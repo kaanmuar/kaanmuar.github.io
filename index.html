@@ -59,7 +59,7 @@
         .tech-tag.selected .text-gray-500, .tech-tag.selected .font-semibold {
             color: white;
         }
-         .tech-tag.selected .stars svg {
+        .tech-tag.selected .stars svg {
             color: #f59e0b; /* Keep star color consistent */
         }
         .tech-tag .tech-icon {
@@ -198,6 +198,12 @@
             top: 4px;
             border: 2px solid white;
         }
+        .timeline-tech-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            border-radius: 4px;
+        }
         /* Trademark Styles */
         .trademark-logo {
             display: inline-flex;
@@ -225,1092 +231,576 @@
 </head>
 <body data-author="Carlos A. Muñoz">
 
-    <div class="container mx-auto max-w-6xl my-6 p-4 md:p-6">
-        <div class="bg-white shadow-2xl rounded-lg overflow-hidden">
-            <div class="md:flex">
-                <!-- Left Column (Sidebar) -->
-                <aside class="md:w-1/3 bg-gray-800 text-white p-6">
-                    <div class="flex flex-col items-center">
-                        <img src="https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400" alt="Carlos Muñoz Ardila">
-                        <div class="mt-5 text-center">
-                            <div class="flex items-center justify-center">
-                                <h1 class="text-2xl font-bold text-white">CARLOS A. MUÑOZ</h1>
-                                <div class="trademark-logo">CM</div>
-                            </div>
-                            <h2 class="text-base text-gray-300 mt-2" data-translate-key="job_title">Senior IT Project Manager, QA Architect & QA Leader</h2>
-                             <p class="text-xs text-cyan-400 mt-1">CSPM | ISTQB | CISA | CISSP</p>
+<div class="container mx-auto max-w-6xl my-6 p-4 md:p-6">
+    <div class="bg-white shadow-2xl rounded-lg overflow-hidden">
+        <div class="md:flex">
+            <!-- Left Column (Sidebar) -->
+            <aside class="md:w-1/3 bg-gray-800 text-white p-6">
+                <div class="flex flex-col items-center">
+                    <img src="https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400" alt="Carlos Muñoz Ardila">
+                    <div class="mt-5 text-center">
+                        <div class="flex items-center justify-center">
+                            <h1 class="text-2xl font-bold text-white">CARLOS A. MUÑOZ</h1>
+                            <div class="trademark-logo">CM</div>
+                        </div>
+                        <h2 class="text-base text-gray-300 mt-2" data-translate-key="job_title">Senior IT Project Manager, QA Architect & QA Leader</h2>
+                        <p class="text-xs text-cyan-400 mt-1">CSPM | ISTQB | CISA | CISSP</p>
+                    </div>
+                </div>
+
+                <hr class="border-gray-600 my-6">
+
+                <!-- Contact Info -->
+                <section class="space-y-3 text-sm">
+                    <div class="flex items-center">
+                        <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
+                        <div class="relative ml-2 no-print" id="contact-info-icon-container">
+                            <svg id="contact-info-icon" class="w-5 h-5 text-gray-500 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                            <div id="contact-info-bubble" class="info-bubble" style="top: -10px; right: -250px;">Click any contact link to open the corresponding application (Email, WhatsApp, etc.).</div>
                         </div>
                     </div>
+                    <div class="flex items-center space-x-3 text-gray-300">
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+                        <a href="tel:+573209191010" class="hover:text-cyan-400">+57 320 919 1010</a>
+                    </div>
+                    <div class="flex items-center space-x-3 text-gray-300">
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
+                        <a href="mailto:kaanmuar@gmail.com" class="hover:text-cyan-400">kaanmuar@gmail.com</a>
+                    </div>
+                    <div class="flex items-start space-x-3 text-gray-300">
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 break-all">linkedin.com/in/carlos-andres-m-2a60b8b/</a>
+                    </div>
+                    <div class="flex items-center space-x-3 text-gray-300">
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg>
+                        <a href="https://wa.me/573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">WhatsApp</a>
+                    </div>
+                    <div class="flex items-center space-x-3 text-gray-300">
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944 11.944-5.356 11.944-11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-."/></svg>
+                        <a href="https://t.me/+573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">Telegram</a>
+                    </div>
+                    <div class="flex items-center space-x-3 text-gray-300">
+                        <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
+                        <span>Medellin, Antioquia, Colombia</span>
+                    </div>
+                </section>
 
-                    <hr class="border-gray-600 my-6">
+                <hr class="border-gray-600 my-6">
 
-                    <!-- Contact Info -->
-                    <section class="space-y-3 text-sm">
-                         <div class="flex items-center">
-                            <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
-                            <div class="relative ml-2 no-print" id="contact-info-icon-container">
-                                <svg id="contact-info-icon" class="w-5 h-5 text-gray-500 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                                <div id="contact-info-bubble" class="info-bubble" style="top: -10px; right: -250px;">Click any contact link to open the corresponding application (Email, WhatsApp, etc.).</div>
+                <!-- Core Competencies Section -->
+                <section>
+                    <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="competencies_title">Core Competencies</h3>
+                    <ul class="mt-3 space-y-2 text-sm text-gray-300 list-disc list-inside">
+                        <li data-translate-key="competency_pm">IT Project Management</li>
+                        <li data-translate-key="competency_qa">QA & Test Automation</li>
+                        <li data-translate-key="competency_lead">Team Leadership & Mentoring</li>
+                        <li data-translate-key="competency_devops">CI/CD & DevOps Strategy</li>
+                        <li data-translate-key="competency_cloud">Cloud Platforms (AWS, Azure, GCP)</li>
+                        <li data-translate-key="competency_strategy">Strategic Business Acumen</li>
+                        <li data-translate-key="competency_relations">Stakeholder & Client Relations</li>
+                    </ul>
+                </section>
+                <hr class="border-gray-600 my-6">
+                <!-- Languages Section -->
+                <section id="languages-section">
+                    <div class="flex items-center justify-between" id="languages-header">
+                        <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
+                    </div>
+                    <div id="languages-body" class="mt-3 space-y-4 text-sm">
+                        <div class="language">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="flag-icon" alt="Spanish Flag"><span class="font-medium ml-2">Spanish</span></div>
+                                <span class="text-gray-400" data-translate-key="lang_native">Native</span>
                             </div>
-                         </div>
-                         <div class="flex items-center space-x-3 text-gray-300">
-                            <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
-                            <a href="tel:+573209191010" class="hover:text-cyan-400">+57 320 919 1010</a>
+                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 100%"></div></div>
                         </div>
-                        <div class="flex items-center space-x-3 text-gray-300">
-                            <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
-                            <a href="mailto:kaanmuar@gmail.com" class="hover:text-cyan-400">kaanmuar@gmail.com</a>
+                        <div class="language">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="flag-icon" alt="English Flag"><span class="font-medium ml-2">English</span></div>
+                                <span class="text-gray-400" data-translate-key="lang_fluent">Fluent</span>
+                            </div>
+                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 90%"></div></div>
                         </div>
-                         <div class="flex items-start space-x-3 text-gray-300">
-                            <svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-                            <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 break-all">linkedin.com/in/carlos-andres-m-2a60b8b/</a>
+                        <div class="language">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="flag-icon" alt="Portuguese Flag"><span class="font-medium ml-2">Portuguese</span></div>
+                                <span class="text-gray-400" data-translate-key="lang_fluent">Fluent</span>
+                            </div>
+                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 85%"></div></div>
                         </div>
-                        <div class="flex items-center space-x-3 text-gray-300">
-                            <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg>
-                            <a href="https://wa.me/573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">WhatsApp</a>
+                        <div class="language">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="flag-icon" alt="Italian Flag">
+                                    <img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="flag-icon -ml-4" alt="German Flag">
+                                    <img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="flag-icon -ml-4" alt="French Flag">
+                                    <span class="font-medium ml-2" data-translate-key="lang_others">Others</span>
+                                </div>
+                                <span class="text-gray-400" data-translate-key="lang_basic">Basic</span>
+                            </div>
+                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 30%"></div></div>
                         </div>
-                        <div class="flex items-center space-x-3 text-gray-300">
-                           <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944 11.944-5.356 11.944-11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-."/></svg>
-                            <a href="https://t.me/+573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">Telegram</a>
-                        </div>
-                        <div class="flex items-center space-x-3 text-gray-300">
-                           <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
-                            <span>Medellin, Antioquia, Colombia</span>
-                        </div>
-                    </section>
+                    </div>
+                </section>
+            </aside>
 
-                    <hr class="border-gray-600 my-6">
+            <!-- Right Column (Main Content) -->
+            <main class="w-full bg-gray-50 p-6">
+                <section>
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-800" data-translate-key="summary_title">Professional Summary</h2>
+                        <div id="language-selector" class="relative no-print flex items-center space-x-2 collapsed cursor-pointer">
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English"><span class="tooltiptext">Translate to English</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español"><span class="tooltiptext">Translate to Spanish</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="pt" alt="Português"><span class="tooltiptext">Translate to Portuguese</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="de" alt="German"><span class="tooltiptext">Translate to German</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="fr" alt="French"><span class="tooltiptext">Translate to Italian</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italian"><span class="tooltiptext">Translate to Italian</span></div>
+                            <svg class="w-4 h-4 text-gray-500 lang-accordion-indicator" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <span class="text-gray-300 mx-1">|</span>
+                            <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext">Print / PDF</span></button></div>
+                        </div>
+                    </div>
+                    <div class="border-b-4 border-gray-300 pb-2 mb-3"></div>
+                    <p class="text-sm text-gray-700" data-translate-key="summary_text">A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.</p>
+                    <div id="summary-details" class="text-sm text-gray-700 mt-2 space-y-2">
+                        <p data-translate-key="summary_detail_1">Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.</p>
+                        <p data-translate-key="summary_detail_2">As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.</p>
+                    </div>
+                    <button id="read-more-btn" class="text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-2 no-print">Read More...</button>
+                </section>
 
-                    <!-- Core Competencies Section -->
-                    <section>
-                        <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="competencies_title">Core Competencies</h3>
-                        <ul class="mt-3 space-y-2 text-sm text-gray-300 list-disc list-inside">
-                            <li data-translate-key="competency_pm">IT Project Management</li>
-                            <li data-translate-key="competency_qa">QA & Test Automation</li>
-                            <li data-translate-key="competency_lead">Team Leadership & Mentoring</li>
-                            <li data-translate-key="competency_devops">CI/CD & DevOps Strategy</li>
-                            <li data-translate-key="competency_cloud">Cloud Platforms (AWS, Azure, GCP)</li>
-                            <li data-translate-key="competency_strategy">Strategic Business Acumen</li>
-                            <li data-translate-key="competency_relations">Stakeholder & Client Relations</li>
-                        </ul>
-                    </section>
-                    <hr class="border-gray-600 my-6">
-                    <!-- Languages Section -->
-                    <section id="languages-section">
-                        <div class="flex items-center justify-between" id="languages-header">
-                            <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
-                        </div>
-                        <div id="languages-body" class="mt-3 space-y-4 text-sm">
-                            <div class="language">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="flag-icon" alt="Spanish Flag"><span class="font-medium ml-2">Spanish</span></div>
-                                    <span class="text-gray-400" data-translate-key="lang_native">Native</span>
-                                </div>
-                                <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 100%"></div></div>
-                            </div>
-                             <div class="language">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="flag-icon" alt="English Flag"><span class="font-medium ml-2">English</span></div>
-                                    <span class="text-gray-400" data-translate-key="lang_fluent">Fluent</span>
-                                </div>
-                                <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 90%"></div></div>
-                            </div>
-                            <div class="language">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="flag-icon" alt="Portuguese Flag"><span class="font-medium ml-2">Portuguese</span></div>
-                                    <span class="text-gray-400" data-translate-key="lang_fluent">Fluent</span>
-                                </div>
-                                <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 85%"></div></div>
-                            </div>
-                            <div class="language">
-                                <div class="flex items-center justify-between">
-                                     <div class="flex items-center">
-                                        <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="flag-icon" alt="Italian Flag">
-                                        <img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="flag-icon -ml-4" alt="German Flag">
-                                        <img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="flag-icon -ml-4" alt="French Flag">
-                                        <span class="font-medium ml-2" data-translate-key="lang_others">Others</span>
-                                    </div>
-                                    <span class="text-gray-400" data-translate-key="lang_basic">Basic</span>
-                                </div>
-                                <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 30%"></div></div>
-                            </div>
-                        </div>
-                    </section>
-                </aside>
-
-                <!-- Right Column (Main Content) -->
-                <main class="w-full bg-gray-50 p-6">
-                    <section>
-                        <div class="flex justify-between items-center">
-                            <h2 class="text-xl font-bold text-gray-800" data-translate-key="summary_title">Professional Summary</h2>
-                            <div id="language-selector" class="relative no-print flex items-center space-x-2 collapsed cursor-pointer">
-                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English"><span class="tooltiptext">Translate to English</span></div>
-                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español"><span class="tooltiptext">Translate to Spanish</span></div>
-                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="pt" alt="Português"><span class="tooltiptext">Translate to Portuguese</span></div>
-                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="de" alt="German"><span class="tooltiptext">Translate to German</span></div>
-                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="fr" alt="French"><span class="tooltiptext">Translate to French</span></div>
-                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italian"><span class="tooltiptext">Translate to Italian</span></div>
-                                 <svg class="w-4 h-4 text-gray-500 lang-accordion-indicator" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                 <span class="text-gray-300 mx-1">|</span>
-                                 <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext">Print / PDF</span></button></div>
-                            </div>
-                        </div>
-                        <div class="border-b-4 border-gray-300 pb-2 mb-3"></div>
-                        <p class="text-sm text-gray-700" data-translate-key="summary_text">A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.</p>
-                        <div id="summary-details" class="text-sm text-gray-700 mt-2 space-y-2">
-                             <p data-translate-key="summary_detail_1">Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.</p>
-                             <p data-translate-key="summary_detail_2">As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.</p>
-                        </div>
-                         <button id="read-more-btn" class="text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-2 no-print">Read More...</button>
-                    </section>
-
-                    <!-- Infographics Section -->
-                    <section class="section mt-8">
-                        <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2 mb-4" data-translate-key="infographics_title">Career at a Glance</h2>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Left side: Radar Chart and Impact -->
-                            <div class="space-y-8">
-                                <!-- Radar Chart -->
-                                <div>
-                                     <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_radar_title">Core Competency Radar</h3>
-                                     <div id="radar-chart-container" class="relative w-full max-w-sm mx-auto h-64">
-                                        <!-- SVG for Radar Chart will be here -->
-                                     </div>
-                                </div>
-                                <!-- Impact Showcase -->
-                                <div>
-                                     <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_impact_title">Key Metrics</h3>
-                                     <div id="impact-showcase-container" class="grid grid-cols-2 gap-4">
-                                        <!-- Stat cards will be here -->
-                                     </div>
-                                </div>
-                            </div>
-                            <!-- Right side: Timeline -->
+                <!-- Infographics Section -->
+                <section class="section mt-8">
+                    <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2 mb-4" data-translate-key="infographics_title">Career at a Glance</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Left side: Radar Chart and Impact -->
+                        <div class="space-y-8">
+                            <!-- Radar Chart -->
                             <div>
-                                <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
-                                <div id="timeline-container" class="relative">
-                                    <!-- Timeline items will be generated by JS -->
+                                <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_radar_title">Core Competency Radar</h3>
+                                <div id="radar-chart-container" class="relative w-full max-w-sm mx-auto h-64">
+                                    <!-- SVG for Radar Chart will be here -->
+                                </div>
+                            </div>
+                            <!-- Impact Showcase -->
+                            <div class="mt-8">
+                                <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_impact_title">Key Metrics</h3>
+                                <div id="impact-showcase-container" class="grid grid-cols-2 gap-4">
+                                    <!-- Stat cards will be here -->
                                 </div>
                             </div>
                         </div>
-                    </section>
+                        <!-- Right side: Timeline -->
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
+                            <div id="timeline-container" class="relative">
+                                <!-- Timeline items will be generated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-                    <section class="section mt-6">
-                         <div class="flex justify-between items-center">
-                            <div class="flex items-center">
-                                <h2 class="text-xl font-bold text-gray-800" data-translate-key="toolkit_title">Technical & Management Toolkit</h2>
-                                <div class="relative ml-2 no-print" id="info-icon-container">
-                                    <svg id="info-icon" class="w-5 h-5 text-gray-500 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                                    <div id="info-bubble" class="info-bubble">Click any skill to filter the experience list. Click again to deselect, or use 'Reset' to clear all.</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button id="expand-all-toolkit" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
-                                <button id="reset-filter" class="no-print text-xs bg-cyan-600 text-white hover:bg-cyan-700 font-semibold py-1 px-3 rounded-full transition-colors">Reset Filters</button>
+                <section class="section mt-6">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <h2 class="text-xl font-bold text-gray-800" data-translate-key="toolkit_title">Technical & Management Toolkit</h2>
+                            <div class="relative ml-2 no-print" id="info-icon-container">
+                                <svg id="info-icon" class="w-5 h-5 text-gray-500 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                                <div id="info-bubble" class="info-bubble">Click any skill to filter the experience list. Click again to deselect, or use 'Reset' to clear all.</div>
                             </div>
                         </div>
-                        <div id="toolkit-container" class="mt-1 space-y-3">
-                            <div class="toolkit-section">
-                                <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                    <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_pm">Project Management & Methodologies:</h3>
-                                    <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div class="toolkit-preview"></div>
-                                <div class="mt-2 flex flex-wrap toolkit-body" id="pm-skills"></div>
-                            </div>
-                             <div class="toolkit-section">
-                                <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                    <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_qa">QA & Test Automation:</h3>
-                                    <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div class="toolkit-preview"></div>
-                                <div class="mt-2 flex flex-wrap toolkit-body" id="qa-skills"></div>
-                            </div>
-                             <div class="toolkit-section">
-                                <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                    <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_lang">Programming & Scripting:</h3>
-                                    <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div class="toolkit-preview"></div>
-                                <div class="mt-2 flex flex-wrap toolkit-body" id="lang-skills"></div>
-                            </div>
-                             <div class="toolkit-section">
-                                <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                    <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_cloud">Cloud, CI/CD & DevOps:</h3>
-                                    <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div class="toolkit-preview"></div>
-                                <div class="mt-2 flex flex-wrap toolkit-body" id="cloud-skills"></div>
-                            </div>
-                             <div class="toolkit-section">
-                                <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                    <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_db">Databases & APIs:</h3>
-                                    <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div class="toolkit-preview"></div>
-                                <div class="mt-2 flex flex-wrap toolkit-body" id="db-skills"></div>
-                            </div>
-                             <div class="toolkit-section">
-                                <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                    <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_platform">Platforms & Business Tools:</h3>
-                                    <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div class="toolkit-preview"></div>
-                                <div class="mt-2 flex flex-wrap toolkit-body" id="platform-skills"></div>
-                            </div>
-                             <div class="toolkit-section">
-                                <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                    <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_system">General & System Tools:</h3>
-                                    <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div class="toolkit-preview"></div>
-                                <div class="mt-2 flex flex-wrap toolkit-body" id="system-skills"></div>
-                            </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="expand-all-toolkit" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
+                            <button id="reset-filter" class="no-print text-xs bg-cyan-600 text-white hover:bg-cyan-700 font-semibold py-1 px-3 rounded-full transition-colors">Reset Filters</button>
                         </div>
-                    </section>
+                    </div>
+                    <div id="toolkit-container" class="mt-1 space-y-3">
+                        <div class="toolkit-section">
+                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
+                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_pm">Project Management & Methodologies:</h3>
+                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="toolkit-preview"></div>
+                            <div class="mt-2 flex flex-wrap toolkit-body" id="pm-skills"></div>
+                        </div>
+                        <div class="toolkit-section">
+                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
+                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_qa">QA & Test Automation:</h3>
+                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="toolkit-preview"></div>
+                            <div class="mt-2 flex flex-wrap toolkit-body" id="qa-skills"></div>
+                        </div>
+                        <div class="toolkit-section">
+                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
+                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_lang">Programming & Scripting:</h3>
+                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="toolkit-preview"></div>
+                            <div class="mt-2 flex flex-wrap toolkit-body" id="lang-skills"></div>
+                        </div>
+                        <div class="toolkit-section">
+                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
+                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_cloud">Cloud, CI/CD & DevOps:</h3>
+                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="toolkit-preview"></div>
+                            <div class="mt-2 flex flex-wrap toolkit-body" id="cloud-skills"></div>
+                        </div>
+                        <div class="toolkit-section">
+                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
+                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_db">Databases & APIs:</h3>
+                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="toolkit-preview"></div>
+                            <div class="mt-2 flex flex-wrap toolkit-body" id="db-skills"></div>
+                        </div>
+                        <div class="toolkit-section">
+                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
+                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_platform">Platforms & Business Tools:</h3>
+                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="toolkit-preview"></div>
+                            <div class="mt-2 flex flex-wrap toolkit-body" id="platform-skills"></div>
+                        </div>
+                        <div class="toolkit-section">
+                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
+                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_system">General & System Tools:</h3>
+                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="toolkit-preview"></div>
+                            <div class="mt-2 flex flex-wrap toolkit-body" id="system-skills"></div>
+                        </div>
+                    </div>
+                </section>
 
-                    <!-- Professional Experience -->
-                    <section class="section mt-6">
-                        <div class="flex justify-between items-center">
-                            <h2 class="text-xl font-bold text-gray-800" data-translate-key="experience_title">Professional Experience</h2>
-                             <button id="expand-all-exp" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
-                        </div>
-                        <div class="mt-3 space-y-1" id="experience-container">
-                            <!-- Experiences will be dynamically inserted here -->
-                        </div>
-                    </section>
+                <!-- Professional Experience -->
+                <section class="section mt-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-800" data-translate-key="experience_title">Professional Experience</h2>
+                        <button id="expand-all-exp" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
+                    </div>
+                    <div class="mt-3 space-y-1" id="experience-container">
+                        <!-- Experiences will be dynamically inserted here -->
+                    </div>
+                </section>
 
-                     <!-- Education & Certifications -->
-                    <section class="section mt-6">
-                        <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2" data-translate-key="education_title">Education & Certifications</h2>
-                        <div class="mt-3 grid md:grid-cols-2 gap-6 text-sm">
-                            <div><h3 class="text-base font-bold text-gray-900">Education</h3><div class="mt-2 space-y-2"><p class="text-gray-700"><strong class="font-medium">Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p><p class="text-gray-700"><strong class="font-medium">Computer Systems Engineering</strong> - EAMQ</p></div></div>
-                            <div><h3 class="text-base font-bold text-gray-900">Key Certifications</h3><div class="mt-2 space-y-2"><p class="text-gray-700"><strong class="font-medium">English Proficiency:</strong> EF SET C2 Proficient</p><p class="text-gray-700"><strong class="font-medium">Project Management:</strong> CSPM</p><p class="text-gray-700"><strong class="font-medium">Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB</p><p class="text-gray-700"><strong class="font-medium">Information Security:</strong> CISA, CISM, CISSP</p></div></div>
-                        </div>
-                    </section>
-                    <footer class="cv-footer no-print">
-                        <p>&copy; 2024 Carlos A. Muñoz | Interactive CV <span class="trademark-logo">CM</span></p>
-                    </footer>
-                </main>
-            </div>
+                <!-- Education & Certifications -->
+                <section class="section mt-6">
+                    <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2" data-translate-key="education_title">Education & Certifications</h2>
+                    <div class="mt-3 grid md:grid-cols-2 gap-6 text-sm">
+                        <div><h3 class="text-base font-bold text-gray-900">Education</h3><div class="mt-2 space-y-2"><p class="text-gray-700"><strong class="font-medium">Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p><p class="text-gray-700"><strong class="font-medium">Computer Systems Engineering</strong> - EAMQ</p></div></div>
+                        <div><h3 class="text-base font-bold text-gray-900">Key Certifications</h3><div class="mt-2 space-y-2"><p class="text-gray-700"><strong class="font-medium">English Proficiency:</strong> EF SET C2 Proficient</p><p class="text-gray-700"><strong class="font-medium">Project Management:</strong> CSPM</p><p class="text-gray-700"><strong class="font-medium">Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB</p><p class="text-gray-700"><strong class="font-medium">Information Security:</strong> CISA, CISM, CISSP</p></div></div>
+                    </div>
+                </section>
+                <footer class="cv-footer no-print">
+                    <p>&copy; 2024 Carlos A. Muñoz | Interactive CV <span class="trademark-logo">CM</span></p>
+                </footer>
+            </main>
         </div>
     </div>
-    <script>
-        /***************************************************
-        * Interactive CV Application
-        * Author: Carlos A. Muñoz
-        * Version: 2.1 (Refactored & Fixed)
-        ****************************************************/
-        document.addEventListener('DOMContentLoaded', () => {
-            const CarlosMunozCV = {
-                state: {
-                    lang: 'en',
-                    selectedSkills: new Set(),
-                },
-                data: {
-                    skills: {
-                         pm: [
-                            { name: 'Agile', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/git/git-plain.svg' },
-                            { name: 'Kanban', stars: 5, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/trello/trello-plain.svg' },
-                            { name: 'Scrum', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/jira/jira-original.svg' },
-                            { name: 'Strategic Planning', years: '10+ Yrs', stars: 5, icon: 'https://cdn-icons-png.flaticon.com/512/3063/3063834.png' },
-                            { name: 'Risk Management', years: '10+ Yrs', stars: 5, icon: 'https://cdn-icons-png.flaticon.com/512/3409/3409605.png' },
-                            { name: 'Stakeholder Mgmt', years: '10+ Yrs', stars: 5, icon: 'https://cdn-icons-png.flaticon.com/512/3303/3303991.png' },
-                            { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jira/jira-original.svg' },
-                            { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'https://www.testrail.com/wp-content/uploads/2021/04/testrail-logo-dark.svg' },
-                            { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'https://www.nicepng.com/png/detail/379-3791220_capability-maturity-model-integration-cmmi-logo.png' },
-                            { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'https://cdn-icons-png.flaticon.com/512/179/179537.png' }
-                        ],
-                        qa: [
-                            { name: 'Selenium', stars: 5, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/selenium/selenium-original.svg' },
-                            { name: 'Cypress', stars: 5, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cypressio/cypressio-original.svg' },
-                            { name: 'Playwright', stars: 4, years: '6+ Yrs', icon: 'https://playwright.dev/img/playwright-logo.svg' },
-                            { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/appium/appium-original.svg' },
-                            { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/robotframework/robotframework-original.svg' },
-                            { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cucumber/cucumber-plain.svg' },
-                            { name: 'Ranorex', stars: 3, years: '6+ Yrs', icon: 'https://www.ranorex.com/assets/images/layout/ranorex-logo.svg' },
-                            { name: 'WebDriverIO', stars: 3, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/webdriverio/webdriverio-original.svg' },
-                            { name: 'Serenity BDD', stars: 3, years: '6+ Yrs', icon: 'https://avatars.githubusercontent.com/u/1475727?s=200&v=4' },
-                            { name: 'Kobiton', stars: 3, years: '6+ Yrs', icon: 'https://kobiton.com/wp-content/uploads/2022/07/kobiton-logo-dark.svg' },
-                            { name: 'Behave', stars: 3, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg' },
-                            { name: 'Protractor', stars: 2, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/protractor/protractor-plain.svg' },
-                            { name: 'Tosca', stars: 3, years: '6+ Yrs', icon: 'https://d1h21p1xurcv3e.cloudfront.net/images/logos/tosca.svg' },
-                            { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'https://d1h21p1xurcv3e.cloudfront.net/images/logos/katalon.svg' },
-                            { name: 'JUnit', stars: 5, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg' },
-                            { name: 'Puppeteer', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/puppeteer/puppeteer-original.svg' }
-                        ],
-                        lang: [
-                            { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg' },
-                            { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg' },
-                            { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
-                            { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg' },
-                            { name: 'Kotlin', stars: 4, years: '5+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg' },
-                            { name: 'C#', stars: 4, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg' },
-                            { name: '.NET', stars: 4, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dotnetcore/dotnetcore-original.svg' },
-                            { name: 'Node.js', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg' },
-                            { name: 'Ruby', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg' },
-                            { name: 'PHP', stars: 2, years: '3+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg' },
-                            { name: 'Perl', stars: 2, years: '2+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/perl/perl-original.svg' }
-                        ],
-                        cloud: [
-                            { name: 'AWS', stars: 5, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg' },
-                            { name: 'Azure DevOps', stars: 4, years: '5+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg' },
-                            { name: 'GCP', stars: 4, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg' },
-                            { name: 'Jenkins', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jenkins/jenkins-original.svg' },
-                            { name: 'Docker', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
-                            { name: 'GitLab', stars: 4, years: '7+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/gitlab/gitlab-original.svg' },
-                            { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg' },
-                            { name: 'CircleCI', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/circleci/circleci-plain.svg' },
-                            { name: 'Travis CI', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/travis/travis-plain.svg' }
-                        ],
-                        db: [
-                            { name: 'SQL', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/azuresqldatabase/azuresqldatabase-original.svg' },
-                            { name: 'PostgreSQL', stars: 4, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg' },
-                            { name: 'MySQL', stars: 4, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg' },
-                            { name: 'Oracle', stars: 3, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/oracle/oracle-original.svg' },
-                            { name: 'MongoDB', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg' },
-                            { name: 'Postman', stars: 5, years: '8+ Yrs', icon: 'https://www.vectorlogo.zone/logos/getpostman/getpostman-icon.svg' },
-                            { name: 'Newman', stars: 4, years: '5+ Yrs', icon: 'https://www.vectorlogo.zone/logos/getpostman/getpostman-icon.svg' },
-                            { name: 'Swagger', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/swagger/swagger-original.svg' },
-                            { name: 'Rest Assured', stars: 4, years: '6+ Yrs', icon: 'https://www.vectorlogo.zone/logos/rest-assured/rest-assured-icon.svg' },
-                            { name: 'SoapUI', stars: 3, years: '15+ Yrs', icon: 'https://static.smartbear.co/smartbearbrand/images/home/soapui-logo-2x.png' }
-                        ],
-                        platform: [
-                            { name: 'Salesforce', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/salesforce/salesforce-original.svg' },
-                            { name: 'MS Dynamics', stars: 3, years: '4+ Yrs', icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Microsoft_Dynamics_365_logo.svg/1200px-Microsoft_Dynamics_365_logo.svg.png' },
-                            { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'https://cdn.cdnlogo.com/logos/s/43/sap.svg' },
-                            { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/zoho_logo_icon_168379.png' },
-                            { name: 'Shopify', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/shopify/shopify-original.svg' },
-                            { name: 'Bitrix24', stars: 2, years: '2+ Yrs', icon: 'https://www.bitrix24.com/images/logo/bitrix24_logo.svg' },
-                            { name: 'Bugzilla', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bugzilla/bugzilla-original.svg' }
-                        ],
-                        system: [
-                            { name: 'Middleware', stars: 4, years: '8+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-icon.svg'},
-                            { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/datagrip/datagrip-original.svg'},
-                            { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/eclipse/eclipse-original.svg'},
-                            { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/devicon/devicon-original.svg'},
-                            { name: 'Putty', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg'},
-                            { name: 'Firebug', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebug/firebug-original.svg'},
-                            { name: 'DHTML', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg'},
-                            { name: 'SSH', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ssh/ssh-original.svg'},
-                        ]
-                    },
-                    experiences: [
-                        {
-                            title: 'Senior QA & Program Consultant',
-                            company: 'Team International',
-                            logo: 'https://www.teaminternational.com/wp-content/uploads/2021/11/TEAM-logo-2021-dark.svg',
-                            dates: 'Jan 2021 - Present',
-                            details: {
-                                en: [
-                                    'Delivered expert QA and project leadership services across 15+ client projects in diverse sectors including FinTech, HealthTech, and retail.',
-                                    'Oversaw end-to-end project delivery, managed complex client relationships and expectations, ensuring alignment with strategic business goals.',
-                                    'Mentored and led distributed technical teams of up to 10 engineers, fostering a culture of quality and continuous improvement using Agile and Scrum methodologies.',
-                                    'Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for various client applications.',
-                                    'Managed project workflows, defect tracking, and reporting using Jira and TestRail, providing clear visibility to all stakeholders.'
-                                ],
-                                es: [
-                                    'Entregué servicios expertos de QA y liderazgo de proyectos en más de 15 proyectos de clientes en diversos sectores, incluyendo FinTech, HealthTech y retail.',
-                                    'Supervisé la entrega de proyectos de principio a fin, gestioné relaciones complejas con clientes y sus expectativas, asegurando la alineación con los objetivos estratégicos del negocio.',
-                                    'Fui mentor y lideré equipos técnicos distribuidos de hasta 10 ingenieros, fomentando una cultura de calidad y mejora continua usando metodologías Agile y Scrum.',
-                                    'Diseñé e implementé estrategias escalables de automatización de pruebas usando Cypress, Playwright y Selenium para diversas aplicaciones de clientes.',
-                                    'Gestioné flujos de trabajo de proyectos, seguimiento de defectos e informes usando Jira y TestRail, proporcionando una visibilidad clara a todos los interesados.'
-                                ],
-                                pt: [
-                                    'Forneci serviços especializados de QA e liderança de projetos em mais de 15 projetos de clientes em diversos setores, incluindo FinTech, HealthTech e varejo.',
-                                    'Supervisionei a entrega de projetos de ponta a ponta, gerenciei relacionamentos complexos com clientes e suas expectativas, garantindo o alinhamento com os objetivos estratégicos de negócios.',
-                                    'Orientei e liderei equipes técnicas distribuídas de até 10 engenheiros, promovendo uma cultura de qualidade e melhoria contínua usando metodologias Agile e Scrum.',
-                                    'Arquitetei e implementei estratégias escaláveis de automação de testes usando Cypress, Playwright e Selenium para várias aplicações de clientes.',
-                                    'Gerenciei fluxos de trabalho de projetos, rastreamento de defeitos e relatórios usando Jira e TestRail, proporcionando visibilidade clara para todos os stakeholders.'
-                                ],
-                                de: [
-                                    'Erbringung von Experten-QA- und Projektleitungsdiensten für über 15 Kundenprojekte in verschiedenen Sektoren, einschließlich FinTech, HealthTech und Einzelhandel.',
-                                    'Überwachung der End-to-End-Projektabwicklung, Management komplexer Kundenbeziehungen und -erwartungen zur Sicherstellung der Ausrichtung auf strategische Geschäftsziele.',
-                                    'Mentoring und Leitung verteilter technischer Teams von bis zu 10 Ingenieuren, Förderung einer Kultur der Qualität und kontinuierlichen Verbesserung unter Verwendung von Agile- und Scrum-Methoden.',
-                                    'Architektur und Implementierung skalierbarer Testautomatisierungsstrategien mit Cypress, Playwright und Selenium für verschiedene Kundenanwendungen.',
-                                    'Verwaltung von Projekt-Workflows, Fehlerverfolgung und Berichterstattung mit Jira und TestRail, um allen Beteiligten klare Sichtbarkeit zu bieten.'
-                                ],
-                                fr: [
-                                    'Fourniture de services experts en QA et en direction de projet pour plus de 15 projets clients dans divers secteurs, notamment la FinTech, la HealthTech et le commerce de détail.',
-                                    'Supervision de la livraison de projets de bout en bout, gestion des relations et des attentes complexes des clients, en veillant à l\'alignement avec les objectifs commerciaux stratégiques.',
-                                    'Encadrement et direction d\'équipes techniques distribuées comptant jusqu\'à 10 ingénieurs, en favorisant une culture de la qualité et de l\'amélioration continue à l\'aide des méthodologies Agile et Scrum.',
-                                    'Conception et mise en œuvre de stratégies d\'automatisation des tests évolutives à l\'aide de Cypress, Playwright et Selenium pour diverses applications clientes.',
-                                    'Gestion des flux de travail de projet, du suivi des bogues et des rapports à l\'aide de Jira et TestRail, offrant une visibilité claire à toutes les parties prenantes.'
-                                ],
-                                it: [
-                                    'Fornitura di servizi esperti di QA e di leadership di progetto per oltre 15 progetti di clienti in diversi settori, tra cui FinTech, HealthTech e retail.',
-                                    'Supervisione della consegna dei progetti end-to-end, gestione di relazioni complesse con i clienti e delle loro aspettative, garantendo l\'allineamento con gli obiettivi strategici aziendali.',
-                                    'Mentoring e guida di team tecnici distribuiti fino a 10 ingegneri, promuovendo una cultura della qualità e del miglioramento continuo utilizzando le metodologie Agile и Scrum.',
-                                    'Progettazione e implementazione di strategie di automazione dei test scalabili utilizzando Cypress, Playwright e Selenium per varie applicazioni dei clienti.',
-                                    'Gestione dei flussi di lavoro dei progetti, del tracciamento dei difetti e della reportistica utilizzando Jira e TestRail, fornendo una chiara visibilità a tutti gli stakeholder.'
-                                ]
-                            },
-                            techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Tosca', 'Puppeteer', 'MS Dynamics', 'SAP', 'Zoho CRM', 'Shopify', 'Bitrix24']
-                        },
-                        {
-                            title: 'Senior Technical Project Manager & Consultant',
-                            company: 'RockStar Coders Agency',
-                            logo: 'https://cdn.iconscout.com/icon/free/png-256/rockstar-2-555437.png',
-                            dates: 'Apr 2019 - Mar 2021',
-                             details: {
-                                en: [
-                                    'Provided technical project management and QA leadership for clients across 8+ projects, including for OverActive and the Afar Project.',
-                                    'Led QA strategy and execution, defining technical solutions to optimize testing processes and improve overall software delivery speed and quality.',
-                                    'Implemented robust automation frameworks using Kotlin, Selenium, and Appium, integrated into CI/CD pipelines with Jenkins and GitLab.',
-                                    'Collaborated closely with development and product management to ensure clear understanding of requirements and effective communication.',
-                                    'Proactively identified and mitigated potential risks to project success by implementing robust QA practices and risk management protocols.'
-                                ],
-                                es: [
-                                    'Proporcioné gestión técnica de proyectos y liderazgo de QA para clientes en más de 8 proyectos, incluyendo para OverActive y el Proyecto Afar.',
-                                    'Lideré la estrategia y ejecución de QA, definiendo soluciones técnicas para optimizar los procesos de prueba y mejorar la velocidad y calidad general de la entrega de software.',
-                                    'Implementé marcos de automatización robustos usando Kotlin, Selenium y Appium, integrados en pipelines de CI/CD con Jenkins y GitLab.',
-                                    'Colaboré estrechamente con los equipos de desarrollo y gestión de productos para asegurar una clara comprensión de los requisitos y una comunicación efectiva.',
-                                    'Identifiqué y mitigé proactivamente los riesgos potenciales para el éxito del proyecto mediante la implementación de prácticas de QA robustas y protocolos de gestión de riesgos.'
-                                ],
-                                pt: [
-                                    'Forneci gerenciamento técnico de projetos e liderança de QA para clientes em mais de 8 projetos, incluindo para a OverActive e o Projeto Afar.',
-                                    'Liderei a estratégia e execução de QA, definindo soluções técnicas para otimizar os processos de teste e mejorar a velocidade e qualidade geral da entrega de software.',
-                                    'Implementei robustos frameworks de automação usando Kotlin, Selenium e Appium, integrados em pipelines de CI/CD com Jenkins e GitLab.',
-                                    'Colaborei de perto com as equipes de desenvolvimento e gerenciamento de produtos para garantir uma compreensão clara dos requisitos e uma comunicação eficaz.',
-                                    'Identifiquei e mitiguei proativamente os riscos potenciais para o sucesso do projeto, implementando práticas de QA robustas e protocolos de gerenciamento de risco.'
-                                ],
-                                de: [
-                                    'Bereitstellung von technischem Projektmanagement und QA-Führung für Kunden in über 8 Projekten, einschließlich für OverActive und das Afar-Projekt.',
-                                    'Leitung der QA-Strategie und -Ausführung, Definition technischer Lösungen zur Optimierung von Testprozessen und zur Verbesserung der allgemeinen Geschwindigkeit und Qualität der Softwarebereitstellung.',
-                                    'Implementierung robuster Automatisierungs-Frameworks mit Kotlin, Selenium und Appium, integriert in CI/CD-Pipelines mit Jenkins und GitLab.',
-                                    'Enge Zusammenarbeit mit Entwicklungs- und Produktmanagementteams, um ein klares Verständnis der Anforderungen und eine effektive Kommunikation sicherzustellen.',
-                                    'Proaktive Identifizierung und Minderung potenzieller Risiken für den Projekterfolg durch Implementierung robuster QA-Praktiken und Risikomanagementprotokolle.'
-                                ],
-                                fr: [
-                                    'Fourniture de la gestion de projet technique et du leadership en QA pour des clients sur plus de 8 projets, y compris pour OverActive et le projet Afar.',
-                                    'Direction de la stratégie et de l\'exécution de l\'assurance qualité, définition de solutions techniques pour optimiser les processus de test et améliorer la vitesse et la qualité globales de la livraison des logiciels.',
-                                    'Mise en œuvre de cadres d\'automatisation robustes utilisant Kotlin, Selenium et Appium, intégrés dans des pipelines CI/CD avec Jenkins et GitLab.',
-                                    'Collaboration étroite avec les équipes de développement et de gestion de produits pour garantir une compréhension claire des exigences et une communication efficace.',
-                                    'Identification et atténuation proactives des risques potentiels pour la réussite des projets en mettant en œuvre des pratiques d\'assurance qualité et des protocoles de gestion des risques solides.'
-                                ],
-                                it: [
-                                    'Fornitura di gestione tecnica dei progetti e leadership QA per clienti in oltre 8 progetti, inclusi OverActive e il Progetto Afar.',
-                                    'Guida della strategia e dell\'esecuzione QA, definendo soluzioni tecniche per ottimizzare i processi di test e migliorare la velocità e la qualità complessiva della consegna del software.',
-                                    'Implementazione di robusti framework di automazione utilizzando Kotlin, Selenium e Appium, integrati in pipeline CI/CD con Jenkins e GitLab.',
-                                    'Collaborazione stretta con i team di sviluppo e di gestione del prodotto per garantire una chiara comprensione dei requisiti e una comunicazione efficace.',
-                                    'Identificazione e mitigazione proattiva dei rischi potenziali per il successo del progetto implementando solide pratiche di QA e protocolli di gestione del rischio.'
-                                ]
-                            },
-                            techUsed: ['Kanban', 'Agile', 'Risk Management', 'Selenium', 'Appium', 'Kotlin', 'Jenkins', 'GitLab', 'Jira', 'Scrum', 'Ranorex', 'WebDriverIO', 'Serenity BDD', 'Kobiton', 'Behave', 'Protractor']
-                        },
-                        {
-                            title: 'Sr. Project Manager & QA Engineer',
-                            company: 'Globant',
-                            logo: 'https://media.licdn.com/dms/image/D4E0BAQF63rR54t5v6w/company-logo_200_200/0/1697472978186/globant_logo?e=2147483647&v=beta&t=4z_dJ0CVLq5D-jG9yYy4m2hI1HhYda_iA9E1iwe9z0I',
-                            dates: 'Apr 2017 - May 2018',
-                            details: {
-                                en: [
-                                    'Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account.',
-                                    'Managed test planning, resource estimation, and client communications, ensuring alignment with project timelines and deliverables.',
-                                    'Architected and spearheaded the development of a new QA automation framework using Kotlin, C# .Net, and Robot Framework.',
-                                    'Utilized AWS services (S3, EC2, Redshift, Athena) for managing test data and environments for Salesforce integration projects.',
-                                    'Performed complex data validation and manipulation using advanced SQL queries against Oracle and PostgreSQL databases.'
-                                ],
-                                es: [
-                                    'Lideré todos los esfuerzos de QA para proyectos de Salesforce Sales Cloud y Service Cloud para la cuenta de alto perfil de DirectvGO / AT&T.',
-                                    'Gestioné la planificación de pruebas, la estimación de recursos y las comunicaciones con el cliente, asegurando la alineación con los cronogramas y entregables del proyecto.',
-                                    'Diseñé y lideré el desarrollo de un nuevo marco de automatización de QA utilizando Kotlin, C# .Net y Robot Framework.',
-                                    'Utilicé servicios de AWS (S3, EC2, Redshift, Athena) para gestionar datos y entornos de prueba para proyectos de integración de Salesforce.',
-                                    'Realicé validación y manipulación de datos complejos utilizando consultas SQL avanzadas en bases de datos Oracle y PostgreSQL.'
-                                ],
-                                pt: [
-                                    'Liderei todos os esforços de QA para projetos Salesforce Sales Cloud e Service Cloud para a conta de alto perfil da DirectvGO / AT&T.',
-                                    'Gerenciei o planejamento de testes, a estimativa de recursos e as comunicações com o cliente, garantindo o alinhamento com os cronogramas e entregas do projeto.',
-                                    'Arquitetei e liderei o desenvolvimento de um novo framework de automação de QA usando Kotlin, C# .Net e Robot Framework.',
-                                    'Utilizei serviços da AWS (S3, EC2, Redshift, Athena) para gerenciar dados e ambientes de teste para projetos de integração do Salesforce.',
-                                    'Realizei validação e manipulação de dados complexos usando consultas SQL avanzadas em bancos de dados Oracle e PostgreSQL.'
-                                ],
-                                de: [
-                                    'Leitung aller QA-Bemühungen für Salesforce Sales Cloud- und Service Cloud-Projekte für den hochkarätigen Kunden DirectvGO / AT&T.',
-                                    'Verwaltung der Testplanung, Ressourcenschätzung und Kundenkommunikation, um die Übereinstimmung mit Projektzeitplänen und -ergebnissen sicherzustellen.',
-                                    'Architektur und Leitung der Entwicklung eines neuen QA-Automatisierungs-Frameworks mit Kotlin, C# .Net und Robot Framework.',
-                                    'Nutzung von AWS-Diensten (S3, EC2, Redshift, Athena) zur Verwaltung von Testdaten und -umgebungen für Salesforce-Integrationsprojekte.',
-                                    'Durchführung komplexer Datenvalidierungen und -manipulationen mithilfe erweiterter SQL-Abfragen in Oracle- und PostgreSQL-Datenbanken.'
-                                ],
-                                fr: [
-                                    'Direction de tous les efforts d\'assurance qualité pour les projets Salesforce Sales Cloud et Service Cloud pour le compte de premier plan DirectvGO / AT&T.',
-                                    'Gestion de la planification des tests, de l\'estimation des ressources et des communications avec les clients, en veillant à l\'alignement sur les calendriers et les livrables du projet.',
-                                    'Conception et direction du développement d\'un nouveau cadre d\'automatisation de l\'assurance qualité utilisant Kotlin, C# .Net et Robot Framework.',
-                                    'Utilisation des services AWS (S3, EC2, Redshift, Athena) pour la gestion des données et des environnements de test pour les projets d\'intégration Salesforce.',
-                                    'Réalisation de validations et de manipulations de données complexes à l\'aide de requêtes SQL avancées sur des bases de données Oracle et PostgreSQL.'
-                                ],
-                                it: [
-                                    'Ho guidato tutti gli sforzi di QA per i progetti Salesforce Sales Cloud e Service Cloud per l\'importante cliente DirectvGO / AT&T.',
-                                    'Ho gestito la pianificazione dei test, la stima delle risorse e le comunicazioni con il cliente, garantendo l\'allineamento con le tempistiche e i deliverable del progetto.',
-                                    'Ho progettato e guidato lo sviluppo di un nuovo framework di automazione QA utilizzando Kotlin, C# .Net e Robot Framework.',
-                                    'Ho utilizzato i servizi AWS (S3, EC2, Redshift, Athena) per la gestione dei dati e degli ambienti di test per i progetti di integrazione di Salesforce.',
-                                    'Ho eseguito complesse convalide e manipolazioni di dati utilizzando query SQL avanzate su database Oracle e PostgreSQL.'
-                                ]
-                            },
-                            techUsed: ['Salesforce', 'AWS', 'SQL', 'Kotlin', 'C#', '.NET', 'Robot Framework', 'Oracle', 'PostgreSQL', 'Jira', 'Agile', 'Kanban', 'Scrum', 'Cypress', 'Tosca', 'Katalon']
-                        },
-                        {
-                            title: 'Sr. QA Engineer',
-                            company: 'Genius Sports',
-                            logo: 'https://media.licdn.com/dms/image/D4E0BAQGj-3A_G8aWRA/company-logo_200_200/0/1698318452113/geniussports_logo?e=2147483647&v=beta&t=Uv2-3s-c8o_s4Vq-5LgokfWzmaf0Z4JEvDq7e2i_5cE',
-                            dates: 'May 2016 - Apr 2017',
-                            details: {
-                                en: [
-                                    'Provided quality assistance by mentoring development teams on delivering high-quality software products for real-time sports data platforms.',
-                                    'Worked with Product Owners to define and refine user stories and acceptance criteria in a fast-paced Agile environment.',
-                                    'Developed and executed comprehensive test scripts, plans, and cases for both backend APIs and frontend applications.',
-                                    'Investigated and resolved complex defects, analyzing risk and impact on live data streams using Graylog and Grafana.',
-                                    'Contributed to the improvement of quality processes, focusing on early defect detection and prevention.'
-                                ],
-                                es: [
-                                    'Brindé asistencia de calidad mentorizando a los equipos de desarrollo en la entrega de productos de software de alta calidad para plataformas de datos deportivos en tiempo real.',
-                                    'Trabajé con los Product Owners para definir y refinar historias de usuario y criterios de aceptación en un entorno Agile de ritmo rápido.',
-                                    'Desarrollé y ejecuté scripts, planes y casos de prueba completos tanto para las API de backend como para las aplicaciones de frontend.',
-                                    'Investigué y resolví defectos complejos, analizando el riesgo y el impacto en los flujos de datos en vivo usando Graylog y Grafana.',
-                                    'Contribuí a la mejora de los procesos de calidad, centrándome en la detección temprana y prevención de defectos.'
-                                ],
-                                pt: [
-                                    'Forneci assistência de qualidade, orientando equipes de desenvolvimento na entrega de produtos de software de alta qualidade para plataformas de dados esportivos em tempo real.',
-                                    'Trabalhei com os Product Owners para definir e refinar histórias de usuário e critérios de aceitação em um ambiente Agile de ritmo acelerado.',
-                                    'Desenvolvi e executei scripts, planos e casos de teste abrangentes para APIs de backend e aplicações de frontend.',
-                                    'Investiguei e resolvi defeitos complexos, analisando o risco e o impacto nos fluxos de dados ao vivo usando Graylog e Grafana.',
-                                    'Contribuí para a melhoria dos processos de qualidade, com foco na detecção precoce e prevenção de defeitos.'
-                                ],
-                                de: [
-                                    'Qualitätssicherung durch Mentoring von Entwicklungsteams bei der Bereitstellung hochwertiger Softwareprodukte für Echtzeit-Sportdatenplattformen.',
-                                    'Zusammenarbeit mit Product Ownern zur Definition und Verfeinerung von User Stories und Akzeptanzkriterien in einer schnelllebigen agilen Umgebung.',
-                                    'Entwicklung und Ausführung umfassender Testskripte, -pläne und -fälle für Backend-APIs und Frontend-Anwendungen.',
-                                    'Untersuchung und Behebung komplexer Fehler, Analyse von Risiken und Auswirkungen auf Live-Datenströme mit Graylog und Grafana.',
-                                    'Beitrag zur Verbesserung der Qualitätsprozesse mit Schwerpunkt auf frühzeitiger Fehlererkennung und -vermeidung.'
-                                ],
-                                fr: [
-                                    'Assistance qualité en encadrant les équipes de développement pour la livraison de produits logiciels de haute qualité pour les plateformes de données sportives en temps réel.',
-                                    'Collaboration avec les Product Owners pour définir et affiner les user stories et les critères d\'acceptation dans un environnement Agile rapide.',
-                                    'Développement et exécution de scripts, plans et cas de test complets pour les API backend et les applications frontend.',
-                                    'Enquête et résolution de défauts complexes, analyse des risques et de l\'impact sur les flux de données en direct à l\'aide de Graylog et Grafana.',
-                                    'Contribution à l\'amélioration des processus de qualité, en se concentrant sur la détection et la prévention précoces des défauts.'
-                                ],
-                                it: [
-                                    'Ho fornito assistenza alla qualità facendo da mentore ai team di sviluppo nella fornitura di prodotti software di alta qualità per piattaforme di dati sportivi in tempo reale.',
-                                    'Ho lavorato con i Product Owner per definire e perfezionare le user story e i criteri di accettazione in un ambiente Agile dal ritmo serrato.',
-                                    'Ho sviluppato ed eseguito script, piani e casi di test completi sia per le API di backend che per le applicazioni frontend.',
-                                    'Ho indagato e risolto difetti complessi, analizzando il rischio e l\'impatto sui flussi di dati in tempo reale utilizzando Graylog e Grafana.',
-                                    'Ho contribuito al miglioramento dei processi di qualità, concentrandomi sulla rilevazione e prevenzione precoce dei difetti.'
-                                ]
-                            },
-                            techUsed: ['Agile', 'Jira', 'SQL', 'Postman', 'Grafana', 'Kanban', 'Scrum']
-                        },
-                         {
-                            title: 'Sr. Technical Architect',
-                            company: 'Zagalabs',
-                            logo: 'https://www.zagalabs.com/wp-content/uploads/2021/01/logo-zagalabs-300x118-1.png',
-                            dates: 'Aug 2015 - Mar 2016',
-                            details: {
-                                en: [
-                                    'Managed the overall testing scope for client projects, ensuring alignment with strategic business objectives.',
-                                     'Set program roadmaps, established project priorities, and resolved conflicts to enhance effectiveness towards business results.',
-                                     'Mentored and guided a matrixed team of onshore and offshore testing resources to ensure comprehensive test coverage.',
-                                     'Managed service aspects of the testing P&L, focusing on cost optimization and resource allocation based on governance guidelines.',
-                                     'Built direct relationships with customer stakeholders to ensure objectivity and promote continuous growth.'
-                                ],
-                                es: [
-                                    'Gestioné el alcance general de las pruebas para los proyectos de los clientes, asegurando la alineación con los objetivos estratégicos del negocio.',
-                                    'Establecí hojas de ruta de programas, fijé prioridades y resolví conflictos para mejorar la eficacia hacia los resultados de negocio.',
-                                    'Fui mentor y guié a un equipo matricial de recursos de prueba onshore y offshore para asegurar una cobertura de prueba completa.',
-                                    'Gestioné los aspectos de servicio del P&L de pruebas, centrándome en la optimización de costos y la asignación de recursos.',
-                                    'Construí relaciones directas con los stakeholders de los clientes para asegurar la objetividad y promover el crecimiento continuo.'
-                                ],
-                                pt: [
-                                    'Gerenciei o escopo geral de testes para projetos de clientes, garantindo o alinhamento com os objetivos estratégicos de negócios.',
-                                    'Defini roadmaps de programas, estabeleci prioridades e resolvi conflitos para aumentar a eficácia em direção aos resultados de negócios.',
-                                    'Orientei e guiei uma equipe matricial de recursos de teste onshore e offshore para garantir uma cobertura de teste abrangente.',
-                                    'Gerenciei aspectos de serviço do P&L de testes, com foco na otimização de custos e alocação de recursos.',
-                                    'Construí relacionamentos diretos com os stakeholders dos clientes para garantir a objetividade e promover o crescimento contínuo.'
-                                ],
-                                de: [
-                                    'Verwaltung des gesamten Testumfangs für Kundenprojekte, um die Ausrichtung auf strategische Geschäftsziele sicherzustellen.',
-                                    'Festlegung von Programm-Roadmaps, Priorisierung von Projekten und Lösung von Konflikten zur Steigerung der Effektivität im Hinblick auf die Geschäftsergebnisse.',
-                                    'Mentoring und Anleitung eines Matrix-Teams aus Onshore- und Offshore-Testressourcen zur Gewährleistung einer umfassenden Testabdeckung.',
-                                    'Verwaltung der Serviceaspekte der Test-GuV mit Fokus auf Kostenoptimierung und Ressourcenzuweisung gemäß Governance-Richtlinien.',
-                                    'Aufbau direkter Beziehungen zu Kunden-Stakeholdern, um Objektivität zu gewährleisten und kontinuierliches Wachstum zu fördern.'
-                                ],
-                                fr: [
-                                    'Gestion de la portée globale des tests pour les projets clients, en assurant l\'alignement avec les objectifs commerciaux stratégiques.',
-                                    'Définition des feuilles de route des programmes, établissement des priorités des projets et résolution des conflits pour améliorer l\'efficacité en vue des résultats commerciaux.',
-                                    'Encadrement et orientation d\'une équipe matricielle de ressources de test onshore et offshore pour garantir une couverture de test complète.',
-                                    'Gestion des aspects de service du compte de résultat des tests, en se concentrant sur l\'optimisation des coûts et l\'allocation des ressources sur la base des directives de gouvernance.',
-                                    'Établissement de relations directes avec les parties prenantes des clients pour garantir l\'objectivité et promouvoir une croissance continue.'
-                                ],
-                                it: [
-                                    'Ho gestito l\'ambito di test complessivo per i progetti dei clienti, garantendo l\'allineamento con gli obiettivi strategici aziendali.',
-                                    'Ho definito le roadmap dei programmi, stabilito le priorità dei progetti e risolto i conflitti per migliorare l\'efficacia verso i risultati aziendali.',
-                                    'Ho fatto da mentore e guidato un team a matrice di risorse di test onshore e offshore per garantire una copertura di test completa.',
-                                    'Ho gestito gli aspetti di servizio del conto economico dei test, concentrandomi sull\'ottimizzazione dei costi e sull\'allocazione delle risorse in base alle linee guida di governance.',
-                                    'Ho costruito relazioni dirette con gli stakeholder dei clienti per garantire l\'obiettività e promuovere la crescita continua.'
-                                ]
-                            },
-                            techUsed: ['Stakeholder Mgmt', 'Strategic Planning', 'TestRail', 'Agile', 'Kanban', 'Scrum', 'Jira', 'Cypress']
-                        },
-                        {
-                            title: 'Sr. Strategic Development Manager',
-                            company: 'The Collective Intelligence Group',
-                            logo: 'https://cdn-icons-png.flaticon.com/512/1005/1005121.png',
-                            dates: 'Sep 2014 - Mar 2015',
-                            details: {
-                                en: [
-                                    'Supported the organization\'s strategic and long-range goal planning, identifying new market opportunities.',
-                                    'Provided business development and capture support for corporate IT opportunities, building relationships with agency stakeholders.',
-                                    'Fostered relationships with potential teaming partners to target IT opportunities aligning with corporate plans.',
-                                    'Managed multiple ongoing projects and followed up with internal teams to develop growth strategies.',
-                                    'Assessed partner capabilities, selected teaming partners, and developed long-term strategic relationships.'
-                                ],
-                                es: [
-                                    'Apoyé la planificación estratégica y de largo alcance de la organización, identificando nuevas oportunidades de mercado.',
-                                    'Proporcioné desarrollo de negocio y soporte de captura para oportunidades de TI corporativas, construyendo relaciones con los stakeholders de las agencias.',
-                                    'Fomenté relaciones com posibles socios para enfocar oportunidades de TI alineadas con los planes corporativos.',
-                                    'Gestioné múltiples proyectos en curso y realicé seguimiento com equipos internos para desarrollar estrategias de crecimiento.',
-                                    'Evalué las capacidades de los socios, seleccioné socios de equipo y desarrollé relaciones estratégicas a largo plazo.'
-                                ],
-                                 pt: [
-                                    'Apoiei o planejamento estratégico e de longo prazo da organização, identificando novas oportunidades de mercado.',
-                                    'Forneci desenvolvimento de negócios e suporte de captura para oportunidades de TI corporativas, construindo relacionamentos com stakeholders de agências.',
-                                    'Fomentei relacionamentos com potenciais parceiros de equipe para direcionar oportunidades de TI alinhadas com os planos corporativos.',
-                                    'Gerenciei múltiplos projetos em andamento e acompanhei as equipes internas para desenvolver estratégias de crescimento.',
-                                    'Avaliei as capacidades dos parceiros, selecionei parceiros de equipe e desenvolvi relacionamentos estratégicos de longo prazo.'
-                                ],
-                                de: [
-                                    'Unterstützung der strategischen und langfristigen Zielplanung der Organisation, Identifizierung neuer Marktchancen.',
-                                    'Bereitstellung von Geschäftsentwicklungs- und Akquiseunterstützung für IT-Unternehmenschancen, Aufbau von Beziehungen zu Agentur-Stakeholdern.',
-                                    'Pflege von Beziehungen zu potenziellen Teampartnern, um IT-Möglichkeiten gezielt zu nutzen, die mit den Unternehmensplänen übereinstimmen.',
-                                    'Verwaltung mehrerer laufender Projekte und Nachverfolgung mit internen Teams zur Entwicklung von Wachstumsstrategien.',
-                                    'Bewertung der Partnerfähigkeiten, Auswahl von Teampartnern und Entwicklung langfristiger strategischer Beziehungen.'
-                                ],
-                                fr: [
-                                    'Soutien à la planification stratégique et à long terme de l\'organisation, en identifiant de nouvelles opportunités de marché.',
-                                    'Fourniture d\'un soutien au développement commercial et à la capture d\'opportunités informatiques d\'entreprise, en établissant des relations avec les parties prenantes des agences.',
-                                    'Promotion des relations avec des partenaires potentiels pour cibler les opportunités informatiques correspondant aux plans de l\'entreprise.',
-                                    'Gestion de plusieurs projets en cours et suivi avec les équipes internes pour développer des stratégies de croissance.',
-                                    'Évaluation des capacités des partenaires, sélection des partenaires et développement de relations stratégiques à long terme.'
-                                ],
-                                it: [
-                                    'Supporto alla pianificazione strategica e a lungo termine dell\'organizzazione, identificando nuove opportunità di mercato.',
-                                    'Fornitura di supporto allo sviluppo del business e all\'acquisizione di opportunità IT aziendali, costruendo relazioni con gli stakeholder delle agenzie.',
-                                    'Promozione di relazioni con potenziali partner per mirare a opportunità IT in linea con i piani aziendali.',
-                                    'Gestione di più progetti in corso e follow-up con i team interni per sviluppare strategie di crescita.',
-                                    'Valutazione delle capacità dei partner, selezione dei partner e sviluppo di relazioni strategiche a lungo termine.'
-                                ]
-                            },
-                            techUsed: ['Strategic Planning', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
-                        },
-                        {
-                            title: 'Sr. Project Manager',
-                            company: 'Bitgray',
-                            logo: 'https://bitgray.com/wp-content/uploads/2021/04/logo_bitgray_azul.svg',
-                            dates: 'Sep 2013 - Sep 2014',
-                            details: {
-                                en: [
-                                    'Managed a portfolio of complex enterprise software initiatives, spanning multiple lines of business.',
-                                    'Provided on-site leadership for project teams, building and motivating team members to meet project goals and milestones.',
-                                    'Owned the full project life cycle, from initiation and planning to successful deployment and post-launch support.',
-                                    'Managed all aspects of multiple related projects to ensure the overall program directly supported strategic objectives.',
-                                    'Reported project status, risks, and progress to executive leadership and stakeholders.'
-                                ],
-                                 es: [
-                                    'Gestioné una cartera de complejas iniciativas de software empresarial, abarcando múltiples líneas de negocio.',
-                                    'Proporcioné liderazgo en el sitio para los equipos de proyecto, construyendo y motivando a los miembros del equipo para cumplir con los objetivos y plazos del proyecto.',
-                                    'Fui responsable del ciclo de vida completo del proyecto, desde el inicio y la planificación hasta el despliegue exitoso y el soporte posterior al lanzamiento.',
-                                    'Gestioné todos los aspectos de múltiples proyectos relacionados para asegurar que el programa general apoyara directamente los objetivos estratégicos.',
-                                    'Informé sobre el estado del proyecto, los riesgos y el progreso a la dirección ejecutiva y a los stakeholders.'
-                                ],
-                                pt: [
-                                    'Gerenciei um portfólio de complexas iniciativas de software empresarial, abrangendo várias linhas de negócios.',
-                                    'Forneci liderança no local para equipes de projeto, construindo e motivando os membros da equipe para atingir as metas e os marcos do projeto.',
-                                    'Fui responsável pelo ciclo de vida completo do projeto, desde o início e planejamento até a implantação bem-sucedida e o suporte pós-lançamento.',
-                                    'Gerenciei todos os aspectos de múltiplos projetos relacionados para garantir que o programa geral apoiasse diretamente los objetivos estratégicos.',
-                                    'Reportei o status do projeto, riscos e progresso para a liderança executiva e stakeholders.'
-                                ],
-                                de: [
-                                    'Verwaltung eines Portfolios komplexer Unternehmenssoftware-Initiativen über mehrere Geschäftsbereiche hinweg.',
-                                    'Bereitstellung von Vor-Ort-Führung für Projektteams, Aufbau und Motivation von Teammitgliedern zur Erreichung von Projektzielen und Meilensteinen.',
-                                    'Verantwortung für den gesamten Projektlebenszyklus, von der Initiierung und Planung bis zur erfolgreichen Bereitstellung und dem Support nach dem Start.',
-                                    'Verwaltung aller Aspekte mehrerer zusammenhängender Projekte, um sicherzustellen, dass das Gesamtprogramm die strategischen Ziele direkt unterstützt.',
-                                    'Berichterstattung über Projektstatus, Risiken und Fortschritte an die Geschäftsleitung und die Stakeholder.'
-                                ],
-                                fr: [
-                                    'Gestion d\'un portefeuille d\'initiatives logicielles d\'entreprise complexes, couvrant plusieurs secteurs d\'activité.',
-                                    'Fourniture d\'un leadership sur site pour les équipes de projet, en constituant et en motivant les membres de l\'équipe pour atteindre les objectifs et les jalons du projet.',
-                                    'Prise en charge de l\'ensemble du cycle de vie du projet, de l\'initiation et de la planification au déploiement réussi et au soutien post-lancement.',
-                                    'Gestion de tous les aspects de plusieurs projets connexes pour garantir que le programme global soutient directement les objectifs stratégiques.',
-                                    'Rapport sur l\'état d\'avancement, les risques et les progrès du projet à la direction et aux parties prenantes.'
-                                ],
-                                it: [
-                                    'Ho gestito un portafoglio di complesse iniziative software aziendali, che abbracciavano più linee di business.',
-                                    'Ho fornito leadership in loco per i team di progetto, costruindo e motivando i membri del team a raggiungere gli obiettivi e le tappe fondamentali del progetto.',
-                                    'Mi sono occupato dell\'intero ciclo di vita del progetto, dall\'avvio e pianificazione all\'implementazione di successo e al supporto post-lancio.',
-                                    'Ho gestito tutti gli aspetti di più progetti correlati per garantire che il programma complessivo sostenesse direttamente gli obiettivi strategici.',
-                                    'Ho riferito sullo stato del progetto, sui rischi e sui progressi alla leadership esecutiva e agli stakeholder.'
-                                ]
-                            },
-                            techUsed: ['Agile', 'Risk Management', 'Jira', 'Kanban', 'Scrum']
-                        },
-                        {
-                            title: 'CISO - Chief Information Security Officer',
-                            company: 'MCHC Consultance Inc.',
-                            logo: 'https://cdn-icons-png.flaticon.com/512/2882/2882787.png',
-                            dates: 'Apr 2013 - Oct 2013',
-                            details: {
-                                en: [
-                                    'Led Information Security and Software Validation initiatives for the consultancy and its clients.',
-                                    'Developed and implemented Disaster Recovery Plans (DRP) and Business Continuity Processes (BCP).',
-                                    'Championed a security-aware culture through organization-wide training and process implementation based on ISO 27001.',
-                                    'Mitigated risks by identifying superior market opportunities and potential security threats.',
-                                    'Developed and enhanced the team\'s skills through targeted training and conferences.'
-                                ],
-                                es: [
-                                    'Lideré iniciativas de Seguridad de la Información y Validación de Software para la consultora y sus clientes.',
-                                    'Desarrollé e implementé Planes de Recuperación de Desastres (DRP) y Procesos de Continuidad del Negocio (BCP).',
-                                    'Promoví una cultura de conciencia de seguridad a través de capacitación en toda la organización e implementación de procesos basados en ISO 27001.',
-                                    'Mitigué riesgos identificando oportunidades de mercado superiores y posibles amenazas de seguridad.',
-                                    'Desarrollé y mejoré las habilidades del equipo a través de capacitaciones y conferencias específicas.'
-                                ],
-                                pt: [
-                                    'Liderei iniciativas de Segurança da Informação e Validação de Software para a consultoria e seus clientes.',
-                                    'Desenvolvi e implementei Planos de Recuperação de Desastres (DRP) e Processos de Continuidade de Negócios (BCP).',
-                                    'Promovi uma cultura de conscientização sobre segurança por meio de treinamento em toda la organização e implementação de processos baseados na ISO 27001.',
-                                    'Mitiguei riscos identificando oportunidades de mercado superiores e potenciais ameaças de segurança.',
-                                    'Desenvolvi e aprimorei as habilidades da equipe por meio de treinamentos e conferências direcionados.'
-                                ],
-                                de: [
-                                    'Leitung von Initiativen zur Informationssicherheit und Softwarevalidierung für die Beratung und ihre Kunden.',
-                                    'Entwicklung und Implementierung von Notfallwiederherstellungsplänen (DRP) und Geschäftskontinuitätsprozessen (BCP).',
-                                    'Förderung einer sicherheitsbewussten Kultur durch unternehmensweite Schulungen und Prozessimplementierung auf der Grundlage von ISO 27001.',
-                                    'Minderung von Risiken durch Identifizierung überlegener Marktchancen und potenzieller Sicherheitsbedrohungen.',
-                                    'Entwicklung und Verbesserung der Fähigkeiten des Teams durch gezielte Schulungen und Konferenzen.'
-                                ],
-                                fr: [
-                                    'Direction des initiatives de sécurité de l\'information et de validation des logiciels pour le cabinet de conseil et ses clients.',
-                                    'Élaboration et mise en œuvre de plans de reprise après sinistre (DRP) et de processus de continuité des activités (BCP).',
-                                    'Promotion d\'une culture de sensibilisation à la sécurité par le biais de formations à l\'échelle de l\'organisation et de la mise en œuvre de processus basés sur la norme ISO 27001.',
-                                    'Atténuation des risques en identifiant les opportunités de marché supérieures et les menaces de sécurité potentielles.',
-                                    'Développement et amélioration des compétences de l\'équipe par le biais de formations et de conférences ciblées.'
-                                ],
-                                it: [
-                                    'Ho guidato le iniziative di sicurezza delle informazioni и convalida del software per la società di consulenza e i suoi clienti.',
-                                    'Ho sviluppato e implementato piani di ripristino di emergenza (DRP) e processi di continuità operativa (BCP).',
-                                    'Ho promosso una cultura consapevole della sicurezza attraverso la formazione a livello di organizzazione e l\'implementazione di processi basati sulla norma ISO 27001.',
-                                    'Ho mitigato i rischi identificando opportunità di mercato superiori e potenziali minacce alla sicurezza.',
-                                    'Ho sviluppato e migliorato le competenze del team attraverso formazione e conferenze mirate.'
-                                ]
-                            },
-                            techUsed: ['Risk Management', 'ISO Standards', 'CISA', 'CISM', 'CISSP', 'Agile', 'Kanban', 'Scrum', 'Jira']
-                        },
-                        {
-                            title: 'Sr. Hybrid QA Engineer / QA Lead',
-                            company: 'Prodigious LATAM (Razorfish)',
-                            logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Razorfish_logo.svg/2560px-Razorfish_logo.svg.png',
-                            dates: 'Jun 2012 - Mar 2013',
-                             details: {
-                                en: [
-                                    'Led QA efforts on projects for major US-based clients, leveraging a hybrid onshore/offshore model.',
-                                    'Wrote and executed complex manual and automated test scripts using tools like Selenium and Quality Center.',
-                                    'Performed extensive testing on front-end (HTML/CSS/DHTML/JavaScript) and back-end (Java/.NET) technologies.',
-                                    'Managed bug tracking and reporting using Jira and Bugzilla, ensuring clear communication with development teams.',
-                                    'Used Firebug for in-depth debugging and analysis of web applications.'
-                                ],
-                                es: [
-                                    'Lideré los esfuerzos de QA en proyectos para importantes clientes de EE. UU., aprovechando un modelo híbrido onshore/offshore.',
-                                    'Escribí y ejecuté complejos scripts de prueba manuales y automatizados utilizando herramientas como Selenium y Quality Center.',
-                                    'Realicé pruebas exhaustivas en tecnologías de front-end (HTML/CSS/DHTML/JavaScript) y back-end (Java/.NET).',
-                                    'Gestioné el seguimiento y reporte de errores usando Jira y Bugzilla, asegurando una comunicación clara con los equipos de desarrollo.',
-                                    'Utilicé Firebug para la depuración y análisis en profundidad de aplicaciones web.'
-                                ],
-                                pt: [
-                                    'Liderei os esforços de QA em projetos para grandes clientes dos EUA, utilizando um modelo híbrido onshore/offshore.',
-                                    'Escrevi e executei scripts de teste manuais e automatizados complexos usando ferramentas como Selenium e Quality Center.',
-                                    'Realizei testes extensivos em tecnologias de front-end (HTML/CSS/DHTML/JavaScript) e back-end (Java/.NET).',
-                                    'Gerenciei o rastreamento e o relatório de bugs usando Jira e Bugzilla, garantindo uma comunicação clara com as equipes de desenvolvimento.',
-                                    'Usei o Firebug para depuração e análise aprofundada de aplicações web.'
-                                ],
-                                de: [
-                                    'Leitung der QA-Bemühungen bei Projekten für große US-amerikanische Kunden unter Nutzung eines hybriden Onshore-/Offshore-Modells.',
-                                    'Schreiben und Ausführen komplexer manueller und automatisierter Testskripte mit Tools wie Selenium und Quality Center.',
-                                    'Durchführung umfangreicher Tests von Front-End- (HTML/CSS/DHTML/JavaScript) und Back-End-Technologien (Java/.NET).',
-                                    'Verwaltung der Fehlerverfolgung und -berichterstattung mit Jira und Bugzilla, um eine klare Kommunikation mit den Entwicklungsteams zu gewährleisten.',
-                                    'Verwendung von Firebug für tiefgreifendes Debugging und die Analyse von Webanwendungen.'
-                                ],
-                                fr: [
-                                    'Direction des efforts d\'assurance qualité sur des projets pour de grands clients basés aux États-Unis, en s\'appuyant sur un modèle hybride onshore/offshore.',
-                                    'Rédaction et exécution de scripts de test manuels et automatisés complexes à l\'aide d\'outils tels que Selenium et Quality Center.',
-                                    'Réalisation de tests approfondis sur les technologies front-end (HTML/CSS/DHTML/JavaScript) et back-end (Java/.NET).',
-                                    'Gestion du suivi et du reporting des bogues à l\'aide de Jira et Bugzilla, garantissant une communication claire avec les équipes de développement.',
-                                    'Utilisation de Firebug pour le débogage et l\'analyse approfondis des applications Web.'
-                                ],
-                                it: [
-                                    'Ho guidato gli sforzi di QA su progetti per importanti clienti con sede negli Stati Uniti, sfruttando un modello ibrido onshore/offshore.',
-                                    'Ho scritto ed eseguito complessi script di test manuali e automatizzati utilizzando strumenti come Selenium e Quality Center.',
-                                    'Ho eseguito test approfonditi su tecnologie front-end (HTML/CSS/DHTML/JavaScript) e back-end (Java/.NET).',
-                                    'Ho gestito il tracciamento e la segnalazione dei bug utilizzando Jira e Bugzilla, garantindo una comunicazione chiara con i team di sviluppo.',
-                                    'Ho usato Firebug per il debug e l\'analisi approfonditi delle applicazioni web.'
-                                ]
-                            },
-                            techUsed: ['Selenium', 'Jira', 'Bugzilla', 'Java', '.NET', 'DHTML', 'Firebug', 'Agile', 'Kanban', 'Scrum']
-                        },
-                        {
-                            title: 'ISE Engineer LATAM',
-                            company: 'Advantech',
-                            logo: 'https://www.advantech.com/images/logo_ADVANTECH_big.png',
-                            dates: 'Jan 2012 - Jul 2012',
-                            details: {
-                                en: [
-                                    'Focused on customer project development, offering standard products and integration services across Latin America.',
-                                    'Developed the direct business channel by growing existing accounts and prospecting for new clients.',
-                                    'Visited customers with well-prepared demo kits and materials to showcase technical solutions.',
-                                    'Worked closely with marketing and technical teams to align sales strategies with product capabilities.',
-                                    'Maintained and updated the CRM database, managed sales pipelines, and closed orders.'
-                                ],
-                                es: [
-                                    'Me centré en el desarrollo de proyectos de clientes, ofreciendo productos estándar y servicios de integración en toda América Latina.',
-                                    'Desarrollé el canal de negocio directo aumentando las cuentas existentes y prospectando nuevos clientes.',
-                                    'Visité a los clientes con kits de demostración y materiales bien preparados para mostrar soluciones técnicas.',
-                                    'Trabajé en estrecha colaboración con los equipos de marketing y técnicos para alinear las estrategias de ventas con las capacidades del producto.',
-                                    'Mantuve y actualicé la base de datos de CRM, gestioné los pipelines de ventas y cerré pedidos.'
-                                ],
-                                pt: [
-                                    'Foquei no desenvolvimento de projetos de clientes, oferecendo produtos padrão e serviços de integração em toda a América Latina.',
-                                    'Desenvolvi o canal de negócios diretos, aumentando as contas existentes e prospectando novos clientes.',
-                                    'Visitei clientes com kits de demonstração e materiais bem preparados para apresentar soluções técnicas.',
-                                    'Trabalhei em estreita colaboração com as equipes de marketing e técnica para alinhar as estratégias de vendas com as capacidades do produto.',
-                                    'Mantive e atualizei o banco de dados do CRM, gerenciei os pipelines de vendas e fechei pedidos.'
-                                ],
-                                de: [
-                                    'Fokus auf die Entwicklung von Kundenprojekten, Angebot von Standardprodukten und Integrationsdiensten in ganz Lateinamerika.',
-                                    'Entwicklung des direkten Geschäftskanals durch Ausbau bestehender Konten und Akquise neuer Kunden.',
-                                    'Besuch von Kunden mit gut vorbereiteten Demo-Kits und Materialien zur Präsentation technischer Lösungen.',
-                                    'Enge Zusammenarbeit mit Marketing- und Technik-Teams zur Abstimmung der Vertriebsstrategien auf die Produktfähigkeiten.',
-                                    'Pflege und Aktualisierung der CRM-Datenbank, Verwaltung der Vertriebspipelines und Abschluss von Aufträgen.'
-                                ],
-                                fr: [
-                                    'Concentration sur le développement de projets clients, en proposant des produits standard et des services d\'intégration dans toute l\'Amérique latine.',
-                                    'Développement du canal de vente directe en développant les comptes existants et en prospectant de nouveaux clients.',
-                                    'Visites chez les clients avec des kits de démonstration et du matériel bien préparés pour présenter les solutions techniques.',
-                                    'Collaboration étroite avec les équipes marketing et techniques pour aligner les stratégies de vente sur les capacités des produits.',
-                                    'Tenue à jour de la base de données CRM, gestion des pipelines de vente et conclusion des commandes.'
-                                ],
-                                it: [
-                                    'Mi sono concentrato sullo sviluppo di progetti per i clienti, offrendo prodotti standard e servizi di integrazione in tutta l\'America Latina.',
-                                    'Ho sviluppato il canale commerciale diretto facendo crescere i conti esistenti e cercando nuovi clienti.',
-                                    'Ho visitato i clienti con kit dimostrativi e materiali ben preparati per presentare le soluzioni tecniche.',
-                                    'Ho lavorato a stretto contatto con i team di marketing e tecnici per allineare le strategie di vendita con le capacità del prodotto.',
-                                    'Ho mantenuto e aggiornato il database CRM, gestito le pipeline di vendita e chiuso gli ordini.'
-                                ]
-                            },
-                            techUsed: ['Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
-                        },
-                        {
-                            title: 'Business Tender Specialist - LATAM',
-                            company: 'Intel Corporation',
-                            logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282020%2C_dark_blue%29.svg/1280px-Intel_logo_%282020%2C_dark_blue%29.svg.png',
-                            dates: 'Mar 2011 - Dec 2011',
-                             details: {
-                                en: [
-                                    'Provided technical assessment and advice to government, B2B, and corporate customers on Intel product acquisitions.',
-                                    'Managed daily interactions with major manufacturers to align on product specifications and availability.',
-                                    'Tracked and studied business tenders across Latin America to identify and influence opportunities.',
-                                    'Delivered key information and product roadmaps to covered accounts and co-partner sales teams.',
-                                    'Actively coordinated and managed end-customer targeted activities like webinars and training sessions.'
-                                ],
-                                 es: [
-                                    'Proporcioné evaluación técnica y asesoramiento a clientes gubernamentales, B2B y corporativos sobre adquisiciones de productos Intel.',
-                                    'Gestioné interacciones diarias con los principales fabricantes para alinear las especificaciones y disponibilidad de los productos.',
-                                    'Rastreé y estudié licitaciones de negocios en toda América Latina para identificar e influir en oportunidades.',
-                                    'Entregué información clave y hojas de ruta de productos a las cuentas cubiertas y a los equipos de ventas de los socios.',
-                                    'Coordiné y gestioné activamente actividades dirigidas al cliente final, como seminarios web y sesiones de capacitación.'
-                                ],
-                                pt: [
-                                    'Forneci avaliação técnica e aconselhamento a clientes governamentais, B2B e corporativos sobre aquisições de produtos Intel.',
-                                    'Gerenciei interações diárias com os principais fabricantes para alinhar especificações e disponibilidade de produtos.',
-                                    'Rastreei e estudei licitações de negócios em toda a América Latina para identificar e influenciar oportunidades.',
-                                    'Entreguei informações importantes e roadmaps de produtos para as contas cobertas e equipes de vendas de parceiros.',
-                                    'Coordenei e gerenciei ativamente atividades direcionadas ao cliente final, como webinars e sessões de treinamento.'
-                                ],
-                                de: [
-                                    'Technische Bewertung und Beratung für Regierungs-, B2B- und Unternehmenskunden bei der Anschaffung von Intel-Produkten.',
-                                    'Verwaltung der täglichen Interaktionen mit großen Herstellern zur Abstimmung von Produktspezifikationen und Verfügbarkeit.',
-                                    'Verfolgung und Untersuchung von Geschäftsausschreibungen in ganz Lateinamerika, um Chancen zu identifizieren und zu beeinflussen.',
-                                    'Bereitstellung wichtiger Informationen und Produkt-Roadmaps für betreute Kunden und Co-Partner-Vertriebsteams.',
-                                    'Aktive Koordination und Verwaltung von auf Endkunden ausgerichteten Aktivitäten wie Webinaren und Schulungen.'
-                                ],
-                                fr: [
-                                    'Fourniture d\'évaluations techniques et de conseils aux clients gouvernementaux, B2B et entreprises sur les acquisitions de produits Intel.',
-                                    'Gestion des interactions quotidiennes avec les principaux fabricants pour s\'aligner sur les spécifications et la disponibilité des produits.',
-                                    'Suivi et étude des appels d\'offres commerciaux dans toute l\'Amérique latine pour identifier et influencer les opportunités.',
-                                    'Fourniture d\'informations clés et de feuilles de route de produits aux comptes couverts et aux équipes de vente des partenaires.',
-                                    'Coordination et gestion actives des activités ciblées sur les clients finaux, telles que les webinaires et les sessions de formation.'
-                                ],
-                                it: [
-                                    'Ho fornito valutazione tecnica e consulenza a clienti governativi, B2B e aziendali sull\'acquisizione di prodotti Intel.',
-                                    'Ho gestito le interazioni quotidiane con i principali produttori per allineare le specifiche e la disponibilità dei prodotti.',
-                                    'Ho seguito e studiato le gare d\'appalto in tutta l\'America Latina per identificare e influenzare le opportunità.',
-                                    'Ho fornito informazioni chiave e roadmap di prodotto ai clienti coperti e ai team di vendita dei co-partner.',
-                                    'Ho coordinato e gestito attivamente attività mirate ai clienti finali come webinar e sessioni di formazione.'
-                                ]
-                            },
-                            techUsed: ['Strategic Planning', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
-                        },
-                        {
-                            title: 'Solutions Engineer - Special Projects LATAM',
-                            company: 'Belcorp',
-                            logo: 'https://media.licdn.com/dms/image/D4E0BAQG5r-m_O0B62A/company-logo_200_200/0/1691383389849/belcorp_logo?e=2147483647&v=beta&t=c5rLzW5j8d_z2y5a4Z_p2c6X8k3fG9h7Z6w7Q5Y5q4A',
-                            dates: 'Aug 2010 - Feb 2011',
-                            details: {
-                                en: [
-                                    'Oversaw all aspects of solution development, from concept ideation through development, launch, and maintenance.',
-                                    'Provided leadership and strategic guidance to development, account, and executive management teams.',
-                                    'Interfaced with cross-functional teams to ensure consistency in solution development and implementation.',
-                                    'Promoted the use of strategic solutions and offerings by the business development community.',
-                                    'Developed and grew the portfolio of solutions and offerings to increase company productivity and profits.'
-                                ],
-                                es: [
-                                    'Supervisé todos los aspectos del desarrollo de soluciones, desde la ideación del concepto hasta el desarrollo, lanzamiento y mantenimiento.',
-                                    'Proporcioné liderazgo y orientación estratégica a los equipos de desarrollo, cuentas y dirección ejecutiva.',
-                                    'Interactué con equipos multifuncionales para asegurar la coherencia en el desarrollo e implementación de soluciones.',
-                                    'Promoví el uso de soluciones y ofertas estratégicas por parte de la comunidad de desarrollo de negocios.',
-                                    'Desarrollé e hice crecer la cartera de soluciones y ofertas para aumentar la productividad y los beneficios de la empresa.'
-                                ],
-                                pt: [
-                                    'Supervisionei todos os aspectos do desenvolvimento de soluções, desde a concepção do conceito até o desenvolvimento, lançamento e manutenção.',
-                                    'Forneci liderança e orientação estratégica para as equipes de desenvolvimento, contas e gestão executiva.',
-                                    'Interagi com equipes multifuncionais para garantir a consistência no desenvolvimento e implementação de soluções.',
-                                    'Promovi o uso de soluções e ofertas estratégicas pela comunidade de desenvolvimento de negócios.',
-                                    'Desenvolvi e expandi o portfólio de soluções e ofertas para aumentar a produtividade e os lucros da empresa.'
-                                ],
-                                de: [
-                                    'Überwachung aller Aspekte der Lösungsentwicklung, von der Konzeption über die Entwicklung, Einführung und Wartung.',
-                                    'Bereitstellung von Führung und strategischer Anleitung für Entwicklungs-, Account- und Geschäftsleitungsteams.',
-                                    'Schnittstelle zu funktionsübergreifenden Teams, um die Konsistenz bei der Entwicklung und Implementierung von Lösungen zu gewährleisten.',
-                                    'Förderung der Nutzung strategischer Lösungen und Angebote durch die Geschäftsentwicklungsgemeinschaft.',
-                                    'Entwicklung und Ausbau des Portfolios an Lösungen und Angeboten zur Steigerung der Unternehmensproduktivität und des Gewinns.'
-                                ],
-                                fr: [
-                                    'Supervision de tous les aspects du développement de solutions, de l\'idéation du concept au développement, au lancement et à la maintenance.',
-                                    'Fourniture d\'un leadership et d\'une orientation stratégique aux équipes de développement, de compte et de direction.',
-                                    'Interface avec les équipes interfonctionnelles pour assurer la cohérence dans le développement и la mise en œuvre des solutions.',
-                                    'Promotion de l\'utilisation de solutions et d\'offres stratégiques par la communauté du développement commercial.',
-                                    'Développement et croissance du portefeuille de solutions et d\'offres pour augmenter la productivité et les bénéfices de l\'entreprise.'
-                                ],
-                                it: [
-                                    'Ho supervisionato tutti gli aspetti dello sviluppo della soluzione, dall\'ideazione del concetto allo sviluppo, al lancio e alla manutenzione.',
-                                    'Ho fornito leadership e guida strategica ai team di sviluppo, account e direzione esecutiva.',
-                                    'Mi sono interfacciato con team interfunzionali per garantire la coerenza nello sviluppo e nell\'implementazione della soluzione.',
-                                    'Ho promosso l\'uso di soluzioni e offerte strategiche da parte della comunità di sviluppo aziendale.',
-                                    'Ho sviluppato e fatto crescere il portafoglio di soluzioni e offerte per aumentare la produttività e i profitti dell\'azienda.'
-                                ]
-                            },
-                            techUsed: ['Strategic Planning', 'Agile', 'Kanban', 'Scrum', 'Jira']
-                        },
-                         {
-                            title: 'Partner Product Manager - NOLA',
-                            company: 'McAfee',
-                            logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/McAfee_Logo.svg/2560px-McAfee_Logo.svg.png',
-                            dates: 'Nov 2009 - Aug 2010',
-                            details: {
-                                en: [
-                                    'Served as both a Business Development Manager and a technical implementation leader for the North of Latin America region.',
-                                    'Developed and managed multiple partner implementation portfolios for McAfee security solutions.',
-                                    'Worked with engineering and product management to define, manage, and deploy signed partner agreements.',
-                                    'Provided pre-sales guidance and support, leveraging a diverse knowledge of existing and planned partner releases.',
-                                    'Researched, validated, and prioritized implementation requirements for new and existing accounts.'
-                                ],
-                                 es: [
-                                    'Actué como Gerente de Desarrollo de Negocios y líder de implementación técnica para la región Norte de América Latina.',
-                                    'Desarrollé y gestioné múltiples carteras de implementación de socios para las soluciones de seguridad de McAfee.',
-                                    'Trabajé con ingeniería y gestión de productos para definir, gestionar y desplegar acuerdos de socios firmados.',
-                                    'Brindé orientación y soporte de preventa, aprovechando un conocimiento diverso de los lanzamientos de socios existentes y planificados.',
-                                    'Investigué, validé y prioricé los requisitos de implementación para cuentas nuevas y existentes.'
-                                ],
-                                pt: [
-                                    'Atuei como Gerente de Desenvolvimento de Negócios e líder de implementação técnica para a região Norte da América Latina.',
-                                    'Desenvolvi e gerenciei vários portfólios de implementação de parceiros para as soluções de segurança da McAfee.',
-                                    'Trabalhei com engenharia e gerenciamento de produtos para definir, gerenciar e implantar acordos de parceiros assinados.',
-                                    'Forneci orientação e suporte de pré-venda, aproveitando um conhecimento diversificado dos lançamentos de parceiros existentes e planejados.',
-                                    'Pesquisei, validei e priorizei os requisitos de implementação para contas novas и existentes.'
-                                ],
-                                de: [
-                                    'Tätigkeit als Business Development Manager und technischer Implementierungsleiter für die Region Nordlateinamerika.',
-                                    'Entwicklung und Verwaltung mehrerer Partnerimplementierungsportfolios für McAfee-Sicherheitslösungen.',
-                                    'Zusammenarbeit mit Ingenieur- und Produktmanagementteams zur Definition, Verwaltung und Bereitstellung unterzeichneter Partnervereinbarungen.',
-                                    'Bereitstellung von Pre-Sales-Anleitungen und -Support unter Nutzung eines vielfältigen Wissens über bestehende und geplante Partner-Releases.',
-                                    'Recherche, Validierung und Priorisierung von Implementierungsanforderungen für neue und bestehende Konten.'
-                                ],
-                                fr: [
-                                    'A servi à la fois de directeur du développement commercial et de responsable de la mise en œuvre technique pour la région du nord de l\'Amérique latine.',
-                                    'A développé et géré plusieurs portefeuilles de mise en œuvre de partenaires pour les solutions de sécurité McAfee.',
-                                    'A travaillé avec les équipes d\'ingénierie et de gestion de produits pour définir, gérer et déployer les accords de partenariat signés.',
-                                    'A fourni des conseils et un soutien avant-vente, en s\'appuyant sur une connaissance diversifiée des versions de partenaires existantes et prévues.',
-                                    'A recherché, validé et hiérarchisé les exigences de mise en œuvre pour les comptes nouveaux et existants.'
-                                ],
-                                it: [
-                                    'Ho ricoperto il ruolo di Business Development Manager e di responsabile dell\'implementazione tecnica per la regione del Nord America Latina.',
-                                    'Ho sviluppato e gestito più portafogli di implementazione dei partner per le soluzioni di sicurezza McAfee.',
-                                    'Ho lavorato con l\'ingegneria e la gestione dei prodotti per definire, gestire e distribuire gli accordi con i partner firmati.',
-                                    'Ho fornito guida e supporto pre-vendita, sfruttando una conoscenza diversificata delle versioni dei partner esistenti e pianificate.',
-                                    'Ho ricercato, convalidato e dato la priorità ai requisiti di implementazione per i clienti nuovi ed esistenti.'
-                                ]
-                            },
-                            techUsed: ['Risk Management', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
-                        },
-                        {
-                            title: 'Advanced Technologies Advisor',
-                            company: 'S&G Consultance Ltd.',
-                            logo: 'https://cdn-icons-png.flaticon.com/512/1830/1830767.png',
-                            dates: 'Feb 2002 - May 2008',
-                            details: {
-                                en: [
-                                    'Advised clients on software acquisition, distribution, IT development, and web/intranet tools.',
-                                    'Provided administrative and operative coaching, focusing on HR potential, organizational processes, and innovation.',
-                                    'Was in charge of the Software and Technology area, utilizing tools like Java, Perl, Oracle, SQL, and Cisco Networking environments.',
-                                    'Advised on technology, corporate, and commercial/marketing strategies, including market analysis and new market incursions.',
-                                    'Implemented process improvements based on SEI, CMM, CMMI, and ISO standards.'
-                                ],
-                                es: [
-                                    'Asesoré a clientes sobre adquisición de software, distribución, desarrollo de TI y herramientas web/intranet.',
-                                    'Brindé coaching administrativo y operativo, centrándome en el potencial de RRHH, procesos organizacionales e innovación.',
-                                    'Estuve a cargo del área de Software y Tecnología, utilizando herramientas como Java, Perl, Oracle, SQL y entornos de red de Cisco.',
-                                    'Asesoré sobre estrategias tecnológicas, corporativas y comerciales/de marketing, incluyendo análisis de mercado e incursiones en nuevos mercados.',
-                                    'Implementé mejoras de procesos basadas en los estándares SEI, CMM, CMMI e ISO.'
-                                ],
-                                 pt: [
-                                    'Aconselhei clientes sobre aquisição de software, distribuição, desenvolvimento de TI e ferramentas de web/intranet.',
-                                    'Forneci coaching administrativo e operacional, com foco em potencial de RH, processos organizacionais e inovação.',
-                                    'Fui responsável pela área de Software e Tecnologia, utilizando ferramentas como Java, Perl, Oracle, SQL e ambientes de rede Cisco.',
-                                    'Aconselhei sobre estratégias de tecnologia, corporativas e comerciais/de marketing, incluindo análise de mercado e incursões em novos mercados.',
-                                    'Implementei melhorias de processo com base nos padrões SEI, CMM, CMMI e ISO.'
-                                ],
-                                de: [
-                                    'Beratung von Kunden bei der Beschaffung, dem Vertrieb, der IT-Entwicklung und den Web-/Intranet-Tools von Software.',
-                                    'Bereitstellung von administrativem und operativem Coaching mit Schwerpunkt auf HR-Potenzial, Organisationsprozessen und Innovation.',
-                                    'Verantwortlich für den Bereich Software und Technologie unter Verwendung von Tools wie Java, Perl, Oracle, SQL und Cisco Networking-Umgebungen.',
-                                    'Beratung zu Technologie-, Unternehmens- und Handels-/Marketingstrategien, einschließlich Marktanalyse und Erschließung neuer Märkte.',
-                                    'Implementierung von Prozessverbesserungen auf der Grundlage der Standards SEI, CMM, CMMI und ISO.'
-                                ],
-                                fr: [
-                                    'Conseil aux clients sur l\'acquisition, la distribution, le développement informatique et les outils web/intranet de logiciels.',
-                                    'Fourniture d\'un coaching administratif et opérationnel, axé sur le potentiel des RH, les processus organisationnels et l\'innovation.',
-                                    'Responsable du domaine des logiciels et de la technologie, en utilisant des outils tels que Java, Perl, Oracle, SQL et les environnements de réseau Cisco.',
-                                    'Conseil sur les stratégies technologiques, d\'entreprise et commerciales/marketing, y compris l\'analyse de marché et les incursions sur de nouveaux marchés.',
-                                    'Mise en œuvre d\'améliorations de processus basées sur les normes SEI, CMM, CMMI et ISO.'
-                                ],
-                                it: [
-                                    'Ho fornito consulenza ai clienti sull\'acquisizione, la distribuzione, lo sviluppo IT e gli strumenti web/intranet del software.',
-                                    'Ho fornito coaching amministrativo e operativo, concentrandomi sul potenziale delle risorse umane, sui processi organizzativi e sull\'innovazione.',
-                                    'Ero responsabile dell\'area Software e Tecnologia, utilizzando strumenti come Java, Perl, Oracle, SQL e ambienti di rete Cisco.',
-                                    'Ho fornito consulenza su strategie tecnologiche, aziendali e commerciali/marketing, comprese analisi di mercato e incursioni in nuovi mercati.',
-                                    'Ho implementato miglioramenti dei processi basati sugli standard SEI, CMM, CMMI e ISO.'
-                                ]
-                            },
-                            techUsed: ['Java', 'Perl', 'Oracle', 'SQL', 'CMMI', 'ISO Standards', 'Middleware', 'Agile', 'Kanban', 'Scrum', 'Jira', 'JUnit', 'Cygwin', 'Putty', 'SSH']
-                        }
+</div>
+<script>
+    /***************************************************
+     * Interactive CV Application
+     * Author: Carlos A. Muñoz
+     * Version: 3.0 (Dynamic Translation Integration)
+     * License: MIT
+     ****************************************************/
+    document.addEventListener('DOMContentLoaded', () => {
+        const CarlosMunozCV = {
+            state: {
+                lang: 'en',
+                selectedSkills: new Set(),
+                translationCache: { 'en': {} },
+            },
+            data: {
+                skills: {
+                    pm: [
+                        { name: 'Agile', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/git/git-plain.svg' },
+                        { name: 'Kanban', stars: 5, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/trello/trello-plain.svg' },
+                        { name: 'Scrum', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/jira/jira-original.svg' },
+                        { name: 'Strategic Planning', years: '10+ Yrs', stars: 5, icon: 'https://cdn-icons-png.flaticon.com/512/3063/3063834.png' },
+                        { name: 'Risk Management', years: '10+ Yrs', stars: 5, icon: 'https://cdn-icons-png.flaticon.com/512/3409/3409605.png' },
+                        { name: 'Stakeholder Mgmt', years: '10+ Yrs', stars: 5, icon: 'https://cdn-icons-png.flaticon.com/512/3303/3303991.png' },
+                        { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jira/jira-original.svg' },
+                        { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'https://www.testrail.com/wp-content/uploads/2021/04/testrail-logo-dark.svg' },
+                        { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'https://www.nicepng.com/png/detail/379-3791220_capability-maturity-model-integration-cmmi-logo.png' },
+                        { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'https://cdn-icons-png.flaticon.com/512/179/179537.png' }
                     ],
+                    qa: [
+                        { name: 'Selenium', stars: 5, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/selenium/selenium-original.svg' },
+                        { name: 'Cypress', stars: 5, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cypressio/cypressio-original.svg' },
+                        { name: 'Playwright', stars: 4, years: '6+ Yrs', icon: 'https://playwright.dev/img/playwright-logo.svg' },
+                        { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/appium/appium-original.svg' },
+                        { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/robotframework/robotframework-original.svg' },
+                        { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cucumber/cucumber-plain.svg' },
+                        { name: 'Ranorex', stars: 3, years: '6+ Yrs', icon: 'https://www.ranorex.com/assets/images/layout/ranorex-logo.svg' },
+                        { name: 'WebDriverIO', stars: 3, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/webdriverio/webdriverio-original.svg' },
+                        { name: 'Serenity BDD', stars: 3, years: '6+ Yrs', icon: 'https://avatars.githubusercontent.com/u/1475727?s=200&v=4' },
+                        { name: 'Kobiton', stars: 3, years: '6+ Yrs', icon: 'https://kobiton.com/wp-content/uploads/2022/07/kobiton-logo-dark.svg' },
+                        { name: 'Behave', stars: 3, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg' },
+                        { name: 'Protractor', stars: 2, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/protractor/protractor-plain.svg' },
+                        { name: 'Tosca', stars: 3, years: '6+ Yrs', icon: 'https://d1h21p1xurcv3e.cloudfront.net/images/logos/tosca.svg' },
+                        { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'https://d1h21p1xurcv3e.cloudfront.net/images/logos/katalon.svg' },
+                        { name: 'JUnit', stars: 5, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg' },
+                        { name: 'Puppeteer', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/puppeteer/puppeteer-original.svg' }
+                    ],
+                    lang: [
+                        { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg' },
+                        { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg' },
+                        { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
+                        { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg' },
+                        { name: 'Kotlin', stars: 4, years: '5+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg' },
+                        { name: 'C#', stars: 4, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg' },
+                        { name: '.NET', stars: 4, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dotnetcore/dotnetcore-original.svg' },
+                        { name: 'Node.js', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg' },
+                        { name: 'Ruby', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg' },
+                        { name: 'PHP', stars: 2, years: '3+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg' },
+                        { name: 'Perl', stars: 2, years: '2+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/perl/perl-original.svg' }
+                    ],
+                    cloud: [
+                        { name: 'AWS', stars: 5, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg' },
+                        { name: 'Azure DevOps', stars: 4, years: '5+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg' },
+                        { name: 'GCP', stars: 4, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg' },
+                        { name: 'Jenkins', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jenkins/jenkins-original.svg' },
+                        { name: 'Docker', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
+                        { name: 'GitLab', stars: 4, years: '7+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/gitlab/gitlab-original.svg' },
+                        { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg' },
+                        { name: 'CircleCI', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/circleci/circleci-plain.svg' },
+                        { name: 'Travis CI', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/travis/travis-plain.svg' }
+                    ],
+                    db: [
+                        { name: 'SQL', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/azuresqldatabase/azuresqldatabase-original.svg' },
+                        { name: 'PostgreSQL', stars: 4, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg' },
+                        { name: 'MySQL', stars: 4, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg' },
+                        { name: 'Oracle', stars: 3, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/oracle/oracle-original.svg' },
+                        { name: 'MongoDB', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg' },
+                        { name: 'Postman', stars: 5, years: '8+ Yrs', icon: 'https://www.vectorlogo.zone/logos/getpostman/getpostman-icon.svg' },
+                        { name: 'Newman', stars: 4, years: '5+ Yrs', icon: 'https://www.vectorlogo.zone/logos/getpostman/getpostman-icon.svg' },
+                        { name: 'Swagger', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/swagger/swagger-original.svg' },
+                        { name: 'Rest Assured', stars: 4, years: '6+ Yrs', icon: 'https://www.vectorlogo.zone/logos/rest-assured/rest-assured-icon.svg' },
+                        { name: 'SoapUI', stars: 3, years: '15+ Yrs', icon: 'https://static.smartbear.co/smartbearbrand/images/home/soapui-logo-2x.png' }
+                    ],
+                    platform: [
+                        { name: 'Salesforce', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/salesforce/salesforce-original.svg' },
+                        { name: 'MS Dynamics', stars: 3, years: '4+ Yrs', icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Microsoft_Dynamics_365_logo.svg/1200px-Microsoft_Dynamics_365_logo.svg.png' },
+                        { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'https://cdn.cdnlogo.com/logos/s/43/sap.svg' },
+                        { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/zoho_logo_icon_168379.png' },
+                        { name: 'Shopify', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/shopify/shopify-original.svg' },
+                        { name: 'Bitrix24', stars: 2, years: '2+ Yrs', icon: 'https://www.bitrix24.com/images/logo/bitrix24_logo.svg' },
+                        { name: 'Bugzilla', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bugzilla/bugzilla-original.svg' }
+                    ],
+                    system: [
+                        { name: 'Middleware', stars: 4, years: '8+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-icon.svg'},
+                        { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/datagrip/datagrip-original.svg'},
+                        { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/eclipse/eclipse-original.svg'},
+                        { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/devicon/devicon-original.svg'},
+                        { name: 'Putty', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg'},
+                        { name: 'Firebug', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebug/firebug-original.svg'},
+                        { name: 'DHTML', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg'},
+                        { name: 'SSH', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ssh/ssh-original.svg'},
+                    ]
+                },
+                experiences: [
+                    {
+                        title: 'Senior QA & Program Consultant',
+                        company: 'Team International',
+                        logo: 'https://www.teaminternational.com/wp-content/uploads/2021/11/TEAM-logo-2021-dark.svg',
+                        dates: 'Jan 2021 - Present',
+                        details_en: [
+                            'Delivered expert QA and project leadership services across 15+ client projects in diverse sectors including FinTech, HealthTech, and retail.',
+                            'Oversaw end-to-end project delivery, managed complex client relationships and expectations, ensuring alignment with strategic business goals.',
+                            'Mentored and led distributed technical teams of up to 10 engineers, fostering a culture of quality and continuous improvement using Agile and Scrum methodologies.',
+                            'Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for various client applications.',
+                            'Managed project workflows, defect tracking, and reporting using Jira and TestRail, providing clear visibility to all stakeholders.'
+                        ],
+                        techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Tosca', 'Puppeteer', 'MS Dynamics', 'SAP', 'Zoho CRM', 'Shopify', 'Bitrix24']
+                    },
+                    {
+                        title: 'Senior Technical Project Manager & Consultant',
+                        company: 'RockStar Coders Agency',
+                        logo: 'https://cdn.iconscout.com/icon/free/png-256/rockstar-2-555437.png',
+                        dates: 'Apr 2019 - Mar 2021',
+                        details_en: [
+                            'Provided technical project management and QA leadership for clients across 8+ projects, including for OverActive and the Afar Project.',
+                            'Led QA strategy and execution, defining technical solutions to optimize testing processes and improve overall software delivery speed and quality.',
+                            'Implemented robust automation frameworks using Kotlin, Selenium, and Appium, integrated into CI/CD pipelines with Jenkins and GitLab.',
+                            'Collaborated closely with development and product management to ensure clear understanding of requirements and effective communication.',
+                            'Proactively identified and mitigated potential risks to project success by implementing robust QA practices and risk management protocols.'
+                        ],
+                        techUsed: ['Kanban', 'Agile', 'Risk Management', 'Selenium', 'Appium', 'Kotlin', 'Jenkins', 'GitLab', 'Jira', 'Scrum', 'Ranorex', 'WebDriverIO', 'Serenity BDD', 'Kobiton', 'Behave', 'Protractor']
+                    },
+                    {
+                        title: 'Sr. Project Manager & QA Engineer',
+                        company: 'Globant',
+                        logo: 'https://media.licdn.com/dms/image/D4E0BAQF63rR54t5v6w/company-logo_200_200/0/1697472978186/globant_logo?e=2147483647&v=beta&t=4z_dJ0CVLq5D-jG9yYy4m2hI1HhYda_iA9E1iwe9z0I',
+                        dates: 'Apr 2017 - May 2018',
+                        details_en: [
+                            'Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account.',
+                            'Managed test planning, resource estimation, and client communications, ensuring alignment with project timelines and deliverables.',
+                            'Architected and spearheaded the development of a new QA automation framework using Kotlin, C# .Net, and Robot Framework.',
+                            'Utilized AWS services (S3, EC2, Redshift, Athena) for managing test data and environments for Salesforce integration projects.',
+                            'Performed complex data validation and manipulation using advanced SQL queries against Oracle and PostgreSQL databases.'
+                        ],
+                        techUsed: ['Salesforce', 'AWS', 'SQL', 'Kotlin', 'C#', '.NET', 'Robot Framework', 'Oracle', 'PostgreSQL', 'Jira', 'Agile', 'Kanban', 'Scrum', 'Cypress', 'Tosca', 'Katalon']
+                    },
+                    {
+                        title: 'Sr. QA Engineer',
+                        company: 'Genius Sports',
+                        logo: 'https://media.licdn.com/dms/image/D4E0BAQGj-3A_G8aWRA/company-logo_200_200/0/1698318452113/geniussports_logo?e=2147483647&v=beta&t=Uv2-3s-c8o_s4Vq-5LgokfWzmaf0Z4JEvDq7e2i_5cE',
+                        dates: 'May 2016 - Apr 2017',
+                        details_en: [
+                            'Provided quality assistance by mentoring development teams on delivering high-quality software products for real-time sports data platforms.',
+                            'Worked with Product Owners to define and refine user stories and acceptance criteria in a fast-paced Agile environment.',
+                            'Developed and executed comprehensive test scripts, plans, and cases for both backend APIs and frontend applications.',
+                            'Investigated and resolved complex defects, analyzing risk and impact on live data streams using Graylog and Grafana.',
+                            'Contributed to the improvement of quality processes, focusing on early defect detection and prevention.'
+                        ],
+                        techUsed: ['Agile', 'Jira', 'SQL', 'Postman', 'Grafana', 'Kanban', 'Scrum']
+                    },
+                    {
+                        title: 'Sr. Technical Architect',
+                        company: 'Zagalabs',
+                        logo: 'https://www.zagalabs.com/wp-content/uploads/2021/01/logo-zagalabs-300x118-1.png',
+                        dates: 'Aug 2015 - Mar 2016',
+                        details_en: [
+                            'Managed the overall testing scope for client projects, ensuring alignment with strategic business objectives.',
+                            'Set program roadmaps, established project priorities, and resolved conflicts to enhance effectiveness towards business results.',
+                            'Mentored and guided a matrixed team of onshore and offshore testing resources to ensure comprehensive test coverage.',
+                            'Managed service aspects of the testing P&L, focusing on cost optimization and resource allocation based on governance guidelines.',
+                            'Built direct relationships with customer stakeholders to ensure objectivity and promote continuous growth.'
+                        ],
+                        techUsed: ['Stakeholder Mgmt', 'Strategic Planning', 'TestRail', 'Agile', 'Kanban', 'Scrum', 'Jira', 'Cypress']
+                    },
+                    {
+                        title: 'Sr. Strategic Development Manager',
+                        company: 'The Collective Intelligence Group',
+                        logo: 'https://cdn-icons-png.flaticon.com/512/1005/1005121.png',
+                        dates: 'Sep 2014 - Mar 2015',
+                        details_en: [
+                            'Supported the organization\'s strategic and long-range goal planning, identifying new market opportunities.',
+                            'Provided business development and capture support for corporate IT opportunities, building relationships with agency stakeholders.',
+                            'Fostered relationships with potential teaming partners to target IT opportunities aligning with corporate plans.',
+                            'Managed multiple ongoing projects and followed up with internal teams to develop growth strategies.',
+                            'Assessed partner capabilities, selected teaming partners, and developed long-term strategic relationships.'
+                        ],
+                        techUsed: ['Strategic Planning', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
+                    },
+                    {
+                        title: 'Sr. Project Manager',
+                        company: 'Bitgray',
+                        logo: 'https://bitgray.com/wp-content/uploads/2021/04/logo_bitgray_azul.svg',
+                        dates: 'Sep 2013 - Sep 2014',
+                        details_en: [
+                            'Managed a portfolio of complex enterprise software initiatives, spanning multiple lines of business.',
+                            'Provided on-site leadership for project teams, building and motivating team members to meet project goals and milestones.',
+                            'Owned the full project life cycle, from initiation and planning to successful deployment and post-launch support.',
+                            'Managed all aspects of multiple related projects to ensure the overall program directly supported strategic objectives.',
+                            'Reported project status, risks, and progress to executive leadership and stakeholders.'
+                        ],
+                        techUsed: ['Agile', 'Risk Management', 'Jira', 'Kanban', 'Scrum']
+                    },
+                    {
+                        title: 'CISO - Chief Information Security Officer',
+                        company: 'MCHC Consultance Inc.',
+                        logo: 'https://cdn-icons-png.flaticon.com/512/2882/2882787.png',
+                        dates: 'Apr 2013 - Oct 2013',
+                        details_en: [
+                            'Led Information Security and Software Validation initiatives for the consultancy and its clients.',
+                            'Developed and implemented Disaster Recovery Plans (DRP) and Business Continuity Processes (BCP).',
+                            'Championed a security-aware culture through organization-wide training and process implementation based on ISO 27001.',
+                            'Mitigated risks by identifying superior market opportunities and potential security threats.',
+                            'Developed and enhanced the team\'s skills through targeted training and conferences.'
+                        ],
+                        techUsed: ['Risk Management', 'ISO Standards', 'CISA', 'CISM', 'CISSP', 'Agile', 'Kanban', 'Scrum', 'Jira']
+                    },
+                    {
+                        title: 'Sr. Hybrid QA Engineer / QA Lead',
+                        company: 'Prodigious LATAM (Razorfish)',
+                        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Razorfish_logo.svg/2560px-Razorfish_logo.svg.png',
+                        dates: 'Jun 2012 - Mar 2013',
+                        details_en: [
+                            'Led QA efforts on projects for major US-based clients, leveraging a hybrid onshore/offshore model.',
+                            'Wrote and executed complex manual and automated test scripts using tools like Selenium and Quality Center.',
+                            'Performed extensive testing on front-end (HTML/CSS/DHTML/JavaScript) and back-end (Java/.NET) technologies.',
+                            'Managed bug tracking and reporting using Jira and Bugzilla, ensuring clear communication with development teams.',
+                            'Used Firebug for in-depth debugging and analysis of web applications.'
+                        ],
+                        techUsed: ['Selenium', 'Jira', 'Bugzilla', 'Java', '.NET', 'DHTML', 'Firebug', 'Agile', 'Kanban', 'Scrum']
+                    },
+                    {
+                        title: 'ISE Engineer LATAM',
+                        company: 'Advantech',
+                        logo: 'https://www.advantech.com/images/logo_ADVANTECH_big.png',
+                        dates: 'Jan 2012 - Jul 2012',
+                        details_en: [
+                            'Focused on customer project development, offering standard products and integration services across Latin America.',
+                            'Developed the direct business channel by growing existing accounts and prospecting for new clients.',
+                            'Visited customers with well-prepared demo kits and materials to showcase technical solutions.',
+                            'Worked closely with marketing and technical teams to align sales strategies with product capabilities.',
+                            'Maintained and updated the CRM database, managed sales pipelines, and closed orders.'
+                        ],
+                        techUsed: ['Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
+                    },
+                    {
+                        title: 'Business Tender Specialist - LATAM',
+                        company: 'Intel Corporation',
+                        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282020%2C_dark_blue%29.svg/1280px-Intel_logo_%282020%2C_dark_blue%29.svg.png',
+                        dates: 'Mar 2011 - Dec 2011',
+                        details_en: [
+                            'Provided technical assessment and advice to government, B2B, and corporate customers on Intel product acquisitions.',
+                            'Managed daily interactions with major manufacturers to align on product specifications and availability.',
+                            'Tracked and studied business tenders across Latin America to identify and influence opportunities.',
+                            'Delivered key information and product roadmaps to covered accounts and co-partner sales teams.',
+                            'Actively coordinated and managed end-customer targeted activities like webinars and training sessions.'
+                        ],
+                        techUsed: ['Strategic Planning', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
+                    },
+                    {
+                        title: 'Solutions Engineer - Special Projects LATAM',
+                        company: 'Belcorp',
+                        logo: 'https://media.licdn.com/dms/image/D4E0BAQG5r-m_O0B62A/company-logo_200_200/0/1691383389849/belcorp_logo?e=2147483647&v=beta&t=c5rLzW5j8d_z2y5a4Z_p2c6X8k3fG9h7Z6w7Q5Y5q4A',
+                        dates: 'Aug 2010 - Feb 2011',
+                        details_en: [
+                            'Oversaw all aspects of solution development, from concept ideation through development, launch, and maintenance.',
+                            'Provided leadership and strategic guidance to development, account, and executive management teams.',
+                            'Interfaced with cross-functional teams to ensure consistency in solution development and implementation.',
+                            'Promoted the use of strategic solutions and offerings by the business development community.',
+                            'Developed and grew the portfolio of solutions and offerings to increase company productivity and profits.'
+                        ],
+                        techUsed: ['Strategic Planning', 'Agile', 'Kanban', 'Scrum', 'Jira']
+                    },
+                    {
+                        title: 'Partner Product Manager - NOLA',
+                        company: 'McAfee',
+                        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/McAfee_Logo.svg/2560px-McAfee_Logo.svg.png',
+                        dates: 'Nov 2009 - Aug 2010',
+                        details_en: [
+                            'Served as both a Business Development Manager and a technical implementation leader for the North of Latin America region.',
+                            'Developed and managed multiple partner implementation portfolios for McAfee security solutions.',
+                            'Worked with engineering and product management to define, manage, and deploy signed partner agreements.',
+                            'Provided pre-sales guidance and support, leveraging a diverse knowledge of existing and planned partner releases.',
+                            'Researched, validated, and prioritized implementation requirements for new and existing accounts.'
+                        ],
+                        techUsed: ['Risk Management', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
+                    },
+                    {
+                        title: 'Advanced Technologies Advisor',
+                        company: 'S&G Consultance Ltd.',
+                        logo: 'https://cdn-icons-png.flaticon.com/512/1830/1830767.png',
+                        dates: 'Feb 2002 - May 2008',
+                        details_en: [
+                            'Advised clients on software acquisition, distribution, IT development, and web/intranet tools.',
+                            'Provided administrative and operative coaching, focusing on HR potential, organizational processes, and innovation.',
+                            'Was in charge of the Software and Technology area, utilizing tools like Java, Perl, Oracle, SQL, and Cisco Networking environments.',
+                            'Advised on technology, corporate, and commercial/marketing strategies, including market analysis and new market incursions.',
+                            'Implemented process improvements based on SEI, CMM, CMMI, and ISO standards.'
+                        ],
+                        techUsed: ['Java', 'Perl', 'Oracle', 'SQL', 'CMMI', 'ISO Standards', 'Middleware', 'Agile', 'Kanban', 'Scrum', 'Jira', 'JUnit', 'Cygwin', 'Putty', 'SSH']
+                    }
+                ],
                 translations: {
                     en: {
                         job_title: "Senior IT Project Manager, QA Architect & QA Leader",
@@ -1550,10 +1040,9 @@
             },
             init() {
                 this.cacheDOMElements();
-                this.populateTranslations();
                 this.renderAll();
                 this.setupEventListeners();
-                this.translatePage(this.state.lang);
+                this.translatePage(this.state.lang, true);
             },
             cacheDOMElements() {
                 this.DOMElements = {
@@ -1594,6 +1083,11 @@
                 this.createImpactCards();
                 this.createTimeline();
             },
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
             createSkillTag(skill) {
                 const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
                 return `
@@ -1609,8 +1103,11 @@
                 `;
             },
             createExperienceEntry(exp, index) {
-                const detailsHtml = exp.details.en.map((detail, i) => `<li data-translate-key="exp_${index}_detail_${i}">${detail}</li>`).join('');
-                const previewHtml = `<p class="text-gray-600" data-translate-key="exp_${index}_detail_0">${exp.details.en[0]}</p>`;
+                const detailsHtml = exp.details_en.map((detail, i) =>
+                    `<li data-translation-source="exp_${index}_detail_${i}" data-original-text="${this.escapeHtml(detail)}">${detail}</li>`
+                ).join('');
+
+                const previewHtml = `<p class="text-gray-600" data-translation-source="exp_${index}_detail_0" data-original-text="${this.escapeHtml(exp.details_en[0])}">${exp.details_en[0]}</p>`;
                 const techPreviewHtml = `<div class="tech-preview mt-2"><strong>Key Tech:</strong> ${exp.techUsed.slice(0, 4).join(', ')}</div>`;
 
                 return `
@@ -1620,7 +1117,7 @@
                                 <h3 class="text-base font-bold text-gray-900" data-translate-key="exp_${index}_title">${exp.title}</h4>
                                 <p class="text-sm text-gray-700 italic flex items-center">
                                     <img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1005/1005121.png'">
-                                    ${exp.company}
+                                    <span data-translate-key="exp_${index}_company">${exp.company}</span>
                                 </p>
                             </div>
                             <p class="text-xs text-gray-600 mr-4">${exp.dates}</p>
@@ -1719,12 +1216,34 @@
                 let content = '';
                 const relevantExperiences = this.data.experiences.slice(0, 6).reverse(); // Get latest 6 experiences
 
+                // Create a quick lookup map for skill icons
+                const skillIconMap = {};
+                Object.values(this.data.skills).flat().forEach(skill => {
+                    skillIconMap[skill.name] = skill.icon;
+                });
+
                 relevantExperiences.forEach(exp => {
+                    const techIconsHtml = exp.techUsed.slice(0, 6).map(techName => {
+                        const iconUrl = skillIconMap[techName];
+                        if (iconUrl) {
+                            return `
+                                <div class="tooltip">
+                                    <img src="${iconUrl}" alt="${techName}" class="timeline-tech-icon">
+                                    <span class="tooltiptext">${techName}</span>
+                                </div>
+                            `;
+                        }
+                        return '';
+                    }).join('');
+
                     content += `
                         <div class="timeline-item">
                             <p class="font-bold text-sm text-gray-800">${exp.title}</p>
                             <p class="text-xs text-gray-600">${exp.company}</p>
-                            <p class="text-xs text-gray-500">${exp.dates}</p>
+                            <p class="text-xs text-gray-500 mb-2">${exp.dates}</p>
+                            <div class="flex items-center">
+                                ${techIconsHtml}
+                            </div>
                         </div>
                     `;
                 });
@@ -1738,28 +1257,65 @@
                     item.style.display = isVisible ? 'block' : 'none';
                 });
             },
-            populateTranslations() {
-                this.data.experiences.forEach((exp, expIdx) => {
-                    Object.keys(this.data.translations).forEach(lang => {
-                        this.data.translations[lang][`exp_${expIdx}_title`] = exp.title;
-                        exp.details.en.forEach((detail, detailIdx) => {
-                            const detailLang = exp.details[lang] ? exp.details[lang][detailIdx] : detail;
-                            this.data.translations[lang][`exp_${expIdx}_detail_${detailIdx}`] = detailLang || detail;
-                        });
-                    });
-                });
-            },
-            translatePage(lang) {
-                const translation = this.data.translations[lang];
-                if (!translation) return;
+            async translatePage(lang, isInitial = false) {
+                if (!isInitial && this.state.lang === lang) return;
                 this.state.lang = lang;
 
+                const staticTranslation = this.data.translations[lang] || this.data.translations.en;
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.getAttribute('data-translate-key');
-                    if (translation[key]) {
-                        el.innerHTML = translation[key];
+                    if (staticTranslation[key]) {
+                        el.innerHTML = staticTranslation[key];
                     }
                 });
+
+                const elementsToTranslate = document.querySelectorAll('[data-translation-source]');
+
+                if (lang === 'en') {
+                    elementsToTranslate.forEach(el => {
+                        el.innerHTML = el.dataset.originalText;
+                    });
+                    return;
+                }
+
+                if (!this.state.translationCache[lang]) {
+                    this.state.translationCache[lang] = {};
+                }
+                const cache = this.state.translationCache[lang];
+                const textsToFetch = new Map();
+
+                elementsToTranslate.forEach(el => {
+                    const originalText = el.dataset.originalText;
+                    if (cache[originalText]) {
+                        el.innerHTML = cache[originalText];
+                    } else {
+                        if (!textsToFetch.has(originalText)) {
+                            textsToFetch.set(originalText, []);
+                        }
+                        textsToFetch.get(originalText).push(el);
+                    }
+                });
+
+                if (textsToFetch.size === 0) return;
+
+                await Promise.all([...textsToFetch.keys()].map(async (text) => {
+                    try {
+                        const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${lang}`);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        const data = await response.json();
+
+                        if (data.responseData && data.responseStatus === 200) {
+                            const translatedText = data.responseData.translatedText;
+                            cache[text] = translatedText;
+                            textsToFetch.get(text).forEach(el => el.innerHTML = translatedText);
+                        } else {
+                            throw new Error('Invalid API response');
+                        }
+                    } catch (error) {
+                        console.error('Translation error:', error);
+                        textsToFetch.get(text).forEach(el => el.innerHTML = text);
+                    }
+                }));
             },
             setupEventListeners() {
                 this.DOMElements.toolkitContainer.addEventListener('click', (e) => {
@@ -1784,8 +1340,8 @@
                 });
 
                 this.DOMElements.experienceContainer.addEventListener('click', (event) => {
-                     const header = event.target.closest('.accordion-header');
-                     if (header) {
+                    const header = event.target.closest('.accordion-header');
+                    if (header) {
                         const accordionBody = header.nextElementSibling;
                         const accordionIcon = header.querySelector('.accordion-icon');
 
@@ -1796,24 +1352,24 @@
                             accordionBody.style.maxHeight = accordionBody.scrollHeight + "px";
                             accordionIcon.style.transform = 'rotate(180deg)';
                         }
-                     }
+                    }
 
-                     const readMoreBtn = event.target.closest('.read-more-btn');
-                     if (readMoreBtn) {
-                         const experienceBody = readMoreBtn.parentElement;
-                         const previewContent = experienceBody.querySelector('.experience-preview-content');
-                         const fullDetails = experienceBody.querySelector('.experience-full-details');
+                    const readMoreBtn = event.target.closest('.read-more-btn');
+                    if (readMoreBtn) {
+                        const experienceBody = readMoreBtn.parentElement;
+                        const previewContent = experienceBody.querySelector('.experience-preview-content');
+                        const fullDetails = experienceBody.querySelector('.experience-full-details');
 
-                         if(fullDetails.classList.contains('hidden')){
-                             previewContent.classList.add('hidden');
-                             fullDetails.classList.remove('hidden');
-                             readMoreBtn.textContent = "Read Less...";
-                         } else {
-                             previewContent.classList.remove('hidden');
-                             fullDetails.classList.add('hidden');
-                             readMoreBtn.textContent = "Read More...";
-                         }
-                     }
+                        if(fullDetails.classList.contains('hidden')){
+                            previewContent.classList.add('hidden');
+                            fullDetails.classList.remove('hidden');
+                            readMoreBtn.textContent = "Read Less...";
+                        } else {
+                            previewContent.classList.remove('hidden');
+                            fullDetails.classList.add('hidden');
+                            readMoreBtn.textContent = "Read More...";
+                        }
+                    }
                 });
 
                 this.DOMElements.expandAllExpBtn.addEventListener('click', (e) => {
@@ -1875,7 +1431,9 @@
 
                 this.DOMElements.languageSelector.addEventListener('click', (e) => {
                     const clickedFlag = e.target.closest('.lang-flag');
-                    if (clickedFlag && !this.DOMElements.languageSelector.classList.contains('collapsed')) {
+                    const isCollapsed = this.DOMElements.languageSelector.classList.contains('collapsed');
+
+                    if (clickedFlag && !isCollapsed) {
                         const lang = clickedFlag.getAttribute('data-lang');
                         this.DOMElements.languageSelector.querySelectorAll('.lang-flag').forEach(f => f.classList.remove('selected'));
                         clickedFlag.classList.add('selected');
@@ -1906,6 +1464,6 @@
 
         CarlosMunozCV.init();
     });
-    </script>
+</script>
 </body>
 </html>
