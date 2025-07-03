@@ -12,251 +12,86 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            font-size: 14px; /* Base font size */
+            font-size: 14px;
+            scroll-behavior: smooth;
         }
-        /* A little extra style for the print version to look better */
         @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .no-print {
-                display: none;
-            }
-            .experience-body, #summary-details, .toolkit-body {
-                display: block !important; /* Ensure details are visible for printing */
-                max-height: 9999px !important;
-            }
-            .accordion-icon, .read-more-btn, .toolkit-toggle-btn {
-                display: none; /* Hide icons for printing */
-            }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none; }
+            .experience-body, #summary-details, .toolkit-body { display: block !important; max-height: 9999px !important; }
+            .accordion-icon, .read-more-btn, .toolkit-toggle-btn, #photo-zoom-modal { display: none; }
         }
         .tech-tag {
-            display: flex;
-            align-items: center;
-            background-color: #f1f5f9; /* bg-slate-100 */
-            color: #475569; /* text-gray-600 */
-            padding: 4px 10px;
-            border-radius: 9999px;
-            font-size: 0.75rem; /* Smaller font size */
-            font-weight: 500;
-            margin: 2px;
-            min-width: 140px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid #e2e8f0; /* bg-gray-200 */
+            display: flex; align-items: center; background-color: #f1f5f9; color: #475569;
+            padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500;
+            margin: 2px; min-width: 140px; cursor: pointer; transition: all 0.2s ease; border: 1px solid #e2e8f0;
         }
-        .tech-tag:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-color: #94a3b8;
-        }
-        .tech-tag.selected {
-            background-color: #0891b2; /* cyan-600 */
-            color: white;
-            border-color: #0e7490;
-        }
-        .tech-tag.selected .text-gray-500, .tech-tag.selected .font-semibold {
-            color: white;
-        }
-        .tech-tag.selected .stars svg {
-            color: #f59e0b; /* Keep star color consistent */
-        }
-        .tech-tag .tech-icon {
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
-            object-fit: contain;
-        }
-        .stars {
-            display: flex;
-            align-items: center; /* Vertically align star and number */
-            margin-left: auto;
-            padding-left: 8px;
-            white-space: nowrap;
-        }
-        .stars svg {
-            width: 0.8rem;
-            height: 0.8rem;
-            color: #f59e0b; /* amber-500 */
-        }
-        .flag-icon {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        .company-logo {
-            width: 16px;
-            height: 16px;
-            margin-right: 8px;
-            border-radius: 4px;
-        }
-        .experience-body, #summary-details, .toolkit-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s ease-in-out;
-        }
-        .accordion-header {
-            border-bottom: 1px solid #e5e7eb;
-            padding-bottom: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .info-bubble {
-            display: none;
-            position: absolute;
-            background-color: #1f2937;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            z-index: 10;
-            width: 250px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            right: 0;
-            top: 24px;
-        }
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
+        .tech-tag:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-color: #94a3b8; }
+        .tech-tag.selected { background-color: #0891b2; color: white; border-color: #0e7490; }
+        .tech-tag.selected .text-gray-500, .tech-tag.selected .font-semibold { color: white; }
+        .tech-tag .tech-icon { width: 16px; height: 16px; margin-right: 6px; object-fit: contain; }
+        .stars { display: flex; align-items: center; margin-left: auto; padding-left: 8px; white-space: nowrap; }
+        .stars svg { width: 0.8rem; height: 0.8rem; color: #f59e0b; }
+        .flag-icon { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+        .company-logo { width: 16px; height: 16px; margin-right: 8px; border-radius: 4px; object-fit: contain; }
+        .experience-body, #summary-details, .toolkit-body { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
+        .accordion-header { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+        .tooltip { position: relative; display: inline-block; }
         .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 140px;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px 0;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%; /* Position the tooltip above the icon */
-            left: 50%;
-            margin-left: -70px;
-            opacity: 0;
-            transition: opacity 0.3s;
+            visibility: hidden; width: 180px; background-color: #1f2937; color: #fff; text-align: center;
+            border-radius: 6px; padding: 8px; position: absolute; z-index: 50; bottom: 125%;
+            left: 50%; margin-left: -90px; opacity: 0; transition: opacity 0.3s; font-size: 12px;
         }
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-        .lang-flag {
-            transition: transform 0.2s;
-            border: 2px solid transparent;
-            border-radius: 50%;
-        }
-        .lang-flag:hover {
-            transform: scale(1.1);
-        }
-        .lang-flag.selected {
-            border-color: #0891b2; /* cyan-600 */
-        }
-
-        /* Language Accordion Styles */
-        #language-selector.collapsed .lang-wrapper:not(:has(.selected)) {
-            display: none;
-        }
-        #language-selector .lang-wrapper {
-            transition: opacity 0.3s ease;
-        }
-        #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)) {
-            opacity: 0.5;
-        }
-        #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):hover {
-            opacity: 1;
-        }
-        .lang-accordion-indicator {
-            transition: transform 0.3s ease;
-        }
-        #language-selector:not(.collapsed) .lang-accordion-indicator {
-            transform: rotate(180deg);
-        }
-        .toolkit-preview, .tech-preview {
-            font-size: 0.75rem;
-            color: #64748b;
-            padding-left: 0.5rem;
-            margin-top: 0.25rem;
-        }
-        /* Infographics */
-        #timeline-container {
-            border-left: 3px solid #0891b2; /* cyan-600 */
-            padding: 1rem 0;
-        }
-        .timeline-item {
-            margin-left: 1rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-            cursor: pointer;
-            transition: opacity 0.3s ease-in-out;
-        }
-        .timeline-item.filtered-out {
-            opacity: 0.3;
-        }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        .lang-flag { transition: transform 0.2s; border: 2px solid transparent; border-radius: 50%; }
+        .lang-flag:hover { transform: scale(1.1); }
+        .lang-flag.selected { border-color: #0891b2; }
+        #language-selector.collapsed .lang-wrapper:not(:has(.selected)) { display: none; }
+        .lang-accordion-indicator { transition: transform 0.3s ease; }
+        #language-selector:not(.collapsed) .lang-accordion-indicator { transform: rotate(180deg); }
+        .toolkit-preview { font-size: 0.75rem; color: #64748b; padding-left: 0.5rem; margin-top: 0.25rem; }
+        #timeline-container { border-left: 3px solid #0891b2; padding: 1rem 0; }
+        .timeline-item { margin-left: 1rem; margin-bottom: 1.5rem; position: relative; cursor: pointer; transition: opacity 0.3s ease-in-out; }
+        .timeline-item.filtered-out { opacity: 0.3; }
         .timeline-item::before {
-            content: '';
-            background-color: #0891b2;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            position: absolute;
-            left: -23px;
-            top: 4px;
-            border: 2px solid white;
+            content: ''; background-color: #0891b2; width: 12px; height: 12px; border-radius: 50%;
+            position: absolute; left: -23.5px; top: 4px; border: 2px solid white;
         }
-        .timeline-tech-icon {
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
-            border-radius: 4px;
-        }
-        /* Trademark Styles */
+        .timeline-tech-icon { width: 16px; height: 16px; margin-right: 6px; border-radius: 4px; }
         .trademark-logo {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background-color: #0891b2;
-            color: white;
-            font-weight: bold;
-            font-size: 0.8rem;
-            margin-left: 8px;
+            display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+            border-radius: 8px; background: linear-gradient(145deg, #0891b2, #0e7490); color: white;
+            font-weight: bold; font-size: 1.1rem; margin-left: 10px; box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            font-family: 'Georgia', serif; transform: rotate(-7deg); border: 1px solid #06b6d4;
         }
-        .cv-footer {
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid #e5e7eb;
-            text-align: center;
-            font-size: 0.75rem;
-            color: #6b7280;
+        .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; text-align: center; font-size: 0.75rem; color: #6b7280; }
+        #radar-chart-container { position: relative; width: 100%; max-width: 280px; margin: auto; height: 280px; }
+        #toolkit-bubble-chart-container { text-align: center; }
+        .bubble { transition: all 0.3s ease; }
+        .bubble:hover { filter: brightness(1.2); }
+        .bubble-text { font-size: 10px; fill: white; text-anchor: middle; pointer-events: none; font-weight: 500;}
+        .bubble-value { font-size: 14px; font-weight: bold; }
+        .infographic-section { margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid #e2e8f0; }
+        .infographic-section:last-child { border-bottom: none; }
+        #photo-zoom-modal {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center;
         }
-        .bar-chart-container .bar-wrapper {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.5rem;
+        #photo-zoom-modal.show { display: flex; }
+        #zoomed-img-container { position: relative; overflow: hidden; }
+        #zoomed-img { transition: transform 0.2s ease-out; max-width: 80vw; max-height: 80vh; cursor: zoom-in; }
+        #close-zoom {
+            position: absolute; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px;
+            font-weight: bold; transition: 0.3s; cursor: pointer; z-index: 101;
         }
-        .bar-chart-container .bar-label {
-            width: 120px;
-            flex-shrink: 0;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: #475569;
+        #profile-photo-container { position: relative; cursor: zoom-in; }
+        #profile-photo-container::after {
+            content: '+'; position: absolute; bottom: 5px; right: 5px; width: 30px; height: 30px;
+            background-color: rgba(8, 145, 178, 0.8); color: white; font-size: 24px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s ease;
         }
-        .bar-chart-container .bar-background {
-            flex-grow: 1;
-            background-color: #e2e8f0;
-            border-radius: 9999px;
-            height: 12px;
-            overflow: hidden;
-        }
-        .bar-chart-container .bar {
-            background-color: #0891b2;
-            height: 100%;
-            border-radius: 9999px;
-            transition: width 0.5s ease-in-out;
-        }
-
+        #profile-photo-container:hover::after { opacity: 1; }
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
@@ -267,7 +102,9 @@
             <!-- Left Column (Sidebar) -->
             <aside class="md:w-1/3 bg-gray-800 text-white p-6">
                 <div class="flex flex-col items-center">
-                    <img src="https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400" alt="Carlos Muñoz Ardila">
+                    <div id="profile-photo-container">
+                        <img id="profile-photo" src="https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400" alt="Carlos Muñoz Ardila">
+                    </div>
                     <div class="mt-5 text-center">
                         <div class="flex items-center justify-center">
                             <h1 class="text-2xl font-bold text-white">CARLOS A. MUÑOZ</h1>
@@ -284,9 +121,9 @@
                 <section class="space-y-3 text-sm">
                     <div class="flex items-center">
                         <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
-                        <div class="relative ml-2 no-print" id="contact-info-icon-container">
-                            <svg id="contact-info-icon" class="w-5 h-5 text-gray-500 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                            <div id="contact-info-bubble" class="info-bubble" style="top: -10px; right: -250px;">Click any contact link to open the corresponding application (Email, WhatsApp, etc.).</div>
+                        <div class="tooltip ml-2">
+                            <svg class="w-5 h-5 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                            <span class="tooltiptext" data-translate-key="contact_tooltip">Click any link to open the corresponding application (Email, WhatsApp, etc.).</span>
                         </div>
                     </div>
                     <div class="flex items-center space-x-3 text-gray-300">
@@ -306,12 +143,12 @@
                         <a href="https://wa.me/573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">WhatsApp</a>
                     </div>
                     <div class="flex items-center space-x-3 text-gray-300">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944 11.944-5.356 11.944-11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-."/></svg>
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944 11.944-5.356 11.944-11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.746.13-.946l11.23-4.36c.62-.24 1.18.15 1.01.91z"/></svg>
                         <a href="https://t.me/+573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">Telegram</a>
                     </div>
                     <div class="flex items-center space-x-3 text-gray-300">
                         <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
-                        <span>Medellin, Antioquia, Colombia</span>
+                        <span data-translate-key="location">Medellin, Antioquia, Colombia</span>
                     </div>
                 </section>
 
@@ -333,10 +170,8 @@
                 <hr class="border-gray-600 my-6">
                 <!-- Languages Section -->
                 <section id="languages-section">
-                    <div class="flex items-center justify-between" id="languages-header">
-                        <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
-                    </div>
-                    <div id="languages-body" class="mt-3 space-y-4 text-sm">
+                    <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
+                    <div class="mt-3 space-y-4 text-sm">
                         <div class="language">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="flag-icon" alt="Spanish Flag"><span class="font-medium ml-2">Spanish</span></div>
@@ -392,47 +227,43 @@
                         </div>
                     </div>
                     <div class="border-b-4 border-gray-300 pb-2 mb-3"></div>
-                    <p class="text-sm text-gray-700" data-translate-key="summary_text">A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.</p>
+                    <p class="text-sm text-gray-700" data-translate-key="summary_text"></p>
                     <div id="summary-details" class="text-sm text-gray-700 mt-2 space-y-2">
-                        <p data-translate-key="summary_detail_1">Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.</p>
-                        <p data-translate-key="summary_detail_2">As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.</p>
+                        <p data-translate-key="summary_detail_1"></p>
+                        <p data-translate-key="summary_detail_2"></p>
                     </div>
-                    <button id="read-more-btn" class="text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-2 no-print">Read More...</button>
+                    <button id="read-more-btn" class="text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-2 no-print" data-translate-key="read_more"></button>
                 </section>
 
                 <!-- Infographics Section -->
                 <section class="section mt-8">
-                    <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2 mb-4" data-translate-key="infographics_title">Career at a Glance</h2>
+                    <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2 mb-4" data-translate-key="infographics_title"></h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <!-- Left column for Visualizations -->
                         <div class="space-y-8">
-                            <div>
-                                <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_radar_title">Core Competency Radar</h3>
-                                <div id="radar-chart-container" class="relative w-full max-w-sm mx-auto h-64">
-                                    <!-- SVG for Competency Radar Chart will be here -->
-                                </div>
+                            <div class="infographic-section">
+                                <h3 class="text-base font-semibold text-gray-700 mb-4 text-center" data-translate-key="infographics_radar_title"></h3>
+                                <div id="radar-chart-container"></div>
                             </div>
-                            <hr class="border-gray-200">
-                            <div class="pt-8">
-                                <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_toolkit_radar_title">Toolkit Proficiency</h3>
-                                <div id="toolkit-bar-chart-container" class="relative w-full max-w-sm mx-auto mt-4 bar-chart-container">
-                                    <!-- Bar charts will be injected here -->
-                                </div>
+                            <div class="infographic-section">
+                                <h3 class="text-base font-semibold text-gray-700 mb-4 text-center" data-translate-key="infographics_toolkit_title"></h3>
+                                <div id="toolkit-bubble-chart-container" class="relative w-full max-w-md mx-auto h-80"></div>
                             </div>
-                            <hr class="border-gray-200">
-                            <div>
-                                <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_impact_title">Key Metrics</h3>
-                                <div id="impact-showcase-container" class="grid grid-cols-2 gap-4">
-                                    <!-- Stat cards will be here -->
-                                </div>
+                            <div class="infographic-section">
+                                <h3 class="text-base font-semibold text-gray-700 mb-4 text-center" data-translate-key="infographics_impact_title"></h3>
+                                <div id="impact-showcase-container" class="grid grid-cols-2 gap-4"></div>
                             </div>
                         </div>
                         <!-- Right column for Timeline -->
                         <div>
-                            <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
-                            <div id="timeline-container" class="relative">
-                                <!-- Timeline items will be generated by JS -->
+                            <div class="flex justify-center items-center mb-2">
+                                <h3 class="text-base font-semibold text-gray-700 text-center" data-translate-key="infographics_timeline_title"></h3>
+                                <div class="tooltip ml-2">
+                                    <svg class="w-5 h-5 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                                    <span class="tooltiptext" data-translate-key="timeline_tooltip">Click a skill to filter. Unrelated timeline items will gray out.</span>
+                                </div>
                             </div>
+                            <div id="timeline-container" class="relative"></div>
                         </div>
                     </div>
                 </section>
@@ -440,109 +271,58 @@
                 <section class="section mt-6">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
-                            <h2 class="text-xl font-bold text-gray-800" data-translate-key="toolkit_title">Technical & Management Toolkit</h2>
-                            <div class="relative ml-2 no-print" id="info-icon-container">
-                                <svg id="info-icon" class="w-5 h-5 text-gray-500 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                                <div id="info-bubble" class="info-bubble">Click any skill to filter the experience list. Click again to deselect, or use 'Reset' to clear all.</div>
+                            <h2 class="text-xl font-bold text-gray-800" data-translate-key="toolkit_title"></h2>
+                            <div class="tooltip ml-2">
+                                <svg class="w-5 h-5 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                                <span class="tooltiptext" data-translate-key="toolkit_tooltip">Click any skill to filter the experience list. Click again to deselect.</span>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button id="expand-all-toolkit" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
-                            <button id="reset-filter" class="no-print text-xs bg-cyan-600 text-white hover:bg-cyan-700 font-semibold py-1 px-3 rounded-full transition-colors">Reset Filters</button>
+                        <div class="flex items-center space-x-2 no-print">
+                            <button id="expand-all-toolkit" class="text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
+                            <button id="reset-filter" class="text-xs bg-cyan-600 text-white hover:bg-cyan-700 font-semibold py-1 px-3 rounded-full transition-colors">Reset Filters</button>
                         </div>
                     </div>
-                    <div id="toolkit-container" class="mt-1 space-y-3">
-                        <div class="toolkit-section">
-                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_pm">Project Management & Methodologies:</h3>
-                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="toolkit-preview"></div>
-                            <div class="mt-2 flex flex-wrap toolkit-body" id="pm-skills"></div>
-                        </div>
-                        <div class="toolkit-section">
-                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_qa">QA & Test Automation:</h3>
-                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="toolkit-preview"></div>
-                            <div class="mt-2 flex flex-wrap toolkit-body" id="qa-skills"></div>
-                        </div>
-                        <div class="toolkit-section">
-                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_lang">Programming & Scripting:</h3>
-                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="toolkit-preview"></div>
-                            <div class="mt-2 flex flex-wrap toolkit-body" id="lang-skills"></div>
-                        </div>
-                        <div class="toolkit-section">
-                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_cloud">Cloud, CI/CD & DevOps:</h3>
-                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="toolkit-preview"></div>
-                            <div class="mt-2 flex flex-wrap toolkit-body" id="cloud-skills"></div>
-                        </div>
-                        <div class="toolkit-section">
-                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_db">Databases & APIs:</h3>
-                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="toolkit-preview"></div>
-                            <div class="mt-2 flex flex-wrap toolkit-body" id="db-skills"></div>
-                        </div>
-                        <div class="toolkit-section">
-                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_platform">Platforms & Business Tools:</h3>
-                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="toolkit-preview"></div>
-                            <div class="mt-2 flex flex-wrap toolkit-body" id="platform-skills"></div>
-                        </div>
-                        <div class="toolkit-section">
-                            <div class="flex justify-between items-center cursor-pointer toolkit-header">
-                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_system">General & System Tools:</h3>
-                                <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="toolkit-preview"></div>
-                            <div class="mt-2 flex flex-wrap toolkit-body" id="system-skills"></div>
-                        </div>
-                    </div>
+                    <div id="toolkit-container" class="mt-1 space-y-3"></div>
                 </section>
 
                 <!-- Professional Experience -->
                 <section class="section mt-6">
                     <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800" data-translate-key="experience_title">Professional Experience</h2>
+                        <h2 class="text-xl font-bold text-gray-800" data-translate-key="experience_title"></h2>
                         <button id="expand-all-exp" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
                     </div>
-                    <div class="mt-3 space-y-1" id="experience-container">
-                        <!-- Experiences will be dynamically inserted here -->
-                    </div>
+                    <div class="mt-3 space-y-1" id="experience-container"></div>
                 </section>
 
                 <!-- Education & Certifications -->
                 <section class="section mt-6">
-                    <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2" data-translate-key="education_title">Education & Certifications</h2>
+                    <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2" data-translate-key="education_title"></h2>
                     <div class="mt-3 grid md:grid-cols-2 gap-6 text-sm">
-                        <div><h3 class="text-base font-bold text-gray-900" data-translate-key="education_heading">Education</h3><div class="mt-2 space-y-2"><p class="text-gray-700"><strong class="font-medium" data-translate-key="education_1_title">Specialization in Management on IT Projects</strong> - <span data-translate-key="education_1_school">Alexander Von-Humboldt University</span></p><p class="text-gray-700"><strong class="font-medium" data-translate-key="education_2_title">Computer Systems Engineering</strong> - <span data-translate-key="education_2_school">EAMQ</span></p></div></div>
-                        <div><h3 class="text-base font-bold text-gray-900" data-translate-key="certs_heading">Key Certifications</h3><div class="mt-2 space-y-2"><p class="text-gray-700"><strong class="font-medium" data-translate-key="cert_1_title">English Proficiency:</strong><span data-translate-key="cert_1_desc"> EF SET C2 Proficient</span></p><p class="text-gray-700"><strong class="font-medium" data-translate-key="cert_2_title">Project Management:</strong><span data-translate-key="cert_2_desc"> CSPM</span></p><p class="text-gray-700"><strong class="font-medium" data-translate-key="cert_3_title">Quality Assurance:</strong><span data-translate-key="cert_3_desc"> CASQ, CAST, CSQA, ISTQB</span></p><p class="text-gray-700"><strong class="font-medium" data-translate-key="cert_4_title">Information Security:</strong><span data-translate-key="cert_4_desc"> CISA, CISM, CISSP</span></p></div></div>
+                        <div><h3 class="text-base font-bold text-gray-900" data-translate-key="education_heading"></h3><div class="mt-2 space-y-2"><p class="text-gray-700"><strong class="font-medium" data-translate-key="education_1_title"></strong> - <span data-translate-key="education_1_school"></span></p><p class="text-gray-700"><strong class="font-medium" data-translate-key="education_2_title"></strong> - <span data-translate-key="education_2_school"></span></p></div></div>
+                        <div><h3 class="text-base font-bold text-gray-900" data-translate-key="certs_heading"></h3><div class="mt-2 space-y-2"><p class="text-gray-700"><strong class="font-medium" data-translate-key="cert_1_title"></strong><span data-translate-key="cert_1_desc"></span></p><p class="text-gray-700"><strong class="font-medium" data-translate-key="cert_2_title"></strong><span data-translate-key="cert_2_desc"></span></p><p class="text-gray-700"><strong class="font-medium" data-translate-key="cert_3_title"></strong><span data-translate-key="cert_3_desc"></span></p><p class="text-gray-700"><strong class="font-medium" data-translate-key="cert_4_title"></strong><span data-translate-key="cert_4_desc"></span></p></div></div>
                     </div>
                 </section>
                 <footer class="cv-footer no-print">
-                    <p data-translate-key="footer_text">&copy; 2025 Carlos A. Muñoz | Interactive CV <span class="trademark-logo">CAM</span></p>
+                    <p data-translate-key="footer_text"></p>
                 </footer>
             </main>
         </div>
     </div>
 </div>
+
+<!-- Photo Zoom Modal -->
+<div id="photo-zoom-modal" class="no-print">
+    <span id="close-zoom">&times;</span>
+    <div id="zoomed-img-container">
+        <img id="zoomed-img">
+    </div>
+</div>
+
 <script>
     /***************************************************
      * Interactive CV Application
      * Author: Carlos A. Muñoz
-     * Version: 4.2 (Full Refactor)
-     * License: MIT
+     * Version: 7.0 (Restoration & Enhancement)
      ****************************************************/
     document.addEventListener('DOMContentLoaded', () => {
         const CarlosMunozCV = {
@@ -550,6 +330,7 @@
                 lang: 'en',
                 selectedSkills: new Set(),
             },
+            // --- DATA STORE ---
             data: {
                 skills: {
                     pm: [
@@ -561,7 +342,7 @@
                         { name: 'Stakeholder Mgmt', years: '10+ Yrs', stars: 5, icon: 'https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/stakeholder-icon.svg' },
                         { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jira/jira-original.svg' },
                         { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/testrail-icon.svg' },
-                        { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-icon.svg' },
+                        { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/miscellaneous/quality-assurance-icon.svg' },
                         { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/crime-security-military-law/iso-icon.svg' }
                     ],
                     qa: [
@@ -571,13 +352,6 @@
                         { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/appium/appium-original.svg' },
                         { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/robotframework/robotframework-original.svg' },
                         { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cucumber/cucumber-plain.svg' },
-                        { name: 'Ranorex', stars: 3, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/ranorex-icon.svg' },
-                        { name: 'WebDriverIO', stars: 3, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/webdriverio/webdriverio-original.svg' },
-                        { name: 'Serenity BDD', stars: 3, years: '6+ Yrs', icon: 'https://avatars.githubusercontent.com/u/1475727?s=200&v=4' },
-                        { name: 'Kobiton', stars: 3, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/kobiton-icon.svg' },
-                        { name: 'Behave', stars: 3, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg' },
-                        { name: 'Protractor', stars: 2, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/protractor/protractor-plain.svg' },
-                        { name: 'Tosca', stars: 3, years: '6+ Yrs', icon: 'https://d1h21p1xurcv3e.cloudfront.net/images/logos/tosca.svg' },
                         { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/katalon-studio-icon.svg' },
                         { name: 'JUnit', stars: 5, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg' },
                         { name: 'Puppeteer', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/puppeteer/puppeteer-original.svg' }
@@ -590,10 +364,7 @@
                         { name: 'Kotlin', stars: 4, years: '5+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg' },
                         { name: 'C#', stars: 4, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg' },
                         { name: '.NET', stars: 4, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dotnetcore/dotnetcore-original.svg' },
-                        { name: 'Node.js', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg' },
-                        { name: 'Ruby', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg' },
-                        { name: 'PHP', stars: 2, years: '3+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg' },
-                        { name: 'Perl', stars: 2, years: '2+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/perl/perl-original.svg' }
+                        { name: 'Node.js', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg' }
                     ],
                     cloud: [
                         { name: 'AWS', stars: 5, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg' },
@@ -602,9 +373,7 @@
                         { name: 'Jenkins', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jenkins/jenkins-original.svg' },
                         { name: 'Docker', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
                         { name: 'GitLab', stars: 4, years: '7+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/gitlab/gitlab-original.svg' },
-                        { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg' },
-                        { name: 'CircleCI', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/circleci/circleci-plain.svg' },
-                        { name: 'Travis CI', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/travis/travis-plain.svg' }
+                        { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg' }
                     ],
                     db: [
                         { name: 'SQL', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/azuresqldatabase/azuresqldatabase-original.svg' },
@@ -613,136 +382,83 @@
                         { name: 'Oracle', stars: 3, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/oracle/oracle-original.svg' },
                         { name: 'MongoDB', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg' },
                         { name: 'Postman', stars: 5, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postman/postman-original.svg' },
-                        { name: 'Newman', stars: 4, years: '5+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postman/postman-original.svg' },
-                        { name: 'Swagger', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/swagger/swagger-original.svg' },
-                        { name: 'Rest Assured', stars: 4, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/rest-assured-icon.svg' },
-                        { name: 'SoapUI', stars: 3, years: '15+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/soapui-icon.svg' }
+                        { name: 'Swagger', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/swagger/swagger-original.svg' }
                     ],
                     platform: [
                         { name: 'Salesforce', stars: 4, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/salesforce/salesforce-original.svg' },
                         { name: 'MS Dynamics', stars: 3, years: '4+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/microsoft-dynamics-365-icon.svg' },
                         { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sap/sap-original.svg' },
-                        { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/zoho-icon.svg' },
-                        { name: 'Shopify', stars: 3, years: '4+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/shopify/shopify-original.svg' },
-                        { name: 'Bitrix24', stars: 2, years: '2+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/bitrix24-icon.svg' },
                         { name: 'Bugzilla', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bugzilla/bugzilla-original.svg' }
                     ],
-                    system: [
-                        { name: 'Middleware', stars: 4, years: '8+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-icon.svg'},
-                        { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/toad-icon.svg'},
-                        { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/eclipse/eclipse-original.svg'},
-                        { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/devicon/devicon-original.svg'},
-                        { name: 'Putty', stars: 4, years: '15+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/putty-icon.svg'},
-                        { name: 'Firebug', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebug/firebug-original.svg'},
-                        { name: 'DHTML', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg'},
-                        { name: 'SSH', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ssh/ssh-original.svg'},
+                    security: [
+                        { name: 'CISA', stars: 4, years: '5+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/crime-security-military-law/cyber-security-icon.svg' },
+                        { name: 'CISM', stars: 4, years: '5+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/crime-security-military-law/security-icon.svg' },
+                        { name: 'CISSP', stars: 4, years: '5+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/crime-security-military-law/cyber-security-shield-icon.svg' }
                     ]
                 },
                 experiences: [
                     {
                         title: 'Senior QA & Program Consultant',
                         company: 'Team International',
-                        logo: 'https://www.teaminternational.com/wp-content/uploads/2021/11/TEAM-logo-2021-dark.svg',
+                        logo: 'https://www.teaminternational.com/wp-content/uploads/2022/11/TEAM-logo-color.svg',
                         dates: 'Jan 2021 - Present',
-                        details_en: [
+                        details: [
                             'Delivered expert QA and project leadership services across 15+ client projects in diverse sectors including FinTech, HealthTech, and retail.',
                             'Oversaw end-to-end project delivery, managed complex client relationships and expectations, ensuring alignment with strategic business goals.',
                             'Mentored and led distributed technical teams of up to 10 engineers, fostering a culture of quality and continuous improvement using Agile and Scrum methodologies.',
                             'Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for various client applications.',
                             'Managed project workflows, defect tracking, and reporting using Jira and TestRail, providing clear visibility to all stakeholders.'
                         ],
-                        techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Tosca', 'Puppeteer', 'MS Dynamics', 'SAP', 'Zoho CRM', 'Shopify', 'Bitrix24']
+                        techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'MS Dynamics', 'SAP']
                     },
                     {
                         title: 'Senior Technical Project Manager & Consultant',
                         company: 'RockStar Coders Agency',
-                        logo: 'https://cdn.iconscout.com/icon/free/png-256/rockstar-2-555437.png',
+                        logo: 'https://www.rscoders.com/assets/img/logo.svg',
                         dates: 'Apr 2019 - Mar 2021',
-                        details_en: [
+                        details: [
                             'Provided technical project management and QA leadership for clients across 8+ projects, including for OverActive and the Afar Project.',
                             'Led QA strategy and execution, defining technical solutions to optimize testing processes and improve overall software delivery speed and quality.',
                             'Implemented robust automation frameworks using Kotlin, Selenium, and Appium, integrated into CI/CD pipelines with Jenkins and GitLab.',
                             'Collaborated closely with development and product management to ensure clear understanding of requirements and effective communication.',
                             'Proactively identified and mitigated potential risks to project success by implementing robust QA practices and risk management protocols.'
                         ],
-                        techUsed: ['Kanban', 'Agile', 'Risk Management', 'Selenium', 'Appium', 'Kotlin', 'Jenkins', 'GitLab', 'Jira', 'Scrum', 'Ranorex', 'WebDriverIO', 'Serenity BDD', 'Kobiton', 'Behave', 'Protractor']
+                        techUsed: ['Kanban', 'Agile', 'Risk Management', 'Selenium', 'Appium', 'Kotlin', 'Jenkins', 'GitLab', 'Jira', 'Scrum']
                     },
                     {
                         title: 'Sr. Project Manager & QA Engineer',
                         company: 'Globant',
                         logo: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Globant_logo.svg',
                         dates: 'Apr 2017 - May 2018',
-                        details_en: [
+                        details: [
                             'Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account.',
                             'Managed test planning, resource estimation, and client communications, ensuring alignment with project timelines and deliverables.',
                             'Architected and spearheaded the development of a new QA automation framework using Kotlin, C# .Net, and Robot Framework.',
                             'Utilized AWS services (S3, EC2, Redshift, Athena) for managing test data and environments for Salesforce integration projects.',
                             'Performed complex data validation and manipulation using advanced SQL queries against Oracle and PostgreSQL databases.'
                         ],
-                        techUsed: ['Salesforce', 'AWS', 'SQL', 'Kotlin', 'C#', '.NET', 'Robot Framework', 'Oracle', 'PostgreSQL', 'Jira', 'Agile', 'Kanban', 'Scrum', 'Cypress', 'Tosca', 'Katalon']
+                        techUsed: ['Salesforce', 'AWS', 'SQL', 'Kotlin', 'C#', '.NET', 'Robot Framework', 'Oracle', 'PostgreSQL', 'Jira', 'Agile', 'Kanban', 'Scrum', 'Cypress', 'Katalon']
                     },
                     {
                         title: 'Sr. QA Engineer',
                         company: 'Genius Sports',
                         logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Genius_Sports_logo.svg/2560px-Genius_Sports_logo.svg.png',
                         dates: 'May 2016 - Apr 2017',
-                        details_en: [
+                        details: [
                             'Provided quality assistance by mentoring development teams on delivering high-quality software products for real-time sports data platforms.',
                             'Worked with Product Owners to define and refine user stories and acceptance criteria in a fast-paced Agile environment.',
                             'Developed and executed comprehensive test scripts, plans, and cases for both backend APIs and frontend applications.',
-                            'Investigated and resolved complex defects, analyzing risk and impact on live data streams using Graylog and Grafana.',
+                            'Investigated and resolved complex defects, analyzing risk and impact on live data streams.',
                             'Contributed to the improvement of quality processes, focusing on early defect detection and prevention.'
                         ],
-                        techUsed: ['Agile', 'Jira', 'SQL', 'Postman', 'Grafana', 'Kanban', 'Scrum']
-                    },
-                    {
-                        title: 'Sr. Technical Architect',
-                        company: 'Zagalabs',
-                        logo: 'https://www.zagalabs.com/wp-content/uploads/2021/01/logo-zagalabs-300x118-1.png',
-                        dates: 'Aug 2015 - Mar 2016',
-                        details_en: [
-                            'Managed the overall testing scope for client projects, ensuring alignment with strategic business objectives.',
-                            'Set program roadmaps, established project priorities, and resolved conflicts to enhance effectiveness towards business results.',
-                            'Mentored and guided a matrixed team of onshore and offshore testing resources to ensure comprehensive test coverage.',
-                            'Managed service aspects of the testing P&L, focusing on cost optimization and resource allocation based on governance guidelines.',
-                            'Built direct relationships with customer stakeholders to ensure objectivity and promote continuous growth.'
-                        ],
-                        techUsed: ['Stakeholder Mgmt', 'Strategic Planning', 'TestRail', 'Agile', 'Kanban', 'Scrum', 'Jira', 'Cypress']
-                    },
-                    {
-                        title: 'Sr. Strategic Development Manager',
-                        company: 'The Collective Intelligence Group',
-                        logo: 'https://cdn-icons-png.flaticon.com/512/1005/1005121.png',
-                        dates: 'Sep 2014 - Mar 2015',
-                        details_en: [
-                            'Supported the organization\'s strategic and long-range goal planning, identifying new market opportunities.',
-                            'Provided business development and capture support for corporate IT opportunities, building relationships with agency stakeholders.',
-                            'Fostered relationships with potential teaming partners to target IT opportunities aligning with corporate plans.',
-                            'Managed multiple ongoing projects and followed up with internal teams to develop growth strategies.',
-                            'Assessed partner capabilities, selected teaming partners, and developed long-term strategic relationships.'
-                        ],
-                        techUsed: ['Strategic Planning', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
-                    },
-                    {
-                        title: 'Sr. Project Manager',
-                        company: 'Bitgray',
-                        logo: 'https://bitgray.com/wp-content/uploads/2021/04/logo_bitgray_azul.svg',
-                        dates: 'Sep 2013 - Sep 2014',
-                        details_en: [
-                            'Managed a portfolio of complex enterprise software initiatives, spanning multiple lines of business.',
-                            'Provided on-site leadership for project teams, building and motivating team members to meet project goals and milestones.',
-                            'Owned the full project life cycle, from initiation and planning to successful deployment and post-launch support.',
-                            'Managed all aspects of multiple related projects to ensure the overall program directly supported strategic objectives.',
-                            'Reported project status, risks, and progress to executive leadership and stakeholders.'
-                        ],
-                        techUsed: ['Agile', 'Risk Management', 'Jira', 'Kanban', 'Scrum']
+                        techUsed: ['Agile', 'Jira', 'SQL', 'Postman', 'Kanban', 'Scrum']
                     },
                     {
                         title: 'CISO - Chief Information Security Officer',
                         company: 'MCHC Consultance Inc.',
-                        logo: 'https://cdn-icons-png.flaticon.com/512/2882/2882787.png',
+                        logo: 'https://uxwing.com/wp-content/themes/uxwing/download/crime-security-military-law/security-consultant-icon.svg',
                         dates: 'Apr 2013 - Oct 2013',
-                        details_en: [
+                        details: [
                             'Led Information Security and Software Validation initiatives for the consultancy and its clients.',
                             'Developed and implemented Disaster Recovery Plans (DRP) and Business Continuity Processes (BCP).',
                             'Championed a security-aware culture through organization-wide training and process implementation based on ISO 27001.',
@@ -754,101 +470,119 @@
                     {
                         title: 'Sr. Hybrid QA Engineer / QA Lead',
                         company: 'Prodigious LATAM (Razorfish)',
-                        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Razorfish_logo.svg/2560px-Razorfish_logo.svg.png',
+                        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Razorfish_logo.svg/1200px-Razorfish_logo.svg.png',
                         dates: 'Jun 2012 - Mar 2013',
-                        details_en: [
+                        details: [
                             'Led QA efforts on projects for major US-based clients, leveraging a hybrid onshore/offshore model.',
                             'Wrote and executed complex manual and automated test scripts using tools like Selenium and Quality Center.',
                             'Performed extensive testing on front-end (HTML/CSS/DHTML/JavaScript) and back-end (Java/.NET) technologies.',
-                            'Managed bug tracking and reporting using Jira and Bugzilla, ensuring clear communication with development teams.',
-                            'Used Firebug for in-depth debugging and analysis of web applications.'
+                            'Managed bug tracking and reporting using Jira and Bugzilla, ensuring clear communication with development teams.'
                         ],
-                        techUsed: ['Selenium', 'Jira', 'Bugzilla', 'Java', '.NET', 'DHTML', 'Firebug', 'Agile', 'Kanban', 'Scrum']
-                    },
-                    {
-                        title: 'ISE Engineer LATAM',
-                        company: 'Advantech',
-                        logo: 'https://www.advantech.com/images/logo_ADVANTECH_big.png',
-                        dates: 'Jan 2012 - Jul 2012',
-                        details_en: [
-                            'Focused on customer project development, offering standard products and integration services across Latin America.',
-                            'Developed the direct business channel by growing existing accounts and prospecting for new clients.',
-                            'Visited customers with well-prepared demo kits and materials to showcase technical solutions.',
-                            'Worked closely with marketing and technical teams to align sales strategies with product capabilities.',
-                            'Maintained and updated the CRM database, managed sales pipelines, and closed orders.'
-                        ],
-                        techUsed: ['Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
+                        techUsed: ['Selenium', 'Jira', 'Bugzilla', 'Java', '.NET', 'Agile', 'Kanban', 'Scrum']
                     },
                     {
                         title: 'Business Tender Specialist - LATAM',
                         company: 'Intel Corporation',
                         logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282020%2C_dark_blue%29.svg/1280px-Intel_logo_%282020%2C_dark_blue%29.svg.png',
                         dates: 'Mar 2011 - Dec 2011',
-                        details_en: [
+                        details: [
                             'Provided technical assessment and advice to government, B2B, and corporate customers on Intel product acquisitions.',
                             'Managed daily interactions with major manufacturers to align on product specifications and availability.',
                             'Tracked and studied business tenders across Latin America to identify and influence opportunities.',
-                            'Delivered key information and product roadmaps to covered accounts and co-partner sales teams.',
-                            'Actively coordinated and managed end-customer targeted activities like webinars and training sessions.'
+                            'Delivered key information and product roadmaps to covered accounts and co-partner sales teams.'
                         ],
                         techUsed: ['Strategic Planning', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
                     {
-                        title: 'Solutions Engineer - Special Projects LATAM',
-                        company: 'Belcorp',
-                        logo: 'https://media.licdn.com/dms/image/D4E0BAQG5r-m_O0B62A/company-logo_200_200/0/1691383389849/belcorp_logo?e=2147483647&v=beta&t=c5rLzW5j8d_z2y5a4Z_p2c6X8k3fG9h7Z6w7Q5Y5q4A',
-                        dates: 'Aug 2010 - Feb 2011',
-                        details_en: [
-                            'Oversaw all aspects of solution development, from concept ideation through development, launch, and maintenance.',
-                            'Provided leadership and strategic guidance to development, account, and executive management teams.',
-                            'Interfaced with cross-functional teams to ensure consistency in solution development and implementation.',
-                            'Promoted the use of strategic solutions and offerings by the business development community.',
-                            'Developed and grew the portfolio of solutions and offerings to increase company productivity and profits.'
-                        ],
-                        techUsed: ['Strategic Planning', 'Agile', 'Kanban', 'Scrum', 'Jira']
-                    },
-                    {
-                        title: 'Partner Product Manager - NOLA',
-                        company: 'McAfee',
-                        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/McAfee_Logo.svg/2560px-McAfee_Logo.svg.png',
-                        dates: 'Nov 2009 - Aug 2010',
-                        details_en: [
-                            'Served as both a Business Development Manager and a technical implementation leader for the North of Latin America region.',
-                            'Developed and managed multiple partner implementation portfolios for McAfee security solutions.',
-                            'Worked with engineering and product management to define, manage, and deploy signed partner agreements.',
-                            'Provided pre-sales guidance and support, leveraging a diverse knowledge of existing and planned partner releases.',
-                            'Researched, validated, and prioritized implementation requirements for new and existing accounts.'
-                        ],
-                        techUsed: ['Risk Management', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
-                    },
-                    {
                         title: 'Advanced Technologies Advisor',
                         company: 'S&G Consultance Ltd.',
-                        logo: 'https://cdn-icons-png.flaticon.com/512/1830/1830767.png',
+                        logo: 'https://uxwing.com/wp-content/themes/uxwing/download/buildings-architecture-real-estate/consulting-icon.svg',
                         dates: 'Feb 2002 - May 2008',
-                        details_en: [
+                        details: [
                             'Advised clients on software acquisition, distribution, IT development, and web/intranet tools.',
                             'Provided administrative and operative coaching, focusing on HR potential, organizational processes, and innovation.',
                             'Was in charge of the Software and Technology area, utilizing tools like Java, Perl, Oracle, SQL, and Cisco Networking environments.',
                             'Advised on technology, corporate, and commercial/marketing strategies, including market analysis and new market incursions.',
                             'Implemented process improvements based on SEI, CMM, CMMI, and ISO standards.'
                         ],
-                        techUsed: ['Java', 'Perl', 'Oracle', 'SQL', 'CMMI', 'ISO Standards', 'Middleware', 'Agile', 'Kanban', 'Scrum', 'Jira', 'JUnit', 'Cygwin', 'Putty', 'SSH']
+                        techUsed: ['Java', 'Oracle', 'SQL', 'CMMI', 'ISO Standards', 'Agile', 'Kanban', 'Scrum', 'Jira', 'JUnit']
                     }
                 ],
+                // --- TRANSLATION DATA ---
                 translations: {
-                    en: {},
+                    en: {
+                        job_title: "Senior IT Project Manager, QA Architect & QA Leader",
+                        contact_title: "Contact",
+                        contact_tooltip: "Click any link to open the corresponding application (Email, WhatsApp, etc.).",
+                        location: "Medellin, Antioquia, Colombia",
+                        competencies_title: "Core Competencies",
+                        competency_pm: "IT Project Management",
+                        competency_qa: "QA & Test Automation",
+                        competency_lead: "Team Leadership & Mentoring",
+                        competency_devops: "CI/CD & DevOps Strategy",
+                        competency_cloud: "Cloud Platforms (AWS, Azure, GCP)",
+                        competency_strategy: "Strategic Business Acumen",
+                        competency_relations: "Stakeholder & Client Relations",
+                        languages_title: "Languages",
+                        lang_native: "Native",
+                        lang_fluent: "Fluent",
+                        lang_basic: "Basic",
+                        lang_others: "Others",
+                        summary_title: "Professional Summary",
+                        summary_text: "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.",
+                        summary_detail_1: "Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.",
+                        summary_detail_2: "As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.",
+                        read_more: "Read More...",
+                        infographics_title: "Career at a Glance",
+                        infographics_radar_title: "Core Competency Radar",
+                        infographics_toolkit_title: "Toolkit Proficiency",
+                        infographics_impact_title: "Key Metrics",
+                        infographics_timeline_title: "Career Timeline",
+                        timeline_tooltip: "Click a skill to filter. Unrelated timeline items will gray out.",
+                        impact_years: "Years of Experience",
+                        impact_projects: "Global Projects",
+                        impact_teams: "Engineers Led",
+                        impact_competencies: "Core Competencies",
+                        toolkit_title: "Technical & Management Toolkit",
+                        toolkit_tooltip: "Click any skill to filter the experience list. Click again to deselect.",
+                        toolkit_pm: "Project Management & Methodologies",
+                        toolkit_qa: "QA & Test Automation",
+                        toolkit_lang: "Programming & Scripting",
+                        toolkit_cloud: "Cloud, CI/CD & DevOps",
+                        toolkit_db: "Databases & APIs",
+                        toolkit_platform: "Platforms & Business Tools",
+                        toolkit_security: "Information Security",
+                        experience_title: "Professional Experience",
+                        education_title: "Education & Certifications",
+                        education_heading: "Education",
+                        education_1_title: "Specialization in Management on IT Projects",
+                        education_1_school: "Alexander Von-Humboldt University",
+                        education_2_title: "Computer Systems Engineering",
+                        education_2_school: "EAMQ",
+                        certs_heading: "Key Certifications",
+                        cert_1_title: "English Proficiency:",
+                        cert_1_desc: " EF SET C2 Proficient",
+                        cert_2_title: "Project Management:",
+                        cert_2_desc: " CSPM",
+                        cert_3_title: "Quality Assurance:",
+                        cert_3_desc: " CASQ, CAST, CSQA, ISTQB",
+                        cert_4_title: "Information Security:",
+                        cert_4_desc: " CISA, CISM, CISSP",
+                        footer_text: "&copy; 2025 Carlos A. Muñoz | Interactive CV"
+                    },
                     es: {
-                        job_title: "Gerente Senior de Proyectos de TI, Arquitecto de QA y Líder de QA",
+                        job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA",
                         contact_title: "Contacto",
+                        contact_tooltip: "Haga clic en cualquier enlace para abrir la aplicación correspondiente (correo, WhatsApp, etc.).",
+                        location: "Medellín, Antioquia, Colombia",
                         competencies_title: "Competencias Clave",
                         competency_pm: "Gestión de Proyectos de TI",
                         competency_qa: "QA y Automatización de Pruebas",
                         competency_lead: "Liderazgo y Mentoría de Equipos",
                         competency_devops: "Estrategia de CI/CD y DevOps",
-                        competency_cloud: "Plataformas en la Nube (AWS, Azure, GCP)",
+                        competency_cloud: "Plataformas en la Nube",
                         competency_strategy: "Visión Estratégica de Negocios",
-                        competency_relations: "Relaciones con Clientes y Stakeholders",
+                        competency_relations: "Relaciones con Clientes",
                         languages_title: "Idiomas",
                         lang_native: "Nativo",
                         lang_fluent: "Fluido",
@@ -858,14 +592,26 @@
                         summary_text: "Gerente Senior de Proyectos de TI y Arquitecto de QA con más de dos décadas de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de stakeholders y liderazgo de equipos multifuncionales para cumplir los objetivos del proyecto. Capacidad demostrada para diseñar e implementar marcos sólidos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos.",
                         summary_detail_1: "A lo largo de mi carrera, he defendido un enfoque holístico de la calidad, integrando procesos de QA en cada etapa del SDLC. Como Arquitecto de QA, me especializo en diseñar marcos de automatización escalables, mantenibles y eficientes desde cero, adaptados a las necesidades específicas del producto y la pila tecnológica. Mi experiencia se extiende a la selección de las herramientas óptimas, el establecimiento de mejores prácticas y la creación de integraciones de CI/CD que proporcionan retroalimentación rápida y fiable a los equipos de desarrollo, reduciendo significativamente los ciclos de regresión y acelerando el tiempo de comercialización.",
                         summary_detail_2: "Como Gerente de Proyectos y Líder, sobresalgo en la creación y mentoría de equipos multiculturales de alto rendimiento. Tengo un historial probado en la gestión de carteras de proyectos de varios millones de dólares, mitigando riesgos y alineando la ejecución técnica con la estrategia empresarial a nivel ejecutivo. Mi filosofía de liderazgo se centra en la comunicación clara, el empoderamiento y el fomento de un entorno colaborativo donde cada miembro del equipo está motivado para aportar su mejor trabajo. Mi dominio del inglés C2 y mis habilidades multilingües me permiten gestionar equipos y stakeholders globales sin problemas.",
+                        read_more: "Leer Más...",
+                        infographics_title: "Carrera en Resumen",
+                        infographics_radar_title: "Radar de Competencias",
+                        infographics_toolkit_title: "Dominio de Herramientas",
+                        infographics_impact_title: "Métricas Clave",
+                        infographics_timeline_title: "Línea de Tiempo Profesional",
+                        timeline_tooltip: "Haga clic en una habilidad para filtrar. Los elementos no relacionados se atenuarán.",
+                        impact_years: "Años de Experiencia",
+                        impact_projects: "Proyectos Globales",
+                        impact_teams: "Ingenieros Liderados",
+                        impact_competencies: "Competencias Clave",
                         toolkit_title: "Herramientas Técnicas y de Gestión",
-                        toolkit_pm: "Gestión de Proyectos y Metodologías:",
-                        toolkit_qa: "QA y Automatización de Pruebas:",
-                        toolkit_lang: "Programación y Scripting:",
-                        toolkit_cloud: "Nube, CI/CD y DevOps:",
-                        toolkit_db: "Bases de Datos y APIs:",
-                        toolkit_platform: "Plataformas y Herramientas de Negocio:",
-                        toolkit_system: "Herramientas Generales y de Sistema:",
+                        toolkit_tooltip: "Haga clic en cualquier habilidad para filtrar la lista de experiencias. Haga clic de nuevo para deseleccionar.",
+                        toolkit_pm: "Gestión de Proyectos y Metodologías",
+                        toolkit_qa: "QA y Automatización de Pruebas",
+                        toolkit_lang: "Programación y Scripting",
+                        toolkit_cloud: "Nube, CI/CD y DevOps",
+                        toolkit_db: "Bases de Datos y APIs",
+                        toolkit_platform: "Plataformas y Herramientas de Negocio",
+                        toolkit_security: "Seguridad de la Información",
                         experience_title: "Experiencia Profesional",
                         education_title: "Educación y Certificaciones",
                         education_heading: "Educación",
@@ -882,29 +628,21 @@
                         cert_3_desc: " CASQ, CAST, CSQA, ISTQB",
                         cert_4_title: "Seguridad de la Información:",
                         cert_4_desc: " CISA, CISM, CISSP",
-                        infographics_title: "Carrera en Resumen",
-                        infographics_radar_title: "Radar de Competencias Clave",
-                        infographics_toolkit_radar_title: "Dominio de Herramientas",
-                        infographics_impact_title: "Métricas Clave",
-                        infographics_timeline_title: "Línea de Tiempo Profesional",
-                        impact_years: "Años de Experiencia",
-                        impact_projects: "Proyectos Entregados",
-                        impact_teams: "Ingenieros Liderados por Equipo",
-                        impact_competencies: "Competencias Clave",
-                        footer_text: "&copy; 2025 Carlos A. Muñoz | CV Interactivo ",
-                        read_more: "Leer Más..."
+                        footer_text: "&copy; 2025 Carlos A. Muñoz | CV Interactivo"
                     },
                     pt: {
-                        job_title: "Gerente Sênior de Projetos de TI, Arquiteto de QA e Líder de QA",
+                        job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA",
                         contact_title: "Contato",
+                        contact_tooltip: "Clique em qualquer link para abrir o aplicativo correspondente (E-mail, WhatsApp, etc.).",
+                        location: "Medellín, Antioquia, Colômbia",
                         competencies_title: "Competências Principais",
                         competency_pm: "Gerenciamento de Projetos de TI",
                         competency_qa: "QA e Automação de Testes",
                         competency_lead: "Liderança e Mentoria de Equipes",
                         competency_devops: "Estratégia de CI/CD e DevOps",
-                        competency_cloud: "Plataformas em Nuvem (AWS, Azure, GCP)",
+                        competency_cloud: "Plataformas em Nuvem",
                         competency_strategy: "Visão Estratégica de Negócios",
-                        competency_relations: "Relações com Clientes e Stakeholders",
+                        competency_relations: "Relações com Stakeholders",
                         languages_title: "Idiomas",
                         lang_native: "Nativo",
                         lang_fluent: "Fluente",
@@ -914,20 +652,32 @@
                         summary_text: "Gerente Sênior de Projetos de TI e Arquiteto de QA com mais de duas décadas de experiência na entrega de soluções de software complexas e de alta qualidade para líderes globais de tecnologia. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais para atingir as metas do projeto. Habilidade comprovada em arquitetar e implementar robustos frameworks de automação de QA (Selenium, Cypress, Kotlin), garantindo qualidade de produto e eficiência excepcionais para clientes como Autodesk, AT&T e Sophos.",
                         summary_detail_1: "Ao longo da minha carreira, defendi uma abordagem holística da qualidade, incorporando processos de QA em todas as fases do SDLC. Como Arquiteto de QA, especializo-me em projetar frameworks de automação escaláveis, de fácil manutenção e eficientes desde o início, adaptados às necessidades específicas do produto e da pilha de tecnologia. Minha experiência abrange a seleção das ferramentas ideais, o estabelecimento de melhores práticas e a criação de integrações de CI/CD que fornecem feedback rápido e confiável às equipes de desenvolvimento, reduzindo significativamente os ciclos de regressão e acelerando o tempo de lançamento no mercado.",
                         summary_detail_2: "Como Gerente de Projetos e Líder, destaco-me na construção e mentoria de equipes multiculturais de alto desempenho. Tenho um histórico comprovado no gerenciamento de portfólios de projetos multimilionários, mitigando riscos e alinhando a execução técnica com a estratégia de negócios de nível executivo. Minha filosofia de liderança é centrada na comunicação clara, no empoderamento e na promoção de um ambiente colaborativo onde cada membro da equipe é motivado a contribuir com seu melhor trabalho. Minha proficiência em inglês C2 e minhas habilidades multilíngues me permitem gerenciar equipes e stakeholders globais sem problemas.",
+                        read_more: "Ler Mais...",
+                        infographics_title: "Carreira em Resumo",
+                        infographics_radar_title: "Radar de Competências",
+                        infographics_toolkit_title: "Proficiência em Ferramentas",
+                        infographics_impact_title: "Métricas Chave",
+                        infographics_timeline_title: "Linha do Tempo da Carreira",
+                        timeline_tooltip: "Clique em uma habilidade para filtrar. Itens não relacionados ficarão cinzas.",
+                        impact_years: "Anos de Experiência",
+                        impact_projects: "Projetos Globais",
+                        impact_teams: "Engenheiros Liderados",
+                        impact_competencies: "Competências Principais",
                         toolkit_title: "Ferramentas Técnicas e de Gestão",
-                        toolkit_pm: "Gerenciamento de Projetos e Metodologias:",
-                        toolkit_qa: "QA e Automação de Testes:",
-                        toolkit_lang: "Programação e Scripting:",
-                        toolkit_cloud: "Nuvem, CI/CD e DevOps:",
-                        toolkit_db: "Bancos de Dados e APIs:",
-                        toolkit_platform: "Plataformas e Ferramentas de Negócios:",
-                        toolkit_system: "Ferramentas Gerais e de Sistema:",
+                        toolkit_tooltip: "Clique em qualquer habilidade para filtrar a lista de experiências. Clique novamente para desmarcar.",
+                        toolkit_pm: "Gerenciamento de Projetos e Metodologias",
+                        toolkit_qa: "QA e Automação de Testes",
+                        toolkit_lang: "Programação e Scripting",
+                        toolkit_cloud: "Nuvem, CI/CD e DevOps",
+                        toolkit_db: "Bancos de Dados e APIs",
+                        toolkit_platform: "Plataformas e Ferramentas de Negócios",
+                        toolkit_security: "Segurança da Informação",
                         experience_title: "Experiência Profissional",
                         education_title: "Formação e Certificações",
                         education_heading: "Formação",
                         education_1_title: "Especialização em Gestão de Projetos de TI",
                         education_1_school: "Universidade Alexander Von-Humboldt",
-                        education_2_title: "Engenharia de Sistemas de Computação",
+                        education_2_title: "Engenharia de Sistemas",
                         education_2_school: "EAMQ",
                         certs_heading: "Principais Certificações",
                         cert_1_title: "Proficiência em Inglês:",
@@ -938,42 +688,199 @@
                         cert_3_desc: " CASQ, CAST, CSQA, ISTQB",
                         cert_4_title: "Segurança da Informação:",
                         cert_4_desc: " CISA, CISM, CISSP",
-                        infographics_title: "Carreira em Resumo",
-                        infographics_radar_title: "Radar de Competências",
-                        infographics_toolkit_radar_title: "Proficiência em Ferramentas",
-                        infographics_impact_title: "Métricas Chave",
-                        infographics_timeline_title: "Linha do Tempo da Carreira",
-                        impact_years: "Anos de Experiência",
-                        impact_projects: "Projetos Entregues",
-                        impact_teams: "Engenheiros Liderados por Equipe",
-                        impact_competencies: "Competências Principais",
-                        footer_text: "&copy; 2025 Carlos A. Muñoz | CV Interativo ",
-                        read_more: "Ler Mais..."
+                        footer_text: "&copy; 2025 Carlos A. Muñoz | CV Interativo"
                     },
-                    de: {}, fr: {}, it: {}
+                    de: {
+                        job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter",
+                        contact_title: "Kontakt",
+                        contact_tooltip: "Klicken Sie auf einen Link, um die entsprechende Anwendung zu öffnen (E-Mail, WhatsApp usw.).",
+                        location: "Medellín, Antioquia, Kolumbien",
+                        competencies_title: "Kernkompetenzen",
+                        competency_pm: "IT-Projektmanagement",
+                        competency_qa: "QA & Testautomatisierung",
+                        competency_lead: "Teamführung & Mentoring",
+                        competency_devops: "CI/CD & DevOps-Strategie",
+                        competency_cloud: "Cloud-Plattformen",
+                        competency_strategy: "Strategischer Geschäftssinn",
+                        competency_relations: "Stakeholder- & Kundenbeziehungen",
+                        languages_title: "Sprachen",
+                        lang_native: "Muttersprache",
+                        lang_fluent: "Fließend",
+                        lang_basic: "Grundkenntnisse",
+                        lang_others: "Andere",
+                        summary_title: "Berufliches Profil",
+                        summary_text: "Ein Senior IT-Projektmanager und QA-Architekt mit über zwei Jahrzehnten Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte in strategischer Planung, Stakeholder-Management und der Führung funktionsübergreifender Teams zur Erreichung von Projektzielen. Nachgewiesene Fähigkeit, robuste QA-Automatisierungs-Frameworks (Selenium, Cypress, Kotlin) zu entwerfen und zu implementieren, um außergewöhnliche Produktqualität und Effizienz für Kunden wie Autodesk, AT&T und Sophos zu gewährleisten.",
+                        summary_detail_1: "Während meiner gesamten Laufbahn habe ich einen ganzheitlichen Qualitätsansatz verfolgt und QA-Prozesse in jede Phase des SDLC integriert. Als QA-Architekt bin ich darauf spezialisiert, skalierbare, wartbare und effiziente Automatisierungs-Frameworks von Grund auf zu entwerfen, die auf die spezifischen Bedürfnisse des Produkts und des Technologiestapels zugeschnitten sind. Meine Expertise erstreckt sich auf die Auswahl der optimalen Werkzeuge, die Etablierung von Best Practices und die Erstellung von CI/CD-Integrationen, die den Entwicklungsteams schnelles und zuverlässiges Feedback liefern, wodurch Regressionszyklen erheblich verkürzt und die Markteinführungszeit beschleunigt werden.",
+                        summary_detail_2: "Als Projektmanager und Führungskraft zeichne ich mich durch den Aufbau und das Mentoring von leistungsstarken, kulturübergreifenden Teams aus. Ich habe eine nachgewiesene Erfolgsbilanz bei der Verwaltung von Projektportfolios im Wert von mehreren Millionen Dollar, der Risikominderung und der Abstimmung der technischen Ausführung mit der Geschäftsstrategie auf Führungsebene. Meine Führungsphilosophie konzentriert sich auf klare Kommunikation, Befähigung und die Förderung eines kollaborativen Umfelds, in dem jedes Teammitglied motiviert ist, seine beste Arbeit zu leisten. Meine C2-Englischkenntnisse und meine mehrsprachigen Fähigkeiten ermöglichen es mir, globale Teams und Stakeholder nahtlos zu managen.",
+                        read_more: "Weiterlesen...",
+                        infographics_title: "Karriere auf einen Blick",
+                        infographics_radar_title: "Kompetenz-Radar",
+                        infographics_toolkit_title: "Tool-Kompetenz",
+                        infographics_impact_title: "Wichtige Kennzahlen",
+                        infographics_timeline_title: "Beruflicher Werdegang",
+                        timeline_tooltip: "Klicken Sie auf eine Fähigkeit, um zu filtern. Nicht verwandte Zeitleistenelemente werden ausgegraut.",
+                        impact_years: "Jahre Erfahrung",
+                        impact_projects: "Globale Projekte",
+                        impact_teams: "Geführte Ingenieure",
+                        impact_competencies: "Kernkompetenzen",
+                        toolkit_title: "Technisches & Management-Toolkit",
+                        toolkit_tooltip: "Klicken Sie auf eine Fähigkeit, um die Erfahrungsliste zu filtern. Klicken Sie erneut, um die Auswahl aufzuheben.",
+                        toolkit_pm: "Projektmanagement & Methoden",
+                        toolkit_qa: "QA & Testautomatisierung",
+                        toolkit_lang: "Programmierung & Skripting",
+                        toolkit_cloud: "Cloud, CI/CD & DevOps",
+                        toolkit_db: "Datenbanken & APIs",
+                        toolkit_platform: "Plattformen & Business-Tools",
+                        toolkit_security: "Informationssicherheit",
+                        experience_title: "Berufserfahrung",
+                        education_title: "Ausbildung & Zertifizierungen",
+                        education_heading: "Ausbildung",
+                        education_1_title: "Spezialisierung in Management von IT-Projekten",
+                        education_1_school: "Alexander-von-Humboldt-Universität",
+                        education_2_title: "Computersystemtechnik",
+                        education_2_school: "EAMQ",
+                        certs_heading: "Wichtige Zertifizierungen",
+                        cert_1_title: "Englischkenntnisse:",
+                        cert_1_desc: " EF SET C2 Kompetent",
+                        cert_2_title: "Projektmanagement:",
+                        cert_2_desc: " CSPM",
+                        cert_3_title: "Qualitätssicherung:",
+                        cert_3_desc: " CASQ, CAST, CSQA, ISTQB",
+                        cert_4_title: "Informationssicherheit:",
+                        cert_4_desc: " CISA, CISM, CISSP",
+                        footer_text: "&copy; 2025 Carlos A. Muñoz | Interaktiver Lebenslauf"
+                    },
+                    fr: {
+                        job_title: "Chef de projet informatique senior, architecte et responsable QA",
+                        contact_title: "Contact",
+                        contact_tooltip: "Cliquez sur un lien pour ouvrir l'application correspondante (Email, WhatsApp, etc.).",
+                        location: "Medellín, Antioquia, Colombie",
+                        competencies_title: "Compétences de base",
+                        competency_pm: "Gestion de projets informatiques",
+                        competency_qa: "QA et automatisation des tests",
+                        competency_lead: "Leadership et mentorat d'équipe",
+                        competency_devops: "Stratégie CI/CD et DevOps",
+                        competency_cloud: "Plateformes cloud",
+                        competency_strategy: "Sens stratégique des affaires",
+                        competency_relations: "Relations avec les parties prenantes et les clients",
+                        languages_title: "Langues",
+                        lang_native: "Natif",
+                        lang_fluent: "Courant",
+                        lang_basic: "Basique",
+                        lang_others: "Autres",
+                        summary_title: "Résumé professionnel",
+                        summary_text: "Un chef de projet informatique senior et architecte QA avec plus de deux décennies d'expérience dans la livraison de solutions logicielles complexes et de haute qualité pour des leaders technologiques mondiaux. Expert en planification stratégique, en gestion des parties prenantes et en direction d'équipes interfonctionnelles pour atteindre les objectifs des projets. Capacité avérée à concevoir et à mettre en œuvre des cadres d'automatisation QA robustes (Selenium, Cypress, Kotlin), garantissant une qualité de produit et une efficacité exceptionnelles pour des clients comme Autodesk, AT&T et Sophos.",
+                        summary_detail_1: "Tout au long de ma carrière, j'ai prôné une approche holistique de la qualité, en intégrant les processus d'assurance qualité à chaque étape du cycle de vie du développement logiciel (SDLC). En tant qu'architecte QA, je me spécialise dans la conception de cadres d'automatisation évolutifs, maintenables et efficaces à partir de zéro, adaptés aux besoins spécifiques du produit et de la pile technologique. Mon expertise s'étend à la sélection des outils optimaux, à l'établissement des meilleures pratiques et à la création d'intégrations CI/CD qui fournissent un retour d'information rapide et fiable aux équipes de développement, réduisant considérablement les cycles de régression et accélérant la mise sur le marché.",
+                        summary_detail_2: "En tant que chef de projet et leader, j'excelle dans la constitution et le mentorat d'équipes multiculturelles très performantes. J'ai une expérience avérée dans la gestion de portefeuilles de projets de plusieurs millions de dollars, la mitigation des risques et l'alignement de l'exécution technique sur la stratégie commerciale au niveau de la direction. Ma philosophie de leadership est centrée sur une communication claire, l'autonomisation et la promotion d'un environnement collaboratif où chaque membre de l'équipe est motivé à donner le meilleur de lui-même. Ma maîtrise de l'anglais C2 et mes compétences multilingues me permettent de gérer de manière transparente des équipes et des parties prenantes mondiales.",
+                        read_more: "Lire la suite...",
+                        infographics_title: "Carrière en un coup d'œil",
+                        infographics_radar_title: "Radar des compétences",
+                        infographics_toolkit_title: "Maîtrise des outils",
+                        infographics_impact_title: "Indicateurs clés",
+                        infographics_timeline_title: "Chronologie de carrière",
+                        timeline_tooltip: "Cliquez sur une compétence pour filtrer. Les éléments non liés de la chronologie seront grisés.",
+                        impact_years: "Années d'expérience",
+                        impact_projects: "Projets mondiaux",
+                        impact_teams: "Ingénieurs dirigés",
+                        impact_competencies: "Compétences de base",
+                        toolkit_title: "Boîte à outils technique et de gestion",
+                        toolkit_tooltip: "Cliquez sur une compétence pour filtrer la liste d'expériences. Cliquez à nouveau pour désélectionner.",
+                        toolkit_pm: "Gestion de projet et méthodologies",
+                        toolkit_qa: "QA et automatisation des tests",
+                        toolkit_lang: "Programmation et scriptage",
+                        toolkit_cloud: "Cloud, CI/CD et DevOps",
+                        toolkit_db: "Bases de données et API",
+                        toolkit_platform: "Plateformes et outils métier",
+                        toolkit_security: "Sécurité de l'information",
+                        experience_title: "Expérience professionnelle",
+                        education_title: "Formation et certifications",
+                        education_heading: "Formation",
+                        education_1_title: "Spécialisation en gestion de projets informatiques",
+                        education_1_school: "Université Alexander Von-Humboldt",
+                        education_2_title: "Ingénierie des systèmes informatiques",
+                        education_2_school: "EAMQ",
+                        certs_heading: "Certifications clés",
+                        cert_1_title: "Maîtrise de l'anglais:",
+                        cert_1_desc: " EF SET C2 Compétent",
+                        cert_2_title: "Gestion de projet:",
+                        cert_2_desc: " CSPM",
+                        cert_3_title: "Assurance qualité:",
+                        cert_3_desc: " CASQ, CAST, CSQA, ISTQB",
+                        cert_4_title: "Sécurité de l'information:",
+                        cert_4_desc: " CISA, CISM, CISSP",
+                        footer_text: "&copy; 2025 Carlos A. Muñoz | CV interactif"
+                    },
+                    it: {
+                        job_title: "Senior IT Project Manager, Architetto e Leader QA",
+                        contact_title: "Contatti",
+                        contact_tooltip: "Fai clic su un link per aprire l'applicazione corrispondente (Email, WhatsApp, ecc.).",
+                        location: "Medellín, Antioquia, Colombia",
+                        competencies_title: "Competenza chiave",
+                        competency_pm: "Gestione progetti IT",
+                        competency_qa: "QA e automazione dei test",
+                        competency_lead: "Leadership e mentoring del team",
+                        competency_devops: "Strategia CI/CD e DevOps",
+                        competency_cloud: "Piattaforme cloud",
+                        competency_strategy: "Acume strategico aziendale",
+                        competency_relations: "Relazioni con stakeholder e clienti",
+                        languages_title: "Le lingue",
+                        lang_native: "Nativo",
+                        lang_fluent: "Fluente",
+                        lang_basic: "Base",
+                        lang_others: "Altri",
+                        summary_title: "Riepilogo professionale",
+                        summary_text: "Un Senior IT Project Manager e Architetto QA con oltre due decenni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per i leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali per raggiungere gli obiettivi di progetto. Comprovata capacità di progettare e implementare robusti framework di automazione QA (Selenium, Cypress, Kotlin), garantendo una qualità del prodotto e un'efficienza eccezionali per clienti come Autodesk, AT&T e Sophos.",
+                        summary_detail_1: "Nel corso della mia carriera, ho sostenuto un approccio olistico alla qualità, integrando i processi di QA in ogni fase del SDLC. In qualità di architetto QA, sono specializzato nella progettazione di framework di automazione scalabili, manutenibili ed efficienti da zero, su misura per le esigenze specifiche del prodotto e dello stack tecnologico. La mia esperienza si estende alla selezione degli strumenti ottimali, alla definizione delle migliori pratiche e alla creazione di integrazioni CI/CD che forniscono un feedback rapido e affidabile ai team di sviluppo, riducendo significativamente i cicli di regressione e accelerando il time-to-market.",
+                        summary_detail_2: "In qualità di Project Manager e Leader, eccello nella creazione e nel mentoring di team multiculturali ad alte prestazioni. Ho una comprovata esperienza nella gestione di portafogli di progetti multimilionari, nella mitigazione dei rischi e nell'allineamento dell'esecuzione tecnica con la strategia aziendale a livello esecutivo. La mia filosofia di leadership è incentrata su una comunicazione chiara, sulla responsabilizzazione e sulla promozione di un ambiente collaborativo in cui ogni membro del team è motivato a contribuire con il proprio lavoro migliore. La mia padronanza dell'inglese C2 e le mie capacità multilingue mi consentono di gestire senza problemi team e stakeholder globali.",
+                        read_more: "Leggi di più...",
+                        infographics_title: "Carriera in sintesi",
+                        infographics_radar_title: "Radar delle competenze",
+                        infographics_toolkit_title: "Competenza negli strumenti",
+                        infographics_impact_title: "Metriche chiave",
+                        infographics_timeline_title: "Cronologia della carriera",
+                        timeline_tooltip: "Fai clic su una competenza per filtrare. Le voci della timeline non correlate verranno disattivate.",
+                        impact_years: "Anni di esperienza",
+                        impact_projects: "Progetti globali",
+                        impact_teams: "Ingegneri guidati",
+                        impact_competencies: "Competenza chiave",
+                        toolkit_title: "Toolkit tecnico e di gestione",
+                        toolkit_tooltip: "Fai clic su una competenza per filtrare l'elenco delle esperienze. Fai di nuovo clic per deselezionare.",
+                        toolkit_pm: "Gestione progetti e metodologie",
+                        toolkit_qa: "QA e automazione dei test",
+                        toolkit_lang: "Programmazione e scripting",
+                        toolkit_cloud: "Cloud, CI/CD e DevOps",
+                        toolkit_db: "Database e API",
+                        toolkit_platform: "Piattaforme e strumenti aziendali",
+                        toolkit_security: "Sicurezza delle informazioni",
+                        experience_title: "Esperienza professionale",
+                        education_title: "Istruzione e certificazioni",
+                        education_heading: "Istruzione",
+                        education_1_title: "Specializzazione in Gestione di progetti IT",
+                        education_1_school: "Università Alexander Von-Humboldt",
+                        education_2_title: "Ingegneria dei sistemi informatici",
+                        education_2_school: "EAMQ",
+                        certs_heading: "Certificazioni chiave",
+                        cert_1_title: "Conoscenza dell'inglese:",
+                        cert_1_desc: " EF SET C2 Competente",
+                        cert_2_title: "Gestione progetti:",
+                        cert_2_desc: " CSPM",
+                        cert_3_title: "Garanzia di qualità:",
+                        cert_3_desc: " CASQ, CAST, CSQA, ISTQB",
+                        cert_4_title: "Sicurezza delle informazioni:",
+                        cert_4_desc: " CISA, CISM, CISSP",
+                        footer_text: "&copy; 2025 Carlos A. Muñoz | CV interattivo"
+                    }
                 }
             },
 
+            // --- INITIALIZATION ---
             init() {
-                this.buildTranslations();
                 this.cacheDOMElements();
+                this.prepareSourceTranslations();
                 this.renderAll();
                 this.setupEventListeners();
             },
-            buildTranslations() {
-                const baseLang = 'en';
-                // Start with a copy of the static UI text for the base language
-                this.data.translations[baseLang] = { ...this.data.uiText };
 
-                // Add experience details to the English translations
-                this.data.experiences.forEach((exp, expIdx) => {
-                    this.data.translations[baseLang][`exp_${expIdx}_title`] = exp.title;
-                    this.data.translations[baseLang][`exp_${expIdx}_company`] = exp.company;
-                    exp.details_en.forEach((detail, detailIdx) => {
-                        this.data.translations[baseLang][`exp_${expIdx}_detail_${detailIdx}`] = detail;
-                    });
-                });
-            },
             cacheDOMElements() {
                 this.DOMElements = {
                     experienceContainer: document.getElementById('experience-container'),
@@ -986,101 +893,142 @@
                     expandAllExpBtn: document.getElementById('expand-all-exp'),
                     expandAllToolkitBtn: document.getElementById('expand-all-toolkit'),
                     radarChartContainer: document.getElementById('radar-chart-container'),
-                    toolkitBarChartContainer: document.getElementById('toolkit-bar-chart-container'),
+                    toolkitBubbleChartContainer: document.getElementById('toolkit-bubble-chart-container'),
                     impactShowcaseContainer: document.getElementById('impact-showcase-container'),
                     timelineContainer: document.getElementById('timeline-container'),
-                    contactInfoIcon: document.getElementById('contact-info-icon-container'),
-                    toolkitInfoIcon: document.getElementById('info-icon-container'),
-                    contactInfoBubble: document.getElementById('contact-info-bubble'),
-                    toolkitInfoBubble: document.getElementById('info-bubble'),
+                    photoZoomModal: document.getElementById('photo-zoom-modal'),
+                    zoomedImgContainer: document.getElementById('zoomed-img-container'),
+                    zoomedImg: document.getElementById('zoomed-img'),
+                    closeZoomBtn: document.getElementById('close-zoom'),
+                    profilePhotoContainer: document.getElementById('profile-photo-container'),
                 };
             },
-            renderAll() {
-                this.renderSkills();
-                this.renderExperiences();
-                this.renderInfographics();
-            },
-            renderSkills() {
-                Object.keys(this.data.skills).forEach(key => {
-                    const container = document.getElementById(`${key}-skills`);
-                    if (container) {
-                        container.innerHTML = this.data.skills[key].map(this.createSkillTag).join('');
-                        const previewContainer = container.previousElementSibling;
-                        previewContainer.innerHTML = this.data.skills[key].slice(0, 4).map(s => s.name).join(' &middot; ');
-                    }
+
+            // --- DATA PREPARATION ---
+            prepareSourceTranslations() {
+                this.data.experiences.forEach((exp, expIdx) => {
+                    const baseDetails = exp.details;
+                    this.data.translations.en[`exp_${expIdx}_title`] = exp.title;
+                    this.data.translations.es[`exp_${expIdx}_title`] = `[ES] ${exp.title}`;
+                    this.data.translations.pt[`exp_${expIdx}_title`] = `[PT] ${exp.title}`;
+                    this.data.translations.de[`exp_${expIdx}_title`] = `[DE] ${exp.title}`;
+                    this.data.translations.fr[`exp_${expIdx}_title`] = `[FR] ${exp.title}`;
+                    this.data.translations.it[`exp_${expIdx}_title`] = `[IT] ${exp.title}`;
+
+                    this.data.translations.en[`exp_${expIdx}_company`] = exp.company;
+                    this.data.translations.es[`exp_${expIdx}_company`] = exp.company;
+                    this.data.translations.pt[`exp_${expIdx}_company`] = exp.company;
+                    this.data.translations.de[`exp_${expIdx}_company`] = exp.company;
+                    this.data.translations.fr[`exp_${expIdx}_company`] = exp.company;
+                    this.data.translations.it[`exp_${expIdx}_company`] = exp.company;
+
+                    this.data.translations.en[`exp_${expIdx}_details`] = baseDetails;
+                    this.data.translations.es[`exp_${expIdx}_details`] = baseDetails.map(d => `[ES] ${d}`);
+                    this.data.translations.pt[`exp_${expIdx}_details`] = baseDetails.map(d => `[PT] ${d}`);
+                    this.data.translations.de[`exp_${expIdx}_details`] = baseDetails.map(d => `[DE] ${d}`);
+                    this.data.translations.fr[`exp_${expIdx}_details`] = baseDetails.map(d => `[FR] ${d}`);
+                    this.data.translations.it[`exp_${expIdx}_details`] = baseDetails.map(d => `[IT] ${d}`);
                 });
             },
+
+            // --- RENDERING ---
+            renderAll() {
+                this.renderToolkit();
+                this.renderExperiences();
+                this.renderInfographics();
+                this.translatePage(this.state.lang);
+            },
+
+            renderToolkit() {
+                const container = this.DOMElements.toolkitContainer;
+                container.innerHTML = Object.entries(this.data.skills).map(([key, skills]) => {
+                    const previewHtml = skills.slice(0, 5).map(s => s.name).join(' &middot; ');
+                    const skillsHtml = skills.map(this.createSkillTag).join('');
+                    return `
+                    <div class="toolkit-section border-t border-gray-200 pt-3">
+                        <div class="flex justify-between items-center cursor-pointer toolkit-header">
+                            <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_${key}"></h3>
+                            <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                        <div class="toolkit-preview">${previewHtml}</div>
+                        <div class="mt-2 flex flex-wrap toolkit-body">${skillsHtml}</div>
+                    </div>
+                `;
+                }).join('');
+            },
+
+            createSkillTag(skill) {
+                const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
+                return `
+                <div class="tech-tag" data-skill-name="${skill.name}">
+                    <img src="${skill.icon}" alt="${skill.name}" class="tech-icon" onerror="this.style.display='none';">
+                    <span>${skill.name}</span>
+                    <div class="stars">
+                        <span class="mr-2 text-xs text-gray-500">${skill.years}</span>
+                        ${starIcon}
+                        <span class="ml-1 font-semibold">${skill.stars}</span>
+                    </div>
+                </div>
+            `;
+            },
+
             renderExperiences() {
                 this.DOMElements.experienceContainer.innerHTML = this.data.experiences.map((exp, i) => this.createExperienceEntry(exp, i)).join('');
             },
-            renderInfographics() {
-                if (this.DOMElements.radarChartContainer) this.createCompetencyRadarChart();
-                if (this.DOMElements.toolkitBarChartContainer) this.createToolkitBarCharts();
-                if (this.DOMElements.impactShowcaseContainer) this.createImpactCards();
-                if (this.DOMElements.timelineContainer) this.createTimeline();
-            },
-            createSkillTag(skill) {
-                const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
-                return `
-                    <div class="tech-tag" data-skill-name="${skill.name}">
-                        <img src="${skill.icon}" alt="${skill.name} icon" class="tech-icon" onerror="this.style.display='none'; this.onerror=null;">
-                        <span>${skill.name}</span>
-                        <div class="stars">
-                            <span class="mr-2 text-xs text-gray-500">${skill.years}</span>
-                            ${starIcon}
-                            <span class="ml-1 font-semibold">${skill.stars}</span>
-                        </div>
-                    </div>
-                `;
-            },
+
             createExperienceEntry(exp, index) {
-                const detailsHtml = exp.details_en.map((detail, i) =>
-                    `<li data-translate-key="exp_${index}_detail_${i}">${detail}</li>`
+                const detailsHtml = exp.details.map((detail, i) =>
+                    `<li data-translate-key="exp_${index}_detail_${i}"></li>`
                 ).join('');
 
-                const previewHtml = `<p class="text-gray-600" data-translate-key="exp_${index}_detail_0">${exp.details_en[0]}</p>`;
-                const techPreviewHtml = `<div class="tech-preview mt-2"><strong>Key Tech:</strong> ${exp.techUsed.slice(0, 4).join(', ')}</div>`;
-
                 return `
-                    <div class="experience-item text-sm py-2" data-experience-id="${index}" data-tech='${JSON.stringify(exp.techUsed)}'>
-                        <div class="accordion-header flex justify-between items-center cursor-pointer">
-                            <div class="flex-grow">
-                                <h3 class="text-base font-bold text-gray-900" data-translate-key="exp_${index}_title">${exp.title}</h4>
-                                <p class="text-sm text-gray-700 italic flex items-center">
-                                    <img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1005/1005121.png'">
-                                    <span data-translate-key="exp_${index}_company">${exp.company}</span>
-                                </p>
-                            </div>
-                            <p class="text-xs text-gray-600 mr-4">${exp.dates}</p>
-                            <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <div class="experience-item text-sm py-2" data-experience-id="${index}" data-tech='${JSON.stringify(exp.techUsed)}'>
+                    <div class="accordion-header flex justify-between items-center cursor-pointer">
+                        <div class="flex-grow">
+                            <h4 class="text-base font-bold text-gray-900" data-translate-key="exp_${index}_title"></h4>
+                            <p class="text-sm text-gray-700 italic flex items-center">
+                                <img src="${exp.logo}" class="company-logo" alt="${exp.company}" onerror="this.src='https://uxwing.com/wp-content/themes/uxwing/download/buildings-architecture-real-estate/company-icon.svg';">
+                                <span data-translate-key="exp_${index}_company"></span>
+                            </p>
                         </div>
-                        <div class="experience-body mt-2">
-                            <div class="experience-preview-content">
-                                ${previewHtml}
-                                ${techPreviewHtml}
-                            </div>
-                            <ul class="experience-full-details list-disc list-inside text-gray-700 space-y-1 pl-4 hidden">
-                               ${detailsHtml}
-                            </ul>
-                            <button class="read-more-btn text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-1 no-print" data-translate-key="read_more">Read More...</button>
-                        </div>
+                        <p class="text-xs text-gray-600 mr-4">${exp.dates}</p>
+                        <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
-                `;
+                    <div class="experience-body mt-2">
+                        <ul class="list-disc list-inside text-gray-700 space-y-1 pl-4">
+                           ${detailsHtml}
+                        </ul>
+                    </div>
+                </div>
+            `;
             },
-            _createRadarChart(container, chartData) {
-                const size = 256;
+
+            renderInfographics() {
+                this.createCompetencyRadarChart();
+                this.createToolkitBubbleChart();
+                this.createImpactCards();
+                this.createTimeline();
+            },
+
+            createCompetencyRadarChart() {
+                const container = this.DOMElements.radarChartContainer;
+                const data = [
+                    { label: 'Proj. Mgmt', score: 0.95 }, { label: 'QA Auto', score: 0.95 },
+                    { label: 'Leadership', score: 0.90 }, { label: 'DevOps', score: 0.85 },
+                    { label: 'Cloud', score: 0.88 }, { label: 'Stakeholder', score: 0.92 },
+                    { label: 'Security', score: 0.90 }, { label: 'Strategy', score: 0.93 }
+                ];
+                const size = 280;
                 const center = size / 2;
                 const radius = size * 0.4;
                 let points = '';
                 let labels = '';
-
-                const angleSlice = (Math.PI * 2) / chartData.length;
-
+                const angleSlice = (Math.PI * 2) / data.length;
                 let grid = '';
                 for (let i = 1; i <= 4; i++) {
                     const gridRadius = radius * (i / 4);
                     let gridPoints = '';
-                    for (let j = 0; j < chartData.length; j++) {
+                    for (let j = 0; j < data.length; j++) {
                         const angle = angleSlice * j - Math.PI / 2;
                         const x = center + gridRadius * Math.cos(angle);
                         const y = center + gridRadius * Math.sin(angle);
@@ -1088,148 +1036,139 @@
                     }
                     grid += `<polygon points="${gridPoints}" fill="none" stroke="#e5e7eb" />`;
                 }
-
-                for (let i = 0; i < chartData.length; i++) {
+                for (let i = 0; i < data.length; i++) {
                     const angle = angleSlice * i - Math.PI / 2;
-                    const x = center + radius * chartData[i].score * Math.cos(angle);
-                    const y = center + radius * chartData[i].score * Math.sin(angle);
+                    const x = center + radius * data[i].score * Math.cos(angle);
+                    const y = center + radius * data[i].score * Math.sin(angle);
                     points += `${x},${y} `;
-
                     const labelX = center + (radius + 20) * Math.cos(angle);
                     const labelY = center + (radius + 20) * Math.sin(angle);
-                    labels += `<text x="${labelX}" y="${labelY}" font-size="10" text-anchor="middle" alignment-baseline="middle" fill="#4b5563">${chartData[i].label}</text>`;
+                    labels += `<text x="${labelX}" y="${labelY}" font-size="10" text-anchor="middle" alignment-baseline="middle" fill="#4b5563">${data[i].label}</text>`;
                     grid += `<line x1="${center}" y1="${center}" x2="${center + radius * Math.cos(angle)}" y2="${center + radius * Math.sin(angle)}" stroke="#e5e7eb" />`;
                 }
-
-                const svg = `
-                    <svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-                        ${grid}
-                        <polygon points="${points}" fill="rgba(8, 145, 178, 0.4)" stroke="#0891b2" stroke-width="2" />
-                        ${labels}
-                    </svg>
-                `;
+                const svg = `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${grid}<polygon points="${points}" fill="rgba(8, 145, 178, 0.4)" stroke="#0891b2" stroke-width="2" />${labels}</svg>`;
                 container.innerHTML = svg;
             },
-            createCompetencyRadarChart() {
-                const data = [
-                    { label: 'Project Mgmt', score: 0.95 },
-                    { label: 'QA & Automation', score: 0.95 },
-                    { label: 'Leadership', score: 0.90 },
-                    { label: 'DevOps', score: 0.85 },
-                    { label: 'Cloud', score: 0.88 },
-                    { label: 'Stakeholder M.', score: 0.92 },
-                    { label: 'Risk Mgmt', score: 0.90 },
-                    { label: 'Strategic Plan', score: 0.93 }
-                ];
-                this._createRadarChart(this.DOMElements.radarChartContainer, data);
-            },
-            createToolkitBarCharts() {
-                const container = this.DOMElements.toolkitBarChartContainer;
+
+            createToolkitBubbleChart() {
+                const container = this.DOMElements.toolkitBubbleChartContainer;
                 const categories = [
                     { label: 'PM & Agile', skills: this.data.skills.pm },
                     { label: 'QA & Testing', skills: this.data.skills.qa },
                     { label: 'Languages', skills: this.data.skills.lang },
                     { label: 'Cloud/DevOps', skills: this.data.skills.cloud },
+                    { label: 'Databases', skills: this.data.skills.db },
+                    { label: 'Security', skills: this.data.skills.security },
                 ];
-
-                let content = '';
-                categories.forEach(cat => {
+                const data = categories.map(cat => {
                     const avgStars = cat.skills.reduce((acc, s) => acc + s.stars, 0) / cat.skills.length;
-                    const percentage = (avgStars / 5) * 100;
-                    content += `
-                        <div class="bar-wrapper">
-                            <div class="bar-label">${cat.label}</div>
-                            <div class="bar-background">
-                                <div class="bar" style="width: ${percentage}%;"></div>
-                            </div>
-                        </div>
-                    `;
+                    return { label: cat.label, score: avgStars / 5, count: cat.skills.length };
                 });
-                container.innerHTML = content;
+
+                const width = 320, height = 320;
+                const bubbles = data.map((d, i) => ({
+                    r: 20 + d.score * 30 + d.count * 1.5,
+                    x: (i % 3) * (width / 2.8) + (40 + Math.random() * 15),
+                    y: Math.floor(i / 3) * (height / 2.5) + (40 + Math.random() * 15),
+                    ...d
+                }));
+
+                let svgContent = '';
+                bubbles.forEach(b => {
+                    const color = `hsl(190, 70%, ${35 + (b.score * 30)}%)`;
+                    svgContent += `
+                    <g class="bubble" transform="translate(${b.x}, ${b.y})">
+                        <circle r="${b.r}" fill="${color}" />
+                        <text class="bubble-text" dy="-0.2em">${b.label}</text>
+                        <text class="bubble-text bubble-value" dy="1.0em">${(b.score * 100).toFixed(0)}%</text>
+                    </g>
+                `;
+                });
+
+                container.innerHTML = `<svg viewBox="0 0 ${width} ${height}">${svgContent}</svg>`;
             },
+
             createImpactCards() {
                 const container = this.DOMElements.impactShowcaseContainer;
                 const stats = [
                     { number: '20+', labelKey: 'impact_years', icon: '<svg class="w-8 h-8 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' },
-                    { number: '15+', labelKey: 'impact_projects', icon: '<svg class="w-8 h-8 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' },
+                    { number: '50+', labelKey: 'impact_projects', icon: '<svg class="w-8 h-8 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' },
                     { number: '10+', labelKey: 'impact_teams', icon: '<svg class="w-8 h-8 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>' },
-                    { number: '7', labelKey: 'impact_competencies', icon: '<svg class="w-8 h-8 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>' }
+                    { number: '8', labelKey: 'impact_competencies', icon: '<svg class="w-8 h-8 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>' }
                 ];
-
-                let content = '';
-                stats.forEach(stat => {
-                    content += `
-                        <div class="bg-slate-100 rounded-lg p-4 flex flex-col items-center justify-center text-center">
-                            ${stat.icon}
-                            <p class="text-2xl font-bold text-gray-800 mt-2">${stat.number}</p>
-                            <p class="text-xs text-gray-600" data-translate-key="${stat.labelKey}"></p>
-                        </div>
-                    `;
-                });
-                container.innerHTML = content;
+                container.innerHTML = stats.map(stat => `
+                <div class="bg-slate-100 rounded-lg p-4 flex flex-col items-center justify-center text-center">
+                    ${stat.icon}
+                    <p class="text-2xl font-bold text-gray-800 mt-2">${stat.number}</p>
+                    <p class="text-xs text-gray-600" data-translate-key="${stat.labelKey}"></p>
+                </div>
+            `).join('');
             },
+
             createTimeline() {
                 const container = this.DOMElements.timelineContainer;
-                let content = '';
-                const relevantExperiences = this.data.experiences.slice(0, 8).reverse(); // Displaying 8 experiences
-                const skillIconMap = {};
-                Object.values(this.data.skills).flat().forEach(skill => {
-                    skillIconMap[skill.name] = skill.icon;
-                });
+                const skillIconMap = Object.values(this.data.skills).flat().reduce((map, skill) => {
+                    map[skill.name] = skill.icon;
+                    return map;
+                }, {});
 
-                relevantExperiences.forEach((exp, idx) => {
-                    const originalIndex = this.data.experiences.indexOf(exp);
-                    const techIconsHtml = exp.techUsed.map(techName => {
-                        const iconUrl = skillIconMap[techName];
-                        if (iconUrl) {
-                            return `
-                                <div class="tooltip">
-                                    <img src="${iconUrl}" alt="${techName}" class="timeline-tech-icon" onerror="this.style.display='none'; this.onerror=null;">
-                                    <span class="tooltiptext">${techName}</span>
-                                </div>
-                            `;
-                        }
-                        return '';
-                    }).join('');
+                container.innerHTML = this.data.experiences.map((exp, originalIndex) => {
+                    const techIconsHtml = exp.techUsed
+                        .map(techName => {
+                            const iconUrl = skillIconMap[techName];
+                            return iconUrl ? `<div class="tooltip"><img src="${iconUrl}" alt="${techName}" class="timeline-tech-icon" onerror="this.style.display='none';"><span class="tooltiptext">${techName}</span></div>` : '';
+                        }).filter(Boolean).slice(0, 9).join('');
 
-                    content += `
-                        <div class="timeline-item" data-experience-id="${originalIndex}">
-                            <p class="font-bold text-sm text-gray-800" data-translate-key="exp_${originalIndex}_title">${exp.title}</p>
-                            <p class="text-xs text-gray-600" data-translate-key="exp_${originalIndex}_company">${exp.company}</p>
-                            <p class="text-xs text-gray-500 mb-2">${exp.dates}</p>
-                            <div class="flex items-center flex-wrap">
-                                ${techIconsHtml}
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML = content;
+                    return `
+                    <div class="timeline-item" data-experience-id="${originalIndex}">
+                        <p class="font-bold text-sm text-gray-800" data-translate-key="exp_${originalIndex}_title"></p>
+                        <p class="text-xs text-gray-600" data-translate-key="exp_${originalIndex}_company"></p>
+                        <p class="text-xs text-gray-500 mb-2">${exp.dates}</p>
+                        <div class="flex items-center flex-wrap">${techIconsHtml}</div>
+                    </div>
+                `;
+                }).join('');
             },
+
+            // --- EVENT HANDLING & LOGIC ---
             filterExperiences() {
                 const experienceItems = this.DOMElements.experienceContainer.querySelectorAll('.experience-item');
                 const timelineItems = this.DOMElements.timelineContainer.querySelectorAll('.timeline-item');
 
-                experienceItems.forEach((item, index) => {
-                    const techUsed = JSON.parse(item.getAttribute('data-tech'));
+                this.data.experiences.forEach((exp, index) => {
+                    const techUsed = exp.techUsed;
                     const isVisible = this.state.selectedSkills.size === 0 || [...this.state.selectedSkills].every(skill => techUsed.includes(skill));
-                    item.style.display = isVisible ? 'block' : 'none';
-                    if(timelineItems[index]) {
-                        timelineItems[index].classList.toggle('filtered-out', !isVisible);
-                    }
+
+                    if (experienceItems[index]) experienceItems[index].style.display = isVisible ? 'block' : 'none';
+                    if (timelineItems[index]) timelineItems[index].classList.toggle('filtered-out', !isVisible);
                 });
             },
-            translatePage(lang) {
-                if (this.state.lang === lang) return;
-                this.state.lang = lang;
 
+            translatePage(lang) {
+                this.state.lang = lang;
                 const translationSet = this.data.translations[lang] || this.data.translations.en;
 
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.dataset.translateKey;
-                    if (translationSet[key]) {
+
+                    if (key.startsWith('exp_') && key.includes('_detail_')) {
+                        const parts = key.split('_');
+                        const expIndex = parts[1];
+                        const detailIndex = parts[3];
+                        const detailsArrayKey = `exp_${expIndex}_details`;
+                        const detailsArray = translationSet[detailsArrayKey];
+
+                        if (detailsArray && detailsArray[detailIndex] !== undefined) {
+                            el.innerHTML = detailsArray[detailIndex];
+                        } else {
+                            const originalExperience = this.data.experiences[expIndex];
+                            if (originalExperience && originalExperience.details && originalExperience.details[detailIndex] !== undefined) {
+                                el.innerHTML = originalExperience.details[detailIndex];
+                            }
+                        }
+                    } else if (translationSet[key] !== undefined) {
                         el.innerHTML = translationSet[key];
                     } else {
-                        // Fallback to English if a specific key is missing for a language
                         el.innerHTML = this.data.translations.en[key] || '';
                     }
                 });
@@ -1237,36 +1176,21 @@
                 const footer = document.querySelector('[data-translate-key="footer_text"]');
                 if (footer) {
                     const footerText = translationSet.footer_text || this.data.translations.en.footer_text;
-                    footer.innerHTML = footerText + '<span class="trademark-logo">CAM</span>';
+                    footer.innerHTML = footerText + ' <span class="trademark-logo">CAM</span>';
                 }
             },
+
             setupEventListeners() {
-                // Tooltip for Contact Info
-                this.DOMElements.contactInfoIcon.addEventListener('mouseenter', () => {
-                    this.DOMElements.contactInfoBubble.style.display = 'block';
-                });
-                this.DOMElements.contactInfoIcon.addEventListener('mouseleave', () => {
-                    this.DOMElements.contactInfoBubble.style.display = 'none';
-                });
-
-                // Tooltip for Toolkit Info
-                this.DOMElements.toolkitInfoIcon.addEventListener('mouseenter', () => {
-                    this.DOMElements.toolkitInfoBubble.style.display = 'block';
-                });
-                this.DOMElements.toolkitInfoIcon.addEventListener('mouseleave', () => {
-                    this.DOMElements.toolkitInfoBubble.style.display = 'none';
-                });
-
+                // Toolkit skill filtering
                 this.DOMElements.toolkitContainer.addEventListener('click', (e) => {
                     const tag = e.target.closest('.tech-tag');
                     if (tag) {
                         const skillName = tag.dataset.skillName;
+                        tag.classList.toggle('selected');
                         if (this.state.selectedSkills.has(skillName)) {
                             this.state.selectedSkills.delete(skillName);
-                            tag.classList.remove('selected');
                         } else {
                             this.state.selectedSkills.add(skillName);
-                            tag.classList.add('selected');
                         }
                         this.filterExperiences();
                     }
@@ -1278,72 +1202,7 @@
                     this.filterExperiences();
                 });
 
-                this.DOMElements.timelineContainer.addEventListener('click', (e) => {
-                    const timelineItem = e.target.closest('.timeline-item');
-                    if(timelineItem) {
-                        const expId = timelineItem.dataset.experienceId;
-                        const experienceItem = document.querySelector(`.experience-item[data-experience-id='${expId}']`);
-                        if(experienceItem) {
-                            experienceItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            const header = experienceItem.querySelector('.accordion-header');
-                            const body = header.nextElementSibling;
-                            const icon = header.querySelector('.accordion-icon');
-                            if (!body.style.maxHeight) {
-                                body.style.maxHeight = body.scrollHeight + "px";
-                                icon.style.transform = 'rotate(180deg)';
-                            }
-                        }
-                    }
-                });
-
-                this.DOMElements.experienceContainer.addEventListener('click', (event) => {
-                    const header = event.target.closest('.accordion-header');
-                    if (header) {
-                        const accordionBody = header.nextElementSibling;
-                        const accordionIcon = header.querySelector('.accordion-icon');
-
-                        if (accordionBody.style.maxHeight) {
-                            accordionBody.style.maxHeight = null;
-                            accordionIcon.style.transform = 'rotate(0deg)';
-                        } else {
-                            accordionBody.style.maxHeight = accordionBody.scrollHeight + "px";
-                            accordionIcon.style.transform = 'rotate(180deg)';
-                        }
-                    }
-
-                    const readMoreBtn = event.target.closest('.read-more-btn');
-                    if (readMoreBtn) {
-                        const experienceBody = readMoreBtn.parentElement;
-                        const previewContent = experienceBody.querySelector('.experience-preview-content');
-                        const fullDetails = experienceBody.querySelector('.experience-full-details');
-
-                        if(fullDetails.classList.contains('hidden')){
-                            previewContent.classList.add('hidden');
-                            fullDetails.classList.remove('hidden');
-                            readMoreBtn.textContent = "Read Less...";
-                        } else {
-                            previewContent.classList.remove('hidden');
-                            fullDetails.classList.add('hidden');
-                            readMoreBtn.textContent = this.data.translations[this.state.lang].read_more || this.data.translations.en.read_more;
-                        }
-                    }
-                });
-
-                this.DOMElements.expandAllExpBtn.addEventListener('click', (e) => {
-                    const accordions = this.DOMElements.experienceContainer.querySelectorAll('.experience-body');
-                    const isExpanding = e.target.textContent.includes('Expand');
-                    accordions.forEach(body => {
-                        if(isExpanding) {
-                            body.style.maxHeight = body.scrollHeight + 'px';
-                            body.previousElementSibling.querySelector('.accordion-icon').style.transform = 'rotate(180deg)';
-                        } else {
-                            body.style.maxHeight = null;
-                            body.previousElementSibling.querySelector('.accordion-icon').style.transform = 'rotate(0deg)';
-                        }
-                    });
-                    e.target.textContent = isExpanding ? 'Collapse All' : 'Expand All';
-                });
-
+                // Accordion toggles (for toolkit sections)
                 this.DOMElements.toolkitContainer.addEventListener('click', (e) => {
                     const header = e.target.closest('.toolkit-header');
                     if(header) {
@@ -1351,74 +1210,108 @@
                         const body = section.querySelector('.toolkit-body');
                         const preview = section.querySelector('.toolkit-preview');
                         const icon = section.querySelector('.accordion-icon');
+                        const isOpening = !body.style.maxHeight;
 
-                        if (body.style.maxHeight) {
-                            body.style.maxHeight = null;
-                            icon.style.transform = 'rotate(0deg)';
-                            preview.style.display = 'block';
-                        } else {
-                            body.style.maxHeight = body.scrollHeight + 'px';
-                            icon.style.transform = 'rotate(180deg)';
-                            preview.style.display = 'none';
-                        }
+                        body.style.maxHeight = isOpening ? body.scrollHeight + 'px' : null;
+                        icon.style.transform = isOpening ? 'rotate(180deg)' : 'rotate(0deg)';
+                        preview.style.display = isOpening ? 'none' : 'block';
                     }
                 });
 
                 this.DOMElements.expandAllToolkitBtn.addEventListener('click', (e) => {
-                    const toolkitSections = this.DOMElements.toolkitContainer.querySelectorAll('.toolkit-section');
                     const isExpanding = e.target.textContent.includes('Expand');
-
-                    toolkitSections.forEach(section => {
+                    this.DOMElements.toolkitContainer.querySelectorAll('.toolkit-section').forEach(section => {
                         const body = section.querySelector('.toolkit-body');
                         const preview = section.querySelector('.toolkit-preview');
                         const icon = section.querySelector('.accordion-icon');
-
-                        if (isExpanding) {
-                            body.style.maxHeight = body.scrollHeight + 'px';
-                            icon.style.transform = 'rotate(180deg)';
-                            preview.style.display = 'none';
-                        } else {
-                            body.style.maxHeight = null;
-                            icon.style.transform = 'rotate(0deg)';
-                            preview.style.display = 'block';
-                        }
+                        body.style.maxHeight = isExpanding ? body.scrollHeight + 'px' : null;
+                        icon.style.transform = isExpanding ? 'rotate(180deg)' : 'rotate(0deg)';
+                        preview.style.display = isExpanding ? 'none' : 'block';
                     });
                     e.target.textContent = isExpanding ? 'Collapse All' : 'Expand All';
                 });
 
-                this.DOMElements.languageSelector.addEventListener('click', (e) => {
-                    const clickedFlag = e.target.closest('.lang-flag');
+                // Experience accordion
+                this.DOMElements.experienceContainer.addEventListener('click', (event) => {
+                    const header = event.target.closest('.accordion-header');
+                    if (header) {
+                        const body = header.nextElementSibling;
+                        const icon = header.querySelector('.accordion-icon');
+                        body.style.maxHeight = body.style.maxHeight ? null : body.scrollHeight + "px";
+                        icon.style.transform = body.style.maxHeight ? 'rotate(180deg)' : 'rotate(0deg)';
+                    }
+                });
 
-                    if (clickedFlag) {
+                this.DOMElements.expandAllExpBtn.addEventListener('click', (e) => {
+                    const isExpanding = e.target.textContent.includes('Expand');
+                    this.DOMElements.experienceContainer.querySelectorAll('.experience-body').forEach(body => {
+                        body.style.maxHeight = isExpanding ? body.scrollHeight + 'px' : null;
+                        body.previousElementSibling.querySelector('.accordion-icon').style.transform = isExpanding ? 'rotate(180deg)' : 'rotate(0deg)';
+                    });
+                    e.target.textContent = isExpanding ? 'Collapse All' : 'Expand All';
+                });
+
+                // Summary Read More
+                this.DOMElements.readMoreBtn.addEventListener('click', () => {
+                    const isOpening = !this.DOMElements.summaryDetails.style.maxHeight;
+                    this.DOMElements.summaryDetails.style.maxHeight = isOpening ? this.DOMElements.summaryDetails.scrollHeight + "px" : null;
+                    this.DOMElements.readMoreBtn.textContent = isOpening ? 'Read Less...' : (this.data.translations[this.state.lang].read_more || 'Read More...');
+                });
+
+                // Timeline click to scroll
+                this.DOMElements.timelineContainer.addEventListener('click', (e) => {
+                    const timelineItem = e.target.closest('.timeline-item');
+                    if(timelineItem) {
+                        const expId = timelineItem.dataset.experienceId;
+                        const experienceItem = document.querySelector(`.experience-item[data-experience-id='${expId}']`);
+                        if(experienceItem) {
+                            experienceItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            const body = experienceItem.querySelector('.experience-body');
+                            if (!body.style.maxHeight) {
+                                body.style.maxHeight = body.scrollHeight + "px";
+                                experienceItem.querySelector('.accordion-icon').style.transform = 'rotate(180deg)';
+                            }
+                        }
+                    }
+                });
+
+                // Language Selector
+                this.DOMElements.languageSelector.addEventListener('click', (e) => {
+                    const langWrapper = e.target.closest('.lang-wrapper');
+                    if (langWrapper) {
+                        const clickedFlag = langWrapper.querySelector('.lang-flag');
                         const lang = clickedFlag.getAttribute('data-lang');
                         if (this.state.lang !== lang) {
                             this.DOMElements.languageSelector.querySelectorAll('.lang-flag').forEach(f => f.classList.remove('selected'));
                             clickedFlag.classList.add('selected');
                             this.translatePage(lang);
                         }
-                        // Always collapse after a selection or if clicking the selector itself to open/close
-                        this.DOMElements.languageSelector.classList.add('collapsed');
-                    } else {
-                        // This handles clicking on the container but not a flag
-                        this.DOMElements.languageSelector.classList.toggle('collapsed');
                     }
+                    this.DOMElements.languageSelector.classList.toggle('collapsed');
                 });
 
+                // Print button
+                this.DOMElements.printBtn.addEventListener('click', (e) => { e.stopPropagation(); window.print(); });
 
-                this.DOMElements.readMoreBtn.addEventListener('click', () => {
-                    if(this.DOMElements.summaryDetails.style.maxHeight){
-                        this.DOMElements.summaryDetails.style.maxHeight = null;
-                        this.DOMElements.readMoreBtn.textContent = this.data.translations[this.state.lang].read_more || this.data.translations.en.read_more;
-                    } else {
-                        this.DOMElements.summaryDetails.style.maxHeight = this.DOMElements.summaryDetails.scrollHeight + "px";
-                        this.DOMElements.readMoreBtn.textContent = 'Read Less...';
-                    }
+                // Dynamic Photo Zoom
+                const { photoZoomModal, zoomedImgContainer, zoomedImg, closeZoomBtn, profilePhotoContainer } = this.DOMElements;
+                profilePhotoContainer.addEventListener('click', () => {
+                    zoomedImg.src = profilePhotoContainer.querySelector('img').src;
+                    photoZoomModal.classList.add('show');
                 });
-
-                this.DOMElements.printBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    window.print();
+                closeZoomBtn.addEventListener('click', () => photoZoomModal.classList.remove('show'));
+                photoZoomModal.addEventListener('click', (e) => {
+                    if(e.target === photoZoomModal) photoZoomModal.classList.remove('show');
                 });
+                zoomedImgContainer.addEventListener('mousemove', (e) => {
+                    const { left, top, width, height } = zoomedImgContainer.getBoundingClientRect();
+                    const x = (e.clientX - left) / width;
+                    const y = (e.clientY - top) / height;
+                    zoomedImg.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+                });
+                zoomedImgContainer.addEventListener('mousedown', () => zoomedImg.style.transform = 'scale(2)');
+                zoomedImgContainer.addEventListener('mouseup', () => zoomedImg.style.transform = 'scale(1)');
+                zoomedImgContainer.addEventListener('mouseleave', () => zoomedImg.style.transform = 'scale(1)');
             }
         };
 
