@@ -124,13 +124,34 @@
         .company-logo { width: 14px; height: 14px; margin-right: 6px; border-radius: 3px; flex-shrink: 0; }
         .experience-body, #summary-details, .toolkit-body { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
         .accordion-header { border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+
+        /* Tooltip and Info Bubble Styles */
         .tooltip { position: relative; display: inline-flex; }
-        .tooltip .tooltiptext {
+        .tooltip .tooltiptext, .info-bubble {
             visibility: hidden; background-color: #333; color: #fff; text-align: center; border-radius: 6px;
-            padding: 5px 10px; position: absolute; z-index: 10; bottom: 125%; left: 50%; transform: translateX(-50%);
-            opacity: 0; transition: opacity 0.3s; white-space: nowrap; font-size: 12px; width: max-content;
+            padding: 5px 10px; position: absolute; z-index: 10;
+            opacity: 0; transition: opacity 0.3s; white-space: nowrap; font-size: 12px;
+        }
+        .tooltip .tooltiptext {
+            bottom: 125%; left: 50%; transform: translateX(-50%); width: max-content;
         }
         .tooltip:hover .tooltiptext, .tooltip:focus .tooltiptext { visibility: visible; opacity: 1; }
+
+        .info-icon-container:hover .info-bubble { visibility: visible; opacity: 1; }
+        .info-bubble {
+            width: 250px; text-align: left; white-space: normal; padding: 8px 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #contact-info-bubble {
+            top: 0;
+            left: 100%;
+            margin-left: 0.5rem;
+        }
+        #toolkit-info-bubble {
+            right: 0;
+            top: 24px;
+        }
+
         .lang-flag { transition: transform 0.2s; border: 2px solid transparent; border-radius: 50%; }
         .lang-flag:hover, .lang-flag:focus { transform: scale(1.1); }
         .lang-flag.selected { border-color: var(--cyan-brand); }
@@ -270,6 +291,10 @@
                 <section aria-labelledby="contact-heading" class="animate-on-scroll">
                     <div class="flex items-center relative">
                         <h3 id="contact-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
+                        <div class="relative ml-2 no-print info-icon-container">
+                            <svg class="w-5 h-5 text-gray-500 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                            <div id="contact-info-bubble" class="info-bubble" data-translate-key="info_bubble_contact"></div>
+                        </div>
                     </div>
                     <div class="flex items-center space-x-3">
                         <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
@@ -366,15 +391,15 @@
                                 <svg class="w-5 h-5 moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                             </button>
                             <div id="language-selector" role="region" aria-label="Language Selector" class="relative flex items-center space-x-2 collapsed cursor-pointer" tabindex="0">
-                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English" tabindex="-1" role="button" aria-label="Select English"><span class="tooltiptext">English</span></div>
-                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español" tabindex="-1" role="button" aria-label="Select Spanish"><span class="tooltiptext">Español</span></div>
-                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="pt" alt="Português" tabindex="-1" role="button" aria-label="Select Portuguese"><span class="tooltiptext">Português</span></div>
-                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="de" alt="Deutsch" tabindex="-1" role="button" aria-label="Select German"><span class="tooltiptext">Deutsch</span></div>
-                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="fr" alt="Français" tabindex="-1" role="button" aria-label="Select French"><span class="tooltiptext">Français</span></div>
-                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italiano" tabindex="-1" role="button" aria-label="Select Italian"><span class="tooltiptext">Italiano</span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English" tabindex="-1" role="button" aria-label="Select English"><span class="tooltiptext" data-translate-key="tooltip_lang_en"></span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español" tabindex="-1" role="button" aria-label="Select Spanish"><span class="tooltiptext" data-translate-key="tooltip_lang_es"></span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="pt" alt="Português" tabindex="-1" role="button" aria-label="Select Portuguese"><span class="tooltiptext" data-translate-key="tooltip_lang_pt"></span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="de" alt="Deutsch" tabindex="-1" role="button" aria-label="Select German"><span class="tooltiptext" data-translate-key="tooltip_lang_de"></span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="fr" alt="Français" tabindex="-1" role="button" aria-label="Select French"><span class="tooltiptext" data-translate-key="tooltip_lang_fr"></span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italiano" tabindex="-1" role="button" aria-label="Select Italian"><span class="tooltiptext" data-translate-key="tooltip_lang_it"></span></div>
                                 <svg class="w-4 h-4 lang-accordion-indicator" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 <span class="mx-1">|</span>
-                                <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200" aria-label="Print or save as PDF"><svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext">Print / PDF</span></button></div>
+                                <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200" aria-label="Print or save as PDF"><svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext" data-translate-key="tooltip_print"></span></button></div>
                             </div>
                         </div>
                     </div>
@@ -393,10 +418,12 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         <!-- Left Column: Graphs -->
                         <div>
-                            <section aria-labelledby="competencies-graph-heading" class="mb-20">
+                            <section aria-labelledby="competencies-graph-heading">
                                 <h3 id="competencies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
                                 <div id="competencies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing core competency scores."></div>
                             </section>
+
+                            <div class="h-20"></div> <!-- Spacer Block -->
 
                             <section aria-labelledby="methodologies-graph-heading">
                                 <h3 id="methodologies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
@@ -418,6 +445,10 @@
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
                             <h2 id="toolkit-heading" class="text-xl font-bold" data-translate-key="toolkit_title">Technical & Management Toolkit</h2>
+                            <div class="relative ml-2 no-print info-icon-container">
+                                <svg class="w-5 h-5 text-gray-500 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                                <div id="toolkit-info-bubble" class="info-bubble" data-translate-key="info_bubble_toolkit"></div>
+                            </div>
                         </div>
                         <div class="flex items-center space-x-2 no-print">
                             <button id="expand-all-toolkit" class="text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
@@ -487,7 +518,7 @@
 <script>
     /***************************************************************************************
      * Interactive CV Application - Carlos A. Muñoz
-     * Version: 5.7 (July 2025) - Translation & Icon Refresh
+     * Version: 5.9 (July 2025) - Tooltip & Layout Finalization
      *
      * Intellectual Property Notice:
      * This document and its contents, including the code, design, and textual information,
@@ -713,7 +744,7 @@
                             pt: [ 'Foquei no desenvolvimento de projetos de clientes, oferecendo produtos padrão e serviços de integração em toda a América Latina.', 'Desenvolvi o canal de negócios diretos, aumentando as contas existentes e prospectando novos clientes.', 'Visitei clientes com kits de demonstração e materiais bem preparados para apresentar soluções técnicas.', 'Trabalhei em estreita colaboração com as equipes de marketing e técnica para alinhar as estratégias de vendas com as capacidades do produto.', 'Mantive e atualizei o banco de dados do CRM, gerenciei os pipelines de vendas e fechei pedidos.' ],
                             de: [ 'Fokus auf die Entwicklung von Kundenprojekten, Angebot von Standardprodukten und Integrationsdiensten in ganz Lateinamerika.', 'Entwicklung des direkten Geschäftskanals durch Ausbau bestehender Konten und Akquise neuer Kunden.', 'Besuch von Kunden mit gut vorbereiteten Demo-Kits und Materialien zur Präsentation technischer Lösungen.', 'Enge Zusammenarbeit mit Marketing- und Technik-Teams zur Abstimmung der Vertriebsstrategien auf die Produktfähigkeiten.', 'Pflege und Aktualisierung der CRM-Datenbank, Verwaltung der Vertriebspipelines und Abschluss von Aufträgen.' ],
                             fr: [ 'Concentration sur le développement de projets clients, en proposant des produits standard et des services d\'intégration dans toute l\'Amérique latine.', 'Développement du canal de vente directe en développant les comptes existants et en prospectant de nouveaux clients.', 'Visites chez les clients avec des kits de démonstration et du matériel bien préparés pour présenter les solutions techniques.', 'Collaboration étroite avec les équipes marketing et techniques pour aligner les stratégies de vente sur les capacités des produits.', 'Tenue à jour de la base de données CRM, gestion des pipelines de vente et conclusion des commandes.' ],
-                            it: [ 'Mi sono concentrato sullo sviluppo di progetti per i clienti, offrendo prodotti standard e servizi di integrazione in tutta l\'America Latina.', 'Ho sviluppato il canale commerciale diretto facendo crescere i conti esistenti e cercando nuovi clienti.', 'Ho visitato i clienti con kit dimostrativi e materiali ben preparati per presentare le soluzioni tecniche.', 'Ho lavorato a stretto contatto con i team di marketing e tecnici per allineare le strategie di vendita con le capacità del prodotto.', 'Ho mantenuto e aggiornato il database CRM, gestito le pipeline di vendita e chiuso gli ordini.' ]
+                            it: [ 'Mi sono concentrato sullo sviluppo di progetti per i clienti, offrendo prodotti standard e servizi di integrazione in tutta l\'America Latina.', 'Ho sviluppato il canale commerciale diretto facendo crescere i conti esistenti e cercando nuovi clienti.', 'Ho visitato i clienti con kit dimostrativi e materiali ben preparati per presentare le soluzioni tecniche.', 'Ho lavorato a stretto contatto con i team di marketing e tecnici per alinear le strategie di vendita con le capacità del prodotto.', 'Ho mantenuto e aggiornato il database CRM, gestito le pipeline di vendita e chiuso gli ordini.' ]
                         },
                         techUsed: ['Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
@@ -734,7 +765,7 @@
                         details: {
                             en: [ 'Oversaw all aspects of solution development, from concept ideation through development, launch, and maintenance.', 'Provided leadership and strategic guidance to development, account, and executive management teams.', 'Interfaced with cross-functional teams to ensure consistency in solution development and implementation.', 'Promoted the use of strategic solutions and offerings by the business development community.', 'Developed and grew the portfolio of solutions and offerings to increase company productivity and profits.' ],
                             es: [ 'Supervisé todos los aspectos del desarrollo de soluciones, desde la ideación del concepto hasta el desarrollo, lanzamiento y mantenimiento.', 'Proporcioné liderazgo y orientación estratégica a los equipos de desarrollo, cuentas y dirección ejecutiva.', 'Interactué con equipos multifuncionales para asegurar la coherencia en el desarrollo e implementación de soluciones.', 'Promoví el uso de soluciones y ofertas estratégicas por parte de la comunidad de desarrollo de negocios.', 'Desarrollé e hice crecer la cartera de soluciones y ofertas para aumentar la productividad y los beneficios de la empresa.' ],
-                            pt: [ 'Supervisionei todos os aspectos do desenvolvimento de soluções, desde a concepção do conceito até o desenvolvimento, lançamento e manutenção.', 'Forneci liderança e orientação estratégica para as equipes de desenvolvimento, contas e gestão executiva.', 'Interagi com equipes multifuncionais para garantir a consistência no desenvolvimento e implementação de soluções.', 'Promovi o uso de soluções e ofertas estratégicas pela comunidade de desenvolvimento de negócios.', 'Desenvolvi e expandi o portfólio de soluções e ofertas para aumentar la produtividade e os lucros da empresa.' ],
+                            pt: [ 'Supervisionei todos os aspectos do desenvolvimento de soluções, desde a concepção do conceito até o desenvolvimento, lançamento e manutenção.', 'Forneci liderança e orientação estratégica para as equipes de desenvolvimento, contas e gestão executiva.', 'Interagi com equipes multifuncionais para garantir la consistência no desenvolvimento e implementação de soluções.', 'Promovi o uso de soluções e ofertas estratégicas pela comunidade de desenvolvimento de negócios.', 'Desenvolvi e expandi o portfólio de soluções e ofertas para aumentar la produtividade e os lucros da empresa.' ],
                             de: [ 'Überwachung aller Aspekte der Lösungsentwicklung, von der Konzeption über die Entwicklung, Einführung und Wartung.', 'Bereitstellung von Führung und strategischer Anleitung für Entwicklungs-, Account- und Geschäftsleitungsteams.', 'Schnittstelle zu funktionsübergreifenden Teams, um die Konsistenz bei der Entwicklung und Implementierung von Lösungen zu gewährleisten.', 'Förderung der Nutzung strategischer Lösungen und Angebote durch die Geschäftsentwicklungsgemeinschaft.', 'Entwicklung und Ausbau des Portfolios an Lösungen und Angeboten zur Steigerung der Unternehmensproduktivität und des Gewinns.' ],
                             fr: [ 'Supervision de tous les aspects du développement de solutions, de l\'idéation du concept au développement, au lancement et à la maintenance.', 'Fourniture d\'un leadership et d\'une orientation stratégique aux équipes de développement, de compte et de direction.', 'Interface avec les équipes interfonctionnelles pour assurer la cohérence dans le développement и la mise en œuvre des solutions.', 'Promotion de l\'utilisation de solutions et d\'offres stratégiques par la communauté du développement commercial.', 'Développement et croissance du portefeuille de solutions et d\'offres pour augmenter la productivité et les bénéfices de l\'entreprise.' ],
                             it: [ 'Ho supervisionato tutti gli aspetti dello sviluppo della soluzione, dall\'ideazione del concetto allo sviluppo, al lancio e alla manutenzione.', 'Ho fornito leadership e guida strategica ai team di sviluppo, account e direzione esecutiva.', 'Mi sono interfacciato con team interfunzionali per garantire la coerenza nello sviluppo e nell\'implementazione della soluzione.', 'Ho promosso l\'uso di soluzioni e offerte strategiche da parte della comunità di sviluppo aziendale.', 'Ho sviluppato e fatto crescere il portafoglio di soluzioni e offerte per aumentare la produttività e i profitti dell\'azienda.' ]
@@ -777,21 +808,81 @@
                 translations: {
                     en: {
                         job_title: "Senior IT Project Manager, QA Architect & QA Leader", contact_title: "Contact", competencies_title: "Core Competencies", competency_pm: "IT Project Management", competency_qa: "QA & Test Automation", competency_lead: "Team Leadership & Mentoring", competency_devops: "CI/CD & DevOps Strategy", competency_cloud: "Cloud Platforms (AWS, Azure, GCP)", competency_strategy: "Strategic Business Acumen", competency_relations: "Stakeholder & Client Relations", languages_title: "Languages", lang_native: "Native", lang_fluent: "Fluent", lang_basic: "Basic", lang_others: "Others", summary_title: "Professional Summary", summary_text: "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.", summary_detail_1: "Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.", summary_detail_2: "As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.", toolkit_title: "Technical & Management Toolkit", toolkit_pm: "Project Management & Methodologies:", toolkit_qa: "QA & Test Automation:", toolkit_lang: "Programming & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Databases & APIs:", toolkit_analytics: "Analytics & Monitoring:", toolkit_platform: "Platforms & Business Tools:", toolkit_system: "General & System Tools:", experience_title: "Professional Experience", education_title: "Education & Certifications", infographics_title: "Career at a Glance", infographics_competencies_title: "Core Competencies", infographics_methodologies_title: "Methodologies & Processes", infographics_timeline_title: "Career Timeline",
+                        info_bubble_contact: "Click any contact link to open the corresponding application (Email, WhatsApp, etc.).",
+                        info_bubble_toolkit: "Click any skill to filter the experience list. Click again to deselect, or use 'Reset' to clear all.",
+                        tooltip_print: "Print / PDF",
+                        tooltip_timeline: "Click to jump to %COMPANY% experience",
+                        tooltip_lang_en: "Translate to English",
+                        tooltip_lang_es: "Translate to Spanish",
+                        tooltip_lang_pt: "Translate to Portuguese",
+                        tooltip_lang_de: "Translate to German",
+                        tooltip_lang_fr: "Translate to French",
+                        tooltip_lang_it: "Translate to Italian"
                     },
                     es: {
                         job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA", contact_title: "Contacto", competencies_title: "Competencias Clave", competency_pm: "Gestión de Proyectos de TI", competency_qa: "QA y Automatización de Pruebas", competency_lead: "Liderazgo y Mentoría de Equipos", competency_devops: "Estrategia de CI/CD y DevOps", competency_cloud: "Plataformas en la Nube", competency_strategy: "Visión Estratégica de Negocio", competency_relations: "Relaciones con Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluido", lang_basic: "Básico", lang_others: "Otros", summary_title: "Resumen Profesional", summary_text: "Un Gerente Senior de Proyectos de TI y Arquitecto de QA con más de dos décadas de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de stakeholders y liderazgo de equipos multifuncionales para alcanzar los objetivos del proyecto. Habilidad demostrada para diseñar e implementar robustos marcos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos.", summary_detail_1: "A lo largo de mi carrera, he defendido un enfoque holístico de la calidad, integrando los procesos de QA en cada etapa del SDLC. Como Arquitecto de QA, me especializo en diseñar marcos de automatización escalables, mantenibles y eficientes desde cero, adaptados a las necesidades específicas del producto y la pila tecnológica. Mi experiencia se extiende a la selección de las herramientas óptimas, el establecimiento de las mejores prácticas y la creación de integraciones de CI/CD que proporcionan retroalimentación rápida y fiable a los equipos de desarrollo, reduciendo significativamente los ciclos de regresión y acelerando el tiempo de comercialización.", summary_detail_2: "Como Gerente de Proyectos y Líder, sobresalgo en la creación y mentoría de equipos multiculturales de alto rendimiento. Tengo un historial probado en la gestión de carteras de proyectos multimillonarios, la mitigación de riesgos y la alineación de la ejecución técnica con la estrategia empresarial a nivel ejecutivo. Mi filosofía de liderazgo se centra en la comunicación clara, el empoderamiento y el fomento de un entorno colaborativo donde cada miembro del equipo está motivado para contribuir con su mejor trabajo. Mi dominio del inglés a nivel C2 y mis habilidades multilingües me permiten gestionar sin problemas equipos y stakeholders globales.", toolkit_title: "Herramientas Técnicas y de Gestión", toolkit_pm: "Gestión de Proyectos y Metodologías:", toolkit_qa: "QA y Automatización de Pruebas:", toolkit_lang: "Programación y Scripting:", toolkit_cloud: "Nube, CI/CD y DevOps:", toolkit_db: "Bases de Datos y APIs:", toolkit_analytics: "Analítica y Monitoreo:", toolkit_platform: "Plataformas y Herramientas de Negocio:", toolkit_system: "Herramientas Generales y de Sistema:", experience_title: "Experiencia Profesional", education_title: "Educación y Certificaciones", infographics_title: "Carrera en un Vistazo", infographics_competencies_title: "Competencias Clave", infographics_methodologies_title: "Metodologías y Procesos", infographics_timeline_title: "Línea de Tiempo Profesional",
+                        info_bubble_contact: "Haga clic en cualquier enlace de contacto para abrir la aplicación correspondiente (Email, WhatsApp, etc.).",
+                        info_bubble_toolkit: "Haga clic en cualquier habilidad para filtrar la lista de experiencias. Haga clic de nuevo para deseleccionar, o use 'Restablecer' para borrar todo.",
+                        tooltip_print: "Imprimir / PDF",
+                        tooltip_timeline: "Haga clic para saltar a la experiencia de %COMPANY%",
+                        tooltip_lang_en: "Traducir a Inglés",
+                        tooltip_lang_es: "Traducir a Español",
+                        tooltip_lang_pt: "Traducir a Portugués",
+                        tooltip_lang_de: "Traducir a Alemán",
+                        tooltip_lang_fr: "Traducir a Francés",
+                        tooltip_lang_it: "Traducir a Italiano"
                     },
                     pt: {
                         job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA", contact_title: "Contato", competencies_title: "Principais Competências", competency_pm: "Gerenciamento de Projetos de TI", competency_qa: "QA e Automação de Testes", competency_lead: "Liderança e Mentoria de Equipes", competency_devops: "Estratégia de CI/CD e DevOps", competency_cloud: "Plataformas de Nuvem", competency_strategy: "Acume Estratégico de Negócios", competency_relations: "Relações com Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Básico", lang_others: "Outros", summary_title: "Resumo Profissional", summary_text: "Um Gerente de Projetos de TI Sênior e Arquiteto de QA com mais de duas décadas de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais para atingir as metas dos projetos. Capacidade comprovada de arquitetar e implementar robustos frameworks de automação de QA (Selenium, Cypress, Kotlin), garantindo qualidade de produto e eficiência excepcionais para clientes como Autodesk, AT&T e Sophos.", summary_detail_1: "Ao longo da minha carreira, defendi uma abordagem holística da qualidade, incorporando processos de QA em todas as fases do SDLC. Como Arquiteto de QA, especializo-me em projetar frameworks de automação escaláveis, de fácil manutenção e eficientes a partir do zero, adaptados às necessidades específicas do produto e da pilha tecnológica. Minha experiência abrange a seleção das ferramentas ideais, o estabelecimento das melhores práticas e a criação de integrações de CI/CD que fornecem feedback rápido e confiável às equipes de desenvolvimento, reduzindo significativamente os ciclos de regressão e acelerando o tempo de lançamento no mercado.", summary_detail_2: "Como Gerente de Projetos e Líder, destaco-me na criação e mentoria de equipes multiculturais de alto desempenho. Tenho um histórico comprovado no gerenciamento de portfólios de projetos multimilionários, na mitigação de riscos e no alinhamento da execução técnica com a estratégia de negócios em nível executivo. Minha filosofia de liderança é centrada na comunicação clara, no empoderamento e na promoção de um ambiente colaborativo donde cada membro da equipe se sinta motivado a contribuir com seu melhor trabalho. Minha proficiência em inglês C2 e minhas habilidades multilíngues me permitem gerenciar equipes e stakeholders globais sem problemas.", toolkit_title: "Kit de Ferramentas Técnicas e de Gestão", toolkit_pm: "Gerenciamento de Projetos e Metodologias:", toolkit_qa: "QA e Automação de Testes:", toolkit_lang: "Programação e Scripting:", toolkit_cloud: "Nuvem, CI/CD e DevOps:", toolkit_db: "Bancos de Dados e APIs:", toolkit_analytics: "Análise e Monitoramento:", toolkit_platform: "Plataformas e Ferramentas de Negócios:", toolkit_system: "Ferramentas Gerais e de Sistema:", experience_title: "Experiência Profissional", education_title: "Educação e Certificações", infographics_title: "Carreira em Resumo", infographics_competencies_title: "Competências Essenciais", infographics_methodologies_title: "Metodologias e Processos", infographics_timeline_title: "Linha do Tempo da Carreira",
+                        info_bubble_contact: "Clique em qualquer link de contato para abrir o aplicativo correspondente (E-mail, WhatsApp, etc.).",
+                        info_bubble_toolkit: "Clique em qualquer habilidade para filtrar a lista de experiências. Clique novamente para desmarcar ou use 'Redefinir' para limpar tudo.",
+                        tooltip_print: "Imprimir / PDF",
+                        tooltip_timeline: "Clique para ir para a experiência de %COMPANY%",
+                        tooltip_lang_en: "Traduzir para Inglês",
+                        tooltip_lang_es: "Traduzir para Espanhol",
+                        tooltip_lang_pt: "Traduzir para Português",
+                        tooltip_lang_de: "Traduzir para Alemão",
+                        tooltip_lang_fr: "Traduzir para Francês",
+                        tooltip_lang_it: "Traduzir para Italiano"
                     },
                     de: {
                         job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter", contact_title: "Kontakt", competencies_title: "Kernkompetenzen", competency_pm: "IT-Projektmanagement", competency_qa: "QS & Testautomatisierung", competency_lead: "Teamführung & Mentoring", competency_devops: "CI/CD & DevOps-Strategie", competency_cloud: "Cloud-Plattformen", competency_strategy: "Strategisches Geschäftsverständnis", competency_relations: "Stakeholder-Beziehungen", languages_title: "Sprachen", lang_native: "Muttersprache", lang_fluent: "Fließend", lang_basic: "Grundkenntnisse", lang_others: "Andere", summary_title: "Berufliches Profil", summary_text: "Ein Senior IT-Projektmanager und QA-Architekt mit über zwei Jahrzehnten Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams zur Erreichung der Projektziele. Nachgewiesene Fähigkeit, robuste QA-Automatisierungs-Frameworks (Selenium, Cypress, Kotlin) zu entwerfen und zu implementieren, um eine außergewöhnliche Produktqualität und Effizienz für Kunden wie Autodesk, AT&T und Sophos zu gewährleisten.", summary_detail_1: "Während meiner gesamten Laufbahn habe ich einen ganzheitlichen Qualitätsansatz verfolgt und QS-Prozesse in jede Phase des SDLC integriert. Als QA-Architekt bin ich darauf spezialisiert, skalierbare, wartbare und effiziente Automatisierungs-Frameworks von Grund auf zu entwerfen, die auf die spezifischen Bedürfnisse des Produkts und des Technologie-Stacks zugeschnitten sind. Meine Expertise erstreckt sich auf die Auswahl der optimalen Werkzeuge, die Etablierung von Best Practices und die Erstellung von CI/CD-Integrationen, die den Entwicklungsteams schnelles und zuverlässiges Feedback liefern, was die Regressionszyklen erheblich verkürzt und die Markteinführungszeit beschleunigt.", summary_detail_2: "Als Projektmanager und Führungskraft zeichne ich mich durch den Aufbau und das Mentoring von leistungsstarken, kulturübergreifenden Teams aus. Ich habe eine nachgewiesene Erfolgsbilanz in der Verwaltung von Multimillionen-Dollar-Projektportfolios, der Risikominderung und der Abstimmung der technischen Ausführung mit der Geschäftsstrategie auf Führungsebene. Meine Führungsphilosophie basiert auf klarer Kommunikation, Ermächtigung und der Förderung eines kollaborativen Umfelds, in dem jedes Teammitglied motiviert ist, seine beste Arbeit zu leisten. Meine C2-Englischkenntnisse und meine Mehrsprachigkeit ermöglichen es mir, globale Teams und Stakeholder nahtlos zu managen.", toolkit_title: "Technisches & Management-Toolkit", toolkit_pm: "Projektmanagement & Methoden:", toolkit_qa: "QS & Testautomatisierung:", toolkit_lang: "Programmierung & Skripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Datenbanken & APIs:", toolkit_analytics: "Analyse & Überwachung:", toolkit_platform: "Plattformen & Geschäftstools:", toolkit_system: "Allgemeine & System-Tools:", experience_title: "Berufserfahrung", education_title: "Ausbildung & Zertifizierungen", infographics_title: "Karriere im Überblick", infographics_competencies_title: "Kernkompetenzen", infographics_methodologies_title: "Methoden & Prozesse", infographics_timeline_title: "Beruflicher Werdegang",
+                        info_bubble_contact: "Klicken Sie auf einen Kontaktlink, um die entsprechende Anwendung zu öffnen (E-Mail, WhatsApp, etc.).",
+                        info_bubble_toolkit: "Klicken Sie auf eine Fähigkeit, um die Erfahrungsliste zu filtern. Klicken Sie erneut, um die Auswahl aufzuheben, oder verwenden Sie 'Zurücksetzen', um alles zu löschen.",
+                        tooltip_print: "Drucken / PDF",
+                        tooltip_timeline: "Klicken, um zur Erfahrung von %COMPANY% zu springen",
+                        tooltip_lang_en: "Auf Englisch übersetzen",
+                        tooltip_lang_es: "Auf Spanisch übersetzen",
+                        tooltip_lang_pt: "Auf Portugiesisch übersetzen",
+                        tooltip_lang_de: "Auf Deutsch übersetzen",
+                        tooltip_lang_fr: "Auf Französisch übersetzen",
+                        tooltip_lang_it: "Auf Italienisch übersetzen"
                     },
                     fr: {
                         job_title: "Chef de Projet IT Senior, Architecte QA & Leader QA", contact_title: "Contact", competencies_title: "Compétences Clés", competency_pm: "Gestion de Projets IT", competency_qa: "AQ & Automatisation des Tests", competency_lead: "Leadership d'Équipe & Mentorat", competency_devops: "Stratégie CI/CD & DevOps", competency_cloud: "Plateformes Cloud", competency_strategy: "Acuité Commerciale Stratégique", competency_relations: "Relations avec les Parties Prenantes", languages_title: "Langues", lang_native: "Natif", lang_fluent: "Courant", lang_basic: "Basique", lang_others: "Autres", summary_title: "Résumé Professionnel", summary_text: "Un chef de projet informatique senior et architecte QA avec plus de deux décennies d'expérience dans la fourniture de solutions logicielles complexes et de haute qualité pour les leaders technologiques mondiaux. Expert en planification stratégique, en gestion des parties prenantes et en direction d'équipes interfonctionnelles pour atteindre les objectifs du projet. Capacité prouvée à concevoir et à mettre en œuvre des cadres d'automatisation QA robustes (Selenium, Cypress, Kotlin), garantissant une qualité de produit et une efficacité exceptionnelles pour des clients comme Autodesk, AT&T et Sophos.", summary_detail_1: "Tout au long de ma carrière, j'ai défendu une approche holistique de la qualité, en intégrant les processus d'AQ à chaque étape du cycle de vie du développement logiciel (SDLC). En tant qu'Architecte QA, je me spécialise dans la conception de cadres d'automatisation évolutifs, maintenables et efficaces à partir de zéro, adaptés aux besoins spécifiques du produit et de la pile technologique. Mon expertise s'étend à la sélection des outils optimaux, à l'établissement des meilleures pratiques et à la création d'intégrations CI/CD qui fournissent un retour d'information rapide et fiable aux équipes de développement, réduisant ainsi considérablement les cycles de régression et accélérant la mise sur le marché.", summary_detail_2: "En tant que Chef de Projet et Leader, j'excelle dans la constitution et le mentorat d'équipes multiculturelles très performantes. J'ai une expérience avérée dans la gestion de portefeuilles de projets de plusieurs millions de dollars, l'atténuation des risques et l'alignement de l'exécution technique avec la stratégie commerciale au niveau de la direction. Ma philosophie de leadership est centrée sur une communication claire, l'autonomisation et la promotion d'un environnement collaboratif où chaque membre de l'équipe est motivé à donner le meilleur de lui-même. Ma maîtrise de l'anglais au niveau C2 et mes compétences multilingues me permettent de gérer sans problème des équipes et des parties prenantes mondiales.", toolkit_title: "Boîte à Outils Technique & de Gestion", toolkit_pm: "Gestion de Projet & Méthodologies:", toolkit_qa: "AQ & Automatisation des Tests:", toolkit_lang: "Programmation & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Bases de Données & APIs:", toolkit_analytics: "Analyse & Surveillance:", toolkit_platform: "Plateformes & Outils Métier:", toolkit_system: "Outils Généraux & Système:", experience_title: "Expérience Professionnelle", education_title: "Formation & Certifications", infographics_title: "Carrière en un coup d'œil", infographics_competencies_title: "Compétences de base", infographics_methodologies_title: "Méthodologies & Processus", infographics_timeline_title: "Chronologie de carrière",
+                        info_bubble_contact: "Cliquez sur un lien de contact pour ouvrir l'application correspondante (Email, WhatsApp, etc.).",
+                        info_bubble_toolkit: "Cliquez sur une compétence pour filtrer la liste d'expériences. Cliquez à nouveau pour désélectionner, ou utilisez 'Réinitialiser' pour tout effacer.",
+                        tooltip_print: "Imprimer / PDF",
+                        tooltip_timeline: "Cliquez pour accéder à l'expérience de %COMPANY%",
+                        tooltip_lang_en: "Traduire en Anglais",
+                        tooltip_lang_es: "Traduire en Espagnol",
+                        tooltip_lang_pt: "Traduire en Portugais",
+                        tooltip_lang_de: "Traduire en Allemand",
+                        tooltip_lang_fr: "Traduire en Français",
+                        tooltip_lang_it: "Traduire en Italien"
                     },
                     it: {
                         job_title: "Senior IT Project Manager, Architetto QA e Leader QA", contact_title: "Contatto", competencies_title: "Competenze Chiave", competency_pm: "Gestione di Progetti IT", competency_qa: "QA & Automazione dei Test", competency_lead: "Leadership di Team & Mentoring", competency_devops: "Strategia CI/CD & DevOps", competency_cloud: "Piattaforme Cloud", competency_strategy: "Acume Strategico Aziendale", competency_relations: "Relazioni con gli Stakeholder", languages_title: "Lingue", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Base", lang_others: "Altre", summary_title: "Riepilogo Professionale", summary_text: "Un Senior IT Project Manager e Architetto QA con oltre due decenni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali per raggiungere gli obiettivi di progetto. Comprovata capacità di architettare e implementare robusti framework di automazione QA (Selenium, Cypress, Kotlin), garantendo una qualità del prodotto e un'efficienza eccezionali per clienti come Autodesk, AT&T e Sophos.", summary_detail_1: "Nel corso della mia carriera, ho promosso un approccio olistico alla qualità, integrando i processi di QA in ogni fase del SDLC. In qualità di Architetto QA, sono specializzato nella progettazione di framework di automazione scalabili, manutenibili ed efficienti da zero, su misura per le esigenze specifiche del prodotto e dello stack tecnologico. La mia esperienza si estende alla selezione degli strumenti ottimali, alla definizione delle migliori pratiche e alla creazione di integrazioni CI/CD che forniscono un feedback rapido e affidabile ai team di sviluppo, riducendo significativamente i cicli di regressione e accelerando il time-to-market.", summary_detail_2: "Come Project Manager e Leader, eccello nella creazione e nel mentoring di team multiculturali ad alte prestazioni. Ho una comprovata esperienza nella gestione di portafogli di progetti multimilionari, nella mitigazione dei rischi e nell'allineamento dell'esecuzione tecnica con la strategia aziendale a livello esecutivo. La mia filosofia di leadership è incentrata sulla comunicazione chiara, sull'empowerment e sulla promozione di un ambiente collaborativo in cui ogni membro del team è motivato a contribuire al meglio. La mia padronanza dell'inglese a livello C2 e le mie capacità multilingue mi consentono di gestire senza problemi team e stakeholder globali.", toolkit_title: "Toolkit Tecnico e Gestionale", toolkit_pm: "Gestione Progetti & Metodologie:", toolkit_qa: "QA & Automazione dei Test:", toolkit_lang: "Programmazione & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Database & API:", toolkit_analytics: "Analisi e Monitoraggio:", toolkit_platform: "Piattaforme & Strumenti Aziendali:", toolkit_system: "Strumenti Generali & di Sistema:", experience_title: "Esperienza Professionale", education_title: "Formazione & Certificazioni", infographics_title: "Carriera in Sintesi", infographics_competencies_title: "Competenza chiave", infographics_methodologies_title: "Metodologie e Processi", infographics_timeline_title: "Cronologia della Carriera",
+                        info_bubble_contact: "Fai clic su qualsiasi link di contatto per aprire l'applicazione corrispondente (Email, WhatsApp, ecc.).",
+                        info_bubble_toolkit: "Fai clic su una competenza per filtrare l'elenco delle esperienze. Fai di nuovo clic per deselezionare o usa 'Ripristina' per cancellare tutto.",
+                        tooltip_print: "Stampa / PDF",
+                        tooltip_timeline: "Fai clic per passare all'esperienza di %COMPANY%",
+                        tooltip_lang_en: "Traduci in Inglese",
+                        tooltip_lang_es: "Traduci in Spagnolo",
+                        tooltip_lang_pt: "Traduci in Portoghese",
+                        tooltip_lang_de: "Traduci in Tedesco",
+                        tooltip_lang_fr: "Traduci in Francese",
+                        tooltip_lang_it: "Traduci in Italiano"
                     }
                 },
             },
@@ -964,7 +1055,7 @@
 
             _generateSingleDatasetRadar(container, data, fillColor, strokeColor) {
                 if (!container) return;
-                const size = 288; // Increased size for more space
+                const size = 288;
                 const center = size / 2;
                 const radius = size * 0.3;
                 const labels = data.map(d => d.label);
@@ -987,8 +1078,8 @@
                 let labelElements = '';
                 labels.forEach((label, i) => {
                     const angle = angleSlice * i - Math.PI / 2;
-                    const labelX = center + (radius + 35) * Math.cos(angle); // Increased distance
-                    const labelY = center + (radius + 35) * Math.sin(angle); // Increased distance
+                    const labelX = center + (radius + 35) * Math.cos(angle);
+                    const labelY = center + (radius + 35) * Math.sin(angle);
 
                     const words = label.split(' ');
                     let tspans = '';
@@ -1029,7 +1120,7 @@
 
                     content += `
                         <div class="timeline-item block p-2 rounded-md" data-tech='${JSON.stringify(exp.techUsed)}' id="timeline-exp-${index}">
-                            <div class="tooltip w-full">
+                            <div class="tooltip w-full" data-company-name="${exp.company}">
                                 <a href="#experience-${index}" class="hover:bg-gray-100 dark:hover:bg-gray-700 block p-1 rounded-md">
                                     <p class="font-bold text-sm">${exp.title}</p>
                                     <div class="flex items-center gap-2 text-xs">
@@ -1039,7 +1130,7 @@
                                     </div>
                                     <div class="timeline-tech-icons">${techIcons}</div>
                                 </a>
-                                <span class="tooltiptext">Click to jump to ${exp.company} experience</span>
+                                <span class="tooltiptext" data-translate-key="tooltip_timeline"></span>
                             </div>
                         </div>
                     `;
@@ -1104,13 +1195,26 @@
             translatePage(lang) {
                 const translation = this.data.translations[lang];
                 if (!translation) return;
+
                 this.state.lang = lang;
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.getAttribute('data-translate-key');
                     if (translation[key]) {
-                        el.innerHTML = translation[key];
+                        let text = translation[key];
+                        // Handle dynamic placeholders for timeline tooltips
+                        if (key === 'tooltip_timeline') {
+                            const tooltipDiv = el.closest('.tooltip');
+                            if (tooltipDiv) {
+                                const companyName = tooltipDiv.dataset.companyName;
+                                if (companyName) {
+                                    text = text.replace('%COMPANY%', companyName);
+                                }
+                            }
+                        }
+                        el.innerHTML = text;
                     }
                 });
+
                 this.renderInfographics(); // Re-render charts for tooltip translation
             },
 
