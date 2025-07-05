@@ -1,0 +1,28 @@
+# Name of the workflow
+name: Lint Code Base
+
+# Run this workflow on every push and pull request
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history for a deeper linting check
+          fetch-depth: 0
+
+      - name: Run Super-Linter
+        uses: github/super-linter@v6
+        env:
+          # This tells the linter to only scan files that have changed
+          VALIDATE_ALL_CODE_BASE: false
+          # Your repository's default branch
+          DEFAULT_BRANCH: main
+          # Required for Super-Linter to work
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
