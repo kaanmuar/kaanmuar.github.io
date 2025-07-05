@@ -237,8 +237,11 @@
         .dark-mode #theme-toggle .moon-icon { display: none; }
         /* Radar chart tooltip */
         .radar-label:hover {
-            cursor: help;
             font-weight: bold;
+            text-decoration: underline;
+            text-decoration-color: var(--cyan-brand);
+            text-decoration-thickness: 2px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -389,17 +392,15 @@
                     <h2 id="infographics-heading" class="text-xl font-bold border-b-4 pb-2 mb-6" data-translate-key="infographics_title">Career at a Glance</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         <!-- Left Column: Graphs -->
-                        <div class="space-y-8">
-                            <section aria-labelledby="competencies-graph-heading">
-                                <h3 id="competencies-graph-heading" class="text-base font-semibold mb-2 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
-                                <div id="competencies-radar-chart" class="relative w-full max-w-sm mx-auto h-64" role="img" aria-label="Radar chart showing core competency scores."></div>
+                        <div>
+                            <section aria-labelledby="competencies-graph-heading" class="mb-20">
+                                <h3 id="competencies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
+                                <div id="competencies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing core competency scores."></div>
                             </section>
 
-                            <hr>
-
                             <section aria-labelledby="methodologies-graph-heading">
-                                <h3 id="methodologies-graph-heading" class="text-base font-semibold mb-2 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
-                                <div id="methodologies-radar-chart" class="relative w-full max-w-sm mx-auto h-64" role="img" aria-label="Radar chart showing methodology and process scores."></div>
+                                <h3 id="methodologies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
+                                <div id="methodologies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing methodology and process scores."></div>
                             </section>
                         </div>
                         <!-- Right Column: Timeline -->
@@ -486,7 +487,7 @@
 <script>
     /***************************************************************************************
      * Interactive CV Application - Carlos A. Muñoz
-     * Version: 5.5 (July 2025) - Event Tracking Update
+     * Version: 5.7 (July 2025) - Translation & Icon Refresh
      *
      * Intellectual Property Notice:
      * This document and its contents, including the code, design, and textual information,
@@ -514,7 +515,7 @@
                         { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/jira/0052CC' },
                         { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/testrail/78C644' },
                         { name: 'MS Project', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/microsoftproject/217346' },
-                        { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'https://www.nicepng.com/png/detail/379-3791220_capability-maturity-model-integration-cmmi-logo.png' },
+                        { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/business-process-management-icon.svg' },
                         { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/iso/000000' }
                     ],
                     qa: [
@@ -524,13 +525,13 @@
                         { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/appium/F15367' },
                         { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'https://cdn.simpleicons.org/robotframework/000000' },
                         { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/cucumber/23D96C' },
-                        { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'https://d1h21p1xurcv3e.cloudfront.net/images/logos/katalon.svg' },
+                        { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/katalon/008742' },
                         { name: 'Puppeteer', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/puppeteer/40B5A4' },
                         { name: 'JMeter', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/apachejmeter/D22128' },
                         { name: 'Gatling', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/gatling/E77734' },
                         { name: 'JUnit', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/junit5/2596BE' },
-                        { name: 'Tosca', stars: 3, years: '6+ Yrs', icon: 'https://d1h21p1xurcv3e.cloudfront.net/images/logos/tosca.svg' },
-                        { name: 'Ranorex', stars: 3, years: '6+ Yrs', icon: 'https://www.ranorex.com/assets/images/layout/ranorex-logo.svg' },
+                        { name: 'Tosca', stars: 3, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/tricentis/13294B' },
+                        { name: 'Ranorex', stars: 3, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/ranorex/00AEEF' },
                     ],
                     lang: [
                         { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
@@ -565,8 +566,8 @@
                         { name: 'Postman', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/postman/FF6C37' },
                         { name: 'GraphQL', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/graphql/E10098' },
                         { name: 'Swagger', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/swagger/85EA2D' },
-                        { name: 'Rest Assured', stars: 4, years: '6+ Yrs', icon: 'https://avatars.githubusercontent.com/u/895831?s=200&v=4' },
-                        { name: 'SoapUI', stars: 3, years: '15+ Yrs', icon: 'https://static.smartbear.co/smartbearbrand/images/home/soapui-logo-2x.png' }
+                        { name: 'Rest Assured', stars: 4, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-testing-icon.svg' },
+                        { name: 'SoapUI', stars: 3, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/soapui/5286DE' }
                     ],
                     analytics: [
                         { name: 'Datadog', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/datadog/632CA6' },
@@ -578,7 +579,7 @@
                     ],
                     platform: [
                         { name: 'Salesforce', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/salesforce/00A1E0' },
-                        { name: 'MS Dynamics', stars: 3, years: '4+ Yrs', icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Microsoft_Dynamics_365_logo.svg/1200px-Microsoft_Dynamics_365_logo.svg.png' },
+                        { name: 'MS Dynamics', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/microsoftdynamics365/0065BF' },
                         { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/sap/008FD3' },
                         { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/zoho/E42525' },
                         { name: 'Shopify', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/shopify/7AB55C' },
@@ -586,9 +587,9 @@
                     ],
                     system: [
                         { name: 'Middleware', stars: 4, years: '8+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-icon.svg'},
-                        { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/datagrip/datagrip-original.svg'},
+                        { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/database-storage/database-icon.svg'},
                         { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/eclipseide/2C2255'},
-                        { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/devicon/devicon-original.svg'},
+                        { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/cygwin/000000'},
                         { name: 'Putty', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg'},
                         { name: 'Firebug', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebug/firebug-original.svg'},
                         { name: 'DHTML', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg'},
@@ -609,7 +610,7 @@
                         techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Tosca', 'Puppeteer', 'MS Dynamics', 'SAP', 'Zoho CRM', 'Shopify', 'Gatling', 'Power BI', 'Tableau', 'New Relic', 'Splunk', 'GraphQL']
                     },
                     {
-                        title: 'Senior Technical Project Manager & Consultant', company: 'RockStar Coders Agency', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/arts-graphic-designs/star-icon.svg', dates: 'Apr 2019 - Mar 2021',
+                        title: 'Senior Technical Project Manager & Consultant', company: 'RockStar Coders Agency', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/arts-graphic-designs/star-solid-icon.svg', dates: 'Apr 2019 - Mar 2021',
                         details: {
                             en: [ 'Provided technical project management and QA leadership for clients across 8+ projects, including for OverActive and the Afar Project.', 'Led QA strategy and execution, defining technical solutions to optimize testing processes and improve overall software delivery speed and quality.', 'Implemented robust automation frameworks using Kotlin, Selenium, and Appium, integrated into CI/CD pipelines with Jenkins and GitLab.', 'Collaborated closely with development and product management to ensure clear understanding of requirements and effective communication.', 'Proactively identified and mitigated potential risks to project success by implementing robust QA practices and risk management protocols.' ],
                             es: [ 'Proporcioné gestión técnica de proyectos y liderazgo de QA para clientes en más de 8 proyectos, incluyendo para OverActive y el Proyecto Afar.', 'Lideré la estrategia y ejecución de QA, definiendo soluciones técnicas para optimizar los procesos de prueba y mejorar la velocidad y calidad general de la entrega de software.', 'Implementé marcos de automatización robustos usando Kotlin, Selenium y Appium, integrados en pipelines de CI/CD con Jenkins y GitLab.', 'Colaboré estrechamente con los equipos de desarrollo y gestión de productos para asegurar una clara comprensión de los requisitos y una comunicación efectiva.', 'Identifiqué y mitigé proactivamente los riesgos potenciales para el éxito del proyecto mediante la implementación de prácticas de QA robustas y protocolos de gestión de riesgos.' ],
@@ -621,7 +622,7 @@
                         techUsed: ['Kanban', 'Agile', 'Risk Management', 'Selenium', 'Appium', 'Kotlin', 'Jenkins', 'GitLab', 'Jira', 'Scrum', 'Ranorex', 'Kubernetes', 'Terraform', 'GCP', 'Azure DevOps', 'Node.js', 'Ruby', 'PHP']
                     },
                     {
-                        title: 'Sr. Project Manager & QA Engineer', company: 'Globant', logo: 'https://cdn.simpleicons.org/globant/00A99D', dates: 'Apr 2017 - May 2018',
+                        title: 'Sr. Project Manager & QA Engineer', company: 'Globant', logo: 'https://static.globant.com/corp-media/2023/11/globant-logo-dark.svg', dates: 'Apr 2017 - May 2018',
                         details: {
                             en: [ 'Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account.', 'Managed test planning, resource estimation, and client communications, ensuring alignment with project timelines and deliverables.', 'Architected and spearheaded the development of a new QA automation framework using Kotlin, C# .Net, and Robot Framework.', 'Utilized AWS services (S3, EC2, Redshift, Athena) for managing test data and environments for Salesforce integration projects.', 'Performed complex data validation and manipulation using advanced SQL queries against Oracle and PostgreSQL databases.' ],
                             es: [ 'Lideré todos los esfuerzos de QA para proyectos de Salesforce Sales Cloud y Service Cloud para la cuenta de alto perfil de DirectvGO / AT&T.', 'Gestioné la planificación de pruebas, la estimación de recursos y las comunicaciones con el cliente, asegurando la alineación con los cronogramas y entregables del proyecto.', 'Diseñé y lideré el desarrollo de un nuevo marco de automatización de QA utilizando Kotlin, C# .Net y Robot Framework.', 'Utilicé servicios de AWS (S3, EC2, Redshift, Athena) para gestionar datos y entornos de prueba para proyectos de integración de Salesforce.', 'Realicé validación y manipulación de datos complejos utilizando consultas SQL avanzadas en bases de datos Oracle y PostgreSQL.' ],
@@ -633,11 +634,11 @@
                         techUsed: ['Salesforce', 'AWS', 'SQL', 'Kotlin', 'C#', '.NET', 'Robot Framework', 'Oracle', 'PostgreSQL', 'Jira', 'Agile', 'Kanban', 'Scrum', 'Cypress', 'Tosca', 'Katalon', 'Datadog', 'MongoDB']
                     },
                     {
-                        title: 'Sr. QA Engineer', company: 'Genius Sports', logo: 'https://cdn.simpleicons.org/geniussports/FF0000', dates: 'May 2016 - Apr 2017',
+                        title: 'Sr. QA Engineer', company: 'Genius Sports', logo: 'https://images.ctfassets.net/lm0nxqkzuy44/5Tf11xH42e8Yx2J9m2tN2X/16e6391b1060b2a9f5d3455431d9a040/gsg-logo-full-colour.svg', dates: 'May 2016 - Apr 2017',
                         details: {
                             en: [ 'Provided quality assistance by mentoring development teams on delivering high-quality software products for real-time sports data platforms.', 'Worked with Product Owners to define and refine user stories and acceptance criteria in a fast-paced Agile environment.', 'Developed and executed comprehensive test scripts, plans, and cases for both backend APIs and frontend applications.', 'Investigated and resolved complex defects, analyzing risk and impact on live data streams using Graylog and Grafana.', 'Contributed to the improvement of quality processes, focusing on early defect detection and prevention.' ],
                             es: [ 'Brindé asistencia de calidad mentorizando a los equipos de desarrollo en la entrega de productos de software de alta calidad para plataformas de datos deportivos en tiempo real.', 'Trabajé con los Product Owners para definir y refinar historias de usuario y criterios de aceptación en un entorno Agile de ritmo rápido.', 'Desarrollé y ejecuté scripts, planes y casos de prueba completos tanto para las API de backend como para las aplicaciones de frontend.', 'Investigué y resolví defectos complejos, analizando el riesgo y el impacto en los flujos de datos en vivo usando Graylog y Grafana.', 'Contribuí a la mejora de los procesos de calidad, centrándome en la detección temprana y prevención de defectos.' ],
-                            pt: [ 'Forneci assistência de qualidade, orientando equipes de desenvolvimento na entrega de produtos de software de alta qualidade para plataformas de dados esportivos em tempo real.', 'Trabalhei com os Product Owners para definir e refinar histórias de usuário e critérios de aceitação em um ambiente Agile de ritmo acelerado.', 'Desenvolvi e executei scripts, planos e casos de teste abrangentes para APIs de backend e aplicações de frontend.', 'Investiguei e resolvi defeitos complexos, analisando o risco e o impacto nos fluxos de dados ao vivo usando Graylog e Grafana.', 'Contribuí para a melhoria dos processos de qualidade, com foco na detecção precoce e prevenção de defeitos.' ],
+                            pt: [ 'Forneci assistência de qualidade, orientando equipes de desenvolvimento na entrega de produtos de software de alta qualidade para plataformas de dados esportivos em tempo real.', 'Trabalhei com os Product Owners para definir e refinar histórias de usuário e critérios de aceitação em um ambiente Agile de ritmo acelerado.', 'Desenvolvi e executei scripts, planos e casos de teste abrangentes para APIs de backend e aplicações de frontend.', 'Investiguei e resolvi defeitos complexos, analizando o risco e o impacto nos fluxos de dados ao vivo usando Graylog e Grafana.', 'Contribuí para a melhoria dos processos de qualidade, com foco na detecção precoce e prevenção de defeitos.' ],
                             de: [ 'Qualitätssicherung durch Mentoring von Entwicklungsteams bei der Bereitstellung hochwertiger Softwareprodukte für Echtzeit-Sportdatenplattformen.', 'Zusammenarbeit mit Product Ownern zur Definition und Verfeinerung von User Stories und Akzeptanzkriterien in einer schnelllebigen agilen Umgebung.', 'Entwicklung und Ausführung umfassender Testskripte, -pläne und -fälle für Backend-APIs und Frontend-Anwendungen.', 'Untersuchung und Behebung komplexer Fehler, Analyse von Risiken und Auswirkungen auf Live-Datenströme mit Graylog und Grafana.', 'Beitrag zur Verbesserung der Qualitätsprozesse mit Schwerpunkt auf frühzeitiger Fehlererkennung und -vermeidung.' ],
                             fr: [ 'Assistance qualité en encadrant les équipes de développement pour la livraison de produits logiciels de haute qualité pour les plateformes de données sportives en temps réel.', 'Collaboration avec les Product Owners pour définir et affiner les user stories et les critères d\'acceptation dans un environnement Agile rapide.', 'Développement et exécution de scripts, plans et cas de test complets pour les API backend et les applications frontend.', 'Enquête et résolution de défauts complexes, analyse des risques et de l\'impact sur les flux de données en direct à l\'aide de Graylog et Grafana.', 'Contribution à l\'amélioration des processus de qualité, en se concentrant sur la détection et la prévention précoces des défauts.' ],
                             it: [ 'Ho fornito assistenza alla qualità facendo da mentore ai team di sviluppo nella fornitura di prodotti software di alta qualità per piattaforme di dati sportivi in tempo real.', 'Ho lavorato con i Product Owner per definire e perfezionare le user story e i criteri di accettazione in un ambiente Agile dal ritmo serrato.', 'Ho sviluppato ed eseguito script, piani e casi di test completi sia per le API di backend che per le applicazioni frontend.', 'Ho indagato e risolto difetti complessi, analizzando il rischio e l\'impatto sui flussi di dati in tempo reale utilizzando Graylog e Grafana.', 'Ho contribuito al miglioramento dei processi di qualità, concentrandomi sulla rilevazione e prevenzione precoce dei difetti.' ]
@@ -645,7 +646,7 @@
                         techUsed: ['Agile', 'Jira', 'SQL', 'Postman', 'Grafana', 'Kanban', 'Scrum', 'Python', 'Cucumber', 'JMeter', 'Rest Assured', 'GitHub']
                     },
                     {
-                        title: 'Sr. Technical Architect', company: 'Zagalabs', logo: 'https://www.zagalabs.com/wp-content/uploads/2021/01/logo-zagalabs-300x118-1.png', dates: 'Aug 2015 - Mar 2016',
+                        title: 'Sr. Technical Architect', company: 'Zagalabs', logo: 'https://www.zagalabs.com/wp-content/uploads/2022/08/logo-zagalabs-black.svg', dates: 'Aug 2015 - Mar 2016',
                         details: {
                             en: [ 'Managed the overall testing scope for client projects, ensuring alignment with strategic business objectives.', 'Set program roadmaps, established project priorities, and resolved conflicts to enhance effectiveness towards business results.', 'Mentored and guided a matrixed team of onshore and offshore testing resources to ensure comprehensive test coverage.', 'Managed service aspects of the testing P&L, focusing on cost optimization and resource allocation based on governance guidelines.', 'Built direct relationships with customer stakeholders to ensure objectivity and promote continuous growth.' ],
                             es: [ 'Gestioné el alcance general de las pruebas para los proyectos de los clientes, asegurando la alineación con los objetivos estratégicos del negocio.', 'Establecí hojas de ruta de programas, fijé prioridades y resolví conflictos para mejorar la eficacia hacia los resultados de negocio.', 'Fui mentor y guié a un equipo matricial de recursos de prueba onshore y offshore para asegurar una cobertura de prueba completa.', 'Gestioné los aspectos de servicio del P&L de pruebas, centrándome en la optimización de costos y la asignación de recursos.', 'Construí relaciones directas con los stakeholders de los clientes para asegurar la objetividad y promover el crecimiento continuo.' ],
@@ -669,7 +670,7 @@
                         techUsed: ['Strategic Planning', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
                     {
-                        title: 'Sr. Project Manager', company: 'Bitgray', logo: 'https://bitgray.com/wp-content/uploads/2021/04/logo_bitgray_azul.svg', dates: 'Sep 2013 - Sep 2014',
+                        title: 'Sr. Project Manager', company: 'Bitgray', logo: 'https://bitgray.com/wp-content/uploads/2023/07/logo-bitgray-azul-v2.svg', dates: 'Sep 2013 - Sep 2014',
                         details: {
                             en: [ 'Managed a portfolio of complex enterprise software initiatives, spanning multiple lines of business.', 'Provided on-site leadership for project teams, building and motivating team members to meet project goals and milestones.', 'Owned the full project life cycle, from initiation and planning to successful deployment and post-launch support.', 'Managed all aspects of multiple related projects to ensure the overall program directly supported strategic objectives.', 'Reported project status, risks, and progress to executive leadership and stakeholders.' ],
                             es: [ 'Gestioné una cartera de complejas iniciativas de software empresarial, abarcando múltiples líneas de negocio.', 'Proporcioné liderazgo en el sitio para los equipos de proyecto, construyendo y motivando a los miembros del equipo para cumplir con los objetivos y plazos del proyecto.', 'Fui responsable del ciclo de vida completo del proyecto, desde el inicio y la planificación hasta el despliegue exitoso y el soporte posterior al lanzamiento.', 'Gestioné todos los aspectos de múltiples proyectos relacionados para asegurar que el programa general apoyara directamente los objetivos estratégicos.', 'Informé sobre el estado del proyecto, los riesgos y el progreso a la dirección ejecutiva y a los stakeholders.' ],
@@ -693,7 +694,7 @@
                         techUsed: ['Risk Management', 'ISO Standards', 'CISA', 'CISM', 'CISSP', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
                     {
-                        title: 'Sr. Hybrid QA Engineer / QA Lead', company: 'Prodigious LATAM (Razorfish)', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Razorfish_logo.svg/1200px-Razorfish_logo.svg.png', dates: 'Jun 2012 - Mar 2013',
+                        title: 'Sr. Hybrid QA Engineer / QA Lead', company: 'Prodigious LATAM (Razorfish)', logo: 'https://www.razorfish.com/images/rf-logo-black.svg', dates: 'Jun 2012 - Mar 2013',
                         details: {
                             en: [ 'Led QA efforts on projects for major US-based clients, leveraging a hybrid onshore/offshore model.', 'Wrote and executed complex manual and automated test scripts using tools like Selenium and Quality Center.', 'Performed extensive testing on front-end (HTML/CSS/DHTML/JavaScript) and back-end (Java/.NET) technologies.', 'Managed bug tracking and reporting using Jira and Bugzilla, ensuring clear communication with development teams.', 'Used Firebug for in-depth debugging and analysis of web applications.' ],
                             es: [ 'Lideré los esfuerzos de QA en proyectos para importantes clientes de EE. UU., aprovechando un modelo híbrido onshore/offshore.', 'Escribí y ejecuté complejos scripts de prueba manuales y automatizados utilizando herramientas como Selenium y Quality Center.', 'Realicé pruebas exhaustivas en tecnologías de front-end (HTML/CSS/DHTML/JavaScript) y back-end (Java/.NET).', 'Gestioné el seguimiento y reporte de errores usando Jira y Bugzilla, asegurando una comunicación clara con los equipos de desarrollo.', 'Utilicé Firebug para la depuración y análisis en profundidad de aplicaciones web.' ],
@@ -705,7 +706,7 @@
                         techUsed: ['Selenium', 'Jira', 'Bugzilla', 'Java', '.NET', 'DHTML', 'Firebug', 'Agile', 'Kanban', 'Scrum', 'SoapUI']
                     },
                     {
-                        title: 'ISE Engineer LATAM', company: 'Advantech', logo: 'https://www.advantech.com/images/logo_ADVANTECH_big.png', dates: 'Jan 2012 - Jul 2012',
+                        title: 'ISE Engineer LATAM', company: 'Advantech', logo: 'https://cdn.simpleicons.org/advantech/E60014', dates: 'Jan 2012 - Jul 2012',
                         details: {
                             en: [ 'Focused on customer project development, offering standard products and integration services across Latin America.', 'Developed the direct business channel by growing existing accounts and prospecting for new clients.', 'Visited customers with well-prepared demo kits and materials to showcase technical solutions.', 'Worked closely with marketing and technical teams to align sales strategies with product capabilities.', 'Maintained and updated the CRM database, managed sales pipelines, and closed orders.' ],
                             es: [ 'Me centré en el desarrollo de proyectos de clientes, ofreciendo productos estándar y servicios de integración en toda América Latina.', 'Desarrollé el canal de negocio directo aumentando las cuentas existentes y prospectando nuevos clientes.', 'Visité a los clientes con kits de demostración y materiales bien preparados para mostrar soluciones técnicas.', 'Trabajé en estrecha colaboración con los equipos de marketing y técnicos para alinear las estrategias de ventas con las capacidades del producto.', 'Mantuve y actualicé la base de datos de CRM, gestioné los pipelines de ventas y cerré pedidos.' ],
@@ -766,20 +767,12 @@
                     }
                 ],
                 radarTooltips: {
-                    en: {
-                        'Project Mgmt': 'Expertise in leading projects from initiation to completion, ensuring they meet scope, budget, and timeline requirements.',
-                        'QA & Automation': 'Deep knowledge in designing and implementing automated testing frameworks to ensure software quality and reliability.',
-                        'Leadership': 'Proven ability to mentor, manage, and motivate cross-functional teams to achieve high performance and project success.',
-                        'DevOps Strategy': 'Skilled in integrating development and operations to improve workflow, increase efficiency, and accelerate release cycles.',
-                        'Cloud Platforms': 'Proficient in leveraging major cloud providers (AWS, Azure, GCP) for scalable, resilient, and cost-effective infrastructure.',
-                        'Stakeholder Mgmt': 'Adept at managing communications and relationships with all stakeholders to ensure project alignment and buy-in.',
-                        'Agile': 'Extensive experience with Agile principles and practices to deliver value iteratively and adapt to changing requirements.',
-                        'Scrum': 'Certified expertise in managing projects using the Scrum framework for transparent, iterative, and collaborative development.',
-                        'Kanban': 'Utilizing Kanban for workflow visualization, managing flow, and continuous improvement to optimize delivery.',
-                        'CMMI': 'Knowledge of the Capability Maturity Model Integration framework to improve and standardize organizational processes.',
-                        'ISO Standards': 'Experience in implementing and adhering to ISO standards for quality management and information security.',
-                        'Risk Mgmt': 'Systematic approach to identifying, analyzing, and mitigating project risks to ensure successful outcomes.'
-                    }
+                    en: { 'Project Mgmt': 'Expertise in leading projects from initiation to completion, ensuring they meet scope, budget, and timeline requirements.', 'QA & Automation': 'Deep knowledge in designing and implementing automated testing frameworks to ensure software quality and reliability.', 'Leadership': 'Proven ability to mentor, manage, and motivate cross-functional teams to achieve high performance and project success.', 'DevOps Strategy': 'Skilled in integrating development and operations to improve workflow, increase efficiency, and accelerate release cycles.', 'Cloud Platforms': 'Proficient in leveraging major cloud providers (AWS, Azure, GCP) for scalable, resilient, and cost-effective infrastructure.', 'Stakeholder Mgmt': 'Adept at managing communications and relationships with all stakeholders to ensure project alignment and buy-in.', 'Agile': 'Extensive experience with Agile principles and practices to deliver value iteratively and adapt to changing requirements.', 'Scrum': 'Certified expertise in managing projects using the Scrum framework for transparent, iterative, and collaborative development.', 'Kanban': 'Utilizing Kanban for workflow visualization, managing flow, and continuous improvement to optimize delivery.', 'CMMI': 'Knowledge of the Capability Maturity Model Integration framework to improve and standardize organizational processes.', 'ISO Standards': 'Experience in implementing and adhering to ISO standards for quality management and information security.', 'Risk Mgmt': 'Systematic approach to identifying, analyzing, and mitigating project risks to ensure successful outcomes.' },
+                    es: { 'Project Mgmt': 'Experiencia en liderar proyectos desde el inicio hasta la finalización, asegurando que cumplan con el alcance, el presupuesto y los plazos.', 'QA & Automation': 'Profundo conocimiento en el diseño e implementación de marcos de pruebas automatizadas para garantizar la calidad y fiabilidad del software.', 'Leadership': 'Capacidad demostrada para orientar, gestionar y motivar equipos multifuncionales para lograr un alto rendimiento y el éxito del proyecto.', 'DevOps Strategy': 'Habilidad en la integración de desarrollo y operaciones para mejorar el flujo de trabajo, aumentar la eficiencia y acelerar los ciclos de lanzamiento.', 'Cloud Platforms': 'Competente en el uso de los principales proveedores de nube (AWS, Azure, GCP) para una infraestructura escalable, resiliente y rentable.', 'Stakeholder Mgmt': 'Experto en la gestión de comunicaciones y relaciones con todas las partes interesadas para garantizar la alineación y el apoyo al proyecto.', 'Agile': 'Amplia experiencia con los principios y prácticas de Agile para entregar valor de forma iterativa y adaptarse a los requisitos cambiantes.', 'Scrum': 'Experiencia certificada en la gestión de proyectos utilizando el marco Scrum para un desarrollo transparente, iterativo y colaborativo.', 'Kanban': 'Uso de Kanban para la visualización del flujo de trabajo, la gestión del flujo y la mejora continua para optimizar la entrega.', 'CMMI': 'Conocimiento del marco de Integración del Modelo de Madurez de Capacidad para mejorar y estandarizar los procesos organizacionales.', 'ISO Standards': 'Experiencia en la implementación y cumplimiento de las normas ISO para la gestión de la calidad y la seguridad de la información.', 'Risk Mgmt': 'Enfoque sistemático para identificar, analizar y mitigar los riesgos del proyecto para garantizar resultados exitosos.' },
+                    pt: { 'Project Mgmt': 'Experiência em liderar projetos desde o início até a conclusão, garantindo que atendam ao escopo, orçamento e cronograma.', 'QA & Automation': 'Profundo conhecimento em projetar e implementar estruturas de teste automatizadas para garantir a qualidade e confiabilidade do software.', 'Leadership': 'Capacidade comprovada de orientar, gerenciar e motivar equipes multifuncionais para alcançar alto desempenho e sucesso nos projetos.', 'DevOps Strategy': 'Habilidade em integrar desenvolvimento e operações para melhorar o fluxo de trabalho, aumentar a eficiência e acelerar os ciclos de lançamento.', 'Cloud Platforms': 'Proficiente em aproveitar os principais provedores de nuvem (AWS, Azure, GCP) para infraestrutura escalável, resiliente и econômica.', 'Stakeholder Mgmt': 'Apto a gerenciar comunicações e relacionamentos com todas as partes interessadas para garantir o alinhamento e a adesão ao projeto.', 'Agile': 'Vasta experiência com os princípios e práticas Agile para entregar valor de forma iterativa e se adaptar a requisitos em constante mudança.', 'Scrum': 'Experiência certificada em gerenciar projetos usando o framework Scrum para um desenvolvimento transparente, iterativo e colaborativo.', 'Kanban': 'Utilização do Kanban para visualização do fluxo de trabalho, gerenciamento do fluxo e melhoria contínua para otimizar a entrega.', 'CMMI': 'Conhecimento do framework de Integração do Modelo de Maturidade da Capacidade para melhorar e padronizar os processos organizacionais.', 'ISO Standards': 'Experiência na implementação e adesão às normas ISO para gestão da qualidade e segurança da informação.', 'Risk Mgmt': 'Abordagem sistemática para identificar, analisar e mitigar os riscos do projeto para garantir resultados bem-sucedidos.' },
+                    de: { 'Project Mgmt': 'Expertise in der Leitung von Projekten von der Initiierung bis zum Abschluss, um sicherzustellen, dass sie den Umfang, das Budget und den Zeitplan einhalten.', 'QA & Automation': 'Tiefes Wissen im Entwerfen und Implementieren von automatisierten Test-Frameworks, um Softwarequalität und -zuverlässigkeit zu gewährleisten.', 'Leadership': 'Nachgewiesene Fähigkeit, funktionsübergreifende Teams zu betreuen, zu leiten und zu motivieren, um hohe Leistungen und Projekterfolg zu erzielen.', 'DevOps Strategy': 'Geschickt in der Integration von Entwicklung und Betrieb, um den Arbeitsablauf zu verbessern, die Effizienz zu steigern und die Release-Zyklen zu beschleunigen.', 'Cloud Platforms': 'Kompetent in der Nutzung der großen Cloud-Anbieter (AWS, Azure, GCP) für eine skalierbare, widerstandsfähige und kostengünstige Infrastruktur.', 'Stakeholder Mgmt': 'Gewandt im Management von Kommunikation und Beziehungen mit allen Stakeholdern, um die Projektausrichtung und -akzeptanz sicherzustellen.', 'Agile': 'Umfangreiche Erfahrung mit agilen Prinzipien und Praktiken, um iterativ Wert zu liefern und sich an ändernde Anforderungen anzupassen.', 'Scrum': 'Zertifizierte Expertise in der Projektleitung mit dem Scrum-Framework für eine transparente, iterative und kollaborative Entwicklung.', 'Kanban': 'Nutzung von Kanban zur Visualisierung des Workflows, zur Steuerung des Flusses und zur kontinuierlichen Verbesserung, um die Lieferung zu optimieren.', 'CMMI': 'Kenntnisse des Capability Maturity Model Integration-Frameworks zur Verbesserung und Standardisierung von Organisationsprozessen.', 'ISO Standards': 'Erfahrung in der Implementierung und Einhaltung von ISO-Normen für Qualitätsmanagement und Informationssicherheit.', 'Risk Mgmt': 'Systematischer Ansatz zur Identifizierung, Analyse und Minderung von Projektrisiken, um erfolgreiche Ergebnisse zu gewährleisten.' },
+                    fr: { 'Project Mgmt': 'Expertise dans la direction de projets de l\'initiation à l\'achèvement, en veillant à ce qu\'ils respectent le périmètre, le budget et le calendrier.', 'QA & Automation': 'Connaissance approfondie de la conception et de la mise en œuvre de cadres de test automatisés pour garantir la qualité et la fiabilité des logiciels.', 'Leadership': 'Capacité avérée à encadrer, gérer et motiver des équipes interfonctionnelles pour atteindre de hautes performances et la réussite des projets.', 'DevOps Strategy': 'Compétent dans l\'intégration du développement et des opérations pour améliorer le flux de travail, augmenter l\'efficacité et accélérer les cycles de publication.', 'Cloud Platforms': 'Maîtrise de l\'utilisation des principaux fournisseurs de cloud (AWS, Azure, GCP) pour une infrastructure évolutive, résiliente et rentable.', 'Stakeholder Mgmt': 'Adepte de la gestion des communications et des relations avec toutes les parties prenantes pour garantir l\'alignement et l\'adhésion au projet.', 'Agile': 'Vaste expérience des principes et pratiques Agile pour fournir de la valeur de manière itérative et s\'adapter aux exigences changeantes.', 'Scrum': 'Expertise certifiée dans la gestion de projets à l\'aide du cadre Scrum pour un développement transparent, itératif et collaboratif.', 'Kanban': 'Utilisation de Kanban pour la visualisation du flux de travail, la gestion du flux et l\'amélioration continue afin d\'optimiser la livraison.', 'CMMI': 'Connaissance du cadre d\'intégration du modèle de maturité des capacités pour améliorer et normaliser les processus organisationnels.', 'ISO Standards': 'Expérience dans la mise en œuvre et le respect des normes ISO pour la gestion de la qualité et la sécurité de l\'information.', 'Risk Mgmt': 'Approche systématique pour identifier, analyser et atténuer les risques du projet afin de garantir des résultats positifs.' },
+                    it: { 'Project Mgmt': 'Competenza nella guida di progetti dall\'inizio al completamento, assicurando il rispetto di ambito, budget e tempistiche.', 'QA & Automation': 'Profonda conoscenza nella progettazione e implementazione di framework di test automatizzati per garantire la qualità e l\'affidabilità del software.', 'Leadership': 'Comprovata capacità di fare da mentore, gestire e motivare team interfunzionali per raggiungere alte prestazioni e il successo del progetto.', 'DevOps Strategy': 'Abile nell\'integrare sviluppo e operazioni per migliorare il flusso di lavoro, aumentare l\'efficienza e accelerare i cicli di rilascio.', 'Cloud Platforms': 'Competente nell\'utilizzo dei principali provider di cloud (AWS, Azure, GCP) per un\'infrastruttura scalabile, resiliente ed economica.', 'Stakeholder Mgmt': 'Abile nella gestione delle comunicazioni e delle relazioni con tutti gli stakeholder per garantire l\'allineamento e il consenso al progetto.', 'Agile': 'Vasta esperienza con i principi e le pratiche Agile per fornire valore in modo iterativo e adattarsi ai requisiti mutevoli.', 'Scrum': 'Competenza certificata nella gestione di progetti utilizzando il framework Scrum per uno sviluppo trasparente, iterativo e collaborativo.', 'Kanban': 'Utilizzo di Kanban per la visualizzazione del flusso di lavoro, la gestione del flusso e il miglioramento continuo per ottimizzare la consegna.', 'CMMI': 'Conoscenza del framework Capability Maturity Model Integration per migliorare e standardizzare i processi organizzativi.', 'ISO Standards': 'Esperienza nell\'implementazione e nel rispetto degli standard ISO per la gestione della qualità e la sicurezza delle informazioni.', 'Risk Mgmt': 'Approccio sistematico per identificare, analizzare e mitigare i rischi di progetto per garantire risultati di successo.' }
                 },
                 translations: {
                     en: {
@@ -971,9 +964,9 @@
 
             _generateSingleDatasetRadar(container, data, fillColor, strokeColor) {
                 if (!container) return;
-                const size = 256;
+                const size = 288; // Increased size for more space
                 const center = size / 2;
-                const radius = size * 0.3; // Reduced radius to give labels more space
+                const radius = size * 0.3;
                 const labels = data.map(d => d.label);
                 const angleSlice = (Math.PI * 2) / labels.length;
                 const isDarkMode = document.body.classList.contains('dark-mode');
@@ -994,8 +987,8 @@
                 let labelElements = '';
                 labels.forEach((label, i) => {
                     const angle = angleSlice * i - Math.PI / 2;
-                    const labelX = center + (radius + 30) * Math.cos(angle);
-                    const labelY = center + (radius + 30) * Math.sin(angle);
+                    const labelX = center + (radius + 35) * Math.cos(angle); // Increased distance
+                    const labelY = center + (radius + 35) * Math.sin(angle); // Increased distance
 
                     const words = label.split(' ');
                     let tspans = '';
@@ -1005,9 +998,9 @@
                         tspans = `<tspan>${label}</tspan>`;
                     }
 
-                    const tooltipText = this.data.radarTooltips.en[label] || label;
+                    const tooltipText = (this.data.radarTooltips[this.state.lang] && this.data.radarTooltips[this.state.lang][label]) || this.data.radarTooltips.en[label] || label;
 
-                    labelElements += `<g class="radar-label"><title>${tooltipText}</title><text x="${labelX}" y="${labelY}" font-size="9" text-anchor="middle" alignment-baseline="middle" fill="${labelColor}">${tspans}</text></g>`;
+                    labelElements += `<g class="radar-label"><title>${tooltipText}</title><text x="${labelX}" y="${labelY}" font-size="10" text-anchor="middle" alignment-baseline="middle" fill="${labelColor}">${tspans}</text></g>`;
                     grid += `<line x1="${center}" y1="${center}" x2="${center + radius * Math.cos(angle)}" y2="${center + radius * Math.sin(angle)}" stroke="${gridColor}" />`;
                 });
 
@@ -1118,6 +1111,7 @@
                         el.innerHTML = translation[key];
                     }
                 });
+                this.renderInfographics(); // Re-render charts for tooltip translation
             },
 
             trackEvent(eventName, eventCategory, eventLabel) {
@@ -1221,7 +1215,7 @@
                 } else { // Toolkit
                     const preview = button.parentElement.nextElementSibling;
                     preview.style.display = isExpanded ? 'block' : 'none';
-                    button.nextElementSibling.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+                    button.nextElementSibling.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
                     label = button.querySelector('h3').textContent.trim();
                 }
                 this.trackEvent('accordion_toggle', 'UI Interaction', `${isExpanded ? 'Collapsed' : 'Expanded'}: ${label}`);
