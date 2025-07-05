@@ -13,12 +13,77 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
+            --bg-primary: #f9fafb;
+            --bg-secondary: #ffffff;
+            --bg-sidebar: #1f2937;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --text-sidebar-primary: #ffffff;
+            --text-sidebar-secondary: #d1d5db;
+            --border-color: #e5e7eb;
             --cyan-brand: #0891b2;
             --orange-brand: #f97316;
             --pulse-blue: rgba(59, 130, 246, 0.7);
         }
+
+        .dark-mode {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-sidebar: #0f172a;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-sidebar-primary: #ffffff;
+            --text-sidebar-secondary: #9ca3af;
+            --border-color: #374151;
+        }
+
         html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', sans-serif; font-size: 14px; position: relative; }
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            position: relative;
+            background-color: var(--bg-primary);
+            color: var(--text-secondary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .main-container {
+            background-color: var(--bg-secondary);
+            transition: background-color 0.3s;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            color: var(--text-sidebar-primary);
+            transition: background-color 0.3s;
+        }
+        .sidebar h1, .sidebar h2, .sidebar h3 {
+            color: var(--text-sidebar-primary);
+        }
+        .sidebar p, .sidebar span, .sidebar li, .sidebar a {
+            color: var(--text-sidebar-secondary);
+        }
+        .sidebar a:hover {
+            color: var(--cyan-brand);
+        }
+        .sidebar hr {
+            border-color: var(--border-color);
+        }
+
+        .main-content {
+            background-color: var(--bg-primary);
+            color: var(--text-secondary);
+        }
+        .main-content h1, .main-content h2, .main-content h3, .main-content h4 {
+            color: var(--text-primary);
+        }
+        .main-content .border-b-4 {
+            border-color: var(--border-color);
+        }
+        .main-content hr {
+            border-color: var(--border-color);
+        }
+
         /* Watermark */
         body::before {
             content: '';
@@ -42,10 +107,15 @@
         }
         .tech-tag {
             display: inline-flex; align-items: center; background-color: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 9999px;
-            font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid #e2e8f0;
+            font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border-color);
+        }
+        .dark-mode .tech-tag {
+            background-color: #374151;
+            color: #d1d5db;
         }
         .tech-tag:hover, .tech-tag:focus { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-color: #94a3b8; outline: none; }
         .tech-tag.selected { background-color: var(--cyan-brand); color: white; border-color: #0e7490; }
+        .dark-mode .tech-tag.selected { color: white; }
         .tech-tag.selected .text-gray-500, .tech-tag.selected .font-semibold { color: white; }
         .tech-tag.selected .stars svg { color: #f59e0b; }
         .tech-tag .tech-icon { width: 16px; height: 16px; margin-right: 6px; object-fit: contain; }
@@ -54,7 +124,7 @@
         .flag-icon { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
         .company-logo { width: 14px; height: 14px; margin-right: 6px; border-radius: 3px; flex-shrink: 0; }
         .experience-body, #summary-details, .toolkit-body { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
-        .accordion-header { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+        .accordion-header { border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
         .tooltip { position: relative; display: inline-flex; }
         .tooltip .tooltiptext {
             visibility: hidden; background-color: #333; color: #fff; text-align: center; border-radius: 6px;
@@ -71,13 +141,13 @@
         #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):hover, #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):focus { opacity: 1; }
         .lang-accordion-indicator { transition: transform 0.3s ease; }
         #language-selector:not(.collapsed) .lang-accordion-indicator { transform: rotate(180deg); }
-        .toolkit-preview { font-size: 0.75rem; color: #64748b; padding-left: 0.5rem; margin-top: 0.25rem; }
+        .toolkit-preview { font-size: 0.75rem; color: var(--text-secondary); padding-left: 0.5rem; margin-top: 0.25rem; }
         #timeline-container { border-left: 3px solid var(--cyan-brand); padding-left: 1rem; }
         .timeline-item { position: relative; transition: opacity 0.3s ease; }
         .timeline-item.filtered-out { opacity: 0.3; }
         .timeline-item::before {
             content: ''; background-color: var(--cyan-brand); width: 12px; height: 12px; border-radius: 50%;
-            position: absolute; left: -23px; top: 10px; border: 2px solid white;
+            position: absolute; left: -23px; top: 10px; border: 2px solid var(--bg-secondary);
         }
         .timeline-tech-icons { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .timeline-tech-icons img { width: 12px; height: 12px; border-radius: 3px; }
@@ -86,7 +156,7 @@
             background-color: var(--cyan-brand); color: white; font-weight: bold; font-size: 0.8rem; border: 2px solid white;
             flex-shrink: 0;
         }
-        .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; text-align: center; font-size: 0.75rem; color: #6b7280; }
+        .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
         .phone-container .phone-text { display: inline; }
         .phone-container .phone-number { display: none; }
         .phone-container:hover .phone-text, .phone-container:focus .phone-text { display: none; }
@@ -104,20 +174,21 @@
             display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; line-height: 1; border: 1px solid #ccc;
         }
         .experience-summary {
-            font-size: 0.8rem; color: #475569; margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid #e2e8f0;
+            font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid var(--border-color);
             transition: opacity 0.3s ease;
         }
         .experience-item.is-open .experience-summary { display: none; }
         .experience-tech-tags {
             margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1;
         }
+        .dark-mode .experience-tech-tags { border-top-color: #4b5563; }
         .experience-tech-tags .exp-tech-tag {
             display: inline-flex; align-items: center; background-color: #e0f2f7; color: #0891b2; padding: 2px 8px;
             border-radius: 9999px; font-size: 0.7rem; font-weight: 500; margin: 2px;
         }
+        .dark-mode .experience-tech-tags .exp-tech-tag { background-color: #1e40af; color: #dbeafe; }
         .experience-tech-tags .exp-tech-tag img { width: 12px; height: 12px; margin-right: 5px; }
 
-        /* Pulse animation for filtered items */
         @keyframes pulse-blue {
             0% { box-shadow: 0 0 0 0px var(--pulse-blue); }
             70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
@@ -125,88 +196,108 @@
         }
         .pulse-highlight {
             animation: pulse-blue 2s 1;
-            border-radius: 8px; /* Match element rounding */
+            border-radius: 8px;
         }
-        /* Accessibility: Visually hidden class for screen readers */
         .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border-width: 0;
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
         }
-        /* Accessibility: Focus styles */
         :focus-visible {
-            outline: 3px solid var(--orange-brand);
-            outline-offset: 2px;
-            box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.5);
-            border-radius: 4px;
+            outline: 3px solid var(--orange-brand); outline-offset: 2px;
+            box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.5); border-radius: 4px;
         }
+        /* On-scroll animations */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .animate-on-scroll.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Keyword highlighting */
+        mark {
+            background-color: #fdba74; /* orange-300 */
+            color: #431407; /* orange-950 */
+            padding: 2px 1px;
+            border-radius: 3px;
+        }
+        .dark-mode mark {
+            background-color: #b45309; /* orange-700 */
+            color: #fff7ed; /* orange-50 */
+        }
+        /* Theme Toggle */
+        #theme-toggle {
+            background: none; border: none; cursor: pointer; color: var(--text-sidebar-secondary);
+        }
+        .dark-mode #theme-toggle { color: #d1d5db; }
+        #theme-toggle .sun-icon { display: none; }
+        #theme-toggle .moon-icon { display: block; }
+        .dark-mode #theme-toggle .sun-icon { display: block; }
+        .dark-mode #theme-toggle .moon-icon { display: none; }
+
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
 
 <div class="container mx-auto max-w-6xl my-6 p-4 md:p-6">
-    <div class="bg-white shadow-2xl rounded-lg overflow-hidden">
+    <div class="bg-secondary shadow-2xl rounded-lg overflow-hidden main-container">
         <div class="md:flex">
             <!-- Left Column (Sidebar) -->
-            <aside class="md:w-1/3 bg-gray-800 text-white p-6">
+            <aside class="md:w-1/3 p-6 sidebar">
                 <div class="flex flex-col items-center">
                     <div class="relative">
                         <img id="profile-photo" src="https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400 cursor-pointer" alt="Profile photo of Carlos Muñoz Ardila" tabindex="0" role="button" aria-label="View larger profile photo">
                         <div class="trademark-logo absolute top-0 right-0" aria-hidden="true">CAM</div>
                     </div>
                     <div class="mt-5 text-center">
-                        <h1 class="text-2xl font-bold text-white whitespace-nowrap">CARLOS A. MUÑOZ</h1>
-                        <h2 class="text-base text-gray-300 mt-2" data-translate-key="job_title">Senior IT Project Manager, QA Architect & QA Leader</h2>
+                        <h1 class="text-2xl font-bold whitespace-nowrap">CARLOS A. MUÑOZ</h1>
+                        <h2 class="text-base mt-2" data-translate-key="job_title">Senior IT Project Manager, QA Architect & QA Leader</h2>
                         <p class="text-xs text-cyan-400 mt-1">CSPM | ISTQB | CISA | CISSP</p>
                     </div>
                 </div>
 
-                <hr class="border-gray-600 my-6">
+                <hr class="my-6">
 
                 <!-- Contact Info -->
-                <section aria-labelledby="contact-heading">
+                <section aria-labelledby="contact-heading" class="animate-on-scroll">
                     <div class="flex items-center relative">
-                        <h3 id="contact-heading" class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
+                        <h3 id="contact-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
                     </div>
-                    <div class="flex items-center space-x-3 text-gray-300">
+                    <div class="flex items-center space-x-3">
                         <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
                         <a href="tel:+573209191010" rel="noopener noreferrer" class="hover:text-cyan-400 phone-container">
                             <span class="phone-text">Phone Number</span>
                             <span class="phone-number" aria-hidden="true">+57 320 919 1010</span>
                         </a>
                     </div>
-                    <div class="flex items-center space-x-3 text-gray-300">
+                    <div class="flex items-center space-x-3 mt-4">
                         <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
                         <a href="mailto:kaanmuar@gmail.com" rel="noopener noreferrer" class="hover:text-cyan-400">kaanmuar@gmail.com</a>
                     </div>
-                    <div class="flex items-start space-x-3 text-gray-300">
+                    <div class="flex items-start space-x-3 mt-4">
                         <svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                         <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">LinkedIn Profile</a>
                     </div>
-                    <div class="flex items-center space-x-3 text-gray-300">
+                    <div class="flex items-center space-x-3 mt-4">
                         <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg>
                         <a href="https://wa.me/573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">WhatsApp</a>
                     </div>
-                    <div class="flex items-center space-x-3 text-gray-300">
+                    <div class="flex items-center space-x-3 mt-4">
                         <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg>
                         <a href="https://t.me/+573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">Telegram</a>
                     </div>
-                    <div class="flex items-center space-x-3 text-gray-300">
+                    <div class="flex items-center space-x-3 mt-4">
                         <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
                         <span>Medellin, Antioquia, Colombia</span>
                     </div>
                 </section>
-                <hr class="border-gray-600 my-6">
+                <hr class="my-6">
                 <!-- Core Competencies -->
-                <section aria-labelledby="competencies-heading">
-                    <h3 id="competencies-heading" class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="competencies_title">Core Competencies</h3>
-                    <ul class="mt-3 space-y-2 text-sm text-gray-300 list-disc list-inside">
+                <section aria-labelledby="competencies-heading" class="animate-on-scroll">
+                    <h3 id="competencies-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="competencies_title">Core Competencies</h3>
+                    <ul class="mt-3 space-y-2 text-sm list-disc list-inside">
                         <li data-translate-key="competency_pm">IT Project Management</li>
                         <li data-translate-key="competency_qa">QA & Test Automation</li>
                         <li data-translate-key="competency_lead">Team Leadership & Mentoring</li>
@@ -216,29 +307,29 @@
                         <li data-translate-key="competency_relations">Stakeholder & Client Relations</li>
                     </ul>
                 </section>
-                <hr class="border-gray-600 my-6">
+                <hr class="my-6">
                 <!-- Languages -->
-                <section id="languages-section" aria-labelledby="languages-heading">
-                    <h3 id="languages-heading" class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
+                <section id="languages-section" aria-labelledby="languages-heading" class="animate-on-scroll">
+                    <h3 id="languages-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
                     <div id="languages-body" class="mt-3 space-y-4 text-sm">
                         <div class="language">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="flag-icon" alt="Spanish Flag"><span class="font-medium ml-2">Spanish</span></div>
-                                <span class="text-gray-400" data-translate-key="lang_native">Native</span>
+                                <span data-translate-key="lang_native">Native</span>
                             </div>
                             <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Spanish proficiency: Native"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 100%"></div></div>
                         </div>
                         <div class="language">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="flag-icon" alt="English Flag"><span class="font-medium ml-2">English</span></div>
-                                <span class="text-gray-400" data-translate-key="lang_fluent">Fluent</span>
+                                <span data-translate-key="lang_fluent">Fluent</span>
                             </div>
                             <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="English proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 90%"></div></div>
                         </div>
                         <div class="language">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="flag-icon" alt="Portuguese Flag"><span class="font-medium ml-2">Portuguese</span></div>
-                                <span class="text-gray-400" data-translate-key="lang_fluent">Fluent</span>
+                                <span data-translate-key="lang_fluent">Fluent</span>
                             </div>
                             <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Portuguese proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 85%"></div></div>
                         </div>
@@ -250,7 +341,7 @@
                                     <img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="flag-icon -ml-3" alt="French Flag">
                                     <span class="font-medium ml-2" data-translate-key="lang_others">Others</span>
                                 </div>
-                                <span class="text-gray-400" data-translate-key="lang_basic">Basic</span>
+                                <span data-translate-key="lang_basic">Basic</span>
                             </div>
                             <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Other languages proficiency: Basic"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 30%"></div></div>
                         </div>
@@ -259,25 +350,31 @@
             </aside>
 
             <!-- Right Column (Main Content) -->
-            <main class="w-full bg-gray-50 p-6">
-                <section aria-labelledby="summary-heading">
+            <main class="w-full p-6 main-content">
+                <section aria-labelledby="summary-heading" class="animate-on-scroll">
                     <div class="flex justify-between items-center">
-                        <h2 id="summary-heading" class="text-xl font-bold text-gray-800" data-translate-key="summary_title">Professional Summary</h2>
-                        <div id="language-selector" role="region" aria-label="Language Selector" class="relative no-print flex items-center space-x-2 collapsed cursor-pointer" tabindex="0">
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English" tabindex="-1" role="button" aria-label="Select English"><span class="tooltiptext">English</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español" tabindex="-1" role="button" aria-label="Select Spanish"><span class="tooltiptext">Español</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="pt" alt="Português" tabindex="-1" role="button" aria-label="Select Portuguese"><span class="tooltiptext">Português</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="de" alt="Deutsch" tabindex="-1" role="button" aria-label="Select German"><span class="tooltiptext">Deutsch</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="fr" alt="Français" tabindex="-1" role="button" aria-label="Select French"><span class="tooltiptext">Français</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italiano" tabindex="-1" role="button" aria-label="Select Italian"><span class="tooltiptext">Italiano</span></div>
-                            <svg class="w-4 h-4 text-gray-500 lang-accordion-indicator" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            <span class="text-gray-300 mx-1">|</span>
-                            <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200" aria-label="Print or save as PDF"><svg class="w-5 h-5 text-gray-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext">Print / PDF</span></button></div>
+                        <h2 id="summary-heading" class="text-xl font-bold" data-translate-key="summary_title">Professional Summary</h2>
+                        <div class="flex items-center space-x-2 no-print">
+                            <button id="theme-toggle" aria-label="Toggle dark mode">
+                                <svg class="w-5 h-5 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                <svg class="w-5 h-5 moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                            </button>
+                            <div id="language-selector" role="region" aria-label="Language Selector" class="relative flex items-center space-x-2 collapsed cursor-pointer" tabindex="0">
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English" tabindex="-1" role="button" aria-label="Select English"><span class="tooltiptext">English</span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español" tabindex="-1" role="button" aria-label="Select Spanish"><span class="tooltiptext">Español</span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="pt" alt="Português" tabindex="-1" role="button" aria-label="Select Portuguese"><span class="tooltiptext">Português</span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="de" alt="Deutsch" tabindex="-1" role="button" aria-label="Select German"><span class="tooltiptext">Deutsch</span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="fr" alt="Français" tabindex="-1" role="button" aria-label="Select French"><span class="tooltiptext">Français</span></div>
+                                <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italiano" tabindex="-1" role="button" aria-label="Select Italian"><span class="tooltiptext">Italiano</span></div>
+                                <svg class="w-4 h-4 lang-accordion-indicator" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <span class="mx-1">|</span>
+                                <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200" aria-label="Print or save as PDF"><svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext">Print / PDF</span></button></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="border-b-4 border-gray-300 pb-2 mb-3"></div>
-                    <p class="text-sm text-gray-700" data-translate-key="summary_text">A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.</p>
-                    <div id="summary-details" class="text-sm text-gray-700 mt-2 space-y-2">
+                    <div class="border-b-4 pb-2 mb-3"></div>
+                    <p data-translate-key="summary_text">A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.</p>
+                    <div id="summary-details" class="mt-2 space-y-2">
                         <p data-translate-key="summary_detail_1">Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.</p>
                         <p data-translate-key="summary_detail_2">As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.</p>
                     </div>
@@ -285,38 +382,38 @@
                 </section>
 
                 <!-- Infographics Section -->
-                <section class="section mt-8 infographics-section" aria-labelledby="infographics-heading">
-                    <h2 id="infographics-heading" class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2 mb-6" data-translate-key="infographics_title">Career at a Glance</h2>
+                <section class="section mt-8 infographics-section animate-on-scroll" aria-labelledby="infographics-heading">
+                    <h2 id="infographics-heading" class="text-xl font-bold border-b-4 pb-2 mb-6" data-translate-key="infographics_title">Career at a Glance</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         <!-- Left Column: Graphs -->
                         <div class="space-y-8">
                             <section aria-labelledby="competencies-graph-heading">
-                                <h3 id="competencies-graph-heading" class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
+                                <h3 id="competencies-graph-heading" class="text-base font-semibold mb-2 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
                                 <div id="competencies-radar-chart" class="relative w-full max-w-sm mx-auto h-64" role="img" aria-label="Radar chart showing core competency scores."></div>
                             </section>
 
-                            <hr class="border-gray-200">
+                            <hr>
 
                             <section aria-labelledby="methodologies-graph-heading">
-                                <h3 id="methodologies-graph-heading" class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
+                                <h3 id="methodologies-graph-heading" class="text-base font-semibold mb-2 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
                                 <div id="methodologies-radar-chart" class="relative w-full max-w-sm mx-auto h-64" role="img" aria-label="Radar chart showing methodology and process scores."></div>
                             </section>
                         </div>
                         <!-- Right Column: Timeline -->
                         <section aria-labelledby="timeline-heading">
-                            <h3 id="timeline-heading" class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
+                            <h3 id="timeline-heading" class="text-base font-semibold mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
                             <div id="timeline-container" class="relative pr-2"></div>
                         </section>
                     </div>
                 </section>
 
-                <hr class="my-12 border-gray-200">
+                <hr class="my-12">
 
                 <!-- Toolkit Section -->
-                <section class="section mt-6" aria-labelledby="toolkit-heading">
+                <section class="section mt-6 animate-on-scroll" aria-labelledby="toolkit-heading">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
-                            <h2 id="toolkit-heading" class="text-xl font-bold text-gray-800" data-translate-key="toolkit_title">Technical & Management Toolkit</h2>
+                            <h2 id="toolkit-heading" class="text-xl font-bold" data-translate-key="toolkit_title">Technical & Management Toolkit</h2>
                         </div>
                         <div class="flex items-center space-x-2 no-print">
                             <button id="expand-all-toolkit" class="text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
@@ -330,33 +427,33 @@
                 </section>
 
                 <!-- Professional Experience -->
-                <section id="professional-experience" class="section mt-6" aria-labelledby="experience-heading">
+                <section id="professional-experience" class="section mt-6 animate-on-scroll" aria-labelledby="experience-heading">
                     <div class="flex justify-between items-center">
-                        <h2 id="experience-heading" class="text-xl font-bold text-gray-800" data-translate-key="experience_title">Professional Experience</h2>
+                        <h2 id="experience-heading" class="text-xl font-bold" data-translate-key="experience_title">Professional Experience</h2>
                         <button id="expand-all-exp" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
                     </div>
                     <div class="mt-3 space-y-1" id="experience-container"></div>
                 </section>
 
                 <!-- Education & Certifications -->
-                <section class="section mt-6" aria-labelledby="education-heading">
-                    <h2 id="education-heading" class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2">Education & Certifications</h2>
+                <section class="section mt-6 animate-on-scroll" aria-labelledby="education-heading">
+                    <h2 id="education-heading" class="text-xl font-bold border-b-4 pb-2">Education & Certifications</h2>
                     <div class="mt-3 grid md:grid-cols-2 gap-6 text-sm">
                         <section aria-labelledby="education-subheading">
-                            <h3 id="education-subheading" class="text-base font-bold text-gray-900">Education</h3>
+                            <h3 id="education-subheading" class="text-base font-bold">Education</h3>
                             <div class="mt-2 space-y-2">
-                                <p class="text-gray-700"><strong class="font-medium">Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p>
-                                <p class="text-gray-700"><strong class="font-medium">Computer Systems Engineering</strong> - EAMQ</p>
-                                <p class="text-gray-700"><strong class="font-medium">Computer Systems Technician</strong> - EAMQ</p>
+                                <p><strong class="font-medium">Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p>
+                                <p><strong class="font-medium">Computer Systems Engineering</strong> - EAMQ</p>
+                                <p><strong class="font-medium">Computer Systems Technician</strong> - EAMQ</p>
                             </div>
                         </section>
                         <section aria-labelledby="certs-subheading">
-                            <h3 id="certs-subheading" class="text-base font-bold text-gray-900">Key Certifications</h3>
+                            <h3 id="certs-subheading" class="text-base font-bold">Key Certifications</h3>
                             <div class="mt-2 space-y-2">
-                                <p class="text-gray-700"><strong class="font-medium">English Proficiency:</strong> EF SET C2 Proficient</p>
-                                <p class="text-gray-700"><strong class="font-medium">Project Management:</strong> CSPM</p>
-                                <p class="text-gray-700"><strong class="font-medium">Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB</p>
-                                <p class="text-gray-700"><strong class="font-medium">Information Security:</strong> CISA, CISM, CISSP</p>
+                                <p><strong class="font-medium">English Proficiency:</strong> EF SET C2 Proficient</p>
+                                <p><strong class="font-medium">Project Management:</strong> CSPM</p>
+                                <p><strong class="font-medium">Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB</p>
+                                <p><strong class="font-medium">Information Security:</strong> CISA, CISM, CISSP</p>
                             </div>
                         </section>
                     </div>
@@ -364,7 +461,7 @@
                 <footer class="cv-footer no-print">
                     <div class="flex justify-center items-center gap-2">
                         <p>&copy; 2025 Carlos A. Muñoz</p>
-                        <span class="text-gray-400" aria-hidden="true">|</span>
+                        <span aria-hidden="true">|</span>
                         <p>Interactive CV</p>
                         <div class="trademark-logo ml-1" aria-hidden="true">CAM</div>
                     </div>
@@ -394,13 +491,6 @@
      * personal and professional evaluation purposes only. Unauthorized reproduction,
      * distribution, or use of any part of this document for commercial purposes is
      * strictly prohibited. All rights reserved.
-     *
-     * Security Best Practices:
-     * - All external links use `rel="noopener noreferrer"` to prevent security vulnerabilities.
-     * - Content is dynamically rendered from a secure, hardcoded JSON object to prevent
-     * injection attacks.
-     * - The application is self-contained and does not rely on external databases or APIs
-     * for its core functionality, enhancing security and privacy.
      ***************************************************************************************/
     document.addEventListener('DOMContentLoaded', () => {
         const CarlosMunozCV = {
@@ -422,7 +512,7 @@
                         { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/testrail/78C644' },
                         { name: 'MS Project', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/microsoftproject/217346' },
                         { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'https://www.nicepng.com/png/detail/379-3791220_capability-maturity-model-integration-cmmi-logo.png' },
-                        { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'https://cdn-icons-png.flaticon.com/512/179/179537.png' }
+                        { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/iso/000000' }
                     ],
                     qa: [
                         { name: 'Selenium', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/selenium/43B02A' },
@@ -696,11 +786,14 @@
 
             init() {
                 this.cacheDOMElements();
+                this.applyInitialTheme(); // New for dark mode
                 this.createWatermark();
                 this.populateAllTranslations();
                 this.renderAll();
                 this.setupEventListeners();
                 this.translatePage(this.state.lang);
+                this.initScrollAnimations(); // New for scroll animations
+                this.initUrlHighlighting(); // New for URL highlighting
             },
 
             cacheDOMElements() {
@@ -723,6 +816,8 @@
                     modalImage: document.getElementById('modal-image'),
                     modalClose: document.querySelector('.modal-close'),
                     filterStatus: document.getElementById('filter-status'),
+                    themeToggle: document.getElementById('theme-toggle'),
+                    mainContent: document.querySelector('.main-content'),
                 };
             },
 
@@ -734,7 +829,7 @@
                 canvas.height = 150;
                 ctx.translate(150, 75);
                 ctx.rotate(-0.4); // ~23 degrees
-                ctx.fillStyle = '#000000';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                 ctx.font = '16px Inter';
                 ctx.textAlign = 'center';
                 ctx.fillText(text, 0, 0);
@@ -754,12 +849,12 @@
                 toolkitOrder.forEach(key => {
                     if (!this.data.skills[key]) return;
                     const section = document.createElement('div');
-                    section.className = 'toolkit-section';
+                    section.className = 'toolkit-section animate-on-scroll';
                     const bodyId = `${key}-skills-body`;
                     section.innerHTML = `
-                        <div class="flex justify-between items-center p-1 hover:bg-gray-100 rounded">
+                        <div class="flex justify-between items-center p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                             <button class="w-full text-left toolkit-header" aria-expanded="false" aria-controls="${bodyId}">
-                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_${key}"></h3>
+                                <h3 class="text-base font-semibold" data-translate-key="toolkit_${key}"></h3>
                             </button>
                              <svg class="accordion-icon w-5 h-5 transform transition-transform text-gray-500" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </div>
@@ -812,23 +907,23 @@
                 }).join('');
 
                 return `
-                    <div class="experience-item text-sm py-2" data-tech='${JSON.stringify(exp.techUsed)}' id="experience-${index}">
-                        <div class="p-1 hover:bg-gray-100 rounded">
+                    <div class="experience-item text-sm py-2 animate-on-scroll" data-tech='${JSON.stringify(exp.techUsed)}' id="experience-${index}">
+                        <div class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                             <button class="accordion-header w-full flex justify-between items-center" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}">
                                 <div class="flex-grow text-left">
-                                    <h4 class="text-base font-bold text-gray-900" data-translate-key="exp_${index}_title">${exp.title}</h4>
-                                    <p class="text-sm text-gray-700 italic flex items-center">
+                                    <h4 class="text-base font-bold" data-translate-key="exp_${index}_title">${exp.title}</h4>
+                                    <p class="text-sm italic flex items-center">
                                         <img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">
                                         ${exp.company}
                                     </p>
                                 </div>
-                                <p class="text-xs text-gray-600 mr-4">${exp.dates}</p>
-                                <svg class="accordion-icon w-5 h-5 transform transition-transform text-gray-500" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <p class="text-xs mr-4">${exp.dates}</p>
+                                <svg class="accordion-icon w-5 h-5 transform transition-transform" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                         </div>
                         <p class="experience-summary" data-translate-key="exp_${index}_summary">${exp.details.en[0].substring(0, 100)}...</p>
                         <div class="experience-body mt-2" id="${bodyId}" role="region" aria-labelledby="${headerId}">
-                            <ul class="list-disc list-inside text-gray-700 space-y-1 pl-4">
+                            <ul class="list-disc list-inside space-y-1 pl-4">
                                ${detailsHtml}
                             </ul>
                             <div class="experience-tech-tags">
@@ -859,9 +954,12 @@
                 if (!container) return;
                 const size = 256;
                 const center = size / 2;
-                const radius = size * 0.35;
+                const radius = size * 0.3; // Reduced radius to give labels more space
                 const labels = data.map(d => d.label);
                 const angleSlice = (Math.PI * 2) / labels.length;
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                const gridColor = isDarkMode ? '#4b5563' : '#e5e7eb';
+                const labelColor = isDarkMode ? '#d1d5db' : '#4b5563';
 
                 let grid = '';
                 for (let i = 1; i <= 4; i++) {
@@ -871,25 +969,25 @@
                         const angle = angleSlice * j - Math.PI / 2;
                         gridPoints += `${center + gridRadius * Math.cos(angle)},${center + gridRadius * Math.sin(angle)} `;
                     });
-                    grid += `<polygon points="${gridPoints}" fill="none" stroke="#e5e7eb" />`;
+                    grid += `<polygon points="${gridPoints}" fill="none" stroke="${gridColor}" />`;
                 }
 
                 let labelElements = '';
                 labels.forEach((label, i) => {
                     const angle = angleSlice * i - Math.PI / 2;
-                    const labelX = center + (radius + 25) * Math.cos(angle);
-                    const labelY = center + (radius + 25) * Math.sin(angle);
+                    const labelX = center + (radius + 30) * Math.cos(angle);
+                    const labelY = center + (radius + 30) * Math.sin(angle);
 
                     const words = label.split(' ');
                     let tspans = '';
                     if (words.length > 1) {
-                        tspans = `<tspan x="${labelX}" dy="-0.6em">${words[0]}</tspan><tspan x="${labelX}" dy="1.2em">${words[1]}</tspan>`;
+                        tspans = `<tspan x="${labelX}" dy="-0.5em">${words[0]}</tspan><tspan x="${labelX}" dy="1.1em">${words[1]}</tspan>`;
                     } else {
                         tspans = `<tspan>${label}</tspan>`;
                     }
 
-                    labelElements += `<text x="${labelX}" y="${labelY}" font-size="9" text-anchor="middle" alignment-baseline="middle" fill="#4b5563">${tspans}</text>`;
-                    grid += `<line x1="${center}" y1="${center}" x2="${center + radius * Math.cos(angle)}" y2="${center + radius * Math.sin(angle)}" stroke="#e5e7eb" />`;
+                    labelElements += `<text x="${labelX}" y="${labelY}" font-size="9" text-anchor="middle" alignment-baseline="middle" fill="${labelColor}">${tspans}</text>`;
+                    grid += `<line x1="${center}" y1="${center}" x2="${center + radius * Math.cos(angle)}" y2="${center + radius * Math.sin(angle)}" stroke="${gridColor}" />`;
                 });
 
                 let polygon = '';
@@ -918,9 +1016,9 @@
                     content += `
                         <div class="timeline-item block p-2 rounded-md" data-tech='${JSON.stringify(exp.techUsed)}' id="timeline-exp-${index}">
                             <div class="tooltip w-full">
-                                <a href="#experience-${index}" class="hover:bg-gray-100 block p-1 rounded-md">
-                                    <p class="font-bold text-sm text-gray-800">${exp.title}</p>
-                                    <div class="flex items-center gap-2 text-xs text-gray-600">
+                                <a href="#experience-${index}" class="hover:bg-gray-100 dark:hover:bg-gray-700 block p-1 rounded-md">
+                                    <p class="font-bold text-sm">${exp.title}</p>
+                                    <div class="flex items-center gap-2 text-xs">
                                         <img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">
                                         <span>${exp.company}</span>
                                         <span class="text-gray-400">| ${exp.dates}</span>
@@ -1025,7 +1123,7 @@
                     this.filterExperiencesAndTimeline();
                 });
 
-                // Accordion toggling (for Experience and Toolkit)
+                // Accordion toggling
                 const handleAccordionToggle = (button) => {
                     const body = document.getElementById(button.getAttribute('aria-controls'));
                     const isExpanded = button.getAttribute('aria-expanded') === 'true';
@@ -1034,6 +1132,7 @@
 
                     if (button.closest('.experience-item')) {
                         button.closest('.experience-item').classList.toggle('is-open', !isExpanded);
+                        button.querySelector('.accordion-icon').style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
                     } else { // Toolkit
                         const preview = button.parentElement.nextElementSibling;
                         preview.style.display = isExpanded ? 'block' : 'none';
@@ -1050,7 +1149,6 @@
                     const button = e.target.closest('.toolkit-header');
                     if (button) handleAccordionToggle(button);
                 });
-
 
                 // Expand/Collapse All
                 this.DOMElements.expandAllExpBtn.addEventListener('click', (e) => this.toggleAllAccordions(this.DOMElements.experienceContainer, e.target));
@@ -1098,6 +1196,13 @@
                 this.DOMElements.modalClose.addEventListener('click', closeModal);
                 this.DOMElements.imageModal.addEventListener('click', (e) => { if (e.target === this.DOMElements.imageModal) closeModal(); });
                 this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+                // Theme Toggle Listener
+                this.DOMElements.themeToggle.addEventListener('click', () => {
+                    const isDarkMode = this.DOMElements.body.classList.toggle('dark-mode');
+                    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+                    this.renderInfographics(); // Re-render charts with new theme colors
+                });
             },
 
             toggleSkillFilter(tag) {
@@ -1122,12 +1227,79 @@
 
                     if(container.id === 'experience-container') {
                         headerBtn.closest('.experience-item').classList.toggle('is-open', isExpanding);
+                        headerBtn.querySelector('.accordion-icon').style.transform = isExpanding ? 'rotate(180deg)' : 'rotate(0deg)';
                     } else {
                         headerBtn.parentElement.nextElementSibling.style.display = isExpanding ? 'none' : 'block';
                         headerBtn.nextElementSibling.style.transform = isExpanding ? 'rotate(180deg)' : 'rotate(0deg)';
                     }
                 });
                 button.textContent = isExpanding ? 'Collapse All' : 'Expand All';
+            },
+
+            applyInitialTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme === 'dark' || (savedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    this.DOMElements.body.classList.add('dark-mode');
+                }
+            },
+
+            initScrollAnimations() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                document.querySelectorAll('.animate-on-scroll').forEach(el => {
+                    observer.observe(el);
+                });
+            },
+
+            initUrlHighlighting() {
+                const params = new URLSearchParams(window.location.search);
+                const skillsToHighlight = params.get('skills');
+                if (!skillsToHighlight) return;
+
+                const keywords = skillsToHighlight.split(',').map(s => s.trim()).filter(Boolean);
+                if (keywords.length === 0) return;
+
+                const regex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'gi');
+
+                const textNodes = [];
+                const walk = document.createTreeWalker(this.DOMElements.mainContent, NodeFilter.SHOW_TEXT, null, false);
+                let node;
+                while(node = walk.nextNode()) {
+                    if (node.parentElement.tagName !== 'SCRIPT' && node.parentElement.tagName !== 'STYLE') {
+                        textNodes.push(node);
+                    }
+                }
+
+                textNodes.forEach(node => {
+                    const text = node.nodeValue;
+                    if (regex.test(text)) {
+                        const fragment = document.createDocumentFragment();
+                        let lastIndex = 0;
+                        text.replace(regex, (match, offset) => {
+                            // Add text before the match
+                            if (offset > lastIndex) {
+                                fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
+                            }
+                            // Add the highlighted match
+                            const mark = document.createElement('mark');
+                            mark.textContent = match;
+                            fragment.appendChild(mark);
+                            lastIndex = offset + match.length;
+                        });
+                        // Add any remaining text after the last match
+                        if (lastIndex < text.length) {
+                            fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+                        }
+                        node.parentNode.replaceChild(fragment, node);
+                    }
+                });
             }
         };
 
