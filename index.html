@@ -12,6 +12,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        /* * Linter Note: Selectors like .dark-mode, .collapsed, .is-visible, .pulse-highlight, etc.,
+         * are flagged as "unused" by some static linters. These classes are dynamically added and removed
+         * by JavaScript to control the application's state and animations. They are not errors.
+         * The '--watermark-url' custom property is also set dynamically via JavaScript.
+        */
         :root {
             --bg-primary: #f9fafb;
             --bg-secondary: #ffffff;
@@ -166,7 +171,7 @@
             align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
         }
         .modal-overlay.visible { opacity: 1; visibility: visible; }
-        .modal-content { background: white; padding: 10px; border-radius: 12px; position: relative; transform: scale(0.9); transition: transform 0.3s ease; }
+        .modal-content { background: var(--bg-secondary); padding: 10px; border-radius: 12px; position: relative; transform: scale(0.9); transition: transform 0.3s ease; }
         .modal-overlay.visible .modal-content { transform: scale(1); }
         .modal-content img { max-width: 80vw; max-height: 80vh; border-radius: 8px; }
         .modal-close {
@@ -190,9 +195,9 @@
         .experience-tech-tags .exp-tech-tag img { width: 12px; height: 12px; margin-right: 5px; }
 
         @keyframes pulse-blue {
-            0% { box-shadow: 0 0 0 0px var(--pulse-blue); }
+            0% { box-shadow: 0 0 0 0 var(--pulse-blue); }
             70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
         .pulse-highlight {
             animation: pulse-blue 2s 1;
@@ -229,7 +234,7 @@
         }
         /* Theme Toggle */
         #theme-toggle {
-            background: none; border: none; cursor: pointer; color: var(--text-sidebar-secondary);
+            background: none; border: none; cursor: pointer; color: var(--text-secondary);
         }
         .dark-mode #theme-toggle { color: #d1d5db; }
         #theme-toggle .sun-icon { display: none; }
@@ -672,7 +677,7 @@
                             es: [ 'Gestioné una cartera de complejas iniciativas de software empresarial, abarcando múltiples líneas de negocio.', 'Proporcioné liderazgo en el sitio para los equipos de proyecto, construyendo y motivando a los miembros del equipo para cumplir con los objetivos y plazos del proyecto.', 'Fui responsable del ciclo de vida completo del proyecto, desde el inicio y la planificación hasta el despliegue exitoso y el soporte posterior al lanzamiento.', 'Gestioné todos los aspectos de múltiples proyectos relacionados para asegurar que el programa general apoyara directamente los objetivos estratégicos.', 'Informé sobre el estado del proyecto, los riesgos y el progreso a la dirección ejecutiva y a los stakeholders.' ],
                             pt: [ 'Gerenciei um portfólio de complexas iniciativas de software empresarial, abrangendo várias linhas de negócios.', 'Forneci liderança no local para equipes de projeto, construindo e motivando os membros da equipe para atingir as metas e os marcos do projeto.', 'Fui responsável pelo ciclo de vida completo do projeto, desde o início e planejamento até a implantação bem-sucedida e o suporte pós-lançamento.', 'Gerenciei todos os aspectos de múltiplos projetos relacionados para garantir que o programa geral apoiasse diretamente los objetivos estratégicos.', 'Reportei o status do projeto, riscos e progresso para a liderança executiva e stakeholders.' ],
                             de: [ 'Verwaltung eines Portfolios komplexer Unternehmenssoftware-Initiativen über mehrere Geschäftsbereiche hinweg.', 'Bereitstellung von Vor-Ort-Führung für Projektteams, Aufbau und Motivation von Teammitgliedern zur Erreichung von Projektzielen und Meilensteinen.', 'Verantwortung für den gesamten Projektlebenszyklus, von der Initiierung und Planung bis zur erfolgreichen Bereitstellung und dem Support nach dem Start.', 'Verwaltung aller Aspekte mehrerer zusammenhängender Projekte, um sicherzustellen, dass das Gesamtprogramm die strategischen Ziele direkt unterstützt.', 'Berichterstattung über Projektstatus, Risiken und Fortschritte an die Geschäftsleitung und die Stakeholder.' ],
-                            fr: [ 'Gestion d\'un portefeuille d\'initiatives logicielles d\'entreprise complexes, couvrant plusieurs secteurs d\'activité.', 'Fourniture d\'un leadership sur site pour les équipes de projet, en constituant et en motivant les membres de l\'équipe pour atteindre les objectifs et les jalons du projet.', 'Prise en charge de l\'ensemble du cycle de vie du projet, de l\'initiation et de la planification au déploiement réussi et au soutien post-lancement.', 'Gestion de tous les aspects de plusieurs projets connexes pour garantir que le programme global soutient directement les objectifs stratégiques.', 'Rapport sur l\'état d\'avancement, les risques et les progrès du projet à la direction et aux parties prenantes.' ],
+                            fr: [ 'Gestion d\'un portefeuille d\'initiatives logicielles d\'entreprise complexes, couvrant plusieurs secteurs d\'activité.', 'Fourniture d\'un leadership sur site pour les équipes de projet, en constituant et en motivant les membres de l\'équipe pour atteindre les objectifs et les jalons du projet.', 'Prise en charge de l\'ensemble du cycle de vie du projet, de l\'initiation et de la planification au déploiement réussi et au soutien post-lancement.', 'Gestion de tous les aspects de plusieurs projets connexes pour garantir que le programme global soutient directement les objetivos stratégiques.', 'Rapport sur l\'état d\'avancement, les risques et les progrès du projet à la direction et aux parties prenantes.' ],
                             it: [ 'Ho gestito un portafoglio di complesse iniziative software aziendali, che abbracciavano più linee di business.', 'Ho fornito leadership in loco per i team di progetto, costruindo e motivando i membri del team a raggiungere gli obiettivi e le tappe fondamentali del progetto.', 'Mi sono occupato dell\'intero ciclo di vita del progetto, dall\'avvio e pianificazione all\'implementazione di successo e al supporto post-lancio.', 'Ho gestito tutti gli aspetti di più progetti correlati per garantire che il programma complessivo sostenesse direttamente gli obiettivi strategici.', 'Ho riferito sullo stato del progetto, sui rischi e sui progressi alla leadership esecutiva e agli stakeholder.' ]
                         },
                         techUsed: ['Agile', 'Risk Management', 'Jira', 'Kanban', 'Scrum', 'MS Project']
@@ -757,7 +762,7 @@
                             pt: [ 'Aconselhei clientes sobre aquisição de software, distribuição, desenvolvimento de TI e ferramentas de web/intranet.', 'Forneci coaching administrativo e operacional, com foco em potencial de RH, processos organizacionais e inovação.', 'Fui responsável pela área de Software e Tecnologia, utilizando ferramentas como Java, Perl, Oracle, SQL e ambientes de rede Cisco.', 'Aconselhei sobre estratégias de tecnologia, corporativas e comerciais/de marketing, incluindo análise de mercado e incursões em novos mercados.', 'Implementei melhorias de processo com base nos padrões SEI, CMM, CMMI e ISO.' ],
                             de: [ 'Beratung von Kunden bei der Beschaffung, dem Vertrieb, der IT-Entwicklung und den Web-/Intranet-Tools von Software.', 'Bereitstellung von administrativem und operativem Coaching mit Schwerpunkt auf HR-Potenzial, Organisationsprozessen und Innovation.', 'Verantwortlich für den Bereich Software und Technologie unter Verwendung von Tools wie Java, Perl, Oracle, SQL und Cisco Networking-Umgebungen.', 'Beratung zu Technologie-, Unternehmens- und Handels-/Marketingstrategien, einschließlich Marktanalyse und Erschließung neuer Märkte.', 'Implementierung von Prozessverbesserungen auf der Grundlage der Standards SEI, CMM, CMMI und ISO.' ],
                             fr: [ 'Conseil aux clients sur l\'acquisition, la distribution, le développement informatique et les outils web/intranet de logiciels.', 'Fourniture d\'un coaching administratif et opérationnel, axé sur le potentiel des RH, les processus organisationnels et l\'innovation.', 'Responsable du domaine des logiciels et de la technologie, en utilisant des outils tels que Java, Perl, Oracle, SQL et les environnements de réseau Cisco.', 'Conseil sur les stratégies technologiques, d\'entreprise et commerciales/marketing, y compris l\'analyse de marché et les incursions sur de nouveaux marchés.', 'Mise en œuvre d\'améliorations de processus basées sur les normes SEI, CMM, CMMI et ISO.' ],
-                            it: [ 'Ho fornito consulenza ai clienti sull\'acquisizione, la distribuzione, lo sviluppo IT e gli strumenti web/intranet del software.', 'Ho fornito coaching amministrativo e operativo, concentrandomi sul potenziale delle risorse umane, sui processi organizzativi e sull\'innovazione.', 'Ero responsabile dell\'area Software e Tecnologia, utilizzando strumenti come Java, Perl, Oracle, SQL e ambienti di rete Cisco.', 'Ho fornito consulenza su strategie tecnologiche, aziendali e commerciali/marketing, comprese analisi di mercato e incursioni in nuovi mercati.', 'Ho implementato miglioramenti dei processi basati sugli standard SEI, CMM, CMMI e ISO.' ]
+                            it: [ 'Ho fornito consulenza ai clienti sull\'acquisizione, la distribuzione, lo sviluppo IT e gli strumenti web/intranet del software.', 'Ho fornito coaching amministrativo e operativo, concentrandomi sul potenziale delle risorse umane, sui processi organizzativi e sull\'innovazione.', 'Ero responsabile dell\'area Software e Tecnologia, utilizzando strumenti como Java, Perl, Oracle, SQL e ambienti di rete Cisco.', 'Ho fornito consulenza su strategie tecnologiche, aziendali e commerciali/marketing, comprese analisi di mercato e incursioni in nuovi mercati.', 'Ho implementato miglioramenti dei processi basati sugli standard SEI, CMM, CMMI e ISO.' ]
                         },
                         techUsed: ['Java', 'Perl', 'Oracle', 'SQL', 'CMMI', 'ISO Standards', 'Middleware', 'Agile', 'Kanban', 'Scrum', 'Jira', 'JUnit', 'Cygwin', 'Putty', 'SSH', 'Toad', 'Eclipse', 'MySQL']
                     }
