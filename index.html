@@ -12,11 +12,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* * Linter Note: Selectors like .dark-mode, .collapsed, .is-visible, .pulse-highlight, etc.,
-         * are flagged as "unused" by some static linters. These classes are dynamically added and removed
-         * by JavaScript to control the application's state and animations. They are not errors.
-         * The '--watermark-url' custom property is also set dynamically via JavaScript.
-        */
         :root {
             --bg-primary: #f9fafb;
             --bg-secondary: #ffffff;
@@ -121,7 +116,6 @@
         .tech-tag:hover, .tech-tag:focus { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-color: #94a3b8; outline: none; }
         .tech-tag.selected { background-color: var(--cyan-brand); color: white; border-color: #0e7490; }
         .dark-mode .tech-tag.selected { color: white; }
-        .tech-tag.selected .text-gray-500, .tech-tag.selected .font-semibold { color: white; }
         .tech-tag.selected .stars svg { color: #f59e0b; }
         .tech-tag .tech-icon { width: 16px; height: 16px; margin-right: 6px; object-fit: contain; }
         .stars { display: flex; align-items: center; margin-left: auto; padding-left: 8px; white-space: nowrap; }
@@ -157,8 +151,8 @@
         .timeline-tech-icons { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .timeline-tech-icons img { width: 12px; height: 12px; border-radius: 3px; }
         .trademark-logo {
-            display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%;
-            background-color: var(--cyan-brand); color: white; font-weight: bold; font-size: 0.8rem; border: 2px solid white;
+            display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%;
+            background-color: var(--cyan-brand); color: white; font-weight: bold; font-size: 0.75rem; border: 2px solid white;
             flex-shrink: 0;
         }
         .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
@@ -241,7 +235,11 @@
         #theme-toggle .moon-icon { display: block; }
         .dark-mode #theme-toggle .sun-icon { display: block; }
         .dark-mode #theme-toggle .moon-icon { display: none; }
-
+        /* Radar chart tooltip */
+        .radar-label:hover {
+            cursor: help;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
@@ -653,7 +651,7 @@
                             es: [ 'Gestioné el alcance general de las pruebas para los proyectos de los clientes, asegurando la alineación con los objetivos estratégicos del negocio.', 'Establecí hojas de ruta de programas, fijé prioridades y resolví conflictos para mejorar la eficacia hacia los resultados de negocio.', 'Fui mentor y guié a un equipo matricial de recursos de prueba onshore y offshore para asegurar una cobertura de prueba completa.', 'Gestioné los aspectos de servicio del P&L de pruebas, centrándome en la optimización de costos y la asignación de recursos.', 'Construí relaciones directas con los stakeholders de los clientes para asegurar la objetividad y promover el crecimiento continuo.' ],
                             pt: [ 'Gerenciei o escopo geral de testes para projetos de clientes, garantindo o alinhamento com os objetivos estratégicos de negócios.', 'Defini roadmaps de programas, estabeleci prioridades e resolvi conflitos para aumentar a eficácia em direção aos resultados de negócios.', 'Orientei e guiei uma equipe matricial de recursos de teste onshore e offshore para garantir uma cobertura de teste abrangente.', 'Gerenciei aspectos de serviço do P&L de testes, com foco na otimização de custos e alocação de recursos.', 'Construí relacionamentos diretos com os stakeholders dos clientes para garantir a objetividade e promover o crescimento contínuo.' ],
                             de: [ 'Verwaltung des gesamten Testumfangs für Kundenprojekte, um die Ausrichtung auf strategische Geschäftsziele sicherzustellen.', 'Festlegung von Programm-Roadmaps, Priorisierung von Projekten und Lösung von Konflikten zur Steigerung der Effektivität im Hinblick auf die Geschäftsergebnisse.', 'Mentoring und Anleitung eines Matrix-Teams aus Onshore- und Offshore-Testressourcen zur Gewährleistung einer umfassenden Testabdeckung.', 'Verwaltung der Serviceaspekte der Test-GuV mit Fokus auf Kostenoptimierung und Ressourcenzuweisung gemäß Governance-Richtlinien.', 'Aufbau direkter Beziehungen zu Kunden-Stakeholdern, um Objektivität zu gewährleisten und kontinuierliches Wachstum zu fördern.' ],
-                            fr: [ 'Gestion de la portée globale des tests pour les projets clients, en assurant l\'alignement avec les objectifs commerciaux stratégiques.', 'Définition des feuilles de route des programmes, établissement des priorités des projets et résolution des conflits pour améliorer l\'efficacité en vue des résultats commerciaux.', 'Encadrement et orientation d\'une équipe matricielle de ressources de test onshore et offshore pour garantir une couverture de test complète.', 'Gestion des aspects de service du compte de résultat des tests, en se concentrant sur l\'optimisation des coûts et l\'allocation des ressources sur la base des directives de gouvernance.', 'Établissement de relations directes avec les parties prenantes des clients pour garantir l\'objectivité et promouvoir une croissance continue.' ],
+                            fr: [ 'Gestion de la portée globale des tests pour les projets clients, en assurant l\'alignement avec les objectifs commerciaux stratégiques.', 'Définition des feuilles de route des programmes, établissement des priorités des projets et résolution des conflits pour améliorer l\'efficacité en vue des résultats commerciaux.', 'Encadrement et orientation d\'une équipe matricielle de ressources de test onshore et offshore pour garantir une couverture de test complète.', 'Gestion des aspects de service du compte de resultado des tests, en se concentrant sur l\'optimisation des coûts et l\'allocation des ressources sur la base des directives de gouvernance.', 'Établissement de relations directes avec les parties prenantes des clients pour garantir l\'objectivité et promouvoir une croissance continue.' ],
                             it: [ 'Ho gestito l\'ambito di test complessivo per i progetti dei clienti, garantendo l\'allineamento con gli obiettivi strategici aziendali.', 'Ho definito le roadmap dei programmi, stabilito le priorità dei progetti e risolto i conflitti per migliorare l\'efficacia verso i risultati aziendali.', 'Ho fatto da mentore e guidato un team a matrice di risorse di test onshore e offshore per garantire una copertura di test completa.', 'Ho gestito gli aspetti di servizio del conto economico dei test, concentrandomi sull\'ottimizzazione dei costi e sull\'allocazione delle risorse in base alle linee guida di governance.', 'Ho costruito relazioni dirette con gli stakeholder dei clienti per garantire l\'obiettività e promuovere la crescita continua.' ]
                         },
                         techUsed: ['Stakeholder Mgmt', 'Strategic Planning', 'TestRail', 'Agile', 'Kanban', 'Scrum', 'Jira', 'Cypress', 'MS Project']
@@ -767,6 +765,22 @@
                         techUsed: ['Java', 'Perl', 'Oracle', 'SQL', 'CMMI', 'ISO Standards', 'Middleware', 'Agile', 'Kanban', 'Scrum', 'Jira', 'JUnit', 'Cygwin', 'Putty', 'SSH', 'Toad', 'Eclipse', 'MySQL']
                     }
                 ],
+                radarTooltips: {
+                    en: {
+                        'Project Mgmt': 'Expertise in leading projects from initiation to completion, ensuring they meet scope, budget, and timeline requirements.',
+                        'QA & Automation': 'Deep knowledge in designing and implementing automated testing frameworks to ensure software quality and reliability.',
+                        'Leadership': 'Proven ability to mentor, manage, and motivate cross-functional teams to achieve high performance and project success.',
+                        'DevOps Strategy': 'Skilled in integrating development and operations to improve workflow, increase efficiency, and accelerate release cycles.',
+                        'Cloud Platforms': 'Proficient in leveraging major cloud providers (AWS, Azure, GCP) for scalable, resilient, and cost-effective infrastructure.',
+                        'Stakeholder Mgmt': 'Adept at managing communications and relationships with all stakeholders to ensure project alignment and buy-in.',
+                        'Agile': 'Extensive experience with Agile principles and practices to deliver value iteratively and adapt to changing requirements.',
+                        'Scrum': 'Certified expertise in managing projects using the Scrum framework for transparent, iterative, and collaborative development.',
+                        'Kanban': 'Utilizing Kanban for workflow visualization, managing flow, and continuous improvement to optimize delivery.',
+                        'CMMI': 'Knowledge of the Capability Maturity Model Integration framework to improve and standardize organizational processes.',
+                        'ISO Standards': 'Experience in implementing and adhering to ISO standards for quality management and information security.',
+                        'Risk Mgmt': 'Systematic approach to identifying, analyzing, and mitigating project risks to ensure successful outcomes.'
+                    }
+                },
                 translations: {
                     en: {
                         job_title: "Senior IT Project Manager, QA Architect & QA Leader", contact_title: "Contact", competencies_title: "Core Competencies", competency_pm: "IT Project Management", competency_qa: "QA & Test Automation", competency_lead: "Team Leadership & Mentoring", competency_devops: "CI/CD & DevOps Strategy", competency_cloud: "Cloud Platforms (AWS, Azure, GCP)", competency_strategy: "Strategic Business Acumen", competency_relations: "Stakeholder & Client Relations", languages_title: "Languages", lang_native: "Native", lang_fluent: "Fluent", lang_basic: "Basic", lang_others: "Others", summary_title: "Professional Summary", summary_text: "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.", summary_detail_1: "Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.", summary_detail_2: "As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.", toolkit_title: "Technical & Management Toolkit", toolkit_pm: "Project Management & Methodologies:", toolkit_qa: "QA & Test Automation:", toolkit_lang: "Programming & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Databases & APIs:", toolkit_analytics: "Analytics & Monitoring:", toolkit_platform: "Platforms & Business Tools:", toolkit_system: "General & System Tools:", experience_title: "Professional Experience", education_title: "Education & Certifications", infographics_title: "Career at a Glance", infographics_competencies_title: "Core Competencies", infographics_methodologies_title: "Methodologies & Processes", infographics_timeline_title: "Career Timeline",
@@ -991,7 +1005,9 @@
                         tspans = `<tspan>${label}</tspan>`;
                     }
 
-                    labelElements += `<text x="${labelX}" y="${labelY}" font-size="9" text-anchor="middle" alignment-baseline="middle" fill="${labelColor}">${tspans}</text>`;
+                    const tooltipText = this.data.radarTooltips.en[label] || label;
+
+                    labelElements += `<g class="radar-label"><title>${tooltipText}</title><text x="${labelX}" y="${labelY}" font-size="9" text-anchor="middle" alignment-baseline="middle" fill="${labelColor}">${tspans}</text></g>`;
                     grid += `<line x1="${center}" y1="${center}" x2="${center + radius * Math.cos(angle)}" y2="${center + radius * Math.sin(angle)}" stroke="${gridColor}" />`;
                 });
 
@@ -1104,7 +1120,6 @@
                 });
             },
 
-            // New function for tracking events
             trackEvent(eventName, eventCategory, eventLabel) {
                 if (typeof gtag === 'function') {
                     gtag('event', eventName, {
@@ -1117,71 +1132,45 @@
             },
 
             setupEventListeners() {
-                // Centralized event listener for clicks
                 document.body.addEventListener('click', (e) => {
-                    // Skill Tag filtering
                     const skillTag = e.target.closest('.tech-tag');
                     if (skillTag) {
                         this.toggleSkillFilter(skillTag);
                         return;
                     }
 
-                    // Accordion toggling
                     const accordionHeader = e.target.closest('.accordion-header, .toolkit-header');
                     if (accordionHeader) {
                         this.handleAccordionToggle(accordionHeader);
                         return;
                     }
 
-                    // Contact links
                     const contactLink = e.target.closest('[data-analytics-event="contact_click"]');
                     if(contactLink) {
                         this.trackEvent('contact_click', 'Contact', contactLink.dataset.analyticsLabel);
                         return;
                     }
 
-                    // Other buttons
                     const button = e.target.closest('button');
                     if (button) {
                         switch (button.id) {
-                            case 'reset-filter':
-                                this.resetFilters();
-                                break;
-                            case 'expand-all-exp':
-                                this.toggleAllAccordions(this.DOMElements.experienceContainer, button);
-                                break;
-                            case 'expand-all-toolkit':
-                                this.toggleAllAccordions(this.DOMElements.toolkitContainer, button);
-                                break;
-                            case 'read-more-btn':
-                                this.toggleReadMore(button);
-                                break;
-                            case 'print-btn':
-                                this.trackEvent('print_cv', 'Interaction', 'Print Button');
-                                window.print();
-                                break;
-                            case 'theme-toggle':
-                                this.toggleTheme();
-                                break;
-                            case 'modal-close':
-                                this.closeModal();
-                                break;
+                            case 'reset-filter': this.resetFilters(); break;
+                            case 'expand-all-exp': this.toggleAllAccordions(this.DOMElements.experienceContainer, button); break;
+                            case 'expand-all-toolkit': this.toggleAllAccordions(this.DOMElements.toolkitContainer, button); break;
+                            case 'read-more-btn': this.toggleReadMore(button); break;
+                            case 'print-btn': this.trackEvent('print_cv', 'Interaction', 'Print Button'); window.print(); break;
+                            case 'theme-toggle': this.toggleTheme(); break;
+                            case 'modal-close': this.closeModal(); break;
                         }
                     }
 
-                    // Language selector
                     const langSelector = e.target.closest('#language-selector');
-                    if (langSelector) {
-                        this.handleLanguageSelector(e);
-                    }
+                    if (langSelector) this.handleLanguageSelector(e);
 
-                    // Image Modal
                     if (e.target.id === 'profile-photo') this.openModal();
                     if (e.target.id === 'image-modal') this.closeModal();
-
                 });
 
-                // Keyboard event listeners
                 this.DOMElements.toolkitContainer.addEventListener('keydown', (e) => {
                     const tag = e.target.closest('.tech-tag');
                     if (tag && (e.key === 'Enter' || e.key === ' ')) {
