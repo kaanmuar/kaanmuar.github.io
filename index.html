@@ -28,8 +28,9 @@
             width: 100vw;
             height: 100vh;
             z-index: -1;
-            opacity: 0.02;
+            opacity: 0.015;
             pointer-events: none;
+            background-image: var(--watermark-url);
             background-repeat: repeat;
         }
         @media print {
@@ -43,7 +44,7 @@
             display: inline-flex; align-items: center; background-color: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 9999px;
             font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid #e2e8f0;
         }
-        .tech-tag:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-color: #94a3b8; }
+        .tech-tag:hover, .tech-tag:focus { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-color: #94a3b8; outline: none; }
         .tech-tag.selected { background-color: var(--cyan-brand); color: white; border-color: #0e7490; }
         .tech-tag.selected .text-gray-500, .tech-tag.selected .font-semibold { color: white; }
         .tech-tag.selected .stars svg { color: #f59e0b; }
@@ -60,14 +61,14 @@
             padding: 5px 10px; position: absolute; z-index: 10; bottom: 125%; left: 50%; transform: translateX(-50%);
             opacity: 0; transition: opacity 0.3s; white-space: nowrap; font-size: 12px; width: max-content;
         }
-        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        .tooltip:hover .tooltiptext, .tooltip:focus .tooltiptext { visibility: visible; opacity: 1; }
         .lang-flag { transition: transform 0.2s; border: 2px solid transparent; border-radius: 50%; }
-        .lang-flag:hover { transform: scale(1.1); }
+        .lang-flag:hover, .lang-flag:focus { transform: scale(1.1); }
         .lang-flag.selected { border-color: var(--cyan-brand); }
         #language-selector.collapsed .lang-wrapper:not(:has(.selected)) { display: none; }
         #language-selector .lang-wrapper { transition: opacity 0.3s ease; }
         #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)) { opacity: 0.5; }
-        #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):hover { opacity: 1; }
+        #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):hover, #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):focus { opacity: 1; }
         .lang-accordion-indicator { transition: transform 0.3s ease; }
         #language-selector:not(.collapsed) .lang-accordion-indicator { transform: rotate(180deg); }
         .toolkit-preview { font-size: 0.75rem; color: #64748b; padding-left: 0.5rem; margin-top: 0.25rem; }
@@ -88,8 +89,8 @@
         .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; text-align: center; font-size: 0.75rem; color: #6b7280; }
         .phone-container .phone-text { display: inline; }
         .phone-container .phone-number { display: none; }
-        .phone-container:hover .phone-text { display: none; }
-        .phone-container:hover .phone-number { display: inline; }
+        .phone-container:hover .phone-text, .phone-container:focus .phone-text { display: none; }
+        .phone-container:hover .phone-number, .phone-container:focus .phone-number { display: inline; }
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex;
             align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -126,16 +127,26 @@
             animation: pulse-blue 2s 1;
             border-radius: 8px; /* Match element rounding */
         }
+        /* Accessibility: Visually hidden class for screen readers */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        /* Accessibility: Focus styles */
+        :focus-visible {
+            outline: 3px solid var(--orange-brand);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.5);
+            border-radius: 4px;
+        }
     </style>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'G-J8GNF5380F');
-    </script>
 </head>
 <body data-author="Carlos A. Muñoz">
 
@@ -146,8 +157,8 @@
             <aside class="md:w-1/3 bg-gray-800 text-white p-6">
                 <div class="flex flex-col items-center">
                     <div class="relative">
-                        <img id="profile-photo" src="https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400 cursor-pointer" alt="Carlos Muñoz Ardila">
-                        <div class="trademark-logo absolute top-0 right-0">CAM</div>
+                        <img id="profile-photo" src="https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400 cursor-pointer" alt="Profile photo of Carlos Muñoz Ardila" tabindex="0" role="button" aria-label="View larger profile photo">
+                        <div class="trademark-logo absolute top-0 right-0" aria-hidden="true">CAM</div>
                     </div>
                     <div class="mt-5 text-center">
                         <h1 class="text-2xl font-bold text-white whitespace-nowrap">CARLOS A. MUÑOZ</h1>
@@ -159,42 +170,42 @@
                 <hr class="border-gray-600 my-6">
 
                 <!-- Contact Info -->
-                <section class="space-y-4 text-sm">
+                <section aria-labelledby="contact-heading">
                     <div class="flex items-center relative">
-                        <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
+                        <h3 id="contact-heading" class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
                     </div>
                     <div class="flex items-center space-x-3 text-gray-300">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
                         <a href="tel:+573209191010" rel="noopener noreferrer" class="hover:text-cyan-400 phone-container">
                             <span class="phone-text">Phone Number</span>
-                            <span class="phone-number">+57 320 919 1010</span>
+                            <span class="phone-number" aria-hidden="true">+57 320 919 1010</span>
                         </a>
                     </div>
                     <div class="flex items-center space-x-3 text-gray-300">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
                         <a href="mailto:kaanmuar@gmail.com" rel="noopener noreferrer" class="hover:text-cyan-400">kaanmuar@gmail.com</a>
                     </div>
                     <div class="flex items-start space-x-3 text-gray-300">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                         <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">LinkedIn Profile</a>
                     </div>
                     <div class="flex items-center space-x-3 text-gray-300">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg>
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg>
                         <a href="https://wa.me/573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">WhatsApp</a>
                     </div>
                     <div class="flex items-center space-x-3 text-gray-300">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944 11.944-5.356 11.944-11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-."/></svg>
+                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg>
                         <a href="https://t.me/+573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400">Telegram</a>
                     </div>
                     <div class="flex items-center space-x-3 text-gray-300">
-                        <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
+                        <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
                         <span>Medellin, Antioquia, Colombia</span>
                     </div>
                 </section>
                 <hr class="border-gray-600 my-6">
                 <!-- Core Competencies -->
-                <section>
-                    <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="competencies_title">Core Competencies</h3>
+                <section aria-labelledby="competencies-heading">
+                    <h3 id="competencies-heading" class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="competencies_title">Core Competencies</h3>
                     <ul class="mt-3 space-y-2 text-sm text-gray-300 list-disc list-inside">
                         <li data-translate-key="competency_pm">IT Project Management</li>
                         <li data-translate-key="competency_qa">QA & Test Automation</li>
@@ -207,29 +218,29 @@
                 </section>
                 <hr class="border-gray-600 my-6">
                 <!-- Languages -->
-                <section id="languages-section">
-                    <h3 class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
+                <section id="languages-section" aria-labelledby="languages-heading">
+                    <h3 id="languages-heading" class="text-lg font-semibold text-gray-200 border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
                     <div id="languages-body" class="mt-3 space-y-4 text-sm">
                         <div class="language">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="flag-icon" alt="Spanish Flag"><span class="font-medium ml-2">Spanish</span></div>
                                 <span class="text-gray-400" data-translate-key="lang_native">Native</span>
                             </div>
-                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 100%"></div></div>
+                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Spanish proficiency: Native"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 100%"></div></div>
                         </div>
                         <div class="language">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="flag-icon" alt="English Flag"><span class="font-medium ml-2">English</span></div>
                                 <span class="text-gray-400" data-translate-key="lang_fluent">Fluent</span>
                             </div>
-                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 90%"></div></div>
+                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="English proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 90%"></div></div>
                         </div>
                         <div class="language">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="flag-icon" alt="Portuguese Flag"><span class="font-medium ml-2">Portuguese</span></div>
                                 <span class="text-gray-400" data-translate-key="lang_fluent">Fluent</span>
                             </div>
-                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 85%"></div></div>
+                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Portuguese proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 85%"></div></div>
                         </div>
                         <div class="language">
                             <div class="flex items-center justify-between">
@@ -241,7 +252,7 @@
                                 </div>
                                 <span class="text-gray-400" data-translate-key="lang_basic">Basic</span>
                             </div>
-                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 30%"></div></div>
+                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Other languages proficiency: Basic"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 30%"></div></div>
                         </div>
                     </div>
                 </section>
@@ -249,19 +260,19 @@
 
             <!-- Right Column (Main Content) -->
             <main class="w-full bg-gray-50 p-6">
-                <section>
+                <section aria-labelledby="summary-heading">
                     <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800" data-translate-key="summary_title">Professional Summary</h2>
-                        <div id="language-selector" class="relative no-print flex items-center space-x-2 collapsed cursor-pointer">
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English"><span class="tooltiptext">English</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español"><span class="tooltiptext">Español</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="pt" alt="Português"><span class="tooltiptext">Português</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="de" alt="Deutsch"><span class="tooltiptext">Deutsch</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="fr" alt="Français"><span class="tooltiptext">Français</span></div>
-                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italiano"><span class="tooltiptext">Italiano</span></div>
-                            <svg class="w-4 h-4 text-gray-500 lang-accordion-indicator" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <h2 id="summary-heading" class="text-xl font-bold text-gray-800" data-translate-key="summary_title">Professional Summary</h2>
+                        <div id="language-selector" role="region" aria-label="Language Selector" class="relative no-print flex items-center space-x-2 collapsed cursor-pointer" tabindex="0">
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English" tabindex="-1" role="button" aria-label="Select English"><span class="tooltiptext">English</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español" tabindex="-1" role="button" aria-label="Select Spanish"><span class="tooltiptext">Español</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="pt" alt="Português" tabindex="-1" role="button" aria-label="Select Portuguese"><span class="tooltiptext">Português</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="de" alt="Deutsch" tabindex="-1" role="button" aria-label="Select German"><span class="tooltiptext">Deutsch</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="fr" alt="Français" tabindex="-1" role="button" aria-label="Select French"><span class="tooltiptext">Français</span></div>
+                            <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italiano" tabindex="-1" role="button" aria-label="Select Italian"><span class="tooltiptext">Italiano</span></div>
+                            <svg class="w-4 h-4 text-gray-500 lang-accordion-indicator" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             <span class="text-gray-300 mx-1">|</span>
-                            <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext">Print / PDF</span></button></div>
+                            <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200" aria-label="Print or save as PDF"><svg class="w-5 h-5 text-gray-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext">Print / PDF</span></button></div>
                         </div>
                     </div>
                     <div class="border-b-4 border-gray-300 pb-2 mb-3"></div>
@@ -270,94 +281,92 @@
                         <p data-translate-key="summary_detail_1">Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.</p>
                         <p data-translate-key="summary_detail_2">As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.</p>
                     </div>
-                    <button id="read-more-btn" class="text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-2 no-print">Read More...</button>
+                    <button id="read-more-btn" class="text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-2 no-print" aria-expanded="false" aria-controls="summary-details">Read More...</button>
                 </section>
 
                 <!-- Infographics Section -->
-                <section class="section mt-8 infographics-section">
-                    <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2 mb-6" data-translate-key="infographics_title">Career at a Glance</h2>
+                <section class="section mt-8 infographics-section" aria-labelledby="infographics-heading">
+                    <h2 id="infographics-heading" class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2 mb-6" data-translate-key="infographics_title">Career at a Glance</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         <!-- Left Column: Graphs -->
                         <div class="space-y-8">
-                            <div>
-                                <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
-                                <div id="competencies-radar-chart" class="relative w-full max-w-sm mx-auto h-64"></div>
-                            </div>
-                            <div>
-                                <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
-                                <div id="methodologies-radar-chart" class="relative w-full max-w-sm mx-auto h-64"></div>
-                            </div>
+                            <section aria-labelledby="competencies-graph-heading">
+                                <h3 id="competencies-graph-heading" class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
+                                <div id="competencies-radar-chart" class="relative w-full max-w-sm mx-auto h-64" role="img" aria-label="Radar chart showing core competency scores."></div>
+                            </section>
+
+                            <hr class="border-gray-200">
+
+                            <section aria-labelledby="methodologies-graph-heading">
+                                <h3 id="methodologies-graph-heading" class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
+                                <div id="methodologies-radar-chart" class="relative w-full max-w-sm mx-auto h-64" role="img" aria-label="Radar chart showing methodology and process scores."></div>
+                            </section>
                         </div>
                         <!-- Right Column: Timeline -->
-                        <div>
-                            <h3 class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
+                        <section aria-labelledby="timeline-heading">
+                            <h3 id="timeline-heading" class="text-base font-semibold text-gray-700 mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
                             <div id="timeline-container" class="relative pr-2"></div>
-                        </div>
+                        </section>
                     </div>
                 </section>
 
                 <hr class="my-12 border-gray-200">
 
                 <!-- Toolkit Section -->
-                <section class="section mt-6">
+                <section class="section mt-6" aria-labelledby="toolkit-heading">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
-                            <h2 class="text-xl font-bold text-gray-800" data-translate-key="toolkit_title">Technical & Management Toolkit</h2>
-                            <div class="relative ml-2 no-print">
-                                <div class="tooltip">
-                                    <svg class="w-5 h-5 text-gray-500 cursor-pointer" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                                    <span class="tooltiptext">Click skills to filter the timeline & experience sections.</span>
-                                </div>
-                            </div>
+                            <h2 id="toolkit-heading" class="text-xl font-bold text-gray-800" data-translate-key="toolkit_title">Technical & Management Toolkit</h2>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button id="expand-all-toolkit" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
-                            <button id="reset-filter" class="no-print text-xs bg-cyan-600 text-white hover:bg-cyan-700 font-semibold py-1 px-3 rounded-full transition-colors">Reset Filters</button>
+                        <div class="flex items-center space-x-2 no-print">
+                            <button id="expand-all-toolkit" class="text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
+                            <button id="reset-filter" class="text-xs bg-cyan-600 text-white hover:bg-cyan-700 font-semibold py-1 px-3 rounded-full transition-colors">Reset Filters</button>
                         </div>
                     </div>
+                    <div id="filter-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
                     <div id="toolkit-container" class="mt-1 space-y-3">
                         <!-- Toolkit sections will be generated by JS -->
                     </div>
                 </section>
 
                 <!-- Professional Experience -->
-                <section id="professional-experience" class="section mt-6">
+                <section id="professional-experience" class="section mt-6" aria-labelledby="experience-heading">
                     <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800" data-translate-key="experience_title">Professional Experience</h2>
+                        <h2 id="experience-heading" class="text-xl font-bold text-gray-800" data-translate-key="experience_title">Professional Experience</h2>
                         <button id="expand-all-exp" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
                     </div>
                     <div class="mt-3 space-y-1" id="experience-container"></div>
                 </section>
 
                 <!-- Education & Certifications -->
-                <section class="section mt-6">
-                    <h2 class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2" data-translate-key="education_title">Education & Certifications</h2>
+                <section class="section mt-6" aria-labelledby="education-heading">
+                    <h2 id="education-heading" class="text-xl font-bold text-gray-800 border-b-4 border-gray-300 pb-2">Education & Certifications</h2>
                     <div class="mt-3 grid md:grid-cols-2 gap-6 text-sm">
-                        <div>
-                            <h3 class="text-base font-bold text-gray-900">Education</h3>
+                        <section aria-labelledby="education-subheading">
+                            <h3 id="education-subheading" class="text-base font-bold text-gray-900">Education</h3>
                             <div class="mt-2 space-y-2">
                                 <p class="text-gray-700"><strong class="font-medium">Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p>
                                 <p class="text-gray-700"><strong class="font-medium">Computer Systems Engineering</strong> - EAMQ</p>
                                 <p class="text-gray-700"><strong class="font-medium">Computer Systems Technician</strong> - EAMQ</p>
                             </div>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-gray-900">Key Certifications</h3>
+                        </section>
+                        <section aria-labelledby="certs-subheading">
+                            <h3 id="certs-subheading" class="text-base font-bold text-gray-900">Key Certifications</h3>
                             <div class="mt-2 space-y-2">
                                 <p class="text-gray-700"><strong class="font-medium">English Proficiency:</strong> EF SET C2 Proficient</p>
                                 <p class="text-gray-700"><strong class="font-medium">Project Management:</strong> CSPM</p>
                                 <p class="text-gray-700"><strong class="font-medium">Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB</p>
                                 <p class="text-gray-700"><strong class="font-medium">Information Security:</strong> CISA, CISM, CISSP</p>
                             </div>
-                        </div>
+                        </section>
                     </div>
                 </section>
                 <footer class="cv-footer no-print">
                     <div class="flex justify-center items-center gap-2">
                         <p>&copy; 2025 Carlos A. Muñoz</p>
-                        <span class="text-gray-400">|</span>
+                        <span class="text-gray-400" aria-hidden="true">|</span>
                         <p>Interactive CV</p>
-                        <div class="trademark-logo ml-1">CAM</div>
+                        <div class="trademark-logo ml-1" aria-hidden="true">CAM</div>
                     </div>
                 </footer>
             </main>
@@ -366,9 +375,10 @@
 </div>
 
 <!-- Modal for Image Zoom -->
-<div id="image-modal" class="modal-overlay no-print">
+<div id="image-modal" class="modal-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
     <div class="modal-content">
-        <span class="modal-close">&times;</span>
+        <h2 id="modal-heading" class="sr-only">Profile Photo</h2>
+        <button class="modal-close" aria-label="Close image viewer">&times;</button>
         <img id="modal-image" src="" alt="Profile Photo Zoomed">
     </div>
 </div>
@@ -376,7 +386,7 @@
 <script>
     /***************************************************************************************
      * Interactive CV Application - Carlos A. Muñoz
-     * Version: 5.1 (July 2025)
+     * Version: 5.4 (July 2025) - Layout and Icon Refinements
      *
      * Intellectual Property Notice:
      * This document and its contents, including the code, design, and textual information,
@@ -405,9 +415,9 @@
                         { name: 'Agile', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/agile/339933' },
                         { name: 'Kanban', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/trello/0079BF' },
                         { name: 'Scrum', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/jira/0052CC' },
-                        { name: 'Strategic Planning', years: '10+ Yrs', stars: 5, icon: 'https://cdn-icons-png.flaticon.com/512/3063/3063834.png' },
-                        { name: 'Risk Management', years: '10+ Yrs', stars: 5, icon: 'https://cdn-icons-png.flaticon.com/512/3409/3409605.png' },
-                        { name: 'Stakeholder Mgmt', years: '10+ Yrs', stars: 5, icon: 'https://cdn-icons-png.flaticon.com/512/3303/3303991.png' },
+                        { name: 'Strategic Planning', years: '10+ Yrs', stars: 5, icon: 'https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/strategic-planning-icon.svg' },
+                        { name: 'Risk Management', years: '10+ Yrs', stars: 5, icon: 'https://uxwing.com/wp-content/themes/uxwing/download/crime-security-military-law/risk-management-icon.svg' },
+                        { name: 'Stakeholder Mgmt', years: '10+ Yrs', stars: 5, icon: 'https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/stakeholder-icon.svg' },
                         { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/jira/0052CC' },
                         { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/testrail/78C644' },
                         { name: 'MS Project', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/microsoftproject/217346' },
@@ -506,13 +516,13 @@
                         techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Tosca', 'Puppeteer', 'MS Dynamics', 'SAP', 'Zoho CRM', 'Shopify', 'Gatling', 'Power BI', 'Tableau', 'New Relic', 'Splunk', 'GraphQL']
                     },
                     {
-                        title: 'Senior Technical Project Manager & Consultant', company: 'RockStar Coders Agency', logo: 'https://cdn-icons-png.flaticon.com/512/1005/1005121.png', dates: 'Apr 2019 - Mar 2021',
+                        title: 'Senior Technical Project Manager & Consultant', company: 'RockStar Coders Agency', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/arts-graphic-designs/star-icon.svg', dates: 'Apr 2019 - Mar 2021',
                         details: {
                             en: [ 'Provided technical project management and QA leadership for clients across 8+ projects, including for OverActive and the Afar Project.', 'Led QA strategy and execution, defining technical solutions to optimize testing processes and improve overall software delivery speed and quality.', 'Implemented robust automation frameworks using Kotlin, Selenium, and Appium, integrated into CI/CD pipelines with Jenkins and GitLab.', 'Collaborated closely with development and product management to ensure clear understanding of requirements and effective communication.', 'Proactively identified and mitigated potential risks to project success by implementing robust QA practices and risk management protocols.' ],
                             es: [ 'Proporcioné gestión técnica de proyectos y liderazgo de QA para clientes en más de 8 proyectos, incluyendo para OverActive y el Proyecto Afar.', 'Lideré la estrategia y ejecución de QA, definiendo soluciones técnicas para optimizar los procesos de prueba y mejorar la velocidad y calidad general de la entrega de software.', 'Implementé marcos de automatización robustos usando Kotlin, Selenium y Appium, integrados en pipelines de CI/CD con Jenkins y GitLab.', 'Colaboré estrechamente con los equipos de desarrollo y gestión de productos para asegurar una clara comprensión de los requisitos y una comunicación efectiva.', 'Identifiqué y mitigé proactivamente los riesgos potenciales para el éxito del proyecto mediante la implementación de prácticas de QA robustas y protocolos de gestión de riesgos.' ],
                             pt: [ 'Forneci gerenciamento técnico de projetos e liderança de QA para clientes em mais de 8 projetos, incluindo para a OverActive e o Projeto Afar.', 'Liderei a estratégia e execução de QA, definindo soluções técnicas para otimizar os processos de teste e mejorar a velocidade e qualidade geral da entrega de software.', 'Implementei robustos frameworks de automação usando Kotlin, Selenium e Appium, integrados em pipelines de CI/CD com Jenkins e GitLab.', 'Colaborei de perto com as equipes de desenvolvimento e gerenciamento de produtos para garantir uma compreensão clara dos requisitos e uma comunicação eficaz.', 'Identifiquei e mitiguei proativamente os riscos potenciais para o sucesso do projeto, implementando práticas de QA robustas e protocolos de gerenciamento de risco.' ],
                             de: [ 'Bereitstellung von technischem Projektmanagement und QA-Führung für Kunden in über 8 Projekten, einschließlich für OverActive und das Afar-Projekt.', 'Leitung der QA-Strategie und -Ausführung, Definition technischer Lösungen zur Optimierung von Testprozessen und zur Verbesserung der allgemeinen Geschwindigkeit und Qualität der Softwarebereitstellung.', 'Implementierung robuster Automatisierungs-Frameworks mit Kotlin, Selenium und Appium, integriert in CI/CD-Pipelines mit Jenkins und GitLab.', 'Enge Zusammenarbeit mit Entwicklungs- und Produktmanagementteams, um ein klares Verständnis der Anforderungen und eine effektive Kommunikation sicherzustellen.', 'Proaktive Identifizierung und Minderung potenzieller Risiken für den Projekterfolg durch Implementierung robuster QA-Praktiken und Risikomanagementprotokolle.' ],
-                            fr: [ 'Fourniture de la gestion de projet technique et du leadership en QA pour des clients sur plus de 8 projets, y compris pour OverActive et le projet Afar.', 'Direction de la stratégie et de l\'exécution de l\'assurance qualité, définition de solutions techniques pour optimiser les processus de test et améliorer la vitesse et la qualité globales de la livraison des logiciels.', 'Mise en œuvre de cadres d\'automatisation robustes utilisant Kotlin, Selenium et Appium, intégrés dans des pipelines CI/CD avec Jenkins et GitLab.', 'Collaboration étroite avec les équipes de développement et de gestion de produits pour garantir une compréhension claire des exigences et une communication efficace.', 'Identification et atténuation proactives des risques potentiels pour la réussite des projets en mettant en œuvre des pratiques d\'assurance qualité et des protocoles de gestion des risques solides.' ],
+                            fr: [ 'Fourniture de la gestion de projet technique et du leadership en QA pour des clients sur plus de 8 projets, y compris pour OverActive et le projet Afar.', 'Direction de la stratégie et de l\'exécution de l\'assurance qualité, définition de solutions techniques pour optimiser les processus de test et améliorer la vitesse et la qualité globales de la livraison des logiciels.', 'Mise en œuvre de cadres d\'automatisation robustes utilisant Kotlin, Selenium et Appium, intégrés dans des pipelines CI/CD avec Jenkins et GitLab.', 'Collaboration étroite avec les équipes de développement et de gestion de produtos para garantir uma compreensão clara dos requisitos e uma comunicação eficaz.', 'Identification et atténuation proactives des risques potentiels pour la réussite des projets en mettant en œuvre des pratiques d\'assurance qualité et des protocoles de gestion des risques solides.' ],
                             it: [ 'Fornitura di gestione tecnica dei progetti e leadership QA per clienti in oltre 8 progetti, inclusi OverActive e il Progetto Afar.', 'Guida della strategia e dell\'esecuzione QA, definendo soluzioni tecniche per ottimizzare i processi di test e migliorare la velocità e la qualità complessiva della consegna del software.', 'Implementazione di robusti framework di automazione utilizzando Kotlin, Selenium e Appium, integrati in pipeline CI/CD con Jenkins e GitLab.', 'Collaborazione stretta con i team di sviluppo e di gestione del prodotto per garantire una chiara comprensione dei requisiti e una comunicazione efficace.', 'Identificazione e mitigazione proattiva dei rischi potenziali per il successo del progetto implementando solide pratiche di QA e protocolli di gestione del rischio.' ]
                         },
                         techUsed: ['Kanban', 'Agile', 'Risk Management', 'Selenium', 'Appium', 'Kotlin', 'Jenkins', 'GitLab', 'Jira', 'Scrum', 'Ranorex', 'Kubernetes', 'Terraform', 'GCP', 'Azure DevOps', 'Node.js', 'Ruby', 'PHP']
@@ -522,7 +532,7 @@
                         details: {
                             en: [ 'Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account.', 'Managed test planning, resource estimation, and client communications, ensuring alignment with project timelines and deliverables.', 'Architected and spearheaded the development of a new QA automation framework using Kotlin, C# .Net, and Robot Framework.', 'Utilized AWS services (S3, EC2, Redshift, Athena) for managing test data and environments for Salesforce integration projects.', 'Performed complex data validation and manipulation using advanced SQL queries against Oracle and PostgreSQL databases.' ],
                             es: [ 'Lideré todos los esfuerzos de QA para proyectos de Salesforce Sales Cloud y Service Cloud para la cuenta de alto perfil de DirectvGO / AT&T.', 'Gestioné la planificación de pruebas, la estimación de recursos y las comunicaciones con el cliente, asegurando la alineación con los cronogramas y entregables del proyecto.', 'Diseñé y lideré el desarrollo de un nuevo marco de automatización de QA utilizando Kotlin, C# .Net y Robot Framework.', 'Utilicé servicios de AWS (S3, EC2, Redshift, Athena) para gestionar datos y entornos de prueba para proyectos de integración de Salesforce.', 'Realicé validación y manipulación de datos complejos utilizando consultas SQL avanzadas en bases de datos Oracle y PostgreSQL.' ],
-                            pt: [ 'Liderei todos os esforços de QA para projetos Salesforce Sales Cloud e Service Cloud para a conta de alto perfil da DirectvGO / AT&T.', 'Gerenciei o planejamento de testes, a estimativa de recursos e as comunicações com o cliente, garantindo o alinhamento com os cronogramas e entregas do projeto.', 'Arquitetei e liderei o desenvolvimento de um novo framework de automação de QA usando Kotlin, C# .Net e Robot Framework.', 'Utilizei serviços da AWS (S3, EC2, Redshift, Athena) para gerenciar dados e ambientes de teste para projetos de integração do Salesforce.', 'Realizei validação e manipulação de dados complexos usando consultas SQL avanzadas em bancos de dados Oracle e PostgreSQL.' ],
+                            pt: [ 'Liderei todos os esforços de QA para projetos Salesforce Sales Cloud e Service Cloud para a conta de alto perfil da DirectvGO / AT&T.', 'Gerenciei o planejamento de testes, a estimativa de recursos e as comunicações com o cliente, garantindo o alinhamento com os cronogramas e entregas do projeto.', 'Arquitetei e liderei o desenvolvimento de um novo framework de automação de QA usando Kotlin, C# .Net e Robot Framework.', 'Utilizei serviços da AWS (S3, EC2, Redshift, Athena) para gerenciar dados e ambientes de teste para projetos de integração do Salesforce.', 'Realizei validação e manipulação de datos complexos usando consultas SQL avanzadas em bancos de dados Oracle e PostgreSQL.' ],
                             de: [ 'Leitung aller QA-Bemühungen für Salesforce Sales Cloud- und Service Cloud-Projekte für den hochkarätigen Kunden DirectvGO / AT&T.', 'Verwaltung der Testplanung, Ressourcenschätzung und Kundenkommunikation, um die Übereinstimmung mit Projektzeitplänen und -ergebnissen sicherzustellen.', 'Architektur und Leitung der Entwicklung eines neuen QA-Automatisierungs-Frameworks mit Kotlin, C# .Net und Robot Framework.', 'Nutzung von AWS-Diensten (S3, EC2, Redshift, Athena) zur Verwaltung von Testdaten und -umgebungen für Salesforce-Integrationsprojekte.', 'Durchführung komplexer Datenvalidierungen und -manipulationen mithilfe erweiterter SQL-Abfragen in Oracle- und PostgreSQL-Datenbanken.' ],
                             fr: [ 'Direction de tous les efforts d\'assurance qualité pour les projets Salesforce Sales Cloud et Service Cloud pour le compte de premier plan DirectvGO / AT&T.', 'Gestion de la planification des tests, de l\'estimation des ressources et des communications avec les clients, en veillant à l\'alignement sur les calendriers et les livrables du projet.', 'Conception et direction du développement d\'un nouveau cadre d\'automatisation de l\'assurance qualité utilisant Kotlin, C# .Net et Robot Framework.', 'Utilisation des services AWS (S3, EC2, Redshift, Athena) pour la gestion des données et des environnements de test pour les projets d\'intégration Salesforce.', 'Réalisation de validations et de manipulations de données complexes à l\'aide de requêtes SQL avancées sur des bases de données Oracle et PostgreSQL.' ],
                             it: [ 'Ho guidato tutti gli sforzi di QA per i progetti Salesforce Sales Cloud e Service Cloud per l\'importante cliente DirectvGO / AT&T.', 'Ho gestito la pianificazione dei test, la stima delle risorse e le comunicazioni con il cliente, garantendo l\'allineamento con le tempistiche e i deliverable del progetto.', 'Ho progettato e guidato lo sviluppo di un nuovo framework di automazione QA utilizzando Kotlin, C# .Net e Robot Framework.', 'Ho utilizzato i servizi AWS (S3, EC2, Redshift, Athena) per la gestione dei dati e degli ambienti di test per i progetti di integrazione di Salesforce.', 'Ho eseguito complesse convalide e manipolazioni di dati utilizzando query SQL avanzate su database Oracle e PostgreSQL.' ]
@@ -537,7 +547,7 @@
                             pt: [ 'Forneci assistência de qualidade, orientando equipes de desenvolvimento na entrega de produtos de software de alta qualidade para plataformas de dados esportivos em tempo real.', 'Trabalhei com os Product Owners para definir e refinar histórias de usuário e critérios de aceitação em um ambiente Agile de ritmo acelerado.', 'Desenvolvi e executei scripts, planos e casos de teste abrangentes para APIs de backend e aplicações de frontend.', 'Investiguei e resolvi defeitos complexos, analisando o risco e o impacto nos fluxos de dados ao vivo usando Graylog e Grafana.', 'Contribuí para a melhoria dos processos de qualidade, com foco na detecção precoce e prevenção de defeitos.' ],
                             de: [ 'Qualitätssicherung durch Mentoring von Entwicklungsteams bei der Bereitstellung hochwertiger Softwareprodukte für Echtzeit-Sportdatenplattformen.', 'Zusammenarbeit mit Product Ownern zur Definition und Verfeinerung von User Stories und Akzeptanzkriterien in einer schnelllebigen agilen Umgebung.', 'Entwicklung und Ausführung umfassender Testskripte, -pläne und -fälle für Backend-APIs und Frontend-Anwendungen.', 'Untersuchung und Behebung komplexer Fehler, Analyse von Risiken und Auswirkungen auf Live-Datenströme mit Graylog und Grafana.', 'Beitrag zur Verbesserung der Qualitätsprozesse mit Schwerpunkt auf frühzeitiger Fehlererkennung und -vermeidung.' ],
                             fr: [ 'Assistance qualité en encadrant les équipes de développement pour la livraison de produits logiciels de haute qualité pour les plateformes de données sportives en temps réel.', 'Collaboration avec les Product Owners pour définir et affiner les user stories et les critères d\'acceptation dans un environnement Agile rapide.', 'Développement et exécution de scripts, plans et cas de test complets pour les API backend et les applications frontend.', 'Enquête et résolution de défauts complexes, analyse des risques et de l\'impact sur les flux de données en direct à l\'aide de Graylog et Grafana.', 'Contribution à l\'amélioration des processus de qualité, en se concentrant sur la détection et la prévention précoces des défauts.' ],
-                            it: [ 'Ho fornito assistenza alla qualità facendo da mentore ai team di sviluppo nella fornitura di prodotti software di alta qualità per piattaforme di dati sportivi in tempo reale.', 'Ho lavorato con i Product Owner per definire e perfezionare le user story e i criteri di accettazione in un ambiente Agile dal ritmo serrato.', 'Ho sviluppato ed eseguito script, piani e casi di test completi sia per le API di backend che per le applicazioni frontend.', 'Ho indagato e risolto difetti complessi, analizzando il rischio e l\'impatto sui flussi di dati in tempo reale utilizzando Graylog e Grafana.', 'Ho contribuito al miglioramento dei processi di qualità, concentrandomi sulla rilevazione e prevenzione precoce dei difetti.' ]
+                            it: [ 'Ho fornito assistenza alla qualità facendo da mentore ai team di sviluppo nella fornitura di prodotti software di alta qualità per piattaforme di dati sportivi in tempo real.', 'Ho lavorato con i Product Owner per definire e perfezionare le user story e i criteri di accettazione in un ambiente Agile dal ritmo serrato.', 'Ho sviluppato ed eseguito script, piani e casi di test completi sia per le API di backend che per le applicazioni frontend.', 'Ho indagato e risolto difetti complessi, analizzando il rischio e l\'impatto sui flussi di dati in tempo reale utilizzando Graylog e Grafana.', 'Ho contribuito al miglioramento dei processi di qualità, concentrandomi sulla rilevazione e prevenzione precoce dei difetti.' ]
                         },
                         techUsed: ['Agile', 'Jira', 'SQL', 'Postman', 'Grafana', 'Kanban', 'Scrum', 'Python', 'Cucumber', 'JMeter', 'Rest Assured', 'GitHub']
                     },
@@ -554,7 +564,7 @@
                         techUsed: ['Stakeholder Mgmt', 'Strategic Planning', 'TestRail', 'Agile', 'Kanban', 'Scrum', 'Jira', 'Cypress', 'MS Project']
                     },
                     {
-                        title: 'Sr. Strategic Development Manager', company: 'The Collective Intelligence Group', logo: 'https://cdn-icons-png.flaticon.com/512/1005/1005121.png', dates: 'Sep 2014 - Mar 2015',
+                        title: 'Sr. Strategic Development Manager', company: 'The Collective Intelligence Group', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/medical-science-lab/brain-icon.svg', dates: 'Sep 2014 - Mar 2015',
                         details: {
                             en: [ 'Supported the organization\'s strategic and long-range goal planning, identifying new market opportunities.', 'Provided business development and capture support for corporate IT opportunities, building relationships with agency stakeholders.', 'Fostered relationships with potential teaming partners to target IT opportunities aligning with corporate plans.', 'Managed multiple ongoing projects and followed up with internal teams to develop growth strategies.', 'Assessed partner capabilities, selected teaming partners, and developed long-term strategic relationships.' ],
                             es: [ 'Apoyé la planificación estratégica y de largo alcance de la organización, identificando nuevas oportunidades de mercado.', 'Proporcioné desarrollo de negocio y soporte de captura para oportunidades de TI corporativas, construyendo relaciones con los stakeholders de las agencias.', 'Fomenté relaciones com posibles socios para enfocar oportunidades de TI alineadas con los planes corporativos.', 'Gestioné múltiples proyectos en curso y realicé seguimiento com equipos internos para desarrollar estrategias de crecimiento.', 'Evalué las capacidades de los socios, seleccioné socios de equipo y desarrollé relaciones estratégicas a largo plazo.' ],
@@ -578,7 +588,7 @@
                         techUsed: ['Agile', 'Risk Management', 'Jira', 'Kanban', 'Scrum', 'MS Project']
                     },
                     {
-                        title: 'CISO - Chief Information Security Officer', company: 'MCHC Consultance Inc.', logo: 'https://cdn-icons-png.flaticon.com/512/2882/2882787.png', dates: 'Apr 2013 - Oct 2013',
+                        title: 'CISO - Chief Information Security Officer', company: 'MCHC Consultance Inc.', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/crime-security-military-law/security-shield-icon.svg', dates: 'Apr 2013 - Oct 2013',
                         details: {
                             en: [ 'Led Information Security and Software Validation initiatives for the consultancy and its clients.', 'Developed and implemented Disaster Recovery Plans (DRP) and Business Continuity Processes (BCP).', 'Championed a security-aware culture through organization-wide training and process implementation based on ISO 27001.', 'Mitigated risks by identifying superior market opportunities and potential security threats.', 'Developed and enhanced the team\'s skills through targeted training and conferences.' ],
                             es: [ 'Lideré iniciativas de Seguridad de la Información y Validación de Software para la consultora y sus clientes.', 'Desarrollé e implementé Planes de Recuperación de Desastres (DRP) y Procesos de Continuidad del Negocio (BCP).', 'Promoví una cultura de conciencia de seguridad a través de capacitación en toda la organización e implementación de procesos basados en ISO 27001.', 'Mitigué riesgos identificando oportunidades de mercado superiores y posibles amenazas de seguridad.', 'Desarrollé y mejoré las habilidades del equipo a través de capacitaciones y conferencias específicas.' ],
@@ -650,7 +660,7 @@
                         techUsed: ['Risk Management', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
                     {
-                        title: 'Advanced Technologies Advisor', company: 'S&G Consultance Ltd.', logo: 'https://cdn-icons-png.flaticon.com/512/1830/1830767.png', dates: 'Feb 2002 - May 2008',
+                        title: 'Advanced Technologies Advisor', company: 'S&G Consultance Ltd.', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/briefcase-icon.svg', dates: 'Feb 2002 - May 2008',
                         details: {
                             en: [ 'Advised clients on software acquisition, distribution, IT development, and web/intranet tools.', 'Provided administrative and operative coaching, focusing on HR potential, organizational processes, and innovation.', 'Was in charge of the Software and Technology area, utilizing tools like Java, Perl, Oracle, SQL, and Cisco Networking environments.', 'Advised on technology, corporate, and commercial/marketing strategies, including market analysis and new market incursions.', 'Implemented process improvements based on SEI, CMM, CMMI, and ISO standards.' ],
                             es: [ 'Asesoré a clientes sobre adquisición de software, distribución, desarrollo de TI y herramientas web/intranet.', 'Brindé coaching administrativo y operativo, centrándome en el potencial de RRHH, procesos organizacionales e innovación.', 'Estuve a cargo del área de Software y Tecnología, utilizando herramientas como Java, Perl, Oracle, SQL y entornos de red de Cisco.', 'Asesoré sobre estrategias tecnológicas, corporativas y comerciales/de marketing, incluyendo análisis de mercado e incursiones en nuevos mercados.', 'Implementé mejoras de procesos basadas en los estándares SEI, CMM, CMMI e ISO.' ],
@@ -712,6 +722,7 @@
                     imageModal: document.getElementById('image-modal'),
                     modalImage: document.getElementById('modal-image'),
                     modalClose: document.querySelector('.modal-close'),
+                    filterStatus: document.getElementById('filter-status'),
                 };
             },
 
@@ -719,16 +730,15 @@
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 const text = 'Carlos A. Muñoz - Confidential';
-                canvas.width = 400;
-                canvas.height = 200;
-                ctx.translate(200, 100);
+                canvas.width = 300;
+                canvas.height = 150;
+                ctx.translate(150, 75);
                 ctx.rotate(-0.4); // ~23 degrees
                 ctx.fillStyle = '#000000';
-                ctx.font = '20px Inter';
+                ctx.font = '16px Inter';
                 ctx.textAlign = 'center';
                 ctx.fillText(text, 0, 0);
                 this.DOMElements.body.style.setProperty('--watermark-url', `url(${canvas.toDataURL()})`);
-                this.DOMElements.body.style.backgroundImage = 'var(--watermark-url)';
             },
 
             renderAll() {
@@ -745,13 +755,16 @@
                     if (!this.data.skills[key]) return;
                     const section = document.createElement('div');
                     section.className = 'toolkit-section';
+                    const bodyId = `${key}-skills-body`;
                     section.innerHTML = `
-                        <div class="flex justify-between items-center cursor-pointer toolkit-header p-1 hover:bg-gray-100 rounded">
-                            <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_${key}"></h3>
-                            <svg class="accordion-icon w-5 h-5 transform transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <div class="flex justify-between items-center p-1 hover:bg-gray-100 rounded">
+                            <button class="w-full text-left toolkit-header" aria-expanded="false" aria-controls="${bodyId}">
+                                <h3 class="text-base font-semibold text-gray-700" data-translate-key="toolkit_${key}"></h3>
+                            </button>
+                             <svg class="accordion-icon w-5 h-5 transform transition-transform text-gray-500" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </div>
                         <div class="toolkit-preview">${this.data.skills[key].slice(0, 4).map(s => s.name).join(' &middot; ')}</div>
-                        <div class="mt-2 flex flex-wrap toolkit-body" id="${key}-skills">
+                        <div class="mt-2 flex flex-wrap toolkit-body" id="${bodyId}">
                             ${this.data.skills[key].map(this.createSkillTag).join('')}
                         </div>
                     `;
@@ -769,12 +782,12 @@
             },
 
             createSkillTag(skill) {
-                const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
+                const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
                 return `
-                    <div class="tech-tag" data-skill-name="${skill.name}">
-                        <img src="${skill.icon}" alt="${skill.name} icon" class="tech-icon" onerror="this.style.display='none'; this.nextElementSibling.style.marginLeft='0';">
+                    <div role="button" tabindex="0" class="tech-tag" data-skill-name="${skill.name}" aria-pressed="false">
+                        <img src="${skill.icon}" alt="" class="tech-icon" onerror="this.style.display='none'; this.nextElementSibling.style.marginLeft='0';">
                         <span>${skill.name}</span>
-                        <div class="stars">
+                        <div class="stars" aria-label="${skill.stars} out of 5 stars. ${skill.years} experience.">
                             <span class="mr-2 text-xs text-gray-500">${skill.years}</span>
                             ${starIcon.repeat(skill.stars)}
                             <span class="font-semibold" style="width: ${(5 - skill.stars) * 0.8}rem;"></span>
@@ -784,32 +797,37 @@
             },
 
             createExperienceEntry(exp, index) {
+                const bodyId = `experience-body-${index}`;
+                const headerId = `experience-header-${index}`;
+
                 const detailsHtml = exp.details.en.map((detail, i) => `<li data-translate-key="exp_${index}_detail_${i}">${detail}</li>`).join('');
 
                 const techTagsHtml = exp.techUsed.map(techName => {
                     const skill = Object.values(this.data.skills).flat().find(s => s.name === techName);
                     if (!skill) return '';
                     return `<div class="exp-tech-tag">
-                                <img src="${skill.icon}" alt="${skill.name}" onerror="this.style.display='none';">
+                                <img src="${skill.icon}" alt="" onerror="this.style.display='none';">
                                 <span>${skill.name}</span>
                             </div>`;
                 }).join('');
 
                 return `
                     <div class="experience-item text-sm py-2" data-tech='${JSON.stringify(exp.techUsed)}' id="experience-${index}">
-                        <div class="accordion-header flex justify-between items-center cursor-pointer p-1 hover:bg-gray-100 rounded">
-                            <div class="flex-grow">
-                                <h4 class="text-base font-bold text-gray-900" data-translate-key="exp_${index}_title">${exp.title}</h4>
-                                <p class="text-sm text-gray-700 italic flex items-center">
-                                    <img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">
-                                    ${exp.company}
-                                </p>
-                            </div>
-                            <p class="text-xs text-gray-600 mr-4">${exp.dates}</p>
-                            <svg class="accordion-icon w-5 h-5 transform transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <div class="p-1 hover:bg-gray-100 rounded">
+                            <button class="accordion-header w-full flex justify-between items-center" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}">
+                                <div class="flex-grow text-left">
+                                    <h4 class="text-base font-bold text-gray-900" data-translate-key="exp_${index}_title">${exp.title}</h4>
+                                    <p class="text-sm text-gray-700 italic flex items-center">
+                                        <img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">
+                                        ${exp.company}
+                                    </p>
+                                </div>
+                                <p class="text-xs text-gray-600 mr-4">${exp.dates}</p>
+                                <svg class="accordion-icon w-5 h-5 transform transition-transform text-gray-500" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
                         </div>
                         <p class="experience-summary" data-translate-key="exp_${index}_summary">${exp.details.en[0].substring(0, 100)}...</p>
-                        <div class="experience-body mt-2">
+                        <div class="experience-body mt-2" id="${bodyId}" role="region" aria-labelledby="${headerId}">
                             <ul class="list-disc list-inside text-gray-700 space-y-1 pl-4">
                                ${detailsHtml}
                             </ul>
@@ -859,9 +877,18 @@
                 let labelElements = '';
                 labels.forEach((label, i) => {
                     const angle = angleSlice * i - Math.PI / 2;
-                    const labelX = center + (radius + 28) * Math.cos(angle);
-                    const labelY = center + (radius + 28) * Math.sin(angle);
-                    labelElements += `<text x="${labelX}" y="${labelY}" font-size="10" text-anchor="middle" alignment-baseline="middle" fill="#4b5563">${label}</text>`;
+                    const labelX = center + (radius + 25) * Math.cos(angle);
+                    const labelY = center + (radius + 25) * Math.sin(angle);
+
+                    const words = label.split(' ');
+                    let tspans = '';
+                    if (words.length > 1) {
+                        tspans = `<tspan x="${labelX}" dy="-0.6em">${words[0]}</tspan><tspan x="${labelX}" dy="1.2em">${words[1]}</tspan>`;
+                    } else {
+                        tspans = `<tspan>${label}</tspan>`;
+                    }
+
+                    labelElements += `<text x="${labelX}" y="${labelY}" font-size="9" text-anchor="middle" alignment-baseline="middle" fill="#4b5563">${tspans}</text>`;
                     grid += `<line x1="${center}" y1="${center}" x2="${center + radius * Math.cos(angle)}" y2="${center + radius * Math.sin(angle)}" stroke="#e5e7eb" />`;
                 });
 
@@ -875,7 +902,7 @@
                 });
                 polygon = `<polygon points="${points}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" />`;
 
-                container.innerHTML = `<svg viewBox="0 0 ${size} ${size+20}">${grid}${polygon}${labelElements}</svg>`;
+                container.innerHTML = `<svg viewBox="0 0 ${size} ${size}">${grid}${polygon}${labelElements}</svg>`;
             },
 
             createTimeline() {
@@ -912,48 +939,40 @@
                 const skills = this.state.selectedSkills;
                 const hasFilters = skills.size > 0;
 
-                // Clear any existing pulse timeout to prevent premature removal of the class
-                if (this.state.pulseTimeout) {
-                    clearTimeout(this.state.pulseTimeout);
-                }
-                // Remove existing pulse classes before re-applying
+                if (this.state.pulseTimeout) clearTimeout(this.state.pulseTimeout);
                 document.querySelectorAll('.pulse-highlight').forEach(el => el.classList.remove('pulse-highlight'));
 
+                let visibleCount = 0;
+                const totalCount = this.data.experiences.length;
                 const matchingExperienceItems = [];
+
                 document.querySelectorAll('#experience-container .experience-item').forEach(item => {
                     const tech = JSON.parse(item.dataset.tech);
                     const isVisible = !hasFilters || [...skills].every(s => tech.includes(s));
                     item.style.display = isVisible ? 'block' : 'none';
-                    if (hasFilters && isVisible) {
-                        matchingExperienceItems.push(item);
+                    if (isVisible) {
+                        visibleCount++;
+                        if (hasFilters) matchingExperienceItems.push(item);
                     }
                 });
 
+                this.DOMElements.filterStatus.textContent = hasFilters ? `Showing ${visibleCount} of ${totalCount} experiences.` : '';
+
                 const matchingTimelineItems = [];
-                document.querySelectorAll('#timeline-container .timeline-item').forEach(item => {
+                document.querySelectorAll('#timeline-container .timeline-item').forEach((item, index) => {
                     const tech = JSON.parse(item.dataset.tech);
                     const isVisible = !hasFilters || [...skills].every(s => tech.includes(s));
                     item.classList.toggle('filtered-out', hasFilters && !isVisible);
                     if (hasFilters && isVisible) {
-                        matchingTimelineItems.push(item);
+                        const timelineItem = document.getElementById(`timeline-exp-${index}`);
+                        if(timelineItem) matchingTimelineItems.push(timelineItem);
                     }
                 });
 
                 if (hasFilters) {
                     const allMatchingItems = [...matchingExperienceItems, ...matchingTimelineItems];
-
-                    // We use requestAnimationFrame to ensure the browser has processed the class removal
-                    // before we add it back, which reliably re-triggers the CSS animation.
-                    requestAnimationFrame(() => {
-                        allMatchingItems.forEach(el => {
-                            el.classList.add('pulse-highlight');
-                        });
-                    });
-
-                    // Set a new timeout to remove the class after the animation finishes.
-                    this.state.pulseTimeout = setTimeout(() => {
-                        allMatchingItems.forEach(el => el.classList.remove('pulse-highlight'));
-                    }, 5000); // Remove class after 5 seconds
+                    requestAnimationFrame(() => allMatchingItems.forEach(el => el.classList.add('pulse-highlight')));
+                    this.state.pulseTimeout = setTimeout(() => allMatchingItems.forEach(el => el.classList.remove('pulse-highlight')), 5000);
                 }
             },
 
@@ -986,85 +1005,56 @@
                 // Toolkit skill filtering
                 this.DOMElements.toolkitContainer.addEventListener('click', (e) => {
                     const tag = e.target.closest('.tech-tag');
-                    if (tag) {
-                        const skillName = tag.dataset.skillName;
-                        tag.classList.toggle('selected');
-                        if (this.state.selectedSkills.has(skillName)) {
-                            this.state.selectedSkills.delete(skillName);
-                        } else {
-                            this.state.selectedSkills.add(skillName);
-                        }
-                        this.filterExperiencesAndTimeline();
+                    if (tag) this.toggleSkillFilter(tag);
+                });
+                this.DOMElements.toolkitContainer.addEventListener('keydown', (e) => {
+                    const tag = e.target.closest('.tech-tag');
+                    if (tag && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        this.toggleSkillFilter(tag);
                     }
                 });
 
                 // Reset skill filters
                 this.DOMElements.resetFilterBtn.addEventListener('click', () => {
                     this.state.selectedSkills.clear();
-                    document.querySelectorAll('.tech-tag.selected').forEach(tag => tag.classList.remove('selected'));
+                    document.querySelectorAll('.tech-tag.selected').forEach(tag => {
+                        tag.classList.remove('selected');
+                        tag.setAttribute('aria-pressed', 'false');
+                    });
                     this.filterExperiencesAndTimeline();
                 });
 
-                // Experience accordion
-                this.DOMElements.experienceContainer.addEventListener('click', (event) => {
-                    const header = event.target.closest('.accordion-header');
-                    if (header) {
-                        const item = header.parentElement;
-                        const body = header.nextElementSibling.nextElementSibling;
-                        const icon = header.querySelector('.accordion-icon');
-                        const isOpen = body.style.maxHeight;
+                // Accordion toggling (for Experience and Toolkit)
+                const handleAccordionToggle = (button) => {
+                    const body = document.getElementById(button.getAttribute('aria-controls'));
+                    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+                    button.setAttribute('aria-expanded', !isExpanded);
+                    body.style.maxHeight = isExpanded ? null : body.scrollHeight + "px";
 
-                        body.style.maxHeight = isOpen ? null : body.scrollHeight + "px";
-                        icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
-                        item.classList.toggle('is-open', !isOpen);
+                    if (button.closest('.experience-item')) {
+                        button.closest('.experience-item').classList.toggle('is-open', !isExpanded);
+                    } else { // Toolkit
+                        const preview = button.parentElement.nextElementSibling;
+                        preview.style.display = isExpanded ? 'block' : 'none';
+                        button.nextElementSibling.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
                     }
+                };
+
+                this.DOMElements.experienceContainer.addEventListener('click', e => {
+                    const button = e.target.closest('.accordion-header');
+                    if (button) handleAccordionToggle(button);
                 });
 
-                // Expand/Collapse All Experiences
-                this.DOMElements.expandAllExpBtn.addEventListener('click', (e) => {
-                    const isExpanding = e.target.textContent.includes('Expand');
-                    this.DOMElements.experienceContainer.querySelectorAll('.experience-item').forEach(item => {
-                        const body = item.querySelector('.experience-body');
-                        const icon = item.querySelector('.accordion-icon');
-                        body.style.maxHeight = isExpanding ? body.scrollHeight + 'px' : null;
-                        icon.style.transform = isExpanding ? 'rotate(180deg)' : 'rotate(0deg)';
-                        item.classList.toggle('is-open', isExpanding);
-                    });
-                    e.target.textContent = isExpanding ? 'Collapse All' : 'Expand All';
+                this.DOMElements.toolkitContainer.addEventListener('click', e => {
+                    const button = e.target.closest('.toolkit-header');
+                    if (button) handleAccordionToggle(button);
                 });
 
-                // Toolkit accordions
-                this.DOMElements.toolkitContainer.addEventListener('click', (e) => {
-                    const header = e.target.closest('.toolkit-header');
-                    if(header) {
-                        const body = header.parentElement.querySelector('.toolkit-body');
-                        const preview = header.parentElement.querySelector('.toolkit-preview');
-                        const icon = header.querySelector('.accordion-icon');
-                        if (body.style.maxHeight) {
-                            body.style.maxHeight = null;
-                            icon.style.transform = 'rotate(0deg)';
-                            preview.style.display = 'block';
-                        } else {
-                            body.style.maxHeight = body.scrollHeight + 'px';
-                            icon.style.transform = 'rotate(180deg)';
-                            preview.style.display = 'none';
-                        }
-                    }
-                });
 
-                // Expand/Collapse All Toolkit sections
-                this.DOMElements.expandAllToolkitBtn.addEventListener('click', (e) => {
-                    const isExpanding = e.target.textContent.includes('Expand');
-                    this.DOMElements.toolkitContainer.querySelectorAll('.toolkit-section').forEach(section => {
-                        const body = section.querySelector('.toolkit-body');
-                        const preview = section.querySelector('.toolkit-preview');
-                        const icon = section.querySelector('.accordion-icon');
-                        body.style.maxHeight = isExpanding ? body.scrollHeight + 'px' : null;
-                        icon.style.transform = isExpanding ? 'rotate(180deg)' : 'rotate(0deg)';
-                        preview.style.display = isExpanding ? 'none' : 'block';
-                    });
-                    e.target.textContent = isExpanding ? 'Collapse All' : 'Expand All';
-                });
+                // Expand/Collapse All
+                this.DOMElements.expandAllExpBtn.addEventListener('click', (e) => this.toggleAllAccordions(this.DOMElements.experienceContainer, e.target));
+                this.DOMElements.expandAllToolkitBtn.addEventListener('click', (e) => this.toggleAllAccordions(this.DOMElements.toolkitContainer, e.target));
 
                 // Language selector
                 this.DOMElements.languageSelector.addEventListener('click', (e) => {
@@ -1085,29 +1075,59 @@
                 // Summary Read More
                 this.DOMElements.readMoreBtn.addEventListener('click', (e) => {
                     const details = this.DOMElements.summaryDetails;
-                    if (details.style.maxHeight) {
-                        details.style.maxHeight = null;
-                        e.target.textContent = 'Read More...';
-                    } else {
-                        details.style.maxHeight = details.scrollHeight + 'px';
-                        e.target.textContent = 'Read Less...';
-                    }
+                    const isExpanded = e.target.getAttribute('aria-expanded') === 'true';
+                    e.target.setAttribute('aria-expanded', !isExpanded);
+                    details.style.maxHeight = isExpanded ? null : details.scrollHeight + 'px';
+                    e.target.textContent = isExpanded ? 'Read More...' : 'Read Less...';
                 });
 
                 // Print button
-                this.DOMElements.printBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); window.print();
-                });
+                this.DOMElements.printBtn.addEventListener('click', (e) => { e.stopPropagation(); window.print(); });
 
                 // Image Modal Listeners
-                this.DOMElements.profilePhoto.addEventListener('click', () => {
+                const openModal = () => {
                     this.DOMElements.modalImage.src = this.DOMElements.profilePhoto.src;
                     this.DOMElements.imageModal.classList.add('visible');
+                    this.DOMElements.modalClose.focus();
+                };
+                const closeModal = () => this.DOMElements.imageModal.classList.remove('visible');
+
+                this.DOMElements.profilePhoto.addEventListener('click', openModal);
+                this.DOMElements.profilePhoto.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openModal(); });
+
+                this.DOMElements.modalClose.addEventListener('click', closeModal);
+                this.DOMElements.imageModal.addEventListener('click', (e) => { if (e.target === this.DOMElements.imageModal) closeModal(); });
+                this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+            },
+
+            toggleSkillFilter(tag) {
+                const skillName = tag.dataset.skillName;
+                const isPressed = tag.getAttribute('aria-pressed') === 'true';
+                tag.classList.toggle('selected');
+                tag.setAttribute('aria-pressed', !isPressed);
+                if (isPressed) {
+                    this.state.selectedSkills.delete(skillName);
+                } else {
+                    this.state.selectedSkills.add(skillName);
+                }
+                this.filterExperiencesAndTimeline();
+            },
+
+            toggleAllAccordions(container, button) {
+                const isExpanding = button.textContent.includes('Expand');
+                container.querySelectorAll('.accordion-header, .toolkit-header').forEach(headerBtn => {
+                    const body = document.getElementById(headerBtn.getAttribute('aria-controls'));
+                    headerBtn.setAttribute('aria-expanded', isExpanding);
+                    body.style.maxHeight = isExpanding ? body.scrollHeight + 'px' : null;
+
+                    if(container.id === 'experience-container') {
+                        headerBtn.closest('.experience-item').classList.toggle('is-open', isExpanding);
+                    } else {
+                        headerBtn.parentElement.nextElementSibling.style.display = isExpanding ? 'none' : 'block';
+                        headerBtn.nextElementSibling.style.transform = isExpanding ? 'rotate(180deg)' : 'rotate(0deg)';
+                    }
                 });
-                this.DOMElements.modalClose.addEventListener('click', () => this.DOMElements.imageModal.classList.remove('visible'));
-                this.DOMElements.imageModal.addEventListener('click', (e) => {
-                    if (e.target === this.DOMElements.imageModal) this.DOMElements.imageModal.classList.remove('visible');
-                });
+                button.textContent = isExpanding ? 'Collapse All' : 'Expand All';
             }
         };
 
