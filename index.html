@@ -11,73 +11,66 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    {
-    "@context": "https://schema.org/",
-    "@type": "Person",
-    "name": "Carlos A. Muñoz Ardila",
-    "url": "https://your-cv-url.com",
-    "image": "https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc",
-    "jobTitle": "Senior IT Project Manager, QA Architect & QA Leader",
-    "description": "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams.",
-    "address": {
-    "@type": "PostalAddress",
-    "addressLocality": "Medellin",
-    "addressRegion": "Antioquia",
-    "addressCountry": "CO"
-    },
-    "sameAs": [
-    "https://www.linkedin.com/in/carlos-andres-m-2a60b8b/",
-    "https://wa.me/573209191010",
-    "https://t.me/+573209191010"
-    ],
-    "knowsAbout": [
-    "IT Project Management",
-    "QA & Test Automation",
-    "Agile",
-    "Scrum",
-    "Kanban",
-    "CI/CD",
-    "DevOps",
-    "Selenium",
-    "Cypress",
-    "Playwright",
-    "AWS",
-    "Azure DevOps",
-    "GCP",
-    "Jira",
-    "Stakeholder Management",
-    "Risk Management"
-    ],
-    "alumniOf": [
-    {
-    "@type": "EducationalOrganization",
-    "name": "Alexander Von-Humboldt University",
-    "alumni": {
-    "@type": "Person",
-    "name": "Carlos A. Muñoz Ardila"
-    }
-    },
-    {
-    "@type": "EducationalOrganization",
-    "name": "EAMQ",
-    "alumni": {
-    "@type": "Person",
-    "name": "Carlos A. Muñoz Ardila"
-    }
-    }
-    ],
-    "workExample": [
-    {
-    "@type": "CreativeWork",
-    "description": "Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account at Globant."
-    },
-    {
-    "@type": "CreativeWork",
-    "description": "Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for 15+ clients at Team International."
-    }
-    ]
-    }
-
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org/",
+            "@type": "Person",
+            "name": "Carlos A. Muñoz Ardila",
+            "url": "https://your-cv-url.com",
+            "image": "https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc",
+            "jobTitle": "Senior IT Project Manager, QA Architect & QA Leader",
+            "description": "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams.",
+            "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Medellin",
+                "addressRegion": "Antioquia",
+                "addressCountry": "CO"
+            },
+            "sameAs": [
+                "https://www.linkedin.com/in/carlos-andres-m-2a60b8b/",
+                "https://wa.me/573209191010",
+                "https://t.me/+573209191010"
+            ],
+            "knowsAbout": [
+                "IT Project Management",
+                "QA & Test Automation",
+                "Agile",
+                "Scrum",
+                "Kanban",
+                "CI/CD",
+                "DevOps",
+                "Selenium",
+                "Cypress",
+                "Playwright",
+                "AWS",
+                "Azure DevOps",
+                "GCP",
+                "Jira",
+                "Stakeholder Management",
+                "Risk Management"
+            ],
+            "alumniOf": [
+                {
+                    "@type": "EducationalOrganization",
+                    "name": "Alexander Von-Humboldt University"
+                },
+                {
+                    "@type": "EducationalOrganization",
+                    "name": "EAMQ"
+                }
+            ],
+            "workExample": [
+                {
+                    "@type": "CreativeWork",
+                    "description": "Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account at Globant."
+                },
+                {
+                    "@type": "CreativeWork",
+                    "description": "Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for 15+ clients at Team International."
+                }
+            ]
+        }
+    </script>
     <style>
         :root {
             --bg-primary: #f9fafb;
@@ -210,8 +203,9 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         #contact-info-bubble {
-            top: 0;
+            top: 50%;
             left: 100%;
+            transform: translateY(-50%);
             margin-left: 0.5rem;
         }
         #toolkit-info-bubble {
@@ -485,12 +479,10 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         <!-- Left Column: Graphs -->
                         <div>
-                            <section aria-labelledby="competencies-graph-heading">
+                            <section aria-labelledby="competencies-graph-heading" class="mb-20">
                                 <h3 id="competencies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
                                 <div id="competencies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing core competency scores."></div>
                             </section>
-
-                            <div class="h-20"></div> <!-- Spacer Block -->
 
                             <section aria-labelledby="methodologies-graph-heading">
                                 <h3 id="methodologies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
@@ -585,7 +577,7 @@
 <script>
     /***************************************************************************************
      * Interactive CV Application - Carlos A. Muñoz
-     * Version: 5.9 (July 2025) - Tooltip & Layout Finalization
+     * Version: 6.0 (July 2025) - Final Polish
      *
      * Intellectual Property Notice:
      * This document and its contents, including the code, design, and textual information,
@@ -703,7 +695,7 @@
                             pt: [ 'Forneci serviços especializados de QA e liderança de projetos em mais de 15 projetos de clientes em diversos setores, incluindo FinTech, HealthTech e varejo.', 'Supervisionei a entrega de projetos de ponta a ponta, gerenciei relacionamentos complexos com clientes e suas expectativas, garantindo o alinhamento com os objetivos estratégicos de negócios.', 'Orientei e liderei equipes técnicas distribuídas de até 10 engenheiros, promovendo uma cultura de qualidade e melhoria contínua usando metodologias Agile e Scrum.', 'Arquitetei e implementei estratégias de automação de testes escaláveis usando Cypress, Playwright e Selenium para várias aplicações de clientes.', 'Gerenciei fluxos de trabalho de projetos, rastreamento de defeitos e relatórios usando Jira e TestRail, proporcionando visibilidade clara para todos os stakeholders.' ],
                             de: [ 'Erbringung von Experten-QA- und Projektleitungsdiensten für über 15 Kundenprojekte in verschiedenen Sektoren, einschließlich FinTech, HealthTech und Einzelhandel.', 'Überwachung der End-to-End-Projektabwicklung, Management komplexer Kundenbeziehungen und -erwartungen zur Sicherstellung der Ausrichtung auf strategische Geschäftsziele.', 'Mentoring und Leitung verteilter technischer Teams von bis zu 10 Ingenieuren, Förderung einer Kultur der Qualität und kontinuierlichen Verbesserung unter Verwendung von Agile- und Scrum-Methoden.', 'Architektur und Implementierung skalierbarer Testautomatisierungsstrategien mit Cypress, Playwright und Selenium für verschiedene Kundenanwendungen.', 'Verwaltung von Projekt-Workflows, Fehlerverfolgung und Berichterstattung mit Jira und TestRail, um allen Beteiligten klare Sichtbarkeit zu bieten.' ],
                             fr: [ 'Fourniture de services experts en QA et en direction de projet pour plus de 15 projets clients dans divers secteurs, notamment la FinTech, la HealthTech et le commerce de détail.', 'Supervision de la livraison de projets de bout en bout, gestion des relations et des attentes complexes des clients, en veillant à l\'alignement avec les objectifs commerciaux stratégiques.', 'Encadrement et direction d\'équipes techniques distribuées comptant jusqu\'à 10 ingénieurs, en favorisant une culture de la qualité et de l\'amélioration continue à l\'aide des méthodologies Agile et Scrum.', 'Conception et mise en œuvre de stratégies d\'automatisation des tests évolutives à l\'aide de Cypress, Playwright et Selenium pour diverses applications clientes.', 'Gestion des flux de travail de projet, du suivi des bogues et des rapports à l\'aide de Jira et TestRail, offrant une visibilité claire à toutes les parties prenantes.' ],
-                            it: [ 'Fornitura di servizi esperti di QA e di leadership di progetto per oltre 15 progetti di clienti in diversi settori, tra cui FinTech, HealthTech e retail.', 'Supervisione della consegna dei progetti end-to-end, gestione di relazioni complesse con i clienti e delle loro aspettative, garantendo l\'allineamento con gli obiettivi strategici aziendali.', 'Mentoring e guida di team tecnici distribuiti fino a 10 ingegneri, promuovendo una cultura della qualità e del miglioramento continuo utilizzando le metodologie Agile e Scrum.', 'Progettazione e implementazione di strategie di automazione dei test scalabili utilizzando Cypress, Playwright e Selenium per varie applicazioni dei clienti.', 'Gestione dei flussi di lavoro dei progetti, del tracciamento dei difetti e della reportistica utilizzando Jira e TestRail, fornendo una chiara visibilità a tutti gli stakeholder.' ]
+                            it: [ 'Fornitura di servizi esperti di QA e di leadership di progetto per oltre 15 progetti di clienti in diversi settori, tra cui FinTech, HealthTech e retail.', 'Supervisione della consegna dei progetti end-to-end, gestione di relazioni complesse con i clienti e delle loro aspettative, garantendo l\'allineamento con gli obiettivi strategici aziendali.', 'Mentoring e guida di team tecnici distribuiti fino a 10 ingegneri, promuovendo una cultura della qualità e del miglioramento continuo utilizzando le metodologie Agile e Scrum.', 'Progettazione e implementazione di strategie di automazione dei test scalabili utilizzando Cypress, Playwright e Selenium per varie applicazioni dei clienti.', 'Gestione dei flussi de lavoro dei progetti, del tracciamento dei difetti e della reportistica utilizzando Jira e TestRail, fornendo una chiara visibilità a tutti gli stakeholder.' ]
                         },
                         techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Tosca', 'Puppeteer', 'MS Dynamics', 'SAP', 'Zoho CRM', 'Shopify', 'Gatling', 'Power BI', 'Tableau', 'New Relic', 'Splunk', 'GraphQL']
                     },
@@ -775,7 +767,7 @@
                             pt: [ 'Gerenciei um portfólio de complexas iniciativas de software empresarial, abrangendo várias linhas de negócios.', 'Forneci liderança no local para equipes de projeto, construindo e motivando os membros da equipe para atingir as metas e os marcos do projeto.', 'Fui responsável pelo ciclo de vida completo do projeto, desde o início e planejamento até a implantação bem-sucedida e o suporte pós-lançamento.', 'Gerenciei todos os aspectos de múltiplos projetos relacionados para garantir que o programa geral apoiasse diretamente los objetivos estratégicos.', 'Reportei o status do projeto, riscos e progresso para a liderança executiva e stakeholders.' ],
                             de: [ 'Verwaltung eines Portfolios komplexer Unternehmenssoftware-Initiativen über mehrere Geschäftsbereiche hinweg.', 'Bereitstellung von Vor-Ort-Führung für Projektteams, Aufbau und Motivation von Teammitgliedern zur Erreichung von Projektzielen und Meilensteinen.', 'Verantwortung für den gesamten Projektlebenszyklus, von der Initiierung und Planung bis zur erfolgreichen Bereitstellung und dem Support nach dem Start.', 'Verwaltung aller Aspekte mehrerer zusammenhängender Projekte, um sicherzustellen, dass das Gesamtprogramm die strategischen Ziele direkt unterstützt.', 'Berichterstattung über Projektstatus, Risiken und Fortschritte an die Geschäftsleitung und die Stakeholder.' ],
                             fr: [ 'Gestion d\'un portefeuille d\'initiatives logicielles d\'entreprise complexes, couvrant plusieurs secteurs d\'activité.', 'Fourniture d\'un leadership sur site pour les équipes de projet, en constituant et en motivant les membres de l\'équipe pour atteindre les objectifs et les jalons du projet.', 'Prise en charge de l\'ensemble du cycle de vie du projet, de l\'initiation et de la planification au déploiement réussi et au soutien post-lancement.', 'Gestion de tous les aspects de plusieurs projets connexes pour garantir que le programme global soutient directement les objetivos stratégiques.', 'Rapport sur l\'état d\'avancement, les risques et les progrès du projet à la direction et aux parties prenantes.' ],
-                            it: [ 'Ho gestito un portafoglio di complesse iniziative software aziendali, che abbracciavano più linee di business.', 'Ho fornito leadership in loco per i team di progetto, costruindo e motivando i membri del team a raggiungere gli obiettivi e le tappe fondamentali del progetto.', 'Mi sono occupato dell\'intero ciclo di vita del progetto, dall\'avvio e pianificazione all\'implementazione di successo e al supporto post-lancio.', 'Ho gestito tutti gli aspetti di più progetti correlati per garantire che il programma complessivo sostenesse direttamente gli obiettivi strategici.', 'Ho riferito sullo stato del progetto, sui rischi e sui progressi alla leadership esecutiva e agli stakeholder.' ]
+                            it: [ 'Ho gestito un portafoglio di complesse iniziative software aziendali, che abbracciavano più linee di business.', 'Ho fornito leadership in loco per i team di progetto, costruindo e motivando i membri del team a raggiungere gli obiettivi e le tappe fondamentali del progetto.', 'Mi sono occupato dell\'intero ciclo de vita del progetto, dall\'avvio e pianificazione all\'implementazione di successo e al supporto post-lancio.', 'Ho gestito tutti gli aspetti di più progetti correlati per garantire che il programma complessivo sostenesse direttamente gli obiettivi strategici.', 'Ho riferito sullo stato del progetto, sui rischi e sui progressi alla leadership esecutiva e agli stakeholder.' ]
                         },
                         techUsed: ['Agile', 'Risk Management', 'Jira', 'Kanban', 'Scrum', 'MS Project']
                     },
@@ -859,7 +851,7 @@
                             pt: [ 'Aconselhei clientes sobre aquisição de software, distribuição, desenvolvimento de TI e ferramentas de web/intranet.', 'Forneci coaching administrativo e operacional, com foco em potencial de RH, processos organizacionais e inovação.', 'Fui responsável pela área de Software e Tecnologia, utilizando ferramentas como Java, Perl, Oracle, SQL e ambientes de rede Cisco.', 'Aconselhei sobre estratégias de tecnologia, corporativas e comerciais/de marketing, incluindo análise de mercado e incursões em novos mercados.', 'Implementei melhorias de processo com base nos padrões SEI, CMM, CMMI e ISO.' ],
                             de: [ 'Beratung von Kunden bei der Beschaffung, dem Vertrieb, der IT-Entwicklung und den Web-/Intranet-Tools von Software.', 'Bereitstellung von administrativem und operativem Coaching mit Schwerpunkt auf HR-Potenzial, Organisationsprozessen und Innovation.', 'Verantwortlich für den Bereich Software und Technologie unter Verwendung von Tools wie Java, Perl, Oracle, SQL und Cisco Networking-Umgebungen.', 'Beratung zu Technologie-, Unternehmens- und Handels-/Marketingstrategien, einschließlich Marktanalyse und Erschließung neuer Märkte.', 'Implementierung von Prozessverbesserungen auf der Grundlage der Standards SEI, CMM, CMMI und ISO.' ],
                             fr: [ 'Conseil aux clients sur l\'acquisition, la distribution, le développement informatique et les outils web/intranet de logiciels.', 'Fourniture d\'un coaching administratif et opérationnel, axé sur le potentiel des RH, les processus organisationnels et l\'innovation.', 'Responsable du domaine des logiciels et de la technologie, en utilisant des outils tels que Java, Perl, Oracle, SQL et les environnements de réseau Cisco.', 'Conseil sur les stratégies technologiques, d\'entreprise et commerciales/marketing, y compris l\'analyse de marché et les incursions sur de nouveaux marchés.', 'Mise en œuvre d\'améliorations de processus basées sur les normes SEI, CMM, CMMI et ISO.' ],
-                            it: [ 'Ho fornito consulenza ai clienti sull\'acquisizione, la distribuzione, lo sviluppo IT e gli strumenti web/intranet del software.', 'Ho fornito coaching amministrativo e operativo, concentrandomi sul potenziale delle risorse umane, sui processi organizzativi e sull\'innovazione.', 'Ero responsabile dell\'area Software e Tecnologia, utilizzando strumenti como Java, Perl, Oracle, SQL e ambienti di rete Cisco.', 'Ho fornito consulenza su strategie tecnologiche, aziendali e commerciali/marketing, comprese analisi di mercato e incursioni in nuovi mercati.', 'Ho implementato miglioramenti dei processi basati sugli standard SEI, CMM, CMMI e ISO.' ]
+                            it: [ 'Ho fornito consulenza ai clienti sull\'acquisizione, la distribuzione, lo sviluppo IT e gli strumenti web/intranet del software.', 'Ho fornito coaching administrativo e operativo, concentrandomi sul potenziale delle risorse umane, sui processi organizzativi e sull\'innovazione.', 'Ero responsabile dell\'area Software e Tecnologia, utilizzando strumenti como Java, Perl, Oracle, SQL e ambienti di rete Cisco.', 'Ho fornito consulenza su strategie tecnologiche, aziendali e commerciali/marketing, comprese analisi di mercato e incursioni in nuovi mercati.', 'Ho implementato miglioramenti dei processi basati sugli standard SEI, CMM, CMMI e ISO.' ]
                         },
                         techUsed: ['Java', 'Perl', 'Oracle', 'SQL', 'CMMI', 'ISO Standards', 'Middleware', 'Agile', 'Kanban', 'Scrum', 'Jira', 'JUnit', 'Cygwin', 'Putty', 'SSH', 'Toad', 'Eclipse', 'MySQL']
                     }
@@ -1282,7 +1274,7 @@
                     }
                 });
 
-                this.renderInfographics(); // Re-render charts for tooltip translation
+                this.createRadarCharts(); // Re-render charts for tooltip translation
             },
 
             trackEvent(eventName, eventCategory, eventLabel) {
