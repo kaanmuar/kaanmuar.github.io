@@ -7,16 +7,27 @@
     <meta name="description" content="Interactive CV of Carlos A. Muñoz, a Senior IT Project Manager, QA Architect & QA Leader with over 20 years of experience.">
     <meta name="keywords" content="Project Manager, QA Architect, Test Automation, Agile, Scrum, Selenium, Cypress, AWS, CV, Resume">
     <title>Visual CV - Carlos Muñoz Ardila</title>
+
+    <link rel="alternate" hreflang="x-default" href="https://carlos-munoz-cv.com/?lang=en" />
+    <link rel="alternate" hreflang="en" href="https://carlos-munoz-cv.com/?lang=en" />
+    <link rel="alternate" hreflang="es" href="https://carlos-munoz-cv.com/?lang=es" />
+    <link rel="alternate" hreflang="pt" href="https://carlos-munoz-cv.com/?lang=pt" />
+    <link rel="alternate" hreflang="de" href="https://carlos-munoz-cv.com/?lang=de" />
+    <link rel="alternate" hreflang="fr" href="https://carlos-munoz-cv.com/?lang=fr" />
+    <link rel="alternate" hreflang="it" href="https://carlos-munoz-cv.com/?lang=it" />
+
     <script src="https://cdn.tailwindcss.com"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
     <script type="application/ld+json">
         {
             "@context": "https://schema.org/",
             "@type": "Person",
             "name": "Carlos A. Muñoz Ardila",
-            "url": "https://your-cv-url.com",
+            "url": "https://carlos-munoz-cv.com/",
             "image": "https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc",
             "jobTitle": "Senior IT Project Manager, QA Architect & QA Leader",
             "description": "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams.",
@@ -31,47 +42,14 @@
                 "https://wa.me/573209191010",
                 "https://t.me/+573209191010"
             ],
-            "knowsAbout": [
-                "IT Project Management",
-                "QA & Test Automation",
-                "Agile",
-                "Scrum",
-                "Kanban",
-                "CI/CD",
-                "DevOps",
-                "Selenium",
-                "Cypress",
-                "Playwright",
-                "AWS",
-                "Azure DevOps",
-                "GCP",
-                "Jira",
-                "Stakeholder Management",
-                "Risk Management"
-            ],
-            "alumniOf": [
-                {
-                    "@type": "EducationalOrganization",
-                    "name": "Alexander Von-Humboldt University"
-                },
-                {
-                    "@type": "EducationalOrganization",
-                    "name": "EAMQ"
-                }
-            ],
-            "workExample": [
-                {
-                    "@type": "CreativeWork",
-                    "description": "Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account at Globant."
-                },
-                {
-                    "@type": "CreativeWork",
-                    "description": "Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for 15+ clients at Team International."
-                }
-            ]
+            "knowsAbout": ["IT Project Management", "QA & Test Automation", "Agile", "Scrum", "Kanban", "CI/CD", "DevOps", "Selenium", "Cypress", "Playwright", "AWS", "Azure DevOps", "GCP", "Jira", "Stakeholder Management", "Risk Management"],
+            "alumniOf": [{"@type": "EducationalOrganization", "name": "Alexander Von-Humboldt University"}, {"@type": "EducationalOrganization", "name": "EAMQ"}],
+            "workExample": [{"@type": "CreativeWork", "description": "Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account at Globant."}, {"@type": "CreativeWork", "description": "Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for 15+ clients at Team International."}]
         }
     </script>
+
     <style>
+        /* CSS Custom Properties (Variables) for easy theming */
         :root {
             --bg-primary: #f9fafb;
             --bg-secondary: #ffffff;
@@ -86,6 +64,7 @@
             --pulse-blue: rgba(59, 130, 246, 0.7);
         }
 
+        /* Dark mode theme variables */
         .dark-mode {
             --bg-primary: #111827;
             --bg-secondary: #1f2937;
@@ -97,6 +76,7 @@
             --border-color: #374151;
         }
 
+        /* Base body and layout styles */
         html { scroll-behavior: smooth; }
         body {
             font-family: 'Inter', sans-serif;
@@ -106,58 +86,44 @@
             color: var(--text-secondary);
             transition: background-color 0.3s, color 0.3s;
         }
-
         .main-container {
             background-color: var(--bg-secondary);
             transition: background-color 0.3s;
         }
 
+        /* Sidebar specific styles */
         .sidebar {
             background-color: var(--bg-sidebar);
             color: var(--text-sidebar-primary);
             transition: background-color 0.3s;
         }
-        .sidebar h1, .sidebar h2, .sidebar h3 {
-            color: var(--text-sidebar-primary);
-        }
-        .sidebar p, .sidebar span, .sidebar li, .sidebar a {
-            color: var(--text-sidebar-secondary);
-        }
-        .sidebar a:hover {
-            color: var(--cyan-brand);
-        }
-        .sidebar hr {
-            border-color: var(--border-color);
-        }
+        .sidebar h1, .sidebar h2, .sidebar h3 { color: var(--text-sidebar-primary); }
+        .sidebar p, .sidebar span, .sidebar li, .sidebar a { color: var(--text-sidebar-secondary); }
+        .sidebar a:hover { color: var(--cyan-brand); }
+        .sidebar hr { border-color: var(--border-color); }
 
+        /* Main content specific styles */
         .main-content {
             background-color: var(--bg-primary);
             color: var(--text-secondary);
         }
-        .main-content h1, .main-content h2, .main-content h3, .main-content h4 {
-            color: var(--text-primary);
-        }
-        .main-content .border-b-4 {
-            border-color: var(--border-color);
-        }
-        .main-content hr {
-            border-color: var(--border-color);
-        }
+        .main-content h1, .main-content h2, .main-content h3, .main-content h4 { color: var(--text-primary); }
+        .main-content .border-b-4, .main-content hr { border-color: var(--border-color); }
 
-        /* Watermark */
+        /* Confidential Watermark Style */
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             z-index: -1;
             opacity: 0.015;
             pointer-events: none;
             background-image: var(--watermark-url);
             background-repeat: repeat;
         }
+
+        /* Print-specific styles to optimize for paper output */
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print, body::before { display: none; }
@@ -165,14 +131,13 @@
             .accordion-icon, .read-more-btn, .toolkit-toggle-btn, .infographics-section, .experience-summary, .experience-tech-tags { display: none !important; }
             .experience-body ul { display: block !important; }
         }
+
+        /* Toolkit and Skill Tag styles */
         .tech-tag {
             display: inline-flex; align-items: center; background-color: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 9999px;
             font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border-color);
         }
-        .dark-mode .tech-tag {
-            background-color: #374151;
-            color: #d1d5db;
-        }
+        .dark-mode .tech-tag { background-color: #374151; color: #d1d5db; }
         .tech-tag:hover, .tech-tag:focus { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-color: #94a3b8; outline: none; }
         .tech-tag.selected { background-color: var(--cyan-brand); color: white; border-color: #0e7490; }
         .dark-mode .tech-tag.selected { color: white; }
@@ -180,39 +145,35 @@
         .tech-tag .tech-icon { width: 16px; height: 16px; margin-right: 6px; object-fit: contain; }
         .stars { display: flex; align-items: center; margin-left: auto; padding-left: 8px; white-space: nowrap; }
         .stars svg { width: 0.8rem; height: 0.8rem; color: #f59e0b; }
+
+        /* Icon and Logo styles */
         .flag-icon { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
         .company-logo { width: 14px; height: 14px; margin-right: 6px; border-radius: 3px; flex-shrink: 0; }
+        .trademark-logo {
+            display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%;
+            background-color: var(--cyan-brand); color: white; font-weight: bold; font-size: 0.75rem; border: 2px solid white;
+            flex-shrink: 0;
+        }
+
+        /* Accordion component styles */
         .experience-body, #summary-details, .toolkit-body { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
         .accordion-header { border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
 
-        /* Tooltip and Info Bubble Styles */
+        /* Tooltip and Info Bubble styles */
         .tooltip { position: relative; display: inline-flex; }
         .tooltip .tooltiptext, .info-bubble {
             visibility: hidden; background-color: #333; color: #fff; text-align: center; border-radius: 6px;
             padding: 5px 10px; position: absolute; z-index: 10;
             opacity: 0; transition: opacity 0.3s; white-space: nowrap; font-size: 12px;
         }
-        .tooltip .tooltiptext {
-            bottom: 125%; left: 50%; transform: translateX(-50%); width: max-content;
-        }
+        .tooltip .tooltiptext { bottom: 125%; left: 50%; transform: translateX(-50%); width: max-content; }
         .tooltip:hover .tooltiptext, .tooltip:focus .tooltiptext { visibility: visible; opacity: 1; }
-
         .info-icon-container:hover .info-bubble { visibility: visible; opacity: 1; }
-        .info-bubble {
-            width: 250px; text-align: left; white-space: normal; padding: 8px 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        #contact-info-bubble {
-            top: 50%;
-            left: 100%;
-            transform: translateY(-50%);
-            margin-left: 0.5rem;
-        }
-        #toolkit-info-bubble {
-            right: 0;
-            top: 24px;
-        }
+        .info-bubble { width: 250px; text-align: left; white-space: normal; padding: 8px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #contact-info-bubble { top: 50%; left: 100%; transform: translateY(-50%); margin-left: 0.5rem; }
+        #toolkit-info-bubble { right: 0; top: 24px; }
 
+        /* Language Selector styles */
         .lang-flag { transition: transform 0.2s; border: 2px solid transparent; border-radius: 50%; }
         .lang-flag:hover, .lang-flag:focus { transform: scale(1.1); }
         .lang-flag.selected { border-color: var(--cyan-brand); }
@@ -222,6 +183,8 @@
         #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):hover, #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):focus { opacity: 1; }
         .lang-accordion-indicator { transition: transform 0.3s ease; }
         #language-selector:not(.collapsed) .lang-accordion-indicator { transform: rotate(180deg); }
+
+        /* Timeline styles */
         .toolkit-preview { font-size: 0.75rem; color: var(--text-secondary); padding-left: 0.5rem; margin-top: 0.25rem; }
         #timeline-container { border-left: 3px solid var(--cyan-brand); padding-left: 1rem; }
         .timeline-item { position: relative; transition: opacity 0.3s ease; }
@@ -232,16 +195,15 @@
         }
         .timeline-tech-icons { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .timeline-tech-icons img { width: 12px; height: 12px; border-radius: 3px; }
-        .trademark-logo {
-            display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%;
-            background-color: var(--cyan-brand); color: white; font-weight: bold; font-size: 0.75rem; border: 2px solid white;
-            flex-shrink: 0;
-        }
+
+        /* Footer and other miscellaneous styles */
         .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
         .phone-container .phone-text { display: inline; }
         .phone-container .phone-number { display: none; }
         .phone-container:hover .phone-text, .phone-container:focus .phone-text { display: none; }
         .phone-container:hover .phone-number, .phone-container:focus .phone-number { display: inline; }
+
+        /* Modal (Image Viewer) styles */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex;
             align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -254,14 +216,14 @@
             position: absolute; top: -15px; right: -15px; background: white; color: #333; border-radius: 50%; width: 30px; height: 30px;
             display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; line-height: 1; border: 1px solid #ccc;
         }
+
+        /* Experience section-specific styles */
         .experience-summary {
             font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid var(--border-color);
             transition: opacity 0.3s ease;
         }
         .experience-item.is-open .experience-summary { display: none; }
-        .experience-tech-tags {
-            margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1;
-        }
+        .experience-tech-tags { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1; }
         .dark-mode .experience-tech-tags { border-top-color: #4b5563; }
         .experience-tech-tags .exp-tech-tag {
             display: inline-flex; align-items: center; background-color: #e0f2f7; color: #0891b2; padding: 2px 8px;
@@ -270,15 +232,13 @@
         .dark-mode .experience-tech-tags .exp-tech-tag { background-color: #1e40af; color: #dbeafe; }
         .experience-tech-tags .exp-tech-tag img { width: 12px; height: 12px; margin-right: 5px; }
 
+        /* Animation and Accessibility styles */
         @keyframes pulse-blue {
             0% { box-shadow: 0 0 0 0 var(--pulse-blue); }
             70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
             100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
-        .pulse-highlight {
-            animation: pulse-blue 2s 1;
-            border-radius: 8px;
-        }
+        .pulse-highlight { animation: pulse-blue 2s 1; border-radius: 8px; }
         .sr-only {
             position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
             overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
@@ -287,43 +247,27 @@
             outline: 3px solid var(--orange-brand); outline-offset: 2px;
             box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.5); border-radius: 4px;
         }
-        /* On-scroll animations */
         .animate-on-scroll {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out;
         }
-        .animate-on-scroll.is-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        /* Keyword highlighting */
-        mark {
-            background-color: #fdba74; /* orange-300 */
-            color: #431407; /* orange-950 */
-            padding: 2px 1px;
-            border-radius: 3px;
-        }
-        .dark-mode mark {
-            background-color: #b45309; /* orange-700 */
-            color: #fff7ed; /* orange-50 */
-        }
-        /* Theme Toggle */
-        #theme-toggle {
-            background: none; border: none; cursor: pointer; color: var(--text-secondary);
-        }
+        .animate-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
+
+        /* Keyword highlighting style for search feature */
+        mark { background-color: #fdba74; color: #431407; padding: 2px 1px; border-radius: 3px; }
+        .dark-mode mark { background-color: #b45309; color: #fff7ed; }
+
+        /* Theme Toggle styles */
+        #theme-toggle { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
         .dark-mode #theme-toggle { color: #d1d5db; }
         #theme-toggle .sun-icon { display: none; }
         #theme-toggle .moon-icon { display: block; }
         .dark-mode #theme-toggle .sun-icon { display: block; }
         .dark-mode #theme-toggle .moon-icon { display: none; }
-        /* Radar chart tooltip */
+
+        /* Radar chart interactive styles */
         .radar-label:hover {
-            font-weight: bold;
-            text-decoration: underline;
-            text-decoration-color: var(--cyan-brand);
-            text-decoration-thickness: 2px;
-            cursor: pointer;
+            font-weight: bold; text-decoration: underline; text-decoration-color: var(--cyan-brand);
+            text-decoration-thickness: 2px; cursor: pointer;
         }
     </style>
 </head>
@@ -332,7 +276,7 @@
 <div class="container mx-auto max-w-6xl my-6 p-4 md:p-6">
     <div class="bg-secondary shadow-2xl rounded-lg overflow-hidden main-container">
         <div class="md:flex">
-            <!-- Left Column (Sidebar) -->
+
             <aside class="md:w-1/3 p-6 sidebar">
                 <div class="flex flex-col items-center">
                     <div class="relative">
@@ -348,7 +292,6 @@
 
                 <hr class="my-6">
 
-                <!-- Contact Info -->
                 <section aria-labelledby="contact-heading" class="animate-on-scroll">
                     <div class="flex items-center relative">
                         <h3 id="contact-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
@@ -357,36 +300,14 @@
                             <div id="contact-info-bubble" class="info-bubble" data-translate-key="info_bubble_contact"></div>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-3">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
-                        <a href="tel:+573209191010" rel="noopener noreferrer" class="hover:text-cyan-400 phone-container" data-analytics-event="contact_click" data-analytics-label="Phone">
-                            <span class="phone-text">Phone Number</span>
-                            <span class="phone-number" aria-hidden="true">+57 320 919 1010</span>
-                        </a>
-                    </div>
-                    <div class="flex items-center space-x-3 mt-4">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
-                        <a href="mailto:kaanmuar@gmail.com" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Email">kaanmuar@gmail.com</a>
-                    </div>
-                    <div class="flex items-start space-x-3 mt-4">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-                        <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="LinkedIn">LinkedIn Profile</a>
-                    </div>
-                    <div class="flex items-center space-x-3 mt-4">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg>
-                        <a href="https://wa.me/573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="WhatsApp">WhatsApp</a>
-                    </div>
-                    <div class="flex items-center space-x-3 mt-4">
-                        <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg>
-                        <a href="https://t.me/+573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Telegram">Telegram</a>
-                    </div>
-                    <div class="flex items-center space-x-3 mt-4">
-                        <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
-                        <span>Medellin, Antioquia, Colombia</span>
-                    </div>
+                    <div class="flex items-center space-x-3"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg><a href="tel:+573209191010" rel="noopener noreferrer" class="hover:text-cyan-400 phone-container" data-analytics-event="contact_click" data-analytics-label="Phone"><span class="phone-text">Phone Number</span><span class="phone-number" aria-hidden="true">+57 320 919 1010</span></a></div>
+                    <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg><a href="mailto:kaanmuar@gmail.com" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Email">kaanmuar@gmail.com</a></div>
+                    <div class="flex items-start space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg><a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="LinkedIn">LinkedIn Profile</a></div>
+                    <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg><a href="https://wa.me/573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="WhatsApp">WhatsApp</a></div>
+                    <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg><a href="https://t.me/+573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Telegram">Telegram</a></div>
+                    <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg><span>Medellin, Antioquia, Colombia</span></div>
                 </section>
                 <hr class="my-6">
-                <!-- Core Competencies -->
                 <section aria-labelledby="competencies-heading" class="animate-on-scroll">
                     <h3 id="competencies-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="competencies_title">Core Competencies</h3>
                     <ul class="mt-3 space-y-2 text-sm list-disc list-inside">
@@ -400,48 +321,17 @@
                     </ul>
                 </section>
                 <hr class="my-6">
-                <!-- Languages -->
                 <section id="languages-section" aria-labelledby="languages-heading" class="animate-on-scroll">
                     <h3 id="languages-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
                     <div id="languages-body" class="mt-3 space-y-4 text-sm">
-                        <div class="language">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="flag-icon" alt="Spanish Flag"><span class="font-medium ml-2">Spanish</span></div>
-                                <span data-translate-key="lang_native">Native</span>
-                            </div>
-                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Spanish proficiency: Native"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 100%"></div></div>
-                        </div>
-                        <div class="language">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="flag-icon" alt="English Flag"><span class="font-medium ml-2">English</span></div>
-                                <span data-translate-key="lang_fluent">Fluent</span>
-                            </div>
-                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="English proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 90%"></div></div>
-                        </div>
-                        <div class="language">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="flag-icon" alt="Portuguese Flag"><span class="font-medium ml-2">Portuguese</span></div>
-                                <span data-translate-key="lang_fluent">Fluent</span>
-                            </div>
-                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Portuguese proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 85%"></div></div>
-                        </div>
-                        <div class="language">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="flag-icon" alt="Italian Flag">
-                                    <img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="flag-icon -ml-3" alt="German Flag">
-                                    <img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="flag-icon -ml-3" alt="French Flag">
-                                    <span class="font-medium ml-2" data-translate-key="lang_others">Others</span>
-                                </div>
-                                <span data-translate-key="lang_basic">Basic</span>
-                            </div>
-                            <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Other languages proficiency: Basic"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 30%"></div></div>
-                        </div>
+                        <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="flag-icon" alt="Spanish Flag"><span class="font-medium ml-2">Spanish</span></div><span data-translate-key="lang_native">Native</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Spanish proficiency: Native"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 100%"></div></div></div>
+                        <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="flag-icon" alt="English Flag"><span class="font-medium ml-2">English</span></div><span data-translate-key="lang_fluent">Fluent</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="English proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 90%"></div></div></div>
+                        <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="flag-icon" alt="Portuguese Flag"><span class="font-medium ml-2">Portuguese</span></div><span data-translate-key="lang_fluent">Fluent</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Portuguese proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 85%"></div></div></div>
+                        <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="flag-icon" alt="Italian Flag"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="flag-icon -ml-3" alt="German Flag"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="flag-icon -ml-3" alt="French Flag"><span class="font-medium ml-2" data-translate-key="lang_others">Others</span></div><span data-translate-key="lang_basic">Basic</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Other languages proficiency: Basic"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 30%"></div></div></div>
                     </div>
                 </section>
             </aside>
 
-            <!-- Right Column (Main Content) -->
             <main class="w-full p-6 main-content">
                 <section aria-labelledby="summary-heading" class="animate-on-scroll">
                     <div class="flex justify-between items-center">
@@ -473,23 +363,19 @@
                     <button id="read-more-btn" class="text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-2 no-print" aria-expanded="false" aria-controls="summary-details">Read More...</button>
                 </section>
 
-                <!-- Infographics Section -->
                 <section class="section mt-8 infographics-section animate-on-scroll" aria-labelledby="infographics-heading">
                     <h2 id="infographics-heading" class="text-xl font-bold border-b-4 pb-2 mb-6" data-translate-key="infographics_title">Career at a Glance</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                        <!-- Left Column: Graphs -->
                         <div>
                             <section aria-labelledby="competencies-graph-heading" class="mb-20">
                                 <h3 id="competencies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
                                 <div id="competencies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing core competency scores."></div>
                             </section>
-
                             <section aria-labelledby="methodologies-graph-heading">
                                 <h3 id="methodologies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
                                 <div id="methodologies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing methodology and process scores."></div>
                             </section>
                         </div>
-                        <!-- Right Column: Timeline -->
                         <section aria-labelledby="timeline-heading">
                             <h3 id="timeline-heading" class="text-base font-semibold mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
                             <div id="timeline-container" class="relative pr-2"></div>
@@ -499,7 +385,6 @@
 
                 <hr class="my-12">
 
-                <!-- Toolkit Section -->
                 <section class="section mt-6 animate-on-scroll" aria-labelledby="toolkit-heading">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
@@ -515,12 +400,9 @@
                         </div>
                     </div>
                     <div id="filter-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-                    <div id="toolkit-container" class="mt-1 space-y-3">
-                        <!-- Toolkit sections will be generated by JS -->
-                    </div>
+                    <div id="toolkit-container" class="mt-1 space-y-3"></div>
                 </section>
 
-                <!-- Professional Experience -->
                 <section id="professional-experience" class="section mt-6 animate-on-scroll" aria-labelledby="experience-heading">
                     <div class="flex justify-between items-center">
                         <h2 id="experience-heading" class="text-xl font-bold" data-translate-key="experience_title">Professional Experience</h2>
@@ -529,7 +411,6 @@
                     <div class="mt-3 space-y-1" id="experience-container"></div>
                 </section>
 
-                <!-- Education & Certifications -->
                 <section class="section mt-6 animate-on-scroll" aria-labelledby="education-heading">
                     <h2 id="education-heading" class="text-xl font-bold border-b-4 pb-2">Education & Certifications</h2>
                     <div class="mt-3 grid md:grid-cols-2 gap-6 text-sm">
@@ -552,6 +433,7 @@
                         </section>
                     </div>
                 </section>
+
                 <footer class="cv-footer no-print">
                     <div class="flex justify-center items-center gap-2">
                         <p>&copy; 2025 Carlos A. Muñoz</p>
@@ -565,7 +447,6 @@
     </div>
 </div>
 
-<!-- Modal for Image Zoom -->
 <div id="image-modal" class="modal-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
     <div class="modal-content">
         <h2 id="modal-heading" class="sr-only">Profile Photo</h2>
@@ -577,7 +458,7 @@
 <script>
     /***************************************************************************************
      * Interactive CV Application - Carlos A. Muñoz
-     * Version: 6.0 (July 2025) - Final Polish
+     * Version: 7.0 (July 2025) - SEO, URL Handling, and Documentation Update
      *
      * Intellectual Property Notice:
      * This document and its contents, including the code, design, and textual information,
@@ -585,14 +466,43 @@
      * personal and professional evaluation purposes only. Unauthorized reproduction,
      * distribution, or use of any part of this document for commercial purposes is
      * strictly prohibited. All rights reserved.
+     *
+     * --- CHANGELOG ---
+     * v7.0:
+     * - Added hreflang tags for international SEO.
+     * - Implemented URL parameter handling to load specific language versions directly.
+     * - Added comprehensive JSDoc comments and inline documentation throughout the codebase.
+     *
+     * v6.0:
+     * - Initial polished version with full interactivity.
      ***************************************************************************************/
+
+    /**
+     * Main application logic is encapsulated within a DOMContentLoaded event listener
+     * to ensure the script runs only after the entire HTML document has been loaded and parsed.
+     */
     document.addEventListener('DOMContentLoaded', () => {
+        /**
+         * @namespace CarlosMunozCV
+         * @description Main object that encapsulates all the properties and methods for the CV application.
+         */
         const CarlosMunozCV = {
+            /**
+             * @property {object} state - Holds the dynamic state of the application.
+             * @property {string} state.lang - The current language code (e.g., 'en', 'es'). Default is 'en'.
+             * @property {Set<string>} state.selectedSkills - A set of skills currently selected for filtering.
+             * @property {?number} state.pulseTimeout - Timeout ID for the filter pulse animation.
+             */
             state: {
                 lang: 'en',
                 selectedSkills: new Set(),
                 pulseTimeout: null,
             },
+
+            /**
+             * @property {object} data - Contains all the static data for the CV, including skills, experiences, and translations.
+             * This separation of data from logic makes the CV easier to update and maintain.
+             */
             data: {
                 skills: {
                     pm: [
@@ -755,7 +665,7 @@
                             pt: [ 'Apoiei o planejamento estratégico e de longo prazo da organização, identificando novas oportunidades de mercado.', 'Forneci desenvolvimento de negócios e suporte de captura para oportunidades de TI corporativas, construindo relacionamentos com stakeholders de agências.', 'Fomentei relacionamentos com potenciais parceiros de equipe para direcionar oportunidades de TI alinhadas com os planos corporativos.', 'Gerenciei múltiplos projetos em andamento e acompanhei as equipes internas para desenvolver estratégias de crescimento.', 'Avaliei as capacidades dos parceiros, selecionei parceiros de equipe e desenvolvi relacionamentos estratégicos de longo prazo.' ],
                             de: [ 'Unterstützung der strategischen und langfristigen Zielplanung der Organisation, Identifizierung neuer Marktchancen.', 'Bereitstellung von Geschäftsentwicklungs- und Akquiseunterstützung für IT-Unternehmenschancen, Aufbau von Beziehungen zu Agentur-Stakeholdern.', 'Pflege von Beziehungen zu potenziellen Teampartnern, um IT-Möglichkeiten gezielt zu nutzen, die mit den Unternehmensplänen übereinstimmen.', 'Verwaltung mehrerer laufender Projekte und Nachverfolgung mit internen Teams zur Entwicklung von Wachstumsstrategien.', 'Bewertung der Partnerfähigkeiten, Auswahl von Teampartnern und Entwicklung langfristiger strategischer Beziehungen.' ],
                             fr: [ 'Soutien à la planification stratégique et à long terme de l\'organisation, en identifiant de nouvelles opportunités de marché.', 'Fourniture d\'un soutien au développement commercial et à la capture d\'opportunités informatiques d\'entreprise, en établissant des relations avec les parties prenantes des agences.', 'Promotion des relations avec des partenaires potentiels pour cibler les opportunités informatiques correspondant aux plans de l\'entreprise.', 'Gestion de plusieurs projets en cours et suivi avec les équipes internes pour développer des stratégies de croissance.', 'Évaluation des capacités des partenaires, sélection des partenaires et développement de relations stratégiques à long terme.' ],
-                            it: [ 'Supporto alla pianificazione strategica e a lungo termine dell\'organizzazione, identificando nuove opportunità di mercato.', 'Fornitura di supporto allo sviluppo del business e all\'acquisizione di opportunità IT aziendali, costruendo relazioni con gli stakeholder delle agenzie.', 'Promozione di relazioni con potenziali partner per mirare a opportunità IT in linea con i piani aziendali.', 'Gestione di più progetti in corso e follow-up con i team interni per sviluppare strategie di crescita.', 'Valutazione delle capacità dei partner, selezione dei partner e sviluppo di relazioni strategiche a lungo termine.' ]
+                            it: [ 'Supporto alla pianificazione strategica e a lungo termine dell\'organizzazione, identificando nuove opportunità di mercato.', 'Fornitura di supporto allo sviluppo del business e all\'acquisizione di opportunità IT aziendali, costruindo relazioni con gli stakeholder delle agenzie.', 'Promozione di relazioni con potenziali partner per mirare a opportunità IT in linea con i piani aziendali.', 'Gestione di più progetti in corso e follow-up con i team interni per sviluppare strategie di crescita.', 'Valutazione delle capacità dei partner, selezione dei partner e sviluppo di relazioni strategiche a lungo termine.' ]
                         },
                         techUsed: ['Strategic Planning', 'Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
@@ -862,7 +772,7 @@
                     pt: { 'Project Mgmt': 'Experiência em liderar projetos desde o início até a conclusão, garantindo que atendam ao escopo, orçamento e cronograma.', 'QA & Automation': 'Profundo conhecimento em projetar e implementar estruturas de teste automatizadas para garantir a qualidade e confiabilidade do software.', 'Leadership': 'Capacidade comprovada de orientar, gerenciar e motivar equipes multifuncionais para alcançar alto desempenho e sucesso nos projetos.', 'DevOps Strategy': 'Habilidade em integrar desenvolvimento e operações para melhorar o fluxo de trabalho, aumentar a eficiência e acelerar os ciclos de lançamento.', 'Cloud Platforms': 'Proficiente em aproveitar os principais provedores de nuvem (AWS, Azure, GCP) para infraestrutura escalável, resiliente и econômica.', 'Stakeholder Mgmt': 'Apto a gerenciar comunicações e relacionamentos com todas as partes interessadas para garantir o alinhamento e a adesão ao projeto.', 'Agile': 'Vasta experiência com os princípios e práticas Agile para entregar valor de forma iterativa e se adaptar a requisitos em constante mudança.', 'Scrum': 'Experiência certificada em gerenciar projetos usando o framework Scrum para um desenvolvimento transparente, iterativo e colaborativo.', 'Kanban': 'Utilização do Kanban para visualização do fluxo de trabalho, gerenciamento do fluxo e melhoria contínua para otimizar a entrega.', 'CMMI': 'Conhecimento do framework de Integração do Modelo de Maturidade da Capacidade para melhorar e padronizar os processos organizacionais.', 'ISO Standards': 'Experiência na implementação e adesão às normas ISO para gestão da qualidade e segurança da informação.', 'Risk Mgmt': 'Abordagem sistemática para identificar, analisar e mitigar os riscos do projeto para garantir resultados bem-sucedidos.' },
                     de: { 'Project Mgmt': 'Expertise in der Leitung von Projekten von der Initiierung bis zum Abschluss, um sicherzustellen, dass sie den Umfang, das Budget und den Zeitplan einhalten.', 'QA & Automation': 'Tiefes Wissen im Entwerfen und Implementieren von automatisierten Test-Frameworks, um Softwarequalität und -zuverlässigkeit zu gewährleisten.', 'Leadership': 'Nachgewiesene Fähigkeit, funktionsübergreifende Teams zu betreuen, zu leiten und zu motivieren, um hohe Leistungen und Projekterfolg zu erzielen.', 'DevOps Strategy': 'Geschickt in der Integration von Entwicklung und Betrieb, um den Arbeitsablauf zu verbessern, die Effizienz zu steigern und die Release-Zyklen zu beschleunigen.', 'Cloud Platforms': 'Kompetent in der Nutzung der großen Cloud-Anbieter (AWS, Azure, GCP) für eine skalierbare, widerstandsfähige und kostengünstige Infrastruktur.', 'Stakeholder Mgmt': 'Gewandt im Management von Kommunikation und Beziehungen mit allen Stakeholdern, um die Projektausrichtung und -akzeptanz sicherzustellen.', 'Agile': 'Umfangreiche Erfahrung mit agilen Prinzipien und Praktiken, um iterativ Wert zu liefern und sich an ändernde Anforderungen anzupassen.', 'Scrum': 'Zertifizierte Expertise in der Projektleitung mit dem Scrum-Framework für eine transparente, iterative und kollaborative Entwicklung.', 'Kanban': 'Nutzung von Kanban zur Visualisierung des Workflows, zur Steuerung des Flusses und zur kontinuierlichen Verbesserung, um die Lieferung zu optimieren.', 'CMMI': 'Kenntnisse des Capability Maturity Model Integration-Frameworks zur Verbesserung und Standardisierung von Organisationsprozessen.', 'ISO Standards': 'Erfahrung in der Implementierung und Einhaltung von ISO-Normen für Qualitätsmanagement und Informationssicherheit.', 'Risk Mgmt': 'Systematischer Ansatz zur Identifizierung, Analyse und Minderung von Projektrisiken, um erfolgreiche Ergebnisse zu gewährleisten.' },
                     fr: { 'Project Mgmt': 'Expertise dans la direction de projets de l\'initiation à l\'achèvement, en veillant à ce qu\'ils respectent le périmètre, le budget et le calendrier.', 'QA & Automation': 'Connaissance approfondie de la conception et de la mise en œuvre de cadres de test automatisés pour garantir la qualité et la fiabilité des logiciels.', 'Leadership': 'Capacité avérée à encadrer, gérer et motiver des équipes interfonctionnelles pour atteindre de hautes performances et la réussite des projets.', 'DevOps Strategy': 'Compétent dans l\'intégration du développement et des opérations pour améliorer le flux de travail, augmenter l\'efficacité et accélérer les cycles de publication.', 'Cloud Platforms': 'Maîtrise de l\'utilisation des principaux fournisseurs de cloud (AWS, Azure, GCP) pour une infrastructure évolutive, résiliente et rentable.', 'Stakeholder Mgmt': 'Adepte de la gestion des communications et des relations avec toutes les parties prenantes pour garantir l\'alignement et l\'adhésion au projet.', 'Agile': 'Vaste expérience des principes et pratiques Agile pour fournir de la valeur de manière itérative et s\'adapter aux exigences changeantes.', 'Scrum': 'Expertise certifiée dans la gestion de projets à l\'aide du cadre Scrum pour un développement transparent, itératif et collaboratif.', 'Kanban': 'Utilisation de Kanban pour la visualisation du flux de travail, la gestion du flux et l\'amélioration continue afin d\'optimiser la livraison.', 'CMMI': 'Connaissance du cadre d\'intégration du modèle de maturité des capacités pour améliorer et normaliser les processus organisationnels.', 'ISO Standards': 'Expérience dans la mise en œuvre et le respect des normes ISO pour la gestion de la qualité et la sécurité de l\'information.', 'Risk Mgmt': 'Approche systématique pour identifier, analyser et atténuer les risques du projet afin de garantir des résultats positifs.' },
-                    it: { 'Project Mgmt': 'Competenza nella guida di progetti dall\'inizio al completamento, assicurando il rispetto di ambito, budget e tempistiche.', 'QA & Automation': 'Profonda conoscenza nella progettazione e implementazione di framework di test automatizzati per garantire la qualità e l\'affidabilità del software.', 'Leadership': 'Comprovata capacità di fare da mentore, gestire e motivare team interfunzionali per raggiungere alte prestazioni e il successo del progetto.', 'DevOps Strategy': 'Abile nell\'integrare sviluppo e operazioni per migliorare il flusso di lavoro, aumentare l\'efficienza e accelerare i cicli di rilascio.', 'Cloud Platforms': 'Competente nell\'utilizzo dei principali provider di cloud (AWS, Azure, GCP) per un\'infrastruttura scalabile, resiliente ed economica.', 'Stakeholder Mgmt': 'Abile nella gestione delle comunicazioni e delle relazioni con tutti gli stakeholder per garantire l\'allineamento e il consenso al progetto.', 'Agile': 'Vasta esperienza con i principi e le pratiche Agile per fornire valore in modo iterativo e adattarsi ai requisiti mutevoli.', 'Scrum': 'Competenza certificata nella gestione di progetti utilizzando il framework Scrum per uno sviluppo trasparente, iterativo e collaborativo.', 'Kanban': 'Utilizzo di Kanban per la visualizzazione del flusso di lavoro, la gestione del flusso e il miglioramento continuo per ottimizzare la consegna.', 'CMMI': 'Conoscenza del framework Capability Maturity Model Integration per migliorare e standardizzare i processi organizzativi.', 'ISO Standards': 'Esperienza nell\'implementazione e nel rispetto degli standard ISO per la gestione della qualità e la sicurezza delle informazioni.', 'Risk Mgmt': 'Approccio sistematico per identificare, analizzare e mitigare i rischi di progetto per garantire risultati di successo.' }
+                    it: { 'Project Mgmt': 'Competenza nella guida di progetti dall\'inizio al completamento, assicurando il rispetto di ambito, budget e tempistiche.', 'QA & Automation': 'Profonda conoscenza nella progettazione e implementazione di framework di test automatizzati per garantire la qualità e l\'affidabilità del software.', 'Leadership': 'Comprovata capacità di fare da mentore, gestire e motivare team interfunzionali per raggiungere alte prestazioni e il successo del progetto.', 'DevOps Strategy': 'Abile nell\'integrare sviluppo e operazioni per migliorare il flusso di lavoro, aumentare l\'efficienza e accelerare i cicli di rilascio.', 'Cloud Platforms': 'Competente nell\'utilizzo dei principali provider di cloud (AWS, Azure, GCP) per un\'infrastruttura scalabile, resiliente ed economica.', 'Stakeholder Mgmt': 'Abile nella gestione delle comunicazioni e delle relazioni con tutti gli stakeholder per garantire l\'allineamento e il consenso al progetto.', 'Agile': 'Vasta esperienza con i principi e le pratiche Agile per fornire valore in modo iterativo e adattarsi ai requisiti mutevoli.', 'Scrum': 'Competenza certificata nella gestione di progetti utilizzando il framework Scrum per uno sviluppo trasparente, iterativo e collaborativo.', 'Kanban': 'Utilizzo di Kanban per la visualizzazione del flusso di lavoro, la gestione del flusso e il miglioramento continuo per ottimizzare la consegna.', 'CMMI': 'Conoscenza del framework Capability Maturity Model Integration per migliorare e standardizzare i processi organizzativi.', 'ISO Standards': 'Esperienza nell\'implementazione e nel rispetto degli standard ISO per la gestione della qualità e della sicurezza delle informazioni.', 'Risk Mgmt': 'Approccio sistematico per identificare, analizzare e mitigare i rischi di progetto per garantire risultati di successo.' }
                 },
                 translations: {
                     en: {
@@ -946,19 +856,29 @@
                 },
             },
 
+            /**
+             * Initializes the application. This is the main entry point.
+             * It orchestrates the setup of the entire page, including DOM caching,
+             * applying settings, rendering content, and setting up event listeners.
+             */
             init() {
-                this.cacheDOMElements();
-                this.applyInitialTheme();
-                this.createWatermark();
-                this.populateAllTranslations();
-                this.renderAll();
-                this.setupEventListeners();
+                this._cacheDOMElements();
+                this._applyUrlLanguage();
+                this._applyInitialTheme();
+                this._createWatermark();
+                this._populateAllTranslations();
+                this._renderAll();
+                this._setupEventListeners();
                 this.translatePage(this.state.lang);
-                this.initScrollAnimations();
-                this.initUrlHighlighting();
+                this._initScrollAnimations();
+                this._initUrlHighlighting();
             },
 
-            cacheDOMElements() {
+            /**
+             * Caches frequently accessed DOM elements into a local object for performance.
+             * @private
+             */
+            _cacheDOMElements() {
                 this.DOMElements = {
                     body: document.body,
                     experienceContainer: document.getElementById('experience-container'),
@@ -983,7 +903,11 @@
                 };
             },
 
-            createWatermark() {
+            /**
+             * Creates a dynamic canvas-based watermark and applies it as a background.
+             * @private
+             */
+            _createWatermark() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 const text = 'Carlos A. Muñoz - Confidential';
@@ -998,16 +922,24 @@
                 this.DOMElements.body.style.setProperty('--watermark-url', `url(${canvas.toDataURL()})`);
             },
 
-            renderAll() {
-                this.renderToolkit();
-                this.renderExperiences();
-                this.renderInfographics();
+            /**
+             * Orchestrator method to call all rendering functions.
+             * @private
+             */
+            _renderAll() {
+                this._renderToolkit();
+                this._renderExperiences();
+                this._renderInfographics();
             },
 
-            renderToolkit() {
+            /**
+             * Renders the entire 'Toolkit' section with its categories and skills.
+             * @private
+             */
+            _renderToolkit() {
                 const toolkitOrder = ['pm', 'qa', 'lang', 'cloud', 'db', 'analytics', 'platform', 'system'];
                 const container = this.DOMElements.toolkitContainer;
-                container.innerHTML = '';
+                container.innerHTML = ''; // Clear previous content
                 toolkitOrder.forEach(key => {
                     if (!this.data.skills[key]) return;
                     const section = document.createElement('div');
@@ -1022,23 +954,37 @@
                         </div>
                         <div class="toolkit-preview">${this.data.skills[key].slice(0, 4).map(s => s.name).join(' &middot; ')}</div>
                         <div class="mt-2 flex flex-wrap toolkit-body" id="${bodyId}">
-                            ${this.data.skills[key].map(this.createSkillTag).join('')}
+                            ${this.data.skills[key].map(this._createSkillTag).join('')}
                         </div>
                     `;
                     container.appendChild(section);
                 });
             },
 
-            renderExperiences() {
-                this.DOMElements.experienceContainer.innerHTML = this.data.experiences.map((exp, i) => this.createExperienceEntry(exp, i)).join('');
+            /**
+             * Renders the 'Professional Experience' section.
+             * @private
+             */
+            _renderExperiences() {
+                this.DOMElements.experienceContainer.innerHTML = this.data.experiences.map((exp, i) => this._createExperienceEntry(exp, i)).join('');
             },
 
-            renderInfographics() {
-                this.createRadarCharts();
-                this.createTimeline();
+            /**
+             * Renders all infographic elements (charts and timeline).
+             * @private
+             */
+            _renderInfographics() {
+                this._createRadarCharts();
+                this._createTimeline();
             },
 
-            createSkillTag(skill) {
+            /**
+             * Creates and returns the HTML string for a single skill tag.
+             * @param {object} skill - The skill object from the data store.
+             * @returns {string} The HTML string for the skill tag.
+             * @private
+             */
+            _createSkillTag(skill) {
                 const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
                 return `
                     <div role="button" tabindex="0" class="tech-tag" data-skill-name="${skill.name}" aria-pressed="false">
@@ -1053,7 +999,14 @@
                 `;
             },
 
-            createExperienceEntry(exp, index) {
+            /**
+             * Creates and returns the HTML string for a single professional experience entry.
+             * @param {object} exp - The experience object from the data store.
+             * @param {number} index - The index of the experience.
+             * @returns {string} The HTML string for the experience entry.
+             * @private
+             */
+            _createExperienceEntry(exp, index) {
                 const bodyId = `experience-body-${index}`;
                 const headerId = `experience-header-${index}`;
 
@@ -1062,10 +1015,7 @@
                 const techTagsHtml = exp.techUsed.map(techName => {
                     const skill = Object.values(this.data.skills).flat().find(s => s.name === techName);
                     if (!skill) return '';
-                    return `<div class="exp-tech-tag">
-                                <img src="${skill.icon}" alt="" onerror="this.style.display='none';">
-                                <span>${skill.name}</span>
-                            </div>`;
+                    return `<div class="exp-tech-tag"><img src="${skill.icon}" alt="" onerror="this.style.display='none';"><span>${skill.name}</span></div>`;
                 }).join('');
 
                 return `
@@ -1074,10 +1024,7 @@
                             <button class="accordion-header w-full flex justify-between items-center" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}">
                                 <div class="flex-grow text-left">
                                     <h4 class="text-base font-bold" data-translate-key="exp_${index}_title">${exp.title}</h4>
-                                    <p class="text-sm italic flex items-center">
-                                        <img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">
-                                        ${exp.company}
-                                    </p>
+                                    <p class="text-sm italic flex items-center"><img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">${exp.company}</p>
                                 </div>
                                 <p class="text-xs mr-4">${exp.dates}</p>
                                 <svg class="accordion-icon w-5 h-5 transform transition-transform" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -1085,89 +1032,69 @@
                         </div>
                         <p class="experience-summary" data-translate-key="exp_${index}_summary">${exp.details.en[0].substring(0, 100)}...</p>
                         <div class="experience-body mt-2" id="${bodyId}" role="region" aria-labelledby="${headerId}">
-                            <ul class="list-disc list-inside space-y-1 pl-4">
-                               ${detailsHtml}
-                            </ul>
-                            <div class="experience-tech-tags">
-                                ${techTagsHtml}
-                            </div>
+                            <ul class="list-disc list-inside space-y-1 pl-4">${detailsHtml}</ul>
+                            <div class="experience-tech-tags">${techTagsHtml}</div>
                         </div>
                     </div>
                 `;
             },
 
-            createRadarCharts() {
-                const competencyData = [
-                    { label: 'Project Mgmt', score: 0.95 }, { label: 'QA & Automation', score: 0.95 },
-                    { label: 'Leadership', score: 0.90 }, { label: 'DevOps Strategy', score: 0.85 },
-                    { label: 'Cloud Platforms', score: 0.88 }, { label: 'Stakeholder Mgmt', score: 0.92 },
-                ];
-                const methodologyData = [
-                    { label: 'Agile', score: 0.95 }, { label: 'Scrum', score: 0.95 },
-                    { label: 'Kanban', score: 0.90 }, { label: 'CMMI', score: 0.75 },
-                    { label: 'ISO Standards', score: 0.85 }, { label: 'Risk Mgmt', score: 0.90 },
-                ];
-
+            /**
+             * Generates and renders the SVG radar charts for competencies and methodologies.
+             * @private
+             */
+            _createRadarCharts() {
+                const competencyData = [ { label: 'Project Mgmt', score: 0.95 }, { label: 'QA & Automation', score: 0.95 }, { label: 'Leadership', score: 0.90 }, { label: 'DevOps Strategy', score: 0.85 }, { label: 'Cloud Platforms', score: 0.88 }, { label: 'Stakeholder Mgmt', score: 0.92 }, ];
+                const methodologyData = [ { label: 'Agile', score: 0.95 }, { label: 'Scrum', score: 0.95 }, { label: 'Kanban', score: 0.90 }, { label: 'CMMI', score: 0.75 }, { label: 'ISO Standards', score: 0.85 }, { label: 'Risk Mgmt', score: 0.90 }, ];
                 this._generateSingleDatasetRadar(this.DOMElements.competenciesRadarChart, competencyData, 'rgba(8, 145, 178, 0.4)', 'rgb(8, 145, 178)');
                 this._generateSingleDatasetRadar(this.DOMElements.methodologiesRadarChart, methodologyData, 'rgba(249, 115, 22, 0.4)', 'rgb(249, 115, 22)');
             },
 
+            /**
+             * A helper function to generate the SVG markup for a single radar chart.
+             * @param {HTMLElement} container - The DOM element to insert the chart into.
+             * @param {Array<object>} data - The dataset for the chart.
+             * @param {string} fillColor - The fill color for the data polygon.
+             * @param {string} strokeColor - The stroke color for the data polygon.
+             * @private
+             */
             _generateSingleDatasetRadar(container, data, fillColor, strokeColor) {
                 if (!container) return;
-                const size = 288;
-                const center = size / 2;
-                const radius = size * 0.3;
-                const labels = data.map(d => d.label);
-                const angleSlice = (Math.PI * 2) / labels.length;
+                const size = 288, center = size / 2, radius = size * 0.3;
+                const labels = data.map(d => d.label), angleSlice = (Math.PI * 2) / labels.length;
                 const isDarkMode = document.body.classList.contains('dark-mode');
-                const gridColor = isDarkMode ? '#4b5563' : '#e5e7eb';
-                const labelColor = isDarkMode ? '#d1d5db' : '#4b5563';
+                const gridColor = isDarkMode ? '#4b5563' : '#e5e7eb', labelColor = isDarkMode ? '#d1d5db' : '#4b5563';
+                let grid = '', labelElements = '', polygon = '', points = '';
 
-                let grid = '';
+                // Draw grid lines and spokes
                 for (let i = 1; i <= 4; i++) {
                     const gridRadius = radius * (i/4);
                     let gridPoints = '';
-                    labels.forEach((_, j) => {
-                        const angle = angleSlice * j - Math.PI / 2;
-                        gridPoints += `${center + gridRadius * Math.cos(angle)},${center + gridRadius * Math.sin(angle)} `;
-                    });
+                    labels.forEach((_, j) => gridPoints += `${center + gridRadius * Math.cos(angleSlice * j - Math.PI / 2)},${center + gridRadius * Math.sin(angleSlice * j - Math.PI / 2)} `);
                     grid += `<polygon points="${gridPoints}" fill="none" stroke="${gridColor}" />`;
                 }
+                labels.forEach((_, i) => grid += `<line x1="${center}" y1="${center}" x2="${center + radius * Math.cos(angleSlice * i - Math.PI / 2)}" y2="${center + radius * Math.sin(angleSlice * i - Math.PI / 2)}" stroke="${gridColor}" />`);
 
-                let labelElements = '';
+                // Draw labels
                 labels.forEach((label, i) => {
-                    const angle = angleSlice * i - Math.PI / 2;
-                    const labelX = center + (radius + 35) * Math.cos(angle);
-                    const labelY = center + (radius + 35) * Math.sin(angle);
-
-                    const words = label.split(' ');
-                    let tspans = '';
-                    if (words.length > 1) {
-                        tspans = `<tspan x="${labelX}" dy="-0.5em">${words[0]}</tspan><tspan x="${labelX}" dy="1.1em">${words[1]}</tspan>`;
-                    } else {
-                        tspans = `<tspan>${label}</tspan>`;
-                    }
-
+                    const angle = angleSlice * i - Math.PI / 2, labelX = center + (radius + 35) * Math.cos(angle), labelY = center + (radius + 35) * Math.sin(angle);
+                    const words = label.split(' '), tspans = (words.length > 1) ? `<tspan x="${labelX}" dy="-0.5em">${words[0]}</tspan><tspan x="${labelX}" dy="1.1em">${words[1]}</tspan>` : `<tspan>${label}</tspan>`;
                     const tooltipText = (this.data.radarTooltips[this.state.lang] && this.data.radarTooltips[this.state.lang][label]) || this.data.radarTooltips.en[label] || label;
-
                     labelElements += `<g class="radar-label"><title>${tooltipText}</title><text x="${labelX}" y="${labelY}" font-size="10" text-anchor="middle" alignment-baseline="middle" fill="${labelColor}">${tspans}</text></g>`;
-                    grid += `<line x1="${center}" y1="${center}" x2="${center + radius * Math.cos(angle)}" y2="${center + radius * Math.sin(angle)}" stroke="${gridColor}" />`;
                 });
 
-                let polygon = '';
-                let points = '';
-                data.forEach((item, i) => {
-                    const angle = angleSlice * i - Math.PI / 2;
-                    const x = center + radius * item.score * Math.cos(angle);
-                    const y = center + radius * item.score * Math.sin(angle);
-                    points += `${x},${y} `;
-                });
+                // Draw data polygon
+                data.forEach((item, i) => points += `${center + radius * item.score * Math.cos(angleSlice * i - Math.PI / 2)},${center + radius * item.score * Math.sin(angleSlice * i - Math.PI / 2)} `);
                 polygon = `<polygon points="${points}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" />`;
 
                 container.innerHTML = `<svg viewBox="0 0 ${size} ${size}">${grid}${polygon}${labelElements}</svg>`;
             },
 
-            createTimeline() {
+            /**
+             * Renders the interactive career timeline.
+             * @private
+             */
+            _createTimeline() {
                 const container = this.DOMElements.timelineContainer;
                 if (!container) return;
                 let content = '';
@@ -1176,17 +1103,12 @@
                         const skill = Object.values(this.data.skills).flat().find(s => s.name === techName);
                         return skill ? `<img src="${skill.icon}" alt="${skill.name}" title="${skill.name}">` : '';
                     }).join('');
-
                     content += `
                         <div class="timeline-item block p-2 rounded-md" data-tech='${JSON.stringify(exp.techUsed)}' id="timeline-exp-${index}">
                             <div class="tooltip w-full" data-company-name="${exp.company}">
                                 <a href="#experience-${index}" class="hover:bg-gray-100 dark:hover:bg-gray-700 block p-1 rounded-md">
                                     <p class="font-bold text-sm">${exp.title}</p>
-                                    <div class="flex items-center gap-2 text-xs">
-                                        <img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">
-                                        <span>${exp.company}</span>
-                                        <span class="text-gray-400">| ${exp.dates}</span>
-                                    </div>
+                                    <div class="flex items-center gap-2 text-xs"><img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'"><span>${exp.company}</span><span class="text-gray-400">| ${exp.dates}</span></div>
                                     <div class="timeline-tech-icons">${techIcons}</div>
                                 </a>
                                 <span class="tooltiptext" data-translate-key="tooltip_timeline"></span>
@@ -1197,48 +1119,50 @@
                 container.innerHTML = content;
             },
 
-            filterExperiencesAndTimeline() {
+            /**
+             * Filters the experience and timeline sections based on selected skills.
+             * @private
+             */
+            _filterExperiencesAndTimeline() {
                 const skills = this.state.selectedSkills;
                 const hasFilters = skills.size > 0;
-
                 if (this.state.pulseTimeout) clearTimeout(this.state.pulseTimeout);
                 document.querySelectorAll('.pulse-highlight').forEach(el => el.classList.remove('pulse-highlight'));
 
                 let visibleCount = 0;
-                const totalCount = this.data.experiences.length;
-                const matchingExperienceItems = [];
-
+                const matchingItems = [];
+                // Filter experience items
                 document.querySelectorAll('#experience-container .experience-item').forEach(item => {
                     const tech = JSON.parse(item.dataset.tech);
                     const isVisible = !hasFilters || [...skills].every(s => tech.includes(s));
                     item.style.display = isVisible ? 'block' : 'none';
                     if (isVisible) {
                         visibleCount++;
-                        if (hasFilters) matchingExperienceItems.push(item);
+                        if (hasFilters) matchingItems.push(item);
                     }
                 });
 
-                this.DOMElements.filterStatus.textContent = hasFilters ? `Showing ${visibleCount} of ${totalCount} experiences.` : '';
-
-                const matchingTimelineItems = [];
+                // Filter timeline items
                 document.querySelectorAll('#timeline-container .timeline-item').forEach((item, index) => {
                     const tech = JSON.parse(item.dataset.tech);
                     const isVisible = !hasFilters || [...skills].every(s => tech.includes(s));
                     item.classList.toggle('filtered-out', hasFilters && !isVisible);
-                    if (hasFilters && isVisible) {
-                        const timelineItem = document.getElementById(`timeline-exp-${index}`);
-                        if(timelineItem) matchingTimelineItems.push(timelineItem);
-                    }
+                    if (hasFilters && isVisible) matchingItems.push(item);
                 });
 
+                // Update screen reader status and apply pulse animation
+                this.DOMElements.filterStatus.textContent = hasFilters ? `Showing ${visibleCount} of ${this.data.experiences.length} experiences.` : '';
                 if (hasFilters) {
-                    const allMatchingItems = [...matchingExperienceItems, ...matchingTimelineItems];
-                    requestAnimationFrame(() => allMatchingItems.forEach(el => el.classList.add('pulse-highlight')));
-                    this.state.pulseTimeout = setTimeout(() => allMatchingItems.forEach(el => el.classList.remove('pulse-highlight')), 5000);
+                    requestAnimationFrame(() => matchingItems.forEach(el => el.classList.add('pulse-highlight')));
+                    this.state.pulseTimeout = setTimeout(() => matchingItems.forEach(el => el.classList.remove('pulse-highlight')), 5000);
                 }
             },
 
-            populateAllTranslations() {
+            /**
+             * Populates the main translation object with data from the experience entries.
+             * @private
+             */
+            _populateAllTranslations() {
                 this.data.experiences.forEach((exp, expIdx) => {
                     Object.keys(this.data.translations).forEach(lang => {
                         if (!this.data.translations[lang] || !exp.details[lang]) return;
@@ -1251,11 +1175,15 @@
                 });
             },
 
+            /**
+             * Translates all elements on the page with a 'data-translate-key' attribute.
+             * @param {string} lang - The language code to translate to.
+             */
             translatePage(lang) {
                 const translation = this.data.translations[lang];
                 if (!translation) return;
-
                 this.state.lang = lang;
+
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.getAttribute('data-translate-key');
                     if (translation[key]) {
@@ -1263,197 +1191,234 @@
                         // Handle dynamic placeholders for timeline tooltips
                         if (key === 'tooltip_timeline') {
                             const tooltipDiv = el.closest('.tooltip');
-                            if (tooltipDiv) {
-                                const companyName = tooltipDiv.dataset.companyName;
-                                if (companyName) {
-                                    text = text.replace('%COMPANY%', companyName);
-                                }
+                            if (tooltipDiv && tooltipDiv.dataset.companyName) {
+                                text = text.replace('%COMPANY%', tooltipDiv.dataset.companyName);
                             }
                         }
                         el.innerHTML = text;
                     }
                 });
-
-                this.createRadarCharts(); // Re-render charts for tooltip translation
+                this._createRadarCharts(); // Re-render charts for tooltip translation
             },
 
-            trackEvent(eventName, eventCategory, eventLabel) {
-                if (typeof gtag === 'function') {
-                    gtag('event', eventName, {
-                        'event_category': eventCategory,
-                        'event_label': eventLabel,
-                    });
-                } else {
-                    console.log(`Analytics event (not sent): ${eventName}, ${eventCategory}, ${eventLabel}`);
+            /**
+             * Sets up a single, delegated event listener on the body to handle all user interactions.
+             * @private
+             */
+            _setupEventListeners() {
+                // Main click handler using event delegation
+                document.body.addEventListener('click', (e) => {
+                    const target = e.target;
+                    const skillTag = target.closest('.tech-tag');
+                    const accordionHeader = target.closest('.accordion-header, .toolkit-header');
+                    const contactLink = target.closest('[data-analytics-event="contact_click"]');
+                    const button = target.closest('button');
+                    const langSelector = target.closest('#language-selector');
+
+                    if (skillTag) this._toggleSkillFilter(skillTag);
+                    else if (accordionHeader) this._handleAccordionToggle(accordionHeader);
+                    else if (contactLink) this._trackEvent('contact_click', 'Contact', contactLink.dataset.analyticsLabel);
+                    else if (button) this._handleButtonClick(button);
+                    else if (langSelector) this._handleLanguageSelector(e);
+                    else if (target.id === 'profile-photo') this._openModal();
+                    else if (target.id === 'image-modal') this._closeModal();
+                });
+
+                // Keydown handlers for accessibility
+                this.DOMElements.toolkitContainer.addEventListener('keydown', (e) => {
+                    if (e.target.closest('.tech-tag') && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        this._toggleSkillFilter(e.target.closest('.tech-tag'));
+                    }
+                });
+                this.DOMElements.profilePhoto.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') this._openModal(); });
+                this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') this._closeModal(); });
+            },
+
+            /**
+             * Handles all button clicks dispatched from the main event listener.
+             * @param {HTMLElement} button - The clicked button element.
+             * @private
+             */
+            _handleButtonClick(button) {
+                switch (button.id) {
+                    case 'reset-filter': this._resetFilters(); break;
+                    case 'expand-all-exp': this._toggleAllAccordions(this.DOMElements.experienceContainer, button); break;
+                    case 'expand-all-toolkit': this._toggleAllAccordions(this.DOMElements.toolkitContainer, button); break;
+                    case 'read-more-btn': this._toggleReadMore(button); break;
+                    case 'print-btn': this._trackEvent('print_cv', 'Interaction', 'Print Button'); window.print(); break;
+                    case 'theme-toggle': this._toggleTheme(); break;
+                    case 'modal-close': this._closeModal(); break;
                 }
             },
 
-            setupEventListeners() {
-                document.body.addEventListener('click', (e) => {
-                    const skillTag = e.target.closest('.tech-tag');
-                    if (skillTag) {
-                        this.toggleSkillFilter(skillTag);
-                        return;
-                    }
-
-                    const accordionHeader = e.target.closest('.accordion-header, .toolkit-header');
-                    if (accordionHeader) {
-                        this.handleAccordionToggle(accordionHeader);
-                        return;
-                    }
-
-                    const contactLink = e.target.closest('[data-analytics-event="contact_click"]');
-                    if(contactLink) {
-                        this.trackEvent('contact_click', 'Contact', contactLink.dataset.analyticsLabel);
-                        return;
-                    }
-
-                    const button = e.target.closest('button');
-                    if (button) {
-                        switch (button.id) {
-                            case 'reset-filter': this.resetFilters(); break;
-                            case 'expand-all-exp': this.toggleAllAccordions(this.DOMElements.experienceContainer, button); break;
-                            case 'expand-all-toolkit': this.toggleAllAccordions(this.DOMElements.toolkitContainer, button); break;
-                            case 'read-more-btn': this.toggleReadMore(button); break;
-                            case 'print-btn': this.trackEvent('print_cv', 'Interaction', 'Print Button'); window.print(); break;
-                            case 'theme-toggle': this.toggleTheme(); break;
-                            case 'modal-close': this.closeModal(); break;
-                        }
-                    }
-
-                    const langSelector = e.target.closest('#language-selector');
-                    if (langSelector) this.handleLanguageSelector(e);
-
-                    if (e.target.id === 'profile-photo') this.openModal();
-                    if (e.target.id === 'image-modal') this.closeModal();
-                });
-
-                this.DOMElements.toolkitContainer.addEventListener('keydown', (e) => {
-                    const tag = e.target.closest('.tech-tag');
-                    if (tag && (e.key === 'Enter' || e.key === ' ')) {
-                        e.preventDefault();
-                        this.toggleSkillFilter(tag);
-                    }
-                });
-
-                this.DOMElements.profilePhoto.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') this.openModal(); });
-                this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') this.closeModal(); });
-            },
-
-            toggleSkillFilter(tag) {
+            /**
+             * Toggles a skill filter on or off.
+             * @param {HTMLElement} tag - The skill tag element that was clicked.
+             * @private
+             */
+            _toggleSkillFilter(tag) {
                 const skillName = tag.dataset.skillName;
                 const isPressed = tag.getAttribute('aria-pressed') === 'true';
                 tag.classList.toggle('selected');
                 tag.setAttribute('aria-pressed', !isPressed);
-                if (isPressed) {
-                    this.state.selectedSkills.delete(skillName);
-                } else {
-                    this.state.selectedSkills.add(skillName);
-                }
-                this.trackEvent('skill_filter', 'Toolkit', `${isPressed ? 'Removed' : 'Added'}: ${skillName}`);
-                this.filterExperiencesAndTimeline();
+                isPressed ? this.state.selectedSkills.delete(skillName) : this.state.selectedSkills.add(skillName);
+                this._trackEvent('skill_filter', 'Toolkit', `${!isPressed ? 'Added' : 'Removed'}: ${skillName}`);
+                this._filterExperiencesAndTimeline();
             },
 
-            resetFilters() {
+            /**
+             * Resets all active skill filters.
+             * @private
+             */
+            _resetFilters() {
                 this.state.selectedSkills.clear();
                 document.querySelectorAll('.tech-tag.selected').forEach(tag => {
                     tag.classList.remove('selected');
                     tag.setAttribute('aria-pressed', 'false');
                 });
-                this.trackEvent('reset_filters', 'Toolkit', 'Clicked Reset');
-                this.filterExperiencesAndTimeline();
+                this._trackEvent('reset_filters', 'Toolkit', 'Clicked Reset');
+                this._filterExperiencesAndTimeline();
             },
 
-            handleAccordionToggle(button) {
+            /**
+             * Handles the expansion and collapse of accordion items.
+             * @param {HTMLElement} button - The accordion header button.
+             * @private
+             */
+            _handleAccordionToggle(button) {
                 const body = document.getElementById(button.getAttribute('aria-controls'));
                 const isExpanded = button.getAttribute('aria-expanded') === 'true';
                 button.setAttribute('aria-expanded', !isExpanded);
                 body.style.maxHeight = isExpanded ? null : body.scrollHeight + "px";
 
-                let label = '';
-                if (button.closest('.experience-item')) {
-                    button.closest('.experience-item').classList.toggle('is-open', !isExpanded);
+                const experienceItem = button.closest('.experience-item');
+                const toolkitItem = button.closest('.toolkit-section');
+
+                if (experienceItem) {
+                    experienceItem.classList.toggle('is-open', !isExpanded);
                     button.querySelector('.accordion-icon').style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
-                    label = button.querySelector('h4').textContent.trim();
-                } else { // Toolkit
-                    const preview = button.parentElement.nextElementSibling;
-                    preview.style.display = isExpanded ? 'block' : 'none';
-                    button.nextElementSibling.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
-                    label = button.querySelector('h3').textContent.trim();
+                } else if (toolkitItem) {
+                    button.parentElement.nextElementSibling.style.display = isExpanded ? 'block' : 'none'; // Toggle preview text
+                    button.nextElementSibling.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'; // Toggle chevron
                 }
-                this.trackEvent('accordion_toggle', 'UI Interaction', `${isExpanded ? 'Collapsed' : 'Expanded'}: ${label}`);
             },
 
-            toggleAllAccordions(container, button) {
+            /**
+             * Expands or collapses all accordion items within a given container.
+             * @param {HTMLElement} container - The container of the accordions (e.g., experience or toolkit).
+             * @param {HTMLElement} button - The 'Expand/Collapse All' button.
+             * @private
+             */
+            _toggleAllAccordions(container, button) {
                 const isExpanding = button.textContent.includes('Expand');
                 const sectionName = container.id.includes('experience') ? 'Experience' : 'Toolkit';
                 container.querySelectorAll('.accordion-header, .toolkit-header').forEach(headerBtn => {
                     const body = document.getElementById(headerBtn.getAttribute('aria-controls'));
                     headerBtn.setAttribute('aria-expanded', isExpanding);
                     body.style.maxHeight = isExpanding ? body.scrollHeight + 'px' : null;
-
-                    if(container.id === 'experience-container') {
-                        headerBtn.closest('.experience-item').classList.toggle('is-open', isExpanding);
-                        headerBtn.querySelector('.accordion-icon').style.transform = isExpanding ? 'rotate(180deg)' : 'rotate(0deg)';
-                    } else {
-                        headerBtn.parentElement.nextElementSibling.style.display = isExpanding ? 'none' : 'block';
-                        headerBtn.nextElementSibling.style.transform = isExpanding ? 'rotate(180deg)' : 'rotate(0deg)';
-                    }
+                    this._handleAccordionToggle(headerBtn); // Reuse logic to set styles
                 });
                 button.textContent = isExpanding ? 'Collapse All' : 'Expand All';
-                this.trackEvent('toggle_all', 'UI Interaction', `${isExpanding ? 'Expand' : 'Collapse'} All ${sectionName}`);
+                this._trackEvent('toggle_all', 'UI Interaction', `${isExpanding ? 'Expand' : 'Collapse'} All ${sectionName}`);
             },
 
-            handleLanguageSelector(e) {
-                const langSelector = e.target.closest('#language-selector');
+            /**
+             * Handles interactions with the language selector component.
+             * @param {Event} e - The click event object.
+             * @private
+             */
+            _handleLanguageSelector(e) {
+                const langSelector = e.currentTarget;
                 const clickedFlag = e.target.closest('.lang-flag');
+                // If a flag is clicked and the menu is open, change language
                 if (clickedFlag && !langSelector.classList.contains('collapsed')) {
                     const lang = clickedFlag.dataset.lang;
                     langSelector.querySelectorAll('.lang-flag').forEach(f => f.classList.remove('selected'));
                     clickedFlag.classList.add('selected');
                     this.translatePage(lang);
                     langSelector.classList.add('collapsed');
-                    this.trackEvent('language_change', 'UI Interaction', `Changed to ${lang.toUpperCase()}`);
+                    this._trackEvent('language_change', 'UI Interaction', `Changed to ${lang.toUpperCase()}`);
                     e.stopPropagation();
                 } else {
+                    // Otherwise, just toggle the menu open/closed
                     langSelector.classList.toggle('collapsed');
                 }
             },
 
-            toggleReadMore(button) {
+            /**
+             * Toggles the "Read More" section in the professional summary.
+             * @param {HTMLElement} button - The "Read More/Less" button.
+             * @private
+             */
+            _toggleReadMore(button) {
                 const details = this.DOMElements.summaryDetails;
                 const isExpanded = button.getAttribute('aria-expanded') === 'true';
                 button.setAttribute('aria-expanded', !isExpanded);
                 details.style.maxHeight = isExpanded ? null : details.scrollHeight + 'px';
                 button.textContent = isExpanded ? 'Read More...' : 'Read Less...';
-                this.trackEvent('read_more_toggle', 'Summary', isExpanded ? 'Collapsed' : 'Expanded');
+                this._trackEvent('read_more_toggle', 'Summary', isExpanded ? 'Collapsed' : 'Expanded');
             },
 
-            toggleTheme() {
+            /**
+             * Toggles between light and dark themes and saves the preference.
+             * @private
+             */
+            _toggleTheme() {
                 const isDarkMode = this.DOMElements.body.classList.toggle('dark-mode');
                 localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-                this.trackEvent('theme_change', 'UI Interaction', isDarkMode ? 'Dark Mode' : 'Light Mode');
-                this.renderInfographics(); // Re-render charts with new theme colors
+                this._trackEvent('theme_change', 'UI Interaction', isDarkMode ? 'Dark Mode' : 'Light Mode');
+                this._renderInfographics(); // Re-render charts with new theme colors
             },
 
-            openModal() {
+            /**
+             * Opens the modal to view the profile photo.
+             * @private
+             */
+            _openModal() {
                 this.DOMElements.modalImage.src = this.DOMElements.profilePhoto.src;
                 this.DOMElements.imageModal.classList.add('visible');
                 this.DOMElements.modalClose.focus();
-                this.trackEvent('view_photo', 'Interaction', 'Profile Photo Modal');
+                this._trackEvent('view_photo', 'Interaction', 'Profile Photo Modal');
             },
-            closeModal() {
+
+            /**
+             * Closes the profile photo modal.
+             * @private
+             */
+            _closeModal() {
                 this.DOMElements.imageModal.classList.remove('visible');
             },
 
-            applyInitialTheme() {
+            /**
+             * Checks for a 'lang' parameter in the URL and sets the initial language state.
+             * @private
+             */
+            _applyUrlLanguage() {
+                const params = new URLSearchParams(window.location.search);
+                const urlLang = params.get('lang');
+                if (urlLang && this.data.translations[urlLang]) {
+                    this.state.lang = urlLang;
+                    this._trackEvent('language_from_url', 'SEO', `Loaded ${urlLang.toUpperCase()}`);
+                }
+            },
+
+            /**
+             * Applies the theme from localStorage or system preference on initial load.
+             * @private
+             */
+            _applyInitialTheme() {
                 const savedTheme = localStorage.getItem('theme');
-                if (savedTheme === 'dark' || (savedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     this.DOMElements.body.classList.add('dark-mode');
                 }
             },
 
-            initScrollAnimations() {
+            /**
+             * Initializes the Intersection Observer for scroll animations.
+             * @private
+             */
+            _initScrollAnimations() {
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
@@ -1463,55 +1428,64 @@
                     });
                 }, { threshold: 0.1 });
 
-                document.querySelectorAll('.animate-on-scroll').forEach(el => {
-                    observer.observe(el);
-                });
+                document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
             },
 
-            initUrlHighlighting() {
+            /**
+             * Checks for a 'skills' URL parameter and highlights matching keywords in the text.
+             * @private
+             */
+            _initUrlHighlighting() {
                 const params = new URLSearchParams(window.location.search);
                 const skillsToHighlight = params.get('skills');
                 if (!skillsToHighlight) return;
 
-                const keywords = skillsToHighlight.split(',').map(s => s.trim()).filter(Boolean);
+                const keywords = skillsToHighlight.split(',').map(s => s.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).filter(Boolean);
                 if (keywords.length === 0) return;
 
-                this.trackEvent('highlight_from_url', 'Smart Feature', keywords.join(', '));
-
+                this._trackEvent('highlight_from_url', 'Smart Feature', keywords.join(', '));
                 const regex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'gi');
 
-                const textNodes = [];
                 const walk = document.createTreeWalker(this.DOMElements.mainContent, NodeFilter.SHOW_TEXT, null, false);
                 let node;
                 while(node = walk.nextNode()) {
                     if (node.parentElement.tagName !== 'SCRIPT' && node.parentElement.tagName !== 'STYLE') {
-                        textNodes.push(node);
+                        const text = node.nodeValue;
+                        if (regex.test(text)) {
+                            const fragment = document.createDocumentFragment();
+                            let lastIndex = 0;
+                            text.replace(regex, (match, offset) => {
+                                fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
+                                const mark = document.createElement('mark');
+                                mark.textContent = match;
+                                fragment.appendChild(mark);
+                                lastIndex = offset + match.length;
+                                return match;
+                            });
+                            fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+                            node.parentNode.replaceChild(fragment, node);
+                        }
                     }
                 }
+            },
 
-                textNodes.forEach(node => {
-                    const text = node.nodeValue;
-                    if (regex.test(text)) {
-                        const fragment = document.createDocumentFragment();
-                        let lastIndex = 0;
-                        text.replace(regex, (match, offset) => {
-                            if (offset > lastIndex) {
-                                fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
-                            }
-                            const mark = document.createElement('mark');
-                            mark.textContent = match;
-                            fragment.appendChild(mark);
-                            lastIndex = offset + match.length;
-                        });
-                        if (lastIndex < text.length) {
-                            fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
-                        }
-                        node.parentNode.replaceChild(fragment, node);
-                    }
-                });
-            }
+            /**
+             * Tracks an event for analytics purposes (if analytics is configured).
+             * @param {string} eventName - The name of the event.
+             * @param {string} eventCategory - The category of the event.
+             * @param {string} eventLabel - The label for the event.
+             * @private
+             */
+            _trackEvent(eventName, eventCategory, eventLabel) {
+                if (typeof gtag === 'function') {
+                    gtag('event', eventName, { 'event_category': eventCategory, 'event_label': eventLabel });
+                } else {
+                    console.log(`Analytics (not sent): ${eventName}, ${eventCategory}, ${eventLabel}`);
+                }
+            },
         };
 
+        // Fire it up!
         CarlosMunozCV.init();
     });
 </script>
