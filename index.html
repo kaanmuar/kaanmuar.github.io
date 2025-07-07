@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- =================================================================
+    |                           METADATA & SEO                            |
+    ================================================================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Carlos A. Muñoz">
@@ -8,6 +11,9 @@
     <meta name="keywords" content="Project Manager, QA Architect, Test Automation, Agile, Scrum, Selenium, Cypress, AWS, CV, Resume">
     <title>Visual CV - Carlos Muñoz Ardila</title>
 
+    <!-- International SEO: hreflang tags -->
+    <!-- These tags tell search engines that this page is available in multiple languages. -->
+    <!-- NOTE: Replace 'https://carlos-munoz-cv.com/' with the actual domain where the CV is hosted. -->
     <link rel="alternate" hreflang="x-default" href="https://carlos-munoz-cv.com/?lang=en" />
     <link rel="alternate" hreflang="en" href="https://carlos-munoz-cv.com/?lang=en" />
     <link rel="alternate" hreflang="es" href="https://carlos-munoz-cv.com/?lang=es" />
@@ -16,12 +22,18 @@
     <link rel="alternate" hreflang="fr" href="https://carlos-munoz-cv.com/?lang=fr" />
     <link rel="alternate" hreflang="it" href="https://carlos-munoz-cv.com/?lang=it" />
 
+    <!-- =================================================================
+    |                       STYLES & LIBRARIES                          |
+    ================================================================== -->
+    <!-- Tailwind CSS for rapid UI development -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Google Fonts for typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 
+    <!-- Structured Data (JSON-LD) for Rich Snippets in search results -->
     <script type="application/ld+json">
         {
             "@context": "https://schema.org/",
@@ -48,6 +60,9 @@
         }
     </script>
 
+    <!-- =================================================================
+    |                         INTERNAL CSS STYLES                         |
+    ================================================================== -->
     <style>
         /* CSS Custom Properties (Variables) for easy theming */
         :root {
@@ -273,11 +288,18 @@
 </head>
 <body data-author="Carlos A. Muñoz">
 
+<!-- =================================================================
+|                            MAIN CONTAINER                           |
+================================================================== -->
 <div class="container mx-auto max-w-6xl my-6 p-4 md:p-6">
     <div class="bg-secondary shadow-2xl rounded-lg overflow-hidden main-container">
         <div class="md:flex">
 
+            <!-- =================================================================
+            |                          SIDEBAR (LEFT COLUMN)                      |
+            ================================================================== -->
             <aside class="md:w-1/3 p-6 sidebar">
+                <!-- Profile Header -->
                 <div class="flex flex-col items-center">
                     <div class="relative">
                         <img id="profile-photo" src="https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400 cursor-pointer" alt="Profile photo of Carlos Muñoz Ardila" tabindex="0" role="button" aria-label="View larger profile photo">
@@ -292,6 +314,7 @@
 
                 <hr class="my-6">
 
+                <!-- Contact Info Section -->
                 <section aria-labelledby="contact-heading" class="animate-on-scroll">
                     <div class="flex items-center relative">
                         <h3 id="contact-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="contact_title">Contact</h3>
@@ -300,6 +323,7 @@
                             <div id="contact-info-bubble" class="info-bubble" data-translate-key="info_bubble_contact"></div>
                         </div>
                     </div>
+                    <!-- Contact Details -->
                     <div class="flex items-center space-x-3"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg><a href="tel:+573209191010" rel="noopener noreferrer" class="hover:text-cyan-400 phone-container" data-analytics-event="contact_click" data-analytics-label="Phone"><span class="phone-text">Phone Number</span><span class="phone-number" aria-hidden="true">+57 320 919 1010</span></a></div>
                     <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg><a href="mailto:kaanmuar@gmail.com" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Email">kaanmuar@gmail.com</a></div>
                     <div class="flex items-start space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg><a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="LinkedIn">LinkedIn Profile</a></div>
@@ -308,6 +332,7 @@
                     <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg><span>Medellin, Antioquia, Colombia</span></div>
                 </section>
                 <hr class="my-6">
+                <!-- Core Competencies Section -->
                 <section aria-labelledby="competencies-heading" class="animate-on-scroll">
                     <h3 id="competencies-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="competencies_title">Core Competencies</h3>
                     <ul class="mt-3 space-y-2 text-sm list-disc list-inside">
@@ -321,9 +346,11 @@
                     </ul>
                 </section>
                 <hr class="my-6">
+                <!-- Languages Section -->
                 <section id="languages-section" aria-labelledby="languages-heading" class="animate-on-scroll">
                     <h3 id="languages-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
                     <div id="languages-body" class="mt-3 space-y-4 text-sm">
+                        <!-- Language items with proficiency bars -->
                         <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="flag-icon" alt="Spanish Flag"><span class="font-medium ml-2">Spanish</span></div><span data-translate-key="lang_native">Native</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Spanish proficiency: Native"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 100%"></div></div></div>
                         <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="flag-icon" alt="English Flag"><span class="font-medium ml-2">English</span></div><span data-translate-key="lang_fluent">Fluent</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="English proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 90%"></div></div></div>
                         <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="flag-icon" alt="Portuguese Flag"><span class="font-medium ml-2">Portuguese</span></div><span data-translate-key="lang_fluent">Fluent</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Portuguese proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 85%"></div></div></div>
@@ -332,15 +359,22 @@
                 </section>
             </aside>
 
+            <!-- =================================================================
+            |                       MAIN CONTENT (RIGHT COLUMN)                   |
+            ================================================================== -->
             <main class="w-full p-6 main-content">
+                <!-- Page Header and Controls -->
                 <section aria-labelledby="summary-heading" class="animate-on-scroll">
                     <div class="flex justify-between items-center">
                         <h2 id="summary-heading" class="text-xl font-bold" data-translate-key="summary_title">Professional Summary</h2>
+                        <!-- Interactive Controls: Theme, Language, Print -->
                         <div class="flex items-center space-x-2 no-print">
+                            <!-- Theme Toggle Button -->
                             <button id="theme-toggle" aria-label="Toggle dark mode">
                                 <svg class="w-5 h-5 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                 <svg class="w-5 h-5 moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                             </button>
+                            <!-- Language Selector Dropdown -->
                             <div id="language-selector" role="region" aria-label="Language Selector" class="relative flex items-center space-x-2 collapsed cursor-pointer" tabindex="0">
                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English" tabindex="-1" role="button" aria-label="Select English"><span class="tooltiptext" data-translate-key="tooltip_lang_en"></span></div>
                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español" tabindex="-1" role="button" aria-label="Select Spanish"><span class="tooltiptext" data-translate-key="tooltip_lang_es"></span></div>
@@ -350,11 +384,13 @@
                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italiano" tabindex="-1" role="button" aria-label="Select Italian"><span class="tooltiptext" data-translate-key="tooltip_lang_it"></span></div>
                                 <svg class="w-4 h-4 lang-accordion-indicator" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 <span class="mx-1">|</span>
+                                <!-- Print Button -->
                                 <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200" aria-label="Print or save as PDF"><svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext" data-translate-key="tooltip_print"></span></button></div>
                             </div>
                         </div>
                     </div>
                     <div class="border-b-4 pb-2 mb-3"></div>
+                    <!-- Professional Summary Text -->
                     <p data-translate-key="summary_text">A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.</p>
                     <div id="summary-details" class="mt-2 space-y-2">
                         <p data-translate-key="summary_detail_1">Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.</p>
@@ -363,9 +399,11 @@
                     <button id="read-more-btn" class="text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-2 no-print" aria-expanded="false" aria-controls="summary-details">Read More...</button>
                 </section>
 
+                <!-- Infographics Section: Charts and Timeline -->
                 <section class="section mt-8 infographics-section animate-on-scroll" aria-labelledby="infographics-heading">
                     <h2 id="infographics-heading" class="text-xl font-bold border-b-4 pb-2 mb-6" data-translate-key="infographics_title">Career at a Glance</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        <!-- Left Column: Radar Charts -->
                         <div>
                             <section aria-labelledby="competencies-graph-heading" class="mb-20">
                                 <h3 id="competencies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
@@ -376,6 +414,7 @@
                                 <div id="methodologies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing methodology and process scores."></div>
                             </section>
                         </div>
+                        <!-- Right Column: Career Timeline -->
                         <section aria-labelledby="timeline-heading">
                             <h3 id="timeline-heading" class="text-base font-semibold mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
                             <div id="timeline-container" class="relative pr-2"></div>
@@ -385,6 +424,7 @@
 
                 <hr class="my-12">
 
+                <!-- Toolkit Section: Skills and Technologies -->
                 <section class="section mt-6 animate-on-scroll" aria-labelledby="toolkit-heading">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
@@ -399,18 +439,23 @@
                             <button id="reset-filter" class="text-xs bg-cyan-600 text-white hover:bg-cyan-700 font-semibold py-1 px-3 rounded-full transition-colors">Reset Filters</button>
                         </div>
                     </div>
+                    <!-- Screen-reader only text for filter status updates -->
                     <div id="filter-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+                    <!-- Container where JS will render the toolkit categories and skills -->
                     <div id="toolkit-container" class="mt-1 space-y-3"></div>
                 </section>
 
+                <!-- Professional Experience Section -->
                 <section id="professional-experience" class="section mt-6 animate-on-scroll" aria-labelledby="experience-heading">
                     <div class="flex justify-between items-center">
                         <h2 id="experience-heading" class="text-xl font-bold" data-translate-key="experience_title">Professional Experience</h2>
                         <button id="expand-all-exp" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
                     </div>
+                    <!-- Container where JS will render the experience entries -->
                     <div class="mt-3 space-y-1" id="experience-container"></div>
                 </section>
 
+                <!-- Education & Certifications Section -->
                 <section class="section mt-6 animate-on-scroll" aria-labelledby="education-heading">
                     <h2 id="education-heading" class="text-xl font-bold border-b-4 pb-2">Education & Certifications</h2>
                     <div class="mt-3 grid md:grid-cols-2 gap-6 text-sm">
@@ -434,6 +479,7 @@
                     </div>
                 </section>
 
+                <!-- Footer -->
                 <footer class="cv-footer no-print">
                     <div class="flex justify-center items-center gap-2">
                         <p>&copy; 2025 Carlos A. Muñoz</p>
@@ -447,6 +493,7 @@
     </div>
 </div>
 
+<!-- Modal for Image Zoom -->
 <div id="image-modal" class="modal-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
     <div class="modal-content">
         <h2 id="modal-heading" class="sr-only">Profile Photo</h2>
@@ -455,54 +502,35 @@
     </div>
 </div>
 
+<!-- =================================================================
+|                         APPLICATION JAVASCRIPT                      |
+================================================================== -->
 <script>
     /***************************************************************************************
      * Interactive CV Application - Carlos A. Muñoz
-     * Version: 7.0 (July 2025) - SEO, URL Handling, and Documentation Update
+     * Version: 7.1 (July 2025) - Bug Fixes and Stability Improvements
      *
      * Intellectual Property Notice:
-     * This document and its contents, including the code, design, and textual information,
-     * are the intellectual property of Carlos A. Muñoz. This interactive CV is intended for
-     * personal and professional evaluation purposes only. Unauthorized reproduction,
-     * distribution, or use of any part of this document for commercial purposes is
-     * strictly prohibited. All rights reserved.
+     * This document and its contents are the intellectual property of Carlos A. Muñoz.
+     * Unauthorized reproduction or distribution is strictly prohibited. All rights reserved.
      *
      * --- CHANGELOG ---
+     * v7.1:
+     * - Fixed modal close button functionality.
+     * - Corrected language selector expansion logic.
+     * - Ensured timeline tooltips are populated correctly after translation.
+     * - Fixed inverted logic for "Expand/Collapse All" buttons.
      * v7.0:
-     * - Added hreflang tags for international SEO.
-     * - Implemented URL parameter handling to load specific language versions directly.
-     * - Added comprehensive JSDoc comments and inline documentation throughout the codebase.
-     *
-     * v6.0:
-     * - Initial polished version with full interactivity.
+     * - Added hreflang tags, URL language handling, and comprehensive documentation.
      ***************************************************************************************/
 
-    /**
-     * Main application logic is encapsulated within a DOMContentLoaded event listener
-     * to ensure the script runs only after the entire HTML document has been loaded and parsed.
-     */
     document.addEventListener('DOMContentLoaded', () => {
-        /**
-         * @namespace CarlosMunozCV
-         * @description Main object that encapsulates all the properties and methods for the CV application.
-         */
         const CarlosMunozCV = {
-            /**
-             * @property {object} state - Holds the dynamic state of the application.
-             * @property {string} state.lang - The current language code (e.g., 'en', 'es'). Default is 'en'.
-             * @property {Set<string>} state.selectedSkills - A set of skills currently selected for filtering.
-             * @property {?number} state.pulseTimeout - Timeout ID for the filter pulse animation.
-             */
             state: {
                 lang: 'en',
                 selectedSkills: new Set(),
                 pulseTimeout: null,
             },
-
-            /**
-             * @property {object} data - Contains all the static data for the CV, including skills, experiences, and translations.
-             * This separation of data from logic makes the CV easier to update and maintain.
-             */
             data: {
                 skills: {
                     pm: [
@@ -605,7 +633,7 @@
                             pt: [ 'Forneci serviços especializados de QA e liderança de projetos em mais de 15 projetos de clientes em diversos setores, incluindo FinTech, HealthTech e varejo.', 'Supervisionei a entrega de projetos de ponta a ponta, gerenciei relacionamentos complexos com clientes e suas expectativas, garantindo o alinhamento com os objetivos estratégicos de negócios.', 'Orientei e liderei equipes técnicas distribuídas de até 10 engenheiros, promovendo uma cultura de qualidade e melhoria contínua usando metodologias Agile e Scrum.', 'Arquitetei e implementei estratégias de automação de testes escaláveis usando Cypress, Playwright e Selenium para várias aplicações de clientes.', 'Gerenciei fluxos de trabalho de projetos, rastreamento de defeitos e relatórios usando Jira e TestRail, proporcionando visibilidade clara para todos os stakeholders.' ],
                             de: [ 'Erbringung von Experten-QA- und Projektleitungsdiensten für über 15 Kundenprojekte in verschiedenen Sektoren, einschließlich FinTech, HealthTech und Einzelhandel.', 'Überwachung der End-to-End-Projektabwicklung, Management komplexer Kundenbeziehungen und -erwartungen zur Sicherstellung der Ausrichtung auf strategische Geschäftsziele.', 'Mentoring und Leitung verteilter technischer Teams von bis zu 10 Ingenieuren, Förderung einer Kultur der Qualität und kontinuierlichen Verbesserung unter Verwendung von Agile- und Scrum-Methoden.', 'Architektur und Implementierung skalierbarer Testautomatisierungsstrategien mit Cypress, Playwright und Selenium für verschiedene Kundenanwendungen.', 'Verwaltung von Projekt-Workflows, Fehlerverfolgung und Berichterstattung mit Jira und TestRail, um allen Beteiligten klare Sichtbarkeit zu bieten.' ],
                             fr: [ 'Fourniture de services experts en QA et en direction de projet pour plus de 15 projets clients dans divers secteurs, notamment la FinTech, la HealthTech et le commerce de détail.', 'Supervision de la livraison de projets de bout en bout, gestion des relations et des attentes complexes des clients, en veillant à l\'alignement avec les objectifs commerciaux stratégiques.', 'Encadrement et direction d\'équipes techniques distribuées comptant jusqu\'à 10 ingénieurs, en favorisant une culture de la qualité et de l\'amélioration continue à l\'aide des méthodologies Agile et Scrum.', 'Conception et mise en œuvre de stratégies d\'automatisation des tests évolutives à l\'aide de Cypress, Playwright et Selenium pour diverses applications clientes.', 'Gestion des flux de travail de projet, du suivi des bogues et des rapports à l\'aide de Jira et TestRail, offrant une visibilité claire à toutes les parties prenantes.' ],
-                            it: [ 'Fornitura di servizi esperti di QA e di leadership di progetto per oltre 15 progetti di clienti in diversi settori, tra cui FinTech, HealthTech e retail.', 'Supervisione della consegna dei progetti end-to-end, gestione di relazioni complesse con i clienti e delle loro aspettative, garantendo l\'allineamento con gli obiettivi strategici aziendali.', 'Mentoring e guida di team tecnici distribuiti fino a 10 ingegneri, promuovendo una cultura della qualità e del miglioramento continuo utilizzando le metodologie Agile e Scrum.', 'Progettazione e implementazione di strategie di automazione dei test scalabili utilizzando Cypress, Playwright e Selenium per varie applicazioni dei clienti.', 'Gestione dei flussi de lavoro dei progetti, del tracciamento dei difetti e della reportistica utilizzando Jira e TestRail, fornendo una chiara visibilità a tutti gli stakeholder.' ]
+                            it: [ 'Fornitura di servizi esperti di QA e di leadership di progetto per oltre 15 progetti di clienti in diversi settori, tra cui FinTech, HealthTech e retail.', 'Supervisione della consegna dei progetti end-to-end, gestione di relazioni complesse con i clienti e delle loro aspettative, garantendo l\'allineamento con gli obiettivi strategici aziendali.', 'Mentoring e guida di team tecnici distribuiti fino a 10 ingegneri, promuovendo una cultura della qualità e del miglioramento continuo utilizzando le metodologie Agile e Scrum.', 'Progettazione e implementazione di strategie de automazione dei test scalabili utilizzando Cypress, Playwright e Selenium per varie applicazioni dei clienti.', 'Gestione dei flussi de lavoro dei progetti, del tracciamento dei difetti e della reportistica utilizzando Jira e TestRail, fornendo una chiara visibilità a tutti gli stakeholder.' ]
                         },
                         techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Tosca', 'Puppeteer', 'MS Dynamics', 'SAP', 'Zoho CRM', 'Shopify', 'Gatling', 'Power BI', 'Tableau', 'New Relic', 'Splunk', 'GraphQL']
                     },
@@ -629,7 +657,7 @@
                             pt: [ 'Liderei todos os esforços de QA para projetos Salesforce Sales Cloud e Service Cloud para a conta de alto perfil da DirectvGO / AT&T.', 'Gerenciei o planejamento de testes, a estimativa de recursos e as comunicações com o cliente, garantindo o alinhamento com os cronogramas e entregas do projeto.', 'Arquitetei e liderei o desenvolvimento de um novo framework de automação de QA usando Kotlin, C# .Net e Robot Framework.', 'Utilizei serviços da AWS (S3, EC2, Redshift, Athena) para gerenciar dados e ambientes de teste para projetos de integração do Salesforce.', 'Realizei validação e manipulação de datos complexos usando consultas SQL avanzadas em bancos de dados Oracle e PostgreSQL.' ],
                             de: [ 'Leitung aller QA-Bemühungen für Salesforce Sales Cloud- und Service Cloud-Projekte für den hochkarätigen Kunden DirectvGO / AT&T.', 'Verwaltung der Testplanung, Ressourcenschätzung und Kundenkommunikation, um die Übereinstimmung mit Projektzeitplänen und -ergebnissen sicherzustellen.', 'Architektur und Leitung der Entwicklung eines neuen QA-Automatisierungs-Frameworks mit Kotlin, C# .Net und Robot Framework.', 'Nutzung von AWS-Diensten (S3, EC2, Redshift, Athena) zur Verwaltung von Testdaten und -umgebungen für Salesforce-Integrationsprojekte.', 'Durchführung komplexer Datenvalidierungen und -manipulationen mithilfe erweiterter SQL-Abfragen in Oracle- und PostgreSQL-Datenbanken.' ],
                             fr: [ 'Direction de tous les efforts d\'assurance qualité pour les projets Salesforce Sales Cloud et Service Cloud pour le compte de premier plan DirectvGO / AT&T.', 'Gestion de la planification des tests, de l\'estimation des ressources et des communications avec les clients, en veillant à l\'alignement sur les calendriers et les livrables du projet.', 'Conception et direction du développement d\'un nouveau cadre d\'automatisation de l\'assurance qualité utilisant Kotlin, C# .Net et Robot Framework.', 'Utilisation des services AWS (S3, EC2, Redshift, Athena) pour la gestion des données et des environnements de test pour les projets d\'intégration Salesforce.', 'Réalisation de validations et de manipulations de données complexes à l\'aide de requêtes SQL avancées sur des bases de données Oracle et PostgreSQL.' ],
-                            it: [ 'Ho guidato tutti gli sforzi di QA per i progetti Salesforce Sales Cloud e Service Cloud per l\'importante cliente DirectvGO / AT&T.', 'Ho gestito la pianificazione dei test, la stima delle risorse e le comunicazioni con il cliente, garantendo l\'allineamento con le tempistiche e i deliverable del progetto.', 'Ho progettato e guidato lo sviluppo di un nuovo framework di automazione QA utilizzando Kotlin, C# .Net e Robot Framework.', 'Ho utilizzato i servizi AWS (S3, EC2, Redshift, Athena) per la gestione dei dati e degli ambienti di test per i progetti di integrazione di Salesforce.', 'Ho eseguito complesse convalide e manipolazioni di dati utilizzando query SQL avanzate su database Oracle e PostgreSQL.' ]
+                            it: [ 'Ho guidato tutti gli sforzi di QA per i progetti Salesforce Sales Cloud e Service Cloud per l\'importante cliente DirectvGO / AT&T.', 'Ho gestito la pianificazione dei test, la stima delle risorse e le comunicazioni con il cliente, garantendo l\'allineamento con le tempistiche e i deliverable del progetto.', 'Ho progettato e guidato lo sviluppo di un nuovo framework de automazione QA utilizzando Kotlin, C# .Net e Robot Framework.', 'Ho utilizzato i servizi AWS (S3, EC2, Redshift, Athena) per la gestione dei dati e degli ambienti di test per i progetti di integrazione di Salesforce.', 'Ho eseguito complesse convalide e manipolazioni di dati utilizzando query SQL avanzate su database Oracle e PostgreSQL.' ]
                         },
                         techUsed: ['Salesforce', 'AWS', 'SQL', 'Kotlin', 'C#', '.NET', 'Robot Framework', 'Oracle', 'PostgreSQL', 'Jira', 'Agile', 'Kanban', 'Scrum', 'Cypress', 'Tosca', 'Katalon', 'Datadog', 'MongoDB']
                     },
@@ -640,7 +668,7 @@
                             es: [ 'Brindé asistencia de calidad mentorizando a los equipos de desarrollo en la entrega de productos de software de alta calidad para plataformas de datos deportivos en tiempo real.', 'Trabajé con los Product Owners para definir y refinar historias de usuario y criterios de aceptación en un entorno Agile de ritmo rápido.', 'Desarrollé y ejecuté scripts, planes y casos de prueba completos tanto para las API de backend como para las aplicaciones de frontend.', 'Investigué y resolví defectos complejos, analizando el riesgo y el impacto en los flujos de datos en vivo usando Graylog y Grafana.', 'Contribuí a la mejora de los procesos de calidad, centrándome en la detección temprana y prevención de defectos.' ],
                             pt: [ 'Forneci assistência de qualidade, orientando equipes de desenvolvimento na entrega de produtos de software de alta qualidade para plataformas de dados esportivos em tempo real.', 'Trabalhei com os Product Owners para definir e refinar histórias de usuário e critérios de aceitação em um ambiente Agile de ritmo acelerado.', 'Desenvolvi e executei scripts, planos e casos de teste abrangentes para APIs de backend e aplicações de frontend.', 'Investiguei e resolvi defeitos complexos, analizando o risco e o impacto nos fluxos de dados ao vivo usando Graylog e Grafana.', 'Contribuí para a melhoria dos processos de qualidade, com foco na detecção precoce e prevenção de defeitos.' ],
                             de: [ 'Qualitätssicherung durch Mentoring von Entwicklungsteams bei der Bereitstellung hochwertiger Softwareprodukte für Echtzeit-Sportdatenplattformen.', 'Zusammenarbeit mit Product Ownern zur Definition und Verfeinerung von User Stories und Akzeptanzkriterien in einer schnelllebigen agilen Umgebung.', 'Entwicklung und Ausführung umfassender Testskripte, -pläne und -fälle für Backend-APIs und Frontend-Anwendungen.', 'Untersuchung und Behebung komplexer Fehler, Analyse von Risiken und Auswirkungen auf Live-Datenströme mit Graylog und Grafana.', 'Beitrag zur Verbesserung der Qualitätsprozesse mit Schwerpunkt auf frühzeitiger Fehlererkennung und -vermeidung.' ],
-                            fr: [ 'Assistance qualité en encadrant les équipes de développement pour la livraison de produits logiciels de haute qualité pour les plateformes de données sportives en temps réel.', 'Collaboration avec les Product Owners pour définir et affiner les user stories et les critères d\'acceptation dans un environnement Agile rapide.', 'Développement et exécution de scripts, plans et cas de test complets pour les API backend et les applications frontend.', 'Enquête et résolution de défauts complexes, analyse des risques et de l\'impact sur les flux de données en direct à l\'aide de Graylog et Grafana.', 'Contribution à l\'amélioration des processus de qualité, en se concentrant sur la détection et la prévention précoces des défauts.' ],
+                            fr: [ 'Assistance qualité en encadrant les équipes de développement pour la livraison de produtos logiciels de haute qualité pour les plateformes de données sportives en temps réel.', 'Collaboration avec les Product Owners pour définir et affiner les user stories et les critères d\'acceptation dans un environnement Agile rapide.', 'Développement et exécution de scripts, plans et cas de test complets pour les API backend et les applications frontend.', 'Enquête et résolution de défauts complexes, analyse des risques et de l\'impact sur les flux de données en direct à l\'aide de Graylog et Grafana.', 'Contribution à l\'amélioration des processus de qualité, en se concentrant sur la détection et la prévention précoces des défauts.' ],
                             it: [ 'Ho fornito assistenza alla qualità facendo da mentore ai team di sviluppo nella fornitura di prodotti software di alta qualità per piattaforme di dati sportivi in tempo real.', 'Ho lavorato con i Product Owner per definire e perfezionare le user story e i criteri di accettazione in un ambiente Agile dal ritmo serrato.', 'Ho sviluppato ed eseguito script, piani e casi di test completi sia per le API di backend che per le applicazioni frontend.', 'Ho indagato e risolto difetti complessi, analizzando il rischio e l\'impatto sui flussi di dati in tempo reale utilizzando Graylog e Grafana.', 'Ho contribuito al miglioramento dei processi di qualità, concentrandomi sulla rilevazione e prevenzione precoce dei difetti.' ]
                         },
                         techUsed: ['Agile', 'Jira', 'SQL', 'Postman', 'Grafana', 'Kanban', 'Scrum', 'Python', 'Cucumber', 'JMeter', 'Rest Assured', 'GitHub']
@@ -677,7 +705,7 @@
                             pt: [ 'Gerenciei um portfólio de complexas iniciativas de software empresarial, abrangendo várias linhas de negócios.', 'Forneci liderança no local para equipes de projeto, construindo e motivando os membros da equipe para atingir as metas e os marcos do projeto.', 'Fui responsável pelo ciclo de vida completo do projeto, desde o início e planejamento até a implantação bem-sucedida e o suporte pós-lançamento.', 'Gerenciei todos os aspectos de múltiplos projetos relacionados para garantir que o programa geral apoiasse diretamente los objetivos estratégicos.', 'Reportei o status do projeto, riscos e progresso para a liderança executiva e stakeholders.' ],
                             de: [ 'Verwaltung eines Portfolios komplexer Unternehmenssoftware-Initiativen über mehrere Geschäftsbereiche hinweg.', 'Bereitstellung von Vor-Ort-Führung für Projektteams, Aufbau und Motivation von Teammitgliedern zur Erreichung von Projektzielen und Meilensteinen.', 'Verantwortung für den gesamten Projektlebenszyklus, von der Initiierung und Planung bis zur erfolgreichen Bereitstellung und dem Support nach dem Start.', 'Verwaltung aller Aspekte mehrerer zusammenhängender Projekte, um sicherzustellen, dass das Gesamtprogramm die strategischen Ziele direkt unterstützt.', 'Berichterstattung über Projektstatus, Risiken und Fortschritte an die Geschäftsleitung und die Stakeholder.' ],
                             fr: [ 'Gestion d\'un portefeuille d\'initiatives logicielles d\'entreprise complexes, couvrant plusieurs secteurs d\'activité.', 'Fourniture d\'un leadership sur site pour les équipes de projet, en constituant et en motivant les membres de l\'équipe pour atteindre les objectifs et les jalons du projet.', 'Prise en charge de l\'ensemble du cycle de vie du projet, de l\'initiation et de la planification au déploiement réussi et au soutien post-lancement.', 'Gestion de tous les aspects de plusieurs projets connexes pour garantir que le programme global soutient directement les objetivos stratégiques.', 'Rapport sur l\'état d\'avancement, les risques et les progrès du projet à la direction et aux parties prenantes.' ],
-                            it: [ 'Ho gestito un portafoglio di complesse iniziative software aziendali, che abbracciavano più linee di business.', 'Ho fornito leadership in loco per i team di progetto, costruindo e motivando i membri del team a raggiungere gli obiettivi e le tappe fondamentali del progetto.', 'Mi sono occupato dell\'intero ciclo de vita del progetto, dall\'avvio e pianificazione all\'implementazione di successo e al supporto post-lancio.', 'Ho gestito tutti gli aspetti di più progetti correlati per garantire che il programma complessivo sostenesse direttamente gli obiettivi strategici.', 'Ho riferito sullo stato del progetto, sui rischi e sui progressi alla leadership esecutiva e agli stakeholder.' ]
+                            it: [ 'Ho gestito un portafoglio di complesse iniziative software aziendali, che abbracciavano più linee di business.', 'Ho fornito leadership in loco per i team di progetto, costruindo e motivando i membri del team a raggiungere gli obiettivi e le tappe fondamentali del progetto.', 'Mi sono occupato dell\'intero ciclo de vida del progetto, dall\'avvio e pianificazione all\'implementazione di successo e al supporto post-lancio.', 'Ho gestito tutti gli aspetti di più progetti correlati per garantire che il programma complessivo sostenesse direttamente gli obiettivi strategici.', 'Ho riferito sullo stato del progetto, sui rischi e sui progressi alla leadership esecutiva e agli stakeholder.' ]
                         },
                         techUsed: ['Agile', 'Risk Management', 'Jira', 'Kanban', 'Scrum', 'MS Project']
                     },
@@ -713,7 +741,7 @@
                             pt: [ 'Foquei no desenvolvimento de projetos de clientes, oferecendo produtos padrão e serviços de integração em toda a América Latina.', 'Desenvolvi o canal de negócios diretos, aumentando as contas existentes e prospectando novos clientes.', 'Visitei clientes com kits de demonstração e materiais bem preparados para apresentar soluções técnicas.', 'Trabalhei em estreita colaboração com as equipes de marketing e técnica para alinhar as estratégias de vendas com as capacidades do produto.', 'Mantive e atualizei o banco de dados do CRM, gerenciei os pipelines de vendas e fechei pedidos.' ],
                             de: [ 'Fokus auf die Entwicklung von Kundenprojekten, Angebot von Standardprodukten und Integrationsdiensten in ganz Lateinamerika.', 'Entwicklung des direkten Geschäftskanals durch Ausbau bestehender Konten und Akquise neuer Kunden.', 'Besuch von Kunden mit gut vorbereiteten Demo-Kits und Materialien zur Präsentation technischer Lösungen.', 'Enge Zusammenarbeit mit Marketing- und Technik-Teams zur Abstimmung der Vertriebsstrategien auf die Produktfähigkeiten.', 'Pflege und Aktualisierung der CRM-Datenbank, Verwaltung der Vertriebspipelines und Abschluss von Aufträgen.' ],
                             fr: [ 'Concentration sur le développement de projets clients, en proposant des produits standard et des services d\'intégration dans toute l\'Amérique latine.', 'Développement du canal de vente directe en développant les comptes existants et en prospectant de nouveaux clients.', 'Visites chez les clients avec des kits de démonstration et du matériel bien préparés pour présenter les solutions techniques.', 'Collaboration étroite avec les équipes marketing et techniques pour aligner les stratégies de vente sur les capacités des produits.', 'Tenue à jour de la base de données CRM, gestion des pipelines de vente et conclusion des commandes.' ],
-                            it: [ 'Mi sono concentrato sullo sviluppo di progetti per i clienti, offrendo prodotti standard e servizi di integrazione in tutta l\'America Latina.', 'Ho sviluppato il canale commerciale diretto facendo crescere i conti esistenti e cercando nuovi clienti.', 'Ho visitato i clienti con kit dimostrativi e materiali ben preparati per presentare le soluzioni tecniche.', 'Ho lavorato a stretto contatto con i team di marketing e tecnici per alinear le strategie di vendita con le capacità del prodotto.', 'Ho mantenuto e aggiornato il database CRM, gestito le pipeline di vendita e chiuso gli ordini.' ]
+                            it: [ 'Mi sono concentrato sullo sviluppo di progetti per i clienti, offrendo produtos standard e servizi di integrazione in tutta l\'America Latina.', 'Ho sviluppato il canale commerciale diretto facendo crescere i conti esistenti e cercando nuovi clienti.', 'Ho visitato i clienti con kit dimostrativi e materiali ben preparati per presentare le soluzioni tecniche.', 'Ho lavorato a stretto contatto con i team di marketing e tecnici per alinear le strategie di vendita con le capacità del prodotto.', 'Ho mantenuto e aggiornato il database CRM, gestito le pipeline di vendita e chiuso gli ordini.' ]
                         },
                         techUsed: ['Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
@@ -769,10 +797,10 @@
                 radarTooltips: {
                     en: { 'Project Mgmt': 'Expertise in leading projects from initiation to completion, ensuring they meet scope, budget, and timeline requirements.', 'QA & Automation': 'Deep knowledge in designing and implementing automated testing frameworks to ensure software quality and reliability.', 'Leadership': 'Proven ability to mentor, manage, and motivate cross-functional teams to achieve high performance and project success.', 'DevOps Strategy': 'Skilled in integrating development and operations to improve workflow, increase efficiency, and accelerate release cycles.', 'Cloud Platforms': 'Proficient in leveraging major cloud providers (AWS, Azure, GCP) for scalable, resilient, and cost-effective infrastructure.', 'Stakeholder Mgmt': 'Adept at managing communications and relationships with all stakeholders to ensure project alignment and buy-in.', 'Agile': 'Extensive experience with Agile principles and practices to deliver value iteratively and adapt to changing requirements.', 'Scrum': 'Certified expertise in managing projects using the Scrum framework for transparent, iterative, and collaborative development.', 'Kanban': 'Utilizing Kanban for workflow visualization, managing flow, and continuous improvement to optimize delivery.', 'CMMI': 'Knowledge of the Capability Maturity Model Integration framework to improve and standardize organizational processes.', 'ISO Standards': 'Experience in implementing and adhering to ISO standards for quality management and information security.', 'Risk Mgmt': 'Systematic approach to identifying, analyzing, and mitigating project risks to ensure successful outcomes.' },
                     es: { 'Project Mgmt': 'Experiencia en liderar proyectos desde el inicio hasta la finalización, asegurando que cumplan con el alcance, el presupuesto y los plazos.', 'QA & Automation': 'Profundo conocimiento en el diseño e implementación de marcos de pruebas automatizadas para garantizar la calidad y fiabilidad del software.', 'Leadership': 'Capacidad demostrada para orientar, gestionar y motivar equipos multifuncionales para lograr un alto rendimiento y el éxito del proyecto.', 'DevOps Strategy': 'Habilidad en la integración de desarrollo y operaciones para mejorar el flujo de trabajo, aumentar la eficiencia y acelerar los ciclos de lanzamiento.', 'Cloud Platforms': 'Competente en el uso de los principales proveedores de nube (AWS, Azure, GCP) para una infraestructura escalable, resiliente y rentable.', 'Stakeholder Mgmt': 'Experto en la gestión de comunicaciones y relaciones con todas las partes interesadas para garantizar la alineación y el apoyo al proyecto.', 'Agile': 'Amplia experiencia con los principios y prácticas de Agile para entregar valor de forma iterativa y adaptarse a los requisitos cambiantes.', 'Scrum': 'Experiencia certificada en la gestión de proyectos utilizando el marco Scrum para un desarrollo transparente, iterativo y colaborativo.', 'Kanban': 'Uso de Kanban para la visualización del flujo de trabajo, la gestión del flujo y la mejora continua para optimizar la entrega.', 'CMMI': 'Conocimiento del marco de Integración del Modelo de Madurez de Capacidad para mejorar y estandarizar los procesos organizacionales.', 'ISO Standards': 'Experiencia en la implementación y cumplimiento de las normas ISO para la gestión de la calidad y la seguridad de la información.', 'Risk Mgmt': 'Enfoque sistemático para identificar, analizar y mitigar los riesgos del proyecto para garantizar resultados exitosos.' },
-                    pt: { 'Project Mgmt': 'Experiência em liderar projetos desde o início até a conclusão, garantindo que atendam ao escopo, orçamento e cronograma.', 'QA & Automation': 'Profundo conhecimento em projetar e implementar estruturas de teste automatizadas para garantir a qualidade e confiabilidade do software.', 'Leadership': 'Capacidade comprovada de orientar, gerenciar e motivar equipes multifuncionais para alcançar alto desempenho e sucesso nos projetos.', 'DevOps Strategy': 'Habilidade em integrar desenvolvimento e operações para melhorar o fluxo de trabalho, aumentar a eficiência e acelerar os ciclos de lançamento.', 'Cloud Platforms': 'Proficiente em aproveitar os principais provedores de nuvem (AWS, Azure, GCP) para infraestrutura escalável, resiliente и econômica.', 'Stakeholder Mgmt': 'Apto a gerenciar comunicações e relacionamentos com todas as partes interessadas para garantir o alinhamento e a adesão ao projeto.', 'Agile': 'Vasta experiência com os princípios e práticas Agile para entregar valor de forma iterativa e se adaptar a requisitos em constante mudança.', 'Scrum': 'Experiência certificada em gerenciar projetos usando o framework Scrum para um desenvolvimento transparente, iterativo e colaborativo.', 'Kanban': 'Utilização do Kanban para visualização do fluxo de trabalho, gerenciamento do fluxo e melhoria contínua para otimizar a entrega.', 'CMMI': 'Conhecimento do framework de Integração do Modelo de Maturidade da Capacidade para melhorar e padronizar os processos organizacionais.', 'ISO Standards': 'Experiência na implementação e adesão às normas ISO para gestão da qualidade e segurança da informação.', 'Risk Mgmt': 'Abordagem sistemática para identificar, analisar e mitigar os riscos do projeto para garantir resultados bem-sucedidos.' },
+                    pt: { 'Project Mgmt': 'Experiência em liderar projetos desde o início até a conclusão, garantindo que atendam ao escopo, orçamento e cronograma.', 'QA & Automation': 'Profundo conhecimento em projetar e implementar estruturas de teste automatizadas para garantir a qualidade e confiabilidade do software.', 'Leadership': 'Capacidade comprovada de orientar, gerenciar e motivar equipes multifuncionais para alcançar alto desempenho e sucesso nos projetos.', 'DevOps Strategy': 'Habilidade em integrar desenvolvimento e operações para mejorar o fluxo de trabalho, aumentar a eficiência e acelerar os ciclos de lançamento.', 'Cloud Platforms': 'Proficiente em aproveitar os principais provedores de nuvem (AWS, Azure, GCP) para infraestrutura escalável, resiliente и econômica.', 'Stakeholder Mgmt': 'Apto a gerenciar comunicações e relacionamentos com todas as partes interessadas para garantir o alinhamento e a adesão ao projeto.', 'Agile': 'Vasta experiência com os princípios e práticas Agile para entregar valor de forma iterativa e se adaptar a requisitos em constante mudança.', 'Scrum': 'Experiência certificada em gerenciar projetos usando o framework Scrum para um desenvolvimento transparente, iterativo e colaborativo.', 'Kanban': 'Utilização do Kanban para visualização do fluxo de trabalho, gerenciamento do fluxo e melhoria contínua para otimizar a entrega.', 'CMMI': 'Conhecimento do framework de Integração do Modelo de Maturidade da Capacidade para melhorar e padronizar os processos organizacionais.', 'ISO Standards': 'Experiência na implementação e adesão às normas ISO para gestão da qualidade e segurança da informação.', 'Risk Mgmt': 'Abordagem sistemática para identificar, analisar e mitigar os riscos do projeto para garantir resultados bem-sucedidos.' },
                     de: { 'Project Mgmt': 'Expertise in der Leitung von Projekten von der Initiierung bis zum Abschluss, um sicherzustellen, dass sie den Umfang, das Budget und den Zeitplan einhalten.', 'QA & Automation': 'Tiefes Wissen im Entwerfen und Implementieren von automatisierten Test-Frameworks, um Softwarequalität und -zuverlässigkeit zu gewährleisten.', 'Leadership': 'Nachgewiesene Fähigkeit, funktionsübergreifende Teams zu betreuen, zu leiten und zu motivieren, um hohe Leistungen und Projekterfolg zu erzielen.', 'DevOps Strategy': 'Geschickt in der Integration von Entwicklung und Betrieb, um den Arbeitsablauf zu verbessern, die Effizienz zu steigern und die Release-Zyklen zu beschleunigen.', 'Cloud Platforms': 'Kompetent in der Nutzung der großen Cloud-Anbieter (AWS, Azure, GCP) für eine skalierbare, widerstandsfähige und kostengünstige Infrastruktur.', 'Stakeholder Mgmt': 'Gewandt im Management von Kommunikation und Beziehungen mit allen Stakeholdern, um die Projektausrichtung und -akzeptanz sicherzustellen.', 'Agile': 'Umfangreiche Erfahrung mit agilen Prinzipien und Praktiken, um iterativ Wert zu liefern und sich an ändernde Anforderungen anzupassen.', 'Scrum': 'Zertifizierte Expertise in der Projektleitung mit dem Scrum-Framework für eine transparente, iterative und kollaborative Entwicklung.', 'Kanban': 'Nutzung von Kanban zur Visualisierung des Workflows, zur Steuerung des Flusses und zur kontinuierlichen Verbesserung, um die Lieferung zu optimieren.', 'CMMI': 'Kenntnisse des Capability Maturity Model Integration-Frameworks zur Verbesserung und Standardisierung von Organisationsprozessen.', 'ISO Standards': 'Erfahrung in der Implementierung und Einhaltung von ISO-Normen für Qualitätsmanagement und Informationssicherheit.', 'Risk Mgmt': 'Systematischer Ansatz zur Identifizierung, Analyse und Minderung von Projektrisiken, um erfolgreiche Ergebnisse zu gewährleisten.' },
                     fr: { 'Project Mgmt': 'Expertise dans la direction de projets de l\'initiation à l\'achèvement, en veillant à ce qu\'ils respectent le périmètre, le budget et le calendrier.', 'QA & Automation': 'Connaissance approfondie de la conception et de la mise en œuvre de cadres de test automatisés pour garantir la qualité et la fiabilité des logiciels.', 'Leadership': 'Capacité avérée à encadrer, gérer et motiver des équipes interfonctionnelles pour atteindre de hautes performances et la réussite des projets.', 'DevOps Strategy': 'Compétent dans l\'intégration du développement et des opérations pour améliorer le flux de travail, augmenter l\'efficacité et accélérer les cycles de publication.', 'Cloud Platforms': 'Maîtrise de l\'utilisation des principaux fournisseurs de cloud (AWS, Azure, GCP) pour une infrastructure évolutive, résiliente et rentable.', 'Stakeholder Mgmt': 'Adepte de la gestion des communications et des relations avec toutes les parties prenantes pour garantir l\'alignement et l\'adhésion au projet.', 'Agile': 'Vaste expérience des principes et pratiques Agile pour fournir de la valeur de manière itérative et s\'adapter aux exigences changeantes.', 'Scrum': 'Expertise certifiée dans la gestion de projets à l\'aide du cadre Scrum pour un développement transparent, itératif et collaboratif.', 'Kanban': 'Utilisation de Kanban pour la visualisation du flux de travail, la gestion du flux et l\'amélioration continue afin d\'optimiser la livraison.', 'CMMI': 'Connaissance du cadre d\'intégration du modèle de maturité des capacités pour améliorer et normaliser les processus organisationnels.', 'ISO Standards': 'Expérience dans la mise en œuvre et le respect des normes ISO pour la gestion de la qualité et la sécurité de l\'information.', 'Risk Mgmt': 'Approche systématique pour identifier, analyser et atténuer les risques du projet afin de garantir des résultats positifs.' },
-                    it: { 'Project Mgmt': 'Competenza nella guida di progetti dall\'inizio al completamento, assicurando il rispetto di ambito, budget e tempistiche.', 'QA & Automation': 'Profonda conoscenza nella progettazione e implementazione di framework di test automatizzati per garantire la qualità e l\'affidabilità del software.', 'Leadership': 'Comprovata capacità di fare da mentore, gestire e motivare team interfunzionali per raggiungere alte prestazioni e il successo del progetto.', 'DevOps Strategy': 'Abile nell\'integrare sviluppo e operazioni per migliorare il flusso di lavoro, aumentare l\'efficienza e accelerare i cicli di rilascio.', 'Cloud Platforms': 'Competente nell\'utilizzo dei principali provider di cloud (AWS, Azure, GCP) per un\'infrastruttura scalabile, resiliente ed economica.', 'Stakeholder Mgmt': 'Abile nella gestione delle comunicazioni e delle relazioni con tutti gli stakeholder per garantire l\'allineamento e il consenso al progetto.', 'Agile': 'Vasta esperienza con i principi e le pratiche Agile per fornire valore in modo iterativo e adattarsi ai requisiti mutevoli.', 'Scrum': 'Competenza certificata nella gestione di progetti utilizzando il framework Scrum per uno sviluppo trasparente, iterativo e collaborativo.', 'Kanban': 'Utilizzo di Kanban per la visualizzazione del flusso di lavoro, la gestione del flusso e il miglioramento continuo per ottimizzare la consegna.', 'CMMI': 'Conoscenza del framework Capability Maturity Model Integration per migliorare e standardizzare i processi organizzativi.', 'ISO Standards': 'Esperienza nell\'implementazione e nel rispetto degli standard ISO per la gestione della qualità e della sicurezza delle informazioni.', 'Risk Mgmt': 'Approccio sistematico per identificare, analizzare e mitigare i rischi di progetto per garantire risultati di successo.' }
+                    it: { 'Project Mgmt': 'Competenza nella guida di progetti dall\'inizio al completamento, assicurando il rispetto di ambito, budget e tempistiche.', 'QA & Automation': 'Profonda conoscenza nella progettazione e implementazione di framework di test automatizzati per garantire la qualità e l\'affidabilità del software.', 'Leadership': 'Comprovata capacità di fare da mentore, gestire e motivare team interfunzionali per raggiungere alte prestazioni e il successo del progetto.', 'DevOps Strategy': 'Abile nell\'integrare sviluppo e operazioni per migliorare il flusso di lavoro, aumentare l\'efficienza e accelerare i cicli di rilascio.', 'Cloud Platforms': 'Competente nell\'utilizzo dei principali provider di cloud (AWS, Azure, GCP) per un\'infrastruttura scalabile, resiliente ed economica.', 'Stakeholder Mgmt': 'Abile nella gestione delle comunicazioni e delle relazioni con tutti gli stakeholder per garantire l\'allineamento e il consenso al progetto.', 'Agile': 'Vasta esperienza con i principi e le pratiche Agile per fornire valore in modo iterativo e adattarsi ai requisiti mutevoli.', 'Scrum': 'Competenza certificata nella gestione di progetti utilizzando il framework Scrum per uno sviluppo trasparente, iterativo e collaborativo.', 'Kanban': 'Utilizzo di Kanban per la visualizzazione del flusso di lavoro, la gestione del flusso e il miglioramento continuo per ottimizzare la consegna.', 'CMMI': 'Conoscenza del framework Capability Maturity Model Integration per migliorare e standardizzare i processi organizzativi.', 'ISO Standards': 'Esperienza nell\'implementazione e nel rispetto degli standard ISO per la gestione della qualità e la sicurezza delle informazioni.', 'Risk Mgmt': 'Approccio sistematico per identificare, analizzare e mitigare i rischi di progetto per garantire risultati di successo.' }
                 },
                 translations: {
                     en: {
@@ -857,9 +885,7 @@
             },
 
             /**
-             * Initializes the application. This is the main entry point.
-             * It orchestrates the setup of the entire page, including DOM caching,
-             * applying settings, rendering content, and setting up event listeners.
+             * Initializes the application.
              */
             init() {
                 this._cacheDOMElements();
@@ -875,7 +901,7 @@
             },
 
             /**
-             * Caches frequently accessed DOM elements into a local object for performance.
+             * Caches frequently accessed DOM elements.
              * @private
              */
             _cacheDOMElements() {
@@ -904,7 +930,7 @@
             },
 
             /**
-             * Creates a dynamic canvas-based watermark and applies it as a background.
+             * Creates a dynamic canvas-based watermark.
              * @private
              */
             _createWatermark() {
@@ -914,7 +940,7 @@
                 canvas.width = 300;
                 canvas.height = 150;
                 ctx.translate(150, 75);
-                ctx.rotate(-0.4); // ~23 degrees
+                ctx.rotate(-0.4);
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                 ctx.font = '16px Inter';
                 ctx.textAlign = 'center';
@@ -923,7 +949,7 @@
             },
 
             /**
-             * Orchestrator method to call all rendering functions.
+             * Calls all rendering functions.
              * @private
              */
             _renderAll() {
@@ -933,13 +959,13 @@
             },
 
             /**
-             * Renders the entire 'Toolkit' section with its categories and skills.
+             * Renders the 'Toolkit' section.
              * @private
              */
             _renderToolkit() {
                 const toolkitOrder = ['pm', 'qa', 'lang', 'cloud', 'db', 'analytics', 'platform', 'system'];
                 const container = this.DOMElements.toolkitContainer;
-                container.innerHTML = ''; // Clear previous content
+                container.innerHTML = '';
                 toolkitOrder.forEach(key => {
                     if (!this.data.skills[key]) return;
                     const section = document.createElement('div');
@@ -970,7 +996,7 @@
             },
 
             /**
-             * Renders all infographic elements (charts and timeline).
+             * Renders all infographic elements.
              * @private
              */
             _renderInfographics() {
@@ -979,8 +1005,8 @@
             },
 
             /**
-             * Creates and returns the HTML string for a single skill tag.
-             * @param {object} skill - The skill object from the data store.
+             * Creates the HTML for a single skill tag.
+             * @param {object} skill - The skill object.
              * @returns {string} The HTML string for the skill tag.
              * @private
              */
@@ -1000,8 +1026,8 @@
             },
 
             /**
-             * Creates and returns the HTML string for a single professional experience entry.
-             * @param {object} exp - The experience object from the data store.
+             * Creates the HTML for a single professional experience entry.
+             * @param {object} exp - The experience object.
              * @param {number} index - The index of the experience.
              * @returns {string} The HTML string for the experience entry.
              * @private
@@ -1040,7 +1066,7 @@
             },
 
             /**
-             * Generates and renders the SVG radar charts for competencies and methodologies.
+             * Generates the SVG radar charts.
              * @private
              */
             _createRadarCharts() {
@@ -1051,11 +1077,11 @@
             },
 
             /**
-             * A helper function to generate the SVG markup for a single radar chart.
-             * @param {HTMLElement} container - The DOM element to insert the chart into.
+             * Helper to generate SVG for a single radar chart.
+             * @param {HTMLElement} container - The DOM element for the chart.
              * @param {Array<object>} data - The dataset for the chart.
-             * @param {string} fillColor - The fill color for the data polygon.
-             * @param {string} strokeColor - The stroke color for the data polygon.
+             * @param {string} fillColor - Fill color for the data polygon.
+             * @param {string} strokeColor - Stroke color for the data polygon.
              * @private
              */
             _generateSingleDatasetRadar(container, data, fillColor, strokeColor) {
@@ -1066,7 +1092,6 @@
                 const gridColor = isDarkMode ? '#4b5563' : '#e5e7eb', labelColor = isDarkMode ? '#d1d5db' : '#4b5563';
                 let grid = '', labelElements = '', polygon = '', points = '';
 
-                // Draw grid lines and spokes
                 for (let i = 1; i <= 4; i++) {
                     const gridRadius = radius * (i/4);
                     let gridPoints = '';
@@ -1075,7 +1100,6 @@
                 }
                 labels.forEach((_, i) => grid += `<line x1="${center}" y1="${center}" x2="${center + radius * Math.cos(angleSlice * i - Math.PI / 2)}" y2="${center + radius * Math.sin(angleSlice * i - Math.PI / 2)}" stroke="${gridColor}" />`);
 
-                // Draw labels
                 labels.forEach((label, i) => {
                     const angle = angleSlice * i - Math.PI / 2, labelX = center + (radius + 35) * Math.cos(angle), labelY = center + (radius + 35) * Math.sin(angle);
                     const words = label.split(' '), tspans = (words.length > 1) ? `<tspan x="${labelX}" dy="-0.5em">${words[0]}</tspan><tspan x="${labelX}" dy="1.1em">${words[1]}</tspan>` : `<tspan>${label}</tspan>`;
@@ -1083,7 +1107,6 @@
                     labelElements += `<g class="radar-label"><title>${tooltipText}</title><text x="${labelX}" y="${labelY}" font-size="10" text-anchor="middle" alignment-baseline="middle" fill="${labelColor}">${tspans}</text></g>`;
                 });
 
-                // Draw data polygon
                 data.forEach((item, i) => points += `${center + radius * item.score * Math.cos(angleSlice * i - Math.PI / 2)},${center + radius * item.score * Math.sin(angleSlice * i - Math.PI / 2)} `);
                 polygon = `<polygon points="${points}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" />`;
 
@@ -1120,7 +1143,7 @@
             },
 
             /**
-             * Filters the experience and timeline sections based on selected skills.
+             * Filters experiences based on selected skills.
              * @private
              */
             _filterExperiencesAndTimeline() {
@@ -1131,7 +1154,6 @@
 
                 let visibleCount = 0;
                 const matchingItems = [];
-                // Filter experience items
                 document.querySelectorAll('#experience-container .experience-item').forEach(item => {
                     const tech = JSON.parse(item.dataset.tech);
                     const isVisible = !hasFilters || [...skills].every(s => tech.includes(s));
@@ -1142,7 +1164,6 @@
                     }
                 });
 
-                // Filter timeline items
                 document.querySelectorAll('#timeline-container .timeline-item').forEach((item, index) => {
                     const tech = JSON.parse(item.dataset.tech);
                     const isVisible = !hasFilters || [...skills].every(s => tech.includes(s));
@@ -1150,7 +1171,6 @@
                     if (hasFilters && isVisible) matchingItems.push(item);
                 });
 
-                // Update screen reader status and apply pulse animation
                 this.DOMElements.filterStatus.textContent = hasFilters ? `Showing ${visibleCount} of ${this.data.experiences.length} experiences.` : '';
                 if (hasFilters) {
                     requestAnimationFrame(() => matchingItems.forEach(el => el.classList.add('pulse-highlight')));
@@ -1159,7 +1179,7 @@
             },
 
             /**
-             * Populates the main translation object with data from the experience entries.
+             * Populates the translation object with experience data.
              * @private
              */
             _populateAllTranslations() {
@@ -1176,8 +1196,8 @@
             },
 
             /**
-             * Translates all elements on the page with a 'data-translate-key' attribute.
-             * @param {string} lang - The language code to translate to.
+             * Translates all elements with a 'data-translate-key'.
+             * @param {string} lang - The language code.
              */
             translatePage(lang) {
                 const translation = this.data.translations[lang];
@@ -1188,7 +1208,6 @@
                     const key = el.getAttribute('data-translate-key');
                     if (translation[key]) {
                         let text = translation[key];
-                        // Handle dynamic placeholders for timeline tooltips
                         if (key === 'tooltip_timeline') {
                             const tooltipDiv = el.closest('.tooltip');
                             if (tooltipDiv && tooltipDiv.dataset.companyName) {
@@ -1198,15 +1217,14 @@
                         el.innerHTML = text;
                     }
                 });
-                this._createRadarCharts(); // Re-render charts for tooltip translation
+                this._createRadarCharts();
             },
 
             /**
-             * Sets up a single, delegated event listener on the body to handle all user interactions.
+             * Sets up a delegated event listener on the body.
              * @private
              */
             _setupEventListeners() {
-                // Main click handler using event delegation
                 document.body.addEventListener('click', (e) => {
                     const target = e.target;
                     const skillTag = target.closest('.tech-tag');
@@ -1221,10 +1239,9 @@
                     else if (button) this._handleButtonClick(button);
                     else if (langSelector) this._handleLanguageSelector(e);
                     else if (target.id === 'profile-photo') this._openModal();
-                    else if (target.id === 'image-modal') this._closeModal();
+                    else if (target.id === 'image-modal' || target.classList.contains('modal-close')) this._closeModal();
                 });
 
-                // Keydown handlers for accessibility
                 this.DOMElements.toolkitContainer.addEventListener('keydown', (e) => {
                     if (e.target.closest('.tech-tag') && (e.key === 'Enter' || e.key === ' ')) {
                         e.preventDefault();
@@ -1236,8 +1253,8 @@
             },
 
             /**
-             * Handles all button clicks dispatched from the main event listener.
-             * @param {HTMLElement} button - The clicked button element.
+             * Handles all button clicks.
+             * @param {HTMLElement} button - The clicked button.
              * @private
              */
             _handleButtonClick(button) {
@@ -1248,13 +1265,15 @@
                     case 'read-more-btn': this._toggleReadMore(button); break;
                     case 'print-btn': this._trackEvent('print_cv', 'Interaction', 'Print Button'); window.print(); break;
                     case 'theme-toggle': this._toggleTheme(); break;
-                    case 'modal-close': this._closeModal(); break;
+                }
+                if(button.classList.contains('modal-close')) {
+                    this._closeModal();
                 }
             },
 
             /**
-             * Toggles a skill filter on or off.
-             * @param {HTMLElement} tag - The skill tag element that was clicked.
+             * Toggles a skill filter.
+             * @param {HTMLElement} tag - The skill tag clicked.
              * @private
              */
             _toggleSkillFilter(tag) {
@@ -1268,7 +1287,7 @@
             },
 
             /**
-             * Resets all active skill filters.
+             * Resets all skill filters.
              * @private
              */
             _resetFilters() {
@@ -1282,7 +1301,7 @@
             },
 
             /**
-             * Handles the expansion and collapse of accordion items.
+             * Handles accordion expansion/collapse.
              * @param {HTMLElement} button - The accordion header button.
              * @private
              */
@@ -1299,39 +1318,36 @@
                     experienceItem.classList.toggle('is-open', !isExpanded);
                     button.querySelector('.accordion-icon').style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
                 } else if (toolkitItem) {
-                    button.parentElement.nextElementSibling.style.display = isExpanded ? 'block' : 'none'; // Toggle preview text
-                    button.nextElementSibling.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'; // Toggle chevron
+                    button.parentElement.nextElementSibling.style.display = isExpanded ? 'block' : 'none';
+                    button.nextElementSibling.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
                 }
             },
 
             /**
-             * Expands or collapses all accordion items within a given container.
-             * @param {HTMLElement} container - The container of the accordions (e.g., experience or toolkit).
+             * Expands or collapses all accordions in a container.
+             * @param {HTMLElement} container - The container of the accordions.
              * @param {HTMLElement} button - The 'Expand/Collapse All' button.
              * @private
              */
             _toggleAllAccordions(container, button) {
                 const isExpanding = button.textContent.includes('Expand');
-                const sectionName = container.id.includes('experience') ? 'Experience' : 'Toolkit';
                 container.querySelectorAll('.accordion-header, .toolkit-header').forEach(headerBtn => {
-                    const body = document.getElementById(headerBtn.getAttribute('aria-controls'));
-                    headerBtn.setAttribute('aria-expanded', isExpanding);
-                    body.style.maxHeight = isExpanding ? body.scrollHeight + 'px' : null;
-                    this._handleAccordionToggle(headerBtn); // Reuse logic to set styles
+                    const isCurrentlyExpanded = headerBtn.getAttribute('aria-expanded') === 'true';
+                    if (isExpanding && !isCurrentlyExpanded || !isExpanding && isCurrentlyExpanded) {
+                        this._handleAccordionToggle(headerBtn);
+                    }
                 });
                 button.textContent = isExpanding ? 'Collapse All' : 'Expand All';
-                this._trackEvent('toggle_all', 'UI Interaction', `${isExpanding ? 'Expand' : 'Collapse'} All ${sectionName}`);
             },
 
             /**
-             * Handles interactions with the language selector component.
-             * @param {Event} e - The click event object.
+             * Handles language selector interactions.
+             * @param {Event} e - The click event.
              * @private
              */
             _handleLanguageSelector(e) {
-                const langSelector = e.currentTarget;
+                const langSelector = this.DOMElements.languageSelector;
                 const clickedFlag = e.target.closest('.lang-flag');
-                // If a flag is clicked and the menu is open, change language
                 if (clickedFlag && !langSelector.classList.contains('collapsed')) {
                     const lang = clickedFlag.dataset.lang;
                     langSelector.querySelectorAll('.lang-flag').forEach(f => f.classList.remove('selected'));
@@ -1341,13 +1357,12 @@
                     this._trackEvent('language_change', 'UI Interaction', `Changed to ${lang.toUpperCase()}`);
                     e.stopPropagation();
                 } else {
-                    // Otherwise, just toggle the menu open/closed
                     langSelector.classList.toggle('collapsed');
                 }
             },
 
             /**
-             * Toggles the "Read More" section in the professional summary.
+             * Toggles the "Read More" section.
              * @param {HTMLElement} button - The "Read More/Less" button.
              * @private
              */
@@ -1361,18 +1376,18 @@
             },
 
             /**
-             * Toggles between light and dark themes and saves the preference.
+             * Toggles between light and dark themes.
              * @private
              */
             _toggleTheme() {
                 const isDarkMode = this.DOMElements.body.classList.toggle('dark-mode');
                 localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
                 this._trackEvent('theme_change', 'UI Interaction', isDarkMode ? 'Dark Mode' : 'Light Mode');
-                this._renderInfographics(); // Re-render charts with new theme colors
+                this._renderInfographics();
             },
 
             /**
-             * Opens the modal to view the profile photo.
+             * Opens the profile photo modal.
              * @private
              */
             _openModal() {
@@ -1391,7 +1406,7 @@
             },
 
             /**
-             * Checks for a 'lang' parameter in the URL and sets the initial language state.
+             * Checks URL for 'lang' parameter and sets initial language.
              * @private
              */
             _applyUrlLanguage() {
@@ -1404,7 +1419,7 @@
             },
 
             /**
-             * Applies the theme from localStorage or system preference on initial load.
+             * Applies theme from localStorage or system preference.
              * @private
              */
             _applyInitialTheme() {
@@ -1415,7 +1430,7 @@
             },
 
             /**
-             * Initializes the Intersection Observer for scroll animations.
+             * Initializes scroll animations.
              * @private
              */
             _initScrollAnimations() {
@@ -1432,7 +1447,7 @@
             },
 
             /**
-             * Checks for a 'skills' URL parameter and highlights matching keywords in the text.
+             * Checks URL for 'skills' parameter and highlights keywords.
              * @private
              */
             _initUrlHighlighting() {
@@ -1470,10 +1485,10 @@
             },
 
             /**
-             * Tracks an event for analytics purposes (if analytics is configured).
-             * @param {string} eventName - The name of the event.
-             * @param {string} eventCategory - The category of the event.
-             * @param {string} eventLabel - The label for the event.
+             * Tracks an event for analytics.
+             * @param {string} eventName - The event name.
+             * @param {string} eventCategory - The event category.
+             * @param {string} eventLabel - The event label.
              * @private
              */
             _trackEvent(eventName, eventCategory, eventLabel) {
@@ -1485,7 +1500,6 @@
             },
         };
 
-        // Fire it up!
         CarlosMunozCV.init();
     });
 </script>
