@@ -12,7 +12,6 @@
     <title>Visual CV - Carlos Muñoz Ardila</title>
 
     <!-- International SEO: hreflang tags -->
-    <!-- These tags tell search engines that this page is available in multiple languages. -->
     <link rel="alternate" hreflang="x-default" href="https://kaanmuar.github.io/?lang=en" />
     <link rel="alternate" hreflang="en" href="https://kaanmuar.github.io/?lang=en" />
     <link rel="alternate" hreflang="es" href="https://kaanmuar.github.io/?lang=es" />
@@ -32,27 +31,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <!-- Structured Data (JSON-LD) for Rich Snippets in search results -->
+    <!-- Structured Data (JSON-LD) for Rich Snippets -->
     <script type="application/ld+json">
         {
             "@context": "https://schema.org/",
             "@type": "Person",
-            "name": "Carlos Andres Muñoz Ardila",
+            "name": "Carlos A. Muñoz Ardila",
             "url": "https://kaanmuar.github.io/",
             "image": "https://media.licdn.com/dms/image/v2/C4E03AQHl7gPZWyffsA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1584460589714?e=1756339200&v=beta&t=V8uB86ve--3nzHpiMz1YtQXb3d-togeUg9LCLasm6Tc",
             "jobTitle": "Senior IT Project Manager, QA Architect & QA Leader",
             "description": "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams.",
-            "address": {
-                "@type": "PostalAddress",
-                "addressLocality": "Medellin",
-                "addressRegion": "Antioquia",
-                "addressCountry": "CO"
-            },
-            "sameAs": [
-                "https://www.linkedin.com/in/carlos-andres-m-2a60b8b/",
-                "https://wa.me/573209191010",
-                "https://t.me/+573209191010"
-            ],
+            "address": { "@type": "PostalAddress", "addressLocality": "Medellin", "addressRegion": "Antioquia", "addressCountry": "CO" },
+            "sameAs": [ "https://www.linkedin.com/in/carlos-andres-m-2a60b8b/", "https://wa.me/573209191010", "https://t.me/+573209191010" ],
             "knowsAbout": ["IT Project Management", "QA & Test Automation", "Agile", "Scrum", "Kanban", "CI/CD", "DevOps", "Selenium", "Cypress", "Playwright", "AWS", "Azure DevOps", "GCP", "Jira", "Stakeholder Management", "Risk Management"],
             "alumniOf": [{"@type": "EducationalOrganization", "name": "Alexander Von-Humboldt University"}, {"@type": "EducationalOrganization", "name": "EAMQ"}],
             "workExample": [{"@type": "CreativeWork", "description": "Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account at Globant."}, {"@type": "CreativeWork", "description": "Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for 15+ clients at Team International."}]
@@ -63,94 +53,33 @@
     |                         INTERNAL CSS STYLES                         |
     ================================================================== -->
     <style>
-        /* CSS Custom Properties (Variables) for easy theming */
         :root {
-            --bg-primary: #f9fafb;
-            --bg-secondary: #ffffff;
-            --bg-sidebar: #1f2937;
-            --text-primary: #111827;
-            --text-secondary: #4b5563;
-            --text-sidebar-primary: #ffffff;
-            --text-sidebar-secondary: #d1d5db;
-            --border-color: #e5e7eb;
-            --cyan-brand: #0891b2;
-            --orange-brand: #f97316;
-            --pulse-blue: rgba(59, 130, 246, 0.7);
+            --bg-primary: #f9fafb; --bg-secondary: #ffffff; --bg-sidebar: #1f2937; --text-primary: #111827; --text-secondary: #4b5563;
+            --text-sidebar-primary: #ffffff; --text-sidebar-secondary: #d1d5db; --border-color: #e5e7eb; --cyan-brand: #0891b2; --orange-brand: #f97316; --pulse-blue: rgba(59, 130, 246, 0.7);
         }
-
-        /* Dark mode theme variables */
         .dark-mode {
-            --bg-primary: #111827;
-            --bg-secondary: #1f2937;
-            --bg-sidebar: #0f172a;
-            --text-primary: #f3f4f6;
-            --text-secondary: #9ca3af;
-            --text-sidebar-primary: #ffffff;
-            --text-sidebar-secondary: #9ca3af;
-            --border-color: #374151;
+            --bg-primary: #111827; --bg-secondary: #1f2937; --bg-sidebar: #0f172a; --text-primary: #f3f4f6; --text-secondary: #9ca3af;
+            --text-sidebar-primary: #ffffff; --text-sidebar-secondary: #9ca3af; --border-color: #374151;
         }
-
-        /* Base body and layout styles */
         html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            position: relative;
-            background-color: var(--bg-primary);
-            color: var(--text-secondary);
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .main-container {
-            background-color: var(--bg-secondary);
-            transition: background-color 0.3s;
-        }
-
-        /* Sidebar specific styles */
-        .sidebar {
-            background-color: var(--bg-sidebar);
-            color: var(--text-sidebar-primary);
-            transition: background-color 0.3s;
-        }
+        body { font-family: 'Inter', sans-serif; font-size: 14px; position: relative; background-color: var(--bg-primary); color: var(--text-secondary); transition: background-color 0.3s, color 0.3s; }
+        .main-container { background-color: var(--bg-secondary); transition: background-color 0.3s; }
+        .sidebar { background-color: var(--bg-sidebar); color: var(--text-sidebar-primary); transition: background-color 0.3s; }
         .sidebar h1, .sidebar h2, .sidebar h3 { color: var(--text-sidebar-primary); }
         .sidebar p, .sidebar span, .sidebar li, .sidebar a { color: var(--text-sidebar-secondary); }
         .sidebar a:hover { color: var(--cyan-brand); }
         .sidebar hr { border-color: var(--border-color); }
-
-        /* Main content specific styles */
-        .main-content {
-            background-color: var(--bg-primary);
-            color: var(--text-secondary);
-        }
+        .main-content { background-color: var(--bg-primary); color: var(--text-secondary); }
         .main-content h1, .main-content h2, .main-content h3, .main-content h4 { color: var(--text-primary); }
         .main-content .border-b-4, .main-content hr { border-color: var(--border-color); }
-
-        /* Confidential Watermark Style */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            z-index: -1;
-            opacity: 0.015;
-            pointer-events: none;
-            background-image: var(--watermark-url);
-            background-repeat: repeat;
-        }
-
-        /* Print-specific styles to optimize for paper output */
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.015; pointer-events: none; background-image: var(--watermark-url); background-repeat: repeat; }
         @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .no-print, body::before { display: none; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print, body::before { display: none; }
             .experience-body, #summary-details, .toolkit-body { display: block !important; max-height: 9999px !important; }
             .accordion-icon, .read-more-btn, .toolkit-toggle-btn, .infographics-section, .experience-summary, .experience-tech-tags { display: none !important; }
             .experience-body ul { display: block !important; }
         }
-
-        /* Toolkit and Skill Tag styles */
-        .tech-tag {
-            display: inline-flex; align-items: center; background-color: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 9999px;
-            font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border-color);
-        }
+        .tech-tag { display: inline-flex; align-items: center; background-color: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border-color); }
         .dark-mode .tech-tag { background-color: #374151; color: #d1d5db; }
         .tech-tag:hover, .tech-tag:focus { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-color: #94a3b8; outline: none; }
         .tech-tag.selected { background-color: var(--cyan-brand); color: white; border-color: #0e7490; }
@@ -159,35 +88,18 @@
         .tech-tag .tech-icon { width: 16px; height: 16px; margin-right: 6px; object-fit: contain; }
         .stars { display: flex; align-items: center; margin-left: auto; padding-left: 8px; white-space: nowrap; }
         .stars svg { width: 0.8rem; height: 0.8rem; color: #f59e0b; }
-
-        /* Icon and Logo styles */
         .flag-icon { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
         .company-logo { width: 14px; height: 14px; margin-right: 6px; border-radius: 3px; flex-shrink: 0; }
-        .trademark-logo {
-            display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%;
-            background-color: var(--cyan-brand); color: white; font-weight: bold; font-size: 0.75rem; border: 2px solid white;
-            flex-shrink: 0;
-        }
-
-        /* Accordion component styles */
         .experience-body, #summary-details, .toolkit-body { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
         .accordion-header { border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
-
-        /* Tooltip and Info Bubble styles */
         .tooltip { position: relative; display: inline-flex; }
-        .tooltip .tooltiptext, .info-bubble {
-            visibility: hidden; background-color: #333; color: #fff; text-align: center; border-radius: 6px;
-            padding: 5px 10px; position: absolute; z-index: 10;
-            opacity: 0; transition: opacity 0.3s; white-space: nowrap; font-size: 12px;
-        }
+        .tooltip .tooltiptext, .info-bubble { visibility: hidden; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 5px 10px; position: absolute; z-index: 10; opacity: 0; transition: opacity 0.3s; white-space: nowrap; font-size: 12px; }
         .tooltip .tooltiptext { bottom: 125%; left: 50%; transform: translateX(-50%); width: max-content; }
         .tooltip:hover .tooltiptext, .tooltip:focus .tooltiptext { visibility: visible; opacity: 1; }
         .info-icon-container:hover .info-bubble { visibility: visible; opacity: 1; }
         .info-bubble { width: 250px; text-align: left; white-space: normal; padding: 8px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         #contact-info-bubble { top: 50%; left: 100%; transform: translateY(-50%); margin-left: 0.5rem; }
         #toolkit-info-bubble { right: 0; top: 24px; }
-
-        /* Language Selector styles */
         .lang-flag { transition: transform 0.2s; border: 2px solid transparent; border-radius: 50%; }
         .lang-flag:hover, .lang-flag:focus { transform: scale(1.1); }
         .lang-flag.selected { border-color: var(--cyan-brand); }
@@ -197,92 +109,55 @@
         #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):hover, #language-selector:not(.collapsed) .lang-wrapper:not(:has(.selected)):focus { opacity: 1; }
         .lang-accordion-indicator { transition: transform 0.3s ease; }
         #language-selector:not(.collapsed) .lang-accordion-indicator { transform: rotate(180deg); }
-
-        /* Timeline styles */
         .toolkit-preview { font-size: 0.75rem; color: var(--text-secondary); padding-left: 0.5rem; margin-top: 0.25rem; }
         #timeline-container { border-left: 3px solid var(--cyan-brand); padding-left: 1rem; }
         .timeline-item { position: relative; transition: opacity 0.3s ease; }
         .timeline-item.filtered-out { opacity: 0.3; }
-        .timeline-item::before {
-            content: ''; background-color: var(--cyan-brand); width: 12px; height: 12px; border-radius: 50%;
-            position: absolute; left: -23px; top: 10px; border: 2px solid var(--bg-secondary);
-        }
+        .timeline-item::before { content: ''; background-color: var(--cyan-brand); width: 12px; height: 12px; border-radius: 50%; position: absolute; left: -23px; top: 10px; border: 2px solid var(--bg-secondary); }
         .timeline-tech-icons { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .timeline-tech-icons img { width: 12px; height: 12px; border-radius: 3px; }
-
-        /* Footer and other miscellaneous styles */
+        .trademark-logo { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background-color: var(--cyan-brand); color: white; font-weight: bold; font-size: 0.75rem; border: 2px solid white; flex-shrink: 0; }
         .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
         .phone-container .phone-text { display: inline; }
         .phone-container .phone-number { display: none; }
         .phone-container:hover .phone-text, .phone-container:focus .phone-text { display: none; }
         .phone-container:hover .phone-number, .phone-container:focus .phone-number { display: inline; }
-
-        /* Modal (Image Viewer) styles */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex;
-            align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
         .modal-overlay.visible { opacity: 1; visibility: visible; }
         .modal-content { background: var(--bg-secondary); padding: 10px; border-radius: 12px; position: relative; transform: scale(0.9); transition: transform 0.3s ease; }
         .modal-overlay.visible .modal-content { transform: scale(1); }
         .modal-content img { max-width: 80vw; max-height: 80vh; border-radius: 8px; }
-        .modal-close {
-            position: absolute; top: -15px; right: -15px; background: white; color: #333; border-radius: 50%; width: 30px; height: 30px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; line-height: 1; border: 1px solid #ccc;
-        }
-
-        /* Experience section-specific styles */
-        .experience-summary {
-            font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid var(--border-color);
-            transition: opacity 0.3s ease;
-        }
+        .modal-close { position: absolute; top: -15px; right: -15px; background: white; color: #333; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; line-height: 1; border: 1px solid #ccc; }
+        .experience-summary { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid var(--border-color); transition: opacity 0.3s ease; }
         .experience-item.is-open .experience-summary { display: none; }
         .experience-tech-tags { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1; }
         .dark-mode .experience-tech-tags { border-top-color: #4b5563; }
-        .experience-tech-tags .exp-tech-tag {
-            display: inline-flex; align-items: center; background-color: #e0f2f7; color: #0891b2; padding: 2px 8px;
-            border-radius: 9999px; font-size: 0.7rem; font-weight: 500; margin: 2px;
-        }
+        .experience-tech-tags .exp-tech-tag { display: inline-flex; align-items: center; background-color: #e0f2f7; color: #0891b2; padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; margin: 2px; }
         .dark-mode .experience-tech-tags .exp-tech-tag { background-color: #1e40af; color: #dbeafe; }
         .experience-tech-tags .exp-tech-tag img { width: 12px; height: 12px; margin-right: 5px; }
-
-        /* Animation and Accessibility styles */
-        @keyframes pulse-blue {
-            0% { box-shadow: 0 0 0 0 var(--pulse-blue); }
-            70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-        }
-        .pulse-highlight { animation: pulse-blue 4s 1; border-radius: 8px; }
-        .sr-only {
-            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-            overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
-        }
-        :focus-visible {
-            outline: 3px solid var(--orange-brand); outline-offset: 2px;
-            box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.5); border-radius: 4px;
-        }
-        .animate-on-scroll {
-            opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-        }
+        @keyframes pulse-blue { 0% { box-shadow: 0 0 0 0 var(--pulse-blue); } 70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        .pulse-highlight { animation: pulse-blue 2s 1; border-radius: 8px; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+        :focus-visible { outline: 3px solid var(--orange-brand); outline-offset: 2px; box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.5); border-radius: 4px; }
+        .animate-on-scroll { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
         .animate-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
-
-        /* Keyword highlighting style for search feature */
         mark { background-color: #fdba74; color: #431407; padding: 2px 1px; border-radius: 3px; }
         .dark-mode mark { background-color: #b45309; color: #fff7ed; }
-
-        /* Theme Toggle styles */
         #theme-toggle { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
         .dark-mode #theme-toggle { color: #d1d5db; }
         #theme-toggle .sun-icon { display: none; }
         #theme-toggle .moon-icon { display: block; }
         .dark-mode #theme-toggle .sun-icon { display: block; }
         .dark-mode #theme-toggle .moon-icon { display: none; }
-
-        /* Radar chart interactive styles */
-        .radar-label:hover {
-            font-weight: bold; text-decoration: underline; text-decoration-color: var(--cyan-brand);
-            text-decoration-thickness: 2px; cursor: pointer;
-        }
+        .radar-label:hover { font-weight: bold; text-decoration: underline; text-decoration-color: var(--cyan-brand); text-decoration-thickness: 2px; cursor: pointer; }
+        /* "Message Me" Feature Styles */
+        #message-fab { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999; }
+        #message-modal { z-index: 1001; }
+        #message-form .form-group { transition: opacity 0.3s ease; }
+        #message-form .form-group.disabled { opacity: 0.5; pointer-events: none; }
+        #file-upload-label { cursor: pointer; }
+        #file-upload-label.disabled { cursor: not-allowed; }
+        #file-name { font-size: 0.75rem; color: var(--text-secondary); }
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
@@ -294,9 +169,7 @@
     <div class="bg-secondary shadow-2xl rounded-lg overflow-hidden main-container">
         <div class="md:flex">
 
-            <!-- =================================================================
-            |                          SIDEBAR (LEFT COLUMN)                      |
-            ================================================================== -->
+            <!-- Sidebar (Left Column) -->
             <aside class="md:w-1/3 p-6 sidebar">
                 <!-- Profile Header -->
                 <div class="flex flex-col items-center">
@@ -310,9 +183,7 @@
                         <p class="text-xs text-cyan-400 mt-1">CSPM | ISTQB | CISA | CISSP</p>
                     </div>
                 </div>
-
                 <hr class="my-6">
-
                 <!-- Contact Info Section -->
                 <section aria-labelledby="contact-heading" class="animate-on-scroll">
                     <div class="flex items-center relative">
@@ -322,7 +193,6 @@
                             <div id="contact-info-bubble" class="info-bubble" data-translate-key="info_bubble_contact"></div>
                         </div>
                     </div>
-                    <!-- Contact Details -->
                     <div class="flex items-center space-x-3"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg><a href="tel:+573209191010" rel="noopener noreferrer" class="hover:text-cyan-400 phone-container" data-analytics-event="contact_click" data-analytics-label="Phone"><span class="phone-text">Phone Number</span><span class="phone-number" aria-hidden="true">+57 320 919 1010</span></a></div>
                     <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg><a href="mailto:kaanmuar@gmail.com" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Email">kaanmuar@gmail.com</a></div>
                     <div class="flex items-start space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg><a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="LinkedIn">LinkedIn Profile</a></div>
@@ -349,7 +219,6 @@
                 <section id="languages-section" aria-labelledby="languages-heading" class="animate-on-scroll">
                     <h3 id="languages-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="languages_title">Languages</h3>
                     <div id="languages-body" class="mt-3 space-y-4 text-sm">
-                        <!-- Language items with proficiency bars -->
                         <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="flag-icon" alt="Spanish Flag"><span class="font-medium ml-2">Spanish</span></div><span data-translate-key="lang_native">Native</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Spanish proficiency: Native"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 100%"></div></div></div>
                         <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="flag-icon" alt="English Flag"><span class="font-medium ml-2">English</span></div><span data-translate-key="lang_fluent">Fluent</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="English proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 90%"></div></div></div>
                         <div class="language"><div class="flex items-center justify-between"><div class="flex items-center"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="flag-icon" alt="Portuguese Flag"><span class="font-medium ml-2">Portuguese</span></div><span data-translate-key="lang_fluent">Fluent</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" aria-label="Portuguese proficiency: Fluent"><div class="bg-teal-400 h-1.5 rounded-full" style="width: 85%"></div></div></div>
@@ -358,22 +227,17 @@
                 </section>
             </aside>
 
-            <!-- =================================================================
-            |                       MAIN CONTENT (RIGHT COLUMN)                   |
-            ================================================================== -->
+            <!-- Main Content (Right Column) -->
             <main class="w-full p-6 main-content">
                 <!-- Page Header and Controls -->
                 <section aria-labelledby="summary-heading" class="animate-on-scroll">
                     <div class="flex justify-between items-center">
                         <h2 id="summary-heading" class="text-xl font-bold" data-translate-key="summary_title">Professional Summary</h2>
-                        <!-- Interactive Controls: Theme, Language, Print -->
                         <div class="flex items-center space-x-2 no-print">
-                            <!-- Theme Toggle Button -->
                             <button id="theme-toggle" aria-label="Toggle dark mode">
                                 <svg class="w-5 h-5 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                 <svg class="w-5 h-5 moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                             </button>
-                            <!-- Language Selector Dropdown -->
                             <div id="language-selector" role="region" aria-label="Language Selector" class="relative flex items-center space-x-2 collapsed cursor-pointer" tabindex="0">
                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English" tabindex="-1" role="button" aria-label="Select English"><span class="tooltiptext" data-translate-key="tooltip_lang_en"></span></div>
                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español" tabindex="-1" role="button" aria-label="Select Spanish"><span class="tooltiptext" data-translate-key="tooltip_lang_es"></span></div>
@@ -383,13 +247,11 @@
                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italiano" tabindex="-1" role="button" aria-label="Select Italian"><span class="tooltiptext" data-translate-key="tooltip_lang_it"></span></div>
                                 <svg class="w-4 h-4 lang-accordion-indicator" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 <span class="mx-1">|</span>
-                                <!-- Print Button -->
                                 <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200" aria-label="Print or save as PDF"><svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext" data-translate-key="tooltip_print"></span></button></div>
                             </div>
                         </div>
                     </div>
                     <div class="border-b-4 pb-2 mb-3"></div>
-                    <!-- Professional Summary Text -->
                     <p data-translate-key="summary_text">A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.</p>
                     <div id="summary-details" class="mt-2 space-y-2">
                         <p data-translate-key="summary_detail_1">Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.</p>
@@ -398,11 +260,10 @@
                     <button id="read-more-btn" class="text-xs text-cyan-600 hover:text-cyan-800 font-semibold mt-2 no-print" aria-expanded="false" aria-controls="summary-details">Read More...</button>
                 </section>
 
-                <!-- Infographics Section: Charts and Timeline -->
+                <!-- Infographics Section -->
                 <section class="section mt-8 infographics-section animate-on-scroll" aria-labelledby="infographics-heading">
                     <h2 id="infographics-heading" class="text-xl font-bold border-b-4 pb-2 mb-6" data-translate-key="infographics_title">Career at a Glance</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                        <!-- Left Column: Radar Charts -->
                         <div>
                             <section aria-labelledby="competencies-graph-heading" class="mb-20">
                                 <h3 id="competencies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
@@ -413,7 +274,6 @@
                                 <div id="methodologies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing methodology and process scores."></div>
                             </section>
                         </div>
-                        <!-- Right Column: Career Timeline -->
                         <section aria-labelledby="timeline-heading">
                             <h3 id="timeline-heading" class="text-base font-semibold mb-2 text-center" data-translate-key="infographics_timeline_title">Career Timeline</h3>
                             <div id="timeline-container" class="relative pr-2"></div>
@@ -423,7 +283,7 @@
 
                 <hr class="my-12">
 
-                <!-- Toolkit Section: Skills and Technologies -->
+                <!-- Toolkit Section -->
                 <section class="section mt-6 animate-on-scroll" aria-labelledby="toolkit-heading">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
@@ -438,9 +298,7 @@
                             <button id="reset-filter" class="text-xs bg-cyan-600 text-white hover:bg-cyan-700 font-semibold py-1 px-3 rounded-full transition-colors">Reset Filters</button>
                         </div>
                     </div>
-                    <!-- Screen-reader only text for filter status updates -->
                     <div id="filter-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-                    <!-- Container where JS will render the toolkit categories and skills -->
                     <div id="toolkit-container" class="mt-1 space-y-3"></div>
                 </section>
 
@@ -450,7 +308,6 @@
                         <h2 id="experience-heading" class="text-xl font-bold" data-translate-key="experience_title">Professional Experience</h2>
                         <button id="expand-all-exp" class="no-print text-xs bg-gray-200 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors">Expand All</button>
                     </div>
-                    <!-- Container where JS will render the experience entries -->
                     <div class="mt-3 space-y-1" id="experience-container"></div>
                 </section>
 
@@ -501,27 +358,74 @@
     </div>
 </div>
 
+<!-- "Message Me" Floating Action Button -->
+<button id="message-fab" class="no-print bg-cyan-600 hover:bg-cyan-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center" aria-label="Open message form">
+    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+</button>
+
+<!-- "Message Me" Modal -->
+<div id="message-modal" class="modal-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="message-modal-heading">
+    <div class="modal-content w-full max-w-lg p-6">
+        <div id="message-form-container">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="message-modal-heading" class="text-xl font-bold text-gray-800 dark:text-gray-200">Message Me</h2>
+                <button id="message-modal-close" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200" aria-label="Close message form">&times;</button>
+            </div>
+            <form id="message-form" novalidate>
+                <div class="form-group">
+                    <label for="sender-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                    <input type="text" id="sender-name" name="name" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
+                </div>
+                <div class="form-group mt-4">
+                    <label for="sender-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                    <input type="email" id="sender-email" name="email" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
+                </div>
+                <div id="message-group" class="form-group mt-4 disabled">
+                    <label for="sender-message" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
+                    <textarea id="sender-message" name="message" rows="4" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                </div>
+                <div id="attachment-group" class="form-group mt-4 disabled">
+                    <label id="file-upload-label" for="file-upload" class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <span>Attach File</span>
+                    </label>
+                    <input type="file" id="file-upload" class="hidden">
+                    <span id="file-name" class="ml-3"></span>
+                </div>
+                <div class="mt-6">
+                    <button id="send-message-btn" type="submit" disabled class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Send Message
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div id="message-status" class="hidden text-center py-10"></div>
+    </div>
+</div>
+
 <!-- =================================================================
 |                         APPLICATION JAVASCRIPT                      |
 ================================================================== -->
-<script>
-    /***************************************************************************************
-     * Interactive CV Application - Carlos A. Muñoz
-     * Version: 7.1 (July 2025) - Bug Fixes and Stability Improvements
-     *
-     * Intellectual Property Notice:
-     * This document and its contents are the intellectual property of Carlos A. Muñoz.
-     * Unauthorized reproduction or distribution is strictly prohibited. All rights reserved.
-     *
-     * --- CHANGELOG ---
-     * v7.1:
-     * - Fixed modal close button functionality.
-     * - Corrected language selector expansion logic.
-     * - Ensured timeline tooltips are populated correctly after translation.
-     * - Fixed inverted logic for "Expand/Collapse All" buttons.
-     * v7.0:
-     * - Added hreflang tags, URL language handling, and comprehensive documentation.
-     ***************************************************************************************/
+<script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
+
+    // IMPORTANT: Replace with your actual Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
+        authDomain: "carlosm-interactive-cv.firebaseapp.com",
+        projectId: "carlosm-interactive-cv",
+        storageBucket: "carlosm-interactive-cv.firebasestorage.app",
+        messagingSenderId: "976558418058",
+        appId: "1:976558418058:web:1dc19bcd40915ea233e573"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
     document.addEventListener('DOMContentLoaded', () => {
         const CarlosMunozCV = {
@@ -561,20 +465,20 @@
                         { name: 'Ranorex', stars: 3, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/ranorex/00AEEF' },
                     ],
                     lang: [
-                        { name: 'Python', stars: 5, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
-                        { name: 'Java', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
-                        { name: 'JavaScript', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
-                        { name: 'TypeScript', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/typescript/3178C6' },
+                        { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
+                        { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
+                        { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
+                        { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/typescript/3178C6' },
                         { name: 'Kotlin', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/kotlin/7F52FF' },
-                        { name: 'C#', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/csharp/512BD4' },
-                        { name: '.NET', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/dot-net/512BD4' },
+                        { name: 'C#', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/csharp/512BD4' },
+                        { name: '.NET', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/dot-net/512BD4' },
                         { name: 'Node.js', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/nodedotjs/339933' },
-                        { name: 'Ruby', stars: 3, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/ruby/CC342D' },
-                        { name: 'PHP', stars: 2, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/php/777BB4' },
+                        { name: 'Ruby', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/ruby/CC342D' },
+                        { name: 'PHP', stars: 2, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/php/777BB4' },
                         { name: 'Perl', stars: 2, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/perl/39457E' }
                     ],
                     cloud: [
-                        { name: 'AWS', stars: 5, years: '12+ Yrs', icon: 'https://cdn.simpleicons.org/amazonaws/232F3E' },
+                        { name: 'AWS', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/amazonaws/232F3E' },
                         { name: 'Azure DevOps', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/azuredevops/0078D7' },
                         { name: 'GCP', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/googlecloud/4285F4' },
                         { name: 'Jenkins', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/jenkins/D24939' },
@@ -590,11 +494,11 @@
                         { name: 'MySQL', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/mysql/4479A1' },
                         { name: 'Oracle', stars: 3, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
                         { name: 'MongoDB', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/mongodb/47A248' },
-                        { name: 'Postman', stars: 5, years: '12+ Yrs', icon: 'https://cdn.simpleicons.org/postman/FF6C37' },
+                        { name: 'Postman', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/postman/FF6C37' },
                         { name: 'GraphQL', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/graphql/E10098' },
                         { name: 'Swagger', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/swagger/85EA2D' },
                         { name: 'Rest Assured', stars: 4, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-testing-icon.svg' },
-                        { name: 'SoapUI', stars: 3, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/soapui/5286DE' }
+                        { name: 'SoapUI', stars: 3, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/soapui/5286DE' }
                     ],
                     analytics: [
                         { name: 'Datadog', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/datadog/632CA6' },
@@ -605,22 +509,22 @@
                         { name: 'Tableau', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/tableau/E97627' },
                     ],
                     platform: [
-                        { name: 'Salesforce', stars: 4, years: '9+ Yrs', icon: 'https://cdn.simpleicons.org/salesforce/00A1E0' },
+                        { name: 'Salesforce', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/salesforce/00A1E0' },
                         { name: 'MS Dynamics', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/microsoftdynamics365/0065BF' },
-                        { name: 'SAP', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/sap/008FD3' },
+                        { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/sap/008FD3' },
                         { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/zoho/E42525' },
                         { name: 'Shopify', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/shopify/7AB55C' },
-                        { name: 'Bugzilla', stars: 4, years: '9+ Yrs', icon: 'https://cdn.simpleicons.org/bugzilla/000000' }
+                        { name: 'Bugzilla', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/bugzilla/000000' }
                     ],
                     system: [
                         { name: 'Middleware', stars: 4, years: '8+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-icon.svg'},
                         { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/database-storage/database-icon.svg'},
                         { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/eclipseide/2C2255'},
                         { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/cygwin/000000'},
-                        { name: 'Putty', stars: 4, years: '8+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg'},
-                        { name: 'Firebug', stars: 3, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebug/firebug-original.svg'},
-                        { name: 'DHTML', stars: 3, years: '6+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg'},
-                        { name: 'SSH', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/ssh/000000'},
+                        { name: 'Putty', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg'},
+                        { name: 'Firebug', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebug/firebug-original.svg'},
+                        { name: 'DHTML', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg'},
+                        { name: 'SSH', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/ssh/000000'},
                     ]
                 },
                 experiences: [
@@ -796,9 +700,9 @@
                 radarTooltips: {
                     en: { 'Project Mgmt': 'Expertise in leading projects from initiation to completion, ensuring they meet scope, budget, and timeline requirements.', 'QA & Automation': 'Deep knowledge in designing and implementing automated testing frameworks to ensure software quality and reliability.', 'Leadership': 'Proven ability to mentor, manage, and motivate cross-functional teams to achieve high performance and project success.', 'DevOps Strategy': 'Skilled in integrating development and operations to improve workflow, increase efficiency, and accelerate release cycles.', 'Cloud Platforms': 'Proficient in leveraging major cloud providers (AWS, Azure, GCP) for scalable, resilient, and cost-effective infrastructure.', 'Stakeholder Mgmt': 'Adept at managing communications and relationships with all stakeholders to ensure project alignment and buy-in.', 'Agile': 'Extensive experience with Agile principles and practices to deliver value iteratively and adapt to changing requirements.', 'Scrum': 'Certified expertise in managing projects using the Scrum framework for transparent, iterative, and collaborative development.', 'Kanban': 'Utilizing Kanban for workflow visualization, managing flow, and continuous improvement to optimize delivery.', 'CMMI': 'Knowledge of the Capability Maturity Model Integration framework to improve and standardize organizational processes.', 'ISO Standards': 'Experience in implementing and adhering to ISO standards for quality management and information security.', 'Risk Mgmt': 'Systematic approach to identifying, analyzing, and mitigating project risks to ensure successful outcomes.' },
                     es: { 'Project Mgmt': 'Experiencia en liderar proyectos desde el inicio hasta la finalización, asegurando que cumplan con el alcance, el presupuesto y los plazos.', 'QA & Automation': 'Profundo conocimiento en el diseño e implementación de marcos de pruebas automatizadas para garantizar la calidad y fiabilidad del software.', 'Leadership': 'Capacidad demostrada para orientar, gestionar y motivar equipos multifuncionales para lograr un alto rendimiento y el éxito del proyecto.', 'DevOps Strategy': 'Habilidad en la integración de desarrollo y operaciones para mejorar el flujo de trabajo, aumentar la eficiencia y acelerar los ciclos de lanzamiento.', 'Cloud Platforms': 'Competente en el uso de los principales proveedores de nube (AWS, Azure, GCP) para una infraestructura escalable, resiliente y rentable.', 'Stakeholder Mgmt': 'Experto en la gestión de comunicaciones y relaciones con todas las partes interesadas para garantizar la alineación y el apoyo al proyecto.', 'Agile': 'Amplia experiencia con los principios y prácticas de Agile para entregar valor de forma iterativa y adaptarse a los requisitos cambiantes.', 'Scrum': 'Experiencia certificada en la gestión de proyectos utilizando el marco Scrum para un desarrollo transparente, iterativo y colaborativo.', 'Kanban': 'Uso de Kanban para la visualización del flujo de trabajo, la gestión del flujo y la mejora continua para optimizar la entrega.', 'CMMI': 'Conocimiento del marco de Integración del Modelo de Madurez de Capacidad para mejorar y estandarizar los procesos organizacionales.', 'ISO Standards': 'Experiencia en la implementación y cumplimiento de las normas ISO para la gestión de la calidad y la seguridad de la información.', 'Risk Mgmt': 'Enfoque sistemático para identificar, analizar y mitigar los riesgos del proyecto para garantizar resultados exitosos.' },
-                    pt: { 'Project Mgmt': 'Experiência em liderar projetos desde o início até a conclusão, garantindo que atendam ao escopo, orçamento e cronograma.', 'QA & Automation': 'Profundo conhecimento em projetar e implementar estruturas de teste automatizadas para garantir a qualidade e confiabilidade do software.', 'Leadership': 'Capacidade comprovada de orientar, gerenciar e motivar equipes multifuncionais para alcançar alto desempenho e sucesso nos projetos.', 'DevOps Strategy': 'Habilidade em integrar desenvolvimento e operações para mejorar o fluxo de trabalho, aumentar a eficiência e acelerar os ciclos de lançamento.', 'Cloud Platforms': 'Proficiente em aproveitar os principais provedores de nuvem (AWS, Azure, GCP) para infraestrutura escalável, resiliente и econômica.', 'Stakeholder Mgmt': 'Apto a gerenciar comunicações e relacionamentos com todas as partes interessadas para garantir o alinhamento e a adesão ao projeto.', 'Agile': 'Vasta experiência com os princípios e práticas Agile para entregar valor de forma iterativa e se adaptar a requisitos em constante mudança.', 'Scrum': 'Experiência certificada em gerenciar projetos usando o framework Scrum para um desenvolvimento transparente, iterativo e colaborativo.', 'Kanban': 'Utilização do Kanban para visualização do fluxo de trabalho, gerenciamento do fluxo e melhoria contínua para otimizar a entrega.', 'CMMI': 'Conhecimento do framework de Integração do Modelo de Maturidade da Capacidade para melhorar e padronizar os processos organizacionais.', 'ISO Standards': 'Experiência na implementação e adesão às normas ISO para gestão da qualidade e segurança da informação.', 'Risk Mgmt': 'Abordagem sistemática para identificar, analisar e mitigar os riscos do projeto para garantir resultados bem-sucedidos.' },
+                    pt: { 'Project Mgmt': 'Experiência em liderar projetos desde o início até a conclusão, garantindo que atendam ao escopo, orçamento e cronograma.', 'QA & Automation': 'Profundo conhecimento em projetar e implementar estruturas de teste automatizadas para garantir a qualidade e confiabilidade do software.', 'Leadership': 'Capacidade comprovada de orientar, gerenciar e motivar equipes multifuncionais para alcançar alto desempenho e sucesso nos projetos.', 'DevOps Strategy': 'Habilidade em integrar desenvolvimento e operações para mejorar o fluxo de trabalho, aumentar a eficiência e acelerar os ciclos de lançamento.', 'Cloud Platforms': 'Proficiente em aproveitar os principais provedores de nuvem (AWS, Azure, GCP) para infraestrutura escalável, resiliente и econômica.', 'Stakeholder Mgmt': 'Apto a gerenciar comunicações e relacionamentos com todas as partes interessadas para garantir o alinhamento e a adesão ao projeto.', 'Agile': 'Vasta experiência com os princípios e práticas Agile para entregar valor de forma iterativa e se adaptar a requisitos em constante mudança.', 'Scrum': 'Experiência certificada em gerenciar projetos usando o framework Scrum para um desenvolvimento transparente, iterativo e colaborativo.', 'Kanban': 'Utilização do Kanban para visualização do fluxo de trabalho, gerenciamento do fluxo e melhoria contínua para otimizar la entrega.', 'CMMI': 'Conhecimento do framework de Integração do Modelo de Maturidade da Capacidade para melhorar e padronizar os processos organizacionais.', 'ISO Standards': 'Experiência na implementação e adesão às normas ISO para gestão da qualidade e segurança da informação.', 'Risk Mgmt': 'Abordagem sistemática para identificar, analisar e mitigar os riscos do projeto para garantir resultados bem-sucedidos.' },
                     de: { 'Project Mgmt': 'Expertise in der Leitung von Projekten von der Initiierung bis zum Abschluss, um sicherzustellen, dass sie den Umfang, das Budget und den Zeitplan einhalten.', 'QA & Automation': 'Tiefes Wissen im Entwerfen und Implementieren von automatisierten Test-Frameworks, um Softwarequalität und -zuverlässigkeit zu gewährleisten.', 'Leadership': 'Nachgewiesene Fähigkeit, funktionsübergreifende Teams zu betreuen, zu leiten und zu motivieren, um hohe Leistungen und Projekterfolg zu erzielen.', 'DevOps Strategy': 'Geschickt in der Integration von Entwicklung und Betrieb, um den Arbeitsablauf zu verbessern, die Effizienz zu steigern und die Release-Zyklen zu beschleunigen.', 'Cloud Platforms': 'Kompetent in der Nutzung der großen Cloud-Anbieter (AWS, Azure, GCP) für eine skalierbare, widerstandsfähige und kostengünstige Infrastruktur.', 'Stakeholder Mgmt': 'Gewandt im Management von Kommunikation und Beziehungen mit allen Stakeholdern, um die Projektausrichtung und -akzeptanz sicherzustellen.', 'Agile': 'Umfangreiche Erfahrung mit agilen Prinzipien und Praktiken, um iterativ Wert zu liefern und sich an ändernde Anforderungen anzupassen.', 'Scrum': 'Zertifizierte Expertise in der Projektleitung mit dem Scrum-Framework für eine transparente, iterative und kollaborative Entwicklung.', 'Kanban': 'Nutzung von Kanban zur Visualisierung des Workflows, zur Steuerung des Flusses und zur kontinuierlichen Verbesserung, um die Lieferung zu optimieren.', 'CMMI': 'Kenntnisse des Capability Maturity Model Integration-Frameworks zur Verbesserung und Standardisierung von Organisationsprozessen.', 'ISO Standards': 'Erfahrung in der Implementierung und Einhaltung von ISO-Normen für Qualitätsmanagement und Informationssicherheit.', 'Risk Mgmt': 'Systematischer Ansatz zur Identifizierung, Analyse und Minderung von Projektrisiken, um erfolgreiche Ergebnisse zu gewährleisten.' },
-                    fr: { 'Project Mgmt': 'Expertise dans la direction de projets de l\'initiation à l\'achèvement, en veillant à ce qu\'ils respectent le périmètre, le budget et le calendrier.', 'QA & Automation': 'Connaissance approfondie de la conception et de la mise en œuvre de cadres de test automatisés pour garantir la qualité et la fiabilité des logiciels.', 'Leadership': 'Capacité avérée à encadrer, gérer et motiver des équipes interfonctionnelles pour atteindre de hautes performances et la réussite des projets.', 'DevOps Strategy': 'Compétent dans l\'intégration du développement et des opérations pour améliorer le flux de travail, augmenter l\'efficacité et accélérer les cycles de publication.', 'Cloud Platforms': 'Maîtrise de l\'utilisation des principaux fournisseurs de cloud (AWS, Azure, GCP) pour une infrastructure évolutive, résiliente et rentable.', 'Stakeholder Mgmt': 'Adepte de la gestion des communications et des relations avec toutes les parties prenantes pour garantir l\'alignement et l\'adhésion au projet.', 'Agile': 'Vaste expérience des principes et pratiques Agile pour fournir de la valeur de manière itérative et s\'adapter aux exigences changeantes.', 'Scrum': 'Expertise certifiée dans la gestion de projets à l\'aide du cadre Scrum pour un développement transparent, itératif et collaboratif.', 'Kanban': 'Utilisation de Kanban pour la visualisation du flux de travail, la gestion du flux et l\'amélioration continue afin d\'optimiser la livraison.', 'CMMI': 'Connaissance du cadre d\'intégration du modèle de maturité des capacités pour améliorer et normaliser les processus organisationnels.', 'ISO Standards': 'Expérience dans la mise en œuvre et le respect des normes ISO pour la gestion de la qualité et la sécurité de l\'information.', 'Risk Mgmt': 'Approche systématique pour identifier, analyser et atténuer les risques du projet afin de garantir des résultats positifs.' },
+                    fr: { 'Project Mgmt': 'Expertise dans la direction de projets de l\'initiation à l\'achèvement, en veillant à ce qu\'ils respectent le périmètre, le budget et le calendrier.', 'QA & Automation': 'Connaissance approfondie de la conception et de la mise en œuvre de cadres de test automatisés pour garantir la qualité et la fiabilité des logiciels.', 'Leadership': 'Capacité avérée à encadrer, gérer et motiver des équipes interfonctionnelles pour atteindre de hautes performances et la réussite des projets.', 'DevOps Strategy': 'Compétent dans l\'intégration du développement et des opérations pour améliorer le flux de travail, augmenter l\'efficacité et accélérer les cycles de publication.', 'Cloud Platforms': 'Maîtrise de l\'utilisation des principaux fournisseurs de cloud (AWS, Azure, GCP) pour une infrastructure évolutive, résiliente et rentable.', 'Stakeholder Mgmt': 'Adepte de la gestion des communications et des relations avec toutes les parties prenantes pour garantir l\'alignement et l\'adhésion au projet.', 'Agile': 'Vaste expérience des principes et pratiques Agile pour fournir de la valeur de manière itérative et s\'adapter aux exigences changeantes.', 'Scrum': 'Expertise certifiée dans la gestion de projets à l\'aide du cadre Scrum pour un développement transparent, itératif et collaboratif.', 'Kanban': 'Utilisation de Kanban pour la visualização do fluxo de trabalho, la gestion du flux et l\'amélioration continue afin d\'optimiser la livraison.', 'CMMI': 'Connaissance du cadre d\'intégration du modèle de maturité des capacités pour améliorer et normaliser les processus organisationnels.', 'ISO Standards': 'Expérience dans la mise en œuvre et le respect des normes ISO pour la gestion de la qualité et la sécurité de l\'information.', 'Risk Mgmt': 'Approche systématique pour identifier, analyser et atténuer les risques du projet afin de garantir des résultats positifs.' },
                     it: { 'Project Mgmt': 'Competenza nella guida di progetti dall\'inizio al completamento, assicurando il rispetto di ambito, budget e tempistiche.', 'QA & Automation': 'Profonda conoscenza nella progettazione e implementazione di framework di test automatizzati per garantire la qualità e l\'affidabilità del software.', 'Leadership': 'Comprovata capacità di fare da mentore, gestire e motivare team interfunzionali per raggiungere alte prestazioni e il successo del progetto.', 'DevOps Strategy': 'Abile nell\'integrare sviluppo e operazioni per migliorare il flusso di lavoro, aumentare l\'efficienza e accelerare i cicli di rilascio.', 'Cloud Platforms': 'Competente nell\'utilizzo dei principali provider di cloud (AWS, Azure, GCP) per un\'infrastruttura scalabile, resiliente ed economica.', 'Stakeholder Mgmt': 'Abile nella gestione delle comunicazioni e delle relazioni con tutti gli stakeholder per garantire l\'allineamento e il consenso al progetto.', 'Agile': 'Vasta esperienza con i principi e le pratiche Agile per fornire valore in modo iterativo e adattarsi ai requisiti mutevoli.', 'Scrum': 'Competenza certificata nella gestione di progetti utilizzando il framework Scrum per uno sviluppo trasparente, iterativo e collaborativo.', 'Kanban': 'Utilizzo di Kanban per la visualizzazione del flusso di lavoro, la gestione del flusso e il miglioramento continuo per ottimizzare la consegna.', 'CMMI': 'Conoscenza del framework Capability Maturity Model Integration per migliorare e standardizzare i processi organizzativi.', 'ISO Standards': 'Esperienza nell\'implementazione e nel rispetto degli standard ISO per la gestione della qualità e la sicurezza delle informazioni.', 'Risk Mgmt': 'Approccio sistematico per identificare, analizzare e mitigare i rischi di progetto per garantire risultati di successo.' }
                 },
                 translations: {
@@ -883,9 +787,6 @@
                 },
             },
 
-            /**
-             * Initializes the application.
-             */
             init() {
                 this._cacheDOMElements();
                 this._applyUrlLanguage();
@@ -897,70 +798,44 @@
                 this.translatePage(this.state.lang);
                 this._initScrollAnimations();
                 this._initUrlHighlighting();
+                this._initMessageMeFeature();
             },
 
-            /**
-             * Caches frequently accessed DOM elements.
-             * @private
-             */
             _cacheDOMElements() {
                 this.DOMElements = {
-                    body: document.body,
-                    experienceContainer: document.getElementById('experience-container'),
-                    toolkitContainer: document.getElementById('toolkit-container'),
-                    languageSelector: document.getElementById('language-selector'),
-                    summaryDetails: document.getElementById('summary-details'),
-                    readMoreBtn: document.getElementById('read-more-btn'),
-                    printBtn: document.getElementById('print-btn'),
-                    resetFilterBtn: document.getElementById('reset-filter'),
-                    expandAllExpBtn: document.getElementById('expand-all-exp'),
-                    expandAllToolkitBtn: document.getElementById('expand-all-toolkit'),
-                    competenciesRadarChart: document.getElementById('competencies-radar-chart'),
-                    methodologiesRadarChart: document.getElementById('methodologies-radar-chart'),
-                    timelineContainer: document.getElementById('timeline-container'),
-                    profilePhoto: document.getElementById('profile-photo'),
-                    imageModal: document.getElementById('image-modal'),
-                    modalImage: document.getElementById('modal-image'),
-                    modalClose: document.querySelector('.modal-close'),
-                    filterStatus: document.getElementById('filter-status'),
-                    themeToggle: document.getElementById('theme-toggle'),
+                    body: document.body, experienceContainer: document.getElementById('experience-container'), toolkitContainer: document.getElementById('toolkit-container'),
+                    languageSelector: document.getElementById('language-selector'), summaryDetails: document.getElementById('summary-details'), readMoreBtn: document.getElementById('read-more-btn'),
+                    printBtn: document.getElementById('print-btn'), resetFilterBtn: document.getElementById('reset-filter'), expandAllExpBtn: document.getElementById('expand-all-exp'),
+                    expandAllToolkitBtn: document.getElementById('expand-all-toolkit'), competenciesRadarChart: document.getElementById('competencies-radar-chart'),
+                    methodologiesRadarChart: document.getElementById('methodologies-radar-chart'), timelineContainer: document.getElementById('timeline-container'),
+                    profilePhoto: document.getElementById('profile-photo'), imageModal: document.getElementById('image-modal'), modalImage: document.getElementById('modal-image'),
+                    modalClose: document.querySelector('.modal-close'), filterStatus: document.getElementById('filter-status'), themeToggle: document.getElementById('theme-toggle'),
                     mainContent: document.querySelector('.main-content'),
+                    // "Message Me" Feature Elements
+                    messageFab: document.getElementById('message-fab'), messageModal: document.getElementById('message-modal'), messageModalClose: document.getElementById('message-modal-close'),
+                    messageForm: document.getElementById('message-form'), messageFormContainer: document.getElementById('message-form-container'), messageStatus: document.getElementById('message-status'),
+                    senderName: document.getElementById('sender-name'), senderEmail: document.getElementById('sender-email'), senderMessage: document.getElementById('sender-message'),
+                    messageGroup: document.getElementById('message-group'), attachmentGroup: document.getElementById('attachment-group'), fileUpload: document.getElementById('file-upload'),
+                    fileName: document.getElementById('file-name'), sendMessageBtn: document.getElementById('send-message-btn'),
                 };
             },
 
-            /**
-             * Creates a dynamic canvas-based watermark.
-             * @private
-             */
             _createWatermark() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                const text = 'Carlos A. Muñoz - Confidential';
-                canvas.width = 300;
-                canvas.height = 150;
-                ctx.translate(150, 75);
-                ctx.rotate(-0.4);
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                ctx.font = '16px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText(text, 0, 0);
+                canvas.width = 300; canvas.height = 150;
+                ctx.translate(150, 75); ctx.rotate(-0.4);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; ctx.font = '16px Inter';
+                ctx.textAlign = 'center'; ctx.fillText('Carlos A. Muñoz - Confidential', 0, 0);
                 this.DOMElements.body.style.setProperty('--watermark-url', `url(${canvas.toDataURL()})`);
             },
 
-            /**
-             * Calls all rendering functions.
-             * @private
-             */
             _renderAll() {
                 this._renderToolkit();
                 this._renderExperiences();
                 this._renderInfographics();
             },
 
-            /**
-             * Renders the 'Toolkit' section.
-             * @private
-             */
             _renderToolkit() {
                 const toolkitOrder = ['pm', 'qa', 'lang', 'cloud', 'db', 'analytics', 'platform', 'system'];
                 const container = this.DOMElements.toolkitContainer;
@@ -986,29 +861,15 @@
                 });
             },
 
-            /**
-             * Renders the 'Professional Experience' section.
-             * @private
-             */
             _renderExperiences() {
                 this.DOMElements.experienceContainer.innerHTML = this.data.experiences.map((exp, i) => this._createExperienceEntry(exp, i)).join('');
             },
 
-            /**
-             * Renders all infographic elements.
-             * @private
-             */
             _renderInfographics() {
                 this._createRadarCharts();
                 this._createTimeline();
             },
 
-            /**
-             * Creates the HTML for a single skill tag.
-             * @param {object} skill - The skill object.
-             * @returns {string} The HTML string for the skill tag.
-             * @private
-             */
             _createSkillTag(skill) {
                 const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
                 return `
@@ -1024,25 +885,15 @@
                 `;
             },
 
-            /**
-             * Creates the HTML for a single professional experience entry.
-             * @param {object} exp - The experience object.
-             * @param {number} index - The index of the experience.
-             * @returns {string} The HTML string for the experience entry.
-             * @private
-             */
             _createExperienceEntry(exp, index) {
                 const bodyId = `experience-body-${index}`;
                 const headerId = `experience-header-${index}`;
-
                 const detailsHtml = exp.details.en.map((detail, i) => `<li data-translate-key="exp_${index}_detail_${i}">${detail}</li>`).join('');
-
                 const techTagsHtml = exp.techUsed.map(techName => {
                     const skill = Object.values(this.data.skills).flat().find(s => s.name === techName);
                     if (!skill) return '';
                     return `<div class="exp-tech-tag"><img src="${skill.icon}" alt="" onerror="this.style.display='none';"><span>${skill.name}</span></div>`;
                 }).join('');
-
                 return `
                     <div class="experience-item text-sm py-2 animate-on-scroll" data-tech='${JSON.stringify(exp.techUsed)}' id="experience-${index}">
                         <div class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
@@ -1064,10 +915,6 @@
                 `;
             },
 
-            /**
-             * Generates the SVG radar charts.
-             * @private
-             */
             _createRadarCharts() {
                 const competencyData = [ { label: 'Project Mgmt', score: 0.95 }, { label: 'QA & Automation', score: 0.95 }, { label: 'Leadership', score: 0.90 }, { label: 'DevOps Strategy', score: 0.85 }, { label: 'Cloud Platforms', score: 0.88 }, { label: 'Stakeholder Mgmt', score: 0.92 }, ];
                 const methodologyData = [ { label: 'Agile', score: 0.95 }, { label: 'Scrum', score: 0.95 }, { label: 'Kanban', score: 0.90 }, { label: 'CMMI', score: 0.75 }, { label: 'ISO Standards', score: 0.85 }, { label: 'Risk Mgmt', score: 0.90 }, ];
@@ -1075,14 +922,6 @@
                 this._generateSingleDatasetRadar(this.DOMElements.methodologiesRadarChart, methodologyData, 'rgba(249, 115, 22, 0.4)', 'rgb(249, 115, 22)');
             },
 
-            /**
-             * Helper to generate SVG for a single radar chart.
-             * @param {HTMLElement} container - The DOM element for the chart.
-             * @param {Array<object>} data - The dataset for the chart.
-             * @param {string} fillColor - Fill color for the data polygon.
-             * @param {string} strokeColor - Stroke color for the data polygon.
-             * @private
-             */
             _generateSingleDatasetRadar(container, data, fillColor, strokeColor) {
                 if (!container) return;
                 const size = 288, center = size / 2, radius = size * 0.3;
@@ -1112,10 +951,6 @@
                 container.innerHTML = `<svg viewBox="0 0 ${size} ${size}">${grid}${polygon}${labelElements}</svg>`;
             },
 
-            /**
-             * Renders the interactive career timeline.
-             * @private
-             */
             _createTimeline() {
                 const container = this.DOMElements.timelineContainer;
                 if (!container) return;
@@ -1141,10 +976,6 @@
                 container.innerHTML = content;
             },
 
-            /**
-             * Filters experiences based on selected skills.
-             * @private
-             */
             _filterExperiencesAndTimeline() {
                 const skills = this.state.selectedSkills;
                 const hasFilters = skills.size > 0;
@@ -1177,10 +1008,6 @@
                 }
             },
 
-            /**
-             * Populates the translation object with experience data.
-             * @private
-             */
             _populateAllTranslations() {
                 this.data.experiences.forEach((exp, expIdx) => {
                     Object.keys(this.data.translations).forEach(lang => {
@@ -1194,10 +1021,6 @@
                 });
             },
 
-            /**
-             * Translates all elements with a 'data-translate-key'.
-             * @param {string} lang - The language code.
-             */
             translatePage(lang) {
                 const translation = this.data.translations[lang];
                 if (!translation) return;
@@ -1219,10 +1042,6 @@
                 this._createRadarCharts();
             },
 
-            /**
-             * Sets up a delegated event listener on the body.
-             * @private
-             */
             _setupEventListeners() {
                 document.body.addEventListener('click', (e) => {
                     const target = e.target;
@@ -1238,7 +1057,7 @@
                     else if (button) this._handleButtonClick(button);
                     else if (langSelector) this._handleLanguageSelector(e);
                     else if (target.id === 'profile-photo') this._openModal();
-                    else if (target.id === 'image-modal' || target.classList.contains('modal-close')) this._closeModal();
+                    else if (target.id === 'image-modal') this._closeModal();
                 });
 
                 this.DOMElements.toolkitContainer.addEventListener('keydown', (e) => {
@@ -1251,11 +1070,6 @@
                 this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') this._closeModal(); });
             },
 
-            /**
-             * Handles all button clicks.
-             * @param {HTMLElement} button - The clicked button.
-             * @private
-             */
             _handleButtonClick(button) {
                 switch (button.id) {
                     case 'reset-filter': this._resetFilters(); break;
@@ -1264,17 +1078,13 @@
                     case 'read-more-btn': this._toggleReadMore(button); break;
                     case 'print-btn': this._trackEvent('print_cv', 'Interaction', 'Print Button'); window.print(); break;
                     case 'theme-toggle': this._toggleTheme(); break;
+                    case 'message-modal-close': this._closeMessageModal(); break;
                 }
                 if(button.classList.contains('modal-close')) {
                     this._closeModal();
                 }
             },
 
-            /**
-             * Toggles a skill filter.
-             * @param {HTMLElement} tag - The skill tag clicked.
-             * @private
-             */
             _toggleSkillFilter(tag) {
                 const skillName = tag.dataset.skillName;
                 const isPressed = tag.getAttribute('aria-pressed') === 'true';
@@ -1285,10 +1095,6 @@
                 this._filterExperiencesAndTimeline();
             },
 
-            /**
-             * Resets all skill filters.
-             * @private
-             */
             _resetFilters() {
                 this.state.selectedSkills.clear();
                 document.querySelectorAll('.tech-tag.selected').forEach(tag => {
@@ -1299,11 +1105,6 @@
                 this._filterExperiencesAndTimeline();
             },
 
-            /**
-             * Handles accordion expansion/collapse.
-             * @param {HTMLElement} button - The accordion header button.
-             * @private
-             */
             _handleAccordionToggle(button) {
                 const body = document.getElementById(button.getAttribute('aria-controls'));
                 const isExpanded = button.getAttribute('aria-expanded') === 'true';
@@ -1322,28 +1123,17 @@
                 }
             },
 
-            /**
-             * Expands or collapses all accordions in a container.
-             * @param {HTMLElement} container - The container of the accordions.
-             * @param {HTMLElement} button - The 'Expand/Collapse All' button.
-             * @private
-             */
             _toggleAllAccordions(container, button) {
                 const isExpanding = button.textContent.includes('Expand');
                 container.querySelectorAll('.accordion-header, .toolkit-header').forEach(headerBtn => {
                     const isCurrentlyExpanded = headerBtn.getAttribute('aria-expanded') === 'true';
-                    if (isExpanding && !isCurrentlyExpanded || !isExpanding && isCurrentlyExpanded) {
-                        this._handleAccordionToggle(headerBtn);
+                    if ((isExpanding && !isCurrentlyExpanded) || (!isExpanding && isCurrentlyExpanded)) {
+                        headerBtn.click();
                     }
                 });
                 button.textContent = isExpanding ? 'Collapse All' : 'Expand All';
             },
 
-            /**
-             * Handles language selector interactions.
-             * @param {Event} e - The click event.
-             * @private
-             */
             _handleLanguageSelector(e) {
                 const langSelector = this.DOMElements.languageSelector;
                 const clickedFlag = e.target.closest('.lang-flag');
@@ -1360,11 +1150,6 @@
                 }
             },
 
-            /**
-             * Toggles the "Read More" section.
-             * @param {HTMLElement} button - The "Read More/Less" button.
-             * @private
-             */
             _toggleReadMore(button) {
                 const details = this.DOMElements.summaryDetails;
                 const isExpanded = button.getAttribute('aria-expanded') === 'true';
@@ -1374,10 +1159,6 @@
                 this._trackEvent('read_more_toggle', 'Summary', isExpanded ? 'Collapsed' : 'Expanded');
             },
 
-            /**
-             * Toggles between light and dark themes.
-             * @private
-             */
             _toggleTheme() {
                 const isDarkMode = this.DOMElements.body.classList.toggle('dark-mode');
                 localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
@@ -1385,10 +1166,6 @@
                 this._renderInfographics();
             },
 
-            /**
-             * Opens the profile photo modal.
-             * @private
-             */
             _openModal() {
                 this.DOMElements.modalImage.src = this.DOMElements.profilePhoto.src;
                 this.DOMElements.imageModal.classList.add('visible');
@@ -1396,18 +1173,10 @@
                 this._trackEvent('view_photo', 'Interaction', 'Profile Photo Modal');
             },
 
-            /**
-             * Closes the profile photo modal.
-             * @private
-             */
             _closeModal() {
                 this.DOMElements.imageModal.classList.remove('visible');
             },
 
-            /**
-             * Checks URL for 'lang' parameter and sets initial language.
-             * @private
-             */
             _applyUrlLanguage() {
                 const params = new URLSearchParams(window.location.search);
                 const urlLang = params.get('lang');
@@ -1417,10 +1186,6 @@
                 }
             },
 
-            /**
-             * Applies theme from localStorage or system preference.
-             * @private
-             */
             _applyInitialTheme() {
                 const savedTheme = localStorage.getItem('theme');
                 if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -1428,10 +1193,6 @@
                 }
             },
 
-            /**
-             * Initializes scroll animations.
-             * @private
-             */
             _initScrollAnimations() {
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
@@ -1445,10 +1206,6 @@
                 document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
             },
 
-            /**
-             * Checks URL for 'skills' parameter and highlights keywords.
-             * @private
-             */
             _initUrlHighlighting() {
                 const params = new URLSearchParams(window.location.search);
                 const skillsToHighlight = params.get('skills');
@@ -1483,13 +1240,6 @@
                 }
             },
 
-            /**
-             * Tracks an event for analytics.
-             * @param {string} eventName - The event name.
-             * @param {string} eventCategory - The event category.
-             * @param {string} eventLabel - The event label.
-             * @private
-             */
             _trackEvent(eventName, eventCategory, eventLabel) {
                 if (typeof gtag === 'function') {
                     gtag('event', eventName, { 'event_category': eventCategory, 'event_label': eventLabel });
@@ -1497,6 +1247,107 @@
                     console.log(`Analytics (not sent): ${eventName}, ${eventCategory}, ${eventLabel}`);
                 }
             },
+
+            // --- "Message Me" Feature Methods ---
+            _initMessageMeFeature() {
+                const { messageFab, messageModal, messageModalClose, messageForm, senderName, senderEmail, senderMessage, fileUpload } = this.DOMElements;
+
+                messageFab.addEventListener('click', () => this._openMessageModal());
+                messageModalClose.addEventListener('click', () => this._closeMessageModal());
+                messageModal.addEventListener('click', (e) => {
+                    if (e.target === messageModal) this._closeMessageModal();
+                });
+
+                messageForm.addEventListener('input', () => this._updateFormState());
+                fileUpload.addEventListener('change', () => this._updateFileName());
+                messageForm.addEventListener('submit', (e) => this._handleFormSubmit(e));
+            },
+
+            _openMessageModal() {
+                this.DOMElements.messageModal.classList.add('visible');
+            },
+
+            _closeMessageModal() {
+                this.DOMElements.messageModal.classList.remove('visible');
+                // Reset form on close
+                this.DOMElements.messageForm.reset();
+                this._updateFormState();
+                this._updateFileName();
+                this.DOMElements.messageFormContainer.classList.remove('hidden');
+                this.DOMElements.messageStatus.classList.add('hidden');
+            },
+
+            _updateFormState() {
+                const { senderName, senderEmail, senderMessage, messageGroup, attachmentGroup, sendMessageBtn } = this.DOMElements;
+                const isNameEmailValid = senderName.value.trim() !== '' && senderEmail.checkValidity();
+                const isMessageValid = senderMessage.value.trim() !== '';
+
+                messageGroup.classList.toggle('disabled', !isNameEmailValid);
+                attachmentGroup.classList.toggle('disabled', !isNameEmailValid || !isMessageValid);
+                sendMessageBtn.disabled = !isNameEmailValid || !isMessageValid;
+            },
+
+            _updateFileName() {
+                const { fileUpload, fileName } = this.DOMElements;
+                fileName.textContent = fileUpload.files.length > 0 ? fileUpload.files[0].name : '';
+            },
+
+            async _handleFormSubmit(e) {
+                e.preventDefault();
+                const { sendMessageBtn, messageForm, messageFormContainer, messageStatus } = this.DOMElements;
+                sendMessageBtn.disabled = true;
+                sendMessageBtn.textContent = 'Sending...';
+
+                const formData = new FormData(messageForm);
+                const name = formData.get('name');
+                const email = formData.get('email');
+                const message = formData.get('message');
+                const file = this.DOMElements.fileUpload.files[0];
+
+                try {
+                    let fileURL = '';
+                    if (file) {
+                        // Validate file type and size
+                        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg'];
+                        if (!allowedTypes.includes(file.type)) {
+                            throw new Error('Invalid file type. Please upload PDF, DOCX, PNG, or JPG.');
+                        }
+                        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                            throw new Error('File is too large. Maximum size is 5MB.');
+                        }
+
+                        const storageRef = ref(storage, `attachments/${Date.now()}_${file.name}`);
+                        const snapshot = await uploadBytes(storageRef, file);
+                        fileURL = await getDownloadURL(snapshot.ref);
+                    }
+
+                    // Save message to Firestore
+                    await addDoc(collection(db, 'messages'), {
+                        name,
+                        email,
+                        message,
+                        fileURL,
+                        createdAt: serverTimestamp()
+                    });
+
+                    // Show success message
+                    messageFormContainer.classList.add('hidden');
+                    messageStatus.classList.remove('hidden');
+                    messageStatus.innerHTML = `<h3 class="text-2xl font-bold text-green-600">Thank You!</h3><p class="mt-2">Your message has been sent successfully.</p>`;
+
+                } catch (error) {
+                    // Show error message
+                    messageFormContainer.classList.add('hidden');
+                    messageStatus.classList.remove('hidden');
+                    messageStatus.innerHTML = `<h3 class="text-2xl font-bold text-red-600">Error</h3><p class="mt-2">Could not send message. ${error.message}</p><button id="retry-btn" class="mt-4 px-4 py-2 bg-cyan-600 text-white rounded">Try Again</button>`;
+                    document.getElementById('retry-btn').addEventListener('click', () => {
+                        messageFormContainer.classList.remove('hidden');
+                        messageStatus.classList.add('hidden');
+                        sendMessageBtn.disabled = false;
+                        sendMessageBtn.textContent = 'Send Message';
+                    });
+                }
+            }
         };
 
         CarlosMunozCV.init();
