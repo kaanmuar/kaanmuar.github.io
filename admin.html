@@ -151,9 +151,21 @@
                 return;
             }
             messagesList.innerHTML = querySnapshot.docs.map(renderMessageCard).join('');
+            // Add listeners for block buttons
+            querySnapshot.docs.forEach(doc => {
+                document.getElementById(`block-msg-${doc.id}`)?.addEventListener('click', (e) => {
+                    const emailToBlock = e.target.dataset.email;
+                    if (confirm(`Are you sure you want to permanently block ${emailToBlock}?`)) {
+                        blockSender(emailToBlock);
+                    }
+                });
+            });
         });
     }
 
+    /**
+     * **MODIFIED**: Attaches a listener for the new "Block Sender" button.
+     */
     function loadRatings() {
         const q = query(collection(db, "ratings"), orderBy("createdAt", "desc"));
         onSnapshot(q, (querySnapshot) => {
@@ -163,18 +175,27 @@
             }
             ratingsList.innerHTML = querySnapshot.docs.map(renderRatingCard).join('');
 
-            // Add event listeners for all possible action buttons
             querySnapshot.docs.forEach(doc => {
+                // Rating status listeners
                 document.getElementById(`approve-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'approved', isAnonymous: false }));
-                // **NEW**: Listener for the anonymous approval button
                 document.getElementById(`approve-anon-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'approved', isAnonymous: true }));
                 document.getElementById(`reject-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'rejected' }));
                 document.getElementById(`retract-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'pending' }));
                 document.getElementById(`restore-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'pending' }));
+                // Block sender listener
+                document.getElementById(`block-rating-${doc.id}`)?.addEventListener('click', (e) => {
+                    const emailToBlock = e.target.dataset.email;
+                    if (confirm(`Are you sure you want to permanently block ${emailToBlock}?`)) {
+                        blockSender(emailToBlock);
+                    }
+                });
             });
         });
     }
 
+    /**
+     * **MODIFIED**: Adds a "Block Sender" button to the message card.
+     */
     function renderMessageCard(doc) {
         const msg = doc.data();
         const date = msg.createdAt ? msg.createdAt.toDate().toLocaleString() : 'N/A';
@@ -187,7 +208,10 @@
                             <p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p>
                             <p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p>
                         </div>
-                        <span class="text-xs text-gray-500">${date}</span>
+                        <div class="flex flex-col items-end">
+                             <span class="text-xs text-gray-500 mb-2">${date}</span>
+                             <button id="block-msg-${doc.id}" data-email="${msg.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>
+                        </div>
                     </div>
                     <p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${msg.message}</p>
                     <p class="text-sm">${attachmentLink}</p>
@@ -196,7 +220,7 @@
     }
 
     /**
-     * **MODIFIED**: Renders an "Approve Anonymously" button for pending reviews.
+     * **MODIFIED**: Adds a "Block Sender" button to the rating card.
      */
     function renderRatingCard(doc) {
         const rating = doc.data();
@@ -236,7 +260,8 @@
                                 <span class="status-dot status-${rating.status}"></span>
                                 <span class="text-sm font-medium capitalize">${rating.status}</span>
                            </div>
-                           <span class="text-xs text-gray-500">${date}</span>
+                           <span class="text-xs text-gray-500 mb-2 block">${date}</span>
+                           <button id="block-rating-${doc.id}" data-email="${rating.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>
                         </div>
                     </div>
                     ${commentHTML}
@@ -260,6 +285,25 @@
         } catch (error) {
             console.error("Error updating rating status: ", error);
             alert("Could not update rating status. See console for details.");
+        }
+    }
+
+    /**
+     * **NEW**: Adds an email to the 'blocked_senders' collection in Firestore.
+     * @param {string} email - The email address to block.
+     */
+    async function blockSender(email) {
+        if (!email) {
+            alert("Cannot block sender with no email address.");
+            return;
+        }
+        const blockRef = doc(db, "blocked_senders", email.toLowerCase());
+        try {
+            await setDoc(blockRef, { blockedAt: serverTimestamp() });
+            alert(`Sender with email ${email} has been blocked successfully.`);
+        } catch (error) {
+            console.error("Error blocking sender: ", error);
+            alert("Could not block sender. See console for details.");
         }
     }
 </script>
