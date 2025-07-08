@@ -1430,10 +1430,18 @@
                     const contactLink = target.closest('[data-analytics-event="contact_click"]');
                     const button = target.closest('button');
                     const langSelector = target.closest('#language-selector');
+                    const timelineLink = target.closest('#timeline-container a');
+
 
                     if (skillTag) this._toggleSkillFilter(skillTag);
                     else if (accordionHeader) this._handleAccordionToggle(accordionHeader);
                     else if (contactLink) this._trackEvent('contact_click', 'Contact', contactLink.dataset.analyticsLabel);
+                    // NEW: Event listener for timeline clicks
+                    else if (timelineLink) {
+                        const jobTitle = timelineLink.querySelector('p.font-bold')?.textContent || 'Unknown Title';
+                        const company = timelineLink.querySelector('div > span')?.textContent || 'Unknown Company';
+                        this._trackEvent('click_timeline', 'Engagement', `${jobTitle} at ${company}`);
+                    }
                     else if (button) this._handleButtonClick(button);
                     else if (langSelector) this._handleLanguageSelector(e);
                     else if (target.id === 'profile-photo') this._openModal();
@@ -1491,6 +1499,9 @@
                 this._filterExperiencesAndTimeline();
             },
 
+            /**
+             * MODIFIED: Added analytics tracking for expanding a job experience.
+             */
             _handleAccordionToggle(button) {
                 const body = document.getElementById(button.getAttribute('aria-controls'));
                 const isExpanded = button.getAttribute('aria-expanded') === 'true';
@@ -1503,6 +1514,13 @@
                 if (experienceItem) {
                     experienceItem.classList.toggle('is-open', !isExpanded);
                     button.querySelector('.accordion-icon').style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+
+                    // NEW: Track event only when expanding
+                    if (!isExpanded) {
+                        const jobTitle = button.querySelector('h4')?.textContent || 'Unknown Title';
+                        const company = button.querySelector('p.italic')?.textContent || 'Unknown Company';
+                        this._trackEvent('expand_experience', 'Engagement', `${jobTitle} at ${company}`);
+                    }
                 } else if (toolkitItem) {
                     button.parentElement.nextElementSibling.style.display = isExpanded ? 'block' : 'none';
                     button.nextElementSibling.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
@@ -1882,6 +1900,9 @@
                         createdAt: serverTimestamp()
                     });
 
+                    // NEW: Track the successful submission in Google Analytics
+                    this._trackEvent('submit_message', 'Form Submission', `Topic: ${formData.get('topic')}`);
+
                     this._showStatusMessage('success', 'message');
                     this._resetMessageForm();
 
@@ -1920,6 +1941,9 @@
                         status: 'pending',
                         createdAt: serverTimestamp()
                     });
+
+                    // NEW: Track the successful submission in Google Analytics
+                    this._trackEvent('submit_rating', 'Form Submission', `Rating: ${ratingValue} Stars`);
 
                     this._showStatusMessage('success', 'rating');
                     this._resetRatingForm();
