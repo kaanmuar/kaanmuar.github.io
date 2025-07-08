@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .tab-btn { padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; transition: all 0.2s; }
+        .tab-btn.active { background-color: #0891b2; color: white; }
+        .tab-btn:not(.active) { background-color: #e5e7eb; color: #4b5563; }
+        .item-card { background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .status-pending { background-color: #f59e0b; }
+        .status-approved { background-color: #10b981; }
+        .status-rejected { background-color: #ef4444; }
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center; z-index: 100;
+        }
+        .login-box { background-color: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="email" class="block font-medium mb-1">Email</label>
+                    <input type="email" id="email" required class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="block font-medium mb-1">Password</label>
+                    <input type="password" id="password" required class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Login</button>
+                <p id="login-error" class="text-red-600 text-sm mt-2"></p>
+            </form>
+        </div>
+    </div>
+
+    <main id="dashboard" class="container mx-auto p-4 md:p-6 hidden">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">CV Admin Dashboard</h1>
+            <button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600">Logout</button>
+        </div>
+
+        <div class="flex space-x-4 mb-6 border-b pb-2">
+            <button id="messages-tab-btn" class="tab-btn active">Messages</button>
+            <button id="ratings-tab-btn" class="tab-btn">CV Ratings</button>
+        </div>
+
+        <div id="messages-pane">
+            <h2 class="text-2xl font-semibold mb-4">Inbox Messages</h2>
+            <div id="messages-list" class="space-y-4">
+                <p>Loading messages...</p>
+            </div>
+        </div>
+
+        <div id="ratings-pane" class="hidden">
+            <h2 class="text-2xl font-semibold mb-4">CV Ratings</h2>
+            <div id="ratings-list" class="space-y-4">
+                <p>Loading ratings...</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
+            authDomain: "carlosm-interactive-cv.firebaseapp.com",
+            projectId: "carlosm-interactive-cv",
+            storageBucket: "carlosm-interactive-cv.firebasestorage.app",
+            messagingSenderId: "976558418058",
+            appId: "1:976558418058:web:1dc19bcd40915ea233e573"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const loginOverlay = document.getElementById('login-overlay');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const dashboard = document.getElementById('dashboard');
+        const logoutBtn = document.getElementById('logout-btn');
+        const messagesTabBtn = document.getElementById('messages-tab-btn');
+        const ratingsTabBtn = document.getElementById('ratings-tab-btn');
+        const messagesPane = document.getElementById('messages-pane');
+        const ratingsPane = document.getElementById('ratings-pane');
+        const messagesList = document.getElementById('messages-list');
+        const ratingsList = document.getElementById('ratings-list');
+        
+        // --- Authentication ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                // User is signed in
+                loginOverlay.style.display = 'none';
+                dashboard.classList.remove('hidden');
+                initDashboard();
+            } else {
+                // User is signed out
+                loginOverlay.style.display = 'flex';
+                dashboard.classList.add('hidden');
+            }
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = loginForm.email.value;
+            const password = loginForm.password.value;
+            signInWithEmailAndPassword(auth, email, password)
+                .catch(error => {
+                    loginError.textContent = "Login failed. Please check your email and password.";
+                    console.error("Login Error:", error);
+                });
+        });
+
+        logoutBtn.addEventListener('click', () => signOut(auth));
+
+        // --- Dashboard Initialization ---
+        function initDashboard() {
+            // Tab switching logic
+            messagesTabBtn.addEventListener('click', () => switchTab('messages'));
+            ratingsTabBtn.addEventListener('click', () => switchTab('ratings'));
+
+            // Load data
+            loadMessages();
+            loadRatings();
+        }
+
+        function switchTab(tabName) {
+            const isMessages = tabName === 'messages';
+            messagesTabBtn.classList.toggle('active', isMessages);
+            ratingsTabBtn.classList.toggle('active', !isMessages);
+            messagesPane.classList.toggle('hidden', !isMessages);
+            ratingsPane.classList.toggle('hidden', isMessages);
+        }
+
+        // --- Data Loading and Rendering ---
+
+        /**
+         * Fetches and displays messages from Firestore in real-time.
+         */
+        function loadMessages() {
+            const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+            onSnapshot(q, (querySnapshot) => {
+                if (querySnapshot.empty) {
+                    messagesList.innerHTML = '<p>No messages yet.</p>';
+                    return;
+                }
+                messagesList.innerHTML = querySnapshot.docs.map(renderMessageCard).join('');
+            });
+        }
+
+        /**
+         * Fetches and displays ratings from Firestore in real-time.
+         */
+        function loadRatings() {
+            const q = query(collection(db, "ratings"), orderBy("createdAt", "desc"));
+            onSnapshot(q, (querySnapshot) => {
+                if (querySnapshot.empty) {
+                    ratingsList.innerHTML = '<p>No ratings yet.</p>';
+                    return;
+                }
+                ratingsList.innerHTML = querySnapshot.docs.map(renderRatingCard).join('');
+                
+                // Add event listeners for the new approve/reject buttons
+                querySnapshot.docs.forEach(doc => {
+                    document.getElementById(`approve-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, 'approved'));
+                    document.getElementById(`reject-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, 'rejected'));
+                });
+            });
+        }
+
+        /**
+         * Renders a single message into an HTML card.
+         * @param {DocumentSnapshot} doc - The Firestore document for the message.
+         * @returns {string} - The HTML string for the card.
+         */
+        function renderMessageCard(doc) {
+            const msg = doc.data();
+            const date = msg.createdAt ? msg.createdAt.toDate().toLocaleString() : 'N/A';
+            const attachmentLink = msg.fileURL ? `<a href="${msg.fileURL}" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline">View Attachment</a>` : '<span>No attachment</span>';
+
+            return `
+                <div class="item-card p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p>
+                            <p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p>
+                        </div>
+                        <span class="text-xs text-gray-500">${date}</span>
+                    </div>
+                    <p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${msg.message}</p>
+                    <p class="text-sm">${attachmentLink}</p>
+                </div>
+            `;
+        }
+        
+        /**
+         * Renders a single rating into an HTML card with action buttons.
+         * @param {DocumentSnapshot} doc - The Firestore document for the rating.
+         * @returns {string} - The HTML string for the card.
+         */
+        function renderRatingCard(doc) {
+            const rating = doc.data();
+            const date = rating.createdAt ? rating.createdAt.toDate().toLocaleString() : 'N/A';
+            const starsHTML = '&#9733;'.repeat(rating.rating) + '&#9734;'.repeat(5 - rating.rating);
+            const commentHTML = rating.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${rating.comment}</p>` : '<p class="text-sm text-gray-500 italic mt-2">No comment provided.</p>';
+            
+            const actionButtons = rating.status === 'pending' ? `
+                <button id="approve-${doc.id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button>
+                <button id="reject-${doc.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>
+            ` : '';
+            
+            return `
+                <div class="item-card p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <p class="font-bold text-lg">${rating.name} <span class="font-normal text-sm text-gray-500">&lt;${rating.email}&gt;</span></p>
+                            <p class="text-xl text-yellow-400" aria-label="Rating: ${rating.rating} out of 5 stars">${starsHTML}</p>
+                        </div>
+                        <div class="text-right">
+                           <div class="flex items-center gap-2 mb-1">
+                                <span class="status-dot status-${rating.status}"></span>
+                                <span class="text-sm font-medium capitalize">${rating.status}</span>
+                           </div>
+                           <span class="text-xs text-gray-500">${date}</span>
+                        </div>
+                    </div>
+                    ${commentHTML}
+                    <div class="flex space-x-2 mt-4">
+                        ${actionButtons}
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Updates the status of a rating in Firestore.
+         * @param {string} docId - The ID of the rating document.
+         * @param {'approved'|'rejected'} newStatus - The new status to set.
+         */
+        async function updateRatingStatus(docId, newStatus) {
+            const ratingRef = doc(db, "ratings", docId);
+            try {
+                await updateDoc(ratingRef, { status: newStatus });
+                console.log(`Rating ${docId} status updated to ${newStatus}`);
+            } catch (error) {
+                console.error("Error updating rating status: ", error);
+                alert("Could not update rating status. See console for details.");
+            }
+        }
+    </script>
+</body>
+</html>
