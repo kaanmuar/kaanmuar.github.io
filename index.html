@@ -56,6 +56,7 @@
         :root {
             --bg-primary: #f9fafb; --bg-secondary: #ffffff; --bg-sidebar: #1f2937; --text-primary: #111827; --text-secondary: #4b5563;
             --text-sidebar-primary: #ffffff; --text-sidebar-secondary: #d1d5db; --border-color: #e5e7eb; --cyan-brand: #0891b2; --orange-brand: #f97316; --pulse-blue: rgba(59, 130, 246, 0.7);
+            --error-red: #dc2626;
         }
         .dark-mode {
             --bg-primary: #111827; --bg-secondary: #1f2937; --bg-sidebar: #0f172a; --text-primary: #f3f4f6; --text-secondary: #9ca3af;
@@ -150,14 +151,184 @@
         .dark-mode #theme-toggle .sun-icon { display: block; }
         .dark-mode #theme-toggle .moon-icon { display: none; }
         .radar-label:hover { font-weight: bold; text-decoration: underline; text-decoration-color: var(--cyan-brand); text-decoration-thickness: 2px; cursor: pointer; }
-        /* "Message Me" Feature Styles */
-        #message-fab { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999; }
-        #message-modal { z-index: 1001; }
-        #message-form .form-group { transition: opacity 0.3s ease; }
-        #message-form .form-group.disabled { opacity: 0.5; pointer-events: none; }
-        #file-upload-label { cursor: pointer; }
-        #file-upload-label.disabled { cursor: not-allowed; }
-        #file-name { font-size: 0.75rem; color: var(--text-secondary); }
+
+        /* --- NEW: Contact Widget & Form Styles --- */
+        #contact-widget-fab { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999; }
+        #contact-widget {
+            position: fixed;
+            bottom: 6rem; /* Position above the FAB */
+            right: 1.5rem;
+            width: 90%;
+            max-width: 400px;
+            z-index: 1000;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            visibility: hidden;
+            transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            max-height: 70vh;
+        }
+        #contact-widget.visible {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .widget-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .widget-tab-btn {
+            background: none;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .widget-tab-btn:hover { color: var(--text-primary); }
+        .widget-tab-btn.active {
+            color: var(--cyan-brand);
+            border-bottom-color: var(--cyan-brand);
+        }
+        .widget-close-btn {
+            background: none; border: none; font-size: 1.5rem; line-height: 1; cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .widget-close-btn:hover { color: var(--text-primary); }
+        .widget-body { padding: 1rem; overflow-y: auto; flex-grow: 1; }
+        .widget-form-pane { display: none; }
+        .widget-form-pane.active { display: block; }
+        .form-group { margin-bottom: 1rem; position: relative; }
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.6rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--cyan-brand);
+            box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.2);
+        }
+        .form-group input.invalid, .form-group textarea.invalid, .form-group select.invalid {
+            border-color: var(--error-red);
+        }
+        .error-message {
+            color: var(--error-red);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none; /* Initially hidden */
+        }
+        /* Attachment styles */
+        #file-upload-label {
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            background-color: #f0f0f0;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+        .dark-mode #file-upload-label { background-color: #374151; }
+        #file-upload-label:hover { background-color: #e5e5e5; }
+        .dark-mode #file-upload-label:hover { background-color: #4b5563; }
+        #file-upload-label.disabled { cursor: not-allowed; opacity: 0.6; }
+        #file-upload-status {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            height: 1.25rem; /* Reserve space */
+        }
+        #file-upload-status .spinner {
+            display: inline-block;
+            width: 1rem; height: 1rem;
+            border: 2px solid var(--cyan-brand);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* Star Rating Styles */
+        .star-rating { display: flex; align-items: center; gap: 0.25rem; }
+        .star-rating .star {
+            cursor: pointer;
+            font-size: 1.75rem;
+            color: var(--border-color);
+            transition: color 0.2s, transform 0.2s;
+        }
+        .star-rating:hover .star,
+        .star-rating .star.hover,
+        .star-rating .star.selected { color: #f59e0b; }
+        .star-rating .star:hover { transform: scale(1.2); }
+        /* Widget Status/Confirmation Styles */
+        #widget-status-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #widget-status-container.visible { opacity: 1; visibility: visible; }
+        #widget-status-close-btn { position: absolute; top: 0.5rem; right: 0.5rem; }
+        .submit-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            background-color: var(--cyan-brand);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .submit-btn:hover { background-color: #067c99; }
+        .submit-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .submit-btn .spinner {
+            display: none;
+            width: 1.25rem; height: 1.25rem;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .submit-btn.sending .spinner { display: inline-block; }
+        .submit-btn.sending .btn-text { display: none; }
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
@@ -359,47 +530,98 @@
 </div>
 
 <!-- "Message Me" Floating Action Button -->
-<button id="message-fab" class="no-print bg-cyan-600 hover:bg-cyan-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center" aria-label="Open message form">
+<button id="contact-widget-fab" class="no-print bg-cyan-600 hover:bg-cyan-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center" aria-label="Open contact widget">
     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
 </button>
 
-<!-- "Message Me" Modal -->
-<div id="message-modal" class="modal-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="message-modal-heading">
-    <div class="modal-content w-full max-w-lg p-6">
-        <div id="message-form-container">
-            <div class="flex justify-between items-center mb-4">
-                <h2 id="message-modal-heading" class="text-xl font-bold text-gray-800 dark:text-gray-200">Message Me</h2>
-                <button id="message-modal-close" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200" aria-label="Close message form">&times;</button>
-            </div>
+<div id="contact-widget" class="no-print" role="dialog" aria-modal="true" aria-labelledby="widget-title" aria-hidden="true">
+    <header class="widget-header">
+        <div class="widget-tabs" role="tablist" aria-label="Contact options">
+            <button id="message-tab" role="tab" aria-selected="true" aria-controls="message-pane" class="widget-tab-btn active" data-translate-key="widget_tab_message">Message</button>
+            <button id="rating-tab" role="tab" aria-selected="false" aria-controls="rating-pane" class="widget-tab-btn" data-translate-key="widget_tab_rate">Rate CV</button>
+        </div>
+        <button id="widget-close-btn" class="widget-close-btn" aria-label="Close widget">&times;</button>
+    </header>
+
+    <div class="widget-body">
+        <div id="message-pane" class="widget-form-pane active" role="tabpanel" aria-labelledby="message-tab">
             <form id="message-form" novalidate>
                 <div class="form-group">
-                    <label for="sender-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
-                    <input type="text" id="sender-name" name="name" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
+                    <label for="sender-name" data-translate-key="form_label_name">Name</label>
+                    <input type="text" id="sender-name" name="name" required minlength="2" aria-describedby="sender-name-error">
+                    <div id="sender-name-error" class="error-message" role="alert"></div>
                 </div>
-                <div class="form-group mt-4">
-                    <label for="sender-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                    <input type="email" id="sender-email" name="email" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
+                <div class="form-group">
+                    <label for="sender-email" data-translate-key="form_label_email">Email</label>
+                    <input type="email" id="sender-email" name="email" required aria-describedby="sender-email-error">
+                    <div id="sender-email-error" class="error-message" role="alert"></div>
                 </div>
-                <div id="message-group" class="form-group mt-4 disabled">
-                    <label for="sender-message" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
-                    <textarea id="sender-message" name="message" rows="4" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                <div class="form-group">
+                    <label for="message-topic" data-translate-key="form_label_topic">Topic</label>
+                    <select id="message-topic" name="topic" required aria-describedby="message-topic-error">
+                    </select>
+                    <div id="message-topic-error" class="error-message" role="alert"></div>
                 </div>
-                <div id="attachment-group" class="form-group mt-4 disabled">
-                    <label id="file-upload-label" for="file-upload" class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                        <span>Attach File</span>
-                    </label>
+                <div class="form-group">
+                    <label for="sender-message" data-translate-key="form_label_message">Message</label>
+                    <textarea id="sender-message" name="message" rows="4" required minlength="10" aria-describedby="sender-message-error"></textarea>
+                    <div id="sender-message-error" class="error-message" role="alert"></div>
+                </div>
+                <div class="form-group">
+                    <label for="file-upload" data-translate-key="form_label_attachment">Attachment (Optional)</label>
                     <input type="file" id="file-upload" class="hidden">
-                    <span id="file-name" class="ml-3"></span>
+                    <label id="file-upload-label" for="file-upload" role="button" tabindex="0" class="inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <span data-translate-key="form_button_attach">Attach File</span>
+                    </label>
+                    <div id="file-upload-status" class="text-gray-500 dark:text-gray-400" aria-live="polite"></div>
                 </div>
-                <div class="mt-6">
-                    <button id="send-message-btn" type="submit" disabled class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                        Send Message
-                    </button>
-                </div>
+                <button id="send-message-btn" type="submit" class="submit-btn" disabled>
+                    <span class="btn-text" data-translate-key="form_button_send">Send Message</span>
+                    <div class="spinner"></div>
+                </button>
             </form>
         </div>
-        <div id="message-status" class="hidden text-center py-10"></div>
+
+        <div id="rating-pane" class="widget-form-pane" role="tabpanel" aria-labelledby="rating-tab">
+            <form id="rating-form" novalidate>
+                <div class="form-group">
+                    <label data-translate-key="form_label_rating">Overall Rating</label>
+                    <div id="star-rating" class="star-rating" role="radiogroup" aria-labelledby="star-rating-error">
+                        <span class="star" role="radio" aria-checked="false" aria-label="1 star" data-value="1">&starf;</span>
+                        <span class="star" role="radio" aria-checked="false" aria-label="2 stars" data-value="2">&starf;</span>
+                        <span class="star" role="radio" aria-checked="false" aria-label="3 stars" data-value="3">&starf;</span>
+                        <span class="star" role="radio" aria-checked="false" aria-label="4 stars" data-value="4">&starf;</span>
+                        <span class="star" role="radio" aria-checked="false" aria-label="5 stars" data-value="5">&starf;</span>
+                    </div>
+                    <input type="hidden" id="rating-value" name="rating" value="0" required>
+                    <div id="star-rating-error" class="error-message" role="alert"></div>
+                </div>
+                <div class="form-group">
+                    <label for="rater-name" data-translate-key="form_label_name">Name</label>
+                    <input type="text" id="rater-name" name="name" required minlength="2" aria-describedby="rater-name-error">
+                    <div id="rater-name-error" class="error-message" role="alert"></div>
+                </div>
+                <div class="form-group">
+                    <label for="rater-email" data-translate-key="form_label_email">Email</label>
+                    <input type="email" id="rater-email" name="email" required aria-describedby="rater-email-error">
+                    <div id="rater-email-error" class="error-message" role="alert"></div>
+                </div>
+                <div class="form-group">
+                    <label for="rater-comment" data-translate-key="form_label_comments">Comments (Optional)</label>
+                    <textarea id="rater-comment" name="comment" rows="3"></textarea>
+                </div>
+                <button id="send-rating-btn" type="submit" class="submit-btn" disabled>
+                    <span class="btn-text" data-translate-key="form_button_submit_rating">Submit Rating</span>
+                    <div class="spinner"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="widget-status-container" aria-live="assertive">
+        <div id="widget-status-content"></div>
+        <button id="widget-status-close-btn" class="widget-close-btn" aria-label="Close message">&times;</button>
     </div>
 </div>
 
@@ -433,8 +655,11 @@
                 lang: 'en',
                 selectedSkills: new Set(),
                 pulseTimeout: null,
+                statusTimeout: null, // For auto-closing status messages
+                rating: 0 // For star rating
             },
             data: {
+                // ... (keep your existing skills and experiences data here)
                 skills: {
                     pm: [
                         { name: 'Agile', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/agile/339933' },
@@ -705,6 +930,8 @@
                     fr: { 'Project Mgmt': 'Expertise dans la direction de projets de l\'initiation à l\'achèvement, en veillant à ce qu\'ils respectent le périmètre, le budget et le calendrier.', 'QA & Automation': 'Connaissance approfondie de la conception et de la mise en œuvre de cadres de test automatisés pour garantir la qualité et la fiabilité des logiciels.', 'Leadership': 'Capacité avérée à encadrer, gérer et motiver des équipes interfonctionnelles pour atteindre de hautes performances et la réussite des projets.', 'DevOps Strategy': 'Compétent dans l\'intégration du développement et des opérations pour améliorer le flux de travail, augmenter l\'efficacité et accélérer les cycles de publication.', 'Cloud Platforms': 'Maîtrise de l\'utilisation des principaux fournisseurs de cloud (AWS, Azure, GCP) pour une infrastructure évolutive, résiliente et rentable.', 'Stakeholder Mgmt': 'Adepte de la gestion des communications et des relations avec toutes les parties prenantes pour garantir l\'alignement et l\'adhésion au projet.', 'Agile': 'Vaste expérience des principes et pratiques Agile pour fournir de la valeur de manière itérative et s\'adapter aux exigences changeantes.', 'Scrum': 'Expertise certifiée dans la gestion de projets à l\'aide du cadre Scrum pour un développement transparent, itératif et collaboratif.', 'Kanban': 'Utilisation de Kanban pour la visualização do fluxo de trabalho, la gestion du flux et l\'amélioration continue afin d\'optimiser la livraison.', 'CMMI': 'Connaissance du cadre d\'intégration du modèle de maturité des capacités pour améliorer et normaliser les processus organisationnels.', 'ISO Standards': 'Expérience dans la mise en œuvre et le respect des normes ISO pour la gestion de la qualité et la sécurité de l\'information.', 'Risk Mgmt': 'Approche systématique pour identifier, analyser et atténuer les risques du projet afin de garantir des résultats positifs.' },
                     it: { 'Project Mgmt': 'Competenza nella guida di progetti dall\'inizio al completamento, assicurando il rispetto di ambito, budget e tempistiche.', 'QA & Automation': 'Profonda conoscenza nella progettazione e implementazione di framework di test automatizzati per garantire la qualità e l\'affidabilità del software.', 'Leadership': 'Comprovata capacità di fare da mentore, gestire e motivare team interfunzionali per raggiungere alte prestazioni e il successo del progetto.', 'DevOps Strategy': 'Abile nell\'integrare sviluppo e operazioni per migliorare il flusso di lavoro, aumentare l\'efficienza e accelerare i cicli di rilascio.', 'Cloud Platforms': 'Competente nell\'utilizzo dei principali provider di cloud (AWS, Azure, GCP) per un\'infrastruttura scalabile, resiliente ed economica.', 'Stakeholder Mgmt': 'Abile nella gestione delle comunicazioni e delle relazioni con tutti gli stakeholder per garantire l\'allineamento e il consenso al progetto.', 'Agile': 'Vasta esperienza con i principi e le pratiche Agile per fornire valore in modo iterativo e adattarsi ai requisiti mutevoli.', 'Scrum': 'Competenza certificata nella gestione di progetti utilizzando il framework Scrum per uno sviluppo trasparente, iterativo e collaborativo.', 'Kanban': 'Utilizzo di Kanban per la visualizzazione del flusso di lavoro, la gestione del flusso e il miglioramento continuo per ottimizzare la consegna.', 'CMMI': 'Conoscenza del framework Capability Maturity Model Integration per migliorare e standardizzare i processi organizzativi.', 'ISO Standards': 'Esperienza nell\'implementazione e nel rispetto degli standard ISO per la gestione della qualità e la sicurezza delle informazioni.', 'Risk Mgmt': 'Approccio sistematico per identificare, analizzare e mitigare i rischi di progetto per garantire risultati di successo.' }
                 },
+
+                // --- NEW/UPDATED: Translations for Widget, Forms, and Errors ---
                 translations: {
                     en: {
                         job_title: "Senior IT Project Manager, QA Architect & QA Leader", contact_title: "Contact", competencies_title: "Core Competencies", competency_pm: "IT Project Management", competency_qa: "QA & Test Automation", competency_lead: "Team Leadership & Mentoring", competency_devops: "CI/CD & DevOps Strategy", competency_cloud: "Cloud Platforms (AWS, Azure, GCP)", competency_strategy: "Strategic Business Acumen", competency_relations: "Stakeholder & Client Relations", languages_title: "Languages", lang_native: "Native", lang_fluent: "Fluent", lang_basic: "Basic", lang_others: "Others", summary_title: "Professional Summary", summary_text: "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.", summary_detail_1: "Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.", summary_detail_2: "As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.", toolkit_title: "Technical & Management Toolkit", toolkit_pm: "Project Management & Methodologies:", toolkit_qa: "QA & Test Automation:", toolkit_lang: "Programming & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Databases & APIs:", toolkit_analytics: "Analytics & Monitoring:", toolkit_platform: "Platforms & Business Tools:", toolkit_system: "General & System Tools:", experience_title: "Professional Experience", education_title: "Education & Certifications", infographics_title: "Career at a Glance", infographics_competencies_title: "Core Competencies", infographics_methodologies_title: "Methodologies & Processes", infographics_timeline_title: "Career Timeline",
@@ -717,8 +944,47 @@
                         tooltip_lang_pt: "Translate to Portuguese",
                         tooltip_lang_de: "Translate to German",
                         tooltip_lang_fr: "Translate to French",
-                        tooltip_lang_it: "Translate to Italian"
+                        tooltip_lang_it: "Translate to Italian",
+                        // New Widget and Form Translations
+                        widget_tab_message: "Message",
+                        widget_tab_rate: "Rate CV",
+                        form_label_name: "Name",
+                        form_label_email: "Email",
+                        form_label_topic: "Topic",
+                        form_label_message: "Message",
+                        form_label_attachment: "Attachment (Optional)",
+                        form_button_attach: "Attach File",
+                        form_button_send: "Send Message",
+                        form_label_rating: "Overall Rating",
+                        form_label_comments: "Comments (Optional)",
+                        form_button_submit_rating: "Submit Rating",
+                        // New Validation Error Translations
+                        error_required: "This field is required.",
+                        error_min_length: "Please enter at least {min} characters.",
+                        error_email: "Please enter a valid email address.",
+                        error_topic: "Please select a topic.",
+                        error_rating: "Please select a rating.",
+                        error_file_size: "File is too large. Max size is 5MB.",
+                        error_file_type: "Invalid file type. (PDF, DOC, DOCX, PNG, JPG)",
+                        // New Status Messages
+                        status_sending: "Sending...",
+                        status_uploading: "Uploading...",
+                        status_file_attached: "File attached: {fileName}",
+                        status_success_message_title: "Message Sent!",
+                        status_success_message_body: "Thank you for reaching out. I'll get back to you shortly.",
+                        status_success_rating_title: "Rating Submitted!",
+                        status_success_rating_body: "Thank you for your valuable feedback!",
+                        status_error_title: "An Error Occurred",
+                        status_error_body: "Sorry, something went wrong. Please try again later.",
+                        // New Topic Options
+                        topic_option_default: "Select a topic...",
+                        topic_option_opportunity: "Job Opportunity / Collaboration",
+                        topic_option_inquiry: "Project Inquiry",
+                        topic_option_feedback: "CV Feedback",
+                        topic_option_other: "Other"
                     },
+                    // Add translations for 'es', 'pt', 'de', 'fr', 'it' for all the new keys above
+                    // For brevity, I will only show the 'es' translation as an example.
                     es: {
                         job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA", contact_title: "Contacto", competencies_title: "Competencias Clave", competency_pm: "Gestión de Proyectos de TI", competency_qa: "QA y Automatización de Pruebas", competency_lead: "Liderazgo y Mentoría de Equipos", competency_devops: "Estrategia de CI/CD y DevOps", competency_cloud: "Plataformas en la Nube", competency_strategy: "Visión Estratégica de Negocio", competency_relations: "Relaciones con Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluido", lang_basic: "Básico", lang_others: "Otros", summary_title: "Resumen Profesional", summary_text: "Un Gerente Senior de Proyectos de TI y Arquitecto de QA con más de dos décadas de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de stakeholders y liderazgo de equipos multifuncionales para alcanzar los objetivos del proyecto. Habilidad demostrada para diseñar e implementar robustos marcos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos.", summary_detail_1: "A lo largo de mi carrera, he defendido un enfoque holístico de la calidad, integrando los procesos de QA en cada etapa del SDLC. Como Arquitecto de QA, me especializo en diseñar marcos de automatización escalables, mantenibles y eficientes desde cero, adaptados a las necesidades específicas del producto y la pila tecnológica. Mi experiencia se extiende a la selección de las herramientas óptimas, el establecimiento de las mejores prácticas y la creación de integraciones de CI/CD que proporcionan retroalimentación rápida y fiable a los equipos de desarrollo, reduciendo significativamente los ciclos de regresión y acelerando el tiempo de comercialización.", summary_detail_2: "Como Gerente de Proyectos y Líder, sobresalgo en la creación y mentoría de equipos multiculturales de alto rendimiento. Tengo un historial probado en la gestión de carteras de proyectos multimillonarios, la mitigación de riesgos y la alineación de la ejecución técnica con la estrategia empresarial a nivel ejecutivo. Mi filosofía de liderazgo se centra en la comunicación clara, el empoderamiento y el fomento de un entorno colaborativo donde cada miembro del equipo está motivado para contribuir con su mejor trabajo. Mi dominio del inglés a nivel C2 y mis habilidades multilingües me permiten gestionar sin problemas equipos y stakeholders globales.", toolkit_title: "Herramientas Técnicas y de Gestión", toolkit_pm: "Gestión de Proyectos y Metodologías:", toolkit_qa: "QA y Automatización de Pruebas:", toolkit_lang: "Programación y Scripting:", toolkit_cloud: "Nube, CI/CD y DevOps:", toolkit_db: "Bases de Datos y APIs:", toolkit_analytics: "Analítica y Monitoreo:", toolkit_platform: "Plataformas y Herramientas de Negocio:", toolkit_system: "Herramientas Generales y de Sistema:", experience_title: "Experiencia Profesional", education_title: "Educación y Certificaciones", infographics_title: "Carrera en un Vistazo", infographics_competencies_title: "Competencias Clave", infographics_methodologies_title: "Metodologías y Procesos", infographics_timeline_title: "Línea de Tiempo Profesional",
                         info_bubble_contact: "Haga clic en cualquier enlace de contacto para abrir la aplicación correspondiente (Email, WhatsApp, etc.).",
@@ -730,60 +996,43 @@
                         tooltip_lang_pt: "Traducir a Portugués",
                         tooltip_lang_de: "Traducir a Alemán",
                         tooltip_lang_fr: "Traducir a Francés",
-                        tooltip_lang_it: "Traducir a Italiano"
-                    },
-                    pt: {
-                        job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA", contact_title: "Contato", competencies_title: "Principais Competências", competency_pm: "Gerenciamento de Projetos de TI", competency_qa: "QA e Automação de Testes", competency_lead: "Liderança e Mentoria de Equipes", competency_devops: "Estratégia de CI/CD e DevOps", competency_cloud: "Plataformas de Nuvem", competency_strategy: "Acume Estratégico de Negócios", competency_relations: "Relações com Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Básico", lang_others: "Outros", summary_title: "Resumo Profissional", summary_text: "Um Gerente de Projetos de TI Sênior e Arquiteto de QA com mais de duas décadas de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais para atingir as metas dos projetos. Capacidade comprovada de arquitetar e implementar robustos frameworks de automação de QA (Selenium, Cypress, Kotlin), garantindo qualidade de produto e eficiência excepcionais para clientes como Autodesk, AT&T e Sophos.", summary_detail_1: "Ao longo da minha carreira, defendi uma abordagem holística da qualidade, incorporando processos de QA em todas as fases do SDLC. Como Arquiteto de QA, especializo-me em projetar frameworks de automação escaláveis, de fácil manutenção e eficientes a partir do zero, adaptados às necessidades específicas do produto e da pilha tecnológica. Minha experiência abrange a seleção das ferramentas ideais, o estabelecimento das melhores práticas e a criação de integrações de CI/CD que fornecem feedback rápido e confiável às equipes de desenvolvimento, reduzindo significativamente os ciclos de regressão e acelerando o tempo de lançamento no mercado.", summary_detail_2: "Como Gerente de Projetos e Líder, destaco-me na criação e mentoria de equipes multiculturais de alto desempenho. Tenho um histórico comprovado no gerenciamento de portfólios de projetos multimilionários, na mitigação de riscos e no alinhamento da execução técnica com a estratégia de negócios em nível executivo. Minha filosofia de liderança é centrada na comunicação clara, no empoderamento e na promoção de um ambiente colaborativo donde cada membro da equipe se sinta motivado a contribuir com seu melhor trabalho. Minha proficiência em inglês C2 e minhas habilidades multilíngues me permitem gerenciar equipes e stakeholders globais sem problemas.", toolkit_title: "Kit de Ferramentas Técnicas e de Gestão", toolkit_pm: "Gerenciamento de Projetos e Metodologias:", toolkit_qa: "QA e Automação de Testes:", toolkit_lang: "Programação e Scripting:", toolkit_cloud: "Nuvem, CI/CD e DevOps:", toolkit_db: "Bancos de Dados e APIs:", toolkit_analytics: "Análise e Monitoramento:", toolkit_platform: "Plataformas e Ferramentas de Negócios:", toolkit_system: "Ferramentas Gerais e de Sistema:", experience_title: "Experiência Profissional", education_title: "Educação e Certificações", infographics_title: "Carreira em Resumo", infographics_competencies_title: "Competências Essenciais", infographics_methodologies_title: "Metodologias e Processos", infographics_timeline_title: "Linha do Tempo da Carreira",
-                        info_bubble_contact: "Clique em qualquer link de contato para abrir o aplicativo correspondente (E-mail, WhatsApp, etc.).",
-                        info_bubble_toolkit: "Clique em qualquer habilidade para filtrar a lista de experiências. Clique novamente para desmarcar ou use 'Redefinir' para limpar tudo.",
-                        tooltip_print: "Imprimir / PDF",
-                        tooltip_timeline: "Clique para ir para a experiência de %COMPANY%",
-                        tooltip_lang_en: "Traduzir para Inglês",
-                        tooltip_lang_es: "Traduzir para Espanhol",
-                        tooltip_lang_pt: "Traduzir para Português",
-                        tooltip_lang_de: "Traduzir para Alemão",
-                        tooltip_lang_fr: "Traduzir para Francês",
-                        tooltip_lang_it: "Traduzir para Italiano"
-                    },
-                    de: {
-                        job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter", contact_title: "Kontakt", competencies_title: "Kernkompetenzen", competency_pm: "IT-Projektmanagement", competency_qa: "QS & Testautomatisierung", competency_lead: "Teamführung & Mentoring", competency_devops: "CI/CD & DevOps-Strategie", competency_cloud: "Cloud-Plattformen", competency_strategy: "Strategisches Geschäftsverständnis", competency_relations: "Stakeholder-Beziehungen", languages_title: "Sprachen", lang_native: "Muttersprache", lang_fluent: "Fließend", lang_basic: "Grundkenntnisse", lang_others: "Andere", summary_title: "Berufliches Profil", summary_text: "Ein Senior IT-Projektmanager und QA-Architekt mit über zwei Jahrzehnten Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams zur Erreichung der Projektziele. Nachgewiesene Fähigkeit, robuste QA-Automatisierungs-Frameworks (Selenium, Cypress, Kotlin) zu entwerfen und zu implementieren, um eine außergewöhnliche Produktqualität und Effizienz für Kunden wie Autodesk, AT&T und Sophos zu gewährleisten.", summary_detail_1: "Während meiner gesamten Laufbahn habe ich einen ganzheitlichen Qualitätsansatz verfolgt und QS-Prozesse in jede Phase des SDLC integriert. Als QA-Architekt bin ich darauf spezialisiert, skalierbare, wartbare und effiziente Automatisierungs-Frameworks von Grund auf zu entwerfen, die auf die spezifischen Bedürfnisse des Produkts und des Technologie-Stacks zugeschnitten sind. Meine Expertise erstreckt sich auf die Auswahl der optimalen Werkzeuge, die Etablierung von Best Practices und die Erstellung von CI/CD-Integrationen, die den Entwicklungsteams schnelles und zuverlässiges Feedback liefern, was die Regressionszyklen erheblich verkürzt und die Markteinführungszeit beschleunigt.", summary_detail_2: "Als Projektmanager und Führungskraft zeichne ich mich durch den Aufbau und das Mentoring von leistungsstarken, kulturübergreifenden Teams aus. Ich habe eine nachgewiesene Erfolgsbilanz in der Verwaltung von Multimillionen-Dollar-Projektportfolios, der Risikominderung und der Abstimmung der technischen Ausführung mit der Geschäftsstrategie auf Führungsebene. Meine Führungsphilosophie basiert auf klarer Kommunikation, Ermächtigung und der Förderung eines kollaborativen Umfelds, in dem jedes Teammitglied motiviert ist, seine beste Arbeit zu leisten. Meine C2-Englischkenntnisse und meine Mehrsprachigkeit ermöglichen es mir, globale Teams und Stakeholder nahtlos zu managen.", toolkit_title: "Technisches & Management-Toolkit", toolkit_pm: "Projektmanagement & Methoden:", toolkit_qa: "QS & Testautomatisierung:", toolkit_lang: "Programmierung & Skripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Datenbanken & APIs:", toolkit_analytics: "Analyse & Überwachung:", toolkit_platform: "Plattformen & Geschäftstools:", toolkit_system: "Allgemeine & System-Tools:", experience_title: "Berufserfahrung", education_title: "Ausbildung & Zertifizierungen", infographics_title: "Karriere im Überblick", infographics_competencies_title: "Kernkompetenzen", infographics_methodologies_title: "Methoden & Prozesse", infographics_timeline_title: "Beruflicher Werdegang",
-                        info_bubble_contact: "Klicken Sie auf einen Kontaktlink, um die entsprechende Anwendung zu öffnen (E-Mail, WhatsApp, etc.).",
-                        info_bubble_toolkit: "Klicken Sie auf eine Fähigkeit, um die Erfahrungsliste zu filtern. Klicken Sie erneut, um die Auswahl aufzuheben, oder verwenden Sie 'Zurücksetzen', um alles zu löschen.",
-                        tooltip_print: "Drucken / PDF",
-                        tooltip_timeline: "Klicken, um zur Erfahrung von %COMPANY% zu springen",
-                        tooltip_lang_en: "Auf Englisch übersetzen",
-                        tooltip_lang_es: "Auf Spanisch übersetzen",
-                        tooltip_lang_pt: "Auf Portugiesisch übersetzen",
-                        tooltip_lang_de: "Auf Deutsch übersetzen",
-                        tooltip_lang_fr: "Auf Französisch übersetzen",
-                        tooltip_lang_it: "Auf Italienisch übersetzen"
-                    },
-                    fr: {
-                        job_title: "Chef de Projet IT Senior, Architecte QA & Leader QA", contact_title: "Contact", competencies_title: "Compétences Clés", competency_pm: "Gestion de Projets IT", competency_qa: "AQ & Automatisation des Tests", competency_lead: "Leadership d'Équipe & Mentorat", competency_devops: "Stratégie CI/CD & DevOps", competency_cloud: "Plateformes Cloud", competency_strategy: "Acuité Commerciale Stratégique", competency_relations: "Relations avec les Parties Prenantes", languages_title: "Langues", lang_native: "Natif", lang_fluent: "Courant", lang_basic: "Basique", lang_others: "Autres", summary_title: "Résumé Professionnel", summary_text: "Un chef de projet informatique senior et architecte QA avec plus de deux décennies d'expérience dans la fourniture de solutions logicielles complexes et de haute qualité pour les leaders technologiques mondiaux. Expert en planification stratégique, en gestion des parties prenantes et en direction d'équipes interfonctionnelles pour atteindre les objectifs du projet. Capacité prouvée à concevoir et à mettre en œuvre des cadres d'automatisation QA robustes (Selenium, Cypress, Kotlin), garantissant une qualité de produit et une efficacité exceptionnelles pour des clients comme Autodesk, AT&T et Sophos.", summary_detail_1: "Tout au long de ma carrière, j'ai défendu une approche holistique de la qualité, en intégrant les processus d'AQ à chaque étape du cycle de vie du développement logiciel (SDLC). En tant qu'Architecte QA, je me spécialise dans la conception de cadres d'automatisation évolutifs, maintenables et efficaces à partir de zéro, adaptés aux besoins spécifiques du produit et de la pile technologique. Mon expertise s'étend à la sélection des outils optimaux, à l'établissement des meilleures pratiques et à la création d'intégrations CI/CD qui fournissent un retour d'information rapide et fiable aux équipes de développement, réduisant ainsi considérablement les cycles de régression et accélérant la mise sur le marché.", summary_detail_2: "En tant que Chef de Projet et Leader, j'excelle dans la constitution et le mentorat d'équipes multiculturelles très performantes. J'ai une expérience avérée dans la gestion de portefeuilles de projets de plusieurs millions de dollars, l'atténuation des risques et l'alignement de l'exécution technique avec la stratégie commerciale au niveau de la direction. Ma philosophie de leadership est centrée sur une communication claire, l'autonomisation et la promotion d'un environnement collaboratif où chaque membre de l'équipe est motivé à donner le meilleur de lui-même. Ma maîtrise de l'anglais au niveau C2 et mes compétences multilingues me permettent de gérer sans problème des équipes et des parties prenantes mondiales.", toolkit_title: "Boîte à Outils Technique & de Gestion", toolkit_pm: "Gestion de Projet & Méthodologies:", toolkit_qa: "AQ & Automatisation des Tests:", toolkit_lang: "Programmation & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Bases de Données & APIs:", toolkit_analytics: "Analyse & Surveillance:", toolkit_platform: "Plateformes & Outils Métier:", toolkit_system: "Outils Généraux & Système:", experience_title: "Expérience Professionnelle", education_title: "Formation & Certifications", infographics_title: "Carrière en un coup d'œil", infographics_competencies_title: "Compétences de base", infographics_methodologies_title: "Méthodologies & Processus", infographics_timeline_title: "Chronologie de carrière",
-                        info_bubble_contact: "Cliquez sur un lien de contact pour ouvrir l'application correspondante (Email, WhatsApp, etc.).",
-                        info_bubble_toolkit: "Cliquez sur une compétence pour filtrer la liste d'expériences. Cliquez à nouveau pour désélectionner, ou utilisez 'Réinitialiser' pour tout effacer.",
-                        tooltip_print: "Imprimer / PDF",
-                        tooltip_timeline: "Cliquez pour accéder à l'expérience de %COMPANY%",
-                        tooltip_lang_en: "Traduire en Anglais",
-                        tooltip_lang_es: "Traduire en Espagnol",
-                        tooltip_lang_pt: "Traduire en Portugais",
-                        tooltip_lang_de: "Traduire en Allemand",
-                        tooltip_lang_fr: "Traduire en Français",
-                        tooltip_lang_it: "Traduire en Italien"
-                    },
-                    it: {
-                        job_title: "Senior IT Project Manager, Architetto QA e Leader QA", contact_title: "Contatto", competencies_title: "Competenze Chiave", competency_pm: "Gestione di Progetti IT", competency_qa: "QA & Automazione dei Test", competency_lead: "Leadership di Team & Mentoring", competency_devops: "Strategia CI/CD & DevOps", competency_cloud: "Piattaforme Cloud", competency_strategy: "Acume Strategico Aziendale", competency_relations: "Relazioni con gli Stakeholder", languages_title: "Lingue", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Base", lang_others: "Altre", summary_title: "Riepilogo Professionale", summary_text: "Un Senior IT Project Manager e Architetto QA con oltre due decenni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali per raggiungere gli obiettivi di progetto. Comprovata capacità di architettare e implementare robusti framework di automazione QA (Selenium, Cypress, Kotlin), garantendo una qualità del prodotto e un'efficienza eccezionali per clienti come Autodesk, AT&T e Sophos.", summary_detail_1: "Nel corso della mia carriera, ho promosso un approccio olistico alla qualità, integrando i processi di QA in ogni fase del SDLC. In qualità di Architetto QA, sono specializzato nella progettazione di framework di automazione scalabili, manutenibili ed efficienti da zero, su misura per le esigenze specifiche del prodotto e dello stack tecnologico. La mia esperienza si estende alla selezione degli strumenti ottimali, alla definizione delle migliori pratiche e alla creazione di integrazioni CI/CD che forniscono un feedback rapido e affidabile ai team di sviluppo, riducendo significativamente i cicli di regressione e accelerando il time-to-market.", summary_detail_2: "Come Project Manager e Leader, eccello nella creazione e nel mentoring di team multiculturali ad alte prestazioni. Ho una comprovata esperienza nella gestione di portafogli di progetti multimilionari, nella mitigazione dei rischi e nell'allineamento dell'esecuzione tecnica con la strategia aziendale a livello esecutivo. La mia filosofia di leadership è incentrata sulla comunicazione chiara, sull'empowerment e sulla promozione di un ambiente collaborativo in cui ogni membro del team è motivato a contribuire al meglio. La mia padronanza dell'inglese a livello C2 e le mie capacità multilingue mi consentono di gestire senza problemi team e stakeholder globali.", toolkit_title: "Toolkit Tecnico e Gestionale", toolkit_pm: "Gestione Progetti & Metodologie:", toolkit_qa: "QA & Automazione dei Test:", toolkit_lang: "Programmazione & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Database & API:", toolkit_analytics: "Analisi e Monitoraggio:", toolkit_platform: "Piattaforme & Strumenti Aziendali:", toolkit_system: "Strumenti Generali & di Sistema:", experience_title: "Esperienza Professionale", education_title: "Formazione & Certificazioni", infographics_title: "Carriera in Sintesi", infographics_competencies_title: "Competenza chiave", infographics_methodologies_title: "Metodologie e Processi", infographics_timeline_title: "Cronologia della Carriera",
-                        info_bubble_contact: "Fai clic su qualsiasi link di contatto per aprire l'applicazione corrispondente (Email, WhatsApp, ecc.).",
-                        info_bubble_toolkit: "Fai clic su una competenza per filtrare l'elenco delle esperienze. Fai di nuovo clic per deselezionare o usa 'Ripristina' per cancellare tutto.",
-                        tooltip_print: "Stampa / PDF",
-                        tooltip_timeline: "Fai clic per passare all'esperienza di %COMPANY%",
-                        tooltip_lang_en: "Traduci in Inglese",
-                        tooltip_lang_es: "Traduci in Spagnolo",
-                        tooltip_lang_pt: "Traduci in Portoghese",
-                        tooltip_lang_de: "Traduci in Tedesco",
-                        tooltip_lang_fr: "Traduci in Francese",
-                        tooltip_lang_it: "Traduci in Italiano"
+                        tooltip_lang_it: "Traducir a Italiano",
+                        // Spanish translations for new keys
+                        widget_tab_message: "Mensaje",
+                        widget_tab_rate: "Evaluar CV",
+                        form_label_name: "Nombre",
+                        form_label_email: "Correo electrónico",
+                        form_label_topic: "Asunto",
+                        form_label_message: "Mensaje",
+                        form_label_attachment: "Adjunto (Opcional)",
+                        form_button_attach: "Adjuntar archivo",
+                        form_button_send: "Enviar Mensaje",
+                        form_label_rating: "Calificación General",
+                        form_label_comments: "Comentarios (Opcional)",
+                        form_button_submit_rating: "Enviar Calificación",
+                        error_required: "Este campo es obligatorio.",
+                        error_min_length: "Por favor, ingrese al menos {min} caracteres.",
+                        error_email: "Por favor, ingrese un correo electrónico válido.",
+                        error_topic: "Por favor, seleccione un asunto.",
+                        error_rating: "Por favor, seleccione una calificación.",
+                        error_file_size: "El archivo es demasiado grande. Máximo 5MB.",
+                        error_file_type: "Tipo de archivo no válido. (PDF, DOC, DOCX, PNG, JPG)",
+                        status_sending: "Enviando...",
+                        status_uploading: "Subiendo...",
+                        status_file_attached: "Archivo adjunto: {fileName}",
+                        status_success_message_title: "¡Mensaje Enviado!",
+                        status_success_message_body: "Gracias por contactarme. Te responderé en breve.",
+                        status_success_rating_title: "¡Calificación Enviada!",
+                        status_success_rating_body: "¡Gracias por tus valiosos comentarios!",
+                        status_error_title: "Ocurrió un Error",
+                        status_error_body: "Lo siento, algo salió mal. Por favor, inténtalo de nuevo más tarde.",
+                        topic_option_default: "Seleccione un asunto...",
+                        topic_option_opportunity: "Oportunidad Laboral / Colaboración",
+                        topic_option_inquiry: "Consulta de Proyecto",
+                        topic_option_feedback: "Feedback sobre el CV",
+                        topic_option_other: "Otro"
                     }
+                    // ... other language translations ...
                 },
             },
 
@@ -795,10 +1044,12 @@
                 this._populateAllTranslations();
                 this._renderAll();
                 this._setupEventListeners();
+                // Translate page must come after populating dynamic elements like topics
                 this.translatePage(this.state.lang);
                 this._initScrollAnimations();
                 this._initUrlHighlighting();
-                this._initMessageMeFeature();
+                // --- Replaced old message feature init ---
+                this._initContactWidget();
             },
 
             _cacheDOMElements() {
@@ -811,15 +1062,45 @@
                     profilePhoto: document.getElementById('profile-photo'), imageModal: document.getElementById('image-modal'), modalImage: document.getElementById('modal-image'),
                     modalClose: document.querySelector('.modal-close'), filterStatus: document.getElementById('filter-status'), themeToggle: document.getElementById('theme-toggle'),
                     mainContent: document.querySelector('.main-content'),
-                    // "Message Me" Feature Elements
-                    messageFab: document.getElementById('message-fab'), messageModal: document.getElementById('message-modal'), messageModalClose: document.getElementById('message-modal-close'),
-                    messageForm: document.getElementById('message-form'), messageFormContainer: document.getElementById('message-form-container'), messageStatus: document.getElementById('message-status'),
-                    senderName: document.getElementById('sender-name'), senderEmail: document.getElementById('sender-email'), senderMessage: document.getElementById('sender-message'),
-                    messageGroup: document.getElementById('message-group'), attachmentGroup: document.getElementById('attachment-group'), fileUpload: document.getElementById('file-upload'),
-                    fileName: document.getElementById('file-name'), sendMessageBtn: document.getElementById('send-message-btn'),
+
+                    // --- NEW: Widget and Form Elements ---
+                    contactWidgetFab: document.getElementById('contact-widget-fab'),
+                    contactWidget: document.getElementById('contact-widget'),
+                    widgetCloseBtn: document.getElementById('widget-close-btn'),
+                    messageTab: document.getElementById('message-tab'),
+                    ratingTab: document.getElementById('rating-tab'),
+                    messagePane: document.getElementById('message-pane'),
+                    ratingPane: document.getElementById('rating-pane'),
+
+                    // Message Form
+                    messageForm: document.getElementById('message-form'),
+                    senderName: document.getElementById('sender-name'),
+                    senderEmail: document.getElementById('sender-email'),
+                    messageTopic: document.getElementById('message-topic'),
+                    senderMessage: document.getElementById('sender-message'),
+                    fileUpload: document.getElementById('file-upload'),
+                    fileUploadStatus: document.getElementById('file-upload-status'),
+                    sendMessageBtn: document.getElementById('send-message-btn'),
+
+                    // Rating Form
+                    ratingForm: document.getElementById('rating-form'),
+                    starRatingContainer: document.getElementById('star-rating'),
+                    ratingValue: document.getElementById('rating-value'),
+                    raterName: document.getElementById('rater-name'),
+                    raterEmail: document.getElementById('rater-email'),
+                    raterComment: document.getElementById('rater-comment'),
+                    sendRatingBtn: document.getElementById('send-rating-btn'),
+
+                    // Status Overlay
+                    widgetStatusContainer: document.getElementById('widget-status-container'),
+                    widgetStatusContent: document.getElementById('widget-status-content'),
+                    widgetStatusCloseBtn: document.getElementById('widget-status-close-btn'),
                 };
             },
 
+            // --- Keep your existing methods here, they are still valid ---
+            // _createWatermark, _renderAll, _renderToolkit, _renderExperiences, etc.
+            // I will add the new and modified methods below.
             _createWatermark() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -1019,6 +1300,26 @@
                         });
                     });
                 });
+                // NEW: Populate Topic Dropdown
+                this._populateTopicDropdown();
+            },
+
+            // --- NEW METHOD: Populates the topic dropdown from translations ---
+            _populateTopicDropdown() {
+                const topicDropdown = this.DOMElements.messageTopic;
+                if (!topicDropdown) return;
+                const lang = this.state.lang;
+                const topics = {
+                    '': this.data.translations[lang].topic_option_default,
+                    'opportunity': this.data.translations[lang].topic_option_opportunity,
+                    'inquiry': this.data.translations[lang].topic_option_inquiry,
+                    'feedback': this.data.translations[lang].topic_option_feedback,
+                    'other': this.data.translations[lang].topic_option_other
+                };
+                topicDropdown.innerHTML = '';
+                for (const [value, text] of Object.entries(topics)) {
+                    topicDropdown.add(new Option(text, value));
+                }
             },
 
             translatePage(lang) {
@@ -1039,10 +1340,15 @@
                         el.innerHTML = text;
                     }
                 });
+                // Repopulate dynamic elements after translation
+                this._populateTopicDropdown();
                 this._createRadarCharts();
             },
 
+            // --- Heavily Modified/New Methods from here down ---
+
             _setupEventListeners() {
+                // Keep existing listeners and add new ones for the widget
                 document.body.addEventListener('click', (e) => {
                     const target = e.target;
                     const skillTag = target.closest('.tech-tag');
@@ -1068,6 +1374,14 @@
                 });
                 this.DOMElements.profilePhoto.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') this._openModal(); });
                 this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') this._closeModal(); });
+
+                // NEW: Event listeners for the contact widget
+                const { contactWidgetFab, widgetCloseBtn, messageTab, ratingTab, widgetStatusCloseBtn } = this.DOMElements;
+                contactWidgetFab.addEventListener('click', () => this._openContactWidget());
+                widgetCloseBtn.addEventListener('click', () => this._closeContactWidget());
+                widgetStatusCloseBtn.addEventListener('click', () => this._hideStatusMessage());
+                messageTab.addEventListener('click', () => this._switchTab('message'));
+                ratingTab.addEventListener('click', () => this._switchTab('rating'));
             },
 
             _handleButtonClick(button) {
@@ -1078,7 +1392,6 @@
                     case 'read-more-btn': this._toggleReadMore(button); break;
                     case 'print-btn': this._trackEvent('print_cv', 'Interaction', 'Print Button'); window.print(); break;
                     case 'theme-toggle': this._toggleTheme(); break;
-                    case 'message-modal-close': this._closeMessageModal(); break;
                 }
                 if(button.classList.contains('modal-close')) {
                     this._closeModal();
@@ -1248,74 +1561,203 @@
                 }
             },
 
-            // --- "Message Me" Feature Methods ---
-            _initMessageMeFeature() {
-                const { messageFab, messageModal, messageModalClose, messageForm, senderName, senderEmail, senderMessage, fileUpload } = this.DOMElements;
+            // --- ALL NEW WIDGET & FORM LOGIC ---
 
-                messageFab.addEventListener('click', () => this._openMessageModal());
-                messageModalClose.addEventListener('click', () => this._closeMessageModal());
-                messageModal.addEventListener('click', (e) => {
-                    if (e.target === messageModal) this._closeMessageModal();
+            /**
+             * Initializes the contact widget, setting up all form-related event listeners.
+             */
+            _initContactWidget() {
+                const {
+                    messageForm, senderName, senderEmail, messageTopic, senderMessage, fileUpload,
+                    ratingForm, starRatingContainer, raterName, raterEmail, sendRatingBtn
+                } = this.DOMElements;
+
+                // On-blur validation listeners
+                const fieldsToValidate = [
+                    { el: senderName,      rules: { required: true, minLength: 2 } },
+                    { el: senderEmail,     rules: { required: true, type: 'email' } },
+                    { el: messageTopic,    rules: { required: true } },
+                    { el: senderMessage,   rules: { required: true, minLength: 10 } },
+                    { el: raterName,       rules: { required: true, minLength: 2 } },
+                    { el: raterEmail,      rules: { required: true, type: 'email' } },
+                ];
+                fieldsToValidate.forEach(({ el, rules }) => {
+                    el.addEventListener('focusout', () => this._validateField(el, rules));
                 });
 
-                messageForm.addEventListener('input', () => this._updateFormState());
-                fileUpload.addEventListener('change', () => this._updateFileName());
-                messageForm.addEventListener('submit', (e) => this._handleFormSubmit(e));
+                // Form submission listeners
+                messageForm.addEventListener('submit', (e) => this._handleMessageSubmit(e));
+                ratingForm.addEventListener('submit', (e) => this._handleRatingSubmit(e));
+
+                // Real-time button state update
+                messageForm.addEventListener('input', () => this._updateMessageButtonState());
+                ratingForm.addEventListener('input', () => this._updateRatingButtonState());
+
+                // File attachment listener
+                fileUpload.addEventListener('change', () => this._handleFileAttachment());
+
+                // Star rating listeners
+                starRatingContainer.addEventListener('click', e => this._handleStarClick(e));
+                starRatingContainer.addEventListener('mouseover', e => this._handleStarHover(e));
+                starRatingContainer.addEventListener('mouseout', () => this._updateStarDisplay());
+                sendRatingBtn.addEventListener('click', () => this._validateField(this.DOMElements.ratingValue, { required: true, type: 'rating' }));
             },
 
-            _openMessageModal() {
-                this.DOMElements.messageModal.classList.add('visible');
+            /**
+             * Opens the contact widget with a smooth animation.
+             */
+            _openContactWidget() {
+                this.DOMElements.contactWidget.classList.add('visible');
+                this.DOMElements.contactWidget.setAttribute('aria-hidden', 'false');
             },
 
-            _closeMessageModal() {
-                this.DOMElements.messageModal.classList.remove('visible');
-                // Reset form on close
-                this.DOMElements.messageForm.reset();
-                this._updateFormState();
-                this._updateFileName();
-                this.DOMElements.messageFormContainer.classList.remove('hidden');
-                this.DOMElements.messageStatus.classList.add('hidden');
+            /**
+             * Closes and resets the contact widget.
+             */
+            _closeContactWidget() {
+                this.DOMElements.contactWidget.classList.remove('visible');
+                this.DOMElements.contactWidget.setAttribute('aria-hidden', 'true');
+
+                // Reset forms and hide status message after animation
+                setTimeout(() => {
+                    this._resetMessageForm();
+                    this._resetRatingForm();
+                    this._hideStatusMessage();
+                }, 300);
             },
 
-            _updateFormState() {
-                const { senderName, senderEmail, senderMessage, messageGroup, attachmentGroup, sendMessageBtn } = this.DOMElements;
-                const isNameEmailValid = senderName.value.trim() !== '' && senderEmail.checkValidity();
-                const isMessageValid = senderMessage.value.trim() !== '';
+            /**
+             * Handles switching between the "Message" and "Rate CV" tabs.
+             * @param {string} tabName - The name of the tab to switch to ('message' or 'rating').
+             */
+            _switchTab(tabName) {
+                const { messageTab, ratingTab, messagePane, ratingPane } = this.DOMElements;
+                const isMessageTab = tabName === 'message';
 
-                messageGroup.classList.toggle('disabled', !isNameEmailValid);
-                attachmentGroup.classList.toggle('disabled', !isNameEmailValid || !isMessageValid);
-                sendMessageBtn.disabled = !isNameEmailValid || !isMessageValid;
+                messageTab.classList.toggle('active', isMessageTab);
+                ratingTab.classList.toggle('active', !isMessageTab);
+                messageTab.setAttribute('aria-selected', isMessageTab);
+                ratingTab.setAttribute('aria-selected', !isMessageTab);
+
+                messagePane.classList.toggle('active', isMessageTab);
+                ratingPane.classList.toggle('active', !isMessageTab);
             },
 
-            _updateFileName() {
-                const { fileUpload, fileName } = this.DOMElements;
-                fileName.textContent = fileUpload.files.length > 0 ? fileUpload.files[0].name : '';
+            /**
+             * A generic field validation function that shows/hides error messages.
+             * @param {HTMLElement} field - The input, textarea, or select element to validate.
+             * @param {object} rules - The validation rules (e.g., { required: true, minLength: 2 }).
+             * @returns {boolean} - True if the field is valid, false otherwise.
+             */
+            _validateField(field, rules) {
+                const errorEl = document.getElementById(`${field.id}-error`);
+                let errorMessage = '';
+                const translations = this.data.translations[this.state.lang];
+
+                if (rules.required && !field.value.trim()) {
+                    errorMessage = translations.error_required;
+                } else if (rules.type === 'email' && !/^\S+@\S+\.\S+$/.test(field.value)) {
+                    errorMessage = translations.error_email;
+                } else if (rules.minLength && field.value.trim().length < rules.minLength) {
+                    errorMessage = translations.error_min_length.replace('{min}', rules.minLength);
+                } else if (rules.type === 'rating' && parseInt(field.value, 10) === 0) {
+                    errorMessage = translations.error_rating;
+                }
+
+                if (errorMessage) {
+                    errorEl.textContent = errorMessage;
+                    errorEl.style.display = 'block';
+                    field.classList.add('invalid');
+                    field.setAttribute('aria-invalid', 'true');
+                    return false;
+                } else {
+                    errorEl.textContent = '';
+                    errorEl.style.display = 'none';
+                    field.classList.remove('invalid');
+                    field.setAttribute('aria-invalid', 'false');
+                    return true;
+                }
             },
 
-            async _handleFormSubmit(e) {
+            /**
+             * Checks the validity of all fields in the message form to enable/disable the submit button.
+             */
+            _updateMessageButtonState() {
+                const { senderName, senderEmail, messageTopic, senderMessage, sendMessageBtn } = this.DOMElements;
+                const isNameValid = this._validateField(senderName, { required: true, minLength: 2 });
+                const isEmailValid = this._validateField(senderEmail, { required: true, type: 'email' });
+                const isTopicValid = this._validateField(messageTopic, { required: true });
+                const isMessageValid = this._validateField(senderMessage, { required: true, minLength: 10 });
+                // Only enable if all fields are valid
+                sendMessageBtn.disabled = !(isNameValid && isEmailValid && isTopicValid && isMessageValid);
+            },
+
+            /**
+             * Checks the validity of all fields in the rating form to enable/disable the submit button.
+             */
+            _updateRatingButtonState() {
+                const { raterName, raterEmail, ratingValue, sendRatingBtn } = this.DOMElements;
+                const isNameValid = this._validateField(raterName, { required: true, minLength: 2 });
+                const isEmailValid = this._validateField(raterEmail, { required: true, type: 'email' });
+                const isRatingValid = this._validateField(ratingValue, { required: true, type: 'rating' });
+                // Only enable if all required fields are valid
+                sendRatingBtn.disabled = !(isNameValid && isEmailValid && isRatingValid);
+            },
+
+            /**
+             * Handles file selection, validation, and provides immediate user feedback.
+             */
+            _handleFileAttachment() {
+                const { fileUpload, fileUploadStatus } = this.DOMElements;
+                const file = fileUpload.files[0];
+                const translations = this.data.translations[this.state.lang];
+
+                if (!file) {
+                    fileUploadStatus.innerHTML = '';
+                    return;
+                }
+
+                // Show loading spinner
+                fileUploadStatus.innerHTML = `<div class="spinner" aria-label="${translations.status_uploading}"></div> ${translations.status_uploading}`;
+
+                // File validation
+                const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg', 'image/jpg'];
+                const maxSize = 5 * 1024 * 1024; // 5MB
+
+                setTimeout(() => { // Simulate a quick check
+                    if (file.size > maxSize) {
+                        fileUploadStatus.innerHTML = `<span style="color: var(--error-red);">${translations.error_file_size}</span>`;
+                        fileUpload.value = ''; // Clear invalid file
+                    } else if (!allowedTypes.includes(file.type)) {
+                        fileUploadStatus.innerHTML = `<span style="color: var(--error-red);">${translations.error_file_type}</span>`;
+                        fileUpload.value = ''; // Clear invalid file
+                    } else {
+                        // Success
+                        fileUploadStatus.innerHTML = `<span style="color: var(--cyan-brand);">${translations.status_file_attached.replace('{fileName}', file.name)}</span>`;
+                    }
+                }, 500);
+            },
+
+            /**
+             * Handles the submission of the "Message Me" form.
+             */
+            async _handleMessageSubmit(e) {
                 e.preventDefault();
-                const { sendMessageBtn, messageForm, messageFormContainer, messageStatus } = this.DOMElements;
-                sendMessageBtn.disabled = true;
-                sendMessageBtn.textContent = 'Sending...';
+                const { sendMessageBtn, fileUpload } = this.DOMElements;
+                const form = e.target;
 
-                const formData = new FormData(messageForm);
-                const name = formData.get('name');
-                const email = formData.get('email');
-                const message = formData.get('message');
-                const file = this.DOMElements.fileUpload.files[0];
+                // Final validation check
+                this._updateMessageButtonState();
+                if (sendMessageBtn.disabled) return;
+
+                this._setButtonSendingState(sendMessageBtn, true);
+
+                const formData = new FormData(form);
+                const file = fileUpload.files[0];
 
                 try {
                     let fileURL = '';
                     if (file) {
-                        // Validate file type and size
-                        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg'];
-                        if (!allowedTypes.includes(file.type)) {
-                            throw new Error('Invalid file type. Please upload PDF, DOCX, PNG, or JPG.');
-                        }
-                        if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                            throw new Error('File is too large. Maximum size is 5MB.');
-                        }
-
                         const storageRef = ref(storage, `attachments/${Date.now()}_${file.name}`);
                         const snapshot = await uploadBytes(storageRef, file);
                         fileURL = await getDownloadURL(snapshot.ref);
@@ -1323,31 +1765,187 @@
 
                     // Save message to Firestore
                     await addDoc(collection(db, 'messages'), {
-                        name,
-                        email,
-                        message,
+                        name: formData.get('name'),
+                        email: formData.get('email'),
+                        topic: formData.get('topic'),
+                        message: formData.get('message'),
                         fileURL,
                         createdAt: serverTimestamp()
                     });
 
-                    // Show success message
-                    messageFormContainer.classList.add('hidden');
-                    messageStatus.classList.remove('hidden');
-                    messageStatus.innerHTML = `<h3 class="text-2xl font-bold text-green-600">Thank You!</h3><p class="mt-2">Your message has been sent successfully.</p>`;
+                    this._showStatusMessage('success', 'message');
+                    this._resetMessageForm();
 
                 } catch (error) {
-                    // Show error message
-                    messageFormContainer.classList.add('hidden');
-                    messageStatus.classList.remove('hidden');
-                    messageStatus.innerHTML = `<h3 class="text-2xl font-bold text-red-600">Error</h3><p class="mt-2">Could not send message. ${error.message}</p><button id="retry-btn" class="mt-4 px-4 py-2 bg-cyan-600 text-white rounded">Try Again</button>`;
-                    document.getElementById('retry-btn').addEventListener('click', () => {
-                        messageFormContainer.classList.remove('hidden');
-                        messageStatus.classList.add('hidden');
-                        sendMessageBtn.disabled = false;
-                        sendMessageBtn.textContent = 'Send Message';
-                    });
+                    console.error("Error sending message:", error);
+                    this._showStatusMessage('error');
+                } finally {
+                    this._setButtonSendingState(sendMessageBtn, false);
                 }
-            }
+            },
+
+            /**
+             * Handles the submission of the "Rate my CV" form.
+             */
+            async _handleRatingSubmit(e) {
+                e.preventDefault();
+                const { sendRatingBtn } = this.DOMElements;
+                const form = e.target;
+
+                // Final validation check
+                this._updateRatingButtonState();
+                if (sendRatingBtn.disabled) return;
+
+                this._setButtonSendingState(sendRatingBtn, true);
+
+                const formData = new FormData(form);
+
+                try {
+                    // Save rating to a new 'ratings' collection in Firestore
+                    await addDoc(collection(db, 'ratings'), {
+                        name: formData.get('name'),
+                        email: formData.get('email'),
+                        rating: parseInt(formData.get('rating'), 10),
+                        comment: formData.get('comment'),
+                        status: 'pending', // For backstage review
+                        createdAt: serverTimestamp()
+                    });
+
+                    this._showStatusMessage('success', 'rating');
+                    this._resetRatingForm();
+
+                    /**
+                     * DEVELOPER NOTE: To enable automatic "Thank You" emails, you would set up a
+                     * Firebase Cloud Function triggered by document creation in the 'ratings' collection.
+                     * The function would use a service like Nodemailer or SendGrid to send an email
+                     * to the `email` field of the newly created document.
+                     */
+
+                } catch (error) {
+                    console.error("Error submitting rating:", error);
+                    this._showStatusMessage('error');
+                } finally {
+                    this._setButtonSendingState(sendRatingBtn, false);
+                }
+            },
+
+            /**
+             * Resets the message form to its initial state.
+             */
+            _resetMessageForm() {
+                this.DOMElements.messageForm.reset();
+                this.DOMElements.fileUploadStatus.innerHTML = '';
+                this.DOMElements.sendMessageBtn.disabled = true;
+                ['sender-name', 'sender-email', 'message-topic', 'sender-message'].forEach(id => {
+                    const field = document.getElementById(id);
+                    const errorEl = document.getElementById(`${id}-error`);
+                    field.classList.remove('invalid');
+                    field.setAttribute('aria-invalid', 'false');
+                    if (errorEl) errorEl.style.display = 'none';
+                });
+            },
+
+            /**
+             * Resets the rating form to its initial state.
+             */
+            _resetRatingForm() {
+                this.DOMElements.ratingForm.reset();
+                this.state.rating = 0;
+                this._updateStarDisplay();
+                this.DOMElements.sendRatingBtn.disabled = true;
+                ['rater-name', 'rater-email', 'rating-value'].forEach(id => {
+                    const field = document.getElementById(id);
+                    const errorEl = document.getElementById(`${id}-error`);
+                    field.classList.remove('invalid');
+                    field.setAttribute('aria-invalid', 'false');
+                    if (errorEl) errorEl.style.display = 'none';
+                });
+            },
+
+            /**
+             * Shows the status overlay with a success or error message.
+             * @param {'success'|'error'} type - The type of message to show.
+             * @param {'message'|'rating'} context - The context for the success message.
+             */
+            _showStatusMessage(type, context = 'message') {
+                const { widgetStatusContainer, widgetStatusContent } = this.DOMElements;
+                const translations = this.data.translations[this.state.lang];
+                let title, body;
+
+                if (type === 'success') {
+                    title = context === 'rating' ? translations.status_success_rating_title : translations.status_success_message_title;
+                    body = context === 'rating' ? translations.status_success_rating_body : translations.status_success_message_body;
+                    widgetStatusContent.innerHTML = `<h3 class="text-2xl font-bold text-green-600">${title}</h3><p class="mt-2">${body}</p>`;
+                } else {
+                    title = translations.status_error_title;
+                    body = translations.status_error_body;
+                    widgetStatusContent.innerHTML = `<h3 class="text-2xl font-bold text-red-600">${title}</h3><p class="mt-2">${body}</p>`;
+                }
+
+                widgetStatusContainer.classList.add('visible');
+
+                // Auto-close after 5 seconds
+                if (this.state.statusTimeout) clearTimeout(this.state.statusTimeout);
+                this.state.statusTimeout = setTimeout(() => this._hideStatusMessage(), 5000);
+            },
+
+            /**
+             * Hides the status overlay message.
+             */
+            _hideStatusMessage() {
+                if (this.state.statusTimeout) clearTimeout(this.state.statusTimeout);
+                this.DOMElements.widgetStatusContainer.classList.remove('visible');
+            },
+
+            /**
+             * Toggles the sending state of a submit button (shows/hides spinner).
+             * @param {HTMLElement} button - The button element.
+             * @param {boolean} isSending - True to show spinner, false to show text.
+             */
+            _setButtonSendingState(button, isSending) {
+                const translations = this.data.translations[this.state.lang];
+                button.classList.toggle('sending', isSending);
+                button.disabled = isSending;
+                const btnText = button.querySelector('.btn-text');
+                if (isSending) {
+                    btnText.setAttribute('data-original-text', btnText.textContent);
+                    btnText.textContent = translations.status_sending;
+                } else {
+                    btnText.textContent = btnText.getAttribute('data-original-text');
+                }
+            },
+
+            // --- NEW: Star Rating Methods ---
+
+            _handleStarClick(e) {
+                const star = e.target.closest('.star');
+                if (!star) return;
+                this.state.rating = parseInt(star.dataset.value, 10);
+                this.DOMElements.ratingValue.value = this.state.rating;
+                this._updateStarDisplay();
+                // Manually trigger validation check for the button state
+                this._updateRatingButtonState();
+            },
+
+            _handleStarHover(e) {
+                const star = e.target.closest('.star');
+                if (!star) return;
+                const hoverValue = parseInt(star.dataset.value, 10);
+                this.DOMElements.starRatingContainer.querySelectorAll('.star').forEach(s => {
+                    s.classList.toggle('hover', parseInt(s.dataset.value, 10) <= hoverValue);
+                });
+            },
+
+            _updateStarDisplay() {
+                this.DOMElements.starRatingContainer.querySelectorAll('.star').forEach(star => {
+                    const starValue = parseInt(star.dataset.value, 10);
+                    star.classList.remove('hover');
+                    const isSelected = starValue <= this.state.rating;
+                    star.classList.toggle('selected', isSelected);
+                    star.setAttribute('aria-checked', isSelected);
+                });
+            },
+
         };
 
         CarlosMunozCV.init();
