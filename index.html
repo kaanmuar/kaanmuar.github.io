@@ -369,6 +369,22 @@
             color: #f59e0b;
             font-size: 1.1rem;
         }
+
+        /* --- NEW: Average Rating Display Style --- */
+        .average-rating-display {
+            display: inline-block;
+            margin-left: 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background-color: var(--bg-primary);
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            vertical-align: middle;
+        }
+        .average-rating-display .star {
+            color: #f59e0b;
+        }
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
@@ -684,7 +700,7 @@
     import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
-    // IMPORTANT: Replace with your actual Firebase configuration
+    // IMPORTANT: Actual Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
         authDomain: "carlosm-interactive-cv.firebaseapp.com",
@@ -707,7 +723,9 @@
                 pulseTimeout: null,
                 statusTimeout: null,
                 rating: 0,
-                hasAutoOpenedRating: false
+                hasAutoOpenedRating: false,
+                // **NEW**: A set to hold the emails of blocked senders
+                blockList: new Set()
             },
             data: {
                 // ... (your existing skills, experiences, and translations data remains here)
@@ -1080,6 +1098,7 @@
 
             init() {
                 this._cacheDOMElements();
+                this._loadBlocklist(); // **NEW**: Load the blocklist on init
                 this._applyUrlLanguage();
                 this._applyInitialTheme();
                 this._createWatermark();
@@ -1137,7 +1156,26 @@
 
                     // **NEW**: Testimonials container
                     testimonialsContainer: document.getElementById('testimonials-container'),
+                    // **NEW**: Cache the average rating element
+                    averageRating: document.getElementById('average-rating'),
                 };
+            },
+
+            /**
+             * **NEW**: Fetches the blocklist from Firestore and stores it in the state.
+             */
+            async _loadBlocklist() {
+                try {
+                    const querySnapshot = await getDocs(collection(db, "blocked_senders"));
+                    const blockedEmails = new Set();
+                    querySnapshot.forEach(doc => {
+                        blockedEmails.add(doc.id.toLowerCase());
+                    });
+                    this.state.blockList = blockedEmails;
+                    console.log("Blocklist loaded successfully.");
+                } catch (error) {
+                    console.error("Error loading blocklist: ", error);
+                }
             },
 
             // ... (All other methods remain here, unchanged) ...
@@ -1610,37 +1648,57 @@
             // --- NEW METHOD: Fetches and renders approved reviews ---
             _loadAndRenderReviews() {
                 const container = this.DOMElements.testimonialsContainer;
-                if (!container) return;
+                const avgRatingEl = this.DOMElements.averageRating;
+                if (!container || !avgRatingEl) return;
 
                 const q = query(collection(db, "ratings"), where("status", "==", "approved"), orderBy("createdAt", "desc"));
 
                 onSnapshot(q, (snapshot) => {
                     if (snapshot.empty) {
-                        // Hide the section if there are no approved reviews
                         container.parentElement.style.display = 'none';
+                        avgRatingEl.style.display = 'none';
                         return;
                     }
 
+                    // Show the section and calculate average
                     container.parentElement.style.display = 'block';
+                    avgRatingEl.style.display = 'inline-block';
+
+                    let totalRating = 0;
+                    snapshot.docs.forEach(doc => {
+                        totalRating += doc.data().rating;
+                    });
+                    const average = totalRating / snapshot.size;
+
+                    // Display average rating
+                    avgRatingEl.innerHTML = `Avg: ${average.toFixed(1)} <span class="star">★</span>`;
+
+                    // Render testimonial cards
                     container.innerHTML = snapshot.docs.map(doc => this._createReviewCard(doc.data())).join('');
                 });
             },
 
-            // --- NEW METHOD: Creates the HTML for a single testimonial card ---
+            /**
+             * **MODIFIED**: This function now handles the 'isAnonymous' flag
+             * to display the author's name correctly.
+             */
             _createReviewCard(review) {
                 const starsHTML = '&#9733;'.repeat(review.rating) + '&#9734;'.repeat(5 - review.rating);
                 const commentHTML = review.comment ? `<p class="testimonial-quote">${review.comment}</p>` : '';
+                // **NEW**: Check if the review should be anonymous
+                const authorName = review.isAnonymous ? 'Anonymous' : review.name;
 
                 return `
-                    <div class="testimonial-card">
-                        <div class="flex justify-between items-center">
-                            <div class="testimonial-stars" aria-label="Rating: ${review.rating} out of 5 stars">${starsHTML}</div>
+                        <div class="testimonial-card">
+                            <div class="flex justify-between items-center">
+                                <div class="testimonial-stars" aria-label="Rating: ${review.rating} out of 5 stars">${starsHTML}</div>
+                            </div>
+                            ${commentHTML}
+                            <p class="testimonial-author">- ${authorName}</p>
                         </div>
-                        ${commentHTML}
-                        <p class="testimonial-author">- ${review.name}</p>
-                    </div>
-                `;
+                    `;
             },
+
 
             _initContactWidget() {
                 const {
@@ -1788,10 +1846,17 @@
                 e.preventDefault();
                 const { sendMessageBtn, senderName, senderEmail, messageTopic, senderMessage, fileUpload } = this.DOMElements;
 
+                const email = senderEmail.value.toLowerCase().trim();
                 const isNameValid = this._validateField(senderName, { required: true, minLength: 2 });
                 const isEmailValid = this._validateField(senderEmail, { required: true, type: 'email' });
                 const isTopicValid = this._validateField(messageTopic, { required: true });
                 const isMessageValid = this._validateField(senderMessage, { required: true, minLength: 10 });
+                // **NEW**: Check if sender is blocked
+                if (this.state.blockList.has(email)) {
+                    console.warn(`Blocked email attempted to send message: ${email}`);
+                    this._showStatusMessage('error'); // Show a generic error
+                    return;
+                }
                 if (!isNameValid || !isEmailValid || !isTopicValid || !isMessageValid) return;
 
                 this._setButtonSendingState(sendMessageBtn, true);
@@ -1830,9 +1895,16 @@
                 e.preventDefault();
                 const { sendRatingBtn, raterName, raterEmail, ratingValue, raterComment } = this.DOMElements;
 
+                const email = raterEmail.value.toLowerCase().trim();
                 const isNameValid = this._validateField(raterName, { required: true, minLength: 2 });
                 const isEmailValid = this._validateField(raterEmail, { required: true, type: 'email' });
                 const isRatingValid = this._validateField(ratingValue, { required: true, type: 'rating' });
+                // **NEW**: Check if sender is blocked
+                if (this.state.blockList.has(email)) {
+                    console.warn(`Blocked email attempted to send rating: ${email}`);
+                    this._showStatusMessage('error'); // Show a generic error
+                    return;
+                }
                 if (!isNameValid || !isEmailValid || !isRatingValid) return;
 
                 this._setButtonSendingState(sendRatingBtn, true);
