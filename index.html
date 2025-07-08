@@ -329,6 +329,46 @@
         }
         .submit-btn.sending .spinner { display: inline-block; }
         .submit-btn.sending .btn-text { display: none; }
+
+
+      /* --- NEW: Testimonial Card Styles --- */
+           .testimonial-card {
+               background-color: var(--bg-primary);
+               border-left: 4px solid var(--cyan-brand);
+               padding: 1rem;
+               border-radius: 0 8px 8px 0;
+               transition: transform 0.2s ease, box-shadow 0.2s ease;
+           }
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .testimonial-quote {
+            font-style: italic;
+            color: var(--text-secondary);
+            position: relative;
+            padding-left: 2rem;
+        }
+        .testimonial-quote::before {
+            content: '“';
+            position: absolute;
+            left: 0;
+            top: -0.5rem;
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--cyan-brand);
+            opacity: 0.3;
+        }
+        .testimonial-author {
+            text-align: right;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-top: 0.75rem;
+        }
+        .testimonial-stars {
+            color: #f59e0b;
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
@@ -506,6 +546,15 @@
                     </div>
                 </section>
 
+                </section>
+
+                <!--Testimonials Section-->
+                <section id="testimonials-section" class="section mt-6 animate-on-scroll" aria-labelledby="testimonials-heading">
+                    <h2 id="testimonials-heading" class="text-xl font-bold border-b-4 pb-2">Testimonials & Feedback</h2>
+                    <div id="testimonials-container" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    </div>
+                </section>
+
                 <!-- Footer -->
                 <footer class="cv-footer no-print">
                     <div class="flex justify-center items-center gap-2">
@@ -630,8 +679,9 @@
 ================================================================== -->
 <script type="module">
     // Import Firebase modules
+    // ** MODIFIED **: Added query and where for the new function
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
     // IMPORTANT: Replace with your actual Firebase configuration
@@ -655,12 +705,12 @@
                 lang: 'en',
                 selectedSkills: new Set(),
                 pulseTimeout: null,
-                statusTimeout: null, // For auto-closing status messages
-                rating: 0, // For star rating
-                hasAutoOpenedRating: false // **NEW**: Flag for scroll trigger
+                statusTimeout: null,
+                rating: 0,
+                hasAutoOpenedRating: false
             },
             data: {
-                // ... (keep your existing skills and experiences data here)
+                // ... (your existing skills, experiences, and translations data remains here)
                 skills: {
                     pm: [
                         { name: 'Agile', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/agile/339933' },
@@ -795,7 +845,7 @@
                         details: {
                             en: [ 'Provided quality assistance by mentoring development teams on delivering high-quality software products for real-time sports data platforms.', 'Worked with Product Owners to define and refine user stories and acceptance criteria in a fast-paced Agile environment.', 'Developed and executed comprehensive test scripts, plans, and cases for both backend APIs and frontend applications.', 'Investigated and resolved complex defects, analyzing risk and impact on live data streams using Graylog and Grafana.', 'Contributed to the improvement of quality processes, focusing on early defect detection and prevention.' ],
                             es: [ 'Brindé asistencia de calidad mentorizando a los equipos de desarrollo en la entrega de productos de software de alta calidad para plataformas de datos deportivos en tiempo real.', 'Trabajé con los Product Owners para definir y refinar historias de usuario y criterios de aceptación en un entorno Agile de ritmo rápido.', 'Desarrollé y ejecuté scripts, planes y casos de prueba completos tanto para las API de backend como para las aplicaciones de frontend.', 'Investigué y resolví defectos complejos, analizando el riesgo y el impacto en los flujos de datos en vivo usando Graylog y Grafana.', 'Contribuí a la mejora de los procesos de calidad, centrándome en la detección temprana y prevención de defectos.' ],
-                            pt: [ 'Forneci assistência de qualidade, orientando equipes de desenvolvimento na entrega de produtos de software de alta qualidade para plataformas de dados esportivos em tempo real.', 'Trabalhei com os Product Owners para definir e refinar histórias de usuário e critérios de aceitação em um ambiente Agile de ritmo acelerado.', 'Desenvolvi e executei scripts, planos e casos de teste abrangentes para APIs de backend e aplicações de frontend.', 'Investiguei e resolvi defeitos complexos, analizando o risco e o impacto nos fluxos de dados ao vivo usando Graylog e Grafana.', 'Contribuí para a melhoria dos processos de qualidade, com foco na detecção precoce e prevenção de defeitos.' ],
+                            pt: [ 'Forneci assistência de qualidade, orientando equipes de desenvolvimento na entrega de produtos de software de alta calidad para plataformas de dados esportivos em tempo real.', 'Trabalhei com os Product Owners para definir e refinar histórias de usuário e critérios de aceitação em um ambiente Agile de ritmo acelerado.', 'Desenvolvi e executei scripts, planos e casos de teste abrangentes para APIs de backend e aplicações de frontend.', 'Investiguei e resolvi defeitos complexos, analizando o risco e o impacto nos fluxos de dados ao vivo usando Graylog e Grafana.', 'Contribuí para a melhoria dos processos de qualidade, com foco na detecção precoce e prevenção de defeitos.' ],
                             de: [ 'Qualitätssicherung durch Mentoring von Entwicklungsteams bei der Bereitstellung hochwertiger Softwareprodukte für Echtzeit-Sportdatenplattformen.', 'Zusammenarbeit mit Product Ownern zur Definition und Verfeinerung von User Stories und Akzeptanzkriterien in einer schnelllebigen agilen Umgebung.', 'Entwicklung und Ausführung umfassender Testskripte, -pläne und -fälle für Backend-APIs und Frontend-Anwendungen.', 'Untersuchung und Behebung komplexer Fehler, Analyse von Risiken und Auswirkungen auf Live-Datenströme mit Graylog und Grafana.', 'Beitrag zur Verbesserung der Qualitätsprozesse mit Schwerpunkt auf frühzeitiger Fehlererkennung und -vermeidung.' ],
                             fr: [ 'Assistance qualité en encadrant les équipes de développement pour la livraison de produtos logiciels de haute qualité pour les plateformes de données sportivas en temps réel.', 'Collaboration avec les Product Owners pour définir et affiner les user stories et les critères d\'acceptation dans un environnement Agile rapide.', 'Développement et exécution de scripts, plans et cas de test complets pour les API backend et les applications frontend.', 'Enquête et résolution de défauts complexes, analyse des risques et de l\'impact sur les flux de données en direct à l\'aide de Graylog et Grafana.', 'Contribution à l\'amélioration des processus de qualité, en se concentrant sur la détection et la prévention précoces des défauts.' ],
                             it: [ 'Ho fornito assistenza alla qualità facendo da mentore ai team di sviluppo nella fornitura di prodotti software di alta qualità per piattaforme di dati sportivi in tempo real.', 'Ho lavorato con i Product Owner per definire e perfezionare le user story e i criteri di accettazione in un ambiente Agile dal ritmo serrato.', 'Ho sviluppato ed eseguito script, piani e casi di test completi sia per le API di backend che per le applicazioni frontend.', 'Ho indagato e risolto difetti complessi, analizzando il rischio e l\'impatto sui flussi di dati in tempo reale utilizzando Graylog e Grafana.', 'Ho contribuito al miglioramento dei processi di qualità, concentrandomi sulla rilevazione e prevenzione precoce dei difetti.' ]
@@ -810,7 +860,7 @@
                             pt: [ 'Gerenciei o escopo geral de testes para projetos de clientes, garantindo o alinhamento com os objetivos estratégicos de negócios.', 'Defini roadmaps de programas, estabeleci prioridades e resolvi conflitos para aumentar a eficácia em direção aos resultados de negócios.', 'Orientei e guiei uma equipe matricial de recursos de teste onshore e offshore para garantir uma cobertura de teste abrangente.', 'Gerenciei aspectos de serviço do P&L de testes, com foco na otimização de custos e alocação de recursos.', 'Construí relacionamentos diretos com os stakeholders dos clientes para garantir a objetividade e promover o crescimento contínuo.' ],
                             de: [ 'Verwaltung des gesamten Testumfangs für Kundenprojekte, um die Ausrichtung auf strategische Geschäftsziele sicherzustellen.', 'Festlegung von Programm-Roadmaps, Priorisierung von Projekten und Lösung von Konflikten zur Steigerung der Effektivität im Hinblick auf die Geschäftsergebnisse.', 'Mentoring und Anleitung eines Matrix-Teams aus Onshore- und Offshore-Testressourcen zur Gewährleistung einer umfassenden Testabdeckung.', 'Verwaltung der Serviceaspekte der Test-GuV mit Fokus auf Kostenoptimierung und Ressourcenzuweisung gemäß Governance-Richtlinien.', 'Aufbau direkter Beziehungen zu Kunden-Stakeholdern, um Objektivität zu gewährleisten und kontinuierliches Wachstum zu fördern.' ],
                             fr: [ 'Gestion de la portée globale des tests pour les projets clients, en assurant l\'alignement avec les objectifs commerciaux stratégiques.', 'Définition des feuilles de route des programmes, établissement des priorités des projets et résolution des conflits pour améliorer l\'efficacité en vue des résultats commerciaux.', 'Encadrement et orientation d\'une équipe matricielle de ressources de test onshore et offshore pour garantir une couverture de test complète.', 'Gestion des aspects de service du compte de resultado des tests, en se concentrant sur l\'optimisation des coûts et l\'allocation des ressources sur la base des directives de gouvernance.', 'Établissement de relations directes avec les parties prenantes des clients pour garantir l\'objectivité et promouvoir une croissance continue.' ],
-                            it: [ 'Ho gestito l\'ambito di test complessivo per i progetti dei clienti, garantendo l\'allineamento con gli obiettivi strategici aziendali.', 'Ho definito le roadmap dei programmi, stabilito le priorità dei progetti e risolto i conflitti per migliorare l\'efficacia verso i risultati aziendali.', 'Ho fatto da mentore e guidato un team a matrice di risorse di test onshore e offshore per garantire una copertura di test completa.', 'Ho gestito gli aspetti di servizio del conto economico dei test, concentrandomi sull\'ottimizzazione dei costi e sull\'allocazione delle risorse in base alle linee guida di governance.', 'Ho costruito relazioni dirette con gli stakeholder dei clienti per garantire l\'obiettività e promuovere la crescita continua.' ]
+                            it: [ 'Ho gestito l\'ambito di test complessivo per i progetti dei clienti, garantendo l\'allineamento con gli obiettivi strategici aziendali.', 'Ho definito le roadmap dei programmi, stabilito le priorità dei progetti e risolto i conflitti per migliorare l\'efficacia verso i risultati aziendali.', 'Ho fatto da mentore e guidato un team a matrice di risorse de test onshore e offshore per garantire una copertura di test completa.', 'Ho gestito gli aspetti di servizio del conto economico dei test, concentrandomi sull\'ottimizzazione dei costi e sull\'allocazione delle risorse in base alle linee guida di governance.', 'Ho costruito relazioni dirette con gli stakeholder dei clienti per garantire l\'obiettività e promuovere la crescita continua.' ]
                         },
                         techUsed: ['Stakeholder Mgmt', 'Strategic Planning', 'TestRail', 'Agile', 'Kanban', 'Scrum', 'Jira', 'Cypress', 'MS Project']
                     },
@@ -858,7 +908,7 @@
                             pt: [ 'Liderei os esforços de QA em projetos para grandes clientes dos EUA, utilizando um modelo híbrido onshore/offshore.', 'Escrevi e executei scripts de teste manuais e automatizados complexos usando ferramentas como Selenium e Quality Center.', 'Realizei testes extensivos em tecnologias de front-end (HTML/CSS/DHTML/JavaScript) e back-end (Java/.NET).', 'Gerenciei o rastreamento e o relatório de bugs usando Jira e Bugzilla, garantindo uma comunicação clara com as equipes de desenvolvimento.', 'Usei o Firebug para depuração e análise aprofundada de aplicações web.' ],
                             de: [ 'Leitung der QA-Bemühungen bei Projekten für große US-amerikanische Kunden unter Nutzung eines hybriden Onshore-/Offshore-Modells.', 'Schreiben und Ausführen komplexer manueller und automatisierter Testskripte mit Tools wie Selenium und Quality Center.', 'Durchführung umfangreicher Tests von Front-End- (HTML/CSS/DHTML/JavaScript) und Back-End-Technologien (Java/.NET).', 'Verwaltung der Fehlerverfolgung und -berichterstattung mit Jira und Bugzilla, um eine klare Kommunikation mit den Entwicklungsteams zu gewährleisten.', 'Verwendung von Firebug für tiefgreifendes Debugging und die Analyse von Webanwendungen.' ],
                             fr: [ 'Direction des efforts d\'assurance qualité sur des projets pour de grands clients basés aux États-Unis, en s\'appuyant sur un modèle hybride onshore/offshore.', 'Rédaction et exécution de scripts de test manuels et automatisés complexes à l\'aide d\'outils tels que Selenium et Quality Center.', 'Réalisation de tests approfondis sur les technologies front-end (HTML/CSS/DHTML/JavaScript) et back-end (Java/.NET).', 'Gestion du suivi et du reporting des bogues à l\'aide de Jira et Bugzilla, garantissant une communication claire avec les équipes de développement.', 'Utilisation de Firebug pour le débogage et l\'analyse approfondis des applications Web.' ],
-                            it: [ 'Ho guidato gli sforzi di QA su progetti per importanti clienti con sede negli Stati Uniti, sfruttando un modello ibrido onshore/offshore.', 'Ho scritto ed eseguito complessi script di test manuali e automatizzati utilizzando strumenti come Selenium e Quality Center.', 'Ho eseguito test approfonditi su tecnologie front-end (HTML/CSS/DHTML/JavaScript) e back-end (Java/.NET).', 'Ho gestito il tracciamento e la segnalazione dei bug utilizzando Jira e Bugzilla, garantindo una comunicazione chiara con i team di sviluppo.', 'Ho usato Firebug per il debug e l\'analisi approfonditi delle applicazioni web.' ]
+                            it: [ 'Ho guidato gli sforzi di QA su progetti per importanti clienti con sede negli Stati Uniti, sfruttando un modello ibrido onshore/offshore.', 'Ho scritto ed eseguito complessi script de test manuali e automatizzati utilizzando strumenti come Selenium e Quality Center.', 'Ho eseguito test approfonditi su tecnologie front-end (HTML/CSS/DHTML/JavaScript) e back-end (Java/.NET).', 'Ho gestito il tracciamento e la segnalazione dei bug utilizzando Jira e Bugzilla, garantindo una comunicazione chiara con i team di sviluppo.', 'Ho usato Firebug per il debug e l\'analisi approfonditi delle applicazioni web.' ]
                         },
                         techUsed: ['Selenium', 'Jira', 'Bugzilla', 'Java', '.NET', 'DHTML', 'Firebug', 'Agile', 'Kanban', 'Scrum', 'SoapUI']
                     },
@@ -929,10 +979,9 @@
                     pt: { 'Project Mgmt': 'Experiência em liderar projetos desde o início até a conclusão, garantindo que atendam ao escopo, orçamento e cronograma.', 'QA & Automation': 'Profundo conhecimento em projetar e implementar estruturas de teste automatizadas para garantir a qualidade e confiabilidade do software.', 'Leadership': 'Capacidade comprovada de orientar, gerenciar e motivar equipes multifuncionais para alcançar alto desempenho e sucesso nos projetos.', 'DevOps Strategy': 'Habilidade em integrar desenvolvimento e operações para mejorar o fluxo de trabalho, aumentar a eficiência e acelerar os ciclos de lançamento.', 'Cloud Platforms': 'Proficiente em aproveitar os principais provedores de nuvem (AWS, Azure, GCP) para infraestrutura escalável, resiliente и econômica.', 'Stakeholder Mgmt': 'Apto a gerenciar comunicações e relacionamentos com todas as partes interessadas para garantir o alinhamento e a adesão ao projeto.', 'Agile': 'Vasta experiência com os princípios e práticas Agile para entregar valor de forma iterativa e se adaptar a requisitos em constante mudança.', 'Scrum': 'Experiência certificada em gerenciar projetos usando o framework Scrum para um desenvolvimento transparente, iterativo e colaborativo.', 'Kanban': 'Utilização do Kanban para visualização do fluxo de trabalho, gerenciamento do fluxo e melhoria contínua para otimizar la entrega.', 'CMMI': 'Conhecimento do framework de Integração do Modelo de Maturidade da Capacidade para melhorar e padronizar os processos organizacionais.', 'ISO Standards': 'Experiência na implementação e adesão às normas ISO para gestão da qualidade e segurança da informação.', 'Risk Mgmt': 'Abordagem sistemática para identificar, analisar e mitigar os riscos do projeto para garantir resultados bem-sucedidos.' },
                     de: { 'Project Mgmt': 'Expertise in der Leitung von Projekten von der Initiierung bis zum Abschluss, um sicherzustellen, dass sie den Umfang, das Budget und den Zeitplan einhalten.', 'QA & Automation': 'Tiefes Wissen im Entwerfen und Implementieren von automatisierten Test-Frameworks, um Softwarequalität und -zuverlässigkeit zu gewährleisten.', 'Leadership': 'Nachgewiesene Fähigkeit, funktionsübergreifende Teams zu betreuen, zu leiten und zu motivieren, um hohe Leistungen und Projekterfolg zu erzielen.', 'DevOps Strategy': 'Geschickt in der Integration von Entwicklung und Betrieb, um den Arbeitsablauf zu verbessern, die Effizienz zu steigern und die Release-Zyklen zu beschleunigen.', 'Cloud Platforms': 'Kompetent in der Nutzung der großen Cloud-Anbieter (AWS, Azure, GCP) für eine skalierbare, widerstandsfähige und kostengünstige Infrastruktur.', 'Stakeholder Mgmt': 'Gewandt im Management von Kommunikation und Beziehungen mit allen Stakeholdern, um die Projektausrichtung und -akzeptanz sicherzustellen.', 'Agile': 'Umfangreiche Erfahrung mit agilen Prinzipien und Praktiken, um iterativ Wert zu liefern und sich an ändernde Anforderungen anzupassen.', 'Scrum': 'Zertifizierte Expertise in der Projektleitung mit dem Scrum-Framework für eine transparente, iterative und kollaborative Entwicklung.', 'Kanban': 'Nutzung von Kanban zur Visualisierung des Workflows, zur Steuerung des Flusses und zur kontinuierlichen Verbesserung, um die Lieferung zu optimieren.', 'CMMI': 'Kenntnisse des Capability Maturity Model Integration-Frameworks zur Verbesserung und Standardisierung von Organisationsprozessen.', 'ISO Standards': 'Erfahrung in der Implementierung und Einhaltung von ISO-Normen für Qualitätsmanagement und Informationssicherheit.', 'Risk Mgmt': 'Systematischer Ansatz zur Identifizierung, Analyse und Minderung von Projektrisiken, um erfolgreiche Ergebnisse zu gewährleisten.' },
                     fr: { 'Project Mgmt': 'Expertise dans la direction de projets de l\'initiation à l\'achèvement, en veillant à ce qu\'ils respectent le périmètre, le budget et le calendrier.', 'QA & Automation': 'Connaissance approfondie de la conception et de la mise en œuvre de cadres de test automatisés pour garantir la qualité et la fiabilité des logiciels.', 'Leadership': 'Capacité avérée à encadrer, gérer et motiver des équipes interfonctionnelles pour atteindre de hautes performances et la réussite des projets.', 'DevOps Strategy': 'Compétent dans l\'intégration du développement et des opérations pour améliorer le flux de travail, augmenter l\'efficacité et accélérer les cycles de publication.', 'Cloud Platforms': 'Maîtrise de l\'utilisation des principaux fournisseurs de cloud (AWS, Azure, GCP) pour une infrastructure évolutive, résiliente et rentable.', 'Stakeholder Mgmt': 'Adepte de la gestion des communications et des relations avec toutes les parties prenantes pour garantir l\'alignement et l\'adhésion au projet.', 'Agile': 'Vaste expérience des principes et pratiques Agile pour fournir de la valeur de manière itérative et s\'adapter aux exigences changeantes.', 'Scrum': 'Expertise certifiée dans la gestion de projets à l\'aide du cadre Scrum pour un développement transparent, itératif et collaboratif.', 'Kanban': 'Utilisation de Kanban pour la visualização do fluxo de trabalho, la gestion du flux et l\'amélioration continue afin d\'optimiser la livraison.', 'CMMI': 'Connaissance du cadre d\'intégration du modèle de maturité des capacités pour améliorer et normaliser les processus organisationnels.', 'ISO Standards': 'Expérience dans la mise en œuvre et le respect des normes ISO pour la gestion de la qualité et la sécurité de l\'information.', 'Risk Mgmt': 'Approche systématique pour identifier, analyser et atténuer les risques du projet afin de garantir des résultats positifs.' },
-                    it: { 'Project Mgmt': 'Competenza nella guida di progetti dall\'inizio al completamento, assicurando il rispetto di ambito, budget e tempistiche.', 'QA & Automation': 'Profonda conoscenza nella progettazione e implementazione di framework di test automatizzati per garantire la qualità e l\'affidabilità del software.', 'Leadership': 'Comprovata capacità di fare da mentore, gestire e motivare team interfunzionali per raggiungere alte prestazioni e il successo del progetto.', 'DevOps Strategy': 'Abile nell\'integrare sviluppo e operazioni per migliorare il flusso di lavoro, aumentare l\'efficienza e accelerare i cicli di rilascio.', 'Cloud Platforms': 'Competente nell\'utilizzo dei principali provider di cloud (AWS, Azure, GCP) per un\'infrastruttura scalabile, resiliente ed economica.', 'Stakeholder Mgmt': 'Abile nella gestione delle comunicazioni e delle relazioni con tutti gli stakeholder per garantire l\'allineamento e il consenso al progetto.', 'Agile': 'Vasta esperienza con i principi e le pratiche Agile per fornire valore in modo iterativo e adattarsi ai requisiti mutevoli.', 'Scrum': 'Competenza certificata nella gestione di progetti utilizzando il framework Scrum per uno sviluppo trasparente, iterativo e collaborativo.', 'Kanban': 'Utilizzo di Kanban per la visualizzazione del flusso di lavoro, la gestione del flusso e il miglioramento continuo per ottimizzare la consegna.', 'CMMI': 'Conoscenza del framework Capability Maturity Model Integration per migliorare e standardizzare i processi organizzativi.', 'ISO Standards': 'Esperienza nell\'implementazione e nel rispetto degli standard ISO per la gestione della qualità e la sicurezza delle informazioni.', 'Risk Mgmt': 'Approccio sistematico per identificare, analizzare e mitigare i rischi di progetto per garantire risultati di successo.' }
+                    it: { 'Project Mgmt': 'Competenza nella guida di progetti dall\'inizio al completamento, assicurando il rispetto di ambito, budget e tempistiche.', 'QA & Automation': 'Profonda conoscenza nella progettazione e implementazione di framework di test automatizzati per garantire la qualità e l\'affidabilità del software.', 'Leadership': 'Comprovata capacità di fare da mentore, gestire e motivare team interfunzionali per raggiungere alte prestazioni e il successo del progetto.', 'DevOps Strategy': 'Abile nell\'integrare sviluppo e operazioni per migliorare il flusso di lavoro, aumentare l\'efficienza e accelerare i cicli di rilascio.', 'Cloud Platforms': 'Competente nell\'utilizzo dei principali provider di cloud (AWS, Azure, GCP) per un\'infrastruttura scalabile, resiliente ed economica.', 'Stakeholder Mgmt': 'Abile nella gestione delle comunicazioni e delle relazioni con tutti gli stakeholder per garantire l\'allineamento e il consenso al progetto.', 'Agile': 'Vasta esperienza con i principi e le pratiche Agile per fornire valore in modo iterativo e adattarsi ai requisiti mutevoli.', 'Scrum': 'Competenza certificata nella gestione di progetti utilizzando il framework Scrum per uno sviluppo trasparente, iterativo e collaborativo.', 'Kanban': 'Utilizzo di Kanban per la visualizzazione del flusso di lavoro, la gestione del flusso e il miglioramento continuo per ottimizzare la consegna.', 'CMMI': 'Conoscenza del framework Capability Maturity Model Integration per migliorare e standardizzare i processi organizzativi.', 'ISO Standards': 'Erfahrung nell\'implementazione e nel rispetto degli standard ISO per la gestione della qualità e la sicurezza delle informazioni.', 'Risk Mgmt': 'Approccio sistematico per identificare, analizzare e mitigare i rischi di progetto per garantire risultati di successo.' }
                 },
 
-                // --- NEW/UPDATED: Translations for Widget, Forms, and Errors ---
                 translations: {
                     en: {
                         job_title: "Senior IT Project Manager, QA Architect & QA Leader", contact_title: "Contact", competencies_title: "Core Competencies", competency_pm: "IT Project Management", competency_qa: "QA & Test Automation", competency_lead: "Team Leadership & Mentoring", competency_devops: "CI/CD & DevOps Strategy", competency_cloud: "Cloud Platforms (AWS, Azure, GCP)", competency_strategy: "Strategic Business Acumen", competency_relations: "Stakeholder & Client Relations", languages_title: "Languages", lang_native: "Native", lang_fluent: "Fluent", lang_basic: "Basic", lang_others: "Others", summary_title: "Professional Summary", summary_text: "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.", summary_detail_1: "Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.", summary_detail_2: "As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.", toolkit_title: "Technical & Management Toolkit", toolkit_pm: "Project Management & Methodologies:", toolkit_qa: "QA & Test Automation:", toolkit_lang: "Programming & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Databases & APIs:", toolkit_analytics: "Analytics & Monitoring:", toolkit_platform: "Platforms & Business Tools:", toolkit_system: "General & System Tools:", experience_title: "Professional Experience", education_title: "Education & Certifications", infographics_title: "Career at a Glance", infographics_competencies_title: "Core Competencies", infographics_methodologies_title: "Methodologies & Processes", infographics_timeline_title: "Career Timeline",
@@ -946,7 +995,6 @@
                         tooltip_lang_de: "Translate to German",
                         tooltip_lang_fr: "Translate to French",
                         tooltip_lang_it: "Translate to Italian",
-                        // New Widget and Form Translations
                         widget_tab_message: "Message",
                         widget_tab_rate: "Rate CV",
                         form_label_name: "Name",
@@ -959,7 +1007,6 @@
                         form_label_rating: "Overall Rating",
                         form_label_comments: "Comments (Optional)",
                         form_button_submit_rating: "Submit Rating",
-                        // New Validation Error Translations
                         error_required: "This field is required.",
                         error_min_length: "Please enter at least {min} characters.",
                         error_email: "Please enter a valid email address.",
@@ -967,7 +1014,6 @@
                         error_rating: "Please select a rating.",
                         error_file_size: "File is too large. Max size is 5MB.",
                         error_file_type: "Invalid file type. (PDF, DOC, DOCX, PNG, JPG)",
-                        // New Status Messages
                         status_sending: "Sending...",
                         status_uploading: "Uploading...",
                         status_file_attached: "File attached: {fileName}",
@@ -977,15 +1023,12 @@
                         status_success_rating_body: "Thank you for your valuable feedback!",
                         status_error_title: "An Error Occurred",
                         status_error_body: "Sorry, something went wrong. Please try again later.",
-                        // New Topic Options
                         topic_option_default: "Select a topic...",
                         topic_option_opportunity: "Job Opportunity / Collaboration",
                         topic_option_inquiry: "Project Inquiry",
                         topic_option_feedback: "CV Feedback",
                         topic_option_other: "Other"
                     },
-                    // Add translations for 'es', 'pt', 'de', 'fr', 'it' for all the new keys above
-                    // For brevity, I will only show the 'es' translation as an example.
                     es: {
                         job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA", contact_title: "Contacto", competencies_title: "Competencias Clave", competency_pm: "Gestión de Proyectos de TI", competency_qa: "QA y Automatización de Pruebas", competency_lead: "Liderazgo y Mentoría de Equipos", competency_devops: "Estrategia de CI/CD y DevOps", competency_cloud: "Plataformas en la Nube", competency_strategy: "Visión Estratégica de Negocio", competency_relations: "Relaciones con Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluido", lang_basic: "Básico", lang_others: "Otros", summary_title: "Resumen Profesional", summary_text: "Un Gerente Senior de Proyectos de TI y Arquitecto de QA con más de dos décadas de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de stakeholders y liderazgo de equipos multifuncionales para alcanzar los objetivos del proyecto. Habilidad demostrada para diseñar e implementar robustos marcos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos.", summary_detail_1: "A lo largo de mi carrera, he defendido un enfoque holístico de la calidad, integrando los procesos de QA en cada etapa del SDLC. Como Arquitecto de QA, me especializo en diseñar marcos de automatización escalables, mantenibles y eficientes desde cero, adaptados a las necesidades específicas del producto y la pila tecnológica. Mi experiencia se extiende a la selección de las herramientas óptimas, el establecimiento de las mejores prácticas y la creación de integraciones de CI/CD que proporcionan retroalimentación rápida y fiable a los equipos de desarrollo, reduciendo significativamente los ciclos de regresión y acelerando el tiempo de comercialización.", summary_detail_2: "Como Gerente de Proyectos y Líder, sobresalgo en la creación y mentoría de equipos multiculturales de alto rendimiento. Tengo un historial probado en la gestión de carteras de proyectos multimillonarios, la mitigación de riesgos y la alineación de la ejecución técnica con la estrategia empresarial a nivel ejecutivo. Mi filosofía de liderazgo se centra en la comunicación clara, el empoderamiento y el fomento de un entorno colaborativo donde cada miembro del equipo está motivado para contribuir con su mejor trabajo. Mi dominio del inglés a nivel C2 y mis habilidades multilingües me permiten gestionar sin problemas equipos y stakeholders globales.", toolkit_title: "Herramientas Técnicas y de Gestión", toolkit_pm: "Gestión de Proyectos y Metodologías:", toolkit_qa: "QA y Automatización de Pruebas:", toolkit_lang: "Programación y Scripting:", toolkit_cloud: "Nube, CI/CD y DevOps:", toolkit_db: "Bases de Datos y APIs:", toolkit_analytics: "Analítica y Monitoreo:", toolkit_platform: "Plataformas y Herramientas de Negocio:", toolkit_system: "Herramientas Generales y de Sistema:", experience_title: "Experiencia Profesional", education_title: "Educación y Certificaciones", infographics_title: "Carrera en un Vistazo", infographics_competencies_title: "Competencias Clave", infographics_methodologies_title: "Metodologías y Procesos", infographics_timeline_title: "Línea de Tiempo Profesional",
                         info_bubble_contact: "Haga clic en cualquier enlace de contacto para abrir la aplicación correspondiente (Email, WhatsApp, etc.).",
@@ -998,7 +1041,6 @@
                         tooltip_lang_de: "Traducir a Alemán",
                         tooltip_lang_fr: "Traducir a Francés",
                         tooltip_lang_it: "Traducir a Italiano",
-                        // Spanish translations for new keys
                         widget_tab_message: "Mensaje",
                         widget_tab_rate: "Evaluar CV",
                         form_label_name: "Nombre",
@@ -1033,7 +1075,6 @@
                         topic_option_feedback: "Feedback sobre el CV",
                         topic_option_other: "Otro"
                     }
-                    // ... other language translations ...
                 },
             },
 
@@ -1045,12 +1086,12 @@
                 this._populateAllTranslations();
                 this._renderAll();
                 this._setupEventListeners();
-                // Translate page must come after populating dynamic elements like topics
                 this.translatePage(this.state.lang);
                 this._initScrollAnimations();
                 this._initUrlHighlighting();
                 this._initContactWidget();
-                this._initScrollTrigger(); // **NEW**: Initialize the scroll trigger
+                this._initScrollTrigger();
+                this._loadAndRenderReviews(); // **NEW**: Load testimonials on page init
             },
 
             _cacheDOMElements() {
@@ -1064,7 +1105,7 @@
                     modalClose: document.querySelector('.modal-close'), filterStatus: document.getElementById('filter-status'), themeToggle: document.getElementById('theme-toggle'),
                     mainContent: document.querySelector('.main-content'),
 
-                    // --- Widget and Form Elements ---
+                    // Widget and Form Elements
                     contactWidgetFab: document.getElementById('contact-widget-fab'),
                     contactWidget: document.getElementById('contact-widget'),
                     widgetCloseBtn: document.getElementById('widget-close-btn'),
@@ -1073,7 +1114,6 @@
                     messagePane: document.getElementById('message-pane'),
                     ratingPane: document.getElementById('rating-pane'),
 
-                    // Message Form
                     messageForm: document.getElementById('message-form'),
                     senderName: document.getElementById('sender-name'),
                     senderEmail: document.getElementById('sender-email'),
@@ -1083,7 +1123,6 @@
                     fileUploadStatus: document.getElementById('file-upload-status'),
                     sendMessageBtn: document.getElementById('send-message-btn'),
 
-                    // Rating Form
                     ratingForm: document.getElementById('rating-form'),
                     starRatingContainer: document.getElementById('star-rating'),
                     ratingValue: document.getElementById('rating-value'),
@@ -1092,14 +1131,16 @@
                     raterComment: document.getElementById('rater-comment'),
                     sendRatingBtn: document.getElementById('send-rating-btn'),
 
-                    // Status Overlay
                     widgetStatusContainer: document.getElementById('widget-status-container'),
                     widgetStatusContent: document.getElementById('widget-status-content'),
                     widgetStatusCloseBtn: document.getElementById('widget-status-close-btn'),
+
+                    // **NEW**: Testimonials container
+                    testimonialsContainer: document.getElementById('testimonials-container'),
                 };
             },
 
-            // ... (All previous _render, _create, etc. methods remain the same) ...
+            // ... (All other methods remain here, unchanged) ...
             _createWatermark() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -1511,16 +1552,12 @@
                 document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
             },
 
-            /**
-             * **NEW**: Initializes a scroll listener to open the rating widget at the page bottom.
-             */
             _initScrollTrigger() {
                 window.addEventListener('scroll', () => {
-                    // Check if widget should auto-open
-                    const hasScrolledToBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50); // 50px buffer
+                    const hasScrolledToBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50);
 
                     if (hasScrolledToBottom && !this.state.hasAutoOpenedRating) {
-                        this.state.hasAutoOpenedRating = true; // Ensure it only triggers once
+                        this.state.hasAutoOpenedRating = true;
                         this._openContactWidget();
                         this._switchTab('rating');
                         this._trackEvent('auto_open_rating', 'Smart Feature', 'Scrolled to bottom');
@@ -1570,7 +1607,40 @@
                 }
             },
 
-            // --- ALL WIDGET & FORM LOGIC ---
+            // --- NEW METHOD: Fetches and renders approved reviews ---
+            _loadAndRenderReviews() {
+                const container = this.DOMElements.testimonialsContainer;
+                if (!container) return;
+
+                const q = query(collection(db, "ratings"), where("status", "==", "approved"), orderBy("createdAt", "desc"));
+
+                onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) {
+                        // Hide the section if there are no approved reviews
+                        container.parentElement.style.display = 'none';
+                        return;
+                    }
+
+                    container.parentElement.style.display = 'block';
+                    container.innerHTML = snapshot.docs.map(doc => this._createReviewCard(doc.data())).join('');
+                });
+            },
+
+            // --- NEW METHOD: Creates the HTML for a single testimonial card ---
+            _createReviewCard(review) {
+                const starsHTML = '&#9733;'.repeat(review.rating) + '&#9734;'.repeat(5 - review.rating);
+                const commentHTML = review.comment ? `<p class="testimonial-quote">${review.comment}</p>` : '';
+
+                return `
+                    <div class="testimonial-card">
+                        <div class="flex justify-between items-center">
+                            <div class="testimonial-stars" aria-label="Rating: ${review.rating} out of 5 stars">${starsHTML}</div>
+                        </div>
+                        ${commentHTML}
+                        <p class="testimonial-author">- ${review.name}</p>
+                    </div>
+                `;
+            },
 
             _initContactWidget() {
                 const {
@@ -1578,7 +1648,6 @@
                     ratingForm, starRatingContainer, raterName, raterEmail
                 } = this.DOMElements;
 
-                // On-blur validation listeners
                 const fieldsToValidate = [
                     { el: senderName,      rules: { required: true, minLength: 2 } },
                     { el: senderEmail,     rules: { required: true, type: 'email' } },
@@ -1594,7 +1663,6 @@
                 messageForm.addEventListener('submit', (e) => this._handleMessageSubmit(e));
                 ratingForm.addEventListener('submit', (e) => this._handleRatingSubmit(e));
 
-                // Real-time button state update on input
                 messageForm.addEventListener('input', () => this._updateMessageButtonState());
                 ratingForm.addEventListener('input', () => this._updateRatingButtonState());
 
@@ -1604,7 +1672,6 @@
                 starRatingContainer.addEventListener('mouseover', e => this._handleStarHover(e));
                 starRatingContainer.addEventListener('mouseout', () => this._updateStarDisplay());
 
-                // Add blur listener to rating to validate if no rating is selected
                 starRatingContainer.addEventListener('focusout', () => this._validateField(this.DOMElements.ratingValue, { required: true, type: 'rating' }));
             },
 
@@ -1721,7 +1788,6 @@
                 e.preventDefault();
                 const { sendMessageBtn, senderName, senderEmail, messageTopic, senderMessage, fileUpload } = this.DOMElements;
 
-                // Final validation check
                 const isNameValid = this._validateField(senderName, { required: true, minLength: 2 });
                 const isEmailValid = this._validateField(senderEmail, { required: true, type: 'email' });
                 const isTopicValid = this._validateField(messageTopic, { required: true });
@@ -1764,7 +1830,6 @@
                 e.preventDefault();
                 const { sendRatingBtn, raterName, raterEmail, ratingValue, raterComment } = this.DOMElements;
 
-                // Final validation check
                 const isNameValid = this._validateField(raterName, { required: true, minLength: 2 });
                 const isEmailValid = this._validateField(raterEmail, { required: true, type: 'email' });
                 const isRatingValid = this._validateField(ratingValue, { required: true, type: 'rating' });
@@ -1861,9 +1926,6 @@
                 }
             },
 
-            /**
-             * **MODIFIED**: This now correctly calls _updateRatingButtonState after a click.
-             */
             _handleStarClick(e) {
                 const star = e.target.closest('.star');
                 if (!star) return;
@@ -1871,7 +1933,7 @@
                 this.DOMElements.ratingValue.value = this.state.rating;
                 this._validateField(this.DOMElements.ratingValue, { required: true, type: 'rating' });
                 this._updateStarDisplay();
-                this._updateRatingButtonState(); // **FIX**: Re-check button state after click.
+                this._updateRatingButtonState();
             },
 
             _handleStarHover(e) {
