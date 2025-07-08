@@ -634,7 +634,7 @@
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
-    // IMPORTANT: Actual Firebase configuration
+    // IMPORTANT: Replace with your actual Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
         authDomain: "carlosm-interactive-cv.firebaseapp.com",
@@ -656,7 +656,8 @@
                 selectedSkills: new Set(),
                 pulseTimeout: null,
                 statusTimeout: null, // For auto-closing status messages
-                rating: 0 // For star rating
+                rating: 0, // For star rating
+                hasAutoOpenedRating: false // **NEW**: Flag for scroll trigger
             },
             data: {
                 // ... (keep your existing skills and experiences data here)
@@ -690,16 +691,16 @@
                         { name: 'Ranorex', stars: 3, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/ranorex/00AEEF' },
                     ],
                     lang: [
-                        { name: 'Python', stars: 5, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
-                        { name: 'Java', stars: 5, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
-                        { name: 'JavaScript', stars: 5, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
-                        { name: 'TypeScript', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/typescript/3178C6' },
-                        { name: 'Kotlin', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/kotlin/7F52FF' },
-                        { name: 'C#', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/csharp/512BD4' },
-                        { name: '.NET', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/dot-net/512BD4' },
-                        { name: 'Node.js', stars: 4, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/nodedotjs/339933' },
-                        { name: 'Ruby', stars: 3, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/ruby/CC342D' },
-                        { name: 'PHP', stars: 2, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/php/777BB4' },
+                        { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
+                        { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
+                        { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
+                        { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/typescript/3178C6' },
+                        { name: 'Kotlin', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/kotlin/7F52FF' },
+                        { name: 'C#', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/csharp/512BD4' },
+                        { name: '.NET', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/dot-net/512BD4' },
+                        { name: 'Node.js', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/nodedotjs/339933' },
+                        { name: 'Ruby', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/ruby/CC342D' },
+                        { name: 'PHP', stars: 2, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/php/777BB4' },
                         { name: 'Perl', stars: 2, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/perl/39457E' }
                     ],
                     cloud: [
@@ -714,16 +715,16 @@
                         { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/github/181717' },
                     ],
                     db: [
-                        { name: 'SQL', stars: 5, years: '9+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/azuresqldatabase/azuresqldatabase-original.svg' },
+                        { name: 'SQL', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/azuresqldatabase/azuresqldatabase-original.svg' },
                         { name: 'PostgreSQL', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/postgresql/4169E1' },
-                        { name: 'MySQL', stars: 4, years: '9+ Yrs', icon: 'https://cdn.simpleicons.org/mysql/4479A1' },
-                        { name: 'Oracle', stars: 3, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
+                        { name: 'MySQL', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/mysql/4479A1' },
+                        { name: 'Oracle', stars: 3, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
                         { name: 'MongoDB', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/mongodb/47A248' },
                         { name: 'Postman', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/postman/FF6C37' },
                         { name: 'GraphQL', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/graphql/E10098' },
                         { name: 'Swagger', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/swagger/85EA2D' },
                         { name: 'Rest Assured', stars: 4, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-testing-icon.svg' },
-                        { name: 'SoapUI', stars: 3, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/soapui/5286DE' }
+                        { name: 'SoapUI', stars: 3, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/soapui/5286DE' }
                     ],
                     analytics: [
                         { name: 'Datadog', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/datadog/632CA6' },
@@ -758,7 +759,7 @@
                         details: {
                             en: [ 'Delivered expert QA and project leadership services across 15+ client projects in diverse sectors including FinTech, HealthTech, and retail.', 'Oversaw end-to-end project delivery, managed complex client relationships and expectations, ensuring alignment with strategic business goals.', 'Mentored and led distributed technical teams of up to 10 engineers, fostering a culture of quality and continuous improvement using Agile and Scrum methodologies.', 'Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for various client applications.', 'Managed project workflows, defect tracking, and reporting using Jira and TestRail, providing clear visibility to all stakeholders.' ],
                             es: [ 'Presté servicios expertos de QA y liderazgo de proyectos en más de 15 proyectos de clientes en diversos sectores, incluidos FinTech, HealthTech y retail.', 'Supervisé la entrega de proyectos de principio a fin, gestioné relaciones complejas con los clientes y sus expectativas, asegurando la alineación con los objetivos estratégicos del negocio.', 'Fui mentor y lideré equipos técnicos distribuidos de hasta 10 ingenieros, fomentando una cultura de calidad y mejora continua utilizando metodologías Agile y Scrum.', 'Diseñé e implementé estrategias de automatización de pruebas escalables utilizando Cypress, Playwright y Selenium para diversas aplicaciones de clientes.', 'Gestioné los flujos de trabajo del proyecto, el seguimiento de defectos y los informes utilizando Jira y TestRail, proporcionando una visibilidad clara a todas las partes interesadas.' ],
-                            pt: [ 'Forneci serviços especializados de QA e liderança de projetos em mais de 15 projetos de clientes em diversos setores, incluindo FinTech, HealthTech e varejo.', 'Supervisionei a entrega de projetos de ponta a ponta, gerenciei relacionamentos complexos com clientes e suas expectativas, garantindo o alinhamento com os objetivos estratégicos de negócios.', 'Orientei e liderei equipes técnicas distribuídas de até 10 engenheiros, promovendo uma cultura de qualidade e melhoria contínua usando metodologias Agile e Scrum.', 'Arquitetei e implementei estratégias de automação de testes escaláveis usando Cypress, Playwright e Selenium para várias aplicações de clientes.', 'Gerenciei fluxos de trabalho de projetos, rastreamento de defeitos e relatórios usando Jira e TestRail, proporcionando visibilidade clara para todos os stakeholders.' ],
+                            pt: [ 'Forneci serviços especializados de QA e liderança de projetos em mais de 15 projetos de clientes em diversos setores, incluindo FinTech, HealthTech e varejo.', 'Supervisionei a entrega de projetos de ponta a ponta, gerenciei relacionamentos complexos com clientes e suas expectativas, garantindo o alinhamento com os objetivos estratégicos de negócios.', 'Orientei e liderei equipes técnicas distribuídas de até 10 ingenieros, promovendo uma cultura de qualidade e melhoria contínua usando metodologias Agile e Scrum.', 'Arquitetei e implementei estratégias de automação de testes escaláveis usando Cypress, Playwright e Selenium para várias aplicações de clientes.', 'Gerenciei fluxos de trabalho de projetos, rastreamento de defeitos e relatórios usando Jira e TestRail, proporcionando visibilidade clara para todos os stakeholders.' ],
                             de: [ 'Erbringung von Experten-QA- und Projektleitungsdiensten für über 15 Kundenprojekte in verschiedenen Sektoren, einschließlich FinTech, HealthTech und Einzelhandel.', 'Überwachung der End-to-End-Projektabwicklung, Management komplexer Kundenbeziehungen und -erwartungen zur Sicherstellung der Ausrichtung auf strategische Geschäftsziele.', 'Mentoring und Leitung verteilter technischer Teams von bis zu 10 Ingenieuren, Förderung einer Kultur der Qualität und kontinuierlichen Verbesserung unter Verwendung von Agile- und Scrum-Methoden.', 'Architektur und Implementierung skalierbarer Testautomatisierungsstrategien mit Cypress, Playwright und Selenium für verschiedene Kundenanwendungen.', 'Verwaltung von Projekt-Workflows, Fehlerverfolgung und Berichterstattung mit Jira und TestRail, um allen Beteiligten klare Sichtbarkeit zu bieten.' ],
                             fr: [ 'Fourniture de services experts en QA et en direction de projet pour plus de 15 projets clients dans divers secteurs, notamment la FinTech, la HealthTech et le commerce de détail.', 'Supervision de la livraison de projets de bout en bout, gestion des relations et des attentes complexes des clients, en veillant à l\'alignement avec les objectifs commerciaux stratégiques.', 'Encadrement et direction d\'équipes techniques distribuées comptant jusqu\'à 10 ingénieurs, en favorisant une culture de la qualité et de l\'amélioration continue à l\'aide des méthodologies Agile et Scrum.', 'Conception et mise en œuvre de stratégies d\'automatisation des tests évolutives à l\'aide de Cypress, Playwright et Selenium pour diverses applications clientes.', 'Gestion des flux de travail de projet, du suivi des bogues et des rapports à l\'aide de Jira et TestRail, offrant une visibilité claire à toutes les parties prenantes.' ],
                             it: [ 'Fornitura di servizi esperti di QA e di leadership di progetto per oltre 15 progetti di clienti in diversi settori, tra cui FinTech, HealthTech e retail.', 'Supervisione della consegna dei progetti end-to-end, gestione di relazioni complesse con i clienti e delle loro aspettative, garantendo l\'allineamento con gli obiettivi strategici aziendali.', 'Mentoring e guida di team tecnici distribuiti fino a 10 ingegneri, promuovendo una cultura della qualità e del miglioramento continuo utilizzando le metodologie Agile e Scrum.', 'Progettazione e implementazione di strategie de automazione dei test scalabili utilizzando Cypress, Playwright e Selenium per varie applicazioni dei clienti.', 'Gestione dei flussi de lavoro dei progetti, del tracciamento dei difetti e della reportistica utilizzando Jira e TestRail, fornendo una chiara visibilità a tutti gli stakeholder.' ]
@@ -796,7 +797,7 @@
                             es: [ 'Brindé asistencia de calidad mentorizando a los equipos de desarrollo en la entrega de productos de software de alta calidad para plataformas de datos deportivos en tiempo real.', 'Trabajé con los Product Owners para definir y refinar historias de usuario y criterios de aceptación en un entorno Agile de ritmo rápido.', 'Desarrollé y ejecuté scripts, planes y casos de prueba completos tanto para las API de backend como para las aplicaciones de frontend.', 'Investigué y resolví defectos complejos, analizando el riesgo y el impacto en los flujos de datos en vivo usando Graylog y Grafana.', 'Contribuí a la mejora de los procesos de calidad, centrándome en la detección temprana y prevención de defectos.' ],
                             pt: [ 'Forneci assistência de qualidade, orientando equipes de desenvolvimento na entrega de produtos de software de alta qualidade para plataformas de dados esportivos em tempo real.', 'Trabalhei com os Product Owners para definir e refinar histórias de usuário e critérios de aceitação em um ambiente Agile de ritmo acelerado.', 'Desenvolvi e executei scripts, planos e casos de teste abrangentes para APIs de backend e aplicações de frontend.', 'Investiguei e resolvi defeitos complexos, analizando o risco e o impacto nos fluxos de dados ao vivo usando Graylog e Grafana.', 'Contribuí para a melhoria dos processos de qualidade, com foco na detecção precoce e prevenção de defeitos.' ],
                             de: [ 'Qualitätssicherung durch Mentoring von Entwicklungsteams bei der Bereitstellung hochwertiger Softwareprodukte für Echtzeit-Sportdatenplattformen.', 'Zusammenarbeit mit Product Ownern zur Definition und Verfeinerung von User Stories und Akzeptanzkriterien in einer schnelllebigen agilen Umgebung.', 'Entwicklung und Ausführung umfassender Testskripte, -pläne und -fälle für Backend-APIs und Frontend-Anwendungen.', 'Untersuchung und Behebung komplexer Fehler, Analyse von Risiken und Auswirkungen auf Live-Datenströme mit Graylog und Grafana.', 'Beitrag zur Verbesserung der Qualitätsprozesse mit Schwerpunkt auf frühzeitiger Fehlererkennung und -vermeidung.' ],
-                            fr: [ 'Assistance qualité en encadrant les équipes de développement pour la livraison de produtos logiciels de haute qualité pour les plateformes de données sportives en temps réel.', 'Collaboration avec les Product Owners pour définir et affiner les user stories et les critères d\'acceptation dans un environnement Agile rapide.', 'Développement et exécution de scripts, plans et cas de test complets pour les API backend et les applications frontend.', 'Enquête et résolution de défauts complexes, analyse des risques et de l\'impact sur les flux de données en direct à l\'aide de Graylog et Grafana.', 'Contribution à l\'amélioration des processus de qualité, en se concentrant sur la détection et la prévention précoces des défauts.' ],
+                            fr: [ 'Assistance qualité en encadrant les équipes de développement pour la livraison de produtos logiciels de haute qualité pour les plateformes de données sportivas en temps réel.', 'Collaboration avec les Product Owners pour définir et affiner les user stories et les critères d\'acceptation dans un environnement Agile rapide.', 'Développement et exécution de scripts, plans et cas de test complets pour les API backend et les applications frontend.', 'Enquête et résolution de défauts complexes, analyse des risques et de l\'impact sur les flux de données en direct à l\'aide de Graylog et Grafana.', 'Contribution à l\'amélioration des processus de qualité, en se concentrant sur la détection et la prévention précoces des défauts.' ],
                             it: [ 'Ho fornito assistenza alla qualità facendo da mentore ai team di sviluppo nella fornitura di prodotti software di alta qualità per piattaforme di dati sportivi in tempo real.', 'Ho lavorato con i Product Owner per definire e perfezionare le user story e i criteri di accettazione in un ambiente Agile dal ritmo serrato.', 'Ho sviluppato ed eseguito script, piani e casi di test completi sia per le API di backend che per le applicazioni frontend.', 'Ho indagato e risolto difetti complessi, analizzando il rischio e l\'impatto sui flussi di dati in tempo reale utilizzando Graylog e Grafana.', 'Ho contribuito al miglioramento dei processi di qualità, concentrandomi sulla rilevazione e prevenzione precoce dei difetti.' ]
                         },
                         techUsed: ['Agile', 'Jira', 'SQL', 'Postman', 'Grafana', 'Kanban', 'Scrum', 'Python', 'Cucumber', 'JMeter', 'Rest Assured', 'GitHub']
@@ -1048,8 +1049,8 @@
                 this.translatePage(this.state.lang);
                 this._initScrollAnimations();
                 this._initUrlHighlighting();
-                // --- Replaced old message feature init ---
                 this._initContactWidget();
+                this._initScrollTrigger(); // **NEW**: Initialize the scroll trigger
             },
 
             _cacheDOMElements() {
@@ -1063,7 +1064,7 @@
                     modalClose: document.querySelector('.modal-close'), filterStatus: document.getElementById('filter-status'), themeToggle: document.getElementById('theme-toggle'),
                     mainContent: document.querySelector('.main-content'),
 
-                    // --- NEW: Widget and Form Elements ---
+                    // --- Widget and Form Elements ---
                     contactWidgetFab: document.getElementById('contact-widget-fab'),
                     contactWidget: document.getElementById('contact-widget'),
                     widgetCloseBtn: document.getElementById('widget-close-btn'),
@@ -1098,9 +1099,7 @@
                 };
             },
 
-            // --- Keep your existing methods here, they are still valid ---
-            // _createWatermark, _renderAll, _renderToolkit, _renderExperiences, etc.
-
+            // ... (All previous _render, _create, etc. methods remain the same) ...
             _createWatermark() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -1300,11 +1299,9 @@
                         });
                     });
                 });
-                // NEW: Populate Topic Dropdown
                 this._populateTopicDropdown();
             },
 
-            // --- NEW METHOD: Populates the topic dropdown from translations ---
             _populateTopicDropdown() {
                 const topicDropdown = this.DOMElements.messageTopic;
                 if (!topicDropdown) return;
@@ -1340,15 +1337,11 @@
                         el.innerHTML = text;
                     }
                 });
-                // Repopulate dynamic elements after translation
                 this._populateTopicDropdown();
                 this._createRadarCharts();
             },
 
-            // --- Heavily Modified/New Methods from here down ---
-
             _setupEventListeners() {
-                // Keep existing listeners and add new ones for the widget
                 document.body.addEventListener('click', (e) => {
                     const target = e.target;
                     const skillTag = target.closest('.tech-tag');
@@ -1375,7 +1368,6 @@
                 this.DOMElements.profilePhoto.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') this._openModal(); });
                 this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') this._closeModal(); });
 
-                // NEW: Event listeners for the contact widget
                 const { contactWidgetFab, widgetCloseBtn, messageTab, ratingTab, widgetStatusCloseBtn } = this.DOMElements;
                 contactWidgetFab.addEventListener('click', () => this._openContactWidget());
                 widgetCloseBtn.addEventListener('click', () => this._closeContactWidget());
@@ -1519,6 +1511,23 @@
                 document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
             },
 
+            /**
+             * **NEW**: Initializes a scroll listener to open the rating widget at the page bottom.
+             */
+            _initScrollTrigger() {
+                window.addEventListener('scroll', () => {
+                    // Check if widget should auto-open
+                    const hasScrolledToBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50); // 50px buffer
+
+                    if (hasScrolledToBottom && !this.state.hasAutoOpenedRating) {
+                        this.state.hasAutoOpenedRating = true; // Ensure it only triggers once
+                        this._openContactWidget();
+                        this._switchTab('rating');
+                        this._trackEvent('auto_open_rating', 'Smart Feature', 'Scrolled to bottom');
+                    }
+                }, { passive: true });
+            },
+
             _initUrlHighlighting() {
                 const params = new URLSearchParams(window.location.search);
                 const skillsToHighlight = params.get('skills');
@@ -1561,15 +1570,12 @@
                 }
             },
 
-            // --- ALL NEW WIDGET & FORM LOGIC ---
+            // --- ALL WIDGET & FORM LOGIC ---
 
-            /**
-             * Initializes the contact widget, setting up all form-related event listeners.
-             */
             _initContactWidget() {
                 const {
                     messageForm, senderName, senderEmail, messageTopic, senderMessage, fileUpload,
-                    ratingForm, starRatingContainer, raterName, raterEmail, sendRatingBtn
+                    ratingForm, starRatingContainer, raterName, raterEmail
                 } = this.DOMElements;
 
                 // On-blur validation listeners
@@ -1585,40 +1591,32 @@
                     el.addEventListener('focusout', () => this._validateField(el, rules));
                 });
 
-                // Form submission listeners
                 messageForm.addEventListener('submit', (e) => this._handleMessageSubmit(e));
                 ratingForm.addEventListener('submit', (e) => this._handleRatingSubmit(e));
 
-                // Real-time button state update
+                // Real-time button state update on input
                 messageForm.addEventListener('input', () => this._updateMessageButtonState());
                 ratingForm.addEventListener('input', () => this._updateRatingButtonState());
 
-                // File attachment listener
                 fileUpload.addEventListener('change', () => this._handleFileAttachment());
 
-                // Star rating listeners
                 starRatingContainer.addEventListener('click', e => this._handleStarClick(e));
                 starRatingContainer.addEventListener('mouseover', e => this._handleStarHover(e));
                 starRatingContainer.addEventListener('mouseout', () => this._updateStarDisplay());
-                sendRatingBtn.addEventListener('click', () => this._validateField(this.DOMElements.ratingValue, { required: true, type: 'rating' }));
+
+                // Add blur listener to rating to validate if no rating is selected
+                starRatingContainer.addEventListener('focusout', () => this._validateField(this.DOMElements.ratingValue, { required: true, type: 'rating' }));
             },
 
-            /**
-             * Opens the contact widget with a smooth animation.
-             */
             _openContactWidget() {
                 this.DOMElements.contactWidget.classList.add('visible');
                 this.DOMElements.contactWidget.setAttribute('aria-hidden', 'false');
             },
 
-            /**
-             * Closes and resets the contact widget.
-             */
             _closeContactWidget() {
                 this.DOMElements.contactWidget.classList.remove('visible');
                 this.DOMElements.contactWidget.setAttribute('aria-hidden', 'true');
 
-                // Reset forms and hide status message after animation
                 setTimeout(() => {
                     this._resetMessageForm();
                     this._resetRatingForm();
@@ -1626,10 +1624,6 @@
                 }, 300);
             },
 
-            /**
-             * Handles switching between the "Message" and "Rate CV" tabs.
-             * @param {string} tabName - The name of the tab to switch to ('message' or 'rating').
-             */
             _switchTab(tabName) {
                 const { messageTab, ratingTab, messagePane, ratingPane } = this.DOMElements;
                 const isMessageTab = tabName === 'message';
@@ -1643,70 +1637,58 @@
                 ratingPane.classList.toggle('active', !isMessageTab);
             },
 
-            /**
-             * A generic field validation function that shows/hides error messages.
-             * @param {HTMLElement} field - The input, textarea, or select element to validate.
-             * @param {object} rules - The validation rules (e.g., { required: true, minLength: 2 }).
-             * @returns {boolean} - True if the field is valid, false otherwise.
-             */
             _validateField(field, rules) {
                 const errorEl = document.getElementById(`${field.id}-error`);
                 let errorMessage = '';
                 const translations = this.data.translations[this.state.lang];
+                const value = field.value.trim();
 
-                if (rules.required && !field.value.trim()) {
-                    errorMessage = translations.error_required;
-                } else if (rules.type === 'email' && !/^\S+@\S+\.\S+$/.test(field.value)) {
+                if (rules.required && !value) {
+                    errorMessage = (rules.type === 'rating' && parseInt(field.value, 10) === 0) ? translations.error_rating : translations.error_required;
+                } else if (rules.type === 'email' && !/^\S+@\S+\.\S+$/.test(value)) {
                     errorMessage = translations.error_email;
-                } else if (rules.minLength && field.value.trim().length < rules.minLength) {
+                } else if (rules.minLength && value.length < rules.minLength) {
                     errorMessage = translations.error_min_length.replace('{min}', rules.minLength);
-                } else if (rules.type === 'rating' && parseInt(field.value, 10) === 0) {
-                    errorMessage = translations.error_rating;
                 }
 
                 if (errorMessage) {
-                    errorEl.textContent = errorMessage;
-                    errorEl.style.display = 'block';
+                    if (errorEl) {
+                        errorEl.textContent = errorMessage;
+                        errorEl.style.display = 'block';
+                    }
                     field.classList.add('invalid');
                     field.setAttribute('aria-invalid', 'true');
                     return false;
                 } else {
-                    errorEl.textContent = '';
-                    errorEl.style.display = 'none';
+                    if (errorEl) {
+                        errorEl.textContent = '';
+                        errorEl.style.display = 'none';
+                    }
                     field.classList.remove('invalid');
                     field.setAttribute('aria-invalid', 'false');
                     return true;
                 }
             },
 
-            /**
-             * Checks the validity of all fields in the message form to enable/disable the submit button.
-             */
             _updateMessageButtonState() {
                 const { senderName, senderEmail, messageTopic, senderMessage, sendMessageBtn } = this.DOMElements;
-                const isNameValid = this._validateField(senderName, { required: true, minLength: 2 });
-                const isEmailValid = this._validateField(senderEmail, { required: true, type: 'email' });
-                const isTopicValid = this._validateField(messageTopic, { required: true });
-                const isMessageValid = this._validateField(senderMessage, { required: true, minLength: 10 });
-                // Only enable if all fields are valid
+                const isNameValid = senderName.value.trim().length >= 2;
+                const isEmailValid = /^\S+@\S+\.\S+$/.test(senderEmail.value.trim());
+                const isTopicValid = messageTopic.value.trim() !== '';
+                const isMessageValid = senderMessage.value.trim().length >= 10;
+
                 sendMessageBtn.disabled = !(isNameValid && isEmailValid && isTopicValid && isMessageValid);
             },
 
-            /**
-             * Checks the validity of all fields in the rating form to enable/disable the submit button.
-             */
             _updateRatingButtonState() {
                 const { raterName, raterEmail, ratingValue, sendRatingBtn } = this.DOMElements;
-                const isNameValid = this._validateField(raterName, { required: true, minLength: 2 });
-                const isEmailValid = this._validateField(raterEmail, { required: true, type: 'email' });
-                const isRatingValid = this._validateField(ratingValue, { required: true, type: 'rating' });
-                // Only enable if all required fields are valid
+                const isNameValid = raterName.value.trim().length >= 2;
+                const isEmailValid = /^\S+@\S+\.\S+$/.test(raterEmail.value.trim());
+                const isRatingValid = parseInt(ratingValue.value, 10) > 0;
+
                 sendRatingBtn.disabled = !(isNameValid && isEmailValid && isRatingValid);
             },
 
-            /**
-             * Handles file selection, validation, and provides immediate user feedback.
-             */
             _handleFileAttachment() {
                 const { fileUpload, fileUploadStatus } = this.DOMElements;
                 const file = fileUpload.files[0];
@@ -1717,42 +1699,37 @@
                     return;
                 }
 
-                // Show loading spinner
                 fileUploadStatus.innerHTML = `<div class="spinner" aria-label="${translations.status_uploading}"></div> ${translations.status_uploading}`;
 
-                // File validation
                 const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg', 'image/jpg'];
                 const maxSize = 5 * 1024 * 1024; // 5MB
 
-                setTimeout(() => { // Simulate a quick check
+                setTimeout(() => {
                     if (file.size > maxSize) {
                         fileUploadStatus.innerHTML = `<span style="color: var(--error-red);">${translations.error_file_size}</span>`;
-                        fileUpload.value = ''; // Clear invalid file
+                        fileUpload.value = '';
                     } else if (!allowedTypes.includes(file.type)) {
                         fileUploadStatus.innerHTML = `<span style="color: var(--error-red);">${translations.error_file_type}</span>`;
-                        fileUpload.value = ''; // Clear invalid file
+                        fileUpload.value = '';
                     } else {
-                        // Success
                         fileUploadStatus.innerHTML = `<span style="color: var(--cyan-brand);">${translations.status_file_attached.replace('{fileName}', file.name)}</span>`;
                     }
                 }, 500);
             },
 
-            /**
-             * Handles the submission of the "Message Me" form.
-             */
             async _handleMessageSubmit(e) {
                 e.preventDefault();
-                const { sendMessageBtn, fileUpload } = this.DOMElements;
-                const form = e.target;
+                const { sendMessageBtn, senderName, senderEmail, messageTopic, senderMessage, fileUpload } = this.DOMElements;
 
                 // Final validation check
-                this._updateMessageButtonState();
-                if (sendMessageBtn.disabled) return;
+                const isNameValid = this._validateField(senderName, { required: true, minLength: 2 });
+                const isEmailValid = this._validateField(senderEmail, { required: true, type: 'email' });
+                const isTopicValid = this._validateField(messageTopic, { required: true });
+                const isMessageValid = this._validateField(senderMessage, { required: true, minLength: 10 });
+                if (!isNameValid || !isEmailValid || !isTopicValid || !isMessageValid) return;
 
                 this._setButtonSendingState(sendMessageBtn, true);
 
-                const formData = new FormData(form);
                 const file = fileUpload.files[0];
 
                 try {
@@ -1763,12 +1740,11 @@
                         fileURL = await getDownloadURL(snapshot.ref);
                     }
 
-                    // Save message to Firestore
                     await addDoc(collection(db, 'messages'), {
-                        name: formData.get('name'),
-                        email: formData.get('email'),
-                        topic: formData.get('topic'),
-                        message: formData.get('message'),
+                        name: senderName.value,
+                        email: senderEmail.value,
+                        topic: messageTopic.value,
+                        message: senderMessage.value,
                         fileURL,
                         createdAt: serverTimestamp()
                     });
@@ -1784,42 +1760,30 @@
                 }
             },
 
-            /**
-             * Handles the submission of the "Rate my CV" form.
-             */
             async _handleRatingSubmit(e) {
                 e.preventDefault();
-                const { sendRatingBtn } = this.DOMElements;
-                const form = e.target;
+                const { sendRatingBtn, raterName, raterEmail, ratingValue, raterComment } = this.DOMElements;
 
                 // Final validation check
-                this._updateRatingButtonState();
-                if (sendRatingBtn.disabled) return;
+                const isNameValid = this._validateField(raterName, { required: true, minLength: 2 });
+                const isEmailValid = this._validateField(raterEmail, { required: true, type: 'email' });
+                const isRatingValid = this._validateField(ratingValue, { required: true, type: 'rating' });
+                if (!isNameValid || !isEmailValid || !isRatingValid) return;
 
                 this._setButtonSendingState(sendRatingBtn, true);
 
-                const formData = new FormData(form);
-
                 try {
-                    // Save rating to a new 'ratings' collection in Firestore
                     await addDoc(collection(db, 'ratings'), {
-                        name: formData.get('name'),
-                        email: formData.get('email'),
-                        rating: parseInt(formData.get('rating'), 10),
-                        comment: formData.get('comment'),
-                        status: 'pending', // For backstage review
+                        name: raterName.value,
+                        email: raterEmail.value,
+                        rating: parseInt(ratingValue.value, 10),
+                        comment: raterComment.value,
+                        status: 'pending',
                         createdAt: serverTimestamp()
                     });
 
                     this._showStatusMessage('success', 'rating');
                     this._resetRatingForm();
-
-                    /**
-                     * DEVELOPER NOTE: To enable automatic "Thank You" emails, you would set up a
-                     * Firebase Cloud Function triggered by document creation in the 'ratings' collection.
-                     * The function would use a service like Nodemailer or SendGrid to send an email
-                     * to the `email` field of the newly created document.
-                     */
 
                 } catch (error) {
                     console.error("Error submitting rating:", error);
@@ -1829,9 +1793,6 @@
                 }
             },
 
-            /**
-             * Resets the message form to its initial state.
-             */
             _resetMessageForm() {
                 this.DOMElements.messageForm.reset();
                 this.DOMElements.fileUploadStatus.innerHTML = '';
@@ -1845,28 +1806,22 @@
                 });
             },
 
-            /**
-             * Resets the rating form to its initial state.
-             */
             _resetRatingForm() {
                 this.DOMElements.ratingForm.reset();
                 this.state.rating = 0;
+                this.DOMElements.ratingValue.value = 0;
                 this._updateStarDisplay();
                 this.DOMElements.sendRatingBtn.disabled = true;
                 ['rater-name', 'rater-email', 'rating-value'].forEach(id => {
                     const field = document.getElementById(id);
-                    const errorEl = document.getElementById(`${id}-error`);
+                    if (!field) return;
                     field.classList.remove('invalid');
                     field.setAttribute('aria-invalid', 'false');
+                    const errorEl = document.getElementById(`${id}-error`);
                     if (errorEl) errorEl.style.display = 'none';
                 });
             },
 
-            /**
-             * Shows the status overlay with a success or error message.
-             * @param {'success'|'error'} type - The type of message to show.
-             * @param {'message'|'rating'} context - The context for the success message.
-             */
             _showStatusMessage(type, context = 'message') {
                 const { widgetStatusContainer, widgetStatusContent } = this.DOMElements;
                 const translations = this.data.translations[this.state.lang];
@@ -1884,24 +1839,15 @@
 
                 widgetStatusContainer.classList.add('visible');
 
-                // Auto-close after 5 seconds
                 if (this.state.statusTimeout) clearTimeout(this.state.statusTimeout);
                 this.state.statusTimeout = setTimeout(() => this._hideStatusMessage(), 5000);
             },
 
-            /**
-             * Hides the status overlay message.
-             */
             _hideStatusMessage() {
                 if (this.state.statusTimeout) clearTimeout(this.state.statusTimeout);
                 this.DOMElements.widgetStatusContainer.classList.remove('visible');
             },
 
-            /**
-             * Toggles the sending state of a submit button (shows/hides spinner).
-             * @param {HTMLElement} button - The button element.
-             * @param {boolean} isSending - True to show spinner, false to show text.
-             */
             _setButtonSendingState(button, isSending) {
                 const translations = this.data.translations[this.state.lang];
                 button.classList.toggle('sending', isSending);
@@ -1910,21 +1856,22 @@
                 if (isSending) {
                     btnText.setAttribute('data-original-text', btnText.textContent);
                     btnText.textContent = translations.status_sending;
-                } else {
+                } else if (btnText.hasAttribute('data-original-text')) {
                     btnText.textContent = btnText.getAttribute('data-original-text');
                 }
             },
 
-            // --- NEW: Star Rating Methods ---
-
+            /**
+             * **MODIFIED**: This now correctly calls _updateRatingButtonState after a click.
+             */
             _handleStarClick(e) {
                 const star = e.target.closest('.star');
                 if (!star) return;
                 this.state.rating = parseInt(star.dataset.value, 10);
                 this.DOMElements.ratingValue.value = this.state.rating;
+                this._validateField(this.DOMElements.ratingValue, { required: true, type: 'rating' });
                 this._updateStarDisplay();
-                // Manually trigger validation check for the button state
-                this._updateRatingButtonState();
+                this._updateRatingButtonState(); // **FIX**: Re-check button state after click.
             },
 
             _handleStarHover(e) {
