@@ -634,7 +634,7 @@
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
-    // IMPORTANT: Replace with your actual Firebase configuration
+    // IMPORTANT: Actual Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
         authDomain: "carlosm-interactive-cv.firebaseapp.com",
@@ -690,16 +690,16 @@
                         { name: 'Ranorex', stars: 3, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/ranorex/00AEEF' },
                     ],
                     lang: [
-                        { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
-                        { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
-                        { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
-                        { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/typescript/3178C6' },
-                        { name: 'Kotlin', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/kotlin/7F52FF' },
-                        { name: 'C#', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/csharp/512BD4' },
-                        { name: '.NET', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/dot-net/512BD4' },
-                        { name: 'Node.js', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/nodedotjs/339933' },
-                        { name: 'Ruby', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/ruby/CC342D' },
-                        { name: 'PHP', stars: 2, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/php/777BB4' },
+                        { name: 'Python', stars: 5, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
+                        { name: 'Java', stars: 5, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
+                        { name: 'JavaScript', stars: 5, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
+                        { name: 'TypeScript', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/typescript/3178C6' },
+                        { name: 'Kotlin', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/kotlin/7F52FF' },
+                        { name: 'C#', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/csharp/512BD4' },
+                        { name: '.NET', stars: 4, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/dot-net/512BD4' },
+                        { name: 'Node.js', stars: 4, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/nodedotjs/339933' },
+                        { name: 'Ruby', stars: 3, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/ruby/CC342D' },
+                        { name: 'PHP', stars: 2, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/php/777BB4' },
                         { name: 'Perl', stars: 2, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/perl/39457E' }
                     ],
                     cloud: [
@@ -714,16 +714,16 @@
                         { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/github/181717' },
                     ],
                     db: [
-                        { name: 'SQL', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/azuresqldatabase/azuresqldatabase-original.svg' },
+                        { name: 'SQL', stars: 5, years: '9+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/azuresqldatabase/azuresqldatabase-original.svg' },
                         { name: 'PostgreSQL', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/postgresql/4169E1' },
-                        { name: 'MySQL', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/mysql/4479A1' },
-                        { name: 'Oracle', stars: 3, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
+                        { name: 'MySQL', stars: 4, years: '9+ Yrs', icon: 'https://cdn.simpleicons.org/mysql/4479A1' },
+                        { name: 'Oracle', stars: 3, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
                         { name: 'MongoDB', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/mongodb/47A248' },
                         { name: 'Postman', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/postman/FF6C37' },
                         { name: 'GraphQL', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/graphql/E10098' },
                         { name: 'Swagger', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/swagger/85EA2D' },
                         { name: 'Rest Assured', stars: 4, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-testing-icon.svg' },
-                        { name: 'SoapUI', stars: 3, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/soapui/5286DE' }
+                        { name: 'SoapUI', stars: 3, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/soapui/5286DE' }
                     ],
                     analytics: [
                         { name: 'Datadog', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/datadog/632CA6' },
@@ -1100,7 +1100,7 @@
 
             // --- Keep your existing methods here, they are still valid ---
             // _createWatermark, _renderAll, _renderToolkit, _renderExperiences, etc.
-            // I will add the new and modified methods below.
+
             _createWatermark() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
