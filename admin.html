@@ -154,9 +154,6 @@
         });
     }
 
-    /**
-     * **MODIFIED**: Attaches event listeners for all possible action buttons.
-     */
     function loadRatings() {
         const q = query(collection(db, "ratings"), orderBy("createdAt", "desc"));
         onSnapshot(q, (querySnapshot) => {
@@ -166,12 +163,14 @@
             }
             ratingsList.innerHTML = querySnapshot.docs.map(renderRatingCard).join('');
 
-            // **MODIFIED**: Add event listeners for all possible action buttons
+            // Add event listeners for all possible action buttons
             querySnapshot.docs.forEach(doc => {
-                document.getElementById(`approve-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, 'approved'));
-                document.getElementById(`reject-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, 'rejected'));
-                document.getElementById(`retract-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, 'pending'));
-                document.getElementById(`restore-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, 'pending'));
+                document.getElementById(`approve-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'approved', isAnonymous: false }));
+                // **NEW**: Listener for the anonymous approval button
+                document.getElementById(`approve-anon-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'approved', isAnonymous: true }));
+                document.getElementById(`reject-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'rejected' }));
+                document.getElementById(`retract-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'pending' }));
+                document.getElementById(`restore-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'pending' }));
             });
         });
     }
@@ -197,7 +196,7 @@
     }
 
     /**
-     * **MODIFIED**: This function now conditionally renders the correct buttons based on the review's current status.
+     * **MODIFIED**: Renders an "Approve Anonymously" button for pending reviews.
      */
     function renderRatingCard(doc) {
         const rating = doc.data();
@@ -210,11 +209,14 @@
         if (rating.status === 'pending') {
             actionButtons = `
                     <button id="approve-${doc.id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button>
+                    <button id="approve-anon-${doc.id}" class="bg-sky-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-sky-600">Approve Anonymously</button>
                     <button id="reject-${doc.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>
                 `;
         } else if (rating.status === 'approved') {
+            const anonBadge = rating.isAnonymous ? '<span class="text-xs font-bold text-sky-600 ml-4">(Published Anonymously)</span>' : '';
             actionButtons = `
                     <button id="retract-${doc.id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract (Move to Pending)</button>
+                    ${anonBadge}
                 `;
         } else if (rating.status === 'rejected') {
             actionButtons = `
@@ -238,18 +240,23 @@
                         </div>
                     </div>
                     ${commentHTML}
-                    <div class="flex space-x-2 mt-4">
+                    <div class="flex items-center space-x-2 mt-4">
                         ${actionButtons}
                     </div>
                 </div>
             `;
     }
 
-    async function updateRatingStatus(docId, newStatus) {
+    /**
+     * **MODIFIED**: Accepts a payload object to update multiple fields at once.
+     * @param {string} docId - The ID of the rating document.
+     * @param {object} payload - The data to update (e.g., { status: 'approved', isAnonymous: true }).
+     */
+    async function updateRatingStatus(docId, payload) {
         const ratingRef = doc(db, "ratings", docId);
         try {
-            await updateDoc(ratingRef, { status: newStatus });
-            console.log(`Rating ${docId} status updated to ${newStatus}`);
+            await updateDoc(ratingRef, payload);
+            console.log(`Rating ${docId} status updated.`);
         } catch (error) {
             console.error("Error updating rating status: ", error);
             alert("Could not update rating status. See console for details.");
