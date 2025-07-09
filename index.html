@@ -18,7 +18,7 @@
 
         gtag('config', 'G-J8GNF5380F');
     </script>
-
+<!--reverted changes-->
     <!-- International SEO: hreflang tags -->
     <link rel="alternate" hreflang="x-default" href="https://kaanmuar.github.io/?lang=en" />
     <link rel="alternate" hreflang="en" href="https://kaanmuar.github.io/?lang=en" />
@@ -739,102 +739,94 @@
                 // ... (your existing skills, experiences, and translations data remains here)
                 skills: {
                     pm: [
-                        { name: 'Agile', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/agile/339933' },
-                        { name: 'Kanban', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/trello/0079BF' },
-                        { name: 'Scrum', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/jira/0052CC' },
-                        { name: 'Strategic Planning', years: '10+ Yrs', stars: 5, icon: 'https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/strategic-planning-icon.svg' },
-                        { name: 'Risk Management', years: '10+ Yrs', stars: 5, icon: 'https://uxwing.com/wp-content/themes/uxwing/download/crime-security-military-law/risk-management-icon.svg' },
-                        { name: 'Stakeholder Mgmt', years: '10+ Yrs', stars: 5, icon: 'https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/stakeholder-icon.svg' },
-                        { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/jira/0052CC' },
-                        { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/testrail/78C644' },
-                        { name: 'MS Project', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/microsoftproject/217346' },
-                        { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/business-process-management-icon.svg' },
-                        { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/iso/000000' }
+                        { name: "Agile", stars: 5, years: "10+ Yrs", slug: "jira" },
+                        { name: "Kanban", stars: 5, years: "8+ Yrs", slug: "trello" },
+                        { name: "Scrum", stars: 5, years: "10+ Yrs", slug: "jira" },
+                        { name: "Strategic Planning", stars: 5, years: "10+ Yrs", icon: "https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/strategic-planning-icon.svg" },
+                        { name: "Risk Management", stars: 5, years: "10+ Yrs", icon: "https://uxwing.com/wp-content/themes/uxwing/download/crime-security-military-law/risk-management-icon.svg" },
+                        { name: "Stakeholder Mgmt", stars: 5, years: "10+ Yrs", icon: "https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/stakeholder-icon.svg" },
+                        { name: "Jira", stars: 5, years: "15+ Yrs", slug: "jira" },
+                        { name: "TestRail", stars: 4, years: "15+ Yrs", icon: "https://cdn.simpleicons.org/testrail/78C644" },
+                        { name: "MS Project", stars: 4, years: "10+ Yrs", slug: "microsoftproject" },
+                        { name: "CMMI", stars: 3, years: "15+ Yrs", icon: "https://uxwing.com/wp-content/themes/uxwing/download/business-professional-services/business-process-management-icon.svg" },
+                        { name: "ISO Standards", stars: 4, years: "15+ Yrs", slug: "iso" }
                     ],
                     qa: [
-                        { name: 'Selenium', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/selenium/43B02A' },
-                        { name: 'Cypress', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/cypress/17202C' },
-                        { name: 'Playwright', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/playwright/2EAD33' },
-                        { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/appium/F15367' },
-                        { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'https://cdn.simpleicons.org/robotframework/000000' },
-                        { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/cucumber/23D96C' },
-                        // CORRECTED: 'katalon' -> 'katalonstudio'
-                        { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/katalonstudio/008742' },
-                        { name: 'Puppeteer', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/puppeteer/40B5A4' },
-                        { name: 'JMeter', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/apachejmeter/D22128' },
-                        { name: 'Gatling', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/gatling/E77734' },
-                        { name: 'JUnit', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/junit5/2596BE' },
-                        { name: 'Tosca', stars: 3, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/tricentis/13294B' },
-                        // CORRECTED: 'ranorex' does not exist, replaced with generic icon
-                        { name: 'Ranorex', stars: 3, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/automation-testing-icon.svg' },
+                        { name: "Selenium", stars: 5, years: "6+ Yrs", slug: "selenium" },
+                        { name: "Cypress", stars: 5, years: "6+ Yrs", slug: "cypressio" },
+                        { name: "Playwright", stars: 4, years: "6+ Yrs", slug: "playwright" },
+                        { name: "Appium", stars: 4, years: "6+ Yrs", slug: "appium" },
+                        { name: "Robot Framework", stars: 4, years: "6+ Yrs", slug: "robotframework" },
+                        { name: "Cucumber", stars: 4, years: "6+ Yrs", slug: "cucumber" },
+                        { name: "Katalon", stars: 4, years: "6+ Yrs", slug: "katalon" },
+                        { name: "Puppeteer", stars: 4, years: "6+ Yrs", slug: "puppeteer" },
+                        { name: "JMeter", stars: 4, years: "8+ Yrs", slug: "apachejmeter" },
+                        { name: "Gatling", stars: 3, years: "4+ Yrs", slug: "gatling" },
+                        { name: "JUnit", stars: 5, years: "6+ Yrs", slug: "junit" },
+                        { name: "Tosca", stars: 3, years: "6+ Yrs", slug: "tricentis" },
+                        { name: "Ranorex", stars: 3, years: "6+ Yrs", icon: "https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/automation-testing-icon.svg" }
                     ],
                     lang: [
-                        { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
-                        { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
-                        { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
-                        { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/typescript/3178C6' },
-                        { name: 'Kotlin', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/kotlin/7F52FF' },
-                        // CORRECTED: URL was wrong, now correct.
-                        { name: 'C#', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/csharp/A179F4' },
-                        // CORRECTED: 'dot-net' -> 'dotnet'
-                        { name: '.NET', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/dotnet/512BD4' },
-                        { name: 'Node.js', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/nodedotjs/339933' },
-                        { name: 'Ruby', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/ruby/CC342D' },
-                        { name: 'PHP', stars: 2, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/php/777BB4' },
-                        { name: 'Perl', stars: 2, years: '2+ Yrs', icon: 'https://cdn.simpleicons.org/perl/39457E' }
+                        { name: "Python", stars: 5, years: "10+ Yrs", slug: "python" },
+                        { name: "Java", stars: 5, years: "15+ Yrs", slug: "java" },
+                        { name: "JavaScript", stars: 5, years: "10+ Yrs", slug: "javascript" },
+                        { name: "TypeScript", stars: 4, years: "4+ Yrs", slug: "typescript" },
+                        { name: "Kotlin", stars: 4, years: "5+ Yrs", slug: "kotlin" },
+                        { name: "C#", stars: 4, years: "8+ Yrs", slug: "csharp" },
+                        { name: ".NET", stars: 4, years: "8+ Yrs", slug: "dotnet" },
+                        { name: "Node.js", stars: 4, years: "6+ Yrs", slug: "nodedotjs" },
+                        { name: "Ruby", stars: 3, years: "4+ Yrs", slug: "ruby" },
+                        { name: "PHP", stars: 2, years: "3+ Yrs", slug: "php" },
+                        { name: "Perl", stars: 2, years: "2+ Yrs", slug: "perl" }
                     ],
                     cloud: [
-                        { name: 'AWS', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/amazonaws/232F3E' },
-                        { name: 'Azure DevOps', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/azuredevops/0078D7' },
-                        { name: 'GCP', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/googlecloud/4285F4' },
-                        { name: 'Jenkins', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/jenkins/D24939' },
-                        { name: 'Docker', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/docker/2496ED' },
-                        { name: 'Kubernetes', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/kubernetes/326CE5' },
-                        { name: 'Terraform', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/terraform/7B42BC' },
-                        { name: 'GitLab', stars: 4, years: '7+ Yrs', icon: 'https://cdn.simpleicons.org/gitlab/FC6D26' },
-                        { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/github/181717' },
+                        { name: "AWS", stars: 5, years: "8+ Yrs", slug: "amazonwebservices" },
+                        { name: "Azure DevOps", stars: 4, years: "5+ Yrs", slug: "azuredevops" },
+                        { name: "GCP", stars: 4, years: "4+ Yrs", slug: "googlecloud" },
+                        { name: "Jenkins", stars: 5, years: "10+ Yrs", slug: "jenkins" },
+                        { name: "Docker", stars: 4, years: "6+ Yrs", slug: "docker" },
+                        { name: "Kubernetes", stars: 3, years: "4+ Yrs", slug: "kubernetes" },
+                        { name: "Terraform", stars: 3, years: "4+ Yrs", slug: "terraform" },
+                        { name: "GitLab", stars: 4, years: "7+ Yrs", slug: "gitlab" },
+                        { name: "GitHub", stars: 5, years: "10+ Yrs", slug: "github" }
                     ],
                     db: [
-                        { name: 'SQL', stars: 5, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/azuresqldatabase/azuresqldatabase-original.svg' },
-                        { name: 'PostgreSQL', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/postgresql/4169E1' },
-                        { name: 'MySQL', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/mysql/4479A1' },
-                        { name: 'Oracle', stars: 3, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/oracle/F80000' },
-                        { name: 'MongoDB', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/mongodb/47A248' },
-                        { name: 'Postman', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/postman/FF6C37' },
-                        { name: 'GraphQL', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/graphql/E10098' },
-                        { name: 'Swagger', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/swagger/85EA2D' },
-                        { name: 'Rest Assured', stars: 4, years: '6+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-testing-icon.svg' },
-                        { name: 'SoapUI', stars: 3, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/soapui/5286DE' }
+                        { name: "SQL", stars: 5, years: "15+ Yrs", slug: "azuresqldatabase" },
+                        { name: "PostgreSQL", stars: 4, years: "8+ Yrs", slug: "postgresql" },
+                        { name: "MySQL", stars: 4, years: "10+ Yrs", slug: "mysql" },
+                        { name: "Oracle", stars: 3, years: "10+ Yrs", slug: "oracle" },
+                        { name: "MongoDB", stars: 4, years: "6+ Yrs", slug: "mongodb" },
+                        { name: "Postman", stars: 5, years: "8+ Yrs", slug: "postman" },
+                        { name: "GraphQL", stars: 3, years: "3+ Yrs", slug: "graphql" },
+                        { name: "Swagger", stars: 4, years: "6+ Yrs", slug: "swagger" },
+                        { name: "Rest Assured", stars: 4, years: "6+ Yrs", icon: "https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-testing-icon.svg" },
+                        { name: "SoapUI", stars: 3, years: "15+ Yrs", icon: "https://cdn.simpleicons.org/soapui/5286DE" }
                     ],
                     analytics: [
-                        { name: 'Datadog', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/datadog/632CA6' },
-                        { name: 'Grafana', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/grafana/F46800' },
-                        // CORRECTED: newrelic is correct
-                        { name: 'New Relic', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/newrelic/14B78D' },
-                        { name: 'Splunk', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/splunk/000000' },
-                        // CORRECTED: 'powerbi' -> 'powerbi'
-                        { name: 'Power BI', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/powerbi/F2C811' },
-                        { name: 'Tableau', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/tableau/E97627' },
+                        { name: "Datadog", stars: 4, years: "4+ Yrs", slug: "datadog" },
+                        { name: "Grafana", stars: 4, years: "5+ Yrs", slug: "grafana" },
+                        { name: "New Relic", stars: 3, years: "4+ Yrs", slug: "newrelic" },
+                        { name: "Splunk", stars: 3, years: "3+ Yrs", slug: "splunk" },
+                        { name: "Power BI", stars: 3, years: "3+ Yrs", slug: "powerbi" },
+                        { name: "Tableau", stars: 3, years: "3+ Yrs", slug: "tableau" }
                     ],
                     platform: [
-                        { name: 'Salesforce', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/salesforce/00A1E0' },
-                        // CORRECTED: 'ms dynamics' -> 'microsoftdynamics365'
-                        { name: 'MS Dynamics', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/microsoftdynamics365/0065BF' },
-                        { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/sap/008FD3' },
-                        { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/zoho/E42525' },
-                        { name: 'Shopify', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/shopify/7AB55C' },
-                        { name: 'Bugzilla', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/bugzilla/000000' }
+                        { name: "Salesforce", stars: 4, years: "6+ Yrs", slug: "salesforce" },
+                        { name: "MS Dynamics", stars: 3, years: "4+ Yrs", slug: "microsoftdynamics365" },
+                        { name: "SAP", stars: 3, years: "5+ Yrs", slug: "sap" },
+                        { name: "Zoho CRM", stars: 3, years: "3+ Yrs", slug: "zoho" },
+                        { name: "Shopify", stars: 3, years: "4+ Yrs", slug: "shopify" },
+                        { name: "Bugzilla", stars: 4, years: "15+ Yrs", slug: "bugzilla" }
                     ],
                     system: [
-                        { name: 'Middleware', stars: 4, years: '8+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-icon.svg'},
-                        { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/database-storage/database-icon.svg'},
-                        { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/eclipseide/2C2255'},
-                        { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/cygwin/000000'},
-                        { name: 'Putty', stars: 4, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg'},
-                        // CORRECTED: 'firebug' does not exist, replaced with generic icon
-                        { name: 'Firebug', stars: 3, years: '15+ Yrs', icon: 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/bug-icon.svg'},
-                        { name: 'DHTML', stars: 3, years: '15+ Yrs', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg'},
-                        { name: 'SSH', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/ssh/000000'},
+                        { name: "Middleware", stars: 4, years: "8+ Yrs", icon: "https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/api-icon.svg"},
+                        { name: "Toad", stars: 4, years: "10+ Yrs", icon: "https://uxwing.com/wp-content/themes/uxwing/download/database-storage/database-icon.svg"},
+                        { name: "Eclipse", stars: 4, years: "10+ Yrs", slug: "eclipseide"},
+                        { name: "Cygwin", stars: 3, years: "10+ Yrs", slug: "cygwin"},
+                        { name: "Putty", stars: 4, years: "15+ Yrs", slug: "putty"},
+                        { name: "Firebug", stars: 3, years: "15+ Yrs", icon: "https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/bug-icon.svg"},
+                        { name: "DHTML", stars: 3, years: "15+ Yrs", slug: "html5"},
+                        { name: "SSH", stars: 4, years: "15+ Yrs", slug: "ssh"},
                     ]
                 },
                 experiences: [
@@ -863,7 +855,7 @@
                         techUsed: ['Kanban', 'Agile', 'Risk Management', 'Selenium', 'Appium', 'Kotlin', 'Jenkins', 'GitLab', 'Jira', 'Scrum', 'Ranorex', 'Kubernetes', 'Terraform', 'GCP', 'Azure DevOps', 'Node.js', 'Ruby', 'PHP']
                     },
                     {
-                        title: 'Sr. Project Manager & QA Engineer', company: 'Globant', logo: 'https://static.globant.com/corp-media/2023/11/globant-logo-dark.svg', dates: 'Apr 2017 - May 2018',
+                        title: 'Sr. Project Manager & QA Engineer', company: 'Globant', logo: 'https://cdn.simpleicons.org/globant/BF0D58', dates: 'Apr 2017 - May 2018',
                         details: {
                             en: [ 'Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account.', 'Managed test planning, resource estimation, and client communications, ensuring alignment with project timelines and deliverables.', 'Architected and spearheaded the development of a new QA automation framework using Kotlin, C# .Net, and Robot Framework.', 'Utilized AWS services (S3, EC2, Redshift, Athena) for managing test data and environments for Salesforce integration projects.', 'Performed complex data validation and manipulation using advanced SQL queries against Oracle and PostgreSQL databases.' ],
                             es: [ 'Lideré todos los esfuerzos de QA para proyectos de Salesforce Sales Cloud y Service Cloud para la cuenta de alto perfil de DirectvGO / AT&T.', 'Gestioné la planificación de pruebas, la estimación de recursos y las comunicaciones con el cliente, asegurando la alineación con los cronogramas y entregables del proyecto.', 'Diseñé y lideré el desarrollo de un nuevo marco de automatización de QA utilizando Kotlin, C# .Net y Robot Framework.', 'Utilicé servicios de AWS (S3, EC2, Redshift, Athena) para gestionar datos y entornos de prueba para proyectos de integración de Salesforce.', 'Realicé validación y manipulación de datos complejos utilizando consultas SQL avanzadas en bases de datos Oracle y PostgreSQL.' ],
@@ -1007,6 +999,25 @@
                         techUsed: ['Java', 'Perl', 'Oracle', 'SQL', 'CMMI', 'ISO Standards', 'Middleware', 'Agile', 'Kanban', 'Scrum', 'Jira', 'JUnit', 'Cygwin', 'Putty', 'SSH', 'Toad', 'Eclipse', 'MySQL']
                     }
                 ],
+
+                /**
+                 * NEW: A helper function to build the correct icon URL.
+                 * This makes the system more robust.
+                 * @param {object} skill - The skill object from the data.
+                 * @returns {string} The full URL of the icon.
+                 */
+                _getIconUrl(skill) {
+                    if (skill.icon) {
+                        return skill.icon; // Use the full URL if provided
+                    }
+                    if (skill.slug) {
+                        // Construct a URL for Devicon CDN
+                        return `https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/${skill.slug}/${skill.slug}-original.svg`;
+                    }
+                    // Fallback for missing icons
+                    return 'https://uxwing.com/wp-content/themes/uxwing/download/web-app-development/bug-icon.svg';
+                },
+
                 radarTooltips: {
                     en: { 'Project Mgmt': 'Expertise in leading projects from initiation to completion, ensuring they meet scope, budget, and timeline requirements.', 'QA & Automation': 'Deep knowledge in designing and implementing automated testing frameworks to ensure software quality and reliability.', 'Leadership': 'Proven ability to mentor, manage, and motivate cross-functional teams to achieve high performance and project success.', 'DevOps Strategy': 'Skilled in integrating development and operations to improve workflow, increase efficiency, and accelerate release cycles.', 'Cloud Platforms': 'Proficient in leveraging major cloud providers (AWS, Azure, GCP) for scalable, resilient, and cost-effective infrastructure.', 'Stakeholder Mgmt': 'Adept at managing communications and relationships with all stakeholders to ensure project alignment and buy-in.', 'Agile': 'Extensive experience with Agile principles and practices to deliver value iteratively and adapt to changing requirements.', 'Scrum': 'Certified expertise in managing projects using the Scrum framework for transparent, iterative, and collaborative development.', 'Kanban': 'Utilizing Kanban for workflow visualization, managing flow, and continuous improvement to optimize delivery.', 'CMMI': 'Knowledge of the Capability Maturity Model Integration framework to improve and standardize organizational processes.', 'ISO Standards': 'Experience in implementing and adhering to ISO standards for quality management and information security.', 'Risk Mgmt': 'Systematic approach to identifying, analyzing, and mitigating project risks to ensure successful outcomes.' },
                     es: { 'Project Mgmt': 'Experiencia en liderar proyectos desde el inicio hasta la finalización, asegurando que cumplan con el alcance, el presupuesto y los plazos.', 'QA & Automation': 'Profundo conocimiento en el diseño e implementación de marcos de pruebas automatizadas para garantizar la calidad y fiabilidad del software.', 'Leadership': 'Capacidad demostrada para orientar, gestionar y motivar equipos multifuncionales para lograr un alto rendimiento y el éxito del proyecto.', 'DevOps Strategy': 'Habilidad en la integración de desarrollo y operaciones para mejorar el flujo de trabajo, aumentar la eficiencia y acelerar los ciclos de lanzamiento.', 'Cloud Platforms': 'Competente en el uso de los principales proveedores de nube (AWS, Azure, GCP) para una infraestructura escalable, resiliente y rentable.', 'Stakeholder Mgmt': 'Experto en la gestión de comunicaciones y relaciones con todas las partes interesadas para garantizar la alineación y el apoyo al proyecto.', 'Agile': 'Amplia experiencia con los principios y prácticas de Agile para entregar valor de forma iterativa y adaptarse a los requisitos cambiantes.', 'Scrum': 'Experiencia certificada en la gestión de proyectos utilizando el marco Scrum para un desarrollo transparente, iterativo y colaborativo.', 'Kanban': 'Uso de Kanban para la visualización del flujo de trabajo, la gestión del flujo y la mejora continua para optimizar la entrega.', 'CMMI': 'Conocimiento del marco de Integración del Modelo de Madurez de Capacidad para mejorar y estandarizar los procesos organizacionales.', 'ISO Standards': 'Experiencia en la implementación y cumplimiento de las normas ISO para la gestión de la calidad y la seguridad de la información.', 'Risk Mgmt': 'Enfoque sistemático para identificar, analizar y mitigar los riesgos del proyecto para garantizar resultados exitosos.' },
@@ -1232,15 +1243,16 @@
             },
 
             _createSkillTag(skill) {
-                const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
+                const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
+                const iconUrl = this._getIconUrl(skill); // Use the new helper function
+
                 return `
                     <div role="button" tabindex="0" class="tech-tag" data-skill-name="${skill.name}" aria-pressed="false">
-                        <img src="${skill.icon}" alt="" class="tech-icon" onerror="this.style.display='none'; this.nextElementSibling.style.marginLeft='0';">
+                        <img src="${iconUrl}" alt="${skill.name} icon" class="tech-icon" onerror="this.style.display='none';">
                         <span>${skill.name}</span>
                         <div class="stars" aria-label="${skill.stars} out of 5 stars. ${skill.years} experience.">
                             <span class="mr-2 text-xs text-gray-500">${skill.years}</span>
                             ${starIcon.repeat(skill.stars)}
-                            <span class="font-semibold" style="width: ${(5 - skill.stars) * 0.8}rem;"></span>
                         </div>
                     </div>
                 `;
