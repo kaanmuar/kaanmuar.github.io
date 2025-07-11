@@ -71,106 +71,110 @@ This project includes a comprehensive End-to-End (E2E) test suite built with **C
     ```javascript
     // cypress/e2e/cv_spec.cy.js
 
-    describe('Interactive CV Test Suite', () => {
-        beforeEach(() => {
-            // Visit the CV page before each test
-            cy.visit('index.html');
-            // Ensure the main content has loaded before proceeding
-            cy.get('.main-container').should('be.visible');
+describe('Interactive CV Test Suite', () => {
+    beforeEach(() => {
+        // Visit the CV page before each test
+        cy.visit('index.html');
+        // Ensure the main content has loaded before proceeding
+        cy.get('.main-container').should('be.visible');
+    });
+
+    context('Core Functionality', () => {
+        it('should load the page and display the main header', () => {
+            cy.get('h1').should('contain.text', 'CARLOS A. MUÑOZ');
         });
 
-        context('Core Functionality', () => {
-            it('should load the page and display the main header', () => {
-                cy.get('h1').should('contain.text', 'CARLOS A. MUÑOZ');
-            });
-
-            it('should toggle dark mode successfully', () => {
-                cy.get('#theme-toggle').click();
-                cy.get('body').should('have.class', 'dark-mode');
-                cy.get('#theme-toggle').click();
-                cy.get('body').should('not.have.class', 'dark-mode');
-            });
-
-            it('should switch languages correctly', () => {
-                // Check initial language (English)
-                cy.get('[data-translate-key="contact_title"]').should('contain.text', 'Contact');
-                
-                // Switch to Spanish
-                cy.get('#language-selector').click();
-                cy.get('[data-lang="es"]').click();
-                cy.get('[data-translate-key="contact_title"]').should('contain.text', 'Contacto');
-            });
+        it('should toggle dark mode successfully', () => {
+            cy.get('#theme-toggle').click();
+            cy.get('body').should('have.class', 'dark-mode');
+            cy.get('#theme-toggle').click();
+            cy.get('body').should('not.have.class', 'dark-mode');
         });
 
-        context('Interactive Features', () => {
-            it('should filter professional experience by clicking a skill tag', () => {
-                const skillToTest = 'Cypress';
-                // Initially, more than one experience should be visible
-                cy.get('.experience-item').should('have.length.greaterThan', 1);
+        it('should switch languages correctly', () => {
+            // Check initial language (English)
+            cy.get('[data-translate-key="contact_title"]').should('contain.text', 'Contact');
 
-                // Click the skill tag
-                cy.contains('.tech-tag', skillToTest).click();
-
-                // Assert that only experiences containing that skill are visible
-                cy.get('.experience-item:visible').should('have.length', 1);
-                cy.get('.experience-item:visible').should('contain.text', 'Team International');
-
-                // Reset filters and check again
-                cy.get('#reset-filter').click();
-                cy.get('.experience-item').should('have.length.greaterThan', 1);
-            });
-
-            it('should expand and collapse an experience item', () => {
-                const experienceItem = cy.get('#experience-0');
-                experienceItem.find('.accordion-header').click();
-                experienceItem.find('.experience-body').should('be.visible');
-                experienceItem.find('.accordion-header').click();
-                experienceItem.find('.experience-body').should('not.be.visible');
-            });
-        });
-
-        context('Contact & Rating Widget', () => {
-            beforeEach(() => {
-                // Open the widget before each test in this context
-                cy.get('#contact-widget-fab').click();
-                cy.get('#contact-widget').should('be.visible');
-            });
-
-            it('should show validation errors for the "Message Me" form', () => {
-                cy.get('#send-message-btn').should('be.disabled');
-                cy.get('#sender-name').type('a').blur();
-                cy.get('#sender-name-error').should('be.visible').and('contain.text', 'at least 2 characters');
-                cy.get('#sender-email').type('invalid-email').blur();
-                cy.get('#sender-email-error').should('be.visible').and('contain.text', 'valid email');
-                cy.get('#send-message-btn').should('be.disabled');
-            });
-
-            it('should enable the send button when the "Message Me" form is valid', () => {
-                cy.get('#sender-name').type('Test User');
-                cy.get('#sender-email').type('test@example.com');
-                cy.get('#message-topic').select('CV Feedback');
-                cy.get('#sender-message').type('This is a test message with sufficient length.');
-                cy.get('#send-message-btn').should('not.be.disabled');
-            });
-
-            it('should switch to the "Rate CV" tab and show validation errors', () => {
-                cy.get('#rating-tab').click();
-                cy.get('#send-rating-btn').should('be.disabled');
-                cy.get('#rater-name').type('b').blur();
-                cy.get('#rater-name-error').should('be.visible');
-                cy.get('#send-rating-btn').should('be.disabled');
-            });
-
-            it('should enable the submit button when the "Rate CV" form is valid', () => {
-                cy.get('#rating-tab').click();
-                // Click the 4th star
-                cy.get('.star[data-value="4"]').click();
-                cy.get('#rater-name').type('Test Rater');
-                cy.get('#rater-email').type('rater@example.com');
-                cy.get('#send-rating-btn').should('not.be.disabled');
-            });
+            // Switch to Spanish
+            cy.get('#language-selector').click();
+            cy.get('[data-lang="es"]').click();
+            cy.get('[data-translate-key="contact_title"]').should('contain.text', 'Contacto');
         });
     });
+
+    context('Interactive Features', () => {
+        it('should filter professional experience by clicking a skill tag', () => {
+            const skillToTest = 'Cypress';
+            // Initially, more than one experience should be visible
+            cy.get('.experience-item').should('have.length.greaterThan', 1);
+
+            // Click the skill tag
+            cy.contains('.tech-tag', skillToTest).click();
+
+            // **FIXED**: Assert that two experiences are visible, as both contain "Cypress"
+            cy.get('.experience-item:visible').should('have.length', 2);
+            cy.get('.experience-item:visible').first().should('contain.text', 'Team International');
+            cy.get('.experience-item:visible').last().should('contain.text', 'Globant');
+
+            // Reset filters and check again
+            cy.get('#reset-filter').click();
+            cy.get('.experience-item').should('have.length.greaterThan', 1);
+        });
+
+        it('should expand and collapse an experience item', () => {
+            const experienceItem = cy.get('#experience-0');
+            experienceItem.find('.accordion-header').click();
+            experienceItem.find('.experience-body').should('be.visible');
+            experienceItem.find('.accordion-header').click();
+            experienceItem.find('.experience-body').should('not.be.visible');
+        });
+    });
+
+    context('Contact & Rating Widget', () => {
+        beforeEach(() => {
+            // Open the widget before each test in this context
+            cy.get('#contact-widget-fab').click();
+            cy.get('#contact-widget').should('be.visible');
+        });
+
+        it('should show validation errors for the "Message Me" form', () => {
+            cy.get('#send-message-btn').should('be.disabled');
+            cy.get('#sender-name').type('a').blur();
+            cy.get('#sender-name-error').should('be.visible').and('contain.text', 'at least 2 characters');
+            cy.get('#sender-email').type('invalid-email').blur();
+            cy.get('#sender-email-error').should('be.visible').and('contain.text', 'valid email');
+            cy.get('#send-message-btn').should('be.disabled');
+        });
+
+        it('should enable the send button when the "Message Me" form is valid', () => {
+            cy.get('#sender-name').type('Test User');
+            cy.get('#sender-email').type('test@example.com');
+            // **FIXED**: Trigger a change event to ensure validation runs
+            cy.get('#message-topic').select('CV Feedback').trigger('change');
+            cy.get('#sender-message').type('This is a test message with sufficient length.');
+            cy.get('#send-message-btn').should('not.be.disabled');
+        });
+
+        it('should switch to the "Rate CV" tab and show validation errors', () => {
+            cy.get('#rating-tab').click();
+            cy.get('#send-rating-btn').should('be.disabled');
+            cy.get('#rater-name').type('b').blur();
+            cy.get('#rater-name-error').should('be.visible');
+            cy.get('#send-rating-btn').should('be.disabled');
+        });
+
+        it('should enable the submit button when the "Rate CV" form is valid', () => {
+            cy.get('#rating-tab').click();
+
+            cy.get('#rater-name').type('Test Rater');
+            cy.get('#rater-email').type('rater@example.com');
+            // **FIXED**: Click the star last to ensure the final validation check passes
+            cy.get('.star[data-value="4"]').click();
+
+            cy.get('#send-rating-btn').should('not.be.disabled');
+        });
+    });
+});
     ```
 
 ### 2. Running the Tests
