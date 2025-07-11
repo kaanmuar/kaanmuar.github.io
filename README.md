@@ -1,6 +1,6 @@
 # 🚀 Interactive CV of Carlos A. Muñoz
 
-![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) ![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase&logoColor=white) ![Google Analytics](https://img.shields.io/badge/google%20analytics-%23E37400.svg?style=for-the-badge&logo=google%20analytics&logoColor=white)
+![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) ![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase&logoColor=white) ![Cypress](https://img.shields.io/badge/cypress-%2317202C.svg?style=for-the-badge&logo=cypress&logoColor=white)
 
 This repository contains the source code for a fully interactive, data-driven, and multilingual online curriculum vitae. It's designed to be a dynamic showcase of professional experience, skills, and projects, moving beyond the limitations of a traditional static resume.
 
@@ -35,35 +35,186 @@ This project is more than just a static webpage. It's a full-stack application b
 
 ## 🛠️ Tech Stack
 
-| Category     | Technologies                                                                                             |
-| :----------- | :------------------------------------------------------------------------------------------------------- |
+| Category      | Technologies                                                                                             |
+| :------------ | :------------------------------------------------------------------------------------------------------- |
 | **Frontend** | `HTML5`, `CSS3`, `Vanilla JavaScript (ES6+)`, `Tailwind CSS`                                               |
 | **Backend** | `Firebase (Firestore, Authentication, Storage)`, `Cloud Functions for Firebase`                            |
+| **Testing** | `Cypress` (for End-to-End testing)                                                                       |
 | **APIs** | `SendGrid API` (for emails), `Google Analytics API` (for tracking)                                         |
+
+---
+
+## 🧪 Automated Testing Suite
+
+This project includes a comprehensive End-to-End (E2E) test suite built with **Cypress**. These tests simulate real user interactions to ensure that all key features of the application are working correctly after every change.
+
+<details>
+<summary><strong>Click to expand the Testing Suite setup and execution guide</strong></summary>
+
+### 1. Test Suite Setup
+
+1.  **Install Cypress:** In your project's root directory, run the following command to install Cypress as a development dependency:
+    ```bash
+    npm install cypress --save-dev
+    ```
+
+2.  **Open Cypress:** The first time you run Cypress, it will automatically create a standard folder structure (`cypress/`) for your tests.
+    ```bash
+    npx cypress open
+    ```
+    You can close the Cypress window after it has created the folders.
+
+3.  **Create the Test File:** Inside the newly created `cypress/e2e/` folder, create a new file named `cv_spec.cy.js`.
+
+4.  **Add Test Code:** Paste the entire code block below into your new `cv_spec.cy.js` file. This suite covers the most critical user journeys.
+
+    ```javascript
+    // cypress/e2e/cv_spec.cy.js
+
+    describe('Interactive CV Test Suite', () => {
+        beforeEach(() => {
+            // Visit the CV page before each test
+            cy.visit('index.html');
+            // Ensure the main content has loaded before proceeding
+            cy.get('.main-container').should('be.visible');
+        });
+
+        context('Core Functionality', () => {
+            it('should load the page and display the main header', () => {
+                cy.get('h1').should('contain.text', 'CARLOS A. MUÑOZ');
+            });
+
+            it('should toggle dark mode successfully', () => {
+                cy.get('#theme-toggle').click();
+                cy.get('body').should('have.class', 'dark-mode');
+                cy.get('#theme-toggle').click();
+                cy.get('body').should('not.have.class', 'dark-mode');
+            });
+
+            it('should switch languages correctly', () => {
+                // Check initial language (English)
+                cy.get('[data-translate-key="contact_title"]').should('contain.text', 'Contact');
+                
+                // Switch to Spanish
+                cy.get('#language-selector').click();
+                cy.get('[data-lang="es"]').click();
+                cy.get('[data-translate-key="contact_title"]').should('contain.text', 'Contacto');
+            });
+        });
+
+        context('Interactive Features', () => {
+            it('should filter professional experience by clicking a skill tag', () => {
+                const skillToTest = 'Cypress';
+                // Initially, more than one experience should be visible
+                cy.get('.experience-item').should('have.length.greaterThan', 1);
+
+                // Click the skill tag
+                cy.contains('.tech-tag', skillToTest).click();
+
+                // Assert that only experiences containing that skill are visible
+                cy.get('.experience-item:visible').should('have.length', 1);
+                cy.get('.experience-item:visible').should('contain.text', 'Team International');
+
+                // Reset filters and check again
+                cy.get('#reset-filter').click();
+                cy.get('.experience-item').should('have.length.greaterThan', 1);
+            });
+
+            it('should expand and collapse an experience item', () => {
+                const experienceItem = cy.get('#experience-0');
+                experienceItem.find('.accordion-header').click();
+                experienceItem.find('.experience-body').should('be.visible');
+                experienceItem.find('.accordion-header').click();
+                experienceItem.find('.experience-body').should('not.be.visible');
+            });
+        });
+
+        context('Contact & Rating Widget', () => {
+            beforeEach(() => {
+                // Open the widget before each test in this context
+                cy.get('#contact-widget-fab').click();
+                cy.get('#contact-widget').should('be.visible');
+            });
+
+            it('should show validation errors for the "Message Me" form', () => {
+                cy.get('#send-message-btn').should('be.disabled');
+                cy.get('#sender-name').type('a').blur();
+                cy.get('#sender-name-error').should('be.visible').and('contain.text', 'at least 2 characters');
+                cy.get('#sender-email').type('invalid-email').blur();
+                cy.get('#sender-email-error').should('be.visible').and('contain.text', 'valid email');
+                cy.get('#send-message-btn').should('be.disabled');
+            });
+
+            it('should enable the send button when the "Message Me" form is valid', () => {
+                cy.get('#sender-name').type('Test User');
+                cy.get('#sender-email').type('test@example.com');
+                cy.get('#message-topic').select('CV Feedback');
+                cy.get('#sender-message').type('This is a test message with sufficient length.');
+                cy.get('#send-message-btn').should('not.be.disabled');
+            });
+
+            it('should switch to the "Rate CV" tab and show validation errors', () => {
+                cy.get('#rating-tab').click();
+                cy.get('#send-rating-btn').should('be.disabled');
+                cy.get('#rater-name').type('b').blur();
+                cy.get('#rater-name-error').should('be.visible');
+                cy.get('#send-rating-btn').should('be.disabled');
+            });
+
+            it('should enable the submit button when the "Rate CV" form is valid', () => {
+                cy.get('#rating-tab').click();
+                // Click the 4th star
+                cy.get('.star[data-value="4"]').click();
+                cy.get('#rater-name').type('Test Rater');
+                cy.get('#rater-email').type('rater@example.com');
+                cy.get('#send-rating-btn').should('not.be.disabled');
+            });
+        });
+    });
+    ```
+
+### 2. Running the Tests
+
+You can run the tests in two ways:
+
+* **Interactive Mode (Recommended for development):**
+    This opens the Cypress Test Runner, which allows you to see your application and the tests running side-by-side. It's great for debugging.
+    ```bash
+    npx cypress open
+    ```
+
+* **Headless Mode (For CI/CD or quick reports):**
+    This runs the tests in the background without opening a browser window. It's faster and ideal for automated scripts. A video recording of the test run will be saved in the `cypress/videos/` folder.
+    ```bash
+    npx cypress run
+    ```
+
+### 3. Viewing the Test Report
+
+After running the tests in either mode, Cypress automatically generates a detailed report. You will find a video of the entire test run in the `cypress/videos/` directory. For more detailed, shareable HTML reports, you can add a reporter plugin like `cypress-mochawesome-reporter`.
+
+</details>
 
 ---
 
 ## ⚙️ Setup and Configuration Guide
 
 <details>
-<summary><strong>Click to expand the setup instructions</strong></summary>
+<summary><strong>Click to expand the project setup instructions</strong></summary>
 
 To run this project locally or deploy your own version, follow these steps.
 
 ### 1. Prerequisites
-
 * [Node.js](https://nodejs.org/en/) and npm installed.
 * [Firebase CLI](https://firebase.google.com/docs/cli) installed (`npm install -g firebase-tools`).
 
 ### 2. Clone the Repository
-
 ```bash
 git clone [https://github.com/kaanmuar/kaanmuar.github.io.git](https://github.com/kaanmuar/kaanmuar.github.io.git)
 cd kaanmuar.github.io
 ```
 
 ### 3. Firebase Project Setup
-
 1.  Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project.
 2.  In your new project, create a **Web App**.
 3.  Copy the `firebaseConfig` object provided during setup.
@@ -97,13 +248,11 @@ cd kaanmuar.github.io
 8.  **Create Database Index:** The query for testimonials requires a composite index. The easiest way to create it is to run the application, check the browser's developer console for an error message containing a link to create the index, and click that link.
 
 ### 4. Google Analytics Setup
-
 1.  Go to [Google Analytics](https://analytics.google.com/) and create a new property.
 2.  Find your **Measurement ID** (e.g., `G-XXXXXXXXXX`).
 3.  In `index.html`, replace `G-YOUR_MEASUREMENT_ID` with your actual ID in the Google Analytics script tag.
 
 ### 5. Email Notifications (Cloud Functions)
-
 1.  **Upgrade Firebase Plan:** Your project must be on the **Blaze (Pay-as-you-go)** plan to use Cloud Functions with external network access. The free tier is very generous.
 2.  **Set up SendGrid:** Create a free account at [SendGrid](https://sendgrid.com/), verify a sender email address, and create an API key.
 3.  **Initialize Functions:** In your project's root directory, run `firebase init functions` and select JavaScript.
@@ -121,11 +270,13 @@ cd kaanmuar.github.io
 ---
 
 ## 📁 File Structure
-
 ```
 /
 ├── index.html            # The main public-facing interactive CV page.
 ├── admin.html            # The secure admin panel for managing messages and ratings.
+├── cypress/              # Contains all End-to-End tests.
+│   └── e2e/
+│       └── cv_spec.cy.js # The main test suite for the application.
 └── functions/
     ├── index.js          # Backend logic for email notifications.
     ├── package.json      # Node.js dependencies for the functions.
@@ -138,4 +289,3 @@ cd kaanmuar.github.io
 
 * **Carlos A. Muñoz**
 * **LinkedIn:** [https://www.linkedin.com/in/carlos-andres-m-2a60b8b/](https://www.linkedin.com/in/carlos-andres-m-2a60b8b/)
-
