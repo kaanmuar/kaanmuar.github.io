@@ -189,9 +189,49 @@ You can run the tests in two ways:
     npx cypress run
     ```
 
-### 3. Viewing the Test Report
+### 3. Generating HTML Reports with Mochawesome
 
-After running the tests in either mode, Cypress automatically generates a detailed report. You will find a video of the entire test run in the `cypress/videos/` directory. For more detailed, shareable HTML reports, you can add a reporter plugin like `cypress-mochawesome-reporter`.
+To generate detailed, shareable HTML reports, follow these steps:
+
+1.  **Install Reporter Dependencies:** In your project's root directory, run this command to install all the necessary packages for the reporter:
+    ```bash
+    npm install --save-dev cypress-mochawesome-reporter mocha mochawesome mochawesome-merge mochawesome-report-generator
+    ```
+
+2.  **Configure Cypress:** Create a file named `cypress.config.js` in your project's root directory (if it doesn't already exist) and add the following configuration:
+
+    ```javascript
+    // cypress.config.js
+    const { defineConfig } = require('cypress');
+
+    module.exports = defineConfig({
+      reporter: 'cypress-mochawesome-reporter',
+      reporterOptions: {
+        charts: true,
+        reportPageTitle: 'Interactive CV - Test Report',
+        embeddedScreenshots: true,
+        inlineAssets: true,
+        saveAllAttempts: false,
+      },
+      e2e: {
+        setupNodeEvents(on, config) {
+          require('cypress-mochawesome-reporter/plugin')(on);
+        },
+      },
+    });
+    ```
+
+3.  **Configure the Support File:** Open the file `cypress/support/e2e.js` and add this single line at the top to import the reporter's commands:
+    ```javascript
+    // cypress/support/e2e.js
+    import 'cypress-mochawesome-reporter/register';
+    ```
+
+4.  **Run and View Report:** Now, when you run your tests in headless mode, the HTML report will be generated automatically.
+    ```bash
+    npx cypress run
+    ```
+    After the run is complete, a new folder named `cypress/reports/html` will be created. Open the `index.html` file inside that folder to view your detailed test report.
 
 </details>
 
@@ -274,9 +314,12 @@ cd kaanmuar.github.io
 /
 ├── index.html            # The main public-facing interactive CV page.
 ├── admin.html            # The secure admin panel for managing messages and ratings.
+├── cypress.config.js     # Configuration for Cypress tests and reporting.
 ├── cypress/              # Contains all End-to-End tests.
 │   └── e2e/
 │       └── cv_spec.cy.js # The main test suite for the application.
+│   └── support/
+│       └── e2e.js        # Cypress support file, imports the reporter.
 └── functions/
     ├── index.js          # Backend logic for email notifications.
     ├── package.json      # Node.js dependencies for the functions.
