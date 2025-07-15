@@ -153,7 +153,7 @@ describe('Interactive CV Test Suite', () => {
             cy.get('#competencies-radar-chart .radar-label').first().find('title').should('not.be.empty');
         });
 
-        // Test 10: Education & Certifications
+        // Test 10: Education & Certifications.
         it('should load the Education & Certifications section', () => {
             cy.get('section[aria-labelledby="education-heading"]').should('be.visible');
             cy.contains('h3', 'Key Certifications').should('be.visible');

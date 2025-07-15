@@ -2,7 +2,7 @@
 
 describe('Admin Panel Test Suite', { tags: '@admin' }, () => {
 
-    const ADMIN_EMAIL = 'kaanmuar@gmail.com'; // Your admin email
+    const ADMIN_EMAIL = 'kaanmuar@gmail.com'; // Your admin email.
     const ADMIN_PASSWORD = 'YOUR_ADMIN_PASSWORD'; // IMPORTANT: Replace this
 
     beforeEach(() => {
