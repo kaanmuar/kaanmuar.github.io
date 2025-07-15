@@ -67,7 +67,7 @@
             --error-red: #dc2626;
         }
         .dark-mode {
-            --bg-primary: #111827; --bg-secondary: #1f2937; --bg-sidebar: #0f172a; --text-primary: #f3f4f6; --text-secondary: #9ca3af;
+            --bg-primary: #1f2937; --bg-secondary: #111827; --bg-sidebar: #0f172a; --text-primary: #f3f4f6; --text-secondary: #9ca3af;
             --text-sidebar-primary: #ffffff; --text-sidebar-secondary: #9ca3af; --border-color: #374151;
         }
         html { scroll-behavior: smooth; }
@@ -160,6 +160,47 @@
         .dark-mode #theme-toggle .moon-icon { display: none; }
         .radar-label:hover { font-weight: bold; text-decoration: underline; text-decoration-color: var(--cyan-brand); text-decoration-thickness: 2px; cursor: pointer; }
 
+        /* For the simulated typing effect */
+        .is-typing {
+            border-right: 2px solid var(--text-primary);
+            animation: typing-cursor 0.7s step-end infinite;
+        }
+        @keyframes typing-cursor {
+            from, to { border-color: transparent }
+            50% { border-color: var(--text-primary); }
+        }
+
+        .experience-item {
+            position: relative;
+            /* Add border properties to the transition */
+            transition: opacity 0.3s ease, border-color 0.5s ease;
+            /* Add a transparent border by default so it can be colored later */
+            border-left: 3px solid transparent;
+            padding-left: 0.5rem; /* Add some padding */
+        }
+        /* For highlighting filtered results */
+        .experience-item.filter-match {
+            border-left-color: #22c55e; /* Green */
+        }
+        .experience-item.filter-no-match {
+            opacity: 0.4;
+        }
+        .timeline-item.filtered-out {
+            opacity: 0.3;
+        }
+        .average-rating-display {
+            font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);
+            background-color: var(--bg-primary); padding: 0.2rem 0.6rem; border-radius: 9999px;
+        }
+        .average-rating-display .star { color: #f59e0b; }
+
+        .testimonial-card {
+            background-color: var(--bg-primary); border-left: 4px solid var(--cyan-brand);
+            padding: 1rem; border-radius: 0 8px 8px 0;
+        }
+        .testimonial-quote { font-style: italic; color: var(--text-secondary); }
+        .testimonial-author { text-align: right; font-weight: bold; margin-top: 0.75rem; }
+        .testimonial-stars { color: #f59e0b; }
         /* --- NEW: Contact Widget & Form Styles --- */
         #contact-widget-fab { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999; }
         #contact-widget {
@@ -242,7 +283,7 @@
         }
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
             outline: none;
-            border-color: var(--cyan-brand);
+            /*border-color: var(--cyan-brand);*/
             box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.2);
         }
         .form-group input.invalid, .form-group textarea.invalid, .form-group select.invalid {
@@ -378,6 +419,125 @@
             font-size: 1.1rem;
         }
 
+        /* ========================================================== */
+        /* |                   NEW CSS: TOUR STYLES                   | */
+        /* ========================================================== */
+        /* A quick, blue-colored pop for single clicks */
+        @keyframes tour-click-pop {
+            50% { box-shadow: 0 0 12px 4px var(--cyan-brand); transform: scale(1.05); }
+        }
+
+        /* A gentle, green pulse for expanding/collapsing sections */
+        @keyframes tour-expand-pulse {
+            50% { box-shadow: 0 0 15px 5px rgba(34, 197, 94, 0.7); }
+        }
+
+        /* A persistent, orange glow for items that stay selected */
+        @keyframes tour-persistent-glow {
+            50% { box-shadow: 0 0 16px 8px rgba(249, 115, 22, 0.7); }
+        }
+
+        #tour-start-btn {
+            background-color: var(--bg-primary);
+            color: var(--cyan-brand);
+            border: 1px solid var(--cyan-brand);
+            animation: subtle-glow 3s infinite ease-in-out;
+            transition: background-color 0.2s;
+        }
+
+        #tour-start-btn:hover { background-color: #e0f2f7; }
+        .dark-mode #tour-start-btn:hover { background-color: #1e3a5f; }
+
+        #tour-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+        }
+
+        .tour-highlight-click {
+            animation: tour-click-pop 0.6s ease-in-out;
+            border-radius: 8px;
+        }
+
+        .tour-highlight-expand {
+            animation: tour-expand-pulse 1s ease-in-out;
+            border-radius: 8px;
+        }
+
+        .tour-highlight-persistent {
+            animation: tour-persistent-glow 1.5s infinite ease-in-out;
+            border-radius: 8px;
+        }
+
+        #tour-tooltip {
+            position: fixed; /* This is critical for floating */
+            z-index: 2002;
+            bottom: 20px;
+            left: 20px;
+            transform: none; /* Remove the old centering transform */
+
+            background-color: rgba(31, 41, 55, 0.75);
+            color: var(--text-primary);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+
+            padding: 1rem;
+            border-radius: 12px;
+            width: auto; /* Let the content define the width */
+            max-width: 450px; /* But don't let it get too wide */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-top: 4px solid var(--orange-brand);
+
+            visibility: hidden;
+            opacity: 0;
+            /* Use a transform for the show/hide animation */
+            transform: translateY(20px);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* IMPORTANT: Adjust the .dark-mode version as well */
+        .dark-mode #tour-tooltip {
+            background-color: rgba(31, 41, 55, 0.75); /* Ensures consistency */
+            color: #f3f4f6;
+        }
+
+        #tour-tooltip.visible {
+            transform: translateY(0); /* Animate it sliding up */
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Add these new animation rules and classes */
+        @keyframes tour-glow-persistent {
+            0%, 100% { box-shadow: 0 0 8px 3px var(--orange-brand); }
+            50% { box-shadow: 0 0 16px 8px rgba(249, 115, 22, 0.7); }
+        }
+
+        @keyframes tour-click-effect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); box-shadow: 0 0 12px var(--cyan-brand); }
+            100% { transform: scale(1); }
+        }
+
+        /* Class for a continuous glow on an element */
+        .tour-highlight-persistent {
+            animation: tour-glow-persistent 1.5s infinite ease-in-out;
+            border-radius: 8px;
+            position: relative;
+            z-index: 2001;
+        }
+
+        /* Class for a single "click" animation */
+        .tour-highlight-click {
+            animation: tour-click-effect 0.5s ease-in-out;
+            border-radius: 8px;
+            position: relative;
+            z-index: 2001;
+        }
         /* --- NEW: Average Rating Display Style --- */
         .average-rating-display {
             display: inline-block;
@@ -413,9 +573,9 @@
                         <div class="trademark-logo absolute top-0 right-0" aria-hidden="true">CAM</div>
                     </div>
                     <div class="mt-5 text-center">
-                        <h1 class="text-2xl font-bold whitespace-nowrap">CARLOS A. MUÑOZ</h1>
-                        <h2 class="text-base mt-2" data-translate-key="job_title">Senior IT Project Manager, QA Architect & QA Leader</h2>
-                        <p class="text-xs text-cyan-400 mt-1">CSPM | ISTQB | CISA | CISSP</p>
+                        <h1 id="main-name" class="text-2xl font-bold whitespace-nowrap">CARLOS A. MUÑOZ</h1>
+                        <h2 id="main-title" class="text-base mt-2" data-translate-key="job_title">Senior IT Project Manager, QA Architect & QA Leader</h2>
+                        <p id="main-certifications" class="text-xs text-cyan-400 mt-1">CSPM | ISTQB | CISA | CISSP</p>
                     </div>
                 </div>
                 <hr class="my-6">
@@ -428,12 +588,12 @@
                             <div id="contact-info-bubble" class="info-bubble" data-translate-key="info_bubble_contact"></div>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-3"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg><a href="tel:+573209191010" rel="noopener noreferrer" class="hover:text-cyan-400 phone-container" data-analytics-event="contact_click" data-analytics-label="Phone"><span class="phone-text">Phone Number</span><span class="phone-number" aria-hidden="true">+57 320 919 1010</span></a></div>
-                    <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg><a href="mailto:kaanmuar@gmail.com" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Email">kaanmuar@gmail.com</a></div>
-                    <div class="flex items-start space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg><a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="LinkedIn">LinkedIn Profile</a></div>
-                    <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg><a href="https://wa.me/573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="WhatsApp">WhatsApp</a></div>
-                    <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg><a href="https://t.me/+573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Telegram">Telegram</a></div>
-                    <div class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg><span>Medellin, Antioquia, Colombia</span></div>
+                    <div id="contact-phone" class="flex items-center space-x-3"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.759a11.03 11.03 0 004.28 4.28l.759-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg><a href="tel:+573209191010" rel="noopener noreferrer" class="hover:text-cyan-400 phone-container" data-analytics-event="contact_click" data-analytics-label="Phone"><span class="phone-text">Phone Number</span><span class="phone-number" aria-hidden="true">+57 320 919 1010</span></a></div>
+                    <div id="contact-email" class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg><a href="mailto:kaanmuar@gmail.com" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Email">kaanmuar@gmail.com</a></div>
+                    <div id="contact-linkedin" class="flex items-start space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg><a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="LinkedIn">LinkedIn Profile</a></div>
+                    <div id="contact-whatsapp"class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg><a href="https://wa.me/573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="WhatsApp">WhatsApp</a></div>
+                    <div id="contact-telegram" class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg><a href="https://t.me/+573209191010" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400" data-analytics-event="contact_click" data-analytics-label="Telegram">Telegram</a></div>
+                    <div id="contact-location" class="flex items-center space-x-3 mt-4"><svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg><span>Medellin, Antioquia, Colombia</span></div>
                 </section>
                 <hr class="my-6">
                 <!-- Core Competencies Section -->
@@ -473,6 +633,10 @@
                                 <svg class="w-5 h-5 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                 <svg class="w-5 h-5 moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                             </button>
+
+                            <button id="tour-start-btn" class="text-xs font-semibold py-1 px-3 rounded-full" aria-label="Start CV Feature Tour">How this Online CV works
+                            </button>
+
                             <div id="language-selector" role="region" aria-label="Language Selector" class="relative flex items-center space-x-2 collapsed cursor-pointer" tabindex="0">
                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English" tabindex="-1" role="button" aria-label="Select English"><span class="tooltiptext" data-translate-key="tooltip_lang_en"></span></div>
                                 <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español" tabindex="-1" role="button" aria-label="Select Spanish"><span class="tooltiptext" data-translate-key="tooltip_lang_es"></span></div>
@@ -570,11 +734,16 @@
                     </div>
                 </section>
 
-                </section>
+
 
                 <!--Testimonials Section-->
                 <section id="testimonials-section" class="section mt-6 animate-on-scroll" aria-labelledby="testimonials-heading">
-                    <h2 id="testimonials-heading" class="text-xl font-bold border-b-4 pb-2">Testimonials & Feedback</h2>
+<!--                    <h2 id="testimonials-heading" class="text-xl font-bold border-b-4 pb-2">Testimonials & Feedback</h2>-->
+                    <div class="flex items-center justify-between">
+                        <h2 id="testimonials-heading" class="text-xl font-bold">Testimonials & Feedback</h2>
+                        <span id="average-rating-display" class="average-rating-display" style="display: none;"></span>
+                    </div>
+                    <div class="border-b-4 pb-2"></div>
                     <div id="testimonials-container" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                     </div>
                 </section>
@@ -697,6 +866,21 @@
         <button id="widget-status-close-btn" class="widget-close-btn" aria-label="Close message">&times;</button>
     </div>
 </div>
+<div id="tour-overlay"></div>
+<div id="tour-tooltip" role="dialog" aria-labelledby="tour-title" aria-describedby="tour-description">
+    <div id="tour-tooltip-content">
+        <h3 id="tour-title" class="text-lg font-bold"></h3>
+        <p id="tour-description" class="text-sm mt-2 mb-4"></p>
+        <div class="flex justify-between items-center mt-4">
+            <span id="tour-step-counter" class="text-xs text-gray-400 dark:text-gray-500"></span>
+            <div class="flex items-center space-x-3">
+                <button id="tour-close-btn" class="text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-300" data-translate-key="tour_close">Close</button>
+                <button id="tour-back-btn" class="text-sm font-semibold bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 py-1 px-4 rounded-md">Back</button>
+                <button id="tour-next-btn" class="text-sm font-bold bg-cyan-600 hover:bg-cyan-700 text-white py-1 px-4 rounded-md">Next</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- =================================================================
 |                         APPLICATION JAVASCRIPT                      |
@@ -724,6 +908,7 @@
     const storage = getStorage(app);
 
     document.addEventListener('DOMContentLoaded', () => {
+       // let experienceList;
         const CarlosMunozCV = {
             state: {
                 lang: 'en',
@@ -733,7 +918,10 @@
                 rating: 0,
                 hasAutoOpenedRating: false,
                 // **NEW**: A set to hold the emails of blocked senders
-                blockList: new Set()
+                blockList: new Set(),
+                // --- NEW STATE ---
+                isTourActive: false,
+                currentTourStep: 0
             },
             data: {
                 // ... (your existing skills, experiences, and translations data remains here)
@@ -758,6 +946,10 @@
                         { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/appium/F15367' },
                         { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'https://cdn.simpleicons.org/robotframework/000000' },
                         { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/cucumber/23D96C' },
+                        // Add locator id here...
+                        { name: 'Provar', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/provar/244D87' },
+                        // Add locator id here...
+                        { name: 'ServiceNow ATF', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/servicenow/53D0A3' },
                         // CORRECTED: 'katalon' -> 'katalonstudio'
                         { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/katalonstudio/008742' },
                         { name: 'Puppeteer', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/puppeteer/40B5A4' },
@@ -841,14 +1033,22 @@
                     {
                         title: 'Senior QA & Program Consultant', company: 'Team International', logo: 'https://www.teaminternational.com/wp-content/uploads/2021/11/TEAM-logo-2021-dark.svg', dates: 'Jan 2021 - Present',
                         details: {
-                            en: [ 'Delivered expert QA and project leadership services across 15+ client projects in diverse sectors including FinTech, HealthTech, and retail.', 'Oversaw end-to-end project delivery, managed complex client relationships and expectations, ensuring alignment with strategic business goals.', 'Mentored and led distributed technical teams of up to 10 engineers, fostering a culture of quality and continuous improvement using Agile and Scrum methodologies.', 'Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for various client applications.', 'Managed project workflows, defect tracking, and reporting using Jira and TestRail, providing clear visibility to all stakeholders.' ],
+                            en: [
+                                'Delivered expert QA and project leadership services across 15+ client projects in diverse sectors including FinTech, HealthTech, and retail.',
+                                'Oversaw end-to-end project delivery, managed complex client relationships and expectations, ensuring alignment with strategic business goals.',
+                                'Mentored and led distributed technical teams of up to 10 engineers, fostering a culture of quality and continuous improvement using Agile and Scrum methodologies.',
+                                // Add a new line here...
+                                'Provided expert consultancy on specialized automation, including for Salesforce (Provar) and ServiceNow (ATF) ecosystems.',
+                                'Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for various client applications.',
+                                'Managed project workflows, defect tracking, and reporting using Jira and TestRail, providing clear visibility to all stakeholders.'
+                            ],
                             es: [ 'Presté servicios expertos de QA y liderazgo de proyectos en más de 15 proyectos de clientes en diversos sectores, incluidos FinTech, HealthTech y retail.', 'Supervisé la entrega de proyectos de principio a fin, gestioné relaciones complejas con los clientes y sus expectativas, asegurando la alineación con los objetivos estratégicos del negocio.', 'Fui mentor y lideré equipos técnicos distribuidos de hasta 10 ingenieros, fomentando una cultura de calidad y mejora continua utilizando metodologías Agile y Scrum.', 'Diseñé e implementé estrategias de automatización de pruebas escalables utilizando Cypress, Playwright y Selenium para diversas aplicaciones de clientes.', 'Gestioné los flujos de trabajo del proyecto, el seguimiento de defectos y los informes utilizando Jira y TestRail, proporcionando una visibilidad clara a todas las partes interesadas.' ],
                             pt: [ 'Forneci serviços especializados de QA e liderança de projetos em mais de 15 projetos de clientes em diversos setores, incluindo FinTech, HealthTech e varejo.', 'Supervisionei a entrega de projetos de ponta a ponta, gerenciei relacionamentos complexos com clientes e suas expectativas, garantindo o alinhamento com os objetivos estratégicos de negócios.', 'Orientei e liderei equipes técnicas distribuídas de até 10 ingenieros, promovendo uma cultura de qualidade e melhoria contínua usando metodologias Agile e Scrum.', 'Arquitetei e implementei estratégias de automação de testes escaláveis usando Cypress, Playwright e Selenium para várias aplicações de clientes.', 'Gerenciei fluxos de trabalho de projetos, rastreamento de defeitos e relatórios usando Jira e TestRail, proporcionando visibilidade clara para todos os stakeholders.' ],
                             de: [ 'Erbringung von Experten-QA- und Projektleitungsdiensten für über 15 Kundenprojekte in verschiedenen Sektoren, einschließlich FinTech, HealthTech und Einzelhandel.', 'Überwachung der End-to-End-Projektabwicklung, Management komplexer Kundenbeziehungen und -erwartungen zur Sicherstellung der Ausrichtung auf strategische Geschäftsziele.', 'Mentoring und Leitung verteilter technischer Teams von bis zu 10 Ingenieuren, Förderung einer Kultur der Qualität und kontinuierlichen Verbesserung unter Verwendung von Agile- und Scrum-Methoden.', 'Architektur und Implementierung skalierbarer Testautomatisierungsstrategien mit Cypress, Playwright und Selenium für verschiedene Kundenanwendungen.', 'Verwaltung von Projekt-Workflows, Fehlerverfolgung und Berichterstattung mit Jira und TestRail, um allen Beteiligten klare Sichtbarkeit zu bieten.' ],
                             fr: [ 'Fourniture de services experts en QA et en direction de projet pour plus de 15 projets clients dans divers secteurs, notamment la FinTech, la HealthTech et le commerce de détail.', 'Supervision de la livraison de projets de bout en bout, gestion des relations et des attentes complexes des clients, en veillant à l\'alignement avec les objectifs commerciaux stratégiques.', 'Encadrement et direction d\'équipes techniques distribuées comptant jusqu\'à 10 ingénieurs, en favorisant une culture de la qualité et de l\'amélioration continue à l\'aide des méthodologies Agile et Scrum.', 'Conception et mise en œuvre de stratégies d\'automatisation des tests évolutives à l\'aide de Cypress, Playwright et Selenium pour diverses applications clientes.', 'Gestion des flux de travail de projet, du suivi des bogues et des rapports à l\'aide de Jira et TestRail, offrant une visibilité claire à toutes les parties prenantes.' ],
                             it: [ 'Fornitura di servizi esperti di QA e di leadership di progetto per oltre 15 progetti di clienti in diversi settori, tra cui FinTech, HealthTech e retail.', 'Supervisione della consegna dei progetti end-to-end, gestione di relazioni complesse con i clienti e delle loro aspettative, garantendo l\'allineamento con gli obiettivi strategici aziendali.', 'Mentoring e guida di team tecnici distribuiti fino a 10 ingegneri, promuovendo una cultura della qualità e del miglioramento continuo utilizzando le metodologie Agile e Scrum.', 'Progettazione e implementazione di strategie de automazione dei test scalabili utilizzando Cypress, Playwright e Selenium per varie applicazioni dei clienti.', 'Gestione dei flussi de lavoro dei progetti, del tracciamento dei difetti e della reportistica utilizzando Jira e TestRail, fornendo una chiara visibilità a tutti gli stakeholder.' ]
                         },
-                        techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Tosca', 'Puppeteer', 'MS Dynamics', 'SAP', 'Zoho CRM', 'Shopify', 'Gatling', 'Power BI', 'Tableau', 'New Relic', 'Splunk', 'GraphQL']
+                        techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'Provar', 'ServiceNow ATF', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Tosca', 'Puppeteer', 'MS Dynamics', 'SAP', 'Zoho CRM', 'Shopify', 'Gatling', 'Power BI', 'Tableau', 'New Relic', 'Splunk', 'GraphQL']
                     },
                     {
                         title: 'Senior Technical Project Manager & Consultant', company: 'RockStar Coders Agency', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/arts-graphic-designs/star-solid-icon.svg', dates: 'Apr 2019 - Mar 2021',
@@ -865,14 +1065,21 @@
                     {
                         title: 'Sr. Project Manager & QA Engineer', company: 'Globant', logo: 'https://static.globant.com/corp-media/2023/11/globant-logo-dark.svg', dates: 'Apr 2017 - May 2018',
                         details: {
-                            en: [ 'Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account.', 'Managed test planning, resource estimation, and client communications, ensuring alignment with project timelines and deliverables.', 'Architected and spearheaded the development of a new QA automation framework using Kotlin, C# .Net, and Robot Framework.', 'Utilized AWS services (S3, EC2, Redshift, Athena) for managing test data and environments for Salesforce integration projects.', 'Performed complex data validation and manipulation using advanced SQL queries against Oracle and PostgreSQL databases.' ],
+                            en: [
+                                'Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account.',
+                                'Managed test planning, resource estimation, and client communications, ensuring alignment with project timelines and deliverables.',
+                                // This line is updated
+                                'Architected and spearheaded automation strategies using specialized frameworks like Provar for Salesforce and the ServiceNow Automated Test Framework (ATF).',
+                                'Utilized AWS services (S3, EC2, Redshift, Athena) for managing test data and environments for Salesforce integration projects.',
+                                'Performed complex data validation and manipulation using advanced SQL queries against Oracle and PostgreSQL databases.'
+                            ],
                             es: [ 'Lideré todos los esfuerzos de QA para proyectos de Salesforce Sales Cloud y Service Cloud para la cuenta de alto perfil de DirectvGO / AT&T.', 'Gestioné la planificación de pruebas, la estimación de recursos y las comunicaciones con el cliente, asegurando la alineación con los cronogramas y entregables del proyecto.', 'Diseñé y lideré el desarrollo de un nuevo marco de automatización de QA utilizando Kotlin, C# .Net y Robot Framework.', 'Utilicé servicios de AWS (S3, EC2, Redshift, Athena) para gestionar datos y entornos de prueba para proyectos de integración de Salesforce.', 'Realicé validación y manipulación de datos complejos utilizando consultas SQL avanzadas en bases de datos Oracle y PostgreSQL.' ],
                             pt: [ 'Liderei todos os esforços de QA para projetos Salesforce Sales Cloud e Service Cloud para a conta de alto perfil da DirectvGO / AT&T.', 'Gerenciei o planejamento de testes, a estimativa de recursos e as comunicações com o cliente, garantindo o alinhamento com os cronogramas e entregas do projeto.', 'Arquitetei e liderei o desenvolvimento de um novo framework de automação de QA usando Kotlin, C# .Net e Robot Framework.', 'Utilizei serviços da AWS (S3, EC2, Redshift, Athena) para gerenciar dados e ambientes de teste para projetos de integração do Salesforce.', 'Realizei validação e manipulação de datos complexos usando consultas SQL avanzadas em bancos de dados Oracle e PostgreSQL.' ],
                             de: [ 'Leitung aller QA-Bemühungen für Salesforce Sales Cloud- und Service Cloud-Projekte für den hochkarätigen Kunden DirectvGO / AT&T.', 'Verwaltung der Testplanung, Ressourcenschätzung und Kundenkommunikation, um die Übereinstimmung mit Projektzeitplänen und -ergebnissen sicherzustellen.', 'Architektur und Leitung der Entwicklung eines neuen QA-Automatisierungs-Frameworks mit Kotlin, C# .Net und Robot Framework.', 'Nutzung von AWS-Diensten (S3, EC2, Redshift, Athena) zur Verwaltung von Testdaten und -umgebungen für Salesforce-Integrationsprojekte.', 'Durchführung komplexer Datenvalidierungen und -manipulationen mithilfe erweiterter SQL-Abfragen in Oracle- und PostgreSQL-Datenbanken.' ],
                             fr: [ 'Direction de tous les efforts d\'assurance qualité pour les projets Salesforce Sales Cloud et Service Cloud pour le compte de premier plan DirectvGO / AT&T.', 'Gestion de la planification des tests, de l\'estimation des ressources et des communications avec les clients, en veillant à l\'alignement sur les calendriers et les livrables du projet.', 'Conception et direction du développement d\'un nouveau cadre d\'automatisation de l\'assurance qualité utilisant Kotlin, C# .Net et Robot Framework.', 'Utilisation des services AWS (S3, EC2, Redshift, Athena) pour la gestion des données et des environnements de test pour les projets d\'intégration Salesforce.', 'Réalisation de validations et de manipulations de données complexes à l\'aide de requêtes SQL avancées sur des bases de données Oracle et PostgreSQL.' ],
                             it: [ 'Ho guidato tutti gli sforzi di QA per i progetti Salesforce Sales Cloud e Service Cloud per l\'importante cliente DirectvGO / AT&T.', 'Ho gestito la pianificazione dei test, la stima delle risorse e le comunicazioni con il cliente, garantendo l\'allineamento con le tempistiche e i deliverable del progetto.', 'Ho progettato e guidato lo sviluppo di un nuovo framework de automazione QA utilizzando Kotlin, C# .Net e Robot Framework.', 'Ho utilizzato i servizi AWS (S3, EC2, Redshift, Athena) per la gestione dei dati e degli ambienti di test per i progetti di integrazione di Salesforce.', 'Ho eseguito complesse convalide e manipolazioni di dati utilizzando query SQL avanzate su database Oracle e PostgreSQL.' ]
                         },
-                        techUsed: ['Salesforce', 'AWS', 'SQL', 'Kotlin', 'C#', '.NET', 'Robot Framework', 'Oracle', 'PostgreSQL', 'Jira', 'Agile', 'Kanban', 'Scrum', 'Cypress', 'Tosca', 'Katalon', 'Datadog', 'MongoDB']
+                        techUsed: ['Salesforce', 'Provar', 'ServiceNow ATF', 'AWS', 'SQL', 'Kotlin', 'C#', '.NET', 'Robot Framework', 'Oracle', 'PostgreSQL', 'Jira', 'Agile', 'Kanban', 'Scrum', 'Cypress', 'Tosca', 'Katalon', 'Datadog', 'MongoDB']
                     },
                     {
                         title: 'Sr. QA Engineer', company: 'Genius Sports', logo: 'https://images.ctfassets.net/lm0nxqkzuy44/5Tf11xH42e8Yx2J9m2tN2X/16e6391b1060b2a9f5d3455431d9a040/gsg-logo-full-colour.svg', dates: 'May 2016 - Apr 2017',
@@ -1022,81 +1229,368 @@
                         info_bubble_contact: "Click any contact link to open the corresponding application (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Click any skill to filter the experience list. Click again to deselect, or use 'Reset' to clear all.",
                         tooltip_print: "Print / PDF",
+                        read_more: "Read More...", read_less: "Read Less...",
                         tooltip_timeline: "Click to jump to %COMPANY% experience",
                         tooltip_lang_en: "Translate to English", tooltip_lang_es: "Translate to Spanish", tooltip_lang_pt: "Translate to Portuguese", tooltip_lang_de: "Translate to German", tooltip_lang_fr: "Translate to French", tooltip_lang_it: "Translate to Italian",
                         widget_tab_message: "Message", widget_tab_rate: "Rate CV",
                         form_label_name: "Name", form_label_email: "Email", form_label_topic: "Topic", form_label_message: "Message", form_label_attachment: "Attachment (Optional)", form_button_attach: "Attach File", form_button_send: "Send Message", form_label_rating: "Overall Rating", form_label_comments: "Comments (Optional)", form_button_submit_rating: "Submit Rating",
                         error_required: "This field is required.", error_min_length: "Please enter at least {min} characters.", error_email: "Please enter a valid email address.", error_topic: "Please select a topic.", error_rating: "Please select a rating.", error_file_size: "File is too large. Max size is 5MB.", error_file_type: "Invalid file type. (PDF, DOC, DOCX, PNG, JPG)",
                         status_sending: "Sending...", status_uploading: "Uploading...", status_file_attached: "File attached: {fileName}", status_success_message_title: "Message Sent!", status_success_message_body: "Thank you for reaching out. I'll get back to you shortly.", status_success_rating_title: "Rating Submitted!", status_success_rating_body: "Thank you for your valuable feedback!", status_error_title: "An Error Occurred", status_error_body: "Sorry, something went wrong. Please try again later.",
-                        topic_option_default: "Select a topic...", topic_option_opportunity: "Job Opportunity / Collaboration", topic_option_inquiry: "Project Inquiry", topic_option_feedback: "CV Feedback", topic_option_other: "Other"
+                        topic_option_default: "Select a topic...", topic_option_opportunity: "Job Opportunity / Collaboration", topic_option_inquiry: "Project Inquiry", topic_option_feedback: "CV Feedback", topic_option_other: "Other",
+                        tour_close: "Close", tour_back: "Back", tour_next: "Next", tour_finish: "Finish", tour_step_1_title: "1. Page Controls", tour_step_1_desc: "Use these controls to switch between Light/Dark themes, select a language, or print the CV as a PDF.", tour_step_2_title: "2. Expandable Summary", tour_step_2_desc: "Click 'Read More...' to see the full professional summary, providing deeper insight into my profile and approach.", tour_step_3_title: "3. Interactive Toolkit", tour_step_3_desc: "This is my full skillset. Click any skill to instantly filter both the Timeline and the Professional Experience sections.", tour_step_4_title: "4. Filterable Timeline", tour_step_4_desc: "This provides a quick career overview. It automatically filters based on the skills you select from the Toolkit.", tour_step_5_title: "5. Detailed Experience", tour_step_5_desc: "Click any job title to expand it and see the detailed responsibilities, achievements, and technologies used for that role.", tour_step_6_title: "6. Contact & Feedback", tour_step_6_desc: "Click this button anytime to send me a message or rate this CV. It even opens automatically if you scroll to the bottom!", tour_step_7_title: "7. Get In Touch", tour_step_7_desc: "All my contact channels are here. Click any link to open the corresponding application, or use the floating blue button to send me a direct message."
                     },
                     es: {
                         job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA", contact_title: "Contacto", competencies_title: "Competencias Clave", competency_pm: "Gestión de Proyectos de TI", competency_qa: "QA y Automatización de Pruebas", competency_lead: "Liderazgo y Mentoría de Equipos", competency_devops: "Estrategia de CI/CD y DevOps", competency_cloud: "Plataformas en la Nube", competency_strategy: "Visión Estratégica de Negocio", competency_relations: "Relaciones con Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluido", lang_basic: "Básico", lang_others: "Otros", summary_title: "Resumen Profesional", toolkit_title: "Herramientas Técnicas y de Gestión", toolkit_pm: "Gestión de Proyectos y Metodologías:", toolkit_qa: "QA y Automatización de Pruebas:", toolkit_lang: "Programación y Scripting:", toolkit_cloud: "Nube, CI/CD y DevOps:", toolkit_db: "Bases de Datos y APIs:", toolkit_analytics: "Analítica y Monitoreo:", toolkit_platform: "Plataformas y Herramientas de Negocio:", toolkit_system: "Herramientas Generales y de Sistema:", experience_title: "Experiencia Profesional", education_title: "Educación y Certificaciones", infographics_title: "Carrera en un Vistazo", infographics_competencies_title: "Competencias Clave", infographics_methodologies_title: "Metodologías y Procesos", infographics_timeline_title: "Línea de Tiempo Profesional",
                         info_bubble_contact: "Haga clic en cualquier enlace de contacto para abrir la aplicación correspondiente (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Haga clic en cualquier habilidad para filtrar la lista de experiencias. Haga clic de nuevo para deseleccionar, o use 'Restablecer' para borrar todo.",
                         tooltip_print: "Imprimir / PDF",
+                        read_more: "Leer Más...", read_less: "Leer Menos...",
                         tooltip_timeline: "Haga clic para saltar a la experiencia de %COMPANY%",
                         tooltip_lang_en: "Traducir a Inglés", tooltip_lang_es: "Traducir a Español", tooltip_lang_pt: "Traducir a Portugués", tooltip_lang_de: "Traducir a Alemán", tooltip_lang_fr: "Traducir a Francés", tooltip_lang_it: "Traducir a Italiano",
                         widget_tab_message: "Mensaje", widget_tab_rate: "Evaluar CV",
                         form_label_name: "Nombre", form_label_email: "Correo electrónico", form_label_topic: "Asunto", form_label_message: "Mensaje", form_label_attachment: "Adjunto (Opcional)", form_button_attach: "Adjuntar archivo", form_button_send: "Enviar Mensaje", form_label_rating: "Calificación General", form_label_comments: "Comentarios (Opcional)", form_button_submit_rating: "Enviar Calificación",
                         error_required: "Este campo es obligatorio.", error_min_length: "Por favor, ingrese al menos {min} caracteres.", error_email: "Por favor, ingrese un correo electrónico válido.", error_topic: "Por favor, seleccione un asunto.", error_rating: "Por favor, seleccione una calificación.", error_file_size: "El archivo es demasiado grande. Máximo 5MB.", error_file_type: "Tipo de archivo no válido. (PDF, DOC, DOCX, PNG, JPG)",
                         status_sending: "Enviando...", status_uploading: "Subiendo...", status_file_attached: "Archivo adjunto: {fileName}", status_success_message_title: "¡Mensaje Enviado!", status_success_message_body: "Gracias por contactarme. Te responderé en breve.", status_success_rating_title: "¡Calificación Enviada!", status_success_rating_body: "¡Gracias por tus valiosos comentarios!", status_error_title: "Ocurrió un Error", status_error_body: "Lo siento, algo salió mal. Por favor, inténtalo de nuevo más tarde.",
-                        topic_option_default: "Seleccione un asunto...", topic_option_opportunity: "Oportunidad Laboral / Colaboración", topic_option_inquiry: "Consulta de Proyecto", topic_option_feedback: "Feedback sobre el CV", topic_option_other: "Otro"
+                        topic_option_default: "Seleccione un asunto...", topic_option_opportunity: "Oportunidad Laboral / Colaboración", topic_option_inquiry: "Consulta de Proyecto", topic_option_feedback: "Feedback sobre el CV", topic_option_other: "Otro",
+                        tour_close: "Cerrar", tour_back: "Atrás", tour_next: "Siguiente", tour_finish: "Finalizar", tour_step_1_title: "1. Controles de Página", tour_step_1_desc: "Usa estos controles para cambiar entre temas Claro/Oscuro, seleccionar un idioma o imprimir el CV como PDF.", tour_step_2_title: "2. Resumen Expandible", tour_step_2_desc: "Haz clic en 'Leer Más...' para ver el resumen profesional completo, obteniendo una visión más profunda de mi perfil.", tour_step_3_title: "3. Toolkit Interactivo", tour_step_3_desc: "Este es mi conjunto de habilidades. Haz clic en cualquier habilidad para filtrar instantáneamente la Línea de Tiempo y la Experiencia Profesional.", tour_step_4_title: "4. Línea de Tiempo Filtrable", tour_step_4_desc: "Esto proporciona un resumen rápido de mi carrera. Se filtra automáticamente según las habilidades que selecciones del Toolkit.", tour_step_5_title: "5. Experiencia Detallada", tour_step_5_desc: "Haz clic en cualquier cargo para expandirlo y ver en detalle las responsabilidades, logros y tecnologías utilizadas.", tour_step_6_title: "6. Contacto y Feedback", tour_step_6_desc: "Haz clic en este botón en cualquier momento para enviarme un mensaje o calificar este CV. ¡Incluso se abre automáticamente si llegas al final!",tour_step_7_title: "7. Ponte en Contacto", tour_step_7_desc: "Todos mis canales de contacto están aquí. Haz clic en cualquier enlace para abrir la aplicación, o usa el botón azul flotante para enviarme un mensaje directo."
                     },
                     pt: {
                         job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA", contact_title: "Contato", competencies_title: "Competências Principais", competency_pm: "Gerenciamento de Projetos de TI", competency_qa: "QA e Automação de Testes", competency_lead: "Liderança e Mentoria de Equipes", competency_devops: "Estratégia de CI/CD e DevOps", competency_cloud: "Plataformas de Nuvem", competency_strategy: "Visão Estratégica de Negócios", competency_relations: "Relações com Stakeholders e Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Básico", lang_others: "Outros", summary_title: "Resumo Profissional", toolkit_title: "Ferramentas Técnicas e de Gestão", toolkit_pm: "Gestão de Projetos e Metodologias:", toolkit_qa: "QA e Automação de Testes:", toolkit_lang: "Programação e Scripting:", toolkit_cloud: "Nuvem, CI/CD e DevOps:", toolkit_db: "Bancos de Dados e APIs:", toolkit_analytics: "Análise e Monitoramento:", toolkit_platform: "Plataformas e Ferramentas de Negócio:", toolkit_system: "Ferramentas Gerais e de Sistema:", experience_title: "Experiência Profissional", education_title: "Educação e Certificações", infographics_title: "Carreira em Resumo", infographics_competencies_title: "Competências Principais", infographics_methodologies_title: "Metodologias e Processos", infographics_timeline_title: "Linha do Tempo da Carreira",
                         info_bubble_contact: "Clique em qualquer link de contato para abrir o aplicativo correspondente (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Clique em qualquer habilidade para filtrar a lista de experiências. Clique novamente para desmarcar, ou use 'Redefinir' para limpar tudo.",
                         tooltip_print: "Imprimir / PDF",
+                        read_more: "Ler Mais...", read_less: "Ler Menos...",
                         tooltip_timeline: "Clique para ir para a experiência de %COMPANY%",
                         tooltip_lang_en: "Traduzir para Inglês", tooltip_lang_es: "Traduzir para Espanhol", tooltip_lang_pt: "Traduzir para Português", tooltip_lang_de: "Traduzir para Alemão", tooltip_lang_fr: "Traduzir para Francês", tooltip_lang_it: "Traduzir para Italiano",
                         widget_tab_message: "Mensagem", widget_tab_rate: "Avaliar CV",
                         form_label_name: "Nome", form_label_email: "Email", form_label_topic: "Tópico", form_label_message: "Mensagem", form_label_attachment: "Anexo (Opcional)", form_button_attach: "Anexar Arquivo", form_button_send: "Enviar Mensagem", form_label_rating: "Avaliação Geral", form_label_comments: "Comentários (Opcional)", form_button_submit_rating: "Enviar Avaliação",
                         error_required: "Este campo é obrigatório.", error_min_length: "Por favor, insira pelo menos {min} caracteres.", error_email: "Por favor, insira um email válido.", error_topic: "Por favor, selecione um tópico.", error_rating: "Por favor, selecione uma avaliação.", error_file_size: "O arquivo é muito grande. Tamanho máximo é 5MB.", error_file_type: "Tipo de arquivo inválido. (PDF, DOC, DOCX, PNG, JPG)",
                         status_sending: "Enviando...", status_uploading: "Carregando...", status_file_attached: "Arquivo anexado: {fileName}", status_success_message_title: "Mensagem Enviada!", status_success_message_body: "Obrigado por entrar em contato. Retornarei em breve.", status_success_rating_title: "Avaliação Enviada!", status_success_rating_body: "Obrigado pelo seu valioso feedback!", status_error_title: "Ocorreu um Erro", status_error_body: "Desculpe, algo deu errado. Por favor, tente novamente mais tarde.",
-                        topic_option_default: "Selecione um tópico...", topic_option_opportunity: "Oportunidade de Emprego / Colaboração", topic_option_inquiry: "Consulta de Projeto", topic_option_feedback: "Feedback sobre o CV", topic_option_other: "Outro"
+                        topic_option_default: "Selecione um tópico...", topic_option_opportunity: "Oportunidade de Emprego / Colaboração", topic_option_inquiry: "Consulta de Projeto", topic_option_feedback: "Feedback sobre o CV", topic_option_other: "Outro",
+                        tour_close: "Fechar", tour_back: "Voltar", tour_next: "Próximo", tour_finish: "Concluir", tour_step_1_title: "1. Controles da Página", tour_step_1_desc: "Use estes controles para alternar entre os temas Claro/Escuro, selecionar um idioma ou imprimir o CV como PDF.", tour_step_2_title: "2. Resumo Expansível", tour_step_2_desc: "Clique em 'Ler Mais...' para ver o resumo profissional completo, obtendo uma visão mais aprofundada do meu perfil e abordagem.", tour_step_3_title: "3. Toolkit Interativo", tour_step_3_desc: "Este é o meu conjunto completo de habilidades. Clique em qualquer habilidade para filtrar instantaneamente as seções de Linha do Tempo e Experiência Profissional.", tour_step_4_title: "4. Linha do Tempo Filtrável", tour_step_4_desc: "Isto fornece uma rápida visão geral da carreira. Filtra automaticamente com base nas habilidades que você seleciona no Toolkit.", tour_step_5_title: "5. Experiência Detalhada", tour_step_5_desc: "Clique em qualquer cargo para expandi-lo e ver as responsabilidades detalhadas, conquistas e tecnologias usadas nessa função.", tour_step_6_title: "6. Contato e Feedback", tour_step_6_desc: "Clique neste botão a qualquer momento para me enviar uma mensagem ou avaliar este CV. Ele até abre automaticamente se você rolar até o final!", tour_step_7_title: "7. Entre em Contato", tour_step_7_desc: "Todos os meus canais de contato estão aqui. Clique em qualquer link para abrir o aplicativo correspondente, ou use o botão azul flutuante para me enviar uma mensagem direta."
                     },
                     de: {
                         job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter", contact_title: "Kontakt", competencies_title: "Kernkompetenzen", competency_pm: "IT-Projektmanagement", competency_qa: "QA & Testautomatisierung", competency_lead: "Teamführung & Mentoring", competency_devops: "CI/CD & DevOps-Strategie", competency_cloud: "Cloud-Plattformen", competency_strategy: "Strategisches Geschäftsverständnis", competency_relations: "Stakeholder- & Kundenbeziehungen", languages_title: "Sprachen", lang_native: "Muttersprache", lang_fluent: "Fließend", lang_basic: "Grundkenntnisse", lang_others: "Andere", summary_title: "Berufliches Profil", toolkit_title: "Technisches & Management-Toolkit", toolkit_pm: "Projektmanagement & Methoden:", toolkit_qa: "QA & Testautomatisierung:", toolkit_lang: "Programmierung & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Datenbanken & APIs:", toolkit_analytics: "Analyse & Überwachung:", toolkit_platform: "Plattformen & Business-Tools:", toolkit_system: "Allgemeine & System-Tools:", experience_title: "Berufserfahrung", education_title: "Ausbildung & Zertifizierungen", infographics_title: "Karriere im Überblick", infographics_competencies_title: "Kernkompetenzen", infographics_methodologies_title: "Methoden & Prozesse", infographics_timeline_title: "Karriere-Zeitachse",
                         info_bubble_contact: "Klicken Sie auf einen Kontaktlink, um die entsprechende Anwendung zu öffnen (E-Mail, WhatsApp, etc.).",
                         info_bubble_toolkit: "Klicken Sie auf eine Fähigkeit, um die Erfahrungsliste zu filtern. Erneut klicken zum Abwählen oder 'Zurücksetzen' verwenden, um alle zu löschen.",
                         tooltip_print: "Drucken / PDF",
+                        read_more: "Mehr lesen...", read_less: "Weniger lesen...",
                         tooltip_timeline: "Klicken, um zur Erfahrung von %COMPANY% zu springen",
                         tooltip_lang_en: "Auf Englisch übersetzen", tooltip_lang_es: "Auf Spanisch übersetzen", tooltip_lang_pt: "Auf Portugiesisch übersetzen", tooltip_lang_de: "Auf Deutsch übersetzen", tooltip_lang_fr: "Auf Französisch übersetzen", tooltip_lang_it: "Auf Italienisch übersetzen",
                         widget_tab_message: "Nachricht", widget_tab_rate: "CV bewerten",
                         form_label_name: "Name", form_label_email: "E-Mail", form_label_topic: "Thema", form_label_message: "Nachricht", form_label_attachment: "Anhang (Optional)", form_button_attach: "Datei anhängen", form_button_send: "Nachricht senden", form_label_rating: "Gesamtbewertung", form_label_comments: "Kommentare (Optional)", form_button_submit_rating: "Bewertung abgeben",
                         error_required: "Dieses Feld ist erforderlich.", error_min_length: "Bitte geben Sie mindestens {min} Zeichen ein.", error_email: "Bitte geben Sie eine gültige E-Mail-Adresse ein.", error_topic: "Bitte wählen Sie ein Thema aus.", error_rating: "Bitte wählen Sie eine Bewertung aus.", error_file_size: "Datei ist zu groß. Max. Größe 5MB.", error_file_type: "Ungültiger Dateityp. (PDF, DOC, DOCX, PNG, JPG)",
                         status_sending: "Senden...", status_uploading: "Hochladen...", status_file_attached: "Datei angehängt: {fileName}", status_success_message_title: "Nachricht gesendet!", status_success_message_body: "Vielen Dank für Ihre Kontaktaufnahme. Ich melde mich in Kürze bei Ihnen.", status_success_rating_title: "Bewertung abgegeben!", status_success_rating_body: "Vielen Dank für Ihr wertvolles Feedback!", status_error_title: "Ein Fehler ist aufgetreten", status_error_body: "Entschuldigung, etwas ist schief gelaufen. Bitte versuchen Sie es später erneut.",
-                        topic_option_default: "Wählen Sie ein Thema...", topic_option_opportunity: "Stellenangebot / Zusammenarbeit", topic_option_inquiry: "Projektaanfrage", topic_option_feedback: "Feedback zum Lebenslauf", topic_option_other: "Anderes"
+                        topic_option_default: "Wählen Sie ein Thema...", topic_option_opportunity: "Stellenangebot / Zusammenarbeit", topic_option_inquiry: "Projektaanfrage", topic_option_feedback: "Feedback zum Lebenslauf", topic_option_other: "Anderes",
+                        tour_close: "Schließen", tour_back: "Zurück", tour_next: "Weiter", tour_finish: "Beenden", tour_step_1_title: "1. Seitensteuerung", tour_step_1_desc: "Verwenden Sie diese Steuerelemente, um zwischen hellen/dunklen Themen zu wechseln, eine Sprache auszuwählen oder den Lebenslauf als PDF zu drucken.", tour_step_2_title: "2. Erweiterbare Zusammenfassung", tour_step_2_desc: "Klicken Sie auf 'Mehr lesen...', um die vollständige berufliche Zusammenfassung zu sehen und einen tieferen Einblick in mein Profil und meinen Ansatz zu erhalten.", tour_step_3_title: "3. Interaktives Toolkit", tour_step_3_desc: "Dies ist mein vollständiges Skillset. Klicken Sie auf eine Fähigkeit, um sowohl die Zeitleiste als auch die Berufserfahrung sofort zu filtern.", tour_step_4_title: "4. Filterbare Zeitleiste", tour_step_4_desc: "Dies bietet einen schnellen Karriereüberblick. Es filtert automatisch basierend auf den Fähigkeiten, die Sie aus dem Toolkit auswählen.", tour_step_5_title: "5. Detaillierte Erfahrung", tour_step_5_desc: "Klicken Sie auf eine Berufsbezeichnung, um sie zu erweitern und die detaillierten Verantwortlichkeiten, Erfolge und verwendeten Technologien für diese Rolle anzuzeigen.", tour_step_6_title: "6. Kontakt & Feedback", tour_step_6_desc: "Klicken Sie jederzeit auf diese Schaltfläche, um mir eine Nachricht zu senden oder diesen Lebenslauf zu bewerten. Er öffnet sich sogar automatisch, wenn Sie nach unten scrollen!", tour_step_7_title: "7. Kontakt aufnehmen", tour_step_7_desc: "Alle meine Kontaktkanäle sind hier. Klicken Sie auf einen Link, um die entsprechende Anwendung zu öffnen, oder verwenden Sie die schwebende blaue Schaltfläche, um mir eine direkte Nachricht zu senden."
                     },
                     fr: {
                         job_title: "Chef de Projet IT Senior, Architecte et Leader QA", contact_title: "Contact", competencies_title: "Compétences Clés", competency_pm: "Gestion de Projets IT", competency_qa: "QA & Automatisation des Tests", competency_lead: "Leadership et Mentorat d'Équipe", competency_devops: "Stratégie CI/CD & DevOps", competency_cloud: "Plateformes Cloud", competency_strategy: "Sens Stratégique des Affaires", competency_relations: "Relations avec les Parties Prenantes et Clients", languages_title: "Langues", lang_native: "Natif", lang_fluent: "Courant", lang_basic: "Basique", lang_others: "Autres", summary_title: "Résumé Professionnel", toolkit_title: "Boîte à Outils Technique & de Gestion", toolkit_pm: "Gestion de Projet & Méthodologies:", toolkit_qa: "QA & Automatisation des Tests:", toolkit_lang: "Programmation & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Bases de Données & APIs:", toolkit_analytics: "Analyse & Surveillance:", toolkit_platform: "Plateformes & Outils Métier:", toolkit_system: "Outils Généraux & Système:", experience_title: "Expérience Professionnelle", education_title: "Formation & Certifications", infographics_title: "Carrière en un Coup d'Œil", infographics_competencies_title: "Compétences Clés", infographics_methodologies_title: "Méthodologies & Processus", infographics_timeline_title: "Chronologie de Carrière",
                         info_bubble_contact: "Cliquez sur un lien de contact pour ouvrir l'application correspondante (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Cliquez sur une compétence pour filtrer la liste d'expériences. Cliquez à nouveau pour désélectionner, ou utilisez 'Réinitialiser' pour tout effacer.",
                         tooltip_print: "Imprimer / PDF",
+                        read_more: "Lire la suite...", read_less: "Lire moins...",
                         tooltip_timeline: "Cliquez pour accéder à l'expérience de %COMPANY%",
                         tooltip_lang_en: "Traduire en Anglais", tooltip_lang_es: "Traduire en Espagnol", tooltip_lang_pt: "Traduire en Portugais", tooltip_lang_de: "Traduire en Allemand", tooltip_lang_fr: "Traduire en Français", tooltip_lang_it: "Traduire en Italien",
                         widget_tab_message: "Message", widget_tab_rate: "Évaluer le CV",
                         form_label_name: "Nom", form_label_email: "Email", form_label_topic: "Sujet", form_label_message: "Message", form_label_attachment: "Pièce Jointe (Optionnel)", form_button_attach: "Joindre un Fichier", form_button_send: "Envoyer le Message", form_label_rating: "Évaluation Globale", form_label_comments: "Commentaires (Optionnel)", form_button_submit_rating: "Soumettre l'Évaluation",
                         error_required: "Ce champ est obligatoire.", error_min_length: "Veuillez saisir au moins {min} caractères.", error_email: "Veuillez saisir une adresse e-mail valide.", error_topic: "Veuillez sélectionner un sujet.", error_rating: "Veuillez sélectionner une évaluation.", error_file_size: "Le fichier est trop volumineux. Taille max 5Mo.", error_file_type: "Type de fichier invalide. (PDF, DOC, DOCX, PNG, JPG)",
                         status_sending: "Envoi...", status_uploading: "Téléchargement...", status_file_attached: "Fichier joint : {fileName}", status_success_message_title: "Message Envoyé !", status_success_message_body: "Merci de nous avoir contactés. Je vous répondrai sous peu.", status_success_rating_title: "Évaluation Soumise !", status_success_rating_body: "Merci pour vos précieux commentaires !", status_error_title: "Une Erreur est Survenue", status_error_body: "Désolé, quelque chose s'est mal passé. Veuillez réessayer plus tard.",
-                        topic_option_default: "Sélectionnez un sujet...", topic_option_opportunity: "Opportunité d'Emploi / Collaboration", topic_option_inquiry: "Demande de Projet", topic_option_feedback: "Commentaires sur le CV", topic_option_other: "Autre"
+                        topic_option_default: "Sélectionnez un sujet...", topic_option_opportunity: "Opportunité d'Emploi / Collaboration", topic_option_inquiry: "Demande de Projet", topic_option_feedback: "Commentaires sur le CV", topic_option_other: "Autre",
+                        tour_close: "Fermer", tour_back: "Retour", tour_next: "Suivant", tour_finish: "Terminer", tour_step_1_title: "1. Contrôles de la Page", tour_step_1_desc: "Utilisez ces contrôles pour basculer entre les thèmes Clair/Sombre, sélectionner une langue ou imprimer le CV en PDF.", tour_step_2_title: "2. Résumé Extensible", tour_step_2_desc: "Cliquez sur 'Lire la suite...' pour voir le résumé professionnel complet, offrant un aperçu plus approfondi de mon profil et de mon approche.", tour_step_3_title: "3. Boîte à Outils Interactive", tour_step_3_desc: "Ceci est l'ensemble de mes compétences. Cliquez sur n'importe quelle compétence pour filtrer instantanément la Chronologie et l'Expérience Professionnelle.", tour_step_4_title: "4. Chronologie Filtrable", tour_step_4_desc: "Ceci offre un aperçu rapide de ma carrière. Elle filtre automatiquement en fonction des compétences que vous sélectionnez dans la boîte à outils.", tour_step_5_title: "5. Expérience Détaillée", tour_step_5_desc: "Cliquez sur n'importe quel titre de poste pour le développer et voir les responsabilités détaillées, les réalisations et les technologies utilisées pour ce rôle.", tour_step_6_title: "6. Contact et Feedback", tour_step_6_desc: "Cliquez sur ce bouton à tout moment pour m'envoyer un message ou noter ce CV. Il s'ouvre même automatiquement si vous faites défiler vers le bas !", tour_step_7_title: "7. Prenez Contact", tour_step_7_desc: "Tous mes canaux de contact sont ici. Cliquez sur un lien pour ouvrir l'application correspondante, ou utilisez le bouton bleu flottant pour m'envoyer un message direct."
                     },
                     it: {
                         job_title: "Manager Senior di Progetti IT, Architetto e Leader QA", contact_title: "Contatti", competencies_title: "Competenza Chiave", competency_pm: "Gestione Progetti IT", competency_qa: "QA e Automazione dei Test", competency_lead: "Leadership e Mentoring del Team", competency_devops: "Strategia CI/CD & DevOps", competency_cloud: "Piattaforme Cloud", competency_strategy: "Acume Strategico Aziendale", competency_relations: "Relazioni con Stakeholder e Clienti", languages_title: "Lingue", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Base", lang_others: "Altro", summary_title: "Riepilogo Professionale", toolkit_title: "Toolkit Tecnico e Gestionale", toolkit_pm: "Gestione Progetti e Metodologie:", toolkit_qa: "QA e Automazione Test:", toolkit_lang: "Programmazione e Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Database e API:", toolkit_analytics: "Analisi e Monitoraggio:", toolkit_platform: "Piattaforme e Strumenti Aziendali:", toolkit_system: "Strumenti Generali e di Sistema:", experience_title: "Esperienza Professionale", education_title: "Istruzione e Certificazioni", infographics_title: "Carriera in Breve", infographics_competencies_title: "Competenze Chiave", infographics_methodologies_title: "Metodologie e Processi", infographics_timeline_title: "Cronologia della Carriera",
                         info_bubble_contact: "Fai clic su qualsiasi link di contatto per aprire l'applicazione corrispondente (Email, WhatsApp, ecc.).",
                         info_bubble_toolkit: "Fai clic su una competenza per filtrare l'elenco delle esperienze. Fai di nuovo clic per deselezionare, o usa 'Reset' per cancellare tutto.",
                         tooltip_print: "Stampa / PDF",
+                        read_more: "Leggi di più...", read_less: "Leggi di meno...",
                         tooltip_timeline: "Clicca per passare all'esperienza di %COMPANY%",
                         tooltip_lang_en: "Traduci in Inglese", tooltip_lang_es: "Traduci in Spagnolo", tooltip_lang_pt: "Traduci in Portoghese", tooltip_lang_de: "Traduci in Tedesco", tooltip_lang_fr: "Traduci in Francese", tooltip_lang_it: "Traduci in Italiano",
                         widget_tab_message: "Messaggio", widget_tab_rate: "Valuta CV",
                         form_label_name: "Nome", form_label_email: "Email", form_label_topic: "Argomento", form_label_message: "Messaggio", form_label_attachment: "Allegato (Opzionale)", form_button_attach: "Allega File", form_button_send: "Invia Messaggio", form_label_rating: "Valutazione Complessiva", form_label_comments: "Commenti (Opzionale)", form_button_submit_rating: "Invia Valutazione",
                         error_required: "Questo campo è obbligatorio.", error_min_length: "Inserisci almeno {min} caratteri.", error_email: "Inserisci un indirizzo email valido.", error_topic: "Seleziona un argomento.", error_rating: "Seleziona una valutazione.", error_file_size: "Il file è troppo grande. Dimensione massima 5MB.", error_file_type: "Tipo di file non valido. (PDF, DOC, DOCX, PNG, JPG)",
                         status_sending: "Invio...", status_uploading: "Caricamento...", status_file_attached: "File allegato: {fileName}", status_success_message_title: "Messaggio Inviato!", status_success_message_body: "Grazie per averci contattato. Ti risponderò a breve.", status_success_rating_title: "Valutazione Inviata!", status_success_rating_body: "Grazie per il tuo prezioso feedback!", status_error_title: "Si è Verificato un Errore", status_error_body: "Spiacenti, qualcosa è andato storto. Riprova più tardi.",
-                        topic_option_default: "Seleziona un argomento...", topic_option_opportunity: "Opportunità di Lavoro / Collaborazione", topic_option_inquiry: "Richiesta di Progetto", topic_option_feedback: "Feedback sul CV", topic_option_other: "Altro"
+                        topic_option_default: "Seleziona un argomento...", topic_option_opportunity: "Opportunità di Lavoro / Collaborazione", topic_option_inquiry: "Richiesta di Progetto", topic_option_feedback: "Feedback sul CV", topic_option_other: "Altro",
+                        tour_close: "Chiudi", tour_back: "Indietro", tour_next: "Avanti", tour_finish: "Fine", tour_step_1_title: "1. Controlli Pagina", tour_step_1_desc: "Usa questi controlli per passare da un tema Chiaro/Scuro all'altro, selezionare una lingua o stampare il CV in formato PDF.", tour_step_2_title: "2. Riepilogo Espandibile", tour_step_2_desc: "Clicca su 'Leggi di più...' per vedere il riepilogo professionale completo, ottenendo una visione più approfondita del mio profilo e approccio.", tour_step_3_title: "3. Toolkit Interattivo", tour_step_3_desc: "Questo è il mio set completo di competenze. Clicca su una qualsiasi competenza per filtrare istantaneamente sia la Cronologia che l'Esperienza Professionale.", tour_step_4_title: "4. Cronologia Filtrabile", tour_step_4_desc: "Questo fornisce una rapida panoramica della carriera. Si filtra automaticamente in base alle competenze selezionate dal Toolkit.", tour_step_5_title: "5. Esperienza Dettagliata", tour_step_5_desc: "Clicca su qualsiasi titolo di lavoro per espanderlo e vedere le responsabilità dettagliate, i risultati e le tecnologie utilizzate per quel ruolo.", tour_step_6_title: "6. Contatti e Feedback", tour_step_6_desc: "Clicca questo pulsante in qualsiasi momento per inviarmi un messaggio o valutare questo CV. Si apre anche automaticamente se scorri fino in fondo!", tour_step_7_title: "7. Mettiti in Contatto", tour_step_7_desc: "Tutti i miei canali di contatto sono qui. Clicca su un qualsiasi link per aprire l'applicazione corrispondente, o usa il pulsante blu fluttuante per inviarmi un messaggio diretto."
                     }
                 },
             },
+
+            // ==========================================================
+            // |         NEW JAVASCRIPT: TOUR STEPS DEFINITION          |
+            // ==========================================================
+            tourSteps: [
+                {
+                    element: '.flex.items-center.space-x-2.no-print',
+                    titleKey: 'tour_step_1_title', descriptionKey: 'tour_step_1_desc',
+                    analyticsTag: 'Viewed_Step_1_PageControls',
+                    action: function() {
+                        const themeToggle = this.DOMElements.themeToggle;
+                        const langSelector = this.DOMElements.languageSelector;
+                        const printBtn = this.DOMElements.printBtn;
+
+                        // 1. Demo Theme Toggle
+                        setTimeout(() => this._applyClickEffect(themeToggle), 500);
+                        setTimeout(() => this._toggleTheme(), 700);
+                        setTimeout(() => this._applyClickEffect(themeToggle), 1700);
+                        setTimeout(() => this._toggleTheme(), 1900);
+
+                        // 2. Demo Language Selector
+                        setTimeout(() => langSelector.classList.remove('collapsed'), 2500);
+                        setTimeout(() => {
+                            langSelector.querySelectorAll('.lang-flag').forEach((flag, i) => {
+                                setTimeout(() => this._applyClickEffect(flag), i * 300);
+                            });
+                        }, 3000);
+                        setTimeout(() => langSelector.classList.add('collapsed'), 5000);
+
+                        // 3. Demo Print Button
+                        setTimeout(() => this._applyClickEffect(printBtn), 5500);
+                        setTimeout(() => {
+                            this.DOMElements.tourDescription.textContent += " (The print dialog would open now. We'll skip it for the demo.)";
+                        }, 5700);
+                    }
+                },
+                {
+                    element: '#read-more-btn',
+                    titleKey: 'tour_step_2_title', descriptionKey: 'tour_step_2_desc',
+                    analyticsTag: 'Viewed_Step_2_ExpandableSummary',
+                    action: function() {
+                        this.DOMElements.readMoreBtn.click();
+                        // Add this line to collapse it back after 3 seconds
+                        setTimeout(() => this.DOMElements.readMoreBtn.click(), 3000);
+                    }
+                },
+                {
+                    element: '#toolkit-container',
+                    titleKey: 'tour_step_3_title', // We'll reuse the title
+                    descriptionKey: 'Watch as we select random skills. The selected skills will glow, and then we will see how the Timeline and Experience sections are filtered based on this selection.',
+                    analyticsTag: 'Viewed_Step_3_InteractiveToolkit',
+                    action: function() {
+                        const allSkills = Array.from(this.DOMElements.toolkitContainer.querySelectorAll('.tech-tag'));
+                        const skillCount = Math.floor(Math.random() * 5) + 1; // 1 to 5 skills
+                        const selectedElements = [];
+
+                        // --- Start of new, smarter logic ---
+                        let skillsToSelectNames = [];
+                        // 1. Pick a random experience to guarantee a match
+                        const randomExperience = this.data.experiences[Math.floor(Math.random() * this.data.experiences.length)];
+                        const requiredSkills = randomExperience.techUsed;
+
+                        // 2. Pick 1 or 2 skills from that experience
+                        const guaranteedSkill = requiredSkills[Math.floor(Math.random() * requiredSkills.length)];
+                        skillsToSelectNames.push(guaranteedSkill);
+                        if (Math.random() > 0.5 && requiredSkills.length > 1) {
+                            let secondSkill;
+                            do {
+                                secondSkill = requiredSkills[Math.floor(Math.random() * requiredSkills.length)];
+                            } while (secondSkill === guaranteedSkill);
+                            skillsToSelectNames.push(secondSkill);
+                        }
+
+                        // 3. Pick a few other random skills to make it look natural
+                        const otherSkills = allSkills.filter(s => !skillsToSelectNames.includes(s.dataset.skillName));
+                        otherSkills.sort(() => 0.5 - Math.random());
+                        for(let i=0; i < 2; i++) { // Add up to 2 more
+                            if (otherSkills[i]) {
+                                skillsToSelectNames.push(otherSkills[i].dataset.skillName);
+                            }
+                        }
+                        const skillsToSelect = allSkills.filter(s => skillsToSelectNames.includes(s.dataset.skillName));
+                        // --- End of new, smarter logic ---
+                        // Function to apply highlights and filters
+                        const applyFilters = () => {
+                            skillsToSelect.forEach(skillEl => {
+                                // Expand section if needed
+                                const header = skillEl.closest('.toolkit-section').querySelector('.toolkit-header');
+                                if (header.getAttribute('aria-expanded') === 'false') {
+                                    header.click();
+                                }
+                                // Select skill and apply persistent glow
+                                skillEl.click();
+                                skillEl.classList.add('tour-highlight-persistent');
+                                selectedElements.push(skillEl);
+                            });
+                        };
+
+                        // Sequence of events
+                        setTimeout(applyFilters, 1000);
+
+                        // Show Timeline results
+                        setTimeout(() => {
+                            this.DOMElements.timelineContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            this.DOMElements.tourDescription.textContent = "See the timeline? Only relevant items are fully visible. The rest are faded.";
+                        }, 3000);
+
+                        // Show Experience results
+                        setTimeout(() => {
+                            this.DOMElements.experienceContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            this.DOMElements.tourDescription.textContent = "The same filtering applies here. Matched roles get a green border, making them easy to spot.";
+                        }, 7000);
+
+                        // Reset everything
+                        setTimeout(() => {
+                            this.DOMElements.resetFilterBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            this.DOMElements.tourDescription.textContent = "Now, we'll reset the filters with one click.";
+                            this._applyClickEffect(this.DOMElements.resetFilterBtn);
+                            this._resetFilters();
+                            // Clean up highlights and collapse sections
+                            selectedElements.forEach(el => {
+                                el.classList.remove('tour-highlight-persistent');
+                                const header = el.closest('.toolkit-section').querySelector('.toolkit-header');
+                                if (header.getAttribute('aria-expanded') === 'true') {
+                                    header.click();
+                                }
+                            });
+                        }, 11000);
+                    }
+                },
+                {
+                    element: '#timeline-container',
+                    titleKey: 'tour_step_4_title', descriptionKey: 'tour_step_4_desc', analyticsTag: 'Viewed_Step_4_FilterableTimeline',
+                    action: function() {
+                        const timelineItem = this.DOMElements.timelineContainer.querySelector('.timeline-item');
+                        const targetExperienceId = timelineItem.querySelector('a').getAttribute('href');
+                        const experienceEl = document.querySelector(targetExperienceId);
+
+                        // 1. Highlight timeline item
+                        this.DOMElements.tourDescription.textContent = "The timeline is interactive. Let's select an item...";
+                        this._applyClickEffect(timelineItem, 2000);
+                        timelineItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // 2. Move to and highlight experience item
+                        setTimeout(() => {
+                            this.DOMElements.tourDescription.textContent = "...and it smoothly takes us to the full details in the experience section.";
+                            experienceEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            this._applyClickEffect(experienceEl, 4000);
+                        }, 2500);
+
+                        // 3. Expand and collapse the experience
+                        setTimeout(() => {
+                            const header = experienceEl.querySelector('.accordion-header');
+                            if (header) header.click();
+                        }, 3000);
+                        setTimeout(() => {
+                            const header = experienceEl.querySelector('.accordion-header');
+                            if (header) header.click();
+                        }, 6000);
+
+                        // 4. Return to timeline
+                        setTimeout(() => {
+                            this.DOMElements.tourDescription.textContent = "This makes it easy to navigate between the summary and the details.";
+                            timelineItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 6500);
+                    }
+                },
+                {
+                    element: '#experience-container .experience-item:first-child',
+                    titleKey: 'tour_step_5_title', descriptionKey: 'tour_step_5_desc', analyticsTag: 'Viewed_Step_5_DetailedExperience',
+                    action: function() {
+                        const firstExpHeader = this.DOMElements.experienceContainer.querySelector('.accordion-header');
+                        if (firstExpHeader) {
+                            firstExpHeader.click();
+                            setTimeout(() => firstExpHeader.click(), 3000);
+                        }
+                    }
+                },
+                {
+                    element: '#contact-widget-fab',
+                    titleKey: 'tour_step_6_title', descriptionKey: 'tour_step_6_desc', analyticsTag: 'Viewed_Step_6_ContactWidget',
+                    action: function() {
+                        this._openContactWidget();
+                        if (!this.DOMElements.messageTab.classList.contains('active')) {
+                            this._switchTab('message');
+                        }
+                        const messageTab = this.DOMElements.messageTab;
+                        const ratingTab = this.DOMElements.ratingTab;
+                        const attachmentBtn = this.DOMElements.messageForm.querySelector('#file-upload-label');
+                        const sendMessageBtn = this.DOMElements.sendMessageBtn;
+
+                        const sequence = [
+                            // Part 1: Message Tab
+                            () => { this._typewriterEffect(this.DOMElements.senderName, 'Valued Visitor'); },
+                            () => { this.DOMElements.senderEmail.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
+                            () => { this._typewriterEffect(this.DOMElements.senderEmail, 'visitor@example.com'); },
+                            () => {
+                                this.DOMElements.messageTopic.value = this._getRandomTopic();
+                                this.DOMElements.messageTopic.dispatchEvent(new Event('change'));
+                            },
+                            () => { this._typewriterEffect(this.DOMElements.senderMessage, 'This is a great interactive CV!'); },
+                            () => {
+                                attachmentBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                attachmentBtn.classList.add('tour-highlight-persistent');
+                            },
+                            () => {
+                                attachmentBtn.classList.remove('tour-highlight-persistent');
+                                sendMessageBtn.classList.add('tour-highlight-persistent');
+                            },
+
+                            // Part 2: Switch to Rating Tab
+                            () => {
+                                sendMessageBtn.classList.remove('tour-highlight-persistent');
+                                this.DOMElements.tourDescription.textContent = "You can also switch tabs to leave feedback on the CV itself.";
+                                this._applyClickEffect(ratingTab); // Highlight the tab switch
+                                this._switchTab('rating');
+                            },
+
+                            // Part 3: Rating Tab
+                            () => {
+                                this.DOMElements.raterName.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                this._typewriterEffect(this.DOMElements.raterName, 'Jane Smith');
+                            },
+                            () => { this._typewriterEffect(this.DOMElements.raterEmail, 'jane.smith@example.com'); },
+                            () => {
+                                const randomRating = this._getRandomRating();
+                                const starEl = document.querySelector(`#star-rating .star[data-value="${randomRating}"]`);
+                                this._handleStarClick(starEl);
+                            },
+                            () => { this._typewriterEffect(this.DOMElements.raterComment, this._getRandomComment()); },
+                            () => { this.DOMElements.sendRatingBtn.classList.add('tour-highlight-persistent'); },
+
+                            // Part 4: Close
+                            () => { this._closeContactWidget(); }
+                        ];
+
+                        // THIS IS THE CORRECTED TIMINGS ARRAY
+                        const timings = [500, 1500, 2000, 3500, 4000, 6000, 7500, 9000, 10000, 10500, 12000, 13500, 14000, 16000];
+                        sequence.forEach((func, index) => setTimeout(func, timings[index]));
+                    }
+                },
+                {
+                    element: 'section[aria-labelledby="contact-heading"]',
+                    titleKey: 'tour_step_7_title', descriptionKey: 'tour_step_7_desc', analyticsTag: 'Viewed_Step_7_ContactInfo',
+                    action: function() {
+                        const links = ['#contact-phone', '#contact-email', '#contact-linkedin', '#contact-whatsapp', '#contact-telegram'];
+                        links.forEach((link, index) => {
+                            setTimeout(() => this._glowElement(document.querySelector(link)), index * 1000);
+                        });
+                    }
+                }
+            ],
+
+          /*  const experienceList = document.getElementById('experience-list');
+            experienceData.forEach((job, index) => {
+                const jobDiv = document.createElement('div');
+                // This line adds the unique ID to each job experience container
+                jobDiv.id = `experience-item-${index}`;
+                jobDiv.className = 'experience-item';
+
+                const timelineDot = document.createElement('div');
+                // This line adds the unique ID to each timeline dot
+                timelineDot.id = `experience-timeline-dot-${index}`;
+                timelineDot.className = 'absolute -left-3.5 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white dark:border-gray-800';
+
+                jobDiv.innerHTML = `
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${job.title}</h3>
+                <p class="text-md font-normal text-gray-600 dark:text-gray-400">${job.company}</p>
+                <p class="text-sm font-normal text-gray-500 dark:text-gray-300">${job.dates}</p>
+                <p class="mt-2 text-base text-gray-700 dark:text-gray-300">${job.description}</p>
+            };
+
+                jobDiv.prepend(timelineDot);
+                experienceList.appendChild(jobDiv);
+            });*/
 
             init() {
                 this._cacheDOMElements();
@@ -1112,7 +1606,18 @@
                 this._initUrlHighlighting();
                 this._initContactWidget();
                 this._initScrollTrigger();
-                this._loadAndRenderReviews(); // **NEW**: Load testimonials on page init
+                try {
+                    this._loadAndRenderReviews(); // Load testimonials
+                } catch (error) {
+                    console.error("Failed to load testimonials:", error);
+                }
+                if (!sessionStorage.getItem('hasSeenTour')) {
+                    // Use a short delay to ensure the page has rendered.
+                    setTimeout(() => {
+                        this.startTour(true); // true indicates it's an auto-start
+                    }, 1000); // 1-second delay
+                }
+
             },
 
             _cacheDOMElements() {
@@ -1160,6 +1665,17 @@
                     testimonialsContainer: document.getElementById('testimonials-container'),
                     // **NEW**: Cache the average rating element
                     averageRating: document.getElementById('average-rating'),
+
+                    // --- NEW DOM ELEMENTS ---
+                    tourStartBtn: document.getElementById('tour-start-btn'),
+                    tourOverlay: document.getElementById('tour-overlay'),
+                    tourTooltip: document.getElementById('tour-tooltip'),
+                    tourTitle: document.getElementById('tour-title'),
+                    tourDescription: document.getElementById('tour-description'),
+                    tourStepCounter: document.getElementById('tour-step-counter'),
+                    tourNextBtn: document.getElementById('tour-next-btn'),
+                    tourBackBtn: document.getElementById('tour-back-btn'),
+                    tourCloseBtn: document.getElementById('tour-close-btn'),
                 };
             },
 
@@ -1260,7 +1776,7 @@
                         <div class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                             <button class="accordion-header w-full flex justify-between items-center" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}">
                                 <div class="flex-grow text-left">
-                                    <h4 class="text-base font-bold" data-translate-key="exp_${index}_title">${exp.title}</h4>
+                                    <h4 class="text-base font-bold" data-translate-key="exp_${index}_title">${exp.title.en}</h4>
                                     <p class="text-sm italic flex items-center"><img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">${exp.company}</p>
                                 </div>
                                 <p class="text-xs mr-4">${exp.dates}</p>
@@ -1340,33 +1856,36 @@
             _filterExperiencesAndTimeline() {
                 const skills = this.state.selectedSkills;
                 const hasFilters = skills.size > 0;
-                if (this.state.pulseTimeout) clearTimeout(this.state.pulseTimeout);
-                document.querySelectorAll('.pulse-highlight').forEach(el => el.classList.remove('pulse-highlight'));
+
+                // Reset all highlights and classes first
+                document.querySelectorAll('.filter-match, .filter-no-match').forEach(el => el.classList.remove('filter-match', 'filter-no-match'));
 
                 let visibleCount = 0;
-                const matchingItems = [];
                 document.querySelectorAll('#experience-container .experience-item').forEach(item => {
                     const tech = JSON.parse(item.dataset.tech);
-                    const isVisible = !hasFilters || [...skills].every(s => tech.includes(s));
-                    item.style.display = isVisible ? 'block' : 'none';
-                    if (isVisible) {
-                        visibleCount++;
-                        if (hasFilters) matchingItems.push(item);
+                    const isMatch = !hasFilters || [...skills].every(s => tech.includes(s));
+
+                    item.style.display = 'block'; // Always show items
+
+                    if (hasFilters) {
+                        if (isMatch) {
+                            item.classList.add('filter-match');
+                            item.classList.remove('filter-no-match');
+                            visibleCount++;
+                        } else {
+                            item.classList.add('filter-no-match');
+                            item.classList.remove('filter-match');
+                        }
                     }
                 });
 
-                document.querySelectorAll('#timeline-container .timeline-item').forEach((item, index) => {
+                document.querySelectorAll('#timeline-container .timeline-item').forEach(item => {
                     const tech = JSON.parse(item.dataset.tech);
-                    const isVisible = !hasFilters || [...skills].every(s => tech.includes(s));
-                    item.classList.toggle('filtered-out', hasFilters && !isVisible);
-                    if (hasFilters && isVisible) matchingItems.push(item);
+                    const isMatch = !hasFilters || [...skills].every(s => tech.includes(s));
+                    item.classList.toggle('filtered-out', hasFilters && !isMatch);
                 });
 
-                this.DOMElements.filterStatus.textContent = hasFilters ? `Showing ${visibleCount} of ${this.data.experiences.length} experiences.` : '';
-                if (hasFilters) {
-                    requestAnimationFrame(() => matchingItems.forEach(el => el.classList.add('pulse-highlight')));
-                    this.state.pulseTimeout = setTimeout(() => matchingItems.forEach(el => el.classList.remove('pulse-highlight')), 5000);
-                }
+                this.DOMElements.filterStatus.textContent = hasFilters ? `Showing ${visibleCount} relevant experiences.` : '';
             },
 
             _populateAllTranslations() {
@@ -1375,9 +1894,9 @@
                         if (!this.data.translations[lang] || !exp.details[lang]) return;
                         this.data.translations[lang][`exp_${expIdx}_title`] = exp.title;
                         this.data.translations[lang][`exp_${expIdx}_summary`] = exp.details[lang][0].substring(0, 100) + '...';
-                        exp.details[lang].forEach((detail, detailIdx) => {
-                            this.data.translations[lang][`exp_${expIdx}_detail_${detailIdx}`] = detail;
-                        });
+                        if (exp.title[lang]) {
+                            this.data.translations[lang][`exp_${expIdx}_title`] = exp.title[lang];
+                        };
                     });
                 });
                 this._populateTopicDropdown();
@@ -1418,11 +1937,21 @@
                         el.innerHTML = text;
                     }
                 });
+
+                // **NEW**: If tour is active, refresh the tooltip text without re-running the animation
+                if (this.state.isTourActive) {
+                    this.showTourStep(this.state.currentTourStep, false); // 'false' prevents re-animation
+                }
                 this._populateTopicDropdown();
                 this._createRadarCharts();
             },
 
             _setupEventListeners() {
+                this.DOMElements.tourStartBtn.addEventListener('click', () => {
+                    this._trackEvent('tour_started', 'Interactive Tour', 'Manual Start');
+                    this.startTour();
+                });
+
                 document.body.addEventListener('click', (e) => {
                     const target = e.target;
                     const skillTag = target.closest('.tech-tag');
@@ -1463,6 +1992,8 @@
                 widgetStatusCloseBtn.addEventListener('click', () => this._hideStatusMessage());
                 messageTab.addEventListener('click', () => this._switchTab('message'));
                 ratingTab.addEventListener('click', () => this._switchTab('rating'));
+
+
             },
 
             _handleButtonClick(button) {
@@ -1491,12 +2022,22 @@
 
             _resetFilters() {
                 this.state.selectedSkills.clear();
+                // Remove selection class from tags
                 document.querySelectorAll('.tech-tag.selected').forEach(tag => {
                     tag.classList.remove('selected');
                     tag.setAttribute('aria-pressed', 'false');
                 });
+                // NEW: Remove filter match/no-match classes from experiences
+                document.querySelectorAll('.experience-item').forEach(item => {
+                    item.classList.remove('filter-match', 'filter-no-match');
+                });
+                // NEW: Remove filtered-out class from timeline
+                document.querySelectorAll('.timeline-item').forEach(item => {
+                    item.classList.remove('filtered-out');
+                });
+
                 this._trackEvent('reset_filters', 'Toolkit', 'Clicked Reset');
-                this._filterExperiencesAndTimeline();
+                this.DOMElements.filterStatus.textContent = '';
             },
 
             /**
@@ -1557,14 +2098,16 @@
             _toggleReadMore(button) {
                 const details = this.DOMElements.summaryDetails;
                 const isExpanded = button.getAttribute('aria-expanded') === 'true';
+                const translations = this.data.translations[this.state.lang];
+
                 button.setAttribute('aria-expanded', !isExpanded);
                 details.style.maxHeight = isExpanded ? null : details.scrollHeight + 'px';
-                button.textContent = isExpanded ? 'Read More...' : 'Read Less...';
+                button.textContent = isExpanded ? translations.read_more : translations.read_less;
                 this._trackEvent('read_more_toggle', 'Summary', isExpanded ? 'Collapsed' : 'Expanded');
             },
 
             _toggleTheme() {
-                const isDarkMode = this.DOMElements.body.classList.toggle('dark-mode');
+                const isDarkMode = document.documentElement.classList.toggle('dark-mode');
                 localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
                 this._trackEvent('theme_change', 'UI Interaction', isDarkMode ? 'Dark Mode' : 'Light Mode');
                 this._renderInfographics();
@@ -1593,7 +2136,7 @@
             _applyInitialTheme() {
                 const savedTheme = localStorage.getItem('theme');
                 if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    this.DOMElements.body.classList.add('dark-mode');
+                    document.documentElement.classList.add('dark-mode');
                 }
             },
 
@@ -1666,57 +2209,46 @@
             },
 
             // --- NEW METHOD: Fetches and renders approved reviews ---
+            // ADD THIS NEW FUNCTION
             _loadAndRenderReviews() {
                 const container = this.DOMElements.testimonialsContainer;
-                const avgRatingEl = this.DOMElements.averageRating;
+                const avgRatingEl = document.getElementById('average-rating-display');
                 if (!container || !avgRatingEl) return;
 
                 const q = query(collection(db, "ratings"), where("status", "==", "approved"), orderBy("createdAt", "desc"));
 
                 onSnapshot(q, (snapshot) => {
                     if (snapshot.empty) {
-                        container.parentElement.style.display = 'none';
-                        avgRatingEl.style.display = 'none';
+                        container.parentElement.style.display = 'none'; // Hide section if no reviews
                         return;
                     }
 
-                    // Show the section and calculate average
                     container.parentElement.style.display = 'block';
-                    avgRatingEl.style.display = 'inline-block';
-
                     let totalRating = 0;
-                    snapshot.docs.forEach(doc => {
-                        totalRating += doc.data().rating;
-                    });
+                    const reviewCardsHTML = snapshot.docs.map(doc => {
+                        const review = doc.data();
+                        totalRating += review.rating;
+                        return this._createReviewCard(review);
+                    }).join('');
+
                     const average = totalRating / snapshot.size;
-
-                    // Display average rating
                     avgRatingEl.innerHTML = `Avg: ${average.toFixed(1)} <span class="star">★</span>`;
-
-                    // Render testimonial cards
-                    container.innerHTML = snapshot.docs.map(doc => this._createReviewCard(doc.data())).join('');
+                    avgRatingEl.style.display = 'inline-block';
+                    container.innerHTML = reviewCardsHTML;
                 });
             },
 
-            /**
-             * **MODIFIED**: This function now handles the 'isAnonymous' flag
-             * to display the author's name correctly.
-             */
+// ADD THIS SECOND NEW FUNCTION
             _createReviewCard(review) {
-                const starsHTML = '&#9733;'.repeat(review.rating) + '&#9734;'.repeat(5 - review.rating);
-                const commentHTML = review.comment ? `<p class="testimonial-quote">${review.comment}</p>` : '';
-                // **NEW**: Check if the review should be anonymous
+                const starsHTML = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
                 const authorName = review.isAnonymous ? 'Anonymous' : review.name;
-
                 return `
-                        <div class="testimonial-card">
-                            <div class="flex justify-between items-center">
-                                <div class="testimonial-stars" aria-label="Rating: ${review.rating} out of 5 stars">${starsHTML}</div>
-                            </div>
-                            ${commentHTML}
-                            <p class="testimonial-author">- ${authorName}</p>
-                        </div>
-                    `;
+        <div class="testimonial-card">
+            <div class="testimonial-stars" aria-label="Rating: ${review.rating} out of 5 stars">${starsHTML}</div>
+            ${review.comment ? `<p class="testimonial-quote">"${review.comment}"</p>` : ''}
+            <p class="testimonial-author">- ${authorName}</p>
+        </div>
+    `;
             },
 
 
@@ -2024,9 +2556,11 @@
                 }
             },
 
-            _handleStarClick(e) {
-                const star = e.target.closest('.star');
+            _handleStarClick(eventOrElement) {
+                // This now accepts either a click event or the star element directly
+                const star = eventOrElement.target ? eventOrElement.target.closest('.star') : eventOrElement;
                 if (!star) return;
+
                 this.state.rating = parseInt(star.dataset.value, 10);
                 this.DOMElements.ratingValue.value = this.state.rating;
                 this._validateField(this.DOMElements.ratingValue, { required: true, type: 'rating' });
@@ -2053,6 +2587,177 @@
                 });
             },
 
+            _applyClickEffect(element, duration = 500) {
+                if (!element) return;
+                element.classList.add('tour-highlight-click');
+                setTimeout(() => element.classList.remove('tour-highlight-click'), duration);
+            },
+
+            // ==========================================================
+            // |            NEW JAVASCRIPT: TOUR FUNCTIONS              |
+            // ==========================================================
+            startTour(isAutoStart = false) {
+                if (this.state.isTourActive) return;
+
+                const tourOverlay = this.DOMElements.tourOverlay;
+                if (!tourOverlay) {
+                    console.error("Tour cannot start: #tour-overlay element not found.");
+                    return;
+                }
+
+                this.state.isTourActive = true;
+                this.state.currentTourStep = 0;
+                tourOverlay.style.display = 'block';
+
+                // Add overlay click to advance tour
+                this.boundOverlayClick = () => this.nextTourStep();
+                tourOverlay.addEventListener('click', this.boundOverlayClick);
+
+                // Other event listeners
+                this.boundHandleTourKey = this.handleTourKey.bind(this);
+                this.boundNextTourStep = this.nextTourStep.bind(this);
+                this.boundPrevTourStep = this.prevTourStep.bind(this);
+                this.boundEndTour = this.endTour.bind(this);
+
+                document.body.addEventListener('keydown', this.boundHandleTourKey);
+                this.DOMElements.tourNextBtn.addEventListener('click', this.boundNextTourStep);
+                this.DOMElements.tourBackBtn.addEventListener('click', this.boundPrevTourStep);
+                this.DOMElements.tourCloseBtn.addEventListener('click', this.boundEndTour);
+
+                this.showTourStep(this.state.currentTourStep);
+
+                sessionStorage.setItem('hasSeenTour', 'true');
+                this._trackEvent('tour_started', 'Interactive Tour', isAutoStart ? 'Auto' : 'Manual');
+            },
+
+            endTour() {
+                if (!this.state.isTourActive) return;
+                this.state.isTourActive = false;
+                this.DOMElements.tourOverlay.style.display = 'none';
+                this.DOMElements.tourTooltip.classList.remove('visible');
+
+                document.querySelectorAll('.tour-highlight, .tour-highlight-seen').forEach(el => {
+                    el.classList.remove('tour-highlight', 'tour-highlight-seen');
+                });
+
+                this.DOMElements.tourOverlay.removeEventListener('click', this.boundOverlayClick);
+                document.body.removeEventListener('keydown', this.boundHandleTourKey);
+                this.DOMElements.tourNextBtn.removeEventListener('click', this.boundNextTourStep);
+                this.DOMElements.tourBackBtn.removeEventListener('click', this.boundPrevTourStep);
+                this.DOMElements.tourCloseBtn.removeEventListener('click', this.boundEndTour);
+
+                this._trackEvent('tour_ended', 'Interactive Tour', `Step ${this.state.currentTourStep + 1}`);
+            },
+
+            nextTourStep() {
+                if (this.state.currentTourStep < this.tourSteps.length - 1) {
+                    this.state.currentTourStep++;
+                    this.showTourStep(this.state.currentTourStep);
+                } else {
+                    this.endTour(); // Finish tour on last step
+                }
+            },
+
+            prevTourStep() {
+                if (this.state.currentTourStep > 0) {
+                    this.state.currentTourStep--;
+                    this.showTourStep(this.state.currentTourStep);
+                }
+            },
+
+            showTourStep(stepIndex, runActionAndAnimation = true) {
+                const oldHighlight = document.querySelector('.tour-highlight');
+                if (oldHighlight) {
+                    oldHighlight.classList.remove('tour-highlight');
+                    oldHighlight.classList.add('tour-highlight-seen');
+                }
+
+                this.DOMElements.tourTooltip.classList.remove('visible');
+                const step = this.tourSteps[stepIndex];
+                const targetElement = document.querySelector(step.element);
+
+                if (!targetElement) {
+                    this.nextTourStep(); return;
+                }
+
+                if (runActionAndAnimation) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                }
+
+                setTimeout(() => {
+                    targetElement.classList.add('tour-highlight');
+
+                    const translations = this.data.translations[this.state.lang];
+                    this.DOMElements.tourTitle.textContent = translations[step.titleKey] || step.titleKey;
+                    this.DOMElements.tourDescription.textContent = translations[step.descriptionKey] || step.descriptionKey;
+                    this.DOMElements.tourStepCounter.textContent = `${stepIndex + 1} / ${this.tourSteps.length}`;
+
+                    this.DOMElements.tourBackBtn.style.display = stepIndex === 0 ? 'none' : 'inline-block';
+                    this.DOMElements.tourNextBtn.textContent = stepIndex === this.tourSteps.length - 1 ? translations.tour_finish : translations.tour_next;
+
+                    const tooltip = this.DOMElements.tourTooltip;
+
+                    tooltip.classList.add('visible');
+
+                    if (runActionAndAnimation && step.analyticsTag) {
+                        this._trackEvent('tour_step_viewed', 'Interactive Tour', step.analyticsTag);
+                    }
+                    if (runActionAndAnimation && typeof step.action === 'function') {
+                        step.action.call(this);
+                    }
+                }, runActionAndAnimation ? 600 : 50);
+            },
+
+            handleTourKey(e) {
+                if (!this.state.isTourActive) return;
+                if (e.key === 'Escape') {
+                    this.endTour();
+                } else if (e.key === 'ArrowRight') {
+                    this.nextTourStep();
+                } else if (e.key === 'ArrowLeft') {
+                    this.prevTourStep();
+                }
+            },
+
+            _typewriterEffect(element, text, onComplete) {
+                let i = 0;
+                element.value = '';
+                element.focus();
+                element.classList.add('is-typing');
+                const typingInterval = setInterval(() => {
+                    if (i < text.length) {
+                        element.value += text.charAt(i);
+                        i++;
+                    } else {
+                        clearInterval(typingInterval);
+                        element.classList.remove('is-typing');
+                        if (onComplete) onComplete();
+                    }
+                }, 50); // Typing speed
+            },
+
+            _glowElement(element, duration = 1500) {
+                if(!element) return;
+                element.classList.add('pulse-highlight');
+                setTimeout(() => element.classList.remove('pulse-highlight'), duration);
+            },
+
+            _getRandomTopic() {
+                const options = this.DOMElements.messageTopic.querySelectorAll('option');
+                // Get a random option, excluding the first one which is the placeholder
+                const randomIndex = Math.floor(Math.random() * (options.length - 1)) + 1;
+                return options[randomIndex].value;
+            },
+
+            _getRandomRating() {
+                // Return a random rating between 4 and 5
+                return Math.floor(Math.random() * 2) + 4;
+            },
+
+            _getRandomComment() {
+                const comments = ["Excellent work!", "Very impressive CV.", "Great interactive features.", "A very professional presentation."];
+                return comments[Math.floor(Math.random() * comments.length)];
+            },
         };
 
         CarlosMunozCV.init();
