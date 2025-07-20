@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CV Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .tab-btn { padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; transition: all 0.2s; }
@@ -21,6 +22,9 @@
             display: flex; align-items: center; justify-content: center; z-index: 100;
         }
         .login-box { background-color: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; }
+        /* NEW: Styles for the blocklist pane */
+        .blocklist-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+        .blocklist-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -50,29 +54,44 @@
     </div>
 
     <div class="flex space-x-4 mb-6 border-b pb-2">
-        <button id="messages-tab-btn" class="tab-btn active">Messages</button>
-        <button id="ratings-tab-btn" class="tab-btn">CV Ratings</button>
+        <button id="messages-tab-btn" class="tab-btn active" data-target="messages-pane">Messages</button>
+        <button id="ratings-tab-btn" class="tab-btn" data-target="ratings-pane">CV Ratings</button>
+        <button id="blocked-senders-tab-btn" class="tab-btn" data-target="blocklist-pane">Blocklist</button>
     </div>
 
-    <div id="messages-pane">
+    <div id="messages-pane" class="tab-pane active">
         <h2 class="text-2xl font-semibold mb-4">Inbox Messages</h2>
         <div id="messages-list" class="space-y-4">
             <p>Loading messages...</p>
         </div>
     </div>
 
-    <div id="ratings-pane" class="hidden">
+    <div id="ratings-pane" class="tab-pane hidden">
         <h2 class="text-2xl font-semibold mb-4">CV Ratings</h2>
         <div id="ratings-list" class="space-y-4">
             <p>Loading ratings...</p>
         </div>
     </div>
+
+
+
+    <!-- NEW: Added the content pane for the Blocklist -->
+    <div id="blocklist-pane" class="tab-pane hidden">
+        <h2 class="text-2xl font-semibold mb-4">Blocked Senders</h2>
+        <div id="blocklist-list" class="item-card p-2">
+            <p>Loading blocklist...</p>
+        </div>
+    </div>
 </main>
 
+
+
 <script type="module">
+    // UPDATED: Imported deleteDoc and setDoc for blocklist management
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
 
     const firebaseConfig = {
         apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
@@ -82,6 +101,7 @@
         messagingSenderId: "976558418058",
         appId: "1:976558418058:web:1dc19bcd40915ea233e573"
     };
+
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -95,10 +115,13 @@
     const logoutBtn = document.getElementById('logout-btn');
     const messagesTabBtn = document.getElementById('messages-tab-btn');
     const ratingsTabBtn = document.getElementById('ratings-tab-btn');
+    const blocklistTabBtn = document.getElementById('blocklist-tab-btn'); // NEW
     const messagesPane = document.getElementById('messages-pane');
     const ratingsPane = document.getElementById('ratings-pane');
+    const blocklistPane = document.getElementById('blocklist-pane'); // NEW
     const messagesList = document.getElementById('messages-list');
     const ratingsList = document.getElementById('ratings-list');
+    const blocklistList = document.getElementById('blocklist-list'); // NEW
 
     // --- Authentication ---
     onAuthStateChanged(auth, user => {
@@ -112,11 +135,11 @@
         }
     });
 
+
+
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const email = loginForm.email.value;
-        const password = loginForm.password.value;
-        signInWithEmailAndPassword(auth, email, password)
+        signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value)
             .catch(error => {
                 loginError.textContent = "Login failed. Please check your email and password.";
                 console.error("Login Error:", error);
@@ -124,21 +147,27 @@
     });
 
     logoutBtn.addEventListener('click', () => signOut(auth));
-
     // --- Dashboard Initialization ---
     function initDashboard() {
-        messagesTabBtn.addEventListener('click', () => switchTab('messages'));
-        ratingsTabBtn.addEventListener('click', () => switchTab('ratings'));
+        // UPDATED: Added listener for the new tab
+        messagesTabBtn.addEventListener('click', () => switchTab('messages-pane'));
+        ratingsTabBtn.addEventListener('click', () => switchTab('ratings-pane'));
+        blocklistTabBtn.addEventListener('click', () => switchTab('blocklist-pane'));
         loadMessages();
         loadRatings();
+        loadBlockedSenders(); // NEW
     }
 
-    function switchTab(tabName) {
-        const isMessages = tabName === 'messages';
-        messagesTabBtn.classList.toggle('active', isMessages);
-        ratingsTabBtn.classList.toggle('active', !isMessages);
-        messagesPane.classList.toggle('hidden', !isMessages);
-        ratingsPane.classList.toggle('hidden', isMessages);
+    function switchTab(targetPaneId) {
+        // UPDATED: This logic now works for any number of tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.target === targetPaneId);
+        });
+
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.toggle('hidden', pane.id !== targetPaneId);
+            pane.classList.toggle('active', pane.id === targetPaneId);
+        });
     }
 
     // --- Data Loading and Rendering ---
@@ -168,6 +197,7 @@
      */
     function loadRatings() {
         const q = query(collection(db, "ratings"), orderBy("createdAt", "desc"));
+
         onSnapshot(q, (querySnapshot) => {
             if (querySnapshot.empty) {
                 ratingsList.innerHTML = '<p>No ratings yet.</p>';
@@ -187,6 +217,45 @@
                     const emailToBlock = e.target.dataset.email;
                     if (confirm(`Are you sure you want to permanently block ${emailToBlock}?`)) {
                         blockSender(emailToBlock);
+                    }
+                });
+            });
+        });
+    }
+
+    // NEW: Function to load and display the list of blocked senders
+
+    function loadBlockedSenders() {
+
+        const q = query(collection(db, "blocked_senders"), orderBy("blockedAt", "desc"));
+        onSnapshot(q, (querySnapshot) => {
+
+            if (querySnapshot.empty) {
+                blocklistList.innerHTML = '<p class="p-4 text-center text-gray-500">No senders have been blocked.</p>';
+                return;
+            }
+            blocklistList.innerHTML = querySnapshot.docs.map(doc => {
+                const email = doc.id;
+                const data = doc.data();
+                const date = data.blockedAt ? data.blockedAt.toDate().toLocaleString() : 'N/A';
+                return `
+                    <div class="blocklist-item">
+                        <div>
+                            <p class="font-medium text-gray-800">${email}</p>
+                            <p class="text-xs text-gray-500">Blocked on: ${date}</p>
+                        </div>
+                        <button data-email="${email}" class="unblock-btn bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Unblock</button>
+                    </div>
+                `;
+            }).join('');
+
+            // Add event listeners to the new "Unblock" buttons
+            document.querySelectorAll('.unblock-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const emailToUnblock = e.target.dataset.email;
+
+                    if (confirm(`Are you sure you want to unblock ${emailToUnblock}? They will be able to send messages again.`)) {
+                        unblockSender(emailToUnblock);
                     }
                 });
             });
@@ -304,6 +373,20 @@
         } catch (error) {
             console.error("Error blocking sender: ", error);
             alert("Could not block sender. See console for details.");
+        }
+    }
+
+    // NEW: Function to remove a sender from the blocklist
+    async function unblockSender(email) {
+        if (!email) return;
+        const blockRef = doc(db, "blocked_senders", email.toLowerCase());
+
+        try {
+            await deleteDoc(blockRef);
+            alert(`Sender with email ${email} has been unblocked.`);
+        } catch (error) {
+            console.error("Error unblocking sender:", error);
+            alert("Could not unblock sender. See console for details.");
         }
     }
 </script>
