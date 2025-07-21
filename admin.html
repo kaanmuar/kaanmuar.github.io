@@ -203,15 +203,36 @@
                 ratingsList.innerHTML = '<p>No ratings yet.</p>';
                 return;
             }
-            ratingsList.innerHTML = querySnapshot.docs.map(renderRatingCard).join('');
+            ratingsList.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if (!button) return;
+
+                const id = button.id;
+                const docId = id.split('-').pop();
+                const email = button.dataset.email;
+
+                if (id.startsWith('approve-anon-')) {
+                    updateRatingStatus(docId, { status: 'approved', isAnonymous: true });
+                } else if (id.startsWith('approve-')) {
+                    updateRatingStatus(docId, { status: 'approved', isAnonymous: false });
+                } else if (id.startsWith('reject-')) {
+                    updateRatingStatus(docId, { status: 'rejected' });
+                } else if (id.startsWith('retract-') || id.startsWith('restore-')) {
+                    updateRatingStatus(docId, { status: 'pending' });
+                } else if (id.startsWith('block-rating-')) {
+                    if (confirm(`Are you sure you want to permanently block ${email}?`)) {
+                        blockSender(email);
+                    }
+                }
+            });
 
             querySnapshot.docs.forEach(doc => {
                 // Rating status listeners
-                document.getElementById(`approve-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'approved', isAnonymous: false }));
+                /*document.getElementById(`approve-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'approved', isAnonymous: false }));
                 document.getElementById(`approve-anon-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'approved', isAnonymous: true }));
                 document.getElementById(`reject-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'rejected' }));
                 document.getElementById(`retract-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'pending' }));
-                document.getElementById(`restore-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'pending' }));
+                document.getElementById(`restore-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'pending' }));*/
                 // Block sender listener
                 document.getElementById(`block-rating-${doc.id}`)?.addEventListener('click', (e) => {
                     const emailToBlock = e.target.dataset.email;
