@@ -203,6 +203,8 @@
                 ratingsList.innerHTML = '<p>No ratings yet.</p>';
                 return;
             }
+            ratingsList.innerHTML = querySnapshot.docs.map(renderRatingCard).join('');
+
             ratingsList.addEventListener('click', (e) => {
                 const button = e.target.closest('button');
                 if (!button) return;
