@@ -1,0 +1,14 @@
+{
+  "name": "kaanmuar.github.io",
+  "version": "1.0.0",
+  "description": "Interactive CV for Carlos A. Muñoz",
+  "scripts": {
+    "test:cypress": "cypress run",
+    "test:robot": "robot cypress/e2e"
+  },
+  "author": "Carlos A. Muñoz",
+  "license": "ISC",
+  "devDependencies": {
+    "cypress": "^10.0.0" 
+  }
+}
