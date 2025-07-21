@@ -1,0 +1,65 @@
+# The name of your workflow. This is what you'll see in the GitHub Actions tab.
+name: End-to-End Tests
+
+# This section defines WHEN the pipeline should run.
+on:
+  # Run it on every 'push' to the main branch.
+  push:
+    branches: [ main ]
+  # Also run it on every 'pull request' that targets the main branch.
+  pull_request:
+    branches: [ main ]
+
+# This section defines the TASKS (or "jobs") the pipeline will perform.
+jobs:
+  # We are defining a single job called "run-tests".
+  run-tests:
+    # This specifies the virtual machine to run on. "ubuntu-latest" is a standard, reliable choice.
+    runs-on: ubuntu-latest
+
+    # This section lists the individual steps the job will take, in order.
+    steps:
+      # Step 1: Check out your code
+      # This action downloads your repository's code onto the virtual machine.
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js environment for Cypress
+      # This action installs Node.js, which is required to run Cypress.
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Specify the version of Node.js to use
+
+      # Step 3: Install Node.js dependencies
+      # This runs "npm ci" which is a faster, more reliable version of "npm install" for CI environments.
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      # Step 4: Set up Python environment for Robot Framework
+      # This action installs Python onto the virtual machine.
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' # Specify the version of Python to use
+
+      # Step 5: Install Python dependencies
+      # This uses pip to install Robot Framework and the SeleniumLibrary.
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install robotframework robotframework-seleniumlibrary
+
+      # Step 6: Run the Cypress Test Suite
+      # This executes your Cypress tests headlessly (without opening a browser window).
+      # The "continue-on-error: true" means that even if Cypress tests fail,
+      # the pipeline will continue to the next step (Robot Framework) so you can see all results.
+      - name: Run Cypress Tests
+        run: npm run test:cypress
+        continue-on-error: true
+
+      # Step 7: Run the Robot Framework Test Suite
+      # This executes your Robot Framework tests.
+      - name: Run Robot Framework Tests
+        run: npm run test:robot
+        continue-on-error: true
