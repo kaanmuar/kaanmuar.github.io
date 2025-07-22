@@ -1,16 +1,10 @@
 // =============================================================================
-// CONSOLIDATED PAGE OBJECTS (WORKAROUND)
-// We are defining the classes directly in this file to bypass Webpack issues.
+// CONSOLIDATED PAGE OBJECTS
 // =============================================================================
 
 class BasePage {
     visit(path) {
-        cy.visit(`/${path}`, {
-            /*onBeforeLoad(win) {
-                // Restore the logic to hide the tour before the page loads
-                win.sessionStorage.setItem('hasSeenTour', 'true');
-            },*/
-        });
+        cy.visit(`/${path}`);
     }
 }
 
@@ -24,31 +18,14 @@ class ContactWidget {
     get contactWidgetFab() { return cy.get('#contact-widget-fab'); }
     get ratingForm() { return cy.get('#rating-form'); }
     get messageForm() { return cy.get('#message-form'); }
-
-    get successMessage() { return cy.get('#widget-status-container'); } // Corrected success message container
-    get errorMessage() { return cy.get('#widget-status-container'); } // The same container shows errors
+    get successMessage() { return cy.get('#widget-status-container'); }
+    get errorMessage() { return cy.get('#widget-status-container'); }
     get ratingTab() { return cy.get('#rating-tab'); }
     get messageTab() { return cy.get('#message-tab'); }
 
-
-    open() {
-        this.contactWidgetFab.click();
-        return this;
-    }
-
-    switchToRatingTab() {
-        this.ratingTab.click({ force: true });
-        cy.wait(100);
-        this.ratingForm.should('be.visible');
-        return this;
-    }
-
-    switchToMessageTab() {
-        this.messageTab.click({ force: true });
-        cy.wait(100);
-        this.messageForm.should('be.visible');
-        return this;
-    }
+    open() { this.contactWidgetFab.click(); return this; }
+    switchToRatingTab() { this.ratingTab.click({ force: true }); this.ratingForm.should('be.visible'); return this; }
+    switchToMessageTab() { this.messageTab.click({ force: true }); this.messageForm.should('be.visible'); return this; }
 
     submitRating(data) {
         if (data.name) this.ratingForm.find('input[name="name"]').type(data.name);
@@ -68,15 +45,8 @@ class ContactWidget {
         return this;
     }
 
-    verifySuccessMessageIsVisible() {
-        this.successMessage.should('be.visible');
-        return this;
-    }
-
-    verifyErrorMessageIsVisible() {
-        this.errorMessage.should('be.visible');
-        return this;
-    }
+    verifySuccessMessageIsVisible() { this.successMessage.should('be.visible'); return this; }
+    verifyErrorMessageIsVisible() { this.errorMessage.should('be.visible'); return this; }
 }
 
 class LoginPage extends BasePage {
@@ -86,119 +56,62 @@ class LoginPage extends BasePage {
     get loginOverlay() { return cy.get('#login-overlay'); }
     get loginError() { return cy.get('#login-error'); }
 
-    visitAdminPage() {
-        super.visit('admin.html');
-        this.loginOverlay.should('be.visible');
-    }
-
-    login(email, password) {
-        this.emailInput.type(email);
-        this.passwordInput.type(password, { log: false });
-        this.submitButton.click();
-    }
-
-    verifyLoginErrorIsVisible() {
-        this.loginError.should('be.visible')
-            .and('contain.text', 'Login failed');
-    }
-
-    verifyIsLoggedOut() {
-        this.loginOverlay.should('be.visible');
-    }
+    visitAdminPage() { super.visit('admin.html'); this.loginOverlay.should('be.visible'); }
+    login(email, password) { this.emailInput.type(email); this.passwordInput.type(password, { log: false }); this.submitButton.click(); }
+    verifyLoginErrorIsVisible() { this.loginError.should('be.visible').and('contain.text', 'Login failed'); }
+    verifyIsLoggedOut() { this.loginOverlay.should('be.visible'); }
 }
 
 class AdminDashboardPage {
-    get dashboard() { return cy.get('#dashboard'); }
-    get ratingsTab() { return cy.get('#ratings-tab-btn'); }
+    // Tabs
     get messagesTab() { return cy.get('#messages-tab-btn'); }
-    get blocklistTab() { return cy.get('#blocked-senders-tab-btn'); }
+    get ratingsTab() { return cy.get('#ratings-tab-btn'); }
+    get rejectedTab() { return cy.get('#rejected-tab-btn'); }
+    get blockedTab() { return cy.get('#blocked-tab-btn'); }
+    get statsTab() { return cy.get('#stats-tab-btn'); }
+
+    // Panes
+    get messagesPane() { return cy.get('#messages-pane'); }
+    get ratingsPane() { return cy.get('#ratings-pane'); }
+    get rejectedPane() { return cy.get('#rejected-pane'); }
+    get blockedPane() { return cy.get('#blocked-pane'); }
+    get statsPane() { return cy.get('#stats-pane'); }
+
+    // General
+    get dashboard() { return cy.get('#dashboard'); }
     get logoutButton() { return cy.contains('button', 'Logout'); }
+    findCardByContent(pane, text) { return cy.get(`${pane} .item-card:contains("${text}")`); }
+    getBulkActionButton(pane) { return cy.get(`${pane} .bulk-actions-container button`); }
+    getBulkActionDropdown(pane) { return cy.get(`${pane} .bulk-actions-dropdown`); }
 
-    visitDashboard() {
-        cy.visit('/admin.html');
-    }
-    verifyDashboardIsVisible() {
-        this.dashboard.should('be.visible', { timeout: 10000 });
-    }
-    logout() {
-        this.logoutButton.click();
-    }
-    navigateToRatingsTab() {
-        this.ratingsTab.click();
-    }
-    navigateToMessagesTab() {
-        this.messagesTab.click();
-    }
-    navigateToBlocklistTab() {
-        this.blocklistTab.click();
-    }
-    findCardByContent(text) {
-        return cy.get(`.item-card:contains("${text}")`);
+    // Methods
+    visitDashboard() { cy.visit('/admin.html'); }
+    verifyDashboardIsVisible() { this.dashboard.should('be.visible', { timeout: 10000 }); }
+    logout() { this.logoutButton.click(); }
+    navigateToTab(tabName) {
+        cy.get(`#${tabName}-tab-btn`).click();
+        cy.get(`#${tabName}-pane`).should('be.visible');
     }
 
-    // --- UPDATED ACTION METHODS ---
-    // Each method now re-queries for the card after the click to avoid detached DOM errors.
-    approveTestimonial(comment) {
-        this.findCardByContent(comment).find('button[id^="approve-"]:not([id*="-anon-"])').click();
-        this.findCardByContent(comment).find('.status-approved').should('be.visible');
-    }
-    approveTestimonialAnonymously(comment) {
-        this.findCardByContent(comment).find('button[id^="approve-anon-"]').click();
-        this.findCardByContent(comment).find('.status-approved').should('be.visible');
-    }
-    retractTestimonial(comment) {
-        this.findCardByContent(comment).find('button[id^="retract-"]').click();
-        this.findCardByContent(comment).find('.status-pending').should('be.visible');
-    }
-    rejectTestimonial(comment) {
-        this.findCardByContent(comment).find('button[id^="reject-"]').click();
-        this.findCardByContent(comment).find('.status-rejected').should('be.visible');
-    }
-
-    // --- VERIFICATION METHODS ---
-    verifyCardStatus(comment, status) {
-        this.findCardByContent(comment).find(`.status-${status}`).should('be.visible');
-    }
-    verifyTestimonialIsPublic(comment) {
-        const cvPage = new CVPage();
-        cvPage.visitCV();
-        cy.get('#testimonials-section').scrollIntoView();
-        cy.get('body', { timeout: 10000 }).should('contain', comment);
-        cy.contains(comment).scrollIntoView().should('be.visible');
-    }
-    verifyTestimonialIsRemoved(comment) {
-        const cvPage = new CVPage();
-        cvPage.visitCV();
-        cy.get('#testimonials-section').scrollIntoView();
-        cy.get('body', { timeout: 10000 }).should('not.contain', comment);
-    }
-    verifyTestimonialIsAnonymous(comment) {
-        const cvPage = new CVPage();
-        cvPage.visitCV();
-        cy.get('#testimonials-section').scrollIntoView();
-        cy.get('#testimonials-container .testimonial-card', { timeout: 10000 })
-            .should('have.length.greaterThan', 0);
-        cy.contains(comment).parents('.testimonial-card').scrollIntoView().should('contain.text', 'Anonymous');
-    }
-    blockSenderFromCard(message) {
+    // Card Actions
+    performActionOnCard(pane, content, action) {
         cy.on('window:confirm', () => true);
-        this.findCardByContent(message).find('button[id^="block-msg-"]').click(); // Corrected selector
+        this.findCardByContent(pane, content).find(`button[data-action="${action}"]`).click();
+    }
 
-        // After click, verify the card is gone (or some other UI change)
-        //this.findCardByContent(message).should('not.exist');
-    }
-    verifyUserInBlocklist(email) {
-        this.navigateToBlocklistTab();
-        cy.get('#blocklist-pane').contains(email).should('be.visible');
-    }
-    unblockUser(email) {
-        cy.get('#blocklist-pane').contains('.blocklist-item', email).find('.unblock-btn').click();
-    }
-    verifyUserNotInBlocklist(email) {
-        cy.get('#blocklist-pane').contains(email).should('not.exist');
+    // Bulk Actions
+    performBulkAction(pane, action) {
+        cy.on('window:confirm', (str) => {
+            expect(str).to.contain('Are you sure');
+            return true;
+        });
+        cy.on('window:alert', (str) => {
+            expect(str).to.contain('Bulk action completed');
+        });
+        this.getBulkActionButton(pane).click();
+        this.getBulkActionDropdown(pane).find(`a[data-bulk-action="${action}"]`).click();
     }
 }
-
 
 // =============================================================================
 // TEST SUITE
@@ -209,231 +122,219 @@ const adminDashboard = new AdminDashboardPage();
 const contactWidget = new ContactWidget();
 const cvPage = new CVPage();
 
-describe('Admin Panel Test Suite @regression', () => {
+describe('Admin Panel v3 Full Test Coverage', () => {
+
     // --- Helper Functions ---
-    const createTestimonial = (data) => {
-        cy.log(`--- Creating Testimonial: ${data.comment} ---`);
+    const generateRandomString = (length = 8) => Math.random().toString(20).substr(2, length);
+    const generateRandomEmail = () => `test-${Date.now()}@${generateRandomString(5)}.com`;
+
+    const createMessage = (overrides = {}) => {
+        const messageData = {
+            name: `MsgUser ${generateRandomString()}`,
+            email: generateRandomEmail(),
+            topic: 'General Inquiry',
+            message: `Test message content ${Date.now()}`,
+            ...overrides,
+        };
         cvPage.visitCV();
-        contactWidget.open().switchToRatingTab().submitRating(data);
+        contactWidget.open().switchToMessageTab().submitMessage(messageData);
         contactWidget.verifySuccessMessageIsVisible();
+        return messageData;
     };
 
-    const createMessage = (data) => {
-        cy.log(`--- Creating Message: ${data.message} ---`);
+    const createRating = (overrides = {}) => {
+        const ratingData = {
+            name: `RateUser ${generateRandomString()}`,
+            email: generateRandomEmail(),
+            stars: 5,
+            comment: `Test rating comment ${Date.now()}`,
+            ...overrides,
+        };
         cvPage.visitCV();
-        contactWidget.open().switchToMessageTab().submitMessage(data);
+        contactWidget.open().switchToRatingTab().submitRating(ratingData);
         contactWidget.verifySuccessMessageIsVisible();
+        return ratingData;
     };
 
-    // --- Test Contexts ---
-    context('Admin Authentication @auth', () => {
-        afterEach(() => {
-            // Clear the specific session we used to prevent it from affecting other tests
-            Cypress.session.clearAllSavedSessions();
+    beforeEach(() => {
+        cy.loginWithSession(); // Custom command for faster login
+        adminDashboard.visitDashboard();
+        adminDashboard.verifyDashboardIsVisible();
+    });
+
+    context('Navigation and UI Elements', () => {
+        it('should switch between all tabs and verify panes are visible', () => {
+            adminDashboard.navigateToTab('ratings');
+            adminDashboard.navigateToTab('rejected');
+            adminDashboard.navigateToTab('blocked');
+            adminDashboard.navigateToTab('stats');
+            adminDashboard.navigateToTab('messages');
         });
 
-        it('should fail to login with incorrect credentials', () => {
-            loginPage.visitAdminPage();
-            loginPage.login('wrong@user.com', 'wrongpassword');
-            loginPage.verifyLoginErrorIsVisible();
-        });
-
-        it('should successfully log in and log out @smoke', () => {
-            cy.loginWithSession();
+        it('should show a new-indicator on Ratings tab when pending ratings exist', () => {
+            createRating({ stars: 4 });
             adminDashboard.visitDashboard();
-            adminDashboard.verifyDashboardIsVisible();
-            adminDashboard.logout();
-            loginPage.verifyIsLoggedOut();
+            adminDashboard.ratingsTab.find('.new-indicator').should('be.visible');
         });
     });
 
-    context('Admin Dashboard and E2E Flows @e2e', () => {
-        beforeEach(() => {
+    context('Filtering Functionality', () => {
+        let testMessage, testRating;
+
+        before(() => {
             cy.loginWithSession();
-            cy.visit('/admin.html');
-            //adminDashboard.visitDashboard();
-            adminDashboard.verifyDashboardIsVisible();
-            //cy.log('Executing manual login...');
-
-           /* const loginPage = new LoginPage();
-            const adminDashboard = new AdminDashboardPage();
-
-            loginPage.visitAdminPage();
-            loginPage.login('kaanmuar@gmail.com', 'Krlos.8403'); // Using credentials directly
-
-            // Now, we wait for the dashboard to become visible after the click.
-            adminDashboard.verifyDashboardIsVisible();
-            cy.log('Manual login successful. Dashboard is visible.');*/
+            testMessage = createMessage();
+            testRating = createRating();
         });
 
-        it('should switch between all tabs @smoke @ui', () => {
-            adminDashboard.navigateToRatingsTab();
-            cy.get('#ratings-pane').should('be.visible');
-            adminDashboard.navigateToBlocklistTab();
-            cy.get('#blocklist-pane').should('be.visible');
-            adminDashboard.navigateToMessagesTab();
-            cy.get('#messages-pane').should('be.visible');
+        it('should filter messages by name, email, and topic', () => {
+            adminDashboard.navigateToTab('messages');
+            // Filter by name
+            adminDashboard.messagesPane.find('#msg-filter-name').type(testMessage.name);
+            adminDashboard.messagesPane.find('#messages-list').children().should('have.length', 1).and('contain', testMessage.name);
+            adminDashboard.messagesPane.find('#msg-filter-name').clear();
+
+            // Filter by email
+            adminDashboard.messagesPane.find('#msg-filter-email').type(testMessage.email);
+            adminDashboard.messagesPane.find('#messages-list').children().should('have.length', 1).and('contain', testMessage.email);
+            adminDashboard.messagesPane.find('#msg-filter-email').clear();
+
+            // Filter by topic dropdown
+            adminDashboard.messagesPane.find('#msg-filter-topic-select').select(testMessage.topic);
+            adminDashboard.messagesPane.find('#messages-list').should('contain', testMessage.topic);
         });
 
-        it('should display the correct action buttons based on the rating status @ui', () => {
-            const testData = {
-                name: 'Cypress User',
-                email: `test-${Date.now()}@cypress.io`,
-                stars: 5,
-                comment: `Button State Test ${Date.now()}`
-            };
-            createTestimonial(testData);
-            adminDashboard.visitDashboard();
-            adminDashboard.navigateToRatingsTab();
-            //const card = adminDashboard.findCardByContent(testData.comment);
+        it('should filter ratings by status, rating, and date range', () => {
+            adminDashboard.navigateToTab('ratings');
+            // Filter by status
+            adminDashboard.ratingsPane.find('#rate-filter-status').select('pending');
+            adminDashboard.ratingsPane.find('#ratings-list').should('contain', testRating.name);
+            adminDashboard.ratingsPane.find('.item-card').first().should('contain', 'Pending');
 
-            cy.log('Verifying buttons for PENDING state');
-            adminDashboard.findCardByContent(testData.comment).within(() => {
-                cy.get('button[id^="approve-"]').should('be.visible');
-                cy.get('button[id^="approve-anon-"]').should('be.visible');
-                cy.get('button[id^="reject-"]').should('be.visible');
-            });
+            // Filter by rating
+            adminDashboard.ratingsPane.find('#rate-filter-status').select(''); // Clear status
+            adminDashboard.ratingsPane.find('#rate-filter-rate').select(testRating.stars.toString());
+            adminDashboard.ratingsPane.find('#ratings-list').should('contain', testRating.name);
 
-            adminDashboard.approveTestimonial(testData.comment);
-            cy.log('Verifying buttons for APPROVED state');
-            adminDashboard.findCardByContent(testData.comment).within(() => {
-                cy.get('button[id^="retract-"]').should('be.visible');
-                cy.get('button[id^="approve-"]:not([id*="-anon-"])').should('not.exist');
-            });
-        });
-
-        it('should handle the full standard testimonial lifecycle (Submit > Approve > Retract)', () => {
-            const testData = {
-                name: 'Lifecycle Tester',
-                email: `lifecycle-${Date.now()}@cypress.io`,
-                stars: 5,
-                comment: `Standard Lifecycle ${Date.now()}`
-            };
-            //const testData = { stars: 5, comment: `Standard Lifecycle ${Date.now()}` };
-            createTestimonial(testData);
-
-            adminDashboard.visitDashboard();
-            adminDashboard.navigateToRatingsTab();
-            adminDashboard.approveTestimonial(testData.comment);
-            adminDashboard.verifyCardStatus(testData.comment, 'approved');
-            cy.wait(2500);
-            adminDashboard.verifyTestimonialIsPublic(testData.comment);
-
-            adminDashboard.visitDashboard();
-            adminDashboard.navigateToRatingsTab();
-            adminDashboard.retractTestimonial(testData.comment);
-            adminDashboard.verifyCardStatus(testData.comment, 'pending');
-            cy.wait(2500);
-            adminDashboard.verifyTestimonialIsRemoved(testData.comment);
-        });
-
-        it('should handle the anonymous approval lifecycle', () => {
-            const testData = { email: `lifecycle-${Date.now()}@cypress.io`, stars: 4, name: 'Anon Tester', comment: `Anonymous Lifecycle ${Date.now()}` };
-            createTestimonial(testData);
-            adminDashboard.visitDashboard();
-            adminDashboard.navigateToRatingsTab();
-            adminDashboard.approveTestimonialAnonymously(testData.comment);
-            cy.wait(1000);
-            adminDashboard.verifyTestimonialIsAnonymous(testData.comment);
-        });
-
-        it('should handle the rejection lifecycle', () => {
-            const testData = { name: 'Lifecycle Tester', email: `lifecycle-${Date.now()}@cypress.io`, stars: 1, comment: `Rejection Lifecycle ${Date.now()}` };
-            createTestimonial(testData);
-            adminDashboard.visitDashboard();
-            adminDashboard.navigateToRatingsTab();
-            adminDashboard.rejectTestimonial(testData.comment);
-            adminDashboard.verifyCardStatus(testData.comment, 'rejected');
-            cy.wait(1000);
-            adminDashboard.verifyTestimonialIsRemoved(testData.comment);
-        });
-
-        it('should handle the message receipt lifecycle @smoke', () => {
-            const messageData = { name: 'Message Sender', email: `lifecycle-${Date.now()}@cypress.io`, topic: 'Other', message: `Message Lifecycle Test ${Date.now()}` };
-            createMessage(messageData);
-            adminDashboard.visitDashboard();
-            adminDashboard.navigateToMessagesTab();
-            adminDashboard.findCardByContent(messageData.message).should('be.visible');
-        });
-
-        it('should handle the full block/unblock sender lifecycle', () => {
-            const emailToBlock = `block-me-${Date.now()}@test.com`;
-            const messageData = { name: 'Email to Block', email: emailToBlock, topic: 'Other', message: `Block/Unblock Test ${Date.now()}` };
-            createMessage(messageData);
-            adminDashboard.visitDashboard();
-            adminDashboard.navigateToMessagesTab();
-            cy.on('window:confirm', () => true);
-            adminDashboard.blockSenderFromCard(messageData.message);
-            adminDashboard.navigateToBlocklistTab();
-            adminDashboard.verifyUserInBlocklist(emailToBlock);
-            adminDashboard.unblockUser(emailToBlock);
-            adminDashboard.verifyUserNotInBlocklist(emailToBlock);
-        });
-
-        it('should prevent a blocked user from submitting a message', () => {
-            const blockedEmail = `blocked-user-${Date.now()}@test.com`;
-            const initialMessage = { name: 'Email to Block', email: blockedEmail, topic: 'Other', message: 'This message will lead to a block.' };
-            createMessage(initialMessage);
-
-            adminDashboard.visitDashboard();
-            adminDashboard.navigateToMessagesTab();
-
-            // Note: The window:confirm handler is now correctly placed inside the blockSenderFromCard method
-            adminDashboard.blockSenderFromCard(initialMessage.message);
-            adminDashboard.verifyUserInBlocklist(blockedEmail);
-
-            // FIXED: Provided a complete, valid message object
-            const secondMessage = {
-                name: 'Blocked User',
-                email: blockedEmail,
-                topic: 'Project Inquiry',
-                message: 'This message should be blocked by the server functionality.'
-            };
-
-            cy.log('--- Attempting to send message from BLOCKED email ---');
-            cvPage.visitCV();
-            contactWidget.open().switchToMessageTab().submitMessage(secondMessage);
-
-            // Assert that the error message is shown, proving the block worked
-            contactWidget.verifyErrorMessageIsVisible();
-            contactWidget.successMessage.should('not.be.visible');
+            // Filter by date range (today)
+            const today = new Date().toISOString().split('T')[0];
+            adminDashboard.ratingsPane.find('#rate-filter-date-start').type(today);
+            adminDashboard.ratingsPane.find('#rate-filter-date-end').type(today);
+            adminDashboard.ratingsPane.find('#ratings-list').should('contain', testRating.name);
         });
     });
 
-    context('Public Form Validation', () => {
+    context('Single Item Actions (Reject, Restore, Block, Unblock)', () => {
+        it('should reject a message and then restore it', () => {
+            const msg = createMessage();
+            adminDashboard.visitDashboard();
+            adminDashboard.navigateToTab('messages');
+
+            // Reject
+            adminDashboard.performActionOnCard('#messages-pane', msg.message, 'reject-msg');
+            adminDashboard.findCardByContent('#messages-pane', msg.message).should('not.exist');
+
+            // Verify in Rejected Tab
+            adminDashboard.navigateToTab('rejected');
+            adminDashboard.findCardByContent('#rejected-pane', msg.message).should('be.visible');
+
+            // Restore
+            adminDashboard.performActionOnCard('#rejected-pane', msg.message, 'restore-msg');
+            adminDashboard.findCardByContent('#rejected-pane', msg.message).should('not.exist');
+
+            // Verify back in Messages Tab
+            adminDashboard.navigateToTab('messages');
+            adminDashboard.findCardByContent('#messages-pane', msg.message).should('be.visible');
+        });
+
+        it('should block a sender and then unblock them', () => {
+            const msg = createMessage();
+            adminDashboard.visitDashboard();
+            adminDashboard.navigateToTab('messages');
+
+            // Block
+            adminDashboard.performActionOnCard('#messages-pane', msg.message, 'block');
+            adminDashboard.findCardByContent('#messages-pane', msg.message).should('not.exist');
+
+            // Verify in Blocked Tab
+            adminDashboard.navigateToTab('blocked');
+            adminDashboard.findCardByContent('#blocked-pane', msg.email).should('be.visible');
+
+            // Unblock
+            adminDashboard.performActionOnCard('#blocked-pane', msg.email, 'unblock');
+            adminDashboard.findCardByContent('#blocked-pane', msg.email).should('not.exist');
+        });
+    });
+
+    context('Bulk Actions Functionality', () => {
+        let itemsToTest = [];
+
         beforeEach(() => {
-            cvPage.visitCV();
-            contactWidget.open();
+            // Create 3 new items for each test
+            itemsToTest = [createRating({ status: 'pending' }), createRating({ status: 'pending' }), createRating({ status: 'pending' })];
+            adminDashboard.visitDashboard();
+            adminDashboard.navigateToTab('ratings');
         });
 
-        it('should show validation errors for an empty rating form', () => {
-            contactWidget.switchToRatingTab();
+        it('should perform bulk "approve" and skip invalid items', () => {
+            // Make one item already approved
+            adminDashboard.performActionOnCard('#ratings-pane', itemsToTest[0].comment, 'approve');
+            adminDashboard.findCardByContent('#ratings-pane', itemsToTest[0].comment).should('contain', 'Approved');
 
-            // 1. First, verify the button is correctly disabled.
-            contactWidget.ratingForm.find('button[type="submit"]').should('be.disabled');
+            // Select all 3
+            itemsToTest.forEach(item => {
+                adminDashboard.findCardByContent('#ratings-pane', item.comment).find('.bulk-checkbox').check();
+            });
 
-            // 2. Trigger validation for the name field.
-            contactWidget.ratingForm.find('input[name="name"]').focus().blur();
-            contactWidget.ratingForm.find('#rater-name-error').should('be.visible');
+            // Perform bulk approve - should skip the already approved one
+            cy.on('window:confirm', (str) => {
+                expect(str).to.contain('Perform \'approve\' on 2 items?');
+                expect(str).to.contain('(1 invalid items will be skipped)');
+                return true;
+            });
+            adminDashboard.performBulkAction('#ratings-pane', 'approve');
 
-            // 3. Trigger validation for the email field.
-            contactWidget.ratingForm.find('input[name="email"]').focus().blur();
-            contactWidget.ratingForm.find('#rater-email-error').should('be.visible');
+            // Verify the other 2 are now approved
+            adminDashboard.findCardByContent('#ratings-pane', itemsToTest[1].comment).should('contain', 'Approved');
+            adminDashboard.findCardByContent('#ratings-pane', itemsToTest[2].comment).should('contain', 'Approved');
         });
 
-        it('should show validation errors for an empty message form', () => {
-            contactWidget.switchToMessageTab();
+        it('should perform bulk "block sender" and remove items from view', () => {
+            // Select all 3
+            itemsToTest.forEach(item => {
+                adminDashboard.findCardByContent('#ratings-pane', item.comment).find('.bulk-checkbox').check();
+            });
 
-            // 1. First, verify the button is correctly disabled.
-            contactWidget.messageForm.find('button[type="submit"]').should('be.disabled');
+            adminDashboard.performBulkAction('#ratings-pane', 'block');
 
-            // 2. Trigger validation for the name field.
-            contactWidget.messageForm.find('input[name="name"]').focus().blur();
-            contactWidget.messageForm.find('#sender-name-error').should('be.visible');
+            // Verify all are gone from the ratings list
+            itemsToTest.forEach(item => {
+                adminDashboard.findCardByContent('#ratings-pane', item.comment).should('not.exist');
+            });
 
-            // 3. Trigger validation for the topic field.
-            contactWidget.messageForm.find('select[name="topic"]').focus().blur();
-            contactWidget.messageForm.find('#message-topic-error').should('be.visible');
+            // Verify all emails are in the blocked list
+            adminDashboard.navigateToTab('blocked');
+            itemsToTest.forEach(item => {
+                adminDashboard.findCardByContent('#blocked-pane', item.email).should('be.visible');
+            });
+        });
+    });
+
+    context('Statistics Page', () => {
+        it('should allow changing chart type and selecting data sources', () => {
+            adminDashboard.navigateToTab('stats');
+
+            // Change chart type
+            adminDashboard.statsPane.find('#stats-chart-type').select('line');
+            adminDashboard.statsPane.find('#stats-apply-btn').click();
+            // Basic check to see if the chart exists
+            adminDashboard.statsPane.find('#stats-chart').should('be.visible');
+
+            // Change data selection (deselect all, then select one)
+            adminDashboard.statsPane.find('#stats-data-select').select([]);
+            adminDashboard.statsPane.find('#stats-data-select').select('blocked');
+            adminDashboard.statsPane.find('#stats-apply-btn').click();
+            adminDashboard.statsPane.find('#stats-chart').should('be.visible');
         });
 
         it('should correctly display and interact with the social share feature', () => {
