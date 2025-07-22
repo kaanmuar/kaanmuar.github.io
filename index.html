@@ -554,8 +554,22 @@
             color: #f59e0b;
         }
 
-        #social-share-selector.collapsed #social-share-options {
+        /* This rule makes the expand/collapse logic work correctly */
+        #social-share-selector.collapsed #social-share-options,
+        #language-selector.collapsed .lang-wrapper:not(:has(.selected)) {
             display: none;
+        }
+
+        /* This rule improves the icon colors for better visibility in both light and dark modes */
+        .share-link-wrapper svg {
+            color: #4b5563; /* Default gray for light mode */
+            transition: color 0.2s;
+        }
+        .dark-mode .share-link-wrapper svg {
+            color: #d1d5db; /* Lighter gray for dark mode */
+        }
+        .share-link-wrapper:hover svg {
+            color: #0891b2; /* Hover color */
         }
     </style>
 </head>
@@ -648,7 +662,7 @@
                                     <span class="tooltiptext" data-translate-key="tooltip_share">Share CV</span>
                                 </div>
                                 <!-- This container will be populated by JavaScript -->
-                                <div id="social-share-options" class="absolute right-0 top-8 flex flex-col items-center gap-2 p-2 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                                <div id="social-share-options" class="absolute right-0 top-full mt-2 flex flex-col items-center gap-2 p-2 rounded-lg shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
                                     <!-- Social media icons will be injected here -->
                                 </div>
                             </div>
@@ -2013,6 +2027,15 @@
                     const button = target.closest('button');
                     const langSelector = target.closest('#language-selector');
                     const timelineLink = target.closest('#timeline-container a');
+                    const shareSelector = target.closest('#social-share-selector');
+
+                    // --- NEW: Click outside to close logic ---
+                    if (!langSelector) this.DOMElements.languageSelector.classList.add('collapsed');
+                    if (!shareSelector) this.DOMElements.socialShareSelector.classList.add('collapsed');
+
+                    // --- Event Delegation for specific elements ---
+                    if (langSelector) this._handleLanguageSelector(e);
+                    if (shareSelector) this._handleShareSelector(e);
 
 
                     if (skillTag) this._toggleSkillFilter(skillTag);
@@ -2051,6 +2074,20 @@
                 ratingTab.addEventListener('click', () => this._switchTab('rating'));
 
 
+            },
+
+            _handleShareSelector(e) {
+                const selector = this.DOMElements.socialShareSelector;
+                const isCurrentlyCollapsed = selector.classList.contains('collapsed');
+
+                // Only toggle if the main icon is clicked, not an option inside
+                if (e.target.closest('#social-share-toggle-icon')) {
+                    selector.classList.toggle('collapsed');
+                    // Track the event
+                    if (isCurrentlyCollapsed) { // It was collapsed, now it's open
+                        this._trackEvent('expand_share_widget', 'Engagement', 'Opened Share Menu');
+                    }
+                }
             },
 
             _handleButtonClick(button) {
@@ -2651,25 +2688,25 @@
             },
 
             _setupShareButtons() {
-                const pageUrl = encodeURIComponent(window.location.href.split('?')[0]);
                 const translations = this.data.translations[this.state.lang];
+                const pageUrl = encodeURIComponent(window.location.href.split('?')[0]);
                 const shareText = encodeURIComponent(translations.share_text);
                 const shareTitle = encodeURIComponent(translations.share_title);
 
                 const socialNetworks = [
-                    { name: 'LinkedIn', icon: '<svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>', url: `https://www.linkedin.com/sharing/share-offsite/?url=${pageUrl}` },
-                    { name: 'X (Twitter)', icon: '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>', url: `https://twitter.com/intent/tweet?url=${pageUrl}&text=${shareText}` },
-                    { name: 'Facebook', icon: '<svg viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>', url: `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}` },
-                    { name: 'WhatsApp', icon: '<svg viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg>', url: `https://api.whatsapp.com/send?text=${shareText}%20${pageUrl}` },
-                    { name: 'Telegram', icon: '<svg viewBox="0 0 24 24"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg>', url: `https://t.me/share/url?url=${pageUrl}&text=${shareText}` },
-                    { name: 'Reddit', icon: '<svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm6.5 13.5c0 .828-.672 1.5-1.5 1.5s-1.5-.672-1.5-1.5.672-1.5 1.5-1.5 1.5.672 1.5 1.5zm-10 0c0 .828-.672 1.5-1.5 1.5S5.5 14.328 5.5 13.5 6.172 12 7 12s1.5.672 1.5 1.5zm3.8-2.64c-.28-.27-2.31.11-4.04.62-.32.09-.45-.1-.36-.42.84-2.83 3.5-4.58 6.58-4.58s5.74 1.75 6.58 4.58c.09.32-.04.51-.36.42-1.73-.51-3.76-.89-4.04-.62-.28.27-.12.62.2.81.93.55 2.7.9 4.31 1.1.33.04.46.21.34.52-.73 1.9-2.73 3.22-5.49 3.22s-4.76-1.32-5.49-3.22c-.12-.31.01-.48.34-.52 1.61-.2 3.38-.55 4.31-1.1.32-.19.48-.54.2-.81z"/></svg>', url: `https://www.reddit.com/submit?url=${pageUrl}&title=${shareTitle}` },
+                    { name: 'LinkedIn', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>', url: `https://www.linkedin.com/sharing/share-offsite/?url=${pageUrl}` },
+                    { name: 'X (Twitter)', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>', url: `https://twitter.com/intent/tweet?url=${pageUrl}&text=${shareText}` },
+                    { name: 'Facebook', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>', url: `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}` },
+                    { name: 'WhatsApp', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.523.074-.797.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871-.118.571-.355 1.04-1.428 1.187-1.776.149-.347.149-.644.104-.77z"/></svg>', url: `https://api.whatsapp.com/send?text=${shareText}%20${pageUrl}` },
+                    { name: 'Telegram', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg>', url: `https://t.me/share/url?url=${pageUrl}&text=${shareText}` },
+                    { name: 'Reddit', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm6.5 13.5c0 .828-.672 1.5-1.5 1.5s-1.5-.672-1.5-1.5.672-1.5 1.5-1.5 1.5.672 1.5 1.5zm-10 0c0 .828-.672 1.5-1.5 1.5S5.5 14.328 5.5 13.5 6.172 12 7 12s1.5.672 1.5 1.5zm3.8-2.64c-.28-.27-2.31.11-4.04.62-.32.09-.45-.1-.36-.42.84-2.83 3.5-4.58 6.58-4.58s5.74 1.75 6.58 4.58c.09.32-.04.51-.36.42-1.73-.51-3.76-.89-4.04-.62-.28.27-.12.62.2.81.93.55 2.7.9 4.31 1.1.33.04.46.21.34.52-.73 1.9-2.73 3.22-5.49 3.22s-4.76-1.32-5.49-3.22c-.12-.31.01-.48.34-.52 1.61-.2 3.38-.55 4.31-1.1.32-.19.48-.54.2-.81z"/></svg>', url: `https://www.reddit.com/submit?url=${pageUrl}&title=${shareTitle}` },
+                    { name: 'Pinterest', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.938 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 .992.371 1.931.82 2.447.09.09.101.185.073.293-.024.09-.077.318-.101.423-.038.158-.182.222-.335.134-1.249-.582-2.03-2.407-2.03-3.874 0-3.154 2.292-6.052 6.608-6.052 3.469 0 6.165 2.473 6.165 5.776 0 3.447-2.173 6.22-5.19 6.22-1.013 0-1.965-.525-2.291-1.148l-.623 2.378c-.226.869-.835 1.958-1.244 2.621.938.356 1.96.551 3.029.551 6.627 0 12-5.373 12-12C24 5.373 18.627 0 12 0z"/></svg>', url: `https://pinterest.com/pin/create/button/?url=${pageUrl}&media=&description=${shareText}` },
                 ];
 
-                // Add the "Copy Link" button manually
                 socialNetworks.push({ name: 'Copy Link', isButton: true, icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>' });
 
                 const optionsContainer = this.DOMElements.socialShareOptions;
-                optionsContainer.innerHTML = ''; // Clear existing options
+                optionsContainer.innerHTML = '';
 
                 socialNetworks.forEach(net => {
                     const wrapper = document.createElement('div');
@@ -2687,16 +2724,16 @@
                     }
 
                     element.innerHTML = net.icon;
-                    element.className = 'w-6 h-6 text-gray-500 hover:text-cyan-600';
+                    element.className = 'w-6 h-6'; // Simplified class, colors handled by CSS
                     element.setAttribute('data-analytics-event', 'share_click');
                     element.setAttribute('data-analytics-label', net.name);
 
                     const tooltip = document.createElement('span');
                     tooltip.className = 'tooltiptext';
-                    tooltip.textContent = `Share on ${net.name}`;
+                    // Use translated tooltip text
+                    tooltip.textContent = net.isButton ? translations.form_button_copy_link : translations.tooltip_share_on.replace('%s', net.name);
                     if (net.isButton) {
                         tooltip.id = 'copy-link-tooltip';
-                        tooltip.textContent = 'Copy Link';
                     }
 
                     wrapper.appendChild(element);
