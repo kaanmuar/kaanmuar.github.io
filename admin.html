@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV Admin Panel</title>
+    <title>CV Admin Panel - Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .tab-btn { padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; transition: all 0.2s; }
+        .tab-btn { padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; transition: all 0.2s; cursor: pointer; }
         .tab-btn.active { background-color: #0891b2; color: white; }
         .tab-btn:not(.active) { background-color: #e5e7eb; color: #4b5563; }
         .item-card { background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -22,9 +23,23 @@
             display: flex; align-items: center; justify-content: center; z-index: 100;
         }
         .login-box { background-color: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; }
-        /* NEW: Styles for the blocklist pane */
-        .blocklist-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
-        .blocklist-item:last-child { border-bottom: none; }
+        .filter-container { background-color: #e5e7eb; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+        .filter-container input, .filter-container select {
+            border-radius: 6px; border: 1px solid #d1d5db; padding: 0.5rem;
+        }
+        .bulk-actions-container { position: relative; display: inline-block; }
+        .bulk-actions-dropdown {
+            display: none; position: absolute; background-color: white;
+            min-width: 180px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1; border-radius: 8px; padding: 0.5rem 0;
+            right: 0;
+        }
+        .bulk-actions-dropdown a {
+            color: black; padding: 12px 16px; text-decoration: none;
+            display: block; cursor: pointer;
+        }
+        .bulk-actions-dropdown a:hover { background-color: #f1f1f1; }
+        .show-dropdown { display: block; }
     </style>
 </head>
 <body>
@@ -53,46 +68,83 @@
         <button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600">Logout</button>
     </div>
 
-    <div class="flex space-x-4 mb-6 border-b pb-2">
-        <button id="messages-tab-btn" class="tab-btn active" data-target="messages-pane">Messages</button>
-        <button id="ratings-tab-btn" class="tab-btn" data-target="ratings-pane">CV Ratings</button>
-        <button id="blocked-senders-tab-btn" class="tab-btn" data-target="blocklist-pane">Blocklist</button>
+    <div class="flex flex-wrap gap-2 mb-6 border-b pb-2">
+        <button id="messages-tab-btn" class="tab-btn active">Messages</button>
+        <button id="ratings-tab-btn" class="tab-btn">CV Ratings</button>
+        <button id="rejected-tab-btn" class="tab-btn">Rejected Messages</button>
+        <button id="stats-tab-btn" class="tab-btn">Statistics</button>
     </div>
 
-    <div id="messages-pane" class="tab-pane active">
-        <h2 class="text-2xl font-semibold mb-4">Inbox Messages</h2>
-        <div id="messages-list" class="space-y-4">
-            <p>Loading messages...</p>
+    <!-- Messages Pane -->
+    <div id="messages-pane">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold">Inbox Messages</h2>
+            <div id="messages-bulk-actions" class="bulk-actions-container"></div>
         </div>
-    </div>
-
-    <div id="ratings-pane" class="tab-pane hidden">
-        <h2 class="text-2xl font-semibold mb-4">CV Ratings</h2>
-        <div id="ratings-list" class="space-y-4">
-            <p>Loading ratings...</p>
+        <div class="filter-container grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <input type="text" id="msg-filter-name" placeholder="Filter by Name..." class="col-span-1">
+            <input type="email" id="msg-filter-email" placeholder="Filter by Email..." class="col-span-1">
+            <input type="text" id="msg-filter-topic" placeholder="Filter by Topic..." class="col-span-1">
+            <input type="date" id="msg-filter-date" class="col-span-1">
+            <select id="msg-filter-attachment" class="col-span-1">
+                <option value="">Any Attachment</option>
+                <option value="yes">With Attachments</option>
+                <option value="no">No Attachments</option>
+            </select>
+            <select id="msg-filter-blocked" class="col-span-1">
+                <option value="">Any Sender</option>
+                <option value="no">Not Blocked</option>
+                <option value="yes">Blocked Senders</option>
+            </select>
         </div>
+        <div id="messages-list" class="space-y-4"></div>
     </div>
 
+    <!-- CV Ratings Pane -->
+    <div id="ratings-pane" class="hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold">CV Ratings</h2>
+            <div id="ratings-bulk-actions" class="bulk-actions-container"></div>
+        </div>
+        <div class="filter-container grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <input type="text" id="rate-filter-name" placeholder="Filter by Name..." class="col-span-1">
+            <input type="email" id="rate-filter-email" placeholder="Filter by Email..." class="col-span-1">
+            <input type="date" id="rate-filter-date" class="col-span-1">
+            <select id="rate-filter-rate" class="col-span-1">
+                <option value="">Any Rate</option><option value="5">5 Stars</option><option value="4">4 Stars</option><option value="3">3 Stars</option><option value="2">2 Stars</option><option value="1">1 Star</option>
+            </select>
+            <select id="rate-filter-status" class="col-span-1">
+                <option value="">Any Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+            </select>
+            <select id="rate-filter-blocked" class="col-span-1">
+                <option value="">Any Sender</option><option value="no">Not Blocked</option><option value="yes">Blocked Senders</option>
+            </select>
+        </div>
+        <div id="ratings-list" class="space-y-4"></div>
+    </div>
 
+    <!-- Rejected Messages Pane -->
+    <div id="rejected-pane" class="hidden">
+        <h2 class="text-2xl font-semibold mb-4">Rejected Messages</h2>
+        <div id="rejected-list" class="space-y-4"></div>
+    </div>
 
-    <!-- NEW: Added the content pane for the Blocklist -->
-    <div id="blocklist-pane" class="tab-pane hidden">
-        <h2 class="text-2xl font-semibold mb-4">Blocked Senders</h2>
-        <div id="blocklist-list" class="item-card p-2">
-            <p>Loading blocklist...</p>
+    <!-- Statistics Pane -->
+    <div id="stats-pane" class="hidden">
+        <h2 class="text-2xl font-semibold mb-4">Platform Statistics</h2>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <canvas id="stats-chart"></canvas>
         </div>
     </div>
 </main>
 
-
-
 <script type="module">
-    // UPDATED: Imported deleteDoc and setDoc for blocklist management
+    // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-
+    // Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
         authDomain: "carlosm-interactive-cv.firebaseapp.com",
@@ -102,10 +154,16 @@
         appId: "1:976558418058:web:1dc19bcd40915ea233e573"
     };
 
-
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    // Global State
+    let allMessages = [];
+    let allRatings = [];
+    let blockedSenders = [];
+    let statsChart = null;
 
     // DOM Elements
     const loginOverlay = document.getElementById('login-overlay');
@@ -113,15 +171,26 @@
     const loginError = document.getElementById('login-error');
     const dashboard = document.getElementById('dashboard');
     const logoutBtn = document.getElementById('logout-btn');
-    const messagesTabBtn = document.getElementById('messages-tab-btn');
-    const ratingsTabBtn = document.getElementById('ratings-tab-btn');
-    const blocklistTabBtn = document.getElementById('blocked-senders-tab-btn'); // NEW
-    const messagesPane = document.getElementById('messages-pane');
-    const ratingsPane = document.getElementById('ratings-pane');
-    const blocklistPane = document.getElementById('blocklist-pane'); // NEW
-    const messagesList = document.getElementById('messages-list');
-    const ratingsList = document.getElementById('ratings-list');
-    const blocklistList = document.getElementById('blocklist-list'); // NEW
+
+    const tabButtons = {
+        messages: document.getElementById('messages-tab-btn'),
+        ratings: document.getElementById('ratings-tab-btn'),
+        rejected: document.getElementById('rejected-tab-btn'),
+        stats: document.getElementById('stats-tab-btn'),
+    };
+
+    const panes = {
+        messages: document.getElementById('messages-pane'),
+        ratings: document.getElementById('ratings-pane'),
+        rejected: document.getElementById('rejected-pane'),
+        stats: document.getElementById('stats-pane'),
+    };
+
+    const lists = {
+        messages: document.getElementById('messages-list'),
+        ratings: document.getElementById('ratings-list'),
+        rejected: document.getElementById('rejected-list'),
+    };
 
     // --- Authentication ---
     onAuthStateChanged(auth, user => {
@@ -135,8 +204,6 @@
         }
     });
 
-
-
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value)
@@ -147,271 +214,415 @@
     });
 
     logoutBtn.addEventListener('click', () => signOut(auth));
+
     // --- Dashboard Initialization ---
     function initDashboard() {
-        // UPDATED: Added listener for the new tab
-        messagesTabBtn.addEventListener('click', () => switchTab('messages-pane'));
-        ratingsTabBtn.addEventListener('click', () => switchTab('ratings-pane'));
-        blocklistTabBtn.addEventListener('click', () => switchTab('blocklist-pane'));
-        loadMessages();
-        loadRatings();
-        loadBlockedSenders(); // NEW
-    }
-
-    function switchTab(targetPaneId) {
-        // UPDATED: This logic now works for any number of tabs
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.target === targetPaneId);
+        Object.keys(tabButtons).forEach(key => {
+            tabButtons[key].addEventListener('click', () => switchTab(key));
         });
 
-        document.querySelectorAll('.tab-pane').forEach(pane => {
-            pane.classList.toggle('hidden', pane.id !== targetPaneId);
-            pane.classList.toggle('active', pane.id === targetPaneId);
-        });
+        loadAllData();
+        setupFilterListeners();
+        setupBulkActionButtons();
     }
 
-    // --- Data Loading and Rendering ---
+    function switchTab(tabKey) {
+        Object.keys(panes).forEach(key => {
+            const isActive = key === tabKey;
+            tabButtons[key].classList.toggle('active', isActive);
+            panes[key].classList.toggle('hidden', !isActive);
+        });
+        if (tabKey === 'stats') {
+            renderStatisticsGraph();
+        }
+    }
+
+    // --- Data Loading ---
+    function loadAllData() {
+        // Load Blocked Senders first
+        onSnapshot(collection(db, "blocked_senders"), (snapshot) => {
+            blockedSenders = snapshot.docs.map(doc => doc.id);
+            // Now load other data that depends on the blocked list
+            loadMessages();
+            loadRatings();
+        });
+    }
 
     function loadMessages() {
         const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-        onSnapshot(q, (querySnapshot) => {
-            if (querySnapshot.empty) {
-                messagesList.innerHTML = '<p>No messages yet.</p>';
-                return;
-            }
-            messagesList.innerHTML = querySnapshot.docs.map(renderMessageCard).join('');
-            // Add listeners for block buttons
-            querySnapshot.docs.forEach(doc => {
-                document.getElementById(`block-msg-${doc.id}`)?.addEventListener('click', (e) => {
-                    const emailToBlock = e.target.dataset.email;
-                    if (confirm(`Are you sure you want to permanently block ${emailToBlock}?`)) {
-                        blockSender(emailToBlock);
-                    }
-                });
-            });
+        onSnapshot(q, (snapshot) => {
+            allMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            applyAllFilters();
         });
     }
 
-    /**
-     * **MODIFIED**: Attaches a listener for the new "Block Sender" button.
-     */
     function loadRatings() {
         const q = query(collection(db, "ratings"), orderBy("createdAt", "desc"));
-
-        onSnapshot(q, (querySnapshot) => {
-            if (querySnapshot.empty) {
-                ratingsList.innerHTML = '<p>No ratings yet.</p>';
-                return;
-            }
-            ratingsList.innerHTML = querySnapshot.docs.map(renderRatingCard).join('');
-
-            ratingsList.addEventListener('click', (e) => {
-                const button = e.target.closest('button');
-                if (!button) return;
-
-                const id = button.id;
-                const docId = id.split('-').pop();
-                const email = button.dataset.email;
-
-                if (id.startsWith('approve-anon-')) {
-                    updateRatingStatus(docId, { status: 'approved', isAnonymous: true });
-                } else if (id.startsWith('approve-')) {
-                    updateRatingStatus(docId, { status: 'approved', isAnonymous: false });
-                } else if (id.startsWith('reject-')) {
-                    updateRatingStatus(docId, { status: 'rejected' });
-                } else if (id.startsWith('retract-') || id.startsWith('restore-')) {
-                    updateRatingStatus(docId, { status: 'pending' });
-                } else if (id.startsWith('block-rating-')) {
-                    if (confirm(`Are you sure you want to permanently block ${email}?`)) {
-                        blockSender(email);
-                    }
-                }
-            });
-
-            querySnapshot.docs.forEach(doc => {
-                // Rating status listeners
-                /*document.getElementById(`approve-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'approved', isAnonymous: false }));
-                document.getElementById(`approve-anon-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'approved', isAnonymous: true }));
-                document.getElementById(`reject-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'rejected' }));
-                document.getElementById(`retract-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'pending' }));
-                document.getElementById(`restore-${doc.id}`)?.addEventListener('click', () => updateRatingStatus(doc.id, { status: 'pending' }));*/
-                // Block sender listener
-                document.getElementById(`block-rating-${doc.id}`)?.addEventListener('click', (e) => {
-                    const emailToBlock = e.target.dataset.email;
-                    if (confirm(`Are you sure you want to permanently block ${emailToBlock}?`)) {
-                        blockSender(emailToBlock);
-                    }
-                });
-            });
+        onSnapshot(q, (snapshot) => {
+            allRatings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            applyAllFilters();
         });
     }
 
-    // NEW: Function to load and display the list of blocked senders
-
-    function loadBlockedSenders() {
-
-        const q = query(collection(db, "blocked_senders"), orderBy("blockedAt", "desc"));
-        onSnapshot(q, (querySnapshot) => {
-
-            if (querySnapshot.empty) {
-                blocklistList.innerHTML = '<p class="p-4 text-center text-gray-500">No senders have been blocked.</p>';
-                return;
-            }
-            blocklistList.innerHTML = querySnapshot.docs.map(doc => {
-                const email = doc.id;
-                const data = doc.data();
-                const date = data.blockedAt ? data.blockedAt.toDate().toLocaleString() : 'N/A';
-                return `
-                    <div class="blocklist-item">
-                        <div>
-                            <p class="font-medium text-gray-800">${email}</p>
-                            <p class="text-xs text-gray-500">Blocked on: ${date}</p>
-                        </div>
-                        <button data-email="${email}" class="unblock-btn bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Unblock</button>
-                    </div>
-                `;
-            }).join('');
-
-            // Add event listeners to the new "Unblock" buttons
-            document.querySelectorAll('.unblock-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const emailToUnblock = e.target.dataset.email;
-
-                    if (confirm(`Are you sure you want to unblock ${emailToUnblock}? They will be able to send messages again.`)) {
-                        unblockSender(emailToUnblock);
-                    }
-                });
-            });
+    // --- Filtering Logic ---
+    function setupFilterListeners() {
+        document.querySelectorAll('.filter-container input, .filter-container select').forEach(el => {
+            el.addEventListener('input', applyAllFilters);
         });
     }
 
-    /**
-     * **MODIFIED**: Adds a "Block Sender" button to the message card.
-     */
-    function renderMessageCard(doc) {
-        const msg = doc.data();
-        const date = msg.createdAt ? msg.createdAt.toDate().toLocaleString() : 'N/A';
-        const attachmentLink = msg.fileURL ? `<a href="${msg.fileURL}" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline">View Attachment</a>` : '<span>No attachment</span>';
-
-        return `
-                <div class="item-card p-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p>
-                            <p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p>
-                        </div>
-                        <div class="flex flex-col items-end">
-                             <span class="text-xs text-gray-500 mb-2">${date}</span>
-                             <button id="block-msg-${doc.id}" data-email="${msg.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>
-                        </div>
-                    </div>
-                    <p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${msg.message}</p>
-                    <p class="text-sm">${attachmentLink}</p>
-                </div>
-            `;
+    function applyAllFilters() {
+        filterAndRenderMessages();
+        filterAndRenderRatings();
     }
 
-    /**
-     * **MODIFIED**: Adds a "Block Sender" button to the rating card.
-     */
-    function renderRatingCard(doc) {
-        const rating = doc.data();
-        const date = rating.createdAt ? rating.createdAt.toDate().toLocaleString() : 'N/A';
-        const starsHTML = '&#9733;'.repeat(rating.rating) + '&#9734;'.repeat(5 - rating.rating);
-        const commentHTML = rating.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${rating.comment}</p>` : '<p class="text-sm text-gray-500 italic mt-2">No comment provided.</p>';
+    function filterAndRenderMessages() {
+        const name = document.getElementById('msg-filter-name').value.toLowerCase();
+        const email = document.getElementById('msg-filter-email').value.toLowerCase();
+        const topic = document.getElementById('msg-filter-topic').value.toLowerCase();
+        const date = document.getElementById('msg-filter-date').value;
+        const attachment = document.getElementById('msg-filter-attachment').value;
+        const blocked = document.getElementById('msg-filter-blocked').value;
 
-        let actionButtons = '';
-        // Conditionally render buttons based on status
-        if (rating.status === 'pending') {
-            actionButtons = `
-                    <button id="approve-${doc.id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button>
-                    <button id="approve-anon-${doc.id}" class="bg-sky-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-sky-600">Approve Anonymously</button>
-                    <button id="reject-${doc.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>
-                `;
-        } else if (rating.status === 'approved') {
-            const anonBadge = rating.isAnonymous ? '<span class="text-xs font-bold text-sky-600 ml-4">(Published Anonymously)</span>' : '';
-            actionButtons = `
-                    <button id="retract-${doc.id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract (Move to Pending)</button>
-                    ${anonBadge}
-                `;
-        } else if (rating.status === 'rejected') {
-            actionButtons = `
-                    <button id="restore-${doc.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore (Move to Pending)</button>
-                `;
-        }
+        const filtered = allMessages.filter(msg => {
+            const msgDate = msg.createdAt ? msg.createdAt.toDate().toISOString().split('T')[0] : '';
+            const isBlocked = blockedSenders.includes(msg.email.toLowerCase());
 
-        return `
-                <div class="item-card p-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <p class="font-bold text-lg">${rating.name} <span class="font-normal text-sm text-gray-500">&lt;${rating.email}&gt;</span></p>
-                            <p class="text-xl text-yellow-400" aria-label="Rating: ${rating.rating} out of 5 stars">${starsHTML}</p>
-                        </div>
-                        <div class="text-right">
-                           <div class="flex items-center gap-2 mb-1">
-                                <span class="status-dot status-${rating.status}"></span>
-                                <span class="text-sm font-medium capitalize">${rating.status}</span>
-                           </div>
-                           <span class="text-xs text-gray-500 mb-2 block">${date}</span>
-                           <button id="block-rating-${doc.id}" data-email="${rating.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>
-                        </div>
-                    </div>
-                    ${commentHTML}
-                    <div class="flex items-center space-x-2 mt-4">
-                        ${actionButtons}
-                    </div>
-                </div>
-            `;
+            if (name && !msg.name.toLowerCase().includes(name)) return false;
+            if (email && !msg.email.toLowerCase().includes(email)) return false;
+            if (topic && !msg.topic.toLowerCase().includes(topic)) return false;
+            if (date && msgDate !== date) return false;
+            if (attachment === 'yes' && !msg.fileURL) return false;
+            if (attachment === 'no' && msg.fileURL) return false;
+            if (blocked === 'yes' && !isBlocked) return false;
+            if (blocked === 'no' && isBlocked) return false;
+            return true;
+        });
+
+        const inboxMessages = filtered.filter(m => m.status !== 'rejected');
+        const rejectedMessages = filtered.filter(m => m.status === 'rejected');
+
+        renderList(lists.messages, inboxMessages, renderMessageCard);
+        renderList(lists.rejected, rejectedMessages, renderRejectedMessageCard);
     }
 
-    /**
-     * **MODIFIED**: Accepts a payload object to update multiple fields at once.
-     * @param {string} docId - The ID of the rating document.
-     * @param {object} payload - The data to update (e.g., { status: 'approved', isAnonymous: true }).
-     */
-    async function updateRatingStatus(docId, payload) {
-        const ratingRef = doc(db, "ratings", docId);
-        try {
-            await updateDoc(ratingRef, payload);
-            console.log(`Rating ${docId} status updated.`);
-        } catch (error) {
-            console.error("Error updating rating status: ", error);
-            alert("Could not update rating status. See console for details.");
-        }
+    function filterAndRenderRatings() {
+        const name = document.getElementById('rate-filter-name').value.toLowerCase();
+        const email = document.getElementById('rate-filter-email').value.toLowerCase();
+        const date = document.getElementById('rate-filter-date').value;
+        const rate = document.getElementById('rate-filter-rate').value;
+        const status = document.getElementById('rate-filter-status').value;
+        const blocked = document.getElementById('rate-filter-blocked').value;
+
+        const filtered = allRatings.filter(r => {
+            const rDate = r.createdAt ? r.createdAt.toDate().toISOString().split('T')[0] : '';
+            const isBlocked = blockedSenders.includes(r.email.toLowerCase());
+
+            if (name && !r.name.toLowerCase().includes(name)) return false;
+            if (email && !r.email.toLowerCase().includes(email)) return false;
+            if (date && rDate !== date) return false;
+            if (rate && r.rating.toString() !== rate) return false;
+            if (status && r.status !== status) return false;
+            if (blocked === 'yes' && !isBlocked) return false;
+            if (blocked === 'no' && isBlocked) return false;
+            return true;
+        });
+
+        renderList(lists.ratings, filtered, renderRatingCard);
     }
 
-    /**
-     * **NEW**: Adds an email to the 'blocked_senders' collection in Firestore.
-     * @param {string} email - The email address to block.
-     */
-    async function blockSender(email) {
-        if (!email) {
-            alert("Cannot block sender with no email address.");
+    // --- Rendering ---
+    function renderList(container, items, renderer) {
+        if (items.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-4">No items match the current filters.</p>';
             return;
         }
-        const blockRef = doc(db, "blocked_senders", email.toLowerCase());
-        try {
-            await setDoc(blockRef, { blockedAt: serverTimestamp() });
-            alert(`Sender with email ${email} has been blocked successfully.`);
-        } catch (error) {
-            console.error("Error blocking sender: ", error);
-            alert("Could not block sender. See console for details.");
-        }
+        container.innerHTML = items.map(renderer).join('');
+        addCardEventListeners();
     }
 
-    // NEW: Function to remove a sender from the blocklist
-    async function unblockSender(email) {
+    function createCardHTML(doc, content, actions, isChecked = false) {
+        return `
+            <div class="item-card p-4 flex gap-4 items-start">
+                <input type="checkbox" class="bulk-checkbox mt-2" data-id="${doc.id}" data-email="${doc.email}" ${isChecked ? 'checked' : ''}>
+                <div class="flex-grow">
+                    ${content}
+                    <div class="flex items-center flex-wrap gap-2 mt-4">
+                        ${actions}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderMessageCard(msg) {
+        const date = msg.createdAt ? msg.createdAt.toDate().toLocaleString() : 'N/A';
+        const attachmentLink = msg.fileURL ? `<a href="${msg.fileURL}" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline">View Attachment</a>` : '<span>No attachment</span>';
+        const isBlocked = blockedSenders.includes(msg.email.toLowerCase());
+
+        const content = `
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p>
+                    <p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p>
+                </div>
+                <div class="flex flex-col items-end">
+                     <span class="text-xs text-gray-500 mb-2">${date}</span>
+                     ${isBlocked ? '<span class="text-xs font-bold text-red-600">BLOCKED</span>' : ''}
+                </div>
+            </div>
+            <p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${msg.message}</p>
+            <p class="text-sm">${attachmentLink}</p>
+        `;
+        const actions = `
+            <button data-action="reject-msg" data-id="${msg.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>
+            <button data-action="block" data-email="${msg.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>
+        `;
+        return createCardHTML(msg, content, actions);
+    }
+
+    function renderRejectedMessageCard(msg) {
+        const date = msg.rejectedAt ? `Rejected: ${msg.rejectedAt.toDate().toLocaleString()}` : 'N/A';
+        const restoredDate = msg.restoredAt ? `<br>Restored: ${msg.restoredAt.toDate().toLocaleString()}` : '';
+        const content = `
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p>
+                    <p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p>
+                </div>
+                <div class="text-right">
+                     <span class="text-xs text-gray-500">${date}${restoredDate}</span>
+                </div>
+            </div>
+            <p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md">${msg.message}</p>
+        `;
+        const actions = `<button data-action="restore-msg" data-id="${msg.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore to Inbox</button>`;
+        return createCardHTML(msg, content, actions);
+    }
+
+    function renderRatingCard(rating) {
+        const date = rating.createdAt ? rating.createdAt.toDate().toLocaleString() : 'N/A';
+        const starsHTML = '&#9733;'.repeat(rating.rating) + '&#9734;'.repeat(5 - rating.rating);
+        const commentHTML = rating.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${rating.comment}</p>` : '';
+        const isBlocked = blockedSenders.includes(rating.email.toLowerCase());
+
+        let actionButtons = '';
+        if (rating.status === 'pending') {
+            actionButtons = `
+                <button data-action="approve" data-id="${rating.id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button>
+                <button data-action="approve-anon" data-id="${rating.id}" class="bg-sky-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-sky-600">Approve Anonymously</button>
+                <button data-action="reject" data-id="${rating.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>
+            `;
+        } else if (rating.status === 'approved') {
+            actionButtons = `<button data-action="retract" data-id="${rating.id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract</button>`;
+        } else if (rating.status === 'rejected') {
+            actionButtons = `<button data-action="restore" data-id="${rating.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore</button>`;
+        }
+        actionButtons += `<button data-action="block" data-email="${rating.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
+
+        const content = `
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <p class="font-bold text-lg">${rating.name} <span class="font-normal text-sm text-gray-500">&lt;${rating.email}&gt;</span></p>
+                    <p class="text-xl text-yellow-400">${starsHTML}</p>
+                </div>
+                <div class="text-right">
+                   <div class="flex items-center gap-2 mb-1">
+                        <span class="status-dot status-${rating.status}"></span>
+                        <span class="text-sm font-medium capitalize">${rating.status}</span>
+                        ${isBlocked ? '<span class="text-xs font-bold text-red-600 ml-2">BLOCKED</span>' : ''}
+                   </div>
+                   <span class="text-xs text-gray-500 mb-2 block">${date}</span>
+                </div>
+            </div>
+            ${commentHTML}
+        `;
+        return createCardHTML(rating, content, actionButtons);
+    }
+
+    // --- Event Listeners for Cards ---
+    function addCardEventListeners() {
+        document.querySelectorAll('[data-action]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                const id = e.target.dataset.id;
+                const email = e.target.dataset.email;
+
+                // Rating Actions
+                if (action === 'approve') updateRatingStatus(id, { status: 'approved', isAnonymous: false });
+                if (action === 'approve-anon') updateRatingStatus(id, { status: 'approved', isAnonymous: true });
+                if (action === 'reject') updateRatingStatus(id, { status: 'rejected' });
+                if (action === 'retract' || action === 'restore') updateRatingStatus(id, { status: 'pending' });
+
+                // Message Actions
+                if (action === 'reject-msg') updateMessageStatus(id, 'rejected');
+                if (action === 'restore-msg') updateMessageStatus(id, 'inbox');
+
+                // Common Actions
+                if (action === 'block' && confirm(`Are you sure you want to block ${email}?`)) blockSender(email);
+            });
+        });
+    }
+
+    // --- Firestore Update Functions ---
+    async function updateRatingStatus(docId, payload) {
+        await updateDoc(doc(db, "ratings", docId), payload);
+    }
+
+    async function updateMessageStatus(docId, status) {
+        const payload = { status };
+        if (status === 'rejected') payload.rejectedAt = serverTimestamp();
+        if (status === 'inbox') payload.restoredAt = serverTimestamp();
+        await updateDoc(doc(db, "messages", docId), payload);
+    }
+
+    async function blockSender(email) {
         if (!email) return;
-        const blockRef = doc(db, "blocked_senders", email.toLowerCase());
+        await setDoc(doc(db, "blocked_senders", email.toLowerCase()), { blockedAt: serverTimestamp() });
+        alert(`Sender ${email} has been blocked.`);
+    }
 
-        try {
-            await deleteDoc(blockRef);
-            alert(`Sender with email ${email} has been unblocked.`);
-        } catch (error) {
-            console.error("Error unblocking sender:", error);
-            alert("Could not unblock sender. See console for details.");
+    // --- Bulk Actions ---
+    function setupBulkActionButtons() {
+        const msgActions = `
+            <button id="msg-bulk-action-btn" class="bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Bulk Actions <i class="fa-solid fa-caret-down ml-2"></i></button>
+            <div id="msg-bulk-dropdown" class="bulk-actions-dropdown">
+                <a data-bulk-action="reject-msg">Reject Selected</a>
+                <a data-bulk-action="block">Block Sender of Selected</a>
+            </div>
+        `;
+        document.getElementById('messages-bulk-actions').innerHTML = msgActions;
+
+        const rateActions = `
+            <button id="rate-bulk-action-btn" class="bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Bulk Actions <i class="fa-solid fa-caret-down ml-2"></i></button>
+            <div id="rate-bulk-dropdown" class="bulk-actions-dropdown">
+                <a data-bulk-action="approve">Approve Selected</a>
+                <a data-bulk-action="approve-anon">Approve Anonymously</a>
+                <a data-bulk-action="reject">Reject Selected</a>
+                <a data-bulk-action="block">Block Sender of Selected</a>
+            </div>
+        `;
+        document.getElementById('ratings-bulk-actions').innerHTML = rateActions;
+
+        // Dropdown toggle logic
+        document.getElementById('msg-bulk-action-btn').addEventListener('click', () => document.getElementById('msg-bulk-dropdown').classList.toggle('show-dropdown'));
+        document.getElementById('rate-bulk-action-btn').addEventListener('click', () => document.getElementById('rate-bulk-dropdown').classList.toggle('show-dropdown'));
+
+        // Action listeners
+        document.querySelectorAll('.bulk-actions-dropdown a').forEach(a => {
+            a.addEventListener('click', (e) => {
+                const action = e.target.dataset.bulkAction;
+                const paneId = e.target.closest('.bulk-actions-container').parentElement.parentElement.id;
+                handleBulkAction(action, paneId);
+                e.target.parentElement.classList.remove('show-dropdown');
+            });
+        });
+    }
+
+    async function handleBulkAction(action, paneId) {
+        const container = document.getElementById(paneId);
+        const selectedCheckboxes = container.querySelectorAll('.bulk-checkbox:checked');
+        if (selectedCheckboxes.length === 0) {
+            alert("No items selected.");
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to perform '${action}' on ${selectedCheckboxes.length} items?`)) return;
+
+        for (const checkbox of selectedCheckboxes) {
+            const id = checkbox.dataset.id;
+            const email = checkbox.dataset.email;
+
+            if (action === 'block') {
+                await blockSender(email);
+            } else if (paneId === 'messages-pane') {
+                if (action === 'reject-msg') await updateMessageStatus(id, 'rejected');
+            } else if (paneId === 'ratings-pane') {
+                if (action === 'approve') await updateRatingStatus(id, { status: 'approved', isAnonymous: false });
+                if (action === 'approve-anon') await updateRatingStatus(id, { status: 'approved', isAnonymous: true });
+                if (action === 'reject') await updateRatingStatus(id, { status: 'rejected' });
+            }
+        }
+        alert("Bulk action completed.");
+    }
+
+    // --- Statistics Graph ---
+    function renderStatisticsGraph() {
+        const ctx = document.getElementById('stats-chart').getContext('2d');
+        const labels = [];
+        const data = {
+            messages: {},
+            ratings: {},
+            rejected: {},
+            blocked: {},
+        };
+
+        // Get last 6 months
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            const label = d.toLocaleString('default', { month: 'short', year: '2-digit' });
+            labels.push(label);
+            data.messages[label] = 0;
+            data.ratings[label] = 0;
+            data.rejected[label] = 0;
+            data.blocked[label] = 0;
+        }
+
+        const processItems = (items, type, dateField) => {
+            items.forEach(item => {
+                if (!item[dateField]) return;
+                const date = item[dateField].toDate();
+                const label = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+                if (data[type][label] !== undefined) {
+                    data[type][label]++;
+                }
+            });
+        };
+
+        processItems(allMessages, 'messages', 'createdAt');
+        processItems(allRatings, 'ratings', 'createdAt');
+        processItems(allMessages.filter(m => m.status === 'rejected'), 'rejected', 'rejectedAt');
+
+        // This is a simplification; for true blocked counts, we'd need to query the collection differently
+        const blockedData = blockedSenders.map(email => ({ email, blockedAt: new Date() })); // Mocking date for demo
+        // In a real app, you'd fetch the 'blockedAt' timestamp from Firestore for each blocked sender.
+        // For now, we just show the total count.
+
+        if (statsChart) {
+            statsChart.destroy();
+        }
+
+        statsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'New Messages', data: Object.values(data.messages), backgroundColor: 'rgba(54, 162, 235, 0.6)' },
+                    { label: 'New CV Ratings', data: Object.values(data.ratings), backgroundColor: 'rgba(255, 206, 86, 0.6)' },
+                    { label: 'Rejected Messages', data: Object.values(data.rejected), backgroundColor: 'rgba(255, 99, 132, 0.6)' },
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+
+    // Close dropdown if clicked outside
+    window.onclick = function(event) {
+        if (!event.target.matches('.bulk-actions-container button')) {
+            var dropdowns = document.getElementsByClassName("bulk-actions-dropdown");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show-dropdown')) {
+                    openDropdown.classList.remove('show-dropdown');
+                }
+            }
         }
     }
+
 </script>
 </body>
 </html>
