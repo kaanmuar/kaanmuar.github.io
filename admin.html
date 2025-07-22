@@ -3,43 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV Admin Panel - Enhanced</title>
+    <title>CV Admin Panel - Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .tab-btn { padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; transition: all 0.2s; cursor: pointer; }
+        .tab-btn { position: relative; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; transition: all 0.2s; cursor: pointer; }
         .tab-btn.active { background-color: #0891b2; color: white; }
         .tab-btn:not(.active) { background-color: #e5e7eb; color: #4b5563; }
         .item-card { background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .status-dot, .new-indicator { width: 10px; height: 10px; border-radius: 50%; }
         .status-pending { background-color: #f59e0b; }
         .status-approved { background-color: #10b981; }
         .status-rejected { background-color: #ef4444; }
+        .new-indicator { background-color: #3b82f6; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
             display: flex; align-items: center; justify-content: center; z-index: 100;
         }
         .login-box { background-color: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; }
-        .filter-container { background-color: #e5e7eb; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+        .filter-container { background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
         .filter-container input, .filter-container select {
-            border-radius: 6px; border: 1px solid #d1d5db; padding: 0.5rem;
+            border-radius: 6px; border: 1px solid #d1d5db; padding: 0.5rem; width: 100%;
         }
+        .filter-label { font-weight: 500; font-size: 0.875rem; color: #4b5563; }
         .bulk-actions-container { position: relative; display: inline-block; }
         .bulk-actions-dropdown {
             display: none; position: absolute; background-color: white;
             min-width: 180px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1; border-radius: 8px; padding: 0.5rem 0;
-            right: 0;
+            z-index: 1; border-radius: 8px; padding: 0.5rem 0; right: 0;
         }
-        .bulk-actions-dropdown a {
-            color: black; padding: 12px 16px; text-decoration: none;
-            display: block; cursor: pointer;
-        }
+        .bulk-actions-dropdown a { color: black; padding: 12px 16px; text-decoration: none; display: block; cursor: pointer; }
         .bulk-actions-dropdown a:hover { background-color: #f1f1f1; }
         .show-dropdown { display: block; }
+        .title-container { display: flex; align-items: center; gap: 0.75rem; }
     </style>
 </head>
 <body>
@@ -47,55 +47,34 @@
 <div id="login-overlay">
     <div class="login-box">
         <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
-        <form id="login-form">
-            <div class="mb-4">
-                <label for="email" class="block font-medium mb-1">Email</label>
-                <input type="email" id="email" required class="w-full p-2 border border-gray-300 rounded-md">
-            </div>
-            <div class="mb-4">
-                <label for="password" class="block font-medium mb-1">Password</label>
-                <input type="password" id="password" required class="w-full p-2 border border-gray-300 rounded-md">
-            </div>
-            <button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Login</button>
-            <p id="login-error" class="text-red-600 text-sm mt-2"></p>
-        </form>
+        <form id="login-form"><div class="mb-4"><label for="email" class="block font-medium mb-1">Email</label><input type="email" id="email" required class="w-full p-2 border border-gray-300 rounded-md"></div><div class="mb-4"><label for="password" class="block font-medium mb-1">Password</label><input type="password" id="password" required class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Login</button><p id="login-error" class="text-red-600 text-sm mt-2"></p></form>
     </div>
 </div>
 
 <main id="dashboard" class="container mx-auto p-4 md:p-6 hidden">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">CV Admin Dashboard</h1>
-        <button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600">Logout</button>
-    </div>
+    <div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-gray-800">CV Admin Dashboard</h1><button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600">Logout</button></div>
 
     <div class="flex flex-wrap gap-2 mb-6 border-b pb-2">
         <button id="messages-tab-btn" class="tab-btn active">Messages</button>
         <button id="ratings-tab-btn" class="tab-btn">CV Ratings</button>
         <button id="rejected-tab-btn" class="tab-btn">Rejected Messages</button>
+        <button id="blocked-tab-btn" class="tab-btn">Blocked Senders</button>
         <button id="stats-tab-btn" class="tab-btn">Statistics</button>
     </div>
 
     <!-- Messages Pane -->
     <div id="messages-pane">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-semibold">Inbox Messages</h2>
+            <div class="title-container"><h2 class="text-2xl font-semibold">Inbox Messages</h2><span id="messages-count" class="font-medium text-gray-500"></span></div>
             <div id="messages-bulk-actions" class="bulk-actions-container"></div>
         </div>
-        <div class="filter-container grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <input type="text" id="msg-filter-name" placeholder="Filter by Name..." class="col-span-1">
-            <input type="email" id="msg-filter-email" placeholder="Filter by Email..." class="col-span-1">
-            <input type="text" id="msg-filter-topic" placeholder="Filter by Topic..." class="col-span-1">
-            <input type="date" id="msg-filter-date" class="col-span-1">
-            <select id="msg-filter-attachment" class="col-span-1">
-                <option value="">Any Attachment</option>
-                <option value="yes">With Attachments</option>
-                <option value="no">No Attachments</option>
-            </select>
-            <select id="msg-filter-blocked" class="col-span-1">
-                <option value="">Any Sender</option>
-                <option value="no">Not Blocked</option>
-                <option value="yes">Blocked Senders</option>
-            </select>
+        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div><label class="filter-label" for="msg-filter-name">Name</label><input type="text" id="msg-filter-name" placeholder="Filter by Name..."></div>
+            <div><label class="filter-label" for="msg-filter-email">Email</label><input type="email" id="msg-filter-email" placeholder="Filter by Email..."></div>
+            <div><label class="filter-label" for="msg-filter-topic-select">Topic</label><select id="msg-filter-topic-select"></select></div>
+            <div id="msg-other-topic-container" class="hidden"><label class="filter-label" for="msg-filter-topic-other">Other Topic</label><input type="text" id="msg-filter-topic-other" placeholder="Enter topic..."></div>
+            <div><label class="filter-label" for="msg-filter-date-start">Date Range</label><div class="flex gap-2"><input type="date" id="msg-filter-date-start"><input type="date" id="msg-filter-date-end"></div></div>
+            <div><label id="msg-filter-attachment-label" class="filter-label" for="msg-filter-attachment">Attachment</label><select id="msg-filter-attachment"></select></div>
         </div>
         <div id="messages-list" class="space-y-4"></div>
     </div>
@@ -103,38 +82,50 @@
     <!-- CV Ratings Pane -->
     <div id="ratings-pane" class="hidden">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-semibold">CV Ratings</h2>
+            <div class="title-container"><h2 class="text-2xl font-semibold">CV Ratings</h2><div id="ratings-new-indicator" class="hidden new-indicator"></div><span id="ratings-count" class="font-medium text-gray-500"></span></div>
             <div id="ratings-bulk-actions" class="bulk-actions-container"></div>
         </div>
-        <div class="filter-container grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <input type="text" id="rate-filter-name" placeholder="Filter by Name..." class="col-span-1">
-            <input type="email" id="rate-filter-email" placeholder="Filter by Email..." class="col-span-1">
-            <input type="date" id="rate-filter-date" class="col-span-1">
-            <select id="rate-filter-rate" class="col-span-1">
-                <option value="">Any Rate</option><option value="5">5 Stars</option><option value="4">4 Stars</option><option value="3">3 Stars</option><option value="2">2 Stars</option><option value="1">1 Star</option>
-            </select>
-            <select id="rate-filter-status" class="col-span-1">
-                <option value="">Any Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
-            </select>
-            <select id="rate-filter-blocked" class="col-span-1">
-                <option value="">Any Sender</option><option value="no">Not Blocked</option><option value="yes">Blocked Senders</option>
-            </select>
+        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div><label class="filter-label" for="rate-filter-name">Name</label><input type="text" id="rate-filter-name" placeholder="Filter by Name..."></div>
+            <div><label class="filter-label" for="rate-filter-email">Email</label><input type="email" id="rate-filter-email" placeholder="Filter by Email..."></div>
+            <div><label class="filter-label" for="rate-filter-date-start">Date Range</label><div class="flex gap-2"><input type="date" id="rate-filter-date-start"><input type="date" id="rate-filter-date-end"></div></div>
+            <div><label id="rate-filter-rate-label" class="filter-label" for="rate-filter-rate">Rating</label><select id="rate-filter-rate"></select></div>
+            <div><label id="rate-filter-status-label" class="filter-label" for="rate-filter-status">Status</label><select id="rate-filter-status"></select></div>
         </div>
         <div id="ratings-list" class="space-y-4"></div>
     </div>
 
     <!-- Rejected Messages Pane -->
     <div id="rejected-pane" class="hidden">
-        <h2 class="text-2xl font-semibold mb-4">Rejected Messages</h2>
+        <div class="flex justify-between items-center mb-4"><div class="title-container"><h2 class="text-2xl font-semibold">Rejected Messages</h2><span id="rejected-count" class="font-medium text-gray-500"></span></div></div>
+        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div><label class="filter-label" for="rej-filter-name">Name</label><input type="text" id="rej-filter-name" placeholder="Filter by Name..."></div>
+            <div><label class="filter-label" for="rej-filter-email">Email</label><input type="email" id="rej-filter-email" placeholder="Filter by Email..."></div>
+            <div><label class="filter-label" for="rej-filter-date-start">Rejection Date</label><div class="flex gap-2"><input type="date" id="rej-filter-date-start"><input type="date" id="rej-filter-date-end"></div></div>
+        </div>
         <div id="rejected-list" class="space-y-4"></div>
+    </div>
+
+    <!-- Blocked Senders Pane -->
+    <div id="blocked-pane" class="hidden">
+        <div class="flex justify-between items-center mb-4"><div class="title-container"><h2 class="text-2xl font-semibold">Blocked Senders</h2><span id="blocked-count" class="font-medium text-gray-500"></span></div></div>
+        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div><label class="filter-label" for="block-filter-email">Email</label><input type="email" id="block-filter-email" placeholder="Filter by Email..."></div>
+            <div><label class="filter-label" for="block-filter-date-start">Blocked Date</label><div class="flex gap-2"><input type="date" id="block-filter-date-start"><input type="date" id="block-filter-date-end"></div></div>
+        </div>
+        <div id="blocked-list" class="space-y-4"></div>
     </div>
 
     <!-- Statistics Pane -->
     <div id="stats-pane" class="hidden">
         <h2 class="text-2xl font-semibold mb-4">Platform Statistics</h2>
-        <div class="bg-white p-4 rounded-lg shadow">
-            <canvas id="stats-chart"></canvas>
+        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div><label class="filter-label" for="stats-date-start">Date Range</label><div class="flex gap-2"><input type="date" id="stats-date-start"><input type="date" id="stats-date-end"></div></div>
+            <div><label class="filter-label" for="stats-chart-type">Chart Type</label><select id="stats-chart-type"><option value="bar">Bar</option><option value="line">Line</option></select></div>
+            <div><label class="filter-label" for="stats-data-select">Data</label><select id="stats-data-select" multiple size="4" class="h-auto"></select></div>
+            <button id="stats-apply-btn" class="bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700 h-10">Apply</button>
         </div>
+        <div class="bg-white p-4 rounded-lg shadow"><canvas id="stats-chart"></canvas></div>
     </div>
 </main>
 
@@ -142,88 +133,37 @@
     // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-    // Firebase Configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
-        authDomain: "carlosm-interactive-cv.firebaseapp.com",
-        projectId: "carlosm-interactive-cv",
-        storageBucket: "carlosm-interactive-cv.firebasestorage.app",
-        messagingSenderId: "976558418058",
-        appId: "1:976558418058:web:1dc19bcd40915ea233e573"
-    };
-
-    // Initialize Firebase
+    // Firebase Config
+    const firebaseConfig = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", storageBucket: "carlosm-interactive-cv.firebasestorage.app", messagingSenderId: "976558418058", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     // Global State
-    let allMessages = [];
-    let allRatings = [];
-    let blockedSenders = [];
+    let allMessages = [], allRatings = [], allBlockedSenders = [];
     let statsChart = null;
+    const MESSAGE_TOPICS = ["General Inquiry", "Job Opportunity", "Collaboration", "Feedback", "Other"];
 
     // DOM Elements
-    const loginOverlay = document.getElementById('login-overlay');
-    const loginForm = document.getElementById('login-form');
-    const loginError = document.getElementById('login-error');
-    const dashboard = document.getElementById('dashboard');
-    const logoutBtn = document.getElementById('logout-btn');
+    const loginOverlay = document.getElementById('login-overlay'), dashboard = document.getElementById('dashboard'), logoutBtn = document.getElementById('logout-btn');
+    const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn') };
+    const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane') };
+    const lists = { messages: document.getElementById('messages-list'), ratings: document.getElementById('ratings-list'), rejected: document.getElementById('rejected-list'), blocked: document.getElementById('blocked-list') };
 
-    const tabButtons = {
-        messages: document.getElementById('messages-tab-btn'),
-        ratings: document.getElementById('ratings-tab-btn'),
-        rejected: document.getElementById('rejected-tab-btn'),
-        stats: document.getElementById('stats-tab-btn'),
-    };
-
-    const panes = {
-        messages: document.getElementById('messages-pane'),
-        ratings: document.getElementById('ratings-pane'),
-        rejected: document.getElementById('rejected-pane'),
-        stats: document.getElementById('stats-pane'),
-    };
-
-    const lists = {
-        messages: document.getElementById('messages-list'),
-        ratings: document.getElementById('ratings-list'),
-        rejected: document.getElementById('rejected-list'),
-    };
-
-    // --- Authentication ---
-    onAuthStateChanged(auth, user => {
-        if (user) {
-            loginOverlay.style.display = 'none';
-            dashboard.classList.remove('hidden');
-            initDashboard();
-        } else {
-            loginOverlay.style.display = 'flex';
-            dashboard.classList.add('hidden');
-        }
-    });
-
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value)
-            .catch(error => {
-                loginError.textContent = "Login failed. Please check your email and password.";
-                console.error("Login Error:", error);
-            });
-    });
-
+    // --- Auth ---
+    onAuthStateChanged(auth, user => { if (user) { loginOverlay.style.display = 'none'; dashboard.classList.remove('hidden'); initDashboard(); } else { loginOverlay.style.display = 'flex'; dashboard.classList.add('hidden'); } });
+    document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, e.target.email.value, e.target.password.value).catch(err => { document.getElementById('login-error').textContent = "Login failed."; console.error(err); }); });
     logoutBtn.addEventListener('click', () => signOut(auth));
 
-    // --- Dashboard Initialization ---
+    // --- Init ---
     function initDashboard() {
-        Object.keys(tabButtons).forEach(key => {
-            tabButtons[key].addEventListener('click', () => switchTab(key));
-        });
-
+        Object.keys(tabButtons).forEach(key => tabButtons[key].addEventListener('click', () => switchTab(key)));
         loadAllData();
         setupFilterListeners();
         setupBulkActionButtons();
+        populateStaticDropdowns();
     }
 
     function switchTab(tabKey) {
@@ -232,397 +172,278 @@
             tabButtons[key].classList.toggle('active', isActive);
             panes[key].classList.toggle('hidden', !isActive);
         });
-        if (tabKey === 'stats') {
-            renderStatisticsGraph();
-        }
+        if (tabKey === 'stats') renderStatisticsGraph();
+    }
+
+    function populateStaticDropdowns() {
+        const topicSelect = document.getElementById('msg-filter-topic-select');
+        topicSelect.innerHTML = `<option value="">All Topics</option>` + MESSAGE_TOPICS.map(t => `<option value="${t}">${t}</option>`).join('');
+
+        document.getElementById('msg-filter-attachment').innerHTML = `<option value="">Any Attachment</option><option value="yes">With Attachments</option><option value="no">No Attachments</option>`;
+        document.getElementById('rate-filter-rate').innerHTML = `<option value="">Any Rate</option>` + [5,4,3,2,1].map(n => `<option value="${n}">${n} Stars</option>`).join('');
+        document.getElementById('rate-filter-status').innerHTML = `<option value="">Any Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>`;
+
+        const statsDataSelect = document.getElementById('stats-data-select');
+        statsDataSelect.innerHTML = `<option value="messages" selected>New Messages</option><option value="ratings" selected>New CV Ratings</option><option value="rejected">Rejected Messages</option><option value="blocked">Blocked Senders</option>`;
     }
 
     // --- Data Loading ---
     function loadAllData() {
-        // Load Blocked Senders first
-        onSnapshot(collection(db, "blocked_senders"), (snapshot) => {
-            blockedSenders = snapshot.docs.map(doc => doc.id);
-            // Now load other data that depends on the blocked list
-            loadMessages();
-            loadRatings();
-        });
-    }
-
-    function loadMessages() {
-        const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-        onSnapshot(q, (snapshot) => {
-            allMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            applyAllFilters();
-        });
-    }
-
-    function loadRatings() {
-        const q = query(collection(db, "ratings"), orderBy("createdAt", "desc"));
-        onSnapshot(q, (snapshot) => {
-            allRatings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            applyAllFilters();
-        });
+        onSnapshot(collection(db, "blocked_senders"), snap => { allBlockedSenders = snap.docs.map(d => ({ id: d.id, ...d.data() })); applyAllFilters(); });
+        onSnapshot(query(collection(db, "messages")), snap => { allMessages = snap.docs.map(d => ({ id: d.id, ...d.data() })); applyAllFilters(); });
+        onSnapshot(query(collection(db, "ratings")), snap => { allRatings = snap.docs.map(d => ({ id: d.id, ...d.data() })); applyAllFilters(); });
     }
 
     // --- Filtering Logic ---
     function setupFilterListeners() {
-        document.querySelectorAll('.filter-container input, .filter-container select').forEach(el => {
-            el.addEventListener('input', applyAllFilters);
+        document.querySelectorAll('.filter-container input, .filter-container select').forEach(el => el.addEventListener('input', applyAllFilters));
+        document.getElementById('msg-filter-topic-select').addEventListener('change', e => {
+            document.getElementById('msg-other-topic-container').classList.toggle('hidden', e.target.value !== 'Other');
+            applyAllFilters();
         });
+        document.getElementById('stats-apply-btn').addEventListener('click', renderStatisticsGraph);
     }
 
     function applyAllFilters() {
-        filterAndRenderMessages();
-        filterAndRenderRatings();
+        const blockedEmails = allBlockedSenders.map(u => u.id);
+        const inboxMessages = allMessages.filter(m => m.status !== 'rejected' && !blockedEmails.includes(m.email.toLowerCase()));
+        const rejectedMessages = allMessages.filter(m => m.status === 'rejected');
+
+        filterAndRender(inboxMessages, filterMessageCard, lists.messages, document.getElementById('messages-count'));
+        filterAndRender(allRatings.filter(r => !blockedEmails.includes(r.email.toLowerCase())), filterRatingCard, lists.ratings, document.getElementById('ratings-count'));
+        filterAndRender(rejectedMessages, filterRejectedMessageCard, lists.rejected, document.getElementById('rejected-count'));
+        filterAndRender(allBlockedSenders, filterBlockedSenderCard, lists.blocked, document.getElementById('blocked-count'));
+
+        updateFilterCounts(inboxMessages, allRatings);
+        updateNewIndicators();
     }
 
-    function filterAndRenderMessages() {
+    function filterAndRender(items, filterFn, container, countEl) {
+        const filtered = items.filter(filterFn);
+        if (countEl) countEl.textContent = `(${filtered.length} / ${items.length})`;
+        renderList(container, filtered, (item) => filterFn(item, true)); // Pass a flag to get renderer
+    }
+
+    const dateInRange = (date, start, end) => (!start || date >= start) && (!end || date <= end);
+
+    function filterMessageCard(msg, forRender = false) {
+        if (forRender) return renderMessageCard(msg);
         const name = document.getElementById('msg-filter-name').value.toLowerCase();
         const email = document.getElementById('msg-filter-email').value.toLowerCase();
-        const topic = document.getElementById('msg-filter-topic').value.toLowerCase();
-        const date = document.getElementById('msg-filter-date').value;
+        const topicSelect = document.getElementById('msg-filter-topic-select').value;
+        const topicOther = document.getElementById('msg-filter-topic-other').value.toLowerCase();
+        const dateStart = document.getElementById('msg-filter-date-start').value;
+        const dateEnd = document.getElementById('msg-filter-date-end').value;
         const attachment = document.getElementById('msg-filter-attachment').value;
-        const blocked = document.getElementById('msg-filter-blocked').value;
 
-        const filtered = allMessages.filter(msg => {
-            const msgDate = msg.createdAt ? msg.createdAt.toDate().toISOString().split('T')[0] : '';
-            const isBlocked = blockedSenders.includes(msg.email.toLowerCase());
+        const msgDate = msg.createdAt ? msg.createdAt.toDate().toISOString().split('T')[0] : '';
+        let topicMatch = true;
+        if (topicSelect) {
+            if (topicSelect === 'Other') topicMatch = msg.topic.toLowerCase().includes(topicOther);
+            else topicMatch = msg.topic === topicSelect;
+        }
 
-            if (name && !msg.name.toLowerCase().includes(name)) return false;
-            if (email && !msg.email.toLowerCase().includes(email)) return false;
-            if (topic && !msg.topic.toLowerCase().includes(topic)) return false;
-            if (date && msgDate !== date) return false;
-            if (attachment === 'yes' && !msg.fileURL) return false;
-            if (attachment === 'no' && msg.fileURL) return false;
-            if (blocked === 'yes' && !isBlocked) return false;
-            if (blocked === 'no' && isBlocked) return false;
-            return true;
-        });
-
-        const inboxMessages = filtered.filter(m => m.status !== 'rejected');
-        const rejectedMessages = filtered.filter(m => m.status === 'rejected');
-
-        renderList(lists.messages, inboxMessages, renderMessageCard);
-        renderList(lists.rejected, rejectedMessages, renderRejectedMessageCard);
+        return (!name || msg.name.toLowerCase().includes(name)) &&
+            (!email || msg.email.toLowerCase().includes(email)) &&
+            topicMatch &&
+            dateInRange(msgDate, dateStart, dateEnd) &&
+            (attachment === '' || (attachment === 'yes' && msg.fileURL) || (attachment === 'no' && !msg.fileURL));
     }
 
-    function filterAndRenderRatings() {
+    function filterRatingCard(r, forRender = false) {
+        if (forRender) return renderRatingCard(r);
         const name = document.getElementById('rate-filter-name').value.toLowerCase();
         const email = document.getElementById('rate-filter-email').value.toLowerCase();
-        const date = document.getElementById('rate-filter-date').value;
+        const dateStart = document.getElementById('rate-filter-date-start').value;
+        const dateEnd = document.getElementById('rate-filter-date-end').value;
         const rate = document.getElementById('rate-filter-rate').value;
         const status = document.getElementById('rate-filter-status').value;
-        const blocked = document.getElementById('rate-filter-blocked').value;
 
-        const filtered = allRatings.filter(r => {
-            const rDate = r.createdAt ? r.createdAt.toDate().toISOString().split('T')[0] : '';
-            const isBlocked = blockedSenders.includes(r.email.toLowerCase());
+        const rDate = r.createdAt ? r.createdAt.toDate().toISOString().split('T')[0] : '';
+        return (!name || r.name.toLowerCase().includes(name)) &&
+            (!email || r.email.toLowerCase().includes(email)) &&
+            dateInRange(rDate, dateStart, dateEnd) &&
+            (!rate || r.rating.toString() === rate) &&
+            (!status || r.status === status);
+    }
 
-            if (name && !r.name.toLowerCase().includes(name)) return false;
-            if (email && !r.email.toLowerCase().includes(email)) return false;
-            if (date && rDate !== date) return false;
-            if (rate && r.rating.toString() !== rate) return false;
-            if (status && r.status !== status) return false;
-            if (blocked === 'yes' && !isBlocked) return false;
-            if (blocked === 'no' && isBlocked) return false;
-            return true;
-        });
+    function filterRejectedMessageCard(msg, forRender = false) {
+        if (forRender) return renderRejectedMessageCard(msg);
+        const name = document.getElementById('rej-filter-name').value.toLowerCase();
+        const email = document.getElementById('rej-filter-email').value.toLowerCase();
+        const dateStart = document.getElementById('rej-filter-date-start').value;
+        const dateEnd = document.getElementById('rej-filter-date-end').value;
+        const rejDate = msg.rejectedAt ? msg.rejectedAt.toDate().toISOString().split('T')[0] : '';
+        return (!name || msg.name.toLowerCase().includes(name)) &&
+            (!email || msg.email.toLowerCase().includes(email)) &&
+            dateInRange(rejDate, dateStart, dateEnd);
+    }
 
-        renderList(lists.ratings, filtered, renderRatingCard);
+    function filterBlockedSenderCard(user, forRender = false) {
+        if (forRender) return renderBlockedSenderCard(user);
+        const email = document.getElementById('block-filter-email').value.toLowerCase();
+        const dateStart = document.getElementById('block-filter-date-start').value;
+        const dateEnd = document.getElementById('block-filter-date-end').value;
+        const blockDate = user.blockedAt ? user.blockedAt.toDate().toISOString().split('T')[0] : '';
+        return (!email || user.id.toLowerCase().includes(email)) &&
+            dateInRange(blockDate, dateStart, dateEnd);
+    }
+
+    function updateFilterCounts(messages, ratings) {
+        const attachmentCounts = { yes: messages.filter(m => m.fileURL).length, no: messages.filter(m => !m.fileURL).length };
+        document.getElementById('msg-filter-attachment-label').textContent = `Attachment (Yes: ${attachmentCounts.yes}, No: ${attachmentCounts.no})`;
+
+        const ratingCounts = ratings.reduce((acc, r) => { acc[r.rating] = (acc[r.rating] || 0) + 1; return acc; }, {});
+        document.getElementById('rate-filter-rate-label').textContent = `Rating (${Object.entries(ratingCounts).map(([k,v]) => `${k}*: ${v}`).join(', ')})`;
+
+        const statusCounts = ratings.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {});
+        document.getElementById('rate-filter-status-label').textContent = `Status (${Object.entries(statusCounts).map(([k,v]) => `${k}: ${v}`).join(', ')})`;
+    }
+
+    function updateNewIndicators() {
+        const hasPending = allRatings.some(r => r.status === 'pending');
+        document.getElementById('ratings-new-indicator').classList.toggle('hidden', !hasPending);
     }
 
     // --- Rendering ---
     function renderList(container, items, renderer) {
-        if (items.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-500 py-4">No items match the current filters.</p>';
-            return;
-        }
-        container.innerHTML = items.map(renderer).join('');
+        container.innerHTML = items.length ? items.map(renderer).join('') : '<p class="text-center text-gray-500 py-4">No items to display.</p>';
         addCardEventListeners();
     }
 
-    function createCardHTML(doc, content, actions, isChecked = false) {
-        return `
-            <div class="item-card p-4 flex gap-4 items-start">
-                <input type="checkbox" class="bulk-checkbox mt-2" data-id="${doc.id}" data-email="${doc.email}" ${isChecked ? 'checked' : ''}>
-                <div class="flex-grow">
-                    ${content}
-                    <div class="flex items-center flex-wrap gap-2 mt-4">
-                        ${actions}
-                    </div>
-                </div>
-            </div>
-        `;
+    function createCardHTML(doc, content, actions) {
+        return `<div class="item-card p-4 flex gap-4 items-start"><input type="checkbox" class="bulk-checkbox mt-2" data-id="${doc.id}" data-email="${doc.email}" data-status="${doc.status || ''}"><div class="flex-grow">${content}<div class="flex items-center flex-wrap gap-2 mt-4">${actions}</div></div></div>`;
     }
 
     function renderMessageCard(msg) {
         const date = msg.createdAt ? msg.createdAt.toDate().toLocaleString() : 'N/A';
-        const attachmentLink = msg.fileURL ? `<a href="${msg.fileURL}" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline">View Attachment</a>` : '<span>No attachment</span>';
-        const isBlocked = blockedSenders.includes(msg.email.toLowerCase());
-
-        const content = `
-            <div class="flex justify-between items-start mb-2">
-                <div>
-                    <p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p>
-                    <p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p>
-                </div>
-                <div class="flex flex-col items-end">
-                     <span class="text-xs text-gray-500 mb-2">${date}</span>
-                     ${isBlocked ? '<span class="text-xs font-bold text-red-600">BLOCKED</span>' : ''}
-                </div>
-            </div>
-            <p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${msg.message}</p>
-            <p class="text-sm">${attachmentLink}</p>
-        `;
-        const actions = `
-            <button data-action="reject-msg" data-id="${msg.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>
-            <button data-action="block" data-email="${msg.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>
-        `;
+        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p><p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p></div><span class="text-xs text-gray-500 mb-2">${date}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${msg.message}</p><p class="text-sm">${msg.fileURL ? `<a href="${msg.fileURL}" target="_blank" class="text-cyan-600 hover:underline">View Attachment</a>` : 'No attachment'}</p>`;
+        const actions = `<button data-action="reject-msg" data-id="${msg.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button><button data-action="block" data-email="${msg.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
         return createCardHTML(msg, content, actions);
+    }
+
+    function renderRatingCard(r) {
+        const date = r.createdAt ? r.createdAt.toDate().toLocaleString() : 'N/A';
+        const stars = '&#9733;'.repeat(r.rating) + '&#9734;'.repeat(5 - r.rating);
+        let actions = '';
+        if (r.status === 'pending') actions = `<button data-action="approve" data-id="${r.id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button><button data-action="approve-anon" data-id="${r.id}" class="bg-sky-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-sky-600">Approve Anonymously</button><button data-action="reject" data-id="${r.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>`;
+        else if (r.status === 'approved') actions = `<button data-action="retract" data-id="${r.id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract</button>`;
+        else if (r.status === 'rejected') actions = `<button data-action="restore" data-id="${r.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore</button>`;
+        actions += `<button data-action="block" data-email="${r.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
+        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${r.name} <span class="font-normal text-sm text-gray-500">&lt;${r.email}&gt;</span></p><p class="text-xl text-yellow-400">${stars}</p></div><div class="text-right"><div class="flex items-center gap-2 mb-1"><span class="status-dot status-${r.status}"></span><span class="text-sm font-medium capitalize">${r.status}</span></div><span class="text-xs text-gray-500 mb-2 block">${date}</span></div></div>${r.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${r.comment}</p>` : ''}`;
+        return createCardHTML(r, content, actions);
     }
 
     function renderRejectedMessageCard(msg) {
         const date = msg.rejectedAt ? `Rejected: ${msg.rejectedAt.toDate().toLocaleString()}` : 'N/A';
-        const restoredDate = msg.restoredAt ? `<br>Restored: ${msg.restoredAt.toDate().toLocaleString()}` : '';
-        const content = `
-            <div class="flex justify-between items-start mb-2">
-                <div>
-                    <p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p>
-                    <p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p>
-                </div>
-                <div class="text-right">
-                     <span class="text-xs text-gray-500">${date}${restoredDate}</span>
-                </div>
-            </div>
-            <p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md">${msg.message}</p>
-        `;
+        const content = `<div class="flex justify-between items-start mb-2"><p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p><span class="text-xs text-gray-500">${date}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md">${msg.message}</p>`;
         const actions = `<button data-action="restore-msg" data-id="${msg.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore to Inbox</button>`;
         return createCardHTML(msg, content, actions);
     }
 
-    function renderRatingCard(rating) {
-        const date = rating.createdAt ? rating.createdAt.toDate().toLocaleString() : 'N/A';
-        const starsHTML = '&#9733;'.repeat(rating.rating) + '&#9734;'.repeat(5 - rating.rating);
-        const commentHTML = rating.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${rating.comment}</p>` : '';
-        const isBlocked = blockedSenders.includes(rating.email.toLowerCase());
-
-        let actionButtons = '';
-        if (rating.status === 'pending') {
-            actionButtons = `
-                <button data-action="approve" data-id="${rating.id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button>
-                <button data-action="approve-anon" data-id="${rating.id}" class="bg-sky-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-sky-600">Approve Anonymously</button>
-                <button data-action="reject" data-id="${rating.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>
-            `;
-        } else if (rating.status === 'approved') {
-            actionButtons = `<button data-action="retract" data-id="${rating.id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract</button>`;
-        } else if (rating.status === 'rejected') {
-            actionButtons = `<button data-action="restore" data-id="${rating.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore</button>`;
-        }
-        actionButtons += `<button data-action="block" data-email="${rating.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
-
-        const content = `
-            <div class="flex justify-between items-start mb-2">
-                <div>
-                    <p class="font-bold text-lg">${rating.name} <span class="font-normal text-sm text-gray-500">&lt;${rating.email}&gt;</span></p>
-                    <p class="text-xl text-yellow-400">${starsHTML}</p>
-                </div>
-                <div class="text-right">
-                   <div class="flex items-center gap-2 mb-1">
-                        <span class="status-dot status-${rating.status}"></span>
-                        <span class="text-sm font-medium capitalize">${rating.status}</span>
-                        ${isBlocked ? '<span class="text-xs font-bold text-red-600 ml-2">BLOCKED</span>' : ''}
-                   </div>
-                   <span class="text-xs text-gray-500 mb-2 block">${date}</span>
-                </div>
-            </div>
-            ${commentHTML}
-        `;
-        return createCardHTML(rating, content, actionButtons);
+    function renderBlockedSenderCard(user) {
+        const date = user.blockedAt ? `Blocked: ${user.blockedAt.toDate().toLocaleString()}` : 'N/A';
+        const content = `<div class="flex justify-between items-center"><p class="font-bold text-lg">${user.id}</p><span class="text-xs text-gray-500">${date}</span></div>`;
+        const actions = `<button data-action="unblock" data-email="${user.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Unblock Sender</button>`;
+        return `<div class="item-card p-4">${content}<div class="flex items-center flex-wrap gap-2 mt-2">${actions}</div></div>`;
     }
 
-    // --- Event Listeners for Cards ---
+    // --- Event Listeners & Actions ---
     function addCardEventListeners() {
         document.querySelectorAll('[data-action]').forEach(button => {
             button.addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
-                const id = e.target.dataset.id;
-                const email = e.target.dataset.email;
-
-                // Rating Actions
+                const { action, id, email } = e.target.dataset;
                 if (action === 'approve') updateRatingStatus(id, { status: 'approved', isAnonymous: false });
-                if (action === 'approve-anon') updateRatingStatus(id, { status: 'approved', isAnonymous: true });
-                if (action === 'reject') updateRatingStatus(id, { status: 'rejected' });
-                if (action === 'retract' || action === 'restore') updateRatingStatus(id, { status: 'pending' });
-
-                // Message Actions
-                if (action === 'reject-msg') updateMessageStatus(id, 'rejected');
-                if (action === 'restore-msg') updateMessageStatus(id, 'inbox');
-
-                // Common Actions
-                if (action === 'block' && confirm(`Are you sure you want to block ${email}?`)) blockSender(email);
+                else if (action === 'approve-anon') updateRatingStatus(id, { status: 'approved', isAnonymous: true });
+                else if (action === 'reject') updateRatingStatus(id, { status: 'rejected' });
+                else if (action === 'retract' || action === 'restore') updateRatingStatus(id, { status: 'pending' });
+                else if (action === 'reject-msg') updateMessageStatus(id, 'rejected');
+                else if (action === 'restore-msg') updateMessageStatus(id, 'inbox');
+                else if (action === 'block' && confirm(`Block ${email}?`)) blockSender(email);
+                else if (action === 'unblock' && confirm(`Unblock ${email}?`)) unblockSender(email);
             });
         });
     }
 
-    // --- Firestore Update Functions ---
-    async function updateRatingStatus(docId, payload) {
-        await updateDoc(doc(db, "ratings", docId), payload);
-    }
-
-    async function updateMessageStatus(docId, status) {
+    async function updateRatingStatus(id, payload) { await updateDoc(doc(db, "ratings", id), payload); }
+    async function updateMessageStatus(id, status) {
         const payload = { status };
         if (status === 'rejected') payload.rejectedAt = serverTimestamp();
-        if (status === 'inbox') payload.restoredAt = serverTimestamp();
-        await updateDoc(doc(db, "messages", docId), payload);
+        else if (status === 'inbox') payload.restoredAt = serverTimestamp();
+        await updateDoc(doc(db, "messages", id), payload);
     }
-
-    async function blockSender(email) {
-        if (!email) return;
-        await setDoc(doc(db, "blocked_senders", email.toLowerCase()), { blockedAt: serverTimestamp() });
-        alert(`Sender ${email} has been blocked.`);
-    }
+    async function blockSender(email) { if(email) await setDoc(doc(db, "blocked_senders", email.toLowerCase()), { blockedAt: serverTimestamp() }); }
+    async function unblockSender(email) { if(email) await deleteDoc(doc(db, "blocked_senders", email.toLowerCase())); }
 
     // --- Bulk Actions ---
     function setupBulkActionButtons() {
-        const msgActions = `
-            <button id="msg-bulk-action-btn" class="bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Bulk Actions <i class="fa-solid fa-caret-down ml-2"></i></button>
-            <div id="msg-bulk-dropdown" class="bulk-actions-dropdown">
-                <a data-bulk-action="reject-msg">Reject Selected</a>
-                <a data-bulk-action="block">Block Sender of Selected</a>
-            </div>
-        `;
-        document.getElementById('messages-bulk-actions').innerHTML = msgActions;
-
-        const rateActions = `
-            <button id="rate-bulk-action-btn" class="bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Bulk Actions <i class="fa-solid fa-caret-down ml-2"></i></button>
-            <div id="rate-bulk-dropdown" class="bulk-actions-dropdown">
-                <a data-bulk-action="approve">Approve Selected</a>
-                <a data-bulk-action="approve-anon">Approve Anonymously</a>
-                <a data-bulk-action="reject">Reject Selected</a>
-                <a data-bulk-action="block">Block Sender of Selected</a>
-            </div>
-        `;
-        document.getElementById('ratings-bulk-actions').innerHTML = rateActions;
-
-        // Dropdown toggle logic
-        document.getElementById('msg-bulk-action-btn').addEventListener('click', () => document.getElementById('msg-bulk-dropdown').classList.toggle('show-dropdown'));
-        document.getElementById('rate-bulk-action-btn').addEventListener('click', () => document.getElementById('rate-bulk-dropdown').classList.toggle('show-dropdown'));
-
-        // Action listeners
-        document.querySelectorAll('.bulk-actions-dropdown a').forEach(a => {
-            a.addEventListener('click', (e) => {
-                const action = e.target.dataset.bulkAction;
-                const paneId = e.target.closest('.bulk-actions-container').parentElement.parentElement.id;
-                handleBulkAction(action, paneId);
-                e.target.parentElement.classList.remove('show-dropdown');
-            });
-        });
+        document.getElementById('messages-bulk-actions').innerHTML = `<button class="bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Bulk <i class="fa-solid fa-caret-down ml-2"></i></button><div class="bulk-actions-dropdown"><a data-bulk-action="reject-msg">Reject</a><a data-bulk-action="block">Block Sender</a></div>`;
+        document.getElementById('ratings-bulk-actions').innerHTML = `<button class="bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Bulk <i class="fa-solid fa-caret-down ml-2"></i></button><div class="bulk-actions-dropdown"><a data-bulk-action="approve">Approve</a><a data-bulk-action="approve-anon">Approve Anon</a><a data-bulk-action="reject">Reject</a><a data-bulk-action="block">Block Sender</a></div>`;
+        document.querySelectorAll('.bulk-actions-container button').forEach(btn => btn.addEventListener('click', (e) => e.currentTarget.nextElementSibling.classList.toggle('show-dropdown')));
+        document.querySelectorAll('.bulk-actions-dropdown a').forEach(a => a.addEventListener('click', (e) => {
+            const action = e.target.dataset.bulkAction;
+            const paneId = e.target.closest('.bulk-actions-container').parentElement.parentElement.id;
+            handleBulkAction(action, paneId);
+            e.target.parentElement.classList.remove('show-dropdown');
+        }));
     }
 
     async function handleBulkAction(action, paneId) {
         const container = document.getElementById(paneId);
-        const selectedCheckboxes = container.querySelectorAll('.bulk-checkbox:checked');
-        if (selectedCheckboxes.length === 0) {
-            alert("No items selected.");
-            return;
-        }
+        const selected = Array.from(container.querySelectorAll('.bulk-checkbox:checked'));
+        if (selected.length === 0) return alert("No items selected.");
 
-        if (!confirm(`Are you sure you want to perform '${action}' on ${selectedCheckboxes.length} items?`)) return;
+        const blockedEmails = allBlockedSenders.map(u => u.id);
+        const actions = {
+            'reject-msg': { valid: s => s.dataset.status !== 'rejected', fn: id => updateMessageStatus(id, 'rejected') },
+            'approve': { valid: s => s.dataset.status === 'pending', fn: id => updateRatingStatus(id, { status: 'approved', isAnonymous: false }) },
+            'approve-anon': { valid: s => s.dataset.status === 'pending', fn: id => updateRatingStatus(id, { status: 'approved', isAnonymous: true }) },
+            'reject': { valid: s => s.dataset.status !== 'rejected', fn: id => updateRatingStatus(id, { status: 'rejected' }) },
+            'block': { valid: s => !blockedEmails.includes(s.dataset.email.toLowerCase()), fn: (id, email) => blockSender(email) },
+        };
+        const currentAction = actions[action];
+        if (!currentAction) return;
 
-        for (const checkbox of selectedCheckboxes) {
-            const id = checkbox.dataset.id;
-            const email = checkbox.dataset.email;
+        const validSelections = selected.filter(currentAction.valid);
+        const invalidCount = selected.length - validSelections.length;
 
-            if (action === 'block') {
-                await blockSender(email);
-            } else if (paneId === 'messages-pane') {
-                if (action === 'reject-msg') await updateMessageStatus(id, 'rejected');
-            } else if (paneId === 'ratings-pane') {
-                if (action === 'approve') await updateRatingStatus(id, { status: 'approved', isAnonymous: false });
-                if (action === 'approve-anon') await updateRatingStatus(id, { status: 'approved', isAnonymous: true });
-                if (action === 'reject') await updateRatingStatus(id, { status: 'rejected' });
-            }
-        }
-        alert("Bulk action completed.");
+        if (validSelections.length === 0) return alert("No valid items selected for this action.");
+        if (!confirm(`Perform '${action}' on ${validSelections.length} items?` + (invalidCount > 0 ? `\n(${invalidCount} invalid items will be skipped)`: ''))) return;
+
+        for (const checkbox of validSelections) await currentAction.fn(checkbox.dataset.id, checkbox.dataset.email);
+        alert(`Action completed on ${validSelections.length} items.`);
     }
 
     // --- Statistics Graph ---
     function renderStatisticsGraph() {
         const ctx = document.getElementById('stats-chart').getContext('2d');
-        const labels = [];
-        const data = {
-            messages: {},
-            ratings: {},
-            rejected: {},
-            blocked: {},
+        const dateStart = document.getElementById('stats-date-start').value;
+        const dateEnd = document.getElementById('stats-date-end').value;
+        const chartType = document.getElementById('stats-chart-type').value;
+        const selectedData = Array.from(document.getElementById('stats-data-select').selectedOptions).map(o => o.value);
+
+        const dataMap = {
+            messages: { items: allMessages, dateField: 'createdAt', label: 'New Messages', color: 'rgba(54, 162, 235, 0.6)' },
+            ratings: { items: allRatings, dateField: 'createdAt', label: 'New CV Ratings', color: 'rgba(255, 206, 86, 0.6)' },
+            rejected: { items: allMessages.filter(m => m.status === 'rejected'), dateField: 'rejectedAt', label: 'Rejected Messages', color: 'rgba(255, 99, 132, 0.6)' },
+            blocked: { items: allBlockedSenders, dateField: 'blockedAt', label: 'Blocked Senders', color: 'rgba(75, 192, 192, 0.6)' },
         };
 
-        // Get last 6 months
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
-            const label = d.toLocaleString('default', { month: 'short', year: '2-digit' });
-            labels.push(label);
-            data.messages[label] = 0;
-            data.ratings[label] = 0;
-            data.rejected[label] = 0;
-            data.blocked[label] = 0;
-        }
+        const datasets = selectedData.map(key => {
+            const source = dataMap[key];
+            const data = source.items.filter(item => item[source.dateField] && dateInRange(item[source.dateField].toDate().toISOString().split('T')[0], dateStart, dateEnd)).length;
+            return { label: source.label, data: [data], backgroundColor: source.color };
+        });
 
-        const processItems = (items, type, dateField) => {
-            items.forEach(item => {
-                if (!item[dateField]) return;
-                const date = item[dateField].toDate();
-                const label = date.toLocaleString('default', { month: 'short', year: '2-digit' });
-                if (data[type][label] !== undefined) {
-                    data[type][label]++;
-                }
-            });
-        };
-
-        processItems(allMessages, 'messages', 'createdAt');
-        processItems(allRatings, 'ratings', 'createdAt');
-        processItems(allMessages.filter(m => m.status === 'rejected'), 'rejected', 'rejectedAt');
-
-        // This is a simplification; for true blocked counts, we'd need to query the collection differently
-        const blockedData = blockedSenders.map(email => ({ email, blockedAt: new Date() })); // Mocking date for demo
-        // In a real app, you'd fetch the 'blockedAt' timestamp from Firestore for each blocked sender.
-        // For now, we just show the total count.
-
-        if (statsChart) {
-            statsChart.destroy();
-        }
-
+        if (statsChart) statsChart.destroy();
         statsChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'New Messages', data: Object.values(data.messages), backgroundColor: 'rgba(54, 162, 235, 0.6)' },
-                    { label: 'New CV Ratings', data: Object.values(data.ratings), backgroundColor: 'rgba(255, 206, 86, 0.6)' },
-                    { label: 'Rejected Messages', data: Object.values(data.rejected), backgroundColor: 'rgba(255, 99, 132, 0.6)' },
-                ]
-            },
-            options: {
-                responsive: true,
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-            }
+            type: chartType,
+            data: { labels: ['Selected Range'], datasets: datasets },
+            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { position: 'top' } } }
         });
     }
 
-    // Close dropdown if clicked outside
-    window.onclick = function(event) {
-        if (!event.target.matches('.bulk-actions-container button')) {
-            var dropdowns = document.getElementsByClassName("bulk-actions-dropdown");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show-dropdown')) {
-                    openDropdown.classList.remove('show-dropdown');
-                }
-            }
-        }
-    }
-
+    window.onclick = function(event) { if (!event.target.matches('.bulk-actions-container button, .bulk-actions-container i')) { document.querySelectorAll(".bulk-actions-dropdown.show-dropdown").forEach(d => d.classList.remove('show-dropdown')); } }
 </script>
 </body>
 </html>
