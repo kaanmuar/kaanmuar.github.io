@@ -435,5 +435,48 @@ describe('Admin Panel Test Suite @regression', () => {
             contactWidget.messageForm.find('select[name="topic"]').focus().blur();
             contactWidget.messageForm.find('#message-topic-error').should('be.visible');
         });
+
+        it('should correctly display and interact with the social share feature', () => {
+            cvPage.visitCV();
+
+            // The main share icon should be visible
+            cy.get('#social-share-toggle-icon').should('be.visible');
+
+            // The options container should exist but not be visible because of the 'collapsed' class logic
+            cy.get('#social-share-options').should('not.be.visible');
+
+            // Click the icon to expand the menu
+            cy.get('#social-share-selector').click();
+
+            // Now the options should be visible
+            cy.get('#social-share-options').should('be.visible');
+
+            // --- Robust Link Verification ---
+            // Get all share links (<a> tags), but exclude the copy button
+            cy.get('#social-share-options a').then($links => {
+                // Pick a random link to test from the list
+                const randomIndex = Math.floor(Math.random() * $links.length);
+                const randomLink = $links.eq(randomIndex);
+                const socialNetwork = randomLink.data('analytics-label');
+
+                cy.log(`--- Randomly testing share link for: ${socialNetwork} ---`);
+
+                // Check that it has a valid href
+                cy.wrap(randomLink)
+                    .should('have.attr', 'href')
+                    .and('not.be.empty');
+
+                // Check that it opens in a new tab
+                cy.wrap(randomLink)
+                    .should('have.attr', 'target', '_blank');
+            });
+
+            // --- Specific Test for Copy Link Button ---
+            cy.get('#copy-link-btn').should('be.visible').click();
+            cy.get('#copy-link-tooltip').should('contain.text', 'Copied!');
+
+            // Verify the tooltip resets
+            cy.get('#copy-link-tooltip', { timeout: 3000 }).should('contain.text', 'Copy Link');
+        });
     });
 });
