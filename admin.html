@@ -68,13 +68,19 @@
             <div class="title-container"><h2 class="text-2xl font-semibold">Inbox Messages</h2><span id="messages-count" class="font-medium text-gray-500"></span></div>
             <div id="messages-bulk-actions" class="bulk-actions-container"></div>
         </div>
-        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div><label class="filter-label" for="msg-filter-name">Name</label><input type="text" id="msg-filter-name" placeholder="Filter by Name..."></div>
-            <div><label class="filter-label" for="msg-filter-email">Email</label><input type="email" id="msg-filter-email" placeholder="Filter by Email..."></div>
-            <div><label class="filter-label" for="msg-filter-topic-select">Topic</label><select id="msg-filter-topic-select"></select></div>
-            <div id="msg-other-topic-container" class="hidden"><label class="filter-label" for="msg-filter-topic-other">Other Topic</label><input type="text" id="msg-filter-topic-other" placeholder="Enter topic..."></div>
-            <div><label class="filter-label" for="msg-filter-date-start">Date Range</label><div class="flex gap-2"><input type="date" id="msg-filter-date-start"><input type="date" id="msg-filter-date-end"></div></div>
-            <div><label id="msg-filter-attachment-label" class="filter-label" for="msg-filter-attachment">Attachment</label><select id="msg-filter-attachment"></select></div>
+        <div class="filter-container">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div><label class="filter-label" for="msg-filter-name">Name</label><input type="text" id="msg-filter-name" placeholder="Filter by Name..."></div>
+                <div><label class="filter-label" for="msg-filter-email">Email</label><input type="email" id="msg-filter-email" placeholder="Filter by Email..."></div>
+                <div><label class="filter-label" for="msg-filter-topic-select">Topic</label><select id="msg-filter-topic-select"></select></div>
+                <div id="msg-other-topic-container" class="hidden"><label class="filter-label" for="msg-filter-topic-other">Other Topic</label><input type="text" id="msg-filter-topic-other" placeholder="Enter topic..."></div>
+                <div><label class="filter-label" for="msg-filter-date-start">Date Range</label><div class="flex gap-2"><input type="date" id="msg-filter-date-start"><input type="date" id="msg-filter-date-end"></div></div>
+                <div><label id="msg-filter-attachment-label" class="filter-label" for="msg-filter-attachment">Attachment</label><select id="msg-filter-attachment"></select></div>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button class="filter-reset-btn text-sm font-semibold py-2 px-4 rounded-md hover:bg-gray-200">Reset</button>
+                <button class="filter-apply-btn bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Apply Filters</button>
+            </div>
         </div>
         <div id="messages-list" class="space-y-4"></div>
     </div>
@@ -85,12 +91,18 @@
             <div class="title-container"><h2 class="text-2xl font-semibold">CV Ratings</h2><div id="ratings-new-indicator" class="hidden new-indicator"></div><span id="ratings-count" class="font-medium text-gray-500"></span></div>
             <div id="ratings-bulk-actions" class="bulk-actions-container"></div>
         </div>
-        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div><label class="filter-label" for="rate-filter-name">Name</label><input type="text" id="rate-filter-name" placeholder="Filter by Name..."></div>
-            <div><label class="filter-label" for="rate-filter-email">Email</label><input type="email" id="rate-filter-email" placeholder="Filter by Email..."></div>
-            <div><label class="filter-label" for="rate-filter-date-start">Date Range</label><div class="flex gap-2"><input type="date" id="rate-filter-date-start"><input type="date" id="rate-filter-date-end"></div></div>
-            <div><label id="rate-filter-rate-label" class="filter-label" for="rate-filter-rate">Rating</label><select id="rate-filter-rate"></select></div>
-            <div><label id="rate-filter-status-label" class="filter-label" for="rate-filter-status">Status</label><select id="rate-filter-status"></select></div>
+        <div class="filter-container">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div><label class="filter-label" for="rate-filter-name">Name</label><input type="text" id="rate-filter-name" placeholder="Filter by Name..."></div>
+                <div><label class="filter-label" for="rate-filter-email">Email</label><input type="email" id="rate-filter-email" placeholder="Filter by Email..."></div>
+                <div><label class="filter-label" for="rate-filter-date-start">Date Range</label><div class="flex gap-2"><input type="date" id="rate-filter-date-start"><input type="date" id="rate-filter-date-end"></div></div>
+                <div><label id="rate-filter-rate-label" class="filter-label" for="rate-filter-rate">Rating</label><select id="rate-filter-rate"></select></div>
+                <div><label id="rate-filter-status-label" class="filter-label" for="rate-filter-status">Status</label><select id="rate-filter-status"></select></div>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button class="filter-reset-btn text-sm font-semibold py-2 px-4 rounded-md hover:bg-gray-200">Reset</button>
+                <button class="filter-apply-btn bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Apply Filters</button>
+            </div>
         </div>
         <div id="ratings-list" class="space-y-4"></div>
     </div>
@@ -98,10 +110,16 @@
     <!-- Rejected Messages Pane -->
     <div id="rejected-pane" class="hidden">
         <div class="flex justify-between items-center mb-4"><div class="title-container"><h2 class="text-2xl font-semibold">Rejected Messages</h2><span id="rejected-count" class="font-medium text-gray-500"></span></div></div>
-        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div><label class="filter-label" for="rej-filter-name">Name</label><input type="text" id="rej-filter-name" placeholder="Filter by Name..."></div>
-            <div><label class="filter-label" for="rej-filter-email">Email</label><input type="email" id="rej-filter-email" placeholder="Filter by Email..."></div>
-            <div><label class="filter-label" for="rej-filter-date-start">Rejection Date</label><div class="flex gap-2"><input type="date" id="rej-filter-date-start"><input type="date" id="rej-filter-date-end"></div></div>
+        <div class="filter-container">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div><label class="filter-label" for="rej-filter-name">Name</label><input type="text" id="rej-filter-name" placeholder="Filter by Name..."></div>
+                <div><label class="filter-label" for="rej-filter-email">Email</label><input type="email" id="rej-filter-email" placeholder="Filter by Email..."></div>
+                <div><label class="filter-label" for="rej-filter-date-start">Rejection Date</label><div class="flex gap-2"><input type="date" id="rej-filter-date-start"><input type="date" id="rej-filter-date-end"></div></div>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button class="filter-reset-btn text-sm font-semibold py-2 px-4 rounded-md hover:bg-gray-200">Reset</button>
+                <button class="filter-apply-btn bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Apply Filters</button>
+            </div>
         </div>
         <div id="rejected-list" class="space-y-4"></div>
     </div>
@@ -109,9 +127,15 @@
     <!-- Blocked Senders Pane -->
     <div id="blocked-pane" class="hidden">
         <div class="flex justify-between items-center mb-4"><div class="title-container"><h2 class="text-2xl font-semibold">Blocked Senders</h2><span id="blocked-count" class="font-medium text-gray-500"></span></div></div>
-        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div><label class="filter-label" for="block-filter-email">Email</label><input type="email" id="block-filter-email" placeholder="Filter by Email..."></div>
-            <div><label class="filter-label" for="block-filter-date-start">Blocked Date</label><div class="flex gap-2"><input type="date" id="block-filter-date-start"><input type="date" id="block-filter-date-end"></div></div>
+        <div class="filter-container">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div><label class="filter-label" for="block-filter-email">Email</label><input type="email" id="block-filter-email" placeholder="Filter by Email..."></div>
+                <div><label class="filter-label" for="block-filter-date-start">Blocked Date</label><div class="flex gap-2"><input type="date" id="block-filter-date-start"><input type="date" id="block-filter-date-end"></div></div>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button class="filter-reset-btn text-sm font-semibold py-2 px-4 rounded-md hover:bg-gray-200">Reset</button>
+                <button class="filter-apply-btn bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Apply Filters</button>
+            </div>
         </div>
         <div id="blocked-list" class="space-y-4"></div>
     </div>
@@ -189,17 +213,36 @@
 
     // --- Data Loading ---
     function loadAllData() {
-        onSnapshot(collection(db, "blocked_senders"), snap => { allBlockedSenders = snap.docs.map(d => ({ id: d.id, ...d.data() })); applyAllFilters(); });
-        onSnapshot(query(collection(db, "messages")), snap => { allMessages = snap.docs.map(d => ({ id: d.id, ...d.data() })); applyAllFilters(); });
-        onSnapshot(query(collection(db, "ratings")), snap => { allRatings = snap.docs.map(d => ({ id: d.id, ...d.data() })); applyAllFilters(); });
+        const initialLoad = (snap, targetArray, callback) => {
+            targetArray.splice(0, targetArray.length, ...snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            callback();
+        };
+
+        onSnapshot(collection(db, "blocked_senders"), snap => initialLoad(snap, allBlockedSenders, applyAllFilters));
+        onSnapshot(query(collection(db, "messages")), snap => initialLoad(snap, allMessages, applyAllFilters));
+        onSnapshot(query(collection(db, "ratings")), snap => initialLoad(snap, allRatings, applyAllFilters));
     }
 
     // --- Filtering Logic ---
     function setupFilterListeners() {
-        document.querySelectorAll('.filter-container input, .filter-container select').forEach(el => el.addEventListener('input', applyAllFilters));
+        // Remove live filtering on input
+        document.querySelectorAll('.filter-apply-btn').forEach(btn => btn.addEventListener('click', applyAllFilters));
+        document.querySelectorAll('.filter-reset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const filterContainer = e.target.closest('.filter-container');
+                filterContainer.querySelectorAll('input, select').forEach(input => {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                });
+                applyAllFilters();
+            });
+        });
+
         document.getElementById('msg-filter-topic-select').addEventListener('change', e => {
             document.getElementById('msg-other-topic-container').classList.toggle('hidden', e.target.value !== 'Other');
-            applyAllFilters();
         });
         document.getElementById('stats-apply-btn').addEventListener('click', renderStatisticsGraph);
     }
@@ -224,7 +267,12 @@
         renderList(container, filtered, (item) => filterFn(item, true)); // Pass a flag to get renderer
     }
 
-    const dateInRange = (date, start, end) => (!start || date >= start) && (!end || date <= end);
+    const dateInRange = (dateStr, startStr, endStr) => {
+        if (!dateStr) return false;
+        if (startStr && dateStr < startStr) return false;
+        if (endStr && dateStr > endStr) return false;
+        return true;
+    };
 
     function filterMessageCard(msg, forRender = false) {
         if (forRender) return renderMessageCard(msg);
