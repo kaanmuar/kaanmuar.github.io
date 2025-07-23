@@ -53,7 +53,7 @@ jobs:
       # This step uploads the HTML report artifact
       - name: Upload Cypress Test Report   # <--- CORRECTED INDENTATION
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-test-report
           path: cypress/reports/html
@@ -61,7 +61,7 @@ jobs:
       # This step uploads screenshots ONLY if tests failed
       - name: Upload Cypress Screenshots on Failure # <--- CORRECTED INDENTATION
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: cypress/screenshots
