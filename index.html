@@ -223,6 +223,15 @@
             flex-direction: column;
             max-height: 70vh;
         }
+        /* NEW: Admin Response Block */
+        .admin-response {
+            margin-top: 1rem; padding: 0.75rem; background-color: #ecfeff;
+            border-left: 3px solid #67e8f9; border-radius: 0 4px 4px 0;
+        }
+        .dark-mode .admin-response { background-color: #1e3a5f; border-left-color: #0891b2; }
+        .admin-response p:first-child { font-weight: bold; font-size: 0.8rem; color: #0e7490; }
+        .dark-mode .admin-response p:first-child { color: #a5f3fc; }
+        .admin-response p:last-child { font-style: italic; font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem; }
         #contact-widget.visible {
             transform: translateY(0) scale(1);
             opacity: 1;
@@ -2312,38 +2321,56 @@
                 const avgRatingEl = document.getElementById('average-rating-display');
                 if (!container || !avgRatingEl) return;
 
-                const q = query(collection(db, "ratings"), where("status", "==", "approved"), orderBy("createdAt", "desc"));
+                // Query the new 'testimonials' collection, ordered by creation date
+                const q = query(collection(db, "testimonials"), orderBy("createdAt", "desc"));
 
                 onSnapshot(q, (snapshot) => {
                     if (snapshot.empty) {
-                        container.parentElement.style.display = 'none'; // Hide section if no reviews
+                        container.parentElement.style.display = 'none'; // Hide section if no testimonials
                         return;
                     }
 
                     container.parentElement.style.display = 'block';
                     let totalRating = 0;
-                    const reviewCardsHTML = snapshot.docs.map(doc => {
-                        const review = doc.data();
-                        totalRating += review.rating;
-                        return this._createReviewCard(review);
+                    let ratingCount = 0;
+
+                    const testimonialCardsHTML = snapshot.docs.map(doc => {
+                        const testimonial = doc.data();
+                        if (testimonial.rating) {
+                            totalRating += testimonial.rating;
+                            ratingCount++;
+                        }
+                        return this._createReviewCard(testimonial);
                     }).join('');
 
-                    const average = totalRating / snapshot.size;
-                    avgRatingEl.innerHTML = `Avg: ${average.toFixed(1)} <span class="star">★</span>`;
-                    avgRatingEl.style.display = 'inline-block';
-                    container.innerHTML = reviewCardsHTML;
+                    if (ratingCount > 0) {
+                        const average = totalRating / ratingCount;
+                        avgRatingEl.innerHTML = `Avg: ${average.toFixed(1)} <span class="star">★</span>`;
+                        avgRatingEl.style.display = 'inline-block';
+                    } else {
+                        avgRatingEl.style.display = 'none';
+                    }
+
+                    container.innerHTML = testimonialCardsHTML;
                 });
             },
 
 // ADD THIS SECOND NEW FUNCTION
-            _createReviewCard(review) {
-                const starsHTML = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
-                const authorName = review.isAnonymous ? 'Anonymous' : review.name;
+            _createReviewCard(testimonial) {
+                const starsHTML = testimonial.rating ? '★'.repeat(testimonial.rating) + '☆'.repeat(5 - testimonial.rating) : '';
+                const adminResponseHTML = testimonial.adminResponse ? `
+        <div class="admin-response">
+            <p>Response from Carlos:</p>
+            <p>"${testimonial.adminResponse}"</p>
+        </div>
+    ` : '';
+
                 return `
         <div class="testimonial-card">
-            <div class="testimonial-stars" aria-label="Rating: ${review.rating} out of 5 stars">${starsHTML}</div>
-            ${review.comment ? `<p class="testimonial-quote">"${review.comment}"</p>` : ''}
-            <p class="testimonial-author">- ${authorName}</p>
+            ${starsHTML ? `<div class="testimonial-stars" aria-label="Rating: ${testimonial.rating} out of 5 stars">${starsHTML}</div>` : ''}
+            ${testimonial.originalText ? `<p class="testimonial-quote">"${testimonial.originalText}"</p>` : ''}
+            <p class="testimonial-author">- ${testimonial.authorName}</p>
+            ${adminResponseHTML}
         </div>
     `;
             },
