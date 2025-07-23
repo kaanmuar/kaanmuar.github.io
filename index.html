@@ -2067,6 +2067,7 @@
                         this._toggleSkillFilter(e.target.closest('.tech-tag'));
                     }
                 });
+                this.DOMElements.profilePhoto.addEventListener('click', () => this._openModal());
                 this.DOMElements.profilePhoto.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') this._openModal(); });
                 this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') this._closeModal(); });
 
@@ -2930,6 +2931,8 @@
             },
         };
 
+        window.CarlosMunozCV = CarlosMunozCV;
+        
         CarlosMunozCV.init();
     });
 </script>
