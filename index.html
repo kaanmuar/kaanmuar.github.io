@@ -1270,7 +1270,7 @@
                         error_required: "This field is required.", error_min_length: "Please enter at least {min} characters.", error_email: "Please enter a valid email address.", error_topic: "Please select a topic.", error_rating: "Please select a rating.", error_file_size: "File is too large. Max size is 5MB.", error_file_type: "Invalid file type. (PDF, DOC, DOCX, PNG, JPG)",
                         status_sending: "Sending...", status_uploading: "Uploading...", status_file_attached: "File attached: {fileName}", status_success_message_title: "Message Sent!", status_success_message_body: "Thank you for reaching out. I'll get back to you shortly.", status_success_rating_title: "Rating Submitted!", status_success_rating_body: "Thank you for your valuable feedback!", status_error_title: "An Error Occurred", status_error_body: "Sorry, something went wrong. Please try again later.",
                         topic_option_default: "Select a topic...", topic_option_opportunity: "Job Opportunity / Collaboration", topic_option_inquiry: "Project Inquiry", topic_option_feedback: "CV Feedback", topic_option_other: "Other",
-                        tour_close: "Close", tour_back: "Back", tour_next: "Next", tour_finish: "Finish", tour_step_1_title: "1. Page Controls", tour_step_1_desc: "Use these controls to switch between Light/Dark themes, select a language, or print the CV as a PDF.", tour_step_2_title: "2. Expandable Summary", tour_step_2_desc: "Click 'Read More...' to see the full professional summary, providing deeper insight into my profile and approach.", tour_step_3_title: "3. Interactive Toolkit", tour_step_3_desc: "This is my full skillset. Click any skill to instantly filter both the Timeline and the Professional Experience sections.", tour_step_4_title: "4. Filterable Timeline", tour_step_4_desc: "This provides a quick career overview. It automatically filters based on the skills you select from the Toolkit.", tour_step_5_title: "5. Detailed Experience", tour_step_5_desc: "Click any job title to expand it and see the detailed responsibilities, achievements, and technologies used for that role.", tour_step_6_title: "6. Contact & Feedback", tour_step_6_desc: "Click this button anytime to send me a message or rate this CV. It even opens automatically if you scroll to the bottom!", tour_step_7_title: "7. Get In Touch", tour_step_7_desc: "All my contact channels are here. Click any link to open the corresponding application, or use the floating blue button to send me a direct message.",
+                        tour_close: "Close", tour_back: "Back", tour_next: "Next", tour_finish: "Finish", tour_step_photo_title: "1. Zoomable Photo", tour_step_photo_desc: "You can click my profile photo at any time to see a larger, high-resolution version.", tour_step_share_title: "2. Share this CV", tour_step_share_desc: "Use the share icon to easily send this interactive CV via LinkedIn, X (Twitter), and other platforms, or simply copy the link.", tour_step_1_title: "3. Page Controls", tour_step_1_desc: "Use these controls to switch between Light/Dark themes, select a language, or print the CV as a PDF.", tour_step_2_title: "4. Expandable Summary", tour_step_2_desc: "Click 'Read More...' to see the full professional summary, providing deeper insight into my profile and approach.", tour_step_3_title: "5. Interactive Toolkit", tour_step_3_desc: "This is my full skillset. Click any skill to instantly filter both the Timeline and the Professional Experience sections.", tour_step_4_title: "6. Filterable Timeline", tour_step_4_desc: "This provides a quick career overview. It automatically filters based on the skills you select from the Toolkit.", tour_step_5_title: "7. Detailed Experience", tour_step_5_desc: "Click any job title to expand it and see the detailed responsibilities, achievements, and technologies used for that role.", tour_step_6_title: "8. Contact & Feedback", tour_step_6_desc: "Click this button anytime to send me a message or rate this CV. It even opens automatically if you scroll to the bottom!", tour_step_7_title: "9. Get In Touch", tour_step_7_desc: "All my contact channels are here. Click any link to open the corresponding application, or use the floating blue button to send me a direct message.",
                         tooltip_share: "Share CV",
                         share_text: "Check out Carlos A. Muñoz's Interactive CV!",
                         share_title: "Carlos A. Muñoz - Interactive CV",
@@ -1402,22 +1402,57 @@
             // |         NEW JAVASCRIPT: TOUR STEPS DEFINITION          |
             // ==========================================================
             tourSteps: [
+                // ==========================================================
+                // NEW STEP 1: PROFILE PHOTO ZOOM
+                // ==========================================================
+                {
+                    element: '#profile-photo',
+                    titleKey: 'tour_step_photo_title',
+                    descriptionKey: 'tour_step_photo_desc',
+                    analyticsTag: 'Viewed_Step_Photo',
+                    action: function() {
+                        this._applyClickEffect(this.DOMElements.profilePhoto);
+                        setTimeout(() => this._openModal(), 600);
+                        setTimeout(() => this._closeModal(), 2500);
+                    }
+                },
+                // ==========================================================
+                // NEW STEP 2: SHARE FUNCTIONALITY
+                // ==========================================================
+                {
+                    element: '#social-share-selector',
+                    titleKey: 'tour_step_share_title',
+                    descriptionKey: 'tour_step_share_desc',
+                    analyticsTag: 'Viewed_Step_Share',
+                    action: function() {
+                        const shareSelector = this.DOMElements.socialShareSelector;
+                        setTimeout(() => this._applyClickEffect(shareSelector), 500);
+                        setTimeout(() => shareSelector.classList.remove('collapsed'), 700);
+                        setTimeout(() => {
+                            const links = shareSelector.querySelectorAll('.share-link-wrapper');
+                            links.forEach((link, i) => {
+                                setTimeout(() => this._glowElement(link, 800), i * 300);
+                            });
+                        }, 1200);
+                        setTimeout(() => shareSelector.classList.add('collapsed'), 3500);
+                    }
+                },
+                // ==========================================================
+                // ALL EXISTING STEPS ARE PRESERVED BELOW
+                // ==========================================================
                 {
                     element: '.flex.items-center.space-x-2.no-print',
-                    titleKey: 'tour_step_1_title', descriptionKey: 'tour_step_1_desc',
+                    titleKey: 'tour_step_1_title',
+                    descriptionKey: 'tour_step_1_desc',
                     analyticsTag: 'Viewed_Step_1_PageControls',
                     action: function() {
                         const themeToggle = this.DOMElements.themeToggle;
                         const langSelector = this.DOMElements.languageSelector;
                         const printBtn = this.DOMElements.printBtn;
-
-                        // 1. Demo Theme Toggle
                         setTimeout(() => this._applyClickEffect(themeToggle), 500);
                         setTimeout(() => this._toggleTheme(), 700);
                         setTimeout(() => this._applyClickEffect(themeToggle), 1700);
                         setTimeout(() => this._toggleTheme(), 1900);
-
-                        // 2. Demo Language Selector
                         setTimeout(() => langSelector.classList.remove('collapsed'), 2500);
                         setTimeout(() => {
                             langSelector.querySelectorAll('.lang-flag').forEach((flag, i) => {
@@ -1425,8 +1460,6 @@
                             });
                         }, 3000);
                         setTimeout(() => langSelector.classList.add('collapsed'), 5000);
-
-                        // 3. Demo Print Button
                         setTimeout(() => this._applyClickEffect(printBtn), 5500);
                         setTimeout(() => {
                             this.DOMElements.tourDescription.textContent += " (The print dialog would open now. We'll skip it for the demo.)";
@@ -1435,31 +1468,25 @@
                 },
                 {
                     element: '#read-more-btn',
-                    titleKey: 'tour_step_2_title', descriptionKey: 'tour_step_2_desc',
+                    titleKey: 'tour_step_2_title',
+                    descriptionKey: 'tour_step_2_desc',
                     analyticsTag: 'Viewed_Step_2_ExpandableSummary',
                     action: function() {
                         this.DOMElements.readMoreBtn.click();
-                        // Add this line to collapse it back after 3 seconds
                         setTimeout(() => this.DOMElements.readMoreBtn.click(), 3000);
                     }
                 },
                 {
                     element: '#toolkit-container',
-                    titleKey: 'tour_step_3_title', // We'll reuse the title
+                    titleKey: 'tour_step_3_title',
                     descriptionKey: 'Watch as we select random skills. The selected skills will glow, and then we will see how the Timeline and Experience sections are filtered based on this selection.',
                     analyticsTag: 'Viewed_Step_3_InteractiveToolkit',
                     action: function() {
                         const allSkills = Array.from(this.DOMElements.toolkitContainer.querySelectorAll('.tech-tag'));
-                        const skillCount = Math.floor(Math.random() * 5) + 1; // 1 to 5 skills
                         const selectedElements = [];
-
-                        // --- Start of new, smarter logic ---
                         let skillsToSelectNames = [];
-                        // 1. Pick a random experience to guarantee a match
                         const randomExperience = this.data.experiences[Math.floor(Math.random() * this.data.experiences.length)];
                         const requiredSkills = randomExperience.techUsed;
-
-                        // 2. Pick 1 or 2 skills from that experience
                         const guaranteedSkill = requiredSkills[Math.floor(Math.random() * requiredSkills.length)];
                         skillsToSelectNames.push(guaranteedSkill);
                         if (Math.random() > 0.5 && requiredSkills.length > 1) {
@@ -1469,54 +1496,39 @@
                             } while (secondSkill === guaranteedSkill);
                             skillsToSelectNames.push(secondSkill);
                         }
-
-                        // 3. Pick a few other random skills to make it look natural
                         const otherSkills = allSkills.filter(s => !skillsToSelectNames.includes(s.dataset.skillName));
                         otherSkills.sort(() => 0.5 - Math.random());
-                        for(let i=0; i < 2; i++) { // Add up to 2 more
+                        for (let i = 0; i < 2; i++) {
                             if (otherSkills[i]) {
                                 skillsToSelectNames.push(otherSkills[i].dataset.skillName);
                             }
                         }
                         const skillsToSelect = allSkills.filter(s => skillsToSelectNames.includes(s.dataset.skillName));
-                        // --- End of new, smarter logic ---
-                        // Function to apply highlights and filters
                         const applyFilters = () => {
                             skillsToSelect.forEach(skillEl => {
-                                // Expand section if needed
                                 const header = skillEl.closest('.toolkit-section').querySelector('.toolkit-header');
                                 if (header.getAttribute('aria-expanded') === 'false') {
                                     header.click();
                                 }
-                                // Select skill and apply persistent glow
                                 skillEl.click();
                                 skillEl.classList.add('tour-highlight-persistent');
                                 selectedElements.push(skillEl);
                             });
                         };
-
-                        // Sequence of events
                         setTimeout(applyFilters, 1000);
-
-                        // Show Timeline results
                         setTimeout(() => {
                             this.DOMElements.timelineContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             this.DOMElements.tourDescription.textContent = "See the timeline? Only relevant items are fully visible. The rest are faded.";
                         }, 3000);
-
-                        // Show Experience results
                         setTimeout(() => {
                             this.DOMElements.experienceContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             this.DOMElements.tourDescription.textContent = "The same filtering applies here. Matched roles get a green border, making them easy to spot.";
                         }, 7000);
-
-                        // Reset everything
                         setTimeout(() => {
                             this.DOMElements.resetFilterBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             this.DOMElements.tourDescription.textContent = "Now, we'll reset the filters with one click.";
                             this._applyClickEffect(this.DOMElements.resetFilterBtn);
                             this._resetFilters();
-                            // Clean up highlights and collapse sections
                             selectedElements.forEach(el => {
                                 el.classList.remove('tour-highlight-persistent');
                                 const header = el.closest('.toolkit-section').querySelector('.toolkit-header');
@@ -1529,25 +1541,21 @@
                 },
                 {
                     element: '#timeline-container',
-                    titleKey: 'tour_step_4_title', descriptionKey: 'tour_step_4_desc', analyticsTag: 'Viewed_Step_4_FilterableTimeline',
+                    titleKey: 'tour_step_4_title',
+                    descriptionKey: 'tour_step_4_desc',
+                    analyticsTag: 'Viewed_Step_4_FilterableTimeline',
                     action: function() {
                         const timelineItem = this.DOMElements.timelineContainer.querySelector('.timeline-item');
                         const targetExperienceId = timelineItem.querySelector('a').getAttribute('href');
                         const experienceEl = document.querySelector(targetExperienceId);
-
-                        // 1. Highlight timeline item
                         this.DOMElements.tourDescription.textContent = "The timeline is interactive. Let's select an item...";
                         this._applyClickEffect(timelineItem, 2000);
                         timelineItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                        // 2. Move to and highlight experience item
                         setTimeout(() => {
                             this.DOMElements.tourDescription.textContent = "...and it smoothly takes us to the full details in the experience section.";
                             experienceEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             this._applyClickEffect(experienceEl, 4000);
                         }, 2500);
-
-                        // 3. Expand and collapse the experience
                         setTimeout(() => {
                             const header = experienceEl.querySelector('.accordion-header');
                             if (header) header.click();
@@ -1556,8 +1564,6 @@
                             const header = experienceEl.querySelector('.accordion-header');
                             if (header) header.click();
                         }, 6000);
-
-                        // 4. Return to timeline
                         setTimeout(() => {
                             this.DOMElements.tourDescription.textContent = "This makes it easy to navigate between the summary and the details.";
                             timelineItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1566,7 +1572,9 @@
                 },
                 {
                     element: '#experience-container .experience-item:first-child',
-                    titleKey: 'tour_step_5_title', descriptionKey: 'tour_step_5_desc', analyticsTag: 'Viewed_Step_5_DetailedExperience',
+                    titleKey: 'tour_step_5_title',
+                    descriptionKey: 'tour_step_5_desc',
+                    analyticsTag: 'Viewed_Step_5_DetailedExperience',
                     action: function() {
                         const firstExpHeader = this.DOMElements.experienceContainer.querySelector('.accordion-header');
                         if (firstExpHeader) {
@@ -1577,19 +1585,18 @@
                 },
                 {
                     element: '#contact-widget-fab',
-                    titleKey: 'tour_step_6_title', descriptionKey: 'tour_step_6_desc', analyticsTag: 'Viewed_Step_6_ContactWidget',
+                    titleKey: 'tour_step_6_title',
+                    descriptionKey: 'tour_step_6_desc',
+                    analyticsTag: 'Viewed_Step_6_ContactWidget',
                     action: function() {
                         this._openContactWidget();
                         if (!this.DOMElements.messageTab.classList.contains('active')) {
                             this._switchTab('message');
                         }
-                        const messageTab = this.DOMElements.messageTab;
                         const ratingTab = this.DOMElements.ratingTab;
                         const attachmentBtn = this.DOMElements.messageForm.querySelector('#file-upload-label');
                         const sendMessageBtn = this.DOMElements.sendMessageBtn;
-
                         const sequence = [
-                            // Part 1: Message Tab
                             () => { this._typewriterEffect(this.DOMElements.senderName, 'Valued Visitor'); },
                             () => { this.DOMElements.senderEmail.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
                             () => { this._typewriterEffect(this.DOMElements.senderEmail, 'visitor@example.com'); },
@@ -1606,16 +1613,12 @@
                                 attachmentBtn.classList.remove('tour-highlight-persistent');
                                 sendMessageBtn.classList.add('tour-highlight-persistent');
                             },
-
-                            // Part 2: Switch to Rating Tab
                             () => {
                                 sendMessageBtn.classList.remove('tour-highlight-persistent');
                                 this.DOMElements.tourDescription.textContent = "You can also switch tabs to leave feedback on the CV itself.";
-                                this._applyClickEffect(ratingTab); // Highlight the tab switch
+                                this._applyClickEffect(ratingTab);
                                 this._switchTab('rating');
                             },
-
-                            // Part 3: Rating Tab
                             () => {
                                 this.DOMElements.raterName.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 this._typewriterEffect(this.DOMElements.raterName, 'Jane Smith');
@@ -1628,19 +1631,17 @@
                             },
                             () => { this._typewriterEffect(this.DOMElements.raterComment, this._getRandomComment()); },
                             () => { this.DOMElements.sendRatingBtn.classList.add('tour-highlight-persistent'); },
-
-                            // Part 4: Close
                             () => { this._closeContactWidget(); }
                         ];
-
-                        // THIS IS THE CORRECTED TIMINGS ARRAY
                         const timings = [500, 1500, 2000, 3500, 4000, 6000, 7500, 9000, 10000, 10500, 12000, 13500, 14000, 16000];
                         sequence.forEach((func, index) => setTimeout(func, timings[index]));
                     }
                 },
                 {
                     element: 'section[aria-labelledby="contact-heading"]',
-                    titleKey: 'tour_step_7_title', descriptionKey: 'tour_step_7_desc', analyticsTag: 'Viewed_Step_7_ContactInfo',
+                    titleKey: 'tour_step_7_title',
+                    descriptionKey: 'tour_step_7_desc',
+                    analyticsTag: 'Viewed_Step_7_ContactInfo',
                     action: function() {
                         const links = ['#contact-phone', '#contact-email', '#contact-linkedin', '#contact-whatsapp', '#contact-telegram'];
                         links.forEach((link, index) => {
@@ -2760,7 +2761,7 @@
                     });
                 });
             },
-            
+
 
             // ==========================================================
             // |            NEW JAVASCRIPT: TOUR FUNCTIONS              |
