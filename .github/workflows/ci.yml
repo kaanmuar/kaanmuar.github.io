@@ -58,6 +58,20 @@ jobs:
         run: npm run test:cypress
         continue-on-error: true
 
+       - name: Upload Cypress Test Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress-test-report
+          path: cypress/reports/html
+
+      - name: Upload Cypress Screenshots on Failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+
       # Step 7: Run the Robot Framework Test Suite
       # This executes your Robot Framework tests.
       - name: Run Robot Framework Tests
