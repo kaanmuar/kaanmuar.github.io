@@ -40,6 +40,22 @@
         .bulk-actions-dropdown a:hover { background-color: #f1f1f1; }
         .show-dropdown { display: block; }
         .title-container { display: flex; align-items: center; gap: 0.75rem; }
+        /* NEW: Response Modal Styles */
+        #response-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 100;
+        }
+        #response-modal-overlay.visible { display: flex; }
+        .response-modal-box {
+            background-color: white; padding: 1.5rem; border-radius: 8px;
+            width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .response-modal-box textarea { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; min-height: 120px; }
+        .responded-badge {
+            background-color: #e0e7ff; color: #4338ca; font-size: 0.7rem; font-weight: 600;
+            padding: 2px 8px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 4px;
+        }
     </style>
 </head>
 <body>
@@ -107,7 +123,7 @@
         <div id="ratings-list" class="space-y-4"></div>
     </div>
 
-    <!-- Rejected Messages Pane -->
+    <!-- Other Panes (Rejected, Blocked, Stats) -->
     <div id="rejected-pane" class="hidden">
         <div class="flex justify-between items-center mb-4"><div class="title-container"><h2 class="text-2xl font-semibold">Rejected Messages</h2><span id="rejected-count" class="font-medium text-gray-500"></span></div></div>
         <div class="filter-container">
@@ -123,8 +139,6 @@
         </div>
         <div id="rejected-list" class="space-y-4"></div>
     </div>
-
-    <!-- Blocked Senders Pane -->
     <div id="blocked-pane" class="hidden">
         <div class="flex justify-between items-center mb-4"><div class="title-container"><h2 class="text-2xl font-semibold">Blocked Senders</h2><span id="blocked-count" class="font-medium text-gray-500"></span></div></div>
         <div class="filter-container">
@@ -139,8 +153,6 @@
         </div>
         <div id="blocked-list" class="space-y-4"></div>
     </div>
-
-    <!-- Statistics Pane -->
     <div id="stats-pane" class="hidden">
         <h2 class="text-2xl font-semibold mb-4">Platform Statistics</h2>
         <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
@@ -153,11 +165,39 @@
     </div>
 </main>
 
+<!-- NEW: Response Modal -->
+<div id="response-modal-overlay">
+    <div class="response-modal-box">
+        <form id="response-form">
+            <h3 class="text-xl font-bold mb-2">Respond to <span id="response-recipient-name"></span></h3>
+            <p class="text-sm text-gray-500 mb-4">Recipient: <span id="response-recipient-email"></span></p>
+            <div class="mb-4">
+                <label for="response-message" class="block font-medium mb-1">Your Response:</label>
+                <textarea id="response-message" required minlength="10"></textarea>
+                <p class="text-xs text-gray-500 mt-1">This response will be saved to the database. A backend function would be needed to trigger an actual email.</p>
+            </div>
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" id="response-is-public" class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500">
+                    <span class="ml-2 text-sm text-gray-700">Make this response public</span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">If checked, the original comment and your response will appear on the CV's Testimonials section.</p>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" id="response-cancel-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-md hover:bg-gray-300">Cancel</button>
+                <button type="submit" id="response-send-btn" class="bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Send Response</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 <script type="module">
     // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-    import { getFirestore, collection, query, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    // MODIFIED: Added addDoc for new testimonial creation
+    import { getFirestore, collection, query, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
     // Firebase Config
     const firebaseConfig = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", storageBucket: "carlosm-interactive-cv.firebasestorage.app", messagingSenderId: "976558418058", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
@@ -175,6 +215,10 @@
     const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn') };
     const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane') };
     const lists = { messages: document.getElementById('messages-list'), ratings: document.getElementById('ratings-list'), rejected: document.getElementById('rejected-list'), blocked: document.getElementById('blocked-list') };
+    // NEW: Response Modal Elements
+    const responseModalOverlay = document.getElementById('response-modal-overlay');
+    const responseForm = document.getElementById('response-form');
+    let currentResponseData = {};
 
     // --- Auth ---
     onAuthStateChanged(auth, user => { if (user) { loginOverlay.style.display = 'none'; dashboard.classList.remove('hidden'); initDashboard(); } else { loginOverlay.style.display = 'flex'; dashboard.classList.add('hidden'); } });
@@ -188,6 +232,8 @@
         setupFilterListeners();
         setupBulkActionButtons();
         populateStaticDropdowns();
+        // NEW: Setup modal listeners
+        setupModalListeners();
     }
 
     function switchTab(tabKey) {
@@ -225,7 +271,6 @@
 
     // --- Filtering Logic ---
     function setupFilterListeners() {
-        // Remove live filtering on input
         document.querySelectorAll('.filter-apply-btn').forEach(btn => btn.addEventListener('click', applyAllFilters));
         document.querySelectorAll('.filter-reset-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -237,6 +282,11 @@
                         input.value = '';
                     }
                 });
+                // Also reset the 'Other' topic field if it exists
+                const otherTopicContainer = filterContainer.querySelector('#msg-other-topic-container');
+                if (otherTopicContainer) {
+                    otherTopicContainer.classList.add('hidden');
+                }
                 applyAllFilters();
             });
         });
@@ -262,15 +312,20 @@
     }
 
     function filterAndRender(items, filterFn, container, countEl) {
-        const filtered = items.filter(filterFn);
+        const filtered = items.filter(item => filterFn(item, false)); // Pass false to filter
         if (countEl) countEl.textContent = `(${filtered.length} / ${items.length})`;
-        renderList(container, filtered, (item) => filterFn(item, true)); // Pass a flag to get renderer
+        renderList(container, filtered, (item) => filterFn(item, true)); // Pass true to get renderer
     }
 
     const dateInRange = (dateStr, startStr, endStr) => {
         if (!dateStr) return false;
-        if (startStr && dateStr < startStr) return false;
-        if (endStr && dateStr > endStr) return false;
+        const date = new Date(dateStr);
+        if (startStr && date < new Date(startStr)) return false;
+        if (endStr) {
+            const endDate = new Date(endStr);
+            endDate.setHours(23, 59, 59, 999); // Include the whole end day
+            if (date > endDate) return false;
+        }
         return true;
     };
 
@@ -360,23 +415,24 @@
     }
 
     function createCardHTML(doc, content, actions) {
-        return `<div class="item-card p-4 flex gap-4 items-start"><input type="checkbox" class="bulk-checkbox mt-2" data-id="${doc.id}" data-email="${doc.email}" data-status="${doc.status || ''}"><div class="flex-grow">${content}<div class="flex items-center flex-wrap gap-2 mt-4">${actions}</div></div></div>`;
+        const respondedBadge = doc.response ? `<div class="responded-badge"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Responded</div>` : '';
+        return `<div class="item-card p-4 flex gap-4 items-start"><input type="checkbox" class="bulk-checkbox mt-2" data-id="${doc.id}" data-email="${doc.email}" data-status="${doc.status || ''}"><div class="flex-grow">${content}<div class="flex items-center flex-wrap gap-2 mt-4">${actions}${respondedBadge}</div></div></div>`;
     }
 
     function renderMessageCard(msg) {
         const date = msg.createdAt ? msg.createdAt.toDate().toLocaleString() : 'N/A';
         const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p><p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p></div><span class="text-xs text-gray-500 mb-2">${date}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${msg.message}</p><p class="text-sm">${msg.fileURL ? `<a href="${msg.fileURL}" target="_blank" class="text-cyan-600 hover:underline">View Attachment</a>` : 'No attachment'}</p>`;
-        const actions = `<button data-action="reject-msg" data-id="${msg.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button><button data-action="block" data-email="${msg.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
+        const actions = `<button data-action="respond" data-type="message" data-id="${msg.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Respond</button><button data-action="reject-msg" data-id="${msg.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button><button data-action="block" data-email="${msg.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
         return createCardHTML(msg, content, actions);
     }
 
     function renderRatingCard(r) {
         const date = r.createdAt ? r.createdAt.toDate().toLocaleString() : 'N/A';
         const stars = '&#9733;'.repeat(r.rating) + '&#9734;'.repeat(5 - r.rating);
-        let actions = '';
-        if (r.status === 'pending') actions = `<button data-action="approve" data-id="${r.id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button><button data-action="approve-anon" data-id="${r.id}" class="bg-sky-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-sky-600">Approve Anonymously</button><button data-action="reject" data-id="${r.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>`;
-        else if (r.status === 'approved') actions = `<button data-action="retract" data-id="${r.id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract</button>`;
-        else if (r.status === 'rejected') actions = `<button data-action="restore" data-id="${r.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore</button>`;
+        let actions = `<button data-action="respond" data-type="rating" data-id="${r.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Respond</button>`;
+        if (r.status === 'pending') actions += `<button data-action="approve" data-id="${r.id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button><button data-action="approve-anon" data-id="${r.id}" class="bg-sky-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-sky-600">Approve Anonymously</button><button data-action="reject" data-id="${r.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>`;
+        else if (r.status === 'approved') actions += `<button data-action="retract" data-id="${r.id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract</button>`;
+        else if (r.status === 'rejected') actions += `<button data-action="restore" data-id="${r.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore</button>`;
         actions += `<button data-action="block" data-email="${r.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
         const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${r.name} <span class="font-normal text-sm text-gray-500">&lt;${r.email}&gt;</span></p><p class="text-xl text-yellow-400">${stars}</p></div><div class="text-right"><div class="flex items-center gap-2 mb-1"><span class="status-dot status-${r.status}"></span><span class="text-sm font-medium capitalize">${r.status}</span></div><span class="text-xs text-gray-500 mb-2 block">${date}</span></div></div>${r.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${r.comment}</p>` : ''}`;
         return createCardHTML(r, content, actions);
@@ -400,7 +456,7 @@
     function addCardEventListeners() {
         document.querySelectorAll('[data-action]').forEach(button => {
             button.addEventListener('click', (e) => {
-                const { action, id, email } = e.target.dataset;
+                const { action, id, email, type } = e.target.dataset;
                 if (action === 'approve') updateRatingStatus(id, { status: 'approved', isAnonymous: false });
                 else if (action === 'approve-anon') updateRatingStatus(id, { status: 'approved', isAnonymous: true });
                 else if (action === 'reject') updateRatingStatus(id, { status: 'rejected' });
@@ -409,6 +465,7 @@
                 else if (action === 'restore-msg') updateMessageStatus(id, 'inbox');
                 else if (action === 'block' && confirm(`Block ${email}?`)) blockSender(email);
                 else if (action === 'unblock' && confirm(`Unblock ${email}?`)) unblockSender(email);
+                else if (action === 'respond') openResponseModal({ id, type });
             });
         });
     }
@@ -422,6 +479,82 @@
     }
     async function blockSender(email) { if(email) await setDoc(doc(db, "blocked_senders", email.toLowerCase()), { blockedAt: serverTimestamp() }); }
     async function unblockSender(email) { if(email) await deleteDoc(doc(db, "blocked_senders", email.toLowerCase())); }
+
+    // --- NEW: Response Modal Logic ---
+    function setupModalListeners() {
+        document.getElementById('response-cancel-btn').addEventListener('click', closeResponseModal);
+        responseForm.addEventListener('submit', handleResponseSubmit);
+    }
+
+    function openResponseModal({ id, type }) {
+        const sourceData = type === 'message' ? allMessages : allRatings;
+        const item = sourceData.find(d => d.id === id);
+        if (!item) {
+            alert('Error: Could not find the item to respond to.');
+            return;
+        }
+        currentResponseData = { ...item, type };
+        document.getElementById('response-recipient-name').textContent = item.name;
+        document.getElementById('response-recipient-email').textContent = item.email;
+        // Only show public checkbox for approved ratings or any message
+        const publicCheckboxContainer = document.getElementById('response-is-public').parentElement;
+        publicCheckboxContainer.style.display = (type === 'rating' && item.status === 'approved') || type === 'message' ? 'flex' : 'none';
+
+        responseModalOverlay.classList.add('visible');
+    }
+
+    function closeResponseModal() {
+        responseModalOverlay.classList.remove('visible');
+        responseForm.reset();
+        currentResponseData = {};
+    }
+
+    async function handleResponseSubmit(e) {
+        e.preventDefault();
+        const responseText = document.getElementById('response-message').value;
+        const isPublic = document.getElementById('response-is-public').checked;
+
+        if (responseText.length < 10) {
+            alert("Response must be at least 10 characters long.");
+            return;
+        }
+
+        const { id, type, name, email, message, comment, rating, isAnonymous } = currentResponseData;
+        const collectionName = type === 'message' ? 'messages' : 'ratings';
+
+        try {
+            // 1. Update the original document with the response
+            await updateDoc(doc(db, collectionName, id), {
+                response: responseText,
+                respondedAt: serverTimestamp(),
+                isPublicResponse: isPublic
+            });
+
+            // 2. If public, create a new document in the 'testimonials' collection
+            if (isPublic) {
+                const testimonialData = {
+                    authorName: isAnonymous ? 'Anonymous' : name,
+                    originalText: type === 'message' ? message : comment,
+                    adminResponse: responseText,
+                    createdAt: serverTimestamp(),
+                    sourceId: id,
+                    sourceType: type
+                };
+                if (type === 'rating') {
+                    testimonialData.rating = rating;
+                }
+                await addDoc(collection(db, "testimonials"), testimonialData);
+            }
+
+            alert("Response sent successfully!");
+            closeResponseModal();
+
+        } catch (error) {
+            console.error("Error sending response: ", error);
+            alert("Failed to send response. Please check the console for errors.");
+        }
+    }
+
 
     // --- Bulk Actions ---
     function setupBulkActionButtons() {
