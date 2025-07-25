@@ -143,7 +143,7 @@ describe('Interactive CV - Full QA Coverage Test Suite', () => {
 
     context('Content Verification', () => {
         it('[Positive] should load the Education & Certifications section', () => {
-            cvPage.educationSection.scrollIntoView().should('be.visible');
+            cvPage.educationSection.scrollIntoView().should('have.class', 'is-visible').and('be.visible');
             cvPage.educationSection.should('contain.text', 'Key Certifications');
         });
 
