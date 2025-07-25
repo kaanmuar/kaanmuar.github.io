@@ -20,7 +20,7 @@ class ContactWidget {
     get contactWidgetFab() { return cy.get('#contact-widget-fab'); }
     get ratingForm() { return cy.get('#rating-form'); }
     get messageForm() { return cy.get('#message-form'); }
-    get successMessage() { return cy.get('#widget-status-container:contains("Success")'); }
+    get successMessage() { return cy.get('#widget-status-container:contains("Message Sent")'); }
     get errorMessage() { return cy.get('#widget-status-container:contains("Error")'); }
     get ratingTab() { return cy.get('#rating-tab'); }
     get messageTab() { return cy.get('#message-tab'); }
@@ -235,7 +235,7 @@ describe('Admin Panel v3 Full Test Coverage', () => {
         });
 
         it('should respond to a message and make it public', () => {
-            const msg = createMessage({ topic: 'Feedback' });
+            const msg = createMessage({ topic: 'feedback' });
             const responseText = 'We appreciate your feedback and will take it into consideration.';
             adminDashboard.visitDashboard();
             adminDashboard.navigateToTab('messages');
