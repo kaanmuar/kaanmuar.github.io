@@ -95,6 +95,7 @@
         .dark-mode .tech-tag.selected { color: white; }
         .tech-tag.selected .stars svg { color: #f59e0b; }
         .tech-tag .tech-icon { width: 16px; height: 16px; margin-right: 6px; object-fit: contain; }
+        .tech-tag img { width: 16px; height: 16px; margin-right: 6px; object-fit: contain; }
         .stars { display: flex; align-items: center; margin-left: auto; padding-left: 8px; white-space: nowrap; }
         .stars svg { width: 0.8rem; height: 0.8rem; color: #f59e0b; }
         .flag-icon { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
@@ -2059,6 +2060,21 @@
                     // Event Delegation for specific elements
                     if (langSelector) this._handleLanguageSelector(e);
                     if (shareSelector) this._handleShareSelector(e);
+
+                    const timelineLink = target.closest('.timeline-item a');
+                    if (timelineLink) {
+                        const targetId = timelineLink.getAttribute('href');
+                        if (targetId && targetId.startsWith('#')) {
+                            const experienceElement = document.querySelector(targetId);
+                            if (experienceElement) {
+                                const header = experienceElement.querySelector('.accordion-header');
+                                // Check if it's not already expanded before clicking
+                                if (header && header.getAttribute('aria-expanded') === 'false') {
+                                    header.click();
+                                }
+                            }
+                        }
+                    }
 
                     const skillTag = target.closest('.tech-tag');
                     if (skillTag) this._toggleSkillFilter(skillTag);
