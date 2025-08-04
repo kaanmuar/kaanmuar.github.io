@@ -34,7 +34,7 @@
     <!-- Tailwind CSS for rapid UI development -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
 
     <!-- Google Fonts for typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -84,17 +84,16 @@
         .main-content h1, .main-content h2, .main-content h3, .main-content h4 { color: var(--text-primary); }
         .main-content .border-b-4, .main-content hr { border-color: var(--border-color); }
         body::before { content: ''; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.015; pointer-events: none; background-image: var(--watermark-url); background-repeat: repeat; }
+
+
         @media print {
-            body > *:not(#print-view) {
+            /* Hide the entire interactive page */
+            body > *:not(#print-content) {
                 display: none !important;
             }
-            #print-view, #print-view * {
+            /* Only show our clean, generated content */
+            #print-content {
                 display: block !important;
-                margin: 0;
-                padding: 0;
-                box-shadow: none;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
             }
         }
         .tech-tag { display: inline-flex; align-items: center; background-color: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border-color); }
@@ -591,8 +590,8 @@
         .share-link-wrapper:hover svg {
             color: #0891b2; /* Hover color */
         }
-        /* NEW: PRINT/EXPORT ONLY STYLES */
-        #print-view { display: none; } /* Hidden by default */
+        /*!* NEW: PRINT/EXPORT ONLY STYLES *!
+        #print-view { display: none; } !* Hidden by default *!
 
         @media print {
             body > *:not(#print-view) { display: none !important; }
@@ -604,9 +603,9 @@
             }
         }
 
-        /* Styles for the generated print view to make it look like a document */
+        !* Styles for the generated print view to make it look like a document *!
         .print-container {
-            width: 210mm; /* A4 width */
+            width: 210mm; !* A4 width *!
             padding: 15mm;
             background: white;
             color: black;
@@ -624,10 +623,11 @@
         .print-section h3 { font-size: 18px; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 15px; margin-bottom: 10px; }
         .print-section ul { list-style-type: disc; padding-left: 20px; }
         .print-section p { margin-bottom: 10px; }
-        .print-contact-item { display: block; margin-bottom: 5px; }
+        .print-contact-item { display: block; margin-bottom: 5px; }*/
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
+<div id="print-content" style="display: none;" aria-hidden="true"></div>
 
 <!-- =================================================================
 |                            MAIN CONTAINER                           |
@@ -1159,7 +1159,7 @@
                         techUsed: ['Kanban', 'Agile', 'Risk Management', 'Selenium', 'Appium', 'Kotlin', 'Jenkins', 'GitLab', 'Jira', 'Scrum', 'Ranorex', 'Kubernetes', 'Terraform', 'GCP', 'Azure DevOps', 'Node.js', 'Ruby', 'PHP']
                     },
                     {
-                        title: 'Sr. Project Manager & QA Engineer', company: 'Globant', logo: 'https://static.globant.com/corp-media/2023/11/globant-logo-dark.svg', dates: 'Apr 2017 - May 2018',
+                        title: 'Sr. Project Manager & QA Engineer', company: 'Globant', logo: 'https://cdn.simpleicons.org/globant/BFD732', dates: 'Apr 2017 - May 2018',
                         details: {
                             en: [
                                 'Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account.',
@@ -1370,7 +1370,11 @@
                         tour_step_9_title: "9. Contact & Feedback",
                         tour_step_9_desc: "Click this button anytime to send me a message or rate this CV. It even opens automatically if you scroll to the bottom!",
                         tour_step_10_title: "10. Get In Touch",
-                        tour_step_10_desc: "All my contact channels are here. Click any link to open the corresponding application, or use the floating blue button to send me a direct message."
+                        tour_step_10_desc: "All my contact channels are here. Click any link to open the corresponding application, or use the floating blue button to send me a direct message.",
+                        summary_title: "Professional Summary",
+                        summary_text: "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.",
+                        summary_detail_1: "Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.",
+                        summary_detail_2: "As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders."
 
                     },
                     es: {
@@ -2375,7 +2379,7 @@
                     case 'expand-all-exp': this._toggleAllAccordions(this.DOMElements.experienceContainer, button); break;
                     case 'expand-all-toolkit': this._toggleAllAccordions(this.DOMElements.toolkitContainer, button); break;
                     case 'read-more-btn': this._toggleReadMore(button); break;
-                    case 'print-btn': this._trackEvent('print_cv', 'Interaction', 'Print Button'); window.print(); break;
+                    case 'print-btn': this._trackEvent('print_cv', 'Interaction', 'Print Button'); this._exportAsPDF(); break;
                     case 'theme-toggle': this._toggleTheme(); break;
                 }
                 if(button.classList.contains('modal-close')) {
@@ -3058,179 +3062,461 @@
             },
 
 
-            // DELETE ALL PREVIOUS EXPORT-RELATED FUNCTIONS AND REPLACE WITH THIS BLOCK
-
             _setupExportButtons() {
-                const translations = this.data.translations[this.state.lang];
-                const exportOptions = [
-                    { nameKey: 'export_cv_pdf', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsPDF() },
-                    { nameKey: 'export_cv_jpg', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>', handler: () => this._exportAsJPG() },
-                    { nameKey: 'export_cv_doc', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsDOC() },
-                    { nameKey: 'export_cv_json', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>', handler: () => this._exportAsJSON() },
-                    { nameKey: 'export_cv_text', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsText() }
-                ];
-
                 const container = this.DOMElements.exportOptions;
-                container.innerHTML = '';
+                container.innerHTML = `<div class="p-2 text-sm text-gray-500">Loading...</div>`; // Initial loading state
 
-                exportOptions.forEach(opt => {
-                    const button = document.createElement('button');
-                    button.className = 'w-full flex items-center gap-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-left';
-                    button.innerHTML = `<div class="w-5 h-5 text-gray-600 dark:text-gray-300">${opt.icon}</div><span class="text-sm">${translations[opt.nameKey]}</span>`;
-                    button.addEventListener('click', () => {
-                        opt.handler();
-                        this._trackEvent('export_cv', 'Export', opt.nameKey);
-                    });
-                    container.appendChild(button);
-                });
-            },
-
-            _generatePrintableView() {
-                const existingPrintView = document.getElementById('print-view');
-                if (existingPrintView) existingPrintView.remove();
-
-                const data = this.data;
-                const en = data.translations.en;
-
-                let sidebarHTML = `
-        <div class="print-section">
-            <h3>${en.contact_title}</h3>
-            <a class="print-contact-item" href="tel:+573209191010">+57 320 919 1010</a>
-            <a class="print-contact-item" href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a>
-            <a class="print-contact-item" href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">LinkedIn Profile</a>
-            <a class="print-contact-item" href="https://wa.me/573209191010">WhatsApp</a>
-            <p>Medellin, Antioquia, Colombia</p>
-        </div>
-        <div class="print-section">
-            <h3>${en.competencies_title}</h3>
-            <ul>
-                <li>${en.competency_pm}</li><li>${en.competency_qa}</li><li>${en.competency_lead}</li>
-                <li>${en.competency_devops}</li><li>${en.competency_cloud}</li><li>${en.competency_strategy}</li>
-                <li>${en.competency_relations}</li>
-            </ul>
-        </div>
-        <div class="print-section">
-            <h3>${en.languages_title}</h3>
-            <p>Spanish (Native), English (Fluent), Portuguese (Fluent), Others (Basic)</p>
-        </div>
-    `;
-
-                // FIX: Correctly access the translated text for summary and experience titles
-                let mainContentHTML = `
-        <div class="print-section">
-            <h3>${en.summary_title}</h3>
-            <p>${document.querySelector('[data-translate-key="summary_text"]').textContent}</p>
-            <p>${document.querySelector('[data-translate-key="summary_detail_1"]').textContent}</p>
-            <p>${document.querySelector('[data-translate-key="summary_detail_2"]').textContent}</p>
-        </div>
-        <div class="print-section">
-            <h3>${en.experience_title}</h3>
-            ${data.experiences.map((exp, index) => `
-                <h4><b>${document.querySelector(`#experience-${index} [data-translate-key="exp_${index}_title"]`).textContent}</b> at ${exp.company} (${exp.dates})</h4>
-                <ul>${exp.details.en.map(d => `<li>${d}</li>`).join('')}</ul>
-                <p><b>Technologies:</b> ${exp.techUsed.join(', ')}</p><br/>
-            `).join('')}
-        </div>
-    `;
-
-                const fullHTML = `
-        <div id="print-view">
-            <div class="print-container">
-                <div class="print-header">
-                    <img src="${this.DOMElements.profilePhoto.src}" class="print-photo" alt="Profile Photo">
-                    <div class="print-header-info">
-                        <h1>CARLOS A. MUÑOZ</h1><h2>${en.job_title}</h2><p>CSPM | ISTQB | CISA | CISSP</p>
-                    </div>
-                </div>
-                <div class="print-body">
-                    <div class="print-sidebar">${sidebarHTML}</div>
-                    <div class="print-main-content">${mainContentHTML}</div>
-                </div>
-            </div>
-        </div>
-    `;
-
-                document.body.insertAdjacentHTML('beforeend', fullHTML);
-            },
-
-            async _exportAsPDF() {
-                this._generatePrintableView();
-                // Use a timeout to ensure the browser has rendered the new view
                 setTimeout(() => {
-                    window.print();
-                    const printView = document.getElementById('print-view');
-                    if (printView) printView.remove();
-                }, 500);
+                    const translations = this.data.translations[this.state.lang];
+                    const exportOptions = [
+                        { nameKey: 'export_cv_pdf', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsPDF_jsPDF() },
+                        { nameKey: 'export_cv_jpg', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>', handler: () => this._exportAsJPG() },
+                        { nameKey: 'export_cv_ats', name: 'Export for ATS (DOC)', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsATS() },
+                        { nameKey: 'export_cv_json', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>', handler: () => this._exportAsJSON() },
+                        { nameKey: 'export_cv_text', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>', handler: () => this._exportAsText() }
+                    ];
+
+                    container.innerHTML = '';
+
+                    exportOptions.forEach(opt => {
+                        const button = document.createElement('button');
+                        button.className = 'w-full flex items-center gap-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-left';
+
+                        // **FIX**: Correctly checks for a hardcoded name vs. a translation key.
+                        const buttonText = opt.name ? opt.name : translations[opt.nameKey];
+
+                        button.innerHTML = `<div class="w-5 h-5 text-gray-600 dark:text-gray-300">${opt.icon}</div><span class="text-sm">${buttonText}</span>`;
+                        button.addEventListener('click', () => {
+                            opt.handler();
+                            this._trackEvent('export_cv', 'Export', opt.nameKey || opt.name);
+                        });
+                        container.appendChild(button);
+                    });
+                }, 1000);
             },
 
-            async _exportAsJPG() {
-                // This is a user-guided action as direct JPG export is unreliable
-                alert("To save as a JPG, please use the 'Print' dialog, select 'Save as PDF', and then use an online converter to change the PDF to a JPG. This ensures the highest quality.");
-                this._exportAsPDF(); // Open the print dialog for them
+            /**
+             * Generates a complete, clean HTML string of the CV content for reliable printing.
+             */
+            _generatePrintableHTML() {
+                const enData = this.data.translations.en;
+                const experiences = this.data.experiences;
+                const skills = this.data.skills;
+                const profilePhotoSrc = this.DOMElements.profilePhoto.src;
+                const summaryFullText = `${enData.summary_text} ${enData.summary_detail_1 || ''} ${enData.summary_detail_2 || ''}`;
+
+                // This function now generates the complete CV content.
+                return `
+                    <style>
+                        /* Includes all necessary styles for the print/JPG layout */
+                        .print-only-container { position: relative; font-family: Arial, sans-serif; color: #000; padding: 40px; background-color: #fff; width: 800px; }
+                        .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 80px; color: rgba(0, 0, 0, 0.05); font-weight: bold; pointer-events: none; z-index: 0; }
+                        h1 { font-size: 26pt; font-weight: bold; text-align: center; margin: 0; } h2 { font-size: 14pt; text-align: center; color: #444; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #0891b2; } h3 { font-size: 16pt; font-weight: bold; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; } h4 { font-size: 12pt; font-weight: bold; margin-top: 15px; margin-bottom: 2px; } p, li { font-size: 10pt; line-height: 1.5; color: #333; } ul { list-style-type: disc; padding-left: 20px; margin-top: 5px; } .contact-info { text-align: center; margin-bottom: 20px; font-size: 10pt; } .contact-info a { color: #0891b2; text-decoration: none; margin: 0 5px; } .profile-photo { display: block; margin: 0 auto 20px auto; width: 120px; height: 120px; border-radius: 50%; } .toolkit-category { margin-bottom: 10px; } .toolkit-skills { font-size: 9pt; color: #555; } .exp-item { margin-bottom: 20px; } .exp-dates { color: #555; font-style: italic; } .technologies { font-size: 9pt; color: #0891b2; font-style: italic; } .languages-section p { margin-bottom: 5px; }
+                    </style>
+                    <div class="print-only-container">
+                        <div class="watermark">Carlos A. Muñoz - Confidential</div>
+                        <img src="${profilePhotoSrc}" class="profile-photo" alt="Profile Photo">
+                        <h1>CARLOS A. MUÑOZ</h1>
+                        <h2>${enData.job_title}</h2>
+                        <div class="contact-info">
+                             <a href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a> | <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">LinkedIn</a> | <span>+57 320 919 1010</span> | <a href="https://wa.me/573209191010">WhatsApp</a> | <a href="https://t.me/+573209191010">Telegram</a><br><a href="https://kaanmuar.github.io/">View Interactive CV Online</a>
+                        </div>
+                        <h3>Professional Summary</h3><p>${summaryFullText}</p>
+                        <h3>Technical & Management Toolkit</h3>
+                        ${Object.keys(skills).map(categoryKey => `<div class="toolkit-category"><h4>${enData[`toolkit_${categoryKey}`] || categoryKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h4><p class="toolkit-skills">${skills[categoryKey].map(s => s.name).join(', ')}</p></div>`).join('')}
+                        <h3>Spoken Languages</h3><div class="languages-section"><p><strong>Spanish:</strong> Native</p><p><strong>English:</strong> Fluent (C2 Proficient)</p><p><strong>Portuguese:</strong> Fluent</p><p><strong>Others (Italian, German, French):</strong> Basic</p></div>
+                        <h3>Professional Experience</h3>
+                        ${experiences.map(exp => `<div class="exp-item"><h4>${exp.title} at ${exp.company}</h4><p class="exp-dates">${exp.dates}</p><ul>${exp.details.en.map(detail => `<li>${detail}</li>`).join('')}</ul><p class="technologies"><strong>Technologies Used:</strong> ${exp.techUsed.join(', ')}</p></div>`).join('')}
+                        <h3>Education & Certifications</h3><h4>Education</h4><p><strong>Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p><p><strong>Computer Systems Engineering</strong> - EAMQ</p><h4>Key Certifications</h4><p><strong>English Proficiency:</strong> EF SET C2 Proficient | <strong>Project Management:</strong> CSPM | <strong>Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB | <strong>Information Security:</strong> CISA, CISM, CISSP</p>
+                    </div>
+                `;
             },
 
-            _exportAsDOC() {
-                const en = this.data.translations.en;
-                const liveURL = "https://kaanmuar.github.io/";
-                let content = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"><title>CV Export</title></head><body>`;
-                content += `<h1>CARLOS A. MUÑOZ</h1><h2>${en.job_title}</h2>`;
-                content += `<h3>CONTACT</h3><p>Email: <a href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a><br/>LinkedIn: <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">https://www.linkedin.com/in/carlos-andres-m-2a60b8b/</a><br/>WhatsApp: <a href="https://wa.me/573209191010">https://wa.me/573209191010</a></p>`;
-                content += `<p>View the live interactive version at: <a href="${liveURL}">${liveURL}</a></p>`;
+            async _prepareAndCleanupForPrint(action) {
+                // Use a direct reference for the loading indicator
+                let loadingIndicator = document.getElementById('export-loading-overlay');
+                if (!loadingIndicator) {
+                    loadingIndicator = document.createElement('div');
+                    loadingIndicator.id = 'export-loading-overlay';
+                    loadingIndicator.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); color: white; display: flex; align-items: center; justify-content: center; z-index: 9999; font-size: 1.5rem;';
+                    document.body.appendChild(loadingIndicator);
+                }
+                loadingIndicator.textContent = 'Preparing Print View...';
+                loadingIndicator.style.display = 'flex';
 
-                // FIX: Get summary text directly from the DOM to ensure it's not undefined
-                const summaryText = document.querySelector('[data-translate-key="summary_text"]').textContent;
-                const summaryDetail1 = document.querySelector('[data-translate-key="summary_detail_1"]').textContent;
-                const summaryDetail2 = document.querySelector('[data-translate-key="summary_detail_2"]').textContent;
-                content += `<h3>PROFESSIONAL SUMMARY</h3><p>${summaryText}</p><p>${summaryDetail1}</p><p>${summaryDetail2}</p>`;
+                const printContainer = document.getElementById('print-content');
+                if (printContainer) {
+                    printContainer.innerHTML = this._generatePrintableHTML();
+                }
 
-                content += `<h3>PROFESSIONAL EXPERIENCE</h3>`;
-                this.data.experiences.forEach((exp, index) => {
-                    // FIX: Get the title directly from the DOM
-                    const title = document.querySelector(`#experience-${index} [data-translate-key="exp_${index}_title"]`).textContent;
-                    content += `<hr/><h4><b>${title}</b> at ${exp.company} (${exp.dates})</h4>`;
-                    content += `<ul>${exp.details.en.map(d => `<li>${d}</li>`).join('')}</ul>`;
-                    content += `<p><b>Technologies:</b> ${exp.techUsed.join(', ')}</p>`;
-                });
-                content += `</body></html>`;
+                const isDark = document.documentElement.classList.contains('dark-mode');
+                if (isDark) {
+                    document.documentElement.classList.remove('dark-mode');
+                }
 
-                const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                action();
+
+                // Correctly reference and hide the overlay in the cleanup
+                setTimeout(() => {
+                    const overlay = document.getElementById('export-loading-overlay');
+                    if(overlay) overlay.style.display = 'none';
+                    if (printContainer) printContainer.innerHTML = '';
+                    if (isDark) {
+                        document.documentElement.classList.add('dark-mode');
+                    }
+                }, 3000);
+            },
+
+            _exportAsATS() {
+                const enData = this.data.translations.en;
+                const experiences = this.data.experiences;
+                const skills = this.data.skills;
+
+                // **FIX**: Correctly pull all parts of the summary from the 'en' language object.
+                const summaryFullText = `${enData.summary_text} ${enData.summary_detail_1 || ''} ${enData.summary_detail_2 || ''}`;
+
+                let content = `
+                    <h1>CARLOS A. MUÑOZ</h1>
+                    <p style="text-align:center;">${enData.job_title}</p>
+                    <p style="text-align:center;">
+                        kaanmuar@gmail.com |
+                        https://www.linkedin.com/in/carlos-andres-m-2a60b8b/ |
+                        +57 320 919 1010
+                    </p>
+                    <hr>
+                    <h2>PROFESSIONAL SUMMARY</h2>
+                    <p>${summaryFullText}</p>
+
+                    <h2>SKILLS</h2>
+                    ${Object.keys(skills).map(key => `
+                        <p><strong>${enData[`toolkit_${key}`] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> ${skills[key].map(s => s.name).join(', ')}</p>
+                    `).join('')}
+
+                    <h2>PROFESSIONAL EXPERIENCE</h2>
+                    ${experiences.map(exp => `
+                        <hr>
+                        <h3>${exp.title}</h3>
+                        <p><strong>${exp.company}</strong> | ${exp.dates}</p>
+                        <ul>${exp.details.en.map(detail => `<li>${detail}</li>`).join('')}</ul>
+                        <p><strong>Technologies Used:</strong> ${exp.techUsed.join(', ')}</p>
+                    `).join('')}
+
+                    <h2>EDUCATION</h2>
+                    <p><strong>Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p>
+                    <p><strong>Computer Systems Engineering</strong> - EAMQ</p>
+
+                    <h2>CERTIFICATIONS</h2>
+                    <p><strong>English Proficiency:</strong> EF SET C2 Proficient</p>
+                    <p><strong>Project Management:</strong> CSPM</p>
+                    <p><strong>Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB</p>
+                    <p><strong>Information Security:</strong> CISA, CISM, CISSP</p>
+                `;
+
+                const fullHtml = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"></head><body>${content}</body></html>`;
+                const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'carlos_munoz_cv.doc';
+                link.download = 'CarlosMunozCV_ATS.doc';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            },
+
+            _exportAsPDF() {
+                this._prepareAndCleanupForPrint(() => {
+                    window.print();
+                });
+            },
+
+            _exportAsPDF_jsPDF() {
+                const jsPDF = window.jsPDF;
+                const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+
+                const enData = this.data.translations.en;
+                const experiences = this.data.experiences;
+                const skills = this.data.skills;
+                const liveURL = "https://kaanmuar.github.io/";
+
+                // --- DOCUMENT STYLES ---
+                const MARGIN = 40;
+                const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
+                const PAGE_WIDTH = doc.internal.pageSize.getWidth();
+                const FONT_SIZES = { h1: 22, h2: 16, h3: 12, body: 10, small: 8 };
+                const COLORS = { primary: '#111827', secondary: '#4b5563', link: '#0891b2' };
+                let cursor = MARGIN;
+
+                const addText = (text, size, x, y, options = {}) => {
+                    if (!text) return 0;
+                    doc.setFontSize(size);
+                    doc.setTextColor(options.color || COLORS.primary);
+                    doc.setFont('helvetica', options.style || 'normal');
+                    const textLines = doc.splitTextToSize(text, options.maxWidth || PAGE_WIDTH - x - MARGIN);
+                    doc.text(textLines, x, y, { align: options.align });
+                    return doc.getTextDimensions(textLines).h;
+                };
+
+                const checkPageBreak = (sectionHeight) => {
+                    if (cursor + sectionHeight > PAGE_HEIGHT - MARGIN) {
+                        doc.addPage();
+                        cursor = MARGIN;
+                    }
+                };
+
+                // --- HEADER & CONTACT ---
+                cursor += addText('CARLOS A. MUÑOZ', FONT_SIZES.h1, PAGE_WIDTH / 2, cursor, { align: 'center', style: 'bold' });
+                cursor += 5;
+                cursor += addText(enData.job_title, FONT_SIZES.h2, PAGE_WIDTH / 2, cursor, { align: 'center', color: COLORS.secondary });
+                cursor += 15;
+                doc.setFontSize(FONT_SIZES.body);
+                doc.setTextColor(COLORS.link);
+                doc.textWithLink('kaanmuar@gmail.com', MARGIN, cursor, { url: 'mailto:kaanmuar@gmail.com' });
+                doc.textWithLink('LinkedIn Profile', MARGIN + 150, cursor, { url: 'https://www.linkedin.com/in/carlos-andres-m-2a60b8b/' });
+                doc.textWithLink('+57 320 919 1010', MARGIN + 300, cursor, { url: 'tel:+573209191010' });
+                cursor += 15;
+                doc.textWithLink('WhatsApp', MARGIN, cursor, { url: 'https://wa.me/573209191010' });
+                doc.textWithLink('Telegram', MARGIN + 150, cursor, { url: 'https://t.me/+573209191010' });
+                doc.textWithLink('Interactive CV Online', MARGIN + 300, cursor, { url: liveURL });
+                cursor += 20;
+                doc.line(MARGIN, cursor, PAGE_WIDTH - MARGIN, cursor);
+                cursor += 20;
+
+                // --- SUMMARY & TOOLKIT ---
+                checkPageBreak(80);
+                cursor += addText('Professional Summary', FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
+                cursor += 10;
+                const summaryText = `${enData.summary_text} ${enData.summary_detail_1 || ''} ${enData.summary_detail_2 || ''}`;
+                cursor += addText(summaryText, FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2), color: COLORS.secondary });
+                cursor += 25;
+                checkPageBreak(200);
+                cursor += addText('Technical & Management Toolkit', FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
+                cursor += 10;
+                Object.keys(skills).forEach(categoryKey => {
+                    const categoryName = enData[`toolkit_${categoryKey}`] || categoryKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const skillsText = skills[categoryKey].map(s => s.name).join(', ');
+                    cursor += addText(categoryName, FONT_SIZES.body, MARGIN, cursor, { style: 'bold', maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+                    cursor += 2;
+                    cursor += addText(skillsText, FONT_SIZES.body, MARGIN + 5, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) - 5, color: COLORS.secondary });
+                    cursor += 10;
+                });
+
+                // --- EXPERIENCE ---
+                checkPageBreak(60);
+                doc.addPage();
+                cursor = MARGIN;
+                cursor += addText('Professional Experience', FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
+                experiences.forEach(exp => {
+                    checkPageBreak(80);
+                    cursor += 15;
+                    cursor += addText(`${exp.title} at ${exp.company}`, FONT_SIZES.h3, MARGIN, cursor, { style: 'bold', maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+                    cursor += 2;
+                    cursor += addText(exp.dates, FONT_SIZES.body, MARGIN, cursor, { color: COLORS.secondary, style: 'italic' });
+                    cursor += 10;
+                    exp.details.en.forEach(detail => {
+                        checkPageBreak(15);
+                        cursor += 5;
+                        cursor += addText(`• ${detail}`, FONT_SIZES.body, MARGIN + 10, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) - 10, color: COLORS.secondary });
+                    });
+                    cursor += 10;
+                    checkPageBreak(15);
+                    cursor += addText(`Technologies: ${exp.techUsed.join(', ')}`, FONT_SIZES.small, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2), color: COLORS.link });
+                });
+
+                // **NEW**: Add Spoken Languages section
+                checkPageBreak(100);
+                cursor += 20;
+                cursor += addText('Spoken Languages', FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
+                cursor += 10;
+                cursor += addText('Spanish: Native', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+                cursor += 5;
+                cursor += addText('English: Fluent (C2 Proficient)', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+                cursor += 5;
+                cursor += addText('Portuguese: Fluent', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+                cursor += 5;
+                cursor += addText('Others (Italian, German, French): Basic', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+
+                // **NEW**: Add Education & Certifications section
+                checkPageBreak(120);
+                cursor += 20;
+                cursor += addText('Education & Certifications', FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
+                cursor += 10;
+                cursor += addText('Education', FONT_SIZES.h3 - 1, MARGIN, cursor, {});
+                cursor += 5;
+                cursor += addText('Specialization in Management on IT Projects - Alexander Von-Humboldt University', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+                cursor += 5;
+                cursor += addText('Computer Systems Engineering - EAMQ', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+                cursor += 15;
+                cursor += addText('Key Certifications', FONT_SIZES.h3 - 1, MARGIN, cursor, {});
+                cursor += 5;
+                cursor += addText('English Proficiency: EF SET C2 Proficient | Project Management: CSPM | Quality Assurance: CASQ, CAST, CSQA, ISTQB | Information Security: CISA, CISM, CISSP', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+
+                // --- FOOTER ---
+                const pageCount = doc.internal.getNumberOfPages();
+                for(let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(FONT_SIZES.small);
+                    doc.setTextColor(COLORS.secondary);
+                    doc.text(`Carlos A. Muñoz | Interactive CV: ${liveURL}`, MARGIN, PAGE_HEIGHT - 20);
+                    doc.text(`Page ${i} of ${pageCount}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 20, { align: 'right' });
+                }
+
+                doc.save('CarlosMunozCV_Export.pdf');
+            },
+
+            async _exportAsJPG() {
+                // **FIX**: Create the loading indicator if it doesn't exist.
+                let loadingIndicator = document.getElementById('export-loading-overlay');
+                if (!loadingIndicator) {
+                    loadingIndicator = document.createElement('div');
+                    loadingIndicator.id = 'export-loading-overlay';
+                    loadingIndicator.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); color: white; display: flex; align-items: center; justify-content: center; z-index: 9999; font-size: 1.5rem;';
+                    document.body.appendChild(loadingIndicator);
+                }
+                loadingIndicator.textContent = 'Generating JPG, please wait...';
+                loadingIndicator.style.display = 'flex';
+
+                const printContainer = document.createElement('div');
+                printContainer.id = 'temp-print-content';
+                printContainer.style.position = 'absolute';
+                printContainer.style.left = '-9999px';
+                printContainer.style.width = '800px';
+                printContainer.innerHTML = this._generatePrintableHTML();
+                document.body.appendChild(printContainer);
+
+                // Preload all images inside the temporary container
+                const images = printContainer.querySelectorAll('img');
+                const promises = [...images].map(img => new Promise((resolve) => {
+                    if (img.complete) return resolve();
+                    img.onload = resolve;
+                    img.onerror = resolve; // Resolve even if an image fails to load
+                }));
+
+                await Promise.all(promises);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Extra delay for fonts
+
+                try {
+                    const canvas = await html2canvas(printContainer.querySelector('.print-only-container'), {
+                        scale: 2, // High resolution
+                        useCORS: true,
+                        backgroundColor: '#ffffff'
+                    });
+
+                    // Trigger the download
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = 'CarlosMunozCV_2025.jpg';
+                    link.click();
+
+                } catch (err) {
+                    console.error("Error generating JPG:", err);
+                    alert("Sorry, an error occurred while generating the JPG image.");
+                } finally {
+                    // Clean up
+                    document.body.removeChild(printContainer);
+                    loadingIndicator.style.display = 'none';
+                }
+            },
+
+            _exportAsDOC() {
+                const enData = this.data.translations.en;
+                const experiences = this.data.experiences;
+                const skills = this.data.skills;
+                const liveURL = "https://kaanmuar.github.io/";
+
+                // **REFINED**: Using a cleaner template for better Word rendering.
+                let content = `
+                    <div style="font-family: Arial, sans-serif; font-size: 10pt;">
+                        <h1 style="text-align: center; font-size: 22pt; margin-bottom: 5px;">CARLOS A. MUÑOZ</h1>
+                        <p style="text-align: center; font-size: 14pt; margin-top: 0;">${enData.job_title}</p>
+                        <p style="text-align: center;">
+                            <a href="mailto:${enData.kaanmuar_email}">${enData.kaanmuar_email}</a> |
+                            <a href="${enData.linkedin_url}">LinkedIn Profile</a> |
+                            ${enData.phone_number} |
+                            <a href="${liveURL}">Interactive CV Online</a>
+                        </p>
+                        <hr>
+                        <h2>Professional Summary</h2>
+                        <p>${enData.summary_text} ${enData.summary_detail_1 || ''} ${enData.summary_detail_2 || ''}</p>
+
+                        <h2>Technical & Management Toolkit</h2>
+                        ${Object.keys(skills).map(key => `
+                            <p><strong>${enData[`toolkit_${key}`] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> ${skills[key].map(s => s.name).join(', ')}</p>
+                        `).join('')}
+
+                        <h2>Spoken Languages</h2>
+                        <p><strong>Spanish:</strong> Native</p>
+                        <p><strong>English:</strong> Fluent (C2 Proficient)</p>
+                        <p><strong>Portuguese:</strong> Fluent</p>
+                        <p><strong>Others (Italian, German, French):</strong> Basic</p>
+
+                        <h2>Professional Experience</h2>
+                        ${experiences.map(exp => `
+                            <hr>
+                            <h3 style="margin-bottom: 2px;">${exp.title} at ${exp.company}</h3>
+                            <p style="margin-top: 0; font-style: italic;">${exp.dates}</p>
+                            <ul style="margin-top: 5px;">${exp.details.en.map(detail => `<li>${detail}</li>`).join('')}</ul>
+                            <p><strong>Technologies Used:</strong> ${exp.techUsed.join(', ')}</p>
+                        `).join('')}
+
+                        <h2>Education & Certifications</h2>
+                        <h4>Education</h4>
+                        <p><strong>Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p>
+                        <p><strong>Computer Systems Engineering</strong> - EAMQ</p>
+                        <h4>Key Certifications</h4>
+                        <p><strong>English Proficiency:</strong> EF SET C2 Proficient | <strong>Project Management:</strong> CSPM | <strong>Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB | <strong>Information Security:</strong> CISA, CISM, CISSP</p>
+                    </div>
+                `;
+
+                const fullHtml = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"></head><body>${content}</body></html>`;
+                const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'CarlosMunozCV_Export.doc';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
             },
 
             _exportAsText() {
-                const en = this.data.translations.en;
+                const enData = this.data.translations.en;
+                const experiences = this.data.experiences;
+                const skills = this.data.skills;
                 const liveURL = "https://kaanmuar.github.io/";
+
                 let textContent = `CV: Carlos A. Muñoz\n====================\n\n`;
-                textContent += `Title: ${en.job_title}\n`;
-                textContent += `\n## CONTACT ##\nEmail: kaanmuar@gmail.com\nLinkedIn: https://www.linkedin.com/in/carlos-andres-m-2a60b8b/\nWhatsApp: https://wa.me/573209191010\nTelegram: https://t.me/+573209191010\nLocation: Medellin, Antioquia, Colombia\n\n`;
-                textContent += `View the live interactive version at: ${liveURL}\n\n`;
+                textContent += `Title: ${enData.job_title}\n\n`;
+                textContent += `## CONTACT ##\nEmail: ${enData.kaanmuar_email}\nLinkedIn: ${enData.linkedin_url}\nPhone: ${enData.phone_number}\nInteractive CV: ${liveURL}\n\n`;
+                textContent += `## PROFESSIONAL SUMMARY ##\n${enData.summary_text} ${enData.summary_detail_1 || ''} ${enData.summary_detail_2 || ''}\n\n`;
 
-                const summaryText = document.querySelector('[data-translate-key="summary_text"]').textContent;
-                const summaryDetail1 = document.querySelector('[data-translate-key="summary_detail_1"]').textContent;
-                const summaryDetail2 = document.querySelector('[data-translate-key="summary_detail_2"]').textContent;
-                textContent += `## PROFESSIONAL SUMMARY ##\n${summaryText}\n${summaryDetail1}\n${summaryDetail2}\n`;
+                // **NEW**: Add Toolkit and Languages sections
+                textContent += `## TECHNICAL & MANAGEMENT TOOLKIT ##\n`;
+                Object.keys(skills).forEach(key => {
+                    const categoryName = enData[`toolkit_${key}`] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    textContent += `\n${categoryName}:\n- ${skills[key].map(s => s.name).join(', ')}\n`;
+                });
 
-                textContent += `\n## PROFESSIONAL EXPERIENCE ##\n\n`;
-                this.data.experiences.forEach((exp, index) => {
-                    // FIX: Get the title directly from the DOM
-                    const title = document.querySelector(`#experience-${index} [data-translate-key="exp_${index}_title"]`).textContent;
+                textContent += `\n## SPOKEN LANGUAGES ##\n- Spanish: Native\n- English: Fluent (C2 Proficient)\n- Portuguese: Fluent\n- Others (Italian, German, French): Basic\n\n`;
+
+                textContent += `## PROFESSIONAL EXPERIENCE ##\n\n`;
+                experiences.forEach(exp => {
                     textContent += `--------------------\n`;
-                    textContent += `${title} at ${exp.company} (${exp.dates})\n`;
+                    textContent += `${exp.title} at ${exp.company} (${exp.dates})\n`;
                     exp.details.en.forEach(detail => {
                         textContent += `- ${detail}\n`;
                     });
                     textContent += `Technologies: ${exp.techUsed.join(', ')}\n\n`;
                 });
+
+                textContent += `## EDUCATION & CERTIFICATIONS ##\n\nEducation:\n- Specialization in Management on IT Projects - Alexander Von-Humboldt University\n- Computer Systems Engineering - EAMQ\n\nKey Certifications:\n- English Proficiency: EF SET C2 Proficient\n- Project Management: CSPM\n- Quality Assurance: CASQ, CAST, CSQA, ISTQB\n- Information Security: CISA, CISM, CISSP\n`;
+
                 const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(textContent);
                 const downloadAnchorNode = document.createElement('a');
                 downloadAnchorNode.setAttribute("href", dataStr);
-                downloadAnchorNode.setAttribute("download", "carlos_munoz_cv.txt");
+                downloadAnchorNode.setAttribute("download", "CarlosMunozCV_Export.txt");
                 document.body.appendChild(downloadAnchorNode);
                 downloadAnchorNode.click();
                 downloadAnchorNode.remove();
