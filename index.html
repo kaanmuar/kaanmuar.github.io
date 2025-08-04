@@ -33,6 +33,8 @@
     ================================================================== -->
     <!-- Tailwind CSS for rapid UI development -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <!-- Google Fonts for typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -83,10 +85,17 @@
         .main-content .border-b-4, .main-content hr { border-color: var(--border-color); }
         body::before { content: ''; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.015; pointer-events: none; background-image: var(--watermark-url); background-repeat: repeat; }
         @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print, body::before { display: none; }
-            .experience-body, #summary-details, .toolkit-body { display: block !important; max-height: 9999px !important; }
-            .accordion-icon, .read-more-btn, .toolkit-toggle-btn, .infographics-section, .experience-summary, .experience-tech-tags { display: none !important; }
-            .experience-body ul { display: block !important; }
+            body > *:not(#print-view) {
+                display: none !important;
+            }
+            #print-view, #print-view * {
+                display: block !important;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
         .tech-tag { display: inline-flex; align-items: center; background-color: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border-color); }
         .dark-mode .tech-tag { background-color: #374151; color: #d1d5db; }
@@ -566,6 +575,7 @@
 
         /* This rule makes the expand/collapse logic work correctly */
         #social-share-selector.collapsed #social-share-options,
+        #export-selector.collapsed #export-options,
         #language-selector.collapsed .lang-wrapper:not(:has(.selected)) {
             display: none;
         }
@@ -581,6 +591,40 @@
         .share-link-wrapper:hover svg {
             color: #0891b2; /* Hover color */
         }
+        /* NEW: PRINT/EXPORT ONLY STYLES */
+        #print-view { display: none; } /* Hidden by default */
+
+        @media print {
+            body > *:not(#print-view) { display: none !important; }
+            #print-view {
+                display: block !important;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+        }
+
+        /* Styles for the generated print view to make it look like a document */
+        .print-container {
+            width: 210mm; /* A4 width */
+            padding: 15mm;
+            background: white;
+            color: black;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        .print-header { display: flex; align-items: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+        .print-photo { width: 100px; height: 100px; border-radius: 50%; margin-right: 20px; }
+        .print-header-info h1 { font-size: 24px; font-weight: bold; margin: 0; }
+        .print-header-info h2 { font-size: 16px; font-weight: normal; margin: 0; }
+        .print-body { display: flex; margin-top: 10px; }
+        .print-sidebar { width: 35%; padding-right: 10mm; }
+        .print-main-content { width: 65%; padding-left: 10mm; border-left: 1px solid #eee; }
+        .print-section h3 { font-size: 18px; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 15px; margin-bottom: 10px; }
+        .print-section ul { list-style-type: disc; padding-left: 20px; }
+        .print-section p { margin-bottom: 10px; }
+        .print-contact-item { display: block; margin-bottom: 5px; }
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
@@ -690,6 +734,15 @@
                                 <svg class="w-4 h-4 lang-accordion-indicator" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 <span class="mx-1">|</span>
                                 <div class="tooltip"><button id="print-btn" class="p-1 rounded-full hover:bg-gray-200" aria-label="Print or save as PDF"><svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext" data-translate-key="tooltip_print"></span></button></div>
+                                <div id="export-selector" class="relative flex items-center space-x-2 collapsed cursor-pointer" tabindex="0" role="region" aria-label="Export options">
+                                    <div class="tooltip">
+                                        <svg id="export-toggle-icon" class="w-5 h-5 text-gray-500 hover:text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        <span class="tooltiptext" data-translate-key="tooltip_export">Export CV</span>
+                                    </div>
+                                    <div id="export-options" class="absolute right-0 top-full mt-2 flex flex-col items-start gap-1 p-2 rounded-lg shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 w-40">
+                                        <!-- Export options will be injected here by JavaScript -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1281,12 +1334,44 @@
                         status_sending: "Sending...", status_uploading: "Uploading...", status_file_attached: "File attached: {fileName}", status_success_message_title: "Message Sent!", status_success_message_body: "Thank you for reaching out. I'll get back to you shortly.", status_success_rating_title: "Rating Submitted!", status_success_rating_body: "Thank you for your valuable feedback!", status_error_title: "An Error Occurred", status_error_body: "Sorry, something went wrong. Please try again later.",
                         topic_option_default: "Select a topic...", topic_option_opportunity: "Job Opportunity / Collaboration", topic_option_inquiry: "Project Inquiry", topic_option_feedback: "CV Feedback", topic_option_other: "Other",
                         tour_close: "Close", tour_back: "Back", tour_next: "Next", tour_finish: "Finish", tour_step_photo_title: "1. Zoomable Photo", tour_step_photo_desc: "You can click my profile photo at any time to see a larger, high-resolution version.", tour_step_share_title: "2. Share this CV", tour_step_share_desc: "Use the share icon to easily send this interactive CV via LinkedIn, X (Twitter), and other platforms, or simply copy the link.", tour_step_1_title: "3. Page Controls", tour_step_1_desc: "Use these controls to switch between Light/Dark themes, select a language, or print the CV as a PDF.", tour_step_2_title: "4. Expandable Summary", tour_step_2_desc: "Click 'Read More...' to see the full professional summary, providing deeper insight into my profile and approach.", tour_step_3_title: "5. Interactive Toolkit", tour_step_3_desc: "This is my full skillset. Click any skill to instantly filter both the Timeline and the Professional Experience sections.", tour_step_4_title: "6. Filterable Timeline", tour_step_4_desc: "This provides a quick career overview. It automatically filters based on the skills you select from the Toolkit.", tour_step_5_title: "7. Detailed Experience", tour_step_5_desc: "Click any job title to expand it and see the detailed responsibilities, achievements, and technologies used for that role.", tour_step_6_title: "8. Contact & Feedback", tour_step_6_desc: "Click this button anytime to send me a message or rate this CV. It even opens automatically if you scroll to the bottom!", tour_step_7_title: "9. Get In Touch", tour_step_7_desc: "All my contact channels are here. Click any link to open the corresponding application, or use the floating blue button to send me a direct message.",
+                        tooltip_export: "Export CV",
+                        export_cv_json: "Export as JSON",
+                        export_cv_text: "Export as Text",
+                        tour_step_export_title: "3. Export this CV",
+                        tour_step_export_desc: "You can also export the raw data of this CV in different formats like JSON or plain text.",
                         tooltip_share: "Share CV",
                         share_text: "Check out Carlos A. Muñoz's Interactive CV!",
                         share_title: "Carlos A. Muñoz - Interactive CV",
                         tooltip_share_on: "Share on %s", // %s is a placeholder
                         form_button_copy_link: "Copy Link",
-                        tooltip_copy_link: "Copy Link"
+                        tooltip_copy_link: "Copy Link",
+                        tooltip_export: "Export CV",
+                        export_cv_json: "Export as JSON",
+                        export_cv_text: "Export as Text",
+                        export_cv_pdf: "Export as PDF",
+                        export_cv_jpg: "Export as JPG",
+                        export_cv_doc: "Export as DOC",
+                        tour_step_1_title: "1. Zoomable Photo",
+                        tour_step_1_desc: "You can click my profile photo at any time to see a larger, high-resolution version.",
+                        tour_step_2_title: "2. Share this CV",
+                        tour_step_2_desc: "Use the share icon to easily send this interactive CV via LinkedIn, X (Twitter), and other platforms, or simply copy the link.",
+                        tour_step_3_title: "3. Export this CV",
+                        tour_step_3_desc: "You can also export the CV in different formats like PDF, DOC, or JSON for offline viewing or for ATS systems.",
+                        tour_step_4_title: "4. Page Controls",
+                        tour_step_4_desc: "Use these controls to switch between Light/Dark themes, select a language, or print the CV as a PDF.",
+                        tour_step_5_title: "5. Expandable Summary",
+                        tour_step_5_desc: "Click 'Read More...' to see the full professional summary, providing deeper insight into my profile and approach.",
+                        tour_step_6_title: "6. Interactive Toolkit",
+                        tour_step_6_desc: "This is my full skillset. Click any skill to instantly filter both the Timeline and the Professional Experience sections.",
+                        tour_step_7_title: "7. Filterable Timeline",
+                        tour_step_7_desc: "This provides a quick career overview. It automatically filters based on the skills you select from the Toolkit.",
+                        tour_step_8_title: "8. Detailed Experience",
+                        tour_step_8_desc: "Click any job title to expand it and see the detailed responsibilities, achievements, and technologies used for that role.",
+                        tour_step_9_title: "9. Contact & Feedback",
+                        tour_step_9_desc: "Click this button anytime to send me a message or rate this CV. It even opens automatically if you scroll to the bottom!",
+                        tour_step_10_title: "10. Get In Touch",
+                        tour_step_10_desc: "All my contact channels are here. Click any link to open the corresponding application, or use the floating blue button to send me a direct message."
+
                     },
                     es: {
                         job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA", contact_title: "Contacto", competencies_title: "Competencias Clave", competency_pm: "Gestión de Proyectos de TI", competency_qa: "QA y Automatización de Pruebas", competency_lead: "Liderazgo y Mentoría de Equipos", competency_devops: "Estrategia de CI/CD y DevOps", competency_cloud: "Plataformas en la Nube", competency_strategy: "Visión Estratégica de Negocio", competency_relations: "Relaciones con Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluido", lang_basic: "Básico", lang_others: "Otros", summary_title: "Resumen Profesional", toolkit_title: "Herramientas Técnicas y de Gestión", toolkit_pm: "Gestión de Proyectos y Metodologías:", toolkit_qa: "QA y Automatización de Pruebas:", toolkit_lang: "Programación y Scripting:", toolkit_cloud: "Nube, CI/CD y DevOps:", toolkit_db: "Bases de Datos y APIs:", toolkit_analytics: "Analítica y Monitoreo:", toolkit_platform: "Plataformas y Herramientas de Negocio:", toolkit_system: "Herramientas Generales y de Sistema:", experience_title: "Experiencia Profesional", education_title: "Educación y Certificaciones", infographics_title: "Carrera en un Vistazo", infographics_competencies_title: "Competencias Clave", infographics_methodologies_title: "Metodologías y Procesos", infographics_timeline_title: "Línea de Tiempo Profesional",
@@ -1308,7 +1393,34 @@
                         share_title: "Carlos A. Muñoz - CV Interactivo",
                         tooltip_share_on: "Compartir en %s",
                         form_button_copy_link: "Copiar Enlace",
-                        tooltip_copy_link: "Copiar Enlace"
+                        tooltip_copy_link: "Copiar Enlace",
+                        tooltip_export: "Exportar CV",
+                        export_cv_json: "Exportar como JSON",
+                        export_cv_text: "Exportar como Texto",
+                        export_cv_pdf: "Exportar como PDF",
+                        export_cv_jpg: "Exportar como JPG",
+                        export_cv_doc: "Exportar como DOC",
+                        tour_step_1_title: "1. Foto Ampliable",
+                        tour_step_1_desc: "Puedes hacer clic en mi foto de perfil en cualquier momento para ver una versión más grande y de alta resolución.",
+                        tour_step_2_title: "2. Compartir este CV",
+                        tour_step_2_desc: "Usa el ícono de compartir para enviar fácilmente este CV interactivo a través de LinkedIn, X (Twitter) y otras plataformas, o simplemente copia el enlace.",
+                        tour_step_3_title: "3. Exportar este CV",
+                        tour_step_3_desc: "También puedes exportar el CV en diferentes formatos como PDF, DOC o JSON para verlo sin conexión o para sistemas ATS.",
+                        tour_step_4_title: "4. Controles de Página",
+                        tour_step_4_desc: "Usa estos controles para cambiar entre temas Claro/Oscuro, seleccionar un idioma o imprimir el CV como PDF.",
+                        tour_step_5_title: "5. Resumen Expandible",
+                        tour_step_5_desc: "Haz clic en 'Leer Más...' para ver el resumen profesional completo, obteniendo una visión más profunda de mi perfil.",
+                        tour_step_6_title: "6. Toolkit Interactivo",
+                        tour_step_6_desc: "Este es mi conjunto de habilidades. Haz clic en cualquier habilidad para filtrar instantáneamente la Línea de Tiempo y la Experiencia Profesional.",
+                        tour_step_7_title: "7. Línea de Tiempo Filtrable",
+                        tour_step_7_desc: "Esto proporciona un resumen rápido de mi carrera. Se filtra automáticamente según las habilidades que selecciones del Toolkit.",
+                        tour_step_8_title: "8. Experiencia Detallada",
+                        tour_step_8_desc: "Haz clic en cualquier cargo para expandirlo y ver en detalle las responsabilidades, logros y tecnologías utilizadas.",
+                        tour_step_9_title: "9. Contacto y Feedback",
+                        tour_step_9_desc: "Haz clic en este botón en cualquier momento para enviarme un mensaje o calificar este CV. ¡Incluso se abre automáticamente si llegas al final!",
+                        tour_step_10_title: "10. Ponte en Contacto",
+                        tour_step_10_desc: "Todos mis canales de contacto están aquí. Haz clic en cualquier enlace para abrir la aplicación, o usa el botón azul flotante para enviarme un mensaje directo."
+
                     },
                     pt: {
                         job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA", contact_title: "Contato", competencies_title: "Competências Principais", competency_pm: "Gerenciamento de Projetos de TI", competency_qa: "QA e Automação de Testes", competency_lead: "Liderança e Mentoria de Equipes", competency_devops: "Estratégia de CI/CD e DevOps", competency_cloud: "Plataformas de Nuvem", competency_strategy: "Visão Estratégica de Negócios", competency_relations: "Relações com Stakeholders e Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Básico", lang_others: "Outros", summary_title: "Resumo Profissional", toolkit_title: "Ferramentas Técnicas e de Gestão", toolkit_pm: "Gestão de Projetos e Metodologias:", toolkit_qa: "QA e Automação de Testes:", toolkit_lang: "Programação e Scripting:", toolkit_cloud: "Nuvem, CI/CD e DevOps:", toolkit_db: "Bancos de Dados e APIs:", toolkit_analytics: "Análise e Monitoramento:", toolkit_platform: "Plataformas e Ferramentas de Negócio:", toolkit_system: "Ferramentas Gerais e de Sistema:", experience_title: "Experiência Profissional", education_title: "Educação e Certificações", infographics_title: "Carreira em Resumo", infographics_competencies_title: "Competências Principais", infographics_methodologies_title: "Metodologias e Processos", infographics_timeline_title: "Linha do Tempo da Carreira",
@@ -1330,7 +1442,33 @@
                         share_title: "Carlos A. Muñoz - CV Interativo",
                         tooltip_share_on: "Compartilhar no %s",
                         form_button_copy_link: "Copiar Link",
-                        tooltip_copy_link: "Copiar Link"
+                        tooltip_copy_link: "Copiar Link",
+                        tooltip_export: "Exportar CV",
+                        export_cv_pdf: "Exportar como PDF",
+                        export_cv_jpg: "Exportar como JPG",
+                        export_cv_doc: "Exportar como DOC",
+                        export_cv_json: "Exportar como JSON (EN)",
+                        export_cv_text: "Exportar como Texto (EN)",
+                        tour_step_1_title: "1. Foto Ampliável",
+                        tour_step_1_desc: "Você pode clicar na minha foto de perfil a qualquer momento para ver uma versão maior e de alta resolução.",
+                        tour_step_2_title: "2. Compartilhar este CV",
+                        tour_step_2_desc: "Use o ícone de compartilhamento para enviar facilmente este CV interativo via LinkedIn, X (Twitter) e outras plataformas, ou simplesmente copie o link.",
+                        tour_step_3_title: "3. Exportar este CV",
+                        tour_step_3_desc: "Você também pode exportar o CV em diferentes formatos como PDF, DOC ou JSON para visualização offline ou para sistemas ATS.",
+                        tour_step_4_title: "4. Controles da Página",
+                        tour_step_4_desc: "Use estes controles para alternar entre os temas Claro/Escuro, selecionar um idioma ou imprimir o CV como PDF.",
+                        tour_step_5_title: "5. Resumo Expansível",
+                        tour_step_5_desc: "Clique em 'Ler Mais...' para ver o resumo profissional completo, obtendo uma visão mais aprofundada do meu perfil.",
+                        tour_step_6_title: "6. Toolkit Interativo",
+                        tour_step_6_desc: "Este é o meu conjunto completo de habilidades. Clique em qualquer habilidade para filtrar instantaneamente a Linha do Tempo e a Experiência Profissional.",
+                        tour_step_7_title: "7. Linha do Tempo Filtrável",
+                        tour_step_7_desc: "Isto fornece uma rápida visão geral da carreira. Filtra automaticamente com base nas habilidades que você seleciona no Toolkit.",
+                        tour_step_8_title: "8. Experiência Detalhada",
+                        tour_step_8_desc: "Clique em qualquer cargo para expandi-lo e ver as responsabilidades detalhadas, conquistas e tecnologias usadas nessa função.",
+                        tour_step_9_title: "9. Contato e Feedback",
+                        tour_step_9_desc: "Clique neste botão a qualquer momento para me enviar uma mensagem ou avaliar este CV. Ele até abre automaticamente se você rolar até o final!",
+                        tour_step_10_title: "10. Entre em Contato",
+                        tour_step_10_desc: "Todos os meus canais de contato estão aqui. Clique em qualquer link para abrir o aplicativo correspondente, ou use o botão azul flutuante para me enviar uma mensagem direta."
                     },
                     de: {
                         job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter", contact_title: "Kontakt", competencies_title: "Kernkompetenzen", competency_pm: "IT-Projektmanagement", competency_qa: "QA & Testautomatisierung", competency_lead: "Teamführung & Mentoring", competency_devops: "CI/CD & DevOps-Strategie", competency_cloud: "Cloud-Plattformen", competency_strategy: "Strategisches Geschäftsverständnis", competency_relations: "Stakeholder- & Kundenbeziehungen", languages_title: "Sprachen", lang_native: "Muttersprache", lang_fluent: "Fließend", lang_basic: "Grundkenntnisse", lang_others: "Andere", summary_title: "Berufliches Profil", toolkit_title: "Technisches & Management-Toolkit", toolkit_pm: "Projektmanagement & Methoden:", toolkit_qa: "QA & Testautomatisierung:", toolkit_lang: "Programmierung & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Datenbanken & APIs:", toolkit_analytics: "Analyse & Überwachung:", toolkit_platform: "Plattformen & Business-Tools:", toolkit_system: "Allgemeine & System-Tools:", experience_title: "Berufserfahrung", education_title: "Ausbildung & Zertifizierungen", infographics_title: "Karriere im Überblick", infographics_competencies_title: "Kernkompetenzen", infographics_methodologies_title: "Methoden & Prozesse", infographics_timeline_title: "Karriere-Zeitachse",
@@ -1352,7 +1490,33 @@
                         share_title: "Carlos A. Muñoz - Interaktiver Lebenslauf",
                         tooltip_share_on: "Teilen auf %s",
                         form_button_copy_link: "Link kopieren",
-                        tooltip_copy_link: "Link kopieren"
+                        tooltip_copy_link: "Link kopieren",
+                        tooltip_export: "Lebenslauf exportieren",
+                        export_cv_pdf: "Als PDF exportieren",
+                        export_cv_jpg: "Als JPG exportieren",
+                        export_cv_doc: "Als DOC exportieren",
+                        export_cv_json: "Als JSON (EN) exportieren",
+                        export_cv_text: "Als Text (EN) exportieren",
+                        tour_step_1_title: "1. Vergrößerbares Foto",
+                        tour_step_1_desc: "Sie können jederzeit auf mein Profilfoto klicken, um eine größere, hochauflösende Version zu sehen.",
+                        tour_step_2_title: "2. Diesen Lebenslauf teilen",
+                        tour_step_2_desc: "Verwenden Sie das Teilen-Symbol, um diesen interaktiven Lebenslauf einfach über LinkedIn, X (Twitter) und andere Plattformen zu senden oder den Link zu kopieren.",
+                        tour_step_3_title: "3. Diesen Lebenslauf exportieren",
+                        tour_step_3_desc: "Sie können den Lebenslauf auch in verschiedenen Formaten wie PDF, DOC oder JSON für die Offline-Anzeige oder für ATS-Systeme exportieren.",
+                        tour_step_4_title: "4. Seitensteuerung",
+                        tour_step_4_desc: "Verwenden Sie diese Steuerelemente, um zwischen hellen/dunklen Themen zu wechseln, eine Sprache auszuwählen oder den Lebenslauf als PDF zu drucken.",
+                        tour_step_5_title: "5. Erweiterbare Zusammenfassung",
+                        tour_step_5_desc: "Klicken Sie auf 'Mehr lesen...', um die vollständige berufliche Zusammenfassung zu sehen und einen tieferen Einblick in mein Profil zu erhalten.",
+                        tour_step_6_title: "6. Interaktives Toolkit",
+                        tour_step_6_desc: "Dies ist mein vollständiges Skillset. Klicken Sie auf eine Fähigkeit, um sowohl die Zeitleiste als auch die Berufserfahrung sofort zu filtern.",
+                        tour_step_7_title: "7. Filterbare Zeitleiste",
+                        tour_step_7_desc: "Dies bietet einen schnellen Karriereüberblick. Es filtert automatisch basierend auf den Fähigkeiten, die Sie aus dem Toolkit auswählen.",
+                        tour_step_8_title: "8. Detaillierte Erfahrung",
+                        tour_step_8_desc: "Klicken Sie auf eine Berufsbezeichnung, um sie zu erweitern und die detaillierten Verantwortlichkeiten und Technologien anzuzeigen.",
+                        tour_step_9_title: "9. Kontakt & Feedback",
+                        tour_step_9_desc: "Klicken Sie jederzeit auf diese Schaltfläche, um mir eine Nachricht zu senden oder diesen Lebenslauf zu bewerten. Er öffnet sich sogar automatisch!",
+                        tour_step_10_title: "10. Kontakt aufnehmen",
+                        tour_step_10_desc: "Alle meine Kontaktkanäle sind hier. Klicken Sie auf einen Link, um die entsprechende Anwendung zu öffnen, oder verwenden Sie die blaue Schaltfläche."
                     },
                     fr: {
                         job_title: "Chef de Projet IT Senior, Architecte et Leader QA", contact_title: "Contact", competencies_title: "Compétences Clés", competency_pm: "Gestion de Projets IT", competency_qa: "QA & Automatisation des Tests", competency_lead: "Leadership et Mentorat d'Équipe", competency_devops: "Stratégie CI/CD & DevOps", competency_cloud: "Plateformes Cloud", competency_strategy: "Sens Stratégique des Affaires", competency_relations: "Relations avec les Parties Prenantes et Clients", languages_title: "Langues", lang_native: "Natif", lang_fluent: "Courant", lang_basic: "Basique", lang_others: "Autres", summary_title: "Résumé Professionnel", toolkit_title: "Boîte à Outils Technique & de Gestion", toolkit_pm: "Gestion de Projet & Méthodologies:", toolkit_qa: "QA & Automatisation des Tests:", toolkit_lang: "Programmation & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Bases de Données & APIs:", toolkit_analytics: "Analyse & Surveillance:", toolkit_platform: "Plateformes & Outils Métier:", toolkit_system: "Outils Généraux & Système:", experience_title: "Expérience Professionnelle", education_title: "Formation & Certifications", infographics_title: "Carrière en un Coup d'Œil", infographics_competencies_title: "Compétences Clés", infographics_methodologies_title: "Méthodologies & Processus", infographics_timeline_title: "Chronologie de Carrière",
@@ -1374,7 +1538,33 @@
                         share_title: "Carlos A. Muñoz - CV Interactif",
                         tooltip_share_on: "Partager sur %s",
                         form_button_copy_link: "Copier le lien",
-                        tooltip_copy_link: "Copier le lien"
+                        tooltip_copy_link: "Copier le lien",
+                        tooltip_export: "Exporter le CV",
+                        export_cv_pdf: "Exporter en PDF",
+                        export_cv_jpg: "Exporter en JPG",
+                        export_cv_doc: "Exporter en DOC",
+                        export_cv_json: "Exporter en JSON (EN)",
+                        export_cv_text: "Exporter en Texte (EN)",
+                        tour_step_1_title: "1. Photo zoomable",
+                        tour_step_1_desc: "Vous pouvez cliquer sur ma photo de profil à tout moment pour voir une version plus grande et en haute résolution.",
+                        tour_step_2_title: "2. Partager ce CV",
+                        tour_step_2_desc: "Utilisez l'icône de partage pour envoyer facilement ce CV interactif via LinkedIn, X (Twitter) et d'autres plateformes, ou copiez simplement le lien.",
+                        tour_step_3_title: "3. Exporter ce CV",
+                        tour_step_3_desc: "Vous pouvez également exporter le CV dans différents formats comme PDF, DOC ou JSON pour une consultation hors ligne ou pour les systèmes ATS.",
+                        tour_step_4_title: "4. Contrôles de la page",
+                        tour_step_4_desc: "Utilisez ces contrôles pour basculer entre les thèmes Clair/Sombre, sélectionner une langue ou imprimer le CV en PDF.",
+                        tour_step_5_title: "5. Résumé extensible",
+                        tour_step_5_desc: "Cliquez sur 'Lire la suite...' pour voir le résumé professionnel complet et obtenir un aperçu plus approfondi de mon profil.",
+                        tour_step_6_title: "6. Boîte à outils interactive",
+                        tour_step_6_desc: "Ceci est l'ensemble de mes compétences. Cliquez sur n'importe quelle compétence pour filtrer instantanément la Chronologie et l'Expérience Professionnelle.",
+                        tour_step_7_title: "7. Chronologie filtrable",
+                        tour_step_7_desc: "Ceci offre un aperçu rapide de ma carrière. Elle filtre automatiquement en fonction des compétences que vous sélectionnez.",
+                        tour_step_8_title: "8. Expérience détaillée",
+                        tour_step_8_desc: "Cliquez sur n'importe quel titre de poste pour le développer et voir les responsabilités détaillées et les technologies utilisées.",
+                        tour_step_9_title: "9. Contact et Feedback",
+                        tour_step_9_desc: "Cliquez sur ce bouton à tout moment pour m'envoyer un message ou noter ce CV. Il s'ouvre même automatiquement!",
+                        tour_step_10_title: "10. Prenez contact",
+                        tour_step_10_desc: "Tous mes canaux de contact sont ici. Cliquez sur un lien pour ouvrir l'application correspondante ou utilisez le bouton bleu."
                     },
                     it: {
                         job_title: "Manager Senior di Progetti IT, Architetto e Leader QA", contact_title: "Contatti", competencies_title: "Competenza Chiave", competency_pm: "Gestione Progetti IT", competency_qa: "QA e Automazione dei Test", competency_lead: "Leadership e Mentoring del Team", competency_devops: "Strategia CI/CD & DevOps", competency_cloud: "Piattaforme Cloud", competency_strategy: "Acume Strategico Aziendale", competency_relations: "Relazioni con Stakeholder e Clienti", languages_title: "Lingue", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Base", lang_others: "Altro", summary_title: "Riepilogo Professionale", toolkit_title: "Toolkit Tecnico e Gestionale", toolkit_pm: "Gestione Progetti e Metodologie:", toolkit_qa: "QA e Automazione Test:", toolkit_lang: "Programmazione e Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Database e API:", toolkit_analytics: "Analisi e Monitoraggio:", toolkit_platform: "Piattaforme e Strumenti Aziendali:", toolkit_system: "Strumenti Generali e di Sistema:", experience_title: "Esperienza Professionale", education_title: "Istruzione e Certificazioni", infographics_title: "Carriera in Breve", infographics_competencies_title: "Competenze Chiave", infographics_methodologies_title: "Metodologie e Processi", infographics_timeline_title: "Cronologia della Carriera",
@@ -1396,7 +1586,33 @@
                         share_title: "Carlos A. Muñoz - CV Interattivo",
                         tooltip_share_on: "Condividi su %s",
                         form_button_copy_link: "Copia link",
-                        tooltip_copy_link: "Copia link"
+                        tooltip_copy_link: "Copia link",
+                        tooltip_export: "Esporta CV",
+                        export_cv_pdf: "Esporta come PDF",
+                        export_cv_jpg: "Esporta come JPG",
+                        export_cv_doc: "Esporta come DOC",
+                        export_cv_json: "Esporta come JSON (EN)",
+                        export_cv_text: "Esporta come Testo (EN)",
+                        tour_step_1_title: "1. Foto Ingrandibile",
+                        tour_step_1_desc: "Puoi fare clic sulla mia foto del profilo in qualsiasi momento per vedere una versione più grande e ad alta risoluzione.",
+                        tour_step_2_title: "2. Condividi questo CV",
+                        tour_step_2_desc: "Usa l'icona di condivisione per inviare facilmente questo CV interattivo tramite LinkedIn, X (Twitter) e altre piattaforme, o semplicemente copia il link.",
+                        tour_step_3_title: "3. Esporta questo CV",
+                        tour_step_3_desc: "Puoi anche esportare il CV in diversi formati come PDF, DOC o JSON per la visualizzazione offline o per i sistemi ATS.",
+                        tour_step_4_title: "4. Controlli Pagina",
+                        tour_step_4_desc: "Usa questi controlli per passare da un tema Chiaro/Scuro all'altro, selezionare una lingua o stampare il CV in formato PDF.",
+                        tour_step_5_title: "5. Riepilogo Espandibile",
+                        tour_step_5_desc: "Clicca su 'Leggi di più...' per vedere il riepilogo professionale completo, ottenendo una visione più approfondita del mio profilo.",
+                        tour_step_6_title: "6. Toolkit Interattivo",
+                        tour_step_6_desc: "Questo è il mio set completo di competenze. Clicca su una qualsiasi competenza per filtrare istantaneamente sia la Cronologia che l'Esperienza Professionale.",
+                        tour_step_7_title: "7. Cronologia Filtrabile",
+                        tour_step_7_desc: "Questo fornisce una rapida panoramica della carriera. Si filtra automaticamente in base alle competenze selezionate dal Toolkit.",
+                        tour_step_8_title: "8. Esperienza Dettagliata",
+                        tour_step_8_desc: "Clicca su qualsiasi titolo di lavoro per espanderlo e vedere le responsabilità dettagliate e le tecnologie utilizzate per quel ruolo.",
+                        tour_step_9_title: "9. Contatti e Feedback",
+                        tour_step_9_desc: "Clicca questo pulsante in qualsiasi momento per inviarmi un messaggio o valutare questo CV. Si apre anche automaticamente se scorri fino in fondo!",
+                        tour_step_10_title: "10. Mettiti in Contatto",
+                        tour_step_10_desc: "Tutti i miei canali di contatto sono qui. Clicca su un qualsiasi link per aprire l'applicazione corrispondente, o usa il pulsante blu fluttuante."
                     },
                     /*summary_text: {
                         es: "Un Gerente de Proyectos de TI Senior y Arquitecto de QA con más de dos décadas de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de partes interesadas y liderazgo de equipos multifuncionales para cumplir los objetivos del proyecto. Capacidad demostrada para diseñar e implementar marcos sólidos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos.",
@@ -1447,14 +1663,28 @@
                         setTimeout(() => shareSelector.classList.add('collapsed'), 3500);
                     }
                 },
+
+                // NEW STEP 3: EXPORT FUNCTIONALITY
+                {
+                    element: '#export-selector',
+                    titleKey: 'tour_step_export_title',
+                    descriptionKey: 'tour_step_export_desc',
+                    analyticsTag: 'Viewed_Step_Export',
+                    action: function() {
+                        const exportSelector = this.DOMElements.exportSelector;
+                        setTimeout(() => this._applyClickEffect(exportSelector), 500);
+                        setTimeout(() => exportSelector.classList.remove('collapsed'), 700);
+                        setTimeout(() => exportSelector.classList.add('collapsed'), 2500);
+                    }
+                },
                 // ==========================================================
                 // ALL EXISTING STEPS ARE PRESERVED BELOW
                 // ==========================================================
                 {
                     element: '.flex.items-center.space-x-2.no-print',
-                    titleKey: 'tour_step_1_title',
-                    descriptionKey: 'tour_step_1_desc',
-                    analyticsTag: 'Viewed_Step_1_PageControls',
+                    titleKey: 'tour_step_4_title',
+                    descriptionKey: 'tour_step_4_desc',
+                    analyticsTag: 'Viewed_Step_4_PageControls',
                     action: function() {
                         const themeToggle = this.DOMElements.themeToggle;
                         const langSelector = this.DOMElements.languageSelector;
@@ -1478,9 +1708,9 @@
                 },
                 {
                     element: '#read-more-btn',
-                    titleKey: 'tour_step_2_title',
-                    descriptionKey: 'tour_step_2_desc',
-                    analyticsTag: 'Viewed_Step_2_ExpandableSummary',
+                    titleKey: 'tour_step_5_title',
+                    descriptionKey: 'tour_step_5_desc',
+                    analyticsTag: 'Viewed_Step_5_ExpandableSummary',
                     action: function() {
                         this.DOMElements.readMoreBtn.click();
                         setTimeout(() => this.DOMElements.readMoreBtn.click(), 3000);
@@ -1488,9 +1718,9 @@
                 },
                 {
                     element: '#toolkit-container',
-                    titleKey: 'tour_step_3_title',
+                    titleKey: 'tour_step_6_title',
                     descriptionKey: 'Watch as we select random skills. The selected skills will glow, and then we will see how the Timeline and Experience sections are filtered based on this selection.',
-                    analyticsTag: 'Viewed_Step_3_InteractiveToolkit',
+                    analyticsTag: 'Viewed_Step_6_InteractiveToolkit',
                     action: function() {
                         const allSkills = Array.from(this.DOMElements.toolkitContainer.querySelectorAll('.tech-tag'));
                         const selectedElements = [];
@@ -1551,9 +1781,9 @@
                 },
                 {
                     element: '#timeline-container',
-                    titleKey: 'tour_step_4_title',
-                    descriptionKey: 'tour_step_4_desc',
-                    analyticsTag: 'Viewed_Step_4_FilterableTimeline',
+                    titleKey: 'tour_step_7_title',
+                    descriptionKey: 'tour_step_7_desc',
+                    analyticsTag: 'Viewed_Step_7_FilterableTimeline',
                     action: function() {
                         const timelineItem = this.DOMElements.timelineContainer.querySelector('.timeline-item');
                         const targetExperienceId = timelineItem.querySelector('a').getAttribute('href');
@@ -1582,9 +1812,9 @@
                 },
                 {
                     element: '#experience-container .experience-item:first-child',
-                    titleKey: 'tour_step_5_title',
-                    descriptionKey: 'tour_step_5_desc',
-                    analyticsTag: 'Viewed_Step_5_DetailedExperience',
+                    titleKey: 'tour_step_8_title',
+                    descriptionKey: 'tour_step_8_desc',
+                    analyticsTag: 'Viewed_Step_8_DetailedExperience',
                     action: function() {
                         const firstExpHeader = this.DOMElements.experienceContainer.querySelector('.accordion-header');
                         if (firstExpHeader) {
@@ -1595,9 +1825,9 @@
                 },
                 {
                     element: '#contact-widget-fab',
-                    titleKey: 'tour_step_6_title',
-                    descriptionKey: 'tour_step_6_desc',
-                    analyticsTag: 'Viewed_Step_6_ContactWidget',
+                    titleKey: 'tour_step_9_title',
+                    descriptionKey: 'tour_step_9_desc',
+                    analyticsTag: 'Viewed_Step_9_ContactWidget',
                     action: function() {
                         this._openContactWidget();
                         if (!this.DOMElements.messageTab.classList.contains('active')) {
@@ -1649,9 +1879,9 @@
                 },
                 {
                     element: 'section[aria-labelledby="contact-heading"]',
-                    titleKey: 'tour_step_7_title',
-                    descriptionKey: 'tour_step_7_desc',
-                    analyticsTag: 'Viewed_Step_7_ContactInfo',
+                    titleKey: 'tour_step_10_title',
+                    descriptionKey: 'tour_step_10_desc',
+                    analyticsTag: 'Viewed_Step_10_ContactInfo',
                     action: function() {
                         const links = ['#contact-phone', '#contact-email', '#contact-linkedin', '#contact-whatsapp', '#contact-telegram'];
                         links.forEach((link, index) => {
@@ -1724,6 +1954,8 @@
                     mainContent: document.querySelector('.main-content'),
                     socialShareSelector: document.getElementById('social-share-selector'),
                     socialShareOptions: document.getElementById('social-share-options'),
+                    exportSelector: document.getElementById('export-selector'),
+                    exportOptions: document.getElementById('export-options'),
 
                     // Widget and Form Elements
                     contactWidgetFab: document.getElementById('contact-widget-fab'),
@@ -2039,6 +2271,7 @@
                 }
                 this._populateTopicDropdown();
                 this._setupShareButtons();
+                this._setupExportButtons();
                 this._createRadarCharts();
             },
 
@@ -2052,14 +2285,20 @@
                     const target = e.target;
                     const langSelector = target.closest('#language-selector');
                     const shareSelector = target.closest('#social-share-selector');
+                    const exportSelector = target.closest('#export-selector'); // Get the export selector
 
                     // Click outside to close dropdowns
                     if (!langSelector) this.DOMElements.languageSelector.classList.add('collapsed');
                     if (!shareSelector) this.DOMElements.socialShareSelector.classList.add('collapsed');
+                    if (!exportSelector) this.DOMElements.exportSelector.classList.add('collapsed'); // Also close export menu
 
                     // Event Delegation for specific elements
-                    if (langSelector) this._handleLanguageSelector(e);
+                    // This now checks if the click was on the main container, not just anywhere inside
+                    if (target.closest('#language-selector > .lang-wrapper, #language-selector > .lang-accordion-indicator')) {
+                        this._handleLanguageSelector(e);
+                    }
                     if (shareSelector) this._handleShareSelector(e);
+                    if (exportSelector) this._handleExportSelector(e); // This handler is already correct
 
                     const timelineLink = target.closest('.timeline-item a');
                     if (timelineLink) {
@@ -2114,6 +2353,18 @@
                     // Track the event
                     if (isCurrentlyCollapsed) { // It was collapsed, now it's open
                         this._trackEvent('expand_share_widget', 'Engagement', 'Opened Share Menu');
+                    }
+                }
+            },
+
+            // NEW FUNCTION: To handle expand/collapse of the export menu
+            _handleExportSelector(e) {
+                const selector = this.DOMElements.exportSelector;
+                const isCurrentlyCollapsed = selector.classList.contains('collapsed');
+                if (e.target.closest('#export-toggle-icon')) {
+                    selector.classList.toggle('collapsed');
+                    if (isCurrentlyCollapsed) {
+                        this._trackEvent('expand_export_widget', 'Engagement', 'Opened Export Menu');
                     }
                 }
             },
@@ -2804,6 +3055,207 @@
                         this._trackEvent('share_click', 'Engagement', btn.dataset.analyticsLabel);
                     });
                 });
+            },
+
+
+            // DELETE ALL PREVIOUS EXPORT-RELATED FUNCTIONS AND REPLACE WITH THIS BLOCK
+
+            _setupExportButtons() {
+                const translations = this.data.translations[this.state.lang];
+                const exportOptions = [
+                    { nameKey: 'export_cv_pdf', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsPDF() },
+                    { nameKey: 'export_cv_jpg', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>', handler: () => this._exportAsJPG() },
+                    { nameKey: 'export_cv_doc', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsDOC() },
+                    { nameKey: 'export_cv_json', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>', handler: () => this._exportAsJSON() },
+                    { nameKey: 'export_cv_text', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsText() }
+                ];
+
+                const container = this.DOMElements.exportOptions;
+                container.innerHTML = '';
+
+                exportOptions.forEach(opt => {
+                    const button = document.createElement('button');
+                    button.className = 'w-full flex items-center gap-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-left';
+                    button.innerHTML = `<div class="w-5 h-5 text-gray-600 dark:text-gray-300">${opt.icon}</div><span class="text-sm">${translations[opt.nameKey]}</span>`;
+                    button.addEventListener('click', () => {
+                        opt.handler();
+                        this._trackEvent('export_cv', 'Export', opt.nameKey);
+                    });
+                    container.appendChild(button);
+                });
+            },
+
+            _generatePrintableView() {
+                const existingPrintView = document.getElementById('print-view');
+                if (existingPrintView) existingPrintView.remove();
+
+                const data = this.data;
+                const en = data.translations.en;
+
+                let sidebarHTML = `
+        <div class="print-section">
+            <h3>${en.contact_title}</h3>
+            <a class="print-contact-item" href="tel:+573209191010">+57 320 919 1010</a>
+            <a class="print-contact-item" href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a>
+            <a class="print-contact-item" href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">LinkedIn Profile</a>
+            <a class="print-contact-item" href="https://wa.me/573209191010">WhatsApp</a>
+            <p>Medellin, Antioquia, Colombia</p>
+        </div>
+        <div class="print-section">
+            <h3>${en.competencies_title}</h3>
+            <ul>
+                <li>${en.competency_pm}</li><li>${en.competency_qa}</li><li>${en.competency_lead}</li>
+                <li>${en.competency_devops}</li><li>${en.competency_cloud}</li><li>${en.competency_strategy}</li>
+                <li>${en.competency_relations}</li>
+            </ul>
+        </div>
+        <div class="print-section">
+            <h3>${en.languages_title}</h3>
+            <p>Spanish (Native), English (Fluent), Portuguese (Fluent), Others (Basic)</p>
+        </div>
+    `;
+
+                // FIX: Correctly access the translated text for summary and experience titles
+                let mainContentHTML = `
+        <div class="print-section">
+            <h3>${en.summary_title}</h3>
+            <p>${document.querySelector('[data-translate-key="summary_text"]').textContent}</p>
+            <p>${document.querySelector('[data-translate-key="summary_detail_1"]').textContent}</p>
+            <p>${document.querySelector('[data-translate-key="summary_detail_2"]').textContent}</p>
+        </div>
+        <div class="print-section">
+            <h3>${en.experience_title}</h3>
+            ${data.experiences.map((exp, index) => `
+                <h4><b>${document.querySelector(`#experience-${index} [data-translate-key="exp_${index}_title"]`).textContent}</b> at ${exp.company} (${exp.dates})</h4>
+                <ul>${exp.details.en.map(d => `<li>${d}</li>`).join('')}</ul>
+                <p><b>Technologies:</b> ${exp.techUsed.join(', ')}</p><br/>
+            `).join('')}
+        </div>
+    `;
+
+                const fullHTML = `
+        <div id="print-view">
+            <div class="print-container">
+                <div class="print-header">
+                    <img src="${this.DOMElements.profilePhoto.src}" class="print-photo" alt="Profile Photo">
+                    <div class="print-header-info">
+                        <h1>CARLOS A. MUÑOZ</h1><h2>${en.job_title}</h2><p>CSPM | ISTQB | CISA | CISSP</p>
+                    </div>
+                </div>
+                <div class="print-body">
+                    <div class="print-sidebar">${sidebarHTML}</div>
+                    <div class="print-main-content">${mainContentHTML}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+                document.body.insertAdjacentHTML('beforeend', fullHTML);
+            },
+
+            async _exportAsPDF() {
+                this._generatePrintableView();
+                // Use a timeout to ensure the browser has rendered the new view
+                setTimeout(() => {
+                    window.print();
+                    const printView = document.getElementById('print-view');
+                    if (printView) printView.remove();
+                }, 500);
+            },
+
+            async _exportAsJPG() {
+                // This is a user-guided action as direct JPG export is unreliable
+                alert("To save as a JPG, please use the 'Print' dialog, select 'Save as PDF', and then use an online converter to change the PDF to a JPG. This ensures the highest quality.");
+                this._exportAsPDF(); // Open the print dialog for them
+            },
+
+            _exportAsDOC() {
+                const en = this.data.translations.en;
+                const liveURL = "https://kaanmuar.github.io/";
+                let content = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"><title>CV Export</title></head><body>`;
+                content += `<h1>CARLOS A. MUÑOZ</h1><h2>${en.job_title}</h2>`;
+                content += `<h3>CONTACT</h3><p>Email: <a href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a><br/>LinkedIn: <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">https://www.linkedin.com/in/carlos-andres-m-2a60b8b/</a><br/>WhatsApp: <a href="https://wa.me/573209191010">https://wa.me/573209191010</a></p>`;
+                content += `<p>View the live interactive version at: <a href="${liveURL}">${liveURL}</a></p>`;
+
+                // FIX: Get summary text directly from the DOM to ensure it's not undefined
+                const summaryText = document.querySelector('[data-translate-key="summary_text"]').textContent;
+                const summaryDetail1 = document.querySelector('[data-translate-key="summary_detail_1"]').textContent;
+                const summaryDetail2 = document.querySelector('[data-translate-key="summary_detail_2"]').textContent;
+                content += `<h3>PROFESSIONAL SUMMARY</h3><p>${summaryText}</p><p>${summaryDetail1}</p><p>${summaryDetail2}</p>`;
+
+                content += `<h3>PROFESSIONAL EXPERIENCE</h3>`;
+                this.data.experiences.forEach((exp, index) => {
+                    // FIX: Get the title directly from the DOM
+                    const title = document.querySelector(`#experience-${index} [data-translate-key="exp_${index}_title"]`).textContent;
+                    content += `<hr/><h4><b>${title}</b> at ${exp.company} (${exp.dates})</h4>`;
+                    content += `<ul>${exp.details.en.map(d => `<li>${d}</li>`).join('')}</ul>`;
+                    content += `<p><b>Technologies:</b> ${exp.techUsed.join(', ')}</p>`;
+                });
+                content += `</body></html>`;
+
+                const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'carlos_munoz_cv.doc';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            },
+
+            _exportAsText() {
+                const en = this.data.translations.en;
+                const liveURL = "https://kaanmuar.github.io/";
+                let textContent = `CV: Carlos A. Muñoz\n====================\n\n`;
+                textContent += `Title: ${en.job_title}\n`;
+                textContent += `\n## CONTACT ##\nEmail: kaanmuar@gmail.com\nLinkedIn: https://www.linkedin.com/in/carlos-andres-m-2a60b8b/\nWhatsApp: https://wa.me/573209191010\nTelegram: https://t.me/+573209191010\nLocation: Medellin, Antioquia, Colombia\n\n`;
+                textContent += `View the live interactive version at: ${liveURL}\n\n`;
+
+                const summaryText = document.querySelector('[data-translate-key="summary_text"]').textContent;
+                const summaryDetail1 = document.querySelector('[data-translate-key="summary_detail_1"]').textContent;
+                const summaryDetail2 = document.querySelector('[data-translate-key="summary_detail_2"]').textContent;
+                textContent += `## PROFESSIONAL SUMMARY ##\n${summaryText}\n${summaryDetail1}\n${summaryDetail2}\n`;
+
+                textContent += `\n## PROFESSIONAL EXPERIENCE ##\n\n`;
+                this.data.experiences.forEach((exp, index) => {
+                    // FIX: Get the title directly from the DOM
+                    const title = document.querySelector(`#experience-${index} [data-translate-key="exp_${index}_title"]`).textContent;
+                    textContent += `--------------------\n`;
+                    textContent += `${title} at ${exp.company} (${exp.dates})\n`;
+                    exp.details.en.forEach(detail => {
+                        textContent += `- ${detail}\n`;
+                    });
+                    textContent += `Technologies: ${exp.techUsed.join(', ')}\n\n`;
+                });
+                const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(textContent);
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "carlos_munoz_cv.txt");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            },
+
+            _exportAsJSON() {
+                const enData = this._getCleanExportData();
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(enData, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "carlos_munoz_cv_en.json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            },
+
+            _getCleanExportData() {
+                const dataCopy = JSON.parse(JSON.stringify(this.data));
+                const enOnlyData = {
+                    skills: dataCopy.skills,
+                    experiences: dataCopy.experiences.map(exp => ({...exp, details: exp.details.en})),
+                    radarTooltips: { en: dataCopy.radarTooltips.en },
+                    translations: { en: dataCopy.translations.en }
+                };
+                return enOnlyData;
             },
 
 
