@@ -1,8 +1,8 @@
-# 🚀 Interactive CV of Carlos A. Muñoz
+# 🚀 Interactive CV & Admin Panel
 
-![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) ![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase&logoColor=white) ![Cypress](https://img.shields.io/badge/cypress-%2317202C.svg?style=for-the-badge&logo=cypress&logoColor=white)
+![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) ![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase&logoColor=white) ![Cypress](https://img.shields.io/badge/cypress-%2317202C.svg?style=for-the-badge&logo=cypress&logoColor=white) ![Playwright](https://img.shields.io/badge/playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white) ![Robot Framework](https://img.shields.io/badge/robot%20framework-000000?style=for-the-badge&logo=robot-framework&logoColor=white)
 
-This repository contains the source code for a fully interactive, data-driven, and multilingual online curriculum vitae. It's designed to be a dynamic showcase of professional experience, skills, and projects, moving beyond the limitations of a traditional static resume.
+This repository contains the source code for a fully interactive, data-driven, and multilingual online curriculum vitae, complete with a secure backend administration panel. It is designed as a dynamic showcase of professional experience, skills, and projects, moving beyond the limitations of a traditional static resume.
 
 **Live Demo:** [**https://kaanmuar.github.io/**](https://kaanmuar.github.io/)
 
@@ -10,309 +10,132 @@ This repository contains the source code for a fully interactive, data-driven, a
 
 ## ✨ Key Features
 
-This project is more than just a static webpage. It's a full-stack application built with Vanilla JavaScript and a Firebase backend, incorporating a wide range of modern web development features.
+This project is a full-stack application built with Vanilla JavaScript and a Firebase backend, incorporating a wide range of modern web development and quality assurance features.
 
-* **Frontend & User Experience**
-    * **Dynamic Content Rendering:** All professional experience, skills, and testimonials are rendered dynamically from JavaScript objects, making the content easy to update and manage.
-    * **Interactive Skill Filtering:** The "Technical Toolkit" section is interactive. Clicking on a skill tag dynamically filters the "Professional Experience" timeline to show only the roles where that skill was used.
-    * **Automated Interactive Tour:** A guided tour automatically runs on first visit (or on-demand) to demonstrate all key interactive features of the CV.
-    * **Multi-language Support:** The entire user interface can be translated on-the-fly between English, Spanish, Portuguese, German, French, and Italian.
-    * **Expandable Sections:** Accordion-style sections for job details and skill categories keep the UI clean and allow users to explore the content at their own pace.
-    * **Visualizations:** Includes custom-rendered radar charts for a visual representation of core competencies and methodologies.
-    * **Responsive Design:** The layout is fully responsive and optimized for viewing on desktop, tablet, and mobile devices.
-    * **Dark Mode:** A theme toggle allows users to switch between light and dark modes, with the user's preference saved in local storage.
+### Interactive CV (`index.html`)
+* **Dynamic Content Rendering:** All professional experience, skills, and testimonials are rendered dynamically from JavaScript objects, making the content easy to update and manage.
+* **Multi-language Support:** The entire UI can be translated on-the-fly between **English, Spanish, Portuguese, German, French, and Italian**. Language preference can be set via a UI toggle or directly through a URL parameter (`?lang=es`).
+* **Interactive Skill Filtering:** The "Technical Toolkit" is fully interactive. Clicking on a skill tag dynamically filters the "Professional Experience" and "Career Timeline" sections to highlight roles where that skill was used.
+* **Dynamic Radar Charts:** Competency and methodology radar charts are interactive. Clicking on a label (e.g., "QA & Automation") filters the toolkit to show the related skills.
+* **Automated Interactive Tour:** A multi-step guided tour runs on first visit (or on-demand) to demonstrate all key interactive features of the CV, with enhanced animations and mobile-specific adjustments.
+* **Responsive Design & Dark Mode:** The layout is fully optimized for desktop, tablet, and mobile devices, and includes a theme toggle for switching between light and dark modes.
+* **Multiple Export Options:** Users can export the CV content in various formats, including **PDF, JPG, DOC, JSON, and TXT**.
+* **Contact & Rating Widget:** A floating widget allows visitors to send a direct message (with optional file attachments up to 5MB) or rate the CV. Submissions are sent directly to a Firestore database.
+* **Live Testimonials:** An approval-based system fetches and displays public testimonials and the average rating in real-time from the Firestore database, including threaded responses from the admin.
+* **SEO & Analytics:** The project includes structured data (JSON-LD) for rich snippets, `hreflang` tags for internationalization, and custom event tracking with Google Analytics for key user interactions.
 
-* **Backend & Contact Features**
-    * **Firebase Integration:** Utilizes Firestore and Storage for backend functionality.
-    * **Contact & Rating Widget:** A floating widget allows visitors to send a direct message (with optional file attachments) or rate the CV with real-time validation.
-    * **Live Testimonials:** An approved-ratings system fetches and displays testimonials and the average rating in real-time from the Firestore database.
-
-* **Analytics & SEO**
-    * **Google Analytics:** Custom event tracking is implemented for key user interactions, including form submissions, skill filter usage, language changes, and tour progress.
-    * **SEO Best Practices:** Includes structured data (JSON-LD) for rich snippets in search results and `hreflang` tags for multi-language content.
+### Admin Panel (`admin.html`)
+* **Secure Authentication:** The admin panel is protected by Firebase Authentication (Email/Password).
+* **Real-time Data Management:** View and manage all incoming messages and ratings from Firestore in real-time.
+* **Advanced Filtering & Search:** Each data view (Inbox, Ratings, etc.) has a multi-field filtering and search capability to easily find specific records.
+* **Response System:** Respond directly to messages or ratings from the admin panel. Responses can be kept private or made public.
+* **Public Testimonial Curation:** Approving a rating and making a response public will automatically create a new entry in the public "Testimonials" collection, which is then displayed on the main CV page.
+* **Content Moderation:** Reject messages, approve/retract ratings, and block senders by email to prevent spam.
+* **Statistics Dashboard:** A visual dashboard with Chart.js provides statistics on incoming messages and ratings over selectable date ranges.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Category | Technologies |
-| :--- | :--- |
-| **Frontend** | `HTML5`, `CSS3`, `Vanilla JavaScript (ES6+)`, `Tailwind CSS` |
-| **Backend** | `Firebase (Firestore, Storage)` |
-| **Testing** | `Cypress` (for End-to-End testing) |
-| **APIs** | `Google Analytics API` (for tracking) |
+| Category      | Technologies                                            |
+| :------------ | :------------------------------------------------------ |
+| **Frontend** | `HTML5`, `CSS3`, `Vanilla JavaScript (ES6+)`, `Tailwind CSS`, `Chart.js` |
+| **Backend** | `Firebase (Authentication, Firestore, Storage)`         |
+| **Testing** | `Cypress`, `Playwright`, `Robot Framework`              |
+| **APIs** | `Google Analytics API` (for tracking)                   |
 
 ---
 
-## 🧪 Automated Testing Suite
+## 🧪 Automated Testing
 
-This project includes a comprehensive End-to-End (E2E) test suite built with **Cypress**. These tests simulate real user interactions to ensure that all key features of the application are working correctly after every change.
+This project includes a comprehensive End-to-End (E2E) testing suite with coverage from three different modern frameworks. These tests ensure that all key features of both the CV and the Admin Panel are working correctly.
 
 <details>
-<summary><strong>Click to expand the Testing Suite setup and execution guide</strong></summary>
+<summary><strong>Click to view the Cypress Test Suite Guide</strong></summary>
 
-### 1. Test Suite Setup
+### 1. Setup
+Install Cypress and dependencies:
+```bash
+npm install cypress cypress-axe cypress-mochawesome-reporter --save-dev
+```
 
-1.  **Install Cypress:** In your project's root directory, run the following command to install Cypress as a development dependency:
-    ```bash
-    npm install cypress --save-dev
-    ```
+### 2. Configuration
+Ensure you have a `cypress.config.js` file in your root directory with reporting configured. The tests are located in `cypress/e2e/`.
 
-2.  **Open Cypress:** The first time you run Cypress, it will automatically create a standard folder structure (`cypress/`) for your tests.
-    ```bash
-    npx cypress open
-    ```
-    You can close the Cypress window after it has created the folders.
+### 3. Run Tests
+* **Interactive Mode:** `npx cypress open`
+* **Headless Mode (for CI/CD):** `npm run test:cypress`
 
-3.  **Create the Test File:** Inside the newly created `cypress/e2e/` folder, create a new file named `cv_spec.cy.js`.
+### 4. Coverage
+The Cypress suite (`cv_spec.cy.js` and `admin_spec.cy.js`) covers:
+* **Desktop & Mobile** viewports.
+* Core UI features like dark mode, language switching, and modal popups.
+* Interactive filtering via the toolkit and radar charts.
+* Contact widget form validation and mock submission.
+* A full run-through of the interactive tour.
+* Admin panel login, filtering, and the full testimonial approval/response lifecycle.
+* Baseline accessibility checks using `cypress-axe`.
 
-4.  **Add Test Code:** Paste the entire code block below into your new `cv_spec.cy.js` file. This expanded suite provides more comprehensive coverage.
+</details>
 
-    ```javascript
-    // cypress/e2e/cv_spec.cy.js
+<details>
+<summary><strong>Click to view the Playwright Test Suite Guide</strong></summary>
 
-    describe('Interactive CV Test Suite', () => {
-        beforeEach(() => {
-            // Visit the CV page before each test
-            cy.visit('index.html');
-            // Ensure the main content has loaded before proceeding
-            cy.get('.main-container').should('be.visible');
-        });
-    
-        context('Core Functionality & Accessibility', () => {
-            it('should load the page and display the main header', () => {
-                cy.get('h1').should('contain.text', 'CARLOS A. MUÑOZ');
-            });
-    
-            it('should toggle dark mode successfully and persist the setting', () => {
-                cy.get('#theme-toggle').click();
-                cy.get('html').should('have.class', 'dark-mode');
-                cy.reload(); // Reload the page
-                cy.get('html').should('have.class', 'dark-mode'); // Check if the setting persisted
-                cy.get('#theme-toggle').click();
-                cy.get('html').should('not.have.class', 'dark-mode');
-            });
-    
-            it('should switch languages correctly', () => {
-                cy.get('[data-translate-key="contact_title"]').should('contain.text', 'Contact');
-                cy.get('#language-selector').click();
-                cy.get('[data-lang="es"]').click();
-                cy.get('[data-translate-key="contact_title"]').should('contain.text', 'Contacto');
-            });
-    
-            it('should open the image modal on profile photo click and close it', () => {
-                cy.get('#profile-photo').click();
-                cy.get('#image-modal').should('have.class', 'visible');
-                cy.get('.modal-close').click();
-                cy.get('#image-modal').should('not.have.class', 'visible');
-            });
-    
-            it('should have correct href for social media links', () => {
-                cy.get('a[href*="linkedin.com"]').should('have.attr', 'target', '_blank');
-                cy.get('a[href*="wa.me"]').should('have.attr', 'target', '_blank');
-            });
-        });
-    
-        context('Interactive Features & Filtering', () => {
-            it('should filter professional experience by clicking a skill tag', () => {
-                const skillToTest = 'Cypress';
-                // Ensure items are visible before filtering
-                cy.get('.experience-item').should('have.length.greaterThan', 5);
-                
-                cy.contains('.tech-tag', skillToTest).click();
-                
-                // Check for the visual filtering cues
-                cy.get('.experience-item.filter-match').should('exist');
-                cy.get('.experience-item.filter-no-match').should('exist');
-                
-                cy.get('#reset-filter').click();
-                cy.get('.experience-item.filter-match').should('not.exist');
-            });
-    
-            it('should expand and collapse a single experience item', () => {
-                const experienceItem = cy.get('#experience-0');
-                experienceItem.find('.accordion-header').click();
-                experienceItem.find('.experience-body').should('have.css', 'max-height').and('not.eq', '0px');
-                experienceItem.find('.accordion-header').click();
-                experienceItem.find('.experience-body').should('have.css', 'max-height', '0px');
-            });
-    
-            it('should expand and collapse all experience items using "Expand All" button', () => {
-                cy.get('#expand-all-exp').click();
-                cy.get('.experience-body').first().should('have.css', 'max-height').and('not.eq', '0px');
-                cy.get('#expand-all-exp').should('contain.text', 'Collapse All').click();
-                cy.get('.experience-body').first().should('have.css', 'max-height', '0px');
-            });
-    
-            it('should navigate to the correct section when a timeline item is clicked', () => {
-                // Click the timeline item for "Globant"
-                cy.get('#timeline-exp-2 a').click();
-                // Check if the URL hash is correct
-                cy.url().should('include', '#experience-2');
-                // Check if the corresponding experience item is visible in the viewport
-                cy.get('#experience-2').should('be.visible');
-            });
-        });
-    
-        context('Contact & Rating Widget', () => {
-            beforeEach(() => {
-                cy.get('#contact-widget-fab').click();
-                cy.get('#contact-widget').should('have.class', 'visible');
-            });
-    
-            it('should show validation errors for the "Message Me" form', () => {
-                cy.get('#send-message-btn').should('be.disabled');
-                cy.get('#sender-name').type('a').blur();
-                cy.get('#sender-name-error').should('be.visible').and('contain.text', 'at least 2 characters');
-                cy.get('#sender-email').type('invalid-email').blur();
-                cy.get('#sender-email-error').should('be.visible').and('contain.text', 'valid email');
-            });
-    
-            it('should successfully submit the message form (UI only)', () => {
-                // Intercept the network request to Firestore to prevent actual submission
-                cy.intercept('POST', '**/[firestore.googleapis.com/](https://firestore.googleapis.com/)**', {
-                    statusCode: 200,
-                    body: {},
-                }).as('firestorePost');
-    
-                cy.get('#sender-name').type('Test User');
-                cy.get('#sender-email').type('test@example.com');
-                cy.get('#message-topic').select('CV Feedback');
-                cy.get('#sender-message').type('This is a test message to verify the UI flow.');
-                cy.get('#send-message-btn').should('not.be.disabled').click();
-    
-                // Check for the success message
-                cy.get('#widget-status-container').should('have.class', 'visible');
-                cy.get('#widget-status-content').should('contain.text', 'Message Sent!');
-            });
-    
-            it('should switch to the "Rate CV" tab and show validation errors', () => {
-                cy.get('#rating-tab').click();
-                cy.get('#send-rating-btn').should('be.disabled');
-                cy.get('#rater-name').type('b').blur();
-                cy.get('#rater-name-error').should('be.visible');
-                cy.get('#rater-email').type('invalid').blur();
-                cy.get('#rater-email-error').should('be.visible');
-            });
-    
-            it('should successfully submit the rating form (UI only)', () => {
-                cy.intercept('POST', '**/[firestore.googleapis.com/](https://firestore.googleapis.com/)**', {
-                    statusCode: 200,
-                    body: {},
-                }).as('firestorePost');
-    
-                cy.get('#rating-tab').click();
-                cy.get('.star[data-value="5"]').click();
-                cy.get('#rater-name').type('Test Rater');
-                cy.get('#rater-email').type('rater@example.com');
-                cy.get('#send-rating-btn').should('not.be.disabled').click();
-    
-                cy.get('#widget-status-container').should('have.class', 'visible');
-                cy.get('#widget-status-content').should('contain.text', 'Rating Submitted!');
-            });
-        });
-    
-        context('Interactive Tour', () => {
-            it('should start the tour and navigate through all steps', () => {
-                cy.get('#tour-start-btn').click();
-                cy.get('#tour-tooltip').should('be.visible');
-                
-                // Check step 1
-                cy.get('#tour-step-counter').should('contain.text', '1 / 7');
-                cy.get('#tour-next-btn').click();
-    
-                // Check step 2
-                cy.get('#tour-step-counter').should('contain.text', '2 / 7');
-                cy.get('#tour-next-btn').click();
-    
-                // Check step 3 (long async step, wait for it)
-                cy.get('#tour-step-counter').should('contain.text', '3 / 7');
-                cy.wait(12000); // Wait for the full animation sequence to complete
-                cy.get('#tour-next-btn').click();
-                
-                // Check step 4
-                cy.get('#tour-step-counter').should('contain.text', '4 / 7');
-                cy.get('#tour-next-btn').click();
-    
-                // Check step 5
-                cy.get('#tour-step-counter').should('contain.text', '5 / 7');
-                cy.get('#tour-next-btn').click();
-                
-                // Check step 6 (long async step, wait for it)
-                cy.get('#tour-step-counter').should('contain.text', '6 / 7');
-                cy.wait(17000); // Wait for the full contact form animation
-                cy.get('#tour-next-btn').click();
-    
-                // Check step 7
-                cy.get('#tour-step-counter').should('contain.text', '7 / 7');
-                cy.get('#tour-next-btn').should('contain.text', 'Finish').click();
-    
-                // Tour should be hidden
-                cy.get('#tour-tooltip').should('not.be.visible');
-            });
-        });
-    });
-    ```
+### 1. Setup
+Install Playwright:
+```bash
+npm init playwright@latest
+```
 
-### 2. Running the Tests
+### 2. Configuration
+Tests are located in the `tests/` directory and use a Page Object Model (`CVPage.js`, `AdminPage.js`).
 
-You can run the tests in two ways:
+### 3. Run Tests
+```bash
+npm run test:playwright
+```
 
-* **Interactive Mode (Recommended for development):**
-    This opens the Cypress Test Runner, which allows you to see your application and the tests running side-by-side. It's great for debugging.
-    ```bash
-    npx cypress open
-    ```
+### 4. View Report
+After the run, view the detailed HTML report:
+```bash
+npx playwright show-report
+```
 
-* **Headless Mode (For CI/CD or quick reports):**
-    This runs the tests in the background without opening a browser window. It's faster and ideal for automated scripts. A video recording of the test run will be saved in the `cypress/videos/` folder.
-    ```bash
-    npx cypress run
-    ```
+### 5. Coverage
+The Playwright suite (`cv-and-admin.spec.js`) covers:
+* **Desktop & Mobile** scenarios using device emulation.
+* Dark mode persistence and interactive filtering.
+* A full End-to-End test of the **Admin Panel**, including creating a new rating on the CV page, logging into the admin panel, approving the rating, responding to it, and finally verifying that it appears as a public testimonial on the main CV page.
 
-### 3. Generating HTML Reports with Mochawesome
+</details>
 
-To generate detailed, shareable HTML reports, follow these steps:
+<details>
+<summary><strong>Click to view the Robot Framework Test Suite Guide</strong></summary>
 
-1.  **Install Reporter Dependencies:** In your project's root directory, run this command to install all the necessary packages for the reporter:
-    ```bash
-    npm install --save-dev cypress-mochawesome-reporter mocha mochawesome mochawesome-merge mochawesome-report-generator
-    ```
+### 1. Setup
+You need Python, Robot Framework, and the SeleniumLibrary installed:
+```bash
+pip install robotframework robotframework-seleniumlibrary
+```
+You will also need the appropriate web driver (e.g., `chromedriver`) in your system's PATH.
 
-2.  **Configure Cypress:** Create a file named `cypress.config.js` in your project's root directory (if it doesn't already exist) and add the following configuration:
+### 2. Test Structure
+The suite uses a two-file structure for maintainability:
+* `cv_resources.robot`: Defines all variables (locators) and low-level keywords (actions).
+* `cv_suite.robot`: Contains the high-level, human-readable test cases.
 
-    ```javascript
-    // cypress.config.js
-    const { defineConfig } = require('cypress');
+### 3. Run Tests
+From your project's root directory, run:
+```bash
+npm run test:robot
+```
 
-    module.exports = defineConfig({
-      reporter: 'cypress-mochawesome-reporter',
-      reporterOptions: {
-        charts: true,
-        reportPageTitle: 'Interactive CV - Test Report',
-        embeddedScreenshots: true,
-        inlineAssets: true,
-        saveAllAttempts: false,
-      },
-      e2e: {
-        setupNodeEvents(on, config) {
-          require('cypress-mochawesome-reporter/plugin')(on);
-        },
-      },
-    });
-    ```
-
-3.  **Configure the Support File:** Open the file `cypress/support/e2e.js` and add this single line at the top to import the reporter's commands:
-    ```javascript
-    // cypress/support/e2e.js
-    import 'cypress-mochawesome-reporter/register';
-    ```
-
-4.  **Run and View Report:** Now, when you run your tests in headless mode, the HTML report will be generated automatically.
-    ```bash
-    npx cypress run
-    ```
-    After the run is complete, a new folder named `cypress/reports/html` will be created. Open the `index.html` file inside that folder to view your detailed test report.
+### 4. Coverage
+The Robot Framework suite (`cv_suite.robot`) covers:
+* **Desktop & Mobile** scenarios by setting the browser window size.
+* Core UI tests for dark mode and language switching.
+* Interactive tests for the dynamic radar chart filter.
+* Verification of the mobile sticky toolbar's behavior on scroll.
 
 </details>
 
@@ -333,9 +156,9 @@ To run this project locally or deploy your own version, follow these steps.
 ```bash
 git clone [https://github.com/kaanmuar/kaanmuar.github.io.git](https://github.com/kaanmuar/kaanmuar.github.io.git)
 cd kaanmuar.github.io
-````
+```
 
-### 3\. Firebase Project Setup
+### 3. Firebase Project Setup
 
 1.  Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project.
 2.  In your new project, create a **Web App**.
@@ -343,75 +166,45 @@ cd kaanmuar.github.io
 4.  Paste this `firebaseConfig` object into both `index.html` and `admin.html`, replacing the existing placeholder.
 5.  **Enable Services:**
     * Go to **Firestore Database** and create a database in **Production mode**.
-    * Go to **Authentication** \> **Sign-in method** and enable **Email/Password**.
+    * Go to **Authentication** > **Sign-in method** and enable **Email/Password**.
     * Go to **Storage** and create a storage bucket.
-6.  **Create Admin User:** In the **Authentication** \> **Users** tab, add a new user with the email and password you will use to log into `admin.html`.
-7.  **Apply Security Rules:** Go to **Firestore Database** \> **Rules** and paste the following rules:
-    ```
-    rules_version = '2';
-    service cloud.firestore {
-      match /databases/{database}/documents {
-        match /messages/{messageId} {
-          allow create: if true;
-          allow read, write, delete: if request.auth != null;
-        }
-        match /ratings/{ratingId} {
-          allow create: if true;
-          allow read: if resource.data.status == 'approved' || request.auth != null;
-          allow update, delete: if request.auth != null;
-        }
-        match /blocked_senders/{email} {
-          allow read: if true;
-          allow write, delete: if request.auth != null;
-        }
-      }
-    }
-    ```
+6.  **Create Admin User:** In the **Authentication** > **Users** tab, add a new user with the email and password you will use to log into `admin.html`.
+7.  **Apply Security Rules:** Go to **Firestore Database** > **Rules** and paste the rules found in the `firestore.rules` file of this repository.
 8.  **Create Database Index:** The query for testimonials requires a composite index. The easiest way to create it is to run the application, check the browser's developer console for an error message containing a link to create the index, and click that link.
 
-### 4\. Google Analytics Setup
+### 4. Install Dependencies
+Install all the necessary `npm` packages for testing:
+```bash
+npm install
+```
 
-1.  Go to [Google Analytics](https://analytics.google.com/) and create a new property.
-2.  Find your **Measurement ID** (e.g., `G-XXXXXXXXXX`).
-3.  In `index.html`, replace `G-YOUR_MEASUREMENT_ID` with your actual ID in the Google Analytics script tag.
+</details>
 
-### 5\. Email Notifications (Cloud Functions)
-
-1.  **Upgrade Firebase Plan:** Your project must be on the **Blaze (Pay-as-you-go)** plan to use Cloud Functions with external network access. The free tier is very generous.
-2.  **Set up SendGrid:** Create a free account at [SendGrid](https://sendgrid.com/), verify a sender email address, and create an API key.
-3.  **Initialize Functions:** In your project's root directory, run `firebase init functions` and select JavaScript.
-4.  **Install Dependencies:** Navigate into the new `functions` folder and run `npm install @sendgrid/mail`.
-5.  **Add Function Code:** Copy the code from the `functions/index.js` file in this repository into your local `functions/index.js`.
-6.  **Set Environment Variables:** In your terminal (from the project root), run the following commands, replacing the placeholders with your actual credentials:
-    ```bash
-    firebase functions:config:set sendgrid.key="YOUR_SENDGRID_API_KEY"
-    firebase functions:config:set notifications.email="your-email@example.com"
-    ```
-7.  **Deploy:** Run `firebase deploy --only functions` from the project root.
-
-\</details\>
-
------
+---
 
 ## 📁 File Structure
 
 ```
 /
-├── index.html          # The main public-facing interactive CV page.
-├── admin.html          # The secure admin panel for managing messages and ratings.
-├── cypress.config.js   # Configuration for Cypress tests and reporting.
-├── cypress/            # Contains all End-to-End tests.
-│   └── e2e/
-│       └── cv_spec.cy.js # The main test suite for the application.
-│   └── support/
-│       └── e2e.js      # Cypress support file, imports the reporter.
-└── functions/
-    ├── index.js        # Backend logic for email notifications.
-    ├── package.json    # Node.js dependencies for the functions.
-    └── .eslintrc.js    # Style guide for the functions code.
+├── index.html              # The main public-facing interactive CV page.
+├── admin.html              # The secure admin panel for managing messages and ratings.
+├── package.json            # Project dependencies and scripts.
+├── .github/
+│   └── workflows/
+│       └── main.yml        # GitHub Actions configuration for CI/CD.
+├── tests/                  # Contains all Playwright tests.
+│   ├── CVPage.js           # Playwright Page Object for index.html.
+│   ├── AdminPage.js        # Playwright Page Object for admin.html.
+│   └── cv-and-admin.spec.js # Playwright test suite.
+└── cypress/
+    └── e2e/
+        ├── cv_spec.cy.js      # Cypress test suite for the CV.
+        ├── admin_spec.cy.js     # Cypress test suite for the admin panel.
+        ├── cv_suite.robot     # Robot Framework main test suite.
+        └── cv_resources.robot # Robot Framework resource file.
 ```
 
------
+---
 
 ## 👤 Author
 
