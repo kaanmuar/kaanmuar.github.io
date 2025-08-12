@@ -4,13 +4,16 @@
   "description": "Interactive CV for Carlos A. Muñoz",
   "scripts": {
     "test:cypress": "cypress run",
-    "test:robot": "robot cypress/e2e"
+    "test:robot": "robot cypress/e2e",
+    "test:playwright": "playwright test"
   },
   "author": "Carlos A. Muñoz",
   "license": "ISC",
   "devDependencies": {
     "@cypress/grep": "^4.1.0",
     "@cypress/webpack-preprocessor": "^6.0.4",
+    "@playwright/test": "^1.54.2",
+    "@types/node": "^24.2.1",
     "axe-core": "^4.10.3",
     "cypress": "^14.5.1",
     "cypress-axe": "^1.6.0",
