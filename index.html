@@ -193,27 +193,65 @@
 
         /* This handles the vertical dropdown on all screen sizes */
         /* This rule makes the language selector visible on desktop again */
-        #language-selector {
-            position: relative; /* Changed from absolute */
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        #language-selector, #language-selector-mobile {
+            position: relative;
         }
 
-        /* This handles the vertical dropdown on all screen sizes */
-        #language-selector .lang-wrapper:not(:has(.selected)) {
+        #language-options, #language-options-mobile {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            z-index: 101;
+            width: max-content;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
             transition: transform 0.2s ease-out, opacity 0.2s ease-out, visibility 0.2s;
             transform: translateY(10px);
             opacity: 0;
             visibility: hidden;
         }
 
-        /* This rule now correctly shows the dropdown options when it is NOT collapsed */
-        #language-selector:not(.collapsed) .lang-wrapper {
+        /*#language-selector:not(.collapsed) .lang-wrapper {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+        }*/
+
+        #language-selector:not(.collapsed) #language-options,
+        #language-selector-mobile:not(.collapsed) #language-options-mobile {
             transform: translateY(0);
             opacity: 1;
             visibility: visible;
         }
+
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.25rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .lang-option:hover {
+            background-color: var(--bg-primary);
+        }
+
+        /* --- FIX: Desktop Header Icon Alignment --- */
+        #page-header-controls .hidden.md\:flex > * {
+            display: flex;
+            align-items: center;
+        }
+
 
         /* This media query specifically fixes all remaining mobile issues */
         @media (max-width: 767px) {
@@ -253,7 +291,7 @@
                 display: none;
             }
             /* This rule shows the mobile dropdown when the parent is NOT collapsed */
-            .mobile-toolbar-wrapper .relative:not(.collapsed) .dropdown { /* FIX: Changed here as well */
+            .mobile-toolbar-wrapper div.relative:not(.collapsed) > .dropdown { /* FIX: Made selector more specific */
                 display: flex;
                 position: absolute;
                 right: 0;
@@ -265,7 +303,7 @@
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 background-color: var(--bg-secondary);
                 width: max-content;
-                z-index: 110; /* Ensure it appears over content */
+                z-index: 110;
             }
 
             /* --- FIX for Mobile Theme Switching --- */
@@ -686,11 +724,32 @@
             .dark-mode body.header-is-stuck #page-header-controls {
                 background-color: rgba(31, 41, 55, 0.75);
             }
-            /* This rule makes all desktop dropdown options hidden when their parent is collapsed */
-            #social-share-selector.collapsed #social-share-options,
-            #export-selector.collapsed #export-options,
-            #language-selector.collapsed .lang-wrapper:not(:has(.selected)) {
-                display: none;
+
+            /* 1. Base style for ALL dropdowns (desktop and mobile) */
+            .dropdown {
+                display: flex; /* This is the key: tells dropdowns how to appear */
+                position: absolute;
+                right: 0;
+                top: calc(100% + 10px); /* Position below the icon */
+                z-index: 101;
+                background-color: var(--bg-secondary);
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                padding: 0.5rem;
+                flex-direction: column;
+                gap: 0.25rem;
+                width: max-content;
+                border: 1px solid var(--border-color);
+            }
+
+            /* 2. Single, clear rule to HIDE any dropdown when its parent is collapsed */
+            #social-share-selector.collapsed .dropdown,
+            #export-selector.collapsed .dropdown,
+            #language-selector.collapsed .dropdown,
+            #social-share-selector-mobile.collapsed .dropdown,
+            #export-selector-mobile.collapsed .dropdown,
+            #language-selector-mobile.collapsed .dropdown {
+                display: none; /* This correctly hides the dropdowns */
             }
         }
 
@@ -715,12 +774,46 @@
                 display: flex;
                 justify-content: center;
             }
+            /* This styles the dropdown container on mobile */
+            .mobile-toolbar-wrapper .dropdown {
+                padding: 0.5rem;
+                background-color: var(--bg-secondary);
+                border-radius: 0.5rem;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+
+            /* This fixes the text and icon colors inside ALL mobile dropdowns */
+            .mobile-toolbar-wrapper .dropdown a,
+            .mobile-toolbar-wrapper .dropdown button,
+            .mobile-toolbar-wrapper .dropdown .lang-option {
+                color: var(--text-primary) !important;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.25rem;
+                border-radius: 4px;
+                font-size: 14px;
+                transition: background-color 0.2s;
+            }
+
+            /* This fixes the SVG icon colors inside the dropdowns */
+            .mobile-toolbar-wrapper .dropdown svg {
+                color: var(--text-primary);
+                fill: var(--text-primary);
+            }
+
+            /* This adds a hover effect for better usability */
+            .mobile-toolbar-wrapper .dropdown a:hover,
+            .mobile-toolbar-wrapper .dropdown button:hover,
+            .mobile-toolbar-wrapper .dropdown .lang-option:hover {
+                background-color: var(--bg-primary);
+            }
             /* This rule hides the mobile dropdowns by default */
-            .mobile-dropdown {
+            .mobile-toolbar-wrapper .dropdown {
                 display: none;
             }
             /* This rule shows the mobile dropdown when the parent is NOT collapsed */
-            .mobile-toolbar-wrapper .relative:not(.collapsed) .mobile-dropdown {
+            .mobile-toolbar-wrapper .relative:not(.collapsed) .dropdown {
                 display: flex;
                 position: absolute;
                 right: 0;
@@ -883,9 +976,12 @@
         }
 
         /* This rule makes the expand/collapse logic work correctly */
-        #social-share-selector.collapsed #social-share-options,
-        #export-selector.collapsed #export-options,
-        #language-selector.collapsed .lang-wrapper:not(:has(.selected)) {
+        #social-share-selector.collapsed .dropdown,
+        #export-selector.collapsed .dropdown,
+        #language-selector.collapsed .dropdown,
+        #social-share-selector-mobile.collapsed .dropdown,
+        #export-selector-mobile.collapsed .dropdown,
+        #language-selector-mobile.collapsed .dropdown {
             display: none;
         }
 
@@ -950,6 +1046,172 @@
         .print-section ul { list-style-type: disc; padding-left: 20px; }
         .print-section p { margin-bottom: 10px; }
         .print-contact-item { display: block; margin-bottom: 5px; }*/
+        /* This rule permanently hides the extra language flags on desktop,
+   turning it into a proper dropdown toggle. */
+        #language-selector .lang-wrapper:not(.selected) {
+            display: none;
+        }
+
+        /* --- Colorful Icons for Mobile Dropdowns --- */
+        .share-icon-linkedin svg { color: #0077B5; }
+        .share-icon-x svg { color: #000000; }
+        .dark-mode .share-icon-x svg { color: #FFFFFF; }
+        .share-icon-facebook svg { color: #1877F2; }
+        .share-icon-whatsapp svg { color: #25D366; }
+        .share-icon-telegram svg { color: #24A1DE; }
+        .share-icon-reddit svg { color: #FF4500; }
+        .share-icon-pinterest svg { color: #E60023; }
+        .share-icon-copy svg { color: var(--text-primary); }
+
+        /* --- Colorful Icons for Export Dropdown (Desktop & Mobile) --- */
+        .export-icon-export_cv_pdf svg { color: #F40F02; }
+        .export-icon-export_cv_jpg svg { color: #FFD700; }
+        .export-icon-export_cv_doc svg { color: #2B579A; }
+        .export-icon-export_cv_json svg { color: #00A36C; }
+        .export-icon-export_cv_text svg { color: var(--text-primary); }
+
+        /* 1. Ensure all toolbar icons are vertically centered. */
+        #page-header-controls .hidden.md\:flex > *,
+        .mobile-toolbar > * {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 2. Remove the incorrect rule that was hiding the language toggle. */
+        #language-selector .lang-wrapper:not(.selected) {
+            display: none; /* This rule is problematic */
+        }
+        /* THIS IS THE FIX: The toggle itself is ALWAYS a flex container. */
+        #language-toggle-desktop,
+        #language-toggle-mobile {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* 3. Universal rule to HIDE dropdowns when their parent is collapsed. */
+        .relative.collapsed > .dropdown {
+            display: none;
+        }
+
+        /* 4. Universal rule to SHOW dropdowns when the parent is NOT collapsed. */
+        .relative:not(.collapsed) > .dropdown {
+            display: flex;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 10px);
+            z-index: 101;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 0.5rem;
+            flex-direction: column;
+            gap: 0.25rem;
+            width: max-content;
+            border: 1px solid var(--border-color);
+        }
+
+        /* 5. Specific styles for mobile dropdown content. */
+        @media (max-width: 767px) {
+            .mobile-toolbar-wrapper .relative:not(.collapsed) > .dropdown {
+                top: calc(100% + 0.5rem);
+                padding: 0.5rem;
+            }
+
+            .mobile-toolbar-wrapper .dropdown a,
+            .mobile-toolbar-wrapper .dropdown button,
+            .mobile-toolbar-wrapper .dropdown .lang-option {
+                color: var(--text-primary) !important;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.25rem;
+                border-radius: 4px;
+                transition: background-color 0.2s;
+            }
+
+            .mobile-toolbar-wrapper .dropdown svg {
+                color: var(--text-primary) !important;
+            }
+
+            .mobile-toolbar-wrapper .dropdown a:hover,
+            .mobile-toolbar-wrapper .dropdown button:hover,
+            .mobile-toolbar-wrapper .dropdown .lang-option:hover {
+                background-color: var(--bg-primary);
+            }
+        }
+        @media (min-width: 768px) {
+            /*
+             * This is the primary fix. It uses the element's ID for high
+             * specificity and !important to force the desktop language toggle
+             * (the flag icon and arrow) to be visible. This overrides any
+             * incorrect "display: none;" rules elsewhere in the file.
+            */
+            #language-toggle-desktop {
+                display: flex !important;
+                align-items: center;
+            }
+
+            /*
+             * This rule ensures the language dropdown menu is correctly hidden
+             * when its parent container has the ".collapsed" class.
+            */
+            #language-selector.collapsed > #language-options {
+                display: none;
+            }
+
+            /*
+             * This rule ensures the language dropdown menu correctly appears
+             * when the ".collapsed" class is removed by JavaScript on click.
+            */
+            #language-selector:not(.collapsed) > #language-options {
+                display: flex;
+            }
+        }
+        @media (min-width: 768px) {
+            /*
+             * This rule explicitly hides the desktop share dropdown when its
+             * parent container has the ".collapsed" class.
+            */
+            #social-share-selector.collapsed > #social-share-options {
+                display: none;
+            }
+
+            /*
+             * This is the PRIMARY FIX. It uses high-specificity IDs to force
+             * the dropdown to become visible as a horizontal row of icons when
+             * the ".collapsed" class is removed on click.
+            */
+            #social-share-selector:not(.collapsed) > #social-share-options {
+                display: flex;           /* Makes the dropdown container visible */
+                flex-direction: row;     /* Arrange icons horizontally */
+                gap: 0.5rem;             /* Adds space between icons */
+                padding: 0.5rem;
+                background-color: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                position: absolute;
+                top: calc(100% + 10px);
+                right: 0;
+                z-index: 101;
+            }
+
+            /*
+             * This rule ensures the links and icons inside the dropdown are
+             * sized correctly so they are clearly visible.
+            */
+            #social-share-options .share-link-wrapper {
+                display: inline-flex;
+                padding: 0.25rem;
+            }
+
+            #social-share-options .share-link-wrapper svg {
+                width: 1.25rem;  /* 20px */
+                height: 1.25rem; /* 20px */
+            }
+        }
     </style>
 </head>
 <body data-author="Carlos A. Muñoz">
@@ -1066,61 +1328,39 @@
                 <!--<div id="page-header-controls" class="flex justify-between items-center">-->
                 <div id="page-header-controls" class="flex justify-between items-center">
                     <h2 id="summary-heading" class="text-xl font-bold" data-translate-key="summary_title">Professional Summary</h2>
-                    <div class="flex justify-between items-center">
 
-                        <div class="hidden md:flex items-center space-x-2 no-print">
-                            <button id="theme-toggle" aria-label="Toggle dark mode">
-                                <svg class="w-5 h-5 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                                <svg class="w-5 h-5 moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                            </button>
+                    <div class="hidden md:flex items-center gap-x-4 no-print">
 
-                            <!-- NEW: Social Share Buttons -->
-                            <!-- NEW: Expandable Social Share Buttons -->
-                            <div id="social-share-selector" class="relative flex items-center space-x-2 border-l border-gray-300 dark:border-gray-600 ml-2 pl-2 collapsed cursor-pointer" tabindex="0" role="region" aria-label="Share options">
-                                <!-- This is the main trigger button -->
-                                <div class="tooltip">
-                                    <svg id="social-share-toggle-icon" class="w-5 h-5 text-gray-500 hover:text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.368a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg>
-                                    <!-- FIXED: Added data-translate-key for the tooltip -->
-                                    <span class="tooltiptext" data-translate-key="tooltip_share">Share CV</span>
-                                </div>
-                                <!-- This container will be populated by JavaScript -->
-                                <div id="social-share-options" class="absolute right-0 top-full mt-2 flex flex-col items-center gap-2 p-2 rounded-lg shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
-                                    <!-- Social media icons will be injected here -->
-                                </div>
+                        <button id="theme-toggle" class="tooltip" aria-label="Toggle dark mode">
+                            <svg class="w-5 h-5 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            <svg class="w-5 h-5 moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                        </button>
+
+                        <div id="social-share-selector" class="relative collapsed" tabindex="0">
+                            <div class="tooltip"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.368a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg><span class="tooltiptext" data-translate-key="tooltip_share"></span></div>
+                            <div id="social-share-options" class="dropdown"></div>
+                        </div>
+
+                        <button id="tour-start-btn" class="tooltip text-xs font-semibold py-1 px-3 rounded-full" aria-label="Start CV Feature Tour">
+                            <span>How this Online CV works</span>
+                        </button>
+
+                        <div id="language-selector" class="relative collapsed flex items-center" tabindex="0">
+                            <div id="language-toggle-desktop" class="tooltip lang-wrapper cursor-pointer flex items-center gap-1">
+                                <img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 lang-flag selected" data-lang="en" alt="English">
+                                <svg class="w-4 h-4 lang-accordion-indicator" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
+                            <div id="language-options" class="dropdown"></div>
+                        </div>
 
-                            <button id="tour-start-btn" class="text-xs font-semibold py-1 px-3 rounded-full" aria-label="Start CV Feature Tour">How this Online CV works
-                            </button>
+                        <button id="print-btn" class="tooltip">
+                            <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            <span class="tooltiptext" data-translate-key="tooltip_print"></span>
+                        </button>
 
-                            <div class="relative flex items-center space-x-2 border-l border-gray-300 dark:border-gray-600 ml-2 pl-2">
-                                <div id="language-selector" role="region" aria-label="Language Selector" class="relative flex items-center space-x-2 collapsed cursor-pointer" tabindex="0">
-                                    <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" class="h-5 w-5 cursor-pointer lang-flag selected" data-lang="en" alt="English" tabindex="-1" role="button" aria-label="Select English"><span class="tooltiptext" data-translate-key="tooltip_lang_en"></span></div>
-                                    <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/es.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="es" alt="Español" tabindex="-1" role="button" aria-label="Select Spanish"><span class="tooltiptext" data-translate-key="tooltip_lang_es"></span></div>
-                                    <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="pt" alt="Português" tabindex="-1" role="button" aria-label="Select Portuguese"><span class="tooltiptext" data-translate-key="tooltip_lang_pt"></span></div>
-                                    <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/de.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="de" alt="Deutsch" tabindex="-1" role="button" aria-label="Select German"><span class="tooltiptext" data-translate-key="tooltip_lang_de"></span></div>
-                                    <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="fr" alt="Français" tabindex="-1" role="button" aria-label="Select French"><span class="tooltiptext" data-translate-key="tooltip_lang_fr"></span></div>
-                                    <div class="tooltip lang-wrapper"><img src="https://hatscripts.github.io/circle-flags/flags/it.svg" class="h-5 w-5 cursor-pointer lang-flag" data-lang="it" alt="Italiano" tabindex="-1" role="button" aria-label="Select Italian"><span class="tooltiptext" data-translate-key="tooltip_lang_it"></span></div>
-                                    <svg class="w-4 h-4 lang-accordion-indicator" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-
-                                <span class="mx-1 text-gray-300 dark:text-gray-600">|</span>
-
-                                <div class="tooltip">
-                                    <button id="print-btn" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Print or save as PDF">
-                                        <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                        <span class="tooltiptext" data-translate-key="tooltip_print"></span>
-                                    </button>
-                                </div>
-
-                                <div id="export-selector" class="relative flex items-center space-x-2 collapsed cursor-pointer" tabindex="0" role="region" aria-label="Export options">
-                                    <div class="tooltip">
-                                        <svg id="export-toggle-icon" class="w-5 h-5 text-gray-500 hover:text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        <span class="tooltiptext" data-translate-key="tooltip_export"></span>
-                                    </div>
-                                    <div id="export-options" class="absolute right-0 top-full mt-2 flex flex-col items-start gap-1 p-2 rounded-lg shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 w-40">
-                                    </div>
-                                </div>
-                            </div>
+                        <div id="export-selector" class="relative collapsed" tabindex="0">
+                            <div class="tooltip"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><span class="tooltiptext" data-translate-key="tooltip_export"></span></div>
+                            <div id="export-options" class="dropdown"></div>
                         </div>
                     </div>
                 </div>
@@ -2470,48 +2710,39 @@
             // |         NEW JAVASCRIPT: TOUR STEPS DEFINITION          |
             // ==========================================================
             tourSteps: [
-                // ==========================================================
-                // NEW STEP 1: PROFILE PHOTO ZOOM
-                // ==========================================================
                 {
                     element: '#profile-photo',
-                    titleKey: 'tour_step_photo_title',
-                    descriptionKey: 'tour_step_photo_desc',
-                    analyticsTag: 'Viewed_Step_Photo',
+                    titleKey: 'tour_step_1_title',
+                    descriptionKey: 'tour_step_1_desc',
+                    analyticsTag: 'Viewed_Step_1_Photo',
                     action: function() {
                         this._applyClickEffect(this.DOMElements.profilePhoto);
                         setTimeout(() => this._openModal(), 600);
                         setTimeout(() => this._closeModal(), 2500);
                     }
                 },
-                // ==========================================================
-                // NEW STEP 2: SHARE FUNCTIONALITY
-                // ==========================================================
                 {
                     element: '#social-share-selector',
-                    titleKey: 'tour_step_share_title',
-                    descriptionKey: 'tour_step_share_desc',
-                    analyticsTag: 'Viewed_Step_Share',
+                    titleKey: 'tour_step_2_title',
+                    descriptionKey: 'tour_step_2_desc',
+                    analyticsTag: 'Viewed_Step_2_Share',
                     action: function() {
                         const shareSelector = this.DOMElements.socialShareSelector;
                         setTimeout(() => this._applyClickEffect(shareSelector), 500);
                         setTimeout(() => shareSelector.classList.remove('collapsed'), 700);
                         setTimeout(() => {
-                            const links = shareSelector.querySelectorAll('.share-link-wrapper');
-                            links.forEach((link, i) => {
+                            shareSelector.querySelectorAll('.share-link-wrapper').forEach((link, i) => {
                                 setTimeout(() => this._glowElement(link, 800), i * 300);
                             });
                         }, 1200);
                         setTimeout(() => shareSelector.classList.add('collapsed'), 3500);
                     }
                 },
-
-                // NEW STEP 3: EXPORT FUNCTIONALITY
                 {
                     element: '#export-selector',
-                    titleKey: 'tour_step_export_title',
-                    descriptionKey: 'tour_step_export_desc',
-                    analyticsTag: 'Viewed_Step_Export',
+                    titleKey: 'tour_step_3_title',
+                    descriptionKey: 'tour_step_3_desc',
+                    analyticsTag: 'Viewed_Step_3_Export',
                     action: function() {
                         const exportSelector = this.DOMElements.exportSelector;
                         setTimeout(() => this._applyClickEffect(exportSelector), 500);
@@ -2519,11 +2750,8 @@
                         setTimeout(() => exportSelector.classList.add('collapsed'), 2500);
                     }
                 },
-                // ==========================================================
-                // ALL EXISTING STEPS ARE PRESERVED BELOW
-                // ==========================================================
                 {
-                    element: '.flex.items-center.space-x-2.no-print',
+                    element: '#page-header-controls .no-print',
                     titleKey: 'tour_step_4_title',
                     descriptionKey: 'tour_step_4_desc',
                     analyticsTag: 'Viewed_Step_4_PageControls',
@@ -2543,9 +2771,6 @@
                         }, 3000);
                         setTimeout(() => langSelector.classList.add('collapsed'), 5000);
                         setTimeout(() => this._applyClickEffect(printBtn), 5500);
-                        setTimeout(() => {
-                            this.DOMElements.tourDescription.textContent += " (The print dialog would open now. We'll skip it for the demo.)";
-                        }, 5700);
                     }
                 },
                 {
@@ -2559,104 +2784,68 @@
                     }
                 },
                 {
-                    element: '#toolkit-container',
+                    element: '.infographics-section',
                     titleKey: 'tour_step_6_title',
-                    descriptionKey: 'Watch as we select random skills. The selected skills will glow, and then we will see how the Timeline and Experience sections are filtered based on this selection.',
-                    analyticsTag: 'Viewed_Step_6_InteractiveToolkit',
+                    descriptionKey: 'tour_step_6_desc',
+                    analyticsTag: 'Viewed_Step_6_Infographics',
+                    action: function() {
+                        const competenciesChart = this.DOMElements.competenciesRadarChart;
+                        const methodologiesChart = this.DOMElements.methodologiesRadarChart;
+                        this._glowElement(competenciesChart, 2000);
+                        setTimeout(() => this._glowElement(methodologiesChart, 2000), 2500);
+                    }
+                },
+                {
+                    element: '#toolkit-container',
+                    titleKey: 'tour_step_7_title',
+                    descriptionKey: 'tour_step_7_desc',
+                    analyticsTag: 'Viewed_Step_7_InteractiveToolkit',
                     action: function() {
                         const allSkills = Array.from(this.DOMElements.toolkitContainer.querySelectorAll('.tech-tag'));
-                        const selectedElements = [];
-                        let skillsToSelectNames = [];
-                        const randomExperience = this.data.experiences[Math.floor(Math.random() * this.data.experiences.length)];
-                        const requiredSkills = randomExperience.techUsed;
-                        const guaranteedSkill = requiredSkills[Math.floor(Math.random() * requiredSkills.length)];
-                        skillsToSelectNames.push(guaranteedSkill);
-                        if (Math.random() > 0.5 && requiredSkills.length > 1) {
-                            let secondSkill;
-                            do {
-                                secondSkill = requiredSkills[Math.floor(Math.random() * requiredSkills.length)];
-                            } while (secondSkill === guaranteedSkill);
-                            skillsToSelectNames.push(secondSkill);
-                        }
-                        const otherSkills = allSkills.filter(s => !skillsToSelectNames.includes(s.dataset.skillName));
-                        otherSkills.sort(() => 0.5 - Math.random());
-                        for (let i = 0; i < 2; i++) {
-                            if (otherSkills[i]) {
-                                skillsToSelectNames.push(otherSkills[i].dataset.skillName);
-                            }
-                        }
-                        const skillsToSelect = allSkills.filter(s => skillsToSelectNames.includes(s.dataset.skillName));
-                        const applyFilters = () => {
-                            skillsToSelect.forEach(skillEl => {
+                        const randomSkills = allSkills.sort(() => 0.5 - Math.random()).slice(0, 3);
+
+                        randomSkills.forEach((skillEl, index) => {
+                            setTimeout(() => {
                                 const header = skillEl.closest('.toolkit-section').querySelector('.toolkit-header');
                                 if (header.getAttribute('aria-expanded') === 'false') {
                                     header.click();
                                 }
-                                skillEl.click();
-                                skillEl.classList.add('tour-highlight-persistent');
-                                selectedElements.push(skillEl);
-                            });
-                        };
-                        setTimeout(applyFilters, 1000);
-                        setTimeout(() => {
-                            this.DOMElements.timelineContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            this.DOMElements.tourDescription.textContent = "See the timeline? Only relevant items are fully visible. The rest are faded.";
-                        }, 3000);
-                        setTimeout(() => {
-                            this.DOMElements.experienceContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            this.DOMElements.tourDescription.textContent = "The same filtering applies here. Matched roles get a green border, making them easy to spot.";
-                        }, 7000);
+                                setTimeout(() => {
+                                    skillEl.click();
+                                    this._glowElement(skillEl, 2000);
+                                }, 300);
+                            }, index * 1200);
+                        });
+
                         setTimeout(() => {
                             this.DOMElements.resetFilterBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            this.DOMElements.tourDescription.textContent = "Now, we'll reset the filters with one click.";
                             this._applyClickEffect(this.DOMElements.resetFilterBtn);
                             this._resetFilters();
-                            selectedElements.forEach(el => {
-                                el.classList.remove('tour-highlight-persistent');
-                                const header = el.closest('.toolkit-section').querySelector('.toolkit-header');
-                                if (header.getAttribute('aria-expanded') === 'true') {
-                                    header.click();
-                                }
-                            });
-                        }, 11000);
+                            this.DOMElements.toolkitContainer.querySelectorAll('.toolkit-header[aria-expanded="true"]').forEach(h => h.click());
+                        }, 5000);
                     }
                 },
                 {
                     element: '#timeline-container',
-                    titleKey: 'tour_step_7_title',
-                    descriptionKey: 'tour_step_7_desc',
-                    analyticsTag: 'Viewed_Step_7_FilterableTimeline',
+                    titleKey: 'tour_step_8_title',
+                    descriptionKey: 'tour_step_8_desc',
+                    analyticsTag: 'Viewed_Step_8_FilterableTimeline',
                     action: function() {
-                        const timelineItem = this.DOMElements.timelineContainer.querySelector('.timeline-item');
-                        const targetExperienceId = timelineItem.querySelector('a').getAttribute('href');
-                        const experienceEl = document.querySelector(targetExperienceId);
-                        this.DOMElements.tourDescription.textContent = "The timeline is interactive. Let's select an item...";
-                        this._applyClickEffect(timelineItem, 2000);
-                        timelineItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const timelineItem = this.DOMElements.timelineContainer.querySelector('.timeline-item a');
+                        const experienceEl = document.querySelector(timelineItem.getAttribute('href'));
+
+                        this._applyClickEffect(timelineItem, 1500);
                         setTimeout(() => {
-                            this.DOMElements.tourDescription.textContent = "...and it smoothly takes us to the full details in the experience section.";
                             experienceEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            this._applyClickEffect(experienceEl, 4000);
-                        }, 2500);
-                        setTimeout(() => {
-                            const header = experienceEl.querySelector('.accordion-header');
-                            if (header) header.click();
-                        }, 3000);
-                        setTimeout(() => {
-                            const header = experienceEl.querySelector('.accordion-header');
-                            if (header) header.click();
-                        }, 6000);
-                        setTimeout(() => {
-                            this.DOMElements.tourDescription.textContent = "This makes it easy to navigate between the summary and the details.";
-                            timelineItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 6500);
+                            this._glowElement(experienceEl, 2000);
+                        }, 2000);
                     }
                 },
                 {
-                    element: '#experience-container .experience-item:first-child',
-                    titleKey: 'tour_step_8_title',
-                    descriptionKey: 'tour_step_8_desc',
-                    analyticsTag: 'Viewed_Step_8_DetailedExperience',
+                    element: '#experience-container',
+                    titleKey: 'tour_step_9_title',
+                    descriptionKey: 'tour_step_9_desc',
+                    analyticsTag: 'Viewed_Step_9_DetailedExperience',
                     action: function() {
                         const firstExpHeader = this.DOMElements.experienceContainer.querySelector('.accordion-header');
                         if (firstExpHeader) {
@@ -2667,67 +2856,24 @@
                 },
                 {
                     element: '#contact-widget-fab',
-                    titleKey: 'tour_step_9_title',
-                    descriptionKey: 'tour_step_9_desc',
-                    analyticsTag: 'Viewed_Step_9_ContactWidget',
+                    titleKey: 'tour_step_10_title',
+                    descriptionKey: 'tour_step_10_desc',
+                    analyticsTag: 'Viewed_Step_10_ContactWidget',
                     action: function() {
                         this._openContactWidget();
-                        if (!this.DOMElements.messageTab.classList.contains('active')) {
-                            this._switchTab('message');
-                        }
-                        const ratingTab = this.DOMElements.ratingTab;
-                        const attachmentBtn = this.DOMElements.messageForm.querySelector('#file-upload-label');
-                        const sendMessageBtn = this.DOMElements.sendMessageBtn;
-                        const sequence = [
-                            () => { this._typewriterEffect(this.DOMElements.senderName, 'Valued Visitor'); },
-                            () => { this.DOMElements.senderEmail.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
-                            () => { this._typewriterEffect(this.DOMElements.senderEmail, 'visitor@example.com'); },
-                            () => {
-                                this.DOMElements.messageTopic.value = this._getRandomTopic();
-                                this.DOMElements.messageTopic.dispatchEvent(new Event('change'));
-                            },
-                            () => { this._typewriterEffect(this.DOMElements.senderMessage, 'This is a great interactive CV!'); },
-                            () => {
-                                attachmentBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                attachmentBtn.classList.add('tour-highlight-persistent');
-                            },
-                            () => {
-                                attachmentBtn.classList.remove('tour-highlight-persistent');
-                                sendMessageBtn.classList.add('tour-highlight-persistent');
-                            },
-                            () => {
-                                sendMessageBtn.classList.remove('tour-highlight-persistent');
-                                this.DOMElements.tourDescription.textContent = "You can also switch tabs to leave feedback on the CV itself.";
-                                this._applyClickEffect(ratingTab);
-                                this._switchTab('rating');
-                            },
-                            () => {
-                                this.DOMElements.raterName.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                this._typewriterEffect(this.DOMElements.raterName, 'Jane Smith');
-                            },
-                            () => { this._typewriterEffect(this.DOMElements.raterEmail, 'jane.smith@example.com'); },
-                            () => {
-                                const randomRating = this._getRandomRating();
-                                const starEl = document.querySelector(`#star-rating .star[data-value="${randomRating}"]`);
-                                this._handleStarClick(starEl);
-                            },
-                            () => { this._typewriterEffect(this.DOMElements.raterComment, this._getRandomComment()); },
-                            () => { this.DOMElements.sendRatingBtn.classList.add('tour-highlight-persistent'); },
-                            () => { this._closeContactWidget(); }
-                        ];
-                        const timings = [500, 1500, 2000, 3500, 4000, 6000, 7500, 9000, 10000, 10500, 12000, 13500, 14000, 16000];
-                        sequence.forEach((func, index) => setTimeout(func, timings[index]));
+                        setTimeout(() => this._switchTab('rating'), 1500);
+                        setTimeout(() => this._switchTab('message'), 3000);
+                        setTimeout(() => this._closeContactWidget(), 4500);
                     }
                 },
                 {
                     element: 'section[aria-labelledby="contact-heading"]',
-                    titleKey: 'tour_step_10_title',
-                    descriptionKey: 'tour_step_10_desc',
-                    analyticsTag: 'Viewed_Step_10_ContactInfo',
+                    titleKey: 'tour_step_11_title',
+                    descriptionKey: 'tour_step_11_desc',
+                    analyticsTag: 'Viewed_Step_11_ContactInfo',
                     action: function() {
-                        const links = ['#contact-phone', '#contact-email', '#contact-linkedin', '#contact-whatsapp', '#contact-telegram'];
-                        links.forEach((link, index) => {
-                            setTimeout(() => this._glowElement(document.querySelector(link)), index * 1000);
+                        ['#contact-phone', '#contact-email', '#contact-linkedin', '#contact-whatsapp', '#contact-telegram'].forEach((link, index) => {
+                            setTimeout(() => this._glowElement(document.querySelector(link)), index * 800);
                         });
                     }
                 }
@@ -3116,67 +3262,95 @@
                     }
                 });
 
-                // **NEW**: If tour is active, refresh the tooltip text without re-running the animation
+                // If a dropdown menu has already been built, we need to rebuild it with the new language.
+                if (this.state.shareMenuInitialized) this._setupShareButtons();
+                if (this.state.exportMenuInitialized) this._setupExportButtons();
+                if (this.state.langMenuInitialized) {
+                    this._populateLanguageOptions(false); // Re-populate desktop
+                    this._populateLanguageOptions(true);  // Re-populate mobile
+                }
+
                 if (this.state.isTourActive) {
-                    this.showTourStep(this.state.currentTourStep, false); // 'false' prevents re-animation
+                    this.showTourStep(this.state.currentTourStep, false);
                 }
                 this._populateTopicDropdown();
-                this._setupShareButtons();
-                this._setupExportButtons();
                 this._createRadarCharts();
             },
 
-            _setupEventListeners() {
-                //this._setupMobileLanguageSelector();
-                this.DOMElements.tourStartBtn.addEventListener('click', () => this.startTour());
-                document.getElementById('tour-start-btn-mobile').addEventListener('click', () => this.startTour());
-                document.getElementById('theme-toggle-mobile').addEventListener('click', () => this._toggleTheme());
-                document.getElementById('print-btn-mobile').addEventListener('click', () => this._exportAsPDF());
+                _setupEventListeners() {
+                    // --- Event listeners for standalone buttons ---
+                    this.DOMElements.tourStartBtn.addEventListener('click', () => this.startTour());
+                    document.getElementById('tour-start-btn-mobile').addEventListener('click', () => this.startTour());
+                    document.getElementById('theme-toggle-mobile').addEventListener('click', () => this._toggleTheme());
+                    document.getElementById('print-btn-mobile').addEventListener('click', () => this._exportAsPDF());
 
-                document.body.addEventListener('click', (e) => {
-                    const target = e.target;
+                    // --- Main click handler for the entire page ---
+                    document.body.addEventListener('click', (e) => {
+                        const target = e.target;
+                        const dropdownSelectors = [
+                            '#social-share-selector', '#export-selector', '#language-selector',
+                            '#social-share-selector-mobile', '#export-selector-mobile', '#language-selector-mobile'
+                        ];
+                        const clickedDropdownSelector = dropdownSelectors.find(selector => target.closest(selector));
 
-                    const dropdownIds = ['language-selector', 'social-share-selector', 'export-selector', 'language-selector-mobile', 'social-share-selector-mobile', 'export-selector-mobile'];
-                    const clickedDropdownId = dropdownIds.find(id => target.closest(`#${id}`));
-
-                    dropdownIds.forEach(id => {
-                        const element = document.getElementById(id);
-                        if (element) {
-                            if (id !== clickedDropdownId) {
-                                element.classList.add('collapsed');
+                        // --- NEW "INITIALIZE ON FIRST USE" LOGIC ---
+                        if (clickedDropdownSelector) {
+                            const element = document.querySelector(clickedDropdownSelector);
+                            if (element) {
+                                // Initialize the content if it's the first time being opened
+                                if (clickedDropdownSelector.includes('social-share') && !this.state.shareMenuInitialized) {
+                                    this._setupShareButtons();
+                                    this.state.shareMenuInitialized = true;
+                                } else if (clickedDropdownSelector.includes('export') && !this.state.exportMenuInitialized) {
+                                    this._setupExportButtons();
+                                    this.state.exportMenuInitialized = true;
+                                } else if (clickedDropdownSelector.includes('language') && !this.state.langMenuInitialized) {
+                                    this._populateLanguageOptions(false); // desktop
+                                    this._populateLanguageOptions(true);  // mobile
+                                    this.state.langMenuInitialized = true;
+                                }
+                                // Toggle its visibility
+                                element.classList.toggle('collapsed');
                             }
                         }
+
+                        // Close all other dropdowns
+                        dropdownSelectors.forEach(selector => {
+                            if (selector !== clickedDropdownSelector) {
+                                const element = document.querySelector(selector);
+                                if (element) element.classList.add('collapsed');
+                            }
+                        });
+
+                        // --- OTHER CLICK HANDLERS ---
+                        const langOption = target.closest('.lang-option');
+                        if (langOption) {
+                            this._handleLanguageChange(langOption.dataset.lang, !!target.closest('#language-options-mobile'));
+                        }
+
+                        const timelineLink = target.closest('.timeline-item a');
+                        if (timelineLink) this._handleTimelineClick(timelineLink);
+
+                        const skillTag = target.closest('.tech-tag');
+                        if (skillTag) this._toggleSkillFilter(skillTag);
+
+                        const accordionHeader = target.closest('.accordion-header, .toolkit-header');
+                        if (accordionHeader) this._handleAccordionToggle(accordionHeader);
+
+                        const button = target.closest('button');
+                        if (button) this._handleButtonClick(button);
                     });
 
-                    if (clickedDropdownId) {
-                        document.getElementById(clickedDropdownId).classList.toggle('collapsed');
-                    }
-
-                    const desktopLangFlag = target.closest('#language-selector .lang-flag');
-                    if (desktopLangFlag) this._handleLanguageChange(desktopLangFlag.dataset.lang, false);
-
-                    const timelineLink = target.closest('.timeline-item a');
-                    if (timelineLink) this._handleTimelineClick(timelineLink);
-
-                    const skillTag = target.closest('.tech-tag');
-                    if (skillTag) this._toggleSkillFilter(skillTag);
-
-                    const accordionHeader = target.closest('.accordion-header, .toolkit-header');
-                    if (accordionHeader) this._handleAccordionToggle(accordionHeader);
-
-                    const button = target.closest('button');
-                    if (button) this._handleButtonClick(button);
-                });
-
-                this.DOMElements.toolkitContainer.addEventListener('keydown', (e) => { if (e.target.closest('.tech-tag') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); this._toggleSkillFilter(e.target.closest('.tech-tag')); } });
-                this.DOMElements.profilePhoto.addEventListener('click', () => this._openModal());
-                this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') this._closeModal(); });
-                this.DOMElements.contactWidgetFab.addEventListener('click', () => this._openContactWidget());
-                this.DOMElements.widgetCloseBtn.addEventListener('click', () => this._closeContactWidget());
-                this.DOMElements.widgetStatusCloseBtn.addEventListener('click', () => this._hideStatusMessage());
-                this.DOMElements.messageTab.addEventListener('click', () => this._switchTab('message'));
-                this.DOMElements.ratingTab.addEventListener('click', () => this._switchTab('rating'));
-            },
+                    // --- Other event listeners ---
+                    this.DOMElements.toolkitContainer.addEventListener('keydown', (e) => { if (e.target.closest('.tech-tag') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); this._toggleSkillFilter(e.target.closest('.tech-tag')); } });
+                    this.DOMElements.profilePhoto.addEventListener('click', () => this._openModal());
+                    this.DOMElements.imageModal.addEventListener('keydown', e => { if (e.key === 'Escape') this._closeModal(); });
+                    this.DOMElements.contactWidgetFab.addEventListener('click', () => this._openContactWidget());
+                    this.DOMElements.widgetCloseBtn.addEventListener('click', () => this._closeContactWidget());
+                    this.DOMElements.widgetStatusCloseBtn.addEventListener('click', () => this._hideStatusMessage());
+                    this.DOMElements.messageTab.addEventListener('click', () => this._switchTab('message'));
+                    this.DOMElements.ratingTab.addEventListener('click', () => this._switchTab('rating'));
+                },
 
             _toggleDropdown(elementId, shouldToggle) {
                 const element = document.getElementById(elementId);
@@ -3320,6 +3494,64 @@
                     // Append the arrow after the selected flag's wrapper
                     selectedFlagWrapper.parentNode.insertBefore(arrow, selectedFlagWrapper.nextSibling);
                 }
+            },
+
+            _handleLanguageChange(lang, isMobile = false) {
+                this.translatePage(lang);
+                const selectorId = isMobile ? 'language-selector-mobile' : 'language-selector';
+                const selector = document.getElementById(selectorId);
+
+                // Update the main flag icon that is always visible
+                const mainToggleImg = selector.querySelector('.lang-flag.selected');
+                if (mainToggleImg) {
+                    mainToggleImg.src = `https://hatscripts.github.io/circle-flags/flags/${lang === 'en' ? 'gb' : lang}.svg`;
+                    mainToggleImg.alt = this.data.translations[lang][`tooltip_lang_${lang}`];
+                    mainToggleImg.dataset.lang = lang;
+                }
+
+                // This function needs to re-create the language options with the newly translated tooltips
+                this._populateLanguageOptions(isMobile);
+
+                // Close the dropdown after selection
+                selector.classList.add('collapsed');
+                selector.classList.remove('visible'); // Also remove visible class for animations
+
+                this._trackEvent('language_change', 'UI Interaction', `Switched to ${lang.toUpperCase()}`);
+            },
+
+            _populateLanguageOptions(isMobile = false) {
+                const langData = this.data.translations;
+                const containerId = isMobile ? 'language-options-mobile' : 'language-options';
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                container.innerHTML = ''; // Clear existing options
+
+                Object.keys(langData).forEach(lang => {
+                    const option = document.createElement('div');
+                    option.className = 'lang-option';
+                    option.dataset.lang = lang;
+                    option.setAttribute('role', 'button');
+                    option.setAttribute('tabindex', '0');
+
+                    const flagCode = lang === 'en' ? 'gb' : lang;
+                    const langName = this.data.translations[this.state.lang][`tooltip_lang_${lang}`] || lang.toUpperCase();
+
+                    option.innerHTML = `
+                        <img src="https://hatscripts.github.io/circle-flags/flags/${flagCode}.svg" class="h-5 w-5 lang-flag" alt="${langName}">
+                        <span>${langName}</span>
+                    `;
+
+                    option.addEventListener('click', () => this._handleLanguageChange(lang, isMobile));
+                    option.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this._handleLanguageChange(lang, isMobile);
+                        }
+                    });
+
+                    container.appendChild(option);
+                });
             },
 
             _toggleReadMore(button) {
@@ -3852,99 +4084,99 @@
                     { name: 'Telegram', icon: '<svg viewBox="0 0 24 24"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg>', url: `https://t.me/share/url?url=${pageUrl}&text=${shareText}` },
                     { name: 'Reddit', icon: '<svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm6.5 13.5c0 .828-.672 1.5-1.5 1.5s-1.5-.672-1.5-1.5.672-1.5 1.5-1.5 1.5.672 1.5 1.5zm-10 0c0 .828-.672 1.5-1.5 1.5S5.5 14.328 5.5 13.5 6.172 12 7 12s1.5.672 1.5 1.5zm3.8-2.64c-.28-.27-2.31.11-4.04.62-.32.09-.45-.1-.36-.42.84-2.83 3.5-4.58 6.58-4.58s5.74 1.75 6.58 4.58c.09.32-.04.51-.36.42-1.73-.51-3.76-.89-4.04-.62-.28.27-.12.62.2.81.93.55 2.7.9 4.31 1.1.33.04.46.21.34.52-.73 1.9-2.73 3.22-5.49 3.22s-4.76-1.32-5.49-3.22c-.12-.31.01-.48.34-.52 1.61-.2 3.38-.55 4.31-1.1.32-.19.48-.54.2-.81z"/></svg>', url: `https://www.reddit.com/submit?url=${pageUrl}&title=${shareTitle}` },
                     { name: 'Pinterest', icon: '<svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.938 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 .992.371 1.931.82 2.447.09.09.101.185.073.293-.024.09-.077.318-.101.423-.038.158-.182.222-.335.134-1.249-.582-2.03-2.407-2.03-3.874 0-3.154 2.292-6.052 6.608-6.052 3.469 0 6.165 2.473 6.165 5.776 0 3.447-2.173 6.22-5.19 6.22-1.013 0-1.965-.525-2.291-1.148l-.623 2.378c-.226.869-.835 1.958-1.244 2.621.938.356 1.96.551 3.029.551 6.627 0 12-5.373 12-12C24 5.373 18.627 0 12 0z"/></svg>', url: `https://pinterest.com/pin/create/button/?url=${pageUrl}&media=&description=${shareText}` },
-                    { name: 'TikTok', icon: '<svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-2.43.03-4.83-.95-6.43-2.98-1.59-2.02-2.36-4.56-2.32-7.06.03-2.5.9-4.96 2.56-6.78 1.66-1.82 4.04-2.89 6.42-2.89.09 1.53.02 3.08-.02 4.61-.29.02-.58.05-.86.08-1.13.08-2.26.36-3.32.9-1.02.53-1.92 1.3-2.61 2.26-.22.3-.43.61-.63.93-.03 2.33.01 4.66-.02 6.99-.01.33.03.66.09.98.24 1.23.82 2.4 1.67 3.37.84.97 1.94 1.63 3.18 1.93.31.07.63.1.94.12.31.02.62.03.93.03.04-2.41 0-4.82.01-7.23Z"/></svg>', url: `https://www.tiktok.com/upload?&desc=${shareText}%20${pageUrl}` },
+                    { name: 'Copy Link', isButton: true, icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>' }
                 ];
 
-                socialNetworks.push({ name: 'Copy Link', isButton: true, icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>' });
+                const desktopContainer = this.DOMElements.socialShareOptions;
+                const mobileContainer = document.getElementById('social-share-options-mobile-container');
 
-                const optionsContainer = this.DOMElements.socialShareOptions;
-                optionsContainer.innerHTML = '';
+                const populateContainer = (container, isMobile) => {
+                    if (!container) return;
+                    container.innerHTML = '';
+                    socialNetworks.forEach(net => {
+                        let element;
+                        let text = net.isButton ? translations.tooltip_copy_link : net.name;
 
-                socialNetworks.forEach(net => {
-                    const wrapper = document.createElement('div');
-                    wrapper.dataset.network = net.name;
-                    wrapper.className = 'tooltip share-link-wrapper';
+                        if (isMobile) {
+                            element = document.createElement(net.isButton ? 'button' : 'a');
+                            element.className = 'w-full flex items-center gap-2 p-1 rounded text-left';
+                            element.innerHTML = `<div class="w-5 h-5 share-icon-${net.name.toLowerCase().split(' ')[0]}">${net.icon}</div><span class="text-sm">${text}</span>`;
+                        } else {
+                            element = document.createElement('a');
+                            element.className = 'tooltip share-link-wrapper';
+                            element.innerHTML = `${net.icon}<span class="tooltiptext">${translations.tooltip_share_on.replace('%s', net.name)}</span>`;
+                        }
 
-                    let element;
-                    if (net.isButton) {
-                        element = document.createElement('button');
-                        element.id = 'copy-link-btn';
-                    } else {
-                        element = document.createElement('a');
-                        element.href = net.url;
-                        element.target = '_blank';
-                        element.rel = 'noopener noreferrer';
-                    }
+                        if (!net.isButton) {
+                            element.href = net.url;
+                            element.target = '_blank';
+                            element.rel = 'noopener noreferrer';
+                        } else {
+                            element.id = isMobile ? 'copy-link-btn-mobile' : 'copy-link-btn-desktop';
+                            if (!isMobile) {
+                                element.href = "#";
+                                element.querySelector('.tooltiptext').textContent = translations.tooltip_copy_link;
+                            }
+                        }
+                        container.appendChild(element);
+                    });
+                };
 
-                    element.innerHTML = net.icon;
-                    element.className = 'w-6 h-6';
-                    element.setAttribute('data-analytics-event', 'share_click');
-                    element.setAttribute('data-analytics-label', net.name);
+                populateContainer(desktopContainer, false);
+                populateContainer(mobileContainer, true);
 
-                    const tooltip = document.createElement('span');
-                    tooltip.className = 'tooltiptext';
-                    tooltip.textContent = net.isButton ? translations.tooltip_copy_link : translations.tooltip_share_on.replace('%s', net.name);
-                    if (net.isButton) {
-                        tooltip.id = 'copy-link-tooltip';
-                    }
-
-                    wrapper.appendChild(element);
-                    wrapper.appendChild(tooltip);
-                    optionsContainer.appendChild(wrapper);
-                });
-
-                const copyBtn = optionsContainer.querySelector('#copy-link-btn');
-                const copyTooltip = optionsContainer.querySelector('#copy-link-tooltip');
-                if (copyBtn && copyTooltip) {
-                    copyBtn.addEventListener('click', () => {
+                const setupCopyListener = (btnId) => {
+                    const copyBtn = document.getElementById(btnId);
+                    if (!copyBtn) return;
+                    const isMobile = btnId.includes('mobile');
+                    const textElement = isMobile ? copyBtn.querySelector('span') : copyBtn.querySelector('.tooltiptext');
+                    if (!textElement) return;
+                    copyBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
                         navigator.clipboard.writeText(window.location.href.split('?')[0]).then(() => {
-                            copyTooltip.textContent = 'Copied!';
-                            // CORRECTED: Use the correct translation key to reset the tooltip
-                            setTimeout(() => { copyTooltip.textContent = translations.tooltip_copy_link; }, 2000);
+                            const originalText = textElement.textContent;
+                            textElement.textContent = 'Copied!';
+                            setTimeout(() => { textElement.textContent = originalText; }, 2000);
                         });
                     });
-                }
-
-                optionsContainer.querySelectorAll('[data-analytics-event="share_click"]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        this._trackEvent('share_click', 'Engagement', btn.dataset.analyticsLabel);
-                    });
-                });
+                };
+                setupCopyListener('copy-link-btn-desktop');
+                setupCopyListener('copy-link-btn-mobile');
             },
 
 
             _setupExportButtons() {
-                const container = this.DOMElements.exportOptions;
-                container.innerHTML = `<div class="p-2 text-sm text-gray-500">Loading...</div>`; // Initial loading state
+                const translations = this.data.translations[this.state.lang];
+                const exportOptions = [
+                    { nameKey: 'export_cv_pdf', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsPDF_jsPDF() },
+                    { nameKey: 'export_cv_jpg', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>', handler: () => this._exportAsJPG() },
+                    { nameKey: 'export_cv_doc', name: 'Export as DOC', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsATS() },
+                    { nameKey: 'export_cv_json', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>', handler: () => this._exportAsJSON() },
+                    { nameKey: 'export_cv_text', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>', handler: () => this._exportAsText() }
+                ];
 
-                setTimeout(() => {
-                    const translations = this.data.translations[this.state.lang];
-                    const exportOptions = [
-                        { nameKey: 'export_cv_pdf', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsPDF_jsPDF() },
-                        { nameKey: 'export_cv_jpg', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>', handler: () => this._exportAsJPG() },
-                        { nameKey: 'export_cv_ats', name: 'Export for ATS (DOC)', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsATS() },
-                        { nameKey: 'export_cv_json', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>', handler: () => this._exportAsJSON() },
-                        { nameKey: 'export_cv_text', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>', handler: () => this._exportAsText() }
-                    ];
+                const desktopContainer = this.DOMElements.exportOptions;
+                const mobileContainer = document.getElementById('export-options-mobile-container');
 
+                const populateContainer = (container) => {
+                    if (!container) return;
                     container.innerHTML = '';
-
                     exportOptions.forEach(opt => {
                         const button = document.createElement('button');
-                        button.className = 'w-full flex items-center gap-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-left';
-
-                        // **FIX**: Correctly checks for a hardcoded name vs. a translation key.
+                        button.className = 'w-full flex items-center gap-2 p-1 rounded text-left';
                         const buttonText = opt.name ? opt.name : translations[opt.nameKey];
-
-                        button.innerHTML = `<div class="w-5 h-5 text-gray-600 dark:text-gray-300">${opt.icon}</div><span class="text-sm">${buttonText}</span>`;
+                        button.innerHTML = `<div class="w-5 h-5 export-icon-${opt.nameKey}">${opt.icon}</div><span class="text-sm">${buttonText}</span>`;
                         button.addEventListener('click', () => {
                             opt.handler();
                             this._trackEvent('export_cv', 'Export', opt.nameKey || opt.name);
                         });
                         container.appendChild(button);
                     });
-                }, 1000);
+                };
+                populateContainer(desktopContainer);
+                populateContainer(mobileContainer);
             },
+
 
             /**
              * Generates a complete, clean HTML string of the CV content for reliable printing.
@@ -3964,6 +4196,7 @@
                         .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 80px; color: rgba(0, 0, 0, 0.05); font-weight: bold; pointer-events: none; z-index: 0; }
                         h1 { font-size: 26pt; font-weight: bold; text-align: center; margin: 0; } h2 { font-size: 14pt; text-align: center; color: #444; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #0891b2; } h3 { font-size: 16pt; font-weight: bold; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; } h4 { font-size: 12pt; font-weight: bold; margin-top: 15px; margin-bottom: 2px; } p, li { font-size: 10pt; line-height: 1.5; color: #333; } ul { list-style-type: disc; padding-left: 20px; margin-top: 5px; } .contact-info { text-align: center; margin-bottom: 20px; font-size: 10pt; } .contact-info a { color: #0891b2; text-decoration: none; margin: 0 5px; } .profile-photo { display: block; margin: 0 auto 20px auto; width: 120px; height: 120px; border-radius: 50%; } .toolkit-category { margin-bottom: 10px; } .toolkit-skills { font-size: 9pt; color: #555; } .exp-item { margin-bottom: 20px; } .exp-dates { color: #555; font-style: italic; } .technologies { font-size: 9pt; color: #0891b2; font-style: italic; } .languages-section p { margin-bottom: 5px; }
                     </style>
+
                     <div class="print-only-container">
                         <div class="watermark">Carlos A. Muñoz - Confidential</div>
                         <img src="${profilePhotoSrc}" class="profile-photo" alt="Profile Photo">
@@ -4438,37 +4671,48 @@
                 updateMobilePlaceholderHeight();
             },*/
             _initMobileStickyBar() {
-                // **CORRECTED**: This now correctly selects the wrapper
                 const mobileToolbarWrapper = document.querySelector('.mobile-toolbar-wrapper');
                 if (!mobileToolbarWrapper) return;
 
+                // The placeholder prevents content from jumping when the toolbar becomes 'fixed'.
                 const placeholder = document.createElement('div');
+                // It's inserted right before the toolbar's wrapper.
                 mobileToolbarWrapper.parentNode.insertBefore(placeholder, mobileToolbarWrapper);
 
+                // This function ensures the placeholder has the same height as the toolbar.
                 const updateHeight = () => {
                     requestAnimationFrame(() => {
                         placeholder.style.height = `${mobileToolbarWrapper.offsetHeight}px`;
                     });
                 };
 
+                // This is the main logic that runs when the user scrolls.
                 const handleScroll = () => {
-                    // **CORRECTED**: This now correctly selects the toolbar inside the wrapper
                     const toolbar = mobileToolbarWrapper.querySelector('.mobile-toolbar');
-                    if (!toolbar) return; // Added safety check
+                    if (!toolbar) return;
 
+                    // If we are on a desktop-sized screen, disable the sticky feature.
                     if (window.innerWidth > 767) {
                         toolbar.classList.remove('is-sticky');
-                        placeholder.style.display = 'none';
+                        placeholder.style.display = 'none'; // Hide the placeholder
                         return;
                     }
 
+                    // On mobile, ensure the placeholder is visible.
                     placeholder.style.display = 'block';
+
+                    // Check if the placeholder has scrolled off the top of the screen.
                     const shouldBeSticky = placeholder.getBoundingClientRect().top < 0;
+
+                    // Add or remove the 'is-sticky' class from the toolbar based on the scroll position.
                     toolbar.classList.toggle('is-sticky', shouldBeSticky);
                 };
 
+                // Attach the event listeners.
                 window.addEventListener('scroll', handleScroll, { passive: true });
                 window.addEventListener('resize', () => { updateHeight(); handleScroll(); }, { passive: true });
+
+                // Set the initial height.
                 updateHeight();
             },
 
@@ -4488,12 +4732,15 @@
                 observer.observe(sentinel);
             },
 
-            // PASTE THIS ENTIRE CORRECTED FUNCTION IN ITS PLACE
             init() {
+                // Add new state flags for our fix
+                this.state.shareMenuInitialized = false;
+                this.state.exportMenuInitialized = false;
+                this.state.langMenuInitialized = false;
+
                 this._cacheDOMElements();
                 this._renderAll();
                 this._forceShowAllContent();
-                //this._handleStickyHeader();
                 this._initStickyObserver();
                 this._loadBlocklist();
                 this._applyUrlLanguage();
@@ -4502,21 +4749,21 @@
                 this._populateAllTranslations();
                 this._initMobileStickyBar();
                 this._setupEventListeners();
-                this.translatePage(this.state.lang);
                 this._initScrollAnimations();
                 this._initUrlHighlighting();
                 this._initContactWidget();
                 this._initScrollTrigger();
-                try {
-                    this._loadAndRenderReviews();
-                } catch (error) {
-                    console.error("Failed to load testimonials:", error);
-                }
 
+                // Translate the static text on the page
+                this.translatePage(this.state.lang);
+
+                // Load asynchronous content after the main UI is ready.
+                try { this._loadAndRenderReviews(); }
+                catch (error) { console.error("Failed to load testimonials:", error); }
+
+                // Start the tour if it hasn't been seen.
                 if (!sessionStorage.getItem('hasSeenTour')) {
-                    setTimeout(() => {
-                        this.startTour(true);
-                    }, 1000);
+                    setTimeout(() => this.startTour(true), 1000);
                 }
             },
 
