@@ -379,6 +379,10 @@
         .dark-mode #theme-toggle .sun-icon { display: block; }
         .dark-mode #theme-toggle .moon-icon { display: none; }
         .radar-label:hover { font-weight: bold; text-decoration: underline; text-decoration-color: var(--cyan-brand); text-decoration-thickness: 2px; cursor: pointer; }
+        .radar-label {
+            cursor: pointer; /* Changes the mouse cursor to a pointer on hover */
+            transition: all 0.2s ease;
+        }
 
         /* For the simulated typing effect */
         .is-typing {
@@ -840,6 +844,20 @@
         /* |                   NEW CSS: TOUR STYLES                   | */
         /* ========================================================== */
         /* A quick, blue-colored pop for single clicks */
+        #tour-tooltip.transparent-mode {
+            background-color: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            box-shadow: none;
+            border-top-color: transparent;
+            transition: background-color 0.3s, border-top-color 0.3s;
+        }
+        #tour-tooltip.transparent-mode #tour-tooltip-content {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
         @keyframes tour-click-pop {
             50% { box-shadow: 0 0 12px 4px var(--cyan-brand); transform: scale(1.05); }
         }
@@ -2399,310 +2417,714 @@
 
                 translations: {
                     en: {
-                        job_title: "Senior IT Project Manager, QA Architect & QA Leader", contact_title: "Contact", competencies_title: "Core Competencies", competency_pm: "IT Project Management", competency_qa: "QA & Test Automation", competency_lead: "Team Leadership & Mentoring", competency_devops: "CI/CD & DevOps Strategy", competency_cloud: "Cloud Platforms (AWS, Azure, GCP)", competency_strategy: "Strategic Business Acumen", competency_relations: "Stakeholder & Client Relations", languages_title: "Languages", lang_native: "Native", lang_fluent: "Fluent", lang_basic: "Basic", lang_others: "Others", summary_title: "Professional Summary", toolkit_title: "Technical & Management Toolkit", toolkit_pm: "Project Management & Methodologies:", toolkit_qa: "QA & Test Automation:", toolkit_lang: "Programming & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Databases & APIs:", toolkit_analytics: "Analytics & Monitoring:", toolkit_platform: "Platforms & Business Tools:", toolkit_system: "General & System Tools:", experience_title: "Professional Experience", education_title: "Education & Certifications", infographics_title: "Career at a Glance", infographics_competencies_title: "Core Competencies", infographics_methodologies_title: "Methodologies & Processes", infographics_timeline_title: "Career Timeline",
-                        info_bubble_contact: "Click any contact link to open the corresponding application (Email, WhatsApp, etc.).",
-                        info_bubble_toolkit: "Click any skill to filter the experience list. Click again to deselect, or use 'Reset' to clear all.",
-                        tooltip_print: "Print / PDF",
-                        read_more: "Read More...", read_less: "Read Less...",
-                        tooltip_timeline: "Click to jump to %COMPANY% experience",
-                        tooltip_lang_en: "Translate to English", tooltip_lang_es: "Translate to Spanish", tooltip_lang_pt: "Translate to Portuguese", tooltip_lang_de: "Translate to German", tooltip_lang_fr: "Translate to French", tooltip_lang_it: "Translate to Italian",
-                        widget_tab_message: "Message", widget_tab_rate: "Rate CV",
-                        form_label_name: "Name", form_label_email: "Email", form_label_topic: "Topic", form_label_message: "Message", form_label_attachment: "Attachment (Optional)", form_button_attach: "Attach File", form_button_send: "Send Message", form_label_rating: "Overall Rating", form_label_comments: "Comments (Optional)", form_button_submit_rating: "Submit Rating",
-                        error_required: "This field is required.", error_min_length: "Please enter at least {min} characters.", error_email: "Please enter a valid email address.", error_topic: "Please select a topic.", error_rating: "Please select a rating.", error_file_size: "File is too large. Max size is 5MB.", error_file_type: "Invalid file type. (PDF, DOC, DOCX, PNG, JPG)",
-                        status_sending: "Sending...", status_uploading: "Uploading...", status_file_attached: "File attached: {fileName}", status_success_message_title: "Message Sent!", status_success_message_body: "Thank you for reaching out. I'll get back to you shortly.", status_success_rating_title: "Rating Submitted!", status_success_rating_body: "Thank you for your valuable feedback!", status_error_title: "An Error Occurred", status_error_body: "Sorry, something went wrong. Please try again later.",
-                        topic_option_default: "Select a topic...", topic_option_opportunity: "Job Opportunity / Collaboration", topic_option_inquiry: "Project Inquiry", topic_option_feedback: "CV Feedback", topic_option_other: "Other",
-                        tour_close: "Close", tour_back: "Back", tour_next: "Next", tour_finish: "Finish", tour_step_photo_title: "1. Zoomable Photo", tour_step_photo_desc: "You can click my profile photo at any time to see a larger, high-resolution version.", tour_step_share_title: "2. Share this CV", tour_step_share_desc: "Use the share icon to easily send this interactive CV via LinkedIn, X (Twitter), and other platforms, or simply copy the link.", tour_step_1_title: "3. Page Controls", tour_step_1_desc: "Use these controls to switch between Light/Dark themes, select a language, or print the CV as a PDF.", tour_step_2_title: "4. Expandable Summary", tour_step_2_desc: "Click 'Read More...' to see the full professional summary, providing deeper insight into my profile and approach.", tour_step_3_title: "5. Interactive Toolkit", tour_step_3_desc: "This is my full skillset. Click any skill to instantly filter both the Timeline and the Professional Experience sections.", tour_step_4_title: "6. Filterable Timeline", tour_step_4_desc: "This provides a quick career overview. It automatically filters based on the skills you select from the Toolkit.", tour_step_5_title: "7. Detailed Experience", tour_step_5_desc: "Click any job title to expand it and see the detailed responsibilities, achievements, and technologies used for that role.", tour_step_6_title: "8. Contact & Feedback", tour_step_6_desc: "Click this button anytime to send me a message or rate this CV. It even opens automatically if you scroll to the bottom!", tour_step_7_title: "9. Get In Touch", tour_step_7_desc: "All my contact channels are here. Click any link to open the corresponding application, or use the floating blue button to send me a direct message.",
-                        tooltip_export: "Export CV",
-                        export_cv_json: "Export as JSON",
-                        export_cv_text: "Export as Text",
-                        tour_step_export_title: "3. Export this CV",
-                        tour_step_export_desc: "You can also export the raw data of this CV in different formats like JSON or plain text.",
-                        tooltip_share: "Share CV",
-                        share_text: "Check out Carlos A. Muñoz's Interactive CV!",
-                        share_title: "Carlos A. Muñoz - Interactive CV",
-                        tooltip_share_on: "Share on %s", // %s is a placeholder
-                        form_button_copy_link: "Copy Link",
-                        tooltip_copy_link: "Copy Link",
-                        tooltip_export: "Export CV",
-                        export_cv_json: "Export as JSON",
-                        export_cv_text: "Export as Text",
-                        export_cv_pdf: "Export as PDF",
-                        export_cv_jpg: "Export as JPG",
-                        export_cv_doc: "Export as DOC",
-                        tour_step_1_title: "1. Zoomable Photo",
-                        tour_step_1_desc: "You can click my profile photo at any time to see a larger, high-resolution version.",
-                        tour_step_2_title: "2. Share this CV",
-                        tour_step_2_desc: "Use the share icon to easily send this interactive CV via LinkedIn, X (Twitter), and other platforms, or simply copy the link.",
-                        tour_step_3_title: "3. Export this CV",
-                        tour_step_3_desc: "You can also export the CV in different formats like PDF, DOC, or JSON for offline viewing or for ATS systems.",
-                        tour_step_4_title: "4. Page Controls",
-                        tour_step_4_desc: "Use these controls to switch between Light/Dark themes, select a language, or print the CV as a PDF.",
-                        tour_step_5_title: "5. Expandable Summary",
-                        tour_step_5_desc: "Click 'Read More...' to see the full professional summary, providing deeper insight into my profile and approach.",
-                        tour_step_6_title: "6. Interactive Toolkit",
-                        tour_step_6_desc: "This is my full skillset. Click any skill to instantly filter both the Timeline and the Professional Experience sections.",
-                        tour_step_7_title: "7. Filterable Timeline",
-                        tour_step_7_desc: "This provides a quick career overview. It automatically filters based on the skills you select from the Toolkit.",
-                        tour_step_8_title: "8. Detailed Experience",
-                        tour_step_8_desc: "Click any job title to expand it and see the detailed responsibilities, achievements, and technologies used for that role.",
-                        tour_step_9_title: "9. Contact & Feedback",
-                        tour_step_9_desc: "Click this button anytime to send me a message or rate this CV. It even opens automatically if you scroll to the bottom!",
-                        tour_step_10_title: "10. Get In Touch",
-                        tour_step_10_desc: "All my contact channels are here. Click any link to open the corresponding application, or use the floating blue button to send me a direct message.",
+                        job_title: "Senior IT Project Manager, QA Architect & QA Leader",
+                        contact_title: "Contact",
+                        competencies_title: "Core Competencies",
+                        competency_pm: "IT Project Management",
+                        competency_qa: "QA & Test Automation",
+                        competency_lead: "Team Leadership & Mentoring",
+                        competency_devops: "CI/CD & DevOps Strategy",
+                        competency_cloud: "Cloud Platforms (AWS, Azure, GCP)",
+                        competency_strategy: "Strategic Business Acumen",
+                        competency_relations: "Stakeholder & Client Relations",
+                        languages_title: "Languages",
+                        lang_native: "Native",
+                        lang_fluent: "Fluent",
+                        lang_basic: "Basic",
+                        lang_others: "Others",
                         summary_title: "Professional Summary",
                         summary_text: "A Senior IT Project Manager and QA Architect with over two decades of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.",
                         summary_detail_1: "Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.",
-                        summary_detail_2: "As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders."
-
+                        summary_detail_2: "As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.",
+                        toolkit_title: "Technical & Management Toolkit",
+                        toolkit_pm: "Project Management & Methodologies:",
+                        toolkit_qa: "QA & Test Automation:",
+                        toolkit_lang: "Programming & Scripting:",
+                        toolkit_cloud: "Cloud, CI/CD & DevOps:",
+                        toolkit_db: "Databases & APIs:",
+                        toolkit_analytics: "Analytics & Monitoring:",
+                        toolkit_platform: "Platforms & Business Tools:",
+                        toolkit_system: "General & System Tools:",
+                        experience_title: "Professional Experience",
+                        education_title: "Education & Certifications",
+                        infographics_title: "Career at a Glance",
+                        infographics_competencies_title: "Core Competencies",
+                        infographics_methodologies_title: "Methodologies & Processes",
+                        infographics_timeline_title: "Career Timeline",
+                        info_bubble_contact: "Click any contact link to open the corresponding application (Email, WhatsApp, etc.).",
+                        info_bubble_toolkit: "Click any skill to filter the experience list. Click again to deselect, or use 'Reset' to clear all.",
+                        tooltip_print: "Print / PDF",
+                        read_more: "Read More...",
+                        read_less: "Read Less...",
+                        tooltip_timeline: "Click to jump to %COMPANY% experience",
+                        tooltip_lang_en: "Translate to English",
+                        tooltip_lang_es: "Translate to Spanish",
+                        tooltip_lang_pt: "Translate to Portuguese",
+                        tooltip_lang_de: "Translate to German",
+                        tooltip_lang_fr: "Translate to French",
+                        tooltip_lang_it: "Translate to Italian",
+                        widget_tab_message: "Message",
+                        widget_tab_rate: "Rate CV",
+                        form_label_name: "Name",
+                        form_label_email: "Email",
+                        form_label_topic: "Topic",
+                        form_label_message: "Message",
+                        form_label_attachment: "Attachment (Optional)",
+                        form_button_attach: "Attach File",
+                        form_button_send: "Send Message",
+                        form_label_rating: "Overall Rating",
+                        form_label_comments: "Comments (Optional)",
+                        form_button_submit_rating: "Submit Rating",
+                        error_required: "This field is required.",
+                        error_min_length: "Please enter at least {min} characters.",
+                        error_email: "Please enter a valid email address.",
+                        error_topic: "Please select a topic.",
+                        error_rating: "Please select a rating.",
+                        error_file_size: "File is too large. Max size is 5MB.",
+                        error_file_type: "Invalid file type. (PDF, DOC, DOCX, PNG, JPG)",
+                        status_sending: "Sending...",
+                        status_uploading: "Uploading...",
+                        status_file_attached: "File attached: {fileName}",
+                        status_success_message_title: "Message Sent!",
+                        status_success_message_body: "Thank you for reaching out. I'll get back to you shortly.",
+                        status_success_rating_title: "Rating Submitted!",
+                        status_success_rating_body: "Thank you for your valuable feedback!",
+                        status_error_title: "An Error Occurred",
+                        status_error_body: "Sorry, something went wrong. Please try again later.",
+                        topic_option_default: "Select a topic...",
+                        topic_option_opportunity: "Job Opportunity / Collaboration",
+                        topic_option_inquiry: "Project Inquiry",
+                        topic_option_feedback: "CV Feedback",
+                        topic_option_other: "Other",
+                        tour_close: "Close",
+                        tour_back: "Back",
+                        tour_next: "Next",
+                        tour_finish: "Finish",
+                        tooltip_share: "Share CV",
+                        tooltip_export: "Export CV",
+                        share_text: "Check out Carlos A. Muñoz's Interactive CV!",
+                        share_title: "Carlos A. Muñoz - Interactive CV",
+                        tooltip_share_on: "Share on %s",
+                        tooltip_copy_link: "Copy Link",
+                        export_cv_pdf: "Export as PDF",
+                        export_cv_jpg: "Export as JPG",
+                        export_cv_doc: "Export as DOC",
+                        export_cv_json: "Export as JSON",
+                        export_cv_text: "Export as Text",
+                        tour_title_photo: "Zoomable Photo",
+                        tour_desc_photo: "Click my profile photo at any time to see a larger, high-resolution version.",
+                        tour_title_controls: "Page Controls",
+                        tour_desc_controls: "Use these controls to share, export, print, change the language, or switch between Light/Dark themes.",
+                        tour_title_summary: "Expandable Summary",
+                        tour_desc_summary: "Click 'Read More...' to see the full professional summary, providing deeper insight into my profile and approach.",
+                        tour_title_glance: "Career at a Glance",
+                        tour_desc_glance: "These infographics visualize my key skills and career progression. Hover over the chart labels for more details.",
+                        tour_title_toolkit: "Interactive Toolkit",
+                        tour_desc_toolkit: "This is my full skillset. Click any skill to instantly filter the Experience and Timeline sections below.",
+                        tour_title_experience: "Detailed Experience",
+                        tour_desc_experience: "This section is filtered by the Toolkit. Click any job title to expand it and see the responsibilities and technologies used.",
+                        tour_title_testimonials: "Testimonials",
+                        tour_desc_testimonials: "This section displays feedback and ratings from colleagues and clients, loaded directly from the database.",
+                        tour_title_sidebar: "Contact & Languages",
+                        tour_desc_sidebar: "Here you can find my direct contact information and language proficiencies.",
+                        tour_title_widget: "Contact & Feedback Widget",
+                        tour_desc_widget: "Click the floating button anytime to send me a direct message or submit a rating for this CV.",
+                        tour_title_finish: "Tour Complete!",
+                        tour_desc_finish: "You're all set! Feel free to explore the CV. Thank you for visiting.",
+                        tour_title_education: "Education & Certifications",
+                        tour_desc_education: "This section details my academic background and key professional certifications that validate my expertise."
                     },
                     es: {
-                        job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA", contact_title: "Contacto", competencies_title: "Competencias Clave", competency_pm: "Gestión de Proyectos de TI", competency_qa: "QA y Automatización de Pruebas", competency_lead: "Liderazgo y Mentoría de Equipos", competency_devops: "Estrategia de CI/CD y DevOps", competency_cloud: "Plataformas en la Nube", competency_strategy: "Visión Estratégica de Negocio", competency_relations: "Relaciones con Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluido", lang_basic: "Básico", lang_others: "Otros", summary_title: "Resumen Profesional", toolkit_title: "Herramientas Técnicas y de Gestión", toolkit_pm: "Gestión de Proyectos y Metodologías:", toolkit_qa: "QA y Automatización de Pruebas:", toolkit_lang: "Programación y Scripting:", toolkit_cloud: "Nube, CI/CD y DevOps:", toolkit_db: "Bases de Datos y APIs:", toolkit_analytics: "Analítica y Monitoreo:", toolkit_platform: "Plataformas y Herramientas de Negocio:", toolkit_system: "Herramientas Generales y de Sistema:", experience_title: "Experiencia Profesional", education_title: "Educación y Certificaciones", infographics_title: "Carrera en un Vistazo", infographics_competencies_title: "Competencias Clave", infographics_methodologies_title: "Metodologías y Procesos", infographics_timeline_title: "Línea de Tiempo Profesional",
+                        job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA",
+                        contact_title: "Contacto",
+                        competencies_title: "Competencias Clave",
+                        competency_pm: "Gestión de Proyectos de TI",
+                        competency_qa: "QA y Automatización de Pruebas",
+                        competency_lead: "Liderazgo y Mentoría de Equipos",
+                        competency_devops: "Estrategia de CI/CD y DevOps",
+                        competency_cloud: "Plataformas en la Nube (AWS, Azure, GCP)",
+                        competency_strategy: "Visión Estratégica de Negocio",
+                        competency_relations: "Relaciones con Clientes",
+                        languages_title: "Idiomas",
+                        lang_native: "Nativo",
+                        lang_fluent: "Fluido",
+                        lang_basic: "Básico",
+                        lang_others: "Otros",
+                        summary_title: "Resumen Profesional",
+                        summary_text: "Un Gerente de Proyectos de TI Senior y Arquitecto de QA con más de dos décadas de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de partes interesadas y liderazgo de equipos multifuncionales para cumplir los objetivos del proyecto. Capacidad demostrada para diseñar e implementar marcos sólidos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos.",
+                        summary_detail_1: "A lo largo de mi carrera, he defendido un enfoque holístico de la calidad, integrando los procesos de QA en cada etapa del SDLC. Como Arquitecto de QA, me especializo en diseñar marcos de automatización escalables, mantenibles y eficientes desde cero, adaptados a las necesidades específicas del producto y la pila tecnológica. Mi experiencia se extiende a la selección de las herramientas óptimas, el establecimiento de mejores prácticas y la creación de integraciones de CI/CD que proporcionan retroalimentación rápida y fiable a los equipos de desarrollo, reduciendo significativamente los ciclos de regresión y acelerando el tiempo de comercialización.",
+                        summary_detail_2: "Como Gerente de Proyectos y Líder, sobresalgo en la creación y mentoría de equipos multiculturales de alto rendimiento. Tengo un historial probado en la gestión de carteras de proyectos multimillonarios, la mitigación de riesgos y la alineación de la ejecución técnica con la estrategia empresarial a nivel ejecutivo. Mi filosofía de liderazgo se centra en la comunicación clara, el empoderamiento y el fomento de un entorno de colaboración donde cada miembro del equipo está motivado para contribuir con su mejor trabajo. Mi dominio del inglés C2 y mis habilidades multilingües me permiten gestionar sin problemas equipos y partes interesadas globales.",
+                        toolkit_title: "Herramientas Técnicas y de Gestión",
+                        toolkit_pm: "Gestión de Proyectos y Metodologías:",
+                        toolkit_qa: "QA y Automatización de Pruebas:",
+                        toolkit_lang: "Programación y Scripting:",
+                        toolkit_cloud: "Nube, CI/CD y DevOps:",
+                        toolkit_db: "Bases de Datos y APIs:",
+                        toolkit_analytics: "Analítica y Monitoreo:",
+                        toolkit_platform: "Plataformas y Herramientas de Negocio:",
+                        toolkit_system: "Herramientas Generales y de Sistema:",
+                        experience_title: "Experiencia Profesional",
+                        education_title: "Educación y Certificaciones",
+                        infographics_title: "Carrera en un Vistazo",
+                        infographics_competencies_title: "Competencias Clave",
+                        infographics_methodologies_title: "Metodologías y Procesos",
+                        infographics_timeline_title: "Línea de Tiempo Profesional",
                         info_bubble_contact: "Haga clic en cualquier enlace de contacto para abrir la aplicación correspondiente (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Haga clic en cualquier habilidad para filtrar la lista de experiencias. Haga clic de nuevo para deseleccionar, o use 'Restablecer' para borrar todo.",
                         tooltip_print: "Imprimir / PDF",
-                        read_more: "Leer Más...", read_less: "Leer Menos...",
+                        read_more: "Leer Más...",
+                        read_less: "Leer Menos...",
                         tooltip_timeline: "Haga clic para saltar a la experiencia de %COMPANY%",
-                        tooltip_lang_en: "Traducir a Inglés", tooltip_lang_es: "Traducir a Español", tooltip_lang_pt: "Traducir a Portugués", tooltip_lang_de: "Traducir a Alemán", tooltip_lang_fr: "Traducir a Francés", tooltip_lang_it: "Traducir a Italiano",
-                        widget_tab_message: "Mensaje", widget_tab_rate: "Evaluar CV",
-                        form_label_name: "Nombre", form_label_email: "Correo electrónico", form_label_topic: "Asunto", form_label_message: "Mensaje", form_label_attachment: "Adjunto (Opcional)", form_button_attach: "Adjuntar archivo", form_button_send: "Enviar Mensaje", form_label_rating: "Calificación General", form_label_comments: "Comentarios (Opcional)", form_button_submit_rating: "Enviar Calificación",
-                        error_required: "Este campo es obligatorio.", error_min_length: "Por favor, ingrese al menos {min} caracteres.", error_email: "Por favor, ingrese un correo electrónico válido.", error_topic: "Por favor, seleccione un asunto.", error_rating: "Por favor, seleccione una calificación.", error_file_size: "El archivo es demasiado grande. Máximo 5MB.", error_file_type: "Tipo de archivo no válido. (PDF, DOC, DOCX, PNG, JPG)",
-                        status_sending: "Enviando...", status_uploading: "Subiendo...", status_file_attached: "Archivo adjunto: {fileName}", status_success_message_title: "¡Mensaje Enviado!", status_success_message_body: "Gracias por contactarme. Te responderé en breve.", status_success_rating_title: "¡Calificación Enviada!", status_success_rating_body: "¡Gracias por tus valiosos comentarios!", status_error_title: "Ocurrió un Error", status_error_body: "Lo siento, algo salió mal. Por favor, inténtalo de nuevo más tarde.",
-                        topic_option_default: "Seleccione un asunto...", topic_option_opportunity: "Oportunidad Laboral / Colaboración", topic_option_inquiry: "Consulta de Proyecto", topic_option_feedback: "Feedback sobre el CV", topic_option_other: "Otro",
-                        tour_close: "Cerrar", tour_back: "Atrás", tour_next: "Siguiente", tour_finish: "Finalizar", tour_step_1_title: "1. Controles de Página", tour_step_1_desc: "Usa estos controles para cambiar entre temas Claro/Oscuro, seleccionar un idioma o imprimir el CV como PDF.", tour_step_2_title: "2. Resumen Expandible", tour_step_2_desc: "Haz clic en 'Leer Más...' para ver el resumen profesional completo, obteniendo una visión más profunda de mi perfil.", tour_step_3_title: "3. Toolkit Interactivo", tour_step_3_desc: "Este es mi conjunto de habilidades. Haz clic en cualquier habilidad para filtrar instantáneamente la Línea de Tiempo y la Experiencia Profesional.", tour_step_4_title: "4. Línea de Tiempo Filtrable", tour_step_4_desc: "Esto proporciona un resumen rápido de mi carrera. Se filtra automáticamente según las habilidades que selecciones del Toolkit.", tour_step_5_title: "5. Experiencia Detallada", tour_step_5_desc: "Haz clic en cualquier cargo para expandirlo y ver en detalle las responsabilidades, logros y tecnologías utilizadas.", tour_step_6_title: "6. Contacto y Feedback", tour_step_6_desc: "Haz clic en este botón en cualquier momento para enviarme un mensaje o calificar este CV. ¡Incluso se abre automáticamente si llegas al final!",tour_step_7_title: "7. Ponte en Contacto", tour_step_7_desc: "Todos mis canales de contacto están aquí. Haz clic en cualquier enlace para abrir la aplicación, o usa el botón azul flotante para enviarme un mensaje directo.",
-                        summary_text: "Un Gerente de Proyectos de TI Senior y Arquitecto de QA con más de dos décadas de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de partes interesadas y liderazgo de equipos multifuncionales para cumplir los objetivos del proyecto. Capacidad demostrada para diseñar e implementar marcos sólidos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos.",
+                        tooltip_lang_en: "Traducir a Inglés",
+                        tooltip_lang_es: "Traducir a Español",
+                        tooltip_lang_pt: "Traducir a Portugués",
+                        tooltip_lang_de: "Traducir a Alemán",
+                        tooltip_lang_fr: "Traducir a Francés",
+                        tooltip_lang_it: "Traducir a Italiano",
+                        widget_tab_message: "Mensaje",
+                        widget_tab_rate: "Evaluar CV",
+                        form_label_name: "Nombre",
+                        form_label_email: "Correo electrónico",
+                        form_label_topic: "Asunto",
+                        form_label_message: "Mensaje",
+                        form_label_attachment: "Adjunto (Opcional)",
+                        form_button_attach: "Adjuntar archivo",
+                        form_button_send: "Enviar Mensaje",
+                        form_label_rating: "Calificación General",
+                        form_label_comments: "Comentarios (Opcional)",
+                        form_button_submit_rating: "Enviar Calificación",
+                        error_required: "Este campo es obligatorio.",
+                        error_min_length: "Por favor, ingrese al menos {min} caracteres.",
+                        error_email: "Por favor, ingrese un correo electrónico válido.",
+                        error_topic: "Por favor, seleccione un asunto.",
+                        error_rating: "Por favor, seleccione una calificación.",
+                        error_file_size: "El archivo es demasiado grande. Máximo 5MB.",
+                        error_file_type: "Tipo de archivo no válido. (PDF, DOC, DOCX, PNG, JPG)",
+                        status_sending: "Enviando...",
+                        status_uploading: "Subiendo...",
+                        status_file_attached: "Archivo adjunto: {fileName}",
+                        status_success_message_title: "¡Mensaje Enviado!",
+                        status_success_message_body: "Gracias por contactarme. Te responderé en breve.",
+                        status_success_rating_title: "¡Calificación Enviada!",
+                        status_success_rating_body: "¡Gracias por tus valiosos comentarios!",
+                        status_error_title: "Ocurrió un Error",
+                        status_error_body: "Lo siento, algo salió mal. Por favor, inténtalo de nuevo más tarde.",
+                        topic_option_default: "Seleccione un asunto...",
+                        topic_option_opportunity: "Oportunidad Laboral / Colaboración",
+                        topic_option_inquiry: "Consulta de Proyecto",
+                        topic_option_feedback: "Feedback sobre el CV",
+                        topic_option_other: "Otro",
+                        tour_close: "Cerrar",
+                        tour_back: "Atrás",
+                        tour_next: "Siguiente",
+                        tour_finish: "Finalizar",
                         tooltip_share: "Compartir CV",
+                        tooltip_export: "Exportar CV",
                         share_text: "¡Echa un vistazo al CV Interactivo de Carlos A. Muñoz!",
                         share_title: "Carlos A. Muñoz - CV Interactivo",
                         tooltip_share_on: "Compartir en %s",
-                        form_button_copy_link: "Copiar Enlace",
                         tooltip_copy_link: "Copiar Enlace",
-                        tooltip_export: "Exportar CV",
-                        export_cv_json: "Exportar como JSON",
-                        export_cv_text: "Exportar como Texto",
                         export_cv_pdf: "Exportar como PDF",
                         export_cv_jpg: "Exportar como JPG",
                         export_cv_doc: "Exportar como DOC",
-                        tour_step_1_title: "1. Foto Ampliable",
-                        tour_step_1_desc: "Puedes hacer clic en mi foto de perfil en cualquier momento para ver una versión más grande y de alta resolución.",
-                        tour_step_2_title: "2. Compartir este CV",
-                        tour_step_2_desc: "Usa el ícono de compartir para enviar fácilmente este CV interactivo a través de LinkedIn, X (Twitter) y otras plataformas, o simplemente copia el enlace.",
-                        tour_step_3_title: "3. Exportar este CV",
-                        tour_step_3_desc: "También puedes exportar el CV en diferentes formatos como PDF, DOC o JSON para verlo sin conexión o para sistemas ATS.",
-                        tour_step_4_title: "4. Controles de Página",
-                        tour_step_4_desc: "Usa estos controles para cambiar entre temas Claro/Oscuro, seleccionar un idioma o imprimir el CV como PDF.",
-                        tour_step_5_title: "5. Resumen Expandible",
-                        tour_step_5_desc: "Haz clic en 'Leer Más...' para ver el resumen profesional completo, obteniendo una visión más profunda de mi perfil.",
-                        tour_step_6_title: "6. Toolkit Interactivo",
-                        tour_step_6_desc: "Este es mi conjunto de habilidades. Haz clic en cualquier habilidad para filtrar instantáneamente la Línea de Tiempo y la Experiencia Profesional.",
-                        tour_step_7_title: "7. Línea de Tiempo Filtrable",
-                        tour_step_7_desc: "Esto proporciona un resumen rápido de mi carrera. Se filtra automáticamente según las habilidades que selecciones del Toolkit.",
-                        tour_step_8_title: "8. Experiencia Detallada",
-                        tour_step_8_desc: "Haz clic en cualquier cargo para expandirlo y ver en detalle las responsabilidades, logros y tecnologías utilizadas.",
-                        tour_step_9_title: "9. Contacto y Feedback",
-                        tour_step_9_desc: "Haz clic en este botón en cualquier momento para enviarme un mensaje o calificar este CV. ¡Incluso se abre automáticamente si llegas al final!",
-                        tour_step_10_title: "10. Ponte en Contacto",
-                        tour_step_10_desc: "Todos mis canales de contacto están aquí. Haz clic en cualquier enlace para abrir la aplicación, o usa el botón azul flotante para enviarme un mensaje directo."
-
+                        export_cv_json: "Exportar como JSON",
+                        export_cv_text: "Exportar como Texto",
+                        tour_title_photo: "Foto Ampliable",
+                        tour_desc_photo: "Puedes hacer clic en mi foto de perfil en cualquier momento para ver una versión más grande y de alta resolución.",
+                        tour_title_controls: "Controles de Página",
+                        tour_desc_controls: "Usa estos controles para compartir, exportar, imprimir, cambiar el idioma o alternar entre los temas Claro/Oscuro.",
+                        tour_title_summary: "Resumen Expandible",
+                        tour_desc_summary: "Haz clic en 'Leer Más...' para ver el resumen profesional completo, obteniendo una visión más profunda de mi perfil.",
+                        tour_title_glance: "Carrera en un Vistazo",
+                        tour_desc_glance: "Estas infografías visualizan mis habilidades clave y progresión de carrera. Pasa el cursor sobre las etiquetas del gráfico para más detalles.",
+                        tour_title_toolkit: "Toolkit Interactivo",
+                        tour_desc_toolkit: "Este es mi conjunto completo de habilidades. Haz clic en cualquier habilidad para filtrar instantáneamente las secciones de Experiencia y Línea de Tiempo.",
+                        tour_title_experience: "Experiencia Detallada",
+                        tour_desc_experience: "Esta sección se filtra por el Toolkit. Haz clic en cualquier cargo para expandirlo y ver las responsabilidades y tecnologías utilizadas.",
+                        tour_title_testimonials: "Testimonios",
+                        tour_desc_testimonials: "Esta sección muestra comentarios y calificaciones de colegas y clientes, cargados directamente desde la base de datos.",
+                        tour_title_sidebar: "Contacto e Idiomas",
+                        tour_desc_sidebar: "Aquí puedes encontrar mi información de contacto directo y mis competencias lingüísticas.",
+                        tour_title_widget: "Widget de Contacto y Feedback",
+                        tour_desc_widget: "Haz clic en el botón flotante en cualquier momento para enviarme un mensaje directo o enviar una calificación para este CV.",
+                        tour_title_finish: "¡Tour Completo!",
+                        tour_desc_finish: "¡Ya estás listo! Siéntete libre de explorar el CV. Gracias por tu visita.",
+                        tour_title_education: "Educación y Certificaciones",
+                        tour_desc_education: "Esta sección detalla mi formación académica y las certificaciones profesionales clave que validan mi experiencia."
                     },
                     pt: {
-                        job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA", contact_title: "Contato", competencies_title: "Competências Principais", competency_pm: "Gerenciamento de Projetos de TI", competency_qa: "QA e Automação de Testes", competency_lead: "Liderança e Mentoria de Equipes", competency_devops: "Estratégia de CI/CD e DevOps", competency_cloud: "Plataformas de Nuvem", competency_strategy: "Visão Estratégica de Negócios", competency_relations: "Relações com Stakeholders e Clientes", languages_title: "Idiomas", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Básico", lang_others: "Outros", summary_title: "Resumo Profissional", toolkit_title: "Ferramentas Técnicas e de Gestão", toolkit_pm: "Gestão de Projetos e Metodologias:", toolkit_qa: "QA e Automação de Testes:", toolkit_lang: "Programação e Scripting:", toolkit_cloud: "Nuvem, CI/CD e DevOps:", toolkit_db: "Bancos de Dados e APIs:", toolkit_analytics: "Análise e Monitoramento:", toolkit_platform: "Plataformas e Ferramentas de Negócio:", toolkit_system: "Ferramentas Gerais e de Sistema:", experience_title: "Experiência Profissional", education_title: "Educação e Certificações", infographics_title: "Carreira em Resumo", infographics_competencies_title: "Competências Principais", infographics_methodologies_title: "Metodologias e Processos", infographics_timeline_title: "Linha do Tempo da Carreira",
+                        job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA",
+                        contact_title: "Contato",
+                        competencies_title: "Competências Principais",
+                        competency_pm: "Gerenciamento de Projetos de TI",
+                        competency_qa: "QA e Automação de Testes",
+                        competency_lead: "Liderança e Mentoria de Equipes",
+                        competency_devops: "Estratégia de CI/CD e DevOps",
+                        competency_cloud: "Plataformas de Nuvem (AWS, Azure, GCP)",
+                        competency_strategy: "Visão Estratégica de Negócios",
+                        competency_relations: "Relações com Stakeholders e Clientes",
+                        languages_title: "Idiomas",
+                        lang_native: "Nativo",
+                        lang_fluent: "Fluente",
+                        lang_basic: "Básico",
+                        lang_others: "Outros",
+                        summary_title: "Resumo Profissional",
+                        summary_text: "Um Gerente de Projetos de TI Sênior e Arquiteto de QA com mais de duas décadas de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais para atingir as metas do projeto. Habilidade comprovada para arquitetar e implementar robustos frameworks de automação de QA (Selenium, Cypress, Kotlin), garantindo qualidade de produto e eficiência excepcionais para clientes como Autodesk, AT&T e Sophos.",
+                        summary_detail_1: "Ao longo da minha carreira, defendi uma abordagem holística da qualidade, incorporando processos de QA em todas as fases do SDLC. Como Arquiteto de QA, especializo-me em projetar frameworks de automação escaláveis, de fácil manutenção e eficientes a partir do zero, adaptados às necessidades específicas do produto e da pilha tecnológica. Minha experiência abrange a seleção das ferramentas ideais, o estabelecimento de melhores práticas e a criação de integrações de CI/CD que fornecem feedback rápido и confiável às equipes de desenvolvimento, reduzindo significativamente os ciclos de regressão e acelerando o tempo de lançamento no mercado.",
+                        summary_detail_2: "Como Gerente de Projetos e Líder, destaco-me na formação e mentoria de equipes multiculturais de alto desempenho. Tenho um histórico comprovado na gestão de portfólios de projetos multimilionários, na mitigação de riscos e no alinhamento da execução técnica com a estratégia de negócios de nível executivo. Minha filosofia de liderança está centrada na comunicação clara, no empoderamento e na promoção de um ambiente colaborativo onde cada membro da equipe se sinta motivado a contribuir com o seu melhor trabalho. Minha proficiência em inglês C2 e minhas habilidades multilíngues permitem-me gerenciar equipes e stakeholders globais sem problemas.",
+                        toolkit_title: "Ferramentas Técnicas e de Gestão",
+                        toolkit_pm: "Gestão de Projetos e Metodologias:",
+                        toolkit_qa: "QA e Automação de Testes:",
+                        toolkit_lang: "Programação e Scripting:",
+                        toolkit_cloud: "Nuvem, CI/CD e DevOps:",
+                        toolkit_db: "Bancos de Dados e APIs:",
+                        toolkit_analytics: "Análise e Monitoramento:",
+                        toolkit_platform: "Plataformas e Ferramentas de Negócio:",
+                        toolkit_system: "Ferramentas Gerais e de Sistema:",
+                        experience_title: "Experiência Profissional",
+                        education_title: "Educação e Certificações",
+                        infographics_title: "Carreira em Resumo",
+                        infographics_competencies_title: "Competências Principais",
+                        infographics_methodologies_title: "Metodologias e Processos",
+                        infographics_timeline_title: "Linha do Tempo da Carreira",
                         info_bubble_contact: "Clique em qualquer link de contato para abrir o aplicativo correspondente (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Clique em qualquer habilidade para filtrar a lista de experiências. Clique novamente para desmarcar, ou use 'Redefinir' para limpar tudo.",
                         tooltip_print: "Imprimir / PDF",
-                        read_more: "Ler Mais...", read_less: "Ler Menos...",
+                        read_more: "Ler Mais...",
+                        read_less: "Ler Menos...",
                         tooltip_timeline: "Clique para ir para a experiência de %COMPANY%",
-                        tooltip_lang_en: "Traduzir para Inglês", tooltip_lang_es: "Traduzir para Espanhol", tooltip_lang_pt: "Traduzir para Português", tooltip_lang_de: "Traduzir para Alemão", tooltip_lang_fr: "Traduzir para Francês", tooltip_lang_it: "Traduzir para Italiano",
-                        widget_tab_message: "Mensagem", widget_tab_rate: "Avaliar CV",
-                        form_label_name: "Nome", form_label_email: "Email", form_label_topic: "Tópico", form_label_message: "Mensagem", form_label_attachment: "Anexo (Opcional)", form_button_attach: "Anexar Arquivo", form_button_send: "Enviar Mensagem", form_label_rating: "Avaliação Geral", form_label_comments: "Comentários (Opcional)", form_button_submit_rating: "Enviar Avaliação",
-                        error_required: "Este campo é obrigatório.", error_min_length: "Por favor, insira pelo menos {min} caracteres.", error_email: "Por favor, insira um email válido.", error_topic: "Por favor, selecione um tópico.", error_rating: "Por favor, selecione uma avaliação.", error_file_size: "O arquivo é muito grande. Tamanho máximo é 5MB.", error_file_type: "Tipo de arquivo inválido. (PDF, DOC, DOCX, PNG, JPG)",
-                        status_sending: "Enviando...", status_uploading: "Carregando...", status_file_attached: "Arquivo anexado: {fileName}", status_success_message_title: "Mensagem Enviada!", status_success_message_body: "Obrigado por entrar em contato. Retornarei em breve.", status_success_rating_title: "Avaliação Enviada!", status_success_rating_body: "Obrigado pelo seu valioso feedback!", status_error_title: "Ocorreu um Erro", status_error_body: "Desculpe, algo deu errado. Por favor, tente novamente mais tarde.",
-                        topic_option_default: "Selecione um tópico...", topic_option_opportunity: "Oportunidade de Emprego / Colaboração", topic_option_inquiry: "Consulta de Projeto", topic_option_feedback: "Feedback sobre o CV", topic_option_other: "Outro",
-                        tour_close: "Fechar", tour_back: "Voltar", tour_next: "Próximo", tour_finish: "Concluir", tour_step_1_title: "1. Controles da Página", tour_step_1_desc: "Use estes controles para alternar entre os temas Claro/Escuro, selecionar um idioma ou imprimir o CV como PDF.", tour_step_2_title: "2. Resumo Expansível", tour_step_2_desc: "Clique em 'Ler Mais...' para ver o resumo profissional completo, obtendo uma visão mais aprofundada do meu perfil e abordagem.", tour_step_3_title: "3. Toolkit Interativo", tour_step_3_desc: "Este é o meu conjunto completo de habilidades. Clique em qualquer habilidade para filtrar instantaneamente as seções de Linha do Tempo e Experiência Profissional.", tour_step_4_title: "4. Linha do Tempo Filtrável", tour_step_4_desc: "Isto fornece uma rápida visão geral da carreira. Filtra automaticamente com base nas habilidades que você seleciona no Toolkit.", tour_step_5_title: "5. Experiência Detalhada", tour_step_5_desc: "Clique em qualquer cargo para expandi-lo e ver as responsabilidades detalhadas, conquistas e tecnologias usadas nessa função.", tour_step_6_title: "6. Contato e Feedback", tour_step_6_desc: "Clique neste botão a qualquer momento para me enviar uma mensagem ou avaliar este CV. Ele até abre automaticamente se você rolar até o final!", tour_step_7_title: "7. Entre em Contato", tour_step_7_desc: "Todos os meus canais de contato estão aqui. Clique em qualquer link para abrir o aplicativo correspondente, ou use o botão azul flutuante para me enviar uma mensagem direta.",
-                        summary_text: "Um Gerente de Projetos de TI Sênior e Arquiteto de QA com mais de duas décadas de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais para atingir as metas do projeto. Habilidade comprovada para arquitetar e implementar robustos frameworks de automação de QA (Selenium, Cypress, Kotlin), garantindo qualidade de produto e eficiência excepcionais para clientes como Autodesk, AT&T e Sophos.",
+                        tooltip_lang_en: "Traduzir para Inglês",
+                        tooltip_lang_es: "Traduzir para Espanhol",
+                        tooltip_lang_pt: "Traduzir para Português",
+                        tooltip_lang_de: "Traduzir para Alemão",
+                        tooltip_lang_fr: "Traduzir para Francês",
+                        tooltip_lang_it: "Traduzir para Italiano",
+                        widget_tab_message: "Mensagem",
+                        widget_tab_rate: "Avaliar CV",
+                        form_label_name: "Nome",
+                        form_label_email: "Email",
+                        form_label_topic: "Tópico",
+                        form_label_message: "Mensagem",
+                        form_label_attachment: "Anexo (Opcional)",
+                        form_button_attach: "Anexar Arquivo",
+                        form_button_send: "Enviar Mensagem",
+                        form_label_rating: "Avaliação Geral",
+                        form_label_comments: "Comentários (Opcional)",
+                        form_button_submit_rating: "Enviar Avaliação",
+                        error_required: "Este campo é obrigatório.",
+                        error_min_length: "Por favor, insira pelo menos {min} caracteres.",
+                        error_email: "Por favor, insira um email válido.",
+                        error_topic: "Por favor, selecione um tópico.",
+                        error_rating: "Por favor, selecione uma avaliação.",
+                        error_file_size: "O arquivo é muito grande. Tamanho máximo é 5MB.",
+                        error_file_type: "Tipo de arquivo inválido. (PDF, DOC, DOCX, PNG, JPG)",
+                        status_sending: "Enviando...",
+                        status_uploading: "Carregando...",
+                        status_file_attached: "Arquivo anexado: {fileName}",
+                        status_success_message_title: "Mensagem Enviada!",
+                        status_success_message_body: "Obrigado por entrar em contato. Retornarei em breve.",
+                        status_success_rating_title: "Avaliação Enviada!",
+                        status_success_rating_body: "Obrigado pelo seu valioso feedback!",
+                        status_error_title: "Ocorreu um Erro",
+                        status_error_body: "Desculpe, algo deu errado. Por favor, tente novamente mais tarde.",
+                        topic_option_default: "Selecione um tópico...",
+                        topic_option_opportunity: "Oportunidade de Emprego / Colaboração",
+                        topic_option_inquiry: "Consulta de Projeto",
+                        topic_option_feedback: "Feedback sobre o CV",
+                        topic_option_other: "Outro",
+                        tour_close: "Fechar",
+                        tour_back: "Voltar",
+                        tour_next: "Próximo",
+                        tour_finish: "Concluir",
                         tooltip_share: "Compartilhar CV",
+                        tooltip_export: "Exportar CV",
                         share_text: "Confira o CV Interativo de Carlos A. Muñoz!",
                         share_title: "Carlos A. Muñoz - CV Interativo",
                         tooltip_share_on: "Compartilhar no %s",
-                        form_button_copy_link: "Copiar Link",
                         tooltip_copy_link: "Copiar Link",
-                        tooltip_export: "Exportar CV",
                         export_cv_pdf: "Exportar como PDF",
                         export_cv_jpg: "Exportar como JPG",
                         export_cv_doc: "Exportar como DOC",
-                        export_cv_json: "Exportar como JSON (EN)",
-                        export_cv_text: "Exportar como Texto (EN)",
-                        tour_step_1_title: "1. Foto Ampliável",
-                        tour_step_1_desc: "Você pode clicar na minha foto de perfil a qualquer momento para ver uma versão maior e de alta resolução.",
-                        tour_step_2_title: "2. Compartilhar este CV",
-                        tour_step_2_desc: "Use o ícone de compartilhamento para enviar facilmente este CV interativo via LinkedIn, X (Twitter) e outras plataformas, ou simplesmente copie o link.",
-                        tour_step_3_title: "3. Exportar este CV",
-                        tour_step_3_desc: "Você também pode exportar o CV em diferentes formatos como PDF, DOC ou JSON para visualização offline ou para sistemas ATS.",
-                        tour_step_4_title: "4. Controles da Página",
-                        tour_step_4_desc: "Use estes controles para alternar entre os temas Claro/Escuro, selecionar um idioma ou imprimir o CV como PDF.",
-                        tour_step_5_title: "5. Resumo Expansível",
-                        tour_step_5_desc: "Clique em 'Ler Mais...' para ver o resumo profissional completo, obtendo uma visão mais aprofundada do meu perfil.",
-                        tour_step_6_title: "6. Toolkit Interativo",
-                        tour_step_6_desc: "Este é o meu conjunto completo de habilidades. Clique em qualquer habilidade para filtrar instantaneamente a Linha do Tempo e a Experiência Profissional.",
-                        tour_step_7_title: "7. Linha do Tempo Filtrável",
-                        tour_step_7_desc: "Isto fornece uma rápida visão geral da carreira. Filtra automaticamente com base nas habilidades que você seleciona no Toolkit.",
-                        tour_step_8_title: "8. Experiência Detalhada",
-                        tour_step_8_desc: "Clique em qualquer cargo para expandi-lo e ver as responsabilidades detalhadas, conquistas e tecnologias usadas nessa função.",
-                        tour_step_9_title: "9. Contato e Feedback",
-                        tour_step_9_desc: "Clique neste botão a qualquer momento para me enviar uma mensagem ou avaliar este CV. Ele até abre automaticamente se você rolar até o final!",
-                        tour_step_10_title: "10. Entre em Contato",
-                        tour_step_10_desc: "Todos os meus canais de contato estão aqui. Clique em qualquer link para abrir o aplicativo correspondente, ou use o botão azul flutuante para me enviar uma mensagem direta."
+                        export_cv_json: "Exportar como JSON",
+                        export_cv_text: "Exportar como Texto",
+                        tour_title_photo: "Foto Ampliável",
+                        tour_desc_photo: "Você pode clicar na minha foto de perfil a qualquer momento para ver uma versão maior e de alta resolução.",
+                        tour_title_controls: "Controles da Página",
+                        tour_desc_controls: "Use estes controles para compartilhar, exportar, imprimir, alterar o idioma ou alternar entre os temas Claro/Escuro.",
+                        tour_title_summary: "Resumo Expansível",
+                        tour_desc_summary: "Clique em 'Ler Mais...' para ver o resumo profissional completo, obtendo uma visão mais aprofundada do meu perfil.",
+                        tour_title_glance: "Carreira em Resumo",
+                        tour_desc_glance: "Estes infográficos visualizam minhas principais habilidades e progressão de carreira. Passe o mouse sobre os rótulos do gráfico para mais detalhes.",
+                        tour_title_toolkit: "Toolkit Interativo",
+                        tour_desc_toolkit: "Este é o meu conjunto completo de habilidades. Clique em qualquer habilidade para filtrar instantaneamente as seções de Experiência e Linha do Tempo.",
+                        tour_title_experience: "Experiência Detalhada",
+                        tour_desc_experience: "Esta seção é filtrada pelo Toolkit. Clique em qualquer cargo para expandi-lo e ver as responsabilidades e tecnologias usadas.",
+                        tour_title_testimonials: "Depoimentos",
+                        tour_desc_testimonials: "Esta seção exibe feedback e avaliações de colegas e clientes, carregados diretamente do banco de dados.",
+                        tour_title_sidebar: "Contato e Idiomas",
+                        tour_desc_sidebar: "Aqui você pode encontrar minhas informações de contato direto e minhas proficiências linguísticas.",
+                        tour_title_widget: "Widget de Contato e Feedback",
+                        tour_desc_widget: "Clique no botão flutuante a qualquer momento para me enviar uma mensagem direta ou enviar uma avaliação para este CV.",
+                        tour_title_finish: "Tour Concluído!",
+                        tour_desc_finish: "Está tudo pronto! Sinta-se à vontade para explorar o CV. Obrigado pela visita.",
+                        tour_title_education: "Educação e Certificações",
+                        tour_desc_education: "Esta seção detalha minha formação acadêmica e as principais certificações profissionais que validam minha expertise."
                     },
                     de: {
-                        job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter", contact_title: "Kontakt", competencies_title: "Kernkompetenzen", competency_pm: "IT-Projektmanagement", competency_qa: "QA & Testautomatisierung", competency_lead: "Teamführung & Mentoring", competency_devops: "CI/CD & DevOps-Strategie", competency_cloud: "Cloud-Plattformen", competency_strategy: "Strategisches Geschäftsverständnis", competency_relations: "Stakeholder- & Kundenbeziehungen", languages_title: "Sprachen", lang_native: "Muttersprache", lang_fluent: "Fließend", lang_basic: "Grundkenntnisse", lang_others: "Andere", summary_title: "Berufliches Profil", toolkit_title: "Technisches & Management-Toolkit", toolkit_pm: "Projektmanagement & Methoden:", toolkit_qa: "QA & Testautomatisierung:", toolkit_lang: "Programmierung & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Datenbanken & APIs:", toolkit_analytics: "Analyse & Überwachung:", toolkit_platform: "Plattformen & Business-Tools:", toolkit_system: "Allgemeine & System-Tools:", experience_title: "Berufserfahrung", education_title: "Ausbildung & Zertifizierungen", infographics_title: "Karriere im Überblick", infographics_competencies_title: "Kernkompetenzen", infographics_methodologies_title: "Methoden & Prozesse", infographics_timeline_title: "Karriere-Zeitachse",
+                        job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter",
+                        contact_title: "Kontakt",
+                        competencies_title: "Kernkompetenzen",
+                        competency_pm: "IT-Projektmanagement",
+                        competency_qa: "QA & Testautomatisierung",
+                        competency_lead: "Teamführung & Mentoring",
+                        competency_devops: "CI/CD & DevOps-Strategie",
+                        competency_cloud: "Cloud-Plattformen (AWS, Azure, GCP)",
+                        competency_strategy: "Strategisches Geschäftsverständnis",
+                        competency_relations: "Stakeholder- & Kundenbeziehungen",
+                        languages_title: "Sprachen",
+                        lang_native: "Muttersprache",
+                        lang_fluent: "Fließend",
+                        lang_basic: "Grundkenntnisse",
+                        lang_others: "Andere",
+                        summary_title: "Berufliches Profil",
+                        summary_text: "Ein leitender IT-Projektmanager und QA-Architekt mit über zwei Jahrzehnten Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams zur Erreichung von Projektzielen. Nachgewiesene Fähigkeit, robuste QA-Automatisierungs-Frameworks (Selenium, Cypress, Kotlin) zu entwerfen und zu implementieren, um außergewöhnliche Produktqualität und Effizienz für Kunden wie Autodesk, AT&T und Sophos zu gewährleisten.",
+                        summary_detail_1: "Während meiner gesamten Karriere habe ich einen ganzheitlichen Qualitätsansatz verfolgt und QA-Prozesse in jede Phase des SDLC integriert. Als QA-Architekt bin ich auf die Konzeption von skalierbaren, wartbaren und effizienten Automatisierungs-Frameworks von Grund auf spezialisiert, die auf die spezifischen Bedürfnisse des Produkts und des Technologie-Stacks zugeschnitten sind. Meine Expertise erstreckt sich auf die Auswahl der optimalen Werkzeuge, die Etablierung von Best Practices und die Erstellung von CI/CD-Integrationen, die den Entwicklungsteams schnelles und zuverlässiges Feedback liefern, was die Regressionszyklen erheblich verkürzt und die Markteinführungszeit beschleunigt.",
+                        summary_detail_2: "Als Projektmanager und Führungskraft zeichne ich mich durch den Aufbau und das Mentoring von leistungsstarken, interkulturellen Teams aus. Ich habe eine nachgewiesene Erfolgsbilanz in der Verwaltung von Multimillionen-Dollar-Projektportfolios, der Risikominderung und der Abstimmung der technischen Ausführung mit der Geschäftsstrategie auf Führungsebene. Meine Führungsphilosophie konzentriert sich auf klare Kommunikation, Befähigung und die Förderung eines kollaborativen Umfelds, in dem jedes Teammitglied motiviert ist, seine beste Arbeit zu leisten. Meine C2-Englischkenntnisse und meine Mehrsprachigkeit ermöglichen es mir, globale Teams und Stakeholder nahtlos zu managen.",
+                        toolkit_title: "Technisches & Management-Toolkit",
+                        toolkit_pm: "Projektmanagement & Methoden:",
+                        toolkit_qa: "QA & Testautomatisierung:",
+                        toolkit_lang: "Programmierung & Scripting:",
+                        toolkit_cloud: "Cloud, CI/CD & DevOps:",
+                        toolkit_db: "Datenbanken & APIs:",
+                        toolkit_analytics: "Analyse & Überwachung:",
+                        toolkit_platform: "Plattformen & Business-Tools:",
+                        toolkit_system: "Allgemeine & System-Tools:",
+                        experience_title: "Berufserfahrung",
+                        education_title: "Ausbildung & Zertifizierungen",
+                        infographics_title: "Karriere im Überblick",
+                        infographics_competencies_title: "Kernkompetenzen",
+                        infographics_methodologies_title: "Methoden & Prozesse",
+                        infographics_timeline_title: "Karriere-Zeitachse",
                         info_bubble_contact: "Klicken Sie auf einen Kontaktlink, um die entsprechende Anwendung zu öffnen (E-Mail, WhatsApp, etc.).",
                         info_bubble_toolkit: "Klicken Sie auf eine Fähigkeit, um die Erfahrungsliste zu filtern. Erneut klicken zum Abwählen oder 'Zurücksetzen' verwenden, um alle zu löschen.",
                         tooltip_print: "Drucken / PDF",
-                        read_more: "Mehr lesen...", read_less: "Weniger lesen...",
+                        read_more: "Mehr lesen...",
+                        read_less: "Weniger lesen...",
                         tooltip_timeline: "Klicken, um zur Erfahrung von %COMPANY% zu springen",
-                        tooltip_lang_en: "Auf Englisch übersetzen", tooltip_lang_es: "Auf Spanisch übersetzen", tooltip_lang_pt: "Auf Portugiesisch übersetzen", tooltip_lang_de: "Auf Deutsch übersetzen", tooltip_lang_fr: "Auf Französisch übersetzen", tooltip_lang_it: "Auf Italienisch übersetzen",
-                        widget_tab_message: "Nachricht", widget_tab_rate: "CV bewerten",
-                        form_label_name: "Name", form_label_email: "E-Mail", form_label_topic: "Thema", form_label_message: "Nachricht", form_label_attachment: "Anhang (Optional)", form_button_attach: "Datei anhängen", form_button_send: "Nachricht senden", form_label_rating: "Gesamtbewertung", form_label_comments: "Kommentare (Optional)", form_button_submit_rating: "Bewertung abgeben",
-                        error_required: "Dieses Feld ist erforderlich.", error_min_length: "Bitte geben Sie mindestens {min} Zeichen ein.", error_email: "Bitte geben Sie eine gültige E-Mail-Adresse ein.", error_topic: "Bitte wählen Sie ein Thema aus.", error_rating: "Bitte wählen Sie eine Bewertung aus.", error_file_size: "Datei ist zu groß. Max. Größe 5MB.", error_file_type: "Ungültiger Dateityp. (PDF, DOC, DOCX, PNG, JPG)",
-                        status_sending: "Senden...", status_uploading: "Hochladen...", status_file_attached: "Datei angehängt: {fileName}", status_success_message_title: "Nachricht gesendet!", status_success_message_body: "Vielen Dank für Ihre Kontaktaufnahme. Ich melde mich in Kürze bei Ihnen.", status_success_rating_title: "Bewertung abgegeben!", status_success_rating_body: "Vielen Dank für Ihr wertvolles Feedback!", status_error_title: "Ein Fehler ist aufgetreten", status_error_body: "Entschuldigung, etwas ist schief gelaufen. Bitte versuchen Sie es später erneut.",
-                        topic_option_default: "Wählen Sie ein Thema...", topic_option_opportunity: "Stellenangebot / Zusammenarbeit", topic_option_inquiry: "Projektaanfrage", topic_option_feedback: "Feedback zum Lebenslauf", topic_option_other: "Anderes",
-                        tour_close: "Schließen", tour_back: "Zurück", tour_next: "Weiter", tour_finish: "Beenden", tour_step_1_title: "1. Seitensteuerung", tour_step_1_desc: "Verwenden Sie diese Steuerelemente, um zwischen hellen/dunklen Themen zu wechseln, eine Sprache auszuwählen oder den Lebenslauf als PDF zu drucken.", tour_step_2_title: "2. Erweiterbare Zusammenfassung", tour_step_2_desc: "Klicken Sie auf 'Mehr lesen...', um die vollständige berufliche Zusammenfassung zu sehen und einen tieferen Einblick in mein Profil und meinen Ansatz zu erhalten.", tour_step_3_title: "3. Interaktives Toolkit", tour_step_3_desc: "Dies ist mein vollständiges Skillset. Klicken Sie auf eine Fähigkeit, um sowohl die Zeitleiste als auch die Berufserfahrung sofort zu filtern.", tour_step_4_title: "4. Filterbare Zeitleiste", tour_step_4_desc: "Dies bietet einen schnellen Karriereüberblick. Es filtert automatisch basierend auf den Fähigkeiten, die Sie aus dem Toolkit auswählen.", tour_step_5_title: "5. Detaillierte Erfahrung", tour_step_5_desc: "Klicken Sie auf eine Berufsbezeichnung, um sie zu erweitern und die detaillierten Verantwortlichkeiten, Erfolge und verwendeten Technologien für diese Rolle anzuzeigen.", tour_step_6_title: "6. Kontakt & Feedback", tour_step_6_desc: "Klicken Sie jederzeit auf diese Schaltfläche, um mir eine Nachricht zu senden oder diesen Lebenslauf zu bewerten. Er öffnet sich sogar automatisch, wenn Sie nach unten scrollen!", tour_step_7_title: "7. Kontakt aufnehmen", tour_step_7_desc: "Alle meine Kontaktkanäle sind hier. Klicken Sie auf einen Link, um die entsprechende Anwendung zu öffnen, oder verwenden Sie die schwebende blaue Schaltfläche, um mir eine direkte Nachricht zu senden.",
-                        summary_text: "Ein leitender IT-Projektmanager und QA-Architekt mit über zwei Jahrzehnten Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams zur Erreichung von Projektzielen. Nachgewiesene Fähigkeit, robuste QA-Automatisierungs-Frameworks (Selenium, Cypress, Kotlin) zu entwerfen und zu implementieren, um außergewöhnliche Produktqualität und Effizienz für Kunden wie Autodesk, AT&T und Sophos zu gewährleisten.",
+                        tooltip_lang_en: "Auf Englisch übersetzen",
+                        tooltip_lang_es: "Auf Spanisch übersetzen",
+                        tooltip_lang_pt: "Auf Portugiesisch übersetzen",
+                        tooltip_lang_de: "Auf Deutsch übersetzen",
+                        tooltip_lang_fr: "Auf Französisch übersetzen",
+                        tooltip_lang_it: "Auf Italienisch übersetzen",
+                        widget_tab_message: "Nachricht",
+                        widget_tab_rate: "CV bewerten",
+                        form_label_name: "Name",
+                        form_label_email: "E-Mail",
+                        form_label_topic: "Thema",
+                        form_label_message: "Nachricht",
+                        form_label_attachment: "Anhang (Optional)",
+                        form_button_attach: "Datei anhängen",
+                        form_button_send: "Nachricht senden",
+                        form_label_rating: "Gesamtbewertung",
+                        form_label_comments: "Kommentare (Optional)",
+                        form_button_submit_rating: "Bewertung abgeben",
+                        error_required: "Dieses Feld ist erforderlich.",
+                        error_min_length: "Bitte geben Sie mindestens {min} Zeichen ein.",
+                        error_email: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+                        error_topic: "Bitte wählen Sie ein Thema aus.",
+                        error_rating: "Bitte wählen Sie eine Bewertung aus.",
+                        error_file_size: "Datei ist zu groß. Max. Größe 5MB.",
+                        error_file_type: "Ungültiger Dateityp. (PDF, DOC, DOCX, PNG, JPG)",
+                        status_sending: "Senden...",
+                        status_uploading: "Hochladen...",
+                        status_file_attached: "Datei angehängt: {fileName}",
+                        status_success_message_title: "Nachricht gesendet!",
+                        status_success_message_body: "Vielen Dank für Ihre Kontaktaufnahme. Ich melde mich in Kürze bei Ihnen.",
+                        status_success_rating_title: "Bewertung abgegeben!",
+                        status_success_rating_body: "Vielen Dank für Ihr wertvolles Feedback!",
+                        status_error_title: "Ein Fehler ist aufgetreten",
+                        status_error_body: "Entschuldigung, etwas ist schief gelaufen. Bitte versuchen Sie es später erneut.",
+                        topic_option_default: "Wählen Sie ein Thema...",
+                        topic_option_opportunity: "Stellenangebot / Zusammenarbeit",
+                        topic_option_inquiry: "Projektaanfrage",
+                        topic_option_feedback: "Feedback zum Lebenslauf",
+                        topic_option_other: "Anderes",
+                        tour_close: "Schließen",
+                        tour_back: "Zurück",
+                        tour_next: "Weiter",
+                        tour_finish: "Beenden",
                         tooltip_share: "Lebenslauf teilen",
+                        tooltip_export: "Lebenslauf exportieren",
                         share_text: "Schauen Sie sich den interaktiven Lebenslauf von Carlos A. Muñoz an!",
                         share_title: "Carlos A. Muñoz - Interaktiver Lebenslauf",
                         tooltip_share_on: "Teilen auf %s",
-                        form_button_copy_link: "Link kopieren",
                         tooltip_copy_link: "Link kopieren",
-                        tooltip_export: "Lebenslauf exportieren",
                         export_cv_pdf: "Als PDF exportieren",
                         export_cv_jpg: "Als JPG exportieren",
                         export_cv_doc: "Als DOC exportieren",
-                        export_cv_json: "Als JSON (EN) exportieren",
-                        export_cv_text: "Als Text (EN) exportieren",
-                        tour_step_1_title: "1. Vergrößerbares Foto",
-                        tour_step_1_desc: "Sie können jederzeit auf mein Profilfoto klicken, um eine größere, hochauflösende Version zu sehen.",
-                        tour_step_2_title: "2. Diesen Lebenslauf teilen",
-                        tour_step_2_desc: "Verwenden Sie das Teilen-Symbol, um diesen interaktiven Lebenslauf einfach über LinkedIn, X (Twitter) und andere Plattformen zu senden oder den Link zu kopieren.",
-                        tour_step_3_title: "3. Diesen Lebenslauf exportieren",
-                        tour_step_3_desc: "Sie können den Lebenslauf auch in verschiedenen Formaten wie PDF, DOC oder JSON für die Offline-Anzeige oder für ATS-Systeme exportieren.",
-                        tour_step_4_title: "4. Seitensteuerung",
-                        tour_step_4_desc: "Verwenden Sie diese Steuerelemente, um zwischen hellen/dunklen Themen zu wechseln, eine Sprache auszuwählen oder den Lebenslauf als PDF zu drucken.",
-                        tour_step_5_title: "5. Erweiterbare Zusammenfassung",
-                        tour_step_5_desc: "Klicken Sie auf 'Mehr lesen...', um die vollständige berufliche Zusammenfassung zu sehen und einen tieferen Einblick in mein Profil zu erhalten.",
-                        tour_step_6_title: "6. Interaktives Toolkit",
-                        tour_step_6_desc: "Dies ist mein vollständiges Skillset. Klicken Sie auf eine Fähigkeit, um sowohl die Zeitleiste als auch die Berufserfahrung sofort zu filtern.",
-                        tour_step_7_title: "7. Filterbare Zeitleiste",
-                        tour_step_7_desc: "Dies bietet einen schnellen Karriereüberblick. Es filtert automatisch basierend auf den Fähigkeiten, die Sie aus dem Toolkit auswählen.",
-                        tour_step_8_title: "8. Detaillierte Erfahrung",
-                        tour_step_8_desc: "Klicken Sie auf eine Berufsbezeichnung, um sie zu erweitern und die detaillierten Verantwortlichkeiten und Technologien anzuzeigen.",
-                        tour_step_9_title: "9. Kontakt & Feedback",
-                        tour_step_9_desc: "Klicken Sie jederzeit auf diese Schaltfläche, um mir eine Nachricht zu senden oder diesen Lebenslauf zu bewerten. Er öffnet sich sogar automatisch!",
-                        tour_step_10_title: "10. Kontakt aufnehmen",
-                        tour_step_10_desc: "Alle meine Kontaktkanäle sind hier. Klicken Sie auf einen Link, um die entsprechende Anwendung zu öffnen, oder verwenden Sie die blaue Schaltfläche."
+                        export_cv_json: "Als JSON exportieren",
+                        export_cv_text: "Als Text exportieren",
+                        tour_title_photo: "Vergrößerbares Foto",
+                        tour_desc_photo: "Sie können jederzeit auf mein Profilfoto klicken, um eine größere, hochauflösende Version zu sehen.",
+                        tour_title_controls: "Seitensteuerung",
+                        tour_desc_controls: "Verwenden Sie diese Steuerelemente, um zu teilen, zu exportieren, zu drucken, die Sprache zu ändern oder zwischen hellen/dunklen Themen zu wechseln.",
+                        tour_title_summary: "Erweiterbare Zusammenfassung",
+                        tour_desc_summary: "Klicken Sie auf 'Mehr lesen...', um die vollständige berufliche Zusammenfassung zu sehen und einen tieferen Einblick in mein Profil zu erhalten.",
+                        tour_title_glance: "Karriere im Überblick",
+                        tour_desc_glance: "Diese Infografiken visualisieren meine Schlüsselkompetenzen und meinen Karriereweg. Fahren Sie mit der Maus über die Diagrammbeschriftungen für weitere Details.",
+                        tour_title_toolkit: "Interaktives Toolkit",
+                        tour_desc_toolkit: "Dies ist mein vollständiges Skillset. Klicken Sie auf eine Fähigkeit, um sofort die Abschnitte Erfahrung und Zeitleiste zu filtern.",
+                        tour_title_experience: "Detaillierte Erfahrung",
+                        tour_desc_experience: "Dieser Abschnitt wird durch das Toolkit gefiltert. Klicken Sie auf eine Berufsbezeichnung, um sie zu erweitern und die Verantwortlichkeiten und verwendeten Technologien anzuzeigen.",
+                        tour_title_testimonials: "Testimonials",
+                        tour_desc_testimonials: "Dieser Abschnitt zeigt Feedback und Bewertungen von Kollegen und Kunden, die direkt aus der Datenbank geladen werden.",
+                        tour_title_sidebar: "Kontakt & Sprachen",
+                        tour_desc_sidebar: "Hier finden Sie meine direkten Kontaktinformationen und Sprachkenntnisse.",
+                        tour_title_widget: "Kontakt- & Feedback-Widget",
+                        tour_desc_widget: "Klicken Sie jederzeit auf den schwebenden Button, um mir eine direkte Nachricht zu senden oder eine Bewertung für diesen Lebenslauf abzugeben.",
+                        tour_title_finish: "Tour abgeschlossen!",
+                        tour_desc_finish: "Sie sind fertig! Fühlen Sie sich frei, den Lebenslauf zu erkunden. Vielen Dank für Ihren Besuch.",
+                        tour_title_education: "Ausbildung & Zertifizierungen",
+                        tour_desc_education: "Dieser Abschnitt beschreibt meinen akademischen Hintergrund und wichtige berufliche Zertifizierungen, die meine Expertise bestätigen."
                     },
                     fr: {
-                        job_title: "Chef de Projet IT Senior, Architecte et Leader QA", contact_title: "Contact", competencies_title: "Compétences Clés", competency_pm: "Gestion de Projets IT", competency_qa: "QA & Automatisation des Tests", competency_lead: "Leadership et Mentorat d'Équipe", competency_devops: "Stratégie CI/CD & DevOps", competency_cloud: "Plateformes Cloud", competency_strategy: "Sens Stratégique des Affaires", competency_relations: "Relations avec les Parties Prenantes et Clients", languages_title: "Langues", lang_native: "Natif", lang_fluent: "Courant", lang_basic: "Basique", lang_others: "Autres", summary_title: "Résumé Professionnel", toolkit_title: "Boîte à Outils Technique & de Gestion", toolkit_pm: "Gestion de Projet & Méthodologies:", toolkit_qa: "QA & Automatisation des Tests:", toolkit_lang: "Programmation & Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Bases de Données & APIs:", toolkit_analytics: "Analyse & Surveillance:", toolkit_platform: "Plateformes & Outils Métier:", toolkit_system: "Outils Généraux & Système:", experience_title: "Expérience Professionnelle", education_title: "Formation & Certifications", infographics_title: "Carrière en un Coup d'Œil", infographics_competencies_title: "Compétences Clés", infographics_methodologies_title: "Méthodologies & Processus", infographics_timeline_title: "Chronologie de Carrière",
+                        job_title: "Chef de Projet IT Senior, Architecte et Leader QA",
+                        contact_title: "Contact",
+                        competencies_title: "Compétences Clés",
+                        competency_pm: "Gestion de Projets IT",
+                        competency_qa: "QA & Automatisation des Tests",
+                        competency_lead: "Leadership et Mentorat d'Équipe",
+                        competency_devops: "Stratégie CI/CD & DevOps",
+                        competency_cloud: "Plateformes Cloud (AWS, Azure, GCP)",
+                        competency_strategy: "Sens Stratégique des Affaires",
+                        competency_relations: "Relations avec les Parties Prenantes et Clients",
+                        languages_title: "Langues",
+                        lang_native: "Natif",
+                        lang_fluent: "Courant",
+                        lang_basic: "Basique",
+                        lang_others: "Autres",
+                        summary_title: "Résumé Professionnel",
+                        summary_text: "Un Chef de Projet Informatique Senior et Architecte QA avec plus de deux décennies d'expérience dans la fourniture de solutions logicielles complexes et de haute qualité pour des leaders technologiques mondiaux. Expert en planification stratégique, en gestion des parties prenantes et en direction d'équipes interfonctionnelles pour atteindre les objectifs des projets. Capacité prouvée à concevoir et mettre en œuvre des cadres d'automatisation QA robustes (Selenium, Cypress, Kotlin), assurant une qualité de produit et une efficacité exceptionnelles pour des clients comme Autodesk, AT&T et Sophos.",
+                        summary_detail_1: "Tout au long de ma carrière, j'ai promu une approche holistique de la qualité, en intégrant les processus d'assurance qualité à chaque étape du cycle de vie du développement logiciel (SDLC). En tant qu'architecte QA, je me spécialise dans la conception de cadres d'automatisation évolutifs, maintenables et efficaces à partir de zéro, adaptés aux besoins spécifiques du produit et de la pile technologique. Mon expertise s'étend à la sélection des outils optimaux, à l'établissement des meilleures pratiques et à la création d'intégrations CI/CD qui fournissent un retour d'information rapide et fiable aux équipes de développement, réduisant considérablement les cycles de régression et accélérant la mise sur le marché.",
+                        summary_detail_2: "En tant que chef de projet et leader, j'excelle dans la constitution et le mentorat d'équipes multiculturelles très performantes. J'ai une expérience avérée dans la gestion de portefeuilles de projets de plusieurs millions de dollars, l'atténuation des risques et l'alignement de l'exécution technique sur la stratégie commerciale au niveau de la direction. Ma philosophie de leadership est centrée sur une communication claire, l'autonomisation et la promotion d'un environnement collaboratif où chaque membre de l'équipe est motivé à donner le meilleur de lui-même. Ma maîtrise de l'anglais au niveau C2 et mes compétences multilingues me permettent de gérer en toute transparence des équipes et des parties prenantes mondiales.",
+                        toolkit_title: "Boîte à Outils Technique & de Gestion",
+                        toolkit_pm: "Gestion de Projet & Méthodologies:",
+                        toolkit_qa: "QA & Automatisation des Tests:",
+                        toolkit_lang: "Programmation & Scripting:",
+                        toolkit_cloud: "Cloud, CI/CD & DevOps:",
+                        toolkit_db: "Bases de Données & APIs:",
+                        toolkit_analytics: "Analyse & Surveillance:",
+                        toolkit_platform: "Plateformes & Outils Métier:",
+                        toolkit_system: "Outils Généraux & Système:",
+                        experience_title: "Expérience Professionnelle",
+                        education_title: "Formation & Certifications",
+                        infographics_title: "Carrière en un Coup d'Œil",
+                        infographics_competencies_title: "Compétences Clés",
+                        infographics_methodologies_title: "Méthodologies & Processus",
+                        infographics_timeline_title: "Chronologie de Carrière",
                         info_bubble_contact: "Cliquez sur un lien de contact pour ouvrir l'application correspondante (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Cliquez sur une compétence pour filtrer la liste d'expériences. Cliquez à nouveau pour désélectionner, ou utilisez 'Réinitialiser' pour tout effacer.",
                         tooltip_print: "Imprimer / PDF",
-                        read_more: "Lire la suite...", read_less: "Lire moins...",
+                        read_more: "Lire la suite...",
+                        read_less: "Lire moins...",
                         tooltip_timeline: "Cliquez pour accéder à l'expérience de %COMPANY%",
-                        tooltip_lang_en: "Traduire en Anglais", tooltip_lang_es: "Traduire en Espagnol", tooltip_lang_pt: "Traduire en Portugais", tooltip_lang_de: "Traduire en Allemand", tooltip_lang_fr: "Traduire en Français", tooltip_lang_it: "Traduire en Italien",
-                        widget_tab_message: "Message", widget_tab_rate: "Évaluer le CV",
-                        form_label_name: "Nom", form_label_email: "Email", form_label_topic: "Sujet", form_label_message: "Message", form_label_attachment: "Pièce Jointe (Optionnel)", form_button_attach: "Joindre un Fichier", form_button_send: "Envoyer le Message", form_label_rating: "Évaluation Globale", form_label_comments: "Commentaires (Optionnel)", form_button_submit_rating: "Soumettre l'Évaluation",
-                        error_required: "Ce champ est obligatoire.", error_min_length: "Veuillez saisir au moins {min} caractères.", error_email: "Veuillez saisir une adresse e-mail valide.", error_topic: "Veuillez sélectionner un sujet.", error_rating: "Veuillez sélectionner une évaluation.", error_file_size: "Le fichier est trop volumineux. Taille max 5Mo.", error_file_type: "Type de fichier invalide. (PDF, DOC, DOCX, PNG, JPG)",
-                        status_sending: "Envoi...", status_uploading: "Téléchargement...", status_file_attached: "Fichier joint : {fileName}", status_success_message_title: "Message Envoyé !", status_success_message_body: "Merci de nous avoir contactés. Je vous répondrai sous peu.", status_success_rating_title: "Évaluation Soumise !", status_success_rating_body: "Merci pour vos précieux commentaires !", status_error_title: "Une Erreur est Survenue", status_error_body: "Désolé, quelque chose s'est mal passé. Veuillez réessayer plus tard.",
-                        topic_option_default: "Sélectionnez un sujet...", topic_option_opportunity: "Opportunité d'Emploi / Collaboration", topic_option_inquiry: "Demande de Projet", topic_option_feedback: "Commentaires sur le CV", topic_option_other: "Autre",
-                        tour_close: "Fermer", tour_back: "Retour", tour_next: "Suivant", tour_finish: "Terminer", tour_step_1_title: "1. Contrôles de la Page", tour_step_1_desc: "Utilisez ces contrôles pour basculer entre les thèmes Clair/Sombre, sélectionner une langue ou imprimer le CV en PDF.", tour_step_2_title: "2. Résumé Extensible", tour_step_2_desc: "Cliquez sur 'Lire la suite...' pour voir le résumé professionnel complet, offrant un aperçu plus approfondi de mon profil et de mon approche.", tour_step_3_title: "3. Boîte à Outils Interactive", tour_step_3_desc: "Ceci est l'ensemble de mes compétences. Cliquez sur n'importe quelle compétence pour filtrer instantanément la Chronologie et l'Expérience Professionnelle.", tour_step_4_title: "4. Chronologie Filtrable", tour_step_4_desc: "Ceci offre un aperçu rapide de ma carrière. Elle filtre automatiquement en fonction des compétences que vous sélectionnez dans la boîte à outils.", tour_step_5_title: "5. Expérience Détaillée", tour_step_5_desc: "Cliquez sur n'importe quel titre de poste pour le développer et voir les responsabilités détaillées, les réalisations et les technologies utilisées pour ce rôle.", tour_step_6_title: "6. Contact et Feedback", tour_step_6_desc: "Cliquez sur ce bouton à tout moment pour m'envoyer un message ou noter ce CV. Il s'ouvre même automatiquement si vous faites défiler vers le bas !", tour_step_7_title: "7. Prenez Contact", tour_step_7_desc: "Tous mes canaux de contact sont ici. Cliquez sur un lien pour ouvrir l'application correspondante, ou utilisez le bouton bleu flottant pour m'envoyer un message direct.",
-                        summary_text: "Un Chef de Projet Informatique Senior et Architecte QA avec plus de deux décennies d'expérience dans la fourniture de solutions logicielles complexes et de haute qualité pour des leaders technologiques mondiaux. Expert en planification stratégique, en gestion des parties prenantes et en direction d'équipes interfonctionnelles pour atteindre les objectifs des projets. Capacité prouvée à concevoir et mettre en œuvre des cadres d'automatisation QA robustes (Selenium, Cypress, Kotlin), assurant une qualité de produit et une efficacité exceptionnelles pour des clients comme Autodesk, AT&T et Sophos.",
+                        tooltip_lang_en: "Traduire en Anglais",
+                        tooltip_lang_es: "Traduire en Espagnol",
+                        tooltip_lang_pt: "Traduire en Portugais",
+                        tooltip_lang_de: "Traduire en Allemand",
+                        tooltip_lang_fr: "Traduire en Français",
+                        tooltip_lang_it: "Traduire en Italien",
+                        widget_tab_message: "Message",
+                        widget_tab_rate: "Évaluer le CV",
+                        form_label_name: "Nom",
+                        form_label_email: "Email",
+                        form_label_topic: "Sujet",
+                        form_label_message: "Message",
+                        form_label_attachment: "Pièce Jointe (Optionnel)",
+                        form_button_attach: "Joindre un Fichier",
+                        form_button_send: "Envoyer le Message",
+                        form_label_rating: "Évaluation Globale",
+                        form_label_comments: "Commentaires (Optionnel)",
+                        form_button_submit_rating: "Soumettre l'Évaluation",
+                        error_required: "Ce champ est obligatoire.",
+                        error_min_length: "Veuillez saisir au moins {min} caractères.",
+                        error_email: "Veuillez saisir une adresse e-mail valide.",
+                        error_topic: "Veuillez sélectionner un sujet.",
+                        error_rating: "Veuillez sélectionner une évaluation.",
+                        error_file_size: "Le fichier est trop volumineux. Taille max 5Mo.",
+                        error_file_type: "Type de fichier invalide. (PDF, DOC, DOCX, PNG, JPG)",
+                        status_sending: "Envoi...",
+                        status_uploading: "Téléchargement...",
+                        status_file_attached: "Fichier joint : {fileName}",
+                        status_success_message_title: "Message Envoyé !",
+                        status_success_message_body: "Merci de nous avoir contactés. Je vous répondrai sous peu.",
+                        status_success_rating_title: "Évaluation Soumise !",
+                        status_success_rating_body: "Merci pour vos précieux commentaires !",
+                        status_error_title: "Une Erreur est Survenue",
+                        status_error_body: "Désolé, quelque chose s'est mal passé. Veuillez réessayer plus tard.",
+                        topic_option_default: "Sélectionnez un sujet...",
+                        topic_option_opportunity: "Opportunité d'Emploi / Collaboration",
+                        topic_option_inquiry: "Demande de Projet",
+                        topic_option_feedback: "Commentaires sur le CV",
+                        topic_option_other: "Autre",
+                        tour_close: "Fermer",
+                        tour_back: "Retour",
+                        tour_next: "Suivant",
+                        tour_finish: "Terminer",
                         tooltip_share: "Partager le CV",
+                        tooltip_export: "Exporter le CV",
                         share_text: "Découvrez le CV interactif de Carlos A. Muñoz !",
                         share_title: "Carlos A. Muñoz - CV Interactif",
                         tooltip_share_on: "Partager sur %s",
-                        form_button_copy_link: "Copier le lien",
                         tooltip_copy_link: "Copier le lien",
-                        tooltip_export: "Exporter le CV",
                         export_cv_pdf: "Exporter en PDF",
                         export_cv_jpg: "Exporter en JPG",
                         export_cv_doc: "Exporter en DOC",
-                        export_cv_json: "Exporter en JSON (EN)",
-                        export_cv_text: "Exporter en Texte (EN)",
-                        tour_step_1_title: "1. Photo zoomable",
-                        tour_step_1_desc: "Vous pouvez cliquer sur ma photo de profil à tout moment pour voir une version plus grande et en haute résolution.",
-                        tour_step_2_title: "2. Partager ce CV",
-                        tour_step_2_desc: "Utilisez l'icône de partage pour envoyer facilement ce CV interactif via LinkedIn, X (Twitter) et d'autres plateformes, ou copiez simplement le lien.",
-                        tour_step_3_title: "3. Exporter ce CV",
-                        tour_step_3_desc: "Vous pouvez également exporter le CV dans différents formats comme PDF, DOC ou JSON pour une consultation hors ligne ou pour les systèmes ATS.",
-                        tour_step_4_title: "4. Contrôles de la page",
-                        tour_step_4_desc: "Utilisez ces contrôles pour basculer entre les thèmes Clair/Sombre, sélectionner une langue ou imprimer le CV en PDF.",
-                        tour_step_5_title: "5. Résumé extensible",
-                        tour_step_5_desc: "Cliquez sur 'Lire la suite...' pour voir le résumé professionnel complet et obtenir un aperçu plus approfondi de mon profil.",
-                        tour_step_6_title: "6. Boîte à outils interactive",
-                        tour_step_6_desc: "Ceci est l'ensemble de mes compétences. Cliquez sur n'importe quelle compétence pour filtrer instantanément la Chronologie et l'Expérience Professionnelle.",
-                        tour_step_7_title: "7. Chronologie filtrable",
-                        tour_step_7_desc: "Ceci offre un aperçu rapide de ma carrière. Elle filtre automatiquement en fonction des compétences que vous sélectionnez.",
-                        tour_step_8_title: "8. Expérience détaillée",
-                        tour_step_8_desc: "Cliquez sur n'importe quel titre de poste pour le développer et voir les responsabilités détaillées et les technologies utilisées.",
-                        tour_step_9_title: "9. Contact et Feedback",
-                        tour_step_9_desc: "Cliquez sur ce bouton à tout moment pour m'envoyer un message ou noter ce CV. Il s'ouvre même automatiquement!",
-                        tour_step_10_title: "10. Prenez contact",
-                        tour_step_10_desc: "Tous mes canaux de contact sont ici. Cliquez sur un lien pour ouvrir l'application correspondante ou utilisez le bouton bleu."
+                        export_cv_json: "Exporter en JSON",
+                        export_cv_text: "Exporter en Texte",
+                        tour_title_photo: "Photo zoomable",
+                        tour_desc_photo: "Vous pouvez cliquer sur ma photo de profil à tout moment pour voir une version plus grande et en haute résolution.",
+                        tour_title_controls: "Contrôles de la page",
+                        tour_desc_controls: "Utilisez ces contrôles pour partager, exporter, imprimer, changer de langue ou basculer entre les thèmes Clair/Sombre.",
+                        tour_title_summary: "Résumé extensible",
+                        tour_desc_summary: "Cliquez sur 'Lire la suite...' pour voir le résumé professionnel complet et obtenir un aperçu plus approfondi de mon profil.",
+                        tour_title_glance: "Carrière en un coup d'œil",
+                        tour_desc_glance: "Ces infographies visualisent mes compétences clés et ma progression de carrière. Survolez les étiquettes du graphique pour plus de détails.",
+                        tour_title_toolkit: "Boîte à outils interactive",
+                        tour_desc_toolkit: "Ceci est l'ensemble de mes compétences. Cliquez sur n'importe quelle compétence pour filtrer instantanément les sections Expérience et Chronologie.",
+                        tour_title_experience: "Expérience détaillée",
+                        tour_desc_experience: "Cette section est filtrée par la Boîte à outils. Cliquez sur n'importe quel titre de poste pour le développer et voir les responsabilités et les technologies utilisées.",
+                        tour_title_testimonials: "Témoignages",
+                        tour_desc_testimonials: "Cette section affiche les commentaires et les évaluations de collègues et de clients, chargés directement depuis la base de données.",
+                        tour_title_sidebar: "Contact et Langues",
+                        tour_desc_sidebar: "Vous trouverez ici mes coordonnées directes et mes compétences linguistiques.",
+                        tour_title_widget: "Widget de contact et de feedback",
+                        tour_desc_widget: "Cliquez sur le bouton flottant à tout moment pour m'envoyer un message direct ou soumettre une évaluation pour ce CV.",
+                        tour_title_finish: "Visite terminée !",
+                        tour_desc_finish: "Vous êtes prêt ! N'hésitez pas à explorer le CV. Merci de votre visite.",
+                        tour_title_education: "Formation et Certifications",
+                        tour_desc_education: "Cette section détaille mon parcours académique et les certifications professionnelles clés qui valident mon expertise."
                     },
                     it: {
-                        job_title: "Manager Senior di Progetti IT, Architetto e Leader QA", contact_title: "Contatti", competencies_title: "Competenza Chiave", competency_pm: "Gestione Progetti IT", competency_qa: "QA e Automazione dei Test", competency_lead: "Leadership e Mentoring del Team", competency_devops: "Strategia CI/CD & DevOps", competency_cloud: "Piattaforme Cloud", competency_strategy: "Acume Strategico Aziendale", competency_relations: "Relazioni con Stakeholder e Clienti", languages_title: "Lingue", lang_native: "Nativo", lang_fluent: "Fluente", lang_basic: "Base", lang_others: "Altro", summary_title: "Riepilogo Professionale", toolkit_title: "Toolkit Tecnico e Gestionale", toolkit_pm: "Gestione Progetti e Metodologie:", toolkit_qa: "QA e Automazione Test:", toolkit_lang: "Programmazione e Scripting:", toolkit_cloud: "Cloud, CI/CD & DevOps:", toolkit_db: "Database e API:", toolkit_analytics: "Analisi e Monitoraggio:", toolkit_platform: "Piattaforme e Strumenti Aziendali:", toolkit_system: "Strumenti Generali e di Sistema:", experience_title: "Esperienza Professionale", education_title: "Istruzione e Certificazioni", infographics_title: "Carriera in Breve", infographics_competencies_title: "Competenze Chiave", infographics_methodologies_title: "Metodologie e Processi", infographics_timeline_title: "Cronologia della Carriera",
+                        job_title: "Manager Senior di Progetti IT, Architetto e Leader QA",
+                        contact_title: "Contatti",
+                        competencies_title: "Competenza Chiave",
+                        competency_pm: "Gestione Progetti IT",
+                        competency_qa: "QA e Automazione dei Test",
+                        competency_lead: "Leadership e Mentoring del Team",
+                        competency_devops: "Strategia CI/CD & DevOps",
+                        competency_cloud: "Piattaforme Cloud (AWS, Azure, GCP)",
+                        competency_strategy: "Acume Strategico Aziendale",
+                        competency_relations: "Relazioni con Stakeholder e Clienti",
+                        languages_title: "Lingue",
+                        lang_native: "Nativo",
+                        lang_fluent: "Fluente",
+                        lang_basic: "Base",
+                        lang_others: "Altro",
+                        summary_title: "Riepilogo Professionale",
+                        summary_text: "Un Senior IT Project Manager e Architetto QA con oltre due decenni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali per raggiungere gli obiettivi di progetto. Comprovata capacità di progettare e implementare robusti framework di automazione QA (Selenium, Cypress, Kotlin), garantendo una qualità del prodotto e un'efficienza eccezionali per clienti come Autodesk, AT&T e Sophos.",
+                        summary_detail_1: "Nel corso della mia carriera, ho promosso un approccio olistico alla qualità, integrando i processi di QA in ogni fase del SDLC. In qualità di Architetto QA, sono specializzato nella progettazione di framework di automazione scalabili, manutenibili ed efficienti da zero, adattati alle esigenze specifiche del prodotto e dello stack tecnologico. La mia esperienza si estende alla selezione degli strumenti ottimali, alla definizione delle migliori pratiche e alla creazione di integrazioni CI/CD che forniscono un feedback rapido e affidabile ai team di sviluppo, riducendo significativamente i cicli di regressione e accelerando il time-to-market.",
+                        summary_detail_2: "In qualità di Project Manager e Leader, eccello nella creazione e nel mentoring di team multiculturali ad alte prestazioni. Ho una comprovata esperienza nella gestione di portafogli di progetti multimilionari, nella mitigazione dei rischi e nell'allineamento dell'esecuzione tecnica con la strategia aziendale a livello esecutivo. La mia filosofia di leadership è incentrata su una comunicazione chiara, sull'empowerment e sulla promozione di un ambiente collaborativo in cui ogni membro del team è motivato a contribuire con il proprio miglior lavoro. La mia padronanza dell'inglese a livello C2 e le mie capacità multilingue mi consentono di gestire senza problemi team e stakeholder globali.",
+                        toolkit_title: "Toolkit Tecnico e Gestionale",
+                        toolkit_pm: "Gestione Progetti e Metodologie:",
+                        toolkit_qa: "QA e Automazione Test:",
+                        toolkit_lang: "Programmazione e Scripting:",
+                        toolkit_cloud: "Cloud, CI/CD & DevOps:",
+                        toolkit_db: "Database e API:",
+                        toolkit_analytics: "Analisi e Monitoraggio:",
+                        toolkit_platform: "Piattaforme e Strumenti Aziendali:",
+                        toolkit_system: "Strumenti Generali e di Sistema:",
+                        experience_title: "Esperienza Professionale",
+                        education_title: "Istruzione e Certificazioni",
+                        infographics_title: "Carriera in Breve",
+                        infographics_competencies_title: "Competenze Chiave",
+                        infographics_methodologies_title: "Metodologie e Processi",
+                        infographics_timeline_title: "Cronologia della Carriera",
                         info_bubble_contact: "Fai clic su qualsiasi link di contatto per aprire l'applicazione corrispondente (Email, WhatsApp, ecc.).",
                         info_bubble_toolkit: "Fai clic su una competenza per filtrare l'elenco delle esperienze. Fai di nuovo clic per deselezionare, o usa 'Reset' per cancellare tutto.",
                         tooltip_print: "Stampa / PDF",
-                        read_more: "Leggi di più...", read_less: "Leggi di meno...",
+                        read_more: "Leggi di più...",
+                        read_less: "Leggi di meno...",
                         tooltip_timeline: "Clicca per passare all'esperienza di %COMPANY%",
-                        tooltip_lang_en: "Traduci in Inglese", tooltip_lang_es: "Traduci in Spagnolo", tooltip_lang_pt: "Traduci in Portoghese", tooltip_lang_de: "Traduci in Tedesco", tooltip_lang_fr: "Traduci in Francese", tooltip_lang_it: "Traduci in Italiano",
-                        widget_tab_message: "Messaggio", widget_tab_rate: "Valuta CV",
-                        form_label_name: "Nome", form_label_email: "Email", form_label_topic: "Argomento", form_label_message: "Messaggio", form_label_attachment: "Allegato (Opzionale)", form_button_attach: "Allega File", form_button_send: "Invia Messaggio", form_label_rating: "Valutazione Complessiva", form_label_comments: "Commenti (Opzionale)", form_button_submit_rating: "Invia Valutazione",
-                        error_required: "Questo campo è obbligatorio.", error_min_length: "Inserisci almeno {min} caratteri.", error_email: "Inserisci un indirizzo email valido.", error_topic: "Seleziona un argomento.", error_rating: "Seleziona una valutazione.", error_file_size: "Il file è troppo grande. Dimensione massima 5MB.", error_file_type: "Tipo di file non valido. (PDF, DOC, DOCX, PNG, JPG)",
-                        status_sending: "Invio...", status_uploading: "Caricamento...", status_file_attached: "File allegato: {fileName}", status_success_message_title: "Messaggio Inviato!", status_success_message_body: "Grazie per averci contattato. Ti risponderò a breve.", status_success_rating_title: "Valutazione Inviata!", status_success_rating_body: "Grazie per il tuo prezioso feedback!", status_error_title: "Si è Verificato un Errore", status_error_body: "Spiacenti, qualcosa è andato storto. Riprova più tardi.",
-                        topic_option_default: "Seleziona un argomento...", topic_option_opportunity: "Opportunità di Lavoro / Collaborazione", topic_option_inquiry: "Richiesta di Progetto", topic_option_feedback: "Feedback sul CV", topic_option_other: "Altro",
-                        tour_close: "Chiudi", tour_back: "Indietro", tour_next: "Avanti", tour_finish: "Fine", tour_step_1_title: "1. Controlli Pagina", tour_step_1_desc: "Usa questi controlli per passare da un tema Chiaro/Scuro all'altro, selezionare una lingua o stampare il CV in formato PDF.", tour_step_2_title: "2. Riepilogo Espandibile", tour_step_2_desc: "Clicca su 'Leggi di più...' per vedere il riepilogo professionale completo, ottenendo una visione più approfondita del mio profilo e approccio.", tour_step_3_title: "3. Toolkit Interattivo", tour_step_3_desc: "Questo è il mio set completo di competenze. Clicca su una qualsiasi competenza per filtrare istantaneamente sia la Cronologia che l'Esperienza Professionale.", tour_step_4_title: "4. Cronologia Filtrabile", tour_step_4_desc: "Questo fornisce una rapida panoramica della carriera. Si filtra automaticamente in base alle competenze selezionate dal Toolkit.", tour_step_5_title: "5. Esperienza Dettagliata", tour_step_5_desc: "Clicca su qualsiasi titolo di lavoro per espanderlo e vedere le responsabilità dettagliate, i risultati e le tecnologie utilizzate per quel ruolo.", tour_step_6_title: "6. Contatti e Feedback", tour_step_6_desc: "Clicca questo pulsante in qualsiasi momento per inviarmi un messaggio o valutare questo CV. Si apre anche automaticamente se scorri fino in fondo!", tour_step_7_title: "7. Mettiti in Contatto", tour_step_7_desc: "Tutti i miei canali di contatto sono qui. Clicca su un qualsiasi link per aprire l'applicazione corrispondente, o usa il pulsante blu fluttuante per inviarmi un messaggio diretto.",
-                        summary_text: "Un Senior IT Project Manager e Architetto QA con oltre due decenni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali per raggiungere gli obiettivi di progetto. Comprovata capacità di progettare e implementare robusti framework di automazione QA (Selenium, Cypress, Kotlin), garantendo una qualità del prodotto e un'efficienza eccezionali per clienti come Autodesk, AT&T e Sophos.",
+                        tooltip_lang_en: "Traduci in Inglese",
+                        tooltip_lang_es: "Traduci in Spagnolo",
+                        tooltip_lang_pt: "Traduci in Portoghese",
+                        tooltip_lang_de: "Traduci in Tedesco",
+                        tooltip_lang_fr: "Traduci in Francese",
+                        tooltip_lang_it: "Traduci in Italiano",
+                        widget_tab_message: "Messaggio",
+                        widget_tab_rate: "Valuta CV",
+                        form_label_name: "Nome",
+                        form_label_email: "Email",
+                        form_label_topic: "Argomento",
+                        form_label_message: "Messaggio",
+                        form_label_attachment: "Allegato (Opzionale)",
+                        form_button_attach: "Allega File",
+                        form_button_send: "Invia Messaggio",
+                        form_label_rating: "Valutazione Complessiva",
+                        form_label_comments: "Commenti (Opzionale)",
+                        form_button_submit_rating: "Invia Valutazione",
+                        error_required: "Questo campo è obbligatororio.",
+                        error_min_length: "Inserisci almeno {min} caratteri.",
+                        error_email: "Inserisci un indirizzo email valido.",
+                        error_topic: "Seleziona un argomento.",
+                        error_rating: "Seleziona una valutazione.",
+                        error_file_size: "Il file è troppo grande. Dimensione massima 5MB.",
+                        error_file_type: "Tipo di file non valido. (PDF, DOC, DOCX, PNG, JPG)",
+                        status_sending: "Invio...",
+                        status_uploading: "Caricamento...",
+                        status_file_attached: "File allegato: {fileName}",
+                        status_success_message_title: "Messaggio Inviato!",
+                        status_success_message_body: "Grazie per averci contattato. Ti risponderò a breve.",
+                        status_success_rating_title: "Valutazione Inviata!",
+                        status_success_rating_body: "Grazie per il tuo prezioso feedback!",
+                        status_error_title: "Si è Verificato un Errore",
+                        status_error_body: "Spiacenti, qualcosa è andato storto. Riprova più tardi.",
+                        topic_option_default: "Seleziona un argomento...",
+                        topic_option_opportunity: "Opportunità di Lavoro / Collaborazione",
+                        topic_option_inquiry: "Richiesta di Progetto",
+                        topic_option_feedback: "Feedback sul CV",
+                        topic_option_other: "Altro",
+                        tour_close: "Chiudi",
+                        tour_back: "Indietro",
+                        tour_next: "Avanti",
+                        tour_finish: "Fine",
                         tooltip_share: "Condividi CV",
+                        tooltip_export: "Esporta CV",
                         share_text: "Dai un'occhiata al CV interattivo di Carlos A. Muñoz!",
                         share_title: "Carlos A. Muñoz - CV Interattivo",
                         tooltip_share_on: "Condividi su %s",
-                        form_button_copy_link: "Copia link",
                         tooltip_copy_link: "Copia link",
-                        tooltip_export: "Esporta CV",
                         export_cv_pdf: "Esporta come PDF",
                         export_cv_jpg: "Esporta come JPG",
                         export_cv_doc: "Esporta come DOC",
-                        export_cv_json: "Esporta come JSON (EN)",
-                        export_cv_text: "Esporta come Testo (EN)",
-                        tour_step_1_title: "1. Foto Ingrandibile",
-                        tour_step_1_desc: "Puoi fare clic sulla mia foto del profilo in qualsiasi momento per vedere una versione più grande e ad alta risoluzione.",
-                        tour_step_2_title: "2. Condividi questo CV",
-                        tour_step_2_desc: "Usa l'icona di condivisione per inviare facilmente questo CV interattivo tramite LinkedIn, X (Twitter) e altre piattaforme, o semplicemente copia il link.",
-                        tour_step_3_title: "3. Esporta questo CV",
-                        tour_step_3_desc: "Puoi anche esportare il CV in diversi formati come PDF, DOC o JSON per la visualizzazione offline o per i sistemi ATS.",
-                        tour_step_4_title: "4. Controlli Pagina",
-                        tour_step_4_desc: "Usa questi controlli per passare da un tema Chiaro/Scuro all'altro, selezionare una lingua o stampare il CV in formato PDF.",
-                        tour_step_5_title: "5. Riepilogo Espandibile",
-                        tour_step_5_desc: "Clicca su 'Leggi di più...' per vedere il riepilogo professionale completo, ottenendo una visione più approfondita del mio profilo.",
-                        tour_step_6_title: "6. Toolkit Interattivo",
-                        tour_step_6_desc: "Questo è il mio set completo di competenze. Clicca su una qualsiasi competenza per filtrare istantaneamente sia la Cronologia che l'Esperienza Professionale.",
-                        tour_step_7_title: "7. Cronologia Filtrabile",
-                        tour_step_7_desc: "Questo fornisce una rapida panoramica della carriera. Si filtra automaticamente in base alle competenze selezionate dal Toolkit.",
-                        tour_step_8_title: "8. Esperienza Dettagliata",
-                        tour_step_8_desc: "Clicca su qualsiasi titolo di lavoro per espanderlo e vedere le responsabilità dettagliate e le tecnologie utilizzate per quel ruolo.",
-                        tour_step_9_title: "9. Contatti e Feedback",
-                        tour_step_9_desc: "Clicca questo pulsante in qualsiasi momento per inviarmi un messaggio o valutare questo CV. Si apre anche automaticamente se scorri fino in fondo!",
-                        tour_step_10_title: "10. Mettiti in Contatto",
-                        tour_step_10_desc: "Tutti i miei canali di contatto sono qui. Clicca su un qualsiasi link per aprire l'applicazione corrispondente, o usa il pulsante blu fluttuante."
+                        export_cv_json: "Esporta come JSON",
+                        export_cv_text: "Esporta come Testo",
+                        tour_title_photo: "Foto Ingrandibile",
+                        tour_desc_photo: "Puoi fare clic sulla mia foto del profilo in qualsiasi momento per vedere una versione più grande e ad alta risoluzione.",
+                        tour_title_controls: "Controlli della Pagina",
+                        tour_desc_controls: "Usa questi controlli per condividere, esportare, stampare, cambiare la lingua o passare dal tema Chiaro a quello Scuro.",
+                        tour_title_summary: "Riepilogo Espandibile",
+                        tour_desc_summary: "Fai clic su 'Leggi di più...' per vedere il riepilogo professionale completo e ottenere una visione più approfondita del mio profilo.",
+                        tour_title_glance: "Carriera in Breve",
+                        tour_desc_glance: "Queste infografiche visualizzano le mie competenze chiave e la mia progressione di carriera. Passa il mouse sulle etichette del grafico per maggiori dettagli.",
+                        tour_title_toolkit: "Toolkit Interattivo",
+                        tour_desc_toolkit: "Questo è il mio set completo di competenze. Fai clic su una qualsiasi competenza per filtrare istantaneamente le sezioni Esperienza e Cronologia.",
+                        tour_title_experience: "Esperienza Dettagliata",
+                        tour_desc_experience: "Questa sezione è filtrata dal Toolkit. Fai clic su un titolo di lavoro per espanderlo e vedere le responsabilità e le tecnologie utilizzate.",
+                        tour_title_testimonials: "Testimonianze",
+                        tour_desc_testimonials: "Questa sezione mostra feedback e valutazioni di colleghi e clienti, caricati direttamente dal database.",
+                        tour_title_sidebar: "Contatti e Lingue",
+                        tour_desc_sidebar: "Qui puoi trovare le mie informazioni di contatto diretto e le mie competenze linguistiche.",
+                        tour_title_widget: "Widget Contatti e Feedback",
+                        tour_desc_widget: "Fai clic sul pulsante fluttuante in qualsiasi momento per inviarmi un messaggio diretto o inviare una valutazione per questo CV.",
+                        tour_title_finish: "Tour Completato!",
+                        tour_desc_finish: "Sei pronto! Sentiti libero di esplorare il CV. Grazie per la tua visita.",
+                        tour_title_education: "Istruzione e Certificazioni",
+                        tour_desc_education: "Questa sezione dettaglia il mio background accademico e le principali certificazioni professionali che convalidano la mia esperienza."
+
                     },
-                    /*summary_text: {
-                        es: "Un Gerente de Proyectos de TI Senior y Arquitecto de QA con más de dos décadas de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de partes interesadas y liderazgo de equipos multifuncionales para cumplir los objetivos del proyecto. Capacidad demostrada para diseñar e implementar marcos sólidos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos.",
-                        pt: "Um Gerente de Projetos de TI Sênior e Arquiteto de QA com mais de duas décadas de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais para atingir as metas do projeto. Habilidade comprovada para arquitetar e implementar robustos frameworks de automação de QA (Selenium, Cypress, Kotlin), garantindo qualidade de produto e eficiência excepcionais para clientes como Autodesk, AT&T e Sophos.",
-                        de: "Ein leitender IT-Projektmanager und QA-Architekt mit über zwei Jahrzehnten Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams zur Erreichung von Projektzielen. Nachgewiesene Fähigkeit, robuste QA-Automatisierungs-Frameworks (Selenium, Cypress, Kotlin) zu entwerfen und zu implementieren, um außergewöhnliche Produktqualität und Effizienz für Kunden wie Autodesk, AT&T und Sophos zu gewährleisten.",
-                        fr: "Un Chef de Projet Informatique Senior et Architecte QA avec plus de deux décennies d'expérience dans la fourniture de solutions logicielles complexes et de haute qualité pour des leaders technologiques mondiaux. Expert en planification stratégique, en gestion des parties prenantes et en direction d'équipes interfonctionnelles pour atteindre les objectifs des projets. Capacité prouvée à concevoir et mettre en œuvre des cadres d'automatisation QA robustes (Selenium, Cypress, Kotlin), assurant une qualité de produit et une efficacité exceptionnelles pour des clients comme Autodesk, AT&T et Sophos.",
-                        it: "Un Senior IT Project Manager e Architetto QA con oltre due decenni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali per raggiungere gli obiettivi di progetto. Comprovata capacità di progettare e implementare robusti framework di automazione QA (Selenium, Cypress, Kotlin), garantendo una qualità del prodotto e un'efficienza eccezionali per clienti come Autodesk, AT&T e Sophos."
-                    },*/
                 },
             },
 
@@ -2712,170 +3134,229 @@
             tourSteps: [
                 {
                     element: '#profile-photo',
-                    titleKey: 'tour_step_1_title',
-                    descriptionKey: 'tour_step_1_desc',
-                    analyticsTag: 'Viewed_Step_1_Photo',
-                    action: function() {
-                        this._applyClickEffect(this.DOMElements.profilePhoto);
-                        setTimeout(() => this._openModal(), 600);
-                        setTimeout(() => this._closeModal(), 2500);
-                    }
-                },
-                {
-                    element: '#social-share-selector',
-                    titleKey: 'tour_step_2_title',
-                    descriptionKey: 'tour_step_2_desc',
-                    analyticsTag: 'Viewed_Step_2_Share',
-                    action: function() {
-                        const shareSelector = this.DOMElements.socialShareSelector;
-                        setTimeout(() => this._applyClickEffect(shareSelector), 500);
-                        setTimeout(() => shareSelector.classList.remove('collapsed'), 700);
-                        setTimeout(() => {
-                            shareSelector.querySelectorAll('.share-link-wrapper').forEach((link, i) => {
-                                setTimeout(() => this._glowElement(link, 800), i * 300);
-                            });
-                        }, 1200);
-                        setTimeout(() => shareSelector.classList.add('collapsed'), 3500);
-                    }
-                },
-                {
-                    element: '#export-selector',
-                    titleKey: 'tour_step_3_title',
-                    descriptionKey: 'tour_step_3_desc',
-                    analyticsTag: 'Viewed_Step_3_Export',
-                    action: function() {
-                        const exportSelector = this.DOMElements.exportSelector;
-                        setTimeout(() => this._applyClickEffect(exportSelector), 500);
-                        setTimeout(() => exportSelector.classList.remove('collapsed'), 700);
-                        setTimeout(() => exportSelector.classList.add('collapsed'), 2500);
-                    }
+                    titleKey: 'tour_title_photo',
+                    descriptionKey: 'tour_desc_photo',
+                    analyticsTag: 'Viewed_Tour_Step_Photo',
+                    action: function() { this._openModal(); setTimeout(() => this._closeModal(), 2500); }
                 },
                 {
                     element: '#page-header-controls .no-print',
-                    titleKey: 'tour_step_4_title',
-                    descriptionKey: 'tour_step_4_desc',
-                    analyticsTag: 'Viewed_Step_4_PageControls',
+                    titleKey: 'tour_title_controls',
+                    descriptionKey: 'tour_desc_controls',
+                    analyticsTag: 'Viewed_Tour_Step_Controls',
                     action: function() {
-                        const themeToggle = this.DOMElements.themeToggle;
-                        const langSelector = this.DOMElements.languageSelector;
-                        const printBtn = this.DOMElements.printBtn;
-                        setTimeout(() => this._applyClickEffect(themeToggle), 500);
-                        setTimeout(() => this._toggleTheme(), 700);
-                        setTimeout(() => this._applyClickEffect(themeToggle), 1700);
-                        setTimeout(() => this._toggleTheme(), 1900);
-                        setTimeout(() => langSelector.classList.remove('collapsed'), 2500);
+                        if (window.innerWidth < 768) {
+                            // On mobile, scroll down to show the sticky header clearly
+                            window.scrollTo({ top: 100, behavior: 'smooth' });
+                        }
                         setTimeout(() => {
-                            langSelector.querySelectorAll('.lang-flag').forEach((flag, i) => {
-                                setTimeout(() => this._applyClickEffect(flag), i * 300);
+                            const controls = [
+                                { selector: '#theme-toggle', action: () => this._toggleTheme() },
+                                { selector: '#social-share-selector', dropdown: '#social-share-options' },
+                                { selector: '#export-selector', dropdown: '#export-options' },
+                                { selector: '#language-selector', dropdown: '#language-options' },
+                                { selector: '#print-btn' }
+                            ];
+                            let delay = 0;
+                            controls.forEach(control => {
+                                setTimeout(() => {
+                                    const el = document.querySelector(control.selector);
+                                    if (!el) return;
+                                    this._applyClickEffect(el);
+                                    if (control.action) {
+                                        control.action.call(this);
+                                        setTimeout(() => control.action.call(this), 1000); // Toggle back
+                                    }
+                                    if (control.dropdown) {
+                                        el.classList.remove('collapsed');
+                                        const dropdownEl = document.querySelector(control.dropdown);
+                                        if(dropdownEl) this._glowElement(dropdownEl, 1500);
+                                        setTimeout(() => el.classList.add('collapsed'), 1800);
+                                    }
+                                }, delay);
+                                delay += 2200;
                             });
-                        }, 3000);
-                        setTimeout(() => langSelector.classList.add('collapsed'), 5000);
-                        setTimeout(() => this._applyClickEffect(printBtn), 5500);
+                        }, window.innerWidth < 768 ? 600 : 0);
                     }
                 },
                 {
-                    element: '#read-more-btn',
-                    titleKey: 'tour_step_5_title',
-                    descriptionKey: 'tour_step_5_desc',
-                    analyticsTag: 'Viewed_Step_5_ExpandableSummary',
+                    element: 'section[aria-labelledby="summary-heading"]',
+                    titleKey: 'tour_title_summary',
+                    descriptionKey: 'tour_desc_summary',
+                    analyticsTag: 'Viewed_Tour_Step_Summary',
                     action: function() {
-                        this.DOMElements.readMoreBtn.click();
-                        setTimeout(() => this.DOMElements.readMoreBtn.click(), 3000);
+                        if (window.innerWidth < 768) {
+                            // On mobile, ensure the element is visible above the tooltip
+                            document.querySelector('section[aria-labelledby="summary-heading"]').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                        setTimeout(() => {
+                            this._applyClickEffect(this.DOMElements.readMoreBtn);
+                            this.DOMElements.readMoreBtn.click();
+                            setTimeout(() => this.DOMElements.readMoreBtn.click(), 3000);
+                        }, window.innerWidth < 768 ? 600 : 0);
                     }
                 },
                 {
                     element: '.infographics-section',
-                    titleKey: 'tour_step_6_title',
-                    descriptionKey: 'tour_step_6_desc',
-                    analyticsTag: 'Viewed_Step_6_Infographics',
+                    titleKey: 'tour_title_glance',
+                    descriptionKey: 'tour_desc_glance',
+                    analyticsTag: 'Viewed_Tour_Step_Glance',
                     action: function() {
-                        const competenciesChart = this.DOMElements.competenciesRadarChart;
-                        const methodologiesChart = this.DOMElements.methodologiesRadarChart;
-                        this._glowElement(competenciesChart, 2000);
-                        setTimeout(() => this._glowElement(methodologiesChart, 2000), 2500);
+                        if (window.innerWidth < 768) {
+                            document.querySelector('.infographics-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                        setTimeout(() => {
+                            this._glowElement(this.DOMElements.competenciesRadarChart, 2000);
+                            setTimeout(() => this._glowElement(this.DOMElements.timelineContainer, 2000), 1000);
+                        }, window.innerWidth < 768 ? 600 : 0);
                     }
                 },
                 {
                     element: '#toolkit-container',
-                    titleKey: 'tour_step_7_title',
-                    descriptionKey: 'tour_step_7_desc',
-                    analyticsTag: 'Viewed_Step_7_InteractiveToolkit',
+                    titleKey: 'tour_title_toolkit',
+                    descriptionKey: 'tour_desc_toolkit',
+                    analyticsTag: 'Viewed_Tour_Step_Toolkit',
                     action: function() {
                         const allSkills = Array.from(this.DOMElements.toolkitContainer.querySelectorAll('.tech-tag'));
-                        const randomSkills = allSkills.sort(() => 0.5 - Math.random()).slice(0, 3);
+                        const skillCount = Math.random() < 0.5 ? 1 : 2;
+                        const skillsToClick = allSkills.sort(() => 0.5 - Math.random()).slice(0, skillCount);
 
-                        randomSkills.forEach((skillEl, index) => {
+                        skillsToClick.forEach((skillEl, index) => {
                             setTimeout(() => {
                                 const header = skillEl.closest('.toolkit-section').querySelector('.toolkit-header');
-                                if (header.getAttribute('aria-expanded') === 'false') {
-                                    header.click();
-                                }
+                                if (header.getAttribute('aria-expanded') === 'false') header.click();
                                 setTimeout(() => {
+                                    this._applyClickEffect(skillEl);
                                     skillEl.click();
-                                    this._glowElement(skillEl, 2000);
-                                }, 300);
-                            }, index * 1200);
+                                }, 500);
+                            }, index * 1000);
                         });
 
+                        let delay = (skillCount * 1000) + 500;
+                        // Scroll to timeline, wait, then glow
                         setTimeout(() => {
-                            this.DOMElements.resetFilterBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            this.DOMElements.timelineContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            setTimeout(() => this._glowElement(this.DOMElements.timelineContainer, 2000), 800);
+                        }, delay);
+                        delay += 3000;
+                        // Scroll to experience, wait, then glow
+                        setTimeout(() => {
+                            this.DOMElements.experienceContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            setTimeout(() => this._glowElement(this.DOMElements.experienceContainer, 2000), 800);
+                        }, delay);
+                        delay += 3000;
+                        // Reset filters
+                        setTimeout(() => {
                             this._applyClickEffect(this.DOMElements.resetFilterBtn);
-                            this._resetFilters();
-                            this.DOMElements.toolkitContainer.querySelectorAll('.toolkit-header[aria-expanded="true"]').forEach(h => h.click());
-                        }, 5000);
-                    }
-                },
-                {
-                    element: '#timeline-container',
-                    titleKey: 'tour_step_8_title',
-                    descriptionKey: 'tour_step_8_desc',
-                    analyticsTag: 'Viewed_Step_8_FilterableTimeline',
-                    action: function() {
-                        const timelineItem = this.DOMElements.timelineContainer.querySelector('.timeline-item a');
-                        const experienceEl = document.querySelector(timelineItem.getAttribute('href'));
-
-                        this._applyClickEffect(timelineItem, 1500);
-                        setTimeout(() => {
-                            experienceEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            this._glowElement(experienceEl, 2000);
-                        }, 2000);
+                            this.DOMElements.resetFilterBtn.click();
+                        }, delay);
                     }
                 },
                 {
                     element: '#experience-container',
-                    titleKey: 'tour_step_9_title',
-                    descriptionKey: 'tour_step_9_desc',
-                    analyticsTag: 'Viewed_Step_9_DetailedExperience',
+                    titleKey: 'tour_title_experience',
+                    descriptionKey: 'tour_desc_experience',
+                    analyticsTag: 'Viewed_Tour_Step_Experience',
                     action: function() {
-                        const firstExpHeader = this.DOMElements.experienceContainer.querySelector('.accordion-header');
-                        if (firstExpHeader) {
-                            firstExpHeader.click();
-                            setTimeout(() => firstExpHeader.click(), 3000);
+                        const headers = this.DOMElements.experienceContainer.querySelectorAll('.accordion-header');
+                        if (headers.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * headers.length);
+                            const randomHeader = headers[randomIndex];
+                            randomHeader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            setTimeout(() => {
+                                this._glowElement(randomHeader.closest('.experience-item'), 1500);
+                                this._applyClickEffect(randomHeader, 800);
+                                randomHeader.click();
+                            }, 800);
+                            setTimeout(() => randomHeader.click(), 4000);
                         }
                     }
                 },
                 {
-                    element: '#contact-widget-fab',
-                    titleKey: 'tour_step_10_title',
-                    descriptionKey: 'tour_step_10_desc',
-                    analyticsTag: 'Viewed_Step_10_ContactWidget',
+                    element: 'section[aria-labelledby="education-heading"]',
+                    titleKey: 'tour_title_education',
+                    descriptionKey: 'tour_desc_education',
+                    analyticsTag: 'Viewed_Tour_Step_Education',
                     action: function() {
-                        this._openContactWidget();
-                        setTimeout(() => this._switchTab('rating'), 1500);
-                        setTimeout(() => this._switchTab('message'), 3000);
-                        setTimeout(() => this._closeContactWidget(), 4500);
+                        const el = document.querySelector('section[aria-labelledby="education-heading"]');
+                        if(el) this._glowElement(el, 2000);
                     }
                 },
                 {
                     element: 'section[aria-labelledby="contact-heading"]',
-                    titleKey: 'tour_step_11_title',
-                    descriptionKey: 'tour_step_11_desc',
-                    analyticsTag: 'Viewed_Step_11_ContactInfo',
+                    titleKey: 'tour_title_sidebar',
+                    descriptionKey: 'tour_desc_sidebar',
+                    analyticsTag: 'Viewed_Tour_Step_Sidebar',
                     action: function() {
-                        ['#contact-phone', '#contact-email', '#contact-linkedin', '#contact-whatsapp', '#contact-telegram'].forEach((link, index) => {
-                            setTimeout(() => this._glowElement(document.querySelector(link)), index * 800);
+                        const contactLinks = ['#contact-phone', '#contact-email', '#contact-linkedin', '#contact-whatsapp', '#contact-telegram'];
+                        contactLinks.forEach((selector, index) => {
+                            setTimeout(() => {
+                                const el = document.querySelector(selector);
+                                if (el) this._glowElement(el, 800);
+                            }, index * 600);
                         });
                     }
+                },
+                {
+                    element: '#contact-widget-fab',
+                    titleKey: 'tour_title_widget',
+                    descriptionKey: 'tour_desc_widget',
+                    analyticsTag: 'Viewed_Tour_Step_Widget',
+                    action: function() {
+                        if (window.innerWidth < 768) this._setTourTooltipTransparency(true);
+                        this._openContactWidget();
+
+                        setTimeout(() => { // Demo Message Tab
+                            this._switchTab('message');
+                            this._typewriterEffect(this.DOMElements.senderName, "John Doe", () => {
+                                this._typewriterEffect(this.DOMElements.senderEmail, "john.doe@example.com", () => {
+                                    this.DOMElements.messageTopic.value = this._getRandomTopic();
+                                    this._typewriterEffect(this.DOMElements.senderMessage, "This is a great interactive CV!", () => {
+                                        this._applyClickEffect(document.getElementById('file-upload-label'));
+                                        setTimeout(() => this._glowElement(this.DOMElements.sendMessageBtn, 1500), 500);
+                                        setTimeout(() => this._switchTab('rating'), 2500);
+                                    });
+                                });
+                            });
+                        }, 1000);
+                        setTimeout(() => { // Demo Rating Tab
+                            this._typewriterEffect(this.DOMElements.raterName, "Jane Smith", () => {
+                                this._typewriterEffect(this.DOMElements.raterEmail, "jane.smith@example.com", () => {
+                                    const randomRating = this._getRandomRating();
+                                    const starToClick = this.DOMElements.starRatingContainer.querySelector(`.star[data-value="${randomRating}"]`);
+                                    if(starToClick) this._handleStarClick(starToClick);
+                                    this._typewriterEffect(this.DOMElements.raterComment, this._getRandomComment(), () => {
+                                        this._glowElement(this.DOMElements.sendRatingBtn, 1500);
+                                        setTimeout(() => {
+                                            if (window.innerWidth < 768) this._setTourTooltipTransparency(false);
+                                            this._closeContactWidget();
+                                        }, 2000);
+                                    });
+                                });
+                            });
+                        }, 8000);
+                    }
+                },
+                {
+                    element: '#testimonials-section',
+                    titleKey: 'tour_title_testimonials',
+                    descriptionKey: 'tour_desc_testimonials',
+                    analyticsTag: 'Viewed_Tour_Step_Testimonials',
+                    action: function() {
+                        if (window.innerWidth < 768) this._setTourTooltipTransparency(true);
+                        const firstCard = this.DOMElements.testimonialsContainer.querySelector('.testimonial-card');
+                        if (firstCard) this._glowElement(firstCard, 2500);
+                        setTimeout(() => {
+                            if (window.innerWidth < 768) this._setTourTooltipTransparency(false);
+                        }, 2800);
+                    }
+                },
+                {
+                    element: '.cv-footer',
+                    titleKey: 'tour_title_finish',
+                    descriptionKey: 'tour_desc_finish',
+                    analyticsTag: 'Viewed_Tour_Step_Finish',
+                    action: function() { this._glowElement(document.querySelector('.cv-footer'), 1500); }
                 }
             ],
 
@@ -3141,7 +3622,9 @@
 
                 labels.forEach((label, i) => {
                     const angle = angleSlice * i - Math.PI / 2, labelX = center + (radius + 35) * Math.cos(angle), labelY = center + (radius + 35) * Math.sin(angle);
-                    const words = label.split(' '), tspans = (words.length > 1) ? `<tspan x="${labelX}" dy="-0.5em">${words[0]}</tspan><tspan x="${labelX}" dy="1.1em">${words[1]}</tspan>` : `<tspan>${label}</tspan>`;
+                    const words = label.split(' ');
+                    // THIS IS THE CORRECTED LINE:
+                    const tspans = (words.length > 1 && label !== 'QA & Automation') ? `<tspan x="${labelX}" dy="-0.5em">${words[0]}</tspan><tspan x="${labelX}" dy="1.1em">${words.slice(1).join(' ')}</tspan>` : `<tspan>${label}</tspan>`;
                     const tooltipText = (this.data.radarTooltips[this.state.lang] && this.data.radarTooltips[this.state.lang][label]) || this.data.radarTooltips.en[label] || label;
                     labelElements += `<g class="radar-label"><title>${tooltipText}</title><text x="${labelX}" y="${labelY}" font-size="10" text-anchor="middle" alignment-baseline="middle" fill="${labelColor}">${tspans}</text></g>`;
                 });
@@ -3150,6 +3633,8 @@
                 polygon = `<polygon points="${points}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" />`;
 
                 container.innerHTML = `<svg viewBox="0 0 ${size} ${size}">${grid}${polygon}${labelElements}</svg>`;
+
+                this._attachRadarLabelListeners();
             },
 
             _createTimeline() {
@@ -3175,6 +3660,64 @@
                     `;
                 });
                 container.innerHTML = content;
+            },
+
+            _getSkillsForCompetency(competencyLabel) {
+                const competencyMap = {
+                    'Project Mgmt': ['Agile', 'Kanban', 'Scrum', 'Strategic Planning', 'Risk Management', 'Stakeholder Mgmt', 'Jira', 'TestRail', 'MS Project'],
+                    'QA & Automation': ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon'],
+                    'Leadership': ['Stakeholder Mgmt', 'Strategic Planning'],
+                    'DevOps Strategy': ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP'],
+                    'Cloud Platforms': ['AWS', 'Azure DevOps', 'GCP', 'Docker'],
+                    'Stakeholder Mgmt': ['Stakeholder Mgmt'],
+                    'Agile': ['Agile', 'Scrum', 'Kanban'],
+                    'Scrum': ['Scrum', 'Jira'],
+                    'Kanban': ['Kanban', 'Trello'],
+                    'CMMI': ['CMMI', 'ISO Standards'],
+                    'ISO Standards': ['ISO Standards', 'CISA', 'CISM', 'CISSP'],
+                    'Risk Mgmt': ['Risk Management', 'Owasp']
+                };
+                return competencyMap[competencyLabel] || [];
+            },
+
+            _attachRadarLabelListeners() {
+                this.DOMElements.competenciesRadarChart.querySelectorAll('.radar-label').forEach(label => {
+                    label.addEventListener('click', () => {
+                        this._resetFilters();
+                        const skillsToSelect = this._getSkillsForCompetency(label.textContent);
+                        const headersToExpand = new Set();
+                        document.querySelectorAll('.tech-tag').forEach(tag => {
+                            if (skillsToSelect.includes(tag.dataset.skillName)) {
+                                this._toggleSkillFilter(tag);
+                                const header = tag.closest('.toolkit-section').querySelector('.toolkit-header');
+                                if (header && header.getAttribute('aria-expanded') === 'false') {
+                                    headersToExpand.add(header);
+                                }
+                            }
+                        });
+                        headersToExpand.forEach(header => header.click());
+                        document.getElementById('toolkit-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                    });
+                });
+                this.DOMElements.methodologiesRadarChart.querySelectorAll('.radar-label').forEach(label => {
+                    label.addEventListener('click', () => {
+                        this._resetFilters();
+                        const skillsToSelect = this._getSkillsForCompetency(label.textContent);
+                        const headersToExpand = new Set();
+                        document.querySelectorAll('.tech-tag').forEach(tag => {
+                            if (skillsToSelect.includes(tag.dataset.skillName)) {
+                                this._toggleSkillFilter(tag);
+                                const header = tag.closest('.toolkit-section').querySelector('.toolkit-header');
+                                if (header && header.getAttribute('aria-expanded') === 'false') {
+                                    headersToExpand.add(header);
+                                }
+                            }
+                        });
+                        headersToExpand.forEach(header => header.click());
+                        document.getElementById('toolkit-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                });
             },
 
             _filterExperiencesAndTimeline() {
@@ -4915,6 +5458,12 @@
                 if(!element) return;
                 element.classList.add('pulse-highlight');
                 setTimeout(() => element.classList.remove('pulse-highlight'), duration);
+            },
+
+            _setTourTooltipTransparency(isTransparent) {
+                if (this.DOMElements.tourTooltip) {
+                    this.DOMElements.tourTooltip.classList.toggle('transparent-mode', isTransparent);
+                }
             },
 
             _getRandomTopic() {
