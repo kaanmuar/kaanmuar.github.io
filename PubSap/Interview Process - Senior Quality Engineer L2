@@ -1,0 +1,131 @@
+Here the answers to your questions :
+
+1. Voice Recording Script
+
+Topic: What does a well-run software engineering team look like to you?
+
+Attached. ()
+
+2. Code Sample Explanation
+
+Online site: https://kaanmuar.github.io
+Repo/Tests : https://github.com/kaanmuar/kaanmuar.github.io/tree/main
+Multi-Framework UI Automation - CV Validation Suite
+
+Repository Structure:
+
+cv-automation-suite/
+├── playwright/
+│   └── tests/
+│       └── cv_navigation.spec.ts   # Core functional flows & parallelization
+├── cypress/
+│   └── e2e/
+│       └── cv_experience.cy.js     # DOM validation & component testing
+└── robot/
+    └── tests/
+        └── cv_skills.robot         # Keyword-driven business logic
+1. Playwright (TypeScript)
+
+import { test, expect } from '@playwright/test';
+
+test.describe('CV Online - Core Functionality', () => {
+  test.beforeEach(async ({ page }) => {
+    // Navigate to the live CV site before each test
+    await page.goto('https://carlosmunoz-cv.example.com');
+  });
+
+  test('should verify profile header and professional title', async ({ page }) => {
+    // Validate page metadata
+    await expect(page).toHaveTitle(/Carlos Andrés Muñoz Ardila - CV/);
+    
+    // Validate main header injection
+    const header = page.locator('h1');
+    await expect(header).toHaveText('Carlos Andrés Muñoz Ardila');
+    
+    // Validate job title using test IDs for resilient selectors
+    const role = page.locator('[data-testid="job-title"]');
+    await expect(role).toHaveText(/Senior Systems Engineer & QA Lead/i);
+  });
+});
+2. Cypress (JavaScript)
+
+describe('CV Online - Professional Experience Routing', () => {
+  beforeEach(() => {
+    cy.visit('https://carlosmunoz-cv.example.com');
+  });
+
+  it('should navigate to the Experience section and verify recent roles', () => {
+    // Intercept potential external API calls for analytics/tracking to prevent flakiness
+    cy.intercept('GET', '/api/analytics', { statusCode: 200 }).as('analytics');
+
+    cy.get('nav').contains('Experience').click();
+    
+    // Validate the timeline renders correctly
+    cy.get('.experience-timeline').should('be.visible');
+    
+    // Verify specific high-impact roles are present in the DOM
+    cy.contains('h3', 'QA Studio Lead').should('exist');
+    cy.contains('.company-name', 'Team International').should('be.visible');
+  });
+});
+3. Robot Framework (Python)
+
+*** Settings ***
+Documentation     Validation of Technical Skills section on the CV using BDD principles.
+Library           SeleniumLibrary
+
+*** Variables ***
+${URL}            https://carlosmunoz-cv.example.com
+${BROWSER}        chrome
+
+*** Test Cases ***
+Verify Core Automation Skills Are Displayed
+    Open Browser To CV Page
+    Navigate To Skills Section
+    Verify Skill Tag Exists    Playwright
+    Verify Skill Tag Exists    Cypress
+    Verify Skill Tag Exists    Robot Framework
+    Verify Skill Tag Exists    TypeScript
+    [Teardown]    Close Browser
+
+*** Keywords ***
+Open Browser To CV Page
+    Open Browser    ${URL}    ${BROWSER}
+    Maximize Browser Window
+    Title Should Be    Carlos Andrés Muñoz Ardila - CV
+
+Navigate To Skills Section
+    Click Link    xpath=//a[contains(@href, '#skills')]
+    Wait Until Element Is Visible    id=skills-section    timeout=5s
+
+Verify Skill Tag Exists
+    [Arguments]    ${skill_name}
+    Element Should Be Visible    xpath=//div[contains(@class, 'skill-tag') and text()='${skill_name}']
+
+The problem being solved: I needed a robust, automated way to validate the functionality, performance, and cross-browser compatibility of my interactive online CV. Beyond simply testing the site, I wanted to establish a comparative baseline for the industry's leading automation tools to evaluate their relative execution speeds, developer experience, and reporting capabilities against a single, consistent target application.
+
+Key design decisions: I architected a unified repository containing three distinct test suites targeting the same application, utilizing Playwright, Cypress, and Robot Framework.
+
+Playwright was implemented for its native parallelization and deep cross-browser context isolation.
+
+Cypress was utilized to demonstrate proficiency in its developer-centric, time-travel debugging environment.
+
+Robot Framework was integrated to showcase keyword-driven testing, separating the technical implementation from high-level, business-readable test cases.
+
+Any trade-offs considered: The primary trade-off was the deliberate acceptance of code duplication and increased maintenance overhead. Writing the same test scenarios across three different frameworks violates the DRY (Don't Repeat Yourself) principle in a traditional production environment. However, I traded this architectural purity for the opportunity to build a comprehensive portfolio piece that acts as a live comparative analysis of these tools.
+
+Why you selected this example: This repository serves as a direct, executable proof of my versatility as a Senior SDET. It demonstrates that I am not just tied to a single tool syntax, but rather that I understand the underlying mechanics of modern UI automation and can architect solutions across various testing paradigms, from keyword-driven Python/Robot environments to modern JavaScript/TypeScript ecosystems.
+
+3. Written Responses
+
+A. Unconventional Problem Solving
+
+When tasked with improving QA efficiency across multiple high-stakes client accounts, the conventional approach would have been to simply hire more siloed testers for each project. Instead, I took a structural approach by spearheading the design of a centralized quality engineering model, effectively acting as an internal "QA Studio." This involved creating standardized playbooks, centralized budget plans, and unified testing strategies that could be applied across different environments.
+
+The situation was unique because it required aligning disparate teams—each with their own legacy processes—under a single standard of excellence. I had to factor in comprehensive requirements, from UI automation to complex ETL and database-level validation using Snowflake. By shifting the paradigm from project-based testing to a centralized, service-oriented QA model, we significantly reduced onboarding time for new engineers, streamlined project transitions, and elevated the overall technical standard across the board.
+
+B. Persistence and Growth
+
+A powerful driver of my personal growth has been my commitment to bodybuilding and maintaining a strict fitness regimen. Training for musculation three to five times a week requires an intense level of focus and consistency that parallels professional engineering. Initially, the biggest obstacle was balancing a demanding schedule as a Senior Systems Engineer with the physical and mental fatigue of a structured training program.
+
+I overcame this by applying the same principles I use in software architecture: treating my routine as a system. I implemented strict scheduling, tracked incremental progress, and focused on progressive overload rather than expecting overnight results. This experience continually reinforces a core lesson that translates directly to my professional life: tackling massive goals—whether it is an entire framework migration or physical transformation—requires unwavering discipline, systemizing your approach, and understanding that small, consistent optimizations compound into major long-term results.
