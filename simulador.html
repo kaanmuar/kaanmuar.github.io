@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,8 +13,6 @@
             --text-main: #172B4D; --text-subtle: #5E6C84; --border-color: #DFE1E6;
             --primary-blue: #0052CC; --ai-purple: #6554C0; --success-green: #36B37E;
             --modal-bg: rgba(9, 30, 66, 0.7); --report-bg: #FFFFFF;
-            
-            /* Pastel Status Colors - Light */
             --pastel-perfect: #E3FCEF; --border-perfect: #36B37E;
             --pastel-refined: #F3F0FF; --border-refined: #6554C0;
             --pastel-rejected: #FFEBE6; --border-rejected: #FF5630;
@@ -26,14 +24,16 @@
             --text-main: #B6C2CF; --text-subtle: #8C9BAB; --border-color: #2C333A;
             --primary-blue: #579DFF; --ai-purple: #9F8FEF; --success-green: #4BCE97;
             --modal-bg: rgba(29, 33, 37, 0.8); --report-bg: #22272B;
-
-            /* Pastel Status Colors - Dark */
             --pastel-perfect: rgba(54, 179, 126, 0.15); --border-perfect: #4BCE97;
             --pastel-refined: rgba(101, 84, 192, 0.15); --border-refined: #9F8FEF;
             --pastel-rejected: rgba(255, 86, 48, 0.15); --border-rejected: #FF8F73;
         }
 
-        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; font-size: 14px; transition: background-color 0.3s, color 0.3s; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; font-size: 14px; transition: background-color 0.3s, color 0.3s; top: 0 !important; }
+        
+        /* Ocultar barra superior de Google Translate */
+        .skiptranslate iframe { display: none !important; }
+        body { top: 0px !important; }
 
         /* --- Controls --- */
         .top-controls { position: fixed; top: 20px; right: 30px; display: flex; gap: 15px; z-index: 100; align-items: center; }
@@ -57,7 +57,6 @@
         .ticket { background: var(--bg-card); border-radius: 4px; padding: 15px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; position: relative; }
         .ticket:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .ticket.active-target { border-color: var(--ai-purple); box-shadow: 0 0 0 3px rgba(101,84,192,0.4); z-index: 10; transform: scale(1.02); }
-        
         .ticket.status-perfect { background: var(--pastel-perfect); border-color: var(--border-perfect); }
         .ticket.status-refined { background: var(--pastel-refined); border-color: var(--border-refined); }
         .ticket.status-rejected { background: var(--pastel-rejected); border-color: var(--border-rejected); }
@@ -72,14 +71,11 @@
         /* --- Realistic Jira Modal --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); display: flex; justify-content: center; align-items: flex-start; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding-top: 30px; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
-        
         .issue-modal { background: var(--bg-body); width: 1200px; max-width: 95%; height: 90vh; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: flex; flex-direction: column; position: relative; overflow: hidden; border: 1px solid var(--border-color); }
         .issue-header { padding: 15px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); }
-        .close-btn { background: transparent; border: none; font-size: 20px; color: var(--text-subtle); cursor: pointer; display: none; }
+        .close-btn { background: transparent; border: none; font-size: 20px; color: var(--text-subtle); cursor: pointer; }
         
         .issue-body { display: flex; flex: 1; overflow: hidden; }
-        
-        /* Left Column */
         .issue-main { flex: 2; padding: 25px; overflow-y: auto; border-right: 1px solid var(--border-color); position: relative; }
         .jira-tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; font-size: 13px; font-weight: 500; color: var(--text-subtle); }
         .jira-tabs span { padding-bottom: 8px; cursor: pointer; }
@@ -87,30 +83,24 @@
         
         .jira-section { margin-bottom: 25px; }
         .jira-section h3 { font-size: 14px; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .jira-content-box { border: 1px solid var(--border-color); border-radius: 4px; padding: 15px; background: var(--bg-card); }
         
         .ac-section { background: var(--bg-sidebar); border: 1px solid var(--border-color); padding: 15px; border-radius: 4px; transition: all 0.3s; font-size: 13px; line-height: 1.5;}
         .ac-section.highlight { border-color: var(--ai-purple); background: rgba(101, 84, 192, 0.1); }
         .ac-section.success { border-color: var(--success-green); background: rgba(54, 179, 126, 0.1); }
 
-        /* Mock attachments & links */
         .attachment-item { display: inline-flex; flex-direction: column; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; margin-right: 10px; width: 120px; font-size: 11px; background: var(--bg-card);}
         .attachment-item img { width: 100%; height: 60px; object-fit: cover; background: #eee; margin-bottom: 5px; border-radius: 2px;}
-        
         .linked-issue { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; background: var(--bg-card); }
         
-        /* Right Column */
         .issue-sidebar { flex: 1; padding: 20px; overflow-y: auto; background: var(--bg-sidebar); }
         .sidebar-panel { margin-bottom: 25px; }
         .sidebar-panel h3 { font-size: 13px; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 15px; font-weight: 600;}
         .field-row { display: flex; align-items: center; margin-bottom: 12px; font-size: 12px; }
         .field-label { width: 130px; color: var(--text-subtle); }
         .field-val { flex: 1; color: var(--text-main); display: flex; align-items: center; gap: 8px; font-weight: 500;}
-        .dev-link { color: var(--primary-blue); text-decoration: none; display: flex; align-items: center; gap: 5px; margin-bottom: 8px; font-weight: 500;}
 
         /* AI Elements */
         .ai-scanner { position: absolute; left: 0; top: 0; width: 100%; height: 40px; background: linear-gradient(to bottom, transparent, rgba(101, 84, 192, 0.3)); border-bottom: 2px solid var(--ai-purple); z-index: 50; display: none; box-shadow: 0 10px 20px rgba(101,84,192,0.1); pointer-events: none;}
-        
         .ai-popup { background: var(--bg-card); border: 1px solid var(--ai-purple); border-radius: 6px; padding: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); margin-top: 20px; display: none; border-left: 4px solid var(--ai-purple); position: relative; z-index: 100;}
         .ai-popup h4 { margin: 0 0 10px 0; color: var(--ai-purple); font-size: 15px; }
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
@@ -139,44 +129,37 @@
 <body>
 
     <div class="top-controls">
-        <button class="control-element theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
-        <select class="control-element" id="langSelector" onchange="changeLanguage(this.value)">
-            <option value="en">English (US)</option>
-            <option value="es">Español (ES/LATAM)</option>
-            <option value="pt">Português (BR)</option>
-            <option value="it">Italiano (IT)</option>
-            <option value="fr">Français (FR)</option>
-            <option value="ru">Русский (RU)</option>
-        </select>
-        <button class="start-btn" id="startBtn" onclick="runSimulation()" data-i18n="btnStart">Iniciar Escaneo AI</button>
+        <button class="control-element theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Modo Oscuro/Claro">🌙</button>
+        <div id="google_translate_element" class="control-element" style="padding: 0; border: none; background: transparent;"></div>
+        <button class="start-btn" id="startBtn" onclick="runSimulation()">Iniciar Escaneo AI</button>
     </div>
 
     <div class="sidebar">
         <div class="sidebar-logo">QA Studio</div>
-        <div style="color: var(--text-subtle); font-size: 13px; font-weight: 500;" data-i18n="activeBoard">Board Activo</div>
+        <div style="color: var(--text-subtle); font-size: 13px; font-weight: 500;">Board Activo</div>
     </div>
 
     <div class="main-content">
         <div class="board-header">
-            <h1 class="board-title" data-i18n="boardTitle">SDLC Tracking Board</h1>
+            <h1 class="board-title">SDLC Tracking Board</h1>
         </div>
 
         <div class="board-container">
             <div class="column">
                 <div class="column-title">Backlog</div>
                 <div class="ticket" id="t-sys-101" onclick="openManualTicket('SYS-101')">
-                    <div class="epic-tag" data-i18n="epicSecurity">Security</div>
-                    <div class="ticket-summary" id="sum-101"></div>
+                    <div class="epic-tag">Seguridad</div>
+                    <div class="ticket-summary" id="sum-101">Configuración SSO (SAML)</div>
                     <div class="ticket-footer"><span>SYS-101</span><div class="ticket-meta"><span class="sp-badge">5</span><div class="avatar">CM</div></div></div>
                 </div>
                 <div class="ticket" id="t-sys-102" onclick="openManualTicket('SYS-102')">
-                    <div class="epic-tag" data-i18n="epicBackend">Backend</div>
-                    <div class="ticket-summary" id="sum-102"></div>
+                    <div class="epic-tag">Backend</div>
+                    <div class="ticket-summary" id="sum-102">Deprecar endpoints v1</div>
                     <div class="ticket-footer"><span>SYS-102</span><div class="ticket-meta"><span class="sp-badge">3</span><div class="avatar" style="background:#36B37E">DA</div></div></div>
                 </div>
                 <div class="ticket" id="t-sys-103" onclick="openManualTicket('SYS-103')">
-                    <div class="epic-tag" data-i18n="epicBackend">Backend</div>
-                    <div class="ticket-summary" id="sum-103"></div>
+                    <div class="epic-tag">Backend</div>
+                    <div class="ticket-summary" id="sum-103">Validación estricta POST /users</div>
                     <div class="ticket-footer"><span>SYS-103</span><div class="ticket-meta"><span class="sp-badge">8</span><div class="avatar" style="background:#FF5630">KB</div></div></div>
                 </div>
             </div>
@@ -184,13 +167,13 @@
             <div class="column">
                 <div class="column-title">To Do</div>
                 <div class="ticket" id="t-sys-104" onclick="openManualTicket('SYS-104')">
-                    <div class="epic-tag" data-i18n="epicFrontend">Frontend</div>
-                    <div class="ticket-summary" id="sum-104"></div>
+                    <div class="epic-tag">Frontend</div>
+                    <div class="ticket-summary" id="sum-104">Actualizar Librerías UI</div>
                     <div class="ticket-footer"><span>SYS-104</span><div class="ticket-meta"><span class="sp-badge">2</span><div class="avatar">CM</div></div></div>
                 </div>
                 <div class="ticket" id="t-sys-105" onclick="openManualTicket('SYS-105')">
-                    <div class="epic-tag" data-i18n="epicDatabase">Database</div>
-                    <div class="ticket-summary" id="sum-105"></div>
+                    <div class="epic-tag">Base de Datos</div>
+                    <div class="ticket-summary" id="sum-105">Migrar DB a PostgreSQL 15</div>
                     <div class="ticket-footer"><span>SYS-105</span><div class="ticket-meta"><span class="sp-badge">13</span><div class="avatar" style="background:#FFAB00">JW</div></div></div>
                 </div>
             </div>
@@ -198,18 +181,18 @@
             <div class="column">
                 <div class="column-title">In Progress</div>
                 <div class="ticket" id="t-sys-106" onclick="openManualTicket('SYS-106')">
-                    <div class="epic-tag" data-i18n="epicSecurity">Security</div>
-                    <div class="ticket-summary" id="sum-106"></div>
+                    <div class="epic-tag">Seguridad</div>
+                    <div class="ticket-summary" id="sum-106">Rate Limiting API</div>
                     <div class="ticket-footer"><span>SYS-106</span><div class="ticket-meta"><span class="sp-badge">5</span><div class="avatar" style="background:#36B37E">DA</div></div></div>
                 </div>
                 <div class="ticket" id="t-sys-107" onclick="openManualTicket('SYS-107')">
-                    <div class="epic-tag" data-i18n="epicPerformance">Performance</div>
-                    <div class="ticket-summary" id="sum-107"></div>
+                    <div class="epic-tag">Performance</div>
+                    <div class="ticket-summary" id="sum-107">Refactor consultas GraphQL</div>
                     <div class="ticket-footer"><span>SYS-107</span><div class="ticket-meta"><span class="sp-badge">8</span><div class="avatar">CM</div></div></div>
                 </div>
                 <div class="ticket" id="t-sys-108" onclick="openManualTicket('SYS-108')">
-                    <div class="epic-tag" data-i18n="epicFrontend">Frontend</div>
-                    <div class="ticket-summary" id="sum-108"></div>
+                    <div class="epic-tag">Frontend</div>
+                    <div class="ticket-summary" id="sum-108">Optimizar Carga Imágenes</div>
                     <div class="ticket-footer"><span>SYS-108</span><div class="ticket-meta"><span class="sp-badge">3</span><div class="avatar" style="background:#FF5630">KB</div></div></div>
                 </div>
             </div>
@@ -225,12 +208,9 @@
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="#36B37E"><rect width="24" height="24" rx="4"/></svg>
                     <span id="modal-key" style="font-weight: 600; color: var(--text-main); font-size: 14px;">SYS-XXX</span>
-                    <span style="font-size: 12px; color: var(--text-subtle); margin-left: 10px;" id="modal-status-txt" data-i18n="modalStatus">Status: Analysis</span>
+                    <span style="font-size: 12px; color: var(--text-subtle); margin-left: 10px;" id="modal-status-txt">Estado: Vista Manual</span>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn-reject" style="padding: 6px 12px; font-size: 12px; border-radius: 3px;">Compartir</button>
-                    <button class="close-btn" id="modalCloseBtn" onclick="closeManualTicket()">✖</button>
-                </div>
+                <button class="close-btn" id="modalCloseBtn" onclick="closeManualTicket()">✖</button>
             </div>
             
             <div class="issue-body">
@@ -240,80 +220,52 @@
                     <h1 style="margin-top:0; font-size: 22px; color: var(--text-main); line-height: 1.3;" id="modal-title">...</h1>
                     
                     <div class="jira-tabs">
-                        <span class="active" data-i18n="tabDesc">Description</span>
-                        <span data-i18n="tabCat">Categories</span>
+                        <span class="active">Descripción</span>
+                        <span>Categorías</span>
                         <span>Zendesk</span>
-                        <span>Deployment</span>
-                        <span>Product Misc</span>
+                        <span>Despliegue</span>
                     </div>
 
                     <div class="jira-section">
-                        <h3 data-i18n="descTitle">Descripción</h3>
+                        <h3>Detalles de la Historia</h3>
                         <div style="font-size: 14px; color: var(--text-main); line-height: 1.6;" id="modal-desc">...</div>
                         
                         <div class="ac-section" id="acSection">
-                            <strong data-i18n="accCriteria">Acceptance Criteria:</strong><br>
+                            <strong>Criterios de Aceptación:</strong><br>
                             <div id="modal-ac" style="margin-top: 10px; font-family: 'Fira Code', monospace; font-size: 12px;">...</div>
                         </div>
 
                         <div class="ai-popup" id="aiPopup">
-                            <h4>✨ <span data-i18n="aiSuggestion">AI Agent Suggestion</span></h4>
+                            <h4>✨ Sugerencia del Agente AI</h4>
                             <p id="ai-popup-text" style="font-size: 13px; line-height: 1.5; color: var(--text-main);">...</p>
                             <div class="btn-group">
-                                <button class="btn btn-primary" onclick="handleDecision(true)" data-i18n="btnAccept">Accept & Inject</button>
-                                <button class="btn btn-reject" onclick="handleDecision(false)" data-i18n="btnReject">Discard</button>
+                                <button class="btn btn-primary" onclick="handleDecision(true)">Aceptar e Inyectar</button>
+                                <button class="btn btn-reject" onclick="handleDecision(false)">Descartar</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="jira-section">
-                        <h3 data-i18n="attachTitle">Archivos adjuntos (2)</h3>
+                        <h3>Archivos adjuntos (2)</h3>
                         <div class="attachment-item">
-                            <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' fill='%23ddd'%3E%3Crect width='100' height='60'/%3E%3Ctext x='50' y='35' font-size='12' fill='%23666' text-anchor='middle'%3EImage%3C/text%3E%3C/svg%3E" alt="attachment">
-                            <span>wireframe_v2.png</span>
+                            <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' fill='%23ddd'%3E%3Crect width='100' height='60'/%3E%3Ctext x='50' y='35' font-size='12' fill='%23666' text-anchor='middle'%3EImagen%3C/text%3E%3C/svg%3E" alt="attachment">
+                            <span>wireframe.png</span>
                             <span style="color: var(--text-subtle);">1.2 MB</span>
                         </div>
                         <div class="attachment-item">
                             <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' fill='%23ddd'%3E%3Crect width='100' height='60'/%3E%3Ctext x='50' y='35' font-size='12' fill='%23666' text-anchor='middle'%3EDoc%3C/text%3E%3C/svg%3E" alt="attachment">
-                            <span>schema_req.pdf</span>
+                            <span>esquema.pdf</span>
                             <span style="color: var(--text-subtle);">450 KB</span>
-                        </div>
-                    </div>
-
-                    <div class="jira-section">
-                        <h3 data-i18n="linkedTitle">Actividades vinculadas</h3>
-                        <p style="font-size: 12px; color: var(--text-subtle); margin: 0 0 8px 0;">clona a</p>
-                        <div class="linked-issue">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF5630"><rect width="24" height="24" rx="4"/></svg>
-                            <span style="text-decoration: line-through; color: var(--text-subtle);">RAFT-10413</span>
-                            <span>Create group entry point from SciShield...</span>
-                            <span style="margin-left: auto; background: var(--border-color); padding: 2px 6px; border-radius: 3px; font-size: 11px;">DONE</span>
-                        </div>
-                    </div>
-                    
-                    <div class="jira-section">
-                        <h3 data-i18n="confTitle">Contenido de Confluence</h3>
-                        <div class="linked-issue">
-                            <span style="color: #0052CC; font-weight: bold; font-size: 16px;">▤</span>
-                            <a href="#" style="color: var(--primary-blue); text-decoration: none;">SciShield UX Alignment for SMP Context - Epic Discovery</a>
                         </div>
                     </div>
                 </div>
 
                 <div class="issue-sidebar">
                     <div class="sidebar-panel">
-                        <h3 data-i18n="detTitle">Detalles</h3>
+                        <h3>Propiedades</h3>
                         <div class="field-row">
-                            <div class="field-label">Assignee</div>
+                            <div class="field-label">Asignado a</div>
                             <div class="field-val"><div class="avatar" id="modal-assignee-av">DA</div> <span id="modal-assignee-nm">Dan Andrews</span></div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field-label">Reporter</div>
-                            <div class="field-val"><div class="avatar" style="background:#FF5630">KB</div> Kim Brown</div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field-label">Feature Owner</div>
-                            <div class="field-val">Kim Brown</div>
                         </div>
                         <div class="field-row">
                             <div class="field-label">Story Points</div>
@@ -323,36 +275,6 @@
                             <div class="field-label">Sprint</div>
                             <div class="field-val"><a href="#" style="color: var(--primary-blue); text-decoration: none;">Sprint 258</a></div>
                         </div>
-                        <div class="field-row">
-                            <div class="field-label">Priority</div>
-                            <div class="field-val" style="color: #FFAB00;">Medium</div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field-label">Severity</div>
-                            <div class="field-val">Ninguno</div>
-                        </div>
-                    </div>
-
-                    <div class="sidebar-panel">
-                        <h3 data-i18n="devTitle">Desarrollo</h3>
-                        <a href="#" class="dev-link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                            Conectar herramientas de desarrollo
-                        </a>
-                        <a href="#" class="dev-link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
-                            Crear rama
-                        </a>
-                        <a href="#" class="dev-link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                            Crear confirmación
-                        </a>
-                    </div>
-                    
-                    <div class="sidebar-panel">
-                        <h3 data-i18n="autoTitle">Automatización</h3>
-                        <p style="font-size: 11px; color: var(--text-subtle); margin: 0 0 10px 0;">Ejecuciones de reglas recientes</p>
-                        <a href="#" class="dev-link" style="font-size: 11px;">Actualiza para ver las ejecuciones recientes.</a>
                     </div>
                 </div>
             </div>
@@ -360,13 +282,13 @@
     </div>
 
     <div class="terminal-overlay" id="terminal">
-        <div class="log-line"><span class="tag-sys">SYSTEM</span> <span id="term-ready">Motor AI Listo. Esperando ejecución.</span></div>
+        <div class="log-line"><span class="tag-sys">SYSTEM</span> <span>Motor AI Listo. Esperando ejecución.</span></div>
     </div>
 
     <div class="report-overlay" id="reportOverlay">
         <div class="report-container">
-            <div class="report-title" data-i18n="reportTitle">AI Audit Report</div>
-            <p style="text-align: center; color: var(--text-subtle); font-size: 15px;" data-i18n="reportSub">Results from automated backlog pre-validation prior to QA execution.</p>
+            <div class="report-title">Reporte de Auditoría AI</div>
+            <p style="text-align: center; color: var(--text-subtle); font-size: 15px;">Resultados de pre-validación del backlog.</p>
             
             <div class="charts-grid">
                 <div class="chart-box"><canvas id="pieChart"></canvas></div>
@@ -376,191 +298,42 @@
             </div>
             
             <div style="text-align: center; margin-top: 40px;">
-                <button class="btn btn-primary" style="font-size: 16px; padding: 12px 30px;" onclick="location.reload()" data-i18n="btnRestart">Close & Restart</button>
+                <button class="btn btn-primary" style="font-size: 16px; padding: 12px 30px;" onclick="location.reload()">Cerrar y Reiniciar</button>
             </div>
         </div>
     </div>
 
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'es', // El idioma base del código es Español
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
     <script>
-        // --- Translation Engine (i18n) Expanded ---
-        const translations = {
-            en: {
-                btnStart: "Start AI Scan", activeBoard: "Active Board", boardTitle: "SDLC Tracking Board",
-                modalStatus: "Status: Analysis", modalView: "Status: Manual View", accCriteria: "Acceptance Criteria:", aiSuggestion: "AI Agent Suggestion",
-                btnAccept: "Accept & Inject", btnReject: "Discard", reportTitle: "AI Audit Report", reportSub: "Automated backlog pre-validation metrics.",
-                btnRestart: "Close & Restart", termReady: "AI Engine Ready. Awaiting execution.",
-                epicSecurity: "Security", epicBackend: "Backend", epicFrontend: "Frontend", epicDatabase: "Database", epicPerformance: "Performance",
-                tabDesc: "Description", tabCat: "Categories", descTitle: "Description", attachTitle: "Attachments (2)", linkedTitle: "Linked Issues",
-                confTitle: "Confluence Content", detTitle: "Details", devTitle: "Development", autoTitle: "Automation",
-                logs: {
-                    start: "Initiating automated review cycle on 8 stories...", analyzing: "Analyzing ticket ", intervention: "Intervention required. Awaiting human decision.",
-                    accepted: "Changes accepted. Refactoring structure...", rejected: "Suggestion rejected by QA. Keeping original version.", complete: "Analysis complete. Generating metrics...",
-                    perfect: "Clean static analysis. ACs ready for automation."
-                },
-                charts: {
-                    pieTitle: "AI Intervention Distribution", pieLabels: ['Perfect (No AI needed)', 'AI Refined', 'Rejected by QA'],
-                    barTitle: "Testability Evolution", barLabels: ['Initial Quality', 'Post-AI Quality'], barPoor: "Poor Structure", barReady: "Ready BDD Syntax",
-                    lineTitle: "Est. Automation Time Saved (Hours)", lineLabels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Current Sprint'],
-                    radarTitle: "Automation Readiness Coverage", radarLabels: ['API Testing', 'E2E (Playwright)', 'Security', 'Performance', 'DB Schema']
-                }
-            },
-            es: {
-                btnStart: "Iniciar Escaneo AI", activeBoard: "Tablero Activo", boardTitle: "SDLC Tracking Board",
-                modalStatus: "Estado: Análisis AI", modalView: "Estado: Vista Manual", accCriteria: "Criterios de Aceptación:", aiSuggestion: "Sugerencia del Agente",
-                btnAccept: "Aceptar e Inyectar", btnReject: "Descartar", reportTitle: "Reporte de Auditoría AI", reportSub: "Métricas de pre-validación del backlog.",
-                btnRestart: "Cerrar y Reiniciar", termReady: "Motor AI Listo. Esperando ejecución.",
-                epicSecurity: "Seguridad", epicBackend: "Backend", epicFrontend: "Frontend", epicDatabase: "Base de Datos", epicPerformance: "Rendimiento",
-                tabDesc: "Descripción", tabCat: "Categorías", descTitle: "Descripción", attachTitle: "Archivos adjuntos (2)", linkedTitle: "Actividades vinculadas",
-                confTitle: "Contenido de Confluence", detTitle: "Detalles", devTitle: "Desarrollo", autoTitle: "Automatización",
-                logs: {
-                    start: "Iniciando ciclo de revisión en 8 historias...", analyzing: "Analizando ticket ", intervention: "Se requiere intervención. Esperando decisión.",
-                    accepted: "Cambios aceptados. Refactorizando estructura...", rejected: "Sugerencia rechazada. Manteniendo original.", complete: "Análisis completo. Generando métricas...",
-                    perfect: "Análisis estático limpio. ACs listos para automatización."
-                },
-                charts: {
-                    pieTitle: "Distribución de Intervención AI", pieLabels: ['Perfectas', 'Refinadas por AI', 'Rechazadas'],
-                    barTitle: "Evolución de la Testabilidad", barLabels: ['Calidad Inicial', 'Calidad Post-AI'], barPoor: "Estructura Pobre", barReady: "Sintaxis BDD Lista",
-                    lineTitle: "Horas Ahorradas en Automatización", lineLabels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint Actual'],
-                    radarTitle: "Cobertura Proyectada (Readiness)", radarLabels: ['API Testing', 'E2E (Playwright)', 'Seguridad', 'Performance', 'DB Schema']
-                }
-            },
-            pt: {
-                btnStart: "Iniciar Varredura AI", activeBoard: "Quadro Ativo", boardTitle: "SDLC Tracking Board",
-                modalStatus: "Status: Análise AI", modalView: "Status: Visualização Manual", accCriteria: "Critérios de Aceitação:", aiSuggestion: "Sugestão do Agente",
-                btnAccept: "Aceitar e Injetar", btnReject: "Descartar", reportTitle: "Relatório de Auditoria AI", reportSub: "Métricas de pré-validação do backlog.",
-                btnRestart: "Fechar e Reiniciar", termReady: "Motor AI Pronto. Aguardando execução.",
-                epicSecurity: "Segurança", epicBackend: "Backend", epicFrontend: "Frontend", epicDatabase: "Banco de Dados", epicPerformance: "Desempenho",
-                tabDesc: "Descrição", tabCat: "Categorias", descTitle: "Descrição", attachTitle: "Anexos (2)", linkedTitle: "Problemas Vinculados",
-                confTitle: "Conteúdo do Confluence", detTitle: "Detalhes", devTitle: "Desenvolvimento", autoTitle: "Automação",
-                logs: {
-                    start: "Iniciando ciclo de revisão em 8 histórias...", analyzing: "Analisando ticket ", intervention: "Intervenção necessária. Aguardando decisão.",
-                    accepted: "Mudanças aceitas. Refatorando estrutura...", rejected: "Sugestão rejeitada. Mantendo original.", complete: "Análise completa. Gerando métricas...",
-                    perfect: "Análise estática limpa. ACs prontos para automação."
-                },
-                charts: {
-                    pieTitle: "Distribuição de Intervenção AI", pieLabels: ['Perfeitas', 'Refinadas por AI', 'Rejeitadas'],
-                    barTitle: "Evolução da Testabilidade", barLabels: ['Qualidade Inicial', 'Qualidade Pós-AI'], barPoor: "Estrutura Pobre", barReady: "Sintaxe BDD Pronta",
-                    lineTitle: "Horas Economizadas em Automação", lineLabels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint Atual'],
-                    radarTitle: "Cobertura Projetada", radarLabels: ['API Testing', 'E2E (Playwright)', 'Segurança', 'Performance', 'DB Schema']
-                }
-            },
-            it: {
-                btnStart: "Avvia Scansione AI", activeBoard: "Bacheca Attiva", boardTitle: "SDLC Tracking Board",
-                modalStatus: "Stato: Analisi AI", modalView: "Stato: Vista Manuale", accCriteria: "Criteri di Accettazione:", aiSuggestion: "Suggerimento Agente",
-                btnAccept: "Accetta e Inietta", btnReject: "Scarta", reportTitle: "Rapporto di Audit AI", reportSub: "Metriche di pre-convalida del backlog.",
-                btnRestart: "Chiudi e Riavvia", termReady: "Motore AI Pronto. In attesa di esecuzione.",
-                epicSecurity: "Sicurezza", epicBackend: "Backend", epicFrontend: "Frontend", epicDatabase: "Database", epicPerformance: "Prestazioni",
-                tabDesc: "Descrizione", tabCat: "Categorie", descTitle: "Descrizione", attachTitle: "Allegati (2)", linkedTitle: "Problemi Collegati",
-                confTitle: "Contenuto Confluence", detTitle: "Dettagli", devTitle: "Sviluppo", autoTitle: "Automazione",
-                logs: {
-                    start: "Avvio del ciclo di revisione su 8 storie...", analyzing: "Analizzando il ticket ", intervention: "Intervento richiesto. In attesa di decisione.",
-                    accepted: "Modifiche accettate. Refactoring della struttura...", rejected: "Suggerimento rifiutato. Mantenimento dell'originale.", complete: "Analisi completata. Generazione metriche...",
-                    perfect: "Analisi statica pulita. AC pronti per l'automazione."
-                },
-                charts: {
-                    pieTitle: "Distribuzione Intervento AI", pieLabels: ['Perfette', 'Affinate da AI', 'Rifiutate'],
-                    barTitle: "Evoluzione della Testabilità", barLabels: ['Qualità Iniziale', 'Qualità Post-AI'], barPoor: "Struttura Povera", barReady: "Sintassi BDD Pronta",
-                    lineTitle: "Ore Risparmiate in Automazione", lineLabels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint Attuale'],
-                    radarTitle: "Copertura Prevista", radarLabels: ['API Testing', 'E2E (Playwright)', 'Sicurezza', 'Performance', 'Schema DB']
-                }
-            },
-            fr: {
-                btnStart: "Démarrer l'Analyse AI", activeBoard: "Tableau Actif", boardTitle: "SDLC Tracking Board",
-                modalStatus: "Statut: Analyse AI", modalView: "Statut: Vue Manuelle", accCriteria: "Critères d'Acceptation:", aiSuggestion: "Suggestion de l'Agent",
-                btnAccept: "Accepter et Injecter", btnReject: "Rejeter", reportTitle: "Rapport d'Audit AI", reportSub: "Métriques de pré-validation du backlog.",
-                btnRestart: "Fermer et Redémarrer", termReady: "Moteur AI Prêt. En attente d'exécution.",
-                epicSecurity: "Sécurité", epicBackend: "Backend", epicFrontend: "Frontend", epicDatabase: "Base de Données", epicPerformance: "Performance",
-                tabDesc: "Description", tabCat: "Catégories", descTitle: "Description", attachTitle: "Pièces jointes (2)", linkedTitle: "Problèmes Liés",
-                confTitle: "Contenu Confluence", detTitle: "Détails", devTitle: "Développement", autoTitle: "Automatisation",
-                logs: {
-                    start: "Lancement du cycle de révision sur 8 histoires...", analyzing: "Analyse du ticket ", intervention: "Intervention requise. En attente de décision.",
-                    accepted: "Modifications acceptées. Refactoring de la structure...", rejected: "Suggestion rejetée. Conservation de l'original.", complete: "Analyse terminée. Génération des métriques...",
-                    perfect: "Analyse statique propre. ACs prêts pour l'automatisation."
-                },
-                charts: {
-                    pieTitle: "Distribution de l'Intervention AI", pieLabels: ['Parfaites', 'Affinées par AI', 'Rejetées'],
-                    barTitle: "Évolution de la Testabilité", barLabels: ['Qualité Initiale', 'Qualité Post-AI'], barPoor: "Structure Pauvre", barReady: "Syntaxe BDD Prête",
-                    lineTitle: "Heures Économisées (Automatisation)", lineLabels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint Actuel'],
-                    radarTitle: "Couverture Projetée", radarLabels: ['Test API', 'E2E (Playwright)', 'Sécurité', 'Performance', 'Schéma DB']
-                }
-            },
-            ru: {
-                btnStart: "Запустить ИИ Сканирование", activeBoard: "Активная Доска", boardTitle: "SDLC Tracking Board",
-                modalStatus: "Статус: Анализ ИИ", modalView: "Статус: Ручной Просмотр", accCriteria: "Критерии Приемки:", aiSuggestion: "Предложение Агента",
-                btnAccept: "Принять и Внедрить", btnReject: "Отклонить", reportTitle: "Отчет Аудита ИИ", reportSub: "Метрики предварительной валидации бэклога.",
-                btnRestart: "Закрыть и Перезапустить", termReady: "Движок ИИ Готов. Ожидание выполнения.",
-                epicSecurity: "Безопасность", epicBackend: "Бэкенд", epicFrontend: "Фронтенд", epicDatabase: "База Данных", epicPerformance: "Производительность",
-                tabDesc: "Описание", tabCat: "Категории", descTitle: "Описание", attachTitle: "Вложения (2)", linkedTitle: "Связанные Задачи",
-                confTitle: "Контент Confluence", detTitle: "Детали", devTitle: "Разработка", autoTitle: "Автоматизация",
-                logs: {
-                    start: "Запуск цикла проверки 8 историй...", analyzing: "Анализ задачи ", intervention: "Требуется вмешательство. Ожидание решения.",
-                    accepted: "Изменения приняты. Рефакторинг структуры...", rejected: "Предложение отклонено. Оставляем оригинал.", complete: "Анализ завершен. Генерация метрик...",
-                    perfect: "Чистый статический анализ. AC готовы к автоматизации."
-                },
-                charts: {
-                    pieTitle: "Распределение вмешательства ИИ", pieLabels: ['Идеально', 'Улучшено ИИ', 'Отклонено'],
-                    barTitle: "Эволюция Тестируемости", barLabels: ['Начальное Качество', 'Качество после ИИ'], barPoor: "Плохая Структура", barReady: "Синтаксис BDD Готов",
-                    lineTitle: "Сэкономленные часы на автоматизацию", lineLabels: ['Спринт 1', 'Спринт 2', 'Спринт 3', 'Текущий Спринт'],
-                    radarTitle: "Прогнозируемое Покрытие", radarLabels: ['API Тесты', 'E2E (Playwright)', 'Безопасность', 'Производительность', 'Схема БД']
-                }
-            }
-        };
+        // Datos base estrictamente en Español (Google Translate se encargará del resto vía DOM)
+        const activeStories = [
+            { id: 'SYS-101', status: 'needs_change', t: "Configuración SSO (SAML)", d: "Implementar inicio de sesión único con IdP corporativo. Los usuarios deben usar Okta. Asegurar fallback a auth normal si falla.", ac: "- Login funciona.\n- Muestra errores.", am: "Criterios vagos. Sugiero refactorizar a Gherkin manejando validación de tokens SAML y manejo explícito de HTTP 401.", aac: "Scenario: SAML Válido\nGiven usuario sin autenticar\nWhen provee respuesta SAML válida\nThen sesión es creada", asg: "CM", nm: "Carlos Munoz", sp: "5" },
+            { id: 'SYS-102', status: 'perfect', t: "Deprecar endpoints v1", d: "Eliminar API legacy v1. Asegurar que los clientes móviles hayan actualizado a v2 antes del apagón final.", ac: "Given ruta API v1\nWhen solicitada\nThen retornar 410 Gone", am: "Análisis estático limpio. Estructura BDD perfecta, lista para pruebas automatizadas.", asg: "DA", nm: "Dan Andrews", sp: "3" },
+            { id: 'SYS-103', status: 'needs_change', t: "Validación estricta POST /users", d: "Validar campos obligatorios (email, teléfono). Debe ejecutarse antes de la inserción para evitar datos corruptos en PostgreSQL.", ac: "API rechaza peticiones malas. Requiere email.", am: "Faltan especificaciones técnicas (Regex). Definir explícitamente el código 400 Bad Request.", aac: "Scenario: Email Inválido\nGiven email malformado\nWhen POST /users\nThen retornar 400 Bad Request", asg: "KB", nm: "Kim Brown", sp: "8" },
+            { id: 'SYS-104', status: 'perfect', t: "Actualizar Librerías UI", d: "Subir dependencias React/Webpack por seguridad tras auditoría de Snyk.", ac: "Given repositorio\nWhen npm install\nThen npm audit retorna 0 críticos", am: "ACs perfectos. Compatibles inmediatamente con el pipeline de CI/CD.", asg: "CM", nm: "Carlos Munoz", sp: "2" },
+            { id: 'SYS-105', status: 'needs_change', t: "Migrar DB a PostgreSQL 15", d: "Actualizar motor de base de datos. Se prefiere zero downtime, ventana de 10 min aprobada para domingo.", ac: "La base de datos debe actualizarse sin perder datos.", am: "El criterio 'sin perder datos' no es testeable automáticamente. Sugiero agregar validación de esquemas y conteo de filas.", aac: "Scenario: Integridad de datos\nGiven backup de DB\nWhen script migración termina\nThen conteo de filas coincide", asg: "JW", nm: "Jeremy White", sp: "13" },
+            { id: 'SYS-106', status: 'perfect', t: "Rate Limiting API", d: "Restringir peticiones por IP para evitar ataques DDoS. Aplicar algoritmo token-bucket en caché.", ac: "Given IP única\nWhen >100 req/min\nThen retorna 429", am: "Criterios claros y declarativos. Ninguna acción de IA requerida.", asg: "DA", nm: "Dan Andrews", sp: "5" },
+            { id: 'SYS-107', status: 'needs_change', t: "Refactor consultas GraphQL", d: "Arreglar problema N+1 en el dashboard causando alta latencia en horas pico.", ac: "El dashboard carga más rápido.", am: "Término 'rápido' ambiguo. Debemos definir un SLA explícito de rendimiento.", aac: "Scenario: Rendimiento GraphQL\nGiven carga de Dashboard\nWhen query se ejecuta\nThen tiempo respuesta < 500ms", asg: "CM", nm: "Carlos Munoz", sp: "8" },
+            { id: 'SYS-108', status: 'needs_change', t: "Optimizar Carga Imágenes", d: "Implementar lazy loading para avatares y miniaturas para mejorar el First Contentful Paint (FCP).", ac: "Imágenes no cargan todas a la vez.", am: "Recomiendo convertir esto a una aserción de inspección del DOM (atributos HTML).", aac: "Scenario: Carga diferida\nGiven carga de página\nThen imágenes ocultas tienen atributo loading='lazy'", asg: "KB", nm: "Kim Brown", sp: "3" }
+        ];
 
-        // DB setup
-        const generateStories = (lang) => {
-            const t = {
-                en: {
-                    101: { t: "SSO Config (SAML)", d: "Implement Single Sign-On using corporate IdP. Users should be able to log in using their Okta credentials. Ensure fallback to standard auth if SSO fails.", ac: "- Login works.\n- Errors are shown.", am: "Vague. Refactor to Gherkin handling SAML tokens & 401.", aac: "Scenario: Valid SAML\nGiven unauthenticated user\nWhen valid SAML response provided\nThen session created", asg: "CM", nm: "Carlos Munoz", sp: "5" },
-                    102: { t: "Deprecate v1 endpoints", d: "Remove legacy v1 API endpoints. Ensure that all mobile clients have been forced to upgrade to v2 before complete shutdown.", ac: "Given API v1 path\nWhen requested\nThen return 410 Gone", am: "Static analysis clean. Perfect BDD structure.", asg: "DA", nm: "Dan Andrews", sp: "3" },
-                    103: { t: "Strict validation POST /users", d: "Validate all mandatory fields (email, phone, address). Needs to run before DB insertion to prevent dirty data in PostgreSQL.", ac: "API rejects bad requests. Needs email.", am: "Missing regex specs. Define 400 Bad Request.", aac: "Scenario: Invalid email\nGiven bad email\nWhen POST /users\nThen return 400 Bad Request", asg: "KB", nm: "Kim Brown", sp: "8" },
-                    104: { t: "Update UI Libraries", d: "Upgrade React and Webpack dependencies for security. Target specific vulnerabilities flagged by Snyk in the recent audit.", ac: "Given repo\nWhen npm install\nThen npm audit returns 0 critical", am: "Perfect ACs for CI pipeline.", asg: "CM", nm: "Carlos Munoz", sp: "2" },
-                    105: { t: "Migrate DB to PostgreSQL 15", d: "Upgrade database engine. Zero downtime is preferred, but a 10-minute maintenance window is approved for Sunday 2 AM.", ac: "Database should be upgraded without losing data.", am: "Not testable automatically. Add schema validation steps.", aac: "Scenario: Data integrity\nGiven DB backup\nWhen migration script runs\nThen table row counts match exactly", asg: "JW", nm: "Jeremy White", sp: "13" },
-                    106: { t: "Rate Limiting API", d: "Restrict requests to prevent DDoS. Apply a strict token-bucket algorithm using Redis.", ac: "Given single IP\nWhen >100 req/min\nThen return 429", am: "Clear and testable. No action needed.", asg: "DA", nm: "Dan Andrews", sp: "5" },
-                    107: { t: "Refactor GraphQL queries", d: "Fix N+1 query issue on the main dashboard which is causing high latency during peak hours.", ac: "Dashboard loads faster.", am: "Non-testable 'faster'. Define explicit SLA.", aac: "Scenario: GraphQL Perf\nGiven Dashboard load\nWhen query executes\nThen time < 500ms", asg: "CM", nm: "Carlos Munoz", sp: "8" },
-                    108: { t: "Optimize Image Loading", d: "Implement lazy loading for all avatars and attachment thumbnails across the application to improve First Contentful Paint (FCP).", ac: "Images don't load all at once.", am: "Convert to DOM inspection test.", aac: "Scenario: Lazy load\nGiven page load\nThen images below fold have loading='lazy' attribute", asg: "KB", nm: "Kim Brown", sp: "3" }
-                },
-                es: {
-                    101: { t: "Configuración SSO (SAML)", d: "Implementar inicio de sesión único con IdP corporativo. Los usuarios deben usar Okta. Asegurar fallback a auth normal si falla.", ac: "- Login funciona.\n- Muestra errores.", am: "Criterios vagos. Refactorizar a Gherkin manejando SAML y HTTP 401.", aac: "Scenario: SAML Válido\nGiven usuario sin autenticar\nWhen provee respuesta SAML válida\nThen sesión es creada", asg: "CM", nm: "Carlos Munoz", sp: "5" },
-                    102: { t: "Deprecar endpoints v1", d: "Eliminar API legacy v1. Asegurar que los clientes móviles hayan actualizado a v2 antes del apagón.", ac: "Given ruta API v1\nWhen solicitada\nThen retornar 410 Gone", am: "Análisis limpio. Estructura BDD perfecta.", asg: "DA", nm: "Dan Andrews", sp: "3" },
-                    103: { t: "Validación estricta POST /users", d: "Validar campos obligatorios (email, teléfono). Debe correr antes de inserción para evitar datos sucios en PostgreSQL.", ac: "API rechaza peticiones malas. Requiere email.", am: "Faltan especificaciones (Regex). Definir 400 Bad Request.", aac: "Scenario: Email Inválido\nGiven email malformado\nWhen POST /users\nThen retornar 400 Bad Request", asg: "KB", nm: "Kim Brown", sp: "8" },
-                    104: { t: "Actualizar Librerías UI", d: "Subir dependencias React/Webpack por seguridad tras auditoría de Snyk.", ac: "Given repositorio\nWhen npm install\nThen npm audit retorna 0 críticos", am: "ACs perfectos para pipeline CI.", asg: "CM", nm: "Carlos Munoz", sp: "2" },
-                    105: { t: "Migrar DB a PostgreSQL 15", d: "Actualizar motor de base de datos. Se prefiere zero downtime, ventana de 10 min aprobada para domingo.", ac: "La base de datos debe actualizarse sin perder datos.", am: "No testeable automáticamente. Agregar validación de esquemas.", aac: "Scenario: Integridad de datos\nGiven backup de DB\nWhen script migración termina\nThen conteo de filas coincide", asg: "JW", nm: "Jeremy White", sp: "13" },
-                    106: { t: "Rate Limiting API", d: "Restringir peticiones por IP para evitar DDoS. Aplicar algoritmo token-bucket con Redis.", ac: "Given IP única\nWhen >100 req/min\nThen retorna 429", am: "Claro y testeable. Sin acción requerida.", asg: "DA", nm: "Dan Andrews", sp: "5" },
-                    107: { t: "Refactor consultas GraphQL", d: "Arreglar problema N+1 en el dashboard causando alta latencia en horas pico.", ac: "El dashboard carga más rápido.", am: "Término 'rápido' no testeable. Definir SLA explícito.", aac: "Scenario: Rendimiento GraphQL\nGiven carga de Dashboard\nWhen query se ejecuta\nThen tiempo < 500ms", asg: "CM", nm: "Carlos Munoz", sp: "8" },
-                    108: { t: "Optimizar Carga Imágenes", d: "Implementar lazy loading para avatares y miniaturas para mejorar FCP.", ac: "Imágenes no cargan todas a la vez.", am: "Convertir a prueba de inspección DOM.", aac: "Scenario: Lazy load\nGiven carga de página\nThen imágenes ocultas tienen atributo loading='lazy'", asg: "KB", nm: "Kim Brown", sp: "3" }
-                }
-            };
-            
-            const base = t[lang] || t['en'];
-            return [
-                { id: 'SYS-101', status: 'needs_change', ...base[101] }, { id: 'SYS-102', status: 'perfect', ...base[102] },
-                { id: 'SYS-103', status: 'needs_change', ...base[103] }, { id: 'SYS-104', status: 'perfect', ...base[104] },
-                { id: 'SYS-105', status: 'needs_change', ...base[105] }, { id: 'SYS-106', status: 'perfect', ...base[106] },
-                { id: 'SYS-107', status: 'needs_change', ...base[107] }, { id: 'SYS-108', status: 'needs_change', ...base[108] }
-            ];
-        };
-
-        let currentLang = 'en';
         let currentTheme = 'light';
-        let activeStories = [];
         let isSimulating = false;
 
-        // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
-            const savedLang = localStorage.getItem('sim_qa_lang');
-            if (savedLang && translations[savedLang]) currentLang = savedLang;
-            else {
-                const userLang = navigator.language || navigator.userLanguage;
-                currentLang = userLang.substring(0, 2);
-                if (!translations[currentLang]) currentLang = 'en';
-            }
-            document.getElementById('langSelector').value = currentLang;
-            
             const savedTheme = localStorage.getItem('sim_qa_theme');
             currentTheme = savedTheme ? savedTheme : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            
             applyTheme(currentTheme);
-            changeLanguage(currentLang);
         });
 
         function toggleTheme() {
@@ -574,24 +347,6 @@
             document.getElementById('themeToggle').innerText = theme === 'dark' ? '☀️' : '🌙';
         }
 
-        function changeLanguage(lang) {
-            currentLang = lang;
-            localStorage.setItem('sim_qa_lang', lang);
-            const t = translations[lang];
-            
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (t[key]) el.innerText = t[key];
-            });
-            document.getElementById('term-ready').innerText = t.termReady;
-            
-            activeStories = generateStories(lang);
-            activeStories.forEach(st => {
-                const summaryEl = document.getElementById(`sum-${st.id.split('-')[1]}`);
-                if(summaryEl) summaryEl.innerText = st.t;
-            });
-        }
-
         // --- Pre-Simulation Manual Interaction ---
         function openManualTicket(id) {
             if (isSimulating) return; 
@@ -602,12 +357,11 @@
             document.getElementById('modal-desc').innerText = story.d;
             document.getElementById('modal-ac').innerHTML = story.ac.replace(/\n/g, '<br>');
             
-            // Populate Details Sidebar
             document.getElementById('modal-assignee-av').innerText = story.asg;
             document.getElementById('modal-assignee-nm').innerText = story.nm;
             document.getElementById('modal-sp').innerText = story.sp;
 
-            document.getElementById('modal-status-txt').innerText = translations[currentLang].modalView;
+            document.getElementById('modal-status-txt').innerText = "Estado: Vista Manual";
             document.getElementById('modalCloseBtn').style.display = 'block';
             document.getElementById('aiPopup').style.display = 'none';
             document.getElementById('acSection').className = 'ac-section';
@@ -637,31 +391,27 @@
         async function runSimulation() {
             isSimulating = true;
             document.getElementById('startBtn').disabled = true;
-            document.getElementById('langSelector').disabled = true; 
-            const t = translations[currentLang];
             
             closeManualTicket(); 
-            log(t.logs.start, 'sys');
+            log("Iniciando ciclo de revisión automatizada de QA...", 'sys');
             await sleep(1000);
 
             for (let i = 0; i < activeStories.length; i++) {
                 const task = activeStories[i];
-                log(`${t.logs.analyzing} ${task.id}...`, 'ai');
+                log(`Analizando ticket ${task.id} mediante NLP...`, 'ai');
                 
                 const ticketEl = document.getElementById(`t-${task.id.toLowerCase()}`);
                 ticketEl.classList.add('active-target');
                 ticketEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 await sleep(800);
 
-                // Setup Modal for AI Mode
-                document.getElementById('modal-status-txt').innerText = t.modalStatus;
+                document.getElementById('modal-status-txt').innerText = "Estado: Análisis AI";
                 document.getElementById('modalCloseBtn').style.display = 'none';
                 document.getElementById('modal-key').innerText = task.id;
                 document.getElementById('modal-title').innerText = task.t;
                 document.getElementById('modal-desc').innerText = task.d;
                 document.getElementById('modal-ac').innerHTML = task.ac.replace(/\n/g, '<br>');
                 
-                // Details sidebar
                 document.getElementById('modal-assignee-av').innerText = task.asg;
                 document.getElementById('modal-assignee-nm').innerText = task.nm;
                 document.getElementById('modal-sp').innerText = task.sp;
@@ -673,7 +423,6 @@
                 
                 await sleep(500);
 
-                // Scanner Animation over issue-main
                 const scanner = document.getElementById('aiScanner');
                 scanner.style.display = 'block';
                 for(let p = 0; p <= 100; p += 6) { scanner.style.top = p + '%'; await sleep(25); }
@@ -681,7 +430,7 @@
 
                 if (task.status === 'perfect') {
                     acSection.classList.add('success');
-                    log(`${task.id}: ${t.logs.perfect}`, 'ai');
+                    log(`${task.id}: ${task.am}`, 'ai');
                     stats.perfect++;
                     await sleep(1500);
                     ticketEl.classList.add('status-perfect'); 
@@ -689,13 +438,13 @@
                     acSection.classList.add('highlight');
                     document.getElementById('ai-popup-text').innerText = task.am;
                     document.getElementById('aiPopup').style.display = 'block';
-                    log(`${task.id}: ${t.logs.intervention}`, 'sys');
+                    log(`${task.id}: Se requiere intervención. Esperando decisión del QA Engineer.`, 'sys');
                     
                     const accepted = await new Promise(res => { userResolve = res; });
                     
                     document.getElementById('aiPopup').style.display = 'none';
                     if (accepted) {
-                        log(`${task.id}: ${t.logs.accepted}`, 'sys');
+                        log(`${task.id}: Cambios aceptados. Refactorizando estructura a BDD...`, 'sys');
                         stats.refined++;
                         stats.hoursSaved += 1.5; 
                         acSection.style.opacity = 0;
@@ -705,7 +454,7 @@
                         await sleep(1500);
                         ticketEl.classList.add('status-refined'); 
                     } else {
-                        log(`${task.id}: ${t.logs.rejected}`, 'sys');
+                        log(`${task.id}: Sugerencia rechazada. Manteniendo criterios originales.`, 'sys');
                         stats.rejected++;
                         await sleep(1000);
                         ticketEl.classList.add('status-rejected'); 
@@ -717,47 +466,43 @@
                 await sleep(400);
             }
 
-            log(t.logs.complete, 'sys');
+            log("Evaluación del Backlog completa. Desplegando métricas proyectadas.", 'sys');
             await sleep(1000);
-            renderDashboard(t);
+            renderDashboard();
         }
 
-        function renderDashboard(t) {
+        function renderDashboard() {
             document.getElementById('reportOverlay').classList.add('show');
             Chart.defaults.color = currentTheme === 'dark' ? '#8C9BAB' : '#5E6C84';
 
-            // 1. Intervention Pie
             new Chart(document.getElementById('pieChart'), {
                 type: 'doughnut',
-                data: { labels: t.charts.pieLabels, datasets: [{ data: [stats.perfect, stats.refined, stats.rejected], backgroundColor: ['#36B37E', '#6554C0', '#FF5630'], borderWidth: 0 }] },
-                options: { plugins: { title: { display: true, text: t.charts.pieTitle } } }
+                data: { labels: ['Perfectas (No AI)', 'Refinadas por AI', 'Rechazadas'], datasets: [{ data: [stats.perfect, stats.refined, stats.rejected], backgroundColor: ['#36B37E', '#6554C0', '#FF5630'], borderWidth: 0 }] },
+                options: { plugins: { title: { display: true, text: 'Distribución de Intervención AI' } } }
             });
 
-            // 2. Quality Bar
             new Chart(document.getElementById('barChart'), {
                 type: 'bar',
-                data: { labels: t.charts.barLabels, datasets: [{ label: t.charts.barPoor, data: [stats.refined + stats.rejected, stats.rejected], backgroundColor: '#FFAB00' }, { label: t.charts.barReady, data: [stats.perfect, stats.perfect + stats.refined], backgroundColor: '#0052CC' }] },
-                options: { plugins: { title: { display: true, text: t.charts.barTitle } }, scales: { y: { stacked: true }, x: { stacked: true } } }
+                data: { labels: ['Calidad Inicial', 'Calidad Post-AI'], datasets: [{ label: "Estructura Pobre", data: [stats.refined + stats.rejected, stats.rejected], backgroundColor: '#FFAB00' }, { label: "Sintaxis BDD Lista", data: [stats.perfect, stats.perfect + stats.refined], backgroundColor: '#0052CC' }] },
+                options: { plugins: { title: { display: true, text: 'Evolución de Testabilidad' } }, scales: { y: { stacked: true }, x: { stacked: true } } }
             });
 
-            // 3. Time Saved Line Chart
             new Chart(document.getElementById('lineChart'), {
                 type: 'line',
-                data: { labels: t.charts.lineLabels, datasets: [{ label: "Hours Saved", data: [4, 7, 5, Math.max(1, stats.hoursSaved)], borderColor: '#6554C0', backgroundColor: 'rgba(101, 84, 192, 0.2)', fill: true, tension: 0.3 }] },
-                options: { plugins: { title: { display: true, text: t.charts.lineTitle } } }
+                data: { labels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint Actual'], datasets: [{ label: "Horas Ahorradas", data: [4, 7, 5, Math.max(1, stats.hoursSaved)], borderColor: '#6554C0', backgroundColor: 'rgba(101, 84, 192, 0.2)', fill: true, tension: 0.3 }] },
+                options: { plugins: { title: { display: true, text: 'Horas Ahorradas en Automatización' } } }
             });
 
-            // 4. Automation Readiness Radar Chart
             new Chart(document.getElementById('radarChart'), {
                 type: 'radar',
                 data: { 
-                    labels: t.charts.radarLabels, 
+                    labels: ['API Testing', 'E2E (Playwright)', 'Seguridad', 'Performance', 'DB Schema'], 
                     datasets: [
-                        { label: "Pre-AI Baseline", data: [60, 40, 30, 20, 50], backgroundColor: 'rgba(255, 86, 48, 0.2)', borderColor: '#FF5630' },
-                        { label: "Post-AI Coverage", data: [95, 90, 85, 75, 80], backgroundColor: 'rgba(54, 179, 126, 0.2)', borderColor: '#36B37E' }
+                        { label: "Línea Base (Pre-AI)", data: [60, 40, 30, 20, 50], backgroundColor: 'rgba(255, 86, 48, 0.2)', borderColor: '#FF5630' },
+                        { label: "Cobertura (Post-AI)", data: [95, 90, 85, 75, 80], backgroundColor: 'rgba(54, 179, 126, 0.2)', borderColor: '#36B37E' }
                     ]
                 },
-                options: { plugins: { title: { display: true, text: t.charts.radarTitle } } }
+                options: { plugins: { title: { display: true, text: 'Cobertura de Preparación' } } }
             });
         }
     </script>
