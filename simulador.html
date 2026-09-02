@@ -3,24 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jira AI SDLC Simulator</title>
+    <title>AI QA SDLC Simulator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Importar Chart.js para el reporte gráfico -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- Atlassian Design System (Jira Cloud) --- */
         :root {
             --bg-body: #FFFFFF;
             --bg-sidebar: #FAFBFC;
-            --bg-board: #FFFFFF;
             --bg-column: #F4F5F7;
             --bg-card: #FFFFFF;
             --text-main: #172B4D;
             --text-subtle: #5E6C84;
             --border-color: #DFE1E6;
-            --jira-blue: #0052CC;
-            --jira-blue-hover: #0047B3;
+            --primary-blue: #0052CC;
             --ai-purple: #6554C0;
-            --epic-purple: #EAE6FF;
-            --epic-text: #403294;
+            --success-green: #36B37E;
         }
 
         body {
@@ -28,256 +26,197 @@
             margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; font-size: 14px;
         }
 
-        /* --- Sidebar & Layout --- */
-        .sidebar {
-            width: 240px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color);
-            padding: 20px 10px; display: flex; flex-direction: column;
-        }
-        .sidebar-logo { font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; padding-left: 10px; display: flex; align-items: center; gap: 8px; }
-        .sidebar-logo span { background: var(--jira-blue); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
-        .nav-item { padding: 8px 12px; margin: 4px 0; border-radius: 3px; color: var(--text-subtle); font-weight: 500; cursor: pointer; }
-        .nav-item.active { background: #E6EFFC; color: var(--jira-blue); }
-
+        /* --- Layout & Board --- */
+        .sidebar { width: 220px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); padding: 20px 10px; }
+        .sidebar-logo { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; padding-left: 10px; }
         .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
-
-        /* --- Board Header --- */
-        .board-header { padding: 20px 30px; border-bottom: 1px solid var(--border-color); }
-        .breadcrumbs { font-size: 12px; color: var(--text-subtle); margin-bottom: 8px; }
-        .board-title { font-size: 24px; font-weight: 600; margin: 0 0 15px 0; display: flex; align-items: center; justify-content: space-between; }
-        .rovo-btn { background: linear-gradient(135deg, #6554C0, #0052CC); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
-
-        /* --- Kanban Board --- */
-        .board-container { flex: 1; padding: 0 20px 20px 30px; overflow-x: auto; overflow-y: hidden; display: flex; flex-direction: column; }
-        .swimlane-header { padding: 15px 0; font-weight: 600; color: var(--text-subtle); font-size: 12px; display: flex; align-items: center; gap: 8px; }
+        .board-header { padding: 20px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; }
+        .board-title { font-size: 24px; font-weight: 600; margin: 0; }
         
-        .columns { display: flex; gap: 10px; flex: 1; overflow-y: auto; padding-bottom: 150px; }
-        
-        .column {
-            background: var(--bg-column); min-width: 260px; max-width: 260px;
-            border-radius: 3px; display: flex; flex-direction: column; padding: 10px;
-        }
-        .column-title { font-size: 11px; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; margin-bottom: 10px; padding: 0 5px; }
+        .board-container { flex: 1; padding: 20px; overflow-x: auto; display: flex; gap: 15px; background: #FFF; }
+        .column { background: var(--bg-column); min-width: 280px; max-width: 280px; border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .column-title { font-size: 12px; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; margin-bottom: 5px; }
 
         .ticket {
-            background: var(--bg-card); border-radius: 3px; padding: 10px; margin-bottom: 8px;
-            box-shadow: 0 1px 2px rgba(9, 30, 66, 0.25); cursor: pointer; border: 1px solid transparent;
-            transition: background 0.2s; position: relative;
+            background: var(--bg-card); border-radius: 3px; padding: 12px;
+            box-shadow: 0 1px 2px rgba(9, 30, 66, 0.25); border: 1px solid transparent; position: relative; transition: all 0.2s;
         }
-        .ticket:hover { background: #FAFBFC; }
-        .ticket.active-target { border-color: var(--ai-purple); box-shadow: 0 0 0 2px var(--ai-purple); animation: highlight 2s infinite; }
-        
-        @keyframes highlight { 0% { box-shadow: 0 0 0 2px rgba(101,84,192,0.4); } 50% { box-shadow: 0 0 0 4px rgba(101,84,192,0.8); } 100% { box-shadow: 0 0 0 2px rgba(101,84,192,0.4); } }
+        .ticket.active-target { border-color: var(--ai-purple); box-shadow: 0 0 0 2px rgba(101,84,192,0.4); }
+        .ticket-summary { font-size: 13px; margin-bottom: 12px; line-height: 1.4; font-weight: 500; }
+        .ticket-footer { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-subtle); }
 
-        .ticket-summary { font-size: 13px; margin-bottom: 10px; line-height: 1.4; }
-        .epic-tag { display: inline-block; background: var(--epic-purple); color: var(--epic-text); font-size: 10px; font-weight: 600; padding: 2px 4px; border-radius: 3px; margin-bottom: 8px; text-transform: uppercase; }
-        .ticket-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-subtle); }
-        .story-points { background: #DFE1E6; color: #42526E; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
-        .avatar { width: 24px; height: 24px; background: var(--jira-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
-
-        /* --- Modal Issue Detail (RAFT-10298) --- */
+        /* --- Modal & AI Components --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(9, 30, 66, 0.54); display: flex; justify-content: center; align-items: flex-start;
+            background: rgba(9, 30, 66, 0.7); display: flex; justify-content: center; align-items: flex-start;
             z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding-top: 50px;
         }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
-
         .issue-modal {
-            background: #FFFFFF; width: 1000px; max-width: 95%; max-height: 85vh; border-radius: 3px;
-            box-shadow: 0 8px 16px rgba(9, 30, 66, 0.25); display: flex; flex-direction: column; overflow: hidden;
-            position: relative;
+            background: #FFFFFF; width: 800px; max-width: 90%; max-height: 85vh; border-radius: 4px;
+            box-shadow: 0 8px 16px rgba(9, 30, 66, 0.25); display: flex; flex-direction: column; position: relative; overflow: hidden;
         }
-
-        .issue-header { padding: 20px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        .issue-key { font-size: 14px; color: var(--text-subtle); display: flex; align-items: center; gap: 5px; }
+        .issue-header { padding: 20px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 16px; display: flex; justify-content: space-between;}
+        .issue-body { padding: 20px; overflow-y: auto; flex: 1; position: relative; }
         
-        .issue-body { display: flex; flex: 1; overflow-y: auto; }
-        .issue-main { flex: 2; padding: 20px 30px; border-right: 1px solid var(--border-color); }
-        .issue-title { font-size: 24px; font-weight: 600; margin: 0 0 20px 0; line-height: 1.3; }
+        .ac-section { background: #FAFBFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 4px; margin-top: 15px; transition: all 0.3s; }
+        .ac-section.highlight { border-color: var(--ai-purple); background: #F3F0FF; }
+        .ac-section.success { border-color: var(--success-green); background: #E3FCEF; }
+
+        .ai-scanner { position: absolute; left: 0; width: 100%; height: 25px; background: linear-gradient(to bottom, transparent, rgba(101, 84, 192, 0.2)); border-bottom: 2px solid var(--ai-purple); z-index: 10; display: none; }
         
-        .tabs { display: flex; gap: 15px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
-        .tab { padding: 8px 0; color: var(--text-subtle); font-weight: 500; font-size: 13px; cursor: pointer; }
-        .tab.active { color: var(--jira-blue); border-bottom: 2px solid var(--jira-blue); }
-
-        .description-content { font-size: 14px; line-height: 1.6; color: var(--text-main); position: relative; }
-        .ac-section { background: #FAFBFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 3px; margin-top: 15px; transition: all 0.3s; }
-        .ac-section.highlight { border-color: var(--ai-purple); background: #F3F0FF; box-shadow: inset 4px 0 0 var(--ai-purple); }
-
-        .issue-sidebar { flex: 1; background: #FAFBFC; padding: 20px; }
-        .sidebar-section { margin-bottom: 20px; }
-        .field-group { display: flex; margin-bottom: 10px; font-size: 12px; }
-        .field-label { width: 120px; color: var(--text-subtle); font-weight: 600; }
-        .field-value { flex: 1; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
-
-        /* --- AI Elements --- */
-        .ai-scanner {
-            position: absolute; left: 0; width: 100%; height: 20px;
-            background: linear-gradient(to bottom, transparent, rgba(101, 84, 192, 0.2));
-            border-bottom: 2px solid var(--ai-purple); z-index: 10; display: none; pointer-events: none;
-        }
-
         .ai-popup {
-            background: #FFFFFF; border: 1px solid var(--ai-purple); border-radius: 8px; padding: 20px;
-            box-shadow: 0 10px 30px rgba(9, 30, 66, 0.3); margin-top: 15px; display: none;
-            border-top: 4px solid var(--ai-purple); animation: slideDown 0.3s forwards;
+            background: #FFFFFF; border: 1px solid var(--ai-purple); border-radius: 6px; padding: 20px;
+            box-shadow: 0 10px 30px rgba(9, 30, 66, 0.2); margin-top: 15px; display: none; border-left: 4px solid var(--ai-purple);
         }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .ai-popup h4 { margin: 0 0 10px 0; color: var(--ai-purple); display: flex; align-items: center; gap: 8px; }
-        
-        .btn { padding: 6px 12px; border-radius: 3px; font-weight: 500; cursor: pointer; font-size: 13px; border: none; }
+        .ai-popup h4 { margin: 0 0 10px 0; color: var(--ai-purple); }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { padding: 8px 16px; border-radius: 4px; font-weight: 500; cursor: pointer; border: none; font-size: 13px; }
         .btn-primary { background: var(--ai-purple); color: white; }
-        .btn-primary:hover { background: #5243AA; }
-        .btn-subtle { background: transparent; color: var(--text-subtle); }
-        .btn-subtle:hover { background: rgba(9, 30, 66, 0.08); }
+        .btn-reject { background: #DFE1E6; color: var(--text-main); }
 
-        /* --- Dev Console (Terminal) --- */
+        /* --- Terminal --- */
         .terminal-overlay {
-            position: fixed; bottom: 0; right: 0; width: 100%; height: 180px;
-            background: #172B4D; color: #40FF88; font-family: 'Fira Code', monospace;
-            z-index: 2000; border-top: 2px solid var(--ai-purple); padding: 10px 20px;
-            box-sizing: border-box; overflow-y: auto; font-size: 12px; box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+            position: fixed; bottom: 0; right: 0; width: calc(100% - 220px); height: 160px;
+            background: #091E42; color: #40FF88; font-family: 'Fira Code', monospace;
+            z-index: 900; padding: 15px; box-sizing: border-box; overflow-y: auto; font-size: 12px;
         }
-        .log-line { margin: 4px 0; opacity: 0; animation: fadeIn 0.2s forwards; }
-        @keyframes fadeIn { to { opacity: 1; } }
-        .tag { padding: 1px 4px; border-radius: 2px; font-size: 10px; margin-right: 6px; background: rgba(255,255,255,0.1); color: #FFF; }
-        .tag-ai { background: var(--ai-purple); }
+        .log-line { margin: 4px 0; }
+        .tag-sys { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px; color: #FFF; margin-right: 5px; }
+        .tag-ai { background: var(--ai-purple); padding: 2px 6px; border-radius: 3px; color: #FFF; margin-right: 5px; }
 
-        .start-btn { position: fixed; bottom: 200px; right: 20px; background: var(--jira-blue); color: white; padding: 10px 20px; border-radius: 3px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 100; }
+        /* --- Dashboard Report Overlay --- */
+        .report-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #F4F5F7;
+            z-index: 2000; display: none; flex-direction: column; align-items: center; padding-top: 40px; overflow-y: auto;
+        }
+        .report-overlay.show { display: flex; }
+        .report-container { width: 900px; max-width: 95%; background: #FFF; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .report-title { font-size: 28px; font-weight: 700; color: var(--text-main); margin-bottom: 20px; text-align: center; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        .chart-box { border: 1px solid var(--border-color); padding: 20px; border-radius: 6px; }
+
+        .start-btn { position: fixed; top: 20px; right: 30px; background: var(--primary-blue); color: white; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; z-index: 100; }
         .start-btn:disabled { background: var(--text-subtle); cursor: not-allowed; }
-
     </style>
 </head>
 <body>
 
-    <!-- Sidebar -->
     <div class="sidebar">
-        <div class="sidebar-logo"><span>SC</span> SciSure</div>
-        <div class="nav-item">Espacio / RAFT Development</div>
-        <div class="nav-item active">RAFT Sprint Board</div>
-        <div class="nav-item">Epics Board</div>
-        <div class="nav-item">RAFT Refinement Board</div>
+        <div class="sidebar-logo">Project Workspace</div>
+        <div style="color: var(--text-subtle); font-size: 13px; font-weight: 500;">Board Activo</div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
+        <button class="start-btn" id="startBtn" onclick="runSimulation()">Iniciar Escaneo AI</button>
+        
         <div class="board-header">
-            <div class="breadcrumbs">Espacios / RAFT Development</div>
-            <div class="board-title">
-                RAFT Sprint Board
-                <button class="rovo-btn">✨ Preguntar a Rovo</button>
-            </div>
+            <h1 class="board-title">SDLC Tracking Board</h1>
         </div>
 
         <div class="board-container">
-            <div class="swimlane-header">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                Modernization & Tech Debt (50 actividades)
+            <!-- Backlog -->
+            <div class="column" id="col-backlog">
+                <div class="column-title">Backlog</div>
+                <div class="ticket" id="t-sys-101">
+                    <div class="ticket-summary">Configuración de SSO Authentication (SAML)</div>
+                    <div class="ticket-footer"><span>SYS-101</span></div>
+                </div>
+                <div class="ticket">
+                    <div class="ticket-summary">Deprecación de endpoints legacy v1</div>
+                    <div class="ticket-footer"><span>SYS-102</span></div>
+                </div>
+                <div class="ticket" id="t-sys-103">
+                    <div class="ticket-summary">Validación estricta de esquema en POST /users</div>
+                    <div class="ticket-footer"><span>SYS-103</span></div>
+                </div>
             </div>
-            
-            <div class="columns">
-                <!-- TO DO -->
-                <div class="column" id="col-todo">
-                    <div class="column-title">TO DO 14</div>
-                    <div class="ticket" id="ticket-10419">
-                        <div class="epic-tag">SciShield UX Align...</div>
-                        <div class="ticket-summary">"My Account" page adjustments fo...</div>
-                        <div class="ticket-footer">
-                            <span style="color:var(--text-subtle)">RAFT-10419</span>
-                            <div class="story-points">1</div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- DOING -->
-                <div class="column" id="col-doing">
-                    <div class="column-title">DOING 10</div>
-                    <div class="ticket">
-                        <div class="ticket-summary">Unskip and fix tests in useJobPolling....</div>
-                        <div class="ticket-footer">
-                            <span style="color:var(--text-subtle)">RAFT-9236</span>
-                            <div style="display:flex; gap:5px;">
-                                <div class="story-points">3</div>
-                                <div class="avatar" style="background:#00B8D9">CM</div> <!-- Carlos Munoz avatar simulado -->
-                            </div>
-                        </div>
-                    </div>
-                    <div class="ticket" id="ticket-target">
-                        <div class="ticket-summary">"My Account" page adjustments for SMP: rename to "Account Settings"...</div>
-                        <div class="ticket-footer">
-                            <span style="color:var(--text-subtle)">RAFT-10298</span>
-                            <div style="display:flex; gap:5px;">
-                                <div class="story-points">1</div>
-                                <div class="avatar">DA</div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- To Do -->
+            <div class="column" id="col-todo">
+                <div class="column-title">To Do</div>
+                <div class="ticket" id="t-sys-104">
+                    <div class="ticket-summary">Actualizar librerías de UI a última versión</div>
+                    <div class="ticket-footer"><span>SYS-104</span></div>
                 </div>
+                <div class="ticket">
+                    <div class="ticket-summary">Migración de base de datos a PostgreSQL 15</div>
+                    <div class="ticket-footer"><span>SYS-105</span></div>
+                </div>
+                <div class="ticket" id="t-sys-106">
+                    <div class="ticket-summary">Implementar Rate Limiting en API pública</div>
+                    <div class="ticket-footer"><span>SYS-106</span></div>
+                </div>
+            </div>
 
-                <!-- OTHER COLUMNS -->
-                <div class="column"><div class="column-title">CRING</div></div>
-                <div class="column"><div class="column-title">FRTING 5</div></div>
-                <div class="column"><div class="column-title">SRTING 6</div></div>
-                <div class="column"><div class="column-title">FCING 2</div></div>
-                <div class="column" id="col-fcd"><div class="column-title">FC'D</div></div>
-                <div class="column"><div class="column-title">FC'D & MERGED 13</div></div>
+            <!-- In Progress -->
+            <div class="column">
+                <div class="column-title">In Progress</div>
+                <div class="ticket" id="t-sys-107">
+                    <div class="ticket-summary">Refactor de consultas GraphQL en Dashboard</div>
+                    <div class="ticket-footer"><span>SYS-107</span></div>
+                </div>
+                <div class="ticket">
+                    <div class="ticket-summary">Optimización de carga de imágenes</div>
+                    <div class="ticket-footer"><span>SYS-108</span></div>
+                </div>
+            </div>
+
+            <!-- Code Review -->
+            <div class="column">
+                <div class="column-title">Code Review</div>
+                <div class="ticket">
+                    <div class="ticket-summary">Creación de pipeline en GitHub Actions</div>
+                    <div class="ticket-footer"><span>SYS-109</span></div>
+                </div>
+            </div>
+
+            <!-- Ready for QA -->
+            <div class="column" id="col-qa">
+                <div class="column-title">Ready for QA</div>
+                <div class="ticket">
+                    <div class="ticket-summary">Pruebas E2E de pasarela de pagos</div>
+                    <div class="ticket-footer"><span>SYS-110</span></div>
+                </div>
+            </div>
+
+            <!-- Done -->
+            <div class="column">
+                <div class="column-title">Done</div>
+                <div class="ticket">
+                    <div class="ticket-summary">Setup inicial de repositorio</div>
+                    <div class="ticket-footer"><span>SYS-111</span></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Issue Modal (RAFT-10298) -->
+    <!-- Modal Dinámico -->
     <div class="modal-overlay" id="issueModal">
         <div class="issue-modal">
             <div class="issue-header">
-                <div class="issue-key"><svg width="16" height="16" viewBox="0 0 24 24" fill="#36B37E"><rect width="24" height="24" rx="4"/></svg> RAFT-10298</div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-subtle">Ready for Dev</button>
-                    <button class="rovo-btn">✨ Agentes</button>
-                </div>
+                <span id="modal-key">SYS-XXX</span>
+                <span style="font-size: 12px; color: var(--text-subtle);">Status: Analysis</span>
             </div>
-            
-            <div class="issue-body">
-                <div class="issue-main" id="issueContent">
-                    <div class="ai-scanner" id="aiScanner"></div>
-                    <h1 class="issue-title">"My Account" page adjustments for SMP: rename to "Account Settings", remove self-registration and the user's edit tab, add "Edit Profile Details"</h1>
-                    
-                    <div style="font-weight:600; margin-bottom:10px;">Detalles clave</div>
-                    <div class="tabs">
-                        <div class="tab active">Description</div>
-                        <div class="tab">Categories</div>
-                        <div class="tab">Zendesk</div>
-                        <div class="tab">Deployment</div>
-                    </div>
-                    
-                    <div class="description-content">
-                        <strong>Story</strong><br>
-                        As a user on an SMP-connected SciShield site, I want my account page to reflect that profile and account details are managed consistently...<br><br>
-                        <strong>Scope Note:</strong> A set of independent adjustments to the current "My Account" page...
-                        
-                        <div class="ac-section" id="acSection">
-                            <strong>Acceptance Criteria</strong><br>
-                            Given a connected site, when the user sees their account menu item in any location it appears, then it reads "Account Settings"...
-                        </div>
-
-                        <!-- AI Popup -->
-                        <div class="ai-popup" id="aiPopup">
-                            <h4>✨ Rovo Agent (SDET Assistant)</h4>
-                            <p style="font-size: 13px; margin-bottom: 15px;">He detectado que los Criterios de Aceptación son ambiguos para la automatización. Sugiero transformarlos a BDD (Gherkin) para inyectarlos directamente en el framework de QA.</p>
-                            <div style="display:flex; gap:10px;">
-                                <button class="btn btn-primary" onclick="handleAiDecision(true)">Refinar a Gherkin</button>
-                                <button class="btn btn-subtle" onclick="handleAiDecision(false)">Ignorar</button>
-                            </div>
-                        </div>
-                    </div>
+            <div class="issue-body" id="issueContent">
+                <div class="ai-scanner" id="aiScanner"></div>
+                <h2 style="margin-top:0;" id="modal-title">Título de la historia</h2>
+                
+                <div style="font-size: 14px; color: var(--text-main); margin-bottom: 20px;" id="modal-desc">
+                    Descripción detallada de la tarea...
                 </div>
                 
-                <div class="issue-sidebar">
-                    <div class="sidebar-section">
-                        <div style="font-weight:600; margin-bottom:15px;">Detalles</div>
-                        <div class="field-group"><div class="field-label">Assignee</div><div class="field-value"><div class="avatar">DA</div> Dan Andrews</div></div>
-                        <div class="field-group"><div class="field-label">Reporter</div><div class="field-value"><div class="avatar" style="background:#FF5630">KB</div> Kim Brown</div></div>
-                        <div class="field-group"><div class="field-label">Story Points</div><div class="field-value">1</div></div>
-                        <div class="field-group"><div class="field-label">Sprint</div><div class="field-value" style="color:var(--jira-blue)">Sprint 258</div></div>
+                <div class="ac-section" id="acSection">
+                    <strong>Acceptance Criteria:</strong><br>
+                    <div id="modal-ac">Criterios originales...</div>
+                </div>
+
+                <div class="ai-popup" id="aiPopup">
+                    <h4 id="ai-popup-title">Sugerencia AI</h4>
+                    <p id="ai-popup-text">Texto de sugerencia</p>
+                    <div class="btn-group" id="ai-btn-group">
+                        <button class="btn btn-primary" onclick="handleDecision(true)">Aceptar Cambio</button>
+                        <button class="btn btn-reject" onclick="handleDecision(false)">Rechazar</button>
                     </div>
                 </div>
             </div>
@@ -286,113 +225,199 @@
 
     <!-- Terminal -->
     <div class="terminal-overlay" id="terminal">
-        <div class="log-line">> SDLC Simulator Backend Initialized.</div>
+        <div class="log-line"><span class="tag-sys">SYSTEM</span> Motor AI Listo.</div>
     </div>
 
-    <button class="start-btn" id="startBtn" onclick="runSimulation()">Ejecutar Simulación SDLC</button>
+    <!-- Dashboard Report -->
+    <div class="report-overlay" id="reportOverlay">
+        <div class="report-container">
+            <div class="report-title">Reporte de Auditoría AI</div>
+            <p style="text-align: center; color: var(--text-subtle);">Resultados del análisis automático de historias de usuario antes de ejecución QA.</p>
+            
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <canvas id="pieChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" onclick="location.reload()">Cerrar y Reiniciar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const terminal = document.getElementById('terminal');
-        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        let userDecisionResolve = null;
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+        let userResolve = null;
 
-        function appendLog(message, isAi = false) {
-            const div = document.createElement('div');
-            div.className = 'log-line';
-            div.innerHTML = (isAi ? '<span class="tag tag-ai">AI-AGENT</span> ' : '<span class="tag">SYSTEM</span> ') + message;
+        // Base de datos de historias a evaluar
+        const evaluationQueue = [
+            {
+                id: 'SYS-101', elementId: 't-sys-101', status: 'needs_change',
+                title: 'Configuración de SSO Authentication (SAML)',
+                desc: 'Implementar inicio de sesión único utilizando el proveedor de identidad corporativo.',
+                ac: '- Que funcione el login.<br>- Que devuelva error si falla.',
+                aiMsg: 'Criterios vagos. Sugiero refactorizar a Gherkin especificando validaciones de token SAML y manejo de códigos HTTP 401/403.',
+                aiAc: 'Scenario: Successful SAML Authentication<br>Given an unauthenticated user<br>When they provide a valid SAML response<br>Then a session token is generated and status is 200'
+            },
+            {
+                id: 'SYS-104', elementId: 't-sys-104', status: 'perfect',
+                title: 'Actualizar librerías de UI a última versión',
+                desc: 'Subir la versión de React y dependencias asociadas para mitigar vulnerabilidades de seguridad.',
+                ac: 'Given the repository dependencies<br>When the package.json is updated<br>Then `npm audit` should return 0 critical vulnerabilities<br>And the frontend build must complete successfully.',
+                aiMsg: 'Análisis estático completado. Los criterios de aceptación están bien estructurados y listos para validación automatizada.'
+            },
+            {
+                id: 'SYS-103', elementId: 't-sys-103', status: 'needs_change',
+                title: 'Validación estricta de esquema en POST /users',
+                desc: 'Asegurar que el endpoint de creación de usuarios valide todos los campos obligatorios antes de insertar en DB.',
+                ac: 'El API debe rechazar peticiones malas. Debe requerir email y password.',
+                aiMsg: 'Falta especificación técnica de esquemas. Se recomienda definir la validación de tipos de datos (String, Regex para email) y respuestas 400 Bad Request.',
+                aiAc: 'Scenario: Invalid email payload<br>Given a payload with malformed email<br>When POST /users is invoked<br>Then the API returns 400 Bad Request<br>And the response contains "Invalid Email Format"'
+            },
+            {
+                id: 'SYS-107', elementId: 't-sys-107', status: 'needs_change',
+                title: 'Refactor de consultas GraphQL en Dashboard',
+                desc: 'Optimizar los queries de GraphQL para evitar el problema de N+1 en la carga del dashboard.',
+                ac: 'El dashboard debe cargar más rápido. Las consultas no deben estar duplicadas.',
+                aiMsg: 'El criterio "más rápido" no es testeable de forma automatizada. Sugiero establecer un límite de tiempo de respuesta (SLA de performance).',
+                aiAc: 'Scenario: GraphQL Query Performance<br>Given the Dashboard view is requested<br>When the GraphQL query executes<br>Then the total execution time must be < 500ms<br>And duplicate resolver calls are exactly 0'
+            },
+            {
+                id: 'SYS-106', elementId: 't-sys-106', status: 'perfect',
+                title: 'Implementar Rate Limiting en API pública',
+                desc: 'Restringir el número de peticiones permitidas por IP para prevenir ataques DDoS básicos.',
+                ac: 'Scenario: Rate limit exceeded<br>Given a single IP address<br>When it makes more than 100 requests per minute<br>Then the API returns 429 Too Many Requests',
+                aiMsg: 'Criterios claros, declarativos y testeables. Cobertura de edge-case correcta. Ninguna acción requerida.'
+            }
+        ];
+
+        let stats = { perfect: 0, refined: 0, rejected: 0 };
+
+        function log(msg, type='sys') {
+            const div = document.createElement('div'); div.className = 'log-line';
+            div.innerHTML = `<span class="tag-${type}">${type.toUpperCase()}</span> ${msg}`;
             terminal.appendChild(div);
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        function handleAiDecision(accepted) {
-            if (userDecisionResolve) userDecisionResolve(accepted);
-        }
+        function handleDecision(accept) { if(userResolve) userResolve(accept); }
 
         async function runSimulation() {
             document.getElementById('startBtn').disabled = true;
-            terminal.innerHTML = '<div class="log-line">> SDLC Simulator Backend Initialized.</div>';
-            
-            appendLog('Iniciando rastreo de tablero activo (Sprint 258)...');
-            await sleep(1500);
+            log('Iniciando ciclo de revisión automatizada...', 'sys');
 
-            // 1. Target the ticket
-            const targetTicket = document.getElementById('ticket-target');
-            targetTicket.classList.add('active-target');
-            appendLog('Analizando tickets en estado DOING...', true);
-            await sleep(1500);
-            appendLog('Ticket RAFT-10298 seleccionado para revisión de QA estático.', true);
-            await sleep(1000);
+            for (let i = 0; i < evaluationQueue.length; i++) {
+                const task = evaluationQueue[i];
+                log(`Analizando ticket ${task.id}...`, 'ai');
+                
+                // Resaltar ticket en el tablero
+                const ticketEl = document.getElementById(task.elementId);
+                ticketEl.classList.add('active-target');
+                ticketEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                await sleep(1000);
 
-            // 2. Open Modal
-            document.getElementById('issueModal').classList.add('show');
-            appendLog('Recuperando metadatos del ticket RAFT-10298...');
-            await sleep(1000);
-
-            // 3. Scanner Animation inside modal
-            const scanner = document.getElementById('aiScanner');
-            const issueContent = document.getElementById('issueContent');
-            scanner.style.display = 'block';
-            
-            for(let i = 0; i <= 100; i += 2) {
-                scanner.style.top = i + '%';
-                await sleep(25);
-                if (i === 30) appendLog('Procesando "Description" con NLP...', true);
-                if (i === 80) {
-                    document.getElementById('acSection').classList.add('highlight');
-                    issueContent.scrollTop = issueContent.scrollHeight;
-                    appendLog('Evaluando "Acceptance Criteria"...', true);
-                }
-            }
-            scanner.style.display = 'none';
-            await sleep(800);
-
-            // 4. Trigger Popup
-            appendLog('Alerta: Criterios detectados en formato no estructurado. Requiere intervención.', true);
-            document.getElementById('aiPopup').style.display = 'block';
-            
-            // Wait for user click
-            const accepted = await new Promise(resolve => { userDecisionResolve = resolve; });
-
-            document.getElementById('aiPopup').style.display = 'none';
-
-            if (accepted) {
-                appendLog('Usuario aprueba refactorización a BDD.');
-                await sleep(500);
-                appendLog('Inyectando sintaxis Gherkin...', true);
+                // Configurar Modal
+                document.getElementById('modal-key').innerText = task.id;
+                document.getElementById('modal-title').innerText = task.title;
+                document.getElementById('modal-desc').innerText = task.desc;
+                document.getElementById('modal-ac').innerHTML = task.ac;
                 
                 const acSection = document.getElementById('acSection');
-                acSection.style.opacity = 0;
-                await sleep(400);
-                acSection.innerHTML = `
-                    <strong>Acceptance Criteria (Refactored by AI)</strong><br><br>
-                    <div style="font-family:'Fira Code', monospace; font-size:12px; background:#172B4D; color:#FFF; padding:10px; border-radius:3px;">
-                    <span style="color:#FF8F73">Feature:</span> Account Settings Renaming<br>
-                    <span style="color:#FF8F73">Scenario:</span> Verify menu item text change<br>
-                    &nbsp;&nbsp;<span style="color:#36B37E">Given</span> a connected site<br>
-                    &nbsp;&nbsp;<span style="color:#36B37E">When</span> the user views the account menu<br>
-                    &nbsp;&nbsp;<span style="color:#36B37E">Then</span> the label must exactly read "Account Settings"
-                    </div>
-                `;
-                acSection.style.opacity = 1;
-                await sleep(2500);
-            } else {
-                appendLog('Usuario rechaza sugerencia. Se mantiene estructura original.');
-                await sleep(1500);
+                acSection.className = 'ac-section'; // reset clases
+                document.getElementById('aiPopup').style.display = 'none';
+                document.getElementById('issueModal').classList.add('show');
+                
+                await sleep(500);
+
+                // Animación Scanner
+                const scanner = document.getElementById('aiScanner');
+                scanner.style.display = 'block';
+                for(let p = 0; p <= 100; p += 4) {
+                    scanner.style.top = p + '%';
+                    await sleep(30);
+                }
+                scanner.style.display = 'none';
+
+                if (task.status === 'perfect') {
+                    acSection.classList.add('success');
+                    log(`${task.id}: ${task.aiMsg}`, 'ai');
+                    stats.perfect++;
+                    await sleep(2000);
+                } else {
+                    acSection.classList.add('highlight');
+                    document.getElementById('ai-popup-text').innerText = task.aiMsg;
+                    document.getElementById('aiPopup').style.display = 'block';
+                    log(`${task.id}: Se requiere intervención. Esperando decisión del usuario.`, 'sys');
+                    
+                    // Pausar ejecución
+                    const accepted = await new Promise(res => { userResolve = res; });
+                    
+                    document.getElementById('aiPopup').style.display = 'none';
+                    if (accepted) {
+                        log(`${task.id}: Usuario aceptó los cambios. Refactorizando...`, 'sys');
+                        stats.refined++;
+                        acSection.style.opacity = 0;
+                        await sleep(300);
+                        document.getElementById('modal-ac').innerHTML = `<div style="color:var(--primary-blue); font-weight:600; margin-bottom:5px;">AI Refactored:</div><div style="font-family:monospace; background:#F4F5F7; padding:10px;">${task.aiAc}</div>`;
+                        acSection.style.opacity = 1;
+                        await sleep(2000);
+                    } else {
+                        log(`${task.id}: Sugerencia rechazada. Manteniendo versión original.`, 'sys');
+                        stats.rejected++;
+                        await sleep(1500);
+                    }
+                }
+
+                // Cerrar modal
+                document.getElementById('issueModal').classList.remove('show');
+                ticketEl.classList.remove('active-target');
+                await sleep(500);
             }
 
-            // 5. Close Modal and Move Ticket
-            document.getElementById('issueModal').classList.remove('show');
-            document.getElementById('acSection').classList.remove('highlight');
-            appendLog('Cerrando ticket. Actualizando flujos de estado Jira...');
+            log('Análisis completo. Generando reporte estadístico...', 'sys');
             await sleep(1000);
+            renderDashboard();
+        }
 
-            // Move to FRTING (or next column based on QA workflow)
-            const fcdColumn = document.getElementById('col-fcd');
-            targetTicket.classList.remove('active-target');
-            fcdColumn.appendChild(targetTicket);
-            appendLog('Ticket RAFT-10298 movido a FC\'D. Listo para ejecución automatizada.');
+        function renderDashboard() {
+            document.getElementById('reportOverlay').classList.add('show');
+            
+            // Gráfico Circular (Pie)
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Perfectas (Sin cambios)', 'Refinadas por AI', 'Rechazadas por Usuario'],
+                    datasets: [{
+                        data: [stats.perfect, stats.refined, stats.rejected],
+                        backgroundColor: ['#36B37E', '#6554C0', '#FF5630'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { plugins: { title: { display: true, text: 'Distribución de Intervención AI' } } }
+            });
 
-            document.getElementById('startBtn').innerText = "Simulación Completada";
+            // Gráfico de Barras (Bar)
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Calidad Inicial de ACs', 'Calidad Posterior a Simulación'],
+                    datasets: [
+                        { label: 'Estructura Pobre', data: [stats.refined + stats.rejected, stats.rejected], backgroundColor: '#FFAB00' },
+                        { label: 'Estructura BDD/Gherkin Lista para Automatización', data: [stats.perfect, stats.perfect + stats.refined], backgroundColor: '#0052CC' }
+                    ]
+                },
+                options: { 
+                    plugins: { title: { display: true, text: 'Evolución de la Testabilidad del Backlog' } },
+                    scales: { y: { beginAtZero: true, stacked: true }, x: { stacked: true } }
+                }
+            });
         }
     </script>
 </body>
