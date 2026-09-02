@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* --- Light Theme (Default) --- */
         :root {
             --bg-body: #FFFFFF;
             --bg-sidebar: #FAFBFC;
@@ -18,41 +19,64 @@
             --primary-blue: #0052CC;
             --ai-purple: #6554C0;
             --success-green: #36B37E;
+            --modal-bg: rgba(9, 30, 66, 0.7);
+            --report-bg: #FFFFFF;
+        }
+
+        /* --- Dark Theme --- */
+        [data-theme="dark"] {
+            --bg-body: #1D2125;
+            --bg-sidebar: #161A1D;
+            --bg-column: #161A1D;
+            --bg-card: #22272B;
+            --text-main: #B6C2CF;
+            --text-subtle: #8C9BAB;
+            --border-color: #2C333A;
+            --primary-blue: #579DFF;
+            --ai-purple: #9F8FEF;
+            --success-green: #4BCE97;
+            --modal-bg: rgba(29, 33, 37, 0.8);
+            --report-bg: #22272B;
         }
 
         body {
             font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main);
             margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; font-size: 14px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- Top Bar & Language Switcher --- */
+        /* --- Top Bar, Language & Theme Switcher --- */
         .top-controls {
             position: fixed; top: 20px; right: 30px; display: flex; gap: 15px; z-index: 100; align-items: center;
         }
         
-        .lang-selector {
+        .control-element {
             padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-color);
-            background: #FFF; color: var(--text-main); font-family: inherit; font-weight: 500;
+            background: var(--bg-card); color: var(--text-main); font-family: inherit; font-weight: 500;
             cursor: pointer; outline: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
         }
+        .control-element:hover { border-color: var(--primary-blue); }
 
-        .start-btn { background: var(--primary-blue); color: white; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; }
-        .start-btn:disabled { background: var(--text-subtle); cursor: not-allowed; }
+        .theme-toggle { font-size: 16px; padding: 6px 10px; display: flex; align-items: center; justify-content: center; }
+
+        .start-btn { background: var(--primary-blue); color: #FFF; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; }
+        .start-btn:disabled { background: var(--text-subtle); cursor: not-allowed; color: #FFF; }
 
         /* --- Layout & Board --- */
-        .sidebar { width: 220px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); padding: 20px 10px; }
+        .sidebar { width: 220px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); padding: 20px 10px; transition: background-color 0.3s; }
         .sidebar-logo { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; padding-left: 10px; }
         .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
         .board-header { padding: 20px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; }
         .board-title { font-size: 24px; font-weight: 600; margin: 0; }
         
-        .board-container { flex: 1; padding: 20px; overflow-x: auto; display: flex; gap: 15px; background: #FFF; }
-        .column { background: var(--bg-column); min-width: 280px; max-width: 280px; border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .board-container { flex: 1; padding: 20px; overflow-x: auto; display: flex; gap: 15px; background: var(--bg-body); transition: background-color 0.3s; }
+        .column { background: var(--bg-column); min-width: 280px; max-width: 280px; border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 10px; transition: background-color 0.3s; }
         .column-title { font-size: 12px; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; margin-bottom: 5px; }
 
         .ticket {
             background: var(--bg-card); border-radius: 3px; padding: 12px;
-            box-shadow: 0 1px 2px rgba(9, 30, 66, 0.25); border: 1px solid transparent; position: relative; transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); position: relative; transition: all 0.2s;
         }
         .ticket.active-target { border-color: var(--ai-purple); box-shadow: 0 0 0 2px rgba(101,84,192,0.4); }
         .ticket-summary { font-size: 13px; margin-bottom: 12px; line-height: 1.4; font-weight: 500; }
@@ -61,38 +85,38 @@
         /* --- Modal & AI Components --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(9, 30, 66, 0.7); display: flex; justify-content: center; align-items: flex-start;
+            background: var(--modal-bg); display: flex; justify-content: center; align-items: flex-start;
             z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding-top: 50px;
         }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .issue-modal {
-            background: #FFFFFF; width: 800px; max-width: 90%; max-height: 85vh; border-radius: 4px;
-            box-shadow: 0 8px 16px rgba(9, 30, 66, 0.25); display: flex; flex-direction: column; position: relative; overflow: hidden;
+            background: var(--bg-body); width: 800px; max-width: 90%; max-height: 85vh; border-radius: 4px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); display: flex; flex-direction: column; position: relative; overflow: hidden; border: 1px solid var(--border-color);
         }
         .issue-header { padding: 20px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 16px; display: flex; justify-content: space-between;}
         .issue-body { padding: 20px; overflow-y: auto; flex: 1; position: relative; }
         
-        .ac-section { background: #FAFBFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 4px; margin-top: 15px; transition: all 0.3s; }
-        .ac-section.highlight { border-color: var(--ai-purple); background: #F3F0FF; }
-        .ac-section.success { border-color: var(--success-green); background: #E3FCEF; }
+        .ac-section { background: var(--bg-sidebar); border: 1px solid var(--border-color); padding: 15px; border-radius: 4px; margin-top: 15px; transition: all 0.3s; }
+        .ac-section.highlight { border-color: var(--ai-purple); background: rgba(101, 84, 192, 0.1); }
+        .ac-section.success { border-color: var(--success-green); background: rgba(54, 179, 126, 0.1); }
 
         .ai-scanner { position: absolute; left: 0; width: 100%; height: 25px; background: linear-gradient(to bottom, transparent, rgba(101, 84, 192, 0.2)); border-bottom: 2px solid var(--ai-purple); z-index: 10; display: none; }
         
         .ai-popup {
-            background: #FFFFFF; border: 1px solid var(--ai-purple); border-radius: 6px; padding: 20px;
-            box-shadow: 0 10px 30px rgba(9, 30, 66, 0.2); margin-top: 15px; display: none; border-left: 4px solid var(--ai-purple);
+            background: var(--bg-card); border: 1px solid var(--ai-purple); border-radius: 6px; padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); margin-top: 15px; display: none; border-left: 4px solid var(--ai-purple);
         }
         .ai-popup h4 { margin: 0 0 10px 0; color: var(--ai-purple); }
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { padding: 8px 16px; border-radius: 4px; font-weight: 500; cursor: pointer; border: none; font-size: 13px; }
-        .btn-primary { background: var(--ai-purple); color: white; }
-        .btn-reject { background: #DFE1E6; color: var(--text-main); }
+        .btn { padding: 8px 16px; border-radius: 4px; font-weight: 500; cursor: pointer; border: none; font-size: 13px; color: #FFF;}
+        .btn-primary { background: var(--ai-purple); }
+        .btn-reject { background: transparent; border: 1px solid var(--text-subtle); color: var(--text-main); }
 
         /* --- Terminal --- */
         .terminal-overlay {
             position: fixed; bottom: 0; right: 0; width: calc(100% - 220px); height: 160px;
-            background: #091E42; color: #40FF88; font-family: 'Fira Code', monospace;
-            z-index: 900; padding: 15px; box-sizing: border-box; overflow-y: auto; font-size: 12px;
+            background: #0D1117; color: #40FF88; font-family: 'Fira Code', monospace;
+            z-index: 900; padding: 15px; box-sizing: border-box; overflow-y: auto; font-size: 12px; border-top: 1px solid var(--border-color);
         }
         .log-line { margin: 4px 0; }
         .tag-sys { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px; color: #FFF; margin-right: 5px; }
@@ -100,21 +124,25 @@
 
         /* --- Dashboard Report Overlay --- */
         .report-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #F4F5F7;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg);
             z-index: 2000; display: none; flex-direction: column; align-items: center; padding-top: 40px; overflow-y: auto;
         }
         .report-overlay.show { display: flex; }
-        .report-container { width: 900px; max-width: 95%; background: #FFF; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .report-container { width: 900px; max-width: 95%; background: var(--report-bg); padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1px solid var(--border-color); }
         .report-title { font-size: 28px; font-weight: 700; color: var(--text-main); margin-bottom: 20px; text-align: center; }
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
-        .chart-box { border: 1px solid var(--border-color); padding: 20px; border-radius: 6px; }
+        
+        /* Asegurar contraste de gráficos en modo oscuro */
+        .chart-box { border: 1px solid var(--border-color); padding: 20px; border-radius: 6px; background: #FFFFFF; } 
+        [data-theme="dark"] .chart-box { background: #E5E7EB; } /* Fondo claro grisáceo para que Chart.js resalte sin romper colores */
 
     </style>
 </head>
 <body>
 
     <div class="top-controls">
-        <select class="lang-selector" id="langSelector" onchange="changeLanguage(this.value)">
+        <button class="control-element theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+        <select class="control-element" id="langSelector" onchange="changeLanguage(this.value)">
             <option value="en">English (US)</option>
             <option value="es">Español (Latam)</option>
         </select>
@@ -208,6 +236,7 @@
 
     <script>
         // --- Translation Engine (i18n) ---
+        // (El diccionario se mantiene exactamente igual)
         const i18n = {
             es: {
                 btnStart: "Iniciar Escaneo AI", activeBoard: "Board Activo", boardTitle: "SDLC Tracking Board",
@@ -262,6 +291,7 @@
         };
 
         let currentLang = 'en';
+        let currentTheme = 'light';
         
         const evaluationQueue = [
             { id: 'SYS-101', status: 'needs_change' },
@@ -271,27 +301,45 @@
             { id: 'SYS-106', status: 'perfect' }
         ];
 
-        // --- Initialization & Language Persistence ---
+        // --- Initialization & LocalStorage Persistence ---
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Verificamos si existe una preferencia guardada en localStorage
+            // 1. Restore Language
             const savedLang = localStorage.getItem('sim_qa_lang');
-            
             if (savedLang && i18n[savedLang]) {
                 currentLang = savedLang;
             } else {
-                // 2. Si no hay nada guardado, detectamos el idioma del navegador
                 const userLang = navigator.language || navigator.userLanguage;
                 currentLang = userLang.startsWith('es') ? 'es' : 'en';
             }
-            
-            // Actualizamos el selector visualmente
             document.getElementById('langSelector').value = currentLang;
             applyTranslations(currentLang);
+
+            // 2. Restore Theme
+            const savedTheme = localStorage.getItem('sim_qa_theme');
+            if (savedTheme) {
+                currentTheme = savedTheme;
+            } else {
+                // Check OS level preference for dark mode
+                currentTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            applyTheme(currentTheme);
         });
 
+        // --- Theme Logic ---
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('sim_qa_theme', currentTheme);
+            applyTheme(currentTheme);
+        }
+
+        function applyTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            document.getElementById('themeToggle').innerText = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        // --- Language Logic ---
         function changeLanguage(lang) {
             currentLang = lang;
-            // 3. Guardamos la nueva selección del usuario en localStorage
             localStorage.setItem('sim_qa_lang', lang);
             applyTranslations(currentLang);
         }
@@ -378,7 +426,7 @@
                         stats.refined++;
                         acSection.style.opacity = 0;
                         await sleep(300);
-                        document.getElementById('modal-ac').innerHTML = `<div style="color:var(--primary-blue); font-weight:600; margin-bottom:5px;">AI Refactored:</div><div style="font-family:monospace; background:#F4F5F7; padding:10px;">${storyData.aiAc}</div>`;
+                        document.getElementById('modal-ac').innerHTML = `<div style="color:var(--primary-blue); font-weight:600; margin-bottom:5px;">AI Refactored:</div><div style="font-family:monospace; background:var(--bg-body); padding:10px; border:1px solid var(--border-color);">${storyData.aiAc}</div>`;
                         acSection.style.opacity = 1;
                         await sleep(2000);
                     } else {
@@ -401,6 +449,9 @@
         function renderDashboard(t) {
             document.getElementById('reportOverlay').classList.add('show');
             
+            // Forzamos el color de fuente del Chart a gris oscuro para que sea legible siempre
+            Chart.defaults.color = '#5E6C84';
+
             new Chart(document.getElementById('pieChart').getContext('2d'), {
                 type: 'doughnut',
                 data: {
