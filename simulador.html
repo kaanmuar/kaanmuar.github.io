@@ -3,341 +3,396 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QA Studio - Jira AI Simulator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <title>Jira AI SDLC Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        /* --- Atlassian Design System (Jira Cloud) --- */
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --board-bg: rgba(15, 23, 42, 0.6);
-            --accent-qa: #00f6ff;
-            --accent-dev: #f59e0b;
-            --accent-ai: #a855f7;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg-body: #FFFFFF;
+            --bg-sidebar: #FAFBFC;
+            --bg-board: #FFFFFF;
+            --bg-column: #F4F5F7;
+            --bg-card: #FFFFFF;
+            --text-main: #172B4D;
+            --text-subtle: #5E6C84;
+            --border-color: #DFE1E6;
+            --jira-blue: #0052CC;
+            --jira-blue-hover: #0047B3;
+            --ai-purple: #6554C0;
+            --epic-purple: #EAE6FF;
+            --epic-text: #403294;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-gradient);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
+            font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main);
+            margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; font-size: 14px;
         }
 
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { font-size: 2rem; margin: 0; background: -webkit-linear-gradient(45deg, var(--accent-qa), var(--accent-ai)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        /* --- Sidebar & Layout --- */
+        .sidebar {
+            width: 240px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color);
+            padding: 20px 10px; display: flex; flex-direction: column;
+        }
+        .sidebar-logo { font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; padding-left: 10px; display: flex; align-items: center; gap: 8px; }
+        .sidebar-logo span { background: var(--jira-blue); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+        .nav-item { padding: 8px 12px; margin: 4px 0; border-radius: 3px; color: var(--text-subtle); font-weight: 500; cursor: pointer; }
+        .nav-item.active { background: #E6EFFC; color: var(--jira-blue); }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+
+        /* --- Board Header --- */
+        .board-header { padding: 20px 30px; border-bottom: 1px solid var(--border-color); }
+        .breadcrumbs { font-size: 12px; color: var(--text-subtle); margin-bottom: 8px; }
+        .board-title { font-size: 24px; font-weight: 600; margin: 0 0 15px 0; display: flex; align-items: center; justify-content: space-between; }
+        .rovo-btn { background: linear-gradient(135deg, #6554C0, #0052CC); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
 
         /* --- Kanban Board --- */
-        .board {
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            max-width: 1200px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
+        .board-container { flex: 1; padding: 0 20px 20px 30px; overflow-x: auto; overflow-y: hidden; display: flex; flex-direction: column; }
+        .swimlane-header { padding: 15px 0; font-weight: 600; color: var(--text-subtle); font-size: 12px; display: flex; align-items: center; gap: 8px; }
+        
+        .columns { display: flex; gap: 10px; flex: 1; overflow-y: auto; padding-bottom: 150px; }
+        
         .column {
-            background: var(--board-bg);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
-            min-width: 250px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            background: var(--bg-column); min-width: 260px; max-width: 260px;
+            border-radius: 3px; display: flex; flex-direction: column; padding: 10px;
         }
-
-        .column-title { font-weight: 600; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; }
+        .column-title { font-size: 11px; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; margin-bottom: 10px; padding: 0 5px; }
 
         .ticket {
-            background: var(--card-bg);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px;
-            padding: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
+            background: var(--bg-card); border-radius: 3px; padding: 10px; margin-bottom: 8px;
+            box-shadow: 0 1px 2px rgba(9, 30, 66, 0.25); cursor: pointer; border: 1px solid transparent;
+            transition: background 0.2s; position: relative;
+        }
+        .ticket:hover { background: #FAFBFC; }
+        .ticket.active-target { border-color: var(--ai-purple); box-shadow: 0 0 0 2px var(--ai-purple); animation: highlight 2s infinite; }
+        
+        @keyframes highlight { 0% { box-shadow: 0 0 0 2px rgba(101,84,192,0.4); } 50% { box-shadow: 0 0 0 4px rgba(101,84,192,0.8); } 100% { box-shadow: 0 0 0 2px rgba(101,84,192,0.4); } }
+
+        .ticket-summary { font-size: 13px; margin-bottom: 10px; line-height: 1.4; }
+        .epic-tag { display: inline-block; background: var(--epic-purple); color: var(--epic-text); font-size: 10px; font-weight: 600; padding: 2px 4px; border-radius: 3px; margin-bottom: 8px; text-transform: uppercase; }
+        .ticket-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-subtle); }
+        .story-points { background: #DFE1E6; color: #42526E; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+        .avatar { width: 24px; height: 24px; background: var(--jira-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
+
+        /* --- Modal Issue Detail (RAFT-10298) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(9, 30, 66, 0.54); display: flex; justify-content: center; align-items: flex-start;
+            z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding-top: 50px;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+
+        .issue-modal {
+            background: #FFFFFF; width: 1000px; max-width: 95%; max-height: 85vh; border-radius: 3px;
+            box-shadow: 0 8px 16px rgba(9, 30, 66, 0.25); display: flex; flex-direction: column; overflow: hidden;
             position: relative;
         }
 
-        .ticket:hover { border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
-        .ticket.active-target { border-color: var(--accent-ai); box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); animation: pulseTicket 1.5s infinite; }
+        .issue-header { padding: 20px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .issue-key { font-size: 14px; color: var(--text-subtle); display: flex; align-items: center; gap: 5px; }
         
-        @keyframes pulseTicket {
-            0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(168, 85, 247, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
-        }
+        .issue-body { display: flex; flex: 1; overflow-y: auto; }
+        .issue-main { flex: 2; padding: 20px 30px; border-right: 1px solid var(--border-color); }
+        .issue-title { font-size: 24px; font-weight: 600; margin: 0 0 20px 0; line-height: 1.3; }
+        
+        .tabs { display: flex; gap: 15px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
+        .tab { padding: 8px 0; color: var(--text-subtle); font-weight: 500; font-size: 13px; cursor: pointer; }
+        .tab.active { color: var(--jira-blue); border-bottom: 2px solid var(--jira-blue); }
 
-        .ticket-id { font-size: 0.75rem; color: var(--accent-qa); font-weight: bold; margin-bottom: 5px; }
-        .ticket-title { font-size: 0.9rem; line-height: 1.3; }
+        .description-content { font-size: 14px; line-height: 1.6; color: var(--text-main); position: relative; }
+        .ac-section { background: #FAFBFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 3px; margin-top: 15px; transition: all 0.3s; }
+        .ac-section.highlight { border-color: var(--ai-purple); background: #F3F0FF; box-shadow: inset 4px 0 0 var(--ai-purple); }
 
-        /* --- Modal (Detalle de Historia) --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-        }
+        .issue-sidebar { flex: 1; background: #FAFBFC; padding: 20px; }
+        .sidebar-section { margin-bottom: 20px; }
+        .field-group { display: flex; margin-bottom: 10px; font-size: 12px; }
+        .field-label { width: 120px; color: var(--text-subtle); font-weight: 600; }
+        .field-value { flex: 1; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
 
-        .modal-overlay.show { opacity: 1; pointer-events: auto; }
-
-        .story-modal {
-            background: #1e293b; border: 1px solid var(--accent-ai);
-            border-radius: 12px; width: 600px; max-width: 90%;
-            padding: 30px; position: relative; overflow: hidden;
-        }
-
-        .story-content { position: relative; z-index: 2; }
-        .story-content h2 { margin-top: 0; color: var(--accent-qa); font-size: 1.5rem; }
-        .story-section { margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border-left: 2px solid var(--text-muted); }
-        .story-section.highlight { border-left-color: var(--accent-ai); background: rgba(168, 85, 247, 0.1); }
-
-        /* Animación del escáner AI */
+        /* --- AI Elements --- */
         .ai-scanner {
-            position: absolute; top: 0; left: 0; width: 100%; height: 50px;
-            background: linear-gradient(to bottom, transparent, rgba(168, 85, 247, 0.4));
-            border-bottom: 2px solid var(--accent-ai);
-            z-index: 10; display: none; pointer-events: none;
-            box-shadow: 0 10px 20px rgba(168, 85, 247, 0.2);
+            position: absolute; left: 0; width: 100%; height: 20px;
+            background: linear-gradient(to bottom, transparent, rgba(101, 84, 192, 0.2));
+            border-bottom: 2px solid var(--ai-purple); z-index: 10; display: none; pointer-events: none;
         }
 
-        /* --- Popup de Mejora AI --- */
         .ai-popup {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
-            background: #0f172a; border: 2px solid var(--accent-ai);
-            border-radius: 8px; padding: 25px; z-index: 20; width: 80%;
-            text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
-            opacity: 0; pointer-events: none; transition: all 0.3s;
+            background: #FFFFFF; border: 1px solid var(--ai-purple); border-radius: 8px; padding: 20px;
+            box-shadow: 0 10px 30px rgba(9, 30, 66, 0.3); margin-top: 15px; display: none;
+            border-top: 4px solid var(--ai-purple); animation: slideDown 0.3s forwards;
         }
-
-        .ai-popup.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-        .ai-popup h3 { color: var(--accent-ai); margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-        .btn-accept { background: var(--accent-ai); color: white; }
-        .btn-accept:hover { background: #9333ea; box-shadow: 0 0 10px var(--accent-ai); }
-        .btn-reject { background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); }
-        .btn-reject:hover { border-color: white; color: white; }
+        .ai-popup h4 { margin: 0 0 10px 0; color: var(--ai-purple); display: flex; align-items: center; gap: 8px; }
+        
+        .btn { padding: 6px 12px; border-radius: 3px; font-weight: 500; cursor: pointer; font-size: 13px; border: none; }
+        .btn-primary { background: var(--ai-purple); color: white; }
+        .btn-primary:hover { background: #5243AA; }
+        .btn-subtle { background: transparent; color: var(--text-subtle); }
+        .btn-subtle:hover { background: rgba(9, 30, 66, 0.08); }
 
-        /* --- Terminal --- */
-        .terminal-container { width: 100%; max-width: 1200px; background: #09090b; border-radius: 8px; border: 1px solid #27272a; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); margin-bottom: 20px; }
-        .terminal-header { background: #18181b; padding: 8px 15px; display: flex; gap: 8px; border-bottom: 1px solid #27272a; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; }
-        .dot.r { background: #ef4444; } .dot.y { background: #eab308; } .dot.g { background: #22c55e; }
-        .terminal { font-family: 'Fira Code', monospace; font-size: 0.85rem; padding: 15px; height: 200px; overflow-y: auto; scroll-behavior: smooth; }
-        .log-line { margin: 6px 0; opacity: 0; animation: fadeIn 0.3s forwards; line-height: 1.4; }
-        @keyframes fadeIn { to { opacity: 1; } }
-        .tag { padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 8px; font-weight: 600; }
-        .tag-sys { background: #334155; color: #f8fafc; }
-        .tag-ai { background: rgba(168, 85, 247, 0.2); border: 1px solid var(--accent-ai); color: #d8b4fe; }
-
-        .btn-start {
-            background: linear-gradient(90deg, #00f6ff, #0088ff); color: #fff; border: none; padding: 12px 24px; font-size: 1rem; font-weight: 600; border-radius: 30px; cursor: pointer; transition: all 0.3s;
+        /* --- Dev Console (Terminal) --- */
+        .terminal-overlay {
+            position: fixed; bottom: 0; right: 0; width: 100%; height: 180px;
+            background: #172B4D; color: #40FF88; font-family: 'Fira Code', monospace;
+            z-index: 2000; border-top: 2px solid var(--ai-purple); padding: 10px 20px;
+            box-sizing: border-box; overflow-y: auto; font-size: 12px; box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
         }
-        .btn-start:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 246, 255, 0.5); }
-        .btn-start:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
+        .log-line { margin: 4px 0; opacity: 0; animation: fadeIn 0.2s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .tag { padding: 1px 4px; border-radius: 2px; font-size: 10px; margin-right: 6px; background: rgba(255,255,255,0.1); color: #FFF; }
+        .tag-ai { background: var(--ai-purple); }
+
+        .start-btn { position: fixed; bottom: 200px; right: 20px; background: var(--jira-blue); color: white; padding: 10px 20px; border-radius: 3px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 100; }
+        .start-btn:disabled { background: var(--text-subtle); cursor: not-allowed; }
+
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Simulación: Jira & AI Agent Refinement</h1>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo"><span>SC</span> SciSure</div>
+        <div class="nav-item">Espacio / RAFT Development</div>
+        <div class="nav-item active">RAFT Sprint Board</div>
+        <div class="nav-item">Epics Board</div>
+        <div class="nav-item">RAFT Refinement Board</div>
     </div>
 
-    <!-- Scrum Board -->
-    <div class="board">
-        <div class="column" id="col-backlog">
-            <div class="column-title">Backlog</div>
-            <div class="ticket" id="ticket-target">
-                <div class="ticket-id">QA-404</div>
-                <div class="ticket-title">Validación de Esquema API REST (User Profile)</div>
-            </div>
-            <div class="ticket">
-                <div class="ticket-id">QA-405</div>
-                <div class="ticket-title">Automatizar login con SSO (Playwright)</div>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="board-header">
+            <div class="breadcrumbs">Espacios / RAFT Development</div>
+            <div class="board-title">
+                RAFT Sprint Board
+                <button class="rovo-btn">✨ Preguntar a Rovo</button>
             </div>
         </div>
-        <div class="column" id="col-todo">
-            <div class="column-title">To Do</div>
-            <div class="ticket">
-                <div class="ticket-id">DEV-892</div>
-                <div class="ticket-title">Actualizar dependencias de PostgreSQL</div>
-            </div>
-        </div>
-        <div class="column" id="col-dev">
-            <div class="column-title">In Dev</div>
-        </div>
-        <div class="column" id="col-review">
-            <div class="column-title">Review</div>
-        </div>
-        <div class="column" id="col-qa">
-            <div class="column-title">Ready for QA</div>
-            <div class="ticket">
-                <div class="ticket-id">QA-390</div>
-                <div class="ticket-title">Pruebas de regresión módulo de pagos</div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Modal Detalle Historia -->
-    <div class="modal-overlay" id="storyModal">
-        <div class="story-modal">
-            <div class="ai-scanner" id="aiScanner"></div>
+        <div class="board-container">
+            <div class="swimlane-header">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                Modernization & Tech Debt (50 actividades)
+            </div>
             
-            <div class="story-content">
-                <h2>QA-404: Validación de Esquema API REST</h2>
-                <div class="story-section" id="descSection">
-                    <strong>Descripción:</strong><br>
-                    Como sistema frontend, necesito validar que el payload del endpoint `/api/v2/profile` retorne la estructura exacta de datos para evitar crasheos en la UI.
+            <div class="columns">
+                <!-- TO DO -->
+                <div class="column" id="col-todo">
+                    <div class="column-title">TO DO 14</div>
+                    <div class="ticket" id="ticket-10419">
+                        <div class="epic-tag">SciShield UX Align...</div>
+                        <div class="ticket-summary">"My Account" page adjustments fo...</div>
+                        <div class="ticket-footer">
+                            <span style="color:var(--text-subtle)">RAFT-10419</span>
+                            <div class="story-points">1</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="story-section" id="acSection">
-                    <strong>Criterios de Aceptación (Borrador):</strong><br>
-                    - El status code debe ser 200.<br>
-                    - El JSON debe contener `userId`, `email` y `role`.
+
+                <!-- DOING -->
+                <div class="column" id="col-doing">
+                    <div class="column-title">DOING 10</div>
+                    <div class="ticket">
+                        <div class="ticket-summary">Unskip and fix tests in useJobPolling....</div>
+                        <div class="ticket-footer">
+                            <span style="color:var(--text-subtle)">RAFT-9236</span>
+                            <div style="display:flex; gap:5px;">
+                                <div class="story-points">3</div>
+                                <div class="avatar" style="background:#00B8D9">CM</div> <!-- Carlos Munoz avatar simulado -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ticket" id="ticket-target">
+                        <div class="ticket-summary">"My Account" page adjustments for SMP: rename to "Account Settings"...</div>
+                        <div class="ticket-footer">
+                            <span style="color:var(--text-subtle)">RAFT-10298</span>
+                            <div style="display:flex; gap:5px;">
+                                <div class="story-points">1</div>
+                                <div class="avatar">DA</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OTHER COLUMNS -->
+                <div class="column"><div class="column-title">CRING</div></div>
+                <div class="column"><div class="column-title">FRTING 5</div></div>
+                <div class="column"><div class="column-title">SRTING 6</div></div>
+                <div class="column"><div class="column-title">FCING 2</div></div>
+                <div class="column" id="col-fcd"><div class="column-title">FC'D</div></div>
+                <div class="column"><div class="column-title">FC'D & MERGED 13</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Issue Modal (RAFT-10298) -->
+    <div class="modal-overlay" id="issueModal">
+        <div class="issue-modal">
+            <div class="issue-header">
+                <div class="issue-key"><svg width="16" height="16" viewBox="0 0 24 24" fill="#36B37E"><rect width="24" height="24" rx="4"/></svg> RAFT-10298</div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-subtle">Ready for Dev</button>
+                    <button class="rovo-btn">✨ Agentes</button>
                 </div>
             </div>
+            
+            <div class="issue-body">
+                <div class="issue-main" id="issueContent">
+                    <div class="ai-scanner" id="aiScanner"></div>
+                    <h1 class="issue-title">"My Account" page adjustments for SMP: rename to "Account Settings", remove self-registration and the user's edit tab, add "Edit Profile Details"</h1>
+                    
+                    <div style="font-weight:600; margin-bottom:10px;">Detalles clave</div>
+                    <div class="tabs">
+                        <div class="tab active">Description</div>
+                        <div class="tab">Categories</div>
+                        <div class="tab">Zendesk</div>
+                        <div class="tab">Deployment</div>
+                    </div>
+                    
+                    <div class="description-content">
+                        <strong>Story</strong><br>
+                        As a user on an SMP-connected SciShield site, I want my account page to reflect that profile and account details are managed consistently...<br><br>
+                        <strong>Scope Note:</strong> A set of independent adjustments to the current "My Account" page...
+                        
+                        <div class="ac-section" id="acSection">
+                            <strong>Acceptance Criteria</strong><br>
+                            Given a connected site, when the user sees their account menu item in any location it appears, then it reads "Account Settings"...
+                        </div>
 
-            <!-- Popup Interactivo IA -->
-            <div class="ai-popup" id="aiPopup">
-                <h3>✨ Mejora Detectada por IA</h3>
-                <p>El criterio de aceptación está incompleto. No se han contemplado escenarios negativos ni validación de tipos de datos estrictos.</p>
-                <p><strong>Sugerencia:</strong> Agregar escenarios Gherkin para Schema Validation (Tipos de datos) y Error 401 (No autorizado).</p>
+                        <!-- AI Popup -->
+                        <div class="ai-popup" id="aiPopup">
+                            <h4>✨ Rovo Agent (SDET Assistant)</h4>
+                            <p style="font-size: 13px; margin-bottom: 15px;">He detectado que los Criterios de Aceptación son ambiguos para la automatización. Sugiero transformarlos a BDD (Gherkin) para inyectarlos directamente en el framework de QA.</p>
+                            <div style="display:flex; gap:10px;">
+                                <button class="btn btn-primary" onclick="handleAiDecision(true)">Refinar a Gherkin</button>
+                                <button class="btn btn-subtle" onclick="handleAiDecision(false)">Ignorar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
-                <div class="btn-group">
-                    <button class="btn btn-accept" onclick="handleAiDecision(true)">Aceptar e Inyectar</button>
-                    <button class="btn btn-reject" onclick="handleAiDecision(false)">Rechazar</button>
+                <div class="issue-sidebar">
+                    <div class="sidebar-section">
+                        <div style="font-weight:600; margin-bottom:15px;">Detalles</div>
+                        <div class="field-group"><div class="field-label">Assignee</div><div class="field-value"><div class="avatar">DA</div> Dan Andrews</div></div>
+                        <div class="field-group"><div class="field-label">Reporter</div><div class="field-value"><div class="avatar" style="background:#FF5630">KB</div> Kim Brown</div></div>
+                        <div class="field-group"><div class="field-label">Story Points</div><div class="field-value">1</div></div>
+                        <div class="field-group"><div class="field-label">Sprint</div><div class="field-value" style="color:var(--jira-blue)">Sprint 258</div></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Terminal -->
-    <div class="terminal-container">
-        <div class="terminal-header"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-        <div class="terminal" id="terminal">
-            <div class="log-line"><span class="tag tag-sys">SYSTEM</span> Tablero Scrum montado. Esperando inicio de simulación...</div>
-        </div>
+    <div class="terminal-overlay" id="terminal">
+        <div class="log-line">> SDLC Simulator Backend Initialized.</div>
     </div>
 
-    <button class="btn-start" id="startBtn" onclick="runSimulationPart1()">Iniciar Simulación</button>
+    <button class="start-btn" id="startBtn" onclick="runSimulation()">Ejecutar Simulación SDLC</button>
 
     <script>
         const terminal = document.getElementById('terminal');
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        let userDecisionResolve = null; // Promesa para detener la simulación hasta que el usuario haga clic
+        let userDecisionResolve = null;
 
-        function appendLog(tagType, tagText, message) {
+        function appendLog(message, isAi = false) {
             const div = document.createElement('div');
             div.className = 'log-line';
-            div.innerHTML = `<span class="tag tag-${tagType}">${tagText}</span> ${message}`;
+            div.innerHTML = (isAi ? '<span class="tag tag-ai">AI-AGENT</span> ' : '<span class="tag">SYSTEM</span> ') + message;
             terminal.appendChild(div);
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        // Función que el botón del popup llamará
         function handleAiDecision(accepted) {
             if (userDecisionResolve) userDecisionResolve(accepted);
         }
 
-        async function runSimulationPart1() {
+        async function runSimulation() {
             document.getElementById('startBtn').disabled = true;
-            terminal.innerHTML = '';
+            terminal.innerHTML = '<div class="log-line">> SDLC Simulator Backend Initialized.</div>';
             
-            appendLog('sys', 'SYSTEM', 'Iniciando escrutinio automático del Backlog...');
+            appendLog('Iniciando rastreo de tablero activo (Sprint 258)...');
             await sleep(1500);
 
-            // 1. Seleccionar ticket
+            // 1. Target the ticket
             const targetTicket = document.getElementById('ticket-target');
             targetTicket.classList.add('active-target');
-            appendLog('ai', 'AGENT-PM', 'Historia QA-404 seleccionada por heurística: Requiere refinamiento antes del Sprint Planning.');
-            await sleep(2000);
-
-            // 2. Abrir Modal
-            document.getElementById('storyModal').classList.add('show');
-            appendLog('ai', 'AGENT-PM', 'Abriendo detalles de la historia...');
+            appendLog('Analizando tickets en estado DOING...', true);
+            await sleep(1500);
+            appendLog('Ticket RAFT-10298 seleccionado para revisión de QA estático.', true);
             await sleep(1000);
 
-            // 3. Simular Escaneo
+            // 2. Open Modal
+            document.getElementById('issueModal').classList.add('show');
+            appendLog('Recuperando metadatos del ticket RAFT-10298...');
+            await sleep(1000);
+
+            // 3. Scanner Animation inside modal
             const scanner = document.getElementById('aiScanner');
+            const issueContent = document.getElementById('issueContent');
             scanner.style.display = 'block';
-            appendLog('sys', 'SYSTEM', 'Inicializando NLP (Procesamiento de Lenguaje Natural)...');
             
-            // Animación manual del escáner bajando por el modal
             for(let i = 0; i <= 100; i += 2) {
                 scanner.style.top = i + '%';
-                await sleep(30);
-                if (i === 40) appendLog('ai', 'AGENT-PM', 'Escaneando descripción del requerimiento...');
-                if (i === 70) {
+                await sleep(25);
+                if (i === 30) appendLog('Procesando "Description" con NLP...', true);
+                if (i === 80) {
                     document.getElementById('acSection').classList.add('highlight');
-                    appendLog('ai', 'AGENT-PM', 'Analizando criterios de aceptación propuestos...');
+                    issueContent.scrollTop = issueContent.scrollHeight;
+                    appendLog('Evaluando "Acceptance Criteria"...', true);
                 }
             }
             scanner.style.display = 'none';
-            await sleep(1000);
-
-            // 4. Mostrar hallazgo de la IA y lanzar Popup
-            appendLog('ai', 'AGENT-PM', '⚠️ Ambigüedad detectada: Faltan restricciones de esquema explícitas y edge cases.');
             await sleep(800);
-            document.getElementById('aiPopup').classList.add('show');
-            appendLog('sys', 'SYSTEM', 'Esperando validación humana (Human-in-the-loop)...');
 
-            // 5. PAUSAR EJECUCIÓN esperando el clic del usuario (Promesa)
-            const accepted = await new Promise(resolve => {
-                userDecisionResolve = resolve;
-            });
+            // 4. Trigger Popup
+            appendLog('Alerta: Criterios detectados en formato no estructurado. Requiere intervención.', true);
+            document.getElementById('aiPopup').style.display = 'block';
+            
+            // Wait for user click
+            const accepted = await new Promise(resolve => { userDecisionResolve = resolve; });
 
-            // 6. El usuario hizo clic, continuamos
-            document.getElementById('aiPopup').classList.remove('show');
-            document.getElementById('acSection').classList.remove('highlight');
+            document.getElementById('aiPopup').style.display = 'none';
 
             if (accepted) {
-                appendLog('sys', 'SYSTEM', 'Usuario ACEPTÓ la sugerencia de la IA.');
+                appendLog('Usuario aprueba refactorización a BDD.');
                 await sleep(500);
-                appendLog('ai', 'AGENT-PM', 'Reescribiendo criterios a sintaxis Gherkin...');
+                appendLog('Inyectando sintaxis Gherkin...', true);
                 
-                // Efecto visual de reescritura
                 const acSection = document.getElementById('acSection');
                 acSection.style.opacity = 0;
-                await sleep(500);
+                await sleep(400);
                 acSection.innerHTML = `
-                    <strong>Criterios de Aceptación (AI Refined):</strong><br>
-                    <span style="color:var(--accent-qa)">Scenario: Schema Validation Success</span><br>
-                    &nbsp;&nbsp;Given a valid JWT token<br>
-                    &nbsp;&nbsp;When a GET request to /api/v2/profile is made<br>
-                    &nbsp;&nbsp;Then response code is 200<br>
-                    &nbsp;&nbsp;And payload matches strictly with ProfileSchema.json
+                    <strong>Acceptance Criteria (Refactored by AI)</strong><br><br>
+                    <div style="font-family:'Fira Code', monospace; font-size:12px; background:#172B4D; color:#FFF; padding:10px; border-radius:3px;">
+                    <span style="color:#FF8F73">Feature:</span> Account Settings Renaming<br>
+                    <span style="color:#FF8F73">Scenario:</span> Verify menu item text change<br>
+                    &nbsp;&nbsp;<span style="color:#36B37E">Given</span> a connected site<br>
+                    &nbsp;&nbsp;<span style="color:#36B37E">When</span> the user views the account menu<br>
+                    &nbsp;&nbsp;<span style="color:#36B37E">Then</span> the label must exactly read "Account Settings"
+                    </div>
                 `;
-                acSection.style.borderLeftColor = 'var(--accent-qa)';
                 acSection.style.opacity = 1;
-                await sleep(2000);
-
+                await sleep(2500);
             } else {
-                appendLog('sys', 'SYSTEM', 'Usuario RECHAZÓ la sugerencia. Manteniendo criterios originales.');
+                appendLog('Usuario rechaza sugerencia. Se mantiene estructura original.');
                 await sleep(1500);
             }
 
-            // 7. Cerrar Modal y mover el ticket
-            appendLog('sys', 'SYSTEM', 'Cerrando historia. Actualizando estado en el tablero Jira...');
-            document.getElementById('storyModal').classList.remove('show');
+            // 5. Close Modal and Move Ticket
+            document.getElementById('issueModal').classList.remove('show');
+            document.getElementById('acSection').classList.remove('highlight');
+            appendLog('Cerrando ticket. Actualizando flujos de estado Jira...');
             await sleep(1000);
 
-            // Mover visualmente el ticket a "To Do" o "In Dev"
-            const todoColumn = document.getElementById('col-todo');
+            // Move to FRTING (or next column based on QA workflow)
+            const fcdColumn = document.getElementById('col-fcd');
             targetTicket.classList.remove('active-target');
-            todoColumn.appendChild(targetTicket); // Lo mueve en el DOM
-            appendLog('sys', 'SYSTEM', 'Historia QA-404 movida a TO DO. Lista para el desarrollo.');
-            
-            // Fin de la primera fase
-            appendLog('sys', 'SYSTEM', '--- FIN DE FASE 1 (Refinamiento AI) ---');
+            fcdColumn.appendChild(targetTicket);
+            appendLog('Ticket RAFT-10298 movido a FC\'D. Listo para ejecución automatizada.');
+
+            document.getElementById('startBtn').innerText = "Simulación Completada";
         }
     </script>
 </body>
