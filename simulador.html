@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDLC QA & AI Simulator</title>
+    <style>
+        :root {
+            --primary: #00ff88;
+            --bg-dark: #121212;
+            --terminal-bg: #1e1e1e;
+            --text: #e0e0e0;
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-dark);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .pipeline {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .stage {
+            text-align: center;
+            z-index: 1;
+            width: 20%;
+        }
+        .circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #333;
+            margin: 0 auto 10px;
+            border: 2px solid #555;
+            transition: all 0.3s;
+        }
+        .circle.active {
+            background-color: var(--primary);
+            border-color: #fff;
+            box-shadow: 0 0 15px var(--primary);
+        }
+        .line {
+            position: absolute;
+            top: 15px;
+            left: 10%;
+            right: 10%;
+            height: 4px;
+            background-color: #333;
+            z-index: 0;
+        }
+        .terminal {
+            background-color: var(--terminal-bg);
+            width: 100%;
+            max-width: 800px;
+            height: 400px;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+        .log-line {
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+        .log-system { color: #888; }
+        .log-ai { color: #bb86fc; font-weight: bold; }
+        .log-qa { color: var(--primary); }
+        .log-error { color: #cf6679; }
+        
+        button {
+            background-color: var(--primary);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: inherit;
+        }
+        button:hover { background-color: #00cc6a; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <h2>Simulador Automático: SDLC con Agentes IA</h2>
+    
+    <div class="pipeline">
+        <div class="line"></div>
+        <div class="stage"><div class="circle" id="c1"></div><span>Planning</span></div>
+        <div class="stage"><div class="circle" id="c2"></div><span>Dev</span></div>
+        <div class="stage"><div class="circle" id="c3"></div><span>QA Auto</span></div>
+        <div class="stage"><div class="circle" id="c4"></div><span>Deploy</span></div>
+        <div class="stage"><div class="circle" id="c5"></div><span>Prod</span></div>
+    </div>
+
+    <div class="terminal" id="terminal">
+        <div class="log-line log-system">> Sistema inicializado. Esperando inicio del ciclo...</div>
+    </div>
+
+    <button id="startBtn" onclick="runSimulation()">Iniciar Simulación SDLC</button>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const startBtn = document.getElementById('startBtn');
+
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        function appendLog(message, type) {
+            const div = document.createElement('div');
+            div.className = `log-line ${type}`;
+            div.innerHTML = message;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function activateStage(stageNumber) {
+            document.querySelectorAll('.circle').forEach((el, index) => {
+                if (index < stageNumber) el.classList.add('active');
+            });
+        }
+
+        async function runSimulation() {
+            startBtn.disabled = true;
+            terminal.innerHTML = '<div class="log-line log-system">> Iniciando nuevo ciclo de desarrollo...</div>';
+            
+            document.querySelectorAll('.circle').forEach(el => el.classList.remove('active'));
+
+            // Phase 1: Planning
+            activateStage(1);
+            appendLog("> FASE 1: Creación de Historia de Usuario", "log-system");
+            await sleep(1000);
+            appendLog("[AI Agent - PM] Analizando requerimientos de negocio...", "log-ai");
+            await sleep(1500);
+            appendLog("[AI Agent - QA] Generando Criterios de Aceptación (Gherkin):<br>&nbsp;&nbsp;Given un usuario autenticado<br>&nbsp;&nbsp;When realiza un POST a /api/v1/data<br>&nbsp;&nbsp;Then el status code debe ser 200", "log-qa");
+            await sleep(2000);
+
+            // Phase 2: Dev
+            activateStage(2);
+            appendLog("<br>> FASE 2: Desarrollo y PR", "log-system");
+            await sleep(1000);
+            appendLog("[Dev] Código enviado a la rama feature/API-validation.", "log-system");
+            await sleep(1200);
+            appendLog("[AI Agent - Code Review] Analizando PR... Complejidad ciclomática óptima. Aprobado.", "log-ai");
+            await sleep(2000);
+
+            // Phase 3: QA Automation
+            activateStage(3);
+            appendLog("<br>> FASE 3: QA Automation Execution", "log-system");
+            await sleep(1000);
+            appendLog("[Pipeline] Ejecutando suite de Playwright...", "log-qa");
+            await sleep(1500);
+            appendLog("[Playwright] FAIL: Elemento '#btn-submit-old' no encontrado.", "log-error");
+            await sleep(1500);
+            appendLog("[AI Agent - Self-Healing] Detectado fallo de locator. Buscando alternativas en el DOM...", "log-ai");
+            await sleep(1500);
+            appendLog("[AI Agent - Self-Healing] Locator corregido a '[data-testid=btn-submit]'. Reejecutando...", "log-ai");
+            await sleep(1200);
+            appendLog("[Playwright] PASS: 45/45 Pruebas exitosas. Cobertura: 98%", "log-qa");
+            await sleep(2000);
+
+            // Phase 4: Deploy
+            activateStage(4);
+            appendLog("<br>> FASE 4: Despliegue CI/CD", "log-system");
+            await sleep(1000);
+            appendLog("[AI Agent - Release] Evaluando riesgo de despliegue... Nivel: BAJO.", "log-ai");
+            await sleep(1500);
+            appendLog("[Pipeline] Construyendo contenedores Docker... Desplegando en Staging.", "log-system");
+            await sleep(1500);
+            appendLog("[QA Pipeline] Pruebas de integración de API (GraphQL/REST) aprobadas.", "log-qa");
+            await sleep(2000);
+
+            // Phase 5: Prod
+            activateStage(5);
+            appendLog("<br>> FASE 5: Verificación en Producción", "log-system");
+            await sleep(1000);
+            appendLog("[Pipeline] Tráfico enrutado a Producción.", "log-system");
+            await sleep(1200);
+            appendLog("[AI Agent - Monitor] Lanzando Sanity Checks y validación de esquemas de bases de datos (PostgreSQL/Snowflake).", "log-ai");
+            await sleep(1500);
+            appendLog("[AI Agent - Monitor] Todo estable. SDLC completado exitosamente.", "log-ai");
+            
+            startBtn.disabled = false;
+            startBtn.innerText = "Reiniciar Simulación";
+        }
+    </script>
+</body>
+</html>
