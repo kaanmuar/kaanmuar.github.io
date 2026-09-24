@@ -107,9 +107,10 @@
         html { color-scheme: light; }
         html.dark-mode { color-scheme: dark; }
         html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
-        body { display: grid; grid-template-rows: 56px minmax(0, 1fr) 120px; overflow: hidden; }
+        html { overflow-x: hidden; }
+        body { display: grid; grid-template-rows: auto minmax(0, 1fr) 120px; overflow: hidden; }
         button { font-family: inherit; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--topbar); gap: 12px; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--topbar); gap: 12px; flex-wrap: wrap; min-height: 56px; }
         .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-family: "Source Serif 4", Georgia, serif; }
         .brand small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; }
         .agents { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -117,7 +118,7 @@
         .agent.active { border-color: var(--cyan); color: var(--agent-active-text); background: var(--agent-active-bg); }
         .agent.done { border-color: var(--green); color: var(--green); }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-        .actions { display: flex; align-items: center; gap: 8px; }
+        .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         #theme-toggle { background: none; border: 0; cursor: pointer; color: var(--text); padding: 6px; display: inline-flex; border-radius: 6px; }
         #theme-toggle:hover { background: var(--panel-2); }
         #theme-toggle .sun-icon { display: none; width: 18px; height: 18px; }
@@ -132,7 +133,7 @@
         .btn-reject { background: transparent; color: var(--red); border: 1px solid var(--red); }
         .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 0; overflow: hidden; }
         .nav { border-right: 1px solid var(--line); background: var(--panel-2); padding: 14px 10px; }
-        .nav button { width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted); padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .nav button, .nav a { width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted); padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; display: block; text-decoration: none; }
         .nav button.active { background: var(--nav-active); color: var(--nav-active-text); }
         .workspace { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
         .phase-banner { flex: 0 0 auto; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--banner); font-size: 13px; color: var(--muted); }
@@ -255,11 +256,28 @@
         #google_translate_element, .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt, iframe.skiptranslate, .goog-te-gadget { display: none !important; visibility: hidden !important; height: 0 !important; }
         html, body { top: 0 !important; position: static !important; }
         @media (max-width: 900px) {
-            .shell { grid-template-columns: 1fr; }
-            .nav { display: flex; overflow: auto; gap: 6px; border-right: 0; border-bottom: 1px solid var(--line); }
-            .nav button { width: auto; white-space: nowrap; }
-            .m-body { grid-template-columns: 1fr; }
+            html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+            body { display: flex; flex-direction: column; }
+            .topbar { flex-direction: column; align-items: stretch; gap: 10px; }
+            .brand { min-width: 0; }
+            .brand small { white-space: normal; }
+            .actions { width: 100%; }
+            #runBtn { flex: 1 1 auto; }
+            .shell { grid-template-columns: 1fr; min-height: 55vh; }
+            .nav { display: flex; overflow: auto; gap: 6px; border-right: 0; border-bottom: 1px solid var(--line); -webkit-overflow-scrolling: touch; }
+            .nav button, .nav a { width: auto; white-space: nowrap; }
+            .board { -webkit-overflow-scrolling: touch; }
+            .col { min-width: min(250px, 82vw); width: min(250px, 82vw); }
+            .log { max-height: 28vh; min-height: 80px; }
+            .overlay { padding: 10px; }
+            .m-body { grid-template-columns: 1fr; min-height: 0; }
+            .m-main { border-right: 0; }
+            .grid2 { grid-template-columns: 1fr; }
+            .field { grid-template-columns: 1fr; }
+            .handoff { flex-direction: column; align-items: stretch; }
+            .handoff .btn { width: 100%; }
             .agents { display: none; }
+            .lang-menu { width: min(15rem, calc(100vw - 24px)); }
         }
     </style>
 </head>
@@ -271,6 +289,7 @@
     </div>
     <div class="agents" id="agentPills"></div>
     <div class="actions">
+        <button class="btn btn-ghost" id="homeBtn" type="button">← CV</button>
         <div class="lang-wrap notranslate" id="langWrap">
             <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
                 <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English">
@@ -292,6 +311,8 @@
         <button data-view="auto">Automation lab</button>
         <button data-view="verify">Sprint verification</button>
         <button data-view="report">Sprint report</button>
+        <a href="qa-lab.html">CV regression lab</a>
+        <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests" target="_blank" rel="noopener noreferrer">Test suite on GitHub</a>
     </aside>
     <main class="workspace">
         <div class="phase-banner" id="banner">Explore the board, open any ticket, then start the four-agent sprint.</div>
@@ -945,6 +966,11 @@ document.getElementById('runBtn').onclick = runSprint;
 document.getElementById('resetBtn').onclick = () => {
     track('sim_reset', 'Simulator', 'Reload');
     location.reload();
+};
+document.getElementById('homeBtn').onclick = () => {
+    track('sim_home', 'Simulator', window.opener ? 'popup' : 'direct');
+    if (window.SiteI18n) SiteI18n.goHome();
+    else location.href = 'index.html';
 };
 overlay.addEventListener('click', e => { if (e.target === overlay && !state.running) closeModal(); });
 

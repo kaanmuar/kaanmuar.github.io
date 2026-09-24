@@ -102,10 +102,13 @@ npx playwright show-report
 ```
 
 ### 5. Coverage
-The Playwright suite (`cv-and-admin.spec.js`) covers:
-* **Desktop & Mobile** scenarios using device emulation.
-* Dark mode persistence and interactive filtering.
-* A full End-to-End test of the **Admin Panel**, including creating a new rating on the CV page, logging into the admin panel, approving the rating, responding to it, and finally verifying that it appears as a public testimonial on the main CV page.
+The Playwright suite under `tests/` covers CV, admin, studio, QA lab, security, accessibility, and mobile (390×844). The same catalog is listed on [qa-lab.html](https://kaanmuar.github.io/qa-lab.html); each case links to its source on GitHub.
+
+Browse the suites:
+* Playwright: [`tests/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests)
+* Cypress: [`cypress/e2e/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/cypress/e2e)
+* Robot: [`tests/robot/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests/robot)
+* In-browser runner: [`js/qa-lab.js`](https://github.com/kaanmuar/kaanmuar.github.io/blob/main/js/qa-lab.js)
 
 </details>
 
@@ -186,22 +189,22 @@ npm install
 
 ```
 /
-├── index.html              # The main public-facing interactive CV page.
-├── admin.html              # The secure admin panel for managing messages and ratings.
-├── package.json            # Project dependencies and scripts.
-├── .github/
-│   └── workflows/
-│       └── main.yml        # GitHub Actions configuration for CI/CD.
-├── tests/                  # Contains all Playwright tests.
-│   ├── CVPage.js           # Playwright Page Object for index.html.
-│   ├── AdminPage.js        # Playwright Page Object for admin.html.
-│   └── cv-and-admin.spec.js # Playwright test suite.
-└── cypress/
-    └── e2e/
-        ├── cv_spec.cy.js      # Cypress test suite for the CV.
-        ├── admin_spec.cy.js     # Cypress test suite for the admin panel.
-        ├── cv_suite.robot     # Robot Framework main test suite.
-        └── cv_resources.robot # Robot Framework resource file.
+├── index.html              # Interactive CV
+├── simulador.html          # 4-agent SDLC studio
+├── qa-lab.html             # Visitor-facing regression lab (catalog + runner)
+├── admin.html              # Admin panel (noindex)
+├── js/qa-lab.js            # Lab catalog, source links, in-browser runner
+├── tests/                  # Playwright specs + Robot
+│   ├── cv.spec.js
+│   ├── admin.spec.js
+│   ├── simulator.spec.js
+│   ├── qa-lab.spec.js
+│   ├── mobile.spec.js
+│   ├── security.spec.js
+│   ├── a11y.spec.js
+│   └── robot/
+├── cypress/e2e/            # Cypress specs
+└── package.json
 ```
 
 ---
