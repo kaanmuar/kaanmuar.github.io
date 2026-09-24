@@ -1,0 +1,19 @@
+{
+  "name": "Carlos A. Muñoz — Interactive CV",
+  "short_name": "Carlos Muñoz CV",
+  "description": "Interactive CV of Carlos A. Muñoz, Senior IT Project Manager, QA Architect and QA Leader.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#0b1220",
+  "theme_color": "#0891b2",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
