@@ -24,6 +24,70 @@ Suite Teardown    Close All Browsers
     Click Radar Chart Label    QA & Automation
     Verify Toolkit Is Filtered
 
+[Desktop] Core Competency Highlights Related Content
+    [Tags]    Desktop    Interactive
+    Open CV in Desktop Browser
+    Click Element    css:.competency-item[data-competency="pm"]
+    Wait Until Page Contains Element    css:html.topic-focus
+    Page Should Contain Element    css:.experience-item.topic-match
+    Page Should Contain Element    css:.experience-item.topic-dim
+    Click Element    id:languages-heading
+    Wait Until Page Does Not Contain Element    css:html.topic-focus
+
+[Desktop] All Seven Competencies Are Clickable
+    [Tags]    Desktop    Interactive
+    Open CV in Desktop Browser
+    ${count}=    Execute Javascript    return document.querySelectorAll('.competency-item').length
+    Should Be Equal As Integers    ${count}    7
+
+[Desktop] Same Competency Click Restores The CV
+    [Tags]    Desktop    Interactive
+    Open CV in Desktop Browser
+    Click Element    css:.competency-item[data-competency="qa"]
+    Wait Until Page Contains Element    css:html.topic-focus
+    Click Element    css:.competency-item[data-competency="qa"]
+    Wait Until Page Does Not Contain Element    css:html.topic-focus
+
+[Desktop] Reset Filters Clears Competency Focus
+    [Tags]    Desktop    Interactive
+    Open CV in Desktop Browser
+    Click Element    css:.competency-item[data-competency="qa"]
+    Wait Until Page Contains Element    css:html.topic-focus
+    Click Element    id:reset-filter
+    Wait Until Page Does Not Contain Element    css:html.topic-focus
+
+[Desktop] Radar QA Label Applies Competency Focus
+    [Tags]    Desktop    Interactive
+    Open CV in Desktop Browser
+    Click Radar Chart Label    QA & Automation
+    Wait Until Page Contains Element    css:html.topic-focus
+    Element Attribute Value Should Be    css:.competency-item[data-competency="qa"]    aria-pressed    true
+
+[Desktop] Theme Toggle Keeps Competency Focus
+    [Tags]    Desktop    Interactive
+    Open CV in Desktop Browser
+    Click Element    css:.competency-item[data-competency="cloud"]
+    Wait Until Page Contains Element    css:html.topic-focus
+    Toggle The Theme On Desktop
+    Wait Until Page Contains Element    css:html.topic-focus
+    Element Attribute Value Should Be    css:.competency-item[data-competency="cloud"]    aria-pressed    true
+
+[Desktop] Topic Query Deep Links QA
+    [Tags]    Desktop    Interactive
+    Open Browser    ${CV_URL}?topic=qa    ${BROWSER}    options=${CHROME_OPTIONS}
+    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); localStorage.setItem('theme','light');
+    Go To    ${CV_URL}?topic=qa
+    Wait Until Page Contains Element    css:html.topic-focus
+    Element Attribute Value Should Be    css:.competency-item[data-competency="qa"]    aria-pressed    true
+
+[Desktop] Unknown Topic Query Leaves CV Unfiltered
+    [Tags]    Desktop    Interactive
+    Open Browser    ${CV_URL}?topic=nope    ${BROWSER}    options=${CHROME_OPTIONS}
+    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); localStorage.setItem('theme','light');
+    Go To    ${CV_URL}?topic=nope
+    Wait Until Element Is Visible    id:main-name    15s
+    Page Should Not Contain Element    css:html.topic-focus
+
 [Desktop] Glance KPIs Show 18 Plus Years
     [Tags]    Desktop    Content
     Open CV in Desktop Browser

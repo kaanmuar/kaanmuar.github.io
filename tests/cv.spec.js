@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { CVPage } = require('./CVPage.js');
-const { forceGlancePair, prepareCV } = require('./helpers.js');
+const { forceGlancePair, prepareCV, waitForCVApp } = require('./helpers.js');
 
 test.describe('CV desktop', () => {
   test.beforeEach(async ({ page }) => {
@@ -28,6 +28,7 @@ test.describe('CV desktop', () => {
   test('honors ?lang=de on load', async ({ page }) => {
     await prepareCV(page, { theme: 'light' });
     await page.goto('/index.html?lang=de');
+    await waitForCVApp(page);
     await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Berufliches Profil/i);
   });
 
@@ -54,6 +55,23 @@ test.describe('CV desktop', () => {
     await expect(page.locator('#toolkit-heading')).toBeInViewport();
     await expect(page.locator('.tech-tag[data-skill-name="Selenium"]')).toHaveClass(/selected/);
     await expect(page.locator('.tech-tag[data-skill-name="Cypress"]')).toHaveClass(/selected/);
+  });
+
+  test('core competency highlights related CV content and restores on outside click', async ({ page }) => {
+    await page.locator('.competency-item[data-competency="pm"]').click();
+    await expect(page.locator('html')).toHaveClass(/topic-focus/);
+    await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.experience-item.topic-match')).not.toHaveCount(0);
+    await expect(page.locator('.experience-item.topic-dim')).not.toHaveCount(0);
+    await expect(page.locator('.timeline-item.topic-match')).not.toHaveCount(0);
+    await page.locator('#languages-heading').click({ force: true });
+    await expect(page.locator('html')).not.toHaveClass(/topic-focus/);
+    await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('tour includes competencies after glance', async ({ page }) => {
+    const keys = await page.evaluate(() => window.CarlosMunozCV.tourSteps.map((s) => s.titleKey));
+    expect(keys.indexOf('tour_title_competencies')).toBe(keys.indexOf('tour_title_glance') + 1);
   });
 
   test('filters experience by a skill tag', async ({ page }) => {
