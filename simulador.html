@@ -1,510 +1,604 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI QA SDLC Simulator - Enterprise</title>
+    <title>Sprint 24 · 4-Agent SDLC Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- Light Theme (Default) --- */
         :root {
-            --bg-body: #FFFFFF; --bg-sidebar: #FAFBFC; --bg-column: #F4F5F7; --bg-card: #FFFFFF;
-            --text-main: #172B4D; --text-subtle: #5E6C84; --border-color: #DFE1E6;
-            --primary-blue: #0052CC; --ai-purple: #6554C0; --success-green: #36B37E;
-            --modal-bg: rgba(9, 30, 66, 0.7); --report-bg: #FFFFFF;
-            --pastel-perfect: #E3FCEF; --border-perfect: #36B37E;
-            --pastel-refined: #F3F0FF; --border-refined: #6554C0;
-            --pastel-rejected: #FFEBE6; --border-rejected: #FF5630;
+            --bg: #0b1220; --panel: #111827; --panel-2: #0f172a; --card: #1e293b;
+            --line: #334155; --text: #e5eefc; --muted: #94a3b8; --blue: #3b82f6;
+            --cyan: #22d3ee; --purple: #a78bfa; --green: #34d399; --amber: #fbbf24;
+            --red: #f87171; --jira: #2684ff; --story: #63ba3c;
         }
-
-        /* --- Dark Theme --- */
-        [data-theme="dark"] {
-            --bg-body: #1D2125; --bg-sidebar: #161A1D; --bg-column: #161A1D; --bg-card: #22272B;
-            --text-main: #B6C2CF; --text-subtle: #8C9BAB; --border-color: #2C333A;
-            --primary-blue: #579DFF; --ai-purple: #9F8FEF; --success-green: #4BCE97;
-            --modal-bg: rgba(29, 33, 37, 0.8); --report-bg: #22272B;
-            --pastel-perfect: rgba(54, 179, 126, 0.15); --border-perfect: #4BCE97;
-            --pastel-refined: rgba(101, 84, 192, 0.15); --border-refined: #9F8FEF;
-            --pastel-rejected: rgba(255, 86, 48, 0.15); --border-rejected: #FF8F73;
+        * { box-sizing: border-box; }
+        html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
+        body { display: grid; grid-template-rows: 56px 1fr 150px; overflow: hidden; }
+        button { font-family: inherit; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); background: #0a1628; gap: 12px; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .brand small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; }
+        .agents { display: flex; gap: 8px; flex-wrap: wrap; }
+        .agent { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+        .agent.active { border-color: var(--purple); color: #fff; background: rgba(167,139,250,.15); }
+        .agent.done { border-color: var(--green); color: var(--green); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        .actions { display: flex; gap: 8px; }
+        .btn { border: 0; border-radius: 6px; padding: 8px 12px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .btn:disabled { opacity: .45; cursor: not-allowed; }
+        .btn-primary { background: var(--jira); color: #fff; }
+        .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+        .btn-accept { background: #0f766e; color: #fff; }
+        .btn-reject { background: transparent; color: var(--red); border: 1px solid var(--red); }
+        .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 0; }
+        .nav { border-right: 1px solid var(--line); background: var(--panel-2); padding: 14px 10px; }
+        .nav button { width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted); padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .nav button.active { background: #1e3a5f; color: #fff; }
+        .workspace { min-width: 0; display: flex; flex-direction: column; }
+        .phase-banner { padding: 10px 16px; border-bottom: 1px solid var(--line); background: #132033; font-size: 13px; color: var(--muted); }
+        .phase-banner strong { color: var(--text); }
+        .board { flex: 1; overflow: auto; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+        .col { min-width: 250px; width: 250px; background: #0f172a; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+        .col h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+        .ticket { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 8px; cursor: pointer; }
+        .ticket:hover { border-color: var(--blue); }
+        .ticket.pulse { outline: 2px solid var(--purple); transform: translateY(-2px); }
+        .ticket.ok { border-color: var(--green); }
+        .ticket.changed { border-color: var(--purple); }
+        .ticket.kept { border-color: var(--amber); }
+        .epic { font-size: 10px; font-weight: 700; color: var(--purple); text-transform: uppercase; }
+        .sum { font-size: 13px; margin: 6px 0 8px; line-height: 1.35; }
+        .meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+        .prio { font-weight: 700; }
+        .prio.highest { color: var(--red); } .prio.high { color: #fb7185; } .prio.medium { color: var(--amber); }
+        .log { background: #020617; color: #86efac; font-family: 'Fira Code', monospace; font-size: 12px; padding: 10px 14px; overflow: auto; border-top: 1px solid var(--line); }
+        .log b { color: var(--cyan); }
+        .overlay { position: fixed; inset: 0; background: rgba(2,6,23,.72); display: none; z-index: 30; padding: 24px; }
+        .overlay.show { display: flex; justify-content: center; align-items: flex-start; overflow: auto; }
+        .modal { width: min(1100px, 100%); background: #0f172a; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 40px; }
+        .m-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+        .m-body { display: grid; grid-template-columns: 1.7fr .9fr; min-height: 520px; }
+        .m-main { padding: 18px; overflow: auto; border-right: 1px solid var(--line); }
+        .m-side { padding: 16px; background: #0b1524; }
+        .tabs { display: flex; gap: 12px; border-bottom: 1px solid var(--line); margin: 12px 0 16px; }
+        .tabs button { background: none; border: 0; color: var(--muted); padding: 8px 0; cursor: pointer; font-size: 13px; }
+        .tabs button.on { color: var(--jira); border-bottom: 2px solid var(--jira); font-weight: 600; }
+        .field { display: grid; grid-template-columns: 110px 1fr; gap: 8px; font-size: 12px; margin-bottom: 8px; color: var(--muted); }
+        .field b { color: var(--text); font-weight: 500; }
+        .ac { background: #0b1220; border: 1px solid var(--line); border-radius: 8px; padding: 12px; white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.5; }
+        .proposal { display: none; margin-top: 14px; border: 1px solid var(--purple); background: rgba(167,139,250,.08); border-radius: 8px; padding: 12px; }
+        .proposal.show { display: block; }
+        .row { display: flex; gap: 8px; margin-top: 10px; }
+        .tests { padding: 16px; overflow: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+        th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+        .gherkin { white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 11px; color: #cbd5e1; background: #020617; padding: 8px; border-radius: 6px; }
+        .code { white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 11.5px; background: #020617; padding: 12px; border-radius: 8px; border: 1px solid var(--line); overflow: auto; max-height: 280px; }
+        .pill { font-size: 10px; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--line); }
+        .pass { color: var(--green); } .fail { color: var(--red); }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+        .check { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; font-size: 13px; }
+        @media (max-width: 900px) {
+            .shell { grid-template-columns: 1fr; }
+            .nav { display: flex; overflow: auto; gap: 6px; border-right: 0; border-bottom: 1px solid var(--line); }
+            .nav button { width: auto; white-space: nowrap; }
+            .m-body { grid-template-columns: 1fr; }
+            .agents { display: none; }
         }
-
-        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; font-size: 14px; transition: background-color 0.3s, color 0.3s; top: 0 !important; }
-        
-        /* Ocultar barra superior de Google Translate */
-        .skiptranslate iframe { display: none !important; }
-        body { top: 0px !important; }
-
-        /* --- Controls --- */
-        .top-controls { position: fixed; top: 20px; right: 30px; display: flex; gap: 15px; z-index: 100; align-items: center; }
-        .control-element { padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-family: inherit; font-weight: 500; cursor: pointer; outline: none; transition: all 0.2s; }
-        .control-element:hover { border-color: var(--primary-blue); }
-        .start-btn { background: var(--primary-blue); color: #FFF; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .start-btn:disabled { background: var(--text-subtle); cursor: not-allowed; opacity: 0.7; }
-
-        /* --- Layout --- */
-        .sidebar { width: 220px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); padding: 20px 10px; transition: background-color 0.3s; }
-        .sidebar-logo { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; padding-left: 10px; }
-        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .board-header { padding: 20px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; }
-        .board-title { font-size: 24px; font-weight: 600; margin: 0; }
-        
-        .board-container { flex: 1; padding: 20px 20px 180px 20px; overflow-x: auto; overflow-y: auto; display: flex; gap: 15px; align-items: flex-start; }
-        .column { background: var(--bg-column); min-width: 300px; max-width: 300px; border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-        .column-title { font-size: 12px; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; margin-bottom: 5px; }
-
-        /* --- Ticket Details --- */
-        .ticket { background: var(--bg-card); border-radius: 4px; padding: 15px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; position: relative; }
-        .ticket:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-        .ticket.active-target { border-color: var(--ai-purple); box-shadow: 0 0 0 3px rgba(101,84,192,0.4); z-index: 10; transform: scale(1.02); }
-        .ticket.status-perfect { background: var(--pastel-perfect); border-color: var(--border-perfect); }
-        .ticket.status-refined { background: var(--pastel-refined); border-color: var(--border-refined); }
-        .ticket.status-rejected { background: var(--pastel-rejected); border-color: var(--border-rejected); }
-
-        .epic-tag { display: inline-block; background: rgba(101, 84, 192, 0.1); color: var(--ai-purple); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; margin-bottom: 8px; text-transform: uppercase; }
-        .ticket-summary { font-size: 14px; margin-bottom: 15px; line-height: 1.4; font-weight: 500; }
-        .ticket-footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-subtle); font-weight: 500; }
-        .ticket-meta { display: flex; gap: 8px; align-items: center; }
-        .sp-badge { background: var(--border-color); color: var(--text-main); padding: 2px 6px; border-radius: 12px; font-size: 11px; }
-        .avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--primary-blue); color: #FFF; display: flex; justify-content: center; align-items: center; font-size: 10px; font-weight: bold; }
-
-        /* --- Realistic Jira Modal --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); display: flex; justify-content: center; align-items: flex-start; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding-top: 30px; }
-        .modal-overlay.show { opacity: 1; pointer-events: auto; }
-        .issue-modal { background: var(--bg-body); width: 1200px; max-width: 95%; height: 90vh; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: flex; flex-direction: column; position: relative; overflow: hidden; border: 1px solid var(--border-color); }
-        .issue-header { padding: 15px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); }
-        .close-btn { background: transparent; border: none; font-size: 20px; color: var(--text-subtle); cursor: pointer; }
-        
-        .issue-body { display: flex; flex: 1; overflow: hidden; }
-        .issue-main { flex: 2; padding: 25px; overflow-y: auto; border-right: 1px solid var(--border-color); position: relative; }
-        .jira-tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; font-size: 13px; font-weight: 500; color: var(--text-subtle); }
-        .jira-tabs span { padding-bottom: 8px; cursor: pointer; }
-        .jira-tabs span.active { color: var(--primary-blue); border-bottom: 2px solid var(--primary-blue); font-weight: 600; }
-        
-        .jira-section { margin-bottom: 25px; }
-        .jira-section h3 { font-size: 14px; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        
-        .ac-section { background: var(--bg-sidebar); border: 1px solid var(--border-color); padding: 15px; border-radius: 4px; transition: all 0.3s; font-size: 13px; line-height: 1.5;}
-        .ac-section.highlight { border-color: var(--ai-purple); background: rgba(101, 84, 192, 0.1); }
-        .ac-section.success { border-color: var(--success-green); background: rgba(54, 179, 126, 0.1); }
-
-        .attachment-item { display: inline-flex; flex-direction: column; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; margin-right: 10px; width: 120px; font-size: 11px; background: var(--bg-card);}
-        .attachment-item img { width: 100%; height: 60px; object-fit: cover; background: #eee; margin-bottom: 5px; border-radius: 2px;}
-        .linked-issue { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; background: var(--bg-card); }
-        
-        .issue-sidebar { flex: 1; padding: 20px; overflow-y: auto; background: var(--bg-sidebar); }
-        .sidebar-panel { margin-bottom: 25px; }
-        .sidebar-panel h3 { font-size: 13px; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 15px; font-weight: 600;}
-        .field-row { display: flex; align-items: center; margin-bottom: 12px; font-size: 12px; }
-        .field-label { width: 130px; color: var(--text-subtle); }
-        .field-val { flex: 1; color: var(--text-main); display: flex; align-items: center; gap: 8px; font-weight: 500;}
-
-        /* AI Elements */
-        .ai-scanner { position: absolute; left: 0; top: 0; width: 100%; height: 40px; background: linear-gradient(to bottom, transparent, rgba(101, 84, 192, 0.3)); border-bottom: 2px solid var(--ai-purple); z-index: 50; display: none; box-shadow: 0 10px 20px rgba(101,84,192,0.1); pointer-events: none;}
-        .ai-popup { background: var(--bg-card); border: 1px solid var(--ai-purple); border-radius: 6px; padding: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); margin-top: 20px; display: none; border-left: 4px solid var(--ai-purple); position: relative; z-index: 100;}
-        .ai-popup h4 { margin: 0 0 10px 0; color: var(--ai-purple); font-size: 15px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; border: none; font-size: 13px; color: #FFF; transition: opacity 0.2s;}
-        .btn:hover { opacity: 0.9; }
-        .btn-primary { background: var(--ai-purple); }
-        .btn-reject { background: transparent; border: 1px solid var(--text-subtle); color: var(--text-main); }
-
-        /* --- Terminal --- */
-        .terminal-overlay { position: fixed; bottom: 0; right: 0; width: calc(100% - 220px); height: 160px; background: #0D1117; color: #40FF88; font-family: 'Fira Code', monospace; z-index: 900; padding: 15px; box-sizing: border-box; overflow-y: auto; font-size: 12px; border-top: 2px solid var(--border-color); }
-        .log-line { margin: 5px 0; line-height: 1.4; }
-        .tag-sys { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px; color: #FFF; margin-right: 6px; font-weight: 600;}
-        .tag-ai { background: var(--ai-purple); padding: 2px 6px; border-radius: 3px; color: #FFF; margin-right: 6px; font-weight: 600;}
-
-        /* --- Dashboard Report --- */
-        .report-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 2000; display: none; flex-direction: column; align-items: center; padding-top: 40px; overflow-y: auto; }
-        .report-overlay.show { display: flex; }
-        .report-container { width: 1000px; max-width: 95%; background: var(--report-bg); padding: 40px; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border: 1px solid var(--border-color); margin-bottom: 40px; }
-        .report-title { font-size: 28px; font-weight: 700; color: var(--text-main); margin-bottom: 10px; text-align: center; }
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 30px; }
-        .chart-box { border: 1px solid var(--border-color); padding: 20px; border-radius: 8px; background: #FFFFFF; box-shadow: 0 2px 5px rgba(0,0,0,0.02);} 
-        [data-theme="dark"] .chart-box { background: #E5E7EB; } 
-
     </style>
 </head>
 <body>
-
-    <div class="top-controls">
-        <button class="control-element theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Modo Oscuro/Claro">🌙</button>
-        <div id="google_translate_element" class="control-element" style="padding: 0; border: none; background: transparent;"></div>
-        <button class="start-btn" id="startBtn" onclick="runSimulation()">Iniciar Escaneo AI</button>
+<header class="topbar">
+    <div class="brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#2684FF"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="2"/></svg>
+        <div>PayStream · QA Studio<small>Active sprint board · 4 specialized agents</small></div>
     </div>
-
-    <div class="sidebar">
-        <div class="sidebar-logo">QA Studio</div>
-        <div style="color: var(--text-subtle); font-size: 13px; font-weight: 500;">Board Activo</div>
+    <div class="agents" id="agentPills"></div>
+    <div class="actions">
+        <button class="btn btn-ghost" id="resetBtn">Reset</button>
+        <button class="btn btn-primary" id="runBtn">Run 4-agent sprint</button>
     </div>
+</header>
+<div class="shell">
+    <aside class="nav" id="nav">
+        <button data-view="board" class="active">Jira board</button>
+        <button data-view="tests">Xray / TestRail</button>
+        <button data-view="auto">Automation lab</button>
+        <button data-view="verify">Sprint verification</button>
+        <button data-view="report">Sprint report</button>
+    </aside>
+    <main class="workspace">
+        <div class="phase-banner" id="banner">Explore the board, open any ticket, then start the four-agent sprint.</div>
+        <div class="board" id="view"></div>
+    </main>
+</div>
+<div class="log" id="log"><div><b>SYSTEM</b> Sprint 24 loaded. Four agents standing by.</div></div>
 
-    <div class="main-content">
-        <div class="board-header">
-            <h1 class="board-title">SDLC Tracking Board</h1>
+<div class="overlay" id="overlay">
+    <div class="modal" id="modal"></div>
+</div>
+
+<script>
+const AGENTS = [
+    { id: 'a1', name: 'Ticket Steward', role: 'Reads & rewrites Jira stories' },
+    { id: 'a2', name: 'Test Designer', role: 'Authors Gherkin and Xray cases' },
+    { id: 'a3', name: 'Automation Engineer', role: 'Builds Playwright / Cypress / Robot' },
+    { id: 'a4', name: 'Release Verifier', role: 'DoD, evidence, sprint sign-off' }
+];
+
+const TICKETS = [
+    {
+        key: 'PAY-241', type: 'Story', epic: 'Checkout integrity', column: 'To Do',
+        summary: 'Enforce 3-D Secure challenge on high-risk checkout',
+        priority: 'Highest', points: 8, assignee: 'CM', assigneeName: 'Carlos Muñoz', reporter: 'Priya Shah',
+        labels: ['security', 'payments', 'pci'], components: ['Checkout API', 'Risk Engine'],
+        env: 'staging-eu-1 · feature/3ds-challenge', sprint: 'Sprint 24',
+        description: `As a payments risk owner, I want high-risk card checkouts to complete a 3-D Secure challenge so that we reduce CNP fraud without blocking low-risk returning customers.
+
+Business context
+PayStream processes ~1.2M checkouts/day. Risk score ≥ 72 must step up to 3DS 2.2. Low-risk wallets (Apple Pay / Google Pay) are out of scope.
+
+Technical notes
+- Risk payload is produced by Risk Engine v4 (\`riskScore\`, \`reasonCodes\`).
+- ACS redirect must preserve the original order UUID.
+- Time-box the challenge to 8 minutes; after expiry the authorization is voided.`,
+        ac: `- 3DS is shown for risky payments
+- User can pay after challenge
+- Errors are handled`,
+        proposedAc: `Scenario: High-risk card requires 3DS
+  Given a guest checkout with riskScore 81 and reasonCodes ["velocity","geo-mismatch"]
+  And the card is Visa ending 4242
+  When the shopper submits payment
+  Then the order remains in status PENDING_3DS
+  And the shopper is redirected to the ACS URL within 2s
+  And the original order UUID is forwarded as threeDSRequestorTransID
+
+Scenario: Successful challenge authorizes the order
+  Given a PENDING_3DS order
+  When the ACS returns transStatus "Y"
+  Then authorization is requested with ECI 05
+  And the order moves to AUTHORIZED
+  And the shopper sees confirmation PAY-241-OK
+
+Scenario: Challenge timeout voids the hold
+  Given a PENDING_3DS order older than 8 minutes
+  When the shopper has not completed ACS
+  Then the authorization hold is voided
+  And the order moves to EXPIRED_3DS
+  And analytics event checkout.3ds.timeout is emitted`,
+        comments: [
+            { who: 'Priya Shah · PO', when: '22 Sep 09:14', text: 'Legal requires we keep the raw ACS payload 90 days for chargebacks.' },
+            { who: 'Luis Ortega · Risk', when: '22 Sep 11:02', text: 'Please do not step-up Apple Pay; false positives spiked last quarter.' }
+        ],
+        links: ['PAY-198 Implement Risk Engine v4', 'SEC-44 Store ACS payloads'],
+        attachments: ['3ds-sequence.png', 'risk-matrix-v4.xlsx'],
+        findings: 'Acceptance criteria are not testable: no risk threshold, no timeout, no ACS transStatus mapping.',
+        tests: [
+            { id: 'XT-1101', title: 'High-risk Visa is challenged', priority: 'Critical', est: '40m', include: true, gherkin: 'Feature: 3DS step-up\n  Scenario: High-risk card requires 3DS\n    Given riskScore 81\n    When payment is submitted\n    Then order is PENDING_3DS' },
+            { id: 'XT-1102', title: 'Successful ACS authorizes order', priority: 'Critical', est: '35m', include: true, gherkin: 'Scenario: ACS Y authorizes\n    Given PENDING_3DS order\n    When transStatus is Y\n    Then order is AUTHORIZED' },
+            { id: 'XT-1103', title: 'Timeout voids authorization hold', priority: 'High', est: '30m', include: true, gherkin: 'Scenario: 8 minute timeout\n    Given PENDING_3DS older than 8m\n    Then order is EXPIRED_3DS' },
+            { id: 'XT-1104', title: 'Apple Pay is never stepped up', priority: 'High', est: '20m', include: false, gherkin: 'Scenario: Wallet exemption\n    Given Apple Pay token\n    When riskScore is 90\n    Then no ACS redirect occurs' }
+        ]
+    },
+    {
+        key: 'PAY-246', type: 'Story', epic: 'Checkout integrity', column: 'In Progress',
+        summary: 'Idempotent capture API for duplicate webhook retries',
+        priority: 'High', points: 5, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Carlos Muñoz',
+        labels: ['api', 'reliability'], components: ['Payments API'],
+        env: 'staging-us-2 · feature/idempotent-capture', sprint: 'Sprint 24',
+        description: `As a platform engineer, I want capture requests to be idempotent on Idempotency-Key so Stripe-style webhook retries do not double-capture a customer.
+
+Current defect
+Ops saw 17 double-captures last week when the PSP retried /v2/captures with the same body after a 504.`,
+        ac: `API should not charge twice. Use a header.`,
+        proposedAc: `Scenario: Same Idempotency-Key returns original capture
+  Given capture CAP-88 already succeeded for order ORD-9
+  When POST /v2/captures is retried with Idempotency-Key "cap-88-a"
+  Then HTTP 200 is returned
+  And body.captureId is CAP-88
+  And the card network is not contacted a second time
+  And metric payments.capture.idempotent_hit increments
+
+Scenario: Missing key is rejected
+  Given a capture request without Idempotency-Key
+  When POST /v2/captures is called
+  Then HTTP 400 with code IDEMPOTENCY_KEY_REQUIRED is returned`,
+        comments: [{ who: 'SRE Bot', when: '21 Sep 18:40', text: 'PagerDuty: duplicate capture on merchant 4412.' }],
+        links: ['INC-902 Double capture'],
+        attachments: ['webhook-retry.har'],
+        findings: 'No HTTP contract, no header name, no metric. Cannot automate as written.',
+        tests: [
+            { id: 'XT-1201', title: 'Retry with same key is idempotent', priority: 'Critical', est: '30m', include: true, gherkin: 'Scenario: Idempotent retry\n  Given capture CAP-88 exists\n  When retried with same key\n  Then captureId stays CAP-88' },
+            { id: 'XT-1202', title: 'Missing Idempotency-Key → 400', priority: 'High', est: '15m', include: true, gherkin: 'Scenario: Missing key\n  When POST /v2/captures has no header\n  Then status is 400' }
+        ]
+    },
+    {
+        key: 'PAY-251', type: 'Bug', epic: 'Wallet UX', column: 'In Review',
+        summary: 'Saved card CVV modal not announced to screen readers',
+        priority: 'High', points: 3, assignee: 'KB', assigneeName: 'Kim Brooks', reporter: 'A11y Guild',
+        labels: ['a11y', 'wcag'], components: ['Web Checkout'],
+        env: 'chrome/voiceover · production replica', sprint: 'Sprint 24',
+        description: `NVDA and VoiceOver skip the CVV dialog when a returning shopper pays with a saved card. WCAG 2.2 4.1.2 / 2.4.3 fail. Legal deadline: this sprint.`,
+        ac: `Make it accessible.`,
+        proposedAc: `Scenario: CVV dialog is announced
+  Given a returning shopper with a saved Visa
+  When they choose Pay
+  Then a modal dialog is opened with role="dialog" and aria-modal="true"
+  And focus moves to the CVV input
+  And the accessible name is "Enter CVV for card ending 4242"
+
+Scenario: Escape returns focus to Pay
+  Given the CVV dialog is open
+  When the shopper presses Escape
+  Then the dialog closes
+  And focus returns to the Pay button`,
+        comments: [{ who: 'A11y Guild', when: '20 Sep 16:11', text: 'Severity 2. Blocking App Store accessibility review.' }],
+        links: ['A11Y-12 Checkout audit'],
+        attachments: ['voiceover-fail.mp4'],
+        findings: '"Make it accessible" is not a criterion. Need roles, focus trap, accessible name.',
+        tests: [
+            { id: 'XT-1301', title: 'Dialog role and focus move', priority: 'Critical', est: '25m', include: true, gherkin: 'Scenario: Dialog announced\n  When Pay is chosen\n  Then role=dialog is present and focused' },
+            { id: 'XT-1302', title: 'Escape restores Pay focus', priority: 'High', est: '15m', include: true, gherkin: 'Scenario: Escape\n  Given dialog open\n  When Escape\n  Then Pay button is focused' }
+        ]
+    },
+    {
+        key: 'PAY-255', type: 'Story', epic: 'Ledger', column: 'To Do',
+        summary: 'Daily settlement file to merchant SFTP with SHA-256 manifest',
+        priority: 'Medium', points: 5, assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Finance Ops',
+        labels: ['batch', 'sftp'], components: ['Settlements'],
+        env: 'batch-worker · sftp.paystream.internal', sprint: 'Sprint 24',
+        description: `Finance needs a 02:15 UTC settlements CSV plus SHA-256 sidecar so merchants can reconcile before banking cut-off.`,
+        ac: `File is generated and uploaded. Checksum exists.`,
+        proposedAc: `Scenario: File lands before cut-off
+  Given 12 AUTHORIZED captures for merchant M-44 on 23 Sep UTC
+  When the 02:15 job runs
+  Then sftp://settle/M-44/2026-09-23.csv contains 12 data rows
+  And 2026-09-23.csv.sha256 matches the file digest
+  And job finishes before 02:25 UTC
+  And Datadog check settlement.sftp.success is OK`,
+        comments: [{ who: 'Finance Ops', when: '19 Sep 08:02', text: 'Please keep UTF-8 and semicolon delimiter — EU merchants.' }],
+        links: ['FIN-77 Recon SLA'],
+        attachments: ['sample-settlement.csv'],
+        findings: 'No row count, encoding, SLA, or monitoring assertion.',
+        tests: [
+            { id: 'XT-1401', title: 'CSV row count matches captures', priority: 'High', est: '35m', include: true, gherkin: 'Scenario: Row count\n  Given 12 captures\n  Then CSV has 12 rows' },
+            { id: 'XT-1402', title: 'SHA-256 sidecar matches', priority: 'High', est: '20m', include: false, gherkin: 'Scenario: Manifest\n  Then sha256 sidecar matches digest' }
+        ]
+    }
+];
+
+const state = {
+    view: 'board',
+    tickets: TICKETS.map(t => ({ ...t, decision: null, tests: t.tests.map(x => ({ ...x })) })),
+    agent: null,
+    running: false,
+    results: [],
+    verify: { ac: false, auto: false, sev: false, notes: false }
+};
+
+const viewEl = document.getElementById('view');
+const logEl = document.getElementById('log');
+const overlay = document.getElementById('overlay');
+const modal = document.getElementById('modal');
+const banner = document.getElementById('banner');
+let gate = null;
+
+function log(src, msg) {
+    const line = document.createElement('div');
+    line.innerHTML = `<b>${src}</b> ${msg}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+}
+function waitUser() { return new Promise(res => { gate = res; }); }
+function resume(v) { if (gate) { const g = gate; gate = null; g(v); } }
+
+function renderAgents() {
+    document.getElementById('agentPills').innerHTML = AGENTS.map(a => {
+        const cls = state.agent === a.id ? 'active' : (agentDone(a.id) ? 'done' : '');
+        return `<div class="agent ${cls}"><span class="dot"></span>${a.name}</div>`;
+    }).join('');
+}
+function agentDone(id) {
+    if (id === 'a1') return state.tickets.every(t => t.decision);
+    if (id === 'a2') return state.tickets.some(t => t.tests.some(x => x.reviewed));
+    if (id === 'a3') return state.results.length > 0;
+    if (id === 'a4') return Object.values(state.verify).every(Boolean);
+    return false;
+}
+
+function setView(name) {
+    state.view = name;
+    document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    if (name === 'board') renderBoard();
+    if (name === 'tests') renderTests();
+    if (name === 'auto') renderAuto();
+    if (name === 'verify') renderVerify();
+    if (name === 'report') renderReport();
+}
+
+function columns() {
+    return ['To Do', 'In Progress', 'In Review', 'Ready for QA', 'Done'];
+}
+
+function renderBoard() {
+    const cols = columns().map(c => {
+        const cards = state.tickets.filter(t => t.column === c).map(ticketCard).join('');
+        return `<div class="col"><h3>${c} · ${state.tickets.filter(t => t.column === c).length}</h3>${cards || '<div class="sum" style="color:var(--muted)">Empty</div>'}</div>`;
+    }).join('');
+    viewEl.innerHTML = cols;
+    viewEl.className = 'board';
+}
+
+function ticketCard(t) {
+    const cls = t.decision === 'accept' ? 'changed' : t.decision === 'keep' ? 'kept' : t.decision === 'ok' ? 'ok' : '';
+    return `<article class="ticket ${cls}" id="card-${t.key}" onclick="openTicket('${t.key}')">
+        <div class="epic">${t.epic} · ${t.type}</div>
+        <div class="sum">${t.summary}</div>
+        <div class="meta"><span>${t.key}</span><span class="prio ${t.priority.toLowerCase()}">${t.priority} · ${t.points} SP</span></div>
+    </article>`;
+}
+
+function openTicket(key, opts = {}) {
+    const t = state.tickets.find(x => x.key === key);
+    const ac = t.decision === 'accept' ? t.proposedAc : t.ac;
+    modal.innerHTML = `
+        <div class="m-head">
+            <div><span class="pill">${t.type}</span> <strong>${t.key}</strong> · ${t.sprint}</div>
+            <button class="btn btn-ghost" onclick="closeModal()">Close</button>
         </div>
-
-        <div class="board-container">
-            <div class="column">
-                <div class="column-title">Backlog</div>
-                <div class="ticket" id="t-sys-101" onclick="openManualTicket('SYS-101')">
-                    <div class="epic-tag">Seguridad</div>
-                    <div class="ticket-summary" id="sum-101">Configuración SSO (SAML)</div>
-                    <div class="ticket-footer"><span>SYS-101</span><div class="ticket-meta"><span class="sp-badge">5</span><div class="avatar">CM</div></div></div>
+        <div class="m-body">
+            <div class="m-main">
+                <h2 style="margin:0 0 6px;font-size:22px">${t.summary}</h2>
+                <div class="tabs">
+                    <button class="on" data-tab="desc">Description</button>
+                    <button data-tab="ac">Acceptance</button>
+                    <button data-tab="res">Resources</button>
+                    <button data-tab="act">Activity</button>
                 </div>
-                <div class="ticket" id="t-sys-102" onclick="openManualTicket('SYS-102')">
-                    <div class="epic-tag">Backend</div>
-                    <div class="ticket-summary" id="sum-102">Deprecar endpoints v1</div>
-                    <div class="ticket-footer"><span>SYS-102</span><div class="ticket-meta"><span class="sp-badge">3</span><div class="avatar" style="background:#36B37E">DA</div></div></div>
+                <div id="tab-desc">
+                    <p style="white-space:pre-wrap;line-height:1.55">${t.description}</p>
                 </div>
-                <div class="ticket" id="t-sys-103" onclick="openManualTicket('SYS-103')">
-                    <div class="epic-tag">Backend</div>
-                    <div class="ticket-summary" id="sum-103">Validación estricta POST /users</div>
-                    <div class="ticket-footer"><span>SYS-103</span><div class="ticket-meta"><span class="sp-badge">8</span><div class="avatar" style="background:#FF5630">KB</div></div></div>
+                <div id="tab-ac" hidden>
+                    <div class="ac" id="acBox">${escapeHtml(ac)}</div>
+                    <div class="proposal ${opts.propose ? 'show' : ''}" id="proposal">
+                        <strong>Agent 1 · Ticket Steward</strong>
+                        <p>${t.findings}</p>
+                        <div class="ac">${escapeHtml(t.proposedAc)}</div>
+                        <div class="row">
+                            <button class="btn btn-accept" onclick="resume('accept')">Accept rewrite</button>
+                            <button class="btn btn-reject" onclick="resume('keep')">Keep original</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <div class="column">
-                <div class="column-title">To Do</div>
-                <div class="ticket" id="t-sys-104" onclick="openManualTicket('SYS-104')">
-                    <div class="epic-tag">Frontend</div>
-                    <div class="ticket-summary" id="sum-104">Actualizar Librerías UI</div>
-                    <div class="ticket-footer"><span>SYS-104</span><div class="ticket-meta"><span class="sp-badge">2</span><div class="avatar">CM</div></div></div>
+                <div id="tab-res" hidden>
+                    <p><strong>Attachments</strong></p>
+                    ${t.attachments.map(a => `<div class="card" style="margin-bottom:8px">📎 ${a} · click-through demo resource</div>`).join('')}
+                    <p><strong>Linked work</strong></p>
+                    ${t.links.map(a => `<div class="linked">${a}</div>`).join('')}
                 </div>
-                <div class="ticket" id="t-sys-105" onclick="openManualTicket('SYS-105')">
-                    <div class="epic-tag">Base de Datos</div>
-                    <div class="ticket-summary" id="sum-105">Migrar DB a PostgreSQL 15</div>
-                    <div class="ticket-footer"><span>SYS-105</span><div class="ticket-meta"><span class="sp-badge">13</span><div class="avatar" style="background:#FFAB00">JW</div></div></div>
-                </div>
-            </div>
-
-            <div class="column">
-                <div class="column-title">In Progress</div>
-                <div class="ticket" id="t-sys-106" onclick="openManualTicket('SYS-106')">
-                    <div class="epic-tag">Seguridad</div>
-                    <div class="ticket-summary" id="sum-106">Rate Limiting API</div>
-                    <div class="ticket-footer"><span>SYS-106</span><div class="ticket-meta"><span class="sp-badge">5</span><div class="avatar" style="background:#36B37E">DA</div></div></div>
-                </div>
-                <div class="ticket" id="t-sys-107" onclick="openManualTicket('SYS-107')">
-                    <div class="epic-tag">Performance</div>
-                    <div class="ticket-summary" id="sum-107">Refactor consultas GraphQL</div>
-                    <div class="ticket-footer"><span>SYS-107</span><div class="ticket-meta"><span class="sp-badge">8</span><div class="avatar">CM</div></div></div>
-                </div>
-                <div class="ticket" id="t-sys-108" onclick="openManualTicket('SYS-108')">
-                    <div class="epic-tag">Frontend</div>
-                    <div class="ticket-summary" id="sum-108">Optimizar Carga Imágenes</div>
-                    <div class="ticket-footer"><span>SYS-108</span><div class="ticket-meta"><span class="sp-badge">3</span><div class="avatar" style="background:#FF5630">KB</div></div></div>
+                <div id="tab-act" hidden>
+                    ${t.comments.map(c => `<div class="card" style="margin-bottom:8px"><b>${c.who}</b> · ${c.when}<div>${c.text}</div></div>`).join('')}
                 </div>
             </div>
-            
-            <div class="column"><div class="column-title">Code Review</div></div>
-            <div class="column"><div class="column-title">Ready for QA</div></div>
+            <aside class="m-side">
+                <div class="field"><span>Status</span><b>${t.column}</b></div>
+                <div class="field"><span>Assignee</span><b>${t.assigneeName}</b></div>
+                <div class="field"><span>Reporter</span><b>${t.reporter}</b></div>
+                <div class="field"><span>Priority</span><b class="prio ${t.priority.toLowerCase()}">${t.priority}</b></div>
+                <div class="field"><span>Story points</span><b>${t.points}</b></div>
+                <div class="field"><span>Sprint</span><b>${t.sprint}</b></div>
+                <div class="field"><span>Components</span><b>${t.components.join(', ')}</b></div>
+                <div class="field"><span>Labels</span><b>${t.labels.join(', ')}</b></div>
+                <div class="field"><span>Environment</span><b>${t.env}</b></div>
+                <div class="field"><span>Linked tests</span><b>${t.tests.length} Xray cases</b></div>
+            </aside>
+        </div>`;
+    overlay.classList.add('show');
+    modal.querySelectorAll('.tabs button').forEach(btn => btn.onclick = () => {
+        modal.querySelectorAll('.tabs button').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        ['desc','ac','res','act'].forEach(id => document.getElementById('tab-' + id).hidden = btn.dataset.tab !== id);
+    });
+    if (opts.propose) {
+        modal.querySelector('[data-tab="ac"]').click();
+    }
+}
+
+function closeModal() { overlay.classList.remove('show'); }
+
+function escapeHtml(s) {
+    return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+
+function renderTests() {
+    viewEl.className = 'tests';
+    const rows = state.tickets.flatMap(t => t.tests.map(tc => `
+        <tr>
+            <td><input type="checkbox" ${tc.include ? 'checked' : ''} onchange="toggleCase('${t.key}','${tc.id}', this.checked)"></td>
+            <td>${tc.id}<div class="muted">${t.key}</div></td>
+            <td>${tc.title}<div class="gherkin">${escapeHtml(tc.gherkin)}</div></td>
+            <td>${tc.priority}</td>
+            <td>${tc.est}</td>
+            <td>${tc.include ? 'Sprint 24' : 'Backlog'}</td>
+        </tr>`)).join('');
+    viewEl.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div><h2 style="margin:0">Xray repository</h2><div style="color:var(--muted);font-size:13px">Gherkin cases linked to Jira stories · select the sprint set</div></div>
+            <button class="btn btn-accept" id="approveTests">Approve sprint test set</button>
         </div>
-    </div>
+        <table>
+            <thead><tr><th>In sprint</th><th>Key</th><th>Case / Gherkin</th><th>Priority</th><th>Est.</th><th>Folder</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+    document.getElementById('approveTests').onclick = () => {
+        state.tickets.forEach(t => t.tests.forEach(tc => { tc.reviewed = true; }));
+        log('A2', 'Sprint test set approved by user.');
+        resume(true);
+        renderAgents();
+    };
+}
+function toggleCase(ticket, id, on) {
+    const tc = state.tickets.find(t => t.key === ticket).tests.find(x => x.id === id);
+    tc.include = on;
+}
 
-    <div class="modal-overlay" id="issueModal">
-        <div class="issue-modal">
-            <div class="issue-header">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#36B37E"><rect width="24" height="24" rx="4"/></svg>
-                    <span id="modal-key" style="font-weight: 600; color: var(--text-main); font-size: 14px;">SYS-XXX</span>
-                    <span style="font-size: 12px; color: var(--text-subtle); margin-left: 10px;" id="modal-status-txt">Estado: Vista Manual</span>
-                </div>
-                <button class="close-btn" id="modalCloseBtn" onclick="closeManualTicket()">✖</button>
-            </div>
-            
-            <div class="issue-body">
-                <div class="issue-main" id="issueContent">
-                    <div class="ai-scanner" id="aiScanner"></div>
-                    
-                    <h1 style="margin-top:0; font-size: 22px; color: var(--text-main); line-height: 1.3;" id="modal-title">...</h1>
-                    
-                    <div class="jira-tabs">
-                        <span class="active">Descripción</span>
-                        <span>Categorías</span>
-                        <span>Zendesk</span>
-                        <span>Despliegue</span>
-                    </div>
+function snippets(tc) {
+    return {
+        playwright: `import { test, expect } from '@playwright/test';\n\ntest('${tc.id} ${tc.title}', async ({ request, page }) => {\n  // Generated from ${tc.id}\n  const res = await request.post('/v2/simulate');\n  expect(res.ok()).toBeTruthy();\n});`,
+        cypress: `describe('${tc.id}', () => {\n  it('${tc.title}', () => {\n    cy.api('POST', '/v2/simulate').its('status').should('eq', 200);\n  });\n});`,
+        robot: `*** Test Cases ***\n${tc.id} ${tc.title}\n    \${resp}=    POST    /v2/simulate\n    Status Should Be    200    \${resp}`
+    };
+}
 
-                    <div class="jira-section">
-                        <h3>Detalles de la Historia</h3>
-                        <div style="font-size: 14px; color: var(--text-main); line-height: 1.6;" id="modal-desc">...</div>
-                        
-                        <div class="ac-section" id="acSection">
-                            <strong>Criterios de Aceptación:</strong><br>
-                            <div id="modal-ac" style="margin-top: 10px; font-family: 'Fira Code', monospace; font-size: 12px;">...</div>
-                        </div>
-
-                        <div class="ai-popup" id="aiPopup">
-                            <h4>✨ Sugerencia del Agente AI</h4>
-                            <p id="ai-popup-text" style="font-size: 13px; line-height: 1.5; color: var(--text-main);">...</p>
-                            <div class="btn-group">
-                                <button class="btn btn-primary" onclick="handleDecision(true)">Aceptar e Inyectar</button>
-                                <button class="btn btn-reject" onclick="handleDecision(false)">Descartar</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="jira-section">
-                        <h3>Archivos adjuntos (2)</h3>
-                        <div class="attachment-item">
-                            <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' fill='%23ddd'%3E%3Crect width='100' height='60'/%3E%3Ctext x='50' y='35' font-size='12' fill='%23666' text-anchor='middle'%3EImagen%3C/text%3E%3C/svg%3E" alt="attachment">
-                            <span>wireframe.png</span>
-                            <span style="color: var(--text-subtle);">1.2 MB</span>
-                        </div>
-                        <div class="attachment-item">
-                            <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' fill='%23ddd'%3E%3Crect width='100' height='60'/%3E%3Ctext x='50' y='35' font-size='12' fill='%23666' text-anchor='middle'%3EDoc%3C/text%3E%3C/svg%3E" alt="attachment">
-                            <span>esquema.pdf</span>
-                            <span style="color: var(--text-subtle);">450 KB</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="issue-sidebar">
-                    <div class="sidebar-panel">
-                        <h3>Propiedades</h3>
-                        <div class="field-row">
-                            <div class="field-label">Asignado a</div>
-                            <div class="field-val"><div class="avatar" id="modal-assignee-av">DA</div> <span id="modal-assignee-nm">Dan Andrews</span></div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field-label">Story Points</div>
-                            <div class="field-val" id="modal-sp">5</div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field-label">Sprint</div>
-                            <div class="field-val"><a href="#" style="color: var(--primary-blue); text-decoration: none;">Sprint 258</a></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+function renderAuto() {
+    viewEl.className = 'tests';
+    const selected = state.tickets.flatMap(t => t.tests.filter(tc => tc.include));
+    const first = selected[0];
+    const sn = first ? snippets(first) : { playwright: '// no cases selected', cypress: '', robot: '' };
+    const resultRows = state.results.map(r => `<tr><td>${r.id}</td><td>${r.fw}</td><td class="${r.ok ? 'pass' : 'fail'}">${r.ok ? 'PASSED' : 'FAILED'}</td><td>${r.ms} ms</td></tr>`).join('');
+    viewEl.innerHTML = `
+        <h2 style="margin-top:0">Automation lab</h2>
+        <p style="color:var(--muted)">${selected.length} cases in the sprint set · frameworks: Playwright, Cypress, Robot Framework</p>
+        <div class="grid2">
+            <div class="card"><h3>Playwright</h3><div class="code">${escapeHtml(sn.playwright)}</div></div>
+            <div class="card"><h3>Cypress</h3><div class="code">${escapeHtml(sn.cypress)}</div></div>
         </div>
-    </div>
+        <div class="card" style="margin-top:12px"><h3>Robot Framework</h3><div class="code">${escapeHtml(sn.robot)}</div></div>
+        <h3>Last run</h3>
+        <table><thead><tr><th>Case</th><th>Framework</th><th>Result</th><th>Duration</th></tr></thead><tbody>${resultRows || '<tr><td colspan="4">No run yet</td></tr>'}</tbody></table>`;
+}
 
-    <div class="terminal-overlay" id="terminal">
-        <div class="log-line"><span class="tag-sys">SYSTEM</span> <span>Motor AI Listo. Esperando ejecución.</span></div>
-    </div>
+function renderVerify() {
+    viewEl.className = 'tests';
+    const v = state.verify;
+    viewEl.innerHTML = `
+        <h2 style="margin-top:0">Sprint verification · Agent 4</h2>
+        <p style="color:var(--muted)">Definition of Done evidence before increment sign-off.</p>
+        <div class="card">
+            <label class="check"><input type="checkbox" ${v.ac ? 'checked' : ''} onchange="state.verify.ac=this.checked"> All sprint stories have testable acceptance criteria (post Agent 1).</label>
+            <label class="check"><input type="checkbox" ${v.auto ? 'checked' : ''} onchange="state.verify.auto=this.checked"> Selected Xray cases have automation results in Playwright, Cypress and Robot.</label>
+            <label class="check"><input type="checkbox" ${v.sev ? 'checked' : ''} onchange="state.verify.sev=this.checked"> No Sev-1 defects remain in Ready for QA / Done.</label>
+            <label class="check"><input type="checkbox" ${v.notes ? 'checked' : ''} onchange="state.verify.notes=this.checked"> Release notes + 3DS / capture / a11y evidence attached.</label>
+            <div class="row"><button class="btn btn-accept" onclick="signOff()">Sign off increment</button></div>
+        </div>`;
+}
 
-    <div class="report-overlay" id="reportOverlay">
-        <div class="report-container">
-            <div class="report-title">Reporte de Auditoría AI</div>
-            <p style="text-align: center; color: var(--text-subtle); font-size: 15px;">Resultados de pre-validación del backlog.</p>
-            
-            <div class="charts-grid">
-                <div class="chart-box"><canvas id="pieChart"></canvas></div>
-                <div class="chart-box"><canvas id="barChart"></canvas></div>
-                <div class="chart-box"><canvas id="lineChart"></canvas></div>
-                <div class="chart-box"><canvas id="radarChart"></canvas></div>
-            </div>
-            
-            <div style="text-align: center; margin-top: 40px;">
-                <button class="btn btn-primary" style="font-size: 16px; padding: 12px 30px;" onclick="location.reload()">Cerrar y Reiniciar</button>
-            </div>
+function signOff() {
+    if (!Object.values(state.verify).every(Boolean)) {
+        log('A4', 'Sign-off blocked: complete every verification checkbox.');
+        return;
+    }
+    log('A4', 'Increment signed off for Sprint 24.');
+    resume(true);
+    setView('report');
+}
+
+function renderReport() {
+    viewEl.className = 'tests';
+    const accepted = state.tickets.filter(t => t.decision === 'accept').length;
+    const kept = state.tickets.filter(t => t.decision === 'keep' || t.decision === 'ok').length;
+    const cases = state.tickets.flatMap(t => t.tests);
+    const inSprint = cases.filter(t => t.include).length;
+    const passed = state.results.filter(r => r.ok).length;
+    viewEl.innerHTML = `
+        <h2 style="margin-top:0">Sprint 24 report</h2>
+        <div class="grid2">
+            <div class="card"><h3>Agent 1 · Stories</h3><p>${accepted} rewritten · ${kept} kept as-is · ${state.tickets.length} total</p></div>
+            <div class="card"><h3>Agent 2 · Xray</h3><p>${inSprint} of ${cases.length} cases selected for the sprint</p></div>
+            <div class="card"><h3>Agent 3 · Automation</h3><p>${passed}/${state.results.length} scripted runs passed</p></div>
+            <div class="card"><h3>Agent 4 · Verification</h3><p>${Object.values(state.verify).every(Boolean) ? 'Increment signed off' : 'Pending sign-off'}</p></div>
         </div>
-    </div>
+        <p style="color:var(--muted)">This studio is a live CV demo of how specialized agents collaborate on a real Scrum increment: refine Jira, curate Xray, generate automation, then verify the DoD.</p>`;
+}
 
-    <script type="text/javascript">
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'es', // El idioma base del código es Español
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-                autoDisplay: false
-            }, 'google_translate_element');
+async function runSprint() {
+    if (state.running) return;
+    state.running = true;
+    document.getElementById('runBtn').disabled = true;
+    closeModal();
+    setView('board');
+
+    state.agent = 'a1'; renderAgents();
+    banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — reading each Jira issue like a BA/QA pair, proposing testable AC. You decide.';
+    log('A1', 'Scanning Sprint 24 stories for testability gaps.');
+    for (const t of state.tickets) {
+        const el = document.getElementById('card-' + t.key);
+        if (el) { el.classList.add('pulse'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        log('A1', `${t.key}: ${t.findings}`);
+        await sleep(500);
+        openTicket(t.key, { propose: true });
+        const decision = await waitUser();
+        t.decision = decision === 'accept' ? 'accept' : 'keep';
+        if (decision === 'accept') {
+            t.ac = t.proposedAc;
+            log('USER', `${t.key} rewrite accepted. AC replaced with Gherkin-ready criteria.`);
+        } else {
+            log('USER', `${t.key} original AC kept.`);
         }
-    </script>
-    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+        t.column = 'Ready for QA';
+        closeModal();
+        renderBoard();
+        await sleep(250);
+    }
+    renderAgents();
 
-    <script>
-        // Datos base estrictamente en Español (Google Translate se encargará del resto vía DOM)
-        const activeStories = [
-            { id: 'SYS-101', status: 'needs_change', t: "Configuración SSO (SAML)", d: "Implementar inicio de sesión único con IdP corporativo. Los usuarios deben usar Okta. Asegurar fallback a auth normal si falla.", ac: "- Login funciona.\n- Muestra errores.", am: "Criterios vagos. Sugiero refactorizar a Gherkin manejando validación de tokens SAML y manejo explícito de HTTP 401.", aac: "Scenario: SAML Válido\nGiven usuario sin autenticar\nWhen provee respuesta SAML válida\nThen sesión es creada", asg: "CM", nm: "Carlos Munoz", sp: "5" },
-            { id: 'SYS-102', status: 'perfect', t: "Deprecar endpoints v1", d: "Eliminar API legacy v1. Asegurar que los clientes móviles hayan actualizado a v2 antes del apagón final.", ac: "Given ruta API v1\nWhen solicitada\nThen retornar 410 Gone", am: "Análisis estático limpio. Estructura BDD perfecta, lista para pruebas automatizadas.", asg: "DA", nm: "Dan Andrews", sp: "3" },
-            { id: 'SYS-103', status: 'needs_change', t: "Validación estricta POST /users", d: "Validar campos obligatorios (email, teléfono). Debe ejecutarse antes de la inserción para evitar datos corruptos en PostgreSQL.", ac: "API rechaza peticiones malas. Requiere email.", am: "Faltan especificaciones técnicas (Regex). Definir explícitamente el código 400 Bad Request.", aac: "Scenario: Email Inválido\nGiven email malformado\nWhen POST /users\nThen retornar 400 Bad Request", asg: "KB", nm: "Kim Brown", sp: "8" },
-            { id: 'SYS-104', status: 'perfect', t: "Actualizar Librerías UI", d: "Subir dependencias React/Webpack por seguridad tras auditoría de Snyk.", ac: "Given repositorio\nWhen npm install\nThen npm audit retorna 0 críticos", am: "ACs perfectos. Compatibles inmediatamente con el pipeline de CI/CD.", asg: "CM", nm: "Carlos Munoz", sp: "2" },
-            { id: 'SYS-105', status: 'needs_change', t: "Migrar DB a PostgreSQL 15", d: "Actualizar motor de base de datos. Se prefiere zero downtime, ventana de 10 min aprobada para domingo.", ac: "La base de datos debe actualizarse sin perder datos.", am: "El criterio 'sin perder datos' no es testeable automáticamente. Sugiero agregar validación de esquemas y conteo de filas.", aac: "Scenario: Integridad de datos\nGiven backup de DB\nWhen script migración termina\nThen conteo de filas coincide", asg: "JW", nm: "Jeremy White", sp: "13" },
-            { id: 'SYS-106', status: 'perfect', t: "Rate Limiting API", d: "Restringir peticiones por IP para evitar ataques DDoS. Aplicar algoritmo token-bucket en caché.", ac: "Given IP única\nWhen >100 req/min\nThen retorna 429", am: "Criterios claros y declarativos. Ninguna acción de IA requerida.", asg: "DA", nm: "Dan Andrews", sp: "5" },
-            { id: 'SYS-107', status: 'needs_change', t: "Refactor consultas GraphQL", d: "Arreglar problema N+1 en el dashboard causando alta latencia en horas pico.", ac: "El dashboard carga más rápido.", am: "Término 'rápido' ambiguo. Debemos definir un SLA explícito de rendimiento.", aac: "Scenario: Rendimiento GraphQL\nGiven carga de Dashboard\nWhen query se ejecuta\nThen tiempo respuesta < 500ms", asg: "CM", nm: "Carlos Munoz", sp: "8" },
-            { id: 'SYS-108', status: 'needs_change', t: "Optimizar Carga Imágenes", d: "Implementar lazy loading para avatares y miniaturas para mejorar el First Contentful Paint (FCP).", ac: "Imágenes no cargan todas a la vez.", am: "Recomiendo convertir esto a una aserción de inspección del DOM (atributos HTML).", aac: "Scenario: Carga diferida\nGiven carga de página\nThen imágenes ocultas tienen atributo loading='lazy'", asg: "KB", nm: "Kim Brown", sp: "3" }
-        ];
+    state.agent = 'a2'; renderAgents();
+    banner.innerHTML = '<strong>Agent 2 · Test Designer</strong> — Xray/TestRail view. Uncheck cases that should stay in the repo backlog, then approve.';
+    setView('tests');
+    log('A2', 'Generated Gherkin cases and linked them to Jira keys.');
+    await waitUser();
+    state.tickets.forEach(t => t.tests.forEach(tc => { if (tc.include) t.column = 'Ready for QA'; }));
+    renderAgents();
 
-        let currentTheme = 'light';
-        let isSimulating = false;
+    state.agent = 'a3'; renderAgents();
+    banner.innerHTML = '<strong>Agent 3 · Automation Engineer</strong> — generating Playwright, Cypress and Robot scripts, then executing the sprint set.';
+    setView('auto');
+    const selected = state.tickets.flatMap(t => t.tests.filter(tc => tc.include));
+    const frameworks = ['Playwright', 'Cypress', 'Robot'];
+    state.results = [];
+    for (const tc of selected) {
+        const fw = frameworks[state.results.length % 3];
+        log('A3', `Generating ${fw} spec for ${tc.id}…`);
+        await sleep(350);
+        const ok = !(tc.id === 'XT-1401' && fw === 'Robot'); // one scripted flake for realism
+        const ms = 420 + Math.floor(Math.random() * 900);
+        state.results.push({ id: tc.id, fw, ok, ms });
+        log('A3', ok ? `${tc.id} [${fw}] PASSED (${ms} ms)` : `${tc.id} [${fw}] FAILED · retry queued`);
+        renderAuto();
+        await sleep(200);
+    }
+    log('A3', 'Run complete. Report attached to the sprint.');
+    renderAgents();
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('sim_qa_theme');
-            currentTheme = savedTheme ? savedTheme : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            applyTheme(currentTheme);
-        });
+    state.agent = 'a4'; renderAgents();
+    banner.innerHTML = '<strong>Agent 4 · Release Verifier</strong> — walk the Definition of Done. Tick every control, then sign off.';
+    setView('verify');
+    log('A4', 'Waiting for human verification of DoD evidence.');
+    await waitUser();
+    state.tickets.forEach(t => { if (t.tests.some(tc => tc.include)) t.column = 'Done'; });
+    banner.innerHTML = '<strong>Sprint 24 complete.</strong> Review the report or reset to run again.';
+    state.running = false;
+    document.getElementById('runBtn').disabled = false;
+    renderAgents();
+    renderBoard();
+    setView('report');
+}
 
-        function toggleTheme() {
-            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('sim_qa_theme', currentTheme);
-            applyTheme(currentTheme);
-        }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-        function applyTheme(theme) {
-            document.body.setAttribute('data-theme', theme);
-            document.getElementById('themeToggle').innerText = theme === 'dark' ? '☀️' : '🌙';
-        }
+document.getElementById('nav').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return; setView(b.dataset.view);
+});
+document.getElementById('runBtn').onclick = runSprint;
+document.getElementById('resetBtn').onclick = () => location.reload();
+overlay.addEventListener('click', e => { if (e.target === overlay && !state.running) closeModal(); });
 
-        // --- Pre-Simulation Manual Interaction ---
-        function openManualTicket(id) {
-            if (isSimulating) return; 
-            
-            const story = activeStories.find(s => s.id === id);
-            document.getElementById('modal-key').innerText = id;
-            document.getElementById('modal-title').innerText = story.t;
-            document.getElementById('modal-desc').innerText = story.d;
-            document.getElementById('modal-ac').innerHTML = story.ac.replace(/\n/g, '<br>');
-            
-            document.getElementById('modal-assignee-av').innerText = story.asg;
-            document.getElementById('modal-assignee-nm').innerText = story.nm;
-            document.getElementById('modal-sp').innerText = story.sp;
-
-            document.getElementById('modal-status-txt').innerText = "Estado: Vista Manual";
-            document.getElementById('modalCloseBtn').style.display = 'block';
-            document.getElementById('aiPopup').style.display = 'none';
-            document.getElementById('acSection').className = 'ac-section';
-            
-            document.getElementById('issueModal').classList.add('show');
-        }
-
-        function closeManualTicket() {
-            document.getElementById('issueModal').classList.remove('show');
-        }
-
-        // --- Simulation Logic ---
-        const terminal = document.getElementById('terminal');
-        const sleep = ms => new Promise(res => setTimeout(res, ms));
-        let userResolve = null;
-        let stats = { perfect: 0, refined: 0, rejected: 0, hoursSaved: 0 };
-
-        function log(msg, type='sys') {
-            const div = document.createElement('div'); div.className = 'log-line';
-            div.innerHTML = `<span class="tag-${type}">${type.toUpperCase()}</span> ${msg}`;
-            terminal.appendChild(div);
-            terminal.scrollTop = terminal.scrollHeight;
-        }
-
-        function handleDecision(accept) { if(userResolve) userResolve(accept); }
-
-        async function runSimulation() {
-            isSimulating = true;
-            document.getElementById('startBtn').disabled = true;
-            
-            closeManualTicket(); 
-            log("Iniciando ciclo de revisión automatizada de QA...", 'sys');
-            await sleep(1000);
-
-            for (let i = 0; i < activeStories.length; i++) {
-                const task = activeStories[i];
-                log(`Analizando ticket ${task.id} mediante NLP...`, 'ai');
-                
-                const ticketEl = document.getElementById(`t-${task.id.toLowerCase()}`);
-                ticketEl.classList.add('active-target');
-                ticketEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                await sleep(800);
-
-                document.getElementById('modal-status-txt').innerText = "Estado: Análisis AI";
-                document.getElementById('modalCloseBtn').style.display = 'none';
-                document.getElementById('modal-key').innerText = task.id;
-                document.getElementById('modal-title').innerText = task.t;
-                document.getElementById('modal-desc').innerText = task.d;
-                document.getElementById('modal-ac').innerHTML = task.ac.replace(/\n/g, '<br>');
-                
-                document.getElementById('modal-assignee-av').innerText = task.asg;
-                document.getElementById('modal-assignee-nm').innerText = task.nm;
-                document.getElementById('modal-sp').innerText = task.sp;
-                
-                const acSection = document.getElementById('acSection');
-                acSection.className = 'ac-section'; 
-                document.getElementById('aiPopup').style.display = 'none';
-                document.getElementById('issueModal').classList.add('show');
-                
-                await sleep(500);
-
-                const scanner = document.getElementById('aiScanner');
-                scanner.style.display = 'block';
-                for(let p = 0; p <= 100; p += 6) { scanner.style.top = p + '%'; await sleep(25); }
-                scanner.style.display = 'none';
-
-                if (task.status === 'perfect') {
-                    acSection.classList.add('success');
-                    log(`${task.id}: ${task.am}`, 'ai');
-                    stats.perfect++;
-                    await sleep(1500);
-                    ticketEl.classList.add('status-perfect'); 
-                } else {
-                    acSection.classList.add('highlight');
-                    document.getElementById('ai-popup-text').innerText = task.am;
-                    document.getElementById('aiPopup').style.display = 'block';
-                    log(`${task.id}: Se requiere intervención. Esperando decisión del QA Engineer.`, 'sys');
-                    
-                    const accepted = await new Promise(res => { userResolve = res; });
-                    
-                    document.getElementById('aiPopup').style.display = 'none';
-                    if (accepted) {
-                        log(`${task.id}: Cambios aceptados. Refactorizando estructura a BDD...`, 'sys');
-                        stats.refined++;
-                        stats.hoursSaved += 1.5; 
-                        acSection.style.opacity = 0;
-                        await sleep(300);
-                        document.getElementById('modal-ac').innerHTML = `<div style="color:var(--primary-blue); font-weight:600; margin-bottom:5px;">AI BDD Refactored:</div><div style="font-family:monospace; color:var(--text-main);">${task.aac.replace(/\n/g, '<br>&nbsp;&nbsp;')}</div>`;
-                        acSection.style.opacity = 1;
-                        await sleep(1500);
-                        ticketEl.classList.add('status-refined'); 
-                    } else {
-                        log(`${task.id}: Sugerencia rechazada. Manteniendo criterios originales.`, 'sys');
-                        stats.rejected++;
-                        await sleep(1000);
-                        ticketEl.classList.add('status-rejected'); 
-                    }
-                }
-
-                document.getElementById('issueModal').classList.remove('show');
-                ticketEl.classList.remove('active-target');
-                await sleep(400);
-            }
-
-            log("Evaluación del Backlog completa. Desplegando métricas proyectadas.", 'sys');
-            await sleep(1000);
-            renderDashboard();
-        }
-
-        function renderDashboard() {
-            document.getElementById('reportOverlay').classList.add('show');
-            Chart.defaults.color = currentTheme === 'dark' ? '#8C9BAB' : '#5E6C84';
-
-            new Chart(document.getElementById('pieChart'), {
-                type: 'doughnut',
-                data: { labels: ['Perfectas (No AI)', 'Refinadas por AI', 'Rechazadas'], datasets: [{ data: [stats.perfect, stats.refined, stats.rejected], backgroundColor: ['#36B37E', '#6554C0', '#FF5630'], borderWidth: 0 }] },
-                options: { plugins: { title: { display: true, text: 'Distribución de Intervención AI' } } }
-            });
-
-            new Chart(document.getElementById('barChart'), {
-                type: 'bar',
-                data: { labels: ['Calidad Inicial', 'Calidad Post-AI'], datasets: [{ label: "Estructura Pobre", data: [stats.refined + stats.rejected, stats.rejected], backgroundColor: '#FFAB00' }, { label: "Sintaxis BDD Lista", data: [stats.perfect, stats.perfect + stats.refined], backgroundColor: '#0052CC' }] },
-                options: { plugins: { title: { display: true, text: 'Evolución de Testabilidad' } }, scales: { y: { stacked: true }, x: { stacked: true } } }
-            });
-
-            new Chart(document.getElementById('lineChart'), {
-                type: 'line',
-                data: { labels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint Actual'], datasets: [{ label: "Horas Ahorradas", data: [4, 7, 5, Math.max(1, stats.hoursSaved)], borderColor: '#6554C0', backgroundColor: 'rgba(101, 84, 192, 0.2)', fill: true, tension: 0.3 }] },
-                options: { plugins: { title: { display: true, text: 'Horas Ahorradas en Automatización' } } }
-            });
-
-            new Chart(document.getElementById('radarChart'), {
-                type: 'radar',
-                data: { 
-                    labels: ['API Testing', 'E2E (Playwright)', 'Seguridad', 'Performance', 'DB Schema'], 
-                    datasets: [
-                        { label: "Línea Base (Pre-AI)", data: [60, 40, 30, 20, 50], backgroundColor: 'rgba(255, 86, 48, 0.2)', borderColor: '#FF5630' },
-                        { label: "Cobertura (Post-AI)", data: [95, 90, 85, 75, 80], backgroundColor: 'rgba(54, 179, 126, 0.2)', borderColor: '#36B37E' }
-                    ]
-                },
-                options: { plugins: { title: { display: true, text: 'Cobertura de Preparación' } } }
-            });
-        }
-    </script>
+renderAgents();
+setView('board');
+</script>
 </body>
 </html>
