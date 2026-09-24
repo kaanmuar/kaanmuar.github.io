@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-skin="harbor">
 <head>
     <!-- =================================================================
     |                           METADATA & SEO                            |
@@ -12,7 +12,7 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta name="theme-color" content="#0891b2">
+    <meta name="theme-color" content="#0d6e76">
     <meta name="color-scheme" content="light dark">
     <meta name="format-detection" content="telephone=yes">
     <meta name="geo.region" content="CO-ANT">
@@ -77,6 +77,8 @@
     ================================================================== -->
     <!-- Compiled Tailwind CSS (see `npm run build:css`) -->
     <link rel="stylesheet" href="style.css">
+    <script src="js/site-theme.js"></script>
+    <script>SiteTheme.boot();</script>
     <script src="js/site-i18n.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
@@ -84,7 +86,7 @@
     <!-- Google Fonts for typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
 
     <!-- Structured Data (JSON-LD) for Rich Snippets -->
     <script type="application/ld+json" id="person-structured-data">
@@ -153,45 +155,82 @@
     ================================================================== -->
     <style>
         :root {
-            --bg-primary: #f9fafb;
-            --bg-secondary: #ffffff;
-            --bg-sidebar: #1f2937;
-            --text-primary: #111827;      /* Primary text (Headings) */
-            --text-secondary: #4b5563;   /* Secondary text (Paragraphs) */
-            --text-sidebar-primary: #ffffff;
-            --text-sidebar-secondary: #d1d5db;
-            --border-color: #e5e7eb;
-            --cyan-brand: #0891b2;
-            --orange-brand: #f97316;
-            --pulse-blue: rgba(59, 130, 246, 0.7);
-            --error-red: #dc2626;
+            --bg-primary: #eef2f4;
+            --bg-secondary: #f7f8fa;
+            --bg-sidebar: #1a2430;
+            --text-primary: #12181f;
+            --text-secondary: #4a5560;
+            --text-sidebar-primary: #f4f7f8;
+            --text-sidebar-secondary: #c5cdd4;
+            --border-color: #d5dce3;
+            --accent: #0d6e76;
+            --accent-hover: #0a585f;
+            --accent-soft: #d7ecee;
+            --accent-ink: #08545b;
+            --accent-on-dark: #4db3bb;
+            --cyan-brand: var(--accent);
+            --orange-brand: var(--accent);
+            --pulse-blue: rgba(13, 110, 118, 0.55);
+            --error-red: #b42318;
+            --font-display: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+            --font-ui: Inter, system-ui, sans-serif;
         }
         .dark-mode {
-            --bg-primary: #1f2937;
-            --bg-secondary: #111827;
-            --bg-sidebar: #0f172a;
-            --text-primary: #f3f4f6;      /* Primary text (Headings) */
-            --text-secondary: #9ca3af;   /* Secondary text (Paragraphs) */
-            --text-sidebar-primary: #ffffff;
-            --text-sidebar-secondary: #9ca3af;
-            --border-color: #374151;
+            --bg-primary: #10161d;
+            --bg-secondary: #161d26;
+            --bg-sidebar: #0c1118;
+            --text-primary: #e8eef2;
+            --text-secondary: #9aa5b1;
+            --text-sidebar-primary: #f4f7f8;
+            --text-sidebar-secondary: #9aa5b1;
+            --border-color: #2a3440;
+            --accent: #4db3bb;
+            --accent-hover: #6dc4ca;
+            --accent-soft: #1a3338;
+            --accent-ink: #8fd0d5;
+            --cyan-brand: var(--accent);
+            --orange-brand: var(--accent);
         }
         html { scroll-behavior: smooth; }
         body {
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
+            font-family: var(--font-ui);
+            font-size: 16.5px;
+            line-height: 1.55;
             position: relative;
             background-color: var(--bg-primary);
-            color: var(--text-secondary); /* This sets the default text color */
+            color: var(--text-secondary);
             transition: background-color 0.3s, color 0.3s;
         }
-        /* The rules below were simplified and corrected */
-        .main-container { background-color: var(--bg-secondary); }
+        .main-container {
+            background-color: var(--bg-secondary);
+            box-shadow: 0 18px 50px rgba(18, 24, 31, 0.08);
+        }
         .sidebar { background-color: var(--bg-sidebar); color: var(--text-sidebar-primary); }
-        .sidebar h1, .sidebar h2, .sidebar h3 { color: var(--text-sidebar-primary); }
+        .sidebar h1, .sidebar h2, .sidebar h3 {
+            color: var(--text-sidebar-primary);
+            font-family: var(--font-display);
+            font-weight: 600;
+            letter-spacing: -0.015em;
+        }
         .sidebar p, .sidebar span, .sidebar li, .sidebar a { color: var(--text-sidebar-secondary); }
-        .sidebar a:hover { color: var(--cyan-brand); }
-        .main-content h1, .main-content h2, .main-content h3, .main-content h4 { color: var(--text-primary); }
+        .sidebar a:hover { color: var(--accent-on-dark); }
+        .main-content h1, .main-content h2, .main-content h3, .main-content h4 {
+            color: var(--text-primary);
+            font-family: var(--font-display);
+            font-weight: 600;
+            letter-spacing: -0.015em;
+        }
+        .border-b-4 {
+            border-bottom-width: 2px !important;
+            border-color: var(--accent) !important;
+        }
+        .sidebar .border-cyan-400 { border-color: rgba(77, 179, 187, 0.45) !important; }
+        .sidebar .text-cyan-400 { color: var(--accent-on-dark) !important; }
+        .text-cyan-400, .text-cyan-600 { color: var(--accent) !important; }
+        .hover\:text-cyan-400:hover, .hover\:text-cyan-800:hover { color: var(--accent-hover) !important; }
+        .bg-cyan-600 { background-color: var(--accent) !important; }
+        .hover\:bg-cyan-700:hover { background-color: var(--accent-hover) !important; }
+        .bg-teal-400 { background-color: var(--accent) !important; }
 
         body::before { content: ''; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.015; pointer-events: none; background-image: var(--watermark-url); background-repeat: repeat; }
 
@@ -250,10 +289,10 @@
             opacity: 0;
             transition: opacity 0.2s ease-out;
         }
-        .tech-tag { display: inline-flex; align-items: center; background-color: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border-color); }
-        .dark-mode .tech-tag { background-color: #374151; color: #d1d5db; }
-        .tech-tag:hover, .tech-tag:focus { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-color: #94a3b8; outline: none; }
-        .tech-tag.selected { background-color: var(--cyan-brand); color: white; border-color: #0e7490; }
+        .tech-tag { display: inline-flex; align-items: center; background-color: transparent; color: var(--text-secondary); padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; margin: 2px; cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border-color); }
+        .dark-mode .tech-tag { background-color: transparent; color: var(--text-secondary); }
+        .tech-tag:hover, .tech-tag:focus { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(18,24,31,0.08); border-color: var(--accent); outline: none; }
+        .tech-tag.selected { background-color: var(--accent); color: white; border-color: var(--accent-hover); }
         .dark-mode .tech-tag.selected { color: white; }
         .tech-tag.selected .stars svg { color: #f59e0b; }
         .tech-tag .tech-icon { width: 16px; height: 16px; margin-right: 6px; object-fit: contain; }
@@ -495,13 +534,13 @@
         .experience-item.is-open .experience-summary { display: none; }
         .experience-tech-tags { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1; }
         .dark-mode .experience-tech-tags { border-top-color: #4b5563; }
-        .experience-tech-tags .exp-tech-tag { display: inline-flex; align-items: center; background-color: #e0f2f7; color: #0891b2; padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; margin: 2px; }
+        .experience-tech-tags .exp-tech-tag { display: inline-flex; align-items: center; background-color: var(--accent-soft); color: var(--accent-ink); padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; margin: 2px; }
         .dark-mode .experience-tech-tags .exp-tech-tag { background-color: #1e40af; color: #dbeafe; }
         .experience-tech-tags .exp-tech-tag img { width: 12px; height: 12px; margin-right: 5px; }
         @keyframes pulse-blue { 0% { box-shadow: 0 0 0 0 var(--pulse-blue); } 70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
         .pulse-highlight { animation: pulse-blue 2s 1; border-radius: 8px; }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
-        :focus-visible { outline: 3px solid var(--orange-brand); outline-offset: 2px; box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.5); border-radius: 4px; }
+        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
         .animate-on-scroll { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
         .animate-on-scroll.is-visible { opacity: 1; transform: none; }
         mark { background-color: #fdba74; color: #431407; padding: 2px 1px; border-radius: 3px; }
@@ -514,8 +553,110 @@
         .dark-mode #theme-toggle .moon-icon { display: none; }
         .radar-label:hover { font-weight: bold; text-decoration: underline; text-decoration-color: var(--cyan-brand); text-decoration-thickness: 2px; cursor: pointer; }
         .radar-label {
-            cursor: pointer; /* Changes the mouse cursor to a pointer on hover */
+            cursor: pointer;
             transition: all 0.2s ease;
+        }
+        .glance-kpis {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin: 0 0 1.75rem;
+        }
+        .glance-kpi {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.7rem 0.6rem 0.65rem;
+            text-align: center;
+        }
+        .glance-kpi strong {
+            display: block;
+            font-family: var(--font-display);
+            font-size: 1.45rem;
+            line-height: 1.1;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .glance-kpi span {
+            display: block;
+            margin-top: 0.2rem;
+            font-size: 0.68rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+        .chart-rotator-head {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        .chart-rotator-head h3 { margin: 0; }
+        .chart-pause {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 999px;
+            width: 28px;
+            height: 28px;
+            font-size: 11px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .chart-pause[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+        .chart-stage {
+            min-height: 18rem;
+            transition: opacity 0.55s ease, filter 0.55s ease, transform 0.55s ease;
+        }
+        .chart-stage.is-exiting {
+            opacity: 0;
+            filter: blur(8px);
+            transform: scale(0.97);
+        }
+        .chart-dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.35rem;
+            margin-top: 0.65rem;
+        }
+        .chart-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            border: 0;
+            padding: 0;
+            background: var(--border-color);
+            cursor: pointer;
+        }
+        .chart-dot.is-active { background: var(--accent); transform: scale(1.2); }
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.35rem 0.75rem;
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            margin-top: 0.35rem;
+        }
+        .chart-legend i {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.3rem;
+            vertical-align: middle;
+        }
+        @media (max-width: 700px) {
+            .glance-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .chart-stage, .chart-stage.is-exiting { transition: none; filter: none; transform: none; }
         }
 
         /* For the simulated typing effect */
@@ -586,7 +727,7 @@
             margin-top: 1rem; padding: 0.75rem; background-color: #ecfeff;
             border-left: 3px solid #67e8f9; border-radius: 0 4px 4px 0;
         }
-        .dark-mode .admin-response { background-color: #1e3a5f; border-left-color: #0891b2; }
+        .dark-mode .admin-response { background-color: var(--accent-soft); border-left-color: var(--accent); }
         .admin-response p:first-child { font-weight: bold; font-size: 0.8rem; color: #0e7490; }
         .dark-mode .admin-response p:first-child { color: #a5f3fc; }
         .admin-response p:last-child { font-style: italic; font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem; }
@@ -1005,7 +1146,7 @@
 
         /* A persistent, orange glow for items that stay selected */
         @keyframes tour-persistent-glow {
-            50% { box-shadow: 0 0 16px 8px rgba(249, 115, 22, 0.7); }
+            50% { box-shadow: 0 0 16px 8px rgba(13, 110, 118, 0.55); }
         }
 
         #tour-start-btn {
@@ -1020,8 +1161,8 @@
             height: 34px; /* Match the height of other buttons */
         }
 
-        #tour-start-btn:hover { background-color: #e0f2f7; }
-        .dark-mode #tour-start-btn:hover { background-color: #1e3a5f; }
+        #tour-start-btn:hover { background-color: var(--accent-soft); }
+        .dark-mode #tour-start-btn:hover { background-color: var(--accent-soft); }
 
         #tour-overlay {
             display: none;
@@ -1081,8 +1222,8 @@
         #tour-progress-fill {
             height: 100%;
             width: 0;
-            background: linear-gradient(90deg, rgba(34, 211, 238, 0.35) 0%, rgba(125, 211, 252, 0.85) 45%, rgba(255, 255, 255, 0.95) 100%);
-            box-shadow: 0 0 14px 2px rgba(125, 211, 252, 0.85);
+            background: linear-gradient(90deg, rgba(13, 110, 118, 0.35) 0%, rgba(77, 179, 187, 0.85) 45%, rgba(255, 255, 255, 0.95) 100%);
+            box-shadow: 0 0 14px 2px rgba(77, 179, 187, 0.65);
         }
         #tour-tooltip-content {
             padding: 1rem;
@@ -1110,8 +1251,8 @@
 
         /* Add these new animation rules and classes */
         @keyframes tour-glow-persistent {
-            0%, 100% { box-shadow: 0 0 8px 3px var(--orange-brand); }
-            50% { box-shadow: 0 0 16px 8px rgba(249, 115, 22, 0.7); }
+            0%, 100% { box-shadow: 0 0 8px 3px var(--accent); }
+            50% { box-shadow: 0 0 16px 8px rgba(13, 110, 118, 0.55); }
         }
 
         @keyframes tour-click-effect {
@@ -1174,7 +1315,7 @@
 
         /* This rule now uses 'fill' for the hover effect */
         .share-link-wrapper:hover svg path {
-            fill: #0891b2; /* Hover color */
+            fill: var(--accent); /* Hover color */
         }
 
         /* This special rule forces multi-color icons (like TikTok) to keep their original colors */
@@ -1186,7 +1327,7 @@
             color: #d1d5db; /* Lighter gray for dark mode */
         }
         .share-link-wrapper:hover svg {
-            color: #0891b2; /* Hover color */
+            color: var(--accent); /* Hover color */
         }
         /*!* NEW: PRINT/EXPORT ONLY STYLES *!
         #print-view { display: none; } !* Hidden by default *!
@@ -1566,15 +1707,23 @@
                 <!-- Infographics Section -->
                 <section class="section mt-8 infographics-section animate-on-scroll" aria-labelledby="infographics-heading">
                     <h2 id="infographics-heading" class="text-xl font-bold border-b-4 pb-2 mb-6" data-translate-key="infographics_title">Career at a Glance</h2>
+                    <p class="text-xs text-center mb-4 no-print" data-translate-key="infographics_live">Live snapshot from this CV · charts rotate</p>
+                    <div class="glance-kpis no-print" id="glance-kpis" aria-label="Career statistics"></div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         <div>
-                            <section aria-labelledby="competencies-graph-heading" class="mb-20">
-                                <h3 id="competencies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
-                                <div id="competencies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing core competency scores."></div>
+                            <section class="chart-rotator" aria-labelledby="chart-a-heading">
+                                <div class="chart-rotator-head">
+                                    <h3 id="chart-a-heading" class="text-base font-semibold text-center" data-translate-key="infographics_competencies_title">Core Competencies</h3>
+                                    <button type="button" id="chart-pause-btn" class="chart-pause no-print" aria-pressed="false" aria-label="Pause charts" title="Pause">❚❚</button>
+                                </div>
+                                <div id="competencies-radar-chart" class="chart-stage relative w-full max-w-sm mx-auto" role="img" aria-label="Career statistics chart."></div>
+                                <div class="chart-dots no-print" id="chart-a-dots"></div>
                             </section>
-                            <section aria-labelledby="methodologies-graph-heading">
-                                <h3 id="methodologies-graph-heading" class="text-base font-semibold mb-3 text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
-                                <div id="methodologies-radar-chart" class="relative w-full max-w-sm mx-auto h-72" role="img" aria-label="Radar chart showing methodology and process scores."></div>
+                            <section class="chart-rotator mt-10" aria-labelledby="chart-b-heading">
+                                <div class="chart-rotator-head">
+                                    <h3 id="chart-b-heading" class="text-base font-semibold text-center" data-translate-key="infographics_methodologies_title">Methodologies & Processes</h3>
+                                </div>
+                                <div id="methodologies-radar-chart" class="chart-stage relative w-full max-w-sm mx-auto" role="img" aria-label="Career statistics chart."></div>
                             </section>
                         </div>
                         <section aria-labelledby="timeline-heading">
@@ -1827,9 +1976,10 @@
                 // **NEW**: A set to hold the emails of blocked senders
                 blockList: new Set(),
                 // --- NEW STATE ---
-                isTourActive: false,
-                currentTourStep: 0,
-                tourDemoReady: false
+                chartIndex: 0,
+                chartPaused: false,
+                chartTimer: null,
+                chartBound: false,
             },
             data: {
 
@@ -2626,6 +2776,25 @@
                         infographics_competencies_title: "Core Competencies",
                         infographics_methodologies_title: "Methodologies & Processes",
                         infographics_timeline_title: "Career Timeline",
+                        infographics_live: "Live snapshot from this CV · charts rotate",
+                        infographics_kpi_years: "Years",
+                        infographics_kpi_roles: "Roles",
+                        infographics_kpi_skills: "Skills",
+                        infographics_kpi_companies: "Companies",
+                        infographics_kpi_certs: "Certs",
+                        infographics_mix_title: "Toolkit mix",
+                        infographics_depth_title: "Experience depth",
+                        infographics_stack_title: "Automation stack",
+                        infographics_langs_title: "Language proficiency",
+                        infographics_pause: "Pause charts",
+                        infographics_play: "Play charts",
+                        infographics_cat_pm: "Project Mgmt",
+                        infographics_cat_qa: "QA & Automation",
+                        infographics_cat_lang: "Languages",
+                        infographics_cat_cloud: "Cloud & DevOps",
+                        infographics_cat_analytics: "Analytics",
+                        infographics_cat_platform: "Platforms",
+                        infographics_cat_system: "Systems",
                         info_bubble_contact: "Click any contact link to open the corresponding application (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Click any skill to filter the experience list. Click again to deselect, or use 'Reset' to clear all.",
                         tooltip_print: "Print / PDF",
@@ -2718,7 +2887,7 @@
                         tour_title_summary: "Expandable Summary",
                         tour_desc_summary: "Click 'Read More...' to see the full professional summary, providing deeper insight into my profile and approach.",
                         tour_title_glance: "Career at a Glance",
-                        tour_desc_glance: "These infographics visualize my key skills and career progression. Hover over the chart labels for more details.",
+                        tour_desc_glance: "KPIs are counted from this CV. Two charts rotate through competencies, methods, toolkit mix, depth, automation stack and languages. Dots jump to a view, pause pins it, radar labels still filter the toolkit, and the timeline jumps to each role.",
                         tour_title_toolkit: "Interactive Toolkit",
                         tour_desc_toolkit: "This is my full skillset. Click any skill to instantly filter the Experience and Timeline sections below.",
                         tour_title_experience: "Detailed Experience",
@@ -2774,6 +2943,25 @@
                         infographics_competencies_title: "Competencias Clave",
                         infographics_methodologies_title: "Metodologías y Procesos",
                         infographics_timeline_title: "Línea de Tiempo Profesional",
+                        infographics_live: "Instantánea de esta CV · los gráficos rotan",
+                        infographics_kpi_years: "Años",
+                        infographics_kpi_roles: "Roles",
+                        infographics_kpi_skills: "Skills",
+                        infographics_kpi_companies: "Empresas",
+                        infographics_kpi_certs: "Certs",
+                        infographics_mix_title: "Composición del toolkit",
+                        infographics_depth_title: "Profundidad de experiencia",
+                        infographics_stack_title: "Stack de automatización",
+                        infographics_langs_title: "Dominio de idiomas",
+                        infographics_pause: "Pausar gráficos",
+                        infographics_play: "Reanudar gráficos",
+                        infographics_cat_pm: "Gestión de proyectos",
+                        infographics_cat_qa: "QA y automatización",
+                        infographics_cat_lang: "Lenguajes",
+                        infographics_cat_cloud: "Cloud y DevOps",
+                        infographics_cat_analytics: "Analítica",
+                        infographics_cat_platform: "Plataformas",
+                        infographics_cat_system: "Sistemas",
                         info_bubble_contact: "Haga clic en cualquier enlace de contacto para abrir la aplicación correspondiente (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Haga clic en cualquier habilidad para filtrar la lista de experiencias. Haga clic de nuevo para deseleccionar, o use 'Restablecer' para borrar todo.",
                         tooltip_print: "Imprimir / PDF",
@@ -2866,7 +3054,7 @@
                         tour_title_summary: "Resumen Expandible",
                         tour_desc_summary: "Haz clic en 'Leer Más...' para ver el resumen profesional completo, obteniendo una visión más profunda de mi perfil.",
                         tour_title_glance: "Carrera en un Vistazo",
-                        tour_desc_glance: "Estas infografías visualizan mis habilidades clave y progresión de carrera. Pasa el cursor sobre las etiquetas del gráfico para más detalles.",
+                        tour_desc_glance: "Los KPI se calculan de este CV. Dos gráficos rotan: competencias, métodos, mix del toolkit, profundidad, stack de automatización e idiomas. Los puntos saltan de vista, pausa lo fija, las etiquetas del radar filtran el toolkit y la línea de tiempo salta a cada rol.",
                         tour_title_toolkit: "Toolkit Interactivo",
                         tour_desc_toolkit: "Este es mi conjunto completo de habilidades. Haz clic en cualquier habilidad para filtrar instantáneamente las secciones de Experiencia y Línea de Tiempo.",
                         tour_title_experience: "Experiencia Detallada",
@@ -2923,6 +3111,25 @@
                         infographics_competencies_title: "Competências Principais",
                         infographics_methodologies_title: "Metodologias e Processos",
                         infographics_timeline_title: "Linha do Tempo da Carreira",
+                        infographics_live: "Instantâneo deste CV · os gráficos rotacionam",
+                        infographics_kpi_years: "Anos",
+                        infographics_kpi_roles: "Funções",
+                        infographics_kpi_skills: "Skills",
+                        infographics_kpi_companies: "Empresas",
+                        infographics_kpi_certs: "Certs",
+                        infographics_mix_title: "Composição do toolkit",
+                        infographics_depth_title: "Profundidade de experiência",
+                        infographics_stack_title: "Stack de automação",
+                        infographics_langs_title: "Proficiência em idiomas",
+                        infographics_pause: "Pausar gráficos",
+                        infographics_play: "Retomar gráficos",
+                        infographics_cat_pm: "Gestão de projetos",
+                        infographics_cat_qa: "QA e automação",
+                        infographics_cat_lang: "Linguagens",
+                        infographics_cat_cloud: "Cloud e DevOps",
+                        infographics_cat_analytics: "Analytics",
+                        infographics_cat_platform: "Plataformas",
+                        infographics_cat_system: "Sistemas",
                         info_bubble_contact: "Clique em qualquer link de contato para abrir o aplicativo correspondente (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Clique em qualquer habilidade para filtrar a lista de experiências. Clique novamente para desmarcar, ou use 'Redefinir' para limpar tudo.",
                         tooltip_print: "Imprimir / PDF",
@@ -3015,7 +3222,7 @@
                         tour_title_summary: "Resumo Expansível",
                         tour_desc_summary: "Clique em 'Ler Mais...' para ver o resumo profissional completo, obtendo uma visão mais aprofundada do meu perfil.",
                         tour_title_glance: "Carreira em Resumo",
-                        tour_desc_glance: "Estes infográficos visualizam minhas principais habilidades e progressão de carreira. Passe o mouse sobre os rótulos do gráfico para mais detalhes.",
+                        tour_desc_glance: "Os KPIs vêm deste CV. Dois gráficos rotacionam: competências, métodos, mix do toolkit, profundidade, stack de automação e idiomas. Os pontos saltam de vista, pausa fixa, rótulos do radar filtram o toolkit e a linha do tempo vai a cada função.",
                         tour_title_toolkit: "Toolkit Interativo",
                         tour_desc_toolkit: "Este é o meu conjunto completo de habilidades. Clique em qualquer habilidade para filtrar instantaneamente as seções de Experiência e Linha do Tempo.",
                         tour_title_experience: "Experiência Detalhada",
@@ -3071,6 +3278,25 @@
                         infographics_competencies_title: "Kernkompetenzen",
                         infographics_methodologies_title: "Methoden & Prozesse",
                         infographics_timeline_title: "Karriere-Zeitachse",
+                        infographics_live: "Live-Snapshot dieses CVs · Diagramme rotieren",
+                        infographics_kpi_years: "Jahre",
+                        infographics_kpi_roles: "Rollen",
+                        infographics_kpi_skills: "Skills",
+                        infographics_kpi_companies: "Firmen",
+                        infographics_kpi_certs: "Zert.",
+                        infographics_mix_title: "Toolkit-Mix",
+                        infographics_depth_title: "Erfahrungstiefe",
+                        infographics_stack_title: "Automation-Stack",
+                        infographics_langs_title: "Sprachkompetenz",
+                        infographics_pause: "Diagramme pausieren",
+                        infographics_play: "Diagramme fortsetzen",
+                        infographics_cat_pm: "Projektmanagement",
+                        infographics_cat_qa: "QA & Automatisierung",
+                        infographics_cat_lang: "Sprachen",
+                        infographics_cat_cloud: "Cloud & DevOps",
+                        infographics_cat_analytics: "Analytics",
+                        infographics_cat_platform: "Plattformen",
+                        infographics_cat_system: "Systeme",
                         info_bubble_contact: "Klicken Sie auf einen Kontaktlink, um die entsprechende Anwendung zu öffnen (E-Mail, WhatsApp, etc.).",
                         info_bubble_toolkit: "Klicken Sie auf eine Fähigkeit, um die Erfahrungsliste zu filtern. Erneut klicken zum Abwählen oder 'Zurücksetzen' verwenden, um alle zu löschen.",
                         tooltip_print: "Drucken / PDF",
@@ -3163,7 +3389,7 @@
                         tour_title_summary: "Erweiterbare Zusammenfassung",
                         tour_desc_summary: "Klicken Sie auf 'Mehr lesen...', um die vollständige berufliche Zusammenfassung zu sehen und einen tieferen Einblick in mein Profil zu erhalten.",
                         tour_title_glance: "Karriere im Überblick",
-                        tour_desc_glance: "Diese Infografiken visualisieren meine Schlüsselkompetenzen und meinen Karriereweg. Fahren Sie mit der Maus über die Diagrammbeschriftungen für weitere Details.",
+                        tour_desc_glance: "Die KPIs stammen aus diesem CV. Zwei Diagramme rotieren: Kompetenzen, Methoden, Toolkit-Mix, Tiefe, Automation-Stack und Sprachen. Punkte wechseln die Ansicht, Pause hält sie, Radar-Labels filtern das Toolkit, die Zeitachse springt zur Rolle.",
                         tour_title_toolkit: "Interaktives Toolkit",
                         tour_desc_toolkit: "Dies ist mein vollständiges Skillset. Klicken Sie auf eine Fähigkeit, um sofort die Abschnitte Erfahrung und Zeitleiste zu filtern.",
                         tour_title_experience: "Detaillierte Erfahrung",
@@ -3219,6 +3445,25 @@
                         infographics_competencies_title: "Compétences Clés",
                         infographics_methodologies_title: "Méthodologies & Processus",
                         infographics_timeline_title: "Chronologie de Carrière",
+                        infographics_live: "Aperçu live de ce CV · les graphiques tournent",
+                        infographics_kpi_years: "Années",
+                        infographics_kpi_roles: "Rôles",
+                        infographics_kpi_skills: "Skills",
+                        infographics_kpi_companies: "Entreprises",
+                        infographics_kpi_certs: "Certifs",
+                        infographics_mix_title: "Mix du toolkit",
+                        infographics_depth_title: "Profondeur d'expérience",
+                        infographics_stack_title: "Stack d'automatisation",
+                        infographics_langs_title: "Maîtrise des langues",
+                        infographics_pause: "Mettre les graphiques en pause",
+                        infographics_play: "Lire les graphiques",
+                        infographics_cat_pm: "Gestion de projet",
+                        infographics_cat_qa: "QA et automatisation",
+                        infographics_cat_lang: "Langages",
+                        infographics_cat_cloud: "Cloud et DevOps",
+                        infographics_cat_analytics: "Analytique",
+                        infographics_cat_platform: "Plateformes",
+                        infographics_cat_system: "Systèmes",
                         info_bubble_contact: "Cliquez sur un lien de contact pour ouvrir l'application correspondante (Email, WhatsApp, etc.).",
                         info_bubble_toolkit: "Cliquez sur une compétence pour filtrer la liste d'expériences. Cliquez à nouveau pour désélectionner, ou utilisez 'Réinitialiser' pour tout effacer.",
                         tooltip_print: "Imprimer / PDF",
@@ -3311,7 +3556,7 @@
                         tour_title_summary: "Résumé extensible",
                         tour_desc_summary: "Cliquez sur 'Lire la suite...' pour voir le résumé professionnel complet et obtenir un aperçu plus approfondi de mon profil.",
                         tour_title_glance: "Carrière en un coup d'œil",
-                        tour_desc_glance: "Ces infographies visualisent mes compétences clés et ma progression de carrière. Survolez les étiquettes du graphique pour plus de détails.",
+                        tour_desc_glance: "Les KPI sont calculés depuis ce CV. Deux graphiques tournent : compétences, méthodes, mix du toolkit, profondeur, stack d'automatisation et langues. Les points changent de vue, pause la fige, les labels radar filtrent le toolkit, la chronologie mène à chaque rôle.",
                         tour_title_toolkit: "Boîte à outils interactive",
                         tour_desc_toolkit: "Ceci est l'ensemble de mes compétences. Cliquez sur n'importe quelle compétence pour filtrer instantanément les sections Expérience et Chronologie.",
                         tour_title_experience: "Expérience détaillée",
@@ -3367,6 +3612,25 @@
                         infographics_competencies_title: "Competenze Chiave",
                         infographics_methodologies_title: "Metodologie e Processi",
                         infographics_timeline_title: "Cronologia della Carriera",
+                        infographics_live: "Istantanea live di questo CV · i grafici ruotano",
+                        infographics_kpi_years: "Anni",
+                        infographics_kpi_roles: "Ruoli",
+                        infographics_kpi_skills: "Skill",
+                        infographics_kpi_companies: "Aziende",
+                        infographics_kpi_certs: "Cert.",
+                        infographics_mix_title: "Mix del toolkit",
+                        infographics_depth_title: "Profondità di esperienza",
+                        infographics_stack_title: "Stack di automazione",
+                        infographics_langs_title: "Competenza linguistica",
+                        infographics_pause: "Metti in pausa i grafici",
+                        infographics_play: "Riprendi i grafici",
+                        infographics_cat_pm: "Project management",
+                        infographics_cat_qa: "QA e automazione",
+                        infographics_cat_lang: "Linguaggi",
+                        infographics_cat_cloud: "Cloud e DevOps",
+                        infographics_cat_analytics: "Analytics",
+                        infographics_cat_platform: "Piattaforme",
+                        infographics_cat_system: "Sistemi",
                         info_bubble_contact: "Fai clic su qualsiasi link di contatto per aprire l'applicazione corrispondente (Email, WhatsApp, ecc.).",
                         info_bubble_toolkit: "Fai clic su una competenza per filtrare l'elenco delle esperienze. Fai di nuovo clic per deselezionare, o usa 'Reset' per cancellare tutto.",
                         tooltip_print: "Stampa / PDF",
@@ -3459,7 +3723,7 @@
                         tour_title_summary: "Riepilogo Espandibile",
                         tour_desc_summary: "Fai clic su 'Leggi di più...' per vedere il riepilogo professionale completo e ottenere una visione più approfondita del mio profilo.",
                         tour_title_glance: "Carriera in Breve",
-                        tour_desc_glance: "Queste infografiche visualizzano le mie competenze chiave e la mia progressione di carriera. Passa il mouse sulle etichette del grafico per maggiori dettagli.",
+                        tour_desc_glance: "I KPI arrivano da questo CV. Due grafici ruotano: competenze, metodi, mix del toolkit, profondità, stack di automazione e lingue. I punti cambiano vista, pausa la blocca, le etichette radar filtrano il toolkit e la cronologia salta a ogni ruolo.",
                         tour_title_toolkit: "Toolkit Interattivo",
                         tour_desc_toolkit: "Questo è il mio set completo di competenze. Fai clic su una qualsiasi competenza per filtrare istantaneamente le sezioni Esperienza e Cronologia.",
                         tour_title_experience: "Esperienza Dettagliata",
@@ -3573,16 +3837,8 @@
                     titleKey: 'tour_title_glance',
                     descriptionKey: 'tour_desc_glance',
                     analyticsTag: 'Viewed_Tour_Step_Glance',
-                    demoMs: 4000,
-                    action: function() {
-                        if (window.innerWidth < 768) {
-                            document.querySelector('.infographics-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                        setTimeout(() => {
-                            this._glowElement(this.DOMElements.competenciesRadarChart, 2000);
-                            setTimeout(() => this._glowElement(this.DOMElements.timelineContainer, 2000), 1000);
-                        }, window.innerWidth < 768 ? 600 : 0);
-                    }
+                    demoMs: 10800,
+                    action: function() { this._demoGlanceTour(); }
                 },
                 {
                     element: '#toolkit-container',
@@ -3800,6 +4056,8 @@
                     printBtn: document.getElementById('print-btn'), resetFilterBtn: document.getElementById('reset-filter'), expandAllExpBtn: document.getElementById('expand-all-exp'),
                     expandAllToolkitBtn: document.getElementById('expand-all-toolkit'), competenciesRadarChart: document.getElementById('competencies-radar-chart'),
                     methodologiesRadarChart: document.getElementById('methodologies-radar-chart'), timelineContainer: document.getElementById('timeline-container'),
+                    glanceKpis: document.getElementById('glance-kpis'), chartPauseBtn: document.getElementById('chart-pause-btn'), chartDots: document.getElementById('chart-a-dots'),
+                    chartAHeading: document.getElementById('chart-a-heading'), chartBHeading: document.getElementById('chart-b-heading'),
                     profilePhoto: document.getElementById('profile-photo'), imageModal: document.getElementById('image-modal'), modalImage: document.getElementById('modal-image'),
                     modalClose: document.querySelector('.modal-close'), filterStatus: document.getElementById('filter-status'), themeToggle: document.getElementById('theme-toggle'),
                     mainContent: document.querySelector('.main-content'),
@@ -3985,7 +4243,9 @@
             },
 
             _renderInfographics() {
-                this._createRadarCharts();
+                this._renderGlanceKpis();
+                this._bindGlanceRotator();
+                this._showGlancePair(this.state.chartIndex, false);
                 this._createTimeline();
             },
 
@@ -4034,11 +4294,280 @@
                 `;
             },
 
+            _parseSkillYears(value) {
+                const n = parseInt(String(value || '').replace(/[^\d]/g, ''), 10);
+                return Number.isFinite(n) ? n : 0;
+            },
+
+            _chartPalette() {
+                const dark = document.documentElement.classList.contains('dark-mode');
+                return {
+                    fillA: dark ? 'rgba(77, 179, 187, 0.32)' : 'rgba(13, 110, 118, 0.32)',
+                    strokeA: dark ? 'rgb(77, 179, 187)' : 'rgb(13, 110, 118)',
+                    fillB: dark ? 'rgba(197, 205, 212, 0.14)' : 'rgba(26, 36, 48, 0.16)',
+                    strokeB: dark ? 'rgb(165, 184, 190)' : 'rgb(58, 90, 98)',
+                    ink: dark ? '#e8eef2' : '#12181f',
+                    muted: dark ? '#9aa5b1' : '#4a5560',
+                    track: dark ? '#2a3440' : '#d5dce3',
+                    slices: dark
+                        ? ['#4db3bb', '#8fd0d5', '#7aa8ad', '#c4a574', '#5fb89a', '#9aa5b1', '#e07a73']
+                        : ['#0d6e76', '#3d7a82', '#08545b', '#b45309', '#0f766e', '#4a5560', '#b42318']
+                };
+            },
+
+            _flatSkills() {
+                return Object.values(this.data.skills).flat();
+            },
+
+            _glanceCatalog() {
+                const t = (key, fallback) => this._s(key, fallback);
+                return [
+                    { id: 'competencies', titleKey: 'infographics_competencies_title', kind: 'radar-comp' },
+                    { id: 'methodologies', titleKey: 'infographics_methodologies_title', kind: 'radar-meth' },
+                    { id: 'mix', titleKey: 'infographics_mix_title', kind: 'donut-mix' },
+                    { id: 'depth', titleKey: 'infographics_depth_title', kind: 'bars-depth' },
+                    { id: 'stack', titleKey: 'infographics_stack_title', kind: 'bars-stack' },
+                    { id: 'langs', titleKey: 'infographics_langs_title', kind: 'bars-langs' }
+                ].map((slide) => ({ ...slide, title: t(slide.titleKey, slide.id) }));
+            },
+
+            _renderGlanceKpis() {
+                const el = this.DOMElements.glanceKpis;
+                if (!el) return;
+                const skills = this._flatSkills();
+                const companies = new Set(this.data.experiences.map((exp) => exp.company)).size;
+                const items = [
+                    { value: '24+', key: 'infographics_kpi_years', label: 'Years' },
+                    { value: String(this.data.experiences.length), key: 'infographics_kpi_roles', label: 'Roles' },
+                    { value: String(skills.length), key: 'infographics_kpi_skills', label: 'Skills' },
+                    { value: String(companies), key: 'infographics_kpi_companies', label: 'Companies' },
+                    { value: '9', key: 'infographics_kpi_certs', label: 'Certs' }
+                ];
+                el.innerHTML = items.map((item) => `
+                    <div class="glance-kpi">
+                        <strong>${item.value}</strong>
+                        <span data-translate-key="${item.key}">${this._s(item.key, item.label)}</span>
+                    </div>
+                `).join('');
+            },
+
+            _renderBarChart(container, rows) {
+                if (!container) return;
+                const palette = this._chartPalette();
+                const max = Math.max(...rows.map((row) => row.value), 1);
+                const barH = 22;
+                const gap = 10;
+                const left = 108;
+                const width = 288;
+                const height = rows.length * (barH + gap) + 8;
+                const bars = rows.map((row, i) => {
+                    const y = 8 + i * (barH + gap);
+                    const w = Math.max(6, (row.value / max) * (width - left - 36));
+                    const label = row.label.length > 15 ? `${row.label.slice(0, 14)}…` : row.label;
+                    return `
+                        <text x="0" y="${y + 15}" font-size="10" fill="${palette.muted}">${label}</text>
+                        <rect x="${left}" y="${y}" width="${width - left - 8}" height="${barH}" rx="4" fill="${palette.track}"></rect>
+                        <rect x="${left}" y="${y}" width="${w}" height="${barH}" rx="4" fill="${palette.strokeA}">
+                            <animate attributeName="width" from="0" to="${w}" dur="0.55s" fill="freeze" />
+                        </rect>
+                        <text x="${left + w + 6}" y="${y + 15}" font-size="10" fill="${palette.ink}">${row.display || row.value}</text>
+                    `;
+                }).join('');
+                container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="presentation">${bars}</svg>`;
+            },
+
+            _renderDonutChart(container, slices) {
+                if (!container) return;
+                const palette = this._chartPalette();
+                const total = slices.reduce((sum, slice) => sum + slice.value, 0) || 1;
+                const cx = 144, cy = 110, r = 62, stroke = 22;
+                const c = 2 * Math.PI * r;
+                let offset = 0;
+                const arcs = slices.map((slice, i) => {
+                    const len = (slice.value / total) * c;
+                    const color = palette.slices[i % palette.slices.length];
+                    const dash = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${len} ${c - len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+                    offset += len;
+                    return dash;
+                }).join('');
+                const legend = slices.map((slice, i) => {
+                    const color = palette.slices[i % palette.slices.length];
+                    return `<span><i style="background:${color}"></i>${slice.label} ${slice.value}</span>`;
+                }).join('');
+                container.innerHTML = `
+                    <svg viewBox="0 0 288 216" role="presentation">
+                        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${palette.track}" stroke-width="${stroke}"></circle>
+                        ${arcs}
+                        <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="22" font-weight="600" fill="${palette.ink}">${total}</text>
+                        <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="${palette.muted}">${this._s('infographics_kpi_skills', 'Skills')}</text>
+                    </svg>
+                    <div class="chart-legend">${legend}</div>
+                `;
+            },
+
+            _paintGlanceSlide(container, slide) {
+                if (!container || !slide) return;
+                const palette = this._chartPalette();
+                const skills = this.data.skills;
+                if (slide.kind === 'radar-comp') {
+                    this._generateSingleDatasetRadar(container, [
+                        { label: 'Project Mgmt', score: 0.95 }, { label: 'QA & Automation', score: 0.95 },
+                        { label: 'Leadership', score: 0.90 }, { label: 'DevOps Strategy', score: 0.85 },
+                        { label: 'Cloud Platforms', score: 0.88 }, { label: 'Stakeholder Mgmt', score: 0.92 }
+                    ], palette.fillA, palette.strokeA);
+                    return;
+                }
+                if (slide.kind === 'radar-meth') {
+                    this._generateSingleDatasetRadar(container, [
+                        { label: 'Agile', score: 0.95 }, { label: 'Scrum', score: 0.95 }, { label: 'Kanban', score: 0.90 },
+                        { label: 'CMMI', score: 0.75 }, { label: 'ISO Standards', score: 0.85 }, { label: 'Risk Mgmt', score: 0.90 }
+                    ], palette.fillB, palette.strokeB);
+                    return;
+                }
+                if (slide.kind === 'donut-mix') {
+                    const order = [
+                        ['pm', 'infographics_cat_pm', 'Project Mgmt'],
+                        ['qa', 'infographics_cat_qa', 'QA & Automation'],
+                        ['lang', 'infographics_cat_lang', 'Languages'],
+                        ['cloud', 'infographics_cat_cloud', 'Cloud & DevOps'],
+                        ['analytics', 'infographics_cat_analytics', 'Analytics'],
+                        ['platform', 'infographics_cat_platform', 'Platforms'],
+                        ['system', 'infographics_cat_system', 'Systems']
+                    ];
+                    this._renderDonutChart(container, order.map(([id, key, fallback]) => ({
+                        label: this._s(key, fallback),
+                        value: (skills[id] || []).length
+                    })).filter((slice) => slice.value > 0));
+                    return;
+                }
+                if (slide.kind === 'bars-depth') {
+                    const rows = [
+                        ['pm', 'infographics_cat_pm', 'Project Mgmt'],
+                        ['qa', 'infographics_cat_qa', 'QA & Automation'],
+                        ['lang', 'infographics_cat_lang', 'Languages'],
+                        ['cloud', 'infographics_cat_cloud', 'Cloud & DevOps'],
+                        ['analytics', 'infographics_cat_analytics', 'Analytics'],
+                        ['platform', 'infographics_cat_platform', 'Platforms']
+                    ].map(([id, key, fallback]) => {
+                        const years = Math.max(...(skills[id] || []).map((skill) => this._parseSkillYears(skill.years)), 0);
+                        return { label: this._s(key, fallback), value: years, display: `${years}+` };
+                    });
+                    this._renderBarChart(container, rows);
+                    return;
+                }
+                if (slide.kind === 'bars-stack') {
+                    const rows = (skills.qa || [])
+                        .map((skill) => ({ label: skill.name, value: this._parseSkillYears(skill.years), display: skill.years.replace(' Yrs', '') }))
+                        .sort((a, b) => b.value - a.value)
+                        .slice(0, 7);
+                    this._renderBarChart(container, rows);
+                    return;
+                }
+                const langRows = [
+                    { key: 'lang_name_es', fallback: 'Spanish', value: 100 },
+                    { key: 'lang_name_en', fallback: 'English', value: 90 },
+                    { key: 'lang_name_pt', fallback: 'Portuguese', value: 85 },
+                    { key: 'lang_others', fallback: 'Others', value: 30 }
+                ].map((row) => ({ label: this._s(row.key, row.fallback), value: row.value, display: `${row.value}%` }));
+                this._renderBarChart(container, langRows);
+            },
+
+            _showGlancePair(index, animate) {
+                const catalog = this._glanceCatalog();
+                if (!catalog.length) return;
+                const primary = ((index % catalog.length) + catalog.length) % catalog.length;
+                const secondary = (primary + Math.floor(catalog.length / 2)) % catalog.length;
+                this.state.chartIndex = primary;
+                const paint = () => {
+                    this._paintGlanceSlide(this.DOMElements.competenciesRadarChart, catalog[primary]);
+                    this._paintGlanceSlide(this.DOMElements.methodologiesRadarChart, catalog[secondary]);
+                    if (this.DOMElements.chartAHeading) {
+                        this.DOMElements.chartAHeading.setAttribute('data-translate-key', catalog[primary].titleKey);
+                        this.DOMElements.chartAHeading.textContent = catalog[primary].title;
+                    }
+                    if (this.DOMElements.chartBHeading) {
+                        this.DOMElements.chartBHeading.setAttribute('data-translate-key', catalog[secondary].titleKey);
+                        this.DOMElements.chartBHeading.textContent = catalog[secondary].title;
+                    }
+                    if (this.DOMElements.chartDots) {
+                        this.DOMElements.chartDots.querySelectorAll('.chart-dot').forEach((dot, i) => {
+                            dot.classList.toggle('is-active', i === primary);
+                            dot.setAttribute('aria-current', i === primary ? 'true' : 'false');
+                        });
+                    }
+                    const a = this.DOMElements.competenciesRadarChart;
+                    const b = this.DOMElements.methodologiesRadarChart;
+                    if (a) a.setAttribute('aria-label', catalog[primary].title);
+                    if (b) b.setAttribute('aria-label', catalog[secondary].title);
+                    this._attachRadarLabelListeners();
+                };
+                const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (!animate || reduced) {
+                    paint();
+                    return;
+                }
+                const stages = [this.DOMElements.competenciesRadarChart, this.DOMElements.methodologiesRadarChart];
+                stages.forEach((stage) => stage && stage.classList.add('is-exiting'));
+                window.setTimeout(() => {
+                    paint();
+                    stages.forEach((stage) => stage && stage.classList.remove('is-exiting'));
+                }, 420);
+            },
+
+            _advanceGlanceCharts() {
+                if (this.state.chartPaused || this.state.chartHover || this.state.chartOffscreen || this.state.isTourActive) return;
+                this._showGlancePair(this.state.chartIndex + 1, true);
+            },
+
+            _bindGlanceRotator() {
+                const catalog = this._glanceCatalog();
+                if (this.DOMElements.chartDots && !this.DOMElements.chartDots.childElementCount) {
+                    this.DOMElements.chartDots.innerHTML = catalog.map((slide, i) => (
+                        `<button type="button" class="chart-dot${i === this.state.chartIndex ? ' is-active' : ''}" data-index="${i}" aria-label="${slide.title}"></button>`
+                    )).join('');
+                    this.DOMElements.chartDots.addEventListener('click', (event) => {
+                        const btn = event.target.closest('.chart-dot');
+                        if (!btn) return;
+                        this._showGlancePair(Number(btn.dataset.index), true);
+                        this._trackEvent('glance_chart_select', 'Infographics', catalog[Number(btn.dataset.index)].id);
+                    });
+                }
+                if (this.state.chartBound) return;
+                this.state.chartBound = true;
+                const pauseBtn = this.DOMElements.chartPauseBtn;
+                const section = document.querySelector('.infographics-section');
+                const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const setPaused = (paused) => {
+                    this.state.chartPaused = paused;
+                    if (pauseBtn) {
+                        pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
+                        pauseBtn.textContent = paused ? '▶' : '❚❚';
+                        pauseBtn.setAttribute('aria-label', this._s(paused ? 'infographics_play' : 'infographics_pause', paused ? 'Play charts' : 'Pause charts'));
+                    }
+                };
+                if (pauseBtn) {
+                    pauseBtn.addEventListener('click', () => {
+                        setPaused(!this.state.chartPaused);
+                        this._trackEvent('glance_chart_pause', 'Infographics', this.state.chartPaused ? 'Paused' : 'Playing');
+                    });
+                }
+                if (section) {
+                    section.addEventListener('mouseenter', () => { this.state.chartHover = true; });
+                    section.addEventListener('mouseleave', () => { this.state.chartHover = false; });
+                }
+                if (!reduce) {
+                    this.state.chartTimer = window.setInterval(() => this._advanceGlanceCharts(), 7000);
+                    if ('IntersectionObserver' in window && section) {
+                        const io = new IntersectionObserver((entries) => {
+                            this.state.chartOffscreen = !entries.some((entry) => entry.isIntersecting);
+                        }, { threshold: 0.25 });
+                        io.observe(section);
+                    }
+                }
+            },
+
             _createRadarCharts() {
-                const competencyData = [ { label: 'Project Mgmt', score: 0.95 }, { label: 'QA & Automation', score: 0.95 }, { label: 'Leadership', score: 0.90 }, { label: 'DevOps Strategy', score: 0.85 }, { label: 'Cloud Platforms', score: 0.88 }, { label: 'Stakeholder Mgmt', score: 0.92 }, ];
-                const methodologyData = [ { label: 'Agile', score: 0.95 }, { label: 'Scrum', score: 0.95 }, { label: 'Kanban', score: 0.90 }, { label: 'CMMI', score: 0.75 }, { label: 'ISO Standards', score: 0.85 }, { label: 'Risk Mgmt', score: 0.90 }, ];
-                this._generateSingleDatasetRadar(this.DOMElements.competenciesRadarChart, competencyData, 'rgba(8, 145, 178, 0.4)', 'rgb(8, 145, 178)');
-                this._generateSingleDatasetRadar(this.DOMElements.methodologiesRadarChart, methodologyData, 'rgba(249, 115, 22, 0.4)', 'rgb(249, 115, 22)');
+                this._showGlancePair(this.state.chartIndex, false);
             },
 
             _generateSingleDatasetRadar(container, data, fillColor, strokeColor) {
@@ -4118,41 +4647,25 @@
             },
 
             _attachRadarLabelListeners() {
-                this.DOMElements.competenciesRadarChart.querySelectorAll('.radar-label').forEach(label => {
-                    label.addEventListener('click', () => {
-                        this._resetFilters();
-                        const skillsToSelect = this._getSkillsForCompetency(label.textContent);
-                        const headersToExpand = new Set();
-                        document.querySelectorAll('.tech-tag').forEach(tag => {
-                            if (skillsToSelect.includes(tag.dataset.skillName)) {
-                                this._toggleSkillFilter(tag);
-                                const header = tag.closest('.toolkit-section').querySelector('.toolkit-header');
-                                if (header && header.getAttribute('aria-expanded') === 'false') {
-                                    headersToExpand.add(header);
+                const charts = [this.DOMElements.competenciesRadarChart, this.DOMElements.methodologiesRadarChart].filter(Boolean);
+                charts.forEach((chart) => {
+                    chart.querySelectorAll('.radar-label').forEach((label) => {
+                        label.addEventListener('click', () => {
+                            this._resetFilters();
+                            const skillsToSelect = this._getSkillsForCompetency(label.textContent);
+                            const headersToExpand = new Set();
+                            document.querySelectorAll('.tech-tag').forEach((tag) => {
+                                if (skillsToSelect.includes(tag.dataset.skillName)) {
+                                    this._toggleSkillFilter(tag);
+                                    const header = tag.closest('.toolkit-section').querySelector('.toolkit-header');
+                                    if (header && header.getAttribute('aria-expanded') === 'false') {
+                                        headersToExpand.add(header);
+                                    }
                                 }
-                            }
+                            });
+                            headersToExpand.forEach((header) => header.click());
+                            document.getElementById('toolkit-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
                         });
-                        headersToExpand.forEach(header => header.click());
-                        document.getElementById('toolkit-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-                    });
-                });
-                this.DOMElements.methodologiesRadarChart.querySelectorAll('.radar-label').forEach(label => {
-                    label.addEventListener('click', () => {
-                        this._resetFilters();
-                        const skillsToSelect = this._getSkillsForCompetency(label.textContent);
-                        const headersToExpand = new Set();x
-                        document.querySelectorAll('.tech-tag').forEach(tag => {
-                            if (skillsToSelect.includes(tag.dataset.skillName)) {
-                                this._toggleSkillFilter(tag);
-                                const header = tag.closest('.toolkit-section').querySelector('.toolkit-header');
-                                if (header && header.getAttribute('aria-expanded') === 'false') {
-                                    headersToExpand.add(header);
-                                }
-                            }
-                        });
-                        headersToExpand.forEach(header => header.click());
-                        document.getElementById('toolkit-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
                     });
                 });
             },
@@ -4689,8 +5202,8 @@
             },
 
             _toggleTheme() {
-                const isDarkMode = document.documentElement.classList.toggle('dark-mode');
-                localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+                const isDarkMode = window.SiteTheme ? SiteTheme.toggle() : document.documentElement.classList.toggle('dark-mode');
+                if (!window.SiteTheme) localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
                 this._trackEvent('theme_change', 'UI Interaction', isDarkMode ? 'Dark Mode' : 'Light Mode');
                 this._renderInfographics();
             },
@@ -4731,6 +5244,11 @@
             },
 
             _applyInitialTheme() {
+                if (window.SiteTheme) {
+                    SiteTheme.boot();
+                    document.addEventListener('cv-theme-change', () => this._renderInfographics());
+                    return;
+                }
                 const savedTheme = localStorage.getItem('theme');
                 if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dark-mode');
@@ -5347,9 +5865,10 @@
 
                 return `
                     <style>
-                        .print-only-container { position: relative; font-family: Arial, sans-serif; color: #000; padding: 40px; background-color: #fff; width: 800px; }
+                        .print-only-container { position: relative; font-family: Inter, Arial, sans-serif; color: #12181f; padding: 40px; background-color: #fff; width: 800px; }
                         .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 80px; color: rgba(0, 0, 0, 0.05); font-weight: bold; pointer-events: none; z-index: 0; }
-                        h1 { font-size: 26pt; font-weight: bold; text-align: center; margin: 0; } h2 { font-size: 14pt; text-align: center; color: #444; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #0891b2; } h3 { font-size: 16pt; font-weight: bold; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; } h4 { font-size: 12pt; font-weight: bold; margin-top: 15px; margin-bottom: 2px; } p, li { font-size: 10pt; line-height: 1.5; color: #333; } ul { list-style-type: disc; padding-left: 20px; margin-top: 5px; } .contact-info { text-align: center; margin-bottom: 20px; font-size: 10pt; } .contact-info a { color: #0891b2; text-decoration: none; margin: 0 5px; } .profile-photo { display: block; margin: 0 auto 20px auto; width: 120px; height: 120px; border-radius: 50%; } .toolkit-category { margin-bottom: 10px; } .toolkit-skills { font-size: 9pt; color: #555; } .exp-item { margin-bottom: 20px; } .exp-dates { color: #555; font-style: italic; } .technologies { font-size: 9pt; color: #0891b2; font-style: italic; } .languages-section p { margin-bottom: 5px; }
+                        h1, h2, h3, h4 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600; }
+                        h1 { font-size: 26pt; font-weight: 700; text-align: center; margin: 0; } h2 { font-size: 14pt; text-align: center; color: #4a5560; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #0d6e76; } h3 { font-size: 16pt; font-weight: 600; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #d5dce3; padding-bottom: 5px; } h4 { font-size: 12pt; font-weight: 600; margin-top: 15px; margin-bottom: 2px; } p, li { font-size: 10pt; line-height: 1.5; color: #333; } ul { list-style-type: disc; padding-left: 20px; margin-top: 5px; } .contact-info { text-align: center; margin-bottom: 20px; font-size: 10pt; } .contact-info a { color: #0d6e76; text-decoration: none; margin: 0 5px; } .profile-photo { display: block; margin: 0 auto 20px auto; width: 120px; height: 120px; border-radius: 50%; } .toolkit-category { margin-bottom: 10px; } .toolkit-skills { font-size: 9pt; color: #555; } .exp-item { margin-bottom: 20px; } .exp-dates { color: #555; font-style: italic; } .technologies { font-size: 9pt; color: #0d6e76; font-style: italic; } .languages-section p { margin-bottom: 5px; }
                     </style>
 
                     <div class="print-only-container">
@@ -5487,7 +6006,7 @@
                 const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
                 const PAGE_WIDTH = doc.internal.pageSize.getWidth();
                 const FONT_SIZES = { h1: 22, h2: 16, h3: 12, body: 10, small: 8 };
-                const COLORS = { primary: '#111827', secondary: '#4b5563', link: '#0891b2' };
+                const COLORS = { primary: '#12181f', secondary: '#4a5560', link: '#0d6e76' };
                 let cursor = MARGIN;
 
                 const addText = (text, size, x, y, options = {}) => {
@@ -6179,6 +6698,42 @@
                 } else {
                     setTimeout(closeMenu, 2400);
                 }
+            },
+
+            _demoGlanceTour() {
+                const section = document.querySelector('.infographics-section');
+                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const kpis = this.DOMElements.glanceKpis;
+                const pauseBtn = this.DOMElements.chartPauseBtn;
+                const dots = this.DOMElements.chartDots ? [...this.DOMElements.chartDots.querySelectorAll('.chart-dot')] : [];
+                const start = window.innerWidth < 768 ? 700 : 250;
+                const run = (ms, fn) => window.setTimeout(() => {
+                    if (!this.state.isTourActive) return;
+                    fn();
+                }, start + ms);
+                run(0, () => this._glowElement(kpis, 1800));
+                run(900, () => {
+                    this._showGlancePair(2, true);
+                    if (dots[2]) this._applyClickEffect(dots[2]);
+                });
+                run(1700, () => this._glowElement(this.DOMElements.competenciesRadarChart, 1600));
+                run(2800, () => {
+                    this._showGlancePair(4, true);
+                    if (dots[4]) this._applyClickEffect(dots[4]);
+                    this._glowElement(this.DOMElements.methodologiesRadarChart, 1500);
+                });
+                run(4300, () => {
+                    if (pauseBtn) {
+                        this._applyClickEffect(pauseBtn);
+                        this._glowElement(pauseBtn, 1400);
+                    }
+                });
+                run(5400, () => {
+                    this._showGlancePair(5, true);
+                    if (dots[5]) this._applyClickEffect(dots[5]);
+                });
+                run(6800, () => this._glowElement(this.DOMElements.timelineContainer, 2000));
+                run(9000, () => this._showGlancePair(0, true));
             },
 
             _demoSimulatorTour() {
