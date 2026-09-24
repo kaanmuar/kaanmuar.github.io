@@ -82,6 +82,18 @@
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
         .check { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; font-size: 13px; }
+        .lang-wrap { position: relative; }
+        .lang-toggle { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--line); color: var(--text); border-radius: 6px; padding: 6px 8px; cursor: pointer; }
+        .lang-toggle img { width: 18px; height: 18px; border-radius: 50%; }
+        .lang-menu { display: none; position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; width: 15rem; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; flex-direction: column; gap: 8px; }
+        .lang-wrap.open .lang-menu { display: flex; }
+        .lang-search { width: 100%; box-sizing: border-box; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 12px; }
+        .lang-options-list { display: flex; flex-direction: column; gap: 4px; max-height: calc(6 * 1.75rem + 5 * 0.25rem); overflow-y: auto; }
+        .lang-option { display: flex; align-items: center; gap: 8px; min-height: 1.75rem; padding: 2px 4px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .lang-option:hover { background: var(--card); }
+        .lang-option img { width: 18px; height: 18px; border-radius: 50%; }
+        #google_translate_element, .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt, iframe.skiptranslate, .goog-te-gadget { display: none !important; visibility: hidden !important; height: 0 !important; }
+        html, body { top: 0 !important; position: static !important; }
         @media (max-width: 900px) {
             .shell { grid-template-columns: 1fr; }
             .nav { display: flex; overflow: auto; gap: 6px; border-right: 0; border-bottom: 1px solid var(--line); }
@@ -99,6 +111,12 @@
     </div>
     <div class="agents" id="agentPills"></div>
     <div class="actions">
+        <div class="lang-wrap notranslate" id="langWrap">
+            <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
+                <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English">
+            </button>
+            <div class="lang-menu" id="langMenu"></div>
+        </div>
         <button class="btn btn-ghost" id="resetBtn">Reset</button>
         <button class="btn btn-primary" id="runBtn">Run 4-agent sprint</button>
     </div>
@@ -122,7 +140,8 @@
     <div class="modal" id="modal"></div>
 </div>
 
-<script>
+    <script src="js/site-i18n.js"></script>
+    <script>
 const AGENTS = [
     { id: 'a1', name: 'Ticket Steward', role: 'Reads & rewrites Jira stories' },
     { id: 'a2', name: 'Test Designer', role: 'Authors Gherkin and Xray cases' },
@@ -318,6 +337,7 @@ function setView(name) {
     if (name === 'auto') renderAuto();
     if (name === 'verify') renderVerify();
     if (name === 'report') renderReport();
+    if (window.SiteI18n) SiteI18n.refreshTranslation();
 }
 
 function columns() {
@@ -398,6 +418,7 @@ function openTicket(key, opts = {}) {
             </aside>
         </div>`;
     overlay.classList.add('show');
+    if (window.SiteI18n) SiteI18n.refreshTranslation();
     modal.querySelectorAll('.tabs button').forEach(btn => btn.onclick = () => {
         modal.querySelectorAll('.tabs button').forEach(b => b.classList.remove('on'));
         btn.classList.add('on');
@@ -524,6 +545,7 @@ async function runSprint() {
 
     state.agent = 'a1'; renderAgents();
     banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — reading each Jira issue like a BA/QA pair, proposing testable AC. You decide.';
+    if (window.SiteI18n) SiteI18n.refreshTranslation();
     log('A1', 'Scanning Sprint 24 stories for testability gaps.');
     for (const t of state.tickets) {
         const el = document.getElementById('card-' + t.key);
@@ -581,6 +603,7 @@ async function runSprint() {
     await waitUser();
     state.tickets.forEach(t => { if (t.tests.some(tc => tc.include)) t.column = 'Done'; });
     banner.innerHTML = '<strong>Sprint 24 complete.</strong> Review the report or reset to run again.';
+    if (window.SiteI18n) SiteI18n.refreshTranslation();
     state.running = false;
     document.getElementById('runBtn').disabled = false;
     renderAgents();
@@ -596,6 +619,52 @@ document.getElementById('nav').addEventListener('click', e => {
 document.getElementById('runBtn').onclick = runSprint;
 document.getElementById('resetBtn').onclick = () => location.reload();
 overlay.addEventListener('click', e => { if (e.target === overlay && !state.running) closeModal(); });
+
+function mountLanguageMenu() {
+    const wrap = document.getElementById('langWrap');
+    const toggle = document.getElementById('langToggle');
+    const menu = document.getElementById('langMenu');
+    const flag = document.getElementById('langFlag');
+    if (!wrap || !window.SiteI18n) return;
+
+    const syncFlag = (code) => {
+        flag.src = SiteI18n.flagUrl(code);
+        flag.alt = SiteI18n.displayName(code);
+    };
+
+    const render = (query) => {
+        const list = menu.querySelector('.lang-options-list');
+        if (!list) return;
+        list.innerHTML = '';
+        SiteI18n.orderedLanguages().forEach((meta) => {
+            if (!SiteI18n.matchesQuery(meta, query)) return;
+            const option = document.createElement('div');
+            option.className = 'lang-option';
+            option.dataset.lang = meta.code;
+            option.innerHTML = `<img src="${SiteI18n.flagUrl(meta.code)}" alt=""><span>${meta.native}</span>`;
+            option.onclick = () => SiteI18n.selectLanguage(meta.code);
+            list.appendChild(option);
+        });
+    };
+
+    menu.innerHTML = '<input class="lang-search" type="search" placeholder="Search language" aria-label="Search language"><div class="lang-options-list"></div>';
+    const search = menu.querySelector('.lang-search');
+    search.addEventListener('input', () => render(search.value));
+    search.addEventListener('click', (e) => e.stopPropagation());
+    render('');
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        wrap.classList.toggle('open');
+    });
+    document.addEventListener('click', () => wrap.classList.remove('open'));
+    SiteI18n.resolve().then((lang) => {
+        syncFlag(lang);
+        SiteI18n.loadWidget();
+        SiteI18n.applyMachineTranslate(lang);
+    });
+}
+
+mountLanguageMenu();
 
 renderAgents();
 setView('board');
