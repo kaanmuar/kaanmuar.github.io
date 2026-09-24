@@ -1,14 +1,23 @@
+Cypress.Commands.add('skipSiteTours', (win) => {
+  win.sessionStorage.setItem('hasSeenTour', 'true');
+  win.sessionStorage.setItem('hasSeenLabTour', 'true');
+  win.sessionStorage.setItem('hasSeenStudioTour', 'true');
+});
+
 Cypress.Commands.add('visitCV', (options = {}) => {
   const { tour = false, theme = 'light', qs = '' } = options;
   cy.visit(`/index.html${qs}`, {
     onBeforeLoad(win) {
       if (tour) win.sessionStorage.removeItem('hasSeenTour');
       else win.sessionStorage.setItem('hasSeenTour', 'true');
+      win.sessionStorage.setItem('hasSeenLabTour', 'true');
+      win.sessionStorage.setItem('hasSeenStudioTour', 'true');
       if (!win.localStorage.getItem('theme')) win.localStorage.setItem('theme', theme);
       if (!(qs && /lang=/.test(qs))) win.localStorage.setItem('cv-preferred-lang', 'en');
     }
   });
   cy.get('.main-container').should('be.visible');
+  cy.window().should('have.property', 'CarlosMunozCV');
 });
 
 Cypress.Commands.add('visitAdmin', () => {

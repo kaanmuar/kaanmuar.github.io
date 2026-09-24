@@ -81,6 +81,16 @@ describe('Interactive CV', () => {
       cy.get('.tech-tag[data-skill-name="Cypress"]').should('have.class', 'selected');
     });
 
+    it('filters the CV from a core competency and restores on outside click', () => {
+      cy.get('.competency-item[data-competency="pm"]').click();
+      cy.get('html').should('have.class', 'topic-focus');
+      cy.get('.competency-item[data-competency="pm"]').should('have.attr', 'aria-pressed', 'true');
+      cy.get('.experience-item.topic-match').should('exist');
+      cy.get('.experience-item.topic-dim').should('exist');
+      cy.get('#languages-heading').click({ force: true });
+      cy.get('html').should('not.have.class', 'topic-focus');
+    });
+
     it('filters experience by a skill tag', () => {
       cvPage.expandAllToolkitBtn.click();
       cy.get('.tech-tag[data-skill-name="Selenium"]').click();

@@ -19,6 +19,8 @@ export class BasePage {
                 // This command runs before any of the page's scripts.
                 // It tricks the page into thinking the tour has already been seen.
                 win.sessionStorage.setItem('hasSeenTour', 'true');
+                win.sessionStorage.setItem('hasSeenLabTour', 'true');
+                win.sessionStorage.setItem('hasSeenStudioTour', 'true');
             },
         });
     }

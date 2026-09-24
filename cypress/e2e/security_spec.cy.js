@@ -29,6 +29,8 @@ describe('Security and SEO', () => {
     cy.get('meta[name="robots"]').should('have.attr', 'content').and('match', /index/i);
     cy.get('link[rel="canonical"]').should('have.attr', 'href').and('include', 'kaanmuar.github.io');
     cy.get('#person-structured-data').invoke('text').should('include', 'Carlos').and('match', /18 (years|años)/i);
+    cy.get('#competencies-structured-data').invoke('text').should('include', 'DefinedTerm').and('include', 'topic=pm');
+    cy.get('meta[name="keywords"]').should('have.attr', 'content').and('include', 'IT Project Management');
   });
 
   it('external profile links use noopener', () => {
@@ -48,7 +50,11 @@ describe('Security and SEO', () => {
   it('public chrome does not link to admin.html', () => {
     cy.visitCV();
     cy.get('a[href*="admin.html"]').should('have.length', 0);
-    cy.visit('/simulador.html');
+    cy.visit('/simulador.html', {
+      onBeforeLoad(win) {
+        win.sessionStorage.setItem('hasSeenStudioTour', 'true');
+      }
+    });
     cy.get('a[href*="admin.html"]').should('have.length', 0);
   });
 });
