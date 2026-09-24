@@ -9,7 +9,7 @@
     <meta name="keywords" content="QA studio, Jira, Xray, Playwright, Cypress, Robot Framework, SDLC, test automation, AI agents">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow">
-    <meta name="theme-color" content="#0b1220">
+    <meta name="theme-color" content="#0d6e76">
     <link rel="canonical" href="https://kaanmuar.github.io/simulador.html">
     <link rel="sitemap" type="application/xml" href="https://kaanmuar.github.io/sitemap.xml">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -74,28 +74,56 @@
         });
     </script>
     <script src="js/site-analytics.js"></script>
+    <script src="js/site-theme.js"></script>
+    <script>SiteTheme.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0b1220; --panel: #111827; --panel-2: #0f172a; --card: #1e293b;
-            --line: #334155; --text: #e5eefc; --muted: #94a3b8; --blue: #3b82f6;
-            --cyan: #22d3ee; --purple: #a78bfa; --green: #34d399; --amber: #fbbf24;
-            --red: #f87171; --jira: #2684ff; --story: #63ba3c;
+            --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
+            --line: #d5dce3; --text: #12181f; --muted: #4a5560; --blue: #0d6e76;
+            --cyan: #0d6e76; --purple: #3d7a82; --green: #0f766e; --amber: #b45309;
+            --red: #b42318; --jira: #0d6e76; --story: #5a9e7a;
+            --topbar: #f7f8fa; --banner: #eef2f4; --col: #e8edf0;
+            --nav-active: #d7ecee; --nav-active-text: #08545b;
+            --agent-active-bg: rgba(13,110,118,.12); --agent-active-text: #08545b;
+            --console: #12181f; --console-text: #8fd0d5; --console-border: #0d6e76;
+            --modal: #f7f8fa; --modal-side: #eef2f4; --overlay: rgba(18,24,31,.45);
+            --log-bg: #e8edf0; --log-text: #0f766e; --code-text: #e8eef2; --laser-mid: #12181f;
+        }
+        html.dark-mode {
+            --bg: #10161d; --panel: #161d26; --panel-2: #0c1118; --card: #1a2430;
+            --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --blue: #4db3bb;
+            --cyan: #4db3bb; --purple: #7aa8ad; --green: #5fb89a; --amber: #c4a574;
+            --red: #e07a73; --jira: #0d6e76; --story: #5a9e7a;
+            --topbar: #0c1118; --banner: #121a22; --col: #0f172a;
+            --nav-active: #1a3338; --nav-active-text: #fff;
+            --agent-active-bg: rgba(77,179,187,.15); --agent-active-text: #fff;
+            --console: #020617; --console-text: #8fd0d5; --console-border: #0d6e76;
+            --modal: #161d26; --modal-side: #0c1118; --overlay: rgba(2,6,23,.72);
+            --log-bg: #020617; --log-text: #86efac; --code-text: #cbd5e1; --laser-mid: #e8eef2;
         }
         * { box-sizing: border-box; }
+        html { color-scheme: light; }
+        html.dark-mode { color-scheme: dark; }
         html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
         body { display: grid; grid-template-rows: 56px minmax(0, 1fr) 120px; overflow: hidden; }
         button { font-family: inherit; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); background: #0a1628; gap: 12px; }
-        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--topbar); gap: 12px; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-family: "Source Serif 4", Georgia, serif; }
         .brand small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; }
         .agents { display: flex; gap: 8px; flex-wrap: wrap; }
         .agent { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
-        .agent.active { border-color: var(--purple); color: #fff; background: rgba(167,139,250,.15); }
+        .agent.active { border-color: var(--cyan); color: var(--agent-active-text); background: var(--agent-active-bg); }
         .agent.done { border-color: var(--green); color: var(--green); }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-        .actions { display: flex; gap: 8px; }
+        .actions { display: flex; align-items: center; gap: 8px; }
+        #theme-toggle { background: none; border: 0; cursor: pointer; color: var(--text); padding: 6px; display: inline-flex; border-radius: 6px; }
+        #theme-toggle:hover { background: var(--panel-2); }
+        #theme-toggle .sun-icon { display: none; width: 18px; height: 18px; }
+        #theme-toggle .moon-icon { display: block; width: 18px; height: 18px; }
+        html.dark-mode #theme-toggle .sun-icon { display: block; }
+        html.dark-mode #theme-toggle .moon-icon { display: none; }
         .btn { border: 0; border-radius: 6px; padding: 8px 12px; font-weight: 600; cursor: pointer; font-size: 13px; }
         .btn:disabled { opacity: .45; cursor: not-allowed; }
         .btn-primary { background: var(--jira); color: #fff; }
@@ -105,26 +133,26 @@
         .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 0; overflow: hidden; }
         .nav { border-right: 1px solid var(--line); background: var(--panel-2); padding: 14px 10px; }
         .nav button { width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted); padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .nav button.active { background: #1e3a5f; color: #fff; }
+        .nav button.active { background: var(--nav-active); color: var(--nav-active-text); }
         .workspace { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-        .phase-banner { flex: 0 0 auto; padding: 10px 16px; border-bottom: 1px solid var(--line); background: #132033; font-size: 13px; color: var(--muted); }
+        .phase-banner { flex: 0 0 auto; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--banner); font-size: 13px; color: var(--muted); }
         .phase-banner strong { color: var(--text); }
         .board { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
-        .col { min-width: 250px; width: 250px; background: #0f172a; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+        .col { min-width: 250px; width: 250px; background: var(--col); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
         .col h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
         .ticket-wrap { margin-bottom: 8px; }
         .ticket { position: relative; overflow: hidden; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px; cursor: pointer; }
         .ticket:hover { border-color: var(--blue); }
         .ticket.pulse { outline: 2px solid var(--purple); transform: translateY(-2px); }
-        .ticket-wrap.active-review .ticket { border-color: var(--cyan); border-radius: 8px 8px 0 0; outline: 1px solid rgba(34,211,238,.45); }
+        .ticket-wrap.active-review .ticket { border-color: var(--cyan); border-radius: 8px 8px 0 0; outline: 1px solid rgba(77,179,187,.45); }
         .laser {
             pointer-events: none;
             position: absolute;
             top: 0; bottom: 0; left: 0;
             width: 12px;
             margin-left: -6px;
-            background: linear-gradient(180deg, transparent 0%, #22d3ee 18%, #fff 50%, #a78bfa 82%, transparent 100%);
-            box-shadow: 0 0 14px 4px rgba(34,211,238,.85), 0 0 36px 10px rgba(167,139,250,.35);
+            background: linear-gradient(180deg, transparent 0%, #0d6e76 18%, var(--laser-mid) 50%, #4db3bb 82%, transparent 100%);
+            box-shadow: 0 0 14px 4px rgba(13,110,118,.75), 0 0 36px 10px rgba(77,179,187,.28);
             opacity: 0;
             z-index: 3;
         }
@@ -137,9 +165,9 @@
         }
         .ticket-console, .agent-console {
             display: none;
-            background: #020617;
-            border: 1px solid #155e75;
-            color: #67e8f9;
+            background: var(--console);
+            border: 1px solid var(--console-border);
+            color: var(--console-text);
             font-family: 'Fira Code', monospace;
             font-size: 11px;
             line-height: 1.45;
@@ -149,7 +177,7 @@
         }
         .ticket-console { border-top: 0; border-radius: 0 0 8px 8px; }
         .ticket-wrap.active-review .ticket-console { display: block; }
-        .agent-console { display: block; border-radius: 0 0 10px 10px; border-top: 1px solid #155e75; max-height: 150px; }
+        .agent-console { display: block; border-radius: 0 0 10px 10px; border-top: 1px solid var(--console-border); max-height: 150px; }
         .agent-console .k, .ticket-console .k { color: var(--amber); }
         .agent-console .ok, .ticket-console .ok { color: var(--green); }
         .agent-console .dec, .ticket-console .dec { color: var(--purple); }
@@ -159,9 +187,9 @@
             flex: 0 0 auto;
             max-height: 132px;
             overflow: auto;
-            background: #020617;
-            border-top: 1px solid #155e75;
-            color: #67e8f9;
+            background: var(--console);
+            border-top: 1px solid var(--console-border);
+            color: var(--console-text);
             font-family: 'Fira Code', monospace;
             font-size: 11px;
             line-height: 1.45;
@@ -185,21 +213,21 @@
         .meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
         .prio { font-weight: 700; }
         .prio.highest { color: var(--red); } .prio.high { color: #fb7185; } .prio.medium { color: var(--amber); }
-        .log { background: #020617; color: #86efac; font-family: 'Fira Code', monospace; font-size: 12px; padding: 10px 14px; overflow: auto; border-top: 1px solid var(--line); min-height: 0; }
+        .log { background: var(--log-bg); color: var(--log-text); font-family: 'Fira Code', monospace; font-size: 12px; padding: 10px 14px; overflow: auto; border-top: 1px solid var(--line); min-height: 0; }
         .log b { color: var(--cyan); }
-        .overlay { position: fixed; inset: 0; background: rgba(2,6,23,.72); display: none; z-index: 30; padding: 24px; }
+        .overlay { position: fixed; inset: 0; background: var(--overlay); display: none; z-index: 30; padding: 24px; }
         .overlay.show { display: flex; justify-content: center; align-items: flex-start; overflow: auto; }
-        .modal { width: min(1100px, 100%); background: #0f172a; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 40px; }
+        .modal { width: min(1100px, 100%); background: var(--modal); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 40px; }
         .m-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); }
         .m-body { display: grid; grid-template-columns: 1.7fr .9fr; min-height: 520px; }
         .m-main { padding: 18px; overflow: auto; border-right: 1px solid var(--line); }
-        .m-side { padding: 16px; background: #0b1524; }
+        .m-side { padding: 16px; background: var(--modal-side); }
         .tabs { display: flex; gap: 12px; border-bottom: 1px solid var(--line); margin: 12px 0 16px; }
         .tabs button { background: none; border: 0; color: var(--muted); padding: 8px 0; cursor: pointer; font-size: 13px; }
         .tabs button.on { color: var(--jira); border-bottom: 2px solid var(--jira); font-weight: 600; }
         .field { display: grid; grid-template-columns: 110px 1fr; gap: 8px; font-size: 12px; margin-bottom: 8px; color: var(--muted); }
         .field b { color: var(--text); font-weight: 500; }
-        .ac { background: #0b1220; border: 1px solid var(--line); border-radius: 8px; padding: 12px; white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.5; }
+        .ac { background: var(--console); border: 1px solid var(--line); border-radius: 8px; padding: 12px; white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.5; color: var(--console-text); }
         .proposal { display: none; margin-top: 14px; border: 1px solid var(--purple); background: rgba(167,139,250,.08); border-radius: 8px; padding: 12px; }
         .proposal.show { display: block; }
         .row { display: flex; gap: 8px; margin-top: 10px; }
@@ -207,8 +235,8 @@
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
         th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
-        .gherkin { white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 11px; color: #cbd5e1; background: #020617; padding: 8px; border-radius: 6px; }
-        .code { white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 11.5px; background: #020617; padding: 12px; border-radius: 8px; border: 1px solid var(--line); overflow: auto; max-height: 280px; }
+        .gherkin { white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 11px; color: var(--code-text); background: var(--console); padding: 8px; border-radius: 6px; }
+        .code { white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 11.5px; background: var(--console); color: var(--code-text); padding: 12px; border-radius: 8px; border: 1px solid var(--line); overflow: auto; max-height: 280px; }
         .pill { font-size: 10px; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--line); }
         .pass { color: var(--green); } .fail { color: var(--red); }
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -238,7 +266,7 @@
 <body>
 <header class="topbar">
     <div class="brand">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#2684FF"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="2"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#0d6e76"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="2"/></svg>
         <div>PayStream · QA Studio<small>Active sprint board · 4 specialized agents</small></div>
     </div>
     <div class="agents" id="agentPills"></div>
@@ -249,6 +277,10 @@
             </button>
             <div class="lang-menu" id="langMenu"></div>
         </div>
+        <button id="theme-toggle" type="button" aria-label="Toggle dark mode">
+            <svg class="sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
         <button class="btn btn-ghost" id="resetBtn">Reset</button>
         <button class="btn btn-primary" id="runBtn">Run 4-agent sprint</button>
     </div>
@@ -965,6 +997,11 @@ function mountLanguageMenu() {
 }
 
 mountLanguageMenu();
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+    const dark = SiteTheme.toggle();
+    track('sim_theme_change', 'Simulator', dark ? 'Dark Mode' : 'Light Mode');
+});
 
 renderAgents();
 setView('board');
