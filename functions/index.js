@@ -12,31 +12,39 @@ const sgMail = require("@sendgrid/mail");
 // Initialize Firebase Admin SDK
 admin.initializeApp();
 
-// It's highly recommended to store your API key in Firebase environment variables
-// for security. You can set this by running the following command in your terminal:
-// firebase functions:config:set sendgrid.key="YOUR_SENDGRID_API_KEY"
-const SENDGRID_API_KEY = functions.config().sendgrid.key;
+// SENDGRID_API_KEY is a Secret Manager secret (firebase functions:secrets:set).
+// SENDGRID_FROM is a plain env var in functions/.env.
+const OWNER_EMAIL = "kaanmuar@gmail.com";
+const TOPIC_LABELS = {
+  opportunity: "Job Opportunity / Collaboration",
+  inquiry: "Project Inquiry",
+  feedback: "CV Feedback",
+  other: "Other"
+};
 
-// It's also a good practice to set your verified sender email in the environment
-// firebase functions:config:set sendgrid.from="your-verified-email@example.com"
-const FROM_EMAIL = functions.config().sendgrid.from;
 
+const withMail = functions.runWith({ secrets: ["SENDGRID_API_KEY"] });
 
-if (!SENDGRID_API_KEY || !FROM_EMAIL) {
-  console.error(
-    "Error: Make sure to set SENDGRID_API_KEY and FROM_EMAIL in Firebase environment config."
-  );
-} else {
-  sgMail.setApiKey(SENDGRID_API_KEY);
+function prepareMail() {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  const from = process.env.SENDGRID_FROM;
+  if (!apiKey || !from) {
+    console.error("SendGrid key or from-address is not configured.");
+    return null;
+  }
+  sgMail.setApiKey(apiKey);
+  return from;
 }
 
 /**
  * This is a generic function that triggers when a new document is created in the "mail" collection.
  * It sends an email using the data from the document. This function remains the same.
  */
-exports.sendEmailOnNewMail = functions.firestore
+exports.sendEmailOnNewMail = withMail.firestore
   .document("mail/{docId}")
   .onCreate(async (snap, context) => {
+    const from = prepareMail();
+    if (!from) return null;
     const mailData = snap.data();
 
     // Basic validation
@@ -47,7 +55,7 @@ exports.sendEmailOnNewMail = functions.firestore
 
     const msg = {
       to: mailData.to,
-      from: FROM_EMAIL, // Use the configured sender email
+      from: from,
       templateId: mailData.templateId,
       dynamic_template_data: mailData.dynamicTemplateData || {},
     };
@@ -137,6 +145,105 @@ exports.queueEmailOnRatingResponse = functions.firestore
       } catch (error) {
         console.error("Error queueing rating reply:", error);
       }
+    }
+    return null;
+  });
+
+function clip(value, max) {
+  const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+  if (text.length <= max) return text;
+  return text.slice(0, max) + "…";
+}
+
+async function sendOwnerEmail(subject, text) {
+  const from = prepareMail();
+  if (!from) return;
+  await sgMail.send({
+    to: OWNER_EMAIL,
+    from: from,
+    subject: clip(subject, 140),
+    text: clip(text, 4000)
+  });
+}
+
+exports.notifyOwnerOnMessage = withMail.firestore
+  .document("messages/{messageId}")
+  .onCreate(async (snap) => {
+    const data = snap.data() || {};
+    const topic = TOPIC_LABELS[data.topic] || data.topic || "—";
+    const text = [
+      "A new message was submitted on your CV.",
+      "",
+      "From: " + clip(data.name, 120) + " <" + clip(data.email, 120) + ">",
+      "Topic: " + clip(topic, 80),
+      data.fileURL ? "Attachment: yes" : "Attachment: no",
+      "",
+      clip(data.message, 2000)
+    ].join("\n");
+    try {
+      await sendOwnerEmail("New CV message — " + clip(topic, 60), text);
+    } catch (error) {
+      console.error("Owner message notification failed:", error);
+    }
+    return null;
+  });
+
+exports.notifyOwnerOnRating = withMail.firestore
+  .document("ratings/{ratingId}")
+  .onCreate(async (snap) => {
+    const data = snap.data() || {};
+    const score = Math.min(5, Math.max(0, Number(data.rating) || 0));
+    const text = [
+      "New feedback was submitted on your CV.",
+      "",
+      "From: " + clip(data.name, 120) + " <" + clip(data.email, 120) + ">",
+      "Rating: " + score + "/5",
+      "",
+      clip(data.comment, 2000) || "(no comment)"
+    ].join("\n");
+    try {
+      await sendOwnerEmail("New CV feedback — " + score + "/5", text);
+    } catch (error) {
+      console.error("Owner rating notification failed:", error);
+    }
+    return null;
+  });
+
+exports.notifyOwnerOnVisit = withMail.firestore
+  .document("visits/{visitId}")
+  .onCreate(async (snap) => {
+    const visit = snap.data() || {};
+    if (visit.source !== "cv") return null;
+    const stateRef = admin.firestore().doc("notification_state/cv_access");
+    const windowMs = 15 * 60 * 1000;
+    let shouldSend = false;
+    let grouped = 0;
+    await admin.firestore().runTransaction(async (tx) => {
+      const state = await tx.get(stateRef);
+      const previous = state.exists ? state.data() : {};
+      const last = previous.lastSentAt && previous.lastSentAt.toMillis ? previous.lastSentAt.toMillis() : 0;
+      if (Date.now() - last < windowMs) {
+        tx.set(stateRef, { pending: (previous.pending || 0) + 1 }, { merge: true });
+        return;
+      }
+      grouped = previous.pending || 0;
+      shouldSend = true;
+      tx.set(stateRef, {
+        lastSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        pending: 0
+      }, { merge: true });
+    });
+    if (!shouldSend) return null;
+    const text = [
+      "Someone opened your CV.",
+      "Language: " + clip(visit.lang || "en", 12),
+      visit.referrerHost ? "Referrer: " + clip(visit.referrerHost, 80) : "Referrer: direct",
+      grouped ? grouped + " more visits in the last 15 minutes were included in this note." : ""
+    ].filter(Boolean).join("\n");
+    try {
+      await sendOwnerEmail("Your CV was opened", text);
+    } catch (error) {
+      console.error("Owner visit notification failed:", error);
     }
     return null;
   });
