@@ -1,6 +1,6 @@
 // cypress/support/pages/Admin/LoginPage.js
 
-import { BasePage } from '@/support/pages/BasePage';
+import { BasePage } from '../BasePage';
 
 /**
  * Represents the Admin Login page.

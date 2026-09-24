@@ -3,5 +3,8 @@ node_modules/
 cypress/screenshots/
 cypress/videos/
 cypress/reports/
+cypress/downloads/
 playwright-report/
 test-results/
+robot-results/
+.venv-robot/

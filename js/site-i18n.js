@@ -226,7 +226,7 @@
     }
 
     function usesDictionary(code) {
-        if (/simulador\.html$/i.test(root.location.pathname)) return false;
+        if (/simulador\.html$/i.test(root.location.pathname) || /qa-lab\.html$/i.test(root.location.pathname)) return false;
         return isNative(code);
     }
 
@@ -335,6 +335,20 @@
         return normalize(params) || saved() || 'en';
     }
 
+    function homeUrl() {
+        const lang = current();
+        return 'index.html?lang=' + encodeURIComponent(lang || 'en');
+    }
+
+    function goHome() {
+        const url = homeUrl();
+        if (root.opener && !root.opener.closed) {
+            try { root.opener.focus(); } catch (e) { /* ignore */ }
+            try { root.close(); } catch (e) { /* ignore */ }
+        }
+        root.location.href = url;
+    }
+
     let refreshTimer = null;
     let refreshing = false;
 
@@ -391,6 +405,8 @@
         persist,
         saved,
         current,
+        homeUrl,
+        goHome,
         resolve,
         isNative,
         usesDictionary,

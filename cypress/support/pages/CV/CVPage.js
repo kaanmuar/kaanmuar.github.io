@@ -1,6 +1,6 @@
 // cypress/support/pages/CV/CVPage.js (Robust Timing Workaround)
 
-import { BasePage } from '@/support/pages/BasePage';
+import { BasePage } from '../BasePage';
 
 /**
  * This version uses chained assertions instead of fixed waits (`cy.wait`)
