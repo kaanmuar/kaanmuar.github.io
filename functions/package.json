@@ -1,0 +1,13 @@
+{
+  "name": "cv-functions",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.4",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^5.1.1"
+  }
+}
