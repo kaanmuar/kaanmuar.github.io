@@ -96,6 +96,21 @@ test.describe('Mobile — CV, Studio, QA Lab, Admin', () => {
     await expect(page.getByRole('heading', { name: /The suite I run on this CV/i })).toBeInViewport();
   });
 
+  test('QA lab tour and dashboard controls fit the phone', async ({ page }) => {
+    await page.goto('/qa-lab.html');
+    await expect(page.locator('#tour-start-btn')).toBeVisible();
+    await expect(page.locator('#dash-open')).toBeVisible();
+    await page.locator('#dash-open').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await expect(page.locator('#dash-title')).toBeVisible();
+    await page.locator('#dash-close').click();
+  });
+
+  test('Studio tour control is available on a phone', async ({ page }) => {
+    await page.goto('/simulador.html');
+    await expect(page.locator('#tour-start-btn')).toBeVisible();
+  });
+
   test('Admin login overlay and back link fit the phone', async ({ page }) => {
     await page.goto('/admin.html');
     await expect(page.locator('#login-overlay')).toBeVisible();

@@ -38,6 +38,7 @@
         id: MEASUREMENT_ID,
         track,
         event,
+        trackEvent: event,
         once,
         page
     };

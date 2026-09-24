@@ -290,6 +290,7 @@
     <div class="agents" id="agentPills"></div>
     <div class="actions">
         <button class="btn btn-ghost" id="homeBtn" type="button">← CV</button>
+        <button class="btn btn-ghost" id="tour-start-btn" type="button">How this studio works</button>
         <div class="lang-wrap notranslate" id="langWrap">
             <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
                 <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English">
@@ -327,6 +328,7 @@
 </div>
 
     <script src="js/site-i18n.js"></script>
+    <script src="js/site-tour.js"></script>
     <script>
 const AGENTS = [
     { id: 'a1', name: 'Ticket Steward', role: 'Reads & rewrites Jira stories' },
@@ -1023,6 +1025,23 @@ function mountLanguageMenu() {
 }
 
 mountLanguageMenu();
+
+const STUDIO_TOUR = {
+    name: 'QA Studio',
+    key: 'hasSeenStudioTour',
+    steps: [
+        { selector: '#nav', title: 'Sprint views', body: 'Jump between the Jira board, Xray cases, the automation lab, sprint verification, and the report. Stay on this page — each view is a different slice of the same increment.', demoMs: 1700 },
+        { selector: '#agentPills', title: 'Four agents', body: 'Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. Watch their status here while they hand work to each other.', demoMs: 1600 },
+        { selector: '#runBtn', title: 'Run the sprint', body: 'Start the four-agent walkthrough. It rewrites stories, authors Gherkin, generates Playwright / Cypress / Robot, then signs off Definition of Done.', demoMs: 1800 },
+        { selector: '#view', title: 'Tickets and artifacts', body: 'Open any ticket to read the story, then follow the generated tests and scripts as the sprint advances.', demoMs: 1700 },
+        { selector: '#log', title: 'Agent log', body: 'Every hand-off lands here. Scroll if you need history; the live line is always the latest action.', demoMs: 1500 },
+        { selector: 'a[href="qa-lab.html"]', title: 'CV regression lab', body: 'When you want to see the same ideas run against this CV in the browser, open the regression lab from this nav.', demoMs: 1700 }
+    ]
+};
+if (window.SiteTour) {
+    SiteTour.bind(document.getElementById('tour-start-btn'), STUDIO_TOUR);
+    SiteTour.autoStart(STUDIO_TOUR);
+}
 
 document.getElementById('theme-toggle').addEventListener('click', () => {
     const dark = SiteTheme.toggle();

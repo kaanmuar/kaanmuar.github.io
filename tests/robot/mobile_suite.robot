@@ -34,6 +34,29 @@ Suite Teardown    Close All Browsers
     ${overlap}=    Execute Javascript    return document.querySelector('.intro h1').getBoundingClientRect().top < document.querySelector('.topbar').getBoundingClientRect().bottom - 1
     Should Not Be True    ${overlap}
 
+[Mobile] QA Lab Dashboard Opens On Phone
+    [Tags]    Mobile    QA-Lab
+    Open Lab In Mobile Browser
+    Wait Until Element Is Visible    id:tour-start-btn
+    Click Element    id:dash-open
+    Wait Until Page Contains Element    css:#dash-overlay.open
+    Click Element    id:dash-close
+    Wait Until Page Does Not Contain Element    css:#dash-overlay.open
+
+[Mobile] Studio Tour Control Is Visible
+    [Tags]    Mobile    Studio
+    Open Studio In Mobile Browser
+    Wait Until Element Is Visible    id:tour-start-btn
+
+[Mobile] QA Competency Filter Works On Phone
+    [Tags]    Mobile    CV
+    Open CV in Mobile Browser
+    Click Element    css:.competency-item[data-competency="qa"]
+    Wait Until Page Contains Element    css:html.topic-focus
+    Page Should Contain Element    css:.experience-item.topic-match
+    Click Element    id:languages-heading
+    Wait Until Page Does Not Contain Element    css:html.topic-focus
+
 [Mobile] Admin Login Shows Back To CV
     [Tags]    Mobile    Admin
     Open Admin In Mobile Browser

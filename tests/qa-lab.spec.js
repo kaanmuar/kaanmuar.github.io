@@ -1,7 +1,9 @@
 const { test, expect } = require('@playwright/test');
+const { skipSiteTours } = require('./helpers.js');
 
 test.describe('CV regression lab', () => {
   test.beforeEach(async ({ page }) => {
+    await skipSiteTours(page);
     await page.addInitScript(() => localStorage.setItem('theme', 'light'));
     await page.goto('/qa-lab.html');
   });
@@ -9,11 +11,14 @@ test.describe('CV regression lab', () => {
   test('lists the catalog with where/when/how for a case', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /The suite I run on this CV/i })).toBeVisible();
     await expect(page.locator('.case-row').first()).toBeVisible();
-    await expect(page.locator('.case-row')).toHaveCount(37);
+    await expect(page.locator('.case-row')).toHaveCount(47);
     await expect(page.locator('#case-detail')).toContainText('Where');
     await expect(page.locator('#case-detail')).toContainText('When');
     await expect(page.locator('#case-detail')).toContainText('How');
     await expect(page.locator('#dash-charts .chart-card')).not.toHaveCount(0);
+    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+    await expect(page.locator('#dash-open')).toBeVisible();
+    await expect(page.locator('#tour-start-btn')).toBeVisible();
     await expect(page.locator('#homeBtn')).toBeVisible();
     await expect(page.locator('#langToggle')).toBeVisible();
     await expect(page.locator('[data-pace="1"]')).toHaveClass(/on/);
@@ -21,6 +26,9 @@ test.describe('CV regression lab', () => {
     await expect(page.locator('#sut')).toBeVisible();
     await expect(page.locator('[data-filter="Mobile"]')).toBeVisible();
     await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /STU-03/ })).toBeVisible();
     const source = page.locator('.src-link').first();
     await expect(source).toBeVisible();
     await expect(source).toHaveAttribute('href', /github\.com\/kaanmuar\/kaanmuar\.github\.io\/blob\/main\/js\/qa-lab\.js#L/);
@@ -68,11 +76,86 @@ test.describe('CV regression lab', () => {
     await expect(page.locator('.main-container')).toBeVisible();
   });
 
-  test('runs a smoke case and records PASS in the log and report', async ({ page }) => {
+  test('runs a smoke case, keeps it in the catalog, and opens the dashboard popup', async ({ page }) => {
     await page.getByRole('button', { name: /SMK-01/ }).click();
     await page.getByRole('button', { name: 'Run this case' }).click();
     await expect(page.locator('#run-log')).toContainText('PASS', { timeout: 30000 });
     await expect(page.locator('#report-body')).toContainText('SMK-01');
     await expect(page.locator('#kpi-pass')).toHaveText('1');
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await expect(page.locator('#dash-title')).toBeVisible();
+    await page.locator('#dash-close').click();
+    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+  });
+
+  test('Dashboard control opens the splash without scrolling the page', async ({ page }) => {
+    await page.locator('#dash-open').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await expect(page.locator('#dash-title')).toBeInViewport();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+  });
+
+  test('catalog keeps the selected case scrolled into the list', async ({ page }) => {
+    await page.getByRole('button', { name: /MOB-01/ }).click();
+    await page.evaluate(() => window.QALab.focusCase('MOB-01'));
+    const inView = await page.evaluate(() => {
+      const row = document.querySelector('.case-row[data-id="MOB-01"]');
+      const list = document.getElementById('case-list');
+      const rr = row.getBoundingClientRect();
+      const lr = list.getBoundingClientRect();
+      return rr.top >= lr.top - 2 && rr.bottom <= lr.bottom + 2;
+    });
+    expect(inView).toBeTruthy();
+  });
+
+  test('guided tour walks the lab controls', async ({ page }) => {
+    await page.locator('#tour-start-btn').click();
+    await expect(page.locator('#site-tour-overlay')).toHaveClass(/on/);
+    await expect(page.locator('#site-tour-title')).toHaveText('The catalog');
+    await expect(page.locator('#case-list')).toHaveClass(/site-tour-hit/);
+    await page.locator('#site-tour-close').click();
+    await expect(page.locator('#site-tour-overlay')).not.toHaveClass(/on/);
+  });
+
+  test('lab tour Next advances after the demo hold', async ({ page }) => {
+    await page.locator('#tour-start-btn').click();
+    await expect(page.locator('#site-tour-next')).toBeDisabled();
+    await expect(page.locator('#site-tour-next')).toBeEnabled({ timeout: 4000 });
+    await page.locator('#site-tour-next').click();
+    await expect(page.locator('#site-tour-title')).toHaveText('Filter by type');
+    await page.locator('#site-tour-close').click();
+  });
+
+  test('closing the dashboard splash by clicking the backdrop', async ({ page }) => {
+    await page.locator('#dash-open').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await page.locator('#dash-overlay').click({ position: { x: 4, y: 4 } });
+    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+  });
+
+  test('Mobile filter narrows the catalog', async ({ page }) => {
+    const all = await page.locator('.case-row').count();
+    await page.locator('[data-filter="Mobile"]').click();
+    await expect(page.locator('[data-filter="Mobile"]')).toHaveClass(/on/);
+    const mobile = await page.locator('.case-row').count();
+    expect(mobile).toBeGreaterThan(0);
+    expect(mobile).toBeLessThan(all);
+    await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
+  });
+
+  test('Functional filter still lists competency cases', async ({ page }) => {
+    await page.locator('[data-filter="Functional"]').click();
+    await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /SMK-01/ })).toHaveCount(0);
+  });
+
+  test('clicking inside the dashboard modal does not close it', async ({ page }) => {
+    await page.locator('#dash-open').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await page.locator('.dash-modal').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await page.locator('#dash-close').click();
   });
 });

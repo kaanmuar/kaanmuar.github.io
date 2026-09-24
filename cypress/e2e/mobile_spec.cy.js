@@ -20,6 +20,7 @@ describe('Mobile — CV, Studio, QA Lab, Admin', () => {
     cy.visit('/simulador.html', {
       onBeforeLoad(win) {
         win.localStorage.setItem('theme', 'light');
+        win.sessionStorage.setItem('hasSeenStudioTour', 'true');
       }
     });
     cy.get('#homeBtn').should('be.visible');
@@ -39,6 +40,7 @@ describe('Mobile — CV, Studio, QA Lab, Admin', () => {
     cy.visit('/qa-lab.html', {
       onBeforeLoad(win) {
         win.localStorage.setItem('theme', 'light');
+        win.sessionStorage.setItem('hasSeenLabTour', 'true');
       }
     });
     cy.get('#homeBtn').should('be.visible');
@@ -52,6 +54,30 @@ describe('Mobile — CV, Studio, QA Lab, Admin', () => {
       expect(h1.getBoundingClientRect().top).to.be.at.least(bar.getBoundingClientRect().bottom - 1);
     });
     cy.contains('h1', 'The suite I run on this CV').should('be.visible');
+  });
+
+  it('QA lab tour and dashboard controls fit the phone', () => {
+    cy.visit('/qa-lab.html', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('theme', 'light');
+        win.sessionStorage.setItem('hasSeenLabTour', 'true');
+      }
+    });
+    cy.get('#tour-start-btn').should('be.visible');
+    cy.get('#dash-open').should('be.visible').click();
+    cy.get('#dash-overlay').should('have.class', 'open');
+    cy.get('#dash-title').should('be.visible');
+    cy.get('#dash-close').click();
+  });
+
+  it('Studio tour control is available on a phone', () => {
+    cy.visit('/simulador.html', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('theme', 'light');
+        win.sessionStorage.setItem('hasSeenStudioTour', 'true');
+      }
+    });
+    cy.get('#tour-start-btn').should('be.visible');
   });
 
   it('Admin login overlay and back link fit the phone', () => {
