@@ -1,21 +1,38 @@
 const fs = require('fs');
 const path = require('path');
 
+function skipSiteTours(page) {
+  return page.addInitScript(() => {
+    try {
+      sessionStorage.setItem('hasSeenTour', 'true');
+      sessionStorage.setItem('hasSeenLabTour', 'true');
+      sessionStorage.setItem('hasSeenStudioTour', 'true');
+    } catch (e) { /* ignore */ }
+  });
+}
+
 async function prepareCV(page, { tour = false, theme = 'light' } = {}) {
   await page.addInitScript(({ tour, theme }) => {
     try {
       if (tour) sessionStorage.removeItem('hasSeenTour');
       else sessionStorage.setItem('hasSeenTour', 'true');
+      sessionStorage.setItem('hasSeenLabTour', 'true');
+      sessionStorage.setItem('hasSeenStudioTour', 'true');
       if (!localStorage.getItem('theme')) localStorage.setItem('theme', theme);
       localStorage.setItem('cv-preferred-lang', 'en');
     } catch (e) { /* ignore */ }
   }, { tour, theme });
 }
 
+async function waitForCVApp(page) {
+  await page.locator('.main-container').waitFor({ state: 'visible' });
+  await page.waitForFunction(() => !!(window.CarlosMunozCV && window.CarlosMunozCV.tourSteps));
+}
+
 async function openCV(page, options = {}) {
   await prepareCV(page, options);
   await page.goto('/index.html');
-  await page.locator('.main-container').waitFor({ state: 'visible' });
+  await waitForCVApp(page);
 }
 
 async function openAdmin(page) {
@@ -46,4 +63,4 @@ function axeSourceExists() {
   return fs.existsSync(path.join(__dirname, '../node_modules/axe-core/axe.min.js'));
 }
 
-module.exports = { prepareCV, openCV, openAdmin, forceGlancePair, runAxe, axeSourceExists };
+module.exports = { prepareCV, waitForCVApp, skipSiteTours, openCV, openAdmin, forceGlancePair, runAxe, axeSourceExists };

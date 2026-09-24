@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { openCV, openAdmin } = require('./helpers.js');
+const { openCV, openAdmin, skipSiteTours } = require('./helpers.js');
 
 test.describe('Security and SEO', () => {
   test('robots.txt allows the CV and disallows admin, tests, and cypress', async ({ request }) => {
@@ -39,6 +39,10 @@ test.describe('Security and SEO', () => {
     const jsonLd = await page.locator('#person-structured-data').textContent();
     expect(jsonLd).toContain('Carlos');
     expect(jsonLd).toMatch(/18 (years|años)/i);
+    const competenciesLd = await page.locator('#competencies-structured-data').textContent();
+    expect(competenciesLd).toContain('IT Project Management');
+    expect(competenciesLd).toContain('DefinedTerm');
+    expect(competenciesLd).toContain('topic=pm');
   });
 
   test('external profile links use noopener noreferrer', async ({ page }) => {
@@ -65,6 +69,7 @@ test.describe('Security and SEO', () => {
   });
 
   test('simulator does not expose admin routes', async ({ page }) => {
+    await skipSiteTours(page);
     await page.goto('/simulador.html');
     await expect(page.locator('a[href*="admin.html"]')).toHaveCount(0);
   });

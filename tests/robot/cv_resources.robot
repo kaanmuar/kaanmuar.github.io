@@ -47,14 +47,14 @@ Open CV in Mobile Browser
 
 Open Studio In Mobile Browser
     Open Browser    ${SIM_URL}    ${BROWSER}    options=${CHROME_OPTIONS}
-    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); localStorage.setItem('theme','light');
+    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); sessionStorage.setItem('hasSeenStudioTour','true'); localStorage.setItem('theme','light');
     Go To    ${SIM_URL}
     Set Window Size    390    844
     Wait Until Element Is Visible    id:runBtn    15s
 
 Open Lab In Mobile Browser
     Open Browser    ${BASE_URL}/qa-lab.html    ${BROWSER}    options=${CHROME_OPTIONS}
-    Execute Javascript    localStorage.setItem('theme','light');
+    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); sessionStorage.setItem('hasSeenLabTour','true'); localStorage.setItem('theme','light');
     Go To    ${BASE_URL}/qa-lab.html
     Set Window Size    390    844
     Wait Until Element Is Visible    id:run-all    15s

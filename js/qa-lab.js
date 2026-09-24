@@ -32,13 +32,13 @@
     {
       id: 'SMK-01', layer: 'Smoke', fw: ['Playwright', 'Cypress'],
       title: 'Public surfaces return 200',
-      where: 'index.html, simulador.html, admin.html, style.css, favicon.svg, robots.txt, sitemap.xml',
+      where: 'index.html, simulador.html, admin.html, style.css, css/cv.css, js/cv-data.js, js/cv-app.js, favicon.svg, robots.txt, sitemap.xml',
       when: 'Before any UI interaction — health of the published tree.',
       how: 'GET each path and assert status 200.',
       async run() {
-        const paths = ['index.html', 'simulador.html', 'admin.html', 'qa-lab.html', 'style.css', 'favicon.svg', 'robots.txt', 'sitemap.xml'];
+        const paths = ['index.html', 'simulador.html', 'admin.html', 'qa-lab.html', 'style.css', 'css/cv.css', 'js/cv-data.js', 'js/cv-app.js', 'favicon.svg', 'robots.txt', 'sitemap.xml'];
         for (const path of paths) await fetchText(path);
-        return '8 assets answered 200';
+        return paths.length + ' assets answered 200';
       }
     },
     {
@@ -154,6 +154,146 @@
         assert(cv.document.querySelector('.tech-tag[data-skill-name="Selenium"]').classList.contains('selected'), 'Selenium not selected');
         assert(cv.document.querySelector('.tech-tag[data-skill-name="Cypress"]').classList.contains('selected'), 'Cypress not selected');
         return 'Selenium + Cypress selected';
+      }
+    },
+    {
+      id: 'FN-15', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Core competency filters and dims unrelated CV content',
+      where: '#competencies-list .competency-item[data-competency=pm]',
+      when: 'After clicking IT Project Management, then clicking Languages.',
+      how: 'html.topic-focus with match + dim rows; outside click restores.',
+      async run({ cv }) {
+        const btn = cv.document.querySelector('.competency-item[data-competency="pm"]');
+        assert(btn, 'competency button missing');
+        btn.dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(120);
+        assert(cv.document.documentElement.classList.contains('topic-focus'), 'topic-focus not applied');
+        assert(btn.getAttribute('aria-pressed') === 'true', 'competency not pressed');
+        assert(cv.document.querySelector('.experience-item.topic-match'), 'no highlighted experience');
+        assert(cv.document.querySelector('.experience-item.topic-dim'), 'no dimmed experience');
+        cv.document.getElementById('languages-heading').dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(80);
+        assert(!cv.document.documentElement.classList.contains('topic-focus'), 'topic-focus stayed after outside click');
+        return 'pm focus + restore';
+      }
+    },
+    {
+      id: 'FN-16', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'All seven core competencies are clickable filters',
+      where: '#competencies-list .competency-item',
+      when: 'Sidebar competencies are rendered.',
+      how: 'Exactly seven buttons: pm qa lead devops cloud strategy relations.',
+      async run({ cv }) {
+        const items = [...cv.document.querySelectorAll('.competency-item')];
+        const ids = items.map((el) => el.dataset.competency);
+        assert(items.length === 7, 'expected 7 competencies, got ' + items.length);
+        assert(ids.join(',') === 'pm,qa,lead,devops,cloud,strategy,relations', 'unexpected ids: ' + ids.join(','));
+        items.forEach((el) => assert(el.getAttribute('aria-pressed') === 'false', el.dataset.competency + ' should start unpressed'));
+        return '7 competency filters';
+      }
+    },
+    {
+      id: 'FN-17', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Clicking the same competency again restores the CV',
+      where: '.competency-item[data-competency=qa]',
+      when: 'Second click on the active competency.',
+      how: 'topic-focus is removed; aria-pressed is false.',
+      async run({ cv }) {
+        const btn = cv.document.querySelector('.competency-item[data-competency="qa"]');
+        btn.dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(80);
+        assert(cv.document.documentElement.classList.contains('topic-focus'), 'qa focus missing');
+        btn.dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(80);
+        assert(!cv.document.documentElement.classList.contains('topic-focus'), 'toggle did not restore');
+        assert(btn.getAttribute('aria-pressed') === 'false', 'qa still pressed');
+        return 'qa toggle restore';
+      }
+    },
+    {
+      id: 'FN-18', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'Switching competencies moves the highlight',
+      where: '.competency-item[data-competency=pm], .competency-item[data-competency=qa]',
+      when: 'PM then QA without an outside click.',
+      how: 'Only QA stays pressed; Selenium is selected; PM is not pressed.',
+      async run({ cv }) {
+        cv.document.querySelector('.competency-item[data-competency="pm"]').dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(80);
+        cv.document.querySelector('.competency-item[data-competency="qa"]').dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(80);
+        assert(cv.document.querySelector('.competency-item[data-competency="qa"]').getAttribute('aria-pressed') === 'true', 'qa not pressed');
+        assert(cv.document.querySelector('.competency-item[data-competency="pm"]').getAttribute('aria-pressed') === 'false', 'pm still pressed');
+        assert(cv.document.querySelector('.tech-tag[data-skill-name="Selenium"]').classList.contains('selected'), 'Selenium not selected for QA');
+        return 'pm → qa';
+      }
+    },
+    {
+      id: 'FN-19', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: '?topic=qa deep-links the competency filter',
+      where: '/index.html?topic=qa',
+      when: 'Cold load with a topic query.',
+      how: 'html.topic-focus; QA pressed; ISTQB education row is a topic-match.',
+      async run({ loadCv }) {
+        const cv = await loadCv('index.html?topic=qa');
+        await wait(200);
+        assert(cv.document.documentElement.classList.contains('topic-focus'), 'deep link did not focus');
+        assert(cv.document.querySelector('.competency-item[data-competency="qa"]').getAttribute('aria-pressed') === 'true', 'qa not pressed from URL');
+        const cert = cv.document.querySelector('[data-topic="qa"]');
+        assert(cert && cert.classList.contains('topic-match'), 'QA certification not highlighted');
+        return 'topic=qa deep link';
+      }
+    },
+    {
+      id: 'FN-20', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Reset Filters clears competency focus',
+      where: '#reset-filter',
+      when: 'After a QA focus, then Reset Filters.',
+      how: 'topic-focus gone; no selected toolkit tags.',
+      async run({ cv }) {
+        cv.document.querySelector('.competency-item[data-competency="qa"]').dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(80);
+        cv.document.getElementById('reset-filter').click();
+        await wait(80);
+        assert(!cv.document.documentElement.classList.contains('topic-focus'), 'reset left topic-focus');
+        assert(!cv.document.querySelector('.tech-tag.selected'), 'toolkit tags still selected');
+        return 'reset clears topic';
+      }
+    },
+    {
+      id: 'FN-21', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'Clicking a highlighted experience keeps competency focus',
+      where: '.experience-item.topic-match',
+      when: 'After PM focus, click a matching role.',
+      how: 'html.topic-focus remains.',
+      async run({ cv }) {
+        cv.document.querySelector('.competency-item[data-competency="pm"]').dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(80);
+        const match = cv.document.querySelector('.experience-item.topic-match');
+        assert(match, 'no matching experience');
+        match.dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(80);
+        assert(cv.document.documentElement.classList.contains('topic-focus'), 'match click cleared focus');
+        return 'match click keeps focus';
+      }
+    },
+    {
+      id: 'FN-22', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'QA radar label applies the same competency focus',
+      where: '#competencies-radar-chart g.radar-label',
+      when: 'After glance pair 0, click QA & Automation.',
+      how: 'html.topic-focus; Selenium selected; unrelated experience is topic-dim.',
+      async run({ cv }) {
+        const api = cv.window.CarlosMunozCV;
+        api._showGlancePair(0, false);
+        await wait(120);
+        const labels = [...cv.document.querySelectorAll('#competencies-radar-chart g.radar-label')];
+        const qa = labels.find((el) => /QA & Automation/.test(el.querySelector('text')?.textContent || ''));
+        qa.dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+        await wait(200);
+        assert(cv.document.documentElement.classList.contains('topic-focus'), 'radar did not apply topic-focus');
+        assert(cv.document.querySelector('.competency-item[data-competency="qa"]').getAttribute('aria-pressed') === 'true', 'sidebar QA not pressed');
+        assert(cv.document.querySelector('.experience-item.topic-dim'), 'no dimmed experience from radar');
+        return 'radar → competency focus';
       }
     },
     {
@@ -387,6 +527,23 @@
       }
     },
     {
+      id: 'SEC-08', layer: 'Security', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Core competencies ship ItemList JSON-LD and topic URLs',
+      where: '#competencies-structured-data, meta keywords',
+      when: 'CV head is parsed.',
+      how: 'DefinedTerm list includes IT Project Management and ?topic=pm; keywords mention Core competency topics.',
+      async run({ cv }) {
+        const json = cv.document.getElementById('competencies-structured-data').textContent;
+        assert(/DefinedTerm/.test(json), 'DefinedTerm missing');
+        assert(/IT Project Management/.test(json), 'PM term missing');
+        assert(/topic=pm/.test(json), 'topic=pm URL missing');
+        const keys = cv.document.querySelector('meta[name="keywords"]').content;
+        assert(/IT Project Management/.test(keys), 'keywords omit IT Project Management');
+        assert(/knowsAbout/.test(cv.document.getElementById('person-structured-data').textContent), 'Person knowsAbout missing');
+        return 'competency ItemList + keywords';
+      }
+    },
+    {
       id: 'A11Y-01', layer: 'Accessibility', fw: ['Playwright', 'Cypress'],
       title: 'No serious WCAG 2 A/AA axe findings (overlays excluded)',
       where: 'CV document except #contact-widget, #tour-tooltip, .skiptranslate',
@@ -495,6 +652,21 @@
         assert(/qa-lab\.html/.test(html), 'regression lab link missing');
         assert(/github\.com\/kaanmuar\/kaanmuar\.github\.io\/tree\/main\/tests/.test(html), 'test suite GitHub link missing');
         return 'Xray + lab + regression lab + GitHub suite';
+      }
+    },
+    {
+      id: 'STU-03', layer: 'Studio', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Studio ships a guided tour of its features',
+      where: 'simulador.html #tour-start-btn, js/site-tour.js, hasSeenStudioTour',
+      when: 'Static parse of studio chrome.',
+      how: 'How this studio works control and site-tour.js are present.',
+      async run() {
+        const html = await fetchText('simulador.html');
+        assert(/id="tour-start-btn"/.test(html), 'studio tour button missing');
+        assert(/How this studio works/.test(html), 'studio tour copy missing');
+        assert(/js\/site-tour\.js/.test(html), 'site-tour.js not loaded');
+        assert(/hasSeenStudioTour/.test(html), 'studio tour session key missing');
+        return 'studio tour wired';
       }
     },
     {
@@ -611,13 +783,15 @@
   const BRANCH = 'main';
   const LAB_LINE = {
     'SMK-01': 33, 'SMK-02': 45,
-    'FN-01': 58, 'FN-02': 76, 'FN-03': 98, 'FN-04': 111, 'FN-05': 126, 'FN-06': 139,
-    'FN-07': 160, 'FN-08': 175, 'FN-09': 190, 'FN-10': 203, 'FN-11': 215, 'FN-12': 228,
-    'FN-13': 241, 'FN-14': 261,
-    'SEC-01': 286, 'SEC-02': 301, 'SEC-03': 318, 'SEC-04': 330, 'SEC-05': 347, 'SEC-06': 360, 'SEC-07': 376,
-    'A11Y-01': 390, 'A11Y-02': 407, 'A11Y-03': 419,
-    'ADM-01': 434, 'ADM-02': 447, 'ADM-03': 460,
-    'STU-01': 473, 'STU-02': 486,
+    'FN-01': 58, 'FN-02': 76, 'FN-03': 98, 'FN-04': 111, 'FN-05': 126,     'FN-06': 139, 'FN-15': 160, 'FN-16': 181, 'FN-17': 196, 'FN-18': 214, 'FN-19': 231,
+    'FN-20': 247, 'FN-21': 263, 'FN-22': 280,
+    'FN-07': 298, 'FN-08': 313, 'FN-09': 328, 'FN-10': 341, 'FN-11': 353, 'FN-12': 366,
+    'FN-13': 379, 'FN-14': 399,
+    'SEC-01': 426, 'SEC-02': 441, 'SEC-03': 458, 'SEC-04': 470, 'SEC-05': 487, 'SEC-06': 500,
+    'SEC-07': 516, 'SEC-08': 530,
+    'A11Y-01': 547, 'A11Y-02': 564, 'A11Y-03': 576,
+    'ADM-01': 591, 'ADM-02': 604, 'ADM-03': 617,
+    'STU-01': 630, 'STU-02': 643, 'STU-03': 658,
     'MOB-01': 500, 'MOB-02': 518, 'MOB-03': 532, 'MOB-04': 553, 'MOB-05': 570, 'MOB-06': 588
   };
   const SRC = {
@@ -629,7 +803,15 @@
     'FN-04': { Playwright: ['tests/cv.spec.js', 34], Cypress: ['cypress/e2e/cv_spec.cy.js', 63], Robot: ['tests/robot/cv_suite.robot', 33] },
     'FN-05': { Playwright: ['tests/cv.spec.js', 42], Cypress: ['cypress/e2e/cv_spec.cy.js', 70], Robot: ['tests/robot/cv_suite.robot', 27] },
     'FN-06': { Playwright: ['tests/cv.spec.js', 49], Cypress: ['cypress/e2e/cv_spec.cy.js', 75], Robot: ['tests/robot/cv_suite.robot', 21] },
-    'FN-07': { Playwright: ['tests/cv.spec.js', 59], Cypress: ['cypress/e2e/cv_spec.cy.js', 84] },
+    'FN-15': { Playwright: ['tests/cv.spec.js', 59], Cypress: ['cypress/e2e/cv_spec.cy.js', 84], Robot: ['tests/robot/cv_suite.robot', 28] },
+    'FN-16': { Playwright: ['tests/competency.spec.js', 12], Cypress: ['cypress/e2e/competency_spec.cy.js', 12], Robot: ['tests/robot/cv_suite.robot', 38] },
+    'FN-17': { Playwright: ['tests/competency.spec.js', 24], Cypress: ['cypress/e2e/competency_spec.cy.js', 22], Robot: ['tests/robot/cv_suite.robot', 46] },
+    'FN-18': { Playwright: ['tests/competency.spec.js', 34], Cypress: ['cypress/e2e/competency_spec.cy.js', 32] },
+    'FN-19': { Playwright: ['tests/competency.spec.js', 45], Cypress: ['cypress/e2e/competency_spec.cy.js', 42] },
+    'FN-20': { Playwright: ['tests/competency.spec.js', 55], Cypress: ['cypress/e2e/competency_spec.cy.js', 51], Robot: ['tests/robot/cv_suite.robot', 54] },
+    'FN-21': { Playwright: ['tests/competency.spec.js', 64], Cypress: ['cypress/e2e/competency_spec.cy.js', 59] },
+    'FN-22': { Playwright: ['tests/competency.spec.js', 74], Cypress: ['cypress/e2e/competency_spec.cy.js', 68], Robot: ['tests/robot/cv_suite.robot', 21] },
+    'FN-07': { Playwright: ['tests/cv.spec.js', 79], Cypress: ['cypress/e2e/cv_spec.cy.js', 95] },
     'FN-08': { Playwright: ['tests/cv.spec.js', 66], Cypress: ['cypress/e2e/cv_spec.cy.js', 91] },
     'FN-09': { Playwright: ['tests/cv.spec.js', 75], Cypress: ['cypress/e2e/cv_spec.cy.js', 99], Robot: ['tests/robot/cv_suite.robot', 41] },
     'FN-10': { Playwright: ['tests/cv.spec.js', 85], Cypress: ['cypress/e2e/cv_spec.cy.js', 121], Robot: ['tests/robot/cv_suite.robot', 49] },
@@ -644,6 +826,7 @@
     'SEC-05': { Playwright: ['tests/security.spec.js', 44], Cypress: ['cypress/e2e/security_spec.cy.js', 34], Robot: ['tests/robot/security_admin.robot', 32] },
     'SEC-06': { Playwright: ['tests/security.spec.js', 51], Cypress: ['cypress/e2e/security_spec.cy.js', 40] },
     'SEC-07': { Playwright: ['tests/security.spec.js', 62], Cypress: ['cypress/e2e/security_spec.cy.js', 48] },
+    'SEC-08': { Playwright: ['tests/security.spec.js', 34], Cypress: ['cypress/e2e/security_spec.cy.js', 27], Robot: ['tests/robot/security_admin.robot', 24] },
     'A11Y-01': { Playwright: ['tests/a11y.spec.js', 5], Cypress: ['cypress/e2e/a11y_spec.cy.js', 2] },
     'A11Y-02': { Playwright: ['tests/a11y.spec.js', 12], Cypress: ['cypress/e2e/a11y_spec.cy.js', 11] },
     'A11Y-03': { Playwright: ['tests/a11y.spec.js', 18], Cypress: ['cypress/e2e/a11y_spec.cy.js', 17] },
@@ -652,6 +835,7 @@
     'ADM-03': { Playwright: ['tests/a11y.spec.js', 30], Cypress: ['cypress/e2e/a11y_spec.cy.js', 27] },
     'STU-01': { Playwright: ['tests/simulator.spec.js', 9], Cypress: ['cypress/e2e/simulator_spec.cy.js', 10], Robot: ['tests/robot/security_admin.robot', 38] },
     'STU-02': { Playwright: ['tests/simulator.spec.js', 26], Cypress: ['cypress/e2e/simulator_spec.cy.js', 27] },
+    'STU-03': { Playwright: ['tests/simulator.spec.js', 42], Cypress: ['cypress/e2e/simulator_spec.cy.js', 36], Robot: ['tests/robot/mobile_suite.robot', 20] },
     'MOB-01': { Playwright: ['tests/mobile.spec.js', 11], Cypress: ['cypress/e2e/mobile_spec.cy.js', 6], Robot: ['tests/robot/mobile_suite.robot', 6] },
     'MOB-02': { Playwright: ['tests/cv.spec.js', 147], Cypress: ['cypress/e2e/cv_spec.cy.js', 180], Robot: ['tests/robot/mobile_suite.robot', 14] },
     'MOB-03': { Playwright: ['tests/mobile.spec.js', 28], Cypress: ['cypress/e2e/mobile_spec.cy.js', 17], Robot: ['tests/robot/mobile_suite.robot', 20] },
@@ -849,6 +1033,7 @@
           this.selectedId = btn.dataset.id;
           this.renderCatalog();
           this.renderDetail();
+          this.focusCase(this.selectedId);
         };
       });
       document.getElementById('case-count').textContent = this.filtered().length + ' / ' + CASES.length + ' cases';
@@ -962,18 +1147,25 @@
       const snapshot = {
         theme: localStorage.getItem('theme'),
         lang: localStorage.getItem('cv-preferred-lang'),
-        tour: sessionStorage.getItem('hasSeenTour')
+        tour: sessionStorage.getItem('hasSeenTour'),
+        labTour: sessionStorage.getItem('hasSeenLabTour'),
+        studioTour: sessionStorage.getItem('hasSeenStudioTour')
       };
       const loadCv = (path, before) => new Promise((resolve, reject) => {
         sessionStorage.setItem('hasSeenTour', 'true');
+        sessionStorage.setItem('hasSeenLabTour', 'true');
+        sessionStorage.setItem('hasSeenStudioTour', 'true');
         if (!/lang=/.test(path)) localStorage.setItem('cv-preferred-lang', 'en');
         iframe.onload = () => {
           const win = iframe.contentWindow;
           const doc = iframe.contentDocument;
           if (before) before(win);
           const start = Date.now();
+          const isCv = /index\.html/i.test(path) || path === '' || path === '/';
           const tick = () => {
-            if (doc.querySelector('.main-container') || doc.getElementById('login-overlay') || doc.getElementById('runBtn') || doc.getElementById('run-all') || Date.now() - start > 8000) {
+            const chrome = doc.getElementById('login-overlay') || doc.getElementById('runBtn') || doc.getElementById('run-all');
+            const cvReady = doc.querySelector('.main-container') && (!isCv || (win.CarlosMunozCV && win.CarlosMunozCV.tourSteps));
+            if (chrome || cvReady || Date.now() - start > 12000) {
               resolve({ window: win, document: doc });
               return;
             }
@@ -1014,6 +1206,10 @@
         if (snapshot.lang != null) localStorage.setItem('cv-preferred-lang', snapshot.lang);
         else localStorage.removeItem('cv-preferred-lang');
         if (snapshot.tour != null) sessionStorage.setItem('hasSeenTour', snapshot.tour);
+        if (snapshot.labTour != null) sessionStorage.setItem('hasSeenLabTour', snapshot.labTour);
+        else sessionStorage.removeItem('hasSeenLabTour');
+        if (snapshot.studioTour != null) sessionStorage.setItem('hasSeenStudioTour', snapshot.studioTour);
+        else sessionStorage.removeItem('hasSeenStudioTour');
         if (global.SiteTheme) global.SiteTheme.apply(snapshot.theme === 'dark', false);
       }
     },
@@ -1035,6 +1231,7 @@
           this.selectedId = c.id;
           this.renderCatalog();
           this.renderDetail();
+          this.focusCase(c.id);
           const row = document.querySelector(`.case-row[data-id="${c.id}"]`);
           if (row) row.classList.add('running');
           this.log(`<span class="k">${c.id}</span> ${c.title}<div class="muted">where ${c.where}</div><div class="muted">when ${c.when}</div><div class="muted">how ${c.how}</div>`);
@@ -1074,6 +1271,7 @@
       document.getElementById('run-all').disabled = false;
       document.getElementById('run-visible').disabled = false;
       document.querySelectorAll('[data-pace]').forEach((b) => { b.disabled = false; });
+      this.openDashboard();
       if (global.SiteAnalytics) {
         global.SiteAnalytics.trackEvent('qa_lab_run', 'QA Lab', `${passed}/${this.results.length}`, { passed, failed, pace: this.pace });
       }
@@ -1089,6 +1287,54 @@
       a.download = 'cv-regression-lab-report.txt';
       a.click();
       URL.revokeObjectURL(a.href);
+    },
+
+    focusCase(id) {
+      const row = document.querySelector(`.case-row[data-id="${id}"]`);
+      const item = row && (row.closest('.case-item') || row);
+      const list = document.getElementById('case-list');
+      if (item && list) {
+        const ir = item.getBoundingClientRect();
+        const lr = list.getBoundingClientRect();
+        const top = list.scrollTop + (ir.top - lr.top) - (list.clientHeight / 2) + (ir.height / 2);
+        list.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      }
+      const detail = document.getElementById('case-detail');
+      if (detail) detail.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      if (this.view === 'watch') {
+        const wrap = document.getElementById('sut-wrap');
+        if (wrap) wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    },
+
+    openDashboard() {
+      const el = document.getElementById('dash-overlay');
+      if (!el) return;
+      el.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    },
+
+    closeDashboard() {
+      const el = document.getElementById('dash-overlay');
+      if (!el) return;
+      el.classList.remove('open');
+      document.body.style.overflow = '';
+    },
+
+    labTour() {
+      return {
+        name: 'QA Lab',
+        key: 'hasSeenLabTour',
+        steps: [
+          { selector: '#case-list', title: 'The catalog', body: 'Every case you can run is listed here. Open one to see where it looks, when it fires, and how it asserts. Lab / Playwright / Cypress / Robot chips jump to the source on GitHub.', demoMs: 1800 },
+          { selector: '.filters', title: 'Filter by type', body: 'Narrow to Smoke, Functional, Security, A11y, Admin, Studio, or Mobile. Run filtered executes only what you see.', demoMs: 1500 },
+          { selector: '.pace', title: 'Pace', body: 'Hold 0,5 / 1,0 / 1,5 / 2,0 seconds between steps so you can watch each action. Slower pace is better for a first demo.', demoMs: 1500 },
+          { selector: '.view-mode', title: 'Watch or Background', body: 'Watch (default) shows the live page as the lab clicks and navigates. Background keeps the same run off-screen if you only want the log.', demoMs: 1600 },
+          { selector: '#run-all', title: 'Run', body: 'Run this case from the detail pane, Run filtered for the current list, or Run full catalog. The active case stays scrolled into view.', demoMs: 1600 },
+          { selector: '#sut-wrap', title: 'Live system under test', body: 'This iframe is the real CV, studio, or admin page. Follow the actions here, then read the log underneath.', demoMs: 1600 },
+          { selector: '#dash-open', title: 'Dashboard', body: 'Totals stay in the KPI strip. When a run finishes, the dashboard opens as a popup — charts and the session report — so you never have to scroll to the bottom.', demoMs: 1800 }
+        ]
+      };
     },
 
     syncPaceUi() {
@@ -1207,6 +1453,24 @@
       document.getElementById('run-all').onclick = () => this.runIds(CASES.map((c) => c.id));
       document.getElementById('run-visible').onclick = () => this.runIds(this.filtered().map((c) => c.id));
       document.getElementById('download-report').onclick = () => this.downloadReport();
+      const dashOpen = document.getElementById('dash-open');
+      const dashClose = document.getElementById('dash-close');
+      const dashOverlay = document.getElementById('dash-overlay');
+      if (dashOpen) dashOpen.onclick = () => this.openDashboard();
+      if (dashClose) dashClose.onclick = () => this.closeDashboard();
+      if (dashOverlay) {
+        dashOverlay.addEventListener('click', (e) => {
+          if (e.target === dashOverlay) this.closeDashboard();
+        });
+      }
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') this.closeDashboard();
+      });
+      if (global.SiteTour) {
+        const tour = this.labTour();
+        SiteTour.bind(document.getElementById('tour-start-btn'), tour);
+        SiteTour.autoStart(tour);
+      }
       this.mountLanguageMenu();
       const sut = document.getElementById('sut');
       if (sut && !sut.getAttribute('src')) sut.src = 'index.html';

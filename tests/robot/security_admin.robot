@@ -35,10 +35,19 @@ CV LinkedIn Uses Noopener
     ${rel}=    Get Element Attribute    css:#contact-linkedin a    rel
     Should Contain    ${rel}    noopener
 
+CV Competencies Structured Data
+    [Tags]    Security    SEO
+    Open CV in Desktop Browser
+    ${json}=    Execute Javascript    return document.getElementById('competencies-structured-data').textContent
+    Should Contain    ${json}    DefinedTerm
+    Should Contain    ${json}    topic=pm
+    Should Contain    ${json}    IT Project Management
+
 Studio Loads Board And Run Control
     [Tags]    Simulator
     Open Browser    ${SIM_URL}    ${BROWSER}    options=${CHROME_OPTIONS}
-    Execute Javascript    localStorage.setItem('theme','light')
+    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); sessionStorage.setItem('hasSeenStudioTour','true'); localStorage.setItem('theme','light')
     Go To    ${SIM_URL}
     Wait Until Page Contains    Run 4-agent sprint
     Page Should Contain Element    css:.ticket
+    Page Should Contain Element    id:tour-start-btn

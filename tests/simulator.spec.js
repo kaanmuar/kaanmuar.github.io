@@ -1,7 +1,9 @@
 const { test, expect } = require('@playwright/test');
+const { skipSiteTours } = require('./helpers.js');
 
 test.describe('Sprint studio', () => {
   test.beforeEach(async ({ page }) => {
+    await skipSiteTours(page);
     await page.addInitScript(() => localStorage.setItem('theme', 'light'));
     await page.goto('/simulador.html');
   });
@@ -11,6 +13,7 @@ test.describe('Sprint studio', () => {
     await expect(page.getByRole('button', { name: /Jira board/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /CV regression lab/i })).toBeVisible();
     await expect(page.locator('#homeBtn')).toBeVisible();
+    await expect(page.locator('#tour-start-btn')).toBeVisible();
     await expect(page.locator('.ticket, .ticket-wrap').first()).toBeVisible();
   });
 
@@ -34,5 +37,23 @@ test.describe('Sprint studio', () => {
     await page.locator('#homeBtn').click();
     await expect(page).toHaveURL(/index\.html/);
     await expect(page.locator('.main-container')).toBeVisible();
+  });
+
+  test('guided tour walks the studio controls', async ({ page }) => {
+    await page.locator('#tour-start-btn').click();
+    await expect(page.locator('#site-tour-overlay')).toHaveClass(/on/);
+    await expect(page.locator('#site-tour-title')).toHaveText('Sprint views');
+    await expect(page.locator('#nav')).toHaveClass(/site-tour-hit/);
+    await page.locator('#site-tour-close').click();
+    await expect(page.locator('#site-tour-overlay')).not.toHaveClass(/on/);
+  });
+
+  test('studio tour Next advances after the demo hold', async ({ page }) => {
+    await page.locator('#tour-start-btn').click();
+    await expect(page.locator('#site-tour-next')).toBeDisabled();
+    await expect(page.locator('#site-tour-next')).toBeEnabled({ timeout: 4000 });
+    await page.locator('#site-tour-next').click();
+    await expect(page.locator('#site-tour-title')).toHaveText('Four agents');
+    await page.locator('#site-tour-close').click();
   });
 });
