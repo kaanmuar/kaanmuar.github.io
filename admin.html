@@ -197,12 +197,12 @@
                 <textarea id="response-message" required minlength="10"></textarea>
                 <p class="text-xs text-gray-500 mt-1">This response will be saved to the database. A backend function would be needed to trigger an actual email.</p>
             </div>
-            <div class="mb-6">
+            <div class="mb-6" id="response-public-wrap">
                 <label class="flex items-center">
                     <input type="checkbox" id="response-is-public" class="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500">
-                    <span class="ml-2 text-sm text-gray-700">Make this response public</span>
+                    <span class="ml-2 text-sm text-gray-700">Publish on the CV</span>
                 </label>
-                <p class="text-xs text-gray-500 mt-1">If checked, the original comment and your response will appear on the CV's Testimonials section.</p>
+                <p class="text-xs text-gray-500 mt-1">Available for approved ratings. The comment, stars, and this reply appear under Testimonials. Retracting or rejecting the rating removes them.</p>
             </div>
             <div class="flex justify-end gap-3">
                 <button type="button" id="response-cancel-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-md hover:bg-gray-300">Cancel</button>
@@ -218,7 +218,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     // MODIFIED: Added addDoc for new testimonial creation
-    import { getFirestore, collection, query, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
     // Firebase Config
     const firebaseConfig = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", storageBucket: "carlosm-interactive-cv.firebasestorage.app", messagingSenderId: "976558418058", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
@@ -229,7 +229,37 @@
     // Global State
     let allMessages = [], allRatings = [], allBlockedSenders = [];
     let statsChart = null;
-    const MESSAGE_TOPICS = ["General Inquiry", "Job Opportunity", "Collaboration", "Feedback", "Other"];
+    let dashboardReady = false;
+    // Values match the CV contact form (`#message-topic`), not display labels.
+    const MESSAGE_TOPICS = [
+        { value: 'opportunity', label: 'Job Opportunity / Collaboration' },
+        { value: 'inquiry', label: 'Project Inquiry' },
+        { value: 'feedback', label: 'CV Feedback' },
+        { value: 'other', label: 'Other' }
+    ];
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+    }
+
+    function topicLabel(value) {
+        const found = MESSAGE_TOPICS.find((topic) => topic.value === value);
+        return found ? found.label : (value || '—');
+    }
+
+    function localDay(timestamp) {
+        if (!timestamp || typeof timestamp.toDate !== 'function') return '';
+        const date = timestamp.toDate();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${date.getFullYear()}-${month}-${day}`;
+    }
+
+    function safeHttps(url) {
+        return /^https:\/\//i.test(url || '') ? url : '';
+    }
 
     // DOM Elements
     const loginOverlay = document.getElementById('login-overlay'), dashboard = document.getElementById('dashboard'), logoutBtn = document.getElementById('logout-btn');
@@ -243,11 +273,20 @@
 
     // --- Auth ---
     onAuthStateChanged(auth, user => { if (user) { loginOverlay.style.display = 'none'; dashboard.classList.remove('hidden'); initDashboard(); } else { loginOverlay.style.display = 'flex'; dashboard.classList.add('hidden'); } });
-    document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, e.target.email.value, e.target.password.value).catch(err => { document.getElementById('login-error').textContent = "Login failed."; console.error(err); }); });
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        document.getElementById('login-error').textContent = '';
+        signInWithEmailAndPassword(auth, e.target.email.value.trim(), e.target.password.value).catch(err => {
+            document.getElementById('login-error').textContent = 'Login failed. Check the email and password.';
+            console.error(err);
+        });
+    });
     logoutBtn.addEventListener('click', () => signOut(auth));
 
     // --- Init ---
     function initDashboard() {
+        if (dashboardReady) return;
+        dashboardReady = true;
         Object.keys(tabButtons).forEach(key => tabButtons[key].addEventListener('click', () => switchTab(key)));
         loadAllData();
         setupFilterListeners();
@@ -268,7 +307,7 @@
 
     function populateStaticDropdowns() {
         const topicSelect = document.getElementById('msg-filter-topic-select');
-        topicSelect.innerHTML = `<option value="">All Topics</option>` + MESSAGE_TOPICS.map(t => `<option value="${t}">${t}</option>`).join('');
+        topicSelect.innerHTML = `<option value="">All Topics</option>` + MESSAGE_TOPICS.map(t => `<option value="${t.value}">${escapeHtml(t.label)}</option>`).join('');
 
         document.getElementById('msg-filter-attachment').innerHTML = `<option value="">Any Attachment</option><option value="yes">With Attachments</option><option value="no">No Attachments</option>`;
         document.getElementById('rate-filter-rate').innerHTML = `<option value="">Any Rate</option>` + [5,4,3,2,1].map(n => `<option value="${n}">${n} Stars</option>`).join('');
@@ -313,18 +352,19 @@
         });
 
         document.getElementById('msg-filter-topic-select').addEventListener('change', e => {
-            document.getElementById('msg-other-topic-container').classList.toggle('hidden', e.target.value !== 'Other');
+            document.getElementById('msg-other-topic-container').classList.toggle('hidden', e.target.value !== 'other');
         });
         document.getElementById('stats-apply-btn').addEventListener('click', renderStatisticsGraph);
     }
 
     function applyAllFilters() {
-        const blockedEmails = allBlockedSenders.map(u => u.id);
-        const inboxMessages = allMessages.filter(m => m.status !== 'rejected' && !blockedEmails.includes(m.email.toLowerCase()));
+        const blockedEmails = allBlockedSenders.map(u => (u.id || '').toLowerCase());
+        const senderEmail = (item) => (item.email || '').toLowerCase();
+        const inboxMessages = allMessages.filter(m => m.status !== 'rejected' && !blockedEmails.includes(senderEmail(m)));
         const rejectedMessages = allMessages.filter(m => m.status === 'rejected');
 
         filterAndRender(inboxMessages, filterMessageCard, lists.messages, document.getElementById('messages-count'));
-        filterAndRender(allRatings.filter(r => !blockedEmails.includes(r.email.toLowerCase())), filterRatingCard, lists.ratings, document.getElementById('ratings-count'));
+        filterAndRender(allRatings.filter(r => !blockedEmails.includes(senderEmail(r))), filterRatingCard, lists.ratings, document.getElementById('ratings-count'));
         filterAndRender(rejectedMessages, filterRejectedMessageCard, lists.rejected, document.getElementById('rejected-count'));
         filterAndRender(allBlockedSenders, filterBlockedSenderCard, lists.blocked, document.getElementById('blocked-count'));
 
@@ -339,14 +379,10 @@
     }
 
     const dateInRange = (dateStr, startStr, endStr) => {
+        if (!startStr && !endStr) return true;
         if (!dateStr) return false;
-        const date = new Date(dateStr);
-        if (startStr && date < new Date(startStr)) return false;
-        if (endStr) {
-            const endDate = new Date(endStr);
-            endDate.setHours(23, 59, 59, 999); // Include the whole end day
-            if (date > endDate) return false;
-        }
+        if (startStr && dateStr < startStr) return false;
+        if (endStr && dateStr > endStr) return false;
         return true;
     };
 
@@ -360,15 +396,16 @@
         const dateEnd = document.getElementById('msg-filter-date-end').value;
         const attachment = document.getElementById('msg-filter-attachment').value;
 
-        const msgDate = msg.createdAt ? msg.createdAt.toDate().toISOString().split('T')[0] : '';
+        const msgDate = localDay(msg.createdAt);
+        const topicValue = (msg.topic || '').toLowerCase();
         let topicMatch = true;
         if (topicSelect) {
-            if (topicSelect === 'Other') topicMatch = msg.topic.toLowerCase().includes(topicOther);
-            else topicMatch = msg.topic === topicSelect;
+            if (topicSelect === 'other' && topicOther) topicMatch = topicValue === 'other' || topicValue.includes(topicOther);
+            else topicMatch = topicValue === topicSelect;
         }
 
-        return (!name || msg.name.toLowerCase().includes(name)) &&
-            (!email || msg.email.toLowerCase().includes(email)) &&
+        return (!name || (msg.name || '').toLowerCase().includes(name)) &&
+            (!email || (msg.email || '').toLowerCase().includes(email)) &&
             topicMatch &&
             dateInRange(msgDate, dateStart, dateEnd) &&
             (attachment === '' || (attachment === 'yes' && msg.fileURL) || (attachment === 'no' && !msg.fileURL));
@@ -383,11 +420,11 @@
         const rate = document.getElementById('rate-filter-rate').value;
         const status = document.getElementById('rate-filter-status').value;
 
-        const rDate = r.createdAt ? r.createdAt.toDate().toISOString().split('T')[0] : '';
-        return (!name || r.name.toLowerCase().includes(name)) &&
-            (!email || r.email.toLowerCase().includes(email)) &&
+        const rDate = localDay(r.createdAt);
+        return (!name || (r.name || '').toLowerCase().includes(name)) &&
+            (!email || (r.email || '').toLowerCase().includes(email)) &&
             dateInRange(rDate, dateStart, dateEnd) &&
-            (!rate || r.rating.toString() === rate) &&
+            (!rate || String(r.rating) === rate) &&
             (!status || r.status === status);
     }
 
@@ -397,9 +434,9 @@
         const email = document.getElementById('rej-filter-email').value.toLowerCase();
         const dateStart = document.getElementById('rej-filter-date-start').value;
         const dateEnd = document.getElementById('rej-filter-date-end').value;
-        const rejDate = msg.rejectedAt ? msg.rejectedAt.toDate().toISOString().split('T')[0] : '';
-        return (!name || msg.name.toLowerCase().includes(name)) &&
-            (!email || msg.email.toLowerCase().includes(email)) &&
+        const rejDate = localDay(msg.rejectedAt);
+        return (!name || (msg.name || '').toLowerCase().includes(name)) &&
+            (!email || (msg.email || '').toLowerCase().includes(email)) &&
             dateInRange(rejDate, dateStart, dateEnd);
     }
 
@@ -408,8 +445,8 @@
         const email = document.getElementById('block-filter-email').value.toLowerCase();
         const dateStart = document.getElementById('block-filter-date-start').value;
         const dateEnd = document.getElementById('block-filter-date-end').value;
-        const blockDate = user.blockedAt ? user.blockedAt.toDate().toISOString().split('T')[0] : '';
-        return (!email || user.id.toLowerCase().includes(email)) &&
+        const blockDate = localDay(user.blockedAt);
+        return (!email || (user.id || '').toLowerCase().includes(email)) &&
             dateInRange(blockDate, dateStart, dateEnd);
     }
 
@@ -417,7 +454,7 @@
         const attachmentCounts = { yes: messages.filter(m => m.fileURL).length, no: messages.filter(m => !m.fileURL).length };
         document.getElementById('msg-filter-attachment-label').textContent = `Attachment (Yes: ${attachmentCounts.yes}, No: ${attachmentCounts.no})`;
 
-        const ratingCounts = ratings.reduce((acc, r) => { acc[r.rating] = (acc[r.rating] || 0) + 1; return acc; }, {});
+        const ratingCounts = ratings.reduce((acc, r) => { const key = r.rating || 0; acc[key] = (acc[key] || 0) + 1; return acc; }, {});
         document.getElementById('rate-filter-rate-label').textContent = `Rating (${Object.entries(ratingCounts).map(([k,v]) => `${k}*: ${v}`).join(', ')})`;
 
         const statusCounts = ratings.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {});
@@ -437,39 +474,42 @@
 
     function createCardHTML(doc, content, actions) {
         const respondedBadge = doc.response ? `<div class="responded-badge"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Responded</div>` : '';
-        return `<div class="item-card p-4 flex gap-4 items-start"><input type="checkbox" class="bulk-checkbox mt-2" data-id="${doc.id}" data-email="${doc.email}" data-status="${doc.status || ''}"><div class="flex-grow">${content}<div class="flex items-center flex-wrap gap-2 mt-4">${actions}${respondedBadge}</div></div></div>`;
+        return `<div class="item-card p-4 flex gap-4 items-start"><input type="checkbox" class="bulk-checkbox mt-2" data-id="${escapeHtml(doc.id)}" data-email="${escapeHtml(doc.email || '')}" data-status="${escapeHtml(doc.status || '')}"><div class="flex-grow">${content}<div class="flex items-center flex-wrap gap-2 mt-4">${actions}${respondedBadge}</div></div></div>`;
     }
 
     function renderMessageCard(msg) {
         const date = msg.createdAt ? msg.createdAt.toDate().toLocaleString() : 'N/A';
-        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p><p class="text-sm text-gray-600"><strong>Topic:</strong> ${msg.topic}</p></div><span class="text-xs text-gray-500 mb-2">${date}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${msg.message}</p><p class="text-sm">${msg.fileURL ? `<a href="${msg.fileURL}" target="_blank" class="text-cyan-600 hover:underline">View Attachment</a>` : 'No attachment'}</p>`;
-        const actions = `<button data-action="respond" data-type="message" data-id="${msg.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Respond</button><button data-action="reject-msg" data-id="${msg.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button><button data-action="block" data-email="${msg.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
+        const fileHref = safeHttps(msg.fileURL);
+        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${escapeHtml(msg.name)} <span class="font-normal text-sm text-gray-500">&lt;${escapeHtml(msg.email)}&gt;</span></p><p class="text-sm text-gray-600"><strong>Topic:</strong> ${escapeHtml(topicLabel(msg.topic))}</p></div><span class="text-xs text-gray-500 mb-2">${escapeHtml(date)}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${escapeHtml(msg.message)}</p><p class="text-sm">${fileHref ? `<a href="${escapeHtml(fileHref)}" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline">View Attachment</a>` : 'No attachment'}</p>`;
+        const actions = `<button data-action="respond" data-type="message" data-id="${escapeHtml(msg.id)}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Respond</button><button data-action="reject-msg" data-id="${escapeHtml(msg.id)}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button><button data-action="block" data-email="${escapeHtml(msg.email)}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
         return createCardHTML(msg, content, actions);
     }
 
     function renderRatingCard(r) {
         const date = r.createdAt ? r.createdAt.toDate().toLocaleString() : 'N/A';
-        const stars = '&#9733;'.repeat(r.rating) + '&#9734;'.repeat(5 - r.rating);
-        let actions = `<button data-action="respond" data-type="rating" data-id="${r.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Respond</button>`;
-        if (r.status === 'pending') actions += `<button data-action="approve" data-id="${r.id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button><button data-action="approve-anon" data-id="${r.id}" class="bg-sky-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-sky-600">Approve Anonymously</button><button data-action="reject" data-id="${r.id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>`;
-        else if (r.status === 'approved') actions += `<button data-action="retract" data-id="${r.id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract</button>`;
-        else if (r.status === 'rejected') actions += `<button data-action="restore" data-id="${r.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore</button>`;
-        actions += `<button data-action="block" data-email="${r.email}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
-        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${r.name} <span class="font-normal text-sm text-gray-500">&lt;${r.email}&gt;</span></p><p class="text-xl text-yellow-400">${stars}</p></div><div class="text-right"><div class="flex items-center gap-2 mb-1"><span class="status-dot status-${r.status}"></span><span class="text-sm font-medium capitalize">${r.status}</span></div><span class="text-xs text-gray-500 mb-2 block">${date}</span></div></div>${r.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${r.comment}</p>` : ''}`;
+        const score = Math.min(5, Math.max(0, Number(r.rating) || 0));
+        const stars = '&#9733;'.repeat(score) + '&#9734;'.repeat(5 - score);
+        const id = escapeHtml(r.id);
+        let actions = `<button data-action="respond" data-type="rating" data-id="${id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Respond</button>`;
+        if (r.status === 'pending') actions += `<button data-action="approve" data-id="${id}" class="bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-green-600">Approve</button><button data-action="approve-anon" data-id="${id}" class="bg-sky-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-sky-600">Approve Anonymously</button><button data-action="reject" data-id="${id}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button>`;
+        else if (r.status === 'approved') actions += `<button data-action="retract" data-id="${id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract</button>`;
+        else if (r.status === 'rejected') actions += `<button data-action="restore" data-id="${id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore</button>`;
+        actions += `<button data-action="block" data-email="${escapeHtml(r.email)}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
+        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${escapeHtml(r.name)} <span class="font-normal text-sm text-gray-500">&lt;${escapeHtml(r.email)}&gt;</span></p><p class="text-xl text-yellow-400">${stars}</p></div><div class="text-right"><div class="flex items-center gap-2 mb-1"><span class="status-dot status-${escapeHtml(r.status || 'pending')}"></span><span class="text-sm font-medium capitalize">${escapeHtml(r.status || 'pending')}</span></div><span class="text-xs text-gray-500 mb-2 block">${escapeHtml(date)}</span></div></div>${r.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${escapeHtml(r.comment)}</p>` : ''}`;
         return createCardHTML(r, content, actions);
     }
 
     function renderRejectedMessageCard(msg) {
         const date = msg.rejectedAt ? `Rejected: ${msg.rejectedAt.toDate().toLocaleString()}` : 'N/A';
-        const content = `<div class="flex justify-between items-start mb-2"><p class="font-bold text-lg">${msg.name} <span class="font-normal text-sm text-gray-500">&lt;${msg.email}&gt;</span></p><span class="text-xs text-gray-500">${date}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md">${msg.message}</p>`;
-        const actions = `<button data-action="restore-msg" data-id="${msg.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore to Inbox</button>`;
+        const content = `<div class="flex justify-between items-start mb-2"><p class="font-bold text-lg">${escapeHtml(msg.name)} <span class="font-normal text-sm text-gray-500">&lt;${escapeHtml(msg.email)}&gt;</span></p><span class="text-xs text-gray-500">${escapeHtml(date)}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md">${escapeHtml(msg.message)}</p>`;
+        const actions = `<button data-action="restore-msg" data-id="${escapeHtml(msg.id)}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore to Inbox</button>`;
         return createCardHTML(msg, content, actions);
     }
 
     function renderBlockedSenderCard(user) {
         const date = user.blockedAt ? `Blocked: ${user.blockedAt.toDate().toLocaleString()}` : 'N/A';
-        const content = `<div class="flex justify-between items-center"><p class="font-bold text-lg">${user.id}</p><span class="text-xs text-gray-500">${date}</span></div>`;
-        const actions = `<button data-action="unblock" data-email="${user.id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Unblock Sender</button>`;
+        const content = `<div class="flex justify-between items-center"><p class="font-bold text-lg">${escapeHtml(user.id)}</p><span class="text-xs text-gray-500">${escapeHtml(date)}</span></div>`;
+        const actions = `<button data-action="unblock" data-email="${escapeHtml(user.id)}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Unblock Sender</button>`;
         return `<div class="item-card p-4">${content}<div class="flex items-center flex-wrap gap-2 mt-2">${actions}</div></div>`;
     }
 
@@ -491,7 +531,15 @@
         });
     }
 
-    async function updateRatingStatus(id, payload) { await updateDoc(doc(db, "ratings", id), payload); }
+    async function updateRatingStatus(id, payload) {
+        await updateDoc(doc(db, "ratings", id), payload);
+        if (payload.status && payload.status !== 'approved') await clearTestimonials(id);
+    }
+
+    async function clearTestimonials(sourceId) {
+        const existing = await getDocs(query(collection(db, "testimonials"), where("sourceId", "==", sourceId)));
+        await Promise.all(existing.docs.map((entry) => deleteDoc(entry.ref)));
+    }
     async function updateMessageStatus(id, status) {
         const payload = { status };
         if (status === 'rejected') payload.rejectedAt = serverTimestamp();
@@ -518,8 +566,11 @@
         document.getElementById('response-recipient-name').textContent = item.name;
         document.getElementById('response-recipient-email').textContent = item.email;
         // Only show public checkbox for approved ratings or any message
-        const publicCheckboxContainer = document.getElementById('response-is-public').parentElement;
-        publicCheckboxContainer.style.display = (type === 'rating' && item.status === 'approved') || type === 'message' ? 'flex' : 'none';
+        const publicWrap = document.getElementById('response-public-wrap');
+        const canPublish = type === 'rating' && item.status === 'approved';
+        publicWrap.style.display = canPublish ? 'block' : 'none';
+        document.getElementById('response-is-public').checked = false;
+        if (item.response) document.getElementById('response-message').value = item.response;
 
         responseModalOverlay.classList.add('visible');
     }
@@ -532,41 +583,37 @@
 
     async function handleResponseSubmit(e) {
         e.preventDefault();
-        const responseText = document.getElementById('response-message').value;
-        const isPublic = document.getElementById('response-is-public').checked;
+        const responseText = document.getElementById('response-message').value.trim();
+        const { id, type } = currentResponseData;
+        const live = (type === 'message' ? allMessages : allRatings).find((entry) => entry.id === id) || currentResponseData;
+        const canPublish = type === 'rating' && live.status === 'approved';
+        const isPublic = canPublish && document.getElementById('response-is-public').checked;
 
         if (responseText.length < 10) {
             alert("Response must be at least 10 characters long.");
             return;
         }
 
-        const { id, type, name, email, message, comment, rating, isAnonymous } = currentResponseData;
         const collectionName = type === 'message' ? 'messages' : 'ratings';
 
         try {
-            // 1. Update the original document with the response
             await updateDoc(doc(db, collectionName, id), {
                 response: responseText,
                 respondedAt: serverTimestamp(),
-                isPublicResponse: isPublic,
-                // NEW: Add a flag to trigger the Cloud Function
-                createPublicTestimonial: isPublic ? true : null
+                isPublicResponse: isPublic
             });
 
-            // 2. If public, create a new document in the 'testimonials' collection
+            await clearTestimonials(id);
             if (isPublic) {
-                const testimonialData = {
-                    authorName: isAnonymous ? 'Anonymous' : name,
-                    originalText: type === 'message' ? message : comment,
+                await addDoc(collection(db, "testimonials"), {
+                    authorName: live.isAnonymous ? 'Anonymous' : (live.name || 'Visitor'),
+                    originalText: live.comment || '',
                     adminResponse: responseText,
+                    rating: Number(live.rating) || 0,
                     createdAt: serverTimestamp(),
                     sourceId: id,
-                    sourceType: type
-                };
-                if (type === 'rating') {
-                    testimonialData.rating = rating;
-                }
-                await addDoc(collection(db, "testimonials"), testimonialData);
+                    sourceType: 'rating'
+                });
             }
 
             alert("Response sent successfully!");
@@ -603,7 +650,7 @@
             'approve': { valid: s => s.dataset.status === 'pending', fn: id => updateRatingStatus(id, { status: 'approved', isAnonymous: false }) },
             'approve-anon': { valid: s => s.dataset.status === 'pending', fn: id => updateRatingStatus(id, { status: 'approved', isAnonymous: true }) },
             'reject': { valid: s => s.dataset.status !== 'rejected', fn: id => updateRatingStatus(id, { status: 'rejected' }) },
-            'block': { valid: s => !blockedEmails.includes(s.dataset.email.toLowerCase()), fn: (id, email) => blockSender(email) },
+            'block': { valid: s => s.dataset.email && !blockedEmails.includes(s.dataset.email.toLowerCase()), fn: (id, email) => blockSender(email) },
         };
         const currentAction = actions[action];
         if (!currentAction) return;
@@ -635,14 +682,32 @@
 
         const datasets = selectedData.map(key => {
             const source = dataMap[key];
-            const data = source.items.filter(item => item[source.dateField] && dateInRange(item[source.dateField].toDate().toISOString().split('T')[0], dateStart, dateEnd)).length;
-            return { label: source.label, data: [data], backgroundColor: source.color };
-        });
+            const counts = new Map();
+            source.items.forEach((item) => {
+                const day = localDay(item[source.dateField]);
+                if (!dateInRange(day, dateStart, dateEnd)) return;
+                if (!day) return;
+                counts.set(day, (counts.get(day) || 0) + 1);
+            });
+            return { label: source.label, color: source.color, counts };
+        }).filter(Boolean);
+
+        const labels = [...new Set(datasets.flatMap((set) => [...set.counts.keys()]))].sort();
+        const chartLabels = labels.length ? labels : ['No data'];
 
         if (statsChart) statsChart.destroy();
         statsChart = new Chart(ctx, {
             type: chartType,
-            data: { labels: ['Selected Range'], datasets: datasets },
+            data: {
+                labels: chartLabels,
+                datasets: datasets.map((set) => ({
+                    label: set.label,
+                    data: chartLabels.map((label) => set.counts.get(label) || 0),
+                    backgroundColor: set.color,
+                    borderColor: set.color,
+                    tension: 0.2
+                }))
+            },
             options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { position: 'top' } } }
         });
     }

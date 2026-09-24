@@ -505,8 +505,30 @@
                 });
             },
 
+            _noteCvAccess() {
+                try {
+                    if (window.top !== window.self || navigator.webdriver) return;
+                    if (sessionStorage.getItem('cv-access-noted') === '1') return;
+                    sessionStorage.setItem('cv-access-noted', '1');
+                } catch (e) {
+                    return;
+                }
+                let referrerHost = '';
+                try {
+                    referrerHost = document.referrer ? new URL(document.referrer).host : '';
+                } catch (e) { /* ignore */ }
+                addDoc(collection(db, 'visits'), {
+                    source: 'cv',
+                    lang: String(document.documentElement.lang || 'en').slice(0, 12),
+                    referrerHost: referrerHost.slice(0, 80),
+                    createdAt: serverTimestamp()
+                }).catch((error) => {
+                    console.warn('CV access note was not saved:', error && error.code ? error.code : error);
+                });
+            },
+
             /**
-             * **NEW**: Fetches the blocklist from Firestore and stores it in the state.
+             * Fetches the blocklist from Firestore and stores it in the state.
              */
             async _loadBlocklist() {
                 try {
@@ -1871,19 +1893,23 @@
 
 // ADD THIS SECOND NEW FUNCTION
             _createReviewCard(testimonial) {
-                const starsHTML = testimonial.rating ? '★'.repeat(testimonial.rating) + '☆'.repeat(5 - testimonial.rating) : '';
+                const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                }[ch]));
+                const score = Math.min(5, Math.max(0, Number(testimonial.rating) || 0));
+                const starsHTML = score ? '★'.repeat(score) + '☆'.repeat(5 - score) : '';
                 const adminResponseHTML = testimonial.adminResponse ? `
         <div class="admin-response">
             <p>Response from Carlos:</p>
-            <p>"${testimonial.adminResponse}"</p>
+            <p>"${escape(testimonial.adminResponse)}"</p>
         </div>
     ` : '';
 
                 return `
         <div class="testimonial-card">
-            ${starsHTML ? `<div class="testimonial-stars" aria-label="Rating: ${testimonial.rating} out of 5 stars">${starsHTML}</div>` : ''}
-            ${testimonial.originalText ? `<p class="testimonial-quote">"${testimonial.originalText}"</p>` : ''}
-            <p class="testimonial-author">- ${testimonial.authorName}</p>
+            ${starsHTML ? `<div class="testimonial-stars" aria-label="Rating: ${score} out of 5 stars">${starsHTML}</div>` : ''}
+            ${testimonial.originalText ? `<p class="testimonial-quote">"${escape(testimonial.originalText)}"</p>` : ''}
+            <p class="testimonial-author">- ${escape(testimonial.authorName || 'Visitor')}</p>
             ${adminResponseHTML}
         </div>
     `;
@@ -2063,11 +2089,12 @@
                     }
 
                     await addDoc(collection(db, 'messages'), {
-                        name: senderName.value,
-                        email: senderEmail.value,
+                        name: senderName.value.trim(),
+                        email,
                         topic: messageTopic.value,
-                        message: senderMessage.value,
+                        message: senderMessage.value.trim(),
                         fileURL,
+                        status: 'inbox',
                         createdAt: serverTimestamp()
                     });
 
@@ -2105,16 +2132,16 @@
 
                 try {
                     await addDoc(collection(db, 'ratings'), {
-                        name: raterName.value,
-                        email: raterEmail.value,
+                        name: raterName.value.trim(),
+                        email,
                         rating: parseInt(ratingValue.value, 10),
-                        comment: raterComment.value,
+                        comment: raterComment.value.trim(),
                         status: 'pending',
+                        isAnonymous: false,
                         createdAt: serverTimestamp()
                     });
 
-                    // NEW: Track the successful submission in Google Analytics
-                    this._trackEvent('submit_rating', 'Form Submission', `Rating: ${ratingValue} Stars`);
+                    this._trackEvent('submit_rating', 'Form Submission', `Rating: ${ratingValue.value} Stars`);
 
                     this._showStatusMessage('success', 'rating');
                     this._resetRatingForm();
@@ -2928,6 +2955,7 @@
                 this._initUrlHighlighting();
                 this._initContactWidget();
                 this._initScrollTrigger();
+                this._noteCvAccess();
 
                 this._bootLanguage();
 
