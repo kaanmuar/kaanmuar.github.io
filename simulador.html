@@ -4,6 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sprint 24 · 4-Agent SDLC Studio</title>
+    <meta name="description" content="Interactive four-agent QA studio: refine Jira stories, design Xray cases, generate Playwright/Cypress/Robot scripts, and sign off a sprint Definition of Done.">
+    <meta name="author" content="Carlos A. Muñoz Ardila">
+    <meta name="keywords" content="QA studio, Jira, Xray, Playwright, Cypress, Robot Framework, SDLC, test automation, AI agents">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+    <meta name="theme-color" content="#0b1220">
+    <link rel="canonical" href="https://kaanmuar.github.io/simulador.html">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="site.webmanifest">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Carlos A. Muñoz — Interactive CV">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="https://kaanmuar.github.io/simulador.html">
+    <meta property="og:title" content="Sprint 24 · 4-Agent SDLC Studio">
+    <meta property="og:description" content="Watch four specialized agents refine Jira, curate Xray, generate automation, and verify a sprint increment.">
+    <meta property="og:image" content="https://kaanmuar.github.io/assets/profile.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sprint 24 · 4-Agent SDLC Studio">
+    <meta name="twitter:description" content="Interactive four-agent QA / SDLC studio from Carlos A. Muñoz's CV.">
+    <meta name="twitter:image" content="https://kaanmuar.github.io/assets/profile.jpg">
+    <link rel="alternate" hreflang="x-default" href="https://kaanmuar.github.io/simulador.html?lang=en">
+    <link rel="alternate" hreflang="en" href="https://kaanmuar.github.io/simulador.html?lang=en">
+    <link rel="alternate" hreflang="es" href="https://kaanmuar.github.io/simulador.html?lang=es">
+    <link rel="alternate" hreflang="pt" href="https://kaanmuar.github.io/simulador.html?lang=pt">
+    <link rel="alternate" hreflang="de" href="https://kaanmuar.github.io/simulador.html?lang=de">
+    <link rel="alternate" hreflang="fr" href="https://kaanmuar.github.io/simulador.html?lang=fr">
+    <link rel="alternate" hreflang="it" href="https://kaanmuar.github.io/simulador.html?lang=it">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "PayStream QA Studio Sprint 24",
+        "url": "https://kaanmuar.github.io/simulador.html",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "description": "Interactive four-agent SDLC studio demonstrating Jira refinement, Xray design, test automation and release verification.",
+        "author": {
+            "@type": "Person",
+            "name": "Carlos A. Muñoz Ardila",
+            "url": "https://kaanmuar.github.io/"
+        },
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "Carlos A. Muñoz — Interactive CV",
+            "url": "https://kaanmuar.github.io/"
+        }
+    }
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-J8GNF5380F', {
+            anonymize_ip: true,
+            send_page_view: true,
+            page_title: document.title,
+            page_path: '/simulador.html',
+            page_location: window.location.href
+        });
+    </script>
+    <script src="js/site-analytics.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -15,7 +76,7 @@
         }
         * { box-sizing: border-box; }
         html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
-        body { display: grid; grid-template-rows: 56px 1fr 150px; overflow: hidden; }
+        body { display: grid; grid-template-rows: 56px minmax(0, 1fr) 120px; overflow: hidden; }
         button { font-family: inherit; }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); background: #0a1628; gap: 12px; }
         .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
@@ -32,19 +93,81 @@
         .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
         .btn-accept { background: #0f766e; color: #fff; }
         .btn-reject { background: transparent; color: var(--red); border: 1px solid var(--red); }
-        .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 0; }
+        .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 0; overflow: hidden; }
         .nav { border-right: 1px solid var(--line); background: var(--panel-2); padding: 14px 10px; }
         .nav button { width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted); padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
         .nav button.active { background: #1e3a5f; color: #fff; }
-        .workspace { min-width: 0; display: flex; flex-direction: column; }
-        .phase-banner { padding: 10px 16px; border-bottom: 1px solid var(--line); background: #132033; font-size: 13px; color: var(--muted); }
+        .workspace { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+        .phase-banner { flex: 0 0 auto; padding: 10px 16px; border-bottom: 1px solid var(--line); background: #132033; font-size: 13px; color: var(--muted); }
         .phase-banner strong { color: var(--text); }
-        .board { flex: 1; overflow: auto; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+        .board { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
         .col { min-width: 250px; width: 250px; background: #0f172a; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
         .col h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-        .ticket { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 8px; cursor: pointer; }
+        .ticket-wrap { margin-bottom: 8px; }
+        .ticket { position: relative; overflow: hidden; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px; cursor: pointer; }
         .ticket:hover { border-color: var(--blue); }
         .ticket.pulse { outline: 2px solid var(--purple); transform: translateY(-2px); }
+        .ticket-wrap.active-review .ticket { border-color: var(--cyan); border-radius: 8px 8px 0 0; outline: 1px solid rgba(34,211,238,.45); }
+        .laser {
+            pointer-events: none;
+            position: absolute;
+            top: 0; bottom: 0; left: 0;
+            width: 12px;
+            margin-left: -6px;
+            background: linear-gradient(180deg, transparent 0%, #22d3ee 18%, #fff 50%, #a78bfa 82%, transparent 100%);
+            box-shadow: 0 0 14px 4px rgba(34,211,238,.85), 0 0 36px 10px rgba(167,139,250,.35);
+            opacity: 0;
+            z-index: 3;
+        }
+        .scanning > .laser { animation: laserSweep var(--scan-ms, 1.7s) linear 1; }
+        @keyframes laserSweep {
+            0% { left: 0; opacity: 0; }
+            8% { opacity: 1; }
+            92% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+        .ticket-console, .agent-console {
+            display: none;
+            background: #020617;
+            border: 1px solid #155e75;
+            color: #67e8f9;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            line-height: 1.45;
+            padding: 8px 10px;
+            max-height: 128px;
+            overflow: auto;
+        }
+        .ticket-console { border-top: 0; border-radius: 0 0 8px 8px; }
+        .ticket-wrap.active-review .ticket-console { display: block; }
+        .agent-console { display: block; border-radius: 0 0 10px 10px; border-top: 1px solid #155e75; max-height: 150px; }
+        .agent-console .k, .ticket-console .k { color: var(--amber); }
+        .agent-console .ok, .ticket-console .ok { color: var(--green); }
+        .agent-console .dec, .ticket-console .dec { color: var(--purple); }
+        .scan-stage { position: relative; overflow: hidden; }
+        .phase-console {
+            display: none;
+            flex: 0 0 auto;
+            max-height: 132px;
+            overflow: auto;
+            background: #020617;
+            border-top: 1px solid #155e75;
+            color: #67e8f9;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            line-height: 1.45;
+            padding: 8px 12px;
+        }
+        .phase-console.show { display: block; }
+        .phase-console .k { color: var(--amber); }
+        .phase-console .ok { color: var(--green); }
+        .phase-console .dec { color: var(--purple); }
+        .handoff {
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        .handoff .btn { white-space: nowrap; flex: 0 0 auto; }
         .ticket.ok { border-color: var(--green); }
         .ticket.changed { border-color: var(--purple); }
         .ticket.kept { border-color: var(--amber); }
@@ -53,7 +176,7 @@
         .meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
         .prio { font-weight: 700; }
         .prio.highest { color: var(--red); } .prio.high { color: #fb7185; } .prio.medium { color: var(--amber); }
-        .log { background: #020617; color: #86efac; font-family: 'Fira Code', monospace; font-size: 12px; padding: 10px 14px; overflow: auto; border-top: 1px solid var(--line); }
+        .log { background: #020617; color: #86efac; font-family: 'Fira Code', monospace; font-size: 12px; padding: 10px 14px; overflow: auto; border-top: 1px solid var(--line); min-height: 0; }
         .log b { color: var(--cyan); }
         .overlay { position: fixed; inset: 0; background: rgba(2,6,23,.72); display: none; z-index: 30; padding: 24px; }
         .overlay.show { display: flex; justify-content: center; align-items: flex-start; overflow: auto; }
@@ -71,7 +194,7 @@
         .proposal { display: none; margin-top: 14px; border: 1px solid var(--purple); background: rgba(167,139,250,.08); border-radius: 8px; padding: 12px; }
         .proposal.show { display: block; }
         .row { display: flex; gap: 8px; margin-top: 10px; }
-        .tests { padding: 16px; overflow: auto; }
+        .tests { flex: 1; min-height: 0; padding: 16px; overflow: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
         th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
@@ -132,6 +255,7 @@
     <main class="workspace">
         <div class="phase-banner" id="banner">Explore the board, open any ticket, then start the four-agent sprint.</div>
         <div class="board" id="view"></div>
+        <div class="phase-console" id="phaseConsole"></div>
     </main>
 </div>
 <div class="log" id="log"><div><b>SYSTEM</b> Sprint 24 loaded. Four agents standing by.</div></div>
@@ -296,15 +420,22 @@ const state = {
     agent: null,
     running: false,
     results: [],
+    autoFocus: null,
     verify: { ac: false, auto: false, sev: false, notes: false }
 };
 
 const viewEl = document.getElementById('view');
 const logEl = document.getElementById('log');
+const phaseConsole = document.getElementById('phaseConsole');
 const overlay = document.getElementById('overlay');
 const modal = document.getElementById('modal');
 const banner = document.getElementById('banner');
 let gate = null;
+
+function track(eventName, category, label, extra) {
+    if (window.SiteAnalytics) SiteAnalytics.event(eventName, category, label, extra);
+    else if (typeof gtag === 'function') gtag('event', eventName, Object.assign({ event_category: category, event_label: label }, extra || {}));
+}
 
 function log(src, msg) {
     const line = document.createElement('div');
@@ -330,6 +461,7 @@ function agentDone(id) {
 }
 
 function setView(name) {
+    const previous = state.view;
     state.view = name;
     document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
     if (name === 'board') renderBoard();
@@ -338,6 +470,7 @@ function setView(name) {
     if (name === 'verify') renderVerify();
     if (name === 'report') renderReport();
     if (window.SiteI18n) SiteI18n.refreshTranslation();
+    if (previous !== name) track('sim_view', 'Simulator', name, { previous_view: previous });
 }
 
 function columns() {
@@ -355,22 +488,87 @@ function renderBoard() {
 
 function ticketCard(t) {
     const cls = t.decision === 'accept' ? 'changed' : t.decision === 'keep' ? 'kept' : t.decision === 'ok' ? 'ok' : '';
-    return `<article class="ticket ${cls}" id="card-${t.key}" onclick="openTicket('${t.key}')">
-        <div class="epic">${t.epic} · ${t.type}</div>
-        <div class="sum">${t.summary}</div>
-        <div class="meta"><span>${t.key}</span><span class="prio ${t.priority.toLowerCase()}">${t.priority} · ${t.points} SP</span></div>
-    </article>`;
+    return `<div class="ticket-wrap" id="wrap-${t.key}">
+        <article class="ticket ${cls}" id="card-${t.key}" onclick="openTicket('${t.key}')">
+            <div class="laser"></div>
+            <div class="epic">${t.epic} · ${t.type}</div>
+            <div class="sum">${t.summary}</div>
+            <div class="meta"><span>${t.key}</span><span class="prio ${t.priority.toLowerCase()}">${t.priority} · ${t.points} SP</span></div>
+        </article>
+        <div class="ticket-console" id="console-${t.key}"></div>
+    </div>`;
+}
+
+function ensureLaser(el) {
+    if (!el) return;
+    if (!el.querySelector(':scope > .laser')) {
+        const beam = document.createElement('div');
+        beam.className = 'laser';
+        el.prepend(beam);
+    }
+}
+
+async function scanElement(el, ms = 1700) {
+    if (!el) return;
+    ensureLaser(el);
+    el.style.setProperty('--scan-ms', ms + 'ms');
+    el.classList.remove('scanning');
+    void el.offsetWidth;
+    el.classList.add('scanning');
+    await sleep(ms);
+    el.classList.remove('scanning');
+}
+
+function clearConsoles() {
+    document.querySelectorAll('.ticket-wrap').forEach(w => w.classList.remove('active-review'));
+    document.querySelectorAll('.ticket-console').forEach(c => { c.innerHTML = ''; });
+}
+
+function showPhaseConsole(on) {
+    phaseConsole.classList.toggle('show', !!on);
+    if (!on) phaseConsole.innerHTML = '';
+}
+
+function consoleLine(host, html) {
+    if (!host) return;
+    const row = document.createElement('div');
+    row.innerHTML = html;
+    host.appendChild(row);
+    host.scrollTop = host.scrollHeight;
+}
+
+async function agentThink(hosts, src, line, cls = '') {
+    const html = `<span class="k">${src}</span> <span class="${cls}">${line}</span>`;
+    hosts.filter(Boolean).forEach(h => consoleLine(h, html));
+    log(src, line.replace(/<[^>]+>/g, ''));
+    if (window.SiteI18n) SiteI18n.refreshTranslation();
+    await sleep(280 + Math.floor(Math.random() * 220));
+}
+
+async function askHandoff(doneAgent, nextAgent) {
+    closeModal();
+    track('sim_handoff_prompt', 'Simulator', `${doneAgent.name} → ${nextAgent.name}`, { from_agent: doneAgent.id, to_agent: nextAgent.id });
+    banner.innerHTML = `<div class="handoff"><div><strong>${doneAgent.name} finished.</strong> Hand off to ${nextAgent.name}? <span style="color:var(--muted)">${nextAgent.role}</span></div><button class="btn btn-primary" id="handoffBtn" type="button">Start ${nextAgent.name}</button></div>`;
+    if (window.SiteI18n) SiteI18n.refreshTranslation();
+    log('SYSTEM', `Waiting for operator to start ${nextAgent.name}.`);
+    const btn = document.getElementById('handoffBtn');
+    if (btn) btn.onclick = () => resume(true);
+    await waitUser();
+    track('sim_handoff_start', 'Simulator', nextAgent.name, { from_agent: doneAgent.id, to_agent: nextAgent.id });
 }
 
 function openTicket(key, opts = {}) {
     const t = state.tickets.find(x => x.key === key);
+    track('sim_open_ticket', 'Simulator', key, { source: opts.propose ? 'agent_review' : 'manual', type: t && t.type });
     const ac = t.decision === 'accept' ? t.proposedAc : t.ac;
     modal.innerHTML = `
         <div class="m-head">
             <div><span class="pill">${t.type}</span> <strong>${t.key}</strong> · ${t.sprint}</div>
             <button class="btn btn-ghost" onclick="closeModal()">Close</button>
         </div>
-        <div class="m-body">
+        <div class="scan-stage" id="ticketScanStage">
+            <div class="laser"></div>
+            <div class="m-body">
             <div class="m-main">
                 <h2 style="margin:0 0 6px;font-size:22px">${t.summary}</h2>
                 <div class="tabs">
@@ -416,7 +614,9 @@ function openTicket(key, opts = {}) {
                 <div class="field"><span>Environment</span><b>${t.env}</b></div>
                 <div class="field"><span>Linked tests</span><b>${t.tests.length} Xray cases</b></div>
             </aside>
-        </div>`;
+            </div>
+        </div>
+        <div class="agent-console" id="ticketConsole"></div>`;
     overlay.classList.add('show');
     if (window.SiteI18n) SiteI18n.refreshTranslation();
     modal.querySelectorAll('.tabs button').forEach(btn => btn.onclick = () => {
@@ -429,7 +629,10 @@ function openTicket(key, opts = {}) {
     }
 }
 
-function closeModal() { overlay.classList.remove('show'); }
+function closeModal() {
+    if (overlay.classList.contains('show')) track('sim_close_modal', 'Simulator', 'issue');
+    overlay.classList.remove('show');
+}
 
 function escapeHtml(s) {
     return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -458,6 +661,7 @@ function renderTests() {
     document.getElementById('approveTests').onclick = () => {
         state.tickets.forEach(t => t.tests.forEach(tc => { tc.reviewed = true; }));
         log('A2', 'Sprint test set approved by user.');
+        track('sim_approve_tests', 'Simulator', `${state.tickets.flatMap(t => t.tests.filter(tc => tc.include)).length} cases`);
         resume(true);
         renderAgents();
     };
@@ -465,6 +669,7 @@ function renderTests() {
 function toggleCase(ticket, id, on) {
     const tc = state.tickets.find(t => t.key === ticket).tests.find(x => x.id === id);
     tc.include = on;
+    track('sim_toggle_case', 'Simulator', id, { ticket, included: on });
 }
 
 function snippets(tc) {
@@ -478,7 +683,7 @@ function snippets(tc) {
 function renderAuto() {
     viewEl.className = 'tests';
     const selected = state.tickets.flatMap(t => t.tests.filter(tc => tc.include));
-    const first = selected[0];
+    const first = state.autoFocus || selected[0];
     const sn = first ? snippets(first) : { playwright: '// no cases selected', cypress: '', robot: '' };
     const resultRows = state.results.map(r => `<tr><td>${r.id}</td><td>${r.fw}</td><td class="${r.ok ? 'pass' : 'fail'}">${r.ok ? 'PASSED' : 'FAILED'}</td><td>${r.ms} ms</td></tr>`).join('');
     viewEl.innerHTML = `
@@ -500,20 +705,27 @@ function renderVerify() {
         <h2 style="margin-top:0">Sprint verification · Agent 4</h2>
         <p style="color:var(--muted)">Definition of Done evidence before increment sign-off.</p>
         <div class="card">
-            <label class="check"><input type="checkbox" ${v.ac ? 'checked' : ''} onchange="state.verify.ac=this.checked"> All sprint stories have testable acceptance criteria (post Agent 1).</label>
-            <label class="check"><input type="checkbox" ${v.auto ? 'checked' : ''} onchange="state.verify.auto=this.checked"> Selected Xray cases have automation results in Playwright, Cypress and Robot.</label>
-            <label class="check"><input type="checkbox" ${v.sev ? 'checked' : ''} onchange="state.verify.sev=this.checked"> No Sev-1 defects remain in Ready for QA / Done.</label>
-            <label class="check"><input type="checkbox" ${v.notes ? 'checked' : ''} onchange="state.verify.notes=this.checked"> Release notes + 3DS / capture / a11y evidence attached.</label>
+            <label class="check"><input type="checkbox" ${v.ac ? 'checked' : ''} onchange="toggleVerify('ac', this.checked)"> All sprint stories have testable acceptance criteria (post Agent 1).</label>
+            <label class="check"><input type="checkbox" ${v.auto ? 'checked' : ''} onchange="toggleVerify('auto', this.checked)"> Selected Xray cases have automation results in Playwright, Cypress and Robot.</label>
+            <label class="check"><input type="checkbox" ${v.sev ? 'checked' : ''} onchange="toggleVerify('sev', this.checked)"> No Sev-1 defects remain in Ready for QA / Done.</label>
+            <label class="check"><input type="checkbox" ${v.notes ? 'checked' : ''} onchange="toggleVerify('notes', this.checked)"> Release notes + 3DS / capture / a11y evidence attached.</label>
             <div class="row"><button class="btn btn-accept" onclick="signOff()">Sign off increment</button></div>
         </div>`;
+}
+
+function toggleVerify(key, on) {
+    state.verify[key] = on;
+    track('sim_verify_check', 'Simulator', key, { checked: on });
 }
 
 function signOff() {
     if (!Object.values(state.verify).every(Boolean)) {
         log('A4', 'Sign-off blocked: complete every verification checkbox.');
+        track('sim_sign_off_blocked', 'Simulator', 'incomplete DoD');
         return;
     }
     log('A4', 'Increment signed off for Sprint 24.');
+    track('sim_sign_off', 'Simulator', 'Sprint 24');
     resume(true);
     setView('report');
 }
@@ -541,65 +753,131 @@ async function runSprint() {
     state.running = true;
     document.getElementById('runBtn').disabled = true;
     closeModal();
+    showPhaseConsole(false);
     setView('board');
+    track('sim_run_sprint', 'Simulator', 'Sprint 24');
 
     state.agent = 'a1'; renderAgents();
-    banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — reading each Jira issue like a BA/QA pair, proposing testable AC. You decide.';
+    track('sim_agent_start', 'Simulator', 'Ticket Steward', { agent_id: 'a1' });
+
+    state.agent = 'a1'; renderAgents();
+    banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — scanning each Jira issue, then proposing testable AC. You decide.';
     if (window.SiteI18n) SiteI18n.refreshTranslation();
-    log('A1', 'Scanning Sprint 24 stories for testability gaps.');
+    log('A1', 'Standing by to review Sprint 24 stories.');
+
     for (const t of state.tickets) {
-        const el = document.getElementById('card-' + t.key);
-        if (el) { el.classList.add('pulse'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-        log('A1', `${t.key}: ${t.findings}`);
-        await sleep(500);
+        clearConsoles();
+        const wrap = document.getElementById('wrap-' + t.key);
+        const card = document.getElementById('card-' + t.key);
+        const boardConsole = document.getElementById('console-' + t.key);
+        if (wrap) wrap.classList.add('active-review');
+        if (card) {
+            card.classList.add('pulse');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        const hosts = [boardConsole];
+        await agentThink(hosts, 'A1', `opening ${t.key} · ${escapeHtml(t.summary)}`);
+        await scanElement(card);
+        await agentThink(hosts, 'A1', 'reading description, comments and current AC…');
+        await agentThink(hosts, 'A1', `finding: ${escapeHtml(t.findings)}`, 'dec');
+        await agentThink(hosts, 'A1', 'drafting Gherkin-ready acceptance rewrite…', 'dec');
         openTicket(t.key, { propose: true });
+        const modalConsole = document.getElementById('ticketConsole');
+        const stage = document.getElementById('ticketScanStage');
+        hosts.push(modalConsole);
+        await agentThink([modalConsole], 'A1', `loaded ${t.key} in Jira issue view`);
+        await scanElement(stage);
+        await agentThink([modalConsole], 'A1', 'diffing original AC vs testable scenarios…', 'dec');
+        await agentThink([modalConsole], 'A1', 'waiting for operator: Accept rewrite or Keep original.', 'dec');
         const decision = await waitUser();
         t.decision = decision === 'accept' ? 'accept' : 'keep';
+        track('sim_ticket_decision', 'Simulator', t.key, { decision: t.decision });
         if (decision === 'accept') {
             t.ac = t.proposedAc;
-            log('USER', `${t.key} rewrite accepted. AC replaced with Gherkin-ready criteria.`);
+            await agentThink(hosts, 'USER', `${t.key} rewrite accepted.`, 'ok');
         } else {
-            log('USER', `${t.key} original AC kept.`);
+            await agentThink(hosts, 'USER', `${t.key} original AC kept.`);
         }
         t.column = 'Ready for QA';
         closeModal();
         renderBoard();
-        await sleep(250);
+        await sleep(200);
     }
+    clearConsoles();
     renderAgents();
+    await askHandoff(AGENTS[0], AGENTS[1]);
 
     state.agent = 'a2'; renderAgents();
+    track('sim_agent_start', 'Simulator', 'Test Designer', { agent_id: 'a2' });
     banner.innerHTML = '<strong>Agent 2 · Test Designer</strong> — Xray/TestRail view. Uncheck cases that should stay in the repo backlog, then approve.';
     setView('tests');
-    log('A2', 'Generated Gherkin cases and linked them to Jira keys.');
+    showPhaseConsole(true);
+    const testHosts = [phaseConsole];
+    await agentThink(testHosts, 'A2', 'mapping each story to Xray keys…');
+    const tableWrap = document.querySelector('#view table');
+    if (tableWrap) {
+        const stage = document.createElement('div');
+        stage.className = 'scan-stage';
+        tableWrap.parentNode.insertBefore(stage, tableWrap);
+        stage.appendChild(tableWrap);
+        await scanElement(stage, 1600);
+    }
+    await agentThink(testHosts, 'A2', 'authoring Gherkin Given / When / Then for included cases…', 'dec');
+    await agentThink(testHosts, 'A2', 'script: Feature: Sprint 24 payments · Scenario Outline: capture + 3DS', 'dec');
+    await agentThink(testHosts, 'A2', 'waiting for operator to approve the sprint test set.', 'dec');
     await waitUser();
     state.tickets.forEach(t => t.tests.forEach(tc => { if (tc.include) t.column = 'Ready for QA'; }));
     renderAgents();
+    await askHandoff(AGENTS[1], AGENTS[2]);
 
     state.agent = 'a3'; renderAgents();
+    track('sim_agent_start', 'Simulator', 'Automation Engineer', { agent_id: 'a3' });
     banner.innerHTML = '<strong>Agent 3 · Automation Engineer</strong> — generating Playwright, Cypress and Robot scripts, then executing the sprint set.';
-    setView('auto');
+    showPhaseConsole(true);
     const selected = state.tickets.flatMap(t => t.tests.filter(tc => tc.include));
     const frameworks = ['Playwright', 'Cypress', 'Robot'];
     state.results = [];
     for (const tc of selected) {
         const fw = frameworks[state.results.length % 3];
-        log('A3', `Generating ${fw} spec for ${tc.id}…`);
-        await sleep(350);
-        const ok = !(tc.id === 'XT-1401' && fw === 'Robot'); // one scripted flake for realism
+        state.autoFocus = tc;
+        renderAuto();
+        const specBlock = document.querySelector('#view .code');
+        if (specBlock) {
+            specBlock.parentElement.style.position = 'relative';
+            specBlock.parentElement.style.overflow = 'hidden';
+            await scanElement(specBlock.parentElement, 1100);
+        }
+        const sn = snippets(tc);
+        const sample = fw === 'Playwright' ? sn.playwright : fw === 'Cypress' ? sn.cypress : sn.robot;
+        await agentThink(testHosts, 'A3', `scaffolding ${fw} spec for ${tc.id} · ${escapeHtml(tc.title)}`, 'dec');
+        await agentThink(testHosts, 'A3', escapeHtml(sample.split('\n')[0]), 'dec');
+        await agentThink(testHosts, 'A3', `compiling / launching ${fw} runner…`);
+        const ok = !(tc.id === 'XT-1401' && fw === 'Robot');
         const ms = 420 + Math.floor(Math.random() * 900);
         state.results.push({ id: tc.id, fw, ok, ms });
-        log('A3', ok ? `${tc.id} [${fw}] PASSED (${ms} ms)` : `${tc.id} [${fw}] FAILED · retry queued`);
+        await agentThink(testHosts, 'A3', ok ? `${tc.id} [${fw}] PASSED (${ms} ms)` : `${tc.id} [${fw}] FAILED · retry queued`, ok ? 'ok' : '');
+        track('sim_automation_result', 'Simulator', tc.id, { framework: fw, passed: ok, duration_ms: ms });
         renderAuto();
-        await sleep(200);
+        await sleep(120);
     }
-    log('A3', 'Run complete. Report attached to the sprint.');
+    await agentThink(testHosts, 'A3', 'Run complete. Report attached to the sprint.', 'ok');
     renderAgents();
+    await askHandoff(AGENTS[2], AGENTS[3]);
 
     state.agent = 'a4'; renderAgents();
+    track('sim_agent_start', 'Simulator', 'Release Verifier', { agent_id: 'a4' });
     banner.innerHTML = '<strong>Agent 4 · Release Verifier</strong> — walk the Definition of Done. Tick every control, then sign off.';
     setView('verify');
-    log('A4', 'Waiting for human verification of DoD evidence.');
+    showPhaseConsole(true);
+    const dod = document.querySelector('#view .card');
+    if (dod) {
+        dod.style.position = 'relative';
+        dod.style.overflow = 'hidden';
+        await scanElement(dod, 1400);
+    }
+    await agentThink(testHosts, 'A4', 'collecting DoD evidence from Agents 1–3…', 'dec');
+    await agentThink(testHosts, 'A4', 'deciding: increment is ready only if every control is ticked.', 'dec');
+    await agentThink(testHosts, 'A4', 'waiting for human verification of every control.', 'dec');
     await waitUser();
     state.tickets.forEach(t => { if (t.tests.some(tc => tc.include)) t.column = 'Done'; });
     banner.innerHTML = '<strong>Sprint 24 complete.</strong> Review the report or reset to run again.';
@@ -609,6 +887,12 @@ async function runSprint() {
     renderAgents();
     renderBoard();
     setView('report');
+    showPhaseConsole(true);
+    track('sim_sprint_complete', 'Simulator', 'Sprint 24', {
+        rewritten: state.tickets.filter(t => t.decision === 'accept').length,
+        runs: state.results.length,
+        passed: state.results.filter(r => r.ok).length
+    });
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -617,7 +901,10 @@ document.getElementById('nav').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return; setView(b.dataset.view);
 });
 document.getElementById('runBtn').onclick = runSprint;
-document.getElementById('resetBtn').onclick = () => location.reload();
+document.getElementById('resetBtn').onclick = () => {
+    track('sim_reset', 'Simulator', 'Reload');
+    location.reload();
+};
 overlay.addEventListener('click', e => { if (e.target === overlay && !state.running) closeModal(); });
 
 function mountLanguageMenu() {
@@ -642,7 +929,10 @@ function mountLanguageMenu() {
             option.className = 'lang-option';
             option.dataset.lang = meta.code;
             option.innerHTML = `<img src="${SiteI18n.flagUrl(meta.code)}" alt=""><span>${meta.native}</span>`;
-            option.onclick = () => SiteI18n.selectLanguage(meta.code);
+            option.onclick = () => {
+                track('sim_language_change', 'Simulator', meta.code);
+                SiteI18n.selectLanguage(meta.code);
+            };
             list.appendChild(option);
         });
     };
@@ -655,6 +945,7 @@ function mountLanguageMenu() {
     toggle.addEventListener('click', (e) => {
         e.stopPropagation();
         wrap.classList.toggle('open');
+        if (wrap.classList.contains('open')) track('sim_language_menu', 'Simulator', 'Opened');
     });
     document.addEventListener('click', () => wrap.classList.remove('open'));
     SiteI18n.resolve().then((lang) => {
@@ -668,6 +959,9 @@ mountLanguageMenu();
 
 renderAgents();
 setView('board');
+track('sim_loaded', 'Simulator', window.opener ? 'popup' : 'direct', {
+    lang: new URLSearchParams(location.search).get('lang') || 'en'
+});
 </script>
 </body>
 </html>
