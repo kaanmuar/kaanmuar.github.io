@@ -983,8 +983,10 @@
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
             box-shadow: none;
-            border-top-color: transparent;
-            transition: background-color 0.3s, border-top-color 0.3s;
+            transition: background-color 0.3s;
+        }
+        #tour-tooltip.transparent-mode #tour-progress {
+            opacity: 1;
         }
         #tour-tooltip.transparent-mode #tour-tooltip-content {
             opacity: 0;
@@ -1058,18 +1060,40 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
 
-            padding: 1rem;
+            padding: 0;
             border-radius: 12px;
             width: auto; /* Let the content define the width */
             max-width: 450px; /* But don't let it get too wide */
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border-top: 4px solid var(--orange-brand);
+            overflow: hidden;
 
             visibility: hidden;
             opacity: 0;
             /* Use a transform for the show/hide animation */
             transform: translateY(20px);
             transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        #tour-progress {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.16);
+            overflow: hidden;
+        }
+        #tour-progress-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, rgba(34, 211, 238, 0.35) 0%, rgba(125, 211, 252, 0.85) 45%, rgba(255, 255, 255, 0.95) 100%);
+            box-shadow: 0 0 14px 2px rgba(125, 211, 252, 0.85);
+        }
+        #tour-tooltip-content {
+            padding: 1rem;
+        }
+        #tour-next-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        #tour-next-btn.tour-next-ready:not(:disabled) {
+            box-shadow: 0 0 14px rgba(34, 211, 238, 0.75);
         }
 
         /* IMPORTANT: Adjust the .dark-mode version as well */
@@ -1748,6 +1772,9 @@
 </div>
 <div id="tour-overlay"></div>
 <div id="tour-tooltip" role="dialog" aria-labelledby="tour-title" aria-describedby="tour-description">
+    <div id="tour-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Demo progress">
+        <div id="tour-progress-fill"></div>
+    </div>
     <div id="tour-tooltip-content">
         <h3 id="tour-title" class="text-lg font-bold"></h3>
         <p id="tour-description" class="text-sm mt-2 mb-4"></p>
@@ -1801,7 +1828,8 @@
                 blockList: new Set(),
                 // --- NEW STATE ---
                 isTourActive: false,
-                currentTourStep: 0
+                currentTourStep: 0,
+                tourDemoReady: false
             },
             data: {
 
@@ -3463,6 +3491,7 @@
                     titleKey: 'tour_title_photo',
                     descriptionKey: 'tour_desc_photo',
                     analyticsTag: 'Viewed_Tour_Step_Photo',
+                    demoMs: 3100,
                     action: function() { this._openModal(); setTimeout(() => this._closeModal(), 2500); }
                 },
                 {
@@ -3470,6 +3499,7 @@
                     titleKey: 'tour_title_controls',
                     descriptionKey: 'tour_desc_controls',
                     analyticsTag: 'Viewed_Tour_Step_Controls',
+                    demoMs: 9800,
                     action: function() {
                         if (window.innerWidth < 768) {
                             // On mobile, scroll down to show the sticky header clearly
@@ -3509,6 +3539,7 @@
                     titleKey: 'tour_title_language',
                     descriptionKey: 'tour_desc_language',
                     analyticsTag: 'Viewed_Tour_Step_Language',
+                    demoMs: 5000,
                     action: function() { this._demoLanguageTour(); }
                 },
                 {
@@ -3516,6 +3547,7 @@
                     titleKey: 'tour_title_simulator',
                     descriptionKey: 'tour_desc_simulator',
                     analyticsTag: 'Viewed_Tour_Step_Simulator',
+                    demoMs: 2600,
                     action: function() { this._demoSimulatorTour(); }
                 },
                 {
@@ -3523,6 +3555,7 @@
                     titleKey: 'tour_title_summary',
                     descriptionKey: 'tour_desc_summary',
                     analyticsTag: 'Viewed_Tour_Step_Summary',
+                    demoMs: 4200,
                     action: function() {
                         if (window.innerWidth < 768) {
                             // On mobile, ensure the element is visible above the tooltip
@@ -3540,6 +3573,7 @@
                     titleKey: 'tour_title_glance',
                     descriptionKey: 'tour_desc_glance',
                     analyticsTag: 'Viewed_Tour_Step_Glance',
+                    demoMs: 4000,
                     action: function() {
                         if (window.innerWidth < 768) {
                             document.querySelector('.infographics-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3555,6 +3589,7 @@
                     titleKey: 'tour_title_toolkit',
                     descriptionKey: 'tour_desc_toolkit',
                     analyticsTag: 'Viewed_Tour_Step_Toolkit',
+                    demoMs: 10500,
                     action: function() {
                         const allSkills = Array.from(this.DOMElements.toolkitContainer.querySelectorAll('.tech-tag'));
                         const skillCount = Math.random() < 0.5 ? 1 : 2;
@@ -3596,6 +3631,7 @@
                     titleKey: 'tour_title_experience',
                     descriptionKey: 'tour_desc_experience',
                     analyticsTag: 'Viewed_Tour_Step_Experience',
+                    demoMs: 4800,
                     action: function() {
                         const headers = this.DOMElements.experienceContainer.querySelectorAll('.accordion-header');
                         if (headers.length > 0) {
@@ -3616,6 +3652,7 @@
                     titleKey: 'tour_title_education',
                     descriptionKey: 'tour_desc_education',
                     analyticsTag: 'Viewed_Tour_Step_Education',
+                    demoMs: 2500,
                     action: function() {
                         const el = document.querySelector('section[aria-labelledby="education-heading"]');
                         if(el) this._glowElement(el, 2000);
@@ -3626,6 +3663,7 @@
                     titleKey: 'tour_title_sidebar',
                     descriptionKey: 'tour_desc_sidebar',
                     analyticsTag: 'Viewed_Tour_Step_Sidebar',
+                    demoMs: 4000,
                     action: function() {
                         const contactLinks = ['#contact-phone', '#contact-email', '#contact-linkedin', '#contact-whatsapp', '#contact-telegram'];
                         contactLinks.forEach((selector, index) => {
@@ -3641,6 +3679,7 @@
                     titleKey: 'tour_title_widget',
                     descriptionKey: 'tour_desc_widget',
                     analyticsTag: 'Viewed_Tour_Step_Widget',
+                    demoMs: 18000,
                     action: function() {
                         if (window.innerWidth < 768) this._setTourTooltipTransparency(true);
                         this._openContactWidget();
@@ -3681,6 +3720,7 @@
                     titleKey: 'tour_title_testimonials',
                     descriptionKey: 'tour_desc_testimonials',
                     analyticsTag: 'Viewed_Tour_Step_Testimonials',
+                    demoMs: 3000,
                     action: function() {
                         if (window.innerWidth < 768) this._setTourTooltipTransparency(true);
                         const firstCard = this.DOMElements.testimonialsContainer.querySelector('.testimonial-card');
@@ -3695,6 +3735,7 @@
                     titleKey: 'tour_title_finish',
                     descriptionKey: 'tour_desc_finish',
                     analyticsTag: 'Viewed_Tour_Step_Finish',
+                    demoMs: 2000,
                     action: function() { this._glowElement(document.querySelector('.cv-footer'), 1500); }
                 }
             ],
@@ -3812,6 +3853,8 @@
                     tourNextBtn: document.getElementById('tour-next-btn'),
                     tourBackBtn: document.getElementById('tour-back-btn'),
                     tourCloseBtn: document.getElementById('tour-close-btn'),
+                    tourProgress: document.getElementById('tour-progress'),
+                    tourProgressFill: document.getElementById('tour-progress-fill'),
 
                 };
             },
@@ -5905,6 +5948,7 @@
 
                 this.state.isTourActive = true;
                 this.state.currentTourStep = 0;
+                this.state.tourDemoReady = false;
                 tourOverlay.style.display = 'block';
 
                 // Add overlay click to advance tour
@@ -5948,10 +5992,12 @@
                 this.DOMElements.tourBackBtn.removeEventListener('click', this.boundPrevTourStep);
                 this.DOMElements.tourCloseBtn.removeEventListener('click', this.boundEndTour);
 
+                this._clearTourProgress();
                 this._trackEvent('tour_ended', 'Interactive Tour', `Step ${this.state.currentTourStep + 1}`);
             },
 
             nextTourStep() {
+                if (!this.state.tourDemoReady) return;
                 if (this.state.currentTourStep < this.tourSteps.length - 1) {
                     this.state.currentTourStep++;
                     this.showTourStep(this.state.currentTourStep);
@@ -5980,7 +6026,9 @@
                     const targetElement = document.querySelector(selector);
 
                 if (!targetElement) {
-                    this.nextTourStep(); return;
+                    this.state.tourDemoReady = true;
+                    this.nextTourStep();
+                    return;
                 }
 
                 if (runActionAndAnimation) {
@@ -5998,6 +6046,10 @@
 
                     this.DOMElements.tourBackBtn.style.display = stepIndex === 0 ? 'none' : 'inline-block';
                     this.DOMElements.tourNextBtn.textContent = stepIndex === this.tourSteps.length - 1 ? translations.tour_finish : translations.tour_next;
+                    if (runActionAndAnimation) {
+                        this.DOMElements.tourNextBtn.disabled = true;
+                        this.DOMElements.tourNextBtn.classList.remove('tour-next-ready');
+                    }
 
                     const tooltip = this.DOMElements.tourTooltip;
 
@@ -6009,6 +6061,11 @@
                     if (runActionAndAnimation && typeof step.action === 'function') {
                         step.action.call(this);
                     }
+                    if (runActionAndAnimation) {
+                        this._startTourProgress(step.demoMs || 2500);
+                    } else {
+                        this._markTourDemoReady();
+                    }
                 }, runActionAndAnimation ? 600 : 50);
             },
 
@@ -6017,9 +6074,53 @@
                 if (e.key === 'Escape') {
                     this.endTour();
                 } else if (e.key === 'ArrowRight') {
-                    this.nextTourStep();
+                    if (this.state.tourDemoReady) this.nextTourStep();
                 } else if (e.key === 'ArrowLeft') {
                     this.prevTourStep();
+                }
+            },
+
+            _clearTourProgress() {
+                if (this._tourProgressTimer) {
+                    clearTimeout(this._tourProgressTimer);
+                    this._tourProgressTimer = null;
+                }
+                const fill = this.DOMElements.tourProgressFill;
+                if (!fill) return;
+                fill.style.transition = 'none';
+                fill.style.width = '0%';
+            },
+
+            _startTourProgress(ms) {
+                this.state.tourDemoReady = false;
+                const fill = this.DOMElements.tourProgressFill;
+                const bar = this.DOMElements.tourProgress;
+                const next = this.DOMElements.tourNextBtn;
+                if (next) {
+                    next.disabled = true;
+                    next.classList.remove('tour-next-ready');
+                }
+                if (!fill) {
+                    this._tourProgressTimer = setTimeout(() => this._markTourDemoReady(), ms);
+                    return;
+                }
+                this._clearTourProgress();
+                if (bar) bar.setAttribute('aria-valuenow', '0');
+                void fill.offsetWidth;
+                fill.style.transition = `width ${ms}ms linear`;
+                fill.style.width = '100%';
+                this._tourProgressTimer = setTimeout(() => this._markTourDemoReady(), ms);
+            },
+
+            _markTourDemoReady() {
+                this.state.tourDemoReady = true;
+                this._tourProgressTimer = null;
+                const next = this.DOMElements.tourNextBtn;
+                const bar = this.DOMElements.tourProgress;
+                if (bar) bar.setAttribute('aria-valuenow', '100');
+                if (next) {
+                    next.disabled = false;
+                    next.classList.add('tour-next-ready');
                 }
             },
 
