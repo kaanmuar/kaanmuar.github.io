@@ -27,4 +27,17 @@
     <xhtml:link rel="alternate" hreflang="fr" href="https://kaanmuar.github.io/simulador.html?lang=fr"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://kaanmuar.github.io/simulador.html?lang=it"/>
   </url>
+  <url>
+    <loc>https://kaanmuar.github.io/qa-lab.html</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kaanmuar.github.io/qa-lab.html?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kaanmuar.github.io/qa-lab.html?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://kaanmuar.github.io/qa-lab.html?lang=es"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kaanmuar.github.io/qa-lab.html?lang=pt"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://kaanmuar.github.io/qa-lab.html?lang=de"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://kaanmuar.github.io/qa-lab.html?lang=fr"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://kaanmuar.github.io/qa-lab.html?lang=it"/>
+  </url>
 </urlset>

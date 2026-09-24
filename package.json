@@ -5,9 +5,11 @@
   "scripts": {
     "build:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --minify",
     "watch:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --watch",
+    "test": "npm run test:playwright && npm run test:cypress",
+    "test:full": "npm run test:playwright && npm run test:cypress && npm run test:robot",
     "test:cy": "cypress run",
     "test:cypress": "cypress run",
-    "test:robot": "robot cypress/e2e",
+    "test:robot": "python3 -m venv .venv-robot >/dev/null 2>&1; .venv-robot/bin/pip install -q -r requirements-robot.txt && .venv-robot/bin/robot --outputdir robot-results tests/robot",
     "test:playwright": "playwright test"
   },
   "author": "Carlos A. Muñoz",

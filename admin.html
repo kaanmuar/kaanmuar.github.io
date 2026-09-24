@@ -57,6 +57,25 @@
             background-color: #e0e7ff; color: #4338ca; font-size: 0.7rem; font-weight: 600;
             padding: 2px 8px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 4px;
         }
+        html { overflow-x: hidden; }
+        #login-overlay {
+            inset: 0; width: 100%; height: 100%; min-height: 100dvh;
+        }
+        .login-box { max-width: min(400px, 100%); }
+        @media (max-width: 767px) {
+            .login-box { padding: 1.25rem; width: 92%; }
+            #dashboard { overflow-x: hidden; }
+            #dashboard > .flex.justify-between.items-center {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            #dashboard h1 { font-size: 1.5rem; line-height: 1.25; }
+            .tab-btn { padding: 0.45rem 0.7rem; font-size: 0.85rem; }
+            .filter-container input, .filter-container select { min-width: 0; max-width: 100%; }
+            .filter-container .flex.gap-2 { flex-wrap: wrap; }
+            .title-container { flex-wrap: wrap; }
+        }
     </style>
 </head>
 <body>
@@ -65,11 +84,12 @@
     <div class="login-box">
         <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
         <form id="login-form"><div class="mb-4"><label for="email" class="block font-medium mb-1">Email</label><input type="email" id="email" required class="w-full p-2 border border-gray-300 rounded-md"></div><div class="mb-4"><label for="password" class="block font-medium mb-1">Password</label><input type="password" id="password" required class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Login</button><p id="login-error" class="text-red-600 text-sm mt-2"></p></form>
+        <p class="text-center mt-4"><a href="index.html" id="admin-home" class="text-cyan-700 underline">← Back to CV</a></p>
     </div>
 </div>
 
 <main id="dashboard" class="container mx-auto p-4 md:p-6 hidden">
-    <div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-gray-800">CV Admin Dashboard</h1><button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600">Logout</button></div>
+    <div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-gray-800">CV Admin Dashboard</h1><div class="flex items-center gap-3"><a href="index.html" id="admin-home-dash" class="text-cyan-700 underline">← Back to CV</a><button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600">Logout</button></div></div>
 
     <div class="flex flex-wrap gap-2 mb-6 border-b pb-2">
         <button id="messages-tab-btn" class="tab-btn active">Messages</button>
