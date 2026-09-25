@@ -190,6 +190,150 @@
         }
     };
 
+    const RECRUITER_COPY = {
+        en: {
+            print_see_work: 'See the work for yourself',
+            print_lab_name: 'QA regression lab',
+            print_lab_pitch: 'Curious how this CV gets checked? Open it and watch the tests move through the page, then see what passed. Free, and nothing to install.',
+            print_studio_name: 'SDLC studio',
+            print_studio_pitch: 'Want to sit in on a software project? Open it and follow one feature from the planning board until the team has tested it and it is ready to ship.',
+            print_current_role: 'Current role',
+            print_now: 'Current',
+            print_certs_title: 'Certifications',
+            print_stack: 'Stack',
+            print_experience_short: 'Experience',
+            print_education_short: 'Education',
+            print_summary_short: 'Summary',
+            print_cat_pm: 'Delivery',
+            print_cat_qa: 'Quality engineering',
+            print_cat_lang: 'Languages and test frameworks',
+            print_cat_cloud: 'Cloud and delivery',
+            print_cat_analytics: 'Observability and security',
+            print_cat_platform: 'Platforms',
+            print_cat_system: 'Systems'
+        },
+        es: {
+            print_see_work: 'Mira el trabajo tú mismo',
+            print_lab_name: 'Laboratorio de regresión QA',
+            print_lab_pitch: '¿Quieres ver cómo se revisa este CV? Ábrelo y mira cómo las pruebas recorren la página, y luego qué pasó. Es gratis y no hay que instalar nada.',
+            print_studio_name: 'Estudio SDLC',
+            print_studio_pitch: '¿Quieres sentarte en un proyecto de software? Ábrelo y sigue una funcionalidad desde el tablero de planificación hasta que el equipo la ha probado y está lista para salir.',
+            print_current_role: 'Rol actual',
+            print_now: 'Actual',
+            print_certs_title: 'Certificaciones',
+            print_stack: 'Stack',
+            print_experience_short: 'Experiencia',
+            print_education_short: 'Educación',
+            print_summary_short: 'Resumen',
+            print_cat_pm: 'Entrega',
+            print_cat_qa: 'Ingeniería de calidad',
+            print_cat_lang: 'Lenguajes y frameworks de prueba',
+            print_cat_cloud: 'Nube y entrega',
+            print_cat_analytics: 'Observabilidad y seguridad',
+            print_cat_platform: 'Plataformas',
+            print_cat_system: 'Sistemas'
+        },
+        pt: {
+            print_see_work: 'Veja o trabalho você mesmo',
+            print_lab_name: 'Laboratório de regressão de QA',
+            print_lab_pitch: 'Curioso para ver como este CV é verificado? Abra e acompanhe os testes percorrendo a página, e depois o que passou. É grátis e não precisa instalar nada.',
+            print_studio_name: 'Estúdio SDLC',
+            print_studio_pitch: 'Quer acompanhar um projeto de software? Abra e siga uma funcionalidade do quadro de planejamento até o time tê-la testado e ela estar pronta para ir ao ar.',
+            print_current_role: 'Função atual',
+            print_now: 'Atual',
+            print_certs_title: 'Certificações',
+            print_stack: 'Stack',
+            print_experience_short: 'Experiência',
+            print_education_short: 'Educação',
+            print_summary_short: 'Resumo',
+            print_cat_pm: 'Entrega',
+            print_cat_qa: 'Engenharia de qualidade',
+            print_cat_lang: 'Linguagens e frameworks de teste',
+            print_cat_cloud: 'Nuvem e entrega',
+            print_cat_analytics: 'Observabilidade e segurança',
+            print_cat_platform: 'Plataformas',
+            print_cat_system: 'Sistemas'
+        },
+        de: {
+            print_see_work: 'Sieh dir die Arbeit selbst an',
+            print_lab_name: 'QA-Regressionslabor',
+            print_lab_pitch: 'Neugierig, wie dieser Lebenslauf geprüft wird? Öffne ihn und sieh zu, wie die Tests durch die Seite laufen, und danach, was bestanden hat. Kostenlos, und nichts zu installieren.',
+            print_studio_name: 'SDLC-Studio',
+            print_studio_pitch: 'Möchtest du bei einem Softwareprojekt dabei sein? Öffne es und verfolge ein Feature vom Planungsboard, bis das Team es getestet hat und es bereit zum Ausliefern ist.',
+            print_current_role: 'Aktuelle Rolle',
+            print_now: 'Aktuell',
+            print_certs_title: 'Zertifizierungen',
+            print_stack: 'Stack',
+            print_experience_short: 'Erfahrung',
+            print_education_short: 'Ausbildung',
+            print_summary_short: 'Profil',
+            print_cat_pm: 'Lieferung',
+            print_cat_qa: 'Quality Engineering',
+            print_cat_lang: 'Sprachen und Test-Frameworks',
+            print_cat_cloud: 'Cloud und Lieferung',
+            print_cat_analytics: 'Beobachtbarkeit und Sicherheit',
+            print_cat_platform: 'Plattformen',
+            print_cat_system: 'Systeme'
+        },
+        fr: {
+            print_see_work: 'Voyez le travail par vous-même',
+            print_lab_name: 'Laboratoire de régression QA',
+            print_lab_pitch: 'Curieux de voir comment ce CV est vérifié ? Ouvrez-le et regardez les tests parcourir la page, puis ce qui a réussi. Gratuit, et rien à installer.',
+            print_studio_name: 'Studio SDLC',
+            print_studio_pitch: 'Envie d’assister à un projet logiciel ? Ouvrez-le et suivez une fonctionnalité du tableau de planification jusqu’à ce que l’équipe l’ait testée et qu’elle soit prête à partir.',
+            print_current_role: 'Poste actuel',
+            print_now: 'Actuel',
+            print_certs_title: 'Certifications',
+            print_stack: 'Stack',
+            print_experience_short: 'Expérience',
+            print_education_short: 'Formation',
+            print_summary_short: 'Résumé',
+            print_cat_pm: 'Livraison',
+            print_cat_qa: 'Ingénierie qualité',
+            print_cat_lang: 'Langages et frameworks de test',
+            print_cat_cloud: 'Cloud et livraison',
+            print_cat_analytics: 'Observabilité et sécurité',
+            print_cat_platform: 'Plateformes',
+            print_cat_system: 'Systèmes'
+        },
+        it: {
+            print_see_work: 'Guarda il lavoro di persona',
+            print_lab_name: 'Laboratorio di regressione QA',
+            print_lab_pitch: 'Curioso di vedere come viene controllato questo CV? Aprilo e guarda i test attraversare la pagina, poi cosa è passato. Gratis, e niente da installare.',
+            print_studio_name: 'Studio SDLC',
+            print_studio_pitch: 'Vuoi assistere a un progetto software? Aprilo e segui una funzionalità dalla bacheca di pianificazione fino a quando il team l’ha testata ed è pronta per uscire.',
+            print_current_role: 'Ruolo attuale',
+            print_now: 'Attuale',
+            print_certs_title: 'Certificazioni',
+            print_stack: 'Stack',
+            print_experience_short: 'Esperienza',
+            print_education_short: 'Formazione',
+            print_summary_short: 'Profilo',
+            print_cat_pm: 'Delivery',
+            print_cat_qa: 'Ingegneria della qualità',
+            print_cat_lang: 'Linguaggi e framework di test',
+            print_cat_cloud: 'Cloud e delivery',
+            print_cat_analytics: 'Osservabilità e sicurezza',
+            print_cat_platform: 'Piattaforme',
+            print_cat_system: 'Sistemi'
+        }
+    };
+
+    const PRINT_COMPANIES = {
+        'Team International': 'https://www.teaminternational.com',
+        'RockStar Coders Agency': 'https://www.rockstarcoders.com',
+        'Globant': 'https://www.globant.com',
+        'Genius Sports': 'https://www.geniussports.com',
+        'Zagalabs': 'https://zagalabs.com',
+        'The Collective Intelligence Group': 'https://thecollectiveintelligencegroup.com',
+        'Bitgray': 'https://bitgray.co',
+        'Prodigious LATAM (Razorfish)': 'https://www.prodigious.com',
+        'Advantech': 'https://www.advantech.com',
+        'Intel Corporation': 'https://www.intel.com',
+        'Belcorp': 'https://www.belcorp.com',
+        'McAfee': 'https://www.mcafee.com'
+    };
+
     function boot() {
         if (!window.CVData) {
             console.error('CVData failed to load (js/cv-data.js)');
@@ -1359,6 +1503,12 @@
             },
 
             _populateAllTranslations() {
+                Object.keys(RECRUITER_COPY).forEach((lang) => {
+                    const dict = this.data.translations[lang];
+                    const pack = RECRUITER_COPY[lang];
+                    if (!dict || !pack) return;
+                    Object.keys(pack).forEach((key) => { dict[key] = pack[key]; });
+                });
                 Object.keys(PRINT_COPY).forEach((lang) => {
                     const dict = this.data.translations[lang];
                     const pack = PRINT_COPY[lang];
@@ -2620,48 +2770,177 @@
             },
 
 
-            /**
-             * Generates a complete, clean HTML string of the CV content for reliable printing.
-             */
-            _generatePrintableHTML() {
-                const experiences = this.data.experiences;
-                const skills = this.data.skills;
-                const profilePhotoSrc = this.DOMElements.profilePhoto.src;
-                const summaryFullText = [this._s('summary_text'), this._s('summary_detail_1'), this._s('summary_detail_2')].filter(Boolean).join(' ');
-                const techLabel = this._s('print_technologies', 'Technologies Used');
+            _escPrint(value) {
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            },
 
+            _printLink(href, label) {
+                return `<a href="${this._escPrint(href)}" target="_blank" rel="noopener noreferrer">${this._escPrint(label)}</a>`;
+            },
+
+            _companyHtml(name) {
+                const href = PRINT_COMPANIES[name];
+                return href ? this._printLink(href, name) : this._escPrint(name);
+            },
+
+            _recruiterCss() {
                 return `
-                    <style>
-                        .print-only-container { position: relative; font-family: Inter, Arial, sans-serif; color: #12181f; padding: 40px; background-color: #fff; width: 800px; }
-                        .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 80px; color: rgba(0, 0, 0, 0.05); font-weight: bold; pointer-events: none; z-index: 0; }
-                        h1, h2, h3, h4 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600; }
-                        h1 { font-size: 26pt; font-weight: 700; text-align: center; margin: 0; } h2 { font-size: 14pt; text-align: center; color: #4a5560; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #0d6e76; } h3 { font-size: 16pt; font-weight: 600; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #d5dce3; padding-bottom: 5px; } h4 { font-size: 12pt; font-weight: 600; margin-top: 15px; margin-bottom: 2px; } p, li { font-size: 10pt; line-height: 1.5; color: #333; } ul { list-style-type: disc; padding-left: 20px; margin-top: 5px; } .contact-info { text-align: center; margin-bottom: 20px; font-size: 10pt; } .contact-info a { color: #0d6e76; text-decoration: none; margin: 0 5px; } .profile-photo { display: block; margin: 0 auto 20px auto; width: 120px; height: 120px; border-radius: 50%; object-fit: cover; object-position: center 18%; } .toolkit-category { margin-bottom: 10px; } .toolkit-skills { font-size: 9pt; color: #555; } .exp-item { margin-bottom: 20px; } .exp-dates { color: #555; font-style: italic; } .technologies { font-size: 9pt; color: #0d6e76; font-style: italic; } .languages-section p { margin-bottom: 5px; }
-                    </style>
-
-                    <div class="print-only-container">
-                        <div class="watermark">Carlos A. Muñoz - ${this._s('print_confidential', 'Confidential')}</div>
-                        <img src="${profilePhotoSrc}" class="profile-photo" alt="Profile Photo">
-                        <h1>CARLOS A. MUÑOZ</h1>
-                        <h2>${this._s('job_title')}</h2>
-                        <div class="contact-info">
-                             <a href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a> | <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">${this._s('print_linkedin', 'LinkedIn')}</a> | <span>+57 320 919 1010</span> | <a href="https://wa.me/573209191010">WhatsApp</a> | <a href="https://t.me/+573209191010">Telegram</a><br><a href="https://kaanmuar.github.io/">${this._s('print_online_cv')}</a>
-                        </div>
-                        <h3>${this._s('summary_title')}</h3><p>${summaryFullText}</p>
-                        <h3>${this._s('toolkit_title')}</h3>
-                        ${Object.keys(skills).map(categoryKey => `<div class="toolkit-category"><h4>${this._s(`toolkit_${categoryKey}`, categoryKey)}</h4><p class="toolkit-skills">${skills[categoryKey].map(s => s.name).join(', ')}</p></div>`).join('')}
-                        <h3>${this._s('languages_title')}</h3><div class="languages-section"><p><strong>${this._s('lang_name_es')}:</strong> ${this._s('lang_native')}</p><p><strong>${this._s('lang_name_en')}:</strong> ${this._s('lang_fluent')} (C2)</p><p><strong>${this._s('lang_name_pt')}:</strong> ${this._s('lang_fluent')}</p><p><strong>${this._s('lang_others')}:</strong> ${this._s('lang_basic')}</p></div>
-                        <h3>${this._s('experience_title')}</h3>
-                        ${experiences.map((exp, i) => {
-                            const item = this._experienceExport(exp, i);
-                            return `<div class="exp-item"><h4>${item.title} — ${item.company}</h4><p class="exp-dates">${item.dates}</p><ul>${item.details.map(detail => `<li>${detail}</li>`).join('')}</ul><p class="technologies"><strong>${techLabel}:</strong> ${item.techUsed.join(', ')}</p></div>`;
-                        }).join('')}
-                        <h3>${this._s('education_title')}</h3><h4>${this._s('education_subheading')}</h4>${this._educationEntries().map((item) => `<p><strong>${item.degree}</strong> - ${item.school}</p>`).join('')}<h4>${this._s('certs_subheading')}</h4><p>${this._certEntries().map((item) => `<strong>${item.label}</strong> ${item.value}`).join(' | ')}</p>
-                    </div>
+                    .cv-print { color: #12181f; font-family: Inter, Arial, sans-serif; background: #fff; }
+                    .cv-print .measure { position: absolute; left: 0; top: 0; width: 178mm; visibility: hidden; }
+                    .cv-print .sheet { width: 210mm; height: 297mm; margin: 0 auto 12px; background: #fff; position: relative; }
+                    .cv-print .sheet-body { position: absolute; top: 14mm; left: 16mm; right: 16mm; bottom: 12mm; overflow: hidden; }
+                    .cv-print .sheet-foot { position: absolute; left: 16mm; right: 16mm; bottom: 6mm; border-top: 1px solid #d5dce3; padding-top: 2mm; display: flex; justify-content: space-between; font-size: 8pt; color: #4a5560; }
+                    .cv-print h1, .cv-print h2, .cv-print h3 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600; color: #12181f; }
+                    .cv-print h1 { font-size: 22pt; line-height: 1.05; margin: 0; letter-spacing: -0.02em; }
+                    .cv-print a { color: #0d6e76; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+                    .cv-print .role { margin: 4px 0 0; font-size: 11pt; color: #0d6e76; font-weight: 600; }
+                    .cv-print .loc, .cv-print .contact { margin: 3px 0 0; font-size: 9pt; color: #4a5560; }
+                    .cv-print .contact { line-height: 1.4; }
+                    .cv-print h2 { font-size: 12pt; margin: 14px 0 6px; padding-bottom: 2px; border-bottom: 1.5px solid #0d6e76; }
+                    .cv-print p { margin: 0 0 7px; font-size: 10.5pt; line-height: 1.45; }
+                    .cv-print .skill, .cv-print .live { margin-bottom: 4px; }
+                    .cv-print .job { margin: 0 0 16px; }
+                    .cv-print .job.current { margin-top: 2px; padding-left: 10px; border-left: 3px solid #0d6e76; }
+                    .cv-print .now { display: inline-block; margin-right: 8px; padding: 1px 6px 2px; border: 1px solid #0d6e76; color: #0d6e76; font-family: Inter, Arial, sans-serif; font-size: 8pt; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 2px; }
+                    .cv-print .job-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+                    .cv-print .job h3 { font-size: 11pt; margin: 0; }
+                    .cv-print .dates { margin: 0; font-size: 9.5pt; color: #4a5560; white-space: nowrap; }
+                    .cv-print .company { margin: 1px 0 4px; font-size: 10pt; font-weight: 600; }
+                    .cv-print ul { margin: 0; padding: 0 0 0 16px; }
+                    .cv-print li { font-size: 10.5pt; line-height: 1.45; margin: 0 0 3px; }
+                    .cv-print .block { display: flow-root; }
+                    .cv-print .stack { margin: 3px 0 0; font-size: 8.5pt; line-height: 1.35; color: #4a5560; }
+                    .cv-print .stack span { color: #0d6e76; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 7.5pt; margin-right: 4px; }
+                    .cv-print .edu { margin-bottom: 2px; }
                 `;
             },
 
-            async _prepareAndCleanupForPrint(action) {
-                // Use a direct reference for the loading indicator
+            _jobPrintBlock(exp, index, current) {
+                const item = this._experienceExport(exp, index);
+                const bullets = item.details.map((line) => `<li>${this._escPrint(line)}</li>`).join('');
+                const tech = (item.techUsed || []).join(', ');
+                const badge = current ? `<span class="now">${this._escPrint(this._s('print_now', 'Current'))}</span>` : '';
+                return `
+                    <article class="job${current ? ' current' : ''}">
+                        <div class="job-row">
+                            <h3>${badge}${this._escPrint(item.title)}</h3>
+                            <p class="dates">${this._escPrint(item.dates)}</p>
+                        </div>
+                        <p class="company">${this._companyHtml(item.company)}</p>
+                        <ul>${bullets}</ul>
+                        ${tech ? `<p class="stack"><span>${this._escPrint(this._s('print_stack', 'Stack'))}</span> ${this._escPrint(tech)}</p>` : ''}
+                    </article>
+                `;
+            },
+
+            _recruiterBlocks() {
+                const blocks = [];
+                const experiences = this.data.experiences || [];
+                blocks.push(`
+                    <header class="mast">
+                        <h1>Carlos A. Muñoz</h1>
+                        <p class="role">${this._escPrint(this._s('job_title'))}</p>
+                        <p class="loc">Medellín, Colombia</p>
+                        <p class="contact">${this._printLink('mailto:kaanmuar@gmail.com', 'kaanmuar@gmail.com')} · ${this._printLink('tel:+573209191010', '+57 320 919 1010')} · ${this._printLink('https://www.linkedin.com/in/carlos-andres-m-2a60b8b/', 'linkedin.com/in/carlos-andres-m-2a60b8b')} · ${this._printLink('https://kaanmuar.github.io/', 'kaanmuar.github.io')}</p>
+                    </header>
+                `);
+                blocks.push(`<h2>${this._escPrint(this._s('print_see_work', 'See the work for yourself'))}</h2>`);
+                blocks.push(`<p class="live">${this._printLink('https://kaanmuar.github.io/qa-lab.html', this._s('print_lab_name', 'QA regression lab'))} — ${this._escPrint(this._s('print_lab_pitch'))}</p>`);
+                blocks.push(`<p class="live">${this._printLink('https://kaanmuar.github.io/simulador.html', this._s('print_studio_name', 'SDLC studio'))} — ${this._escPrint(this._s('print_studio_pitch'))}</p>`);
+                blocks.push(`<h2>${this._escPrint(this._s('print_skills', 'Skills'))}</h2>`);
+                Object.keys(this.data.skills || {}).forEach((key) => {
+                    const names = this.data.skills[key].map((skill) => skill.name).join(', ');
+                    blocks.push(`<p class="skill"><strong>${this._escPrint(this._s('print_cat_' + key, key))}.</strong> ${this._escPrint(names)}</p>`);
+                });
+                if (experiences[0]) {
+                    blocks.push(`<h2>${this._escPrint(this._s('print_current_role', 'Current role'))}</h2>`);
+                    blocks.push(this._jobPrintBlock(experiences[0], 0, true));
+                }
+                blocks.push(`<h2>${this._escPrint(this._s('print_certs_title', 'Certifications'))}</h2>`);
+                this._certEntries().forEach((item) => {
+                    const label = String(item.label || '').replace(/:\s*$/, '');
+                    blocks.push(`<p class="edu"><strong>${this._escPrint(label)}</strong> · ${this._escPrint(item.value)}</p>`);
+                });
+                blocks.push(`<h2>${this._escPrint(this._s('languages_title', 'Languages'))}</h2>`);
+                blocks.push(`<p>${this._escPrint(this._s('lang_name_es'))}, ${this._escPrint(this._s('lang_native'))} · ${this._escPrint(this._s('lang_name_en'))}, ${this._escPrint(this._s('lang_fluent'))} (C2) · ${this._escPrint(this._s('lang_name_pt'))}, ${this._escPrint(this._s('lang_fluent'))} · ${this._escPrint(this._s('lang_others'))}, ${this._escPrint(this._s('lang_basic'))}</p>`);
+                blocks.push(`<h2>${this._escPrint(this._s('print_experience_short', 'Experience'))}</h2>`);
+                experiences.slice(1).forEach((exp, offset) => {
+                    blocks.push(this._jobPrintBlock(exp, offset + 1, false));
+                });
+                blocks.push(`<h2>${this._escPrint(this._s('print_education_short', 'Education'))}</h2>`);
+                this._educationEntries().forEach((item) => {
+                    blocks.push(`<p class="edu"><strong>${this._escPrint(item.degree)}</strong> · ${this._escPrint(item.school)}</p>`);
+                });
+                blocks.push(`<h2>${this._escPrint(this._s('print_summary_short', 'Summary'))}</h2>`);
+                ['summary_text', 'summary_detail_1', 'summary_detail_2'].forEach((key) => {
+                    const text = this._s(key);
+                    if (text) blocks.push(`<p>${this._escPrint(text)}</p>`);
+                });
+                return blocks;
+            },
+
+            async _renderRecruiterSheets() {
+                const host = document.createElement('div');
+                host.className = 'cv-print';
+                host.setAttribute('aria-hidden', 'true');
+                host.style.cssText = 'position:fixed;left:0;top:0;width:210mm;z-index:1;background:#fff;';
+                host.innerHTML = `<style>${this._recruiterCss()}</style><div class="measure"></div>`;
+                document.body.appendChild(host);
+                const measure = host.querySelector('.measure');
+                const blocks = this._recruiterBlocks();
+                measure.innerHTML = blocks.map((html, i) => `<div class="block" data-i="${i}">${html}</div>`).join('');
+                try {
+                    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+                } catch (e) { /* fonts are optional for layout */ }
+                await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+                const probe = document.createElement('div');
+                probe.className = 'sheet';
+                probe.innerHTML = '<div class="sheet-body"></div>';
+                host.appendChild(probe);
+                const limit = probe.querySelector('.sheet-body').clientHeight || 1020;
+                probe.remove();
+
+                const nodes = [...measure.children];
+                const heights = nodes.map((node) => node.getBoundingClientRect().height);
+                const pages = [];
+                let page = [];
+                let used = 0;
+                const slack = 8;
+                nodes.forEach((node, index) => {
+                    const h = heights[index];
+                    const isHead = node.querySelector(':scope > h2');
+                    const next = heights[index + 1] || 0;
+                    const room = limit - used - slack;
+                    if (used > 0 && (h > room || (isHead && next > 0 && h + next > room))) {
+                        pages.push(page);
+                        page = [];
+                        used = 0;
+                    }
+                    page.push(node.innerHTML);
+                    used += h;
+                });
+                if (page.length) pages.push(page);
+
+                const sheets = pages.map((parts, index) => `
+                    <section class="sheet">
+                        <div class="sheet-body">${parts.join('')}</div>
+                        <footer class="sheet-foot">
+                            <span>Carlos A. Muñoz · ${this._printLink('https://kaanmuar.github.io/', 'kaanmuar.github.io')}</span>
+                            <span>${index + 1} / ${pages.length}</span>
+                        </footer>
+                    </section>
+                `).join('');
+                host.innerHTML = `<style>${this._recruiterCss()}</style>${sheets}`;
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+                return host;
+            },
+
+            _showExportOverlay(message) {
                 let loadingIndicator = document.getElementById('export-loading-overlay');
                 if (!loadingIndicator) {
                     loadingIndicator = document.createElement('div');
@@ -2669,386 +2948,197 @@
                     loadingIndicator.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); color: white; display: flex; align-items: center; justify-content: center; z-index: 9999; font-size: 1.5rem;';
                     document.body.appendChild(loadingIndicator);
                 }
-                loadingIndicator.textContent = this._s('print_preparing', 'Preparing Print View...');
+                loadingIndicator.textContent = message;
                 loadingIndicator.style.display = 'flex';
+                return loadingIndicator;
+            },
 
+            _recruiterWordHtml() {
+                const experiences = this.data.experiences || [];
+                const job = (exp, index) => {
+                    const item = this._experienceExport(exp, index);
+                    const href = PRINT_COMPANIES[item.company];
+                    const company = href ? `<a href="${this._escPrint(href)}">${this._escPrint(item.company)}</a>` : this._escPrint(item.company);
+                    return `<h3>${this._escPrint(item.title)}</h3><p><strong>${company}</strong> | ${this._escPrint(item.dates)}</p><ul>${item.details.map((line) => `<li>${this._escPrint(line)}</li>`).join('')}</ul><p><strong>${this._escPrint(this._s('print_stack', 'Stack'))}:</strong> ${this._escPrint(item.techUsed.join(', '))}</p>`;
+                };
+                return `
+                    <h1>Carlos A. Muñoz</h1>
+                    <p>${this._escPrint(this._s('job_title'))}</p>
+                    <p>Medellín, Colombia</p>
+                    <p><a href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a> | <a href="tel:+573209191010">+57 320 919 1010</a> | <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">linkedin.com/in/carlos-andres-m-2a60b8b</a> | <a href="https://kaanmuar.github.io/">kaanmuar.github.io</a></p>
+                    <h2>${this._escPrint(this._s('print_see_work', 'See the work for yourself'))}</h2>
+                    <p><a href="https://kaanmuar.github.io/qa-lab.html">${this._escPrint(this._s('print_lab_name', 'QA regression lab'))}</a> — ${this._escPrint(this._s('print_lab_pitch'))}</p>
+                    <p><a href="https://kaanmuar.github.io/simulador.html">${this._escPrint(this._s('print_studio_name', 'SDLC studio'))}</a> — ${this._escPrint(this._s('print_studio_pitch'))}</p>
+                    <h2>${this._escPrint(this._s('print_skills', 'Skills'))}</h2>
+                    ${Object.keys(this.data.skills || {}).map((key) => `<p><strong>${this._escPrint(this._s('print_cat_' + key, key))}:</strong> ${this._escPrint(this.data.skills[key].map((skill) => skill.name).join(', '))}</p>`).join('')}
+                    ${experiences[0] ? `<h2>${this._escPrint(this._s('print_current_role', 'Current role'))}</h2>${job(experiences[0], 0)}` : ''}
+                    <h2>${this._escPrint(this._s('print_certs_title', 'Certifications'))}</h2>
+                    ${this._certEntries().map((item) => `<p><strong>${this._escPrint(String(item.label || '').replace(/:\s*$/, ''))}</strong> ${this._escPrint(item.value)}</p>`).join('')}
+                    <h2>${this._escPrint(this._s('languages_title', 'Languages'))}</h2>
+                    <p>${this._escPrint(this._s('lang_name_es'))}, ${this._escPrint(this._s('lang_native'))} · ${this._escPrint(this._s('lang_name_en'))}, ${this._escPrint(this._s('lang_fluent'))} (C2) · ${this._escPrint(this._s('lang_name_pt'))}, ${this._escPrint(this._s('lang_fluent'))} · ${this._escPrint(this._s('lang_others'))}, ${this._escPrint(this._s('lang_basic'))}</p>
+                    <h2>${this._escPrint(this._s('print_experience_short', 'Experience'))}</h2>
+                    ${experiences.slice(1).map((exp, offset) => job(exp, offset + 1)).join('<hr>')}
+                    <h2>${this._escPrint(this._s('print_education_short', 'Education'))}</h2>
+                    ${this._educationEntries().map((item) => `<p><strong>${this._escPrint(item.degree)}</strong> — ${this._escPrint(item.school)}</p>`).join('')}
+                    <h2>${this._escPrint(this._s('print_summary_short', 'Summary'))}</h2>
+                    ${['summary_text', 'summary_detail_1', 'summary_detail_2'].map((key) => this._s(key)).filter(Boolean).map((text) => `<p>${this._escPrint(text)}</p>`).join('')}
+                `;
+            },
+
+            _recruiterText() {
+                const experiences = this.data.experiences || [];
+                const lines = [];
+                const job = (exp, index) => {
+                    const item = this._experienceExport(exp, index);
+                    const href = PRINT_COMPANIES[item.company];
+                    lines.push(`${item.title}`);
+                    lines.push(`${item.company}${href ? ' (' + href + ')' : ''} | ${item.dates}`);
+                    item.details.forEach((line) => lines.push('- ' + line));
+                    lines.push(`${this._s('print_stack', 'Stack')}: ${item.techUsed.join(', ')}`);
+                    lines.push('');
+                };
+                lines.push('Carlos A. Muñoz');
+                lines.push(this._s('job_title'));
+                lines.push('Medellín, Colombia');
+                lines.push('kaanmuar@gmail.com | +57 320 919 1010 | https://www.linkedin.com/in/carlos-andres-m-2a60b8b/ | https://kaanmuar.github.io/');
+                lines.push('');
+                lines.push(`## ${this._s('print_see_work', 'See the work for yourself')} ##`);
+                lines.push(`${this._s('print_lab_name', 'QA regression lab')} (https://kaanmuar.github.io/qa-lab.html) — ${this._s('print_lab_pitch')}`);
+                lines.push(`${this._s('print_studio_name', 'SDLC studio')} (https://kaanmuar.github.io/simulador.html) — ${this._s('print_studio_pitch')}`);
+                lines.push('');
+                lines.push(`## ${this._s('print_skills', 'Skills')} ##`);
+                Object.keys(this.data.skills || {}).forEach((key) => {
+                    lines.push(`${this._s('print_cat_' + key, key)}: ${this.data.skills[key].map((skill) => skill.name).join(', ')}`);
+                });
+                lines.push('');
+                if (experiences[0]) {
+                    lines.push(`## ${this._s('print_current_role', 'Current role')} ##`);
+                    job(experiences[0], 0);
+                }
+                lines.push(`## ${this._s('print_certs_title', 'Certifications')} ##`);
+                this._certEntries().forEach((item) => lines.push(`- ${String(item.label || '').replace(/:\s*$/, '')} ${item.value}`));
+                lines.push('');
+                lines.push(`## ${this._s('languages_title', 'Languages')} ##`);
+                lines.push(`${this._s('lang_name_es')}, ${this._s('lang_native')} · ${this._s('lang_name_en')}, ${this._s('lang_fluent')} (C2) · ${this._s('lang_name_pt')}, ${this._s('lang_fluent')} · ${this._s('lang_others')}, ${this._s('lang_basic')}`);
+                lines.push('');
+                lines.push(`## ${this._s('print_experience_short', 'Experience')} ##`);
+                lines.push('');
+                experiences.slice(1).forEach((exp, offset) => job(exp, offset + 1));
+                lines.push(`## ${this._s('print_education_short', 'Education')} ##`);
+                this._educationEntries().forEach((item) => lines.push(`- ${item.degree} — ${item.school}`));
+                lines.push('');
+                lines.push(`## ${this._s('print_summary_short', 'Summary')} ##`);
+                ['summary_text', 'summary_detail_1', 'summary_detail_2'].forEach((key) => {
+                    const text = this._s(key);
+                    if (text) lines.push(text, '');
+                });
+                return lines.join('\n');
+            },
+
+            async _prepareAndCleanupForPrint(action) {
+                const loadingIndicator = this._showExportOverlay(this._s('print_preparing', 'Preparing Print View...'));
                 const printContainer = document.getElementById('print-content');
+                const host = await this._renderRecruiterSheets();
                 if (printContainer) {
-                    printContainer.innerHTML = this._generatePrintableHTML();
+                    host.style.cssText = '';
+                    printContainer.innerHTML = '';
+                    printContainer.appendChild(host);
                 }
 
                 const isDark = document.documentElement.classList.contains('dark-mode');
-                if (isDark) {
-                    document.documentElement.classList.remove('dark-mode');
-                }
-
+                if (isDark) document.documentElement.classList.remove('dark-mode');
                 await new Promise(resolve => setTimeout(resolve, 200));
-
                 action();
 
-                // Correctly reference and hide the overlay in the cleanup
                 setTimeout(() => {
-                    const overlay = document.getElementById('export-loading-overlay');
-                    if(overlay) overlay.style.display = 'none';
+                    loadingIndicator.style.display = 'none';
                     if (printContainer) printContainer.innerHTML = '';
-                    if (isDark) {
-                        document.documentElement.classList.add('dark-mode');
-                    }
+                    if (isDark) document.documentElement.classList.add('dark-mode');
                 }, 3000);
             },
 
-            _exportAsATS() {
-                const experiences = this.data.experiences;
-                const skills = this.data.skills;
-                const summaryFullText = [this._s('summary_text'), this._s('summary_detail_1'), this._s('summary_detail_2')].filter(Boolean).join(' ');
-                const techLabel = this._s('print_technologies', 'Technologies Used');
-
-                let content = `
-                    <h1>CARLOS A. MUÑOZ</h1>
-                    <p style="text-align:center;">${this._s('job_title')}</p>
-                    <p style="text-align:center;">
-                        kaanmuar@gmail.com |
-                        https://www.linkedin.com/in/carlos-andres-m-2a60b8b/ |
-                        +57 320 919 1010
-                    </p>
-                    <hr>
-                    <h2>${this._s('summary_title')}</h2>
-                    <p>${summaryFullText}</p>
-
-                    <h2>${this._s('print_skills', this._s('toolkit_title'))}</h2>
-                    ${Object.keys(skills).map(key => `
-                        <p><strong>${this._s(`toolkit_${key}`, key)}:</strong> ${skills[key].map(s => s.name).join(', ')}</p>
-                    `).join('')}
-
-                    <h2>${this._s('experience_title')}</h2>
-                    ${experiences.map((exp, i) => {
-                        const item = this._experienceExport(exp, i);
-                        return `
-                        <hr>
-                        <h3>${item.title}</h3>
-                        <p><strong>${item.company}</strong> | ${item.dates}</p>
-                        <ul>${item.details.map(detail => `<li>${detail}</li>`).join('')}</ul>
-                        <p><strong>${techLabel}:</strong> ${item.techUsed.join(', ')}</p>
-                    `;
-                    }).join('')}
-
-                    <h2>${this._s('education_subheading')}</h2>
-                    ${this._educationEntries().map((item) => `<p><strong>${item.degree}</strong> - ${item.school}</p>`).join('')}
-
-                    <h2>${this._s('certs_subheading')}</h2>
-                    ${this._certEntries().map((item) => `<p><strong>${item.label}</strong> ${item.value}</p>`).join('')}
-                `;
-
-                const fullHtml = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"></head><body>${content}</body></html>`;
+            _downloadWord(filename) {
+                const fullHtml = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"></head><body>${this._recruiterWordHtml()}</body></html>`;
                 const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'CarlosMunozCV_ATS.doc';
+                link.download = filename;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            },
+
+            _exportAsATS() {
+                this._downloadWord('CarlosMunozCV_ATS.doc');
             },
 
             _exportAsPDF() {
-                this._prepareAndCleanupForPrint(() => {
+                return this._prepareAndCleanupForPrint(() => {
                     window.print();
                 });
             },
 
-            _exportAsPDF_jsPDF() {
-                const jsPDF = window.jsPDF;
-                const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
-
-                const experiences = this.data.experiences;
-                const skills = this.data.skills;
-                const liveURL = "https://kaanmuar.github.io/";
-
-                // --- DOCUMENT STYLES ---
-                const MARGIN = 40;
-                const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
-                const PAGE_WIDTH = doc.internal.pageSize.getWidth();
-                const FONT_SIZES = { h1: 22, h2: 16, h3: 12, body: 10, small: 8 };
-                const COLORS = { primary: '#12181f', secondary: '#4a5560', link: '#0d6e76' };
-                let cursor = MARGIN;
-
-                const addText = (text, size, x, y, options = {}) => {
-                    if (!text) return 0;
-                    doc.setFontSize(size);
-                    doc.setTextColor(options.color || COLORS.primary);
-                    doc.setFont('helvetica', options.style || 'normal');
-                    const textLines = doc.splitTextToSize(text, options.maxWidth || PAGE_WIDTH - x - MARGIN);
-                    doc.text(textLines, x, y, { align: options.align });
-                    return doc.getTextDimensions(textLines).h;
-                };
-
-                const checkPageBreak = (sectionHeight) => {
-                    if (cursor + sectionHeight > PAGE_HEIGHT - MARGIN) {
-                        doc.addPage();
-                        cursor = MARGIN;
+            async _exportAsPDF_jsPDF() {
+                const loadingIndicator = this._showExportOverlay(this._s('print_preparing', 'Preparing Print View...'));
+                const host = await this._renderRecruiterSheets();
+                try {
+                    const jsPDF = window.jsPDF;
+                    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                    const sheets = [...host.querySelectorAll('.sheet')];
+                    for (let i = 0; i < sheets.length; i++) {
+                        const canvas = await html2canvas(sheets[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+                        const img = canvas.toDataURL('image/jpeg', 0.95);
+                        if (i > 0) doc.addPage();
+                        doc.addImage(img, 'JPEG', 0, 0, 210, 297);
                     }
-                };
-
-                // --- HEADER & CONTACT ---
-                cursor += addText('CARLOS A. MUÑOZ', FONT_SIZES.h1, PAGE_WIDTH / 2, cursor, { align: 'center', style: 'bold' });
-                cursor += 5;
-                cursor += addText(this._s('job_title'), FONT_SIZES.h2, PAGE_WIDTH / 2, cursor, { align: 'center', color: COLORS.secondary });
-                cursor += 15;
-                doc.setFontSize(FONT_SIZES.body);
-                doc.setTextColor(COLORS.link);
-                doc.textWithLink('kaanmuar@gmail.com', MARGIN, cursor, { url: 'mailto:kaanmuar@gmail.com' });
-                doc.textWithLink(this._s('print_linkedin', 'LinkedIn Profile'), MARGIN + 150, cursor, { url: 'https://www.linkedin.com/in/carlos-andres-m-2a60b8b/' });
-                doc.textWithLink('+57 320 919 1010', MARGIN + 300, cursor, { url: 'tel:+573209191010' });
-                cursor += 15;
-                doc.textWithLink('WhatsApp', MARGIN, cursor, { url: 'https://wa.me/573209191010' });
-                doc.textWithLink('Telegram', MARGIN + 150, cursor, { url: 'https://t.me/+573209191010' });
-                doc.textWithLink(this._s('print_online_cv'), MARGIN + 300, cursor, { url: liveURL });
-                cursor += 20;
-                doc.line(MARGIN, cursor, PAGE_WIDTH - MARGIN, cursor);
-                cursor += 20;
-
-                // --- SUMMARY & TOOLKIT ---
-                checkPageBreak(80);
-                cursor += addText(this._s('summary_title'), FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
-                cursor += 10;
-                const summaryText = [this._s('summary_text'), this._s('summary_detail_1'), this._s('summary_detail_2')].filter(Boolean).join(' ');
-                cursor += addText(summaryText, FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2), color: COLORS.secondary });
-                cursor += 25;
-                checkPageBreak(200);
-                cursor += addText(this._s('toolkit_title'), FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
-                cursor += 10;
-                Object.keys(skills).forEach(categoryKey => {
-                    const categoryName = this._s(`toolkit_${categoryKey}`, categoryKey);
-                    const skillsText = skills[categoryKey].map(s => s.name).join(', ');
-                    cursor += addText(categoryName, FONT_SIZES.body, MARGIN, cursor, { style: 'bold', maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-                    cursor += 2;
-                    cursor += addText(skillsText, FONT_SIZES.body, MARGIN + 5, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) - 5, color: COLORS.secondary });
-                    cursor += 10;
-                });
-
-                // --- EXPERIENCE ---
-                checkPageBreak(60);
-                doc.addPage();
-                cursor = MARGIN;
-                cursor += addText(this._s('experience_title'), FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
-                experiences.forEach((exp, i) => {
-                    const item = this._experienceExport(exp, i);
-                    checkPageBreak(80);
-                    cursor += 15;
-                    cursor += addText(`${item.title} — ${item.company}`, FONT_SIZES.h3, MARGIN, cursor, { style: 'bold', maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-                    cursor += 2;
-                    cursor += addText(item.dates, FONT_SIZES.body, MARGIN, cursor, { color: COLORS.secondary, style: 'italic' });
-                    cursor += 10;
-                    item.details.forEach(detail => {
-                        checkPageBreak(15);
-                        cursor += 5;
-                        cursor += addText(`• ${detail}`, FONT_SIZES.body, MARGIN + 10, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) - 10, color: COLORS.secondary });
-                    });
-                    cursor += 10;
-                    checkPageBreak(15);
-                    cursor += addText(`${this._s('print_technologies')}: ${item.techUsed.join(', ')}`, FONT_SIZES.small, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2), color: COLORS.link });
-                });
-
-                // **NEW**: Add Spoken Languages section
-                checkPageBreak(100);
-                cursor += 20;
-                cursor += addText(this._s('languages_title'), FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
-                cursor += 10;
-                cursor += addText(`${this._s('lang_name_es')}: ${this._s('lang_native')}`, FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-                cursor += 5;
-                cursor += addText(`${this._s('lang_name_en')}: ${this._s('lang_fluent')} (C2)`, FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-                cursor += 5;
-                cursor += addText(`${this._s('lang_name_pt')}: ${this._s('lang_fluent')}`, FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-                cursor += 5;
-                cursor += addText(`${this._s('lang_others')}: ${this._s('lang_basic')}`, FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-
-                // **NEW**: Add Education & Certifications section
-                checkPageBreak(120);
-                cursor += 20;
-                cursor += addText(this._s('education_title'), FONT_SIZES.h2, MARGIN, cursor, { style: 'bold' });
-                cursor += 10;
-                cursor += addText(this._s('education_subheading'), FONT_SIZES.h3 - 1, MARGIN, cursor, {});
-                cursor += 5;
-                this._educationEntries().forEach((item) => {
-                    cursor += addText(item.degree + ' - ' + item.school, FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-                    cursor += 5;
-                });
-                cursor += 10;
-                cursor += addText(this._s('certs_subheading'), FONT_SIZES.h3 - 1, MARGIN, cursor, {});
-                cursor += 5;
-                cursor += addText(this._certEntries().map((item) => item.label + ' ' + item.value).join(' | '), FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-
-                // --- FOOTER ---
-                const pageCount = doc.internal.getNumberOfPages();
-                for(let i = 1; i <= pageCount; i++) {
-                    doc.setPage(i);
-                    doc.setFontSize(FONT_SIZES.small);
-                    doc.setTextColor(COLORS.secondary);
-                    doc.text(`Carlos A. Muñoz | Interactive CV: ${liveURL}`, MARGIN, PAGE_HEIGHT - 20);
-                    doc.text(this._s('print_page', 'Page {current} of {total}').replace('{current}', String(i)).replace('{total}', String(pageCount)), PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 20, { align: 'right' });
+                    doc.save('CarlosMunozCV_Export.pdf');
+                } catch (err) {
+                    console.error('Error generating PDF:', err);
+                    alert('Sorry, an error occurred while generating the PDF.');
+                } finally {
+                    host.remove();
+                    loadingIndicator.style.display = 'none';
                 }
-
-                doc.save('CarlosMunozCV_Export.pdf');
             },
 
             async _exportAsJPG() {
-                // **FIX**: Create the loading indicator if it doesn't exist.
-                let loadingIndicator = document.getElementById('export-loading-overlay');
-                if (!loadingIndicator) {
-                    loadingIndicator = document.createElement('div');
-                    loadingIndicator.id = 'export-loading-overlay';
-                    loadingIndicator.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); color: white; display: flex; align-items: center; justify-content: center; z-index: 9999; font-size: 1.5rem;';
-                    document.body.appendChild(loadingIndicator);
-                }
-                loadingIndicator.textContent = this._s('print_generating_jpg', 'Generating JPG, please wait...');
-                loadingIndicator.style.display = 'flex';
-
-                const printContainer = document.createElement('div');
-                printContainer.id = 'temp-print-content';
-                printContainer.style.position = 'absolute';
-                printContainer.style.left = '-9999px';
-                printContainer.style.width = '800px';
-                printContainer.innerHTML = this._generatePrintableHTML();
-                document.body.appendChild(printContainer);
-
-                // Preload all images inside the temporary container
-                const images = printContainer.querySelectorAll('img');
-                const promises = [...images].map(img => new Promise((resolve) => {
-                    if (img.complete) return resolve();
-                    img.onload = resolve;
-                    img.onerror = resolve; // Resolve even if an image fails to load
-                }));
-
-                await Promise.all(promises);
-                await new Promise(resolve => setTimeout(resolve, 500)); // Extra delay for fonts
-
+                const loadingIndicator = this._showExportOverlay(this._s('print_generating_jpg', 'Generating JPG, please wait...'));
+                const host = await this._renderRecruiterSheets();
                 try {
-                    const canvas = await html2canvas(printContainer.querySelector('.print-only-container'), {
-                        scale: 2, // High resolution
+                    const canvas = await html2canvas(host, {
+                        scale: 2,
                         useCORS: true,
                         backgroundColor: '#ffffff'
                     });
-
-                    // Trigger the download
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
                     const link = document.createElement('a');
-                    link.href = imgData;
+                    link.href = canvas.toDataURL('image/jpeg', 0.95);
                     link.download = 'CarlosMunozCV_2025.jpg';
                     link.click();
-
                 } catch (err) {
-                    console.error("Error generating JPG:", err);
-                    alert("Sorry, an error occurred while generating the JPG image.");
+                    console.error('Error generating JPG:', err);
+                    alert('Sorry, an error occurred while generating the JPG image.');
                 } finally {
-                    // Clean up
-                    document.body.removeChild(printContainer);
+                    host.remove();
                     loadingIndicator.style.display = 'none';
                 }
             },
 
             _exportAsDOC() {
-                const experiences = this.data.experiences;
-                const skills = this.data.skills;
-                const liveURL = "https://kaanmuar.github.io/";
-                const techLabel = this._s('print_technologies', 'Technologies Used');
-                const summaryFullText = [this._s('summary_text'), this._s('summary_detail_1'), this._s('summary_detail_2')].filter(Boolean).join(' ');
-
-                let content = `
-                    <div style="font-family: Arial, sans-serif; font-size: 10pt;">
-                        <h1 style="text-align: center; font-size: 22pt; margin-bottom: 5px;">CARLOS A. MUÑOZ</h1>
-                        <p style="text-align: center; font-size: 14pt; margin-top: 0;">${this._s('job_title')}</p>
-                        <p style="text-align: center;">
-                            <a href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a> |
-                            <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">${this._s('print_linkedin')}</a> |
-                            +57 320 919 1010 |
-                            <a href="${liveURL}">${this._s('print_online_cv')}</a>
-                        </p>
-                        <hr>
-                        <h2>${this._s('summary_title')}</h2>
-                        <p>${summaryFullText}</p>
-
-                        <h2>${this._s('toolkit_title')}</h2>
-                        ${Object.keys(skills).map(key => `
-                            <p><strong>${this._s(`toolkit_${key}`, key)}:</strong> ${skills[key].map(s => s.name).join(', ')}</p>
-                        `).join('')}
-
-                        <h2>${this._s('languages_title')}</h2>
-                        <p><strong>${this._s('lang_name_es')}:</strong> ${this._s('lang_native')}</p>
-                        <p><strong>${this._s('lang_name_en')}:</strong> ${this._s('lang_fluent')} (C2)</p>
-                        <p><strong>${this._s('lang_name_pt')}:</strong> ${this._s('lang_fluent')}</p>
-                        <p><strong>${this._s('lang_others')}:</strong> ${this._s('lang_basic')}</p>
-
-                        <h2>${this._s('experience_title')}</h2>
-                        ${experiences.map((exp, i) => {
-                            const item = this._experienceExport(exp, i);
-                            return `
-                            <hr>
-                            <h3 style="margin-bottom: 2px;">${item.title} — ${item.company}</h3>
-                            <p style="margin-top: 0; font-style: italic;">${item.dates}</p>
-                            <ul style="margin-top: 5px;">${item.details.map(detail => `<li>${detail}</li>`).join('')}</ul>
-                            <p><strong>${techLabel}:</strong> ${item.techUsed.join(', ')}</p>
-                        `;
-                        }).join('')}
-
-                        <h2>${this._s('education_title')}</h2>
-                        <h4>${this._s('education_subheading')}</h4>
-                        ${this._educationEntries().map((item) => `<p><strong>${item.degree}</strong> - ${item.school}</p>`).join('')}
-                        <h4>${this._s('certs_subheading')}</h4>
-                        <p>${this._certEntries().map((item) => `<strong>${item.label}</strong> ${item.value}`).join(' | ')}</p>
-                    </div>
-                `;
-
-                const fullHtml = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"></head><body>${content}</body></html>`;
-                const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'CarlosMunozCV_Export.doc';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                this._downloadWord('CarlosMunozCV_Export.doc');
             },
 
             _exportAsText() {
-                const experiences = this.data.experiences;
-                const skills = this.data.skills;
-                const liveURL = "https://kaanmuar.github.io/";
-                const techLabel = this._s('print_technologies', 'Technologies Used');
-                const summaryFullText = [this._s('summary_text'), this._s('summary_detail_1'), this._s('summary_detail_2')].filter(Boolean).join(' ');
-
-                let textContent = `CV: Carlos A. Muñoz\n====================\n\n`;
-                textContent += `${this._s('job_title')}\n\n`;
-                textContent += `## ${this._s('contact_title')} ##\nEmail: kaanmuar@gmail.com\nLinkedIn: https://www.linkedin.com/in/carlos-andres-m-2a60b8b/\nPhone: +57 320 919 1010\n${this._s('print_online_cv')}: ${liveURL}\n\n`;
-                textContent += `## ${this._s('summary_title')} ##\n${summaryFullText}\n\n`;
-
-                textContent += `## ${this._s('toolkit_title')} ##\n`;
-                Object.keys(skills).forEach(key => {
-                    textContent += `\n${this._s(`toolkit_${key}`, key)}:\n- ${skills[key].map(s => s.name).join(', ')}\n`;
-                });
-
-                textContent += `\n## ${this._s('languages_title')} ##\n- ${this._s('lang_name_es')}: ${this._s('lang_native')}\n- ${this._s('lang_name_en')}: ${this._s('lang_fluent')} (C2)\n- ${this._s('lang_name_pt')}: ${this._s('lang_fluent')}\n- ${this._s('lang_others')}: ${this._s('lang_basic')}\n\n`;
-
-                textContent += `## ${this._s('experience_title')} ##\n\n`;
-                experiences.forEach((exp, i) => {
-                    const item = this._experienceExport(exp, i);
-                    textContent += `--------------------\n`;
-                    textContent += `${item.title} — ${item.company} (${item.dates})\n`;
-                    item.details.forEach(detail => {
-                        textContent += `- ${detail}\n`;
-                    });
-                    textContent += `${techLabel}: ${item.techUsed.join(', ')}\n\n`;
-                });
-
-                textContent += `## ${this._s('education_title')} ##\n\n${this._s('education_subheading')}:\n${this._educationEntries().map((item) => '- ' + item.degree + ' - ' + item.school).join('\n')}\n\n${this._s('certs_subheading')}:\n${this._certEntries().map((item) => '- ' + item.label + ' ' + item.value).join('\n')}\n`;
-
-                const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(textContent);
+                const dataStr = 'data:text/plain;charset=utf-8,' + encodeURIComponent(this._recruiterText());
                 const downloadAnchorNode = document.createElement('a');
-                downloadAnchorNode.setAttribute("href", dataStr);
-                downloadAnchorNode.setAttribute("download", "CarlosMunozCV_Export.txt");
+                downloadAnchorNode.setAttribute('href', dataStr);
+                downloadAnchorNode.setAttribute('download', 'CarlosMunozCV_Export.txt');
                 document.body.appendChild(downloadAnchorNode);
                 downloadAnchorNode.click();
                 downloadAnchorNode.remove();
             },
+
 
             _exportAsJSON() {
                 const payload = this._getCleanExportData();

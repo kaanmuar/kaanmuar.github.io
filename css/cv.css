@@ -82,6 +82,8 @@
 
 
         @media print {
+            @page { size: A4; margin: 0; }
+            html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
             /* Hide the entire interactive page */
             body > *:not(#print-content) {
                 display: none !important;
@@ -89,6 +91,18 @@
             /* Only show our clean, generated content */
             #print-content {
                 display: block !important;
+            }
+            #print-content .sheet {
+                width: 210mm;
+                height: 297mm;
+                margin: 0;
+                page-break-after: always;
+                break-after: page;
+                overflow: hidden;
+            }
+            #print-content .sheet:last-child {
+                page-break-after: auto;
+                break-after: auto;
             }
         }
 
