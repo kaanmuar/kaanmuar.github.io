@@ -282,6 +282,18 @@
         return true;
     }
 
+    function forceMachine(lang) {
+        const normalized = normalize(lang) || 'en';
+        if (normalized === 'en') {
+            applyMachineTranslate('en');
+            return;
+        }
+        pendingMachineLang = normalized;
+        setGoogtrans(normalized);
+        loadWidget();
+        if (!triggerCombo(normalized)) loadWidget();
+    }
+
     function applyMachineTranslate(lang) {
         const normalized = normalize(lang) || 'en';
         if (usesDictionary(normalized) || normalized === 'en') {
@@ -412,6 +424,7 @@
         usesDictionary,
         applyEarlyCookie,
         applyMachineTranslate,
+        forceMachine,
         loadWidget,
         selectLanguage,
         refreshTranslation,
