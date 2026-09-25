@@ -111,7 +111,8 @@
             "workExample": [
                 {"@type": "CreativeWork", "description": "Led all QA efforts for Salesforce Sales Cloud and Service Cloud projects for the high-profile DirectvGO / AT&T account at Globant."},
                 {"@type": "CreativeWork", "description": "Architected and implemented scalable test automation strategies using Cypress, Playwright, and Selenium for 15+ clients at Team International."},
-                {"@type": "WebApplication", "name": "PayStream QA Studio Sprint 24", "url": "https://kaanmuar.github.io/simulador.html"}
+                {"@type": "WebApplication", "name": "Free SDLC studio — Jira, Xray, and test automation", "url": "https://kaanmuar.github.io/simulador.html"},
+                {"@type": "WebApplication", "name": "CV Regression Lab", "url": "https://kaanmuar.github.io/qa-lab.html"}
             ]
         }
     </script>
@@ -160,11 +161,25 @@
                 {
                     "@type": "WebApplication",
                     "@id": "https://kaanmuar.github.io/simulador.html#app",
-                    "name": "PayStream QA Studio Sprint 24",
+                    "name": "Free SDLC studio — Jira, Xray, and test automation",
                     "url": "https://kaanmuar.github.io/simulador.html",
                     "applicationCategory": "DeveloperApplication",
                     "operatingSystem": "Web",
-                    "description": "Interactive four-agent SDLC studio demonstrating Jira refinement, Xray design, test automation and release verification.",
+                    "description": "Free in-browser four-agent SDLC studio. Refine Jira stories, design Xray cases, generate Playwright, Cypress, and Robot scripts, and check a sprint Definition of Done. No account required.",
+                    "isAccessibleForFree": true,
+                    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+                    "author": { "@id": "https://kaanmuar.github.io/#person" }
+                },
+                {
+                    "@type": "WebApplication",
+                    "@id": "https://kaanmuar.github.io/qa-lab.html#app",
+                    "name": "CV Regression Lab",
+                    "url": "https://kaanmuar.github.io/qa-lab.html",
+                    "applicationCategory": "DeveloperApplication",
+                    "operatingSystem": "Web",
+                    "description": "Free in-browser QA regression lab. Run the Playwright, Cypress, and Robot catalog against this CV, watch each check, and open the results dashboard.",
+                    "isAccessibleForFree": true,
+                    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                     "author": { "@id": "https://kaanmuar.github.io/#person" }
                 }
             ]
@@ -418,18 +433,18 @@
                         <section aria-labelledby="education-subheading">
                             <h3 id="education-subheading" class="text-base font-bold" data-translate-key="education_subheading">Education</h3>
                             <div class="mt-2 space-y-2">
-                                <p data-topic="pm"><strong class="font-medium">Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p>
-                                <p data-topic="strategy"><strong class="font-medium">Computer Systems Engineering</strong> - EAMQ</p>
-                                <p data-topic="strategy"><strong class="font-medium">Computer Systems Technician</strong> - EAMQ</p>
+                                <p data-topic="pm"><strong class="font-medium" data-translate-key="edu_degree_1">Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p>
+                                <p data-topic="strategy"><strong class="font-medium" data-translate-key="edu_degree_2">Computer Systems Engineering</strong> - EAMQ</p>
+                                <p data-topic="strategy"><strong class="font-medium" data-translate-key="edu_degree_3">Computer Systems Technician</strong> - EAMQ</p>
                             </div>
                         </section>
                         <section aria-labelledby="certs-subheading">
                             <h3 id="certs-subheading" class="text-base font-bold" data-translate-key="certs_subheading">Key Certifications</h3>
                             <div class="mt-2 space-y-2">
-                                <p data-topic="relations"><strong class="font-medium">English Proficiency:</strong> EF SET C2 Proficient</p>
-                                <p data-topic="pm"><strong class="font-medium">Project Management:</strong> CSPM</p>
-                                <p data-topic="qa"><strong class="font-medium">Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB</p>
-                                <p data-topic="strategy"><strong class="font-medium">Information Security:</strong> CISA, CISM, CISSP</p>
+                                <p data-topic="relations"><strong class="font-medium" data-translate-key="cert_label_english">English Proficiency:</strong> EF SET C2 Proficient</p>
+                                <p data-topic="pm"><strong class="font-medium" data-translate-key="cert_label_pm">Project Management:</strong> CSPM</p>
+                                <p data-topic="qa"><strong class="font-medium" data-translate-key="cert_label_qa">Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB</p>
+                                <p data-topic="strategy"><strong class="font-medium" data-translate-key="cert_label_security">Information Security:</strong> CISA, CISM, CISSP</p>
                             </div>
                         </section>
                     </div>
@@ -451,6 +466,10 @@
 
                 <!-- Footer -->
                 <footer class="cv-footer no-print">
+                    <nav class="cv-footer-tools" aria-label="Live tools">
+                        <a href="qa-lab.html" data-translate-key="footer_lab">QA regression lab — run the Playwright, Cypress, and Robot suite in the browser</a>
+                        <a href="simulador.html" data-translate-key="footer_studio">SDLC studio — try the Jira, Xray, and test-automation sprint</a>
+                    </nav>
                     <div class="flex justify-center items-center gap-2">
                         <p>&copy; 2025 Carlos A. Muñoz</p>
                         <span aria-hidden="true">|</span>

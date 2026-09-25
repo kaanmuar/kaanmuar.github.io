@@ -19,6 +19,177 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
+    const PRINT_COPY = {
+        en: {
+            print_confidential: 'Confidential',
+            edu_degree_1: 'Specialization in Management on IT Projects',
+            edu_degree_2: 'Computer Systems Engineering',
+            edu_degree_3: 'Computer Systems Technician',
+            cert_label_english: 'English Proficiency:',
+            cert_label_pm: 'Project Management:',
+            cert_label_qa: 'Quality Assurance:',
+            cert_label_security: 'Information Security:',
+            footer_lab: 'QA regression lab — run the Playwright, Cypress, and Robot suite in the browser',
+            footer_studio: 'SDLC studio — try the Jira, Xray, and test-automation sprint',
+            roles: [
+                'Senior QA & Program Consultant',
+                'Senior Technical Project Manager & Consultant',
+                'Sr. Project Manager & QA Engineer',
+                'Sr. QA Engineer',
+                'Sr. Technical Architect',
+                'Sr. Strategic Development Manager',
+                'Sr. Project Manager',
+                'CISO - Chief Information Security Officer',
+                'Sr. Hybrid QA Engineer / QA Lead',
+                'ISE Engineer LATAM',
+                'Business Tender Specialist - LATAM',
+                'Solutions Engineer - Special Projects LATAM',
+                'Partner Product Manager - NOLA',
+                'Advanced Technologies Advisor'
+            ]
+        },
+        es: {
+            print_confidential: 'Confidencial',
+            edu_degree_1: 'Especialización en Gestión de Proyectos de TI',
+            edu_degree_2: 'Ingeniería de Sistemas',
+            edu_degree_3: 'Técnico en Sistemas',
+            cert_label_english: 'Competencia en inglés:',
+            cert_label_pm: 'Gestión de proyectos:',
+            cert_label_qa: 'Aseguramiento de calidad:',
+            cert_label_security: 'Seguridad de la información:',
+            footer_lab: 'Laboratorio de regresión QA — ejecuta Playwright, Cypress y Robot en el navegador',
+            footer_studio: 'Estudio SDLC — prueba el sprint de Jira, Xray y automatización',
+            roles: [
+                'Consultor Senior de QA y Programas',
+                'Gerente Senior de Proyectos Técnicos y Consultor',
+                'Gerente Senior de Proyectos e Ingeniero de QA',
+                'Ingeniero Senior de QA',
+                'Arquitecto Técnico Senior',
+                'Gerente Senior de Desarrollo Estratégico',
+                'Gerente Senior de Proyectos',
+                'CISO - Director de Seguridad de la Información',
+                'Ingeniero Senior de QA Híbrido / Líder de QA',
+                'Ingeniero ISE LATAM',
+                'Especialista en Licitaciones - LATAM',
+                'Ingeniero de Soluciones - Proyectos Especiales LATAM',
+                'Gerente de Producto Partner - NOLA',
+                'Asesor de Tecnologías Avanzadas'
+            ]
+        },
+        pt: {
+            print_confidential: 'Confidencial',
+            edu_degree_1: 'Especialização em Gestão de Projetos de TI',
+            edu_degree_2: 'Engenharia de Sistemas de Computação',
+            edu_degree_3: 'Técnico em Sistemas de Computação',
+            cert_label_english: 'Proficiência em inglês:',
+            cert_label_pm: 'Gestão de projetos:',
+            cert_label_qa: 'Garantia de qualidade:',
+            cert_label_security: 'Segurança da informação:',
+            footer_lab: 'Laboratório de regressão de QA — execute Playwright, Cypress e Robot no navegador',
+            footer_studio: 'Estúdio SDLC — experimente o sprint de Jira, Xray e automação de testes',
+            roles: [
+                'Consultor Sênior de QA e Programas',
+                'Gerente Sênior de Projetos Técnicos e Consultor',
+                'Gerente Sênior de Projetos e Engenheiro de QA',
+                'Engenheiro Sênior de QA',
+                'Arquiteto Técnico Sênior',
+                'Gerente Sênior de Desenvolvimento Estratégico',
+                'Gerente Sênior de Projetos',
+                'CISO - Diretor de Segurança da Informação',
+                'Engenheiro Sênior de QA Híbrido / Líder de QA',
+                'Engenheiro ISE LATAM',
+                'Especialista em Licitações - LATAM',
+                'Engenheiro de Soluções - Projetos Especiais LATAM',
+                'Gerente de Produto Parceiro - NOLA',
+                'Consultor de Tecnologias Avançadas'
+            ]
+        },
+        de: {
+            print_confidential: 'Vertraulich',
+            edu_degree_1: 'Spezialisierung in IT-Projektmanagement',
+            edu_degree_2: 'Ingenieurwesen für Computersysteme',
+            edu_degree_3: 'Techniker für Computersysteme',
+            cert_label_english: 'Englischkenntnisse:',
+            cert_label_pm: 'Projektmanagement:',
+            cert_label_qa: 'Qualitätssicherung:',
+            cert_label_security: 'Informationssicherheit:',
+            footer_lab: 'QA-Regressionslabor — Playwright, Cypress und Robot im Browser ausführen',
+            footer_studio: 'SDLC-Studio — Jira-, Xray- und Testautomatisierungs-Sprint ausprobieren',
+            roles: [
+                'Senior QA- und Programmberater',
+                'Senior Technical Project Manager und Berater',
+                'Senior Projektmanager und QA-Ingenieur',
+                'Senior QA-Ingenieur',
+                'Senior Technical Architect',
+                'Senior Manager für strategische Entwicklung',
+                'Senior Projektmanager',
+                'CISO - Leiter der Informationssicherheit',
+                'Senior Hybrid-QA-Ingenieur / QA-Lead',
+                'ISE-Ingenieur LATAM',
+                'Spezialist für Ausschreibungen - LATAM',
+                'Solutions Engineer - Sonderprojekte LATAM',
+                'Partner Product Manager - NOLA',
+                'Berater für fortschrittliche Technologien'
+            ]
+        },
+        fr: {
+            print_confidential: 'Confidentiel',
+            edu_degree_1: 'Spécialisation en gestion de projets informatiques',
+            edu_degree_2: 'Ingénierie des systèmes informatiques',
+            edu_degree_3: 'Technicien en systèmes informatiques',
+            cert_label_english: 'Compétence en anglais :',
+            cert_label_pm: 'Gestion de projet :',
+            cert_label_qa: 'Assurance qualité :',
+            cert_label_security: 'Sécurité de l\'information :',
+            footer_lab: 'Laboratoire de régression QA — lancez Playwright, Cypress et Robot dans le navigateur',
+            footer_studio: 'Studio SDLC — essayez le sprint Jira, Xray et automatisation de tests',
+            roles: [
+                'Consultant senior QA et programmes',
+                'Chef de projet technique senior et consultant',
+                'Chef de projet senior et ingénieur QA',
+                'Ingénieur QA senior',
+                'Architecte technique senior',
+                'Responsable senior du développement stratégique',
+                'Chef de projet senior',
+                'CISO - Directeur de la sécurité de l\'information',
+                'Ingénieur QA hybride senior / Lead QA',
+                'Ingénieur ISE LATAM',
+                'Spécialiste des appels d\'offres - LATAM',
+                'Ingénieur solutions - Projets spéciaux LATAM',
+                'Partner Product Manager - NOLA',
+                'Conseiller en technologies avancées'
+            ]
+        },
+        it: {
+            print_confidential: 'Riservato',
+            edu_degree_1: 'Specializzazione in gestione di progetti IT',
+            edu_degree_2: 'Ingegneria dei sistemi informatici',
+            edu_degree_3: 'Tecnico dei sistemi informatici',
+            cert_label_english: 'Competenza in inglese:',
+            cert_label_pm: 'Gestione dei progetti:',
+            cert_label_qa: 'Assicurazione qualità:',
+            cert_label_security: 'Sicurezza delle informazioni:',
+            footer_lab: 'Laboratorio di regressione QA — esegui Playwright, Cypress e Robot nel browser',
+            footer_studio: 'Studio SDLC — prova lo sprint Jira, Xray e automazione dei test',
+            roles: [
+                'Consulente senior QA e programmi',
+                'Senior Technical Project Manager e consulente',
+                'Senior Project Manager e ingegnere QA',
+                'Ingegnere QA senior',
+                'Architetto tecnico senior',
+                'Senior Manager dello sviluppo strategico',
+                'Senior Project Manager',
+                'CISO - Responsabile della sicurezza delle informazioni',
+                'Ingegnere QA ibrido senior / QA Lead',
+                'Ingegnere ISE LATAM',
+                'Specialista gare d\'appalto - LATAM',
+                'Solutions Engineer - Progetti speciali LATAM',
+                'Partner Product Manager - NOLA',
+                'Consulente di tecnologie avanzate'
+            ]
+        }
+    };
+
     function boot() {
         if (!window.CVData) {
             console.error('CVData failed to load (js/cv-data.js)');
@@ -551,7 +722,7 @@
                 canvas.width = 300; canvas.height = 150;
                 ctx.translate(150, 75); ctx.rotate(-0.4);
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; ctx.font = '16px Inter';
-                ctx.textAlign = 'center'; ctx.fillText('Carlos A. Muñoz - Confidential', 0, 0);
+                ctx.textAlign = 'center'; ctx.fillText('Carlos A. Muñoz - ' + this._s('print_confidential', 'Confidential'), 0, 0);
                 this.DOMElements.body.style.setProperty('--watermark-url', `url(${canvas.toDataURL()})`);
             },
 
@@ -626,10 +797,10 @@
                         <div class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                             <button class="accordion-header w-full flex justify-between items-center" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}">
                                 <div class="flex-grow text-left">
-                                    <h4 class="text-base font-bold" data-translate-key="exp_${index}_title">${exp.title.en}</h4>
+                                    <h4 class="text-base font-bold" data-translate-key="exp_${index}_title">${typeof exp.title === 'string' ? exp.title : (exp.title.en || '')}</h4>
                                     <p class="text-sm italic flex items-center"><img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">${exp.company}</p>
                                 </div>
-                                <p class="text-xs mr-4">${exp.dates}</p>
+                                <p class="text-xs mr-4" data-raw-date="${exp.dates}">${exp.dates}</p>
                                 <svg class="accordion-icon w-5 h-5 transform transition-transform" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                         </div>
@@ -964,8 +1135,8 @@
                         <div class="timeline-item block p-2 rounded-md" data-tech='${JSON.stringify(exp.techUsed)}' id="timeline-exp-${index}">
                             <div class="tooltip w-full" data-company-name="${exp.company}">
                                 <a href="#experience-${index}" class="hover:bg-gray-100 dark:hover:bg-gray-700 block p-1 rounded-md">
-                                    <p class="font-bold text-sm">${exp.title}</p>
-                                    <div class="flex items-center gap-2 text-xs"><img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'"><span>${exp.company}</span><span class="text-gray-400">| ${exp.dates}</span></div>
+                                    <p class="font-bold text-sm" data-translate-key="exp_${index}_title">${typeof exp.title === 'string' ? exp.title : exp.title.en}</p>
+                                    <div class="flex items-center gap-2 text-xs"><img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'"><span>${exp.company}</span><span class="text-gray-400" data-raw-date="${exp.dates}" data-date-prefix="| ">| ${exp.dates}</span></div>
                                     <div class="timeline-tech-icons">${techIcons}</div>
                                 </a>
                                 <span class="tooltiptext" data-translate-key="tooltip_timeline"></span>
@@ -1188,20 +1359,90 @@
             },
 
             _populateAllTranslations() {
+                Object.keys(PRINT_COPY).forEach((lang) => {
+                    const dict = this.data.translations[lang];
+                    const pack = PRINT_COPY[lang];
+                    if (!dict || !pack) return;
+                    Object.keys(pack).forEach((key) => {
+                        if (key === 'roles') return;
+                        dict[key] = pack[key];
+                    });
+                    (pack.roles || []).forEach((title, i) => {
+                        dict['role_' + i] = title;
+                    });
+                });
                 this.data.experiences.forEach((exp, expIdx) => {
                     Object.keys(this.data.translations).forEach(lang => {
                         if (!this.data.translations[lang] || !exp.details[lang]) return;
-                        this.data.translations[lang][`exp_${expIdx}_title`] = exp.title;
+                        const englishTitle = typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '');
+                        this.data.translations[lang][`exp_${expIdx}_title`] = this.data.translations[lang][`role_${expIdx}`] || englishTitle;
                         this.data.translations[lang][`exp_${expIdx}_summary`] = exp.details[lang][0].substring(0, 100) + '...';
-                        if (exp.title[lang]) {
-                            this.data.translations[lang][`exp_${expIdx}_title`] = exp.title[lang];
-                        }
                         exp.details[lang].forEach((detail, i) => {
                             this.data.translations[lang][`exp_${expIdx}_detail_${i}`] = detail;
                         });
                     });
                 });
                 this._populateTopicDropdown();
+            },
+
+            _isNativeLang(lang) {
+                const code = lang || this.state.lang || 'en';
+                return !!(window.SiteI18n ? SiteI18n.isNative(code) : this.data.translations[code]);
+            },
+
+            _localDateRange(raw) {
+                const lang = String(this.state.dictLang || this.state.lang || 'en').slice(0, 2);
+                const months = {
+                    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    es: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+                    pt: ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
+                    de: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
+                    fr: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+                    it: ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic']
+                };
+                const present = { en: 'Present', es: 'Actualidad', pt: 'Atual', de: 'heute', fr: 'aujourd\'hui', it: 'oggi' };
+                const source = months.en;
+                const target = months[lang] || source;
+                let text = String(raw || '');
+                source.forEach((month, i) => {
+                    text = text.replace(new RegExp('\\b' + month + '\\b', 'g'), target[i]);
+                });
+                return text.replace(/\bPresent\b/g, present[lang] || present.en);
+            },
+
+            _refreshLocalizedDates() {
+                const native = this._isNativeLang(this.state.lang);
+                document.querySelectorAll('[data-raw-date]').forEach((el) => {
+                    const raw = el.getAttribute('data-raw-date') || '';
+                    const prefix = el.getAttribute('data-date-prefix') || '';
+                    el.textContent = prefix + (native ? this._localDateRange(raw) : raw);
+                });
+            },
+
+            _exportDate(index, raw) {
+                if (!this._isNativeLang(this.state.lang)) {
+                    const el = document.querySelector('#experience-' + index + ' [data-raw-date]');
+                    const text = el ? (el.innerText || el.textContent || '').trim() : '';
+                    if (text) return text;
+                }
+                return this._localDateRange(raw);
+            },
+
+            _educationEntries() {
+                return [
+                    { degree: this._s('edu_degree_1', 'Specialization in Management on IT Projects'), school: 'Alexander Von-Humboldt University' },
+                    { degree: this._s('edu_degree_2', 'Computer Systems Engineering'), school: 'EAMQ' },
+                    { degree: this._s('edu_degree_3', 'Computer Systems Technician'), school: 'EAMQ' }
+                ];
+            },
+
+            _certEntries() {
+                return [
+                    { label: this._s('cert_label_english', 'English Proficiency:'), value: 'EF SET C2 Proficient' },
+                    { label: this._s('cert_label_pm', 'Project Management:'), value: 'CSPM' },
+                    { label: this._s('cert_label_qa', 'Quality Assurance:'), value: 'CASQ, CAST, CSQA, ISTQB' },
+                    { label: this._s('cert_label_security', 'Information Security:'), value: 'CISA, CISM, CISSP' }
+                ];
             },
 
             _populateTopicDropdown() {
@@ -1242,11 +1483,19 @@
 
             _experienceExport(exp, index) {
                 const lang = this._exportLangCode();
-                const rawTitle = (exp.title && exp.title[lang]) || (exp.title && exp.title.en) || exp.title || '';
-                const title = this._s(`exp_${index}_title`, rawTitle);
+                const englishTitle = typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '');
+                const titleNodes = Array.from(document.querySelectorAll(`[data-translate-key="exp_${index}_title"]`));
+                const titleTexts = titleNodes
+                    .map((el) => (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim())
+                    .filter(Boolean);
+                let title = titleTexts[0] || '';
+                if (!this._isNativeLang(this.state.lang)) {
+                    title = titleTexts.find((text) => text !== englishTitle) || title;
+                }
+                if (!title) title = (this._t() || {})[`role_${index}`] || englishTitle;
                 const detailsSource = (exp.details && (exp.details[lang] || exp.details.en)) || [];
                 const details = detailsSource.map((detail, i) => this._s(`exp_${index}_detail_${i}`, detail));
-                return { title, company: exp.company, dates: exp.dates, details, techUsed: exp.techUsed || [] };
+                return { title, company: exp.company, dates: this._exportDate(index, exp.dates), details, techUsed: exp.techUsed || [] };
             },
 
             translatePage(lang) {
@@ -1319,6 +1568,8 @@
                         if (btn) btn.setAttribute('aria-label', translation.tooltip_theme);
                     });
                 }
+                this._refreshLocalizedDates();
+                this._createWatermark();
                 if (window.SiteI18n) {
                     if (isNative) SiteI18n.applyMachineTranslate('en');
                     else {
@@ -2388,7 +2639,7 @@
                     </style>
 
                     <div class="print-only-container">
-                        <div class="watermark">Carlos A. Muñoz - Confidential</div>
+                        <div class="watermark">Carlos A. Muñoz - ${this._s('print_confidential', 'Confidential')}</div>
                         <img src="${profilePhotoSrc}" class="profile-photo" alt="Profile Photo">
                         <h1>CARLOS A. MUÑOZ</h1>
                         <h2>${this._s('job_title')}</h2>
@@ -2404,7 +2655,7 @@
                             const item = this._experienceExport(exp, i);
                             return `<div class="exp-item"><h4>${item.title} — ${item.company}</h4><p class="exp-dates">${item.dates}</p><ul>${item.details.map(detail => `<li>${detail}</li>`).join('')}</ul><p class="technologies"><strong>${techLabel}:</strong> ${item.techUsed.join(', ')}</p></div>`;
                         }).join('')}
-                        <h3>${this._s('education_title')}</h3><h4>${this._s('education_subheading')}</h4><p><strong>Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p><p><strong>Computer Systems Engineering</strong> - EAMQ</p><h4>${this._s('certs_subheading')}</h4><p><strong>English Proficiency:</strong> EF SET C2 Proficient | <strong>Project Management:</strong> CSPM | <strong>Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB | <strong>Information Security:</strong> CISA, CISM, CISSP</p>
+                        <h3>${this._s('education_title')}</h3><h4>${this._s('education_subheading')}</h4>${this._educationEntries().map((item) => `<p><strong>${item.degree}</strong> - ${item.school}</p>`).join('')}<h4>${this._s('certs_subheading')}</h4><p>${this._certEntries().map((item) => `<strong>${item.label}</strong> ${item.value}`).join(' | ')}</p>
                     </div>
                 `;
             },
@@ -2482,14 +2733,10 @@
                     }).join('')}
 
                     <h2>${this._s('education_subheading')}</h2>
-                    <p><strong>Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p>
-                    <p><strong>Computer Systems Engineering</strong> - EAMQ</p>
+                    ${this._educationEntries().map((item) => `<p><strong>${item.degree}</strong> - ${item.school}</p>`).join('')}
 
                     <h2>${this._s('certs_subheading')}</h2>
-                    <p><strong>English Proficiency:</strong> EF SET C2 Proficient</p>
-                    <p><strong>Project Management:</strong> CSPM</p>
-                    <p><strong>Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB</p>
-                    <p><strong>Information Security:</strong> CISA, CISM, CISSP</p>
+                    ${this._certEntries().map((item) => `<p><strong>${item.label}</strong> ${item.value}</p>`).join('')}
                 `;
 
                 const fullHtml = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"></head><body>${content}</body></html>`;
@@ -2622,13 +2869,14 @@
                 cursor += 10;
                 cursor += addText(this._s('education_subheading'), FONT_SIZES.h3 - 1, MARGIN, cursor, {});
                 cursor += 5;
-                cursor += addText('Specialization in Management on IT Projects - Alexander Von-Humboldt University', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-                cursor += 5;
-                cursor += addText('Computer Systems Engineering - EAMQ', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
-                cursor += 15;
+                this._educationEntries().forEach((item) => {
+                    cursor += addText(item.degree + ' - ' + item.school, FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+                    cursor += 5;
+                });
+                cursor += 10;
                 cursor += addText(this._s('certs_subheading'), FONT_SIZES.h3 - 1, MARGIN, cursor, {});
                 cursor += 5;
-                cursor += addText('English Proficiency: EF SET C2 Proficient | Project Management: CSPM | Quality Assurance: CASQ, CAST, CSQA, ISTQB | Information Security: CISA, CISM, CISSP', FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
+                cursor += addText(this._certEntries().map((item) => item.label + ' ' + item.value).join(' | '), FONT_SIZES.body, MARGIN, cursor, { maxWidth: PAGE_WIDTH - (MARGIN * 2) });
 
                 // --- FOOTER ---
                 const pageCount = doc.internal.getNumberOfPages();
@@ -2744,10 +2992,9 @@
 
                         <h2>${this._s('education_title')}</h2>
                         <h4>${this._s('education_subheading')}</h4>
-                        <p><strong>Specialization in Management on IT Projects</strong> - Alexander Von-Humboldt University</p>
-                        <p><strong>Computer Systems Engineering</strong> - EAMQ</p>
+                        ${this._educationEntries().map((item) => `<p><strong>${item.degree}</strong> - ${item.school}</p>`).join('')}
                         <h4>${this._s('certs_subheading')}</h4>
-                        <p><strong>English Proficiency:</strong> EF SET C2 Proficient | <strong>Project Management:</strong> CSPM | <strong>Quality Assurance:</strong> CASQ, CAST, CSQA, ISTQB | <strong>Information Security:</strong> CISA, CISM, CISSP</p>
+                        <p>${this._certEntries().map((item) => `<strong>${item.label}</strong> ${item.value}`).join(' | ')}</p>
                     </div>
                 `;
 
@@ -2792,7 +3039,7 @@
                     textContent += `${techLabel}: ${item.techUsed.join(', ')}\n\n`;
                 });
 
-                textContent += `## ${this._s('education_title')} ##\n\n${this._s('education_subheading')}:\n- Specialization in Management on IT Projects - Alexander Von-Humboldt University\n- Computer Systems Engineering - EAMQ\n\n${this._s('certs_subheading')}:\n- English Proficiency: EF SET C2 Proficient\n- Project Management: CSPM\n- Quality Assurance: CASQ, CAST, CSQA, ISTQB\n- Information Security: CISA, CISM, CISSP\n`;
+                textContent += `## ${this._s('education_title')} ##\n\n${this._s('education_subheading')}:\n${this._educationEntries().map((item) => '- ' + item.degree + ' - ' + item.school).join('\n')}\n\n${this._s('certs_subheading')}:\n${this._certEntries().map((item) => '- ' + item.label + ' ' + item.value).join('\n')}\n`;
 
                 const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(textContent);
                 const downloadAnchorNode = document.createElement('a');
