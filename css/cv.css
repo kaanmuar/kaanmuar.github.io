@@ -1703,3 +1703,17 @@
         .mobile-toolbar-wrapper .mobile-toolbar.is-sticky .tool-caption {
             color: var(--text-primary);
         }
+        .cv-live-off { display: none !important; }
+        html.cv-captions-off .tool-caption { display: none !important; }
+        #cv-preview-banner {
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            margin: 0;
+            padding: 0.6rem 1rem;
+            background: #1a242f;
+            color: #f4efe4;
+            text-align: center;
+            font-size: 0.92rem;
+            line-height: 1.4;
+        }
