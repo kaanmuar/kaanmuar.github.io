@@ -6,4 +6,4 @@ Disallow: /cypress/
 Disallow: /tests/
 Disallow: /functions/
 
-Sitemap: https://kaanmuar.github.io/sitemap.xml
+Sitemap: https://carlosandmunoz.com/sitemap.xml

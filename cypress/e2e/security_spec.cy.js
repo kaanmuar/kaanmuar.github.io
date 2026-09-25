@@ -11,7 +11,7 @@ describe('Security and SEO', () => {
 
   it('sitemap lists CV and simulator and omits admin', () => {
     cy.request('/sitemap.xml').its('body').then((xml) => {
-      expect(xml).to.include('kaanmuar.github.io/');
+      expect(xml).to.include('carlosandmunoz.com/');
       expect(xml).to.include('simulador.html');
       expect(xml).to.include('qa-lab.html');
       expect(xml).to.include('qa-lab.html?lang=es');
@@ -27,7 +27,8 @@ describe('Security and SEO', () => {
   it('CV is indexable and has canonical plus JSON-LD', () => {
     cy.visitCV();
     cy.get('meta[name="robots"]').should('have.attr', 'content').and('match', /index/i);
-    cy.get('link[rel="canonical"]').should('have.attr', 'href').and('include', 'kaanmuar.github.io');
+    cy.get('link[rel="canonical"]').should('have.attr', 'href').and('include', 'carlosandmunoz.com');
+    cy.get('#site-structured-data').invoke('text').should('include', 'featureList').and('include', 'QA regression lab');
     cy.get('#person-structured-data').invoke('text').should('include', 'Carlos').and('match', /18 (years|años)/i);
     cy.get('#competencies-structured-data').invoke('text').should('include', 'DefinedTerm').and('include', 'topic=pm');
     cy.get('meta[name="keywords"]').should('have.attr', 'content').and('include', 'IT Project Management');
