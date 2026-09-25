@@ -155,14 +155,69 @@ function clip(value, max) {
   return text.slice(0, max) + "…";
 }
 
-async function sendOwnerEmail(subject, text) {
+function clipBlock(value, max) {
+  const text = String(value == null ? "" : value).replace(/\r\n/g, "\n").trim();
+  if (text.length <= max) return text;
+  return text.slice(0, max) + "…";
+}
+
+function escapeHtml(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  }[ch]));
+}
+
+function adminRespondUrl(type, id) {
+  const docId = String(id || "").trim();
+  if (!docId || (type !== "message" && type !== "rating")) return "";
+  const url = new URL("https://kaanmuar.github.io/admin.html");
+  url.searchParams.set("respond", type);
+  url.searchParams.set("id", docId);
+  return url.toString();
+}
+
+async function sendOwnerEmail({ subject, intro, rows, body, respondUrl }) {
   const from = prepareMail();
   if (!from) return;
+  const safeRows = (rows || []).filter((row) => row && row.value);
+  const text = [
+    intro,
+    "",
+    ...safeRows.map((row) => row.label + ": " + row.value),
+    body ? "\n" + body : "",
+    respondUrl ? "\nRespond: " + respondUrl : ""
+  ].join("\n").slice(0, 4000);
+  const rowHtml = safeRows.map((row) =>
+    "<tr>" +
+    "<td style=\"padding:8px 16px 8px 0;color:#5c6b7a;font-size:13px;vertical-align:top;white-space:nowrap;\">" + escapeHtml(row.label) + "</td>" +
+    "<td style=\"padding:8px 0;color:#1c2833;font-size:15px;\">" + escapeHtml(row.value) + "</td>" +
+    "</tr>"
+  ).join("");
+  const bodyHtml = body
+    ? "<div style=\"margin-top:16px;padding:16px;background:#f4f7f8;border-radius:8px;color:#1c2833;font-size:15px;line-height:1.5;white-space:pre-wrap;\">" + escapeHtml(body) + "</div>"
+    : "";
+  const buttonHtml = respondUrl
+    ? "<a href=\"" + escapeHtml(respondUrl) + "\" style=\"display:inline-block;margin-top:22px;background:#0e7490;color:#ffffff;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:12px 20px;border-radius:8px;\">Respond</a>"
+    : "";
+  const html = "<!DOCTYPE html><html><body style=\"margin:0;padding:24px;background:#eef2f4;font-family:Georgia,'Times New Roman',serif;\">" +
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;\">" +
+    "<tr><td style=\"padding:28px;\">" +
+    "<p style=\"margin:0 0 8px;font-family:Arial,sans-serif;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#0e7490;\">Carlos Muñoz CV</p>" +
+    "<h1 style=\"margin:0 0 20px;font-size:22px;line-height:1.3;color:#102027;font-weight:normal;\">" + escapeHtml(intro) + "</h1>" +
+    "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">" + rowHtml + "</table>" +
+    bodyHtml +
+    buttonHtml +
+    "</td></tr></table></body></html>";
   await sgMail.send({
     to: OWNER_EMAIL,
     from: from,
     subject: clip(subject, 140),
-    text: clip(text, 4000)
+    text: text,
+    html: html
   });
 }
 
@@ -171,17 +226,19 @@ exports.notifyOwnerOnMessage = withMail.firestore
   .onCreate(async (snap) => {
     const data = snap.data() || {};
     const topic = TOPIC_LABELS[data.topic] || data.topic || "—";
-    const text = [
-      "A new message was submitted on your CV.",
-      "",
-      "From: " + clip(data.name, 120) + " <" + clip(data.email, 120) + ">",
-      "Topic: " + clip(topic, 80),
-      data.fileURL ? "Attachment: yes" : "Attachment: no",
-      "",
-      clip(data.message, 2000)
-    ].join("\n");
     try {
-      await sendOwnerEmail("New CV message — " + clip(topic, 60), text);
+      await sendOwnerEmail({
+        subject: "New CV message — " + clip(topic, 60),
+        intro: "New message on your CV",
+        rows: [
+          { label: "From", value: clip(data.name, 120) },
+          { label: "Email", value: clip(data.email, 120) },
+          { label: "Topic", value: clip(topic, 80) },
+          { label: "Attachment", value: data.fileURL ? "Yes" : "No" }
+        ],
+        body: clipBlock(data.message, 2000),
+        respondUrl: adminRespondUrl("message", snap.id)
+      });
     } catch (error) {
       console.error("Owner message notification failed:", error);
     }
@@ -193,16 +250,18 @@ exports.notifyOwnerOnRating = withMail.firestore
   .onCreate(async (snap) => {
     const data = snap.data() || {};
     const score = Math.min(5, Math.max(0, Number(data.rating) || 0));
-    const text = [
-      "New feedback was submitted on your CV.",
-      "",
-      "From: " + clip(data.name, 120) + " <" + clip(data.email, 120) + ">",
-      "Rating: " + score + "/5",
-      "",
-      clip(data.comment, 2000) || "(no comment)"
-    ].join("\n");
     try {
-      await sendOwnerEmail("New CV feedback — " + score + "/5", text);
+      await sendOwnerEmail({
+        subject: "New CV feedback — " + score + "/5",
+        intro: "New feedback on your CV",
+        rows: [
+          { label: "From", value: clip(data.name, 120) },
+          { label: "Email", value: clip(data.email, 120) },
+          { label: "Rating", value: score + " out of 5" }
+        ],
+        body: clipBlock(data.comment, 2000) || "(no comment)",
+        respondUrl: adminRespondUrl("rating", snap.id)
+      });
     } catch (error) {
       console.error("Owner rating notification failed:", error);
     }
@@ -234,14 +293,16 @@ exports.notifyOwnerOnVisit = withMail.firestore
       }, { merge: true });
     });
     if (!shouldSend) return null;
-    const text = [
-      "Someone opened your CV.",
-      "Language: " + clip(visit.lang || "en", 12),
-      visit.referrerHost ? "Referrer: " + clip(visit.referrerHost, 80) : "Referrer: direct",
-      grouped ? grouped + " more visits in the last 15 minutes were included in this note." : ""
-    ].filter(Boolean).join("\n");
     try {
-      await sendOwnerEmail("Your CV was opened", text);
+      await sendOwnerEmail({
+        subject: "Your CV was opened",
+        intro: "Someone opened your CV",
+        rows: [
+          { label: "Language", value: clip(visit.lang || "en", 12) },
+          { label: "Referrer", value: visit.referrerHost ? clip(visit.referrerHost, 80) : "Direct" },
+          grouped ? { label: "Also", value: grouped + " more visits in the last 15 minutes" } : null
+        ]
+      });
     } catch (error) {
       console.error("Owner visit notification failed:", error);
     }
