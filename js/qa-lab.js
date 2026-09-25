@@ -447,7 +447,8 @@
         const xml = await fetchText('sitemap.xml');
         assert(xml.includes('simulador.html'), 'studio missing from sitemap');
         assert(xml.includes('qa-lab.html'), 'qa-lab missing from sitemap');
-        ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
+        assert(xml.includes('hreflang="en" href="https://carlosandmunoz.com/qa-lab.html"'), 'english hreflang missing');
+        ['es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
           assert(xml.includes('qa-lab.html?lang=' + lang), 'qa-lab hreflang missing for ' + lang);
         });
         assert(!xml.includes('admin.html'), 'admin leaked into sitemap');
@@ -471,12 +472,12 @@
       title: 'CV is indexable with canonical and JSON-LD',
       where: 'meta robots, link[rel=canonical], #person-structured-data',
       when: 'CV head is parsed.',
-      how: 'index present; canonical points at github.io; JSON-LD names Carlos and 18 years/años.',
+      how: 'index present; canonical points at carlosandmunoz.com; JSON-LD names Carlos and 18 years/años.',
       async run({ cv }) {
         const robots = cv.document.querySelector('meta[name="robots"]').content;
         assert(/index/i.test(robots), 'CV not indexable');
         const canonical = cv.document.querySelector('link[rel="canonical"]').href;
-        assert(/kaanmuar\.github\.io/.test(canonical), 'canonical host unexpected');
+        assert(/carlosandmunoz\.com/.test(canonical), 'canonical host unexpected');
         const json = cv.document.getElementById('person-structured-data').textContent;
         assert(/Carlos/.test(json), 'JSON-LD name missing');
         assert(/18 (years|años)/i.test(json), '18 years missing from JSON-LD');
