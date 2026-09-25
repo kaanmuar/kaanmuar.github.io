@@ -204,7 +204,12 @@
         #language-selector .lang-wrapper { transition: opacity 0.3s ease; }
         #language-selector.collapsed .lang-wrapper:not(:has(.selected)) { display: none; }
         .lang-accordion-indicator { transition: transform 0.3s ease; }
-        #language-selector:not(.collapsed) .lang-accordion-indicator { transform: rotate(180deg); }
+        #language-selector:not(.collapsed) .lang-accordion-indicator,
+        #language-selector-mobile:not(.collapsed) .lang-accordion-indicator { transform: rotate(180deg); }
+        .tool-btn { flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+        .tool-icon-row { display: inline-flex; align-items: center; gap: 2px; }
+        .tool-caption { display: block; font-size: 0.625rem; line-height: 1.1; font-weight: 600; letter-spacing: 0.01em; color: var(--text-secondary); text-align: center; white-space: nowrap; }
+        #page-header-controls .tool-btn { flex-direction: column; align-items: center; gap: 2px; }
 
         /* This handles the vertical dropdown on all screen sizes */
         /* This rule makes the language selector visible on desktop again */
@@ -352,20 +357,24 @@
             .dropdown { /* FIX: Changed from .mobile-dropdown to match the JS */
                 display: none;
             }
-            /* This rule shows the mobile dropdown when the parent is NOT collapsed */
-            .mobile-toolbar-wrapper div.relative:not(.collapsed) > .dropdown { /* FIX: Made selector more specific */
+            .mobile-toolbar { position: relative; }
+            .mobile-toolbar > .relative { position: static; }
+            /* Menus anchor to the full toolbar so they stay on screen */
+            .mobile-toolbar-wrapper div.relative:not(.collapsed) > .dropdown {
                 display: flex;
                 position: absolute;
-                right: 0;
-                top: calc(100% + 0.5rem);
+                left: 0.4rem;
+                right: 0.4rem;
+                top: calc(100% + 0.35rem);
                 flex-direction: column;
                 gap: 0.5rem;
                 padding: 0.5rem;
                 border-radius: 0.5rem;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 background-color: var(--bg-secondary);
-                width: max-content;
-                z-index: 110;
+                width: auto;
+                max-width: none;
+                z-index: 130;
             }
 
             /* --- FIX for Mobile Theme Switching --- */
@@ -411,6 +420,7 @@
         .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
         .cv-footer-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem; margin-bottom: 0.75rem; }
         .cv-footer-tools a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; }
+        .cv-capabilities { max-width: 42rem; margin: 0 auto 0.75rem; line-height: 1.45; }
         .phone-container .phone-text { display: inline; }
         .phone-container .phone-number { display: none; }
         .phone-container:hover .phone-text, .phone-container:focus .phone-text { display: none; }
@@ -1020,21 +1030,35 @@
                 display: flex;
                 justify-content: center;
             }
-            .mobile-toolbar button,
-            .mobile-toolbar .tooltip {
+            .mobile-toolbar > button,
+            .mobile-toolbar .tool-btn {
                 min-height: 44px;
                 min-width: 44px;
                 padding: 8px;
                 align-items: center;
                 justify-content: center;
             }
-            .mobile-toolbar svg,
+            .mobile-toolbar .tool-btn svg,
             .mobile-toolbar .lang-flag {
                 width: 1.25rem;
                 height: 1.25rem;
                 flex-shrink: 0;
             }
+            .mobile-toolbar .lang-accordion-indicator { width: 0.9rem; height: 0.9rem; }
             .mobile-toolbar .lang-flag { border-radius: 50%; object-fit: cover; }
+            .mobile-toolbar .tool-btn {
+                flex-direction: column;
+                width: 100%;
+                gap: 2px;
+                min-height: 48px;
+                padding: 4px 2px;
+            }
+            .mobile-toolbar > .tool-wide {
+                flex: 1 0 100%;
+                width: 100%;
+                max-width: 100%;
+                min-height: 36px;
+            }
             #language-options-mobile,
             #social-share-options-mobile-container,
             #export-options-mobile-container {
@@ -1066,7 +1090,14 @@
             /* This fixes the SVG icon colors inside the dropdowns */
             .mobile-toolbar-wrapper .dropdown svg {
                 color: var(--text-primary);
-                fill: var(--text-primary);
+                fill: currentColor;
+                width: 1.25rem;
+                height: 1.25rem;
+                flex-shrink: 0;
+            }
+            .mobile-toolbar-wrapper .dropdown svg[fill="none"] {
+                fill: none;
+                stroke: currentColor;
             }
 
             /* This adds a hover effect for better usability */
@@ -1080,18 +1111,23 @@
                 display: none;
             }
             /* This rule shows the mobile dropdown when the parent is NOT collapsed */
-            .mobile-toolbar-wrapper .relative:not(.collapsed) .dropdown {
+            .mobile-toolbar { position: relative; }
+            .mobile-toolbar > .relative { position: static; }
+            .mobile-toolbar-wrapper .relative:not(.collapsed) > .dropdown {
                 display: flex;
                 position: absolute;
-                right: 0;
-                top: calc(100% + 0.5rem);
+                left: 0.4rem;
+                right: 0.4rem;
+                top: calc(100% + 0.35rem);
                 flex-direction: column;
                 gap: 0.5rem;
                 padding: 0.5rem;
                 border-radius: 0.5rem;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 background-color: var(--bg-secondary);
-                width: max-content;
+                width: auto;
+                max-width: none;
+                z-index: 130;
             }
         }
 
@@ -1137,20 +1173,24 @@
             50% { box-shadow: 0 0 16px 8px rgba(13, 110, 118, 0.55); }
         }
 
-        #tour-start-btn {
-            display: inline-flex; /* Use flexbox for alignment */
-            align-items: center; /* Vertically center the text */
-            text-align: center; /* Horizontally center the text */
+        #tour-start-btn,
+        #tour-start-btn-mobile {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
             background-color: var(--bg-primary);
             color: var(--cyan-brand);
             border: 1px solid var(--cyan-brand);
             animation: subtle-glow 3s infinite ease-in-out;
             transition: background-color 0.2s;
-            height: 34px; /* Match the height of other buttons */
+            height: 34px;
         }
 
-        #tour-start-btn:hover { background-color: var(--accent-soft); }
-        .dark-mode #tour-start-btn:hover { background-color: var(--accent-soft); }
+        #tour-start-btn:hover,
+        #tour-start-btn-mobile:hover { background-color: var(--accent-soft); }
+        .dark-mode #tour-start-btn:hover,
+        .dark-mode #tour-start-btn-mobile:hover { background-color: var(--accent-soft); }
 
         #tour-overlay {
             display: none;

@@ -877,6 +877,13 @@
                         collapse_all: "Collapse All",
                         reset_filters: "Reset Filters",
                         tooltip_theme: "Toggle dark mode",
+                        toolbar_theme: "Theme",
+                        toolbar_share: "Share",
+                        toolbar_lang: "Language",
+                        toolbar_studio: "Studio",
+                        toolbar_lab: "Lab",
+                        toolbar_print: "Print",
+                        toolbar_export: "Export",
                         copied: "Copied!",
                         print_online_cv: "View Interactive CV Online",
                         print_linkedin: "LinkedIn Profile",
@@ -928,9 +935,9 @@
                         tour_title_education: "Education & Certifications",
                         tour_desc_education: "This section details my academic background and key professional certifications that validate my expertise.",
                         page_title: "Visual CV - Carlos Muñoz Ardila | IT Project Manager & QA Architect",
-                        meta_description: "Interactive CV of Carlos A. Muñoz, a Senior IT Project Manager, QA Architect & QA Leader with over 18 years of experience delivering complex software solutions.",
+                        meta_description: "Interactive CV of Carlos A. Muñoz, Senior IT Project Manager and QA Architect. Six languages, competency filters, a skills toolkit, a career timeline, print, and PDF, JPG, Word, JSON, and text downloads, plus a free QA lab and SDLC studio.",
                         json_job_title: "Senior IT Project Manager, QA Architect & QA Leader",
-                        json_description: "A Senior IT Project Manager and QA Architect with over 18 years of experience delivering high-quality, complex software solutions for global technology leaders. Expert in IT project management, QA automation, DevOps strategy, cloud platforms, and leading cross-functional teams."
+                        json_description: "A Senior IT Project Manager and QA Architect with over 18 years of experience delivering high-quality, complex software solutions for global technology leaders. Expert in IT project management, QA automation, DevOps strategy, cloud platforms, and leading cross-functional teams. This interactive CV adds competency filters, print and downloads, a free QA regression lab, and a free SDLC studio."
                     },
                     es: {
                         job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA",
@@ -1050,6 +1057,13 @@
                         collapse_all: "Contraer todo",
                         reset_filters: "Restablecer filtros",
                         tooltip_theme: "Cambiar tema",
+                        toolbar_theme: "Tema",
+                        toolbar_share: "Compartir",
+                        toolbar_lang: "Idioma",
+                        toolbar_studio: "Estudio",
+                        toolbar_lab: "Lab",
+                        toolbar_print: "Imprimir",
+                        toolbar_export: "Exportar",
                         copied: "¡Copiado!",
                         print_online_cv: "Ver CV interactivo en línea",
                         print_linkedin: "Perfil de LinkedIn",
@@ -1101,9 +1115,9 @@
                         tour_title_education: "Educación y Certificaciones",
                         tour_desc_education: "Esta sección detalla mi formación académica y las certificaciones profesionales clave que validan mi experiencia.",
                         page_title: "CV Visual - Carlos Muñoz Ardila | Gerente de Proyectos TI y Arquitecto QA",
-                        meta_description: "CV interactivo de Carlos A. Muñoz, un Gerente Senior de Proyectos de TI y Arquitecto de QA con más de 18 años de experiencia entregando soluciones de software complejas.",
+                        meta_description: "CV interactivo de Carlos A. Muñoz, gerente senior de proyectos de TI y arquitecto de QA. Seis idiomas, filtros de competencias, toolkit, línea de tiempo, impresión y descargas en PDF, JPG, Word, JSON y texto, más un laboratorio de QA y un estudio SDLC gratuitos.",
                         json_job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA",
-                        json_description: "Un Gerente de Proyectos de TI y Arquitecto de QA con más de 18 años de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de stakeholders y liderazgo de equipos multifuncionales."
+                        json_description: "Un Gerente de Proyectos de TI y Arquitecto de QA con más de 18 años de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de stakeholders y liderazgo de equipos multifuncionales. Este CV interactivo añade filtros de competencias, impresión y descargas, un laboratorio de regresión QA gratuito y un estudio SDLC gratuito."
 
                     },
                     pt: {
@@ -1224,6 +1238,13 @@
                         collapse_all: "Recolher tudo",
                         reset_filters: "Redefinir filtros",
                         tooltip_theme: "Alternar tema",
+                        toolbar_theme: "Tema",
+                        toolbar_share: "Compartilhar",
+                        toolbar_lang: "Idioma",
+                        toolbar_studio: "Estúdio",
+                        toolbar_lab: "Lab",
+                        toolbar_print: "Imprimir",
+                        toolbar_export: "Exportar",
                         copied: "Copiado!",
                         print_online_cv: "Ver CV interativo online",
                         print_linkedin: "Perfil do LinkedIn",
@@ -1275,9 +1296,9 @@
                         tour_title_education: "Educação e Certificações",
                         tour_desc_education: "Esta seção detalha minha formação acadêmica e as principais certificações profissionais que validam minha expertise.",
                         page_title: "CV Visual - Carlos Muñoz Ardila | Gerente de Projetos de TI e Arquiteto de QA",
-                        meta_description: "CV interativo de Carlos A. Muñoz, um Gerente Sênior de Projetos de TI e Arquiteto de QA com mais de 18 anos de experiência na entrega de soluções de software complexas.",
+                        meta_description: "CV interativo de Carlos A. Muñoz, gerente sênior de projetos de TI e arquiteto de QA. Seis idiomas, filtros de competências, toolkit, linha do tempo, impressão e downloads em PDF, JPG, Word, JSON e texto, além de um laboratório de QA e um estúdio SDLC gratuitos.",
                         json_job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA",
-                        json_description: "Um Gerente Sênior de Projetos de TI e Arquiteto de QA com mais de 18 anos de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais."
+                        json_description: "Um Gerente Sênior de Projetos de TI e Arquiteto de QA com mais de 18 anos de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais. Este CV interativo acrescenta filtros de competências, impressão e downloads, um laboratório de regressão de QA gratuito e um estúdio SDLC gratuito."
                     },
                     de: {
                         job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter",
@@ -1397,6 +1418,13 @@
                         collapse_all: "Alle einklappen",
                         reset_filters: "Filter zurücksetzen",
                         tooltip_theme: "Dunkelmodus umschalten",
+                        toolbar_theme: "Thema",
+                        toolbar_share: "Teilen",
+                        toolbar_lang: "Sprache",
+                        toolbar_studio: "Studio",
+                        toolbar_lab: "Labor",
+                        toolbar_print: "Drucken",
+                        toolbar_export: "Export",
                         copied: "Kopiert!",
                         print_online_cv: "Interaktiven Lebenslauf online ansehen",
                         print_linkedin: "LinkedIn-Profil",
@@ -1448,9 +1476,9 @@
                         tour_title_education: "Ausbildung & Zertifizierungen",
                         tour_desc_education: "Dieser Abschnitt beschreibt meinen akademischen Hintergrund und wichtige berufliche Zertifizierungen, die meine Expertise bestätigen.",
                         page_title: "Visueller Lebenslauf - Carlos Muñoz Ardila | IT-Projektmanager & QA-Architekt",
-                        meta_description: "Interaktiver Lebenslauf von Carlos A. Muñoz, einem Senior IT-Projektmanager und QA-Architekten mit über 18 Jahren Erfahrung in der Bereitstellung komplexer Softwarelösungen.",
+                        meta_description: "Interaktiver Lebenslauf von Carlos A. Muñoz, Senior-IT-Projektmanager und QA-Architekt. Sechs Sprachen, Kompetenzfilter, Toolkit, Zeitachse, Druck und Downloads als PDF, JPG, Word, JSON und Text, plus ein kostenloses QA-Labor und SDLC-Studio.",
                         json_job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter",
-                        json_description: "Ein Senior IT-Projektmanager und QA-Architekt mit über 18 Jahren Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams."
+                        json_description: "Ein Senior IT-Projektmanager und QA-Architekt mit über 18 Jahren Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams. Dieser interaktive Lebenslauf ergänzt Kompetenzfilter, Druck und Downloads, ein kostenloses QA-Regressionslabor und ein kostenloses SDLC-Studio."
                     },
                     fr: {
                         job_title: "Chef de Projet IT Senior, Architecte et Leader QA",
@@ -1570,6 +1598,13 @@
                         collapse_all: "Tout réduire",
                         reset_filters: "Réinitialiser les filtres",
                         tooltip_theme: "Basculer le thème",
+                        toolbar_theme: "Thème",
+                        toolbar_share: "Partager",
+                        toolbar_lang: "Langue",
+                        toolbar_studio: "Studio",
+                        toolbar_lab: "Labo",
+                        toolbar_print: "Imprimer",
+                        toolbar_export: "Export",
                         copied: "Copié !",
                         print_online_cv: "Voir le CV interactif en ligne",
                         print_linkedin: "Profil LinkedIn",
@@ -1621,9 +1656,9 @@
                         tour_title_education: "Formation et Certifications",
                         tour_desc_education: "Cette section détaille mon parcours académique et les certifications professionnelles clés qui valident mon expertise.",
                         page_title: "CV Visuel - Carlos Muñoz Ardila | Chef de Projet IT & Architecte QA",
-                        meta_description: "CV interactif de Carlos A. Muñoz, un Chef de Projet IT Senior et Architecte QA avec plus de 18 ans d'expérience dans la livraison de solutions logicielles complexes.",
+                        meta_description: "CV interactif de Carlos A. Muñoz, chef de projet IT senior et architecte QA. Six langues, filtres de compétences, boîte à outils, chronologie, impression et téléchargements PDF, JPG, Word, JSON et texte, plus un laboratoire QA et un studio SDLC gratuits.",
                         json_job_title: "Chef de Projet IT Senior, Architecte et Leader QA",
-                        json_description: "Un Chef de Projet IT Senior et Architecte QA avec plus de 18 ans d'expérience dans la livraison de solutions logicielles de haute qualité et complexes pour des leaders technologiques mondiaux. Expert en planification stratégique, gestion des parties prenantes et direction d'équipes interfonctionnelles."
+                        json_description: "Un Chef de Projet IT Senior et Architecte QA avec plus de 18 ans d'expérience dans la livraison de solutions logicielles de haute qualité et complexes pour des leaders technologiques mondiaux. Expert en planification stratégique, gestion des parties prenantes et direction d'équipes interfonctionnelles. Ce CV interactif ajoute des filtres de compétences, l'impression et les téléchargements, un laboratoire de régression QA gratuit et un studio SDLC gratuit."
                     },
                     it: {
                         job_title: "Manager Senior di Progetti IT, Architetto e Leader QA",
@@ -1743,6 +1778,13 @@
                         collapse_all: "Comprimi tutto",
                         reset_filters: "Reimposta filtri",
                         tooltip_theme: "Attiva/disattiva tema scuro",
+                        toolbar_theme: "Tema",
+                        toolbar_share: "Condividi",
+                        toolbar_lang: "Lingua",
+                        toolbar_studio: "Studio",
+                        toolbar_lab: "Lab",
+                        toolbar_print: "Stampa",
+                        toolbar_export: "Esporta",
                         copied: "Copiato!",
                         print_online_cv: "Vedi il CV interattivo online",
                         print_linkedin: "Profilo LinkedIn",
@@ -1794,9 +1836,9 @@
                         tour_title_education: "Istruzione e Certificazioni",
                         tour_desc_education: "Questa sezione dettaglia il mio background accademico e le principali certificazioni professionali che convalidano la mia esperienza.",
                         page_title: "CV Visivo - Carlos Muñoz Ardila | Project Manager IT e Architetto QA",
-                        meta_description: "CV interattivo di Carlos A. Muñoz, un Senior IT Project Manager e Architetto QA con oltre 18 anni di esperienza nella fornitura di soluzioni software complesse.",
+                        meta_description: "CV interattivo di Carlos A. Muñoz, senior IT project manager e architetto QA. Sei lingue, filtri delle competenze, toolkit, linea del tempo, stampa e download in PDF, JPG, Word, JSON e testo, più un laboratorio QA e uno studio SDLC gratuiti.",
                         json_job_title: "Manager Senior di Progetti IT, Architetto e Leader QA",
-                        json_description: "Un Senior IT Project Manager e Architetto QA con oltre 18 anni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali."
+                        json_description: "Un Senior IT Project Manager e Architetto QA con oltre 18 anni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali. Questo CV interattivo aggiunge filtri delle competenze, stampa e download, un laboratorio di regressione QA gratuito e uno studio SDLC gratuito."
                     },
                 },
   };

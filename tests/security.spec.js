@@ -17,7 +17,7 @@ test.describe('Security and SEO', () => {
     const res = await request.get('/sitemap.xml');
     expect(res.ok()).toBeTruthy();
     const xml = await res.text();
-    expect(xml).toContain('kaanmuar.github.io/');
+    expect(xml).toContain('carlosandmunoz.com/');
         expect(xml).toContain('simulador.html');
         expect(xml).toContain('qa-lab.html');
         expect(xml).toContain('qa-lab.html?lang=es');
@@ -35,7 +35,11 @@ test.describe('Security and SEO', () => {
     await openCV(page);
     const robots = await page.locator('meta[name="robots"]').getAttribute('content');
     expect(robots).toMatch(/index/i);
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /kaanmuar\.github\.io/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /carlosandmunoz\.com/);
+    const siteLd = await page.locator('#site-structured-data').textContent();
+    expect(siteLd).toContain('featureList');
+    expect(siteLd).toContain('QA regression lab');
+    expect(siteLd).toContain('SDLC studio');
     const jsonLd = await page.locator('#person-structured-data').textContent();
     expect(jsonLd).toContain('Carlos');
     expect(jsonLd).toMatch(/18 (years|años)/i);

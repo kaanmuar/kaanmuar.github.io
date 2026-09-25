@@ -31,6 +31,7 @@
             cert_label_security: 'Information Security:',
             footer_lab: 'QA regression lab — run the Playwright, Cypress, and Robot suite in the browser',
             footer_studio: 'SDLC studio — try the Jira, Xray, and test-automation sprint',
+            footer_capabilities: 'Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, seven competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.',
             roles: [
                 'Senior QA & Program Consultant',
                 'Senior Technical Project Manager & Consultant',
@@ -59,6 +60,7 @@
             cert_label_security: 'Seguridad de la información:',
             footer_lab: 'Laboratorio de regresión QA — ejecuta Playwright, Cypress y Robot en el navegador',
             footer_studio: 'Estudio SDLC — prueba el sprint de Jira, Xray y automatización',
+            footer_capabilities: 'Se lee en inglés, español, portugués, alemán, francés e italiano. Incluye un recorrido guiado, temas claro y oscuro, siete filtros de competencias, un toolkit, una línea de tiempo, impresión y descargas en PDF, JPG, Word, JSON y texto plano.',
             roles: [
                 'Consultor Senior de QA y Programas',
                 'Gerente Senior de Proyectos Técnicos y Consultor',
@@ -87,6 +89,7 @@
             cert_label_security: 'Segurança da informação:',
             footer_lab: 'Laboratório de regressão de QA — execute Playwright, Cypress e Robot no navegador',
             footer_studio: 'Estúdio SDLC — experimente o sprint de Jira, Xray e automação de testes',
+            footer_capabilities: 'Leitura em inglês, espanhol, português, alemão, francês e italiano. Inclui um tour guiado, temas claro e escuro, sete filtros de competências, um toolkit, uma linha do tempo, impressão e downloads em PDF, JPG, Word, JSON e texto simples.',
             roles: [
                 'Consultor Sênior de QA e Programas',
                 'Gerente Sênior de Projetos Técnicos e Consultor',
@@ -115,6 +118,7 @@
             cert_label_security: 'Informationssicherheit:',
             footer_lab: 'QA-Regressionslabor — Playwright, Cypress und Robot im Browser ausführen',
             footer_studio: 'SDLC-Studio — Jira-, Xray- und Testautomatisierungs-Sprint ausprobieren',
+            footer_capabilities: 'Lesbar auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Enthält eine Führung, helles und dunkles Design, sieben Kompetenzfilter, ein Toolkit, eine Zeitachse, Druck und Downloads als PDF, JPG, Word, JSON und Klartext.',
             roles: [
                 'Senior QA- und Programmberater',
                 'Senior Technical Project Manager und Berater',
@@ -143,6 +147,7 @@
             cert_label_security: 'Sécurité de l\'information :',
             footer_lab: 'Laboratoire de régression QA — lancez Playwright, Cypress et Robot dans le navigateur',
             footer_studio: 'Studio SDLC — essayez le sprint Jira, Xray et automatisation de tests',
+            footer_capabilities: 'Lisible en anglais, espagnol, portugais, allemand, français et italien. Comprend une visite guidée, les thèmes clair et sombre, sept filtres de compétences, une boîte à outils, une chronologie, l\'impression et des téléchargements PDF, JPG, Word, JSON et texte brut.',
             roles: [
                 'Consultant senior QA et programmes',
                 'Chef de projet technique senior et consultant',
@@ -171,6 +176,7 @@
             cert_label_security: 'Sicurezza delle informazioni:',
             footer_lab: 'Laboratorio di regressione QA — esegui Playwright, Cypress e Robot nel browser',
             footer_studio: 'Studio SDLC — prova lo sprint Jira, Xray e automazione dei test',
+            footer_capabilities: 'Leggibile in inglese, spagnolo, portoghese, tedesco, francese e italiano. Include un tour guidato, temi chiaro e scuro, sette filtri delle competenze, un toolkit, una linea del tempo, stampa e download in PDF, JPG, Word, JSON e testo semplice.',
             roles: [
                 'Consulente senior QA e programmi',
                 'Senior Technical Project Manager e consulente',
@@ -763,7 +769,7 @@
                 const locales = { en: 'en_US', es: 'es_CO', pt: 'pt_BR', de: 'de_DE', fr: 'fr_FR', it: 'it_IT' };
                 const title = (translation && translation.page_title) || document.title;
                 const description = (translation && translation.meta_description) || '';
-                const canonicalUrl = `https://kaanmuar.github.io/${lang && lang !== 'en' ? '?lang=' + encodeURIComponent(lang) : ''}`;
+                const canonicalUrl = `https://carlosandmunoz.com/${lang && lang !== 'en' ? '?lang=' + encodeURIComponent(lang) : ''}`;
 
                 document.documentElement.lang = lang || 'en';
                 if (translation && translation.page_title) document.title = translation.page_title;
@@ -2845,12 +2851,12 @@
                         <h1>Carlos A. Muñoz</h1>
                         <p class="role">${this._escPrint(this._s('job_title'))}</p>
                         <p class="loc">Medellín, Colombia</p>
-                        <p class="contact">${this._printLink('mailto:kaanmuar@gmail.com', 'kaanmuar@gmail.com')} · ${this._printLink('tel:+573209191010', '+57 320 919 1010')} · ${this._printLink('https://www.linkedin.com/in/carlos-andres-m-2a60b8b/', 'linkedin.com/in/carlos-andres-m-2a60b8b')} · ${this._printLink('https://kaanmuar.github.io/', 'kaanmuar.github.io')}</p>
+                        <p class="contact">${this._printLink('mailto:kaanmuar@gmail.com', 'kaanmuar@gmail.com')} · ${this._printLink('tel:+573209191010', '+57 320 919 1010')} · ${this._printLink('https://www.linkedin.com/in/carlos-andres-m-2a60b8b/', 'linkedin.com/in/carlos-andres-m-2a60b8b')} · ${this._printLink('https://carlosandmunoz.com/', 'carlosandmunoz.com')}</p>
                     </header>
                 `);
                 blocks.push(`<h2>${this._escPrint(this._s('print_see_work', 'See the work for yourself'))}</h2>`);
-                blocks.push(`<p class="live">${this._printLink('https://kaanmuar.github.io/qa-lab.html', this._s('print_lab_name', 'QA regression lab'))} — ${this._escPrint(this._s('print_lab_pitch'))}</p>`);
-                blocks.push(`<p class="live">${this._printLink('https://kaanmuar.github.io/simulador.html', this._s('print_studio_name', 'SDLC studio'))} — ${this._escPrint(this._s('print_studio_pitch'))}</p>`);
+                blocks.push(`<p class="live">${this._printLink('https://carlosandmunoz.com/qa-lab.html', this._s('print_lab_name', 'QA regression lab'))} — ${this._escPrint(this._s('print_lab_pitch'))}</p>`);
+                blocks.push(`<p class="live">${this._printLink('https://carlosandmunoz.com/simulador.html', this._s('print_studio_name', 'SDLC studio'))} — ${this._escPrint(this._s('print_studio_pitch'))}</p>`);
                 blocks.push(`<h2>${this._escPrint(this._s('print_skills', 'Skills'))}</h2>`);
                 Object.keys(this.data.skills || {}).forEach((key) => {
                     const names = this.data.skills[key].map((skill) => skill.name).join(', ');
@@ -2930,7 +2936,7 @@
                     <section class="sheet">
                         <div class="sheet-body">${parts.join('')}</div>
                         <footer class="sheet-foot">
-                            <span>Carlos A. Muñoz · ${this._printLink('https://kaanmuar.github.io/', 'kaanmuar.github.io')}</span>
+                            <span>Carlos A. Muñoz · ${this._printLink('https://carlosandmunoz.com/', 'carlosandmunoz.com')}</span>
                             <span>${index + 1} / ${pages.length}</span>
                         </footer>
                     </section>
@@ -2965,10 +2971,10 @@
                     <h1>Carlos A. Muñoz</h1>
                     <p>${this._escPrint(this._s('job_title'))}</p>
                     <p>Medellín, Colombia</p>
-                    <p><a href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a> | <a href="tel:+573209191010">+57 320 919 1010</a> | <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">linkedin.com/in/carlos-andres-m-2a60b8b</a> | <a href="https://kaanmuar.github.io/">kaanmuar.github.io</a></p>
+                    <p><a href="mailto:kaanmuar@gmail.com">kaanmuar@gmail.com</a> | <a href="tel:+573209191010">+57 320 919 1010</a> | <a href="https://www.linkedin.com/in/carlos-andres-m-2a60b8b/">linkedin.com/in/carlos-andres-m-2a60b8b</a> | <a href="https://carlosandmunoz.com/">carlosandmunoz.com</a></p>
                     <h2>${this._escPrint(this._s('print_see_work', 'See the work for yourself'))}</h2>
-                    <p><a href="https://kaanmuar.github.io/qa-lab.html">${this._escPrint(this._s('print_lab_name', 'QA regression lab'))}</a> — ${this._escPrint(this._s('print_lab_pitch'))}</p>
-                    <p><a href="https://kaanmuar.github.io/simulador.html">${this._escPrint(this._s('print_studio_name', 'SDLC studio'))}</a> — ${this._escPrint(this._s('print_studio_pitch'))}</p>
+                    <p><a href="https://carlosandmunoz.com/qa-lab.html">${this._escPrint(this._s('print_lab_name', 'QA regression lab'))}</a> — ${this._escPrint(this._s('print_lab_pitch'))}</p>
+                    <p><a href="https://carlosandmunoz.com/simulador.html">${this._escPrint(this._s('print_studio_name', 'SDLC studio'))}</a> — ${this._escPrint(this._s('print_studio_pitch'))}</p>
                     <h2>${this._escPrint(this._s('print_skills', 'Skills'))}</h2>
                     ${Object.keys(this.data.skills || {}).map((key) => `<p><strong>${this._escPrint(this._s('print_cat_' + key, key))}:</strong> ${this._escPrint(this.data.skills[key].map((skill) => skill.name).join(', '))}</p>`).join('')}
                     ${experiences[0] ? `<h2>${this._escPrint(this._s('print_current_role', 'Current role'))}</h2>${job(experiences[0], 0)}` : ''}
@@ -3000,11 +3006,11 @@
                 lines.push('Carlos A. Muñoz');
                 lines.push(this._s('job_title'));
                 lines.push('Medellín, Colombia');
-                lines.push('kaanmuar@gmail.com | +57 320 919 1010 | https://www.linkedin.com/in/carlos-andres-m-2a60b8b/ | https://kaanmuar.github.io/');
+                lines.push('kaanmuar@gmail.com | +57 320 919 1010 | https://www.linkedin.com/in/carlos-andres-m-2a60b8b/ | https://carlosandmunoz.com/');
                 lines.push('');
                 lines.push(`## ${this._s('print_see_work', 'See the work for yourself')} ##`);
-                lines.push(`${this._s('print_lab_name', 'QA regression lab')} (https://kaanmuar.github.io/qa-lab.html) — ${this._s('print_lab_pitch')}`);
-                lines.push(`${this._s('print_studio_name', 'SDLC studio')} (https://kaanmuar.github.io/simulador.html) — ${this._s('print_studio_pitch')}`);
+                lines.push(`${this._s('print_lab_name', 'QA regression lab')} (https://carlosandmunoz.com/qa-lab.html) — ${this._s('print_lab_pitch')}`);
+                lines.push(`${this._s('print_studio_name', 'SDLC studio')} (https://carlosandmunoz.com/simulador.html) — ${this._s('print_studio_pitch')}`);
                 lines.push('');
                 lines.push(`## ${this._s('print_skills', 'Skills')} ##`);
                 Object.keys(this.data.skills || {}).forEach((key) => {
