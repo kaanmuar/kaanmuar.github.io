@@ -370,7 +370,30 @@
 
         updateFilterCounts(inboxMessages, allRatings);
         updateNewIndicators();
+        openRequestedResponse();
     }
+
+    let pendingRespond = null;
+    function readRespondRequest() {
+        const params = new URLSearchParams(window.location.search);
+        const type = params.get('respond');
+        const id = params.get('id');
+        if ((type === 'message' || type === 'rating') && id) pendingRespond = { type, id };
+    }
+
+    function openRequestedResponse() {
+        if (!pendingRespond) return;
+        const source = pendingRespond.type === 'message' ? allMessages : allRatings;
+        if (!source.some((item) => item.id === pendingRespond.id)) return;
+        switchTab(pendingRespond.type === 'message' ? 'messages' : 'ratings');
+        openResponseModal(pendingRespond);
+        pendingRespond = null;
+        const url = new URL(window.location.href);
+        url.searchParams.delete('respond');
+        url.searchParams.delete('id');
+        history.replaceState({}, '', url.pathname + url.search + url.hash);
+    }
+    readRespondRequest();
 
     function filterAndRender(items, filterFn, container, countEl) {
         const filtered = items.filter(item => filterFn(item, false)); // Pass false to filter
