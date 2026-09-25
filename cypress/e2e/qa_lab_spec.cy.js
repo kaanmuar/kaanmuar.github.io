@@ -11,7 +11,7 @@ describe('CV regression lab', () => {
 
   it('lists cases and explains where, when, and how', () => {
     cy.contains('h1', 'The suite I run on this CV').should('be.visible');
-    cy.get('.case-row').should('have.length', 47);
+    cy.get('.case-row').should('have.length', 53);
     cy.contains('.case-id', 'MOB-01').should('exist');
     cy.contains('.case-id', 'FN-15').should('exist');
     cy.contains('.case-id', 'FN-22').should('exist');
