@@ -44,7 +44,15 @@ test.describe('Mobile — CV, Studio, QA Lab, Admin', () => {
     expect(icons).toHaveLength(8);
     for (const icon of icons) {
       expect(icon.overflow, icon.id).toBeFalsy();
-      expect(icon.visibleMarks, icon.id).toBe(1);
+      if (icon.id === 'tour-start-btn-mobile') {
+        expect(icon.visibleMarks, icon.id).toBe(0);
+        continue;
+      }
+      if (icon.id === 'language-selector-mobile') {
+        expect(icon.visibleMarks, icon.id).toBe(2);
+      } else {
+        expect(icon.visibleMarks, icon.id).toBe(1);
+      }
       expect(icon.iconW, icon.id).toBeGreaterThanOrEqual(16);
       expect(icon.iconH, icon.id).toBeGreaterThanOrEqual(16);
     }
