@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV regression lab · Carlos A. Muñoz</title>
-    <meta name="description" content="Live catalog, runner and results dashboard for the Playwright, Cypress and Robot suite that verifies this interactive CV. Watch where each check looks, when it fires, and how it asserts.">
+    <title>Free QA regression lab · Playwright, Cypress, Robot</title>
+    <meta name="description" content="Free in-browser QA regression lab. Run the Playwright, Cypress, and Robot suite against this CV, watch each check, and open the results dashboard. No account required.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
     <meta name="keywords" content="QA lab, regression testing, Playwright, Cypress, Robot Framework, accessibility, security tests, interactive CV, Carlos Muñoz">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -23,13 +23,13 @@
     <meta property="og:locale:alternate" content="fr_FR">
     <meta property="og:locale:alternate" content="it_IT">
     <meta property="og:url" content="https://kaanmuar.github.io/qa-lab.html">
-    <meta property="og:title" content="CV regression lab · Carlos A. Muñoz">
-    <meta property="og:description" content="Watch the same checks I keep in Playwright, Cypress and Robot run against this CV — catalog, pace, log, and a results dashboard.">
+    <meta property="og:title" content="Free QA regression lab · Playwright, Cypress, Robot">
+    <meta property="og:description" content="Open the lab and run the same Playwright, Cypress, and Robot checks against this CV. Catalog, pace, log, and a results dashboard. Free to try.">
     <meta property="og:image" content="https://kaanmuar.github.io/assets/profile.jpg?v=20260925">
     <meta property="og:image:alt" content="Portrait of Carlos A. Muñoz Ardila">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CV regression lab · Carlos A. Muñoz">
-    <meta name="twitter:description" content="Live Playwright, Cypress and Robot catalog running against Carlos A. Muñoz's interactive CV.">
+    <meta name="twitter:title" content="Free QA regression lab · Playwright, Cypress, Robot">
+    <meta name="twitter:description" content="Free in-browser Playwright, Cypress, and Robot lab running against Carlos A. Muñoz's interactive CV.">
     <meta name="twitter:image" content="https://kaanmuar.github.io/assets/profile.jpg?v=20260925">
     <meta name="twitter:image:alt" content="Portrait of Carlos A. Muñoz Ardila">
     <link rel="alternate" hreflang="x-default" href="https://kaanmuar.github.io/qa-lab.html?lang=en">
@@ -49,7 +49,9 @@
                 "url": "https://kaanmuar.github.io/qa-lab.html",
                 "applicationCategory": "DeveloperApplication",
                 "operatingSystem": "Web",
-                "description": "In-browser catalog, paced runner and results dashboard mirroring the Playwright, Cypress and Robot suite for Carlos A. Muñoz's interactive CV.",
+                "description": "Free in-browser QA regression lab. Run the Playwright, Cypress, and Robot catalog against this CV, watch each check, and open the results dashboard. No account required.",
+                "isAccessibleForFree": true,
+                "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                 "author": {
                     "@type": "Person",
                     "name": "Carlos A. Muñoz Ardila",
@@ -128,7 +130,7 @@
         #theme-toggle .moon-icon { display: block; width: 18px; height: 18px; }
         html.dark-mode #theme-toggle .sun-icon { display: block; }
         html.dark-mode #theme-toggle .moon-icon { display: none; }
-        .btn { border: 0; border-radius: 6px; padding: 8px 12px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .btn { border: 0; border-radius: 6px; padding: 8px 12px; font-weight: 600; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-block; }
         .btn:disabled { opacity: .45; cursor: not-allowed; }
         .btn-primary { background: var(--cyan); color: #fff; }
         .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
@@ -239,7 +241,7 @@
         <div>CV regression lab<small>Playwright · Cypress · Robot — live against this site</small></div>
     </div>
     <div class="actions">
-        <button class="btn btn-ghost" id="homeBtn" type="button">← CV</button>
+        <a class="btn btn-ghost" id="homeBtn" href="index.html">← CV</a>
         <button class="btn btn-ghost" id="tour-start-btn" type="button">How this lab works</button>
         <a class="btn btn-ghost" href="https://github.com/kaanmuar/kaanmuar.github.io" target="_blank" rel="noopener noreferrer">Suite repo</a>
         <a class="btn btn-ghost" href="simulador.html">Sprint studio</a>

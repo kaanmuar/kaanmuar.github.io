@@ -395,6 +395,8 @@
         .timeline-tech-icons img { width: 12px; height: 12px; border-radius: 3px; }
         .trademark-logo { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background-color: var(--cyan-brand); color: white; font-weight: bold; font-size: 0.75rem; border: 2px solid white; flex-shrink: 0; }
         .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
+        .cv-footer-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem; margin-bottom: 0.75rem; }
+        .cv-footer-tools a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; }
         .phone-container .phone-text { display: inline; }
         .phone-container .phone-number { display: none; }
         .phone-container:hover .phone-text, .phone-container:focus .phone-text { display: none; }

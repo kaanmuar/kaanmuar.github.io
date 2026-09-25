@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sprint 24 · 4-Agent SDLC Studio</title>
-    <meta name="description" content="Interactive four-agent QA studio: refine Jira stories, design Xray cases, generate Playwright/Cypress/Robot scripts, and sign off a sprint Definition of Done.">
+    <title>Free SDLC studio · Jira, Xray, and test automation</title>
+    <meta name="description" content="Free in-browser SDLC studio. Refine Jira stories, design Xray cases, generate Playwright, Cypress, and Robot scripts, and check a sprint Definition of Done. No account required.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
     <meta name="keywords" content="QA studio, Jira, Xray, Playwright, Cypress, Robot Framework, SDLC, test automation, AI agents">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -23,13 +23,13 @@
     <meta property="og:locale:alternate" content="fr_FR">
     <meta property="og:locale:alternate" content="it_IT">
     <meta property="og:url" content="https://kaanmuar.github.io/simulador.html">
-    <meta property="og:title" content="Sprint 24 · 4-Agent SDLC Studio">
-    <meta property="og:description" content="Watch four specialized agents refine Jira, curate Xray, generate automation, and verify a sprint increment.">
+    <meta property="og:title" content="Free SDLC studio · Jira, Xray, and test automation">
+    <meta property="og:description" content="Try a four-agent sprint in the browser: Jira refinement, Xray design, Playwright, Cypress, and Robot scripts, then a Definition of Done check. Free, no account.">
     <meta property="og:image" content="https://kaanmuar.github.io/assets/profile.jpg?v=20260925">
     <meta property="og:image:alt" content="Portrait of Carlos A. Muñoz Ardila">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Sprint 24 · 4-Agent SDLC Studio">
-    <meta name="twitter:description" content="Interactive four-agent QA / SDLC studio from Carlos A. Muñoz's CV.">
+    <meta name="twitter:title" content="Free SDLC studio · Jira, Xray, and test automation">
+    <meta name="twitter:description" content="Free in-browser SDLC studio: Jira, Xray, Playwright, Cypress, and Robot. Open it and run a sprint.">
     <meta name="twitter:image" content="https://kaanmuar.github.io/assets/profile.jpg?v=20260925">
     <meta name="twitter:image:alt" content="Portrait of Carlos A. Muñoz Ardila">
     <link rel="alternate" hreflang="x-default" href="https://kaanmuar.github.io/simulador.html?lang=en">
@@ -43,11 +43,13 @@
     {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "PayStream QA Studio Sprint 24",
+        "name": "Free SDLC studio — Jira, Xray, and test automation",
         "url": "https://kaanmuar.github.io/simulador.html",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Web",
-        "description": "Interactive four-agent SDLC studio demonstrating Jira refinement, Xray design, test automation and release verification.",
+        "description": "Free in-browser SDLC studio. Refine Jira stories, design Xray cases, generate Playwright, Cypress, and Robot scripts, and check a sprint Definition of Done. No account required.",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "author": {
             "@type": "Person",
             "name": "Carlos A. Muñoz Ardila",
@@ -125,7 +127,7 @@
         #theme-toggle .moon-icon { display: block; width: 18px; height: 18px; }
         html.dark-mode #theme-toggle .sun-icon { display: block; }
         html.dark-mode #theme-toggle .moon-icon { display: none; }
-        .btn { border: 0; border-radius: 6px; padding: 8px 12px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .btn { border: 0; border-radius: 6px; padding: 8px 12px; font-weight: 600; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; }
         .btn:disabled { opacity: .45; cursor: not-allowed; }
         .btn-primary { background: var(--jira); color: #fff; }
         .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
@@ -136,6 +138,7 @@
         .nav button, .nav a { width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted); padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; display: block; text-decoration: none; }
         .nav button.active { background: var(--nav-active); color: var(--nav-active-text); }
         .workspace { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+        .studio-lead { margin: 0; padding: 10px 16px 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
         .phase-banner { flex: 0 0 auto; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--banner); font-size: 13px; color: var(--muted); }
         .phase-banner strong { color: var(--text); }
         .board { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
@@ -289,7 +292,7 @@
     </div>
     <div class="agents" id="agentPills"></div>
     <div class="actions">
-        <button class="btn btn-ghost" id="homeBtn" type="button">← CV</button>
+        <a class="btn btn-ghost" id="homeBtn" href="index.html">← CV</a>
         <button class="btn btn-ghost" id="tour-start-btn" type="button">How this studio works</button>
         <div class="lang-wrap notranslate" id="langWrap">
             <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
@@ -316,6 +319,7 @@
         <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests" target="_blank" rel="noopener noreferrer">Test suite on GitHub</a>
     </aside>
     <main class="workspace">
+        <p class="studio-lead">Free in-browser SDLC studio. Open a Jira-style ticket, then run four agents that refine the story, design Xray cases, generate Playwright, Cypress, and Robot scripts, and check the sprint Definition of Done. No account required.</p>
         <div class="phase-banner" id="banner">Explore the board, open any ticket, then start the four-agent sprint.</div>
         <div class="board" id="view"></div>
         <div class="phase-console" id="phaseConsole"></div>
@@ -969,7 +973,8 @@ document.getElementById('resetBtn').onclick = () => {
     track('sim_reset', 'Simulator', 'Reload');
     location.reload();
 };
-document.getElementById('homeBtn').onclick = () => {
+document.getElementById('homeBtn').onclick = (e) => {
+    e.preventDefault();
     track('sim_home', 'Simulator', window.opener ? 'popup' : 'direct');
     if (window.SiteI18n) SiteI18n.goHome();
     else location.href = 'index.html';
