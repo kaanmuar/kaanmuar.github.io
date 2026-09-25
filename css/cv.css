@@ -20,6 +20,7 @@
             --font-display: "Source Serif 4", "Iowan Old Style", Georgia, serif;
             --font-ui: Inter, system-ui, sans-serif;
         }
+        #profile-photo { object-position: center 18%; }
         .dark-mode {
             --bg-primary: #10161d;
             --bg-secondary: #161d26;
