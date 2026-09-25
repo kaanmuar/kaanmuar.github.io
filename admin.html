@@ -6,14 +6,26 @@
     <meta name="robots" content="noindex, nofollow">
     <title>CV Admin Panel - Pro</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .tab-btn { position: relative; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; transition: all 0.2s; cursor: pointer; }
-        .tab-btn.active { background-color: #0891b2; color: white; }
-        .tab-btn:not(.active) { background-color: #e5e7eb; color: #4b5563; }
-        .item-card { background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        body { font-family: Inter, system-ui, sans-serif; background-color: #eef2f4; color: #4a5560; }
+        #dashboard h1, #dashboard h2, .login-box h2, #cv-pane h2, .cv-column-title {
+            font-family: "Source Serif 4", Georgia, serif; color: #12181f; font-weight: 600; letter-spacing: -0.015em;
+        }
+        .tab-btn { position: relative; padding: 0.5rem 1rem; border-radius: 999px; font-weight: 600; transition: background 0.2s, color 0.2s; cursor: pointer; border: 1px solid transparent; }
+        .tab-btn.active { background-color: #0d6e76; color: white; }
+        .tab-btn:not(.active) { background-color: #f7f8fa; color: #4a5560; border-color: #d5dce3; }
+        #dashboard .bg-white, .filter-container, .login-box, .response-modal-box, .item-card {
+            background: #f7f8fa; border: 1px solid #d5dce3; box-shadow: 0 18px 50px rgba(18, 24, 31, 0.06);
+        }
+        #dashboard .bg-cyan-600, .login-box .bg-cyan-600, #cv-pane .bg-cyan-600 { background-color: #0d6e76 !important; }
+        #dashboard .text-cyan-700, #dashboard .text-cyan-800, .login-box .text-cyan-700 { color: #0d6e76 !important; }
+        .item-card { background-color: white; border-radius: 14px; box-shadow: 0 10px 30px rgba(18, 24, 31, 0.05); }
+        .tab-bar { display: flex; flex-wrap: wrap; gap: 0.35rem; width: fit-content; max-width: 100%; margin-bottom: 1.25rem; padding: 0.3rem; background: #fff; border: 1px solid #d5dce3; border-radius: 999px; }
+        #logout-btn { background: transparent; color: #f4f7f8; border: 1px solid rgba(244, 247, 248, 0.35); border-radius: 999px; font-weight: 600; }
         .status-dot, .new-indicator { width: 10px; height: 10px; border-radius: 50%; }
         .status-pending { background-color: #f59e0b; }
         .status-approved { background-color: #10b981; }
@@ -57,7 +69,7 @@
             background-color: #e0e7ff; color: #4338ca; font-size: 0.7rem; font-weight: 600;
             padding: 2px 8px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 4px;
         }
-        html { overflow-x: hidden; }
+        html { overflow-x: hidden; color-scheme: light; }
         #login-overlay {
             inset: 0; width: 100%; height: 100%; min-height: 100dvh;
         }
@@ -76,6 +88,120 @@
             .filter-container .flex.gap-2 { flex-wrap: wrap; }
             .title-container { flex-wrap: wrap; }
         }
+        #cv-pane textarea, #cv-pane input, #cv-pane select {
+            width: 100%; max-width: 22rem; border: 1px solid #d5dce3; border-radius: 8px; padding: 0.5rem 0.65rem; background-color: #fff; color: #12181f;
+        }
+        #cv-pane select, #dashboard .filter-container select, #stats-range {
+            appearance: none; cursor: pointer; padding-right: 2.1rem; max-width: 22rem;
+            background-color: #fff;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230d6e76' stroke-width='1.6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.7rem center; background-size: 0.7rem;
+        }
+        #cv-pane textarea { min-height: 6.5rem; }
+        #cv-pane input[type="checkbox"] { width: 1rem; height: 1rem; max-width: none; padding: 0; accent-color: #0d6e76; background-image: none; }
+        #cv-pane input:disabled { background-color: #e8edf0; color: #6b7280; cursor: not-allowed; }
+        #cv-pane .cv-check { display: flex; justify-content: flex-start; align-items: center; gap: 0.45rem; width: auto; margin-top: 0.65rem; font-size: 0.9rem; color: #12181f; }
+        .cv-section-picker { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+        .cv-section-label { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: #0d6e76; }
+        #cv-pane #cv-section {
+            width: auto; min-width: 14rem; max-width: 18rem; font-family: "Source Serif 4", Georgia, serif;
+            font-weight: 700; font-size: 1.2rem; color: #08545b; background-color: #d7ecee;
+            border: 1px solid #0d6e76; border-radius: 10px; padding: 0.4rem 2.2rem 0.4rem 0.75rem;
+        }
+        .cv-columns { display: grid; gap: 1rem; align-items: start; }
+        .cv-columns-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .cv-columns-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .cv-stack { display: flex; flex-direction: column; gap: 1rem; }
+        .cv-compact { max-width: 48rem; }
+        .cv-column { background: #fff; border: 1px solid #d5dce3; border-radius: 12px; padding: 0.9rem 1rem 1rem; }
+        .cv-column-title { display: inline-block; background: #d7ecee; color: #08545b; border-radius: 8px; padding: 0.2rem 0.7rem; margin-bottom: 0.35rem; font-size: 1.05rem; }
+        .cv-block { margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px solid #d5dce3; }
+        .cv-inline, .cv-line { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: flex-end; }
+        .cv-line { margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid #d5dce3; }
+        .cv-field .filter-label { margin-top: 0; }
+        #cv-pane .cv-field.is-sm { width: 8.5rem; flex: 0 0 auto; }
+        #cv-pane .cv-field.is-xs { width: 5rem; flex: 0 0 auto; }
+        #cv-pane .cv-field.is-md { width: 11rem; flex: 0 0 auto; }
+        #cv-pane .cv-field.is-grow { flex: 1 1 14rem; }
+        #cv-pane .cv-field.is-sm input, #cv-pane .cv-field.is-xs input, #cv-pane .cv-field.is-md input, #cv-pane .cv-field.is-grow input, #cv-pane .cv-stack textarea, #cv-pane .cv-stack .cv-column > input, #cv-pane .cv-grid input { max-width: none; width: 100%; }
+        .cv-card { margin-top: 0.75rem; padding: 0.75rem 0.85rem; border: 1px solid #d5dce3; border-radius: 12px; background: #f7f8fa; }
+        .cv-card textarea { min-height: 4.5rem; }
+        .cv-line .cv-check { margin-top: 0; align-self: center; }
+        .cv-line .cv-btn { margin-top: 0; align-self: center; }
+        .cv-menu { position: relative; display: block; width: 100%; max-width: 22rem; }
+        .cv-section-picker .cv-menu { width: auto; min-width: 14rem; max-width: 18rem; }
+        .stats-head .cv-menu { width: 12rem; }
+        .cv-menu-btn {
+            width: 100%; text-align: left; cursor: pointer; color: #12181f; background-color: #fff;
+            border: 1px solid #d5dce3; border-radius: 8px; padding: 0.5rem 2.1rem 0.5rem 0.65rem; font-weight: 600;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230d6e76' stroke-width='1.6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.7rem center; background-size: 0.7rem;
+        }
+        .cv-menu.is-section .cv-menu-btn {
+            font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: 1.2rem; color: #08545b;
+            background-color: #d7ecee; border-color: #0d6e76; border-radius: 10px;
+        }
+        .cv-menu select { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+        .cv-menu-panel {
+            position: fixed; z-index: 80; min-width: 12rem; max-height: min(20rem, 70vh);
+            overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+            background: #fff; color: #12181f; border: 1px solid #d5dce3; border-radius: 10px;
+            box-shadow: 0 16px 40px rgba(18, 24, 31, 0.18); padding: 0.3rem;
+            scrollbar-width: thin; scrollbar-color: #0d6e76 #eef2f4;
+        }
+        .cv-menu-item {
+            display: block; width: 100%; text-align: left; cursor: pointer; border: 0; border-radius: 6px;
+            background: #fff; color: #12181f; padding: 0.45rem 0.65rem; font-weight: 500;
+        }
+        .cv-menu-item:hover, .cv-menu-item.is-current { background: #d7ecee; color: #08545b; }
+        .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+        .cv-mini { background: #f7f8fa; border: 1px solid #d5dce3; border-radius: 10px; padding: 0.55rem 0.7rem; }
+        .cv-note { margin-top: 0.5rem; font-size: 0.78rem; color: #4a5560; }
+        .cv-btn { display: inline-flex; width: auto; margin: 0.55rem 0.4rem 0 0; background: #fff; color: #08545b; border: 1px solid #0d6e76; border-radius: 8px; padding: 0.45rem 0.8rem; font-weight: 700; }
+        .cv-btn:hover { background: #d7ecee; }
+        .cv-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+        .cv-actions button { font-weight: 700; border-radius: 8px; padding: 0.55rem 0.9rem; }
+        .cv-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
+        .cv-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #d5dce3; }
+        .cv-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; list-style: none; margin: 0.75rem 0 0; padding: 0; min-height: 2.6rem; }
+        .cv-steps button {
+            padding: 0; border-radius: 999px; border: 1px solid #d5dce3; background: #fff; font-weight: 700; color: #334155;
+            display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
+            transition: width 0.35s ease, height 0.35s ease, font-size 0.35s ease, background 0.35s ease, color 0.35s ease, border-color 0.35s ease, transform 0.35s ease;
+        }
+        .cv-steps button.is-dot { width: 0.4rem; height: 0.4rem; font-size: 0; border-color: transparent; background: #94a3b8; color: transparent; }
+        .cv-steps button.is-edge { width: 1.15rem; height: 1.15rem; font-size: 0.6rem; }
+        .cv-steps button.is-mid { width: 1.5rem; height: 1.5rem; font-size: 0.68rem; }
+        .cv-steps button.is-near { width: 1.9rem; height: 1.9rem; font-size: 0.78rem; }
+        .cv-steps button.is-current { width: 2.5rem; height: 2.5rem; font-size: 0.95rem; background: #0d6e76; border-color: #0d6e76; color: #fff; }
+        .cv-steps button.is-skipped:not(.is-current):not(.is-dot) { background: #e5e7eb; color: #64748b; }
+        .cv-review-frame { width: 100%; height: 70vh; min-height: 28rem; border: 1px solid #d5dce3; border-radius: 12px; background: #fff; }
+        #cv-pane .filter-label { display: block; margin-top: 0.65rem; font-weight: 600; color: #4a5560; }
+        .admin-bar {
+            display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+            background: #1a2430; color: #f4f7f8; margin: -1.5rem -1.5rem 1.25rem; padding: 1.15rem 1.5rem; border-radius: 0 0 20px 20px;
+        }
+        .admin-kicker { margin: 0; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8fd0d5; }
+        .admin-bar h1 { margin: 0; color: #f4f7f8; font-size: 1.7rem; }
+        .admin-bar a { color: #8fd0d5 !important; }
+        .stats-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-bottom: 1rem; }
+        .stats-head .filter-label { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+        .stats-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+        .stat-kpi { background: #fff; border: 1px solid #d5dce3; border-radius: 14px; padding: 0.85rem 0.95rem; box-shadow: 0 10px 30px rgba(18, 24, 31, 0.05); }
+        .stat-kpi span { display: block; font-size: 0.75rem; color: #4a5560; }
+        .stat-kpi strong { display: block; margin-top: 0.2rem; font-family: "Source Serif 4", Georgia, serif; font-size: 1.55rem; color: #12181f; }
+        .stat-kpi em { display: block; margin-top: 0.3rem; font-style: normal; font-size: 0.72rem; color: #6b7280; }
+        .stat-kpi em.up { color: #0d6e76; }
+        .stat-kpi em.down { color: #b42318; }
+        .stats-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 0.85rem; }
+        .stats-card { background: #fff; border: 1px solid #d5dce3; border-radius: 16px; padding: 1rem; box-shadow: 0 10px 30px rgba(18, 24, 31, 0.05); }
+        .stats-card h3 { margin: 0 0 0.6rem; font-size: 1rem; }
+        .stats-wide { grid-column: 1 / -1; }
+        @media (max-width: 980px) {
+            .cv-columns-2, .cv-columns-3 { grid-template-columns: 1fr; }
+            .stats-kpis, .stats-grid { grid-template-columns: 1fr 1fr; }
+            .admin-bar { margin-left: -1rem; margin-right: -1rem; }
+        }
     </style>
 </head>
 <body>
@@ -89,14 +215,18 @@
 </div>
 
 <main id="dashboard" class="container mx-auto p-4 md:p-6 hidden">
-    <div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-gray-800">CV Admin Dashboard</h1><div class="flex items-center gap-3"><a href="index.html" id="admin-home-dash" class="text-cyan-700 underline">← Back to CV</a><button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600">Logout</button></div></div>
+    <header class="admin-bar">
+        <div><p class="admin-kicker">Interactive CV</p><h1>Admin</h1></div>
+        <div class="flex items-center gap-3"><a href="index.html" id="admin-home-dash" class="underline">← Back to CV</a><button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600">Logout</button></div>
+    </header>
 
-    <div class="flex flex-wrap gap-2 mb-6 border-b pb-2">
+    <div class="tab-bar">
         <button id="messages-tab-btn" class="tab-btn active">Messages</button>
         <button id="ratings-tab-btn" class="tab-btn">CV Ratings</button>
         <button id="rejected-tab-btn" class="tab-btn">Rejected Messages</button>
         <button id="blocked-tab-btn" class="tab-btn">Blocked Senders</button>
         <button id="stats-tab-btn" class="tab-btn">Statistics</button>
+        <button id="cv-tab-btn" class="tab-btn">CV content</button>
     </div>
 
     <!-- Messages Pane -->
@@ -175,14 +305,60 @@
         <div id="blocked-list" class="space-y-4"></div>
     </div>
     <div id="stats-pane" class="hidden">
-        <h2 class="text-2xl font-semibold mb-4">Platform Statistics</h2>
-        <div class="filter-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-            <div><label class="filter-label" for="stats-date-start">Date Range</label><div class="flex gap-2"><input type="date" id="stats-date-start"><input type="date" id="stats-date-end"></div></div>
-            <div><label class="filter-label" for="stats-chart-type">Chart Type</label><select id="stats-chart-type"><option value="bar">Bar</option><option value="line">Line</option></select></div>
-            <div><label class="filter-label" for="stats-data-select">Data</label><select id="stats-data-select" multiple size="4" class="h-auto"></select></div>
-            <button id="stats-apply-btn" class="bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700 h-10">Apply</button>
+        <div class="stats-head">
+            <div><h2 class="text-2xl font-semibold">Statistics</h2><p class="text-gray-600">Messages, ratings, and moderation across the CV.</p></div>
+            <label class="filter-label" for="stats-range">Range<select id="stats-range"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select></label>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow"><canvas id="stats-chart"></canvas></div>
+        <div id="stats-kpis" class="stats-kpis"></div>
+        <div class="stats-grid">
+            <section class="stats-card stats-wide"><h3>Activity</h3><canvas id="stats-trend"></canvas></section>
+            <section class="stats-card"><h3>Rating mix</h3><canvas id="stats-ratings"></canvas></section>
+            <section class="stats-card"><h3>Review status</h3><canvas id="stats-status"></canvas></section>
+            <section class="stats-card stats-wide"><h3>Message topics</h3><canvas id="stats-topics"></canvas></section>
+        </div>
+    </div>
+
+    <div id="cv-pane" class="hidden">
+        <h2 class="text-2xl font-semibold mb-2">CV content</h2>
+        <p class="text-gray-600 mb-4">The steps follow the CV from top to bottom. Each list stays open, so you edit a row in place. You edit in English, and the other languages follow the automatic translation. Next keeps a change. Skip leaves an untouched step as it is. Preview checks the CV. Publish opens the snapshot, and Confirmation there is what goes live.</p>
+        <p id="cv-status" class="text-sm text-gray-700 mb-4"></p>
+        <div class="bg-white p-4 rounded-lg shadow space-y-4">
+            <div class="cv-section-picker">
+                <label class="cv-section-label" for="cv-section">Section</label>
+                <select id="cv-section"></select>
+            </div>
+            <div id="cv-lang-wrap" class="hidden">
+                <label class="filter-label" for="cv-lang">Language for the summary and the role bullets</label>
+                <select id="cv-lang">
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="de">German</option>
+                    <option value="fr">French</option>
+                    <option value="it">Italian</option>
+                </select>
+            </div>
+            <div id="cv-section-body" class="space-y-3"></div>
+            <div id="cv-review" class="hidden space-y-3">
+                <p class="text-gray-600">This is the CV with the changes from the steps you edited. Visitors still see the published CV until you press Confirmation.</p>
+                <iframe id="cv-review-frame" class="cv-review-frame" title="CV with your changes"></iframe>
+                <button type="button" id="cv-revert" class="bg-white text-red-700 border border-red-300">Use the file again</button>
+            </div>
+            <div class="cv-footer">
+                <p id="cv-step-label" class="text-sm font-semibold text-gray-700"></p>
+                <div class="cv-actions">
+                    <button type="button" id="cv-back" class="bg-gray-200 text-gray-800">Back</button>
+                    <button type="button" id="cv-skip" class="bg-gray-200 text-gray-800">Skip</button>
+                    <button type="button" id="cv-next" class="bg-cyan-600 text-white">Next</button>
+                    <button type="button" id="cv-preview" class="bg-white text-cyan-800 border border-cyan-700">Preview</button>
+                    <button type="button" id="cv-publish" class="bg-white text-cyan-800 border border-cyan-700">Publish</button>
+                    <button type="button" id="cv-confirm" class="bg-cyan-600 text-white hidden">Confirmation</button>
+                    <button type="button" id="cv-discard" class="bg-white text-red-700 border border-red-300 hidden">Discard</button>
+                </div>
+                <ol id="cv-steps" class="cv-steps" aria-label="CV content steps"></ol>
+                <p id="cv-message" class="text-sm" role="status"></p>
+            </div>
+        </div>
     </div>
 </main>
 
@@ -213,22 +389,26 @@
 </div>
 
 
-<script type="module">
+    <script src="js/site-i18n.js"></script>
+    <script src="js/cv-data.js"></script>
+    <script type="module">
     // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     // MODIFIED: Added addDoc for new testimonial creation
-    import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, getDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { createCvEditor } from "./js/cv-editor.js";
 
     // Firebase Config
     const firebaseConfig = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", storageBucket: "carlosm-interactive-cv.firebasestorage.app", messagingSenderId: "976558418058", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const cvEditor = createCvEditor({ db, auth, doc, getDoc, setDoc, deleteDoc, serverTimestamp });
 
     // Global State
     let allMessages = [], allRatings = [], allBlockedSenders = [];
-    let statsChart = null;
+    let statsCharts = [];
     let dashboardReady = false;
     // Values match the CV contact form (`#message-topic`), not display labels.
     const MESSAGE_TOPICS = [
@@ -263,8 +443,8 @@
 
     // DOM Elements
     const loginOverlay = document.getElementById('login-overlay'), dashboard = document.getElementById('dashboard'), logoutBtn = document.getElementById('logout-btn');
-    const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn') };
-    const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane') };
+    const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn'), cv: document.getElementById('cv-tab-btn') };
+    const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane'), cv: document.getElementById('cv-pane') };
     const lists = { messages: document.getElementById('messages-list'), ratings: document.getElementById('ratings-list'), rejected: document.getElementById('rejected-list'), blocked: document.getElementById('blocked-list') };
     // NEW: Response Modal Elements
     const responseModalOverlay = document.getElementById('response-modal-overlay');
@@ -294,6 +474,8 @@
         populateStaticDropdowns();
         // NEW: Setup modal listeners
         setupModalListeners();
+        cvEditor.bind();
+        cvEditor.load();
     }
 
     function switchTab(tabKey) {
@@ -314,7 +496,7 @@
         document.getElementById('rate-filter-status').innerHTML = `<option value="">Any Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>`;
 
         const statsDataSelect = document.getElementById('stats-data-select');
-        statsDataSelect.innerHTML = `<option value="messages" selected>New Messages</option><option value="ratings" selected>New CV Ratings</option><option value="rejected">Rejected Messages</option><option value="blocked">Blocked Senders</option>`;
+        if (statsDataSelect) statsDataSelect.innerHTML = `<option value="messages" selected>New Messages</option><option value="ratings" selected>New CV Ratings</option><option value="rejected">Rejected Messages</option><option value="blocked">Blocked Senders</option>`;
     }
 
     // --- Data Loading ---
@@ -354,7 +536,8 @@
         document.getElementById('msg-filter-topic-select').addEventListener('change', e => {
             document.getElementById('msg-other-topic-container').classList.toggle('hidden', e.target.value !== 'other');
         });
-        document.getElementById('stats-apply-btn').addEventListener('click', renderStatisticsGraph);
+        const statsRange = document.getElementById('stats-range');
+        if (statsRange) statsRange.addEventListener('change', renderStatisticsGraph);
     }
 
     function applyAllFilters() {
@@ -690,52 +873,221 @@
 
     // --- Statistics Graph ---
     function renderStatisticsGraph() {
-        const ctx = document.getElementById('stats-chart').getContext('2d');
-        const dateStart = document.getElementById('stats-date-start').value;
-        const dateEnd = document.getElementById('stats-date-end').value;
-        const chartType = document.getElementById('stats-chart-type').value;
-        const selectedData = Array.from(document.getElementById('stats-data-select').selectedOptions).map(o => o.value);
-
-        const dataMap = {
-            messages: { items: allMessages, dateField: 'createdAt', label: 'New Messages', color: 'rgba(54, 162, 235, 0.6)' },
-            ratings: { items: allRatings, dateField: 'createdAt', label: 'New CV Ratings', color: 'rgba(255, 206, 86, 0.6)' },
-            rejected: { items: allMessages.filter(m => m.status === 'rejected'), dateField: 'rejectedAt', label: 'Rejected Messages', color: 'rgba(255, 99, 132, 0.6)' },
-            blocked: { items: allBlockedSenders, dateField: 'blockedAt', label: 'Blocked Senders', color: 'rgba(75, 192, 192, 0.6)' },
+        const range = (document.getElementById('stats-range') || {}).value || '30';
+        const isoDay = (date) => {
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${date.getFullYear()}-${month}-${day}`;
         };
-
-        const datasets = selectedData.map(key => {
-            const source = dataMap[key];
-            const counts = new Map();
-            source.items.forEach((item) => {
-                const day = localDay(item[source.dateField]);
-                if (!dateInRange(day, dateStart, dateEnd)) return;
-                if (!day) return;
-                counts.set(day, (counts.get(day) || 0) + 1);
-            });
-            return { label: source.label, color: source.color, counts };
-        }).filter(Boolean);
-
-        const labels = [...new Set(datasets.flatMap((set) => [...set.counts.keys()]))].sort();
+        const shiftDay = (daysAgo) => {
+            const date = new Date();
+            date.setDate(date.getDate() - daysAgo);
+            return isoDay(date);
+        };
+        const span = range === 'all' ? 0 : Number(range);
+        const start = span ? shiftDay(span) : '';
+        const previousEnd = span ? shiftDay(span + 1) : '';
+        const previousStart = span ? shiftDay(span * 2) : '';
+        const inRange = (item, field) => dateInRange(localDay(item[field]), start, '');
+        const inPrevious = (item, field) => span && dateInRange(localDay(item[field]), previousStart, previousEnd);
+        const messages = allMessages.filter((item) => inRange(item, 'createdAt'));
+        const ratings = allRatings.filter((item) => inRange(item, 'createdAt'));
+        const rejected = allMessages.filter((item) => item.status === 'rejected' && inRange(item, 'rejectedAt'));
+        const blocked = allBlockedSenders.filter((item) => inRange(item, 'blockedAt'));
+        const pending = ratings.filter((item) => item.status === 'pending').length;
+        const approved = ratings.filter((item) => item.status === 'approved').length;
+        const avg = ratings.length ? (ratings.reduce((sum, item) => sum + (Number(item.rating) || 0), 0) / ratings.length) : 0;
+        const priorMessages = allMessages.filter((item) => inPrevious(item, 'createdAt')).length;
+        const priorRatings = allRatings.filter((item) => inPrevious(item, 'createdAt'));
+        const priorAvg = priorRatings.length ? priorRatings.reduce((sum, item) => sum + (Number(item.rating) || 0), 0) / priorRatings.length : 0;
+        const priorRejected = allMessages.filter((item) => item.status === 'rejected' && inPrevious(item, 'rejectedAt')).length;
+        const priorBlocked = allBlockedSenders.filter((item) => inPrevious(item, 'blockedAt')).length;
+        const delta = (current, previous, digits) => {
+            if (!span) return '';
+            const diff = Number(current) - Number(previous);
+            const text = `${diff > 0 ? '+' : ''}${digits ? diff.toFixed(digits) : diff} vs prior ${span} days`;
+            const tone = diff > 0 ? 'up' : diff < 0 ? 'down' : '';
+            return `<em class="${tone}">${text}</em>`;
+        };
+        const kpis = document.getElementById('stats-kpis');
+        if (kpis) {
+            const cards = [
+                ['Messages', messages.length, delta(messages.length, priorMessages)],
+                ['Avg rating', ratings.length ? avg.toFixed(1) : '—', ratings.length && priorRatings.length ? delta(avg, priorAvg, 1) : ''],
+                ['Pending', pending, ''],
+                ['Approved', approved, ''],
+                ['Rejected', rejected.length, delta(rejected.length, priorRejected)],
+                ['Blocked', blocked.length, delta(blocked.length, priorBlocked)]
+            ];
+            kpis.innerHTML = cards.map(([label, value, change]) => `<div class="stat-kpi"><span>${label}</span><strong>${value}</strong>${change || ''}</div>`).join('');
+        }
+        const days = new Map();
+        const bump = (item, field, key) => {
+            const day = localDay(item[field]);
+            if (!day || (start && day < start)) return;
+            if (!days.has(day)) days.set(day, { messages: 0, ratings: 0 });
+            days.get(day)[key] += 1;
+        };
+        messages.forEach((item) => bump(item, 'createdAt', 'messages'));
+        ratings.forEach((item) => bump(item, 'createdAt', 'ratings'));
+        const labels = [...days.keys()].sort();
         const chartLabels = labels.length ? labels : ['No data'];
-
-        if (statsChart) statsChart.destroy();
-        statsChart = new Chart(ctx, {
-            type: chartType,
+        const ink = '#0d6e76';
+        const sand = '#b45309';
+        statsCharts.forEach((chart) => chart.destroy());
+        statsCharts = [];
+        const make = (id, config) => {
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+            statsCharts.push(new Chart(canvas.getContext('2d'), config));
+        };
+        make('stats-trend', {
+            type: 'line',
             data: {
                 labels: chartLabels,
-                datasets: datasets.map((set) => ({
-                    label: set.label,
-                    data: chartLabels.map((label) => set.counts.get(label) || 0),
-                    backgroundColor: set.color,
-                    borderColor: set.color,
-                    tension: 0.2
-                }))
+                datasets: [
+                    { label: 'Messages', data: chartLabels.map((label) => (days.get(label) || {}).messages || 0), borderColor: ink, backgroundColor: 'rgba(13,110,118,0.15)', fill: true, tension: 0.3 },
+                    { label: 'Ratings', data: chartLabels.map((label) => (days.get(label) || {}).ratings || 0), borderColor: sand, backgroundColor: 'rgba(180,83,9,0.12)', fill: true, tension: 0.3 }
+                ]
             },
-            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { position: 'top' } } }
+            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { position: 'bottom' } } }
+        });
+        const starCounts = [1, 2, 3, 4, 5].map((star) => ratings.filter((item) => Number(item.rating) === star).length);
+        make('stats-ratings', {
+            type: 'doughnut',
+            data: { labels: ['1 star', '2 stars', '3 stars', '4 stars', '5 stars'], datasets: [{ data: starCounts, backgroundColor: ['#b42318', '#b45309', '#c4a574', '#3d7a82', '#0d6e76'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+        make('stats-status', {
+            type: 'doughnut',
+            data: { labels: ['Pending', 'Approved', 'Rejected'], datasets: [{ data: [pending, approved, ratings.filter((item) => item.status === 'rejected').length], backgroundColor: ['#b45309', '#0d6e76', '#b42318'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+        const topics = new Map();
+        messages.forEach((item) => {
+            const topic = item.topic || 'Unspecified';
+            topics.set(topic, (topics.get(topic) || 0) + 1);
+        });
+        const topicLabels = [...topics.keys()];
+        make('stats-topics', {
+            type: 'bar',
+            data: { labels: topicLabels.length ? topicLabels : ['No data'], datasets: [{ label: 'Messages', data: topicLabels.length ? topicLabels.map((label) => topics.get(label)) : [0], backgroundColor: '#0d6e76' }] },
+            options: { responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
         });
     }
 
-    window.onclick = function(event) { if (!event.target.matches('.bulk-actions-container button, .bulk-actions-container i')) { document.querySelectorAll(".bulk-actions-dropdown.show-dropdown").forEach(d => d.classList.remove('show-dropdown')); } }
+
+    function placeMenu(button, panel) {
+        const rect = button.getBoundingClientRect();
+        const width = Math.max(rect.width, 220);
+        const gap = 4;
+        const spaceBelow = window.innerHeight - rect.bottom - gap - 8;
+        const spaceAbove = rect.top - gap - 8;
+        const openUp = spaceBelow < 220 && spaceAbove > spaceBelow;
+        const room = Math.max(140, openUp ? spaceAbove : spaceBelow);
+        panel.style.maxHeight = Math.min(room, 320) + 'px';
+        panel.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)) + 'px';
+        panel.style.width = width + 'px';
+        if (openUp) {
+            panel.style.top = 'auto';
+            panel.style.bottom = (window.innerHeight - rect.top + gap) + 'px';
+        } else {
+            panel.style.bottom = 'auto';
+            panel.style.top = (rect.bottom + gap) + 'px';
+        }
+    }
+
+    function closeMenus(except) {
+        document.querySelectorAll('.cv-menu-panel').forEach((panel) => {
+            if (panel !== except) panel.hidden = true;
+        });
+        document.querySelectorAll('.cv-menu-btn[aria-expanded="true"]').forEach((button) => {
+            if (!except || button.nextElementSibling !== except) button.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    window.mountAdminMenus = function mountAdminMenus(root) {
+        if (!root) return;
+        root.querySelectorAll('select').forEach((select) => {
+            if (select.multiple || select.dataset.menuReady) {
+                if (select._paintMenu) select._paintMenu();
+                return;
+            }
+            select.dataset.menuReady = '1';
+            select.setAttribute('aria-hidden', 'true');
+            select.tabIndex = -1;
+            const wrap = document.createElement('div');
+            wrap.className = 'cv-menu' + (select.id === 'cv-section' ? ' is-section' : '');
+            select.parentNode.insertBefore(wrap, select);
+            wrap.appendChild(select);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'cv-menu-btn';
+            button.setAttribute('aria-haspopup', 'listbox');
+            button.setAttribute('aria-expanded', 'false');
+            const labelled = select.id && document.querySelector(`label[for="${select.id}"]`);
+            if (labelled) button.setAttribute('aria-label', labelled.textContent.trim());
+            const panel = document.createElement('div');
+            panel.className = 'cv-menu-panel';
+            panel.hidden = true;
+            panel.setAttribute('role', 'listbox');
+            panel.tabIndex = -1;
+            panel.addEventListener('wheel', (event) => {
+                const max = panel.scrollHeight - panel.clientHeight;
+                if (max <= 0) return;
+                event.preventDefault();
+                event.stopPropagation();
+                panel.scrollTop = Math.max(0, Math.min(max, panel.scrollTop + event.deltaY));
+            }, { passive: false });
+            wrap.appendChild(button);
+            wrap.appendChild(panel);
+            const paintMenu = () => {
+                const current = select.options[select.selectedIndex];
+                button.textContent = current ? current.textContent : 'Choose';
+                panel.replaceChildren(...[...select.options].map((option) => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'cv-menu-item' + (option.selected ? ' is-current' : '');
+                    item.textContent = option.textContent;
+                    item.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        select.value = option.value;
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        panel.hidden = true;
+                        button.setAttribute('aria-expanded', 'false');
+                        paintMenu();
+                    });
+                    return item;
+                }));
+            };
+            select._paintMenu = paintMenu;
+            paintMenu();
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const willOpen = panel.hidden;
+                closeMenus(willOpen ? panel : null);
+                panel.hidden = !willOpen;
+                button.setAttribute('aria-expanded', String(willOpen));
+                if (willOpen) placeMenu(button, panel);
+            });
+            new MutationObserver(paintMenu).observe(select, { childList: true, subtree: true, characterData: true });
+        });
+    };
+
+    window.mountAdminMenus(document.getElementById('dashboard'));
+    cvEditor.bind();
+
+    window.addEventListener('scroll', (event) => {
+        const target = event.target;
+        if (target instanceof Element && target.closest('.cv-menu-panel')) return;
+        closeMenus();
+    }, true);
+    window.onclick = function(event) {
+        if (!event.target.matches('.bulk-actions-container button, .bulk-actions-container i')) {
+            document.querySelectorAll('.bulk-actions-dropdown.show-dropdown').forEach((dropdown) => dropdown.classList.remove('show-dropdown'));
+        }
+        if (!event.target.closest('.cv-menu')) closeMenus();
+    };
 </script>
 </body>
 </html>

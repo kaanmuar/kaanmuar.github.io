@@ -1,7 +1,7 @@
     // Import Firebase modules
     // ** MODIFIED **: Added query and where for the new function
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
     // IMPORTANT: Actual Firebase configuration
@@ -908,7 +908,7 @@
             },
 
             _renderExperiences() {
-                this.DOMElements.experienceContainer.innerHTML = this.data.experiences.map((exp, i) => this._createExperienceEntry(exp, i)).join('');
+                this.DOMElements.experienceContainer.innerHTML = this.data.experiences.map((exp, i) => exp.liveHidden ? '' : this._createExperienceEntry(exp, i)).join('');
             },
 
             _renderInfographics() {
@@ -933,11 +933,18 @@
                 `;
             },
 
+            _esc(value) {
+                return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                }[ch]));
+            },
+
             _createExperienceEntry(exp, index) {
                 const bodyId = `experience-body-${index}`;
                 const headerId = `experience-header-${index}`;
-                const detailsHtml = exp.details.en.map((detail, i) => `<li data-translate-key="exp_${index}_detail_${i}">${detail}</li>`).join('');
-                const techTagsHtml = exp.techUsed.map(techName => {
+                const title = typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '');
+                const detailsHtml = (exp.details.en || []).map((detail, i) => `<li data-translate-key="exp_${index}_detail_${i}">${this._esc(detail)}</li>`).join('');
+                const techTagsHtml = (exp.techUsed || []).map(techName => {
                     const skill = Object.values(this.data.skills).flat().find(s => s.name === techName);
                     if (!skill) return '';
                     return `<div class="exp-tech-tag"><img src="${skill.icon}" alt="" onerror="this.style.display='none';"><span>${skill.name}</span></div>`;
@@ -947,14 +954,14 @@
                         <div class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                             <button class="accordion-header w-full flex justify-between items-center" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}">
                                 <div class="flex-grow text-left">
-                                    <h4 class="text-base font-bold" data-translate-key="exp_${index}_title">${typeof exp.title === 'string' ? exp.title : (exp.title.en || '')}</h4>
-                                    <p class="text-sm italic flex items-center"><img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'">${exp.company}</p>
+                                    <h4 class="text-base font-bold" data-translate-key="exp_${index}_title">${this._esc(title)}</h4>
+                                    <p class="text-sm italic flex items-center"><img src="${this._esc(exp.logo)}" class="company-logo" alt="${this._esc(exp.company)} Logo" onerror="this.style.display='none'">${this._esc(exp.company)}</p>
                                 </div>
-                                <p class="text-xs mr-4" data-raw-date="${exp.dates}">${exp.dates}</p>
+                                <p class="text-xs mr-4" data-raw-date="${this._esc(exp.dates)}">${this._esc(exp.dates)}</p>
                                 <svg class="accordion-icon w-5 h-5 transform transition-transform" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                         </div>
-                        <p class="experience-summary" data-translate-key="exp_${index}_summary">${exp.details.en[0].substring(0, 100)}...</p>
+                        <p class="experience-summary" data-translate-key="exp_${index}_summary">${this._esc((exp.details.en && exp.details.en[0] ? exp.details.en[0] : title).substring(0, 100))}...</p>
                         <div class="experience-body mt-2" id="${bodyId}" role="region" aria-labelledby="${headerId}">
                             <ul class="list-disc list-inside space-y-1 pl-4">${detailsHtml}</ul>
                             <div class="experience-tech-tags">${techTagsHtml}</div>
@@ -1004,18 +1011,25 @@
                 const el = this.DOMElements.glanceKpis;
                 if (!el) return;
                 const skills = this._flatSkills();
-                const companies = new Set(this.data.experiences.map((exp) => exp.company)).size;
-                const items = [
+                const visibleExperiences = this.data.experiences.filter((exp) => !exp.liveHidden);
+                const companies = new Set(visibleExperiences.map((exp) => exp.company)).size;
+                const liveKpis = this._liveDoc && this._liveDoc.glance && Array.isArray(this._liveDoc.glance.kpis)
+                    ? this._liveDoc.glance.kpis.filter((item) => !item.hidden)
+                    : null;
+                const items = liveKpis ? liveKpis.map((item) => ({
+                    value: this._cleanLiveText(item.value, 24) || '0',
+                    label: this._cleanLiveText(item.label, 40) || item.key
+                })) : [
                     { value: '18+', key: 'infographics_kpi_years', label: 'Years' },
-                    { value: String(this.data.experiences.length), key: 'infographics_kpi_roles', label: 'Roles' },
+                    { value: String(visibleExperiences.length), key: 'infographics_kpi_roles', label: 'Roles' },
                     { value: String(skills.length), key: 'infographics_kpi_skills', label: 'Skills' },
                     { value: String(companies), key: 'infographics_kpi_companies', label: 'Companies' },
                     { value: '9', key: 'infographics_kpi_certs', label: 'Certs' }
                 ];
                 el.innerHTML = items.map((item) => `
                     <div class="glance-kpi">
-                        <strong>${item.value}</strong>
-                        <span data-translate-key="${item.key}">${this._s(item.key, item.label)}</span>
+                        <strong>${this._esc(item.value)}</strong>
+                        <span${item.key ? ` data-translate-key="${item.key}"` : ''}>${this._esc(liveKpis ? item.label : this._s(item.key, item.label))}</span>
                     </div>
                 `).join('');
             },
@@ -1277,6 +1291,7 @@
                 if (!container) return;
                 let content = '';
                 this.data.experiences.forEach((exp, index) => {
+                    if (exp.liveHidden || exp.onTimeline === false) return;
                     const techIcons = exp.techUsed.slice(0, 7).map(techName => {
                         const skill = Object.values(this.data.skills).flat().find(s => s.name === techName);
                         return skill ? `<img src="${skill.icon}" alt="${skill.name}" title="${skill.name}" onerror="this.style.display='none'">` : '';
@@ -1285,8 +1300,8 @@
                         <div class="timeline-item block p-2 rounded-md" data-tech='${JSON.stringify(exp.techUsed)}' id="timeline-exp-${index}">
                             <div class="tooltip w-full" data-company-name="${exp.company}">
                                 <a href="#experience-${index}" class="hover:bg-gray-100 dark:hover:bg-gray-700 block p-1 rounded-md">
-                                    <p class="font-bold text-sm" data-translate-key="exp_${index}_title">${typeof exp.title === 'string' ? exp.title : exp.title.en}</p>
-                                    <div class="flex items-center gap-2 text-xs"><img src="${exp.logo}" class="company-logo" alt="${exp.company} Logo" onerror="this.style.display='none'"><span>${exp.company}</span><span class="text-gray-400" data-raw-date="${exp.dates}" data-date-prefix="| ">| ${exp.dates}</span></div>
+                                    <p class="font-bold text-sm" data-translate-key="exp_${index}_title">${this._esc(typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || ''))}</p>
+                                    <div class="flex items-center gap-2 text-xs"><img src="${this._esc(exp.logo)}" class="company-logo" alt="${this._esc(exp.company)} Logo" onerror="this.style.display='none'"><span>${this._esc(exp.company)}</span><span class="text-gray-400" data-raw-date="${this._esc(exp.dates)}" data-date-prefix="| ">| ${this._esc(exp.dates)}</span></div>
                                     <div class="timeline-tech-icons">${techIcons}</div>
                                 </a>
                                 <span class="tooltiptext" data-translate-key="tooltip_timeline"></span>
@@ -1656,7 +1671,8 @@
 
             translatePage(lang) {
                 const requested = (window.SiteI18n && SiteI18n.normalize(lang)) || lang || 'en';
-                const isNative = !!(window.SiteI18n ? SiteI18n.isNative(requested) : this.data.translations[requested]);
+                const machine = !!(this._liveDoc && this._liveDoc.machineTranslate && requested !== 'en');
+                const isNative = !machine && !!(window.SiteI18n ? SiteI18n.isNative(requested) : this.data.translations[requested]);
                 this.state.lang = requested;
                 this.state.dictLang = isNative ? requested : 'en';
                 const translation = this._t();
@@ -1686,7 +1702,7 @@
                                     text = text.replace('%COMPANY%', tooltipDiv.dataset.companyName);
                                 }
                             }
-                            el.innerHTML = text;
+                            el.innerHTML = this._esc(text);
                         }
                     });
                 }
@@ -1727,13 +1743,15 @@
                 this._refreshLocalizedDates();
                 this._createWatermark();
                 if (window.SiteI18n) {
-                    if (isNative) SiteI18n.applyMachineTranslate('en');
+                    if (machine) SiteI18n.forceMachine(requested);
+                    else if (isNative) SiteI18n.applyMachineTranslate('en');
                     else {
                         SiteI18n.loadWidget();
                         SiteI18n.applyMachineTranslate(requested);
                     }
-                    SiteI18n.refreshTranslation();
+                    if (!machine) SiteI18n.refreshTranslation();
                 }
+                if (this._liveDoc) this._applyLiveChrome();
             },
 
                 _setupEventListeners() {
@@ -2057,9 +2075,18 @@
                 const container = document.getElementById(containerId);
                 if (!container) return;
 
-                const languages = (window.SiteI18n && SiteI18n.orderedLanguages()) || Object.keys(this.data.translations).map((code) => ({
+                let languages = (window.SiteI18n && SiteI18n.orderedLanguages()) || Object.keys(this.data.translations).map((code) => ({
                     code, name: code.toUpperCase(), native: code.toUpperCase(), flag: code === 'en' ? 'gb' : code
                 }));
+                const menu = this._liveDoc && this._liveDoc.languages && this._liveDoc.languages.items;
+                if (Array.isArray(menu) && menu.length) {
+                    const catalog = languages.slice();
+                    languages = menu.filter((item) => item && item.shown !== false && item.code).map((item) => {
+                        const meta = catalog.find((entry) => entry.code === item.code) || { code: item.code, name: item.label || item.code, native: item.label || item.code, flag: item.code };
+                        const label = this._cleanLiveText(item.label, 40);
+                        return label ? { ...meta, native: label, name: label } : meta;
+                    });
+                }
                 const placeholder = this._t().lang_search_placeholder || 'Search language';
 
                 container.innerHTML = '';
@@ -2680,8 +2707,32 @@
                     { name: 'Telegram', icon: '<svg viewBox="0 0 24 24"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944S18.532 0 11.944 0zM18.067 7.713l-2.427 11.23c-.156.72-.553.896-1.116.554l-3.6-2.656-1.745 1.683c-.19.19-.356.356-.713.356l.254-3.665 6.757-6.12c.297-.254-.057-.394-.454-.14l-8.31 5.215-3.53-1.096c-.713-.223-.72-.713-.14-1.096l10.87-4.23c.6-.254 1.13.14 1.33.944z"/></svg>', url: `https://t.me/share/url?url=${pageUrl}&text=${shareText}` },
                     { name: 'Reddit', icon: '<svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm6.5 13.5c0 .828-.672 1.5-1.5 1.5s-1.5-.672-1.5-1.5.672-1.5 1.5-1.5 1.5.672 1.5 1.5zm-10 0c0 .828-.672 1.5-1.5 1.5S5.5 14.328 5.5 13.5 6.172 12 7 12s1.5.672 1.5 1.5zm3.8-2.64c-.28-.27-2.31.11-4.04.62-.32.09-.45-.1-.36-.42.84-2.83 3.5-4.58 6.58-4.58s5.74 1.75 6.58 4.58c.09.32-.04.51-.36.42-1.73-.51-3.76-.89-4.04-.62-.28.27-.12.62.2.81.93.55 2.7.9 4.31 1.1.33.04.46.21.34.52-.73 1.9-2.73 3.22-5.49 3.22s-4.76-1.32-5.49-3.22c-.12-.31.01-.48.34-.52 1.61-.2 3.38-.55 4.31-1.1.32-.19.48-.54.2-.81z"/></svg>', url: `https://www.reddit.com/submit?url=${pageUrl}&title=${shareTitle}` },
                     { name: 'Pinterest', icon: '<svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.938 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 .992.371 1.931.82 2.447.09.09.101.185.073.293-.024.09-.077.318-.101.423-.038.158-.182.222-.335.134-1.249-.582-2.03-2.407-2.03-3.874 0-3.154 2.292-6.052 6.608-6.052 3.469 0 6.165 2.473 6.165 5.776 0 3.447-2.173 6.22-5.19 6.22-1.013 0-1.965-.525-2.291-1.148l-.623 2.378c-.226.869-.835 1.958-1.244 2.621.938.356 1.96.551 3.029.551 6.627 0 12-5.373 12-12C24 5.373 18.627 0 12 0z"/></svg>', url: `https://pinterest.com/pin/create/button/?url=${pageUrl}&media=&description=${shareText}` },
-                    { name: 'Copy Link', isButton: true, icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>' }
+                    { name: 'Copy Link', id: 'copy', isButton: true, icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>' }
                 ];
+                const shareMenu = this._liveDoc && this._liveDoc.share && this._liveDoc.share.items;
+                const shareIds = { LinkedIn: 'linkedin', 'X (Twitter)': 'x', Facebook: 'facebook', WhatsApp: 'whatsapp', Telegram: 'telegram', Reddit: 'reddit', Pinterest: 'pinterest', 'Copy Link': 'copy' };
+                let networks = socialNetworks.map((net) => ({ ...net, id: shareIds[net.name] || net.id }));
+                if (Array.isArray(shareMenu)) {
+                    networks = networks.filter((net) => {
+                        const row = shareMenu.find((item) => item.id === net.id);
+                        return row && row.hidden !== true;
+                    }).map((net) => {
+                        const row = shareMenu.find((item) => item.id === net.id);
+                        const label = row && this._cleanLiveText(row.label, 40);
+                        const url = row && /^https:\/\//i.test(row.url || '') ? row.url : '';
+                        return { ...net, name: label || net.name, url: url || net.url };
+                    });
+                    shareMenu.filter((item) => item && item.custom && item.hidden !== true && /^https:\/\//i.test(item.url || '')).forEach((item) => {
+                        networks.push({
+                            name: this._cleanLiveText(item.label, 40) || 'Link',
+                            id: item.id,
+                            icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>',
+                            url: item.url
+                        });
+                    });
+                } else {
+                    networks = socialNetworks;
+                }
 
                 const desktopContainer = this.DOMElements.socialShareOptions;
                 const mobileContainer = document.getElementById('social-share-options-mobile-container');
@@ -2689,7 +2740,7 @@
                 const populateContainer = (container, isMobile) => {
                     if (!container) return;
                     container.innerHTML = '';
-                    socialNetworks.forEach(net => {
+                    networks.forEach(net => {
                         let element;
                         let text = net.isButton ? translations.tooltip_copy_link : net.name;
 
@@ -2750,8 +2801,29 @@
                     { nameKey: 'export_cv_jpg', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>', handler: () => this._exportAsJPG() },
                     { nameKey: 'export_cv_doc', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>', handler: () => this._exportAsATS() },
                     { nameKey: 'export_cv_json', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>', handler: () => this._exportAsJSON() },
-                    { nameKey: 'export_cv_text', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>', handler: () => this._exportAsText() }
+                    { nameKey: 'export_cv_text', id: 'text', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>', handler: () => this._exportAsText() }
                 ];
+                const downloadMenu = this._liveDoc && this._liveDoc.downloads && this._liveDoc.downloads.items;
+                let options = exportOptions.map((opt) => ({ ...opt, id: opt.nameKey.replace('export_cv_', '') }));
+                if (Array.isArray(downloadMenu)) {
+                    options = options.filter((opt) => {
+                        const row = downloadMenu.find((item) => item.id === opt.id);
+                        return row && row.hidden !== true;
+                    }).map((opt) => {
+                        const row = downloadMenu.find((item) => item.id === opt.id);
+                        return row && row.label ? { ...opt, label: this._cleanLiveText(row.label, 40) } : opt;
+                    });
+                    downloadMenu.filter((item) => item && item.custom && item.hidden !== true && /^https:\/\//i.test(item.url || '')).forEach((item) => {
+                        options.push({
+                            id: item.id,
+                            label: this._cleanLiveText(item.label, 40) || 'Download',
+                            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>',
+                            handler: () => window.open(item.url, '_blank', 'noopener')
+                        });
+                    });
+                } else {
+                    options = exportOptions;
+                }
 
                 const desktopContainer = this.DOMElements.exportOptions;
                 const mobileContainer = document.getElementById('export-options-mobile-container');
@@ -2759,10 +2831,10 @@
                 const populateContainer = (container) => {
                     if (!container) return;
                     container.innerHTML = '';
-                    exportOptions.forEach(opt => {
+                    options.forEach(opt => {
                         const button = document.createElement('button');
                         button.className = 'w-full flex items-center gap-2 p-1 rounded text-left';
-                        const buttonText = translations[opt.nameKey] || opt.nameKey;
+                        const buttonText = opt.label || translations[opt.nameKey] || opt.nameKey;
                         button.innerHTML = `<div class="w-5 h-5 export-icon-${opt.nameKey}">${opt.icon}</div><span class="text-sm">${buttonText}</span>`;
                         button.addEventListener('click', () => {
                             opt.handler();
@@ -3277,6 +3349,325 @@
                 observer.observe(sentinel);
             },
 
+            _ensureFileSnapshot() {
+                if (this._fileExperiences) return;
+                this._fileExperiences = JSON.parse(JSON.stringify(window.CVData.experiences));
+                this._fileSummaries = {};
+                this._fileSkills = JSON.parse(JSON.stringify(window.CVData.skills));
+                ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
+                    const dict = window.CVData.translations[lang];
+                    this._fileSummaries[lang] = dict ? dict.summary_text : '';
+                });
+            },
+
+            _cleanLiveText(value, max) {
+                return String(value ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+            },
+
+            _roleFromLive(role, fileExperiences) {
+                const source = Number.isInteger(role.source) ? role.source : -1;
+                const base = source >= 0 && fileExperiences[source]
+                    ? JSON.parse(JSON.stringify(fileExperiences[source]))
+                    : { title: '', company: '', dates: '', logo: 'assets/icons/briefcase.svg', techUsed: [], details: {} };
+                const title = this._cleanLiveText(role.title, 140);
+                const company = this._cleanLiveText(role.company, 140);
+                const dates = this._cleanLiveText(role.dates, 80);
+                if (!title || !company || !dates) return null;
+                base.title = title;
+                base.company = company;
+                base.dates = dates;
+                if (!base.logo) base.logo = 'assets/icons/briefcase.svg';
+                if (!Array.isArray(base.techUsed)) base.techUsed = [];
+                if (!base.details) base.details = {};
+                const bullets = role.bullets || {};
+                ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
+                    const lines = Array.isArray(bullets[lang])
+                        ? bullets[lang].map((line) => this._cleanLiveText(line, 400)).filter(Boolean).slice(0, 8)
+                        : [];
+                    if (lines.length) base.details[lang] = lines;
+                });
+                const english = (base.details.en && base.details.en.length) ? base.details.en : [title];
+                ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
+                    if (!base.details[lang] || !base.details[lang].length) base.details[lang] = english.slice();
+                });
+                base.liveHidden = role.hidden === true;
+                base.onTimeline = role.onTimeline !== false;
+                return base;
+            },
+
+            _applyLiveCv(live) {
+                this._ensureFileSnapshot();
+                const fileExperiences = JSON.parse(JSON.stringify(this._fileExperiences));
+                ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
+                    if (this.data.translations[lang]) this.data.translations[lang].summary_text = this._fileSummaries[lang];
+                });
+                this.data.experiences = fileExperiences;
+                this.data.skills = JSON.parse(JSON.stringify(this._fileSkills));
+                this._liveDoc = null;
+                if (!live || (live.version !== 1 && live.version !== 2)) return false;
+                const summary = live.summary || {};
+                ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
+                    const text = this._cleanLiveText(summary[lang], 1200);
+                    if (text && this.data.translations[lang]) this.data.translations[lang].summary_text = text;
+                });
+                if (Array.isArray(live.roles) && live.roles.length) {
+                    const next = live.roles.slice(0, 24).map((role) => this._roleFromLive(role, fileExperiences)).filter(Boolean);
+                    if (next.length) this.data.experiences = next;
+                }
+                ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
+                    if (!PRINT_COPY[lang]) return;
+                    PRINT_COPY[lang].roles = this.data.experiences.map((exp) => (
+                        typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '')
+                    ));
+                });
+                if (live.version === 2) this._absorbLiveContent(live);
+                this._liveDoc = live;
+                return true;
+            },
+
+            _stampAll(keys) {
+                ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
+                    const dict = this.data.translations[lang];
+                    if (!dict) return;
+                    Object.keys(keys).forEach((key) => {
+                        if (keys[key]) dict[key] = keys[key];
+                    });
+                });
+            },
+
+            _absorbLiveContent(live) {
+                const clean = (value, max) => this._cleanLiveText(value, max);
+                const keys = {};
+                const profile = live.profile || {};
+                if (profile.title) keys.job_title = clean(profile.title, 160);
+                const summary = live.summary || {};
+                if (summary.title) keys.summary_title = clean(summary.title, 80);
+                const sections = [
+                    ['competencies', 'competencies_title'],
+                    ['spoken', 'languages_title'],
+                    ['glance', 'infographics_title'],
+                    ['timeline', 'infographics_timeline_title'],
+                    ['toolkit', 'toolkit_title'],
+                    ['experience', 'experience_title'],
+                    ['education', 'education_title'],
+                    ['contact', 'contact_title']
+                ];
+                sections.forEach(([name, key]) => {
+                    if (live[name] && live[name].title) keys[key] = clean(live[name].title, 80);
+                });
+                if (live.glance && live.glance.note) keys.infographics_live = clean(live.glance.note, 120);
+                if (live.education && live.education.educationTitle) keys.education_subheading = clean(live.education.educationTitle, 80);
+                if (live.education && live.education.certsTitle) keys.certs_subheading = clean(live.education.certsTitle, 80);
+                if (live.theme && live.theme.label) keys.toolbar_theme = clean(live.theme.label, 40);
+                if (live.theme && live.theme.tooltip) keys.tooltip_theme = clean(live.theme.tooltip, 80);
+                (live.toolbar && live.toolbar.items || []).forEach((item) => {
+                    if (item.label) keys['toolbar_' + item.id] = clean(item.label, 40);
+                });
+                (live.toolkit && live.toolkit.groups || []).forEach((group) => {
+                    if (group.label) keys['toolkit_' + group.key] = clean(group.label, 80);
+                });
+                this._stampAll(keys);
+                const details = live.summaryDetails || {};
+                ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
+                    const pack = details[lang];
+                    const dict = this.data.translations[lang];
+                    if (!pack || !dict) return;
+                    dict.summary_detail_1 = clean(pack.a, 1200);
+                    dict.summary_detail_2 = pack.b ? clean(pack.b, 1200) : '';
+                });
+                if (Array.isArray(live.toolkit && live.toolkit.groups)) {
+                    const next = {};
+                    live.toolkit.groups.forEach((group) => {
+                        if (!group.key || group.hidden) return;
+                        const previous = this._fileSkills[group.key] || [];
+                        next[group.key] = (group.skills || []).filter((skill) => skill && !skill.hidden && clean(skill.name, 60)).map((skill) => {
+                            const name = clean(skill.name, 60);
+                            const old = previous.find((item) => item.name === name) || {};
+                            const stars = Math.min(5, Math.max(1, Number(skill.stars) || old.stars || 3));
+                            return { name, stars, years: clean(skill.years, 20) || old.years || '', icon: old.icon || 'assets/icons/puzzle.svg' };
+                        });
+                    });
+                    this.data.skills = next;
+                }
+            },
+
+            _refreshAfterLiveCv() {
+                this._populateAllTranslations();
+                this._renderToolkit();
+                this._renderExperiences();
+                this._createTimeline();
+                this._renderGlanceKpis();
+                this._forceShowAllContent();
+                this.translatePage(this.state.lang || 'en');
+            },
+
+            _applyLiveChrome() {
+                const live = this._liveDoc;
+                if (!live || live.version !== 2) return;
+                const clean = (value, max) => this._cleanLiveText(value, max);
+                const show = (id, on) => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.toggle('cv-live-off', !on);
+                };
+                document.documentElement.classList.toggle('cv-captions-off', !!(live.toolbar && live.toolbar.hideCaptions));
+                const toolbarNodes = {
+                    theme: ['theme-toggle', 'theme-toggle-mobile'],
+                    share: ['social-share-selector', 'social-share-selector-mobile'],
+                    tour: ['tour-start-btn', 'tour-start-btn-mobile'],
+                    lang: ['language-selector', 'language-selector-mobile'],
+                    studio: ['sim-launch-btn', 'sim-launch-btn-mobile'],
+                    lab: ['qa-lab-btn', 'qa-lab-btn-mobile'],
+                    print: ['print-btn', 'print-btn-mobile'],
+                    export: ['export-selector', 'export-selector-mobile']
+                };
+                (live.toolbar && live.toolbar.items || []).forEach((item) => {
+                    (toolbarNodes[item.id] || []).forEach((id) => show(id, item.hidden !== true));
+                });
+                if (live.theme && live.theme.hidden) toolbarNodes.theme.forEach((id) => show(id, false));
+                const profile = live.profile || {};
+                const name = document.getElementById('main-name');
+                if (name && profile.name) name.textContent = clean(profile.name, 80);
+                const certs = document.getElementById('main-certifications');
+                if (certs && profile.certs != null) certs.textContent = clean(profile.certs, 120);
+                const photo = document.getElementById('profile-photo');
+                if (photo) {
+                    if (profile.photoRemoved) photo.classList.add('cv-live-off');
+                    else {
+                        photo.classList.remove('cv-live-off');
+                        if (profile.photo && String(profile.photo).indexOf('data:image/') === 0) photo.src = profile.photo;
+                    }
+                }
+                const contact = live.contact || {};
+                ['phone', 'email', 'linkedin', 'whatsapp', 'telegram', 'location'].forEach((key) => {
+                    show('contact-' + key, !(contact[key] && contact[key].hidden));
+                });
+                const linkText = (id, href, text) => {
+                    const anchor = document.querySelector('#' + id + ' a');
+                    if (!anchor) return;
+                    if (href) anchor.setAttribute('href', href);
+                    if (text) anchor.textContent = text;
+                };
+                if (contact.phone && contact.phone.value) {
+                    const anchor = document.querySelector('#contact-phone a');
+                    const digits = clean(contact.phone.value, 40);
+                    if (anchor) anchor.setAttribute('href', 'tel:' + digits.replace(/[^\d+]/g, ''));
+                    const label = anchor && anchor.querySelector('.phone-text');
+                    const number = anchor && anchor.querySelector('.phone-number');
+                    if (label && contact.phone.label) label.textContent = clean(contact.phone.label, 40);
+                    if (number) number.textContent = digits;
+                }
+                if (contact.email && contact.email.value) linkText('contact-email', 'mailto:' + clean(contact.email.value, 80), clean(contact.email.value, 80));
+                if (contact.linkedin) linkText('contact-linkedin', /^https:\/\//i.test(contact.linkedin.url || '') ? contact.linkedin.url : '', clean(contact.linkedin.label, 40));
+                if (contact.whatsapp) linkText('contact-whatsapp', /^https:\/\//i.test(contact.whatsapp.url || '') ? contact.whatsapp.url : '', clean(contact.whatsapp.label, 40));
+                if (contact.telegram) linkText('contact-telegram', /^https:\/\//i.test(contact.telegram.url || '') ? contact.telegram.url : '', clean(contact.telegram.label, 40));
+                const location = document.querySelector('#contact-location span');
+                if (location && contact.location && contact.location.value) location.textContent = clean(contact.location.value, 80);
+                document.querySelectorAll('#contact-section .cv-contact-extra').forEach((row) => row.remove());
+                const contactHost = document.getElementById('contact-location');
+                (contact.extras || []).filter((item) => item && !item.hidden && clean(item.value, 180)).forEach((item) => {
+                    const row = document.createElement('div');
+                    row.className = 'cv-contact-extra flex items-center space-x-3 mt-4';
+                    const kind = item.kind || 'link';
+                    const label = clean(item.label, 40);
+                    const value = clean(item.value, 180);
+                    if (kind === 'address') row.innerHTML = `<span>${this._esc(label ? label + ': ' : '')}${this._esc(value)}</span>`;
+                    else {
+                        const href = kind === 'phone' ? 'tel:' + value.replace(/[^\d+]/g, '') : kind === 'email' ? 'mailto:' + value : (/^https:\/\//i.test(value) ? value : '');
+                        if (!href) return;
+                        row.innerHTML = `<a href="${this._esc(href)}" ${kind === 'phone' || kind === 'email' ? '' : 'target="_blank" '}rel="noopener noreferrer" class="hover:text-cyan-400">${this._esc(label || value)}</a>`;
+                    }
+                    if (contactHost && contactHost.parentNode) contactHost.parentNode.appendChild(row);
+                });
+                show('contact-section', !contact.hidden);
+                const detailTwo = document.querySelector('[data-translate-key="summary_detail_2"]');
+                if (detailTwo && live.summaryDetails) {
+                    const pack = live.summaryDetails.en || {};
+                    detailTwo.classList.toggle('cv-live-off', !clean(pack.b, 20));
+                }
+                show('competencies-section', !(live.competencies && live.competencies.hidden));
+                if (live.competencies && Array.isArray(live.competencies.items)) {
+                    const list = document.getElementById('competencies-list');
+                    if (list) {
+                        list.innerHTML = live.competencies.items.filter((item) => item && !item.hidden && clean(item.label, 80)).map((item) => {
+                            const id = (clean(item.id, 24).toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'topic');
+                            return `<li><button type="button" class="competency-item" data-competency="${this._esc(id)}" aria-pressed="false">${this._esc(clean(item.label, 80))}</button></li>`;
+                        }).join('');
+                    }
+                }
+                show('languages-section', !(live.spoken && live.spoken.hidden));
+                if (live.spoken && Array.isArray(live.spoken.items)) {
+                    const body = document.getElementById('languages-body');
+                    if (body) {
+                        body.innerHTML = live.spoken.items.filter((item) => item && !item.hidden && clean(item.name, 40)).map((item) => {
+                            const pct = Math.min(100, Math.max(0, Number(item.percent) || 0));
+                            const flag = /^[a-z]{2}$/i.test(item.flag || '') ? item.flag.toLowerCase() : '';
+                            const flagImg = flag ? `<img src="https://hatscripts.github.io/circle-flags/flags/${flag}.svg" class="flag-icon" alt="">` : '';
+                            return `<div class="language"><div class="flex items-center justify-between"><div class="flex items-center">${flagImg}<span class="font-medium ml-2">${this._esc(clean(item.name, 40))}</span></div><span>${this._esc(clean(item.level, 24))}</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" role="img"><div class="bg-teal-400 h-1.5 rounded-full" style="width: ${pct}%"></div></div></div>`;
+                        }).join('');
+                    }
+                }
+                show('toolkit-section', !(live.toolkit && live.toolkit.hidden));
+                show('professional-experience', !(live.experience && live.experience.hidden));
+                show('education-section', !(live.education && live.education.hidden));
+                if (live.education) {
+                    const degrees = document.querySelector('#education-section [aria-labelledby="education-subheading"] .mt-2');
+                    const certList = document.querySelector('#education-section [aria-labelledby="certs-subheading"] .mt-2');
+                    if (degrees && Array.isArray(live.education.degrees)) {
+                        degrees.innerHTML = live.education.degrees.filter((item) => item && !item.hidden && clean(item.degree, 120)).map((item) => (
+                            `<p><strong class="font-medium">${this._esc(clean(item.degree, 120))}</strong> - ${this._esc(clean(item.school, 80))}</p>`
+                        )).join('');
+                    }
+                    if (certList && Array.isArray(live.education.certs)) {
+                        certList.innerHTML = live.education.certs.filter((item) => item && !item.hidden && clean(item.label, 60)).map((item) => (
+                            `<p><strong class="font-medium">${this._esc(clean(item.label, 60))}</strong> ${this._esc(clean(item.value, 120))}</p>`
+                        )).join('');
+                    }
+                }
+                const glanceOff = !!(live.glance && live.glance.hidden);
+                const chartsOff = glanceOff || !!(live.glance && live.glance.chartsHidden);
+                const timelineOff = !!(live.timeline && live.timeline.hidden);
+                show('infographics-heading', !glanceOff);
+                show('glance-kpis', !glanceOff);
+                const note = document.querySelector('[data-translate-key="infographics_live"]');
+                if (note) note.classList.toggle('cv-live-off', glanceOff);
+                document.querySelectorAll('#glance-section .chart-rotator').forEach((el) => el.classList.toggle('cv-live-off', chartsOff));
+                show('timeline-section', !timelineOff);
+                const glance = document.getElementById('glance-section');
+                if (glance) glance.classList.toggle('cv-live-off', glanceOff && timelineOff);
+            },
+
+            _showCvPreviewBanner() {
+                if (document.getElementById('cv-preview-banner')) return;
+                const bar = document.createElement('p');
+                bar.id = 'cv-preview-banner';
+                bar.textContent = 'Preview. Visitors still see the published CV until you press Confirmation in the admin.';
+                document.body.prepend(bar);
+            },
+
+            async _loadLiveCv() {
+                const preview = new URLSearchParams(window.location.search).get('cvpreview') === '1';
+                if (preview) {
+                    try {
+                        const raw = localStorage.getItem('cv-live-preview');
+                        const live = raw ? JSON.parse(raw) : null;
+                        if (this._applyLiveCv(live)) {
+                            this._showCvPreviewBanner();
+                            this._refreshAfterLiveCv();
+                        }
+                    } catch (error) {
+                        console.warn('CV preview stayed on the file.', error);
+                    }
+                    return;
+                }
+                try {
+                    const snap = await getDoc(doc(db, 'cvContent', 'live'));
+                    if (!snap.exists()) return;
+                    if (this._applyLiveCv(snap.data())) this._refreshAfterLiveCv();
+                } catch (error) {
+                    console.warn('Live CV stayed on the file.', error);
+                }
+            },
+
             init() {
                 // Add new state flags for our fix
                 this.state.shareMenuInitialized = false;
@@ -3301,6 +3692,9 @@
                 this._noteCvAccess();
 
                 this._bootLanguage();
+                if (new URLSearchParams(window.location.search).get('cvpreview') === '1') {
+                    sessionStorage.setItem('hasSeenTour', '1');
+                }
 
                 // Load asynchronous content after the main UI is ready.
                 try { this._loadAndRenderReviews(); }
@@ -3310,6 +3704,7 @@
                 if (!sessionStorage.getItem('hasSeenTour')) {
                     setTimeout(() => this.startTour(true), 1000);
                 }
+                this._loadLiveCv();
             },
 
 
