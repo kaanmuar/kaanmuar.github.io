@@ -353,7 +353,7 @@
                 <!-- Core Competencies Section -->
                 <section aria-labelledby="competencies-heading" class="animate-on-scroll">
                     <h3 id="competencies-heading" class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="competencies_title">Core Competencies</h3>
-                    <ul id="competencies-list" class="mt-3 space-y-2 text-sm list-disc list-inside">
+                    <ul id="competencies-list" class="mt-3 space-y-2 text-sm">
                         <li><button type="button" class="competency-item" data-competency="pm" data-translate-key="competency_pm" aria-pressed="false">IT Project Management</button></li>
                         <li><button type="button" class="competency-item" data-competency="qa" data-translate-key="competency_qa" aria-pressed="false">QA & Test Automation</button></li>
                         <li><button type="button" class="competency-item" data-competency="lead" data-translate-key="competency_lead" aria-pressed="false">Team Leadership & Mentoring</button></li>
@@ -587,6 +587,7 @@
 
     <div class="widget-body">
         <div id="message-pane" class="widget-form-pane active" role="tabpanel" aria-labelledby="message-tab">
+            <p class="widget-lead" data-translate-key="widget_message_lead">A note about a role, a project, or a question. I read every one.</p>
             <form id="message-form" novalidate>
                 <div class="form-group">
                     <label for="sender-name" data-translate-key="form_label_name">Name</label>
@@ -626,15 +627,18 @@
         </div>
 
         <div id="rating-pane" class="widget-form-pane" role="tabpanel" aria-labelledby="rating-tab">
+            <p class="widget-lead" data-translate-key="widget_rating_lead">Tap a star, then leave a line if you want. Approved notes appear in Testimonials.</p>
             <form id="rating-form" novalidate>
                 <div class="form-group">
                     <label data-translate-key="form_label_rating">Overall Rating</label>
+                    <div class="star-stage">
                     <div id="star-rating" class="star-rating" role="radiogroup" aria-labelledby="star-rating-error">
                         <span class="star" role="radio" aria-checked="false" aria-label="1 star" data-value="1">&starf;</span>
                         <span class="star" role="radio" aria-checked="false" aria-label="2 stars" data-value="2">&starf;</span>
                         <span class="star" role="radio" aria-checked="false" aria-label="3 stars" data-value="3">&starf;</span>
                         <span class="star" role="radio" aria-checked="false" aria-label="4 stars" data-value="4">&starf;</span>
                         <span class="star" role="radio" aria-checked="false" aria-label="5 stars" data-value="5">&starf;</span>
+                    </div>
                     </div>
                     <input type="hidden" id="rating-value" name="rating" value="0" required>
                     <div id="star-rating-error" class="error-message" role="alert"></div>

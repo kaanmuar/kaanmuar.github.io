@@ -119,12 +119,15 @@
             --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76;
             --green: #0f766e; --amber: #b45309; --red: #b42318;
             --topbar: #f7f8fa; --console: #12181f; --console-text: #8fd0d5;
+            --frost: color-mix(in srgb, var(--panel) 82%, white);
+            --frost-blur: blur(40px) saturate(1.25);
         }
         html.dark-mode {
             --bg: #10161d; --panel: #161d26; --panel-2: #0c1118; --card: #1a2430;
             --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb;
             --green: #5fb89a; --amber: #c4a574; --red: #e07a73;
             --topbar: #0c1118; --console: #020617; --console-text: #8fd0d5;
+            --frost: color-mix(in srgb, var(--panel) 58%, #6d7c8c);
         }
         * { box-sizing: border-box; }
         html, body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
@@ -161,11 +164,13 @@
         .case-list { overflow: auto; flex: 1; min-height: 0; padding: 0 8px 12px; }
         .case-item { margin-bottom: 6px; }
         .case-row { width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 8px 8px 0 0; padding: 8px; margin-bottom: 0; cursor: pointer; color: inherit; display: grid; grid-template-columns: 64px 1fr auto; gap: 6px; align-items: start; }
-        .src-links { display: flex; flex-wrap: wrap; gap: 6px; }
+        .src-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
         .src-links-row { padding: 4px 8px 8px 72px; background: var(--card); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; }
         .case-row.on + .src-links-row { border-color: var(--cyan); }
         .src-links-detail { margin: 6px 0 10px; }
-        .src-link { font-size: 11px; color: var(--cyan); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; font-weight: 600; }
+        .src-link { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; height: 22px; line-height: 1; font-size: 11px; color: var(--cyan); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; font-weight: 600; white-space: nowrap; }
+        .src-link svg { width: 12px; height: 12px; display: block; flex: 0 0 auto; }
+        #case-detail.stage-head { display: block; }
         .src-link:hover { border-color: var(--cyan); }
         .case-row.on { border-color: var(--cyan); }
         .case-row.running { outline: 1px solid var(--cyan); }
@@ -193,7 +198,16 @@
         #run-log .ok { color: var(--green); }
         #run-log .fail { color: var(--red); }
         #run-log .muted { color: #9aa5b1; font-size: 10px; }
-        .dash-overlay { display: none; position: fixed; inset: 0; z-index: 40; background: rgba(18,24,31,.45); padding: 16px; overflow: auto; }
+        .dash-overlay { display: none; position: fixed; inset: 0; z-index: 120; background: rgba(18,24,31,.84); padding: 16px; overflow: auto; }
+        html.report-open #site-tour-overlay,
+        html.report-open #site-tour-tooltip,
+        html.report-open .site-tour-hit { visibility: hidden !important; }
+        .fw-compare { display: flex; flex-direction: column; gap: 10px; }
+        .fw-row { display: grid; grid-template-columns: 92px 1fr; gap: 4px 8px; align-items: center; font-size: 12px; }
+        .fw-row .fw-meta { grid-column: 2; }
+        .fw-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+        .fw-track span { display: block; height: 100%; border-radius: 999px; }
+        .fw-meta { color: var(--muted); font-variant-numeric: tabular-nums; }
         .dash-overlay.open { display: block; }
         .dash-modal { max-width: 980px; margin: 4vh auto; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 20px; box-shadow: 0 16px 40px rgba(18,24,31,.2); }
         .dash-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
@@ -208,8 +222,14 @@
         th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
         th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
         .count { padding: 0 10px 8px; font-size: 12px; color: var(--muted); }
-        .pace { display: flex; align-items: center; gap: 4px; }
+        .pace { display: flex; align-items: flex-start; gap: 4px; }
         .pace-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-right: 4px; }
+        .pace > .pace-label { padding-top: 7px; }
+        .pace-scale { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .pace-btns { display: flex; align-items: center; gap: 4px; }
+        .pace-speed { display: grid; grid-template-columns: auto minmax(36px, 1fr) auto; align-items: center; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; line-height: 1; }
+        .pace-speed-line { display: block; height: 3px; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--muted)); position: relative; }
+        .pace-speed-line::after { content: ""; position: absolute; right: -1px; top: 50%; width: 0; height: 0; transform: translateY(-50%); border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 5px solid var(--muted); }
         .pace-btn { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 6px; padding: 5px 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-variant-numeric: tabular-nums; }
         .pace-btn.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
         .pace-btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -217,7 +237,7 @@
         .lang-wrap { position: relative; }
         .lang-toggle { background: none; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; cursor: pointer; display: inline-flex; }
         .lang-toggle img { width: 20px; height: 20px; border-radius: 50%; display: block; }
-        .lang-menu { display: none; position: absolute; right: 0; top: calc(100% + 6px); width: 220px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px; z-index: 20; flex-direction: column; gap: 6px; box-shadow: 0 8px 24px rgba(18,24,31,.12); }
+        .lang-menu { display: none; position: absolute; right: 0; top: calc(100% + 6px); width: 220px; background: var(--frost); border: 1px solid var(--line); border-radius: 8px; padding: 8px; z-index: 20; flex-direction: column; gap: 6px; box-shadow: 0 8px 24px rgba(18,24,31,.12); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
         .lang-wrap.open .lang-menu { display: flex; }
         .lang-search { width: 100%; box-sizing: border-box; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 12px; }
         .lang-options-list { display: flex; flex-direction: column; gap: 4px; max-height: calc(6 * 1.75rem + 5 * 0.25rem); overflow-y: auto; }
@@ -272,12 +292,21 @@
         <button class="btn btn-ghost" id="tour-start-btn" type="button">How this lab works</button>
         <a class="btn btn-ghost" href="https://github.com/kaanmuar/kaanmuar.github.io" target="_blank" rel="noopener noreferrer">Suite repo</a>
         <a class="btn btn-ghost" href="simulador.html">Sprint studio</a>
-        <div class="pace notranslate" role="group" aria-label="Run pace in seconds">
+        <div class="pace notranslate" role="group" aria-label="Run pace in seconds. Left is faster, right is slower.">
             <span class="pace-label">Pace</span>
-            <button type="button" class="pace-btn" data-pace="0.5">0,5</button>
-            <button type="button" class="pace-btn on" data-pace="1">1,0</button>
-            <button type="button" class="pace-btn" data-pace="1.5">1,5</button>
-            <button type="button" class="pace-btn" data-pace="2">2,0</button>
+            <div class="pace-scale">
+                <div class="pace-btns">
+                    <button type="button" class="pace-btn" data-pace="0.5">0,5</button>
+                    <button type="button" class="pace-btn on" data-pace="1">1,0</button>
+                    <button type="button" class="pace-btn" data-pace="1.5">1,5</button>
+                    <button type="button" class="pace-btn" data-pace="2">2,0</button>
+                </div>
+                <div class="pace-speed" aria-hidden="true">
+                    <span>Faster</span>
+                    <span class="pace-speed-line"></span>
+                    <span>Slower</span>
+                </div>
+            </div>
         </div>
         <div class="view-mode notranslate" role="group" aria-label="Show or hide live automation">
             <span class="pace-label">Actions</span>
