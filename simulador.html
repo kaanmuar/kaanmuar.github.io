@@ -104,6 +104,8 @@
             --console: #12181f; --console-text: #8fd0d5; --console-border: #0d6e76;
             --modal: #f7f8fa; --modal-side: #eef2f4; --overlay: rgba(18,24,31,.45);
             --log-bg: #e8edf0; --log-text: #0f766e; --code-text: #e8eef2; --laser-mid: #12181f;
+            --frost: color-mix(in srgb, var(--panel) 82%, white);
+            --frost-blur: blur(40px) saturate(1.25);
         }
         html.dark-mode {
             --bg: #10161d; --panel: #161d26; --panel-2: #0c1118; --card: #1a2430;
@@ -116,13 +118,16 @@
             --console: #020617; --console-text: #8fd0d5; --console-border: #0d6e76;
             --modal: #161d26; --modal-side: #0c1118; --overlay: rgba(2,6,23,.72);
             --log-bg: #020617; --log-text: #86efac; --code-text: #cbd5e1; --laser-mid: #e8eef2;
+            --frost: color-mix(in srgb, var(--panel) 58%, #6d7c8c);
         }
         * { box-sizing: border-box; }
         html { color-scheme: light; }
         html.dark-mode { color-scheme: dark; }
-        html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
+        html, body { margin: 0; height: 100%; height: 100dvh; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
         html { overflow-x: hidden; }
-        body { display: grid; grid-template-rows: auto minmax(0, 1fr) 120px; overflow: hidden; }
+        body { display: grid; grid-template-rows: auto minmax(0, 1fr) 72px; overflow: hidden; }
+        body.sprint-on { grid-template-rows: auto minmax(0, 1fr); }
+        body.sprint-on .log, body.sprint-on .studio-lead { display: none; }
         button { font-family: inherit; }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--topbar); gap: 12px; flex-wrap: wrap; min-height: 56px; }
         .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-family: "Source Serif 4", Georgia, serif; }
@@ -153,31 +158,40 @@
         .studio-lead { margin: 0; padding: 6px 16px 0; font-size: 12px; line-height: 1.35; color: var(--muted); }
         .phase-banner { flex: 0 0 auto; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--banner); font-size: 13px; color: var(--muted); }
         .phase-banner strong { color: var(--text); }
-        .board { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
-        .col { min-width: 250px; width: 250px; background: var(--col); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
-        .col h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+        .board { flex: 1; min-height: 0; overflow: hidden; padding: 16px; display: flex; gap: 12px; align-items: stretch; }
+        .col { min-width: 0; width: auto; flex: 1 1 0; background: var(--col); border: 1px solid var(--line); border-radius: 8px; padding: 0 0 8px; display: flex; flex-direction: column; max-height: 100%; }
+        .col h3 { margin: 0; padding: 10px 10px 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; justify-content: space-between; border-top: 3px solid var(--col-accent, var(--muted)); border-radius: 8px 8px 0 0; }
+        .col-count { min-width: 18px; height: 18px; border-radius: 999px; background: var(--panel); color: var(--text); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; letter-spacing: 0; }
+        .col-body { padding: 0 8px; overflow: auto; }
         .ticket-wrap { margin-bottom: 8px; }
-        .ticket { position: relative; overflow: hidden; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px; cursor: pointer; }
+        .ticket { position: relative; overflow: hidden; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px; cursor: pointer; box-shadow: 0 1px 1px rgba(18,24,31,.06); }
         .ticket:hover { border-color: var(--blue); }
-        .ticket.pulse { outline: 2px solid var(--purple); transform: translateY(-2px); }
-        .ticket-wrap.active-review .ticket { border-color: var(--cyan); border-radius: 8px 8px 0 0; outline: 1px solid rgba(77,179,187,.45); }
+        .ticket.pulse { outline: 2px solid var(--scan-color, var(--purple)); transform: translateY(-1px); }
+        .ticket-wrap.active-review .ticket { border-color: var(--scan-color, var(--cyan)); border-radius: 6px 6px 0 0; }
+        .ticket-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 11px; }
+        .issue-type { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--blue); }
+        .issue-type.bug { color: var(--red); }
+        .ticket-key { font-family: "Fira Code", monospace; color: var(--muted); }
+        .ticket-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+        .ticket-chips span { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: var(--panel-2); color: var(--muted); }
+        .avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--cyan); color: #fff; font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
         .laser {
             pointer-events: none;
             position: absolute;
             top: 0; bottom: 0; left: 0;
-            width: 12px;
-            margin-left: -6px;
-            background: linear-gradient(180deg, transparent 0%, #0d6e76 18%, var(--laser-mid) 50%, #4db3bb 82%, transparent 100%);
-            box-shadow: 0 0 14px 4px rgba(13,110,118,.75), 0 0 36px 10px rgba(77,179,187,.28);
+            width: 42px;
+            margin-left: -21px;
+            background: linear-gradient(90deg, transparent, var(--scan-color, rgba(77,179,187,.35)), transparent);
+            box-shadow: 0 0 22px 6px var(--scan-glow, rgba(77,179,187,.18));
             opacity: 0;
             z-index: 3;
         }
-        .scanning > .laser { animation: laserSweep var(--scan-ms, 1.7s) linear 1; }
+        .scanning > .laser { animation: laserSweep var(--scan-ms, 2.2s) ease-in-out 1; }
         @keyframes laserSweep {
-            0% { left: 0; opacity: 0; }
-            8% { opacity: 1; }
-            92% { opacity: 1; }
-            100% { left: 100%; opacity: 0; }
+            0% { left: -10%; opacity: 0; }
+            18% { opacity: .72; }
+            82% { opacity: .45; }
+            100% { left: 110%; opacity: 0; }
         }
         .ticket-console, .agent-console {
             display: none;
@@ -193,7 +207,7 @@
         }
         .ticket-console { border-top: 0; border-radius: 0 0 8px 8px; }
         .ticket-wrap.active-review .ticket-console { display: block; }
-        .agent-console { display: block; border-radius: 0 0 10px 10px; border-top: 1px solid var(--console-border); max-height: 150px; }
+        .agent-console { display: block; border-radius: 0 0 10px 10px; border-top: 1px solid var(--console-border); max-height: 220px; }
         .agent-console .k, .ticket-console .k { color: var(--amber); }
         .agent-console .ok, .ticket-console .ok { color: var(--green); }
         .agent-console .dec, .ticket-console .dec { color: var(--purple); }
@@ -201,17 +215,73 @@
         .phase-console {
             display: none;
             flex: 0 0 auto;
-            max-height: 132px;
-            overflow: auto;
+            max-height: 2.4em;
+            overflow: hidden;
             background: var(--console);
             border-top: 1px solid var(--console-border);
             color: var(--console-text);
             font-family: 'Fira Code', monospace;
-            font-size: 11px;
+            font-size: 12px;
             line-height: 1.45;
-            padding: 8px 12px;
+            padding: 6px 12px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
         .phase-console.show { display: block; }
+        .phase-console.action { max-height: 2.4em; }
+        .fw-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+        .fw-pick label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--text); }
+        .platform-pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+        .platform-card { background: var(--card); border: 1px solid var(--line); border-top: 4px solid var(--tool, var(--blue)); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+        .platform-card h3 { margin: 0; font-size: 16px; color: var(--text); }
+        .platform-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; flex: 1; }
+        .platform-mark { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--tool, var(--blue)); }
+        .tool { border: 1px solid #dfe1e6; border-radius: 10px; overflow: hidden; background: #f4f5f7; color: #172b4d; position: relative; }
+        .tool-bar { display: flex; align-items: center; gap: 12px; padding: 10px 12px; position: sticky; top: 0; z-index: 2; }
+        .tool-brand { font-weight: 800; letter-spacing: .02em; }
+        .tool-crumb { flex: 1; font-size: 12px; opacity: .9; min-width: 0; }
+        .tool-body { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 280px; }
+        .tool-tree { background: #fff; border-right: 1px solid #dfe1e6; padding: 10px 12px; font-size: 12px; }
+        .tool-tree b { display: block; margin: 8px 0 4px; }
+        .tool-tree div { padding: 3px 0 3px 10px; color: #42526e; }
+        .tool-main { padding: 12px; min-width: 0; }
+        .tool table { background: #fff; color: #172b4d; }
+        .tool th { color: #6b778c; }
+        .tool td, .tool th { border-bottom: 1px solid #ebecf0; }
+        .case-sheet { background: #fff; border: 1px solid #dfe1e6; border-radius: 8px; margin-top: 12px; position: relative; overflow: hidden; }
+        .case-sheet.case-now { box-shadow: 0 0 0 2px #8777d9; }
+        .case-head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #ebecf0; }
+        .case-key { font-weight: 700; }
+        .case-fields { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 12px; background: #fafbfc; font-size: 12px; }
+        .case-fields span { background: #fff; border: 1px solid #dfe1e6; border-radius: 4px; padding: 3px 6px; }
+        .script-label { margin: 10px 12px 0; font-size: 12px; font-weight: 700; color: #42526e; }
+        .tool tr.step-now td { background: #deebff; }
+        .tool .sub { color: #6b778c; font-size: 11px; margin-top: 2px; }
+        .in-sprint { font-size: 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+        .add-step { margin: 0 12px 12px; color: #6b778c; font-size: 12px; }
+        .tool-xray .tool-bar { background: #0747a6; color: #fff; }
+        .tool-xray .tool-brand { background: #36b37e; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 12px; }
+        .tool .btn-accept:disabled { background: rgba(255,255,255,.22); color: #fff; cursor: default; }
+        .tool-xray .btn-accept { background: #0052cc; }
+        .tool-zephyr .tool-bar { background: #0b3d2e; color: #fff; }
+        .tool-zephyr .tool-brand { color: #7ddea0; }
+        .tool-zephyr .btn-accept { background: #1f8a4c; }
+        .tool-zephyr tr.step-now td { background: #e3fcef; }
+        .tool-testrail .tool-bar { background: #30343a; color: #fff; }
+        .tool-testrail .tool-brand { color: #8ebfff; }
+        .tool-testrail .btn-accept { background: #2d6da3; }
+        .tool-testrail tr.step-now td { background: #e8f1fb; }
+        .gherkin-x { margin: 8px 12px 0; }
+        .action-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+        .action-item { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--panel); }
+        .action-item b { color: var(--text); }
+        .action-item span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+        .walk { margin: 8px 0 0; padding: 0; list-style: none; }
+        .walk li { border-left: 2px solid var(--line); padding: 4px 0 6px 8px; margin: 6px 0; }
+        .walk li.step-now { border-left-color: var(--purple); background: rgba(135,119,217,.12); }
+        .walk b { display: block; font-size: 12px; }
+        .walk span { display: block; color: var(--muted); font-size: 11px; }
+        .ticket-foot { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 10px; color: var(--muted); }
         .phase-console .k { color: var(--amber); }
         .phase-console .ok { color: var(--green); }
         .phase-console .dec { color: var(--purple); }
@@ -231,11 +301,12 @@
         .prio.highest { color: var(--red); } .prio.high { color: #fb7185; } .prio.medium { color: var(--amber); }
         .log { background: var(--log-bg); color: var(--log-text); font-family: 'Fira Code', monospace; font-size: 12px; padding: 10px 14px; overflow: auto; border-top: 1px solid var(--line); min-height: 0; }
         .log b { color: var(--cyan); }
-        .overlay { position: fixed; inset: 0; background: var(--overlay); display: none; z-index: 30; padding: 24px; }
-        .overlay.show { display: flex; justify-content: center; align-items: flex-start; overflow: auto; }
-        .modal { width: min(1100px, 100%); background: var(--modal); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 40px; }
-        .m-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); }
-        .m-body { display: grid; grid-template-columns: 1.7fr .9fr; min-height: 520px; }
+        .overlay { position: fixed; inset: 0; background: var(--overlay); display: none; z-index: 30; padding: 16px; }
+        .overlay.show { display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .modal { width: min(1100px, 100%); max-height: calc(100dvh - 32px); background: var(--modal); border: 1px solid var(--line); border-radius: 10px; display: flex; flex-direction: column; }
+        .m-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+        .m-body { display: grid; grid-template-columns: 1.7fr .9fr; min-height: 0; flex: 1; overflow: auto; }
+        .proposal .row { position: sticky; bottom: 0; background: var(--modal); padding: 8px 0; }
         .m-main { padding: 18px; overflow: auto; border-right: 1px solid var(--line); }
         .m-side { padding: 16px; background: var(--modal-side); }
         .tabs { display: flex; gap: 12px; border-bottom: 1px solid var(--line); margin: 12px 0 16px; }
@@ -261,7 +332,7 @@
         .lang-wrap { position: relative; }
         .lang-toggle { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--line); color: var(--text); border-radius: 6px; padding: 6px 8px; cursor: pointer; }
         .lang-toggle img { width: 18px; height: 18px; border-radius: 50%; }
-        .lang-menu { display: none; position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; width: 15rem; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; flex-direction: column; gap: 8px; }
+        .lang-menu { display: none; position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; width: 15rem; background: var(--frost); border: 1px solid var(--line); border-radius: 8px; padding: 8px; flex-direction: column; gap: 8px; -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
         .lang-wrap.open .lang-menu { display: flex; }
         .lang-search { width: 100%; box-sizing: border-box; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 12px; }
         .lang-options-list { display: flex; flex-direction: column; gap: 4px; max-height: calc(6 * 1.75rem + 5 * 0.25rem); overflow-y: auto; }
@@ -290,8 +361,8 @@
             .studio-lead { padding: 8px 12px 0; }
             .nav { display: flex; overflow: auto; gap: 6px; border-right: 0; border-bottom: 1px solid var(--line); -webkit-overflow-scrolling: touch; padding: 8px; max-width: 100%; }
             .nav button, .nav a { width: auto; white-space: nowrap; min-height: 40px; display: inline-flex; align-items: center; }
-            .board { -webkit-overflow-scrolling: touch; min-height: 46vh; padding: 12px; max-width: 100%; }
-            .col { min-width: min(250px, 82vw); width: min(250px, 82vw); }
+            .board { -webkit-overflow-scrolling: touch; overflow: auto; min-height: 46vh; padding: 12px; max-width: 100%; }
+            .col { min-width: min(250px, 82vw); width: min(250px, 82vw); flex: 0 0 auto; }
             .log { max-height: 22vh; min-height: 72px; }
             .overlay { padding: 8px; }
             .modal { width: 100%; }
@@ -300,7 +371,9 @@
             .m-main { border-right: 0; }
             .tabs { overflow-x: auto; flex-wrap: nowrap; }
             .tabs button { white-space: nowrap; }
-            .grid2 { grid-template-columns: 1fr; }
+            .grid2, .platform-pick, .tool-body { grid-template-columns: 1fr; }
+            .tool-tree { border-right: 0; border-bottom: 1px solid #dfe1e6; }
+            .tool-bar { flex-wrap: wrap; }
             .field { grid-template-columns: 1fr; }
             .row { flex-wrap: wrap; }
             .handoff { flex-direction: column; align-items: stretch; }
@@ -361,7 +434,7 @@
     <script>
 const AGENTS = [
     { id: 'a1', name: 'Ticket Steward', role: 'Reads & rewrites Jira stories' },
-    { id: 'a2', name: 'Test Designer', role: 'Authors Gherkin and Xray cases' },
+    { id: 'a2', name: 'Test Designer', role: 'Writes the cases in Zephyr, Xray, or TestRail' },
     { id: 'a3', name: 'Automation Engineer', role: 'Builds Playwright / Cypress / Robot' },
     { id: 'a4', name: 'Release Verifier', role: 'DoD, evidence, sprint sign-off' }
 ];
@@ -507,13 +580,77 @@ Scenario: Escape returns focus to Pay
     }
 ];
 
+const EXTRA = {
+    'PAY-241': { fixVersion: '2026.09', due: '30 Sep', subtasks: ['ACS redirect keeps the order UUID', '8 minute timeout voids the hold', 'Apple Pay stays exempt'] },
+    'PAY-246': { fixVersion: '2026.09', due: '28 Sep', subtasks: ['Idempotency-Key required', 'Retry returns the original capture'] },
+    'PAY-251': { fixVersion: '2026.09', due: '26 Sep', subtasks: ['Dialog role and focus move', 'Escape restores the Pay button'] },
+    'PAY-255': { fixVersion: '2026.09', due: '01 Oct', subtasks: ['CSV row count matches captures', 'SHA-256 sidecar matches the file'] }
+};
+
+const WALKS = {
+    'XT-1101': [
+        { what: 'Open a guest checkout with Visa ending 4242', where: 'Checkout · card form', when: 'Before Pay is clicked', why: 'A risk score of 81 must be forced into 3-D Secure' },
+        { what: 'Submit payment and watch the order status', where: 'POST /v2/payments', when: 'On Pay', why: 'The order has to stay PENDING_3DS instead of capturing' },
+        { what: 'Confirm the ACS redirect carries the order UUID', where: 'Browser location · ACS URL', when: 'Within 2 seconds of submit', why: 'The challenge must stay tied to the original order' }
+    ],
+    'XT-1102': [
+        { what: 'Start from a PENDING_3DS order', where: 'Order ORD fixture', when: 'After the shopper is on the ACS page', why: 'Authorization only follows a successful challenge' },
+        { what: 'Return transStatus Y from the ACS', where: 'ACS callback', when: 'Shopper completes the challenge', why: 'Y is the success signal for ECI 05' },
+        { what: 'Assert the order is AUTHORIZED and confirmation PAY-241-OK is shown', where: 'Order status · confirmation page', when: 'After the callback', why: 'The shopper and the ledger must agree the payment landed' }
+    ],
+    'XT-1103': [
+        { what: 'Age a PENDING_3DS order past 8 minutes', where: 'Order clock fixture', when: 'Before the shopper returns', why: 'An abandoned challenge must not leave a hold' },
+        { what: 'Leave the ACS unfinished', where: 'ACS page', when: 'Timeout fires', why: 'No transStatus should arrive' },
+        { what: 'Assert the hold is voided and checkout.3ds.timeout is emitted', where: 'Order status · analytics', when: 'At expiry', why: 'Finance and risk both need the void' }
+    ],
+    'XT-1104': [
+        { what: 'Pay with an Apple Pay token and riskScore 90', where: 'Wallet sheet', when: 'On Pay', why: 'Wallets are explicitly out of the 3DS step-up' },
+        { what: 'Watch the network for an ACS redirect', where: 'Browser requests', when: 'During submit', why: 'A redirect here is a false positive' },
+        { what: 'Assert the order authorizes with no challenge', where: 'Order status', when: 'After submit', why: 'Returning wallet shoppers must not be blocked' }
+    ],
+    'XT-1201': [
+        { what: 'Create capture CAP-88 for order ORD-9', where: 'POST /v2/captures', when: 'First attempt', why: 'The retry needs an original success to return' },
+        { what: 'Repeat the same body with Idempotency-Key cap-88-a', where: 'POST /v2/captures header', when: 'PSP retries after a 504', why: 'A second network call would double-charge' },
+        { what: 'Assert HTTP 200, captureId CAP-88, and the idempotent_hit metric', where: 'Response · Datadog', when: 'On the retry', why: 'Ops must see the replay was absorbed' }
+    ],
+    'XT-1202': [
+        { what: 'POST /v2/captures with no Idempotency-Key', where: 'Payments API', when: 'Request is sent', why: 'A missing key is how the double-capture defect starts' },
+        { what: 'Read the status and error code', where: 'HTTP response', when: 'Immediately', why: 'Callers need a stable 400, not a second charge' },
+        { what: 'Assert 400 IDEMPOTENCY_KEY_REQUIRED and no capture row', where: 'Response · ledger', when: 'After the call', why: 'The API must refuse rather than guess' }
+    ],
+    'XT-1301': [
+        { what: 'Sign in as a shopper with a saved Visa ending 4242', where: 'Checkout · saved card', when: 'Before Pay', why: 'The bug only shows for returning shoppers' },
+        { what: 'Choose Pay and listen with the screen reader', where: 'CVV dialog', when: 'Dialog opens', why: 'WCAG 4.1.2 requires the dialog to be announced' },
+        { what: 'Assert role=dialog, aria-modal, and focus on the CVV field named for 4242', where: 'Accessibility tree', when: 'On open', why: 'Focus and name are what VoiceOver skipped' }
+    ],
+    'XT-1302': [
+        { what: 'Open the CVV dialog', where: 'Checkout · Pay', when: 'Dialog is showing', why: 'Escape only matters once focus is inside' },
+        { what: 'Press Escape', where: 'Keyboard', when: 'While the dialog is open', why: 'Shoppers must have a way back without a mouse' },
+        { what: 'Assert the dialog is gone and focus is on Pay', where: 'Checkout · Pay button', when: 'After Escape', why: 'Focus must not fall to the top of the page' }
+    ],
+    'XT-1401': [
+        { what: 'Seed 12 AUTHORIZED captures for merchant M-44 on 23 Sep UTC', where: 'Ledger fixture', when: 'Before 02:15 UTC', why: 'The file has to match that day’s captures' },
+        { what: 'Run the settlement job', where: 'batch-worker', when: '02:15 UTC', why: 'Merchants reconcile before the banking cut-off' },
+        { what: 'Assert the CSV on SFTP has 12 data rows and finishes before 02:25', where: 'sftp://settle/M-44/2026-09-23.csv', when: 'Job end', why: 'A short or late file breaks recon' }
+    ],
+    'XT-1402': [
+        { what: 'Take the settlement CSV the job just wrote', where: 'SFTP M-44 folder', when: 'After the 02:15 job', why: 'The sidecar is useless without the file it describes' },
+        { what: 'Read 2026-09-23.csv.sha256', where: 'Same folder', when: 'Immediately after upload', why: 'Merchants hash the file before they import it' },
+        { what: 'Assert the digest matches the CSV bytes', where: 'SHA-256 sidecar', when: 'Before cut-off', why: 'A mismatch means the file was truncated in transit' }
+    ]
+};
+
 const state = {
     view: 'board',
-    tickets: TICKETS.map(t => ({ ...t, decision: null, tests: t.tests.map(x => ({ ...x })) })),
+    tickets: TICKETS.map(t => ({ ...t, ...EXTRA[t.key], decision: null, clean: false, tests: t.tests.map(x => ({ ...x, steps: WALKS[x.id] || [] })) })),
     agent: null,
     running: false,
     results: [],
     autoFocus: null,
+    tcPlatform: null,
+    pickingPlatform: false,
+    awaitingSave: false,
+    focusCase: null,
     verify: { ac: false, auto: false, sev: false, notes: false }
 };
 
@@ -536,8 +673,20 @@ function log(src, msg) {
     logEl.appendChild(line);
     logEl.scrollTop = logEl.scrollHeight;
 }
-function waitUser() { return new Promise(res => { gate = res; }); }
-function resume(v) { if (gate) { const g = gate; gate = null; g(v); } }
+let earlyChoice;
+function armWait() { earlyChoice = undefined; }
+function waitUser() {
+    if (earlyChoice !== undefined) {
+        const value = earlyChoice;
+        earlyChoice = undefined;
+        return Promise.resolve(value);
+    }
+    return new Promise(res => { gate = res; });
+}
+function resume(v) {
+    if (gate) { const g = gate; gate = null; g(v); }
+    else earlyChoice = v;
+}
 
 function renderAgents() {
     document.getElementById('agentPills').innerHTML = AGENTS.map(a => {
@@ -570,10 +719,19 @@ function columns() {
     return ['To Do', 'In Progress', 'In Review', 'Ready for QA', 'Done'];
 }
 
+const COL_TONE = {
+    'To Do': '#6b778c',
+    'In Progress': '#4c9aff',
+    'In Review': '#c4a574',
+    'Ready for QA': '#8777d9',
+    'Done': '#36b37e'
+};
+
 function renderBoard() {
     const cols = columns().map(c => {
-        const cards = state.tickets.filter(t => t.column === c).map(ticketCard).join('');
-        return `<div class="col"><h3>${c} · ${state.tickets.filter(t => t.column === c).length}</h3>${cards || '<div class="sum" style="color:var(--muted)">Empty</div>'}</div>`;
+        const items = state.tickets.filter(t => t.column === c);
+        const cards = items.map(ticketCard).join('');
+        return `<div class="col" style="--col-accent:${COL_TONE[c]}"><h3><span>${c}</span><span class="col-count">${items.length}</span></h3><div class="col-body">${cards || '<div style="color:var(--muted);font-size:12px;padding:8px">Empty</div>'}</div></div>`;
     }).join('');
     viewEl.innerHTML = cols;
     viewEl.className = 'board';
@@ -581,12 +739,16 @@ function renderBoard() {
 
 function ticketCard(t) {
     const cls = t.decision === 'accept' ? 'changed' : t.decision === 'keep' ? 'kept' : t.decision === 'ok' ? 'ok' : '';
+    const initials = t.assignee || '·';
+    const chips = (t.labels || []).slice(0, 3).map(label => `<span>${label}</span>`).join('');
     return `<div class="ticket-wrap" id="wrap-${t.key}">
         <article class="ticket ${cls}" id="card-${t.key}" onclick="openTicket('${t.key}')">
             <div class="laser"></div>
-            <div class="epic">${t.epic} · ${t.type}</div>
+            <div class="ticket-top"><span class="issue-type ${t.type === 'Bug' ? 'bug' : ''}">${t.type}</span><span class="ticket-key">${t.key}</span></div>
             <div class="sum">${t.summary}</div>
-            <div class="meta"><span>${t.key}</span><span class="prio ${t.priority.toLowerCase()}">${t.priority} · ${t.points} SP</span></div>
+            <div class="ticket-chips">${chips}</div>
+            <div class="meta"><span class="avatar" title="${t.assigneeName}">${initials}</span><span class="prio ${t.priority.toLowerCase()}">${t.priority}</span><span>${t.points} SP</span></div>
+            <div class="ticket-foot"><span>${t.fixVersion || ''}</span><span>${t.due ? 'Due ' + t.due : ''}</span></div>
         </article>
         <div class="ticket-console" id="console-${t.key}"></div>
     </div>`;
@@ -601,10 +763,20 @@ function ensureLaser(el) {
     }
 }
 
-async function scanElement(el, ms = 1700) {
+const SCAN_TONE = {
+    a1: { color: 'rgba(77,179,187,.42)', glow: 'rgba(77,179,187,.16)' },
+    a2: { color: 'rgba(196,165,116,.45)', glow: 'rgba(196,165,116,.16)' },
+    a3: { color: 'rgba(129,140,248,.40)', glow: 'rgba(129,140,248,.16)' },
+    a4: { color: 'rgba(95,184,154,.42)', glow: 'rgba(95,184,154,.16)' }
+};
+
+async function scanElement(el, ms = 2200, agent = 'a1') {
     if (!el) return;
     ensureLaser(el);
+    const tone = SCAN_TONE[agent] || SCAN_TONE.a1;
     el.style.setProperty('--scan-ms', ms + 'ms');
+    el.style.setProperty('--scan-color', tone.color);
+    el.style.setProperty('--scan-glow', tone.glow);
     el.classList.remove('scanning');
     void el.offsetWidth;
     el.classList.add('scanning');
@@ -627,7 +799,7 @@ function consoleLine(host, html) {
     const row = document.createElement('div');
     row.innerHTML = html;
     host.appendChild(row);
-    host.scrollTop = host.scrollHeight;
+    while (host.children.length > 1) host.removeChild(host.firstChild);
 }
 
 async function agentThink(hosts, src, line, cls = '') {
@@ -639,13 +811,14 @@ async function agentThink(hosts, src, line, cls = '') {
 }
 
 async function askHandoff(doneAgent, nextAgent) {
+    armWait();
     closeModal();
     track('sim_handoff_prompt', 'Simulator', `${doneAgent.name} → ${nextAgent.name}`, { from_agent: doneAgent.id, to_agent: nextAgent.id });
     banner.innerHTML = `<div class="handoff"><div><strong>${doneAgent.name} finished.</strong> Hand off to ${nextAgent.name}? <span style="color:var(--muted)">${nextAgent.role}</span></div><button class="btn btn-primary" id="handoffBtn" type="button">Start ${nextAgent.name}</button></div>`;
     if (window.SiteI18n) SiteI18n.refreshTranslation();
     log('SYSTEM', `Waiting for operator to start ${nextAgent.name}.`);
     const btn = document.getElementById('handoffBtn');
-    if (btn) btn.onclick = () => resume(true);
+    if (btn) btn.onclick = () => { btn.disabled = true; resume(true); };
     await waitUser();
     track('sim_handoff_start', 'Simulator', nextAgent.name, { from_agent: doneAgent.id, to_agent: nextAgent.id });
 }
@@ -680,8 +853,8 @@ function openTicket(key, opts = {}) {
                         <p>${t.findings}</p>
                         <div class="ac">${escapeHtml(t.proposedAc)}</div>
                         <div class="row">
-                            <button class="btn btn-accept" onclick="resume('accept')">Accept rewrite</button>
-                            <button class="btn btn-reject" onclick="resume('keep')">Keep original</button>
+                            <button class="btn btn-accept" onclick="this.disabled=true; resume('accept')">Accept rewrite</button>
+                            <button class="btn btn-reject" onclick="this.disabled=true; resume('keep')">Keep original</button>
                         </div>
                     </div>
                 </div>
@@ -705,7 +878,10 @@ function openTicket(key, opts = {}) {
                 <div class="field"><span>Components</span><b>${t.components.join(', ')}</b></div>
                 <div class="field"><span>Labels</span><b>${t.labels.join(', ')}</b></div>
                 <div class="field"><span>Environment</span><b>${t.env}</b></div>
-                <div class="field"><span>Linked tests</span><b>${t.tests.length} Xray cases</b></div>
+                <div class="field"><span>Fix version</span><b>${t.fixVersion || '—'}</b></div>
+                <div class="field"><span>Due</span><b>${t.due || '—'}</b></div>
+                <div class="field"><span>Linked tests</span><b>${t.tests.length} test cases</b></div>
+                <div class="field"><span>Subtasks</span><b>${(t.subtasks || []).join(' · ') || '—'}</b></div>
             </aside>
             </div>
         </div>
@@ -731,30 +907,174 @@ function escapeHtml(s) {
     return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 }
 
+function walkHtml(tc) {
+    return `<ol class="walk">${(tc.steps || []).map((s, i) => `<li id="step-${tc.id}-${i}"><b>${i + 1}. ${escapeHtml(s.what)}</b><span>Where ${escapeHtml(s.where)}</span><span>When ${escapeHtml(s.when)}</span><span>Why ${escapeHtml(s.why)}</span></li>`).join('')}</ol>`;
+}
+
+const TOOLS = {
+    zephyr: {
+        name: 'Zephyr Scale',
+        where: 'Tests · Test Cases library · the folder for that story',
+        save: 'Approve in Zephyr',
+        blurb: 'A folder in the test library, a step-by-step script, and coverage linked back to the Jira story.'
+    },
+    xray: {
+        name: 'Xray',
+        where: 'Jira · Test Repository · a Cucumber test issue',
+        save: 'Add to Xray repository',
+        blurb: 'A Jira test issue in the repository: Cucumber type, folder, and Action, Data, and Expected Result.'
+    },
+    testrail: {
+        name: 'TestRail',
+        where: 'Test Cases · the section for that story · template Test Case (Steps)',
+        save: 'Save in TestRail',
+        blurb: 'A section in the suite, template Test Case (Steps), a Jira reference, and a Step / Expected Result script.'
+    }
+};
+
+const CASE_FOLDERS = {
+    'PAY-241': 'Checkout / 3-D Secure',
+    'PAY-246': 'Checkout / Captures',
+    'PAY-251': 'Checkout / Accessibility',
+    'PAY-255': 'Settlement / Files'
+};
+
+function caseKey(platform, id) {
+    if (platform === 'zephyr') return id.replace('XT-', 'ZT-');
+    if (platform === 'testrail') return 'C' + id.slice(3);
+    return id;
+}
+
+function choosePlatform(id) {
+    if (!TOOLS[id]) return;
+    state.tcPlatform = id;
+    const gated = state.pickingPlatform;
+    if (gated) state.pickingPlatform = false;
+    document.querySelectorAll('[data-tc-platform]').forEach(btn => { btn.disabled = true; });
+    if (gated) resume(id);
+    if (state.view === 'tests') renderTests();
+}
+
+function platformPickerHtml() {
+    const cards = Object.entries(TOOLS).map(([id, tool]) => `
+        <article class="platform-card" style="--tool:${id === 'zephyr' ? '#1f8a4c' : id === 'xray' ? '#0052cc' : '#2d6da3'}">
+            <div class="platform-mark">${tool.name}</div>
+            <h3>Write the cases here</h3>
+            <p>${tool.blurb}</p>
+            <button class="btn btn-primary" type="button" data-tc-platform="${id}">Use ${tool.name}</button>
+        </article>`).join('');
+    return `
+        <h2 style="margin:0">Where should these test cases be written?</h2>
+        <p style="color:var(--muted);max-width:68ch">The stories are corrected. Pick the tool you would open next. The cases are then written the way that tool asks for them.</p>
+        <div class="platform-pick">${cards}</div>`;
+}
+
+function bindPlatformChoices() {
+    document.querySelectorAll('[data-tc-platform]').forEach(btn => {
+        btn.onclick = () => choosePlatform(btn.dataset.tcPlatform);
+    });
+}
+
+function stepTable(tc, platform) {
+    const rows = (tc.steps || []).map((s, i) => {
+        const id = `step-${tc.id}-${i}`;
+        if (platform === 'testrail') {
+            return `<tr id="${id}"><td class="n">${i + 1}</td><td><b>${escapeHtml(s.what)}</b><div class="sub">${escapeHtml(s.where)} · ${escapeHtml(s.when)}</div></td><td>${escapeHtml(s.why)}</td></tr>`;
+        }
+        return `<tr id="${id}"><td class="n">${i + 1}</td><td>${escapeHtml(s.what)}</td><td><div>${escapeHtml(s.where)}</div><div class="sub">${escapeHtml(s.when)}</div></td><td>${escapeHtml(s.why)}</td></tr>`;
+    }).join('');
+    if (platform === 'testrail') {
+        return `<table><thead><tr><th></th><th>Step</th><th>Expected Result</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+    const stepHead = platform === 'zephyr' ? 'Test Step' : 'Action';
+    const dataHead = platform === 'zephyr' ? 'Test Data' : 'Data';
+    return `<table><thead><tr><th></th><th>${stepHead}</th><th>${dataHead}</th><th>Expected Result</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function caseSheet(t, tc, platform) {
+    const key = caseKey(platform, tc.id);
+    const folder = CASE_FOLDERS[t.key] || t.key;
+    const check = `<label class="in-sprint"><input type="checkbox" ${tc.include ? 'checked' : ''} onchange="toggleCase('${t.key}','${tc.id}', this.checked)"> In this run</label>`;
+    const fields = platform === 'testrail'
+        ? `<span>Section ${escapeHtml(folder)}</span><span>Template Test Case (Steps)</span><span>Type Functional</span><span>Priority ${escapeHtml(tc.priority)}</span><span>Estimate ${escapeHtml(tc.est)}</span><span>References ${t.key}</span>`
+        : platform === 'zephyr'
+            ? `<span>Status Draft</span><span>Owner Test Designer</span><span>Priority ${escapeHtml(tc.priority)}</span><span>Estimate ${escapeHtml(tc.est)}</span><span>Folder ${escapeHtml(folder)}</span><span>Coverage ${t.key}</span>`
+            : `<span>Test Type Cucumber</span><span>Cucumber Type Scenario</span><span>Priority ${escapeHtml(tc.priority)}</span><span>Folder ${escapeHtml(folder)}</span><span>Tests ${t.key}</span>`;
+    const script = platform === 'xray'
+        ? `<div class="gherkin gherkin-x">${escapeHtml(tc.gherkin)}</div><div class="script-label">Test Steps</div>`
+        : `<div class="script-label">${platform === 'zephyr' ? 'Test Script · Step-by-step' : 'Steps'}</div>`;
+    const add = platform === 'testrail' ? '' : '<div class="add-step">+ Add step</div>';
+    return `<article class="case-sheet" id="case-${tc.id}">
+        <div class="case-head"><div><div class="case-key">${key}</div><div>${escapeHtml(tc.title)}</div></div>${check}</div>
+        <div class="case-fields">${fields}</div>
+        ${script}
+        ${stepTable(tc, platform)}
+        ${add}
+    </article>`;
+}
+
+function platformRepoHtml(platform) {
+    const tool = TOOLS[platform];
+    const included = state.tickets.flatMap(t => t.tests.filter(tc => tc.include).map(tc => ({ t, tc })));
+    const focus = included.find(item => item.tc.id === state.focusCase);
+    const folders = state.tickets.map(t => `<div>${escapeHtml(CASE_FOLDERS[t.key] || t.key)} · ${t.tests.length}</div>`).join('');
+    const indexHead = platform === 'testrail'
+        ? '<th>ID</th><th>Title</th><th>References</th><th>Priority</th><th>In this run</th>'
+        : platform === 'zephyr'
+            ? '<th>Key</th><th>Name</th><th>Coverage</th><th>Priority</th><th>In this run</th>'
+            : '<th>Key</th><th>Summary</th><th>Requirement</th><th>Priority</th><th>In this run</th>';
+    const index = focus ? '' : included.map(({ t, tc }) => `
+        <tr>
+            <td>${caseKey(platform, tc.id)}</td>
+            <td>${escapeHtml(tc.title)}</td>
+            <td>${escapeHtml(t.key)}</td>
+            <td>${escapeHtml(tc.priority)}</td>
+            <td><input type="checkbox" ${tc.include ? 'checked' : ''} onchange="toggleCase('${t.key}','${tc.id}', this.checked)"></td>
+        </tr>`).join('');
+    const sheets = focus ? caseSheet(focus.t, focus.tc, platform) : '';
+    const place = platform === 'testrail'
+        ? 'PayStream &gt; Test Cases &gt; Sprint 24'
+        : platform === 'zephyr'
+            ? 'PayStream · Tests · Test Cases · Sprint 24'
+            : 'PayStream / Test Repository / Sprint 24';
+    const crumb = focus
+        ? `${place} · case ${included.findIndex(item => item.tc.id === focus.tc.id) + 1} of ${included.length}`
+        : `${place} · ${included.length} cases in this run`;
+    return `<div class="tool tool-${platform} scan-stage">
+        <div class="laser"></div>
+        <div class="tool-bar">
+            <div class="tool-brand">${tool.name}</div>
+            <div class="tool-crumb">${crumb}</div>
+            ${state.running ? `<button class="btn btn-accept" id="approveTests" type="button">${tool.save}</button>` : ''}
+        </div>
+        <div class="tool-body">
+            <aside class="tool-tree"><b>${platform === 'testrail' ? 'Sections' : 'Folders'}</b>${folders}</aside>
+            <div class="tool-main">
+                ${index ? `<table><thead><tr>${indexHead}</tr></thead><tbody>${index}</tbody></table>` : ''}
+                ${sheets}
+            </div>
+        </div>
+    </div>`;
+}
+
 function renderTests() {
     viewEl.className = 'tests';
-    const rows = state.tickets.flatMap(t => t.tests.map(tc => `
-        <tr>
-            <td><input type="checkbox" ${tc.include ? 'checked' : ''} onchange="toggleCase('${t.key}','${tc.id}', this.checked)"></td>
-            <td>${tc.id}<div class="muted">${t.key}</div></td>
-            <td>${tc.title}<div class="gherkin">${escapeHtml(tc.gherkin)}</div></td>
-            <td>${tc.priority}</td>
-            <td>${tc.est}</td>
-            <td>${tc.include ? 'Sprint 24' : 'Backlog'}</td>
-        </tr>`)).join('');
-    viewEl.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div><h2 style="margin:0">Xray repository</h2><div style="color:var(--muted);font-size:13px">Gherkin cases linked to Jira stories · select the sprint set</div></div>
-            <button class="btn btn-accept" id="approveTests">Approve sprint test set</button>
-        </div>
-        <table>
-            <thead><tr><th>In sprint</th><th>Key</th><th>Case / Gherkin</th><th>Priority</th><th>Est.</th><th>Folder</th></tr></thead>
-            <tbody>${rows}</tbody>
-        </table>`;
-    document.getElementById('approveTests').onclick = () => {
+    if (state.pickingPlatform || !state.tcPlatform) {
+        viewEl.innerHTML = platformPickerHtml();
+        bindPlatformChoices();
+        return;
+    }
+    viewEl.innerHTML = platformRepoHtml(state.tcPlatform);
+    const approve = document.getElementById('approveTests');
+    if (!approve) return;
+    approve.disabled = !state.awaitingSave;
+    approve.onclick = () => {
+        if (!state.awaitingSave) return;
+        approve.disabled = true;
+        state.awaitingSave = false;
         state.tickets.forEach(t => t.tests.forEach(tc => { tc.reviewed = true; }));
-        log('A2', 'Sprint test set approved by user.');
-        track('sim_approve_tests', 'Simulator', `${state.tickets.flatMap(t => t.tests.filter(tc => tc.include)).length} cases`);
+        log('A2', `Sprint test set saved in ${TOOLS[state.tcPlatform].name}.`);
+        track('sim_approve_tests', 'Simulator', `${state.tickets.flatMap(t => t.tests.filter(tc => tc.include)).length} cases`, { platform: state.tcPlatform });
         resume(true);
         renderAgents();
     };
@@ -766,10 +1086,14 @@ function toggleCase(ticket, id, on) {
 }
 
 function snippets(tc) {
+    const steps = tc.steps || [];
+    const pw = steps.map((s, i) => `  // ${i + 1}. when ${s.when} · where ${s.where}\n  // what: ${s.what}\n  // why: ${s.why}`).join('\n');
+    const cy = steps.map((s, i) => `    // ${i + 1}. ${s.when} @ ${s.where} — ${s.what}`).join('\n');
+    const rb = steps.map((s, i) => `    # ${i + 1}. ${s.when} | ${s.where} | ${s.what}`).join('\n');
     return {
-        playwright: `import { test, expect } from '@playwright/test';\n\ntest('${tc.id} ${tc.title}', async ({ request, page }) => {\n  // Generated from ${tc.id}\n  const res = await request.post('/v2/simulate');\n  expect(res.ok()).toBeTruthy();\n});`,
-        cypress: `describe('${tc.id}', () => {\n  it('${tc.title}', () => {\n    cy.api('POST', '/v2/simulate').its('status').should('eq', 200);\n  });\n});`,
-        robot: `*** Test Cases ***\n${tc.id} ${tc.title}\n    \${resp}=    POST    /v2/simulate\n    Status Should Be    200    \${resp}`
+        playwright: `import { test, expect } from '@playwright/test';\n\ntest('${tc.id} ${tc.title}', async ({ page }) => {\n${pw || '  // no steps'}\n  await expect(page).toHaveURL(/.+/);\n});`,
+        cypress: `describe('${tc.id} ${tc.title}', () => {\n  it('follows the case step by step', () => {\n${cy || '    // no steps'}\n  });\n});`,
+        robot: `*** Test Cases ***\n${tc.id} ${tc.title}\n${rb || '    Log    no steps'}`
     };
 }
 
@@ -778,32 +1102,40 @@ function renderAuto() {
     const selected = state.tickets.flatMap(t => t.tests.filter(tc => tc.include));
     const first = state.autoFocus || selected[0];
     const sn = first ? snippets(first) : { playwright: '// no cases selected', cypress: '', robot: '' };
-    const resultRows = state.results.map(r => `<tr><td>${r.id}</td><td>${r.fw}</td><td class="${r.ok ? 'pass' : 'fail'}">${r.ok ? 'PASSED' : 'FAILED'}</td><td>${r.ms} ms</td></tr>`).join('');
+    const passed = state.results.filter(r => r.ok).length;
+    const chosen = Array.isArray(state.frameworks) && state.frameworks.length ? state.frameworks : ['Playwright', 'Cypress', 'Robot'];
+    const keys = { Playwright: 'playwright', Cypress: 'cypress', Robot: 'robot' };
+    const fw = state.autoFw && keys[state.autoFw] ? state.autoFw : chosen[0];
+    const reel = first ? walkHtml(first) : '';
+    const place = selected.indexOf(first);
     viewEl.innerHTML = `
         <h2 style="margin-top:0">Automation lab</h2>
-        <p style="color:var(--muted)">${selected.length} cases in the sprint set · frameworks: Playwright, Cypress, Robot Framework</p>
-        <div class="grid2">
-            <div class="card"><h3>Playwright</h3><div class="code">${escapeHtml(sn.playwright)}</div></div>
-            <div class="card"><h3>Cypress</h3><div class="code">${escapeHtml(sn.cypress)}</div></div>
-        </div>
-        <div class="card" style="margin-top:12px"><h3>Robot Framework</h3><div class="code">${escapeHtml(sn.robot)}</div></div>
-        <h3>Last run</h3>
-        <table><thead><tr><th>Case</th><th>Framework</th><th>Result</th><th>Duration</th></tr></thead><tbody>${resultRows || '<tr><td colspan="4">No run yet</td></tr>'}</tbody></table>`;
+        <p style="color:var(--muted)">Case ${place < 0 ? 1 : place + 1} of ${selected.length} · ${fw} · ${passed} of ${state.results.length} runs passed</p>
+        <div class="card"><h3>${first ? first.id + ' · ' + fw : 'How this run moves'}</h3>${reel}<div class="code" style="margin-top:8px">${escapeHtml(sn[keys[fw]] || '')}</div></div>`;
 }
+
+const VERIFIER_ACTIONS = [
+    { what: 'Read each story’s acceptance criteria after the steward pass', where: 'Jira · Sprint 24 · Acceptance tab', when: 'After Ticket Steward, before test design', why: 'A story that is still vague cannot be automated' },
+    { what: 'Match every selected Xray case to a framework result', where: 'Automation lab · Last run', when: 'After the engineer finishes the chosen frameworks', why: 'A case with no result is not done' },
+    { what: 'Look for a Sev-1 still sitting in Ready for QA or Done', where: 'Board · Ready for QA and Done', when: 'Before sign-off', why: 'A blocking defect must not ship inside the increment' },
+    { what: 'Confirm release notes and the 3DS, capture, and accessibility evidence', where: 'Sprint report · attachments', when: 'At the increment gate', why: 'Support and audit need the same proof the agents produced' }
+];
 
 function renderVerify() {
     viewEl.className = 'tests';
     const v = state.verify;
+    const actions = VERIFIER_ACTIONS.map(step => `<article class="action-item"><b>${step.what}</b><span>Where ${step.where}</span><span>When ${step.when}</span><span>Why ${step.why}</span></article>`).join('');
     viewEl.innerHTML = `
         <h2 style="margin-top:0">Sprint verification · Agent 4</h2>
-        <p style="color:var(--muted)">Definition of Done evidence before increment sign-off.</p>
+        <p style="color:var(--muted)">Tick every control, then sign off. The four checks are the decision.</p>
         <div class="card">
             <label class="check"><input type="checkbox" ${v.ac ? 'checked' : ''} onchange="toggleVerify('ac', this.checked)"> All sprint stories have testable acceptance criteria (post Agent 1).</label>
-            <label class="check"><input type="checkbox" ${v.auto ? 'checked' : ''} onchange="toggleVerify('auto', this.checked)"> Selected Xray cases have automation results in Playwright, Cypress and Robot.</label>
+            <label class="check"><input type="checkbox" ${v.auto ? 'checked' : ''} onchange="toggleVerify('auto', this.checked)"> Selected cases have automation results in ${(state.frameworks || ['Playwright', 'Cypress', 'Robot']).join(', ')}.</label>
             <label class="check"><input type="checkbox" ${v.sev ? 'checked' : ''} onchange="toggleVerify('sev', this.checked)"> No Sev-1 defects remain in Ready for QA / Done.</label>
             <label class="check"><input type="checkbox" ${v.notes ? 'checked' : ''} onchange="toggleVerify('notes', this.checked)"> Release notes + 3DS / capture / a11y evidence attached.</label>
             <div class="row"><button class="btn btn-accept" onclick="signOff()">Sign off increment</button></div>
-        </div>`;
+        </div>
+        <div class="action-list">${actions}</div>`;
 }
 
 function toggleVerify(key, on) {
@@ -826,15 +1158,16 @@ function signOff() {
 function renderReport() {
     viewEl.className = 'tests';
     const accepted = state.tickets.filter(t => t.decision === 'accept').length;
-    const kept = state.tickets.filter(t => t.decision === 'keep' || t.decision === 'ok').length;
+    const clean = state.tickets.filter(t => t.decision === 'ok').length;
+    const kept = state.tickets.filter(t => t.decision === 'keep').length;
     const cases = state.tickets.flatMap(t => t.tests);
     const inSprint = cases.filter(t => t.include).length;
     const passed = state.results.filter(r => r.ok).length;
     viewEl.innerHTML = `
         <h2 style="margin-top:0">Sprint 24 report</h2>
         <div class="grid2">
-            <div class="card"><h3>Agent 1 · Stories</h3><p>${accepted} rewritten · ${kept} kept as-is · ${state.tickets.length} total</p></div>
-            <div class="card"><h3>Agent 2 · Xray</h3><p>${inSprint} of ${cases.length} cases selected for the sprint</p></div>
+            <div class="card"><h3>Agent 1 · Stories</h3><p>${accepted} rewritten · ${clean} needed no fix · ${kept} kept as written · ${state.tickets.length} total</p></div>
+            <div class="card"><h3>Agent 2 · ${TOOLS[state.tcPlatform] ? TOOLS[state.tcPlatform].name : 'Test cases'}</h3><p>${inSprint} of ${cases.length} cases selected for the sprint</p></div>
             <div class="card"><h3>Agent 3 · Automation</h3><p>${passed}/${state.results.length} scripted runs passed</p></div>
             <div class="card"><h3>Agent 4 · Verification</h3><p>${Object.values(state.verify).every(Boolean) ? 'Increment signed off' : 'Pending sign-off'}</p></div>
         </div>
@@ -844,6 +1177,8 @@ function renderReport() {
 async function runSprint() {
     if (state.running) return;
     state.running = true;
+    document.body.classList.add('sprint-on');
+    if (window.SiteTour) SiteTour.stop();
     document.getElementById('runBtn').disabled = true;
     closeModal();
     showPhaseConsole(false);
@@ -854,11 +1189,17 @@ async function runSprint() {
     track('sim_agent_start', 'Simulator', 'Ticket Steward', { agent_id: 'a1' });
 
     state.agent = 'a1'; renderAgents();
-    banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — scanning each Jira issue, then proposing testable AC. You decide.';
+    banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — scanning each Jira issue. Some already meet the bar and pass without a rewrite. The rest wait for your decision.';
     if (window.SiteI18n) SiteI18n.refreshTranslation();
     log('A1', 'Standing by to review Sprint 24 stories.');
+    const cleanFlags = state.tickets.map(() => Math.random() < 0.45);
+    if (!cleanFlags.some(Boolean)) cleanFlags[Math.floor(Math.random() * cleanFlags.length)] = true;
+    if (cleanFlags.every(Boolean)) cleanFlags[Math.floor(Math.random() * cleanFlags.length)] = false;
 
-    for (const t of state.tickets) {
+    for (let index = 0; index < state.tickets.length; index++) {
+        armWait();
+        const t = state.tickets[index];
+        t.clean = cleanFlags[index];
         clearConsoles();
         const wrap = document.getElementById('wrap-' + t.key);
         const card = document.getElementById('card-' + t.key);
@@ -869,19 +1210,28 @@ async function runSprint() {
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         const hosts = [boardConsole];
-        await agentThink(hosts, 'A1', `opening ${t.key} · ${escapeHtml(t.summary)}`);
-        await scanElement(card);
-        await agentThink(hosts, 'A1', 'reading description, comments and current AC…');
-        await agentThink(hosts, 'A1', `finding: ${escapeHtml(t.findings)}`, 'dec');
-        await agentThink(hosts, 'A1', 'drafting Gherkin-ready acceptance rewrite…', 'dec');
+        await agentThink(hosts, 'A1', `opening ${t.key} · where ${t.column} · when Sprint 24 review starts`);
+        await scanElement(card, 2200, 'a1');
+        await agentThink(hosts, 'A1', `what: read description, comments, and AC · why: ${escapeHtml(t.findings)}`);
+        if (t.clean) {
+            t.decision = 'ok';
+            t.column = 'Ready for QA';
+            await agentThink(hosts, 'A1', `This ticket doesn't require any fix. ${t.key} stays as written and moves to Ready for QA.`, 'ok');
+            track('sim_ticket_decision', 'Simulator', t.key, { decision: 'ok' });
+            await sleep(1200);
+            renderBoard();
+            await sleep(200);
+            continue;
+        }
+        await agentThink(hosts, 'A1', 'drafting a Gherkin-ready rewrite so the later agents can script it…', 'dec');
         openTicket(t.key, { propose: true });
         const modalConsole = document.getElementById('ticketConsole');
         const stage = document.getElementById('ticketScanStage');
         hosts.push(modalConsole);
-        await agentThink([modalConsole], 'A1', `loaded ${t.key} in Jira issue view`);
-        await scanElement(stage);
+        await agentThink([modalConsole], 'A1', `loaded ${t.key} in the issue view · where Acceptance · when the scan finishes`);
+        await scanElement(stage, 2200, 'a1');
         await agentThink([modalConsole], 'A1', 'diffing original AC vs testable scenarios…', 'dec');
-        await agentThink([modalConsole], 'A1', 'waiting for operator: Accept rewrite or Keep original.', 'dec');
+        await agentThink([modalConsole], 'A1', 'waiting for you: Accept rewrite or Keep original.', 'dec');
         const decision = await waitUser();
         t.decision = decision === 'accept' ? 'accept' : 'keep';
         track('sim_ticket_decision', 'Simulator', t.key, { decision: t.decision });
@@ -902,22 +1252,54 @@ async function runSprint() {
 
     state.agent = 'a2'; renderAgents();
     track('sim_agent_start', 'Simulator', 'Test Designer', { agent_id: 'a2' });
-    banner.innerHTML = '<strong>Agent 2 · Test Designer</strong> — Xray/TestRail view. Uncheck cases that should stay in the repo backlog, then approve.';
+    state.pickingPlatform = true;
+    armWait();
+    banner.innerHTML = '<strong>Agent 2 · Test Designer</strong> — the stories are corrected. Choose Zephyr, Xray, or TestRail before any test case is written.';
     setView('tests');
     showPhaseConsole(true);
     const testHosts = [phaseConsole];
-    await agentThink(testHosts, 'A2', 'mapping each story to Xray keys…');
-    const tableWrap = document.querySelector('#view table');
-    if (tableWrap) {
-        const stage = document.createElement('div');
-        stage.className = 'scan-stage';
-        tableWrap.parentNode.insertBefore(stage, tableWrap);
-        stage.appendChild(tableWrap);
-        await scanElement(stage, 1600);
+    await agentThink(testHosts, 'A2', 'stories are Ready for QA · where the test tool · when before the first case · why the steps have to match the tool the team already uses');
+    let picked = await waitUser();
+    while (!TOOLS[picked]) {
+        state.pickingPlatform = true;
+        armWait();
+        setView('tests');
+        picked = await waitUser();
     }
-    await agentThink(testHosts, 'A2', 'authoring Gherkin Given / When / Then for included cases…', 'dec');
-    await agentThink(testHosts, 'A2', 'script: Feature: Sprint 24 payments · Scenario Outline: capture + 3DS', 'dec');
-    await agentThink(testHosts, 'A2', 'waiting for operator to approve the sprint test set.', 'dec');
+    state.pickingPlatform = false;
+    state.tcPlatform = picked;
+    const tool = TOOLS[picked];
+    banner.innerHTML = `<strong>Agent 2 · Test Designer</strong> — writing the sprint set in ${tool.name}. Uncheck a case to leave it in the backlog, then save.`;
+    if (window.SiteI18n) SiteI18n.refreshTranslation();
+    state.focusCase = null;
+    renderTests();
+    await agentThink(testHosts, 'A2', `opened ${tool.name} · where ${tool.where} · when the steward finished`, 'dec');
+    for (const t of state.tickets) {
+        for (const tc of t.tests.filter(item => item.include)) {
+            state.focusCase = tc.id;
+            renderTests();
+            const sheet = document.getElementById('case-' + tc.id);
+            if (sheet) {
+                sheet.classList.add('case-now');
+                await scanElement(sheet, 700, 'a2');
+            }
+            await agentThink(testHosts, 'A2', `creating ${caseKey(picked, tc.id)} ${escapeHtml(tc.title)} · where ${tool.where} · covered by ${t.key}`, 'dec');
+            for (let stepIndex = 0; stepIndex < (tc.steps || []).length; stepIndex++) {
+                const step = tc.steps[stepIndex];
+                document.querySelectorAll('.step-now').forEach(node => node.classList.remove('step-now'));
+                const node = document.getElementById('step-' + tc.id + '-' + stepIndex);
+                if (node) node.classList.add('step-now');
+                await agentThink(testHosts, 'A2', `step ${stepIndex + 1} · what ${escapeHtml(step.what)} · where ${escapeHtml(step.where)} · when ${escapeHtml(step.when)} · why ${escapeHtml(step.why)}`);
+            }
+        }
+    }
+    state.focusCase = null;
+    state.awaitingSave = true;
+    renderTests();
+    armWait();
+    const saveBtn = document.getElementById('approveTests');
+    if (saveBtn) saveBtn.disabled = false;
+    await agentThink(testHosts, 'A2', `waiting for you to save the sprint set in ${tool.name}.`, 'dec');
     await waitUser();
     state.tickets.forEach(t => t.tests.forEach(tc => { if (tc.include) t.column = 'Ready for QA'; }));
     renderAgents();
@@ -925,33 +1307,55 @@ async function runSprint() {
 
     state.agent = 'a3'; renderAgents();
     track('sim_agent_start', 'Simulator', 'Automation Engineer', { agent_id: 'a3' });
-    banner.innerHTML = '<strong>Agent 3 · Automation Engineer</strong> — generating Playwright, Cypress and Robot scripts, then executing the sprint set.';
+    armWait();
+    banner.innerHTML = `<strong>Agent 3 · Automation Engineer</strong> — choose the framework or frameworks for this sprint set.
+        <div class="fw-pick">
+            <label><input type="checkbox" data-fw="Playwright" checked> Playwright</label>
+            <label><input type="checkbox" data-fw="Cypress" checked> Cypress</label>
+            <label><input type="checkbox" data-fw="Robot" checked> Robot</label>
+            <button class="btn btn-primary" id="fwGo" type="button">Run selected frameworks</button>
+        </div>`;
+    if (window.SiteI18n) SiteI18n.refreshTranslation();
+    document.getElementById('fwGo').onclick = () => {
+        const picked = [...document.querySelectorAll('[data-fw]:checked')].map(el => el.dataset.fw);
+        if (!picked.length) {
+            log('A3', 'Pick at least one framework.');
+            return;
+        }
+        resume(picked);
+    };
+    const pickedFw = await waitUser();
+    state.frameworks = Array.isArray(pickedFw) && pickedFw.length ? pickedFw : ['Playwright', 'Cypress', 'Robot'];
     showPhaseConsole(true);
     const selected = state.tickets.flatMap(t => t.tests.filter(tc => tc.include));
-    const frameworks = ['Playwright', 'Cypress', 'Robot'];
     state.results = [];
+    setView('auto');
     for (const tc of selected) {
-        const fw = frameworks[state.results.length % 3];
-        state.autoFocus = tc;
-        renderAuto();
-        const specBlock = document.querySelector('#view .code');
-        if (specBlock) {
-            specBlock.parentElement.style.position = 'relative';
-            specBlock.parentElement.style.overflow = 'hidden';
-            await scanElement(specBlock.parentElement, 1100);
+        for (const fw of state.frameworks) {
+            state.autoFocus = tc;
+            state.autoFw = fw;
+            renderAuto();
+            const specBlock = document.querySelector('#view .code');
+            if (specBlock) {
+                specBlock.parentElement.style.position = 'relative';
+                specBlock.parentElement.style.overflow = 'hidden';
+                await scanElement(specBlock.parentElement, 1600, 'a3');
+            }
+            const sn = snippets(tc);
+            const sample = fw === 'Playwright' ? sn.playwright : fw === 'Cypress' ? sn.cypress : sn.robot;
+            await agentThink(testHosts, 'A3', `scaffolding ${fw} for ${tc.id} · where Automation lab · when the case is in the sprint set`, 'dec');
+            const firstStep = (tc.steps || [])[0];
+            if (firstStep) await agentThink(testHosts, 'A3', `what ${escapeHtml(firstStep.what)} · why ${escapeHtml(firstStep.why)}`);
+            await agentThink(testHosts, 'A3', escapeHtml(sample.split('\n').slice(0, 2).join(' ')), 'dec');
+            await agentThink(testHosts, 'A3', `launching the ${fw} runner against staging…`);
+            const ok = !(tc.id === 'XT-1401' && fw === 'Robot');
+            const ms = 420 + Math.floor(Math.random() * 900);
+            state.results.push({ id: tc.id, fw, ok, ms });
+            await agentThink(testHosts, 'A3', ok ? `${tc.id} [${fw}] PASSED (${ms} ms)` : `${tc.id} [${fw}] FAILED · row count did not match the ledger`, ok ? 'ok' : '');
+            track('sim_automation_result', 'Simulator', tc.id, { framework: fw, passed: ok, duration_ms: ms });
+            renderAuto();
+            await sleep(120);
         }
-        const sn = snippets(tc);
-        const sample = fw === 'Playwright' ? sn.playwright : fw === 'Cypress' ? sn.cypress : sn.robot;
-        await agentThink(testHosts, 'A3', `scaffolding ${fw} spec for ${tc.id} · ${escapeHtml(tc.title)}`, 'dec');
-        await agentThink(testHosts, 'A3', escapeHtml(sample.split('\n')[0]), 'dec');
-        await agentThink(testHosts, 'A3', `compiling / launching ${fw} runner…`);
-        const ok = !(tc.id === 'XT-1401' && fw === 'Robot');
-        const ms = 420 + Math.floor(Math.random() * 900);
-        state.results.push({ id: tc.id, fw, ok, ms });
-        await agentThink(testHosts, 'A3', ok ? `${tc.id} [${fw}] PASSED (${ms} ms)` : `${tc.id} [${fw}] FAILED · retry queued`, ok ? 'ok' : '');
-        track('sim_automation_result', 'Simulator', tc.id, { framework: fw, passed: ok, duration_ms: ms });
-        renderAuto();
-        await sleep(120);
     }
     await agentThink(testHosts, 'A3', 'Run complete. Report attached to the sprint.', 'ok');
     renderAgents();
@@ -959,23 +1363,29 @@ async function runSprint() {
 
     state.agent = 'a4'; renderAgents();
     track('sim_agent_start', 'Simulator', 'Release Verifier', { agent_id: 'a4' });
-    banner.innerHTML = '<strong>Agent 4 · Release Verifier</strong> — walk the Definition of Done. Tick every control, then sign off.';
+    banner.innerHTML = '<strong>Agent 4 · Release Verifier</strong> — follow each action: what is checked, where, when, and why. Then tick every control and sign off.';
+    armWait();
     setView('verify');
     showPhaseConsole(true);
-    const dod = document.querySelector('#view .card');
+    phaseConsole.classList.add('action');
+    const dod = document.querySelector('#view .action-list') || document.querySelector('#view .card');
     if (dod) {
         dod.style.position = 'relative';
         dod.style.overflow = 'hidden';
-        await scanElement(dod, 1400);
+        await scanElement(dod, 2000, 'a4');
     }
-    await agentThink(testHosts, 'A4', 'collecting DoD evidence from Agents 1–3…', 'dec');
-    await agentThink(testHosts, 'A4', 'deciding: increment is ready only if every control is ticked.', 'dec');
-    await agentThink(testHosts, 'A4', 'waiting for human verification of every control.', 'dec');
+    for (const step of VERIFIER_ACTIONS) {
+        await agentThink(testHosts, 'A4', `what ${step.what}`, 'dec');
+        await agentThink(testHosts, 'A4', `where ${step.where} · when ${step.when} · why ${step.why}`);
+    }
+    await agentThink(testHosts, 'A4', 'waiting for you to tick every control, then sign off.', 'dec');
     await waitUser();
     state.tickets.forEach(t => { if (t.tests.some(tc => tc.include)) t.column = 'Done'; });
     banner.innerHTML = '<strong>Sprint 24 complete.</strong> Review the report or reset to run again.';
     if (window.SiteI18n) SiteI18n.refreshTranslation();
     state.running = false;
+    state.focusCase = null;
+    document.body.classList.remove('sprint-on');
     document.getElementById('runBtn').disabled = false;
     renderAgents();
     renderBoard();
@@ -1063,7 +1473,7 @@ const STUDIO_TOUR = {
         { selector: '#nav', title: 'Sprint views', body: 'Jump between the Jira board, Xray cases, the automation lab, sprint verification, and the report. Stay on this page — each view is a different slice of the same increment.', demoMs: 1700 },
         { selector: '#agentPills', title: 'Four agents', body: 'Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. Watch their status here while they hand work to each other.', demoMs: 1600 },
         { selector: '#runBtn', title: 'Run the sprint', body: 'Start the four-agent walkthrough. It rewrites stories, authors Gherkin, generates Playwright / Cypress / Robot, then signs off Definition of Done.', demoMs: 1800 },
-        { selector: '#view', title: 'Tickets and artifacts', body: 'Open any ticket to read the story, then follow the generated tests and scripts as the sprint advances.', demoMs: 1700 },
+        { selector: '#view', title: 'Tickets and artifacts', body: 'Open any ticket to read the story. After the stories are corrected, choose Zephyr, Xray, or TestRail and follow the cases as they are written in that tool.', demoMs: 1700 },
         { selector: '#log', title: 'Agent log', body: 'Every hand-off lands here. Scroll if you need history; the live line is always the latest action.', demoMs: 1500 },
         { selector: 'a[href="qa-lab.html"]', title: 'CV regression lab', body: 'When you want to see the same ideas run against this CV in the browser, open the regression lab from this nav.', demoMs: 1700 }
     ]

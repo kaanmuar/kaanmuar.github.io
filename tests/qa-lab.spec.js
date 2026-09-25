@@ -11,7 +11,7 @@ test.describe('CV regression lab', () => {
   test('lists the catalog with where/when/how for a case', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /The suite I run on this CV/i })).toBeVisible();
     await expect(page.locator('.case-row').first()).toBeVisible();
-    await expect(page.locator('.case-row')).toHaveCount(47);
+    await expect(page.locator('.case-row')).toHaveCount(53);
     await expect(page.locator('#case-detail')).toContainText('Where');
     await expect(page.locator('#case-detail')).toContainText('When');
     await expect(page.locator('#case-detail')).toContainText('How');
@@ -28,7 +28,12 @@ test.describe('CV regression lab', () => {
     await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /FN-23/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /FN-28/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /STU-03/ })).toBeVisible();
+    const chip = await page.locator('#case-detail .src-link').first().boundingBox();
+    expect(chip.height).toBeLessThan(28);
+    expect(chip.width).toBeLessThan(140);
     const source = page.locator('.src-link').first();
     await expect(source).toBeVisible();
     await expect(source).toHaveAttribute('href', /github\.com\/kaanmuar\/kaanmuar\.github\.io\/blob\/main\/js\/qa-lab\.js#L/);
@@ -149,6 +154,24 @@ test.describe('CV regression lab', () => {
     await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /SMK-01/ })).toHaveCount(0);
+  });
+
+  test('theme, language, share, print, and download cases pass', async ({ page }) => {
+    test.setTimeout(90000);
+    await page.evaluate(() => {
+      localStorage.setItem('qa-lab-pace', '0.5');
+      localStorage.setItem('qa-lab-view', 'background');
+    });
+    const ids = ['FN-23', 'FN-24', 'FN-25', 'FN-26', 'FN-27', 'FN-28'];
+    const results = await page.evaluate(async (caseIds) => {
+      await window.QALab.runIds(caseIds);
+      return window.QALab.results
+        .filter((row) => caseIds.includes(row.id))
+        .map((row) => ({ id: row.id, ok: row.ok, error: row.error || '', detail: row.detail || '' }));
+    }, ids);
+    expect(results.map((row) => row.id).sort()).toEqual(ids.slice().sort());
+    const failed = results.filter((row) => !row.ok);
+    expect(failed, JSON.stringify(failed, null, 2)).toEqual([]);
   });
 
   test('clicking inside the dashboard modal does not close it', async ({ page }) => {

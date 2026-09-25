@@ -16,6 +16,141 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  function withTimeout(work, ms, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(label + ' timed out after ' + ms + 'ms')), ms);
+      Promise.resolve(work).then(
+        (value) => { clearTimeout(timer); resolve(value); },
+        (err) => { clearTimeout(timer); reject(err); }
+      );
+    });
+  }
+
+  const NATIVE_LANGS = ['en', 'es', 'pt', 'de', 'fr', 'it'];
+  const LANG_TITLE = {
+    en: /Professional Summary/i,
+    es: /Resumen Profesional/i,
+    pt: /Resumo Profissional/i,
+    de: /Berufliches Profil/i,
+    fr: /Résumé Professionnel/i,
+    it: /Riepilogo Professionale/i
+  };
+  const PRINT_SKILLS = {
+    en: 'Skills',
+    es: 'Habilidades',
+    pt: 'Competências',
+    de: 'Fähigkeiten',
+    fr: 'Compétences',
+    it: 'Competenze'
+  };
+  const PRINT_HREFS = [
+    'mailto:kaanmuar@gmail.com',
+    'tel:+573209191010',
+    'https://www.linkedin.com/in/carlos-andres-m-2a60b8b/',
+    'https://carlosandmunoz.com/',
+    'https://carlosandmunoz.com/qa-lab.html',
+    'https://carlosandmunoz.com/simulador.html'
+  ];
+  const SHARE_TARGETS = [
+    ['linkedin.com', '/sharing/share-offsite/'],
+    ['twitter.com', '/intent/tweet'],
+    ['facebook.com', '/sharer/sharer.php'],
+    ['whatsapp.com', '/send'],
+    ['t.me', '/share/url'],
+    ['reddit.com', '/submit'],
+    ['pinterest.com', '/pin/create/button/']
+  ];
+
+  function shuffle(list) {
+    const bag = list.slice();
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const swap = bag[i];
+      bag[i] = bag[j];
+      bag[j] = swap;
+    }
+    return bag;
+  }
+
+  function cvApp(cv) {
+    const app = cv.window.CarlosMunozCV;
+    assert(app, 'CV app is not ready');
+    return app;
+  }
+
+  function currentLang(cv) {
+    const app = cv.window.CarlosMunozCV;
+    return (app && (app.state.dictLang || app.state.lang)) || 'en';
+  }
+
+  async function chooseLang(cv, code) {
+    const sel = cv.document.getElementById('language-selector');
+    assert(sel, 'language selector missing');
+    let opt = cv.document.querySelector('#language-options .lang-option[data-lang="' + code + '"]');
+    if (!opt) {
+      sel.click();
+      await wait(150);
+      opt = cv.document.querySelector('#language-options .lang-option[data-lang="' + code + '"]');
+    }
+    assert(opt, 'language option missing: ' + code);
+    opt.click();
+    await wait(350);
+    const title = cv.document.querySelector('[data-translate-key="summary_title"]');
+    assert(title && LANG_TITLE[code].test(title.textContent), code + ' summary was "' + (title ? title.textContent.trim() : '') + '"');
+    assert(currentLang(cv) === code, 'language state is ' + currentLang(cv) + ' after choosing ' + code);
+    return title.textContent.trim();
+  }
+
+  function setDark(cv, want) {
+    const html = cv.document.documentElement;
+    const btn = cv.document.getElementById('theme-toggle');
+    assert(btn, '#theme-toggle missing');
+    if (html.classList.contains('dark-mode') !== want) btn.click();
+    assert(html.classList.contains('dark-mode') === want, want ? 'theme did not become dark' : 'theme did not become light');
+  }
+
+  function assertAddress(href) {
+    if (href.indexOf('mailto:') === 0) {
+      assert(/^mailto:[^\s@]+@[^\s@]+$/.test(href), 'mail link is not usable: ' + href);
+      return;
+    }
+    if (href.indexOf('tel:') === 0) {
+      assert(/^tel:\+?[0-9]{8,}$/.test(href), 'phone link is not usable: ' + href);
+      return;
+    }
+    const url = new URL(href);
+    assert(url.protocol === 'https:', 'link is not https: ' + href);
+    assert(url.hostname.length > 0, 'link has no host: ' + href);
+  }
+
+  async function printedHrefs(cv) {
+    const win = cv.window;
+    const original = win.print;
+    let hrefs = [];
+    win.print = () => {
+      hrefs = [...win.document.querySelectorAll('#print-content a[href]')].map((a) => a.getAttribute('href'));
+    };
+    try {
+      const btn = win.document.getElementById('print-btn');
+      assert(btn, '#print-btn missing');
+      const before = win.location.href;
+      btn.click();
+      for (let i = 0; i < 30 && hrefs.length === 0; i++) await wait(100);
+      assert(win.location.href === before, 'print left the CV');
+    } finally {
+      win.print = original;
+    }
+    assert(hrefs.length > 0, 'print did not build the recruiter sheets');
+    return hrefs;
+  }
+
+  function decodeDataUrl(href) {
+    const comma = href.indexOf(',');
+    if (comma === -1) return '';
+    try { return decodeURIComponent(href.slice(comma + 1)); }
+    catch (err) { return href.slice(comma + 1); }
+  }
+
   const PACE_KEY = 'qa-lab-pace';
   const PACE_VALUES = [0.5, 1, 1.5, 2];
 
@@ -390,7 +525,7 @@
         assert(send.disabled, 'send should be disabled');
         const name = form.querySelector('#sender-name');
         name.focus();
-        name.blur();
+        name.dispatchEvent(new cv.window.FocusEvent('focusout'));
         await wait(40);
         assert(name.classList.contains('invalid'), 'name not marked invalid');
         cv.document.getElementById('widget-close-btn').click();
@@ -407,17 +542,22 @@
         const start = [...cv.document.querySelectorAll('#tour-start-btn')].find((el) => el.offsetParent !== null) || cv.document.getElementById('tour-start-btn');
         start.click();
         const tip = cv.document.getElementById('tour-tooltip');
-        assert(tip.classList.contains('visible') || tip.offsetParent, 'tour tooltip not shown');
+        const shown = Date.now();
+        while (!tip.classList.contains('visible') && Date.now() - shown < 3000) await wait(50);
+        assert(tip.classList.contains('visible'), 'tour tooltip not shown');
         assert(/1\s*\//.test(cv.document.getElementById('tour-step-counter').textContent), 'step 1 missing');
         const next = cv.document.getElementById('tour-next-btn');
         const startWait = Date.now();
         while (next.disabled && Date.now() - startWait < 16000) await wait(200);
         assert(!next.disabled, 'Next never enabled (demo gate)');
         next.click();
-        await wait(80);
-        assert(/2\s*\//.test(cv.document.getElementById('tour-step-counter').textContent), 'did not advance');
+        const advanced = Date.now();
+        const counter = cv.document.getElementById('tour-step-counter');
+        while (!/2\s*\//.test(counter.textContent) && Date.now() - advanced < 3000) await wait(50);
+        assert(/2\s*\//.test(counter.textContent), 'did not advance');
         cv.document.getElementById('tour-close-btn').click();
-        await wait(80);
+        const closed = Date.now();
+        while (tip.classList.contains('visible') && Date.now() - closed < 2000) await wait(50);
         assert(!tip.classList.contains('visible'), 'tour still open');
         return 'demo-gated Next, then closed';
       }
@@ -777,6 +917,223 @@
         assert(overlay.getBoundingClientRect().width >= Math.min(admin.window.innerWidth, 300), 'overlay does not span the phone');
         return 'login + back at ' + admin.window.innerWidth + 'px';
       }
+    },
+    {
+      id: 'FN-23', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Dark, light, then back to the original theme',
+      where: '#theme-toggle, html.dark-mode',
+      when: 'After forcing dark, then light, then dark again.',
+      how: 'The class follows each step and the theme that was open at the start is restored.',
+      async run({ cv }) {
+        const html = cv.document.documentElement;
+        const original = html.classList.contains('dark-mode');
+        try {
+          setDark(cv, true);
+          setDark(cv, false);
+          setDark(cv, true);
+          setDark(cv, original);
+          return (original ? 'started dark' : 'started light') + ' and restored';
+        } finally {
+          if (html.classList.contains('dark-mode') !== original) setDark(cv, original);
+        }
+      }
+    },
+    {
+      id: 'FN-24', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Three random languages, then the original',
+      where: '#language-selector, [data-translate-key=summary_title]',
+      when: 'After three native languages chosen at random.',
+      how: 'Each summary title matches that language, then the starting language is restored.',
+      async run({ cv }) {
+        const original = currentLang(cv);
+        const picks = shuffle(NATIVE_LANGS.filter((code) => code !== original)).slice(0, 3);
+        assert(picks.length === 3, 'need three languages besides ' + original);
+        try {
+          for (const code of picks) await chooseLang(cv, code);
+          await chooseLang(cv, original);
+          return picks.join(' → ') + ' → ' + original;
+        } finally {
+          if (currentLang(cv) !== original) await chooseLang(cv, original);
+        }
+      }
+    },
+    {
+      id: 'FN-25', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Every share link targets its network',
+      where: '#social-share-options, #social-share-options-mobile-container, #copy-link-btn-desktop',
+      when: 'After the share menu is built.',
+      how: 'LinkedIn, X, Facebook, WhatsApp, Telegram, Reddit, and Pinterest are https links carrying this CV URL. Copy stays on the page.',
+      async run({ cv }) {
+        const pageUrl = cv.window.location.href.split('?')[0];
+        const encoded = encodeURIComponent(pageUrl);
+        ['social-share-options', 'social-share-options-mobile-container'].forEach((id) => {
+          const links = [...cv.document.querySelectorAll('#' + id + ' a[href]')].filter((a) => a.getAttribute('href') !== '#');
+          assert(links.length === SHARE_TARGETS.length, id + ' has ' + links.length + ' share links');
+          SHARE_TARGETS.forEach(([host, path]) => {
+            const link = links.find((a) => a.href.indexOf(host) !== -1 && a.href.indexOf(path) !== -1);
+            assert(link, id + ' is missing ' + host + path);
+            assert(link.target === '_blank', host + ' does not open in a new tab');
+            assert(/noopener/i.test(link.rel), host + ' is missing noopener');
+            assert(link.href.indexOf(encoded) !== -1, host + ' does not carry ' + pageUrl);
+            assertAddress(link.href);
+          });
+        });
+        const copy = cv.document.getElementById('copy-link-btn-desktop');
+        assert(copy, 'copy link missing');
+        const before = cv.window.location.href;
+        let copied = '';
+        const nav = cv.window.navigator;
+        const clip = nav && nav.clipboard;
+        const originalWrite = clip && clip.writeText;
+        if (clip) {
+          try { clip.writeText = (text) => { copied = String(text); return Promise.resolve(); }; } catch (err) { /* clipboard may be locked */ }
+        }
+        copy.click();
+        await wait(40);
+        if (clip && originalWrite) {
+          try { clip.writeText = originalWrite; } catch (err) { /* leave the stub */ }
+        }
+        assert(cv.window.location.href === before, 'copy link navigated away');
+        if (copied) assert(copied.split('?')[0] === pageUrl, 'copied ' + copied);
+        return SHARE_TARGETS.length + ' networks on desktop and phone';
+      }
+    },
+    {
+      id: 'FN-26', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Print runs under a random language',
+      where: '#print-btn, #print-content .sheet',
+      when: 'After a native language chosen at random, then Print.',
+      how: 'The recruiter sheets use that language’s skills heading and the CV stays on this page. The starting language returns.',
+      async run({ cv }) {
+        const original = currentLang(cv);
+        const chosen = shuffle(NATIVE_LANGS.filter((code) => code !== original))[0];
+        try {
+          await chooseLang(cv, chosen);
+          const hrefs = await printedHrefs(cv);
+          const sheets = cv.document.querySelectorAll('#print-content .sheet');
+          assert(sheets.length > 0, 'print sheets missing');
+          const text = [...sheets].map((sheet) => sheet.textContent).join('\n');
+          assert(text.indexOf(PRINT_SKILLS[chosen]) !== -1, 'print sheets missing ' + PRINT_SKILLS[chosen]);
+          assert(hrefs.length >= PRINT_HREFS.length, 'print built ' + hrefs.length + ' links');
+          return chosen + ' · ' + sheets.length + ' sheets';
+        } finally {
+          if (currentLang(cv) !== original) await chooseLang(cv, original);
+        }
+      }
+    },
+    {
+      id: 'FN-27', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Print hyperlinks are real and the site pages respond',
+      where: '#print-content a[href], /, /qa-lab.html, /simulador.html',
+      when: 'During Print, before the sheets are cleared.',
+      how: 'Mail, phone, LinkedIn, and carlosandmunoz.com links are well formed. The CV, lab, and studio answer on this server.',
+      async run({ cv }) {
+        const hrefs = await printedHrefs(cv);
+        PRINT_HREFS.forEach((expected) => {
+          const found = hrefs.find((href) => href === expected);
+          assert(found, 'print is missing ' + expected);
+          assertAddress(found);
+        });
+        const pages = [
+          ['https://carlosandmunoz.com/', '/'],
+          ['https://carlosandmunoz.com/qa-lab.html', '/qa-lab.html'],
+          ['https://carlosandmunoz.com/simulador.html', '/simulador.html']
+        ];
+        for (const [href, path] of pages) {
+          const res = await fetch(path, { cache: 'no-store' });
+          assert(res.ok, path + ' returned HTTP ' + res.status + ' for ' + href);
+        }
+        return hrefs.length + ' print links';
+      }
+    },
+    {
+      id: 'FN-28', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Downloads run under a random language',
+      where: '#export-options button',
+      when: 'After a native language chosen at random, then each export.',
+      how: 'Text, Word, and JSON carry that language and the public links. PDF and JPG start a file download. The starting language returns.',
+      async run({ cv }) {
+        const original = currentLang(cv);
+        const chosen = shuffle(NATIVE_LANGS.filter((code) => code !== original))[0];
+        const win = cv.window;
+        const files = [];
+        const proto = win.HTMLAnchorElement.prototype;
+        const origClick = proto.click;
+        const realCanvas = win.html2canvas;
+        const realAlert = win.alert;
+        proto.click = function () {
+          const name = this.getAttribute('download') || '';
+          if (name) files.push({ name: name, href: this.getAttribute('href') || '' });
+        };
+        win.html2canvas = () => {
+          const canvas = win.document.createElement('canvas');
+          canvas.width = 12;
+          canvas.height = 12;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 12, 12);
+          }
+          return Promise.resolve(canvas);
+        };
+        const notes = [];
+        const origConsoleError = win.console.error.bind(win.console);
+        win.console.error = function () {
+          notes.push([...arguments].map((item) => (item && item.message) || String(item)).join(' '));
+          return origConsoleError.apply(win.console, arguments);
+        };
+        win.alert = (msg) => { notes.push(String(msg)); };
+        try {
+          await chooseLang(cv, chosen);
+          assert(typeof realCanvas === 'function', 'html2canvas missing');
+          assert(typeof win.jsPDF === 'function', 'jsPDF missing');
+          const buttons = [...cv.document.querySelectorAll('#export-options button')];
+          assert(buttons.length === 5, 'export menu has ' + buttons.length + ' actions');
+          const app = cvApp(cv);
+          const RealPdf = win.jsPDF;
+          function WrappedPdf(options) {
+            const doc = new RealPdf(options);
+            const origSave = doc.save;
+            doc.save = function (filename) {
+              files.push({ name: filename, href: 'application/pdf' });
+              return origSave.apply(doc, arguments);
+            };
+            return doc;
+          }
+          WrappedPdf.API = RealPdf.API;
+          win.jsPDF = WrappedPdf;
+          try {
+            await app._exportAsPDF_jsPDF();
+            await app._exportAsJPG();
+          } finally {
+            win.jsPDF = RealPdf;
+          }
+          app._exportAsATS();
+          app._exportAsJSON();
+          app._exportAsText();
+          assert(notes.length === 0, notes.join(' | '));
+          const names = files.map((file) => file.name);
+          ['CarlosMunozCV_Export.pdf', 'CarlosMunozCV_2025.jpg', 'CarlosMunozCV_ATS.doc', 'CarlosMunozCV_Export.txt', 'carlos_munoz_cv_' + chosen + '.json'].forEach((name) => {
+            assert(names.indexOf(name) !== -1, 'download missing ' + name + ' (got ' + names.join(', ') + ')');
+          });
+          const text = decodeDataUrl((files.find((file) => file.name === 'CarlosMunozCV_Export.txt') || {}).href || '');
+          const json = decodeDataUrl((files.find((file) => /\.json$/.test(file.name)) || {}).href || '');
+          assert(text.indexOf(PRINT_SKILLS[chosen]) !== -1, 'text export missing ' + PRINT_SKILLS[chosen]);
+          assert(text.indexOf('https://carlosandmunoz.com/') !== -1, 'text export missing the public site');
+          assert(text.indexOf('https://carlosandmunoz.com/qa-lab.html') !== -1, 'text export missing the lab');
+          assert(text.indexOf('https://carlosandmunoz.com/simulador.html') !== -1, 'text export missing the studio');
+          assert(json.indexOf('"language": "' + chosen + '"') !== -1, 'JSON language is not ' + chosen);
+          const word = cvApp(cv)._recruiterWordHtml();
+          PRINT_HREFS.forEach((href) => assert(word.indexOf(href) !== -1, 'Word export missing ' + href));
+          return chosen + ' · ' + names.length + ' files';
+        } finally {
+          proto.click = origClick;
+          win.html2canvas = realCanvas;
+          win.alert = realAlert;
+          win.console.error = origConsoleError;
+          if (currentLang(cv) !== original) await chooseLang(cv, original);
+        }
+      }
     }
   ];
 
@@ -788,6 +1145,7 @@
     'FN-20': 247, 'FN-21': 263, 'FN-22': 280,
     'FN-07': 298, 'FN-08': 313, 'FN-09': 328, 'FN-10': 341, 'FN-11': 353, 'FN-12': 366,
     'FN-13': 379, 'FN-14': 399,
+    'FN-23': 917, 'FN-24': 937, 'FN-25': 956, 'FN-26': 997, 'FN-27': 1020, 'FN-28': 1045,
     'SEC-01': 426, 'SEC-02': 441, 'SEC-03': 458, 'SEC-04': 470, 'SEC-05': 487, 'SEC-06': 500,
     'SEC-07': 516, 'SEC-08': 530,
     'A11Y-01': 547, 'A11Y-02': 564, 'A11Y-03': 576,
@@ -855,6 +1213,13 @@
     Robot: 'tests/robot'
   };
 
+  const FW_MARK = {
+    Lab: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.4 10.6 3.8 8l-1.1 1.1 3.7 3.7 7-7-1.1-1.1z"/></svg>',
+    Playwright: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2.2 11.6 8 1.8l5.8 9.8H2.2zm5.8-6.2 2.6 4.4H5.4L8 5.4z"/></svg>',
+    Cypress: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.4a6.6 6.6 0 1 0 0 13.2A6.6 6.6 0 0 0 8 1.4zm0 1.6c1.8 1.5 2.8 3.2 2.8 5s-1 3.5-2.8 5c-1.8-1.5-2.8-3.2-2.8-5s1-3.5 2.8-5z"/></svg>',
+    Robot: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M7.2 1.6h1.6V3h1.8A1.6 1.6 0 0 1 12.2 4.6v4.2A1.6 1.6 0 0 1 10.6 10.4H5.4A1.6 1.6 0 0 1 3.8 8.8V4.6A1.6 1.6 0 0 1 5.4 3h1.8V1.6zM6 6.1a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zm4 0a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zM6.2 12h3.6v1.4H6.2z"/></svg>'
+  };
+
   function sourceEntries(c) {
     const items = [{ label: 'Lab', href: blob('js/qa-lab.js', LAB_LINE[c.id]) }];
     const row = SRC[c.id] || {};
@@ -868,7 +1233,7 @@
 
   function sourceHtml(c, extraClass) {
     return `<span class="src-links ${extraClass || ''}">${sourceEntries(c).map((item) =>
-      `<a class="src-link" href="${item.href}" target="_blank" rel="noopener noreferrer">${item.label}</a>`
+      `<a class="src-link" href="${item.href}" target="_blank" rel="noopener noreferrer">${FW_MARK[item.label] || ''}<span>${item.label}</span></a>`
     ).join('')}</span>`;
   }
 
@@ -948,6 +1313,50 @@
     const label = svgEl('text', { x: 60, y: 64, 'text-anchor': 'middle', fill: 'var(--text)', 'font-size': '16', 'font-weight': '700' }, Math.round((passed / total) * 100) + '%');
     svg.appendChild(label);
     return svg;
+  }
+
+  function frameworkCompare(results) {
+    const tones = [
+      { name: 'Playwright', color: '#2f9e8f' },
+      { name: 'Cypress', color: '#3d9a6a' },
+      { name: 'Robot', color: '#c4a574' }
+    ];
+    const rows = tones.map((tone) => {
+      const mirrored = CASES.filter((c) => c.fw.includes(tone.name));
+      const ran = results.filter((r) => {
+        const c = CASES.find((item) => item.id === r.id);
+        return c && c.fw.includes(tone.name);
+      });
+      const passed = ran.filter((r) => r.ok).length;
+      const avg = ran.length ? Math.round(ran.reduce((sum, r) => sum + (r.ms || 0), 0) / ran.length) : 0;
+      const rate = ran.length ? Math.round((passed / ran.length) * 100) : 0;
+      return { ...tone, mirrored: mirrored.length, ran: ran.length, passed, avg, rate };
+    });
+    const ranked = rows.filter((row) => row.ran).slice().sort((a, b) => a.avg - b.avg);
+    const fastest = ranked[0];
+    const tied = ranked.length > 1 && ranked.every((row) => row.avg === ranked[0].avg);
+    const maxAvg = Math.max(...rows.map((row) => row.avg), 1);
+    const wrap = document.createElement('div');
+    wrap.className = 'fw-compare';
+    rows.forEach((row) => {
+      const line = document.createElement('div');
+      line.className = 'fw-row';
+      const width = row.ran ? Math.max(8, Math.round((row.avg / maxAvg) * 100)) : 0;
+      const detail = row.ran
+        ? row.passed + '/' + row.ran + ' passed · ' + row.rate + '% · avg ' + row.avg + ' ms · ' + row.mirrored + ' mirrored'
+        : row.mirrored + ' mirrored · run the catalog to compare speed';
+      line.innerHTML = '<strong>' + row.name + '</strong><div class="fw-track"><span style="width:' + width + '%;background:' + row.color + '"></span></div><span class="fw-meta">' + detail + '</span>';
+      wrap.appendChild(line);
+    });
+    if (fastest) {
+      const note = document.createElement('p');
+      note.className = 'chart-cap';
+      note.textContent = tied
+        ? 'Averages match because this is one browser run. Each bar only includes the cases that framework mirrors.'
+        : fastest.name + ' was fastest this session at ' + fastest.avg + ' ms average.';
+      wrap.appendChild(note);
+    }
+    return wrap;
   }
 
   function bars(rows, title) {
@@ -1077,7 +1486,8 @@
       const cards = [
         { title: 'This run — pass rate', caption: 'Source: in-browser lab vs live pages · current session', node: donut(passed, failed, skipped) },
         { title: 'Catalog by test type', caption: 'Count of cases in the published suite map', node: bars(Object.entries(byLayer).map(([label, value]) => ({ label, value, color: layerColor(label) })), 'Cases by type') },
-        { title: 'Mirrored in each runner', caption: 'How many catalog cases also exist in Playwright, Cypress, Robot', node: bars(Object.entries(byFw).map(([label, value]) => ({ label, value })), 'Framework coverage') }
+        { title: 'Mirrored in each runner', caption: 'How many catalog cases also exist in Playwright, Cypress, Robot', node: bars(Object.entries(byFw).map(([label, value]) => ({ label, value })), 'Framework coverage') },
+        { title: 'Automation frameworks — performance', caption: 'Same browser run. A case counts for every framework that mirrors it. Lower average time is the faster framework this session.', node: frameworkCompare(this.results) }
       ];
       if (durations.length) {
         cards.push({ title: 'Slowest checks this run (ms)', caption: 'Wall time inside this browser, not CI agents', node: bars(durations, 'Duration ms') });
@@ -1227,54 +1637,78 @@
       const pack = CASES.filter((c) => ids.includes(c.id));
       const holdMs = Math.round(this.pace * 1000);
       this.log(`<b>LAB</b> Starting ${pack.length} case${pack.length === 1 ? '' : 's'} against ${location.origin} · pace ${formatPace(this.pace)} s · ${this.view === 'watch' ? 'Watch' : 'Background'}`);
-      await this.withTargets(async (ctx) => {
-        for (const c of pack) {
-          this.selectedId = c.id;
-          this.renderCatalog();
-          this.renderDetail();
-          this.focusCase(c.id);
-          const row = document.querySelector(`.case-row[data-id="${c.id}"]`);
-          if (row) row.classList.add('running');
-          this.log(`<span class="k">${c.id}</span> ${c.title}<div class="muted">where ${c.where}</div><div class="muted">when ${c.when}</div><div class="muted">how ${c.how}</div>`);
-          await wait(holdMs);
-          const t0 = performance.now();
-          try {
-            const detail = await c.run(ctx) || 'ok';
-            const ms = Math.round(performance.now() - t0);
-            this.results = this.results.filter((r) => r.id !== c.id);
-            this.results.push({ id: c.id, ok: true, ms, detail, layer: c.layer });
-            this.log(`<span class="ok">PASS</span> ${c.id} · ${ms} ms · ${String(detail).replace(/</g, '&lt;')}`);
-          } catch (err) {
-            const ms = Math.round(performance.now() - t0);
-            this.results = this.results.filter((r) => r.id !== c.id);
-            this.results.push({ id: c.id, ok: false, ms, error: err.message, layer: c.layer });
-            this.log(`<span class="fail">FAIL</span> ${c.id} · ${ms} ms · ${String(err.message).replace(/</g, '&lt;')}`);
+      const unlock = () => {
+        this.running = false;
+        document.getElementById('run-all').disabled = false;
+        document.getElementById('run-visible').disabled = false;
+        document.querySelectorAll('[data-pace]').forEach((b) => { b.disabled = false; });
+      };
+      try {
+        await this.withTargets(async (ctx) => {
+          const iframe = document.getElementById('sut');
+          const desktopFrame = {
+            width: iframe.style.width,
+            height: iframe.style.height,
+            maxWidth: iframe.style.maxWidth
+          };
+          for (const c of pack) {
+            iframe.style.width = desktopFrame.width;
+            iframe.style.height = desktopFrame.height;
+            iframe.style.maxWidth = desktopFrame.maxWidth;
+            const src = iframe.getAttribute('src') || '';
+            if (!/index\.html/i.test(src)) ctx.cv = await ctx.loadCv('index.html');
+            else ctx.cv = { window: iframe.contentWindow, document: iframe.contentDocument };
+            this.selectedId = c.id;
+            this.renderCatalog();
+            this.renderDetail();
+            this.focusCase(c.id);
+            const row = document.querySelector(`.case-row[data-id="${c.id}"]`);
+            if (row) row.classList.add('running');
+            this.log(`<span class="k">${c.id}</span> ${c.title}<div class="muted">where ${c.where}</div><div class="muted">when ${c.when}</div><div class="muted">how ${c.how}</div>`);
+            await wait(holdMs);
+            const t0 = performance.now();
+            try {
+              const detail = await withTimeout(c.run(ctx), 40000, c.id) || 'ok';
+              const ms = Math.round(performance.now() - t0);
+              this.results = this.results.filter((r) => r.id !== c.id);
+              this.results.push({ id: c.id, ok: true, ms, detail, layer: c.layer });
+              this.log(`<span class="ok">PASS</span> ${c.id} · ${ms} ms · ${String(detail).replace(/</g, '&lt;')}`);
+            } catch (err) {
+              const ms = Math.round(performance.now() - t0);
+              this.results = this.results.filter((r) => r.id !== c.id);
+              this.results.push({ id: c.id, ok: false, ms, error: err.message, layer: c.layer });
+              this.log(`<span class="fail">FAIL</span> ${c.id} · ${ms} ms · ${String(err.message).replace(/</g, '&lt;')}`);
+            }
+            if (row) row.classList.remove('running');
+            try {
+              this.renderDetail();
+              this.renderDashboard();
+              this.renderReport();
+            } catch (renderErr) {
+              this.log(`<span class="fail">RENDER</span> ${c.id} · ${String(renderErr.message).replace(/</g, '&lt;')}`);
+            }
+            await wait(holdMs);
           }
-          if (row) row.classList.remove('running');
-          this.renderDetail();
-          this.renderDashboard();
-          this.renderReport();
-          await wait(holdMs);
+        });
+        const passed = this.results.filter((r) => ids.includes(r.id) && r.ok).length;
+        const failed = this.results.filter((r) => ids.includes(r.id) && !r.ok).length;
+        writeHistory({
+          ts: Date.now(),
+          passed,
+          failed,
+          total: pack.length,
+          rate: pack.length ? Math.round((passed / pack.length) * 100) : 0
+        });
+        this.renderDashboard();
+        this.log(`<b>LAB</b> Finished · ${passed} passed · ${failed} failed · ${pack.length} ran`);
+        this.openDashboard();
+        if (global.SiteAnalytics) {
+          global.SiteAnalytics.trackEvent('qa_lab_run', 'QA Lab', `${passed}/${pack.length}`, { passed, failed, pace: this.pace });
         }
-      });
-      const passed = this.results.filter((r) => r.ok).length;
-      const failed = this.results.filter((r) => !r.ok).length;
-      writeHistory({
-        ts: Date.now(),
-        passed,
-        failed,
-        total: this.results.length,
-        rate: this.results.length ? Math.round((passed / this.results.length) * 100) : 0
-      });
-      this.renderDashboard();
-      this.log(`<b>LAB</b> Finished · ${passed} passed · ${failed} failed`);
-      this.running = false;
-      document.getElementById('run-all').disabled = false;
-      document.getElementById('run-visible').disabled = false;
-      document.querySelectorAll('[data-pace]').forEach((b) => { b.disabled = false; });
-      this.openDashboard();
-      if (global.SiteAnalytics) {
-        global.SiteAnalytics.trackEvent('qa_lab_run', 'QA Lab', `${passed}/${this.results.length}`, { passed, failed, pace: this.pace });
+      } catch (err) {
+        this.log(`<span class="fail">LAB</span> stopped · ${String(err.message).replace(/</g, '&lt;')}`);
+      } finally {
+        unlock();
       }
     },
 
@@ -1311,6 +1745,8 @@
     openDashboard() {
       const el = document.getElementById('dash-overlay');
       if (!el) return;
+      document.documentElement.classList.add('report-open');
+      if (global.SiteTour) global.SiteTour.hold();
       el.classList.add('open');
       document.body.style.overflow = 'hidden';
     },
@@ -1319,7 +1755,9 @@
       const el = document.getElementById('dash-overlay');
       if (!el) return;
       el.classList.remove('open');
+      document.documentElement.classList.remove('report-open');
       document.body.style.overflow = '';
+      if (global.SiteTour) global.SiteTour.release();
     },
 
     labTour() {
@@ -1329,7 +1767,7 @@
         steps: [
           { selector: '#case-list', title: 'The catalog', body: 'Every case you can run is listed here. Open one to see where it looks, when it fires, and how it asserts. Lab / Playwright / Cypress / Robot chips jump to the source on GitHub.', demoMs: 1800 },
           { selector: '.filters', title: 'Filter by type', body: 'Narrow to Smoke, Functional, Security, A11y, Admin, Studio, or Mobile. Run filtered executes only what you see.', demoMs: 1500 },
-          { selector: '.pace', title: 'Pace', body: 'Hold 0,5 / 1,0 / 1,5 / 2,0 seconds between steps so you can watch each action. Slower pace is better for a first demo.', demoMs: 1500 },
+          { selector: '.pace', title: 'Pace', body: 'The line under the numbers runs from faster on the left to slower on the right. 0,5 holds the least, 2,0 holds the most, so a first look is easier on the right.', demoMs: 1500 },
           { selector: '.view-mode', title: 'Watch or Background', body: 'Watch (default) shows the live page as the lab clicks and navigates. Background keeps the same run off-screen if you only want the log.', demoMs: 1600 },
           { selector: '#run-all', title: 'Run', body: 'Run this case from the detail pane, Run filtered for the current list, or Run full catalog. The active case stays scrolled into view.', demoMs: 1600 },
           { selector: '#sut-wrap', title: 'Live system under test', body: 'This iframe is the real CV, studio, or admin page. Follow the actions here, then read the log underneath.', demoMs: 1600 },
