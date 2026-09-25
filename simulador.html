@@ -150,7 +150,7 @@
         .nav button, .nav a { width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted); padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; display: block; text-decoration: none; }
         .nav button.active { background: var(--nav-active); color: var(--nav-active-text); }
         .workspace { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-        .studio-lead { margin: 0; padding: 8px 16px 0; font-size: 13px; line-height: 1.4; color: var(--muted); }
+        .studio-lead { margin: 0; padding: 6px 16px 0; font-size: 12px; line-height: 1.35; color: var(--muted); }
         .phase-banner { flex: 0 0 auto; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--banner); font-size: 13px; color: var(--muted); }
         .phase-banner strong { color: var(--text); }
         .board { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
@@ -270,23 +270,27 @@
         .lang-option img { width: 18px; height: 18px; border-radius: 50%; }
         #google_translate_element, .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt, iframe.skiptranslate, .goog-te-gadget { display: none !important; visibility: hidden !important; height: 0 !important; }
         html, body { top: 0 !important; position: static !important; }
+        @media (max-width: 1100px) {
+            .shell { grid-template-columns: 180px minmax(0, 1fr); }
+            .col { min-width: 220px; width: 220px; }
+        }
         @media (max-width: 900px) {
             html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
             body { display: flex; flex-direction: column; }
-            .topbar { flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 10px; }
+            .topbar { flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 10px; max-width: 100%; }
             .brand { min-width: 0; }
             .brand small { white-space: normal; }
-            .actions { width: 100%; }
-            .agents { width: 100%; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .actions { width: 100%; max-width: 100%; }
+            .agents { width: 100%; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .agents > * { flex: 0 0 auto; }
             .btn { white-space: nowrap; }
-            #runBtn { flex: 1 1 auto; }
-            .shell { grid-template-columns: 1fr; min-height: 70vh; flex: 1; }
-            .workspace { min-height: 60vh; }
+            #runBtn { flex: 1 1 auto; justify-content: center; }
+            .shell { grid-template-columns: 1fr; min-height: 70vh; flex: 1; width: 100%; }
+            .workspace { min-height: 60vh; min-width: 0; }
             .studio-lead { padding: 8px 12px 0; }
-            .nav { display: flex; overflow: auto; gap: 6px; border-right: 0; border-bottom: 1px solid var(--line); -webkit-overflow-scrolling: touch; padding: 8px; }
+            .nav { display: flex; overflow: auto; gap: 6px; border-right: 0; border-bottom: 1px solid var(--line); -webkit-overflow-scrolling: touch; padding: 8px; max-width: 100%; }
             .nav button, .nav a { width: auto; white-space: nowrap; min-height: 40px; display: inline-flex; align-items: center; }
-            .board { -webkit-overflow-scrolling: touch; min-height: 46vh; padding: 12px; }
+            .board { -webkit-overflow-scrolling: touch; min-height: 46vh; padding: 12px; max-width: 100%; }
             .col { min-width: min(250px, 82vw); width: min(250px, 82vw); }
             .log { max-height: 22vh; min-height: 72px; }
             .overlay { padding: 8px; }
@@ -301,7 +305,7 @@
             .row { flex-wrap: wrap; }
             .handoff { flex-direction: column; align-items: stretch; }
             .handoff .btn { width: 100%; }
-            .lang-menu { width: min(15rem, calc(100vw - 24px)); }
+            .lang-menu { right: 0; width: min(15rem, calc(100vw - 24px)); }
         }
     </style>
 </head>
@@ -340,7 +344,7 @@
         <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests" target="_blank" rel="noopener noreferrer">Test suite on GitHub</a>
     </aside>
     <main class="workspace">
-        <p class="studio-lead">Open a ticket and follow it from the planning board until the team has tested it and it is ready to ship. Four agents rewrite the Jira story, write Gherkin and Xray cases, generate Playwright, Cypress, and Robot scripts, and check the Definition of Done. The board, test design, automation lab, sprint verification, and sprint report stay on this page. Free, no account, in English, Spanish, Portuguese, German, French, and Italian.</p>
+        <p class="studio-lead">Open a ticket and follow it from the planning board until the team has tested it and it is ready to ship.</p>
         <div class="phase-banner" id="banner">Explore the board, open any ticket, then start the four-agent sprint.</div>
         <div class="board" id="view"></div>
         <div class="phase-console" id="phaseConsole"></div>

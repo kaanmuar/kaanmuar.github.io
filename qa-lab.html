@@ -129,8 +129,8 @@
         * { box-sizing: border-box; }
         html, body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
         html.dark-mode { color-scheme: dark; }
-        html { overflow-x: hidden; }
-        body { min-height: 100vh; display: grid; grid-template-rows: auto auto 1fr; }
+        html { overflow-x: hidden; height: 100%; }
+        body { min-height: 100vh; min-height: 100dvh; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--topbar); gap: 12px; flex-wrap: wrap; min-height: 56px; }
         .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-family: "Source Serif 4", Georgia, serif; }
         .brand small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; }
@@ -146,15 +146,15 @@
         .btn:disabled { opacity: .45; cursor: not-allowed; }
         .btn-primary { background: var(--cyan); color: #fff; }
         .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
-        .intro { padding: 10px 18px 2px; max-width: 1100px; }
-        .intro h1 { font-family: "Source Serif 4", Georgia, serif; font-size: 1.35rem; margin: 0 0 4px; }
-        .intro p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
-        .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 12px 18px; }
+        .intro { padding: 6px 16px 0; }
+        .intro h1 { font-family: "Source Serif 4", Georgia, serif; font-size: 1.15rem; margin: 0; }
+        .intro p { margin: 2px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+        .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 8px 16px; }
         .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
         .kpi b { display: block; font-size: 1.4rem; }
         .kpi span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-        .work { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 0; border-top: 1px solid var(--line); align-items: start; }
-        .rail { border-right: 1px solid var(--line); background: var(--panel-2); display: flex; flex-direction: column; min-height: 0; max-height: calc(100vh - 8px); position: sticky; top: 0; }
+        .work { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); flex: 1; min-height: 0; border-top: 1px solid var(--line); align-items: stretch; }
+        .rail { border-right: 1px solid var(--line); background: var(--panel-2); display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; }
         .filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; }
         .filters button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
         .filters button.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
@@ -172,23 +172,23 @@
         .case-id { font-family: "Fira Code", monospace; font-size: 11px; color: var(--cyan); }
         .case-title { font-size: 12px; }
         .pill { font-size: 10px; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
-        .stage { display: grid; grid-template-rows: auto minmax(0, auto) minmax(140px, 1fr) auto; min-width: 0; }
-        .stage-head { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-        .sut-wrap { position: relative; background: var(--panel); border-bottom: 1px solid var(--line); min-width: 0; }
+        .stage { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+        .stage-head { display: flex; justify-content: space-between; gap: 12px; padding: 8px 14px; border-bottom: 1px solid var(--line); min-width: 0; }
+        .sut-wrap { position: relative; background: var(--panel); border-bottom: 1px solid var(--line); min-width: 0; flex: 1; min-height: 0; }
         .sut-bg-note { display: none; padding: 10px 14px; font-size: 12px; color: var(--muted); }
-        html.lab-watch .sut-wrap { overflow: auto; -webkit-overflow-scrolling: touch; max-height: min(70vh, 720px); }
-        html.lab-watch #sut { width: 100%; height: min(62vh, 640px); border: 0; background: var(--panel); display: block; }
+        html.lab-watch .sut-wrap { overflow: hidden; }
+        html.lab-watch #sut { width: 100%; height: 100%; min-height: 180px; border: 0; background: var(--panel); display: block; }
         html.lab-background .sut-wrap { height: 42px; overflow: hidden; }
         html.lab-background .sut-bg-note { display: block; }
         html.lab-background #sut { position: absolute; left: -120vw; top: 0; width: 1024px; min-width: 390px; height: 768px; border: 0; visibility: hidden; pointer-events: none; }
         .spec { display: grid; grid-template-columns: 64px 1fr; gap: 6px 10px; font-size: 13px; }
         .spec dt { color: var(--muted); font-weight: 600; }
-        .spec dd { margin: 0; }
+        .spec dd { margin: 0; overflow-wrap: anywhere; }
         .muted { color: var(--muted); font-size: 13px; }
         .pass { color: var(--green); font-weight: 600; }
         .fail { color: var(--red); font-weight: 600; }
         #sut { width: 100%; border: 0; background: var(--panel); }
-        #run-log { background: var(--console); color: var(--console-text); font-family: "Fira Code", monospace; font-size: 11px; line-height: 1.45; padding: 10px 12px; overflow: auto; min-height: 180px; }
+        #run-log { background: var(--console); color: var(--console-text); font-family: "Fira Code", monospace; font-size: 11px; line-height: 1.45; padding: 8px 12px; overflow: auto; flex: 0 0 auto; min-height: 72px; max-height: 18vh; }
         #run-log .k { color: var(--amber); }
         #run-log .ok { color: var(--green); }
         #run-log .fail { color: var(--red); }
@@ -226,30 +226,37 @@
         .lang-option img { width: 18px; height: 18px; border-radius: 50%; }
         #google_translate_element, .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt, iframe.skiptranslate, .goog-te-gadget { display: none !important; visibility: hidden !important; height: 0 !important; }
         html, body { top: 0 !important; position: static !important; }
+        @media (max-width: 1100px) {
+            .work { grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); }
+        }
         @media (max-width: 900px) {
+            html, body { height: auto; overflow-x: hidden; overflow-y: auto; }
+            body { display: block; }
             .topbar { flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 10px; }
             .brand { min-width: 0; }
             .brand small { white-space: normal; }
             .actions { width: 100%; }
             .btn { white-space: nowrap; }
             .pace, .view-mode { flex-wrap: wrap; }
-            html.lab-watch .sut-wrap { max-height: 52vh; }
+            .work { display: block; }
+            html.lab-watch .sut-wrap { overflow: auto; max-height: 52vh; }
             html.lab-watch #sut { height: min(48vh, 420px); }
-            .work { grid-template-columns: 1fr; }
             .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 8px 10px; gap: 8px; }
             .kpi { padding: 8px 10px; }
             .kpi b { font-size: 1.15rem; }
-            .rail { min-height: 0; max-height: none; position: static; }
+            .rail { max-height: none; overflow: visible; }
+            .stage { overflow: visible; }
             .case-list { max-height: 28vh; }
             .intro { padding: 8px 12px 0; }
-            .intro h1 { font-size: 1.2rem; }
+            .intro h1 { font-size: 1.15rem; }
             .stage-head { flex-direction: column; align-items: flex-start; }
+            #run-log { max-height: none; min-height: 140px; }
             .charts { grid-template-columns: 1fr; }
             .case-row { grid-template-columns: 64px minmax(0, 1fr); }
             .spec { grid-template-columns: 1fr; }
             table { display: block; overflow-x: auto; }
             .dash-overlay { padding: 8px; }
-            .dash-modal { margin: 0 auto; padding: 12px; }
+            .dash-modal { margin: 0 auto; padding: 12px; max-width: 100%; }
             .lang-menu { right: auto; left: 0; width: min(220px, calc(100vw - 24px)); }
         }
     </style>
@@ -295,7 +302,6 @@
 <section class="intro">
     <h1>The suite I run on this CV</h1>
     <p>Same checks as <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests" target="_blank" rel="noopener noreferrer">Playwright</a>, <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/cypress/e2e" target="_blank" rel="noopener noreferrer">Cypress</a>, and <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests/robot" target="_blank" rel="noopener noreferrer">Robot</a>. Open a case, then Watch or Background.</p>
-    <p>Filter by smoke, functional, security, accessibility, admin, studio, or mobile. Set the pace, watch each check or run it in the background, then open the dashboard or download the text report. Free, no account, in English, Spanish, Portuguese, German, French, and Italian.</p>
 </section>
 <section class="kpis" aria-label="Last run totals">
     <div class="kpi"><span>Passed</span><b id="kpi-pass">—</b></div>
