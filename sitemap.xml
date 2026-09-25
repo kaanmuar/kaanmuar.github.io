@@ -3,7 +3,7 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://kaanmuar.github.io/</loc>
-    <lastmod>2026-09-24</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://kaanmuar.github.io/?lang=en"/>
@@ -16,9 +16,9 @@
   </url>
   <url>
     <loc>https://kaanmuar.github.io/simulador.html</loc>
-    <lastmod>2026-09-24</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://kaanmuar.github.io/simulador.html?lang=en"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://kaanmuar.github.io/simulador.html?lang=en"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://kaanmuar.github.io/simulador.html?lang=es"/>
@@ -29,9 +29,9 @@
   </url>
   <url>
     <loc>https://kaanmuar.github.io/qa-lab.html</loc>
-    <lastmod>2026-09-24</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://kaanmuar.github.io/qa-lab.html?lang=en"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://kaanmuar.github.io/qa-lab.html?lang=en"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://kaanmuar.github.io/qa-lab.html?lang=es"/>
