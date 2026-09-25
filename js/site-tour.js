@@ -31,6 +31,7 @@
   let index = 0;
   let timer = null;
   let hit = null;
+  let held = false;
 
   function $(id) { return document.getElementById(id); }
 
@@ -115,9 +116,28 @@
     stop() {
       clearTimeout(timer);
       clearHit();
+      held = false;
       const overlay = $('site-tour-overlay');
       if (overlay) overlay.classList.remove('on');
       cfg = null;
+    },
+    hold() {
+      if (!cfg) return;
+      held = true;
+      clearTimeout(timer);
+      clearHit();
+      const overlay = $('site-tour-overlay');
+      if (overlay) overlay.classList.remove('on');
+    },
+    release() {
+      if (!held || !cfg) {
+        held = false;
+        return;
+      }
+      held = false;
+      const overlay = $('site-tour-overlay');
+      if (overlay) overlay.classList.add('on');
+      showStep();
     },
     bind(button, options) {
       if (!button) return;

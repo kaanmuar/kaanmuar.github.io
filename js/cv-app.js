@@ -2315,7 +2315,7 @@
                 return `
         <div class="testimonial-card">
             ${starsHTML ? `<div class="testimonial-stars" aria-label="Rating: ${score} out of 5 stars">${starsHTML}</div>` : ''}
-            ${testimonial.originalText ? `<p class="testimonial-quote">"${escape(testimonial.originalText)}"</p>` : ''}
+            ${testimonial.originalText ? `<p class="testimonial-quote">${escape(testimonial.originalText)}</p>` : ''}
             <p class="testimonial-author">- ${escape(testimonial.authorName || 'Visitor')}</p>
             ${adminResponseHTML}
         </div>
