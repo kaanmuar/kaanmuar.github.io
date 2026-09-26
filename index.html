@@ -609,6 +609,7 @@
         <div id="message-pane" class="widget-form-pane active" role="tabpanel" aria-labelledby="message-tab">
             <p class="widget-lead" data-translate-key="widget_message_lead">A note about a role, a project, or a question. I read every one.</p>
             <form id="message-form" novalidate>
+                <div class="form-fields">
                 <div class="form-group">
                     <label for="sender-name" data-translate-key="form_label_name">Name</label>
                     <input type="text" id="sender-name" name="name" required minlength="2" aria-describedby="sender-name-error">
@@ -627,7 +628,7 @@
                 </div>
                 <div class="form-group">
                     <label for="sender-message" data-translate-key="form_label_message">Message</label>
-                    <textarea id="sender-message" name="message" rows="4" required minlength="10" aria-describedby="sender-message-error"></textarea>
+                    <textarea id="sender-message" name="message" rows="2" required minlength="10" aria-describedby="sender-message-error"></textarea>
                     <div id="sender-message-error" class="error-message" role="alert"></div>
                 </div>
                 <div class="form-group">
@@ -638,6 +639,7 @@
                         <span data-translate-key="form_button_attach">Attach File</span>
                     </label>
                     <div id="file-upload-status" class="text-gray-500 dark:text-gray-400" aria-live="polite"></div>
+                </div>
                 </div>
                 <button id="send-message-btn" type="submit" class="submit-btn" disabled>
                     <span class="btn-text" data-translate-key="form_button_send">Send Message</span>
@@ -691,19 +693,22 @@
     </div>
 </div>
 <div id="tour-overlay"></div>
-<div id="tour-tooltip" role="dialog" aria-labelledby="tour-title" aria-describedby="tour-description">
-    <div id="tour-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Demo progress">
+<div id="tour-tooltip" role="dialog" aria-modal="false" aria-labelledby="tour-step-label tour-title" aria-describedby="tour-description" tabindex="-1" aria-hidden="true">
+    <div id="tour-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Step progress">
         <div id="tour-progress-fill"></div>
     </div>
     <div id="tour-tooltip-content">
+        <span id="tour-step-label" class="sr-only"></span>
         <h3 id="tour-title" class="text-lg font-bold"></h3>
+        <div id="tour-clip" class="tour-clip" hidden aria-hidden="true"></div>
         <p id="tour-description" class="text-sm mt-2 mb-4"></p>
         <div class="flex justify-between items-center mt-4">
-            <span id="tour-step-counter" class="text-xs text-gray-400 dark:text-gray-500"></span>
+            <span id="tour-step-counter" class="text-xs"></span>
             <div class="flex items-center space-x-3">
                 <button id="tour-close-btn" class="text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-300" data-translate-key="tour_close">Close</button>
                 <button id="tour-back-btn" class="text-sm font-semibold bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 py-1 px-4 rounded-md">Back</button>
                 <button id="tour-next-btn" class="text-sm font-bold bg-cyan-600 hover:bg-cyan-700 text-white py-1 px-4 rounded-md">Next</button>
+                <span id="tour-next-wait" class="sr-only">Available when this step finishes.</span>
             </div>
         </div>
     </div>

@@ -389,6 +389,15 @@
         }, 80);
     }
 
+    function follow(apply) {
+        root.addEventListener('storage', (event) => {
+            if (!event || event.key !== STORAGE_KEY || !event.newValue) return;
+            const next = normalize(event.newValue);
+            if (!next || typeof apply !== 'function') return;
+            apply(next);
+        });
+    }
+
     function selectLanguage(nextLang) {
         const next = persist(nextLang);
         const url = new URL(root.location.href);
@@ -427,6 +436,7 @@
         forceMachine,
         loadWidget,
         selectLanguage,
+        follow,
         refreshTranslation,
         needsReload
     };

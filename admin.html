@@ -390,6 +390,19 @@
 
 
     <script src="js/site-i18n.js"></script>
+    <script>
+        if (window.SiteI18n) {
+            SiteI18n.resolve().then(function (lang) {
+                document.documentElement.lang = lang || 'en';
+                SiteI18n.loadWidget();
+                SiteI18n.applyMachineTranslate(lang);
+            });
+            SiteI18n.follow(function (lang) {
+                document.documentElement.lang = lang || 'en';
+                SiteI18n.applyMachineTranslate(lang);
+            });
+        }
+    </script>
     <script src="js/cv-data.js"></script>
     <script type="module">
     // Firebase Imports

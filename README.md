@@ -2,9 +2,9 @@
 
 ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) ![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase&logoColor=white) ![Cypress](https://img.shields.io/badge/cypress-%2317202C.svg?style=for-the-badge&logo=cypress&logoColor=white) ![Playwright](https://img.shields.io/badge/playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white) ![Robot Framework](https://img.shields.io/badge/robot%20framework-000000?style=for-the-badge&logo=robot-framework&logoColor=white)
 
-This repository is the source for a multilingual interactive CV, a four-agent SDLC studio, a visitor-facing regression lab, and a Firebase admin panel. GitHub Pages publishes `main`.
+This repository is the source for a multilingual interactive CV, a four-agent SDLC studio, a visitor-facing regression lab, and a Firebase admin panel. GitHub Pages publishes `main` at the custom domain.
 
-**Live Demo:** [**https://kaanmuar.github.io/**](https://kaanmuar.github.io/)
+**Live site:** [**https://carlosandmunoz.com/**](https://carlosandmunoz.com/)
 
 ---
 
@@ -20,32 +20,35 @@ The page is markup, SEO, and JSON-LD. Content is `js/cv-data.js` (toolkit, exper
 * **Languages:** Native UI for **English, Spanish, Portuguese, German, French, and Italian**, plus machine translation for other languages. Set the language from the menu or `?lang=es`.
 * **Core competency filters:** Each sidebar competency is a button. Related toolkit skills, timeline roles, experience, and certifications stay sharp; everything else dims. Click the same competency again, **Reset Filters**, or anywhere outside a match to restore the full CV. Deep links: `?topic=qa` or `?competency=qa`.
 * **Toolkit and radar:** A skill tag filters experience and timeline (every selected skill must match). Radar labels such as **QA & Automation** apply the same competency focus and select the related toolkit skills.
-* **Guided tour:** First visit (or **How this Online CV works**) walks the photo, controls, glance, competencies, toolkit, timeline, experience, and the rest of the page. Next stays disabled until the step demo finishes.
+* **Guided tour:** First visit (or **How this Online CV works**) walks the photo, controls, language, studio, lab, glance, competencies, toolkit, experience, education, and the contact widget. Each step pulses the control. The tour card is a dialog: focus moves into it, the step title and instructions are text, Escape closes it, and Left/Right move between steps once Next is available. The same card is on the studio and the lab. Cases `A11Y-04`, `A11Y-05`, and `A11Y-06` cover those three cards.
 * **Harbor theme:** Light is the default. The theme toggle persists and stays in sync with the studio and QA lab.
 * **Phone layout:** A sticky mobile toolbar holds theme, language, print, studio, and lab. Desktop header controls stay hidden under the `md` breakpoint.
 * **Export:** PDF, JPG, DOC, JSON, and TXT.
 * **Contact and ratings:** The floating widget sends a message (optional attachment up to 5MB) or a rating to Firestore.
 * **Testimonials:** Approved public ratings and admin replies render from Firestore.
-* **SEO and analytics:** Person and competency JSON-LD (each competency has a `?topic=` URL), `hreflang`, canonical, and Google Analytics events for filters, tour, language, and export.
+* **SEO and analytics:** Person JSON-LD, a ProfessionalService offer (`#qa-practice`) for contract, freelance, advisory, and mentoring, and competency JSON-LD (each competency has a `?topic=` URL). The visible offer line is `#engagement-offer`. Also `hreflang`, canonical on `carlosandmunoz.com`, and Google Analytics events for filters, tour, language, and export.
 
 ### SDLC studio (`simulador.html`)
 
-A four-agent sprint board (Jira, Xray / TestRail, automation lab, release) launched from the CV. It shares the Harbor theme and has its own guided tour (`hasSeenStudioTour`).
+A four-agent sprint launched from the CV: Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. The first agent asks which board — **Jira**, **Azure DevOps**, **Monday.com**, **Trello**, **Linear**, or **Asana** — and six PayStream stories render in that layout (3-D Secure, captures, accessibility, settlement, EU refunds, webhook signatures). Later views are **Zephyr Scale**, **Xray**, or **TestRail**, then the runners you leave on (Playwright, Cypress, Robot, and optionally Selenium, WebdriverIO, and Appium), then release sign-off. **Runners** on the right edge slides in a case list and that runner’s console while the scripts run. **Pace** on the top bar is 0.5s to 2.0s. **Report** opens the sprint file: English by default, another language if you pick one, graphs included, then download or print with the QA lab mark. It shares the Harbor theme and has its own guided tour (`hasSeenStudioTour`): board, four agents, run, pace, tickets, the native runner logs, the report, the agent log, and the lab. A pulse marks each step. The **Four agents** step plays the same 4-second agent clip as the CV tour.
 
 ### CV regression lab (`qa-lab.html`)
 
-The same cases the public suites cover, runnable in the browser against an iframe of the CV. Each case links to its source on GitHub.
+The same cases the public suites cover, runnable in the browser against an iframe of the CV, studio, or admin page. Each case links to its source on GitHub.
 
 * **Watch** is the default so the visitor sees the actions. **Background** hides the iframe and keeps the log.
 * Pace holds are **0.5s, 1.0s, 1.5s, and 2.0s**.
 * The catalog scrolls the running case into view. **Dashboard** opens as a splash (close, Escape, or backdrop).
 * Filters include Smoke, Functional, Security, A11y, Admin, Studio, and Mobile.
-* A lab tour (`hasSeenLabTour`) walks the catalog and filters.
+* **Report** opens the file options before anything is printed. English is the default language. Graphs, case lines, and the runner comparison are included. Saved runs can be selected, downloaded, printed, or compared.
+* **Runners** on the right edge splits the native view: case list on the left, that runner’s console on the right.
+* A lab tour (`hasSeenLabTour`) walks the catalog, filters, scripts, language, suite repo, sprint studio, indicators, pace, watch or background, runners, run, the live page, the native runner logs, the report file, the dashboard, and how to open the tour again. A pulse marks each step. **Live system under test** plays a 4-second clip of checks turning green.
 
 ### Admin panel (`admin.html`)
 
 * **Firebase Authentication** (email/password). The page is `noindex` and omitted from `sitemap.xml`. `robots.txt` disallows `/admin.html`, `/cypress/`, and `/tests/`.
 * Real-time inbox, ratings, search, private or public replies, testimonial approval, sender blocking, and a Chart.js stats view.
+* **CV editor:** Signed-in edits for profile, about, career, toolkit, education, share, and display. Publish writes Firestore `cvContent/live`. The public CV shows that document only with `?cvpreview=1`.
 
 ---
 
@@ -55,7 +58,7 @@ The same cases the public suites cover, runnable in the browser against an ifram
 | :------------ | :------------------------------------------------------ |
 | **Frontend** | `HTML5`, `CSS3`, `Vanilla JavaScript (ES6 modules)`, `Tailwind CSS v4`, `Chart.js` |
 | **Backend** | `Firebase (Authentication, Firestore, Storage)` |
-| **Testing** | `Playwright`, `Cypress`, `Robot Framework`, in-browser runner in `js/qa-lab.js` |
+| **Testing** | `Playwright`, `Cypress`, `Robot Framework`, plus in-browser Selenium, WebdriverIO, and Appium views in `js/qa-lab.js` |
 | **Analytics** | `Google Analytics` (`js/site-analytics.js`) |
 
 ---
@@ -64,7 +67,7 @@ The same cases the public suites cover, runnable in the browser against an ifram
 
 `npm test` runs Playwright and Cypress. `npm run test:full` also runs Robot. Playwright starts a local static server on port `8765` when one is not already running.
 
-The catalog on [qa-lab.html](https://kaanmuar.github.io/qa-lab.html) lists every case and links to the suite file on `main`.
+The catalog on [qa-lab.html](https://carlosandmunoz.com/qa-lab.html) lists every case and links to the suite file on `main`.
 
 * Playwright: [`tests/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests)
 * Cypress: [`cypress/e2e/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/cypress/e2e)
@@ -148,7 +151,7 @@ npm run build:css
 2. Put the `firebaseConfig` object in `js/cv-app.js` and `admin.html`.
 3. Enable **Firestore** (production mode), **Authentication → Email/Password**, and **Storage**.
 4. Create the admin user under **Authentication → Users**.
-5. Paste `firestore.rules` into **Firestore → Rules**.
+5. In **Firestore → Rules**, allow the collections the pages use (`messages`, `ratings`, `testimonials`, `visits`, `blocked_senders`, and `cvContent`). `cvContent` is public read and signed-in write. This repo does not include a rules file.
 6. If the testimonials query asks for a composite index, open the console link from the browser error and create it.
 
 </details>
@@ -165,9 +168,10 @@ npm run build:css
 ├── js/
 │   ├── cv-data.js          # Skills, experience, native dictionaries
 │   ├── cv-app.js           # CV behavior and Firestore
+│   ├── cv-editor.js        # Admin CV editor (cvContent/live)
 │   ├── site-theme.js       # Shared light/dark theme
 │   ├── site-i18n.js        # Language menu and machine translation
-│   ├── site-tour.js        # Shared tour overlay (lab and studio)
+│   ├── site-tour.js        # Shared tour pulse (lab and studio)
 │   ├── site-analytics.js   # GA helper
 │   └── qa-lab.js           # Lab catalog, source links, runner
 ├── simulador.html          # 4-agent SDLC studio
