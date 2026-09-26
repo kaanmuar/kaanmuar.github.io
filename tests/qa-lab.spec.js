@@ -11,7 +11,7 @@ test.describe('CV regression lab', () => {
   test('lists the catalog with where/when/how for a case', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /The suite I run on this CV/i })).toBeVisible();
     await expect(page.locator('.case-row').first()).toBeVisible();
-    await expect(page.locator('.case-row')).toHaveCount(53);
+    await expect(page.locator('.case-row')).toHaveCount(66);
     await expect(page.locator('#case-detail')).toContainText('Where');
     await expect(page.locator('#case-detail')).toContainText('When');
     await expect(page.locator('#case-detail')).toContainText('How');
@@ -30,6 +30,15 @@ test.describe('CV regression lab', () => {
     await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /FN-23/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /FN-28/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /FN-29/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /STU-04/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /FN-33/ })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'Robot' })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'Appium' })).toBeVisible();
+    await expect(page.locator('#fw-picker input')).toHaveCount(6);
+    await expect(page.locator('#runner-edge')).toBeVisible();
+    await expect(page.locator('#fw-ask')).toBeHidden();
+    await expect(page.locator('#view-slider')).toBeVisible();
     await expect(page.getByRole('button', { name: /STU-03/ })).toBeVisible();
     const chip = await page.locator('#case-detail .src-link').first().boundingBox();
     expect(chip.height).toBeLessThan(28);

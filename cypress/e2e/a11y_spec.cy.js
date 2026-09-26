@@ -3,7 +3,7 @@ describe('Accessibility', () => {
     cy.visitCV();
     cy.injectAxe();
     cy.checkA11y(
-      { exclude: ['#contact-widget', '#tour-tooltip', '.skiptranslate'] },
+      { exclude: ['#contact-widget', '.skiptranslate'] },
       { includedImpacts: ['critical', 'serious'], rules: { 'color-contrast': { enabled: false } } }
     );
   });
@@ -22,6 +22,42 @@ describe('Accessibility', () => {
   it('profile photo has an accessible name', () => {
     cy.visitCV();
     cy.get('#profile-photo').should('have.attr', 'alt').and('not.be.empty');
+  });
+
+  it('CV tour card is a labelled dialog and takes focus', () => {
+    cy.visitCV();
+    cy.get('#tour-start-btn').first().click();
+    cy.get('#tour-tooltip').should('be.visible').and('have.attr', 'role', 'dialog').and('have.focus');
+    cy.get('#tour-title').invoke('text').should('not.be.empty');
+    cy.get('#tour-description').invoke('text').should('not.be.empty');
+    cy.get('#tour-close-btn').should('contain', 'Close');
+    cy.get('#tour-tooltip').trigger('keydown', { key: 'Escape', bubbles: true });
+    cy.get('#tour-tooltip').should('not.be.visible');
+  });
+
+  it('studio tour card is a labelled dialog and takes focus', () => {
+    cy.visit('/simulador.html', { onBeforeLoad(win) { win.sessionStorage.setItem('hasSeenStudioTour', 'true'); } });
+    cy.get('#tour-start-btn').click();
+    cy.get('#site-tour-tooltip').should('be.visible').and('have.attr', 'role', 'dialog').and('have.focus');
+    cy.get('#site-tour-title').should('have.text', 'Sprint views');
+    cy.get('#site-tour-body').invoke('text').should('not.be.empty');
+    cy.get('#site-tour-tooltip').trigger('keydown', { key: 'Escape', bubbles: true });
+    cy.get('#site-tour-tooltip').should('not.be.visible');
+  });
+
+  it('lab tour card is a labelled dialog and takes focus', () => {
+    cy.visit('/qa-lab.html', {
+      onBeforeLoad(win) {
+        win.sessionStorage.setItem('hasSeenLabTour', 'true');
+        win.sessionStorage.setItem('qa-lab-fw-asked', '1');
+      }
+    });
+    cy.get('#tour-start-btn').click();
+    cy.get('#site-tour-tooltip').should('be.visible').and('have.attr', 'role', 'dialog').and('have.focus');
+    cy.get('#site-tour-title').should('have.text', 'The catalog');
+    cy.get('#site-tour-body').invoke('text').should('not.be.empty');
+    cy.get('#site-tour-tooltip').trigger('keydown', { key: 'Escape', bubbles: true });
+    cy.get('#site-tour-tooltip').should('not.be.visible');
   });
 
   it('admin login fields are labeled', () => {

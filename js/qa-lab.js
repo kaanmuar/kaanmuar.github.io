@@ -209,24 +209,20 @@
     },
     {
       id: 'FN-02', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
-      title: 'Language switch EN → ES → EN',
+      title: 'Language switch to a random language, then back',
       where: '#language-selector / #language-options [data-lang]',
-      when: 'After opening the language menu and choosing a code.',
-      how: '[data-translate-key=summary_title] contains Resumen then Professional Summary.',
+      when: 'After a native language chosen at random.',
+      how: 'The summary title matches that language, then the language that was on screen at the start is restored.',
       async run({ cv }) {
-        const sel = cv.document.getElementById('language-selector');
-        sel.click();
-        const es = cv.document.querySelector('#language-options .lang-option[data-lang="es"]');
-        assert(es, 'Spanish option missing');
-        es.click();
-        await wait(200);
-        const title = cv.document.querySelector('[data-translate-key="summary_title"]');
-        assert(/Resumen/i.test(title.textContent), 'Spanish summary title missing');
-        sel.click();
-        cv.document.querySelector('#language-options .lang-option[data-lang="en"]').click();
-        await wait(200);
-        assert(/Professional Summary/i.test(title.textContent), 'English summary title missing');
-        return title.textContent.trim();
+        const original = currentLang(cv);
+        const chosen = shuffle(NATIVE_LANGS.filter((code) => code !== original))[0];
+        try {
+          const title = await chooseLang(cv, chosen);
+          return chosen + ' · ' + title;
+        } finally {
+          if (currentLang(cv) !== original) await chooseLang(cv, original);
+          assert(currentLang(cv) === original, 'did not return to ' + original);
+        }
       }
     },
     {
@@ -687,13 +683,13 @@
     {
       id: 'A11Y-01', layer: 'Accessibility', fw: ['Playwright', 'Cypress'],
       title: 'No serious WCAG 2 A/AA axe findings (overlays excluded)',
-      where: 'CV document except #contact-widget, #tour-tooltip, .skiptranslate',
+      where: 'CV document except #contact-widget and .skiptranslate. The tour card is checked in A11Y-04 while it is open.',
       when: 'After load, axe-core 4.10 injected into the iframe.',
       how: 'Zero violations with impact serious or critical, color-contrast off (same as CI).',
       async run({ cv }) {
         await injectAxe(cv.window, cv.document);
         const results = await cv.window.axe.run(
-          { exclude: [['#contact-widget'], ['#tour-tooltip'], ['.skiptranslate']] },
+          { exclude: [['#contact-widget'], ['.skiptranslate']] },
           { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa'] }, rules: { 'color-contrast': { enabled: false } } }
         );
         const serious = results.violations.filter((v) => ['serious', 'critical'].includes(v.impact));
@@ -726,6 +722,66 @@
         const alt = cv.document.getElementById('profile-photo').getAttribute('alt') || '';
         assert(alt.length > 0, 'profile alt empty');
         return alt;
+      }
+    },
+    {
+      id: 'A11Y-04', layer: 'Accessibility', fw: ['Playwright', 'Cypress'],
+      title: 'CV tour card is a labelled dialog and takes keyboard focus',
+      where: '#tour-tooltip, #tour-title, #tour-description, #tour-close-btn',
+      when: 'How this Online CV works is opened.',
+      how: 'The card is a dialog, focus is inside it, the step title and instructions are text, and Escape closes it.',
+      async run({ cv }) {
+        const start = [...cv.document.querySelectorAll('#tour-start-btn')].find((el) => el.offsetParent !== null) || cv.document.getElementById('tour-start-btn');
+        start.click();
+        const tip = cv.document.getElementById('tour-tooltip');
+        const shown = Date.now();
+        while (!tip.classList.contains('visible') && Date.now() - shown < 3000) await wait(50);
+        assert(tip.getAttribute('role') === 'dialog', 'tour card is not a dialog');
+        assert(tip === cv.document.activeElement, 'focus did not move to the tour card');
+        assert(cv.document.getElementById('tour-title').textContent.trim().length > 0, 'tour title empty');
+        assert(cv.document.getElementById('tour-description').textContent.trim().length > 0, 'tour instructions empty');
+        cv.document.body.dispatchEvent(new cv.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        assert(!tip.classList.contains('visible'), 'Escape did not close the tour');
+        return 'dialog focused, then closed';
+      }
+    },
+    {
+      id: 'A11Y-05', layer: 'Accessibility', fw: ['Playwright', 'Cypress'],
+      title: 'Studio tour card is a labelled dialog and takes keyboard focus',
+      where: 'simulador.html #site-tour-tooltip',
+      when: 'How this studio works is opened.',
+      how: 'The card is a dialog, focus is inside it, the step has a title and instructions, and Escape closes it.',
+      async run({ loadCv }) {
+        const studio = await loadCv('simulador.html');
+        studio.document.getElementById('tour-start-btn').click();
+        const tip = studio.document.getElementById('site-tour-tooltip');
+        const shown = Date.now();
+        while (shown && (!tip || tip.offsetParent === null) && Date.now() - shown < 2000) await wait(40);
+        assert(tip && tip.getAttribute('role') === 'dialog', 'studio tour card is not a dialog');
+        assert(studio.document.activeElement === tip, 'focus did not move to the studio tour');
+        assert(studio.document.getElementById('site-tour-title').textContent.trim() === 'Sprint views', 'first studio step missing');
+        assert(studio.document.getElementById('site-tour-body').textContent.trim().length > 0, 'studio instructions empty');
+        studio.document.dispatchEvent(new studio.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        assert(!studio.document.documentElement.classList.contains('site-tour-on'), 'Escape did not close the studio tour');
+        return 'studio dialog focused, then closed';
+      }
+    },
+    {
+      id: 'A11Y-06', layer: 'Accessibility', fw: ['Playwright', 'Cypress'],
+      title: 'Lab tour card is a labelled dialog and takes keyboard focus',
+      where: 'qa-lab.html #site-tour-tooltip',
+      when: 'How this lab works is opened.',
+      how: 'The card is a dialog, focus is inside it, the catalog step has instructions, and Escape closes it.',
+      async run() {
+        document.getElementById('tour-start-btn').click();
+        const tip = document.getElementById('site-tour-tooltip');
+        assert(tip && tip.getAttribute('role') === 'dialog', 'lab tour card is not a dialog');
+        assert(document.activeElement === tip, 'focus did not move to the lab tour');
+        assert(document.getElementById('site-tour-title').textContent.trim() === 'The catalog', 'first lab step missing');
+        assert(document.getElementById('site-tour-body').textContent.trim().length > 0, 'lab instructions empty');
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        assert(!document.documentElement.classList.contains('site-tour-on'), 'Escape did not close the lab tour');
+        return 'lab dialog focused, then closed';
       }
     },
     {
@@ -1134,6 +1190,178 @@
           if (currentLang(cv) !== original) await chooseLang(cv, original);
         }
       }
+    },
+    {
+      id: 'FN-29', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'Send Message stays inside the contact panel',
+      where: '#contact-widget-fab, #contact-widget, #send-message-btn',
+      when: 'After the contact widget opens on a laptop-height page.',
+      how: 'The send control’s box sits inside the widget, not past its bottom edge.',
+      async run({ cv }) {
+        cv.document.getElementById('contact-widget-fab').click();
+        await wait(60);
+        const widget = cv.document.getElementById('contact-widget');
+        const send = cv.document.getElementById('send-message-btn');
+        const wr = widget.getBoundingClientRect();
+        const sr = send.getBoundingClientRect();
+        assert(sr.height > 0, 'send button has no box');
+        assert(sr.top >= wr.top - 1, 'send button is above the widget');
+        assert(sr.bottom <= wr.bottom + 1, 'send button sits below the widget');
+        cv.document.getElementById('widget-close-btn').click();
+        return 'send button inside the panel';
+      }
+    },
+    {
+      id: 'FN-30', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'Tour Back returns to the previous step',
+      where: '#tour-start-btn, #tour-next-btn, #tour-back-btn',
+      when: 'After Next advances the CV tour.',
+      how: 'Back shows step 1 again, then Close hides the tooltip.',
+      async run({ cv }) {
+        const start = [...cv.document.querySelectorAll('#tour-start-btn')].find((el) => el.offsetParent !== null) || cv.document.getElementById('tour-start-btn');
+        start.click();
+        const tip = cv.document.getElementById('tour-tooltip');
+        const shown = Date.now();
+        while (!tip.classList.contains('visible') && Date.now() - shown < 3000) await wait(50);
+        const next = cv.document.getElementById('tour-next-btn');
+        const startWait = Date.now();
+        while (next.disabled && Date.now() - startWait < 16000) await wait(200);
+        next.click();
+        const counter = cv.document.getElementById('tour-step-counter');
+        const advanced = Date.now();
+        while (!/2\s*\//.test(counter.textContent) && Date.now() - advanced < 3000) await wait(50);
+        cv.document.getElementById('tour-back-btn').click();
+        const backed = Date.now();
+        while (!/1\s*\//.test(counter.textContent) && Date.now() - backed < 3000) await wait(50);
+        assert(/1\s*\//.test(counter.textContent), 'Back did not return to step 1');
+        cv.document.getElementById('tour-close-btn').click();
+        return 'Back restored step 1';
+      }
+    },
+    {
+      id: 'FN-31', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'The CV states the contract and advisory offer',
+      where: '#engagement-offer',
+      when: 'CV first paint.',
+      how: 'The offer paragraph is present and names contract work.',
+      async run({ cv }) {
+        const offer = cv.document.getElementById('engagement-offer');
+        assert(offer, 'engagement offer missing');
+        assert(/contract/i.test(offer.textContent), 'offer does not mention contract');
+        return 'offer visible';
+      }
+    },
+    {
+      id: 'FN-32', layer: 'Functional', fw: ['Playwright'],
+      title: 'Lab asks which runners to use and remembers the tour',
+      where: 'qa-lab.html #fw-picker, #runner-deck, #view-slider; js/site-tour.js',
+      when: 'Static parse of the lab page and the shared tour.',
+      how: 'The framework ask, native runner deck, and watch slider are in the page. A finished tour is stored in localStorage.',
+      async run() {
+        const html = await fetchText('qa-lab.html');
+        const tour = await fetchText('js/site-tour.js');
+        assert(html.includes('id="fw-picker"'), 'framework picker missing');
+        assert(html.includes('id="fw-ask"'), 'framework ask missing');
+        assert(html.includes('id="runner-drawer"'), 'native runner view missing');
+        assert(html.includes('id="view-slider"'), 'watch switch missing');
+        assert(html.includes('QA LAB · CARLOS MUÑOZ') || html.includes('QA LAB'), 'report watermark missing');
+        assert(html.includes('id="suite-repo"'), 'suite repo control missing');
+        assert(html.includes('id="studio-link"'), 'sprint studio control missing');
+        assert(tour.includes('localStorage.setItem(key, \'true\')'), 'finished tour is not remembered');
+        return 'picker, runners, slider, remembered tour';
+      }
+    },
+    {
+      id: 'STU-04', layer: 'Studio', fw: ['Playwright', 'Cypress'],
+      title: 'Studio asks which board the sprint should use',
+      where: 'simulador.html BOARDS',
+      when: 'Static parse of the studio script.',
+      how: 'Jira, Azure DevOps, Monday.com, Trello, Linear, and Asana are offered.',
+      async run() {
+        const html = await fetchText('simulador.html');
+        ['Jira', 'Azure DevOps', 'Monday.com', 'Trello', 'Linear', 'Asana'].forEach((name) => {
+          assert(html.includes(name), name + ' board missing');
+        });
+        assert(html.includes('data-board'), 'board choice missing');
+        return 'six boards offered';
+      }
+    },
+    {
+      id: 'FN-33', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'Rate CV offers five stars',
+      where: '#contact-widget-fab, #rating-tab, #star-rating',
+      when: 'After opening the contact widget and the Rate CV pane.',
+      how: 'Five stars are shown. Choosing the fifth sets the rating to 5. The widget closes.',
+      async run({ cv }) {
+        cv.document.getElementById('contact-widget-fab').click();
+        await wait(40);
+        cv.document.getElementById('rating-tab').click();
+        const stars = cv.document.querySelectorAll('#star-rating .star');
+        assert(stars.length === 5, 'expected five stars, saw ' + stars.length);
+        stars[4].click();
+        assert(cv.document.getElementById('rating-value').value === '5', 'rating value is not 5');
+        cv.document.getElementById('widget-close-btn').click();
+        return 'five stars, fifth selected';
+      }
+    },
+    {
+      id: 'STU-05', layer: 'Studio', fw: ['Playwright', 'Cypress'],
+      title: 'Studio slides a runner console in from the right',
+      where: 'simulador.html #runner-edge #runner-drawer',
+      when: 'Static parse of the studio page.',
+      how: 'A Runners edge opens a drawer split into the case list and that runner’s console.',
+      async run() {
+        const html = await fetchText('simulador.html');
+        assert(html.includes('id="runner-edge"'), 'runner edge missing');
+        assert(html.includes('id="runner-drawer"'), 'runner drawer missing');
+        assert(html.includes('runner-cases'), 'case list missing');
+        assert(html.includes('runner-console'), 'runner console missing');
+        return 'studio runner drawer';
+      }
+    },
+    {
+      id: 'STU-06', layer: 'Studio', fw: ['Playwright', 'Cypress'],
+      title: 'Studio report stays English until a language is chosen',
+      where: 'simulador.html #studio-report-open #studio-report-lang',
+      when: 'Static parse of the studio page.',
+      how: 'Report opens a preview with graphs, and English is the selected language.',
+      async run() {
+        const html = await fetchText('simulador.html');
+        assert(html.includes('id="studio-report-open"'), 'report button missing');
+        assert(html.includes('id="studio-report-lang"'), 'report language missing');
+        assert(html.includes('value="en" selected'), 'English is not the default report language');
+        assert(html.includes('id="studio-opt-graphs"'), 'graph option missing');
+        return 'studio report options';
+      }
+    },
+    {
+      id: 'STU-07', layer: 'Studio', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Sprint board holds six stories including refunds and webhooks',
+      where: 'simulador.html TICKETS',
+      when: 'Static parse of the studio script.',
+      how: 'PAY-241, PAY-246, PAY-251, PAY-255, PAY-260, and PAY-264 are on the board.',
+      async run() {
+        const html = await fetchText('simulador.html');
+        ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264'].forEach((key) => {
+          assert(html.includes("key: '" + key + "'"), key + ' missing');
+        });
+        return 'six sprint stories';
+      }
+    },
+    {
+      id: 'FN-34', layer: 'Functional', fw: ['Playwright'],
+      title: 'Lab report opens in English with graphs',
+      where: 'qa-lab.html #report-open #report-lang #opt-graphs',
+      when: 'Static parse of the lab page.',
+      how: 'Report is present, English is selected, and the graphs option is checked.',
+      async run() {
+        const html = await fetchText('qa-lab.html');
+        assert(html.includes('id="report-open"'), 'report button missing');
+        assert(html.includes('id="report-lang"'), 'report language missing');
+        assert(html.includes('value="en" selected'), 'English is not the default report language');
+        assert(html.includes('id="opt-graphs" checked'), 'graphs are not on by default');
+        return 'lab report options';
+      }
     }
   ];
 
@@ -1146,9 +1374,11 @@
     'FN-07': 298, 'FN-08': 313, 'FN-09': 328, 'FN-10': 341, 'FN-11': 353, 'FN-12': 366,
     'FN-13': 379, 'FN-14': 399,
     'FN-23': 917, 'FN-24': 937, 'FN-25': 956, 'FN-26': 997, 'FN-27': 1020, 'FN-28': 1045,
+    'FN-29': 1139, 'FN-30': 1159, 'FN-31': 1186, 'FN-32': 1199, 'FN-33': 1228, 'FN-34': 1292,
+    'STU-04': 1217, 'STU-05': 1248, 'STU-06': 1263, 'STU-07': 1278,
     'SEC-01': 426, 'SEC-02': 441, 'SEC-03': 458, 'SEC-04': 470, 'SEC-05': 487, 'SEC-06': 500,
     'SEC-07': 516, 'SEC-08': 530,
-    'A11Y-01': 547, 'A11Y-02': 564, 'A11Y-03': 576,
+    'A11Y-01': 684, 'A11Y-02': 701, 'A11Y-03': 713, 'A11Y-04': 728, 'A11Y-05': 749, 'A11Y-06': 770,
     'ADM-01': 591, 'ADM-02': 604, 'ADM-03': 617,
     'STU-01': 630, 'STU-02': 643, 'STU-03': 658,
     'MOB-01': 500, 'MOB-02': 518, 'MOB-03': 532, 'MOB-04': 553, 'MOB-05': 570, 'MOB-06': 588
@@ -1189,9 +1419,12 @@
     'A11Y-01': { Playwright: ['tests/a11y.spec.js', 5], Cypress: ['cypress/e2e/a11y_spec.cy.js', 2] },
     'A11Y-02': { Playwright: ['tests/a11y.spec.js', 12], Cypress: ['cypress/e2e/a11y_spec.cy.js', 11] },
     'A11Y-03': { Playwright: ['tests/a11y.spec.js', 18], Cypress: ['cypress/e2e/a11y_spec.cy.js', 17] },
+    'A11Y-04': { Playwright: ['tests/a11y.spec.js', 30], Cypress: ['cypress/e2e/a11y_spec.cy.js', 27] },
+    'A11Y-05': { Playwright: ['tests/a11y.spec.js', 48], Cypress: ['cypress/e2e/a11y_spec.cy.js', 37] },
+    'A11Y-06': { Playwright: ['tests/a11y.spec.js', 62], Cypress: ['cypress/e2e/a11y_spec.cy.js', 48] },
     'ADM-01': { Playwright: ['tests/admin.spec.js', 9], Cypress: ['cypress/e2e/admin_spec.cy.js', 18], Robot: ['tests/robot/security_admin.robot', 6] },
     'ADM-02': { Playwright: ['tests/admin.spec.js', 17], Cypress: ['cypress/e2e/admin_spec.cy.js', 24] },
-    'ADM-03': { Playwright: ['tests/a11y.spec.js', 30], Cypress: ['cypress/e2e/a11y_spec.cy.js', 27] },
+    'ADM-03': { Playwright: ['tests/a11y.spec.js', 79], Cypress: ['cypress/e2e/a11y_spec.cy.js', 63] },
     'STU-01': { Playwright: ['tests/simulator.spec.js', 9], Cypress: ['cypress/e2e/simulator_spec.cy.js', 10], Robot: ['tests/robot/security_admin.robot', 38] },
     'STU-02': { Playwright: ['tests/simulator.spec.js', 26], Cypress: ['cypress/e2e/simulator_spec.cy.js', 27] },
     'STU-03': { Playwright: ['tests/simulator.spec.js', 42], Cypress: ['cypress/e2e/simulator_spec.cy.js', 36], Robot: ['tests/robot/mobile_suite.robot', 20] },
@@ -1210,22 +1443,50 @@
   const FW_TREE = {
     Playwright: 'tests',
     Cypress: 'cypress/e2e',
-    Robot: 'tests/robot'
+    Robot: 'tests/robot',
+    Selenium: 'js/qa-lab.js',
+    WebDriverIO: 'js/qa-lab.js',
+    Appium: 'js/qa-lab.js'
   };
+
+  const ALL_FW = ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'Appium'];
+  const FW_KEY = 'qa-lab-frameworks';
+
+  function runnersFor(c) {
+    const list = c.fw.slice();
+    if (c.layer === 'Mobile') {
+      if (!list.includes('Appium')) list.push('Appium');
+    } else if (list.includes('Playwright')) {
+      if (!list.includes('Selenium')) list.push('Selenium');
+      if (!list.includes('WebDriverIO')) list.push('WebDriverIO');
+    }
+    return list;
+  }
+
+  function readFrameworks() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(FW_KEY) || 'null');
+      if (Array.isArray(saved) && saved.length) return saved.filter((name) => ALL_FW.includes(name));
+    } catch (err) { /* ignore */ }
+    return ALL_FW.slice();
+  }
 
   const FW_MARK = {
     Lab: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.4 10.6 3.8 8l-1.1 1.1 3.7 3.7 7-7-1.1-1.1z"/></svg>',
     Playwright: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2.2 11.6 8 1.8l5.8 9.8H2.2zm5.8-6.2 2.6 4.4H5.4L8 5.4z"/></svg>',
     Cypress: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.4a6.6 6.6 0 1 0 0 13.2A6.6 6.6 0 0 0 8 1.4zm0 1.6c1.8 1.5 2.8 3.2 2.8 5s-1 3.5-2.8 5c-1.8-1.5-2.8-3.2-2.8-5s1-3.5 2.8-5z"/></svg>',
-    Robot: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M7.2 1.6h1.6V3h1.8A1.6 1.6 0 0 1 12.2 4.6v4.2A1.6 1.6 0 0 1 10.6 10.4H5.4A1.6 1.6 0 0 1 3.8 8.8V4.6A1.6 1.6 0 0 1 5.4 3h1.8V1.6zM6 6.1a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zm4 0a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zM6.2 12h3.6v1.4H6.2z"/></svg>'
+    Robot: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M7.2 1.6h1.6V3h1.8A1.6 1.6 0 0 1 12.2 4.6v4.2A1.6 1.6 0 0 1 10.6 10.4H5.4A1.6 1.6 0 0 1 3.8 8.8V4.6A1.6 1.6 0 0 1 5.4 3h1.8V1.6zM6 6.1a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zm4 0a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zM6.2 12h3.6v1.4H6.2z"/></svg>',
+    Selenium: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 2.2 4.4v7.2L8 14.8l5.8-3.2V4.4L8 1.2zm0 2.1 3.6 2v4.2L8 11.5 4.4 9.5V5.3L8 3.3z"/></svg>',
+    WebDriverIO: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 3.2h12v1.6H2zm0 4h8v1.6H2zm0 4h10v1.6H2z"/></svg>',
+    Appium: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5 1.4h6v1.2H5zM4 3.2h8a1 1 0 0 1 1 1v8.2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4.2a1 1 0 0 1 1-1zm3 9.2h2v.8H7z"/></svg>'
   };
 
   function sourceEntries(c) {
     const items = [{ label: 'Lab', href: blob('js/qa-lab.js', LAB_LINE[c.id]) }];
     const row = SRC[c.id] || {};
-    ['Playwright', 'Cypress', 'Robot'].forEach((fw) => {
-      if (!c.fw.includes(fw)) return;
+    runnersFor(c).forEach((fw) => {
       if (row[fw]) items.push({ label: fw, href: blob(row[fw][0], row[fw][1]) });
+      else if (LAB_LINE[c.id] && (fw === 'Selenium' || fw === 'WebDriverIO' || fw === 'Appium')) items.push({ label: fw, href: blob('js/qa-lab.js', LAB_LINE[c.id]) });
       else items.push({ label: fw, href: REPO + '/tree/' + BRANCH + '/' + FW_TREE[fw] });
     });
     return items;
@@ -1277,7 +1538,587 @@
   function writeHistory(entry) {
     const list = readHistory();
     list.push(entry);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(-12)));
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(-24)));
+    } catch (err) { /* ignore quota */ }
+  }
+
+  function escHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function formatWhen(ts) {
+    try {
+      return new Date(ts).toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    } catch (err) {
+      return String(ts);
+    }
+  }
+
+  function runKey(run) {
+    return run && (run.id || String(run.ts));
+  }
+
+  function meter(pct, color) {
+    const n = Math.max(0, Math.min(100, Math.round(pct || 0)));
+    return '<div class="h-meter" aria-hidden="true"><span style="width:' + n + '%;background:' + (color || '#0d6e76') + '"></span></div>';
+  }
+
+  function caseMeta(id) {
+    return CASES.find((item) => item.id === id) || { id: id, title: id, layer: '', where: '', when: '', how: '' };
+  }
+
+  function analyzeRuns(runs) {
+    const ordered = runs.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const withCases = ordered.filter((run) => Array.isArray(run.cases) && run.cases.length);
+    const ids = [];
+    withCases.forEach((run) => run.cases.forEach((row) => { if (!ids.includes(row.id)) ids.push(row.id); }));
+    const matrix = ids.map((id) => {
+      const meta = caseMeta(id);
+      const cells = ordered.map((run) => (run.cases || []).find((row) => row.id === id) || null);
+      const present = cells.filter(Boolean);
+      const first = present[0];
+      const last = present[present.length - 1];
+      const passes = present.filter((row) => row.ok).length;
+      const fails = present.length - passes;
+      let verdict = 'partial';
+      if (present.length >= 2 && first && last && first.ok && !last.ok) verdict = 'regression';
+      else if (present.length >= 2 && first && last && !first.ok && last.ok) verdict = 'fixed';
+      else if (passes && fails) verdict = 'flaky';
+      else if (present.length === ordered.length && fails === 0) verdict = 'stable pass';
+      else if (present.length === ordered.length && passes === 0) verdict = 'stable fail';
+      else if (present.length === 1) verdict = last && last.ok ? 'pass' : 'fail';
+      return {
+        id,
+        title: meta.title,
+        layer: (last && last.layer) || meta.layer || '',
+        where: meta.where || '',
+        how: meta.how || '',
+        cells,
+        verdict,
+        delta: first && last ? (last.ms || 0) - (first.ms || 0) : 0,
+        note: (last && last.note) || ''
+      };
+    });
+    const rates = ordered.map((run) => Number(run.rate) || 0);
+    const durations = ordered.map((run) => Number(run.ms) || 0).filter((ms) => ms > 0);
+    const mean = (list) => (list.length ? Math.round(list.reduce((sum, n) => sum + n, 0) / list.length) : 0);
+    const best = ordered.slice().sort((a, b) => (b.rate || 0) - (a.rate || 0) || (a.ms || 0) - (b.ms || 0))[0];
+    const weakest = ordered.slice().sort((a, b) => (a.rate || 0) - (b.rate || 0) || (b.ms || 0) - (a.ms || 0))[0];
+    const fastest = durations.length ? ordered.filter((run) => run.ms).slice().sort((a, b) => a.ms - b.ms)[0] : null;
+    const slowest = durations.length ? ordered.filter((run) => run.ms).slice().sort((a, b) => b.ms - a.ms)[0] : null;
+    const first = ordered[0];
+    const latest = ordered[ordered.length - 1];
+    const layers = [];
+    matrix.forEach((row) => { if (row.layer && !layers.includes(row.layer)) layers.push(row.layer); });
+    return {
+      ordered,
+      matrix,
+      layers,
+      meanRate: mean(rates),
+      meanMs: mean(durations),
+      spread: rates.length ? Math.max(...rates) - Math.min(...rates) : 0,
+      change: ordered.length > 1 ? (latest.rate || 0) - (first.rate || 0) : 0,
+      best,
+      weakest,
+      fastest,
+      slowest,
+      regressions: matrix.filter((row) => row.verdict === 'regression'),
+      fixes: matrix.filter((row) => row.verdict === 'fixed'),
+      flaky: matrix.filter((row) => row.verdict === 'flaky'),
+      stablePass: matrix.filter((row) => row.verdict === 'stable pass'),
+      stableFail: matrix.filter((row) => row.verdict === 'stable fail')
+    };
+  }
+
+  function runnerStats(run) {
+    const names = run.runners && run.runners.length ? run.runners : [];
+    return names.map((name) => {
+      const ran = (run.cases || []).filter((row) => {
+        const meta = caseMeta(row.id);
+        return runnersFor(meta).includes(name);
+      });
+      const passed = ran.filter((row) => row.ok).length;
+      const avg = ran.length ? Math.round(ran.reduce((sum, row) => sum + (row.ms || 0), 0) / ran.length) : 0;
+      return { name, ran: ran.length, passed, avg, rate: ran.length ? Math.round((passed / ran.length) * 100) : 0 };
+    });
+  }
+
+  const REPORT_LANG_KEY = 'qa-lab-report-lang';
+  const REPORT_LANGS = ['en', 'es', 'pt', 'de', 'fr', 'it'];
+  const REPORT_EN = {
+    docTitle: 'QA Lab report · Carlos Muñoz',
+    title: 'CV regression lab',
+    produced: 'Produced by the QA lab of Carlos Muñoz',
+    environment: 'Environment',
+    runners: 'Runners',
+    graphs: 'Graphs',
+    passRate: 'Pass rate',
+    passRateCap: 'Passed and failed in this session',
+    byType: 'Cases by type',
+    byTypeCap: 'Count of cases in the published suite',
+    byRunner: 'Cases mirrored in each runner',
+    byRunnerCap: 'Cases shown for the runners left on',
+    fwPerf: 'Runner performance',
+    fwPerfCap: 'Same browser run. A lower average is the faster runner this session.',
+    slowest: 'Slowest checks (ms)',
+    slowestCap: 'Wall time inside this browser',
+    historyRate: 'Pass rate across saved runs',
+    historyCap: 'Saved in this browser',
+    historyEmpty: 'No saved runs in this browser yet.',
+    runnerComparison: 'Runner comparison',
+    tied: 'Averages match because this is one browser run. Each bar only includes the cases that runner mirrors.',
+    fastestLead: 'was fastest this session at',
+    msAverage: 'ms average',
+    mirroredOnly: 'mirrored · run the catalog to compare speed',
+    passedOf: 'passed',
+    colId: 'ID', colTitle: 'Title', colResult: 'Result', colMs: 'ms', colEvidence: 'Evidence',
+    colType: 'Type', colWhere: 'Where', colHow: 'How',
+    pass: 'PASSED', fail: 'FAILED',
+    security: 'Security mark: QA Lab · Carlos A. Muñoz',
+    footer: 'Produced by the QA lab of Carlos Muñoz · https://carlosandmunoz.com · not a third-party certificate',
+    empty: 'Run the suite to generate case lines. Saved runs can still be included from history.',
+    selectedRuns: 'Selected runs',
+    durationMissing: 'duration not stored',
+    pace: 'Pace', view: 'View', watch: 'Watch', background: 'Background', origin: 'Origin',
+    noCaseLines: 'Case lines were not stored for this run.',
+    analysis: 'Run analysis', caseLines: 'case lines', indicators: 'Indicators',
+    runsCompared: 'Runs compared', meanPass: 'Mean pass rate', bestPass: 'Best pass rate',
+    weakestPass: 'Weakest pass rate', passChange: 'Pass-rate change', passSpread: 'Pass-rate spread',
+    meanDuration: 'Mean duration', fastestRun: 'Fastest run', slowestRun: 'Slowest run',
+    regressions: 'Regressions', fixes: 'Fixes', flaky: 'Flaky cases',
+    stablePass: 'Stable passes', stableFail: 'Stable failures',
+    runIndex: 'Run index', run: 'Run', when: 'When', rate: 'Rate', duration: 'Duration',
+    movement: 'Movement',
+    noRegression: 'No case passed earlier and failed in the latest of these runs.',
+    noFix: 'No case failed earlier and passed in the latest of these runs.',
+    noFlaky: 'No case both passed and failed across these runs.',
+    runnersEach: 'Runners on each run',
+    runnersNote: 'Times are this browser’s wall clock. A bar counts the cases that runner mirrors inside that run.',
+    runnersMissing: 'runners were not stored for this run.',
+    caseIndex: 'Case index', verdict: 'Verdict', delta: 'Δ ms', latestEvidence: 'Latest evidence',
+    whereHow: 'Where and how',
+    olderOnly: 'These runs have totals only. New runs store every case.',
+    noStored: 'No case lines stored.',
+    typeNeed: 'Type totals need case lines. Older runs stored only the pass rate.',
+    noHistory: 'Select at least one saved run in Run history.',
+    pt: 'pt',
+    verdicts: {
+      regression: 'regression', fixed: 'fixed', flaky: 'flaky', 'stable pass': 'stable pass',
+      'stable fail': 'stable fail', partial: 'partial', pass: 'pass', fail: 'fail'
+    }
+  };
+  const REPORT_EXTRA = {
+    es: {
+      docTitle: 'Informe del laboratorio QA · Carlos Muñoz', title: 'Laboratorio de regresión del CV',
+      produced: 'Producido por el laboratorio QA de Carlos Muñoz', environment: 'Entorno', runners: 'Ejecutores',
+      graphs: 'Gráficas', passRate: 'Tasa de éxito', passRateCap: 'Aprobados y fallidos en esta sesión',
+      byType: 'Casos por tipo', byTypeCap: 'Cantidad de casos de la suite publicada',
+      byRunner: 'Casos reflejados en cada ejecutor', byRunnerCap: 'Casos de los ejecutores que dejaste activos',
+      fwPerf: 'Rendimiento de los ejecutores', fwPerfCap: 'La misma ejecución en el navegador. El promedio más bajo es el ejecutor más rápido.',
+      slowest: 'Comprobaciones más lentas (ms)', slowestCap: 'Tiempo real dentro de este navegador',
+      historyRate: 'Tasa de éxito de las ejecuciones guardadas', historyCap: 'Guardado en este navegador',
+      historyEmpty: 'Aún no hay ejecuciones guardadas en este navegador.',
+      runnerComparison: 'Comparación de ejecutores',
+      tied: 'Los promedios coinciden porque es una sola ejecución en el navegador. Cada barra incluye solo los casos que ese ejecutor refleja.',
+      fastestLead: 'fue el más rápido en esta sesión, con', msAverage: 'ms de promedio',
+      mirroredOnly: 'reflejados · ejecuta el catálogo para comparar la velocidad',
+      passedOf: 'aprobados', colTitle: 'Título', colResult: 'Resultado', colEvidence: 'Evidencia',
+      colType: 'Tipo', colWhere: 'Dónde', colHow: 'Cómo', pass: 'APROBADO', fail: 'FALLIDO',
+      security: 'Marca de seguridad: QA Lab · Carlos A. Muñoz',
+      footer: 'Producido por el laboratorio QA de Carlos Muñoz · https://carlosandmunoz.com · no es un certificado de un tercero',
+      empty: 'Ejecuta la suite para generar las líneas de casos. Las ejecuciones guardadas se pueden incluir desde el historial.',
+      selectedRuns: 'Ejecuciones seleccionadas', durationMissing: 'duración no guardada',
+      pace: 'Ritmo', view: 'Vista', watch: 'Ver', background: 'Segundo plano', origin: 'Origen',
+      noCaseLines: 'Esta ejecución no guardó las líneas de casos.',
+      analysis: 'Análisis de ejecuciones', caseLines: 'líneas de casos', indicators: 'Indicadores',
+      runsCompared: 'Ejecuciones comparadas', meanPass: 'Tasa media de éxito', bestPass: 'Mejor tasa de éxito',
+      weakestPass: 'Peor tasa de éxito', passChange: 'Cambio de la tasa', passSpread: 'Amplitud de la tasa',
+      meanDuration: 'Duración media', fastestRun: 'Ejecución más rápida', slowestRun: 'Ejecución más lenta',
+      regressions: 'Regresiones', fixes: 'Correcciones', flaky: 'Casos inestables',
+      stablePass: 'Aprobados estables', stableFail: 'Fallos estables',
+      runIndex: 'Índice de ejecuciones', run: 'Ejecución', when: 'Cuándo', rate: 'Tasa', duration: 'Duración',
+      movement: 'Movimiento',
+      noRegression: 'Ningún caso pasó antes y falló en la última de estas ejecuciones.',
+      noFix: 'Ningún caso falló antes y pasó en la última de estas ejecuciones.',
+      noFlaky: 'Ningún caso pasó y falló a la vez en estas ejecuciones.',
+      runnersEach: 'Ejecutores en cada ejecución',
+      runnersNote: 'Los tiempos son el reloj de este navegador. Cada barra cuenta los casos que ese ejecutor refleja en esa ejecución.',
+      runnersMissing: 'esta ejecución no guardó los ejecutores.',
+      caseIndex: 'Índice de casos', verdict: 'Veredicto', latestEvidence: 'Última evidencia',
+      whereHow: 'Dónde y cómo',
+      olderOnly: 'Estas ejecuciones solo tienen totales. Las nuevas guardan cada caso.',
+      noStored: 'No hay líneas de casos guardadas.',
+      typeNeed: 'Los totales por tipo necesitan líneas de casos. Las ejecuciones antiguas solo guardaron la tasa.',
+      noHistory: 'Selecciona al menos una ejecución guardada en el historial.',
+      verdicts: { regression: 'regresión', fixed: 'corregido', flaky: 'inestable', 'stable pass': 'aprobado estable', 'stable fail': 'fallo estable', partial: 'parcial', pass: 'aprobado', fail: 'fallo' }
+    },
+    pt: {
+      docTitle: 'Relatório do laboratório QA · Carlos Muñoz', title: 'Laboratório de regressão do CV',
+      produced: 'Produzido pelo laboratório QA de Carlos Muñoz', environment: 'Ambiente', runners: 'Executores',
+      graphs: 'Gráficos', passRate: 'Taxa de aprovação', passRateCap: 'Aprovados e reprovados nesta sessão',
+      byType: 'Casos por tipo', byTypeCap: 'Quantidade de casos da suíte publicada',
+      byRunner: 'Casos espelhados em cada executor', byRunnerCap: 'Casos dos executores deixados ativos',
+      fwPerf: 'Desempenho dos executores', fwPerfCap: 'A mesma execução no navegador. A média menor é o executor mais rápido.',
+      slowest: 'Verificações mais lentas (ms)', slowestCap: 'Tempo real neste navegador',
+      historyRate: 'Taxa de aprovação das execuções salvas', historyCap: 'Salvo neste navegador',
+      historyEmpty: 'Ainda não há execuções salvas neste navegador.',
+      runnerComparison: 'Comparação dos executores',
+      tied: 'As médias coincidem porque esta é uma única execução no navegador. Cada barra inclui só os casos que aquele executor espelha.',
+      fastestLead: 'foi o mais rápido nesta sessão, com', msAverage: 'ms de média',
+      mirroredOnly: 'espelhados · execute o catálogo para comparar a velocidade',
+      passedOf: 'aprovados', colTitle: 'Título', colResult: 'Resultado', colEvidence: 'Evidência',
+      colType: 'Tipo', colWhere: 'Onde', colHow: 'Como', pass: 'APROVADO', fail: 'REPROVADO',
+      security: 'Marca de segurança: QA Lab · Carlos A. Muñoz',
+      footer: 'Produzido pelo laboratório QA de Carlos Muñoz · https://carlosandmunoz.com · não é um certificado de terceiros',
+      empty: 'Execute a suíte para gerar as linhas dos casos. Execuções salvas ainda podem entrar pelo histórico.',
+      selectedRuns: 'Execuções selecionadas', durationMissing: 'duração não salva',
+      pace: 'Ritmo', view: 'Vista', watch: 'Assistir', background: 'Segundo plano', origin: 'Origem',
+      noCaseLines: 'Esta execução não salvou as linhas dos casos.',
+      analysis: 'Análise das execuções', caseLines: 'linhas de casos', indicators: 'Indicadores',
+      runsCompared: 'Execuções comparadas', meanPass: 'Taxa média de aprovação', bestPass: 'Melhor taxa de aprovação',
+      weakestPass: 'Pior taxa de aprovação', passChange: 'Variação da taxa', passSpread: 'Amplitude da taxa',
+      meanDuration: 'Duração média', fastestRun: 'Execução mais rápida', slowestRun: 'Execução mais lenta',
+      regressions: 'Regressões', fixes: 'Correções', flaky: 'Casos instáveis',
+      stablePass: 'Aprovações estáveis', stableFail: 'Falhas estáveis',
+      runIndex: 'Índice de execuções', run: 'Execução', when: 'Quando', rate: 'Taxa', duration: 'Duração',
+      movement: 'Movimento',
+      noRegression: 'Nenhum caso passou antes e falhou na última destas execuções.',
+      noFix: 'Nenhum caso falhou antes e passou na última destas execuções.',
+      noFlaky: 'Nenhum caso passou e falhou ao longo destas execuções.',
+      runnersEach: 'Executores em cada execução',
+      runnersNote: 'Os tempos são o relógio deste navegador. Cada barra conta os casos que aquele executor espelha na execução.',
+      runnersMissing: 'esta execução não salvou os executores.',
+      caseIndex: 'Índice de casos', verdict: 'Veredito', latestEvidence: 'Última evidência',
+      whereHow: 'Onde e como',
+      olderOnly: 'Estas execuções só têm totais. As novas guardam cada caso.',
+      noStored: 'Não há linhas de casos guardadas.',
+      typeNeed: 'Os totais por tipo precisam das linhas dos casos. Execuções antigas só guardaram a taxa.',
+      noHistory: 'Selecione pelo menos uma execução salva no histórico.',
+      verdicts: { regression: 'regressão', fixed: 'corrigido', flaky: 'instável', 'stable pass': 'aprovação estável', 'stable fail': 'falha estável', partial: 'parcial', pass: 'aprovado', fail: 'falha' }
+    },
+    de: {
+      docTitle: 'QA-Laborbericht · Carlos Muñoz', title: 'CV-Regressionslabor',
+      produced: 'Erstellt vom QA-Labor von Carlos Muñoz', environment: 'Umgebung', runners: 'Runner',
+      graphs: 'Diagramme', passRate: 'Bestehensquote', passRateCap: 'Bestanden und fehlgeschlagen in dieser Sitzung',
+      byType: 'Fälle nach Typ', byTypeCap: 'Anzahl der Fälle in der veröffentlichten Suite',
+      byRunner: 'Fälle je Runner', byRunnerCap: 'Fälle der aktiv gelassenen Runner',
+      fwPerf: 'Runner-Leistung', fwPerfCap: 'Derselbe Lauf im Browser. Der niedrigere Mittelwert ist der schnellere Runner.',
+      slowest: 'Langsamste Prüfungen (ms)', slowestCap: 'Laufzeit in diesem Browser',
+      historyRate: 'Bestehensquote der gespeicherten Läufe', historyCap: 'In diesem Browser gespeichert',
+      historyEmpty: 'In diesem Browser sind noch keine Läufe gespeichert.',
+      runnerComparison: 'Runner-Vergleich',
+      tied: 'Die Mittelwerte sind gleich, weil es ein Browserlauf ist. Jeder Balken zählt nur die Fälle, die dieser Runner spiegelt.',
+      fastestLead: 'war in dieser Sitzung am schnellsten mit', msAverage: 'ms im Mittel',
+      mirroredOnly: 'gespiegelt · Katalog ausführen, um die Geschwindigkeit zu vergleichen',
+      passedOf: 'bestanden', colTitle: 'Titel', colResult: 'Ergebnis', colEvidence: 'Nachweis',
+      colType: 'Typ', colWhere: 'Wo', colHow: 'Wie', pass: 'BESTANDEN', fail: 'FEHLGESCHLAGEN',
+      security: 'Sicherheitszeichen: QA Lab · Carlos A. Muñoz',
+      footer: 'Erstellt vom QA-Labor von Carlos Muñoz · https://carlosandmunoz.com · kein Zertifikat eines Dritten',
+      empty: 'Führen Sie die Suite aus, um Fallzeilen zu erzeugen. Gespeicherte Läufe können aus dem Verlauf dazukommen.',
+      selectedRuns: 'Ausgewählte Läufe', durationMissing: 'Dauer nicht gespeichert',
+      pace: 'Tempo', view: 'Ansicht', watch: 'Zuschauen', background: 'Hintergrund', origin: 'Ursprung',
+      noCaseLines: 'Für diesen Lauf wurden keine Fallzeilen gespeichert.',
+      analysis: 'Laufanalyse', caseLines: 'Fallzeilen', indicators: 'Kennzahlen',
+      runsCompared: 'Verglichene Läufe', meanPass: 'Mittlere Bestehensquote', bestPass: 'Beste Bestehensquote',
+      weakestPass: 'Schwächste Bestehensquote', passChange: 'Änderung der Quote', passSpread: 'Spanne der Quote',
+      meanDuration: 'Mittlere Dauer', fastestRun: 'Schnellster Lauf', slowestRun: 'Langsamster Lauf',
+      regressions: 'Regressionen', fixes: 'Behobene Fälle', flaky: 'Instabile Fälle',
+      stablePass: 'Stabil bestanden', stableFail: 'Stabil fehlgeschlagen',
+      runIndex: 'Laufindex', run: 'Lauf', when: 'Wann', rate: 'Quote', duration: 'Dauer',
+      movement: 'Veränderung',
+      noRegression: 'Kein Fall bestand früher und schlug im letzten dieser Läufe fehl.',
+      noFix: 'Kein Fall schlug früher fehl und bestand im letzten dieser Läufe.',
+      noFlaky: 'Kein Fall bestand und schlug über diese Läufe hinweg fehl.',
+      runnersEach: 'Runner je Lauf',
+      runnersNote: 'Die Zeiten sind die Uhr dieses Browsers. Ein Balken zählt die Fälle, die der Runner in diesem Lauf spiegelt.',
+      runnersMissing: 'für diesen Lauf wurden keine Runner gespeichert.',
+      caseIndex: 'Fallindex', verdict: 'Urteil', latestEvidence: 'Letzter Nachweis',
+      whereHow: 'Wo und wie',
+      olderOnly: 'Diese Läufe haben nur Summen. Neue Läufe speichern jeden Fall.',
+      noStored: 'Keine Fallzeilen gespeichert.',
+      typeNeed: 'Typ-Summen brauchen Fallzeilen. Ältere Läufe speicherten nur die Quote.',
+      noHistory: 'Wählen Sie mindestens einen gespeicherten Lauf im Verlauf.',
+      verdicts: { regression: 'Regression', fixed: 'behoben', flaky: 'instabil', 'stable pass': 'stabil bestanden', 'stable fail': 'stabil fehlgeschlagen', partial: 'teilweise', pass: 'bestanden', fail: 'fehlgeschlagen' }
+    },
+    fr: {
+      docTitle: 'Rapport du laboratoire QA · Carlos Muñoz', title: 'Laboratoire de régression du CV',
+      produced: 'Produit par le laboratoire QA de Carlos Muñoz', environment: 'Environnement', runners: 'Exécuteurs',
+      graphs: 'Graphiques', passRate: 'Taux de réussite', passRateCap: 'Réussis et échoués dans cette session',
+      byType: 'Cas par type', byTypeCap: 'Nombre de cas de la suite publiée',
+      byRunner: 'Cas reflétés par chaque exécuteur', byRunnerCap: 'Cas des exécuteurs laissés actifs',
+      fwPerf: 'Performance des exécuteurs', fwPerfCap: 'La même exécution dans le navigateur. La moyenne la plus basse est l’exécuteur le plus rapide.',
+      slowest: 'Contrôles les plus lents (ms)', slowestCap: 'Temps réel dans ce navigateur',
+      historyRate: 'Taux de réussite des exécutions enregistrées', historyCap: 'Enregistré dans ce navigateur',
+      historyEmpty: 'Aucune exécution enregistrée dans ce navigateur.',
+      runnerComparison: 'Comparaison des exécuteurs',
+      tied: 'Les moyennes se valent parce qu’il s’agit d’une seule exécution dans le navigateur. Chaque barre ne compte que les cas que cet exécuteur reflète.',
+      fastestLead: 'a été le plus rapide cette session, à', msAverage: 'ms en moyenne',
+      mirroredOnly: 'reflétés · lancez le catalogue pour comparer la vitesse',
+      passedOf: 'réussis', colTitle: 'Titre', colResult: 'Résultat', colEvidence: 'Preuve',
+      colType: 'Type', colWhere: 'Où', colHow: 'Comment', pass: 'RÉUSSI', fail: 'ÉCHOUÉ',
+      security: 'Marque de sécurité : QA Lab · Carlos A. Muñoz',
+      footer: 'Produit par le laboratoire QA de Carlos Muñoz · https://carlosandmunoz.com · pas un certificat tiers',
+      empty: 'Lancez la suite pour produire les lignes de cas. Les exécutions enregistrées peuvent encore être ajoutées depuis l’historique.',
+      selectedRuns: 'Exécutions sélectionnées', durationMissing: 'durée non enregistrée',
+      pace: 'Rythme', view: 'Vue', watch: 'Regarder', background: 'Arrière-plan', origin: 'Origine',
+      noCaseLines: 'Les lignes de cas n’ont pas été enregistrées pour cette exécution.',
+      analysis: 'Analyse des exécutions', caseLines: 'lignes de cas', indicators: 'Indicateurs',
+      runsCompared: 'Exécutions comparées', meanPass: 'Taux moyen de réussite', bestPass: 'Meilleur taux de réussite',
+      weakestPass: 'Taux de réussite le plus faible', passChange: 'Écart du taux', passSpread: 'Amplitude du taux',
+      meanDuration: 'Durée moyenne', fastestRun: 'Exécution la plus rapide', slowestRun: 'Exécution la plus lente',
+      regressions: 'Régressions', fixes: 'Corrections', flaky: 'Cas instables',
+      stablePass: 'Réussites stables', stableFail: 'Échecs stables',
+      runIndex: 'Index des exécutions', run: 'Exécution', when: 'Quand', rate: 'Taux', duration: 'Durée',
+      movement: 'Mouvement',
+      noRegression: 'Aucun cas n’a réussi plus tôt puis échoué dans la dernière de ces exécutions.',
+      noFix: 'Aucun cas n’a échoué plus tôt puis réussi dans la dernière de ces exécutions.',
+      noFlaky: 'Aucun cas n’a à la fois réussi et échoué sur ces exécutions.',
+      runnersEach: 'Exécuteurs de chaque exécution',
+      runnersNote: 'Les temps sont l’horloge de ce navigateur. Une barre compte les cas que l’exécuteur reflète dans cette exécution.',
+      runnersMissing: 'les exécuteurs n’ont pas été enregistrés pour cette exécution.',
+      caseIndex: 'Index des cas', verdict: 'Verdict', latestEvidence: 'Dernière preuve',
+      whereHow: 'Où et comment',
+      olderOnly: 'Ces exécutions n’ont que des totaux. Les nouvelles enregistrent chaque cas.',
+      noStored: 'Aucune ligne de cas enregistrée.',
+      typeNeed: 'Les totaux par type exigent les lignes de cas. Les anciennes exécutions n’ont gardé que le taux.',
+      noHistory: 'Sélectionnez au moins une exécution enregistrée dans l’historique.',
+      verdicts: { regression: 'régression', fixed: 'corrigé', flaky: 'instable', 'stable pass': 'réussite stable', 'stable fail': 'échec stable', partial: 'partiel', pass: 'réussi', fail: 'échec' }
+    },
+    it: {
+      docTitle: 'Report del laboratorio QA · Carlos Muñoz', title: 'Laboratorio di regressione del CV',
+      produced: 'Prodotto dal laboratorio QA di Carlos Muñoz', environment: 'Ambiente', runners: 'Esecutori',
+      graphs: 'Grafici', passRate: 'Tasso di superamento', passRateCap: 'Superati e falliti in questa sessione',
+      byType: 'Casi per tipo', byTypeCap: 'Numero di casi della suite pubblicata',
+      byRunner: 'Casi rispecchiati da ogni esecutore', byRunnerCap: 'Casi degli esecutori lasciati attivi',
+      fwPerf: 'Prestazioni degli esecutori', fwPerfCap: 'La stessa esecuzione nel browser. La media più bassa è l’esecutore più veloce.',
+      slowest: 'Controlli più lenti (ms)', slowestCap: 'Tempo reale in questo browser',
+      historyRate: 'Tasso di superamento delle esecuzioni salvate', historyCap: 'Salvato in questo browser',
+      historyEmpty: 'Nessuna esecuzione salvata in questo browser.',
+      runnerComparison: 'Confronto degli esecutori',
+      tied: 'Le medie coincidono perché è una sola esecuzione nel browser. Ogni barra include solo i casi che quell’esecutore rispecchia.',
+      fastestLead: 'è stato il più veloce in questa sessione, con', msAverage: 'ms di media',
+      mirroredOnly: 'rispecchiati · esegui il catalogo per confrontare la velocità',
+      passedOf: 'superati', colTitle: 'Titolo', colResult: 'Risultato', colEvidence: 'Evidenza',
+      colType: 'Tipo', colWhere: 'Dove', colHow: 'Come', pass: 'SUPERATO', fail: 'FALLITO',
+      security: 'Marchio di sicurezza: QA Lab · Carlos A. Muñoz',
+      footer: 'Prodotto dal laboratorio QA di Carlos Muñoz · https://carlosandmunoz.com · non è un certificato di terzi',
+      empty: 'Esegui la suite per generare le righe dei casi. Le esecuzioni salvate si possono includere dalla cronologia.',
+      selectedRuns: 'Esecuzioni selezionate', durationMissing: 'durata non salvata',
+      pace: 'Ritmo', view: 'Vista', watch: 'Guarda', background: 'Sfondo', origin: 'Origine',
+      noCaseLines: 'Per questa esecuzione non sono state salvate le righe dei casi.',
+      analysis: 'Analisi delle esecuzioni', caseLines: 'righe dei casi', indicators: 'Indicatori',
+      runsCompared: 'Esecuzioni confrontate', meanPass: 'Tasso medio di superamento', bestPass: 'Miglior tasso di superamento',
+      weakestPass: 'Tasso di superamento più basso', passChange: 'Variazione del tasso', passSpread: 'Ampiezza del tasso',
+      meanDuration: 'Durata media', fastestRun: 'Esecuzione più veloce', slowestRun: 'Esecuzione più lenta',
+      regressions: 'Regressioni', fixes: 'Correzioni', flaky: 'Casi instabili',
+      stablePass: 'Superamenti stabili', stableFail: 'Fallimenti stabili',
+      runIndex: 'Indice delle esecuzioni', run: 'Esecuzione', when: 'Quando', rate: 'Tasso', duration: 'Durata',
+      movement: 'Movimento',
+      noRegression: 'Nessun caso è passato prima e fallito nell’ultima di queste esecuzioni.',
+      noFix: 'Nessun caso è fallito prima e passato nell’ultima di queste esecuzioni.',
+      noFlaky: 'Nessun caso è sia passato sia fallito in queste esecuzioni.',
+      runnersEach: 'Esecutori di ogni esecuzione',
+      runnersNote: 'I tempi sono l’orologio di questo browser. Una barra conta i casi che l’esecutore rispecchia in quell’esecuzione.',
+      runnersMissing: 'gli esecutori non sono stati salvati per questa esecuzione.',
+      caseIndex: 'Indice dei casi', verdict: 'Verdetto', latestEvidence: 'Ultima evidenza',
+      whereHow: 'Dove e come',
+      olderOnly: 'Queste esecuzioni hanno solo i totali. Quelle nuove salvano ogni caso.',
+      noStored: 'Nessuna riga di caso salvata.',
+      typeNeed: 'I totali per tipo richiedono le righe dei casi. Le esecuzioni vecchie hanno salvato solo il tasso.',
+      noHistory: 'Seleziona almeno un’esecuzione salvata nella cronologia.',
+      verdicts: { regression: 'regressione', fixed: 'corretto', flaky: 'instabile', 'stable pass': 'superamento stabile', 'stable fail': 'fallimento stabile', partial: 'parziale', pass: 'superato', fail: 'fallito' }
+    }
+  };
+
+  function readReportLang() {
+    try {
+      const saved = localStorage.getItem(REPORT_LANG_KEY);
+      if (REPORT_LANGS.includes(saved)) return saved;
+    } catch (err) { /* ignore */ }
+    return 'en';
+  }
+
+  function reportCopy(lang) {
+    const code = REPORT_LANGS.includes(lang) ? lang : 'en';
+    const extra = REPORT_EXTRA[code] || {};
+    return Object.assign({}, REPORT_EN, extra, {
+      verdicts: Object.assign({}, REPORT_EN.verdicts, extra.verdicts || {})
+    });
+  }
+
+  function analysisBody(runs, lang) {
+    const c = reportCopy(lang);
+    const model = analyzeRuns(runs);
+    const kpi = (label, value) => '<article class="card compare-kpi"><b>' + escHtml(value) + '</b><span>' + escHtml(label) + '</span></article>';
+    const signed = (n) => (n > 0 ? '+' : '') + n;
+    const indexRows = model.ordered.map((run) => '<tr><td>' + escHtml(runKey(run)) + '</td><td>' + escHtml(formatWhen(run.ts)) + '</td><td>' + escHtml((run.runners || []).join(', ') || '—') + '</td><td>' + escHtml(run.pace != null ? run.pace + 's' : '—') + '</td><td>' + escHtml(run.view || '—') + '</td><td>' + (run.passed || 0) + '/' + (run.total || 0) + '</td><td>' + (run.rate || 0) + '%</td><td>' + (run.ms ? (run.ms / 1000).toFixed(1) + 's' : '—') + '</td></tr>').join('');
+    const rateBars = model.ordered.map((run) => '<div class="fw-row"><strong>' + escHtml(runKey(run)) + '</strong>' + meter(run.rate || 0, '#0d6e76') + '<span class="fw-meta">' + (run.rate || 0) + '% · ' + (run.passed || 0) + '/' + (run.total || 0) + '</span></div>').join('');
+    const maxMs = Math.max(...model.ordered.map((run) => run.ms || 0), 1);
+    const timeBars = model.ordered.map((run) => '<div class="fw-row"><strong>' + escHtml(runKey(run)) + '</strong>' + meter(((run.ms || 0) / maxMs) * 100, '#08545b') + '<span class="fw-meta">' + (run.ms ? (run.ms / 1000).toFixed(1) + 's' : '—') + '</span></div>').join('');
+    const head = model.ordered.map((run) => '<th>' + escHtml(runKey(run)) + '</th>').join('');
+    const matrixRows = model.matrix.map((row) => {
+      const cells = row.cells.map((cell) => {
+        if (!cell) return '<td class="muted">—</td>';
+        return '<td class="' + (cell.ok ? 'pass' : 'fail') + '">' + (cell.ok ? c.pass : c.fail) + ' · ' + (cell.ms || 0) + 'ms</td>';
+      }).join('');
+      return '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(row.title) + '</td><td>' + escHtml(row.layer) + '</td>' + cells + '<td>' + escHtml(c.verdicts[row.verdict] || row.verdict) + '</td><td>' + signed(row.delta) + 'ms</td><td>' + escHtml(row.note) + '</td></tr>';
+    }).join('');
+    const layerRows = model.layers.map((layer) => {
+      const cells = model.ordered.map((run) => {
+        const rows = (run.cases || []).filter((item) => (item.layer || caseMeta(item.id).layer) === layer);
+        if (!rows.length) return '<td>—</td>';
+        const passed = rows.filter((item) => item.ok).length;
+        return '<td>' + passed + '/' + rows.length + '</td>';
+      }).join('');
+      return '<tr><td>' + escHtml(layer) + '</td>' + cells + '</tr>';
+    }).join('');
+    const runnerBlocks = model.ordered.map((run) => {
+      const stats = runnerStats(run);
+      if (!stats.length) return '<p><strong>' + escHtml(runKey(run)) + '</strong> · ' + escHtml(c.runnersMissing) + '</p>';
+      const lines = stats.map((row) => '<div class="fw-row"><strong>' + escHtml(row.name) + '</strong>' + meter(row.rate, '#0d6e76') + '<span class="fw-meta">' + row.passed + '/' + row.ran + ' ' + escHtml(c.passedOf) + ' · ' + row.rate + '% · avg ' + row.avg + ' ms</span></div>').join('');
+      return '<h4>' + escHtml(runKey(run)) + ' · ' + escHtml(formatWhen(run.ts)) + '</h4><div class="fw-compare">' + lines + '</div>';
+    }).join('');
+    const list = (rows, empty) => (rows.length ? '<ul>' + rows.map((row) => '<li><strong>' + escHtml(row.id) + '</strong> ' + escHtml(row.title) + ' · ' + escHtml(row.note) + '</li>').join('') + '</ul>' : '<p class="muted">' + empty + '</p>');
+    const from = formatWhen(model.ordered[0].ts);
+    const to = formatWhen(model.ordered[model.ordered.length - 1].ts);
+    const payload = {
+      producedBy: 'QA lab of Carlos Muñoz',
+      site: 'https://carlosandmunoz.com',
+      runs: model.ordered.map((run) => ({
+        id: runKey(run), ts: run.ts, rate: run.rate || 0, passed: run.passed || 0, failed: run.failed || 0,
+        total: run.total || 0, ms: run.ms || 0, pace: run.pace, view: run.view, origin: run.origin || '',
+        runners: run.runners || [], cases: run.cases || []
+      })),
+      indicators: {
+        runs: model.ordered.length,
+        meanPassRate: model.meanRate,
+        passRateSpread: model.spread,
+        passRateChange: model.change,
+        meanDurationMs: model.meanMs,
+        bestRun: model.best ? runKey(model.best) : '',
+        weakestRun: model.weakest ? runKey(model.weakest) : '',
+        regressions: model.regressions.map((row) => row.id),
+        fixes: model.fixes.map((row) => row.id),
+        flaky: model.flaky.map((row) => row.id),
+        stablePass: model.stablePass.map((row) => row.id),
+        stableFail: model.stableFail.map((row) => row.id)
+      }
+    };
+    return `
+      <p><strong>${escHtml(c.analysis)}</strong> · ${escHtml(from)} → ${escHtml(to)}<br>
+      ${escHtml(c.produced)} · carlosandmunoz.com<br>
+      ${model.ordered.length} · ${escHtml(c.caseLines)} ${model.matrix.length}</p>
+      <h3>${escHtml(c.indicators)}</h3>
+      <div class="compare-kpis">
+        ${kpi(c.runsCompared, model.ordered.length)}
+        ${kpi(c.meanPass, model.meanRate + '%')}
+        ${kpi(c.bestPass, (model.best ? model.best.rate : 0) + '%')}
+        ${kpi(c.weakestPass, (model.weakest ? model.weakest.rate : 0) + '%')}
+        ${kpi(c.passChange, signed(model.change) + ' ' + c.pt)}
+        ${kpi(c.passSpread, model.spread + ' ' + c.pt)}
+        ${kpi(c.meanDuration, model.meanMs ? (model.meanMs / 1000).toFixed(1) + 's' : '—')}
+        ${kpi(c.fastestRun, model.fastest ? (model.fastest.ms / 1000).toFixed(1) + 's' : '—')}
+        ${kpi(c.slowestRun, model.slowest ? (model.slowest.ms / 1000).toFixed(1) + 's' : '—')}
+        ${kpi(c.regressions, model.regressions.length)}
+        ${kpi(c.fixes, model.fixes.length)}
+        ${kpi(c.flaky, model.flaky.length)}
+        ${kpi(c.stablePass, model.stablePass.length)}
+        ${kpi(c.stableFail, model.stableFail.length)}
+      </div>
+      <h3>${escHtml(c.runIndex)}</h3>
+      <div class="matrix-wrap"><table>
+        <thead><tr><th>${escHtml(c.run)}</th><th>${escHtml(c.when)}</th><th>${escHtml(c.runners)}</th><th>${escHtml(c.pace)}</th><th>${escHtml(c.view)}</th><th>${escHtml(c.pass)}</th><th>${escHtml(c.rate)}</th><th>${escHtml(c.duration)}</th></tr></thead>
+        <tbody>${indexRows}</tbody>
+      </table></div>
+      <h3>${escHtml(c.passRate)}</h3>
+      <div class="fw-compare">${rateBars}</div>
+      <h3>${escHtml(c.duration)}</h3>
+      <div class="fw-compare">${timeBars}</div>
+      <h3>${escHtml(c.movement)}</h3>
+      <h4>${escHtml(c.regressions)}</h4>${list(model.regressions, c.noRegression)}
+      <h4>${escHtml(c.fixes)}</h4>${list(model.fixes, c.noFix)}
+      <h4>${escHtml(c.flaky)}</h4>${list(model.flaky, c.noFlaky)}
+      <h3>${escHtml(c.byType)}</h3>
+      <div class="matrix-wrap"><table>
+        <thead><tr><th>${escHtml(c.colType)}</th>${head}</tr></thead>
+        <tbody>${layerRows || '<tr><td colspan="' + (model.ordered.length + 1) + '">' + escHtml(c.typeNeed) + '</td></tr>'}</tbody>
+      </table></div>
+      <h3>${escHtml(c.runnersEach)}</h3>
+      <p class="muted">${escHtml(c.runnersNote)}</p>
+      ${runnerBlocks}
+      <h3>${escHtml(c.caseIndex)}</h3>
+      <div class="matrix-wrap"><table>
+        <thead><tr><th>${escHtml(c.colId)}</th><th>${escHtml(c.colTitle)}</th><th>${escHtml(c.colType)}</th>${head}<th>${escHtml(c.verdict)}</th><th>${escHtml(c.delta)}</th><th>${escHtml(c.latestEvidence)}</th></tr></thead>
+        <tbody>${matrixRows || '<tr><td colspan="6">' + escHtml(c.olderOnly) + '</td></tr>'}</tbody>
+      </table></div>
+      <h3>${escHtml(c.whereHow)}</h3>
+      <div class="matrix-wrap"><table>
+        <thead><tr><th>${escHtml(c.colId)}</th><th>${escHtml(c.colWhere)}</th><th>${escHtml(c.colHow)}</th></tr></thead>
+        <tbody>${model.matrix.map((row) => '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(row.where) + '</td><td>' + escHtml(row.how) + '</td></tr>').join('') || '<tr><td colspan="3">' + escHtml(c.noStored) + '</td></tr>'}</tbody>
+      </table></div>
+      <script type="application/json" id="qa-lab-analysis">${JSON.stringify(payload).replace(/</g, '\\u003c')}</script>`;
+  }
+
+  function runsBody(runs, lang) {
+    const c = reportCopy(lang);
+    const ordered = runs.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const index = ordered.map((run) => '<li><a href="#run-' + escHtml(runKey(run)) + '">' + escHtml(runKey(run)) + '</a> · ' + escHtml(formatWhen(run.ts)) + ' · ' + (run.passed || 0) + '/' + (run.total || 0) + ' ' + escHtml(c.passedOf) + ' · ' + (run.rate || 0) + '%</li>').join('');
+    const sections = ordered.map((run) => {
+      const rows = (run.cases || []).map((row) => {
+        const meta = caseMeta(row.id);
+        return '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(meta.title) + '</td><td class="' + (row.ok ? 'pass' : 'fail') + '">' + (row.ok ? c.pass : c.fail) + '</td><td>' + (row.ms || 0) + '</td><td>' + escHtml(row.layer || meta.layer) + '</td><td>' + escHtml(row.note || '') + '</td></tr>';
+      }).join('');
+      const stats = runnerStats(run).map((row) => '<li>' + escHtml(row.name) + ' · ' + row.passed + '/' + row.ran + ' · avg ' + row.avg + ' ms</li>').join('');
+      const view = run.view === 'background' ? c.background : (run.view === 'watch' ? c.watch : (run.view || '—'));
+      return `<section id="run-${escHtml(runKey(run))}">
+        <h2>${escHtml(runKey(run))} · ${escHtml(formatWhen(run.ts))}</h2>
+        <p>${run.passed || 0}/${run.total || 0} ${escHtml(c.passedOf)} · ${run.rate || 0}% · ${run.ms ? (run.ms / 1000).toFixed(1) + 's' : escHtml(c.durationMissing)} · ${escHtml(c.pace)} ${escHtml(run.pace != null ? run.pace + 's' : '—')} · ${escHtml(view)}<br>
+        ${escHtml(c.runners)}: ${escHtml((run.runners || []).join(', ') || '—')}<br>
+        ${escHtml(c.origin)}: ${escHtml(run.origin || '')}</p>
+        ${stats ? '<ul>' + stats + '</ul>' : ''}
+        <table><thead><tr><th>${escHtml(c.colId)}</th><th>${escHtml(c.colTitle)}</th><th>${escHtml(c.colResult)}</th><th>${escHtml(c.colMs)}</th><th>${escHtml(c.colType)}</th><th>${escHtml(c.colEvidence)}</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6">' + escHtml(c.noCaseLines) + '</td></tr>'}</tbody></table>
+      </section>`;
+    }).join('');
+    return `<h2>${escHtml(c.selectedRuns)}</h2><ol>${index}</ol>${sections}`;
+  }
+
+  function brandedFile(title, body, lang) {
+    const code = REPORT_LANGS.includes(lang) ? lang : 'en';
+    return `<!DOCTYPE html><html lang="${code}" translate="no" class="notranslate"><head><meta charset="utf-8"><meta name="google" content="notranslate"><title>${escHtml(title)}</title>
+      <style>
+        body { font-family: Georgia, serif; color: #12181f; margin: 32px; }
+        .mark { position: fixed; inset: 30% 0 auto; text-align: center; font-weight: 800; letter-spacing: .14em;
+          font-size: 28px; color: rgba(13,110,118,.28); transform: rotate(-18deg); pointer-events: none; }
+        table { border-collapse: collapse; width: 100%; font-family: sans-serif; font-size: 12px; margin: 8px 0 18px; }
+        td, th { border-bottom: 1px solid #d5dce3; padding: 6px 8px; text-align: left; vertical-align: top; }
+        .pass { color: #0d6e76; font-weight: 700; } .fail { color: #b42318; font-weight: 700; }
+        .muted { color: #5c6b76; font-size: 12px; }
+        .compare-kpis, .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .compare-kpi, .chart-card { border: 1px solid #d5dce3; border-radius: 8px; padding: 8px 10px; break-inside: avoid; }
+        .compare-kpi b { display: block; font-size: 1.25rem; }
+        .compare-kpi span, .chart-cap { color: #5c6b76; font-size: 11px; }
+        .chart-card h3 { margin: 0 0 8px; font-size: 14px; }
+        .chart-svg { width: 100%; max-width: 420px; height: auto; display: block; }
+        .h-meter, .fw-track { height: 10px; border-radius: 999px; background: #e6ebf0; overflow: hidden; }
+        .h-meter span, .fw-track span { display: block; height: 100%; border-radius: 999px; }
+        .fw-row { display: grid; grid-template-columns: 110px 1fr; gap: 4px 8px; align-items: center; font-size: 12px; margin: 6px 0; font-family: sans-serif; }
+        .fw-meta { grid-column: 2; color: #5c6b76; }
+        footer { margin-top: 28px; font-size: 12px; }
+        h2, h3 { break-after: avoid; }
+        @media print { a { color: inherit; text-decoration: none; } .chart-card, .fw-row, .h-meter { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+      </style></head><body>
+      <div class="mark">QA LAB · CARLOS MUÑOZ</div>
+      <h1>${escHtml(title)}</h1>
+      ${body}
+      <footer>${escHtml(reportCopy(code).footer)}</footer>
+      </body></html>`;
   }
 
   function svgEl(name, attrs, text) {
@@ -1315,17 +2156,21 @@
     return svg;
   }
 
-  function frameworkCompare(results) {
+  function frameworkCompare(results, copy) {
     const tones = [
       { name: 'Playwright', color: '#2f9e8f' },
       { name: 'Cypress', color: '#3d9a6a' },
-      { name: 'Robot', color: '#c4a574' }
+      { name: 'Robot', color: '#c4a574' },
+      { name: 'Selenium', color: '#43b02a' },
+      { name: 'WebDriverIO', color: '#ea5907' },
+      { name: 'Appium', color: '#662d91' }
     ];
-    const rows = tones.map((tone) => {
-      const mirrored = CASES.filter((c) => c.fw.includes(tone.name));
+    const chosen = readFrameworks();
+    const rows = tones.filter((tone) => chosen.includes(tone.name)).map((tone) => {
+      const mirrored = CASES.filter((c) => runnersFor(c).includes(tone.name));
       const ran = results.filter((r) => {
         const c = CASES.find((item) => item.id === r.id);
-        return c && c.fw.includes(tone.name);
+        return c && runnersFor(c).includes(tone.name) && chosen.includes(tone.name);
       });
       const passed = ran.filter((r) => r.ok).length;
       const avg = ran.length ? Math.round(ran.reduce((sum, r) => sum + (r.ms || 0), 0) / ran.length) : 0;
@@ -1343,8 +2188,8 @@
       line.className = 'fw-row';
       const width = row.ran ? Math.max(8, Math.round((row.avg / maxAvg) * 100)) : 0;
       const detail = row.ran
-        ? row.passed + '/' + row.ran + ' passed · ' + row.rate + '% · avg ' + row.avg + ' ms · ' + row.mirrored + ' mirrored'
-        : row.mirrored + ' mirrored · run the catalog to compare speed';
+        ? row.passed + '/' + row.ran + ' ' + (copy ? copy.passedOf : 'passed') + ' · ' + row.rate + '% · avg ' + row.avg + ' ms · ' + row.mirrored
+        : row.mirrored + ' ' + (copy ? copy.mirroredOnly : 'mirrored · run the catalog to compare speed');
       line.innerHTML = '<strong>' + row.name + '</strong><div class="fw-track"><span style="width:' + width + '%;background:' + row.color + '"></span></div><span class="fw-meta">' + detail + '</span>';
       wrap.appendChild(line);
     });
@@ -1352,8 +2197,8 @@
       const note = document.createElement('p');
       note.className = 'chart-cap';
       note.textContent = tied
-        ? 'Averages match because this is one browser run. Each bar only includes the cases that framework mirrors.'
-        : fastest.name + ' was fastest this session at ' + fastest.avg + ' ms average.';
+        ? (copy ? copy.tied : 'Averages match because this is one browser run. Each bar only includes the cases that framework mirrors.')
+        : (copy ? fastest.name + ' ' + copy.fastestLead + ' ' + fastest.avg + ' ' + copy.msAverage + '.' : fastest.name + ' was fastest this session at ' + fastest.avg + ' ms average.');
       wrap.appendChild(note);
     }
     return wrap;
@@ -1401,6 +2246,94 @@
     return svg;
   }
 
+  function freezeSvg(node) {
+    const clone = node.cloneNode(true);
+    const map = { 'var(--text)': '#12181f', 'var(--muted)': '#5c6b76', 'var(--line)': '#d5dce3' };
+    clone.querySelectorAll('*').forEach((el) => {
+      ['fill', 'stroke'].forEach((attr) => {
+        const value = el.getAttribute(attr);
+        if (map[value]) el.setAttribute(attr, map[value]);
+      });
+    });
+    return clone.outerHTML;
+  }
+
+  function chartCard(title, inner, caption) {
+    return '<article class="chart-card"><h3>' + escHtml(title) + '</h3>' + inner + (caption ? '<p class="chart-cap">' + escHtml(caption) + '</p>' : '') + '</article>';
+  }
+
+  function sessionChartsHtml(results, copy) {
+    const passed = results.filter((row) => row.ok).length;
+    const failed = results.filter((row) => !row.ok).length;
+    const byLayer = {};
+    CASES.forEach((item) => { byLayer[item.layer] = (byLayer[item.layer] || 0) + 1; });
+    const chosen = readFrameworks();
+    const byFw = {};
+    chosen.forEach((name) => { byFw[name] = 0; });
+    CASES.forEach((item) => runnersFor(item).forEach((name) => { if (byFw[name] != null) byFw[name] += 1; }));
+    const durations = results.slice().sort((a, b) => (b.ms || 0) - (a.ms || 0)).slice(0, 8).map((row) => ({
+      label: row.id, value: row.ms || 0, color: row.ok ? '#0d6e76' : '#b42318'
+    }));
+    const history = readHistory().map((run) => Number(run.rate) || 0);
+    const cards = [
+      chartCard(copy.passRate, freezeSvg(donut(passed, failed, 0)), copy.passRateCap),
+      chartCard(copy.byType, freezeSvg(bars(Object.entries(byLayer).map(([label, value]) => ({ label: label, value: value, color: layerColor(label) })), copy.byType)), copy.byTypeCap),
+      chartCard(copy.byRunner, freezeSvg(bars(Object.entries(byFw).map(([label, value]) => ({ label: label, value: value, color: '#0d6e76' })), copy.byRunner)), copy.byRunnerCap),
+      chartCard(copy.fwPerf, frameworkCompare(results, copy).outerHTML, copy.fwPerfCap),
+      chartCard(copy.historyRate, freezeSvg(sparkline(history)), history.length ? copy.historyCap : copy.historyEmpty)
+    ];
+    if (durations.length) cards.splice(4, 0, chartCard(copy.slowest, freezeSvg(bars(durations, copy.slowest)), copy.slowestCap));
+    return '<div class="chart-grid">' + cards.join('') + '</div>';
+  }
+
+  function buildReport(results, opts, picked) {
+    const copy = reportCopy(opts && opts.lang);
+    const stamp = new Date().toISOString();
+    const passed = results.filter((row) => row.ok).length;
+    let body = '<p><strong>' + escHtml(copy.title) + '</strong> · ' + escHtml(stamp) + '<br>'
+      + escHtml(copy.produced) + ' · carlosandmunoz.com<br>'
+      + escHtml(copy.environment) + ': ' + escHtml(location.origin) + ' · ' + passed + '/' + results.length + ' ' + escHtml(copy.passedOf) + '</p>';
+    if (!opts || opts.graphs !== false) body += '<h2>' + escHtml(copy.graphs) + '</h2>' + sessionChartsHtml(results, copy);
+    if (!opts || opts.runners !== false) body += '<h2>' + escHtml(copy.runnerComparison) + '</h2>' + frameworkCompare(results, copy).outerHTML;
+    if (!opts || opts.cases !== false) {
+      const rows = results.map((row) => '<tr><td>' + escHtml(row.id) + '</td><td class="' + (row.ok ? 'pass' : 'fail') + '">' + (row.ok ? copy.pass : copy.fail) + '</td><td>' + (row.ms || 0) + '</td><td>' + escHtml(row.detail || row.error || '') + '</td></tr>').join('');
+      body += '<h2>' + escHtml(copy.colResult) + '</h2><table><thead><tr><th>' + escHtml(copy.colId) + '</th><th>' + escHtml(copy.colResult) + '</th><th>' + escHtml(copy.colMs) + '</th><th>' + escHtml(copy.colEvidence) + '</th></tr></thead><tbody>'
+        + (rows || '<tr><td colspan="4">' + escHtml(copy.empty) + '</td></tr>') + '</tbody></table><p class="muted">' + escHtml(copy.security) + ' · ' + escHtml(stamp) + '</p>';
+    }
+    if (opts && opts.history) body += (picked && picked.length) ? runsBody(picked, opts.lang) : '<p>' + escHtml(copy.noHistory) + '</p>';
+    if (opts && opts.analysis) body += (picked && picked.length) ? analysisBody(picked, opts.lang) : '<p>' + escHtml(copy.noHistory) + '</p>';
+    return brandedFile(copy.docTitle, body, opts && opts.lang);
+  }
+
+  const GUIDE_KEY = 'lab-guide-seen';
+
+  function guideSeen() {
+    try { return new Set(JSON.parse(localStorage.getItem(GUIDE_KEY) || '[]')); }
+    catch (err) { return new Set(); }
+  }
+
+  function dismissGuide(id) {
+    const seen = guideSeen();
+    const key = String(id);
+    if (seen.has(key)) return;
+    seen.add(key);
+    localStorage.setItem(GUIDE_KEY, JSON.stringify([...seen]));
+    const el = document.querySelector('[data-guide="' + key + '"]');
+    if (el) el.classList.remove('lab-guide');
+  }
+
+  function mountLabGuide() {
+    const seen = guideSeen();
+    document.querySelectorAll('[data-guide]').forEach((el) => {
+      const id = el.getAttribute('data-guide');
+      if (seen.has(id)) return;
+      el.classList.add('lab-guide');
+      el.addEventListener('click', () => dismissGuide(id));
+    });
+    const runFiltered = document.getElementById('run-visible');
+    if (runFiltered && !seen.has('5')) runFiltered.addEventListener('click', () => dismissGuide('5'));
+  }
+
   const Lab = {
     cases: CASES,
     results: [],
@@ -1410,6 +2343,7 @@
     logLines: [],
     pace: readPace(),
     view: readView(),
+    historyPick: new Set(),
 
     filtered() {
       if (this.filter === 'All') return CASES;
@@ -1456,7 +2390,7 @@
       const result = this.results.find((r) => r.id === c.id);
       el.innerHTML = `
         <h3>${c.id} · ${c.title}</h3>
-        <p class="muted">${c.fw.join(' · ')}</p>
+        <p class="muted">${runnersFor(c).join(' · ')}</p>
         ${sourceHtml(c, 'src-links-detail')}
         <dl class="spec">
           <dt>Where</dt><dd>${c.where}</dd>
@@ -1465,7 +2399,10 @@
         </dl>
         ${result ? `<p class="${result.ok ? 'pass' : 'fail'}">${result.ok ? 'PASSED' : 'FAILED'} · ${result.ms} ms${result.detail ? ' · ' + result.detail : ''}</p>` : '<p class="muted">Not executed in this session yet.</p>'}
         <button type="button" class="btn btn-ghost" id="run-one">Run this case</button>`;
-      document.getElementById('run-one').onclick = () => this.runIds([c.id]);
+      document.getElementById('run-one').onclick = () => {
+        dismissGuide('5');
+        this.runIds([c.id]);
+      };
     },
 
     renderDashboard() {
@@ -1476,8 +2413,9 @@
       const skipped = this.results.filter((r) => r.status === 'skip').length;
       const byLayer = {};
       CASES.forEach((c) => { byLayer[c.layer] = (byLayer[c.layer] || 0) + 1; });
-      const byFw = { Playwright: 0, Cypress: 0, Robot: 0 };
-      CASES.forEach((c) => c.fw.forEach((f) => { byFw[f] += 1; }));
+      const byFw = {};
+      readFrameworks().forEach((name) => { byFw[name] = 0; });
+      CASES.forEach((c) => runnersFor(c).forEach((f) => { if (byFw[f] != null) byFw[f] += 1; }));
       const durations = this.results.slice().sort((a, b) => b.ms - a.ms).slice(0, 8).map((r) => ({
         label: r.id, value: r.ms, color: r.ok ? '#0d6e76' : '#b42318'
       }));
@@ -1486,7 +2424,7 @@
       const cards = [
         { title: 'This run — pass rate', caption: 'Source: in-browser lab vs live pages · current session', node: donut(passed, failed, skipped) },
         { title: 'Catalog by test type', caption: 'Count of cases in the published suite map', node: bars(Object.entries(byLayer).map(([label, value]) => ({ label, value, color: layerColor(label) })), 'Cases by type') },
-        { title: 'Mirrored in each runner', caption: 'How many catalog cases also exist in Playwright, Cypress, Robot', node: bars(Object.entries(byFw).map(([label, value]) => ({ label, value })), 'Framework coverage') },
+        { title: 'Mirrored in each runner', caption: 'Cases shown in the runners you left on: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium', node: bars(Object.entries(byFw).map(([label, value]) => ({ label, value })), 'Framework coverage') },
         { title: 'Automation frameworks — performance', caption: 'Same browser run. A case counts for every framework that mirrors it. Lower average time is the faster framework this session.', node: frameworkCompare(this.results) }
       ];
       if (durations.length) {
@@ -1494,9 +2432,10 @@
       }
       cards.push({
         title: 'Pass rate — last lab runs here',
-        caption: 'localStorage qa-lab-history · this browser only',
+        caption: 'Saved in this browser. Select runs above to download, print, or compare.',
         node: sparkline(history.map((h) => h.rate))
       });
+      this.renderHistory();
       cards.forEach((card) => {
         const div = document.createElement('article');
         div.className = 'card chart-card';
@@ -1515,18 +2454,22 @@
       document.getElementById('kpi-ms').textContent = ms ? (ms / 1000).toFixed(1) + 's' : '—';
     },
 
-    renderReport() {
-      const el = document.getElementById('report-body');
-      if (!el) return;
-      if (!this.results.length) {
-        el.innerHTML = '<p class="muted">Run the suite to generate a report. I keep the same checks in Playwright, Cypress and Robot for CI; this lab is the version a visitor can watch.</p>';
-        return;
-      }
+    reportMarkup() {
       const passed = this.results.filter((r) => r.ok).length;
       const stamp = new Date().toISOString();
-      el.innerHTML = `
+      const runners = this.selectedFrameworks().join(', ') || 'none selected';
+      const compare = frameworkCompare(this.results);
+      return {
+        stamp,
+        passed,
+        runners,
+        compare,
+        html: `
         <p><strong>CV regression lab</strong> · ${stamp}<br>
-        Owner: Carlos A. Muñoz · environment: ${location.origin} · ${passed}/${this.results.length} passed</p>
+        Produced by the QA lab of Carlos Muñoz · carlosandmunoz.com<br>
+        Environment: ${location.origin} · ${passed}/${this.results.length} passed · runners: ${runners}</p>
+        <h3>Runner comparison</h3>
+        <div class="report-compare"></div>
         <table>
           <thead><tr><th>ID</th><th>Result</th><th>ms</th><th>Where / evidence</th></tr></thead>
           <tbody>${this.results.map((r) => `<tr>
@@ -1535,7 +2478,78 @@
             <td>${r.ms}</td>
             <td>${(r.detail || r.error || '').replace(/</g, '&lt;')}</td>
           </tr>`).join('')}</tbody>
-        </table>`;
+        </table>
+        <p class="muted">Security mark: QA Lab · Carlos A. Muñoz · ${stamp}</p>`
+      };
+    },
+
+    renderReport() {
+      const el = document.getElementById('report-body');
+      if (!el) return;
+      el.classList.add('qa-mark');
+      if (!this.results.length) {
+        el.innerHTML = '<p class="muted">Run the suite to generate a report. I keep the same checks in Playwright, Cypress, Robot, Selenium, WebdriverIO and Appium; this lab is the version a visitor can watch.</p>';
+        return;
+      }
+      const doc = this.reportMarkup();
+      el.innerHTML = doc.html;
+      const slot = el.querySelector('.report-compare');
+      if (slot) slot.appendChild(doc.compare);
+    },
+
+    reportChoices() {
+      const langEl = document.getElementById('report-lang');
+      const on = (id, fallback) => {
+        const el = document.getElementById(id);
+        return el ? el.checked : fallback;
+      };
+      return {
+        lang: langEl && REPORT_LANGS.includes(langEl.value) ? langEl.value : readReportLang(),
+        graphs: on('opt-graphs', true),
+        cases: on('opt-cases', true),
+        runners: on('opt-runners', true),
+        history: on('opt-history', false),
+        analysis: on('opt-analysis', false)
+      };
+    },
+
+    reportDocument(opts) {
+      return buildReport(this.results, opts || this.reportChoices(), this.pickedRuns());
+    },
+
+    refreshReportPreview() {
+      const frame = document.getElementById('report-preview');
+      if (!frame) return;
+      frame.srcdoc = this.reportDocument(this.reportChoices());
+    },
+
+    openReportOptions(preset) {
+      const box = document.getElementById('report-options');
+      const langEl = document.getElementById('report-lang');
+      if (!box) return;
+      if (langEl) langEl.value = readReportLang();
+      const set = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = value;
+      };
+      set('opt-graphs', !(preset && preset.graphs === false));
+      set('opt-cases', !(preset && preset.cases === false));
+      set('opt-runners', !(preset && preset.runners === false));
+      set('opt-history', !!(preset && preset.history));
+      set('opt-analysis', !!(preset && preset.analysis));
+      box.hidden = false;
+      this.refreshReportPreview();
+    },
+
+    closeReportOptions() {
+      const box = document.getElementById('report-options');
+      const frame = document.getElementById('report-preview');
+      if (box) box.hidden = true;
+      if (frame) frame.srcdoc = '';
+    },
+
+    reportFile() {
+      return this.reportDocument(this.reportChoices());
     },
 
     async withTargets(fn) {
@@ -1625,9 +2639,63 @@
       }
     },
 
+    openAsk(ids) {
+      this.pendingIds = ids;
+      const list = document.getElementById('fw-ask-list');
+      const ask = document.getElementById('fw-ask');
+      if (!list || !ask) return;
+      const chosen = new Set(this.selectedFrameworks());
+      list.innerHTML = ALL_FW.map((name) => {
+        const label = name === 'WebDriverIO' ? 'WebdriverIO' : name;
+        return '<label class="' + (chosen.has(name) ? 'on' : '') + '"><input type="checkbox" value="' + name + '"' + (chosen.has(name) ? ' checked' : '') + '> ' + label + '</label>';
+      }).join('');
+      ask.hidden = false;
+    },
+
+    closeAsk() {
+      const ask = document.getElementById('fw-ask');
+      if (ask) ask.hidden = true;
+    },
+
+    confirmAsk() {
+      const picked = [...document.querySelectorAll('#fw-ask-list input:checked')].map((box) => box.value);
+      if (!picked.length) return;
+      document.querySelectorAll('#fw-picker input').forEach((box) => {
+        box.checked = picked.includes(box.value);
+      });
+      this.saveFrameworks();
+      this.closeAsk();
+      try { sessionStorage.setItem('qa-lab-fw-asked', '1'); } catch (err) { /* ignore */ }
+      const ids = this.pendingIds || [];
+      this.pendingIds = null;
+      if (ids.length) this.runIds(ids);
+    },
+
+    openRunners() {
+      const drawer = document.getElementById('runner-drawer');
+      if (drawer) drawer.classList.add('open');
+      this.renderRunners(this.runnerTab);
+    },
+
+    closeRunners() {
+      const drawer = document.getElementById('runner-drawer');
+      if (drawer) drawer.classList.remove('open');
+    },
+
     async runIds(ids) {
       if (this.running) return;
+      if (!sessionStorage.getItem('qa-lab-fw-asked')) {
+        this.openAsk(ids);
+        return;
+      }
+      const chosen = this.selectedFrameworks();
+      if (!chosen.length) {
+        this.openAsk(ids);
+        return;
+      }
       this.running = true;
+      document.documentElement.classList.add('lab-running');
+      this.openRunners();
       this.pace = readPace();
       this.view = readView();
       this.syncViewUi();
@@ -1639,6 +2707,7 @@
       this.log(`<b>LAB</b> Starting ${pack.length} case${pack.length === 1 ? '' : 's'} against ${location.origin} · pace ${formatPace(this.pace)} s · ${this.view === 'watch' ? 'Watch' : 'Background'}`);
       const unlock = () => {
         this.running = false;
+        document.documentElement.classList.remove('lab-running');
         document.getElementById('run-all').disabled = false;
         document.getElementById('run-visible').disabled = false;
         document.querySelectorAll('[data-pace]').forEach((b) => { b.disabled = false; });
@@ -1665,6 +2734,8 @@
             const row = document.querySelector(`.case-row[data-id="${c.id}"]`);
             if (row) row.classList.add('running');
             this.log(`<span class="k">${c.id}</span> ${c.title}<div class="muted">where ${c.where}</div><div class="muted">when ${c.when}</div><div class="muted">how ${c.how}</div>`);
+            this.activeCase = c.id;
+            this.renderRunners(this.runnerTab);
             await wait(holdMs);
             const t0 = performance.now();
             try {
@@ -1680,10 +2751,12 @@
               this.log(`<span class="fail">FAIL</span> ${c.id} · ${ms} ms · ${String(err.message).replace(/</g, '&lt;')}`);
             }
             if (row) row.classList.remove('running');
+            this.activeCase = '';
             try {
               this.renderDetail();
               this.renderDashboard();
               this.renderReport();
+              this.renderRunners(this.runnerTab);
             } catch (renderErr) {
               this.log(`<span class="fail">RENDER</span> ${c.id} · ${String(renderErr.message).replace(/</g, '&lt;')}`);
             }
@@ -1692,13 +2765,7 @@
         });
         const passed = this.results.filter((r) => ids.includes(r.id) && r.ok).length;
         const failed = this.results.filter((r) => ids.includes(r.id) && !r.ok).length;
-        writeHistory({
-          ts: Date.now(),
-          passed,
-          failed,
-          total: pack.length,
-          rate: pack.length ? Math.round((passed / pack.length) * 100) : 0
-        });
+        writeHistory(this.snapshotRecord(ids));
         this.renderDashboard();
         this.log(`<b>LAB</b> Finished · ${passed} passed · ${failed} failed · ${pack.length} ran`);
         this.openDashboard();
@@ -1712,16 +2779,141 @@
       }
     },
 
-    downloadReport() {
-      const passed = this.results.filter((r) => r.ok).length;
-      const body = `CV regression lab — Carlos A. Muñoz\n${new Date().toISOString()}\nOrigin: ${location.origin}\n${passed}/${this.results.length} passed\n\n` +
-        this.results.map((r) => `${r.ok ? 'PASS' : 'FAIL'}  ${r.id.padEnd(8)}  ${String(r.ms).padStart(5)} ms  ${r.detail || r.error || ''}`).join('\n');
-      const blob = new Blob([body], { type: 'text/plain' });
+    snapshotRecord(ids) {
+      const slice = this.results.filter((r) => ids.includes(r.id));
+      const passed = slice.filter((r) => r.ok).length;
+      const ms = slice.reduce((sum, r) => sum + (r.ms || 0), 0);
+      return {
+        id: 'R' + Date.now().toString(36),
+        ts: Date.now(),
+        passed,
+        failed: slice.length - passed,
+        total: slice.length,
+        rate: slice.length ? Math.round((passed / slice.length) * 100) : 0,
+        ms,
+        pace: this.pace,
+        view: this.view,
+        origin: location.origin,
+        runners: this.selectedFrameworks(),
+        cases: slice.map((r) => ({
+          id: r.id,
+          ok: !!r.ok,
+          ms: r.ms || 0,
+          layer: r.layer || '',
+          note: String(r.detail || r.error || '').slice(0, 220)
+        }))
+      };
+    },
+
+    renderHistory() {
+      const list = document.getElementById('history-list');
+      if (!list) return;
+      const runs = readHistory().slice().reverse();
+      if (!runs.length) {
+        list.innerHTML = '<p class="muted">No saved runs in this browser yet. Finish a pass and it will be listed here.</p>';
+        return;
+      }
+      list.innerHTML = runs.map((run) => {
+        const key = runKey(run);
+        const on = this.historyPick.has(key) ? ' checked' : '';
+        const runners = (run.runners || []).join(', ');
+        return '<label class="history-row"><input type="checkbox" value="' + escHtml(key) + '"' + on + '><span><strong>' + escHtml(formatWhen(run.ts)) + '</strong> · ' + escHtml(key) + '<br>' + (run.passed || 0) + '/' + (run.total || 0) + ' passed · ' + (run.rate || 0) + '% · ' + (run.ms ? (run.ms / 1000).toFixed(1) + 's' : 'duration not stored') + (runners ? ' · ' + escHtml(runners) : '') + '</span></label>';
+      }).join('');
+    },
+
+    historyNote(text) {
+      const note = document.getElementById('history-note');
+      if (note) note.textContent = text;
+    },
+
+    pickedRuns() {
+      const wanted = new Set([...document.querySelectorAll('#history-list input:checked')].map((box) => box.value));
+      return readHistory().filter((run) => wanted.has(runKey(run)));
+    },
+
+    saveHtml(filename, html) {
+      const file = new Blob([html], { type: 'text/html' });
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'cv-regression-lab-report.txt';
+      a.href = URL.createObjectURL(file);
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(a.href);
+    },
+
+    printHtml(html) {
+      const frame = document.createElement('iframe');
+      frame.setAttribute('title', 'QA lab report print');
+      frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+      document.body.appendChild(frame);
+      const doc = frame.contentDocument;
+      doc.open();
+      doc.write(html);
+      doc.close();
+      setTimeout(() => {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+        setTimeout(() => frame.remove(), 800);
+      }, 60);
+    },
+
+    downloadRuns() {
+      if (!this.pickedRuns().length) {
+        this.historyNote('Select at least one run to download.');
+        return;
+      }
+      this.openReportOptions({ history: true, analysis: false });
+    },
+
+    printRuns() {
+      if (!this.pickedRuns().length) {
+        this.historyNote('Select at least one run to print.');
+        return;
+      }
+      this.openReportOptions({ history: true, analysis: false });
+    },
+
+    compareRuns() {
+      const runs = this.pickedRuns();
+      const board = document.getElementById('compare-board');
+      if (!board) return;
+      if (!runs.length) {
+        this.historyNote('Select at least one run to compare. Two or more show movement.');
+        return;
+      }
+      board.hidden = false;
+      board.className = 'compare-board card qa-mark';
+      board.innerHTML = '<div class="history-head"><h3>Run analysis</h3><div class="history-actions"><button class="btn btn-ghost" type="button" id="analysis-download">Download analysis</button><button class="btn btn-ghost" type="button" id="analysis-print">Print analysis</button></div></div>' + analysisBody(runs);
+      const download = document.getElementById('analysis-download');
+      const print = document.getElementById('analysis-print');
+      if (download) download.onclick = () => this.openReportOptions({ history: true, analysis: true });
+      if (print) print.onclick = () => this.openReportOptions({ history: true, analysis: true });
+      this.historyNote(runs.length === 1 ? 'One run is open as an analysis. Select another to see regressions, fixes, and flaky cases.' : 'Analysis covers ' + runs.length + ' runs.');
+      board.scrollIntoView({ block: 'nearest' });
+    },
+
+    downloadReport() {
+      const file = new Blob([this.reportFile()], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(file);
+      a.download = 'qa-lab-carlos-munoz-report.html';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    },
+
+    printReport() {
+      const frame = document.createElement('iframe');
+      frame.setAttribute('title', 'QA lab report print');
+      frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+      document.body.appendChild(frame);
+      const doc = frame.contentDocument;
+      doc.open();
+      doc.write(this.reportFile());
+      doc.close();
+      setTimeout(() => {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+        setTimeout(() => frame.remove(), 800);
+      }, 60);
     },
 
     focusCase(id) {
@@ -1765,13 +2957,22 @@
         name: 'QA Lab',
         key: 'hasSeenLabTour',
         steps: [
-          { selector: '#case-list', title: 'The catalog', body: 'Every case you can run is listed here. Open one to see where it looks, when it fires, and how it asserts. Lab / Playwright / Cypress / Robot chips jump to the source on GitHub.', demoMs: 1800 },
-          { selector: '.filters', title: 'Filter by type', body: 'Narrow to Smoke, Functional, Security, A11y, Admin, Studio, or Mobile. Run filtered executes only what you see.', demoMs: 1500 },
-          { selector: '.pace', title: 'Pace', body: 'The line under the numbers runs from faster on the left to slower on the right. 0,5 holds the least, 2,0 holds the most, so a first look is easier on the right.', demoMs: 1500 },
-          { selector: '.view-mode', title: 'Watch or Background', body: 'Watch (default) shows the live page as the lab clicks and navigates. Background keeps the same run off-screen if you only want the log.', demoMs: 1600 },
-          { selector: '#run-all', title: 'Run', body: 'Run this case from the detail pane, Run filtered for the current list, or Run full catalog. The active case stays scrolled into view.', demoMs: 1600 },
-          { selector: '#sut-wrap', title: 'Live system under test', body: 'This iframe is the real CV, studio, or admin page. Follow the actions here, then read the log underneath.', demoMs: 1600 },
-          { selector: '#dash-open', title: 'Dashboard', body: 'Totals stay in the KPI strip. When a run finishes, the dashboard opens as a popup — charts and the session report — so you never have to scroll to the bottom.', demoMs: 1800 }
+          { selector: '#case-list', title: 'The catalog', body: 'Every check is a row: where it looks, when it runs, and how it asserts. A pulse marks the control for this step. The chips under the row open that same case in the lab and in each runner on GitHub.', demoMs: 1800 },
+          { selector: '.filters', title: 'Filter by type', body: 'Smoke, Functional, Security, A11y, Admin, Studio, or Mobile. Run filtered runs only the rows still on screen.', demoMs: 1500 },
+          { selector: '#case-list .src-links', title: 'Scripts and cases', body: 'Each chip is a real file: the lab check, then Playwright, Cypress, Robot, Selenium, WebdriverIO, or Appium. Click a chip to open that script.', demoMs: 1600 },
+          { selector: '#langWrap', title: 'Language', body: 'A language chosen here is the language on the CV, the studio, this lab, and admin. The same choice sticks when you move between them.', demoMs: 1600 },
+          { selector: '#suite-repo', title: 'Suite repo', body: 'Suite repo opens the GitHub project that holds these checks. The chips on each row jump to the file. This link opens the whole project.', demoMs: 1400 },
+          { selector: '#studio-link', title: 'Sprint studio', body: 'Sprint studio opens the four-agent board. The language you picked here is the language the studio opens in.', demoMs: 1400 },
+          { selector: '.kpis', title: 'Suite run indicators', body: 'Passed, failed, skipped, and duration update as the catalog runs. They are the totals for this session, before the dashboard charts.', demoMs: 1500 },
+          { selector: '.pace', title: 'Pace', body: 'The line runs from faster on the left to slower on the right. 0.5 holds the least between actions, 2.0 holds the most, so a first look is easier on the right.', demoMs: 1500 },
+          { selector: '#view-slider', title: 'Watch or Background', body: 'The slider keeps one side on. Watch shows the live page. Background is the idle side until you choose it, and then the checks run off-screen.', demoMs: 1600 },
+          { selector: '#fw-picker', title: 'Which runners', body: 'Leave on the frameworks you want this pass to show: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, or several. A run with none selected waits until you pick one.', demoMs: 1700 },
+          { selector: '#run-all', title: 'Run', body: 'Run this case, Run filtered, or Run full catalog. The active row stays in view while the checks proceed.', demoMs: 1600 },
+          { selector: '#sut-wrap', title: 'Live system under test', body: 'The frame is the real CV, studio, or admin page. The checks act here, then the log under the frame records each one.', demoMs: 4000, preview: 'lab' },
+          { selector: '#runner-drawer', title: 'Native runners', body: 'Open Runners on the right edge. Each tab is that runner’s own log: Playwright’s list reporter, Cypress’s command log, Robot’s keyword log, Selenium IDE, the WebdriverIO spec reporter, or the Appium server log.', demoMs: 1800, prepare: () => { if (global.QALab) global.QALab.openRunners(); } },
+          { selector: '#report-open', title: 'Report file', body: 'Report opens the file options. English is the default. Pick another language, leave the graphs on, check the preview, then download or print.', demoMs: 1500 },
+          { selector: '#dash-open', title: 'Dashboard', body: 'When the run finishes, the dashboard opens: charts, this session’s report, and the run history. Select past runs to download, print, or compare.', demoMs: 1800 },
+          { selector: '#tour-start-btn', title: 'Open this tour again', body: 'This walkthrough stays closed after the first visit. How this lab works brings it back whenever you want it.', demoMs: 1600 }
         ]
       };
     },
@@ -1797,8 +2998,16 @@
       this.view = mode;
       document.documentElement.classList.toggle('lab-watch', mode === 'watch');
       document.documentElement.classList.toggle('lab-background', mode === 'background');
+      const knob = document.getElementById('view-switch');
+      if (knob) {
+        knob.setAttribute('aria-checked', mode === 'watch' ? 'true' : 'false');
+        knob.setAttribute('aria-label', mode === 'watch' ? 'Watch on, Background off' : 'Background on, Watch off');
+      }
       document.querySelectorAll('[data-view]').forEach((btn) => {
-        btn.classList.toggle('on', btn.dataset.view === mode);
+        const on = btn.dataset.view === mode;
+        btn.classList.toggle('on', on);
+        btn.classList.toggle('is-idle', !on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
     },
 
@@ -1809,6 +3018,171 @@
       if (track && global.SiteAnalytics) {
         global.SiteAnalytics.trackEvent('qa_lab_view', 'QA Lab', this.view);
       }
+    },
+
+    selectedFrameworks() {
+      const boxes = [...document.querySelectorAll('#fw-picker input')];
+      if (!boxes.length) return readFrameworks();
+      return boxes.filter((box) => box.checked).map((box) => box.value);
+    },
+
+    saveFrameworks() {
+      const chosen = this.selectedFrameworks();
+      localStorage.setItem(FW_KEY, JSON.stringify(chosen));
+      document.querySelectorAll('#fw-picker label').forEach((label) => {
+        const box = label.querySelector('input');
+        label.classList.toggle('on', !!(box && box.checked));
+      });
+      this.renderRunners();
+      this.renderDashboard();
+    },
+
+    mountFrameworkPicker() {
+      const host = document.getElementById('fw-picker');
+      if (!host) return;
+      const chosen = new Set(readFrameworks());
+      host.innerHTML = '<span class="pace-label">Run with</span>' + ALL_FW.map((name) =>
+        '<label class="' + (chosen.has(name) ? 'on' : '') + '"><input type="checkbox" value="' + name + '"' + (chosen.has(name) ? ' checked' : '') + '> ' + (name === 'WebDriverIO' ? 'WebdriverIO' : name) + '</label>'
+      ).join('');
+      host.querySelectorAll('input').forEach((box) => {
+        box.addEventListener('change', () => this.saveFrameworks());
+      });
+    },
+
+    renderRunners(active) {
+      const tabs = document.getElementById('runner-tabs');
+      const stage = document.getElementById('runner-stage');
+      if (!tabs || !stage) return;
+      const chosen = this.selectedFrameworks();
+      const current = chosen.includes(active) ? active : (chosen.includes(this.runnerTab) ? this.runnerTab : chosen[0]);
+      this.runnerTab = current || '';
+      tabs.innerHTML = chosen.map((name) =>
+        '<button type="button" role="tab" data-runner="' + name + '" class="' + (name === current ? 'on' : '') + '" aria-selected="' + (name === current ? 'true' : 'false') + '">' + (name === 'WebDriverIO' ? 'WebdriverIO' : name) + '</button>'
+      ).join('') || '<span class="muted">Pick at least one runner.</span>';
+      tabs.querySelectorAll('[data-runner]').forEach((btn) => {
+        btn.onclick = () => this.renderRunners(btn.dataset.runner);
+      });
+      stage.innerHTML = current ? this.runnerSkin(current) : '';
+      const log = stage.querySelector('.runner-console');
+      if (log) log.scrollTop = log.scrollHeight;
+    },
+
+    runnerRows(name) {
+      return this.results.filter((r) => {
+        const c = CASES.find((item) => item.id === r.id);
+        return c && runnersFor(c).includes(name);
+      });
+    },
+
+    consoleSteps(name, c, r) {
+      const status = !r ? 'RUNNING' : (r.ok ? 'PASS' : 'FAIL');
+      const ms = r ? r.ms + ' ms' : '…';
+      const evidence = r ? (r.ok ? (r.detail || 'ok') : (r.error || 'failed')) : 'in progress';
+      const where = c.where || '';
+      const how = c.how || '';
+      const when = c.when || '';
+      if (name === 'Cypress') {
+        return [
+          'cy.visit  ' + where,
+          'cy.log  ' + when,
+          (r && !r.ok ? 'fail' : 'assert') + '  ' + c.id + '  ' + how,
+          status + '  ' + ms + '  ' + evidence
+        ];
+      }
+      if (name === 'Robot') {
+        return [
+          c.id + ' :: ' + c.title,
+          '  ' + how,
+          '  | ' + status + ' |  ' + ms + ' |',
+          '  ' + evidence,
+          '  where = ' + where
+        ];
+      }
+      if (name === 'Selenium') {
+        return [
+          '[info] Executing: | open | ' + where + ' | |',
+          '[info] Executing: | assert | ' + how + ' | |',
+          '[info] ' + c.id + '  ' + status + '  ' + ms,
+          '[info] ' + evidence
+        ];
+      }
+      if (name === 'WebDriverIO') {
+        return [
+          '[0-0] ' + status + ' in chrome — ' + c.id + ' ' + c.title,
+          '[0-0]   ' + how,
+          '[0-0]   ' + evidence,
+          '[0-0]   ' + ms
+        ];
+      }
+      if (name === 'Appium') {
+        return [
+          '[HTTP] --> POST /session  ' + c.id,
+          '[HTTP] --> POST /session/url  ' + where,
+          '[debug] ' + how,
+          '[HTTP] <-- ' + (!r ? '…' : (r.ok ? '200' : '500')) + '  ' + ms + '  ' + evidence
+        ];
+      }
+      return [
+        (!r ? '  ●' : (r.ok ? '  ✓' : '  ✘')) + '  ' + c.id + '  ' + c.title,
+        '     where  ' + where,
+        '     when   ' + when,
+        '     how    ' + how,
+        '     ' + status + '  ' + ms + '  ' + evidence
+      ];
+    },
+
+    runnerConsole(name, rows) {
+      const esc = (value) => String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const banner = {
+        Playwright: 'npx playwright test',
+        Cypress: 'cypress run  ·  command log',
+        Robot: 'robot  ·  console',
+        Selenium: 'Selenium IDE  ·  execution log',
+        WebDriverIO: 'wdio run  ·  spec reporter',
+        Appium: 'appium  ·  server log'
+      }[name] || name;
+      const blocks = ['<div>' + esc(banner) + '</div>'];
+      const live = this.activeCase && CASES.find((item) => item.id === this.activeCase && runnersFor(item).includes(name) && !rows.some((r) => r.id === this.activeCase));
+      const paint = (r, lines) => {
+        const cls = !r ? 'run' : (r.ok ? 'ok' : 'fail');
+        lines.forEach((line) => blocks.push('<div class="' + cls + '">' + esc(line) + '</div>'));
+        blocks.push('<div class="gap"></div>');
+      };
+      if (live) paint(null, this.consoleSteps(name, live, null));
+      rows.forEach((r) => {
+        const c = CASES.find((item) => item.id === r.id) || { id: r.id, title: r.id, where: '', when: '', how: '' };
+        paint(r, this.consoleSteps(name, c, r));
+      });
+      if (!rows.length && !live) blocks.push('<div class="run">Idle. Start a run to stream this console.</div>');
+      return blocks.join('');
+    },
+
+    runnerSkin(name) {
+      const rows = this.runnerRows(name);
+      const live = this.activeCase && CASES.find((item) => item.id === this.activeCase && runnersFor(item).includes(name) && !rows.some((r) => r.id === this.activeCase));
+      const items = [];
+      if (live) items.push('<li class="run">● ' + live.id + '</li>');
+      if (rows.length) {
+        rows.forEach((r) => items.push('<li class="' + (r.ok ? 'ok' : 'fail') + '">' + (r.ok ? '✓' : '✗') + ' ' + r.id + '</li>'));
+      } else if (!live) items.push('<li class="run">waiting for a run</li>');
+      const titles = {
+        Playwright: ['Playwright Test', 'stdout'],
+        Cypress: ['Cypress specs', 'Command log'],
+        Robot: ['Robot tests', 'Console'],
+        Selenium: ['Selenium tests', 'IDE log'],
+        WebDriverIO: ['WebdriverIO specs', 'Reporter'],
+        Appium: ['Appium sessions', 'Server log']
+      };
+      const pair = titles[name] || [name, 'Console'];
+      const klass = {
+        Playwright: 'runner-play',
+        Cypress: 'runner-cy',
+        Robot: 'runner-robot',
+        Selenium: 'runner-ide',
+        WebDriverIO: 'runner-wdio',
+        Appium: 'runner-appium'
+      }[name] || 'runner-play';
+      return '<div class="runner-split ' + klass + '"><section class="runner-cases"><b>' + pair[0] + '</b><ul>' + items.join('') + '</ul></section><section class="runner-console" aria-label="' + pair[1] + '"><b>' + pair[1] + '</b><div class="runner-log">' + this.runnerConsole(name, rows) + '</div></section></div>';
     },
 
     mountLanguageMenu() {
@@ -1834,6 +3208,7 @@
           option.onclick = () => {
             if (global.SiteAnalytics) global.SiteAnalytics.trackEvent('qa_lab_language_change', 'QA Lab', meta.code);
             SiteI18n.selectLanguage(meta.code);
+            document.documentElement.lang = meta.code;
           };
           list.appendChild(option);
         });
@@ -1854,6 +3229,11 @@
         SiteI18n.loadWidget();
         SiteI18n.applyMachineTranslate(lang);
       });
+      SiteI18n.follow((lang) => {
+        syncFlag(lang);
+        document.documentElement.lang = lang || 'en';
+        SiteI18n.applyMachineTranslate(lang);
+      });
     },
 
     boot() {
@@ -1865,6 +3245,8 @@
       this.renderDetail();
       this.renderDashboard();
       this.renderReport();
+      this.mountFrameworkPicker();
+      this.renderRunners();
       document.querySelectorAll('[data-filter]').forEach((btn) => {
         btn.onclick = () => {
           this.filter = btn.dataset.filter;
@@ -1881,6 +3263,39 @@
       document.querySelectorAll('[data-view]').forEach((btn) => {
         btn.onclick = () => this.setView(btn.dataset.view, true);
       });
+      const viewSwitch = document.getElementById('view-switch');
+      if (viewSwitch) {
+        viewSwitch.onclick = () => this.setView(this.view === 'watch' ? 'background' : 'watch', true);
+      }
+      const edge = document.getElementById('runner-edge');
+      const runnerClose = document.getElementById('runner-close');
+      if (edge) edge.onclick = () => {
+        const drawer = document.getElementById('runner-drawer');
+        if (drawer && drawer.classList.contains('open')) this.closeRunners();
+        else this.openRunners();
+      };
+      if (runnerClose) runnerClose.onclick = () => this.closeRunners();
+      const askGo = document.getElementById('fw-ask-go');
+      const askCancel = document.getElementById('fw-ask-cancel');
+      if (askGo) askGo.onclick = () => this.confirmAsk();
+      if (askCancel) askCancel.onclick = () => this.closeAsk();
+      const reportOpen = document.getElementById('report-open');
+      if (reportOpen) reportOpen.onclick = () => this.openReportOptions();
+      const reportClose = document.getElementById('report-options-close');
+      const reportPrint = document.getElementById('report-options-print');
+      const reportDownload = document.getElementById('report-options-download');
+      if (reportClose) reportClose.onclick = () => this.closeReportOptions();
+      if (reportPrint) reportPrint.onclick = () => this.printReport();
+      if (reportDownload) reportDownload.onclick = () => this.downloadReport();
+      const reportLang = document.getElementById('report-lang');
+      const reportRefresh = () => {
+        if (reportLang && REPORT_LANGS.includes(reportLang.value)) {
+          try { localStorage.setItem(REPORT_LANG_KEY, reportLang.value); } catch (err) { /* ignore */ }
+        }
+        this.refreshReportPreview();
+      };
+      if (reportLang) reportLang.addEventListener('change', reportRefresh);
+      document.querySelectorAll('#report-checks input').forEach((box) => box.addEventListener('change', reportRefresh));
       const home = document.getElementById('homeBtn');
       if (home) {
         home.onclick = (e) => {
@@ -1889,9 +3304,40 @@
           else location.href = 'index.html';
         };
       }
+      const studio = document.getElementById('studio-link');
+      if (studio) {
+        studio.addEventListener('click', (e) => {
+          if (!global.SiteI18n) return;
+          e.preventDefault();
+          location.href = 'simulador.html?lang=' + encodeURIComponent(SiteI18n.current());
+        });
+      }
       document.getElementById('run-all').onclick = () => this.runIds(CASES.map((c) => c.id));
       document.getElementById('run-visible').onclick = () => this.runIds(this.filtered().map((c) => c.id));
-      document.getElementById('download-report').onclick = () => this.downloadReport();
+      const legacyDownload = document.getElementById('download-report');
+      if (legacyDownload) legacyDownload.onclick = () => this.openReportOptions();
+      const historyList = document.getElementById('history-list');
+      if (historyList) {
+        historyList.addEventListener('change', (e) => {
+          const box = e.target;
+          if (!box || box.type !== 'checkbox') return;
+          if (box.checked) this.historyPick.add(box.value);
+          else this.historyPick.delete(box.value);
+        });
+      }
+      const historyAll = document.getElementById('history-all');
+      if (historyAll) {
+        historyAll.onclick = () => {
+          readHistory().forEach((run) => this.historyPick.add(runKey(run)));
+          this.renderHistory();
+        };
+      }
+      const historyDownload = document.getElementById('history-download');
+      const historyPrint = document.getElementById('history-print');
+      const historyCompare = document.getElementById('history-compare');
+      if (historyDownload) historyDownload.onclick = () => this.downloadRuns();
+      if (historyPrint) historyPrint.onclick = () => this.printRuns();
+      if (historyCompare) historyCompare.onclick = () => this.compareRuns();
       const dashOpen = document.getElementById('dash-open');
       const dashClose = document.getElementById('dash-close');
       const dashOverlay = document.getElementById('dash-overlay');
@@ -1903,13 +3349,20 @@
         });
       }
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') this.closeDashboard();
+        if (e.key !== 'Escape') return;
+        const report = document.getElementById('report-options');
+        if (report && !report.hidden) {
+          this.closeReportOptions();
+          return;
+        }
+        this.closeDashboard();
       });
       if (global.SiteTour) {
         const tour = this.labTour();
         SiteTour.bind(document.getElementById('tour-start-btn'), tour);
         SiteTour.autoStart(tour);
       }
+      mountLabGuide();
       this.mountLanguageMenu();
       const sut = document.getElementById('sut');
       if (sut && !sut.getAttribute('src')) sut.src = 'index.html';
