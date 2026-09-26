@@ -2,6 +2,7 @@ Cypress.Commands.add('skipSiteTours', (win) => {
   win.sessionStorage.setItem('hasSeenTour', 'true');
   win.sessionStorage.setItem('hasSeenLabTour', 'true');
   win.sessionStorage.setItem('hasSeenStudioTour', 'true');
+  win.sessionStorage.setItem('qa-lab-fw-asked', '1');
 });
 
 Cypress.Commands.add('visitCV', (options = {}) => {
@@ -12,6 +13,7 @@ Cypress.Commands.add('visitCV', (options = {}) => {
       else win.sessionStorage.setItem('hasSeenTour', 'true');
       win.sessionStorage.setItem('hasSeenLabTour', 'true');
       win.sessionStorage.setItem('hasSeenStudioTour', 'true');
+      win.sessionStorage.setItem('qa-lab-fw-asked', '1');
       if (!win.localStorage.getItem('theme')) win.localStorage.setItem('theme', theme);
       if (!(qs && /lang=/.test(qs))) win.localStorage.setItem('cv-preferred-lang', 'en');
     }

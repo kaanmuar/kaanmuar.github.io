@@ -236,6 +236,48 @@
         .platform-card h3 { margin: 0; font-size: 16px; color: var(--text); }
         .platform-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; flex: 1; }
         .platform-mark { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--tool, var(--blue)); }
+        .board-host { flex: 1; min-height: 0; overflow: hidden; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+        .board-toolbar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 13px; }
+        .board-toolbar b { font-size: 15px; }
+        .board-toolbar span { color: var(--muted); font-size: 12px; }
+        .board-cols { flex: 1; min-height: 0; display: flex; gap: 12px; align-items: stretch; overflow: auto; }
+        .col-empty { color: var(--muted); font-size: 12px; padding: 8px; }
+        .board-jira .ticket-key { color: #0052cc; font-weight: 600; }
+        .board-azure .ticket { border-left: 3px solid #0078d4; }
+        .board-azure .wi-id { color: #0078d4; font-weight: 700; font-family: "Fira Code", monospace; }
+        .board-trello { background: #0079bf; border-radius: 10px; }
+        .board-trello .board-toolbar, .board-trello .board-toolbar span { color: #fff; }
+        .board-trello .col { background: #ebecf0; color: #172b4d; }
+        .board-trello .col h3 { color: #172b4d; text-transform: none; letter-spacing: 0; font-size: 14px; border-top-color: transparent; }
+        .board-trello .ticket { background: #fff; color: #172b4d; }
+        .board-trello .sum { color: #172b4d; }
+        .trello-labels { display: flex; gap: 4px; min-height: 8px; }
+        .trello-labels i { width: 40px; height: 8px; border-radius: 4px; display: block; }
+        .board-linear .col { background: transparent; border: 0; }
+        .board-linear .col h3 { text-transform: none; letter-spacing: 0; font-size: 13px; }
+        .linear-row { display: flex; align-items: center; gap: 8px; }
+        .linear-row .sum { margin: 0; flex: 1; }
+        .prio-mark { width: 8px; height: 8px; border-radius: 2px; background: var(--muted); flex: 0 0 auto; }
+        .prio-mark.highest, .prio-mark.high { background: #e5484d; }
+        .prio-mark.medium { background: #f2c94c; }
+        .board-asana .col h3 { text-transform: none; letter-spacing: 0; font-size: 14px; border-top-color: #f06a6a; }
+        .asana-card { display: flex; align-items: flex-start; gap: 8px; }
+        .asana-check { width: 16px; height: 16px; border: 2px solid #c5c5c5; border-radius: 50%; flex: 0 0 auto; margin-top: 2px; }
+        .asana-body { flex: 1; min-width: 0; }
+        .asana-body .sum { margin: 0; }
+        .board-monday { background: #fff; color: #323338; }
+        .board-monday .board-toolbar, .board-monday .board-toolbar span { color: #323338; }
+        .board-monday .board-cols { display: block; }
+        .monday-cols, .monday-row { display: grid; grid-template-columns: minmax(0, 1.8fr) .7fr .9fr .7fr .35fr; gap: 8px; align-items: center; }
+        .monday-cols { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #676879; padding: 0 10px 6px; }
+        .monday-group h3 { margin: 12px 0 6px; font-size: 14px; color: var(--g, #323338); display: flex; align-items: center; gap: 8px; }
+        .monday-row { background: #fff; border-bottom: 1px solid #e6e9ef; }
+        .monday-row .sum { margin: 0; }
+        .monday-status { color: #fff; border-radius: 4px; padding: 3px 8px; font-size: 12px; font-weight: 600; background: var(--g, #c4c4c4); justify-self: start; }
+        html.dark-mode .board-jira .ticket-key { color: #4c9aff; }
+        html.dark-mode .board-monday { background: #fff; color: #323338; }
+        html.dark-mode .board-monday .ticket,
+        html.dark-mode .board-monday .sum { background: #fff; color: #323338; }
         .tool { border: 1px solid #dfe1e6; border-radius: 10px; overflow: hidden; background: #f4f5f7; color: #172b4d; position: relative; }
         .tool-bar { display: flex; align-items: center; gap: 12px; padding: 10px 12px; position: sticky; top: 0; z-index: 2; }
         .tool-brand { font-weight: 800; letter-spacing: .02em; }
@@ -339,6 +381,63 @@
         .lang-option { display: flex; align-items: center; gap: 8px; min-height: 1.75rem; padding: 2px 4px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .lang-option:hover { background: var(--card); }
         .lang-option img { width: 18px; height: 18px; border-radius: 50%; }
+        .runner-edge {
+            position: fixed; right: 0; top: 42%; z-index: 40; border: 0; border-radius: 8px 0 0 8px;
+            background: #0d6e76; color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .04em;
+            padding: 12px 8px; cursor: pointer; writing-mode: vertical-rl;
+        }
+        .runner-drawer {
+            position: fixed; top: 0; right: 0; z-index: 55; height: 100%; width: min(720px, 94vw);
+            background: var(--panel); border-left: 1px solid var(--line);
+            box-shadow: -12px 0 32px rgba(8, 14, 18, .28);
+            transform: translateX(100%); transition: transform .22s ease;
+            display: flex; flex-direction: column;
+        }
+        .runner-drawer.open { transform: none; }
+        .runner-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+        .runner-tabs button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .runner-tabs button.on { background: #0d6e76; color: #fff; border-color: #0d6e76; }
+        .runner-stage { flex: 1; min-height: 0; display: flex; }
+        .runner-split { display: grid; grid-template-columns: minmax(140px, .82fr) minmax(220px, 1.25fr); width: 100%; min-height: 0; }
+        .runner-cases, .runner-console { min-height: 0; overflow: auto; padding: 10px 12px; background: #1e1e1e; color: #d4d4d4; font-family: ui-monospace, monospace; font-size: 12px; }
+        .runner-cases { border-right: 1px solid #333; }
+        .runner-cases b, .runner-console b { display: block; color: #9cdcfe; font-size: 11px; margin-bottom: 8px; }
+        .runner-cases ul { margin: 0; padding: 0; }
+        .runner-cases li { list-style: none; padding: 3px 0; }
+        .runner-cases .ok, .runner-log .ok { color: #89d185; }
+        .runner-cases .fail, .runner-log .fail { color: #f48771; }
+        .runner-cases .run, .runner-log .run { color: #dcdcaa; }
+        .runner-log div { white-space: pre-wrap; word-break: break-word; line-height: 1.45; }
+        .pace { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+        .pace-btns { display: flex; align-items: center; gap: 4px; }
+        .pace-btn { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 6px; padding: 5px 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-variant-numeric: tabular-nums; }
+        .pace-btn.on { background: #0d6e76; color: #fff; border-color: #0d6e76; }
+        .ink td { background: rgba(196, 165, 116, .22); }
+        .ink td:first-child { box-shadow: inset 3px 0 0 #c4a574; }
+        .pen { color: #8a6a32; font-weight: 700; }
+        .skin { min-height: 100%; display: flex; flex-direction: column; }
+        .skin-bar { padding: 6px 10px; font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+        .skin-play { background: #1e1e1e; color: #d4d4d4; }
+        .skin-play .skin-bar { background: #252526; color: #9cdcfe; }
+        .skin-cy { background: #0b0e14; color: #c5c8c6; }
+        .skin-cy .skin-bar { background: #1b1e27; color: #6ecf8b; }
+        .skin-robot { background: #fff; color: #17202a; }
+        .skin-robot .skin-bar { background: #0d6e76; color: #fff; }
+        .skin-robot .runner-log div { border-bottom: 1px solid #e6ebf0; padding: 2px 0; }
+        .skin-ide { background: #f3f3f3; color: #222; }
+        .skin-ide .skin-bar { background: #3c3c3c; color: #fff; }
+        .skin-wdio { background: #111; color: #e8e8e8; }
+        .skin-wdio .skin-bar { background: #ea5906; color: #fff; }
+        .skin-appium { background: #101418; color: #d6deeb; }
+        .skin-appium .skin-bar { background: #662d91; color: #fff; }
+        #studio-report { z-index: 80; }
+        #studio-report[hidden] { display: none; }
+        .report-card { width: min(920px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--card); color: var(--text); border-radius: 12px; padding: 18px; }
+        .report-card h2 { margin: 0 0 8px; }
+        .report-lang { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; margin: 8px 0; }
+        .report-lang select { font: inherit; font-weight: 500; max-width: 240px; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+        .report-checks { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 8px 0 12px; font-size: 13px; }
+        .report-preview { width: 100%; height: 360px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
         #google_translate_element, .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt, iframe.skiptranslate, .goog-te-gadget { display: none !important; visibility: hidden !important; height: 0 !important; }
         html, body { top: 0 !important; position: static !important; }
         @media (max-width: 1100px) {
@@ -361,7 +460,7 @@
             .studio-lead { padding: 8px 12px 0; }
             .nav { display: flex; overflow: auto; gap: 6px; border-right: 0; border-bottom: 1px solid var(--line); -webkit-overflow-scrolling: touch; padding: 8px; max-width: 100%; }
             .nav button, .nav a { width: auto; white-space: nowrap; min-height: 40px; display: inline-flex; align-items: center; }
-            .board { -webkit-overflow-scrolling: touch; overflow: auto; min-height: 46vh; padding: 12px; max-width: 100%; }
+            .board, .board-host { -webkit-overflow-scrolling: touch; overflow: auto; min-height: 46vh; padding: 12px; max-width: 100%; }
             .col { min-width: min(250px, 82vw); width: min(250px, 82vw); flex: 0 0 auto; }
             .log { max-height: 22vh; min-height: 72px; }
             .overlay { padding: 8px; }
@@ -371,7 +470,7 @@
             .m-main { border-right: 0; }
             .tabs { overflow-x: auto; flex-wrap: nowrap; }
             .tabs button { white-space: nowrap; }
-            .grid2, .platform-pick, .tool-body { grid-template-columns: 1fr; }
+            .grid2, .platform-pick, .board-pick, .tool-body, .monday-cols, .monday-row { grid-template-columns: 1fr; }
             .tool-tree { border-right: 0; border-bottom: 1px solid #dfe1e6; }
             .tool-bar { flex-wrap: wrap; }
             .field { grid-template-columns: 1fr; }
@@ -402,6 +501,16 @@
             <svg class="sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
             <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
         </button>
+        <div class="pace" id="studio-pace">
+            <span>Pace</span>
+            <div class="pace-btns">
+                <button type="button" class="pace-btn" data-pace="0.5">0,5</button>
+                <button type="button" class="pace-btn on" data-pace="1">1,0</button>
+                <button type="button" class="pace-btn" data-pace="1.5">1,5</button>
+                <button type="button" class="pace-btn" data-pace="2">2,0</button>
+            </div>
+        </div>
+        <button class="btn btn-ghost" id="studio-report-open" type="button">Report</button>
         <button class="btn btn-ghost" id="resetBtn">Reset</button>
         <button class="btn btn-primary" id="runBtn">Run 4-agent sprint</button>
     </div>
@@ -425,6 +534,42 @@
 </div>
 <div class="log" id="log"><div><b>SYSTEM</b> Sprint 24 loaded. Four agents standing by.</div></div>
 
+<button class="runner-edge" id="runner-edge" type="button">Runners</button>
+<aside id="runner-drawer" class="runner-drawer" aria-label="Native runner views">
+    <div class="m-head" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)">
+        <strong>Native runners</strong>
+        <button class="btn btn-ghost" type="button" id="runner-close">Close</button>
+    </div>
+    <div class="runner-tabs" id="runner-tabs" role="tablist"></div>
+    <div id="runner-stage" class="runner-stage"></div>
+</aside>
+<div id="studio-report" class="overlay notranslate" hidden translate="no">
+    <div class="report-card" role="dialog" aria-modal="true" aria-labelledby="studio-report-title">
+        <h2 id="studio-report-title">Sprint report</h2>
+        <p style="color:var(--muted)">The file stays in English until you pick another language. Check the preview, including the graphs, then download or print.</p>
+        <label class="report-lang notranslate">Report language
+            <select id="studio-report-lang">
+                <option value="en" selected>English</option>
+                <option value="es">Español</option>
+                <option value="pt">Português</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="it">Italiano</option>
+            </select>
+        </label>
+        <div class="report-checks">
+            <label><input type="checkbox" id="studio-opt-graphs" checked> Graphs</label>
+            <label><input type="checkbox" id="studio-opt-cases" checked> Case results</label>
+            <label><input type="checkbox" id="studio-opt-runners" checked> Runner comparison</label>
+        </div>
+        <iframe id="studio-report-preview" class="report-preview notranslate" title="Sprint report preview" sandbox="allow-same-origin"></iframe>
+        <div class="row" style="margin-top:12px;justify-content:flex-end">
+            <button class="btn btn-ghost" type="button" id="studio-report-close">Close</button>
+            <button class="btn btn-ghost" type="button" id="studio-report-print">Print</button>
+            <button class="btn btn-primary" type="button" id="studio-report-download">Download</button>
+        </div>
+    </div>
+</div>
 <div class="overlay" id="overlay">
     <div class="modal" id="modal"></div>
 </div>
@@ -433,7 +578,7 @@
     <script src="js/site-tour.js"></script>
     <script>
 const AGENTS = [
-    { id: 'a1', name: 'Ticket Steward', role: 'Reads & rewrites Jira stories' },
+    { id: 'a1', name: 'Ticket Steward', role: 'Reads and rewrites the stories on the board' },
     { id: 'a2', name: 'Test Designer', role: 'Writes the cases in Zephyr, Xray, or TestRail' },
     { id: 'a3', name: 'Automation Engineer', role: 'Builds Playwright / Cypress / Robot' },
     { id: 'a4', name: 'Release Verifier', role: 'DoD, evidence, sprint sign-off' }
@@ -577,6 +722,54 @@ Scenario: Escape returns focus to Pay
             { id: 'XT-1401', title: 'CSV row count matches captures', priority: 'High', est: '35m', include: true, gherkin: 'Scenario: Row count\n  Given 12 captures\n  Then CSV has 12 rows' },
             { id: 'XT-1402', title: 'SHA-256 sidecar matches', priority: 'High', est: '20m', include: false, gherkin: 'Scenario: Manifest\n  Then sha256 sidecar matches digest' }
         ]
+    },
+    {
+        key: 'PAY-260', type: 'Story', epic: 'Checkout integrity', column: 'To Do',
+        summary: '14-day EU refund window with ledger reversal',
+        priority: 'High', points: 5, assignee: 'CM', assigneeName: 'Carlos Muñoz', reporter: 'Finance Ops',
+        labels: ['refunds', 'eu'], components: ['Payments API', 'Ledger'],
+        env: 'staging-eu-1 · feature/eu-refund-window', sprint: 'Sprint 24',
+        description: `EU shoppers can refund a captured order for 14 days. The ledger must reverse the capture and the merchant settlement row must drop out of the next file.`,
+        ac: `Refunds work for two weeks.`,
+        proposedAc: `Scenario: Refund inside 14 days reverses the capture
+  Given capture CAP-90 for an EU order captured 3 days ago
+  When POST /v2/refunds is called
+  Then HTTP 201 returns refundId REF-90
+  And the ledger row moves to REVERSED
+  And the next settlement file omits CAP-90`,
+        comments: [{ who: 'Finance Ops', when: '24 Sep 10:18', text: 'Day 15 must be a 422, not a silent success.' }],
+        links: ['FIN-81 EU consumer refunds'],
+        attachments: ['refund-window.md'],
+        findings: 'No day count, no ledger status, no settlement exclusion.',
+        tests: [
+            { id: 'XT-1501', title: 'Refund inside 14 days reverses capture', priority: 'Critical', est: '30m', include: true, gherkin: 'Scenario: In window\n  Given capture 3 days ago\n  Then ledger is REVERSED' },
+            { id: 'XT-1502', title: 'Refund on day 15 is rejected', priority: 'High', est: '20m', include: true, gherkin: 'Scenario: Outside window\n  Given capture 15 days ago\n  Then status is 422' }
+        ]
+    },
+    {
+        key: 'PAY-264', type: 'Bug', epic: 'Webhooks', column: 'In Progress',
+        summary: 'Valid Stripe-Signature timestamps are rejected as stale',
+        priority: 'Highest', points: 3, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'SRE',
+        labels: ['webhooks', 'security'], components: ['Payments API'],
+        env: 'staging-us-2 · bugfix/signature-skew', sprint: 'Sprint 24',
+        description: `The webhook verifier treats a timestamp older than 30 seconds as stale. Stripe retries arrive at 45–90 seconds and every valid event is dropped.`,
+        ac: `Accept signatures that are still valid.`,
+        proposedAc: `Scenario: Signature within 5 minutes is accepted
+  Given a Stripe-Signature timestamp 90 seconds old and a correct HMAC
+  When POST /v2/webhooks/stripe is called
+  Then HTTP 200 is returned
+  And the event is stored once
+Scenario: Signature older than 5 minutes is rejected
+  Given a timestamp 6 minutes old
+  Then HTTP 400 with code SIGNATURE_STALE is returned`,
+        comments: [{ who: 'SRE', when: '25 Sep 07:40', text: 'Dropped payment_intent.succeeded events since the skew change.' }],
+        links: ['INC-918 Webhook drops'],
+        attachments: ['stripe-signature-sample.txt'],
+        findings: 'The tolerance is not stated. 30 seconds is shorter than Stripe retry spacing.',
+        tests: [
+            { id: 'XT-1601', title: '90 second signature is accepted', priority: 'Critical', est: '25m', include: true, gherkin: 'Scenario: Within tolerance\n  Given timestamp age 90s\n  Then status is 200' },
+            { id: 'XT-1602', title: '6 minute signature is stale', priority: 'High', est: '15m', include: true, gherkin: 'Scenario: Stale\n  Given timestamp age 6m\n  Then code is SIGNATURE_STALE' }
+        ]
     }
 ];
 
@@ -584,7 +777,9 @@ const EXTRA = {
     'PAY-241': { fixVersion: '2026.09', due: '30 Sep', subtasks: ['ACS redirect keeps the order UUID', '8 minute timeout voids the hold', 'Apple Pay stays exempt'] },
     'PAY-246': { fixVersion: '2026.09', due: '28 Sep', subtasks: ['Idempotency-Key required', 'Retry returns the original capture'] },
     'PAY-251': { fixVersion: '2026.09', due: '26 Sep', subtasks: ['Dialog role and focus move', 'Escape restores the Pay button'] },
-    'PAY-255': { fixVersion: '2026.09', due: '01 Oct', subtasks: ['CSV row count matches captures', 'SHA-256 sidecar matches the file'] }
+    'PAY-255': { fixVersion: '2026.09', due: '01 Oct', subtasks: ['CSV row count matches captures', 'SHA-256 sidecar matches the file'] },
+    'PAY-260': { fixVersion: '2026.09', due: '02 Oct', subtasks: ['Refund inside 14 days reverses the capture', 'Day 15 returns 422'] },
+    'PAY-264': { fixVersion: '2026.09', due: '27 Sep', subtasks: ['90 second signature is accepted', '6 minute signature is rejected'] }
 };
 
 const WALKS = {
@@ -637,6 +832,26 @@ const WALKS = {
         { what: 'Take the settlement CSV the job just wrote', where: 'SFTP M-44 folder', when: 'After the 02:15 job', why: 'The sidecar is useless without the file it describes' },
         { what: 'Read 2026-09-23.csv.sha256', where: 'Same folder', when: 'Immediately after upload', why: 'Merchants hash the file before they import it' },
         { what: 'Assert the digest matches the CSV bytes', where: 'SHA-256 sidecar', when: 'Before cut-off', why: 'A mismatch means the file was truncated in transit' }
+    ],
+    'XT-1501': [
+        { what: 'Seed capture CAP-90 for an EU order captured 3 days ago', where: 'Ledger fixture', when: 'Before the refund call', why: 'The window only applies to a real capture' },
+        { what: 'POST /v2/refunds for CAP-90', where: 'Payments API', when: 'Inside day 14', why: 'The consumer right is a reversal, not a second charge' },
+        { what: 'Assert HTTP 201, ledger REVERSED, and the next settlement file omits CAP-90', where: 'Response · ledger · settlement', when: 'After the call', why: 'Finance must not pay the merchant twice' }
+    ],
+    'XT-1502': [
+        { what: 'Age capture CAP-91 to 15 days', where: 'Ledger clock', when: 'Before the refund call', why: 'Day 15 is outside the EU window' },
+        { what: 'POST /v2/refunds', where: 'Payments API', when: 'On day 15', why: 'A late refund must not reverse a settled capture' },
+        { what: 'Assert HTTP 422 and the ledger row stays CAPTURED', where: 'Response · ledger', when: 'After the call', why: 'A silent success would break recon' }
+    ],
+    'XT-1601': [
+        { what: 'Build a Stripe-Signature with a correct HMAC and a timestamp 90 seconds old', where: 'Webhook fixture', when: 'Before the POST', why: 'Stripe retries land after 30 seconds' },
+        { what: 'POST /v2/webhooks/stripe', where: 'Payments API', when: 'The retry arrives', why: 'A dropped payment_intent.succeeded loses the capture' },
+        { what: 'Assert HTTP 200 and the event is stored once', where: 'Response · event table', when: 'After the call', why: 'A second insert would double-apply the payment' }
+    ],
+    'XT-1602': [
+        { what: 'Build a signature timestamp 6 minutes old', where: 'Webhook fixture', when: 'Before the POST', why: 'The tolerance has to end somewhere' },
+        { what: 'POST /v2/webhooks/stripe', where: 'Payments API', when: 'The late event arrives', why: 'Replay of an old body is the attack the check exists for' },
+        { what: 'Assert HTTP 400 SIGNATURE_STALE and no event row', where: 'Response · event table', when: 'After the call', why: 'Stale events must not move money' }
     ]
 };
 
@@ -649,6 +864,14 @@ const state = {
     autoFocus: null,
     tcPlatform: null,
     pickingPlatform: false,
+    board: 'jira',
+    pickingBoard: false,
+    runnerLog: [],
+    runnerFeed: [],
+    runnerLive: null,
+    runnerTab: 'Playwright',
+    pace: 1,
+    ink: null,
     awaitingSave: false,
     focusCase: null,
     verify: { ac: false, auto: false, sev: false, notes: false }
@@ -715,43 +938,216 @@ function setView(name) {
     if (previous !== name) track('sim_view', 'Simulator', name, { previous_view: previous });
 }
 
-function columns() {
-    return ['To Do', 'In Progress', 'In Review', 'Ready for QA', 'Done'];
-}
+const STAGES = ['To Do', 'In Progress', 'In Review', 'Ready for QA', 'Done'];
 
-const COL_TONE = {
-    'To Do': '#6b778c',
-    'In Progress': '#4c9aff',
-    'In Review': '#c4a574',
-    'Ready for QA': '#8777d9',
-    'Done': '#36b37e'
+const BOARDS = {
+    jira: {
+        name: 'Jira',
+        nav: 'Jira board',
+        crumb: 'PayStream · Sprint 24 · Scrum board',
+        accent: '#0052cc',
+        noun: 'issue',
+        blurb: 'A Scrum board. Each card is an issue with a key, a type, story points, and an assignee.',
+        columns: { 'To Do': 'To Do', 'In Progress': 'In Progress', 'In Review': 'In Review', 'Ready for QA': 'Ready for QA', 'Done': 'Done' },
+        tones: { 'To Do': '#6b778c', 'In Progress': '#0052cc', 'In Review': '#ffab00', 'Ready for QA': '#6554c0', 'Done': '#36b37e' },
+        fields: { status: 'Status', assignee: 'Assignee', points: 'Story points', sprint: 'Sprint' }
+    },
+    azure: {
+        name: 'Azure DevOps',
+        nav: 'Azure Boards',
+        crumb: 'PayStream · Sprint 24 · Board',
+        accent: '#0078d4',
+        noun: 'work item',
+        blurb: 'A sprint board of work items. Each card shows the ID, the state, who it is assigned to, and the effort.',
+        columns: { 'To Do': 'New', 'In Progress': 'Active', 'In Review': 'Resolved', 'Ready for QA': 'Ready for test', 'Done': 'Closed' },
+        tones: { 'To Do': '#0078d4', 'In Progress': '#0078d4', 'In Review': '#8661c5', 'Ready for QA': '#f2c811', 'Done': '#107c10' },
+        fields: { status: 'State', assignee: 'Assigned to', points: 'Effort', sprint: 'Iteration' }
+    },
+    monday: {
+        name: 'Monday.com',
+        nav: 'Monday board',
+        crumb: 'PayStream sprint · Main table',
+        accent: '#ff3d57',
+        noun: 'item',
+        blurb: 'A table of items in colored groups. Status, owner, and priority are columns on the row.',
+        columns: { 'To Do': 'Not started', 'In Progress': 'Working on it', 'In Review': 'Waiting for review', 'Ready for QA': 'Ready for QA', 'Done': 'Done' },
+        tones: { 'To Do': '#c4c4c4', 'In Progress': '#fdab3d', 'In Review': '#a25ddc', 'Ready for QA': '#579bfc', 'Done': '#00c875' },
+        fields: { status: 'Status', assignee: 'Owner', points: 'Numbers', sprint: 'Board' }
+    },
+    trello: {
+        name: 'Trello',
+        nav: 'Trello board',
+        crumb: 'PayStream · Sprint 24',
+        accent: '#0079bf',
+        noun: 'card',
+        blurb: 'Lists of cards. A card has a title, color labels, and members. The list is the status.',
+        columns: { 'To Do': 'To Do', 'In Progress': 'Doing', 'In Review': 'Review', 'Ready for QA': 'QA', 'Done': 'Done' },
+        tones: { 'To Do': '#0079bf', 'In Progress': '#0079bf', 'In Review': '#0079bf', 'Ready for QA': '#0079bf', 'Done': '#0079bf' },
+        fields: { status: 'List', assignee: 'Members', points: 'Checklist', sprint: 'Board' }
+    },
+    linear: {
+        name: 'Linear',
+        nav: 'Linear',
+        crumb: 'PayStream · Cycle 24',
+        accent: '#5e6ad2',
+        noun: 'issue',
+        blurb: 'Issues grouped by status. Each row is an identifier, a priority, a title, and an assignee.',
+        columns: { 'To Do': 'Todo', 'In Progress': 'In Progress', 'In Review': 'In Review', 'Ready for QA': 'In QA', 'Done': 'Done' },
+        tones: { 'To Do': '#8a8f98', 'In Progress': '#f2c94c', 'In Review': '#5e6ad2', 'Ready for QA': '#f2994a', 'Done': '#4cb782' },
+        fields: { status: 'Status', assignee: 'Assignee', points: 'Estimate', sprint: 'Cycle' }
+    },
+    asana: {
+        name: 'Asana',
+        nav: 'Asana board',
+        crumb: 'PayStream · Board',
+        accent: '#f06a6a',
+        noun: 'task',
+        blurb: 'Tasks in sections. A task has a name and an assignee, and the section is where it stands.',
+        columns: { 'To Do': 'To do', 'In Progress': 'In progress', 'In Review': 'Review', 'Ready for QA': 'QA', 'Done': 'Complete' },
+        tones: { 'To Do': '#6d6e6f', 'In Progress': '#f06a6a', 'In Review': '#f06a6a', 'Ready for QA': '#f06a6a', 'Done': '#25a244' },
+        fields: { status: 'Section', assignee: 'Assignee', points: 'Points', sprint: 'Project' }
+    }
 };
 
-function renderBoard() {
-    const cols = columns().map(c => {
-        const items = state.tickets.filter(t => t.column === c);
-        const cards = items.map(ticketCard).join('');
-        return `<div class="col" style="--col-accent:${COL_TONE[c]}"><h3><span>${c}</span><span class="col-count">${items.length}</span></h3><div class="col-body">${cards || '<div style="color:var(--muted);font-size:12px;padding:8px">Empty</div>'}</div></div>`;
-    }).join('');
-    viewEl.innerHTML = cols;
-    viewEl.className = 'board';
+function currentBoard() {
+    return BOARDS[state.board] || BOARDS.jira;
 }
 
-function ticketCard(t) {
+function stageLabel(column) {
+    return currentBoard().columns[column] || column;
+}
+
+function applyBoardChrome() {
+    const board = currentBoard();
+    const btn = document.querySelector('.nav button[data-view="board"]');
+    if (btn) btn.textContent = board.nav;
+    const small = document.querySelector('.brand small');
+    if (small) small.textContent = board.crumb;
+}
+
+function chooseBoard(id) {
+    if (!BOARDS[id]) return;
+    state.board = id;
+    state.pickingBoard = false;
+    document.querySelectorAll('[data-board]').forEach(btn => { btn.disabled = true; });
+    applyBoardChrome();
+    resume(id);
+    if (state.view === 'board' && !state.running) renderBoard();
+}
+
+function boardPickerHtml() {
+    const cards = Object.entries(BOARDS).map(([id, board]) => `
+        <article class="platform-card" style="--tool:${board.accent}">
+            <div class="platform-mark">${board.name}</div>
+            <h3>${board.nav}</h3>
+            <p>${board.blurb}</p>
+            <button class="btn btn-primary" type="button" data-board="${id}" style="background:${board.accent}">Use ${board.name}</button>
+        </article>`).join('');
+    return `
+        <h2 style="margin:0">Which board should this sprint use?</h2>
+        <p style="color:var(--muted);max-width:74ch">Agent 1 reads the same stories on the board you pick. Linear and Asana sit with Jira, Azure DevOps, Monday, and Trello.</p>
+        <div class="platform-pick board-pick">${cards}</div>`;
+}
+
+function bindBoardChoices() {
+    document.querySelectorAll('[data-board]').forEach(btn => {
+        btn.onclick = () => chooseBoard(btn.dataset.board);
+    });
+}
+
+function ticketShell(t, inner, extraClass) {
     const cls = t.decision === 'accept' ? 'changed' : t.decision === 'keep' ? 'kept' : t.decision === 'ok' ? 'ok' : '';
-    const initials = t.assignee || '·';
-    const chips = (t.labels || []).slice(0, 3).map(label => `<span>${label}</span>`).join('');
     return `<div class="ticket-wrap" id="wrap-${t.key}">
-        <article class="ticket ${cls}" id="card-${t.key}" onclick="openTicket('${t.key}')">
+        <article class="ticket ${extraClass || ''} ${cls}" id="card-${t.key}" onclick="openTicket('${t.key}')">
             <div class="laser"></div>
-            <div class="ticket-top"><span class="issue-type ${t.type === 'Bug' ? 'bug' : ''}">${t.type}</span><span class="ticket-key">${t.key}</span></div>
-            <div class="sum">${t.summary}</div>
-            <div class="ticket-chips">${chips}</div>
-            <div class="meta"><span class="avatar" title="${t.assigneeName}">${initials}</span><span class="prio ${t.priority.toLowerCase()}">${t.priority}</span><span>${t.points} SP</span></div>
-            <div class="ticket-foot"><span>${t.fixVersion || ''}</span><span>${t.due ? 'Due ' + t.due : ''}</span></div>
+            ${inner}
         </article>
         <div class="ticket-console" id="console-${t.key}"></div>
     </div>`;
+}
+
+function jiraCard(t) {
+    const chips = (t.labels || []).slice(0, 3).map(label => `<span>${label}</span>`).join('');
+    return ticketShell(t, `
+        <div class="ticket-top"><span class="issue-type ${t.type === 'Bug' ? 'bug' : ''}">${t.type}</span><span class="ticket-key">${t.key}</span></div>
+        <div class="sum">${t.summary}</div>
+        <div class="ticket-chips">${chips}</div>
+        <div class="meta"><span class="avatar" title="${t.assigneeName}">${t.assignee}</span><span class="prio ${t.priority.toLowerCase()}">${t.priority}</span><span>${t.points} SP</span></div>
+        <div class="ticket-foot"><span>${t.fixVersion || ''}</span><span>${t.due ? 'Due ' + t.due : ''}</span></div>`);
+}
+
+function azureCard(t) {
+    const type = t.type === 'Bug' ? 'Bug' : 'User Story';
+    return ticketShell(t, `
+        <div class="ticket-top"><span class="issue-type ${t.type === 'Bug' ? 'bug' : ''}">${type}</span><span class="wi-id">${t.key.replace(/\D/g, '')}</span></div>
+        <div class="sum">${t.summary}</div>
+        <div class="meta"><span class="avatar" title="${t.assigneeName}">${t.assignee}</span><span>${t.points} effort</span></div>`);
+}
+
+function trelloCard(t) {
+    const colors = ['#61bd4f', '#f2d600', '#ff9f1a', '#eb5a46', '#c377e0'];
+    const bars = (t.labels || []).slice(0, 3).map((label, i) => `<i style="background:${colors[i]}" title="${label}"></i>`).join('');
+    return ticketShell(t, `
+        <div class="trello-labels">${bars}</div>
+        <div class="sum">${t.summary}</div>
+        <div class="meta"><span class="avatar" title="${t.assigneeName}">${t.assignee}</span></div>`);
+}
+
+function linearCard(t) {
+    return ticketShell(t, `
+        <span class="prio-mark ${t.priority.toLowerCase()}"></span>
+        <span class="ticket-key">${t.key}</span>
+        <span class="sum">${t.summary}</span>
+        <span class="avatar" title="${t.assigneeName}">${t.assignee}</span>`, 'linear-row');
+}
+
+function asanaCard(t) {
+    return ticketShell(t, `
+        <span class="asana-check" aria-hidden="true"></span>
+        <div class="asana-body"><div class="sum">${t.summary}</div></div>
+        <span class="avatar" title="${t.assigneeName}">${t.assignee}</span>`, 'asana-card');
+}
+
+function mondayRow(t, stage) {
+    const tone = BOARDS.monday.tones[stage];
+    return ticketShell(t, `
+        <span class="sum">${t.summary}</span>
+        <span class="avatar" title="${t.assigneeName}">${t.assignee}</span>
+        <span class="monday-status" style="background:${tone}">${BOARDS.monday.columns[stage]}</span>
+        <span class="prio ${t.priority.toLowerCase()}">${t.priority}</span>
+        <span>${t.points}</span>`, 'monday-row');
+}
+
+function columnMarkup(cardFor) {
+    const board = currentBoard();
+    return STAGES.map(stage => {
+        const items = state.tickets.filter(t => t.column === stage);
+        const cards = items.map(t => cardFor(t, stage)).join('');
+        const tone = board.tones[stage];
+        return `<div class="col" style="--col-accent:${tone}"><h3><span>${board.columns[stage]}</span><span class="col-count">${items.length}</span></h3><div class="col-body">${cards || '<div class="col-empty">Empty</div>'}</div></div>`;
+    }).join('');
+}
+
+function renderBoard() {
+    if (state.pickingBoard) {
+        viewEl.className = 'tests';
+        viewEl.innerHTML = boardPickerHtml();
+        bindBoardChoices();
+        return;
+    }
+    const board = currentBoard();
+    const faces = { jira: jiraCard, azure: azureCard, trello: trelloCard, linear: linearCard, asana: asanaCard };
+    viewEl.className = 'board-host board-' + state.board;
+    if (state.board === 'monday') {
+        const groups = STAGES.map(stage => {
+            const items = state.tickets.filter(t => t.column === stage);
+            const rows = items.map(t => mondayRow(t, stage)).join('') || '<div class="col-empty">Empty group</div>';
+            return `<section class="monday-group" style="--g:${board.tones[stage]}"><h3>${board.columns[stage]} <span class="col-count">${items.length}</span></h3>${rows}</section>`;
+        }).join('');
+        viewEl.innerHTML = `<div class="board-toolbar"><b>PayStream sprint</b><span>Main table</span></div><div class="board-cols"><div class="monday-cols"><span>Item</span><span>Owner</span><span>Status</span><span>Priority</span><span>SP</span></div>${groups}</div>`;
+        return;
+    }
+    viewEl.innerHTML = `<div class="board-toolbar"><b>${board.name}</b><span>${board.crumb}</span></div><div class="board-cols">${columnMarkup(faces[state.board] || jiraCard)}</div>`;
 }
 
 function ensureLaser(el) {
@@ -829,7 +1225,7 @@ function openTicket(key, opts = {}) {
     const ac = t.decision === 'accept' ? t.proposedAc : t.ac;
     modal.innerHTML = `
         <div class="m-head">
-            <div><span class="pill">${t.type}</span> <strong>${t.key}</strong> · ${t.sprint}</div>
+            <div><span class="pill">${t.type}</span> <strong>${t.key}</strong> · ${stageLabel(t.column)}</div>
             <button class="btn btn-ghost" onclick="closeModal()">Close</button>
         </div>
         <div class="scan-stage" id="ticketScanStage">
@@ -869,12 +1265,12 @@ function openTicket(key, opts = {}) {
                 </div>
             </div>
             <aside class="m-side">
-                <div class="field"><span>Status</span><b>${t.column}</b></div>
-                <div class="field"><span>Assignee</span><b>${t.assigneeName}</b></div>
+                <div class="field"><span>${currentBoard().fields.status}</span><b>${stageLabel(t.column)}</b></div>
+                <div class="field"><span>${currentBoard().fields.assignee}</span><b>${t.assigneeName}</b></div>
                 <div class="field"><span>Reporter</span><b>${t.reporter}</b></div>
                 <div class="field"><span>Priority</span><b class="prio ${t.priority.toLowerCase()}">${t.priority}</b></div>
-                <div class="field"><span>Story points</span><b>${t.points}</b></div>
-                <div class="field"><span>Sprint</span><b>${t.sprint}</b></div>
+                <div class="field"><span>${currentBoard().fields.points}</span><b>${t.points}</b></div>
+                <div class="field"><span>${currentBoard().fields.sprint}</span><b>${t.sprint}</b></div>
                 <div class="field"><span>Components</span><b>${t.components.join(', ')}</b></div>
                 <div class="field"><span>Labels</span><b>${t.labels.join(', ')}</b></div>
                 <div class="field"><span>Environment</span><b>${t.env}</b></div>
@@ -936,7 +1332,9 @@ const CASE_FOLDERS = {
     'PAY-241': 'Checkout / 3-D Secure',
     'PAY-246': 'Checkout / Captures',
     'PAY-251': 'Checkout / Accessibility',
-    'PAY-255': 'Settlement / Files'
+    'PAY-255': 'Settlement / Files',
+    'PAY-260': 'Checkout / Refunds',
+    'PAY-264': 'Webhooks / Signatures'
 };
 
 function caseKey(platform, id) {
@@ -976,12 +1374,15 @@ function bindPlatformChoices() {
 }
 
 function stepTable(tc, platform) {
-    const rows = (tc.steps || []).map((s, i) => {
+    const all = tc.steps || [];
+    const limit = state.ink && state.ink.id === tc.id ? state.ink.n : all.length;
+    const rows = all.slice(0, limit).map((s, i) => {
         const id = `step-${tc.id}-${i}`;
+        const ink = i === limit - 1 && state.ink && state.ink.id === tc.id ? ' class="ink"' : '';
         if (platform === 'testrail') {
-            return `<tr id="${id}"><td class="n">${i + 1}</td><td><b>${escapeHtml(s.what)}</b><div class="sub">${escapeHtml(s.where)} · ${escapeHtml(s.when)}</div></td><td>${escapeHtml(s.why)}</td></tr>`;
+            return `<tr id="${id}"${ink}><td class="n">${i + 1}</td><td><b>${escapeHtml(s.what)}</b><div class="sub">${escapeHtml(s.where)} · ${escapeHtml(s.when)}</div></td><td>${escapeHtml(s.why)}</td></tr>`;
         }
-        return `<tr id="${id}"><td class="n">${i + 1}</td><td>${escapeHtml(s.what)}</td><td><div>${escapeHtml(s.where)}</div><div class="sub">${escapeHtml(s.when)}</div></td><td>${escapeHtml(s.why)}</td></tr>`;
+        return `<tr id="${id}"${ink}><td class="n">${i + 1}</td><td>${escapeHtml(s.what)}</td><td><div>${escapeHtml(s.where)}</div><div class="sub">${escapeHtml(s.when)}</div></td><td>${escapeHtml(s.why)}</td></tr>`;
     }).join('');
     if (platform === 'testrail') {
         return `<table><thead><tr><th></th><th>Step</th><th>Expected Result</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -1037,9 +1438,12 @@ function platformRepoHtml(platform) {
         : platform === 'zephyr'
             ? 'PayStream · Tests · Test Cases · Sprint 24'
             : 'PayStream / Test Repository / Sprint 24';
-    const crumb = focus
-        ? `${place} · case ${included.findIndex(item => item.tc.id === focus.tc.id) + 1} of ${included.length}`
-        : `${place} · ${included.length} cases in this run`;
+    const writing = state.ink && focus && state.ink.id === focus.tc.id;
+    const crumb = writing
+        ? `<span class="pen">Writing ${caseKey(platform, focus.tc.id)} · step ${state.ink.n} of ${(focus.tc.steps || []).length}</span>`
+        : focus
+            ? `${place} · case ${included.findIndex(item => item.tc.id === focus.tc.id) + 1} of ${included.length}`
+            : `${place} · ${included.length} cases in this run`;
     return `<div class="tool tool-${platform} scan-stage">
         <div class="laser"></div>
         <div class="tool-bar">
@@ -1085,6 +1489,17 @@ function toggleCase(ticket, id, on) {
     track('sim_toggle_case', 'Simulator', id, { ticket, included: on });
 }
 
+function fwSample(tc, fw) {
+    const sn = snippets(tc);
+    if (fw === 'Playwright') return sn.playwright;
+    if (fw === 'Cypress') return sn.cypress;
+    if (fw === 'Robot') return sn.robot;
+    const lines = (tc.steps || []).map((step, index) => (index + 1) + '. ' + step.what + ' @ ' + step.where);
+    if (fw === 'Selenium') return '[info] open staging\n' + lines.map(line => '[info] ' + line).join('\n');
+    if (fw === 'WebdriverIO') return 'wdio ' + tc.id + '\n' + lines.join('\n');
+    return '[HTTP] POST /session ' + tc.id + '\n' + lines.join('\n');
+}
+
 function snippets(tc) {
     const steps = tc.steps || [];
     const pw = steps.map((s, i) => `  // ${i + 1}. when ${s.when} · where ${s.where}\n  // what: ${s.what}\n  // why: ${s.why}`).join('\n');
@@ -1101,21 +1516,19 @@ function renderAuto() {
     viewEl.className = 'tests';
     const selected = state.tickets.flatMap(t => t.tests.filter(tc => tc.include));
     const first = state.autoFocus || selected[0];
-    const sn = first ? snippets(first) : { playwright: '// no cases selected', cypress: '', robot: '' };
     const passed = state.results.filter(r => r.ok).length;
     const chosen = Array.isArray(state.frameworks) && state.frameworks.length ? state.frameworks : ['Playwright', 'Cypress', 'Robot'];
-    const keys = { Playwright: 'playwright', Cypress: 'cypress', Robot: 'robot' };
-    const fw = state.autoFw && keys[state.autoFw] ? state.autoFw : chosen[0];
+    const fw = state.autoFw && chosen.includes(state.autoFw) ? state.autoFw : chosen[0];
     const reel = first ? walkHtml(first) : '';
     const place = selected.indexOf(first);
     viewEl.innerHTML = `
         <h2 style="margin-top:0">Automation lab</h2>
         <p style="color:var(--muted)">Case ${place < 0 ? 1 : place + 1} of ${selected.length} · ${fw} · ${passed} of ${state.results.length} runs passed</p>
-        <div class="card"><h3>${first ? first.id + ' · ' + fw : 'How this run moves'}</h3>${reel}<div class="code" style="margin-top:8px">${escapeHtml(sn[keys[fw]] || '')}</div></div>`;
+        <div class="card"><h3>${first ? first.id + ' · ' + fw : 'How this run moves'}</h3>${reel}<div class="code" style="margin-top:8px">${escapeHtml(first ? fwSample(first, fw) : '')}</div></div>`;
 }
 
 const VERIFIER_ACTIONS = [
-    { what: 'Read each story’s acceptance criteria after the steward pass', where: 'Jira · Sprint 24 · Acceptance tab', when: 'After Ticket Steward, before test design', why: 'A story that is still vague cannot be automated' },
+    { what: 'Read each story’s acceptance criteria after the steward pass', where: 'Board · Sprint 24 · Acceptance tab', when: 'After Ticket Steward, before test design', why: 'A story that is still vague cannot be automated' },
     { what: 'Match every selected Xray case to a framework result', where: 'Automation lab · Last run', when: 'After the engineer finishes the chosen frameworks', why: 'A case with no result is not done' },
     { what: 'Look for a Sev-1 still sitting in Ready for QA or Done', where: 'Board · Ready for QA and Done', when: 'Before sign-off', why: 'A blocking defect must not ship inside the increment' },
     { what: 'Confirm release notes and the 3DS, capture, and accessibility evidence', where: 'Sprint report · attachments', when: 'At the increment gate', why: 'Support and audit need the same proof the agents produced' }
@@ -1171,7 +1584,7 @@ function renderReport() {
             <div class="card"><h3>Agent 3 · Automation</h3><p>${passed}/${state.results.length} scripted runs passed</p></div>
             <div class="card"><h3>Agent 4 · Verification</h3><p>${Object.values(state.verify).every(Boolean) ? 'Increment signed off' : 'Pending sign-off'}</p></div>
         </div>
-        <p style="color:var(--muted)">This studio is a live CV demo of how specialized agents collaborate on a real Scrum increment: refine Jira, curate Xray, generate automation, then verify the DoD.</p>`;
+        <p style="color:var(--muted)">Open Report to check the language, the graphs, and the case lines, then download or print. The Runners tab on the right keeps the console from this pass.</p>`;
 }
 
 async function runSprint() {
@@ -1189,8 +1602,29 @@ async function runSprint() {
     track('sim_agent_start', 'Simulator', 'Ticket Steward', { agent_id: 'a1' });
 
     state.agent = 'a1'; renderAgents();
-    banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — scanning each Jira issue. Some already meet the bar and pass without a rewrite. The rest wait for your decision.';
+    state.pickingBoard = true;
+    armWait();
+    banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — choose the board this sprint should use. Jira, Azure DevOps, Monday, Trello, Linear, or Asana.';
     if (window.SiteI18n) SiteI18n.refreshTranslation();
+    setView('board');
+    showPhaseConsole(true);
+    await agentThink([phaseConsole], 'A1', 'asking which board you use · when before the first story is opened · why the columns and cards should match that tool');
+    let boardId = await waitUser();
+    while (!BOARDS[boardId]) {
+        state.pickingBoard = true;
+        armWait();
+        setView('board');
+        boardId = await waitUser();
+    }
+    state.pickingBoard = false;
+    state.board = boardId;
+    applyBoardChrome();
+    showPhaseConsole(false);
+    const board = BOARDS[boardId];
+    log('A1', `Board set to ${board.name}.`);
+    banner.innerHTML = `<strong>Agent 1 · Ticket Steward</strong> — scanning each ${board.noun} on ${board.name}. Some already meet the bar and pass without a rewrite. The rest wait for your decision.`;
+    if (window.SiteI18n) SiteI18n.refreshTranslation();
+    setView('board');
     log('A1', 'Standing by to review Sprint 24 stories.');
     const cleanFlags = state.tickets.map(() => Math.random() < 0.45);
     if (!cleanFlags.some(Boolean)) cleanFlags[Math.floor(Math.random() * cleanFlags.length)] = true;
@@ -1210,7 +1644,7 @@ async function runSprint() {
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         const hosts = [boardConsole];
-        await agentThink(hosts, 'A1', `opening ${t.key} · where ${t.column} · when Sprint 24 review starts`);
+        await agentThink(hosts, 'A1', `opening ${t.key} · where ${stageLabel(t.column)} · when Sprint 24 review starts`);
         await scanElement(card, 2200, 'a1');
         await agentThink(hosts, 'A1', `what: read description, comments, and AC · why: ${escapeHtml(t.findings)}`);
         if (t.clean) {
@@ -1272,27 +1706,32 @@ async function runSprint() {
     banner.innerHTML = `<strong>Agent 2 · Test Designer</strong> — writing the sprint set in ${tool.name}. Uncheck a case to leave it in the backlog, then save.`;
     if (window.SiteI18n) SiteI18n.refreshTranslation();
     state.focusCase = null;
+    state.ink = null;
     renderTests();
     await agentThink(testHosts, 'A2', `opened ${tool.name} · where ${tool.where} · when the steward finished`, 'dec');
     for (const t of state.tickets) {
         for (const tc of t.tests.filter(item => item.include)) {
             state.focusCase = tc.id;
+            state.ink = { id: tc.id, n: 0 };
             renderTests();
             const sheet = document.getElementById('case-' + tc.id);
             if (sheet) {
+                sheet.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                 sheet.classList.add('case-now');
                 await scanElement(sheet, 700, 'a2');
             }
             await agentThink(testHosts, 'A2', `creating ${caseKey(picked, tc.id)} ${escapeHtml(tc.title)} · where ${tool.where} · covered by ${t.key}`, 'dec');
             for (let stepIndex = 0; stepIndex < (tc.steps || []).length; stepIndex++) {
                 const step = tc.steps[stepIndex];
-                document.querySelectorAll('.step-now').forEach(node => node.classList.remove('step-now'));
+                state.ink = { id: tc.id, n: stepIndex + 1 };
+                renderTests();
                 const node = document.getElementById('step-' + tc.id + '-' + stepIndex);
-                if (node) node.classList.add('step-now');
+                if (node) node.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                 await agentThink(testHosts, 'A2', `step ${stepIndex + 1} · what ${escapeHtml(step.what)} · where ${escapeHtml(step.where)} · when ${escapeHtml(step.when)} · why ${escapeHtml(step.why)}`);
             }
         }
     }
+    state.ink = null;
     state.focusCase = null;
     state.awaitingSave = true;
     renderTests();
@@ -1313,6 +1752,9 @@ async function runSprint() {
             <label><input type="checkbox" data-fw="Playwright" checked> Playwright</label>
             <label><input type="checkbox" data-fw="Cypress" checked> Cypress</label>
             <label><input type="checkbox" data-fw="Robot" checked> Robot</label>
+            <label><input type="checkbox" data-fw="Selenium"> Selenium</label>
+            <label><input type="checkbox" data-fw="WebdriverIO"> WebdriverIO</label>
+            <label><input type="checkbox" data-fw="Appium"> Appium</label>
             <button class="btn btn-primary" id="fwGo" type="button">Run selected frameworks</button>
         </div>`;
     if (window.SiteI18n) SiteI18n.refreshTranslation();
@@ -1329,6 +1771,9 @@ async function runSprint() {
     showPhaseConsole(true);
     const selected = state.tickets.flatMap(t => t.tests.filter(tc => tc.include));
     state.results = [];
+    state.runnerLog = [];
+    state.runnerFeed = [];
+    openStudioRunners();
     setView('auto');
     for (const tc of selected) {
         for (const fw of state.frameworks) {
@@ -1341,16 +1786,26 @@ async function runSprint() {
                 specBlock.parentElement.style.overflow = 'hidden';
                 await scanElement(specBlock.parentElement, 1600, 'a3');
             }
-            const sn = snippets(tc);
-            const sample = fw === 'Playwright' ? sn.playwright : fw === 'Cypress' ? sn.cypress : sn.robot;
+            const sample = fwSample(tc, fw);
+            state.runnerLive = { id: tc.id, fw };
+            state.runnerFeed.push({ fw, text: runnerCmd(fw, tc, null, -1), cls: 'run' });
+            renderStudioRunners();
             await agentThink(testHosts, 'A3', `scaffolding ${fw} for ${tc.id} · where Automation lab · when the case is in the sprint set`, 'dec');
-            const firstStep = (tc.steps || [])[0];
-            if (firstStep) await agentThink(testHosts, 'A3', `what ${escapeHtml(firstStep.what)} · why ${escapeHtml(firstStep.why)}`);
+            const steps = tc.steps || [];
+            for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
+                state.runnerFeed.push({ fw, text: runnerCmd(fw, tc, steps[stepIndex], stepIndex), cls: 'run' });
+                renderStudioRunners();
+                await agentThink(testHosts, 'A3', `what ${escapeHtml(steps[stepIndex].what)} · where ${escapeHtml(steps[stepIndex].where)}`);
+            }
             await agentThink(testHosts, 'A3', escapeHtml(sample.split('\n').slice(0, 2).join(' ')), 'dec');
             await agentThink(testHosts, 'A3', `launching the ${fw} runner against staging…`);
             const ok = !(tc.id === 'XT-1401' && fw === 'Robot');
             const ms = 420 + Math.floor(Math.random() * 900);
-            state.results.push({ id: tc.id, fw, ok, ms });
+            state.results.push({ id: tc.id, fw, ok, ms, title: tc.title });
+            state.runnerLive = null;
+            state.runnerFeed.push({ fw, text: (ok ? 'PASS' : 'FAIL') + '  ' + tc.id + '  ' + ms + ' ms' + (ok ? '' : '  row count did not match the ledger'), cls: ok ? 'ok' : 'fail' });
+            state.runnerLog.push({ fw, id: tc.id, ok, ms, title: tc.title, where: steps[0] ? steps[0].where : '', how: steps[0] ? steps[0].what : tc.title, note: ok ? 'passed' : 'row count did not match the ledger' });
+            renderStudioRunners();
             await agentThink(testHosts, 'A3', ok ? `${tc.id} [${fw}] PASSED (${ms} ms)` : `${tc.id} [${fw}] FAILED · row count did not match the ledger`, ok ? 'ok' : '');
             track('sim_automation_result', 'Simulator', tc.id, { framework: fw, passed: ok, duration_ms: ms });
             renderAuto();
@@ -1398,12 +1853,71 @@ async function runSprint() {
     });
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function sleep(ms) { return new Promise(r => setTimeout(r, Math.max(40, Math.round(ms * (state.pace || 1))))); }
+
+function runnerCmd(fw, tc, step, index) {
+    if (!step) {
+        if (fw === 'Playwright') return 'npx playwright test ' + tc.id + ' --reporter=list';
+        if (fw === 'Cypress') return 'cypress run --spec ' + tc.id + '.cy.js';
+        if (fw === 'Robot') return 'robot --test "' + tc.id + '" tests/';
+        if (fw === 'Selenium') return 'Executing: | open | staging | ' + tc.id + ' |';
+        if (fw === 'WebdriverIO') return '[0-0] RUNNING in chrome - ' + tc.id;
+        return '[HTTP] POST /session  ' + tc.id;
+    }
+    const n = index + 1;
+    if (fw === 'Playwright') return '  ' + n + '  await page  ' + step.what + '  @ ' + step.where;
+    if (fw === 'Cypress') return '  cy  ' + step.what + '  (' + step.where + ')';
+    if (fw === 'Robot') return n + '  ' + step.what + '    ' + step.where + '    ' + step.when;
+    if (fw === 'Selenium') return 'Executing: | ' + step.what + ' | ' + step.where + ' | ' + step.when + ' |';
+    if (fw === 'WebdriverIO') return '[0-0] ' + step.what + '  ' + step.where;
+    return '[HTTP] ' + step.what + '  ' + step.where;
+}
+
+function runnerSkin(fw, logHtml) {
+    const bar = {
+        Playwright: ['skin-play', 'Playwright · list reporter'],
+        Cypress: ['skin-cy', 'Cypress · command log'],
+        Robot: ['skin-robot', 'Robot · log.html'],
+        Selenium: ['skin-ide', 'Selenium IDE · command log'],
+        WebdriverIO: ['skin-wdio', 'WebdriverIO · spec reporter'],
+        Appium: ['skin-appium', 'Appium · server log']
+    }[fw] || ['skin-play', fw];
+    return '<div class="skin ' + bar[0] + '"><div class="skin-bar">' + bar[1] + '</div><div class="runner-log">' + logHtml + '</div></div>';
+}
 
 document.getElementById('nav').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return; setView(b.dataset.view);
 });
 document.getElementById('runBtn').onclick = runSprint;
+document.getElementById('runner-edge').onclick = () => {
+    const drawer = document.getElementById('runner-drawer');
+    if (drawer.classList.contains('open')) closeStudioRunners();
+    else openStudioRunners();
+};
+document.getElementById('runner-close').onclick = () => closeStudioRunners();
+document.getElementById('studio-report-open').onclick = () => openStudioReport();
+const STUDIO_PACE_KEY = 'qa-studio-pace';
+function applyStudioPace(value) {
+    const n = Number(value);
+    state.pace = [0.5, 1, 1.5, 2].includes(n) ? n : 1;
+    try { localStorage.setItem(STUDIO_PACE_KEY, String(state.pace)); } catch (err) { /* private mode */ }
+    document.querySelectorAll('#studio-pace [data-pace]').forEach(btn => {
+        btn.classList.toggle('on', Number(btn.dataset.pace) === state.pace);
+    });
+}
+try {
+    const savedPace = Number(localStorage.getItem(STUDIO_PACE_KEY));
+    if ([0.5, 1, 1.5, 2].includes(savedPace)) applyStudioPace(savedPace);
+} catch (err) { /* private mode */ }
+document.querySelectorAll('#studio-pace [data-pace]').forEach(btn => {
+    btn.onclick = () => applyStudioPace(btn.dataset.pace);
+});
+document.getElementById('studio-report-close').onclick = () => closeStudioReport();
+document.getElementById('studio-report-print').onclick = () => printStudioReport();
+document.getElementById('studio-report-download').onclick = () => downloadStudioReport();
+['studio-report-lang', 'studio-opt-graphs', 'studio-opt-cases', 'studio-opt-runners'].forEach(id => {
+    document.getElementById(id).addEventListener('change', refreshStudioReport);
+});
 document.getElementById('resetBtn').onclick = () => {
     track('sim_reset', 'Simulator', 'Reload');
     location.reload();
@@ -1459,23 +1973,168 @@ function mountLanguageMenu() {
     document.addEventListener('click', () => wrap.classList.remove('open'));
     SiteI18n.resolve().then((lang) => {
         syncFlag(lang);
+        document.documentElement.lang = lang || 'en';
         SiteI18n.loadWidget();
         SiteI18n.applyMachineTranslate(lang);
     });
+    SiteI18n.follow((lang) => {
+        syncFlag(lang);
+        document.documentElement.lang = lang || 'en';
+        SiteI18n.applyMachineTranslate(lang);
+    });
+    const labLink = document.querySelector('a[href="qa-lab.html"]');
+    if (labLink) {
+        labLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            location.href = 'qa-lab.html?lang=' + encodeURIComponent(SiteI18n.current());
+        });
+    }
 }
 
 mountLanguageMenu();
+
+function openStudioRunners() {
+    const drawer = document.getElementById('runner-drawer');
+    if (drawer) drawer.classList.add('open');
+    renderStudioRunners();
+}
+function closeStudioRunners() {
+    const drawer = document.getElementById('runner-drawer');
+    if (drawer) drawer.classList.remove('open');
+}
+function renderStudioRunners(active) {
+    const tabs = document.getElementById('runner-tabs');
+    const stage = document.getElementById('runner-stage');
+    if (!tabs || !stage) return;
+    const chosen = state.frameworks && state.frameworks.length ? state.frameworks : ['Playwright', 'Cypress', 'Robot'];
+    if (active) state.runnerTab = active;
+    if (!chosen.includes(state.runnerTab)) state.runnerTab = chosen[0];
+    const current = state.runnerTab;
+    tabs.innerHTML = chosen.map(name => '<button type="button" data-runner="' + name + '" class="' + (name === current ? 'on' : '') + '">' + name + '</button>').join('');
+    tabs.querySelectorAll('[data-runner]').forEach(btn => { btn.onclick = () => renderStudioRunners(btn.dataset.runner); });
+    const rows = (state.runnerLog || []).filter(row => row.fw === current);
+    const live = state.runnerLive && state.runnerLive.fw === current ? state.runnerLive : null;
+    const items = [];
+    if (live) items.push('<li class="run">● ' + live.id + '</li>');
+    rows.forEach(row => items.push('<li class="' + (row.ok ? 'ok' : 'fail') + '">' + (row.ok ? '✓' : '✗') + ' ' + row.id + '</li>'));
+    if (!items.length) items.push('<li class="run">waiting for a run</li>');
+    const feed = (state.runnerFeed || []).filter(row => row.fw === current);
+    const lines = feed.map(row => '<div class="' + (row.cls || '') + '">' + escapeHtml(row.text) + '</div>');
+    if (!lines.length) lines.push('<div class="run">Idle. Commands appear here as this runner executes the sprint.</div>');
+    stage.innerHTML = '<div class="runner-split"><section class="runner-cases"><b>' + current + ' tests</b><ul>' + items.join('') + '</ul></section><section class="runner-console">' + runnerSkin(current, lines.join('')) + '</section></div>';
+    const log = stage.querySelector('.runner-console');
+    if (log) log.scrollTop = log.scrollHeight;
+}
+
+const STUDIO_REPORT_LANG = 'qa-studio-report-lang';
+const STUDIO_COPY = {
+    en: { title: 'Sprint report', produced: 'Produced by the QA lab of Carlos Muñoz', graphs: 'Graphs', cases: 'Case results', runners: 'Runner comparison', pass: 'PASSED', fail: 'FAILED', rate: 'Pass rate', duration: 'Duration', empty: 'Run the sprint to fill this report.', footer: 'Produced by the QA lab of Carlos Muñoz · https://carlosandmunoz.com · not a third-party certificate' },
+    es: { title: 'Informe del sprint', produced: 'Producido por el laboratorio QA de Carlos Muñoz', graphs: 'Gráficas', cases: 'Resultados de casos', runners: 'Comparación de ejecutores', pass: 'APROBADO', fail: 'FALLIDO', rate: 'Tasa de éxito', duration: 'Duración', empty: 'Ejecuta el sprint para llenar este informe.', footer: 'Producido por el laboratorio QA de Carlos Muñoz · https://carlosandmunoz.com · no es un certificado de un tercero' },
+    pt: { title: 'Relatório do sprint', produced: 'Produzido pelo laboratório QA de Carlos Muñoz', graphs: 'Gráficos', cases: 'Resultados dos casos', runners: 'Comparação dos executores', pass: 'APROVADO', fail: 'REPROVADO', rate: 'Taxa de aprovação', duration: 'Duração', empty: 'Execute o sprint para preencher este relatório.', footer: 'Produzido pelo laboratório QA de Carlos Muñoz · https://carlosandmunoz.com · não é um certificado de terceiros' },
+    de: { title: 'Sprintbericht', produced: 'Erstellt vom QA-Labor von Carlos Muñoz', graphs: 'Diagramme', cases: 'Fallergebnisse', runners: 'Runner-Vergleich', pass: 'BESTANDEN', fail: 'FEHLGESCHLAGEN', rate: 'Bestehensquote', duration: 'Dauer', empty: 'Führen Sie den Sprint aus, um diesen Bericht zu füllen.', footer: 'Erstellt vom QA-Labor von Carlos Muñoz · https://carlosandmunoz.com · kein Zertifikat eines Dritten' },
+    fr: { title: 'Rapport de sprint', produced: 'Produit par le laboratoire QA de Carlos Muñoz', graphs: 'Graphiques', cases: 'Résultats des cas', runners: 'Comparaison des exécuteurs', pass: 'RÉUSSI', fail: 'ÉCHOUÉ', rate: 'Taux de réussite', duration: 'Durée', empty: 'Lancez le sprint pour remplir ce rapport.', footer: 'Produit par le laboratoire QA de Carlos Muñoz · https://carlosandmunoz.com · pas un certificat tiers' },
+    it: { title: 'Report dello sprint', produced: 'Prodotto dal laboratorio QA di Carlos Muñoz', graphs: 'Grafici', cases: 'Risultati dei casi', runners: 'Confronto degli esecutori', pass: 'SUPERATO', fail: 'FALLITO', rate: 'Tasso di superamento', duration: 'Durata', empty: 'Esegui lo sprint per compilare questo report.', footer: 'Prodotto dal laboratorio QA di Carlos Muñoz · https://carlosandmunoz.com · non è un certificato di terzi' }
+};
+function studioCopy(lang) {
+    return Object.assign({}, STUDIO_COPY.en, STUDIO_COPY[lang] || {});
+}
+function studioReportHtml() {
+    const langEl = document.getElementById('studio-report-lang');
+    const lang = langEl && STUDIO_COPY[langEl.value] ? langEl.value : 'en';
+    const c = studioCopy(lang);
+    const graphs = document.getElementById('studio-opt-graphs').checked;
+    const cases = document.getElementById('studio-opt-cases').checked;
+    const runners = document.getElementById('studio-opt-runners').checked;
+    const results = state.results || [];
+    const passed = results.filter(row => row.ok).length;
+    const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+    let body = '<p><strong>' + esc(c.title) + '</strong><br>' + esc(c.produced) + ' · carlosandmunoz.com<br>' + passed + '/' + results.length + '</p>';
+    if (!results.length) body += '<p>' + esc(c.empty) + '</p>';
+    if (graphs) {
+        const max = Math.max(...results.map(row => row.ms || 0), 1);
+        const bars = results.slice(0, 12).map(row => '<div style="display:grid;grid-template-columns:88px 1fr 64px;gap:8px;align-items:center;margin:6px 0;font-family:sans-serif;font-size:12px"><strong>' + esc(row.id) + '</strong><div style="height:10px;background:#e6ebf0;border-radius:999px;overflow:hidden"><span style="display:block;height:100%;width:' + Math.max(8, Math.round(((row.ms || 0) / max) * 100)) + '%;background:' + (row.ok ? '#0d6e76' : '#b42318') + '"></span></div><span>' + (row.ms || 0) + ' ms</span></div>').join('');
+        const byFw = {};
+        results.forEach(row => {
+            if (!byFw[row.fw]) byFw[row.fw] = { ran: 0, passed: 0 };
+            byFw[row.fw].ran += 1;
+            if (row.ok) byFw[row.fw].passed += 1;
+        });
+        const fwBars = Object.entries(byFw).map(([name, row]) => {
+            const rate = row.ran ? Math.round((row.passed / row.ran) * 100) : 0;
+            return '<div style="display:grid;grid-template-columns:110px 1fr 80px;gap:8px;align-items:center;margin:6px 0;font-family:sans-serif;font-size:12px"><strong>' + esc(name) + '</strong><div style="height:10px;background:#e6ebf0;border-radius:999px;overflow:hidden"><span style="display:block;height:100%;width:' + rate + '%;background:#0d6e76"></span></div><span>' + row.passed + '/' + row.ran + ' · ' + rate + '%</span></div>';
+        }).join('');
+        body += '<h2>' + esc(c.graphs) + '</h2><h3>' + esc(c.rate) + '</h3>' + (fwBars || '<p>' + esc(c.empty) + '</p>') + '<h3>' + esc(c.duration) + '</h3>' + bars;
+    }
+    if (runners) {
+        body += '<h2>' + esc(c.runners) + '</h2><p>' + esc((state.frameworks || []).join(', ') || '—') + '</p>';
+    }
+    if (cases) {
+        const rows = results.map(row => '<tr><td>' + esc(row.id) + '</td><td>' + esc(row.fw) + '</td><td style="color:' + (row.ok ? '#0d6e76' : '#b42318') + '">' + (row.ok ? esc(c.pass) : esc(c.fail)) + '</td><td>' + (row.ms || 0) + '</td></tr>').join('');
+        body += '<h2>' + esc(c.cases) + '</h2><table style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:12px"><thead><tr><th>ID</th><th>Runner</th><th></th><th>ms</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">' + esc(c.empty) + '</td></tr>') + '</tbody></table>';
+    }
+    return '<!DOCTYPE html><html lang="' + lang + '" translate="no" class="notranslate"><head><meta charset="utf-8"><meta name="google" content="notranslate"><title>' + esc(c.title) + ' · Carlos Muñoz</title></head><body style="font-family:Georgia,serif;color:#12181f;margin:32px"><div style="position:fixed;inset:30% 0 auto;text-align:center;font-weight:800;letter-spacing:.14em;font-size:28px;color:rgba(13,110,118,.28);transform:rotate(-18deg)">QA LAB · CARLOS MUÑOZ</div><h1>' + esc(c.title) + '</h1>' + body + '<footer style="margin-top:28px;font-size:12px">' + esc(c.footer) + '</footer></body></html>';
+}
+function openStudioReport() {
+    const box = document.getElementById('studio-report');
+    const langEl = document.getElementById('studio-report-lang');
+    if (langEl) {
+        let saved = 'en';
+        try { saved = localStorage.getItem(STUDIO_REPORT_LANG) || 'en'; } catch (err) { /* ignore */ }
+        if (!STUDIO_COPY[saved]) saved = 'en';
+        langEl.value = saved;
+    }
+    box.hidden = false;
+    box.classList.add('show');
+    refreshStudioReport();
+}
+function refreshStudioReport() {
+    const frame = document.getElementById('studio-report-preview');
+    const langEl = document.getElementById('studio-report-lang');
+    if (langEl) {
+        try { localStorage.setItem(STUDIO_REPORT_LANG, langEl.value || 'en'); } catch (err) { /* ignore */ }
+    }
+    if (frame) frame.srcdoc = studioReportHtml();
+}
+function closeStudioReport() {
+    const box = document.getElementById('studio-report');
+    const frame = document.getElementById('studio-report-preview');
+    if (box) {
+        box.hidden = true;
+        box.classList.remove('show');
+    }
+    if (frame) frame.srcdoc = '';
+}
+function printStudioReport() {
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+    document.body.appendChild(frame);
+    frame.contentDocument.open();
+    frame.contentDocument.write(studioReportHtml());
+    frame.contentDocument.close();
+    setTimeout(() => { frame.contentWindow.focus(); frame.contentWindow.print(); setTimeout(() => frame.remove(), 800); }, 60);
+}
+function downloadStudioReport() {
+    const file = new Blob([studioReportHtml()], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file);
+    a.download = 'qa-studio-carlos-munoz-report.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
 
 const STUDIO_TOUR = {
     name: 'QA Studio',
     key: 'hasSeenStudioTour',
     steps: [
-        { selector: '#nav', title: 'Sprint views', body: 'Jump between the Jira board, Xray cases, the automation lab, sprint verification, and the report. Stay on this page — each view is a different slice of the same increment.', demoMs: 1700 },
-        { selector: '#agentPills', title: 'Four agents', body: 'Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. Watch their status here while they hand work to each other.', demoMs: 1600 },
-        { selector: '#runBtn', title: 'Run the sprint', body: 'Start the four-agent walkthrough. It rewrites stories, authors Gherkin, generates Playwright / Cypress / Robot, then signs off Definition of Done.', demoMs: 1800 },
-        { selector: '#view', title: 'Tickets and artifacts', body: 'Open any ticket to read the story. After the stories are corrected, choose Zephyr, Xray, or TestRail and follow the cases as they are written in that tool.', demoMs: 1700 },
-        { selector: '#log', title: 'Agent log', body: 'Every hand-off lands here. Scroll if you need history; the live line is always the latest action.', demoMs: 1500 },
-        { selector: 'a[href="qa-lab.html"]', title: 'CV regression lab', body: 'When you want to see the same ideas run against this CV in the browser, open the regression lab from this nav.', demoMs: 1700 }
+        { selector: '#nav', title: 'Sprint views', body: 'Five views of one increment: the board, the test tool, the automation lab, verification, and the report. A pulse marks the control for this step. Agent 1 asks which board first: Jira, Azure DevOps, Monday, Trello, Linear, or Asana.', demoMs: 1700 },
+        { selector: '#agentPills', title: 'Four agents', body: 'Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. The clip is one pass: the story moves, the cases are written on screen, the script runs, then the increment is signed off.', demoMs: 4000, preview: 'studio' },
+        { selector: '#runBtn', title: 'Run the sprint', body: 'The run starts with the board question. Each agent then waits for you: accept or keep the story, save the cases, pick the runners, and sign off.', demoMs: 1800 },
+        { selector: '#studio-pace', title: 'Pace', body: 'The line runs from faster on the left to slower on the right. 0.5 holds the least between actions, 2.0 holds the most, including the moment the Test Designer writes each step.', demoMs: 1500 },
+        { selector: '#view', title: 'Tickets and artifacts', body: 'The board matches the tool you picked. Open a story to read it. After the stories, choose Zephyr, Xray, or TestRail and watch the Test Designer write each step into that tool.', demoMs: 1700 },
+        { selector: '#runner-edge', title: 'Runner console', body: 'Runners slides in from the right. Each tab is that framework’s own log: Playwright’s list reporter, Cypress’s command log, Robot’s keyword log, Selenium IDE, the WebdriverIO spec reporter, or the Appium server log.', demoMs: 1600, prepare: () => openStudioRunners() },
+        { selector: '#studio-report-open', title: 'Sprint report file', body: 'Report opens the file options. English is the default. Pick another language, leave the graphs on, check the preview, then download or print.', demoMs: 1600 },
+        { selector: '#log', title: 'Agent log', body: 'Each line is the latest action: what the agent did, where, and why. Earlier lines stay here if you need them.', demoMs: 1500 },
+        { selector: 'a[href="qa-lab.html"]', title: 'CV regression lab', body: 'Opens the regression lab. The same checks run in the browser against this CV, with a catalog, a pace, watch or background, and a results dashboard.', demoMs: 1700 }
     ]
 };
 if (window.SiteTour) {
