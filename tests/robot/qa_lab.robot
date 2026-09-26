@@ -8,7 +8,7 @@ ${LAB_URL}    ${BASE_URL}/qa-lab.html
 *** Keywords ***
 Open Lab In Desktop Browser
     Open Browser    ${LAB_URL}    ${BROWSER}    options=${CHROME_OPTIONS}
-    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); sessionStorage.setItem('hasSeenLabTour','true'); localStorage.setItem('theme','light');
+    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); sessionStorage.setItem('hasSeenLabTour','true'); sessionStorage.setItem('qa-lab-fw-asked','1'); localStorage.setItem('theme','light');
     Go To    ${LAB_URL}
     Set Window Size    1280    800
     Wait Until Element Is Visible    id:run-all    15s
@@ -18,7 +18,7 @@ Lab Catalog Lists Fifty Three Cases And New Features
     [Tags]    QA-Lab
     Open Lab In Desktop Browser
     ${count}=    Execute Javascript    return document.querySelectorAll('.case-row').length
-    Should Be Equal As Integers    ${count}    53
+    Should Be Equal As Integers    ${count}    66
     Page Should Contain    FN-15
     Page Should Contain    FN-23
     Page Should Contain    FN-28

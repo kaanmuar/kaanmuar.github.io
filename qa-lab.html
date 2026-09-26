@@ -159,6 +159,26 @@
         .work { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); flex: 1; min-height: 0; border-top: 1px solid var(--line); align-items: stretch; }
         .rail { border-right: 1px solid var(--line); background: var(--panel-2); display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; }
         .filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; }
+        @keyframes lab-guide-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(13, 110, 118, .55); }
+            70% { box-shadow: 0 0 0 8px rgba(13, 110, 118, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(13, 110, 118, 0); }
+        }
+        .lab-guide { position: relative; border-radius: 10px; outline: 2px solid var(--cyan); outline-offset: 2px; animation: lab-guide-pulse 1.8s ease-out infinite; }
+        .lab-guide::after {
+            content: attr(data-guide);
+            position: absolute; z-index: 3; top: 4px; left: 4px; width: 18px; height: 18px;
+            border-radius: 50%; background: var(--cyan); color: #fff; font-size: 11px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; pointer-events: none;
+        }
+        .filters.lab-guide { padding-left: 30px; }
+        .filters.lab-guide::after { top: 12px; left: 6px; }
+        #case-list.lab-guide { padding-top: 26px; }
+        #case-list.lab-guide::after { top: 4px; left: 8px; }
+        .topbar .lab-guide::after { top: -8px; left: -8px; }
+        @media (prefers-reduced-motion: reduce) {
+            .lab-guide { animation: none; box-shadow: 0 0 0 3px rgba(13, 110, 118, .35); }
+        }
         .filters button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
         .filters button.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
         .case-list { overflow: auto; flex: 1; min-height: 0; padding: 0 8px 12px; }
@@ -209,7 +229,20 @@
         .fw-track span { display: block; height: 100%; border-radius: 999px; }
         .fw-meta { color: var(--muted); font-variant-numeric: tabular-nums; }
         .dash-overlay.open { display: block; }
-        .dash-modal { max-width: 980px; margin: 4vh auto; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 20px; box-shadow: 0 16px 40px rgba(18,24,31,.2); }
+        .dash-modal { max-width: 1100px; margin: 4vh auto; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 20px; box-shadow: 0 16px 40px rgba(18,24,31,.2); }
+        .history-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 8px; }
+        .history-head h3 { margin: 0; font-size: 16px; }
+        .history-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        #history-list { max-height: 220px; overflow: auto; }
+        .history-row { display: flex; gap: 8px; align-items: flex-start; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 13px; }
+        .history-row input { margin-top: 3px; }
+        .compare-board { margin-top: 16px; }
+        .compare-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 8px 0 14px; }
+        .compare-kpi b { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+        .compare-kpi span { color: var(--muted); font-size: 11px; }
+        .h-meter { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; min-width: 80px; }
+        .h-meter span { display: block; height: 100%; border-radius: 999px; }
+        .matrix-wrap { overflow: auto; }
         .dash-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
         .dash-modal-head h2 { font-family: "Source Serif 4", Georgia, serif; margin: 0; }
         .dash { padding: 0; border: 0; }
@@ -234,6 +267,117 @@
         .pace-btn.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
         .pace-btn:disabled { opacity: .45; cursor: not-allowed; }
         .view-mode { display: flex; align-items: center; gap: 4px; }
+        .toolrow {
+            display: flex; align-items: center; gap: 10px; padding: 6px 16px;
+            border-bottom: 1px solid var(--line); background: var(--panel);
+            overflow-x: auto; flex-shrink: 0;
+        }
+        .power { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+        .power-name {
+            border: 0; background: transparent; color: var(--text); font-size: 12px; font-weight: 700;
+            cursor: pointer; padding: 0;
+        }
+        .power-name.is-idle { opacity: .35; }
+        .power-switch {
+            width: 46px; height: 26px; border: 0; border-radius: 999px; background: var(--cyan);
+            position: relative; cursor: pointer; padding: 0; flex: 0 0 auto;
+        }
+        .power-knob {
+            position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
+            background: #fff; transition: left .18s ease; box-shadow: 0 1px 3px rgba(0,0,0,.25);
+        }
+        .power-switch[aria-checked="false"] .power-knob { left: 23px; }
+        .fw-picker { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+        .fw-picker label {
+            display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line);
+            border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer;
+        }
+        .fw-picker label.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
+        .fw-picker input { accent-color: #fff; }
+        .runner-edge {
+            position: fixed; right: 0; top: 42%; z-index: 35; border: 0; border-radius: 8px 0 0 8px;
+            background: var(--cyan); color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .04em;
+            padding: 12px 8px; cursor: pointer; writing-mode: vertical-rl;
+        }
+        .runner-drawer {
+            position: fixed; top: 0; right: 0; z-index: 45; height: 100%; width: min(720px, 94vw);
+            background: var(--panel); border-left: 1px solid var(--line);
+            box-shadow: -12px 0 32px rgba(8, 14, 18, .28);
+            transform: translateX(100%); transition: transform .22s ease;
+            display: flex; flex-direction: column;
+        }
+        .runner-drawer.open { transform: none; }
+        html.lab-running .intro, html.lab-running .brand small { display: none; }
+        html.lab-running #case-detail { max-height: 64px; overflow: hidden; }
+        html.lab-running #case-detail .spec, html.lab-running #case-detail .src-links-detail { display: none; }
+        .fw-ask {
+            position: fixed; inset: 0; z-index: 80; background: rgba(8, 14, 18, .55);
+            display: flex; align-items: center; justify-content: center; padding: 16px;
+        }
+        .fw-ask[hidden] { display: none; }
+        #report-options { z-index: 140; }
+        .report-options-card { width: min(920px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
+        .report-lang-label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; margin-top: 8px; }
+        .report-lang-label select { font: inherit; font-weight: 500; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); max-width: 240px; }
+        .report-checks { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 10px 0; font-size: 13px; font-weight: 500; }
+        .report-preview { width: 100%; height: 380px; border: 1px solid var(--line); border-radius: 8px; background: #fff; margin: 8px 0 12px; }
+        .fw-ask-card { background: var(--card); color: var(--text); border-radius: 12px; padding: 18px; width: min(520px, 100%); border: 1px solid var(--line); }
+        .fw-ask-card h2 { margin: 0 0 8px; font-family: "Source Serif 4", Georgia, serif; font-size: 1.25rem; }
+        .fw-ask-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+        .qa-mark {
+            position: relative;
+        }
+        .qa-mark::before {
+            content: "QA LAB  ·  CARLOS MUÑOZ";
+            position: absolute; inset: 18% 0 auto; text-align: center; font-weight: 800; letter-spacing: .12em;
+            font-size: 22px; color: rgba(13, 110, 118, .22); transform: rotate(-18deg); pointer-events: none;
+        }
+        .runner-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+        .runner-tabs button {
+            border: 1px solid var(--line); background: transparent; color: var(--muted);
+            border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;
+        }
+        .runner-tabs button.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
+        .runner-stage { flex: 1; min-height: 0; overflow: hidden; display: flex; }
+        .runner-split { display: grid; grid-template-columns: minmax(148px, 0.82fr) minmax(240px, 1.25fr); width: 100%; min-height: 0; flex: 1; }
+        .runner-cases, .runner-console { min-height: 0; overflow: auto; padding: 10px 12px; }
+        .runner-cases { border-right: 1px solid rgba(127, 140, 152, .35); }
+        .runner-cases b, .runner-console b { display: block; font-size: 11px; letter-spacing: .04em; margin-bottom: 8px; }
+        .runner-cases ul { margin: 0; padding: 0; }
+        .runner-cases li { list-style: none; padding: 3px 0; font-family: ui-monospace, monospace; font-size: 12px; }
+        .runner-log { font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.5; }
+        .runner-log div { white-space: pre-wrap; word-break: break-word; }
+        .runner-log .gap { height: 8px; }
+        .runner-play { background: #1e1e1e; color: #d4d4d4; }
+        .runner-play b { color: #9cdcfe; }
+        .runner-play .ok { color: #89d185; }
+        .runner-play .fail { color: #f48771; }
+        .runner-play .run { color: #dcdcaa; }
+        .runner-cy { background: #1b1e2e; color: #d0d4e0; }
+        .runner-cy b { color: #69d3a7; }
+        .runner-cy .ok { color: #69d3a7; }
+        .runner-cy .fail { color: #f48771; }
+        .runner-cy .run { color: #dcdcaa; }
+        .runner-robot { background: #f4f7f8; color: #17202a; }
+        .runner-robot b { color: #0d6e76; }
+        .runner-robot .ok { color: #0d6e76; }
+        .runner-robot .fail { color: #b42318; }
+        .runner-robot .run { color: #9a6700; }
+        .runner-ide { background: #f7f8fa; color: #17202a; }
+        .runner-ide b { color: #2f7d32; }
+        .runner-ide .ok { color: #2f7d32; }
+        .runner-ide .fail { color: #b42318; }
+        .runner-ide .run { color: #9a6700; }
+        .runner-wdio { background: #0e1116; color: #d7dde4; }
+        .runner-wdio b { color: #ea5907; }
+        .runner-wdio .ok { color: #3dd68c; }
+        .runner-wdio .fail { color: #ff6b6b; }
+        .runner-wdio .run { color: #ffd166; }
+        .runner-appium { background: #14181f; color: #e8eef2; }
+        .runner-appium b { color: #c4b5fd; }
+        .runner-appium .ok { color: #3dd68c; }
+        .runner-appium .fail { color: #ff6b6b; }
+        .runner-appium .run { color: #ffd166; }
         .lang-wrap { position: relative; }
         .lang-toggle { background: none; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; cursor: pointer; display: inline-flex; }
         .lang-toggle img { width: 20px; height: 20px; border-radius: 50%; display: block; }
@@ -246,6 +390,9 @@
         .lang-option img { width: 18px; height: 18px; border-radius: 50%; }
         #google_translate_element, .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt, iframe.skiptranslate, .goog-te-gadget { display: none !important; visibility: hidden !important; height: 0 !important; }
         html, body { top: 0 !important; position: static !important; }
+        @media (min-width: 901px) {
+            body #site-tour-tooltip { left: auto; right: 16px; }
+        }
         @media (max-width: 1100px) {
             .work { grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); }
         }
@@ -285,14 +432,12 @@
 <header class="topbar">
     <div class="brand">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#0d6e76"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="2"/></svg>
-        <div>CV regression lab<small>Playwright · Cypress · Robot — live against this site</small></div>
+        <div>CV regression lab<small>Playwright · Cypress · Robot · Selenium · WebdriverIO · Appium</small></div>
     </div>
     <div class="actions">
         <a class="btn btn-ghost" id="homeBtn" href="index.html">← CV</a>
         <button class="btn btn-ghost" id="tour-start-btn" type="button">How this lab works</button>
-        <a class="btn btn-ghost" href="https://github.com/kaanmuar/kaanmuar.github.io" target="_blank" rel="noopener noreferrer">Suite repo</a>
-        <a class="btn btn-ghost" href="simulador.html">Sprint studio</a>
-        <div class="pace notranslate" role="group" aria-label="Run pace in seconds. Left is faster, right is slower.">
+        <div class="pace notranslate" data-guide="3" role="group" aria-label="Run pace in seconds. Left is faster, right is slower.">
             <span class="pace-label">Pace</span>
             <div class="pace-scale">
                 <div class="pace-btns">
@@ -308,11 +453,6 @@
                 </div>
             </div>
         </div>
-        <div class="view-mode notranslate" role="group" aria-label="Show or hide live automation">
-            <span class="pace-label">Actions</span>
-            <button type="button" class="pace-btn on" data-view="watch">Watch</button>
-            <button type="button" class="pace-btn" data-view="background">Background</button>
-        </div>
         <div class="lang-wrap notranslate" id="langWrap">
             <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
                 <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English">
@@ -325,12 +465,24 @@
         </button>
         <button class="btn btn-ghost" id="dash-open" type="button">Dashboard</button>
         <button class="btn btn-ghost" id="run-visible" type="button">Run filtered</button>
-        <button class="btn btn-primary" id="run-all" type="button">Run full catalog</button>
+        <button class="btn btn-primary" id="run-all" data-guide="5" type="button">Run full catalog</button>
     </div>
 </header>
+<div class="toolrow" id="lab-tools">
+    <a class="btn btn-ghost" id="suite-repo" href="https://github.com/kaanmuar/kaanmuar.github.io" target="_blank" rel="noopener noreferrer">Suite repo</a>
+    <a class="btn btn-ghost" id="studio-link" href="simulador.html">Sprint studio</a>
+    <div class="view-mode power notranslate" id="view-slider" data-guide="4" role="group" aria-label="Show or hide live automation">
+        <button type="button" class="power-name on" data-view="watch" aria-pressed="true">Watch</button>
+        <button type="button" class="power-switch" id="view-switch" role="switch" aria-checked="true" aria-label="Watch on, Background off">
+            <span class="power-knob" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="power-name is-idle" data-view="background" aria-pressed="false">Background</button>
+    </div>
+    <div class="fw-picker notranslate" id="fw-picker" role="group" aria-label="Automation frameworks to run"></div>
+</div>
 <section class="intro">
     <h1>The suite I run on this CV</h1>
-    <p>Same checks as <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests" target="_blank" rel="noopener noreferrer">Playwright</a>, <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/cypress/e2e" target="_blank" rel="noopener noreferrer">Cypress</a>, and <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests/robot" target="_blank" rel="noopener noreferrer">Robot</a>. Open a case, then Watch or Background.</p>
+    <p>Same checks as <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests" target="_blank" rel="noopener noreferrer">Playwright</a>, <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/cypress/e2e" target="_blank" rel="noopener noreferrer">Cypress</a>, <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests/robot" target="_blank" rel="noopener noreferrer">Robot</a>, Selenium, WebdriverIO, and Appium. Choose the runners, then Watch or Background.</p>
 </section>
 <section class="kpis" aria-label="Last run totals">
     <div class="kpi"><span>Passed</span><b id="kpi-pass">—</b></div>
@@ -340,7 +492,7 @@
 </section>
 <div class="work">
     <aside class="rail">
-        <div class="filters">
+        <div class="filters" data-guide="1">
             <button type="button" data-filter="All" class="on">All</button>
             <button type="button" data-filter="Smoke">Smoke</button>
             <button type="button" data-filter="Functional">Functional</button>
@@ -351,7 +503,7 @@
             <button type="button" data-filter="Mobile">Mobile</button>
         </div>
         <div class="count" id="case-count"></div>
-        <div class="case-list" id="case-list"></div>
+        <div class="case-list" id="case-list" data-guide="2"></div>
     </aside>
     <div class="stage">
         <div class="stage-head" id="case-detail"></div>
@@ -362,7 +514,56 @@
         <div id="run-log"><div><b>LAB</b> Catalog loaded. Pick a case or run the full set — I will execute against this origin and keep a report.</div></div>
         <div class="stage-head">
             <span class="muted">Live log for this run</span>
-            <button class="btn btn-ghost" type="button" id="download-report">Download .txt report</button>
+            <button class="btn btn-primary" type="button" id="report-open">Report</button>
+        </div>
+    </div>
+</div>
+<button class="runner-edge" id="runner-edge" type="button">Runners</button>
+<aside id="runner-drawer" class="runner-drawer" aria-label="Native runner views">
+    <div class="stage-head">
+        <strong>Native runners</strong>
+        <button class="btn btn-ghost" type="button" id="runner-close">Close</button>
+    </div>
+    <div class="runner-tabs" id="runner-tabs" role="tablist"></div>
+    <div id="runner-stage" class="runner-stage"></div>
+</aside>
+<div id="report-options" class="fw-ask notranslate" hidden translate="no">
+    <div class="fw-ask-card report-options-card" role="dialog" aria-modal="true" aria-labelledby="report-options-title">
+        <h2 id="report-options-title">Report</h2>
+        <p class="muted">The report stays in English until you pick another language. Check the preview, then download or print. Graphs are included.</p>
+        <label class="report-lang-label notranslate">Report language
+            <select id="report-lang">
+                <option value="en" selected>English</option>
+                <option value="es">Español</option>
+                <option value="pt">Português</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="it">Italiano</option>
+            </select>
+        </label>
+        <div class="report-checks" id="report-checks">
+            <label><input type="checkbox" id="opt-graphs" checked> Graphs</label>
+            <label><input type="checkbox" id="opt-cases" checked> Case results</label>
+            <label><input type="checkbox" id="opt-runners" checked> Runner comparison</label>
+            <label><input type="checkbox" id="opt-history"> Selected history runs</label>
+            <label><input type="checkbox" id="opt-analysis"> Comparison analysis</label>
+        </div>
+        <iframe id="report-preview" class="report-preview notranslate" title="Report preview" sandbox="allow-same-origin"></iframe>
+        <div class="history-actions">
+            <button class="btn btn-ghost" type="button" id="report-options-close">Close</button>
+            <button class="btn btn-ghost" type="button" id="report-options-print">Print</button>
+            <button class="btn btn-primary" type="button" id="report-options-download">Download</button>
+        </div>
+    </div>
+</div>
+<div id="fw-ask" class="fw-ask" hidden>
+    <div class="fw-ask-card" role="dialog" aria-modal="true" aria-labelledby="fw-ask-title">
+        <h2 id="fw-ask-title">Which frameworks should this run use?</h2>
+        <p class="muted">Pick one or several. Robot and Appium are in this list with Playwright, Cypress, Selenium, and WebdriverIO.</p>
+        <div class="fw-ask-list" id="fw-ask-list"></div>
+        <div style="display:flex; gap:8px; justify-content:flex-end">
+            <button class="btn btn-ghost" type="button" id="fw-ask-cancel">Cancel</button>
+            <button class="btn btn-primary" type="button" id="fw-ask-go">Run these</button>
         </div>
     </div>
 </div>
@@ -373,7 +574,21 @@
             <button class="btn btn-ghost" type="button" id="dash-close">Close</button>
         </div>
         <section class="dash">
-            <div class="charts" id="dash-charts"></div>
+            <article class="card" id="run-history">
+                <div class="history-head">
+                    <h3>Run history</h3>
+                    <div class="history-actions">
+                        <button class="btn btn-ghost" type="button" id="history-all">Select all</button>
+                        <button class="btn btn-ghost" type="button" id="history-download">Download selected</button>
+                        <button class="btn btn-ghost" type="button" id="history-print">Print selected</button>
+                        <button class="btn btn-primary" type="button" id="history-compare">Compare selected</button>
+                    </div>
+                </div>
+                <p class="muted" id="history-note">Select one or more saved runs. Compare builds an analysis you can print or download.</p>
+                <div id="history-list"></div>
+            </article>
+            <section id="compare-board" class="compare-board" hidden></section>
+            <div class="charts" id="dash-charts" style="margin-top:16px"></div>
             <article class="card" style="margin-top:16px" id="report-body"></article>
         </section>
     </div>

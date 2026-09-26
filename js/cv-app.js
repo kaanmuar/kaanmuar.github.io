@@ -399,6 +399,7 @@
                                 setTimeout(() => {
                                     const el = document.querySelector(control.selector);
                                     if (!el) return;
+                                    this._focusTour(el);
                                     this._applyClickEffect(el);
                                     if (control.action) {
                                         control.action.call(this);
@@ -407,7 +408,10 @@
                                     if (control.dropdown) {
                                         el.classList.remove('collapsed');
                                         const dropdownEl = document.querySelector(control.dropdown);
-                                        if(dropdownEl) this._glowElement(dropdownEl, 1500);
+                                        if (dropdownEl) {
+                                            this._focusTour(dropdownEl);
+                                            this._glowElement(dropdownEl, 1500);
+                                        }
                                         setTimeout(() => el.classList.add('collapsed'), 1800);
                                     }
                                 }, delay);
@@ -429,7 +433,8 @@
                     titleKey: 'tour_title_simulator',
                     descriptionKey: 'tour_desc_simulator',
                     analyticsTag: 'Viewed_Tour_Step_Simulator',
-                    demoMs: 2600,
+                    demoMs: 4000,
+                    preview: 'studio',
                     action: function() { this._demoSimulatorTour(); }
                 },
                 {
@@ -437,7 +442,8 @@
                     titleKey: 'tour_title_qa_lab',
                     descriptionKey: 'tour_desc_qa_lab',
                     analyticsTag: 'Viewed_Tour_Step_QaLab',
-                    demoMs: 3200,
+                    demoMs: 4000,
+                    preview: 'lab',
                     action: function() { this._demoQaLabTour(); }
                 },
                 {
@@ -481,6 +487,7 @@
                         setTimeout(() => {
                             if (match) {
                                 match.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                this._focusTour(match);
                                 this._glowElement(match, 1800);
                             }
                         }, 700);
@@ -503,6 +510,7 @@
                                 const header = skillEl.closest('.toolkit-section').querySelector('.toolkit-header');
                                 if (header.getAttribute('aria-expanded') === 'false') header.click();
                                 setTimeout(() => {
+                                    this._focusTour(skillEl);
                                     this._applyClickEffect(skillEl);
                                     skillEl.click();
                                 }, 500);
@@ -513,13 +521,19 @@
                         // Scroll to timeline, wait, then glow
                         setTimeout(() => {
                             this.DOMElements.timelineContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            setTimeout(() => this._glowElement(this.DOMElements.timelineContainer, 2000), 800);
+                            setTimeout(() => {
+                                this._focusTour(this.DOMElements.timelineContainer);
+                                this._glowElement(this.DOMElements.timelineContainer, 2000);
+                            }, 800);
                         }, delay);
                         delay += 3000;
                         // Scroll to experience, wait, then glow
                         setTimeout(() => {
                             this.DOMElements.experienceContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            setTimeout(() => this._glowElement(this.DOMElements.experienceContainer, 2000), 800);
+                            setTimeout(() => {
+                                this._focusTour(this.DOMElements.experienceContainer);
+                                this._glowElement(this.DOMElements.experienceContainer, 2000);
+                            }, 800);
                         }, delay);
                         delay += 3000;
                         // Reset filters
@@ -542,7 +556,9 @@
                             const randomHeader = headers[randomIndex];
                             randomHeader.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             setTimeout(() => {
-                                this._glowElement(randomHeader.closest('.experience-item'), 1500);
+                                const item = randomHeader.closest('.experience-item');
+                                this._focusTour(item);
+                                this._glowElement(item, 1500);
                                 this._applyClickEffect(randomHeader, 800);
                                 randomHeader.click();
                             }, 800);
@@ -572,7 +588,10 @@
                         contactLinks.forEach((selector, index) => {
                             setTimeout(() => {
                                 const el = document.querySelector(selector);
-                                if (el) this._glowElement(el, 800);
+                                if (el) {
+                                    this._focusTour(el);
+                                    this._glowElement(el, 800);
+                                }
                             }, index * 600);
                         });
                     }
@@ -627,7 +646,10 @@
                     action: function() {
                         if (window.innerWidth < 768) this._setTourTooltipTransparency(true);
                         const firstCard = this.DOMElements.testimonialsContainer.querySelector('.testimonial-card');
-                        if (firstCard) this._glowElement(firstCard, 2500);
+                        if (firstCard) {
+                            this._focusTour(firstCard);
+                            this._glowElement(firstCard, 2500);
+                        }
                         setTimeout(() => {
                             if (window.innerWidth < 768) this._setTourTooltipTransparency(false);
                         }, 2800);
@@ -3711,6 +3733,126 @@
             // ==========================================================
             // |            NEW JAVASCRIPT: TOUR FUNCTIONS              |
             // ==========================================================
+            _ensureTourLift() {
+                let lift = document.getElementById('tour-lift');
+                if (lift) return lift;
+                lift = document.createElement('div');
+                lift.id = 'tour-lift';
+                lift.setAttribute('aria-hidden', 'true');
+                document.body.appendChild(lift);
+                return lift;
+            },
+
+            _spotRadius(el) {
+                const raw = getComputedStyle(el).borderRadius || '';
+                const first = parseFloat(raw);
+                if (first >= 6) return raw;
+                return '8px';
+            },
+
+            _opaqueBg(el) {
+                let node = el;
+                while (node && node !== document.documentElement) {
+                    const bg = getComputedStyle(node).backgroundColor;
+                    if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') return bg;
+                    node = node.parentElement;
+                }
+                return getComputedStyle(document.body).backgroundColor;
+            },
+
+            _focusTour(el) {
+                if (!el || !this.state.isTourActive) return;
+                el.classList.add('pulse-highlight');
+            },
+
+            _placeTourSpot(target) {
+                const overlay = this.DOMElements.tourOverlay;
+                const el = target || this._tourFocus || document.querySelector('.tour-highlight');
+                const lift = this._ensureTourLift();
+                if (!overlay || !el || !lift) return;
+                const rect = el.getBoundingClientRect();
+                if (rect.width < 2 || rect.height < 2) return;
+                const radius = this._spotRadius(el);
+                const live = !!(el.querySelector && (el.querySelector('iframe, canvas') || el.tagName === 'IFRAME' || el.tagName === 'CANVAS'));
+                const wide = rect.width > window.innerWidth * 0.55 || rect.height > window.innerHeight * 0.45;
+                const caption = (this.DOMElements.tourTitle && this.DOMElements.tourTitle.textContent) || '';
+                if (this._liftFor !== el || live) {
+                    lift.replaceChildren();
+                    lift.classList.toggle('is-frame', live);
+                    const name = document.createElement('div');
+                    name.className = 'lens-name';
+                    name.textContent = caption;
+                    lift.appendChild(name);
+                    if (!live) {
+                        const clone = el.cloneNode(true);
+                        clone.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
+                        clone.removeAttribute('id');
+                        clone.querySelectorAll('script').forEach((node) => node.remove());
+                        clone.classList.remove('tour-highlight', 'tour-highlight-wide', 'tour-highlight-seen');
+                        clone.style.cssText = 'width:' + rect.width + 'px;height:' + rect.height + 'px;margin:0;transform:none;animation:none;box-shadow:none;outline:none;position:relative;overflow:visible;';
+                        lift.appendChild(clone);
+                        lift.style.background = this._opaqueBg(el);
+                    } else {
+                        lift.style.background = 'transparent';
+                    }
+                    this._liftFor = el;
+                } else {
+                    const name = lift.querySelector('.lens-name');
+                    if (name) name.textContent = caption;
+                }
+                let scale = 1.45;
+                if (live || window.matchMedia('(prefers-reduced-motion: reduce)').matches) scale = 1;
+                else if (wide || rect.width > window.innerWidth * 0.4 || rect.height > window.innerHeight * 0.34) scale = 1.18;
+                if (rect.width > window.innerWidth * 0.62 || rect.height > window.innerHeight * 0.52) scale = live ? 1 : 1.08;
+                scale = Math.max(1, Math.min(scale, (window.innerWidth - 24) / Math.max(rect.width, 1), (window.innerHeight - 80) / Math.max(rect.height, 1)));
+                const growX = rect.width * (scale - 1) / 2;
+                const growY = rect.height * (scale - 1) / 2;
+                let shiftX = 0;
+                let shiftY = 0;
+                if (live) {
+                    shiftX = 0;
+                    shiftY = 0;
+                } else {
+                if (rect.left - growX < 12) shiftX = 12 - (rect.left - growX);
+                if (rect.top - growY < 44) shiftY = 44 - (rect.top - growY);
+                const visRight = rect.right + growX + shiftX;
+                const visBottom = rect.bottom + growY + shiftY;
+                if (visRight > window.innerWidth - 12) shiftX -= visRight - (window.innerWidth - 12);
+                if (visBottom > window.innerHeight - 12) shiftY -= visBottom - (window.innerHeight - 12);
+                }
+                lift.style.left = rect.left + 'px';
+                lift.style.top = rect.top + 'px';
+                lift.style.width = rect.width + 'px';
+                lift.style.height = rect.height + 'px';
+                lift.style.borderRadius = radius;
+                lift.style.transform = 'translateZ(0) translate(' + shiftX + 'px, ' + shiftY + 'px) scale(' + scale + ')';
+                lift.classList.add('on');
+                if (live) {
+                    const rx = parseFloat(radius) || 8;
+                    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + window.innerWidth + '" height="' + window.innerHeight + '"><defs><mask id="h"><rect width="100%" height="100%" fill="white"/><rect x="' + (rect.left + shiftX) + '" y="' + (rect.top + shiftY) + '" width="' + rect.width + '" height="' + rect.height + '" rx="' + rx + '" ry="' + rx + '" fill="black"/></mask></defs><rect width="100%" height="100%" fill="black" mask="url(#h)"/></svg>';
+                    const url = 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+                    overlay.style.webkitMaskImage = url;
+                    overlay.style.maskImage = url;
+                } else {
+                    overlay.style.webkitMaskImage = '';
+                    overlay.style.maskImage = '';
+                }
+            },
+
+            _clearTourSpot() {
+                this._liftFor = null;
+                const lift = document.getElementById('tour-lift');
+                if (lift) {
+                    lift.classList.remove('on', 'is-frame');
+                    lift.replaceChildren();
+                }
+                const overlay = this.DOMElements.tourOverlay;
+                if (overlay) {
+                    overlay.style.webkitMaskImage = '';
+                    overlay.style.maskImage = '';
+                }
+            },
+
             startTour(isAutoStart = false) {
                 if (this.state.isTourActive) return;
 
@@ -3723,9 +3865,10 @@
                 this.state.isTourActive = true;
                 this.state.currentTourStep = 0;
                 this.state.tourDemoReady = false;
+                this._tourReturn = document.activeElement;
+                document.documentElement.classList.add('cv-tour');
                 tourOverlay.style.display = 'block';
 
-                // Add overlay click to advance tour
                 this.boundOverlayClick = () => this.nextTourStep();
                 tourOverlay.addEventListener('click', this.boundOverlayClick);
 
@@ -3749,12 +3892,23 @@
             endTour() {
                 if (!this.state.isTourActive) return;
                 this.state.isTourActive = false;
+                document.documentElement.classList.remove('cv-tour');
+                this._tourFocus = null;
+                document.querySelectorAll('.pulse-highlight').forEach((node) => node.classList.remove('pulse-highlight'));
+                this._closeModal();
                 this.DOMElements.tourOverlay.style.display = 'none';
                 this.DOMElements.tourTooltip.classList.remove('visible');
+                this.DOMElements.tourTooltip.setAttribute('aria-hidden', 'true');
+                this._clearTourClip();
+                if (this._tourReturn && typeof this._tourReturn.focus === 'function') {
+                    this._tourReturn.focus({ preventScroll: true });
+                }
+                this._tourReturn = null;
 
-                document.querySelectorAll('.tour-highlight, .tour-highlight-seen').forEach(el => {
-                    el.classList.remove('tour-highlight', 'tour-highlight-seen');
+                document.querySelectorAll('.tour-highlight, .tour-highlight-seen, .tour-highlight-wide').forEach(el => {
+                    el.classList.remove('tour-highlight', 'tour-highlight-seen', 'tour-highlight-wide');
                 });
+                this._clearTourSpot();
                 ['language-selector', 'language-selector-mobile'].forEach((id) => {
                     const el = document.getElementById(id);
                     if (el) el.classList.add('collapsed');
@@ -3791,7 +3945,7 @@
             showTourStep(stepIndex, runActionAndAnimation = true) {
                 const oldHighlight = document.querySelector('.tour-highlight');
                 if (oldHighlight) {
-                    oldHighlight.classList.remove('tour-highlight');
+                    oldHighlight.classList.remove('tour-highlight', 'tour-highlight-wide');
                     oldHighlight.classList.add('tour-highlight-seen');
                 }
 
@@ -3812,12 +3966,16 @@
 
                 setTimeout(() => {
                     targetElement.classList.add('tour-highlight');
+                    this._tourFocus = targetElement;
 
                     const translations = this._t();
                     this.DOMElements.tourTitle.textContent = translations[step.titleKey] || step.titleKey;
                     this.DOMElements.tourDescription.textContent = translations[step.descriptionKey] || step.descriptionKey;
+                    this._showTourClip(step.preview);
                     if (window.SiteI18n) SiteI18n.refreshTranslation();
                     this.DOMElements.tourStepCounter.textContent = `${stepIndex + 1} / ${this.tourSteps.length}`;
+                    const stepLabel = document.getElementById('tour-step-label');
+                    if (stepLabel) stepLabel.textContent = `Step ${stepIndex + 1} of ${this.tourSteps.length}.`;
 
                     this.DOMElements.tourBackBtn.style.display = stepIndex === 0 ? 'none' : 'inline-block';
                     this.DOMElements.tourNextBtn.textContent = stepIndex === this.tourSteps.length - 1 ? translations.tour_finish : translations.tour_next;
@@ -3829,6 +3987,8 @@
                     const tooltip = this.DOMElements.tourTooltip;
 
                     tooltip.classList.add('visible');
+                    tooltip.removeAttribute('aria-hidden');
+                    tooltip.focus({ preventScroll: true });
 
                     if (runActionAndAnimation && step.analyticsTag) {
                         this._trackEvent('tour_step_viewed', 'Interactive Tour', step.analyticsTag);
@@ -3846,6 +4006,8 @@
 
             handleTourKey(e) {
                 if (!this.state.isTourActive) return;
+                const tag = e.target && e.target.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
                 if (e.key === 'Escape') {
                     this.endTour();
                 } else if (e.key === 'ArrowRight') {
@@ -3873,6 +4035,7 @@
                 const next = this.DOMElements.tourNextBtn;
                 if (next) {
                     next.disabled = true;
+                    next.setAttribute('aria-describedby', 'tour-next-wait');
                     next.classList.remove('tour-next-ready');
                 }
                 if (!fill) {
@@ -3895,6 +4058,7 @@
                 if (bar) bar.setAttribute('aria-valuenow', '100');
                 if (next) {
                     next.disabled = false;
+                    next.removeAttribute('aria-describedby');
                     next.classList.add('tour-next-ready');
                 }
             },
@@ -3934,6 +4098,7 @@
                 if (!selector || !options) return;
                 this._applyClickEffect(selector);
                 selector.classList.remove('collapsed');
+                this._focusTour(options);
                 const search = options.querySelector('.lang-search');
                 const list = options.querySelector('.lang-options-list');
                 if (list) this._glowElement(list, 2200);
@@ -3967,15 +4132,16 @@
                     if (!this.state.isTourActive) return;
                     fn();
                 }, start + ms);
-                run(0, () => this._glowElement(kpis, 1800));
+                run(0, () => { this._focusTour(kpis); this._glowElement(kpis, 1800); });
                 run(900, () => {
                     this._showGlancePair(2, true);
                     if (dots[2]) this._applyClickEffect(dots[2]);
                 });
-                run(1700, () => this._glowElement(this.DOMElements.competenciesRadarChart, 1600));
+                run(1700, () => { this._focusTour(this.DOMElements.competenciesRadarChart); this._glowElement(this.DOMElements.competenciesRadarChart, 1600); });
                 run(2800, () => {
                     this._showGlancePair(4, true);
                     if (dots[4]) this._applyClickEffect(dots[4]);
+                    this._focusTour(this.DOMElements.methodologiesRadarChart);
                     this._glowElement(this.DOMElements.methodologiesRadarChart, 1500);
                 });
                 run(4300, () => {
@@ -3988,8 +4154,30 @@
                     this._showGlancePair(5, true);
                     if (dots[5]) this._applyClickEffect(dots[5]);
                 });
-                run(6800, () => this._glowElement(this.DOMElements.timelineContainer, 2000));
+                run(6800, () => { this._focusTour(this.DOMElements.timelineContainer); this._glowElement(this.DOMElements.timelineContainer, 2000); });
                 run(9000, () => this._showGlancePair(0, true));
+            },
+
+            _showTourClip(kind) {
+                const clip = document.getElementById('tour-clip');
+                if (!clip) return;
+                if (!kind) {
+                    this._clearTourClip();
+                    return;
+                }
+                clip.hidden = false;
+                clip.className = 'tour-clip tour-clip-' + kind;
+                clip.innerHTML = kind === 'lab'
+                    ? '<div class="clip-rows"><div class="clip-row"><span>CV-04</span><em></em></div><div class="clip-row"><span>STU-02</span><em></em></div><div class="clip-row"><span>SEC-08</span><em></em></div></div><div class="clip-stage"><div class="clip-page"></div><i class="clip-cursor"></i></div>'
+                    : '<div class="clip-agents"><span>Steward</span><span>Tests</span><span>Auto</span><span>Release</span></div><div class="clip-board"><div><b>To do</b></div><div><b>Doing</b></div><div><b>QA</b></div><div><b>Done</b></div><i class="clip-card"></i><i class="clip-scan"></i></div>';
+            },
+
+            _clearTourClip() {
+                const clip = document.getElementById('tour-clip');
+                if (!clip) return;
+                clip.hidden = true;
+                clip.className = 'tour-clip';
+                clip.innerHTML = '';
             },
 
             _demoSimulatorTour() {

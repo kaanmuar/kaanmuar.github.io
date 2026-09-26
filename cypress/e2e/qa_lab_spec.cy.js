@@ -5,13 +5,14 @@ describe('CV regression lab', () => {
         win.localStorage.setItem('theme', 'light');
         win.sessionStorage.setItem('hasSeenLabTour', 'true');
         win.sessionStorage.setItem('hasSeenStudioTour', 'true');
+        win.sessionStorage.setItem('qa-lab-fw-asked', '1');
       }
     });
   });
 
   it('lists cases and explains where, when, and how', () => {
     cy.contains('h1', 'The suite I run on this CV').should('be.visible');
-    cy.get('.case-row').should('have.length', 53);
+    cy.get('.case-row').should('have.length', 66);
     cy.contains('.case-id', 'MOB-01').should('exist');
     cy.contains('.case-id', 'FN-15').should('exist');
     cy.contains('.case-id', 'FN-22').should('exist');

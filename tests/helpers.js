@@ -7,6 +7,7 @@ function skipSiteTours(page) {
       sessionStorage.setItem('hasSeenTour', 'true');
       sessionStorage.setItem('hasSeenLabTour', 'true');
       sessionStorage.setItem('hasSeenStudioTour', 'true');
+      sessionStorage.setItem('qa-lab-fw-asked', '1');
     } catch (e) { /* ignore */ }
   });
 }
@@ -47,16 +48,19 @@ async function forceGlancePair(page, index = 0) {
   }, index);
 }
 
-async function runAxe(page, { exclude = [] } = {}) {
+async function runAxe(page, { exclude = [], include = '', contrast = false } = {}) {
   const axePath = require.resolve('axe-core/axe.min.js');
   await page.addScriptTag({ path: axePath });
-  return page.evaluate(async (excludeSelectors) => {
-    const context = excludeSelectors.length ? { exclude: excludeSelectors.map((sel) => [sel]) } : document;
-    return window.axe.run(context, {
+  return page.evaluate(async ({ excludeSelectors, include, contrast }) => {
+    const context = {};
+    if (include) context.include = [[include]];
+    if (excludeSelectors.length) context.exclude = excludeSelectors.map((sel) => [sel]);
+    const target = include || excludeSelectors.length ? context : document;
+    return window.axe.run(target, {
       runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa'] },
-      rules: { 'color-contrast': { enabled: false } }
+      rules: { 'color-contrast': { enabled: contrast } }
     });
-  }, exclude);
+  }, { excludeSelectors: exclude, include, contrast });
 }
 
 function axeSourceExists() {
