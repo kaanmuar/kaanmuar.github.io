@@ -390,21 +390,30 @@
                     descriptionKey: 'tour_desc_photo',
                     analyticsTag: 'Viewed_Tour_Step_Photo',
                     demoMs: 3100,
-                    action: function() { this._openModal(); setTimeout(() => this._closeModal(), 2500); }
+                    action: function() {
+                        if (window.innerWidth < 768) return;
+                        this._openModal();
+                        setTimeout(() => this._closeModal(), 2500);
+                    }
                 },
                 {
-                    element: '#page-header-controls .no-print',
+                    element: function() { return window.innerWidth < 768 ? '.mobile-toolbar' : '#page-header-controls .no-print'; },
                     titleKey: 'tour_title_controls',
                     descriptionKey: 'tour_desc_controls',
                     analyticsTag: 'Viewed_Tour_Step_Controls',
                     demoMs: 9800,
                     action: function() {
-                        if (window.innerWidth < 768) {
-                            // On mobile, scroll down to show the sticky header clearly
-                            window.scrollTo({ top: 100, behavior: 'smooth' });
-                        }
+                        const mobile = window.innerWidth < 768;
+                        if (!mobile) window.scrollTo({ top: 0, behavior: 'smooth' });
                         setTimeout(() => {
-                            const controls = [
+                            const bar = document.querySelector('.mobile-toolbar');
+                            if (mobile && bar) this._revealTourTarget(bar);
+                            const controls = mobile ? [
+                                { selector: '#theme-toggle-mobile', action: () => this._toggleTheme() },
+                                { selector: '#social-share-selector-mobile', dropdown: '#social-share-options-mobile-container' },
+                                { selector: '#export-selector-mobile', dropdown: '#export-options-mobile-container' },
+                                { selector: '#print-btn-mobile' }
+                            ] : [
                                 { selector: '#theme-toggle', action: () => this._toggleTheme() },
                                 { selector: '#social-share-selector', dropdown: '#social-share-options' },
                                 { selector: '#export-selector', dropdown: '#export-options' },
@@ -415,7 +424,7 @@
                                 setTimeout(() => {
                                     const el = document.querySelector(control.selector);
                                     if (!el) return;
-                                    this._focusTour(el);
+                                    this._revealTourTarget(el);
                                     this._applyClickEffect(el);
                                     if (control.action) {
                                         control.action.call(this);
@@ -425,7 +434,7 @@
                                         el.classList.remove('collapsed');
                                         const dropdownEl = document.querySelector(control.dropdown);
                                         if (dropdownEl) {
-                                            this._focusTour(dropdownEl);
+                                            this._revealTourTarget(dropdownEl);
                                             this._glowElement(dropdownEl, 1500);
                                         }
                                         setTimeout(() => el.classList.add('collapsed'), 1800);
@@ -495,10 +504,12 @@
                     analyticsTag: 'Viewed_Tour_Step_Competencies',
                     demoMs: 7200,
                     action: function() {
-                        const btn = document.querySelector('.competency-item[data-competency="pm"]');
+                        const items = Array.from(document.querySelectorAll('.competency-item'));
+                        const btn = items[Math.floor(Math.random() * items.length)];
                         if (!btn) return;
+                        this._revealTourTarget(btn);
                         this._applyClickEffect(btn);
-                        this._applyCompetencyFocus('pm');
+                        this._applyCompetencyFocus(btn.getAttribute('data-competency'));
                         const match = document.querySelector('.experience-item.filter-match, .experience-item.topic-match');
                         setTimeout(() => {
                             if (match) {
@@ -604,12 +615,16 @@
                         contactLinks.forEach((selector, index) => {
                             setTimeout(() => {
                                 const el = document.querySelector(selector);
-                                if (el) {
-                                    this._focusTour(el);
-                                    this._glowElement(el, 800);
-                                }
+                                if (!el) return;
+                                el.classList.add('pulse-highlight');
+                                this._glowElement(el, 800);
                             }, index * 600);
                         });
+                        const languages = document.getElementById('languages-section');
+                        if (languages && window.innerWidth < 768) {
+                            languages.classList.add('tour-highlight');
+                            setTimeout(() => this._scrollClearOfCard(languages, 28), 700);
+                        }
                     }
                 },
                 {
@@ -619,7 +634,7 @@
                     analyticsTag: 'Viewed_Tour_Step_Widget',
                     demoMs: 18000,
                     action: function() {
-                        if (window.innerWidth < 768) this._setTourTooltipTransparency(true);
+                        if (window.innerWidth < 768) this._placeWidgetForTour();
                         this._openContactWidget();
 
                         setTimeout(() => { // Demo Message Tab
@@ -644,8 +659,8 @@
                                     this._typewriterEffect(this.DOMElements.raterComment, this._getRandomComment(), () => {
                                         this._glowElement(this.DOMElements.sendRatingBtn, 1500);
                                         setTimeout(() => {
-                                            if (window.innerWidth < 768) this._setTourTooltipTransparency(false);
                                             this._closeContactWidget();
+                                            this._resetWidgetTourPlace();
                                         }, 2000);
                                     });
                                 });
@@ -660,15 +675,13 @@
                     analyticsTag: 'Viewed_Tour_Step_Testimonials',
                     demoMs: 3000,
                     action: function() {
-                        if (window.innerWidth < 768) this._setTourTooltipTransparency(true);
-                        const firstCard = this.DOMElements.testimonialsContainer.querySelector('.testimonial-card');
-                        if (firstCard) {
-                            this._focusTour(firstCard);
-                            this._glowElement(firstCard, 2500);
+                        const section = document.getElementById('testimonials-section');
+                        const firstCard = section && section.querySelector('.testimonial-card');
+                        const target = firstCard || section;
+                        if (target) {
+                            this._revealTourTarget(target);
+                            this._glowElement(target, 2500);
                         }
-                        setTimeout(() => {
-                            if (window.innerWidth < 768) this._setTourTooltipTransparency(false);
-                        }, 2800);
                     }
                 },
                 {
@@ -3989,6 +4002,7 @@
             _focusTour(el) {
                 if (!el || !this.state.isTourActive) return;
                 el.classList.add('pulse-highlight');
+                if (window.innerWidth < 768) this._scrollClearOfCard(el, 28);
             },
 
             _placeTourSpot(target) {
@@ -4105,6 +4119,14 @@
                 this.boundEndTour = this.endTour.bind(this);
 
                 document.body.addEventListener('keydown', this.boundHandleTourKey);
+                this.boundFitTourCard = () => {
+                    if (this._tourFocus) this._fitTourCard(this._tourFocus);
+                };
+                window.addEventListener('resize', this.boundFitTourCard);
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', this.boundFitTourCard);
+                    window.visualViewport.addEventListener('scroll', this.boundFitTourCard);
+                }
                 this.DOMElements.tourNextBtn.addEventListener('click', this.boundNextTourStep);
                 this.DOMElements.tourBackBtn.addEventListener('click', this.boundPrevTourStep);
                 this.DOMElements.tourCloseBtn.addEventListener('click', this.boundEndTour);
@@ -4142,6 +4164,18 @@
 
                 this.DOMElements.tourOverlay.removeEventListener('click', this.boundOverlayClick);
                 document.body.removeEventListener('keydown', this.boundHandleTourKey);
+                this._setTourTooltipTransparency(false);
+                this._resetWidgetTourPlace();
+                this._closeContactWidget();
+                this._blurTourField();
+                if (this.boundFitTourCard) {
+                    window.removeEventListener('resize', this.boundFitTourCard);
+                    if (window.visualViewport) {
+                        window.visualViewport.removeEventListener('resize', this.boundFitTourCard);
+                        window.visualViewport.removeEventListener('scroll', this.boundFitTourCard);
+                    }
+                }
+                this._resetTourCard();
                 this.DOMElements.tourNextBtn.removeEventListener('click', this.boundNextTourStep);
                 this.DOMElements.tourBackBtn.removeEventListener('click', this.boundPrevTourStep);
                 this.DOMElements.tourCloseBtn.removeEventListener('click', this.boundEndTour);
@@ -4168,6 +4202,133 @@
                 }
             },
 
+            _tourViewport() {
+                const view = window.visualViewport;
+                return {
+                    left: view ? view.offsetLeft : 0,
+                    top: view ? view.offsetTop : 0,
+                    width: view ? view.width : window.innerWidth,
+                    height: view ? view.height : window.innerHeight
+                };
+            },
+
+            _blurTourField() {
+                const active = document.activeElement;
+                if (!active || active === document.body) return;
+                const tip = this.DOMElements.tourTooltip;
+                if (tip && tip.contains(active)) return;
+                const tag = active.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable) active.blur();
+            },
+
+            _resetTourCard() {
+                const tip = this.DOMElements.tourTooltip;
+                if (!tip) return;
+                tip.style.top = '';
+                tip.style.bottom = '';
+                tip.style.left = '';
+                tip.style.right = '';
+                tip.style.width = '';
+                tip.style.maxWidth = '';
+                tip.style.maxHeight = '';
+                tip.style.boxSizing = '';
+            },
+
+            _pinTourCard() {
+                const tip = this.DOMElements.tourTooltip;
+                if (!tip || window.innerWidth >= 768) return null;
+                const view = this._tourViewport();
+                const width = Math.max(200, Math.round(view.width - 24));
+                tip.style.boxSizing = 'border-box';
+                tip.style.left = Math.round(view.left + 12) + 'px';
+                tip.style.right = 'auto';
+                tip.style.width = width + 'px';
+                tip.style.maxWidth = width + 'px';
+                tip.style.maxHeight = Math.round(view.height * 0.42) + 'px';
+                return view;
+            },
+
+            _scrollClearOfCard(el, gap) {
+                const tip = this.DOMElements.tourTooltip;
+                if (!tip || !el || window.innerWidth >= 768) return;
+                if (getComputedStyle(el).position === 'fixed') return;
+                const rect = el.getBoundingClientRect();
+                const tipRect = tip.getBoundingClientRect();
+                const view = this._tourViewport();
+                const pad = gap || 16;
+                if (rect.width < 2 || tipRect.height < 2) return;
+                const cardOnTop = tipRect.top <= view.top + 24;
+                const zoneTop = cardOnTop ? tipRect.bottom + pad : view.top + 8;
+                const zoneBottom = cardOnTop ? view.top + view.height - 12 : tipRect.top - pad;
+                let shift = 0;
+                if (rect.bottom > zoneBottom) shift = rect.bottom - zoneBottom;
+                if (rect.top - shift < zoneTop) shift = rect.top - zoneTop;
+                if (Math.abs(shift) > 1) {
+                    const root = document.scrollingElement || document.documentElement;
+                    const html = document.documentElement;
+                    const prev = html.style.scrollBehavior;
+                    html.style.scrollBehavior = 'auto';
+                    root.scrollTop += shift;
+                    html.style.scrollBehavior = prev;
+                }
+            },
+
+            _fitTourCard(el) {
+                const tip = this.DOMElements.tourTooltip;
+                if (!tip || !el) return;
+                if (window.innerWidth >= 768) {
+                    this._resetTourCard();
+                    return;
+                }
+                const view = this._pinTourCard();
+                const rect = el.getBoundingClientRect();
+                const fixed = getComputedStyle(el).position === 'fixed';
+                const pinTop = fixed && rect.top > view.top + view.height * 0.45;
+                if (pinTop) {
+                    tip.style.bottom = 'auto';
+                    tip.style.top = Math.round(view.top + 12) + 'px';
+                } else {
+                    tip.style.top = 'auto';
+                    tip.style.bottom = Math.max(12, Math.round(window.innerHeight - (view.top + view.height) + 12)) + 'px';
+                }
+                if (!fixed) this._scrollClearOfCard(el, 28);
+            },
+
+            _revealTourTarget(el) {
+                if (!el || !this.state.isTourActive) return;
+                document.querySelectorAll('.tour-highlight').forEach((node) => {
+                    if (node !== el) node.classList.remove('tour-highlight');
+                });
+                el.classList.add('tour-highlight');
+                this._tourFocus = el;
+                if (window.innerWidth < 768) this._fitTourCard(el);
+                else el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+            },
+
+            _placeWidgetForTour() {
+                const widget = this.DOMElements.contactWidget;
+                const tip = this.DOMElements.tourTooltip;
+                if (!widget || !tip) return;
+                const view = this._tourViewport();
+                const tipRect = tip.getBoundingClientRect();
+                const width = Math.max(200, Math.round(view.width - 24));
+                widget.style.boxSizing = 'border-box';
+                widget.style.left = Math.round(view.left + 12) + 'px';
+                widget.style.right = 'auto';
+                widget.style.width = width + 'px';
+                widget.style.bottom = 'auto';
+                widget.style.top = Math.round(tipRect.bottom + 8) + 'px';
+                widget.style.maxHeight = Math.max(180, Math.round(view.top + view.height - tipRect.bottom - 20)) + 'px';
+            },
+
+            _resetWidgetTourPlace() {
+                const widget = this.DOMElements.contactWidget;
+                if (!widget) return;
+                ['boxSizing', 'left', 'right', 'width', 'bottom', 'top', 'maxHeight'].forEach((prop) => {
+                    widget.style[prop] = '';
+                });
+            },
+
             showTourStep(stepIndex, runActionAndAnimation = true) {
                 const oldHighlight = document.querySelector('.tour-highlight');
                 if (oldHighlight) {
@@ -4187,10 +4348,12 @@
                 }
 
                 if (runActionAndAnimation) {
-                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    const narrow = window.innerWidth < 768;
+                    targetElement.scrollIntoView({ behavior: narrow ? 'auto' : 'smooth', block: narrow ? 'nearest' : 'center', inline: 'nearest' });
                 }
 
                 setTimeout(() => {
+                    this._blurTourField();
                     targetElement.classList.add('tour-highlight');
                     this._tourFocus = targetElement;
 
@@ -4215,6 +4378,7 @@
                     tooltip.classList.add('visible');
                     tooltip.removeAttribute('aria-hidden');
                     tooltip.focus({ preventScroll: true });
+                    this._fitTourCard(targetElement);
 
                     if (runActionAndAnimation && step.analyticsTag) {
                         this._trackEvent('tour_step_viewed', 'Interactive Tour', step.analyticsTag);
@@ -4292,7 +4456,8 @@
             _typewriterEffect(element, text, onComplete) {
                 let i = 0;
                 element.value = '';
-                element.focus();
+                if (window.innerWidth >= 768) element.focus({ preventScroll: true });
+                else element.blur();
                 element.classList.add('is-typing');
                 const typingInterval = setInterval(() => {
                     if (i < text.length) {
@@ -4303,7 +4468,7 @@
                         element.classList.remove('is-typing');
                         if (onComplete) onComplete();
                     }
-                }, 50); // Typing speed
+                }, 50);
             },
 
             _glowElement(element, duration = 1500) {
@@ -4324,25 +4489,38 @@
                 if (!selector || !options) return;
                 this._applyClickEffect(selector);
                 selector.classList.remove('collapsed');
-                this._focusTour(options);
-                const search = options.querySelector('.lang-search');
                 const list = options.querySelector('.lang-options-list');
-                if (list) this._glowElement(list, 2200);
+                const search = options.querySelector('.lang-search');
+                if (search) search.blur();
+                const choices = list ? Array.from(list.querySelectorAll('.lang-option')) : [];
+                const pick = choices[Math.floor(Math.random() * choices.length)];
+                const code = pick ? pick.dataset.lang : '';
+                const name = pick ? pick.textContent.trim() : '';
                 const closeMenu = () => {
                     if (search) {
                         search.value = '';
                         search.dispatchEvent(new Event('input'));
+                        search.blur();
                     }
                     selector.classList.add('collapsed');
                 };
-                if (search) {
+                const showPick = () => {
+                    const shown = code ? options.querySelector('.lang-option[data-lang="' + code + '"]') : options.querySelector('.lang-option');
+                    const target = shown || options;
+                    this._revealTourTarget(target);
+                    this._glowElement(target, 1800);
+                };
+                if (search && name) {
+                    const query = name.slice(0, Math.min(3, name.length)).toLowerCase();
                     setTimeout(() => {
-                        this._typewriterEffect(search, 'port', () => {
+                        this._typewriterEffect(search, query, () => {
                             search.dispatchEvent(new Event('input'));
+                            showPick();
                             setTimeout(closeMenu, 1600);
                         });
                     }, 400);
                 } else {
+                    showPick();
                     setTimeout(closeMenu, 2400);
                 }
             },
@@ -4409,6 +4587,7 @@
             _demoSimulatorTour() {
                 const btn = document.getElementById(window.innerWidth < 768 ? 'sim-launch-btn-mobile' : 'sim-launch-btn');
                 if (!btn) return;
+                this._revealTourTarget(btn);
                 this._applyClickEffect(btn, 800);
                 this._glowElement(btn, 2200);
                 const tip = btn.querySelector('.tooltiptext');
@@ -4425,6 +4604,7 @@
             _demoQaLabTour() {
                 const target = document.getElementById(window.innerWidth < 768 ? 'qa-lab-btn-mobile' : 'qa-lab-btn');
                 if (!target) return;
+                this._revealTourTarget(target);
                 this._applyClickEffect(target, 800);
                 this._glowElement(target, 2600);
                 const tip = target.querySelector('.tooltiptext');
