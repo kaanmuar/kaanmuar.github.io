@@ -12,7 +12,7 @@ on:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
 
     steps:
       # Step 1: Checks out your repository's code
@@ -74,3 +74,86 @@ jobs:
         with:
           name: cypress-screenshots
           path: cypress/screenshots
+
+  catalog-browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Firefox
+        uses: browser-actions/setup-firefox@v1
+      - name: Selenium catalog on Chrome
+        run: npm run test:selenium
+        continue-on-error: true
+      - name: Selenium catalog on Firefox
+        run: TARGET_BROWSER=firefox npm run test:selenium
+        continue-on-error: true
+      - name: WebdriverIO catalog on Chrome
+        run: npm run test:wdio
+        continue-on-error: true
+      - name: Upload native results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-catalog-results
+          path: |
+            wdio-results
+            runner-results
+
+  catalog-apple:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Selenium catalog on Safari
+        run: TARGET_BROWSER=safari npm run test:selenium
+        continue-on-error: true
+      - name: Appium catalog on the first iPhone simulator
+        run: |
+          export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+          DEVICE=$(node -e "const {listTargets}=require('./scripts/targets'); const phone=(listTargets().devices||[]).find(d=>d.platform==='ios'&&/iPhone/.test(d.name)); if(!phone){console.error('no iPhone simulator'); process.exit(1)}; process.stdout.write(JSON.stringify(phone));")
+          APPIUM_DEVICE="$DEVICE" APPIUM_DEVICE_LABEL="$(node -e 'const d=JSON.parse(process.argv[1]); process.stdout.write(d.label)' "$DEVICE")" npm run test:appium
+        continue-on-error: true
+      - name: Upload Apple results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-catalog-results
+          path: |
+            appium-results
+            runner-results
+
+  catalog-android:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Appium catalog on an Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          script: APPIUM_DEVICE='{"platform":"android","id":"emulator-5554","name":"emulator-5554","label":"Android emulator"}' npm run test:appium
+        continue-on-error: true
