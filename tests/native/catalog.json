@@ -41,7 +41,7 @@
   {"id":"SEC-04","layer":"Security","title":"CV is indexable with canonical and JSON-LD","path":"index.html","phone":false},
   {"id":"SEC-05","layer":"Security","title":"LinkedIn uses noopener + _blank","path":"index.html","phone":false},
   {"id":"SEC-06","layer":"Security","title":"lang query does not execute script","path":"index.html","phone":false},
-  {"id":"SEC-07","layer":"Security","title":"Public chrome does not link to admin.html","path":"index.html","phone":false},
+  {"id":"SEC-07","layer":"Security","title":"Only the login control opens admin","path":"index.html","phone":false},
   {"id":"SEC-08","layer":"Security","title":"Core competencies ship ItemList JSON-LD and topic URLs","path":"index.html","phone":false},
   {"id":"A11Y-01","layer":"Accessibility","title":"No serious WCAG 2 A/AA axe findings (overlays excluded)","path":"index.html","phone":false},
   {"id":"A11Y-02","layer":"Accessibility","title":"Main landmark and named heading","path":"index.html","phone":false},

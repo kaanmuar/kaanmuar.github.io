@@ -596,11 +596,16 @@
       return 'no dialog; page intact';
     },
     'SEC-07': async function () {
-      var cv = await textOf('index.html');
-      var studio = await textOf('simulador.html');
-      assert(!/href\s*=\s*["'][^"']*admin\.html/.test(cv), 'CV links to admin');
-      assert(!/href\s*=\s*["'][^"']*admin\.html/.test(studio), 'studio links to admin');
-      return 'no public admin href';
+      function loginOnly(html, count, label) {
+        var tags = html.match(/<a\b[^>]*>/g) || [];
+        var links = tags.filter(function (tag) { return /href\s*=\s*["']admin\.html["']/.test(tag); });
+        assert(links.length === count, label + ' admin links ' + links.length);
+        links.forEach(function (tag) { assert(/id="admin-login-btn/.test(tag), label + ' admin href is not the login control'); });
+      }
+      loginOnly(await textOf('index.html'), 2, 'CV');
+      loginOnly(await textOf('simulador.html'), 1, 'studio');
+      loginOnly(await textOf('qa-lab.html'), 1, 'lab');
+      return 'login control only';
     },
     'SEC-08': async function () {
       var json = document.getElementById('competencies-structured-data').textContent;
