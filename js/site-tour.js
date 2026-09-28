@@ -6,23 +6,27 @@
     }
     #site-tour-overlay.on { display: block; }
     .site-tour-hit {
-      animation: site-tour-pulse 1.6s ease-out infinite;
-      border-radius: 8px;
+      animation: site-tour-pulse 1.6s ease-in-out infinite;
+      border-radius: inherit;
     }
     @keyframes site-tour-pulse {
-      0%, 100% { box-shadow: 0 0 0 0 transparent; }
-      50% { box-shadow: 0 0 12px 4px #0d6e76; }
+      0%, 100% { box-shadow: inset 0 0 0 3px #4db3bb; }
+      50% { box-shadow: inset 0 0 0 3px #4db3bb, inset 0 0 14px #4db3bb; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .site-tour-hit { animation: none; box-shadow: 0 0 0 3px rgba(13, 110, 118, 0.55); }
+      .site-tour-hit { animation: none; box-shadow: inset 0 0 0 3px #4db3bb; }
     }
     #site-tour-tooltip {
-      display: none; position: fixed; z-index: 4600; left: 16px; bottom: 16px; max-width: min(420px, calc(100vw - 32px));
+      display: none; position: fixed; z-index: 4600; left: 12px; bottom: 12px; box-sizing: border-box;
+      width: min(420px, calc(100% - 24px)); max-width: calc(100% - 24px);
       background: #1f2937; color: #f8fafc; border-radius: 12px; overflow: hidden;
       box-shadow: 0 12px 32px rgba(0,0,0,.28); pointer-events: auto;
     }
     html.site-tour-on #site-tour-tooltip { display: block; }
     html.dark-mode #site-tour-tooltip { background: rgba(12, 17, 24, 0.94); }
+    @media (max-width: 767px) {
+      html.site-tour-on body { padding-bottom: 46vh; }
+    }
     #site-tour-progress { height: 5px; background: rgba(255,255,255,.12); }
     #site-tour-progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, #0d6e76, #4db3bb); }
     #site-tour-tooltip-content { padding: 14px 16px 12px; }
@@ -152,6 +156,77 @@
     hit = null;
   }
 
+  function viewportBox() {
+    const view = window.visualViewport;
+    return {
+      left: view ? view.offsetLeft : 0,
+      top: view ? view.offsetTop : 0,
+      width: view ? view.width : window.innerWidth,
+      height: view ? view.height : window.innerHeight
+    };
+  }
+
+  function pinTip() {
+    const tip = $('site-tour-tooltip');
+    if (!tip) return;
+    if (window.innerWidth >= 768) {
+      tip.style.left = '';
+      tip.style.right = '';
+      tip.style.top = '';
+      tip.style.bottom = '';
+      tip.style.width = '';
+      tip.style.maxWidth = '';
+      return;
+    }
+    const view = viewportBox();
+    const width = Math.max(200, Math.round(view.width - 24));
+    tip.style.boxSizing = 'border-box';
+    tip.style.left = Math.round(view.left + 12) + 'px';
+    tip.style.right = 'auto';
+    tip.style.width = width + 'px';
+    tip.style.maxWidth = width + 'px';
+    tip.style.top = 'auto';
+    tip.style.bottom = Math.max(12, Math.round(window.innerHeight - (view.top + view.height) + 12)) + 'px';
+  }
+
+  function clearOfTip(el) {
+    const tip = $('site-tour-tooltip');
+    if (!el || !tip || window.innerWidth >= 768) return;
+    if (getComputedStyle(el).position === 'fixed') return;
+    const rect = el.getBoundingClientRect();
+    const tipRect = tip.getBoundingClientRect();
+    const view = viewportBox();
+    const pad = 28;
+    if (rect.width < 2 || tipRect.height < 2) return;
+    const clearTop = view.top + 12;
+    const clearBottom = tipRect.top - pad;
+    let shift = 0;
+    if (rect.bottom > clearBottom) shift = rect.bottom - clearBottom;
+    if (rect.top - shift < clearTop) shift = rect.top - clearTop;
+    if (Math.abs(shift) > 1) {
+      const root = document.scrollingElement || document.documentElement;
+      const html = document.documentElement;
+      const prev = html.style.scrollBehavior;
+      html.style.scrollBehavior = 'auto';
+      root.scrollTop += shift;
+      html.style.scrollBehavior = prev;
+    }
+  }
+
+  function blurFields() {
+    const active = document.activeElement;
+    const tip = $('site-tour-tooltip');
+    if (!active || (tip && tip.contains(active))) return;
+    const tag = active.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable) active.blur();
+  }
+
+  function onViewport() {
+    if (!cfg) return;
+    pinTip();
+    if (hit) clearOfTip(hit);
+  }
+
   function showStep() {
     const step = cfg.steps[index];
     const last = index === cfg.steps.length - 1;
@@ -180,10 +255,14 @@
     clearHit();
     if (typeof step.prepare === 'function') step.prepare();
     const el = step.selector ? document.querySelector(step.selector) : null;
+    blurFields();
+    pinTip();
     if (el) {
       hit = el;
       el.classList.add('site-tour-hit');
-      el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      const narrow = window.innerWidth < 768;
+      el.scrollIntoView({ block: narrow ? 'start' : 'center', inline: 'nearest', behavior: narrow ? 'auto' : 'smooth' });
+      if (narrow) setTimeout(() => clearOfTip(el), 420);
     }
     const ms = step.demoMs || 1400;
     requestAnimationFrame(() => {
@@ -227,6 +306,11 @@
       returnFocus = document.activeElement;
       document.documentElement.classList.add('site-tour-on');
       $('site-tour-overlay').classList.add('on');
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', onViewport);
+        window.visualViewport.addEventListener('scroll', onViewport);
+      }
+      window.addEventListener('resize', onViewport);
       showStep();
       if (global.SiteAnalytics) global.SiteAnalytics.trackEvent('site_tour_start', cfg.name || 'Tour', 'start');
     },
@@ -251,6 +335,20 @@
       document.documentElement.classList.remove('site-tour-on');
       const overlay = $('site-tour-overlay');
       if (overlay) overlay.classList.remove('on');
+      window.removeEventListener('resize', onViewport);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', onViewport);
+        window.visualViewport.removeEventListener('scroll', onViewport);
+      }
+      const tip = $('site-tour-tooltip');
+      if (tip) {
+        tip.style.left = '';
+        tip.style.right = '';
+        tip.style.top = '';
+        tip.style.bottom = '';
+        tip.style.width = '';
+        tip.style.maxWidth = '';
+      }
       cfg = null;
       if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus({ preventScroll: true });
       returnFocus = null;
