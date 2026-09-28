@@ -1,0 +1,11 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="rail" name="CV content rail">
+    <mxGraphModel dx="900" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+        <mxCell id="2" value="Steps&#10;1 Profile&#10;2 About&#10;3 Career&#10;4 Toolkit&#10;8 Messages&#10;9 Review" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#14202b;fontColor=#ffffff;align=left;spacingLeft=12;" vertex="1" parent="1"><mxGeometry x="40" y="40" width="180" height="280" as="geometry"/></mxCell>
+        <mxCell id="3" value="AI Expertise&#10;ON&#10;Cursor · Claude · Copilot · ChatGPT · Custom personalizations&#10;Team International" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#0d6e76;align=left;spacingLeft=12;" vertex="1" parent="1"><mxGeometry x="260" y="40" width="420" height="160" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -481,6 +481,36 @@
             .handoff .btn { width: 100%; }
             .lang-menu { right: 0; width: min(15rem, calc(100vw - 24px)); }
         }
+        .delivery-strip { display: flex; flex-direction: column; gap: 8px; }
+        .who-row, .health-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .who { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 12px; color: var(--text); }
+        .who b { font-size: 11px; }
+        .health-row span { font-size: 12px; color: var(--muted); padding: 2px 6px; }
+        .intake-gaps { margin-top: 12px; padding: 10px 12px; border: 1px solid #e3b341; background: rgba(227, 179, 65, .12); border-radius: 8px; }
+        .intake-gaps ul { margin: 6px 0 0; padding-left: 18px; }
+        .flow-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+        .metric { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+        .metric b { display: block; font-size: 22px; margin-top: 4px; }
+        .metric span { color: var(--muted); font-size: 12px; }
+        .bar-row { display: grid; grid-template-columns: minmax(7.5rem, 9rem) 1fr 2.5rem; gap: 8px; align-items: center; font-size: 12px; margin: 6px 0; }
+        .bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+        .bar i { display: block; height: 100%; background: #0d6e76; }
+        .release-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .choice { display: flex; flex-direction: column; gap: 6px; }
+        .choice button { text-align: left; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 8px 10px; cursor: pointer; }
+        .switch-label { margin: 10px 0 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+        .sprint-switch { display: flex; flex-wrap: wrap; gap: 6px; }
+        .run-row { display: grid; grid-template-columns: 7rem 8rem 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+        .run-row span { color: var(--muted); }
+        .sprint-chip { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+        .sprint-chip.on { background: #0d6e76; color: #fff; border-color: #0d6e76; }
+        .board-project .project-head, .board-project .project-line { display: grid; grid-template-columns: minmax(0, 2.2fr) .8fr .5fr .7fr .9fr; gap: 8px; align-items: center; }
+        .board-project .project-head { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 0 8px; }
+        .board-project .project-line { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 6px; }
+        .choice button.on { border-color: #0d6e76; background: rgba(13, 110, 118, .12); }
+        @media (max-width: 900px) {
+            .flow-grid, .release-grid { grid-template-columns: 1fr; }
+        }
     </style>
     <link rel="stylesheet" href="css/site-look.css">
 </head>
@@ -526,17 +556,18 @@
         <button data-view="auto">Automation lab</button>
         <button data-view="verify">Sprint verification</button>
         <button data-view="report">Sprint report</button>
+        <button data-view="flow">Sprint analytics</button>
         <a href="qa-lab.html">CV regression lab</a>
         <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests" target="_blank" rel="noopener noreferrer">Test suite on GitHub</a>
     </aside>
     <main class="workspace">
-        <p class="studio-lead">Open a ticket and follow it from the planning board until the team has tested it and it is ready to ship.</p>
+        <p class="studio-lead">The board chips open the same tickets in Jira, Azure DevOps, Monday, Trello, Linear, Asana, and MS Project. Sprint report keeps the earlier studio runs. Design files open from a ticket’s Resources tab.</p>
         <div class="phase-banner" id="banner">Explore the board, open any ticket, then start the four-agent sprint.</div>
         <div class="board" id="view"></div>
         <div class="phase-console" id="phaseConsole"></div>
     </main>
 </div>
-<div class="log" id="log"><div><b>SYSTEM</b> Sprint 24 loaded. Four agents standing by.</div></div>
+<div class="log" id="log"><div><b>SYSTEM</b> Sprint 24 loaded. Interactive CV delivery is on the board. Four agents standing by.</div></div>
 
 <button class="runner-edge" id="runner-edge" type="button">Runners</button>
 <aside id="runner-drawer" class="runner-drawer" aria-label="Native runner views">
@@ -777,6 +808,855 @@ Scenario: Signature older than 5 minutes is rejected
     }
 ];
 
+const PEOPLE = [
+    { initials: 'CM', name: 'Carlos Muñoz', role: 'PO', duty: 'Asks for the change and accepts the increment' },
+    { initials: 'EV', name: 'Elena Vargas', role: 'PM', duty: 'Holds scope, order, and the stakeholders' },
+    { initials: 'NP', name: 'Noah Patel', role: 'BA', duty: 'Writes the ask and marks what intake left out' },
+    { initials: 'AD', name: 'Amara Diallo', role: 'TL', duty: 'Reviews the approach before anyone calls it done' },
+    { initials: 'DA', name: 'Dana Alves', role: 'Dev', duty: 'Builds the admin editor' },
+    { initials: 'LO', name: 'Luis Ortega', role: 'Dev', duty: 'Builds the public CV the filters depend on' },
+    { initials: 'SH', name: 'Samira Haddad', role: 'QA', duty: 'Ties each bug to a story and keeps the catalog as the judge' },
+    { initials: 'JW', name: 'Jordan White', role: 'DevOps', duty: 'Chooses where it deploys, the pace, and the infrastructure' },
+    { initials: 'RS', name: 'Rita Solano', role: 'Design', duty: 'Leaves Figma, Miro, draw.io, and Visio on the UI stories' }
+];
+
+const PROGRAM = [
+    {
+        key: 'CV-301', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'Done', cycle: 4,
+        summary: 'Portrait, avatar, or placeholder, and a history of uploads',
+        priority: 'High', points: 5, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Carlos Muñoz',
+        labels: ['admin', 'photo'], components: ['CV editor', 'Storage'],
+        env: 'my laptop', sprint: 'Sprint 24', fixVersion: '2026.09', due: '26 Sep',
+        subtasks: ['Placeholder when nothing is chosen', 'Six illustrated avatars', 'Reuse an earlier upload'],
+        description: 'Add some professional avatars so if the user does not want to upload a photo he can pick one, or else a placeholder. Keep a history of uploaded pictures.',
+        ac: 'Photos should look fine. History somewhere.',
+        proposedAc: 'Scenario: No photo shows the placeholder\n  Given photoKind is placeholder\n  Then the portrait is assets/avatars/placeholder.svg\nScenario: An avatar is chosen\n  Given avatar atlas\n  Then the public CV uses assets/avatars/atlas.svg\nScenario: An upload can be chosen again\n  Given a JPEG in the history row\n  When Use this photo is clicked\n  Then the portrait returns to that file',
+        gaps: ['Environment says "my laptop" and never names QA, Stage, or UAT.', 'No steps, no file size, no content type.', 'No resource for the avatar set.'],
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 09:10', text: 'If I do not upload, I still want a face on the CV.' },
+            { who: 'Noah Patel · BA', when: '24 Sep 11:40', text: 'Intake is missing the environment and the 2MB JPEG rule. I am not signing the AC.' },
+            { who: 'Dana Alves · Dev', when: '26 Sep 16:05', text: 'Moved To Do → In Progress → In Review → Ready for QA → Done after the placeholder and the history row worked locally.' }
+        ],
+        links: ['CV-366 Upload had no history'],
+        attachments: [],
+        findings: 'No environment, no steps, and no file contract. QA cannot stage this.',
+        tests: []
+    },
+    {
+        key: 'CV-308', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'Done', cycle: 3,
+        summary: 'Messages and ratings editable from CV content',
+        priority: 'High', points: 5, assignee: 'LO', assigneeName: 'Luis Ortega', reporter: 'Carlos Muñoz',
+        labels: ['admin', 'forms'], components: ['CV editor', 'Public CV'],
+        env: 'production?', sprint: 'Sprint 24', fixVersion: '2026.09', due: '26 Sep',
+        subtasks: ['Message tab copy', 'Rating tab copy', 'Topic labels stay on the allowed ids'],
+        description: 'Add the Messages and Rating section to the CV Admin and all its components to be editable.',
+        ac: 'Make the form editable.',
+        proposedAc: 'Scenario: Hiding the message tab leaves rating active\n  Given the message form is off and rating is on\n  Then the rating tab is the one visitors see\nScenario: Topic ids stay legal\n  Then the ids remain opportunity, inquiry, feedback, and other',
+        gaps: ['"production?" is not QA, Stage, or UAT.', 'No list of fields.', 'No note that topic ids are constrained by Firestore rules.'],
+        comments: [
+            { who: 'Elena Vargas · PM', when: '24 Sep 09:30', text: 'This sits in Sprint 24. Do not invent new topic ids.' },
+            { who: 'Luis Ortega · Dev', when: '26 Sep 17:12', text: 'Moved In Progress → Ready for QA → Done. English stays the source.' }
+        ],
+        links: ['CV-334 Rating marks'],
+        attachments: [],
+        findings: 'The ask names no field, no environment, and no rule for the topic ids.',
+        tests: []
+    },
+    {
+        key: 'CV-314', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'In Review', cycle: 2,
+        summary: 'Each competency stays tied to skills and roles',
+        priority: 'Highest', points: 8, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Noah Patel',
+        labels: ['competency', 'filter'], components: ['CV editor', 'Public CV'],
+        env: 'the CV page', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['Skill chips', 'Role chips', 'Public filter uses the links'],
+        description: 'Core competencies are not another text list. Each one is tight to technologies, skills, and experiences.',
+        ac: 'Link them somehow.',
+        proposedAc: 'Scenario: A competency highlights only its skills and roles\n  Given AI Expertise is linked to Cursor and Team International\n  When the visitor clicks AI Expertise\n  Then those skills stay selected\n  And Team International stays in focus\n  And the other competencies dim',
+        gaps: ['Environment is "the CV page", not QA, Stage, or UAT.', 'No steps for adding a link.', 'No example of a skill name that must match the toolkit.'],
+        comments: [
+            { who: 'Noah Patel · BA', when: '25 Sep 10:02', text: 'The first draft was a text field. That cannot drive the filter.' },
+            { who: 'Amara Diallo · TL', when: '28 Sep 09:15', text: 'In review. A live document must not drop a skill group the file just added.' }
+        ],
+        links: ['CV-355 Free-text competency', 'CV-321 AI Expertise'],
+        attachments: [],
+        findings: 'Without named skills and role indexes, the public filter has nothing to match.',
+        tests: []
+    },
+    {
+        key: 'CV-321', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'In Review', added: true, cycle: 1,
+        summary: 'AI Expertise for the last year of delivery',
+        priority: 'Highest', points: 5, assignee: 'LO', assigneeName: 'Luis Ortega', reporter: 'Carlos Muñoz',
+        labels: ['ai', 'competency'], components: ['Toolkit', 'Experience', 'Public CV'],
+        env: 'somewhere public', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['Toolkit group', 'Bullet on Team International', 'Filter id ai'],
+        description: 'Add AI Expertise for Cursor, Claude, Copilot, ChatGPT, and custom personalizations during the last year. It has to be tightened to the skills and the current role.',
+        ac: 'Show AI on the CV.',
+        proposedAc: 'Scenario: AI Expertise focuses the current role\n  Given the toolkit lists Cursor, Claude, GitHub Copilot, ChatGPT, and Custom personalizations\n  And Team International Jan 2021 – Present lists those tools\n  When AI Expertise is clicked\n  Then that role matches and the other roles dim',
+        gaps: ['Added mid-sprint with no environment.', 'Tool names are spelled three different ways in the ask.', 'No preview area named.'],
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '27 Sep 18:40', text: 'This is the last year of real work. It cannot be a loose label.' },
+            { who: 'Samira Haddad · QA', when: '28 Sep 09:40', text: 'Opened CV-370 because a published CV was hiding the new toolkit group.' }
+        ],
+        links: ['CV-314 Competencies', 'CV-370 Live CV hid AI practice'],
+        attachments: [],
+        findings: 'A label with no skill names and no role will not move the filter.',
+        tests: []
+    },
+    {
+        key: 'CV-327', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'Ready for QA',
+        summary: 'Month picker for dates, a year menu, and clickable stars',
+        priority: 'High', points: 3, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Noah Patel',
+        labels: ['editor', 'toolkit'], components: ['CV editor'],
+        env: 'admin', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['Month inputs plus Present', 'Years menu', 'Five clickable stars'],
+        description: 'For dates, add a date picker so the user does not have to write the date. For technical management and toolkit, Years and Stars should be dropdown numbers and a 5 star line.',
+        ac: 'Easier dates and stars.',
+        proposedAc: 'Scenario: Present keeps the public date line\n  Given the start month is 2021-01 and Present is on\n  Then the CV shows Jan 2021 - Present\nScenario: A star click sets the count\n  When the third star is clicked\n  Then stars is 3',
+        gaps: ['"admin" does not say QA, Stage, or UAT.', 'No browser.', 'Stars could mean 0–5 or 1–5. That was not written.'],
+        comments: [
+            { who: 'Noah Patel · BA', when: '27 Sep 14:20', text: 'I sent this back. The AC does not say what the CV string should still look like.' },
+            { who: 'Dana Alves · Dev', when: '28 Sep 08:50', text: 'Moved In Progress → Ready for QA. Waiting on Samira in the QA preview.' }
+        ],
+        links: [],
+        attachments: [],
+        findings: 'The public date format and the star scale are missing, so two people would build two widgets.',
+        tests: []
+    },
+    {
+        key: 'CV-334', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'Ready for QA',
+        summary: 'ON/OFF switches and a choice of rating marks',
+        priority: 'Medium', points: 3, assignee: 'LO', assigneeName: 'Luis Ortega', reporter: 'Noah Patel',
+        labels: ['editor', 'rating'], components: ['CV editor', 'Public CV'],
+        env: 'admin, maybe', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['Replace Show', 'Five other marks'],
+        description: 'Change the Show checkbox for an ON/OFF switch. Add some other 5 options for rating star icons: check marks, round circles, thumbs up, or anything that indicates a rate.',
+        ac: 'Switch and some icons.',
+        proposedAc: 'Scenario: Show becomes a switch\n  Given a section is visible\n  Then the control reads ON\nScenario: The visitor sees the chosen mark\n  Given the rating mark is thumbs\n  Then the five public marks are 👍',
+        gaps: ['Environment is "admin, maybe".', 'The five marks are not named.', 'No note that the public page must use the same glyph.'],
+        comments: [
+            { who: 'Luis Ortega · Dev', when: '28 Sep 09:05', text: 'Marks are star, check, circle, thumb, diamond, and shield. Moved to Ready for QA.' }
+        ],
+        links: ['CV-361 Show was a checkbox'],
+        attachments: [],
+        findings: 'An unnamed icon set will not match between the editor and the public CV.',
+        tests: []
+    },
+    {
+        key: 'CV-340', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'In Progress',
+        summary: 'CV content laid out as a customizer, not a flat form',
+        priority: 'High', points: 5, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Elena Vargas',
+        labels: ['editor', 'layout'], components: ['Admin'],
+        env: 'preview', sprint: 'Sprint 24', fixVersion: '2026.09', due: '29 Sep',
+        subtasks: ['Step rail', 'One card per object', 'Switch on the card'],
+        description: 'Compare CV content to a customizing interface. The current presentation is too flat.',
+        ac: 'Make it look more professional.',
+        proposedAc: 'Scenario: Steps stay visible while a section is edited\n  Given the About step is open\n  Then the step rail still shows Profile through Review\n  And each competency is its own card',
+        gaps: ['"preview" does not say QA, Stage, or UAT.', '"Professional" is not a check.', 'No reference for the rail.'],
+        comments: [
+            { who: 'Elena Vargas · PM', when: '27 Sep 15:00', text: 'This is the shell for the other editor stories. It does not close until the rail is what people see.' },
+            { who: 'Amara Diallo · TL', when: '28 Sep 09:20', text: 'I want the rail reviewed before UAT. See CV-399.' }
+        ],
+        links: ['CV-399 Review the rail'],
+        attachments: [],
+        findings: 'A visual ask with no structure will be restyled again next week.',
+        tests: []
+    },
+    {
+        key: 'CV-348', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'In Progress',
+        summary: 'CV content dropdowns stay open and selectable',
+        priority: 'Highest', points: 3, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Samira Haddad',
+        labels: ['defect', 'editor'], components: ['Admin'],
+        env: 'Chrome', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['Section menu', 'Link a skill', 'Years menu'],
+        description: 'Dropdowns are broken again. Please fix them.',
+        ac: 'Dropdowns work.',
+        proposedAc: 'Scenario: The section menu opens above the pane\n  When Section is opened\n  Then the list is visible and a choice changes the step\nScenario: Years is a menu of numbers\n  When 8 Yrs is chosen\n  Then the skill stores 8 Yrs',
+        gaps: ['"Chrome" is not an environment.', 'No steps.', 'No screenshot of which menu fails.'],
+        comments: [
+            { who: 'Samira Haddad · QA', when: '28 Sep 08:10', text: 'Reopened. The native select sits on the button and the list is clipped. Bug CV-352.' },
+            { who: 'Dana Alves · Dev', when: '28 Sep 09:30', text: 'Still In Progress until the panel is confirmed on Section, Link a skill, and Years.' }
+        ],
+        links: ['CV-352 Dropdown panel clipped'],
+        attachments: [],
+        findings: 'Three menus fail for different reasons. One sentence cannot be tested.',
+        tests: []
+    },
+    {
+        key: 'CV-352', rehearse: false, type: 'Bug', epic: 'Interactive CV', column: 'In Review', blocks: 'CV-348',
+        summary: 'Dropdown panel is clipped and the native select covers the button',
+        priority: 'Highest', points: 2, assignee: 'SH', assigneeName: 'Samira Haddad', reporter: 'Noah Patel',
+        labels: ['bug', 'editor'], components: ['Admin'],
+        env: 'QA preview · local admin', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['Portal the panel', 'Hide the native select'],
+        description: 'On CV content, opening Section shows nothing useful. The control looks like a button but the click hits the real select. The list is cut off by the pane.',
+        ac: 'Fix the menus.',
+        proposedAc: 'Scenario: The open list is on the page, not inside the card\n  When a menu opens\n  Then its panel is attached to the document\n  And a choice updates the field',
+        gaps: ['The bug was filed against a story that had no steps, so the first fix missed Link a skill.'],
+        comments: [
+            { who: 'Noah Patel · BA', when: '28 Sep 08:20', text: 'Blocked by CV-348. The story never said which menus.' },
+            { who: 'Samira Haddad · QA', when: '28 Sep 09:45', text: 'Moved To Do → In Progress → In Review after Section, skills, and years opened.' }
+        ],
+        links: ['Blocks CV-348'],
+        attachments: [],
+        findings: 'A bug with no reproduction steps got a partial fix.',
+        tests: []
+    },
+    {
+        key: 'CV-355', rehearse: false, type: 'Bug', epic: 'Interactive CV', column: 'Done', blocks: 'CV-314', cycle: 2,
+        summary: 'A competency was free text, so the filter could not follow it',
+        priority: 'High', points: 3, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Samira Haddad',
+        labels: ['bug', 'competency'], components: ['CV editor', 'Public CV'],
+        env: 'QA preview · public CV', sprint: 'Sprint 24', fixVersion: '2026.09', due: '27 Sep',
+        subtasks: ['Chips instead of a bare label'],
+        description: 'Adding a competency only appended text. Clicking it on the CV did not highlight skills or a role.',
+        ac: 'Connect the list.',
+        proposedAc: 'Scenario: Removing a skill chip unlinks it\n  When Cursor is removed from AI Expertise\n  Then the public filter no longer requires Cursor',
+        gaps: ['Original story had no skill names, so this bug was inevitable.'],
+        comments: [
+            { who: 'Samira Haddad · QA', when: '26 Sep 18:00', text: 'Filed against CV-314. Moved In Progress → Ready for QA → Done once the chips drove the filter.' }
+        ],
+        links: ['Blocks CV-314'],
+        attachments: [],
+        findings: 'The parent story shipped a text field. This bug is the correction.',
+        tests: []
+    },
+    {
+        key: 'CV-361', rehearse: false, type: 'Bug', epic: 'Interactive CV', column: 'Ready for QA', blocks: 'CV-334',
+        summary: 'Show was a checkbox, so visibility did not read as ON or OFF',
+        priority: 'Medium', points: 2, assignee: 'LO', assigneeName: 'Luis Ortega', reporter: 'Samira Haddad',
+        labels: ['bug', 'editor'], components: ['CV editor'],
+        env: 'QA preview · admin', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['Switch markup'],
+        description: 'Every Show control is a checkbox. On a long form it is unclear whether the section is visible.',
+        ac: 'Use a switch.',
+        proposedAc: 'Scenario: The switch label is the click target\n  When the ON/OFF control is clicked\n  Then the section shown flag flips',
+        gaps: ['The parent story did not say the label must receive the click.'],
+        comments: [
+            { who: 'Samira Haddad · QA', when: '28 Sep 09:00', text: 'Moved from To Do to Ready for QA with CV-334. I still need to click it, not only see it.' }
+        ],
+        links: ['Blocks CV-334'],
+        attachments: [],
+        findings: 'The correction is the switch. It is not done until a click toggles it.',
+        tests: []
+    },
+    {
+        key: 'CV-366', rehearse: false, type: 'Bug', epic: 'Interactive CV', column: 'Done', blocks: 'CV-301', cycle: 2,
+        summary: 'Upload had no history and no placeholder',
+        priority: 'High', points: 2, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Carlos Muñoz',
+        labels: ['bug', 'photo'], components: ['CV editor'],
+        env: 'QA preview · admin', sprint: 'Sprint 24', fixVersion: '2026.09', due: '26 Sep',
+        subtasks: ['History row', 'Placeholder asset'],
+        description: 'After an upload, the picture could not be chosen again. Clearing the photo left a broken frame.',
+        ac: 'Remember the photo.',
+        proposedAc: 'Scenario: History restores the upload\n  Given one JPEG in this browser\n  When Use this photo is clicked\n  Then the portrait is that JPEG',
+        gaps: ['No storage rule was named, so cloud history was assumed and is still not deployed.'],
+        comments: [
+            { who: 'Jordan White · DevOps', when: '26 Sep 17:40', text: 'Local history works. Cloud history waits on CV-384. I moved this bug to Done for the browser path only.' }
+        ],
+        links: ['Blocks CV-301', 'CV-384 Photo rules'],
+        attachments: [],
+        findings: 'The story forgot the empty state. This bug put the placeholder back.',
+        tests: []
+    },
+    {
+        key: 'CV-370', rehearse: false, type: 'Bug', epic: 'Interactive CV', column: 'In Progress', blocks: 'CV-321',
+        summary: 'A published CV hid the new AI toolkit group',
+        priority: 'High', points: 3, assignee: 'LO', assigneeName: 'Luis Ortega', reporter: 'Samira Haddad',
+        labels: ['bug', 'ai'], components: ['Public CV'],
+        env: 'Stage · published cvContent', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['Keep new file groups', 'Keep a new trailing bullet'],
+        description: 'The file CV gained AI practice, then the published document replaced the whole toolkit and the new group disappeared.',
+        ac: 'Do not lose the new group.',
+        proposedAc: 'Scenario: A group the publish does not know is kept\n  Given the live toolkit has no ai key\n  When the public CV loads\n  Then AI practice is still listed\n  And clicking AI Expertise focuses Team International',
+        gaps: ['Found only after the story was called ready. Stage was never in the parent ticket.'],
+        comments: [
+            { who: 'Samira Haddad · QA', when: '28 Sep 09:50', text: 'Moved To Do → In Progress. Still open until the public page shows the five tools and the current role.' },
+            { who: 'Luis Ortega · Dev', when: '28 Sep 10:05', text: 'The file group is merged back. I have not moved this to review yet.' }
+        ],
+        links: ['Blocks CV-321'],
+        attachments: [],
+        findings: 'The parent story named no environment, so Stage was never checked.',
+        tests: []
+    },
+    {
+        key: 'CV-380', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'To Do',
+        summary: 'DevOps chooses where this increment deploys, and at what pace',
+        priority: 'High', points: 5, assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Elena Vargas',
+        labels: ['devops', 'release'], components: ['GitHub Pages', 'Firebase'],
+        env: 'not chosen — QA, Stage, UAT, or production', sprint: 'Sprint 24', fixVersion: '2026.09', due: '29 Sep',
+        subtasks: ['Name the target', 'Name the cadence', 'Name trunk or a release branch', 'Name the infrastructure'],
+        description: 'We need a decision before UAT. What ships, where, how often, on which branch, and which infrastructure. Preview areas to consider: QA, Stage, UAT. Production is GitHub Pages from main.',
+        ac: 'DevOps will decide.',
+        proposedAc: 'Scenario: The release is named before UAT\n  Given a target, a cadence, a branch model, and an infrastructure set\n  Then CV-380 leaves To Do\n  And the sprint report shows that path',
+        gaps: ['This ticket is the decision. It is still empty on purpose.', 'No owner had picked QA vs Stage vs UAT.', 'Pace was confused with the studio demo speed.'],
+        comments: [
+            { who: 'Elena Vargas · PM', when: '28 Sep 08:00', text: 'Jordan owns this. Nothing in Ready for QA promotes until the target is named.' },
+            { who: 'Amara Diallo · TL', when: '28 Sep 08:30', text: 'Trunk on main is how Pages publishes. Say so if that is the structure.' }
+        ],
+        links: ['CV-384 Photo rules', 'CV-388 Morning report'],
+        attachments: [],
+        findings: 'A release with no target is not a release.',
+        tests: []
+    },
+    {
+        key: 'CV-384', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'To Do',
+        summary: 'Profile photo rules promote QA, then Stage, then UAT',
+        priority: 'High', points: 3, assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Amara Diallo',
+        labels: ['devops', 'firebase'], components: ['Firestore', 'Storage'],
+        env: 'rules written, not deployed', sprint: 'Sprint 24', fixVersion: '2026.09', due: '30 Sep',
+        subtasks: ['cvPhotos owner write', 'profile-photos public read'],
+        description: 'Cloud photo history needs Firestore cvPhotos and Storage profile-photos. The rules are in the repo. They are not on the project. Until they are, uploads stay in the browser.',
+        ac: 'Deploy the rules when ready.',
+        proposedAc: 'Scenario: An owner upload is readable on the public CV\n  Given the rules are deployed to Stage\n  When a JPEG under 2MB is stored\n  Then the CV can read it\n  And a stranger cannot write it',
+        gaps: ['No environment is named beyond "not deployed".', 'No change window.', 'No rollback.'],
+        comments: [
+            { who: 'Jordan White · DevOps', when: '28 Sep 08:40', text: 'I will not deploy this to production from the studio. QA and Stage first.' },
+            { who: 'Samira Haddad · QA', when: '28 Sep 08:55', text: 'I need a Stage URL before I call CV-366 done for the cloud path.' }
+        ],
+        links: ['CV-366 Upload history', 'CV-380 Release decision'],
+        attachments: [],
+        findings: 'Infrastructure is described, and the promotion path is not chosen.',
+        tests: []
+    },
+    {
+        key: 'CV-388', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'Done', cycle: 5,
+        summary: 'Node 22 functions and the morning site report',
+        priority: 'High', points: 5, assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Elena Vargas',
+        labels: ['devops', 'functions'], components: ['Cloud Functions'],
+        env: 'production · carlosm-interactive-cv', sprint: 'Sprint 24', fixVersion: '2026.09', due: '22 Sep',
+        subtasks: ['Runtime Node 22', 'Scheduled report'],
+        description: 'Move Cloud Functions off Node 20 before that runtime shuts down, and send the morning site report.',
+        ac: 'Report arrives. Runtime is 22.',
+        proposedAc: 'Scenario: The morning job uses Node 22\n  Given the scheduled function\n  Then the runtime is Node 22\n  And the owner receives the site report',
+        gaps: ['The first draft did not name the project or the schedule.'],
+        comments: [
+            { who: 'Jordan White · DevOps', when: '22 Sep 07:10', text: 'Moved To Do → In Progress → Ready for QA → Done. Production is on Node 22.' }
+        ],
+        links: ['CV-380 Release decision'],
+        attachments: [],
+        findings: 'The correction was to name the project and the runtime. That part is done.',
+        tests: []
+    },
+    {
+        key: 'CV-392', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'In Progress',
+        summary: 'Hold the sprint so the catalog stays the only pass or fail',
+        priority: 'Medium', points: 2, assignee: 'EV', assigneeName: 'Elena Vargas', reporter: 'Carlos Muñoz',
+        labels: ['pm', 'scope'], components: ['QA lab'],
+        env: 'QA lab · catalog', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['No model marks a run', 'No extra catalog case without a product change'],
+        description: 'The lab catalog is the judge. This sprint must not add a green badge that a person or a model invented.',
+        ac: 'Keep the catalog honest.',
+        proposedAc: 'Scenario: A new public competency updates the existing check\n  Given eight filters on the CV\n  Then FN-16 expects those eight ids\n  And no new case id was invented for it',
+        gaps: ['The first note said "make the tests pass" and did not say who is allowed to mark a run.'],
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '22 Sep 09:00', text: 'If the page changes, the catalog changes with it. A summary is not a result.' },
+            { who: 'Elena Vargas · PM', when: '28 Sep 09:10', text: 'Still In Progress while AI Expertise is in review.' }
+        ],
+        links: ['CV-321 AI Expertise'],
+        attachments: [],
+        findings: 'Scope without this rule would let the studio declare done.',
+        tests: []
+    },
+    {
+        key: 'CV-396', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'To Do',
+        summary: 'Every new story names QA, Stage, or UAT before it is estimated',
+        priority: 'Medium', points: 2, assignee: 'NP', assigneeName: 'Noah Patel', reporter: 'Elena Vargas',
+        labels: ['ba', 'intake'], components: ['Board'],
+        env: 'Sprint planning', sprint: 'Sprint 24', fixVersion: '2026.09', due: '29 Sep',
+        subtasks: ['Environment', 'Steps', 'Resources', 'Tech'],
+        description: 'Intake this sprint was sloppy. The next story does not enter the sprint until it names the preview area, the steps, the resources, and the technical pieces.',
+        ac: 'BA rejects a thin story.',
+        proposedAc: 'Scenario: A story with no environment stays in the intake column\n  Given env is "the site"\n  Then planning does not estimate it',
+        gaps: ['This checklist did not exist when CV-301 through CV-348 were filed. Those gaps are the evidence.'],
+        comments: [
+            { who: 'Elena Vargas · PM', when: '28 Sep 08:15', text: 'Noah owns the checklist. I do not want another "please fix" story.' },
+            { who: 'Noah Patel · BA', when: '28 Sep 08:45', text: 'To Do. I will apply it to CV-380 before Jordan estimates the release.' }
+        ],
+        links: ['CV-380 Release decision'],
+        attachments: [],
+        findings: 'The board is the example. The checklist is how the next sprint starts cleaner.',
+        tests: []
+    },
+    {
+        key: 'CV-399', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'In Review',
+        summary: 'Tech lead reviews the customizer rail before UAT',
+        priority: 'Medium', points: 2, assignee: 'AD', assigneeName: 'Amara Diallo', reporter: 'Elena Vargas',
+        labels: ['tl', 'review'], components: ['Admin'],
+        env: 'UAT not started', sprint: 'Sprint 24', fixVersion: '2026.09', due: '29 Sep',
+        subtasks: ['Rail stays while a card is edited', 'One card per competency'],
+        description: 'Review the CV content rail and the competency cards before anyone calls the layout ready for UAT.',
+        ac: 'TL signs the layout.',
+        proposedAc: 'Scenario: The rail and the open step agree\n  Given About is current\n  Then the rail marks About\n  And the canvas shows the competency cards',
+        gaps: ['UAT has no URL yet because CV-380 has no target.'],
+        comments: [
+            { who: 'Amara Diallo · TL', when: '28 Sep 09:25', text: 'In review. I will not move this to Ready for QA while the release target is blank.' }
+        ],
+        links: ['CV-340 Customizer layout', 'CV-380 Release decision'],
+        attachments: [],
+        findings: 'Review is blocked on the environment DevOps has not named.',
+        tests: []
+    },
+    {
+        key: 'CV-442', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'In Review', added: true, cycle: 1,
+        summary: 'Make the portrait mark a trademark and let the owner edit the letters',
+        priority: 'High', points: 3, assignee: 'RS', assigneeName: 'Rita Solano', reporter: 'Carlos Muñoz',
+        labels: ['trademark', 'ui'], components: ['Public CV', 'CV editor'],
+        env: 'the portrait', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        subtasks: ['Seal on the portrait', 'Same mark in the footer', 'Letters field on Profile'],
+        description: 'This was supposed to be like a trademark. Redesign it according to the best of the market. Add an option to change its content in CV Admin / CV content.',
+        ac: 'Make it look like a trademark and let me edit it.',
+        proposedAc: 'Scenario: The portrait and the footer show the same letters\n  Given the letters are CAM\n  Then both seals read CAM\nScenario: Profile stores up to four letters\n  When the letters field is QA\n  Then the preview seal reads QA',
+        gaps: ['"the portrait" is not QA, Stage, or UAT.', 'No letter limit.', 'Best of the market names no look, no type, and no color.'],
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '28 Sep 11:31', text: 'The cyan circle on the photo was supposed to be a trademark. Redesign it, and let me change the letters in CV content.' },
+            { who: 'Rita Solano · Design', when: '28 Sep 11:50', text: 'First pass was a dark signet. It did not belong on this page. CV-448 is the correction.' },
+            { who: 'Noah Patel · BA', when: '28 Sep 12:05', text: 'Cases XT-1701, XT-1702, and XT-1703 are on this story. The third one is the bug.' }
+        ],
+        links: ['CV-448 Seal ignored the current look'],
+        attachments: [],
+        findings: 'A trademark with no letter limit and no named look will be redesigned twice.',
+        practice: { design: ['The seal uses the current look: paper, accent ink, and the same blur as the cards'], qa: ['XT-1701 portrait letters', 'XT-1702 admin letters', 'XT-1703 frost and translucency'] },
+        tests: [
+            { id: 'XT-1701', title: 'Portrait and footer seals show the same letters', priority: 'High', est: '15m', include: true, gherkin: 'Scenario: Default trademark\n  Given the public CV\n  Then both seals read CAM\n  And the portrait seal is named Trademark, CAM' },
+            { id: 'XT-1702', title: 'Profile letters update the seal preview', priority: 'High', est: '20m', include: true, gherkin: 'Scenario: Edit the trademark\n  Given CV content Profile\n  When Letters is qa\n  Then the preview reads QA\n  And a blank field falls back to CAM' },
+            { id: 'XT-1703', title: 'Seal follows the current look and stays slightly translucent', priority: 'High', est: '15m', include: true, gherkin: 'Scenario: Frosted seal\n  Given Golden Gate\n  Then the fill is the page paper at about 60 percent\n  And the blur matches the cards\n  And the letters use the accent ink' }
+        ]
+    },
+    {
+        key: 'CV-448', rehearse: false, type: 'Bug', epic: 'Interactive CV', column: 'In Review', blocks: 'CV-442', added: true,
+        summary: 'Trademark ignored the current look and was fully solid',
+        priority: 'High', points: 2, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Carlos Muñoz',
+        labels: ['bug', 'trademark'], components: ['Public CV'],
+        env: 'the portrait', sprint: 'Sprint 24', fixVersion: '2026.09', due: '28 Sep',
+        description: 'The colors, design, pattern, and style should match the current environment. Also make it a little translucent.',
+        ac: 'Match the page and let the photo show through.',
+        proposedAc: 'Scenario: The seal is frosted glass\n  Given the current look\n  Then the seal uses that paper, that accent, and that blur\n  And the portrait shows through the fill',
+        gaps: ['No token names.', 'No opacity.', 'Same thin environment as CV-442.'],
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '28 Sep 12:16', text: 'The dark seal does not match this page. Use the current style, and make it a little translucent.' },
+            { who: 'Dana Alves · Dev', when: '28 Sep 12:20', text: 'Moved the seal onto the look tokens. Fill is about 60 percent, letters stay solid. Still In Review with CV-442.' },
+            { who: 'Samira Haddad · QA', when: '28 Sep 12:22', text: 'XT-1703 is the case. I have not signed the portrait yet.' }
+        ],
+        links: ['Blocks CV-442'],
+        attachments: [],
+        findings: 'The first seal was a separate object. The page is frosted glass.',
+        tests: []
+    }
+];
+TICKETS.push(...PROGRAM);
+
+function pack(row) {
+    return Object.assign({
+        rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'Done',
+        priority: 'High', points: 3, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Carlos Muñoz',
+        labels: ['history'], components: ['CV'], env: 'production · GitHub Pages',
+        fixVersion: '2026.09', due: '23 Sep', subtasks: [], description: '', ac: 'Shipped in that sprint.',
+        proposedAc: 'Closed with the bug that corrected the first draft.', gaps: [],
+        comments: [], links: [], attachments: [], findings: 'Closed. The activity is the sprint.', tests: []
+    }, row);
+}
+
+const HISTORY = [
+    pack({
+        key: 'CV-120', sprint: 'Sprint 20', summary: 'Replace the broken icons on the published CV',
+        due: '23 Sep', cycle: 8, labels: ['icons', 'ui'],
+        description: 'There are many broken icons. Identify them and fix them. The published site is the check.',
+        ac: 'Icons show.',
+        gaps: ['No list of which icons.', 'No file format.', 'No design source.'],
+        attachments: ['Figma · toolbar-icons.fig', 'draw.io · icon-map.drawio'],
+        practice: { design: ['Figma · toolbar-icons.fig', 'draw.io · icon-map.drawio'], dev: ['SonarQube on the icon markup', 'Snyk on the icon CDN'], qa: ['Postman · GET each icon URL and expect 200'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '10 Sep 19:05', text: 'The published page has holes where icons should be. Fix whatever you find.' },
+            { who: 'Rita Solano · Design', when: '12 Sep 11:00', text: 'I put the set in Figma and the map in draw.io. Simple Icons that 404 cannot stay.' },
+            { who: 'Samira Haddad · QA', when: '18 Sep 16:20', text: 'Opened CV-121. A URL can look fine in the file and still fail on the live page.' },
+            { who: 'Dana Alves · Dev', when: '23 Sep 19:30', text: 'Moved Backlog → In Progress → Ready for QA → Done after the live page loaded every icon.' }
+        ],
+        links: ['CV-121 Broken icon URLs']
+    }),
+    pack({
+        key: 'CV-121', sprint: 'Sprint 20', type: 'Bug', blocks: 'CV-120', summary: 'Published icon URLs return 404',
+        assignee: 'SH', assigneeName: 'Samira Haddad', reporter: 'Rita Solano', points: 2, due: '22 Sep', cycle: 4,
+        labels: ['bug', 'icons'],
+        description: 'Several toolkit icons request a host that does not have the file. The CV shows a broken image.',
+        practice: { dev: ['Snyk has nothing to say about a dead URL', 'New Relic browser shows the 404s'], qa: ['Postman collection · icon smoke · 200'] },
+        comments: [
+            { who: 'Rita Solano · Design', when: '18 Sep 16:40', text: 'Blocks CV-120. The Figma file has the replacement SVGs.' },
+            { who: 'Dana Alves · Dev', when: '22 Sep 18:10', text: 'Swapped the dead URLs for files we host. Moved to Done with the story.' }
+        ],
+        links: ['Blocks CV-120']
+    }),
+    pack({
+        key: 'CV-124', sprint: 'Sprint 20', summary: 'Four agents run one sprint from ticket to sign-off',
+        assignee: 'LO', assigneeName: 'Luis Ortega', points: 8, due: '23 Sep', cycle: 10,
+        labels: ['studio'], components: ['SDLC studio'],
+        description: 'The studio should show four agents reading real tickets, rewriting them, writing Gherkin in a test tool, letting the user pick the cases, generating the scripts, and checking the Definition of Done.',
+        ac: 'Make the studio feel like a sprint.',
+        gaps: ['No sample ticket.', 'No named test tool.', 'No handoff.'],
+        practice: { design: ['Miro · four-agent-flow', 'Visio · sprint-lanes.vsdx'], dev: ['JUnit-style checks around the ticket model'], qa: ['Postman not used here · the check is the studio itself'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '11 Sep 19:47', text: 'Tickets need to be as detailed as a real Jira issue. The user decides on the rewrite and on which cases run.' },
+            { who: 'Noah Patel · BA', when: '14 Sep 10:15', text: 'The first draft had no acceptance criteria a person could reject.' },
+            { who: 'Elena Vargas · PM', when: '23 Sep 19:50', text: 'Closed. Sprint 20 is the sprint that built the studio. Later sprints only add to it.' }
+        ],
+        links: ['CV-128 Studio had no ticket body']
+    }),
+    pack({
+        key: 'CV-128', sprint: 'Sprint 20', type: 'Bug', blocks: 'CV-124', summary: 'The studio had no expandable ticket or test tool',
+        assignee: 'LO', assigneeName: 'Luis Ortega', reporter: 'Noah Patel', points: 3, due: '23 Sep', cycle: 5,
+        description: 'Opening a card did not show description, resources, or activity. There was no Xray, Zephyr, or TestRail place to write cases.',
+        comments: [
+            { who: 'Noah Patel · BA', when: '16 Sep 09:20', text: 'Blocks CV-124. A title on a card is not a ticket.' },
+            { who: 'Amara Diallo · TL', when: '21 Sep 15:00', text: 'The issue view and the test-tool choice are the correction. I signed the review.' },
+            { who: 'Luis Ortega · Dev', when: '23 Sep 19:40', text: 'Moved In Progress → In Review → Done with CV-124.' }
+        ],
+        links: ['Blocks CV-124']
+    }),
+    pack({
+        key: 'CV-132', sprint: 'Sprint 20', summary: 'Jenkins publishes the CV when main moves',
+        assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Elena Vargas', points: 5, due: '23 Sep', cycle: 6,
+        labels: ['devops'], components: ['Jenkins', 'GitHub Pages'],
+        description: 'DevOps needs a pipeline. Jenkins should build and publish. CircleCI and TravisCI were named and then set aside.',
+        practice: { devops: ['Jenkins · pages job on main', 'CircleCI considered and not adopted', 'TravisCI considered and not adopted'] },
+        comments: [
+            { who: 'Elena Vargas · PM', when: '12 Sep 09:00', text: 'We cannot keep asking if the publish worked. Automate it.' },
+            { who: 'Jordan White · DevOps', when: '19 Sep 11:30', text: 'CircleCI and TravisCI both can build a static site. Jenkins matches the rest of the practice, so Jenkins won.' },
+            { who: 'Samira Haddad · QA', when: '23 Sep 19:20', text: 'I checked the live URL after the Jenkins job. Done.' }
+        ],
+        links: ['CV-120 Icons']
+    }),
+    pack({
+        key: 'CV-140', sprint: 'Sprint 21', summary: 'Every page follows the visitor language, with a searchable flag list',
+        assignee: 'LO', assigneeName: 'Luis Ortega', points: 8, due: '4 Oct', cycle: 9,
+        labels: ['i18n'], components: ['CV', 'Studio', 'QA lab'],
+        description: 'Detect the local language. Keep English, Spanish, Portuguese, German, French, and Italian, and let the list scroll and search once it grows. Each language needs its flag.',
+        gaps: ['Did not say print, tooltips, or the studio had to follow.'],
+        attachments: ['Figma · language-menu.fig'],
+        practice: { design: ['Figma · language-menu.fig'], dev: ['SonarQube on the language menu'], qa: ['Postman · GET index.html and read html lang'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 09:02', text: 'The whole site, not a few labels. Keep the dropdown. Add search and flags.' },
+            { who: 'Noah Patel · BA', when: '25 Sep 10:00', text: 'The ask forgot print and the studio. Those became CV-144 and CV-148.' },
+            { who: 'Luis Ortega · Dev', when: '3 Oct 16:00', text: 'Moved across the sprint and closed with the two bugs.' }
+        ],
+        links: ['CV-144 Print stayed English', 'CV-148 Studio copy stayed English']
+    }),
+    pack({
+        key: 'CV-144', sprint: 'Sprint 21', type: 'Bug', blocks: 'CV-140', summary: 'Print and export stayed in English',
+        assignee: 'LO', assigneeName: 'Luis Ortega', reporter: 'Carlos Muñoz', points: 3, due: '30 Sep', cycle: 4,
+        description: 'The screen was Spanish. The PDF and the other downloads were still English.',
+        practice: { qa: ['Postman not applicable · the check is the print preview in the selected language'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 09:33', text: 'If I am reading Spanish, the file I hand someone must be Spanish.' },
+            { who: 'Samira Haddad · QA', when: '29 Sep 14:10', text: 'Reproduced on PDF and the plain-text download. Blocks CV-140.' },
+            { who: 'Luis Ortega · Dev', when: '30 Sep 17:40', text: 'Print copy now follows the selected language. Done.' }
+        ],
+        links: ['Blocks CV-140']
+    }),
+    pack({
+        key: 'CV-148', sprint: 'Sprint 21', type: 'Bug', blocks: 'CV-140', summary: 'Tooltips, share, and studio popups stayed in English',
+        assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Carlos Muñoz', points: 3, due: '1 Oct', cycle: 5,
+        description: 'The language choice on the CV did not reach tooltips, export, share, or the studio dialogs.',
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 09:23', text: 'Keep the language I already picked when I open the studio.' },
+            { who: 'Dana Alves · Dev', when: '1 Oct 11:15', text: 'The studio reads the same language as the CV. Moved to Done.' }
+        ],
+        links: ['Blocks CV-140']
+    }),
+    pack({
+        key: 'CV-152', sprint: 'Sprint 21', summary: 'A laser scan, a console, and a handoff between agents',
+        assignee: 'DA', assigneeName: 'Dana Alves', points: 5, due: '2 Oct', cycle: 6,
+        labels: ['studio'], components: ['SDLC studio'],
+        description: 'When an agent reads a ticket, a laser crosses the card and a console under it says what the agent is doing. The next agent starts only when the user says so.',
+        practice: { design: ['Miro · agent-handoff'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 10:05', text: 'I want to see the review happen, and I want to be asked before the next agent starts.' },
+            { who: 'Amara Diallo · TL', when: '28 Sep 15:00', text: 'The handoff is the product. Do not auto-advance.' },
+            { who: 'Dana Alves · Dev', when: '2 Oct 16:20', text: 'Scan, console, and the handoff button shipped. Done.' }
+        ],
+        links: ['CV-124 Four agents']
+    }),
+    pack({
+        key: 'CV-156', sprint: 'Sprint 21', summary: 'Full SEO on the CV and analytics on the studio, admin stays out',
+        assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Carlos Muñoz', points: 5, due: '3 Oct', cycle: 7,
+        labels: ['seo', 'devops'], components: ['CV', 'Studio'],
+        practice: { devops: ['Jenkins publishes the sitemap with the site'], dev: ['New Relic and Grafana watch the Pages responses', 'Splunk is the log side, not wired on this static host'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 10:18', text: 'Track every move, including the studio. Keep admin out of search.' },
+            { who: 'Jordan White · DevOps', when: '3 Oct 09:40', text: 'Sitemap, robots, and the studio events are in. Admin is noindex. Done.' }
+        ],
+        links: []
+    }),
+    pack({
+        key: 'CV-160', sprint: 'Sprint 21', summary: 'The tour explains the new work and shows a progress bar',
+        assignee: 'DA', assigneeName: 'Dana Alves', points: 3, due: '4 Oct', cycle: 5,
+        labels: ['tour', 'ui'],
+        attachments: ['Figma · tour-progress.fig'],
+        practice: { design: ['Figma · tour-progress.fig'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 11:04', text: 'Update the tour for everything we just added, in the selected language.' },
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 11:21', text: 'The top of the tour needs a bright bar so I know when I can press Next.' },
+            { who: 'Samira Haddad · QA', when: '2 Oct 10:00', text: 'Filed CV-164 because the first build had the new steps and no bar.' },
+            { who: 'Dana Alves · Dev', when: '4 Oct 12:10', text: 'Bar and steps closed together. Done.' }
+        ],
+        links: ['CV-164 Tour had no progress bar']
+    }),
+    pack({
+        key: 'CV-164', sprint: 'Sprint 21', type: 'Bug', blocks: 'CV-160', summary: 'The tour had no progress bar',
+        assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Samira Haddad', points: 2, due: '3 Oct', cycle: 3,
+        description: 'The new tour steps played, and the visitor could not see how long the step had left or when Next was honest.',
+        comments: [
+            { who: 'Samira Haddad · QA', when: '2 Oct 10:05', text: 'Blocks CV-160. Next was there. The bar was not.' },
+            { who: 'Rita Solano · Design', when: '2 Oct 11:30', text: 'Use the Figma bar: translucent, bright, full width of the card.' },
+            { who: 'Dana Alves · Dev', when: '3 Oct 18:00', text: 'Done with the story.' }
+        ],
+        links: ['Blocks CV-160']
+    }),
+    pack({
+        key: 'CV-170', sprint: 'Sprint 22', summary: 'Harbor look, and the studio follows the CV light or dark theme',
+        assignee: 'RS', assigneeName: 'Rita Solano', reporter: 'Carlos Muñoz', points: 5, due: '8 Oct', cycle: 8,
+        labels: ['design'], components: ['CV', 'Studio'],
+        attachments: ['Figma · harbor.fig', 'Miro · look-and-feel', 'Visio · theme-flow.vsdx'],
+        practice: { design: ['Figma · harbor.fig', 'Miro · look-and-feel workshop', 'Visio · theme-flow.vsdx', 'draw.io · token-map.drawio'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 11:28', text: 'Compare the page with what people expect, then keep it elegant. I do not want a random skin on every load.' },
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 11:39', text: 'Harbor.' },
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 11:56', text: 'If the CV is dark, the studio is dark. One switch.' },
+            { who: 'Amara Diallo · TL', when: '6 Oct 15:20', text: 'Reviewed the Figma file. Harbor stays the default. Done.' }
+        ],
+        links: []
+    }),
+    pack({
+        key: 'CV-174', sprint: 'Sprint 22', summary: 'Career at a glance moves, and the years say 18+',
+        assignee: 'DA', assigneeName: 'Dana Alves', points: 3, due: '7 Oct', cycle: 6,
+        labels: ['ui'],
+        practice: { design: ['Figma · glance-charts.fig'], dev: ['Grafana is the model for the chart motion, not a dependency'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 12:09', text: 'The charts should change on their own, with a transition, and stay useful.' },
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 12:27', text: 'It is 18+ years, not 24+.' },
+            { who: 'Samira Haddad · QA', when: '5 Oct 09:10', text: 'CV-176: the 18+ was in and the line sat off-center.' },
+            { who: 'Dana Alves · Dev', when: '7 Oct 16:00', text: 'Charts, tour, and the aligned 18+ closed. Done.' }
+        ],
+        links: ['CV-176 18+ was misaligned']
+    }),
+    pack({
+        key: 'CV-176', sprint: 'Sprint 22', type: 'Bug', blocks: 'CV-174', summary: 'The 18+ figure was misaligned',
+        assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Carlos Muñoz', points: 1, due: '6 Oct', cycle: 2,
+        description: 'The years were corrected and the number did not sit with the label.',
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 12:28', text: 'Align it.' },
+            { who: 'Rita Solano · Design', when: '5 Oct 11:00', text: 'The Figma frame has the baseline. Match that.' },
+            { who: 'Dana Alves · Dev', when: '6 Oct 17:10', text: 'Done with CV-174.' }
+        ],
+        links: ['Blocks CV-174']
+    }),
+    pack({
+        key: 'CV-180', sprint: 'Sprint 22', summary: 'A full suite, and a lab where a visitor can watch it',
+        assignee: 'SH', assigneeName: 'Samira Haddad', reporter: 'Carlos Muñoz', points: 8, due: '8 Oct', cycle: 10,
+        labels: ['qa'], components: ['QA lab', 'Playwright', 'Cypress', 'Robot'],
+        practice: { dev: ['JUnit is the unit side for any Java helper', 'SonarQube quality gate on the lab script', 'Snyk on the test dependencies', 'New Relic and Splunk stay off this static lab'], qa: ['Postman · GET qa-lab.html', 'Playwright, Cypress, and Robot catalogs'], devops: ['Jenkins runs the suite when the branch moves'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 12:40', text: 'Review Playwright, Cypress, and Robot. Cover the CV and admin. Add security and accessibility. Make the suite complete.' },
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 13:27', text: 'Let a visitor see the cases, run them, and read a dashboard. It should read as my work.' },
+            { who: 'Elena Vargas · PM', when: '8 Oct 17:00', text: 'Closed with CV-184. The pace control was the correction, not a new product.' }
+        ],
+        links: ['CV-184 Lab ran too fast']
+    }),
+    pack({
+        key: 'CV-184', sprint: 'Sprint 22', type: 'Bug', blocks: 'CV-180', summary: 'The lab ran too fast and had no way back',
+        assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Carlos Muñoz', points: 3, due: '7 Oct', cycle: 4,
+        description: 'A full run finished before a person could see a check. Studio, lab, and CV had no return to the page you came from.',
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '24 Sep 13:53', text: 'Add 0.5, 1, 1.5, and 2. Add back buttons. Keep SEO and languages.' },
+            { who: 'Samira Haddad · QA', when: '6 Oct 10:40', text: 'Blocks CV-180. I could not follow a single case at the default pace.' },
+            { who: 'Dana Alves · Dev', when: '7 Oct 15:30', text: 'Pace and the back links shipped. Done.' }
+        ],
+        links: ['Blocks CV-180']
+    }),
+    pack({
+        key: 'CV-190', sprint: 'Sprint 23', summary: 'Replace the profile photo',
+        assignee: 'DA', assigneeName: 'Dana Alves', points: 2, due: '9 Oct', cycle: 3,
+        labels: ['photo'],
+        practice: { design: ['Figma · portrait-crop.fig'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '25 Sep 08:53', text: 'Use the formal portrait I just attached.' },
+            { who: 'Rita Solano · Design', when: '27 Sep 11:00', text: 'Crop is in Figma. Do not stretch it in the circle.' },
+            { who: 'Dana Alves · Dev', when: '9 Oct 12:00', text: 'Live portrait updated. Done.' }
+        ],
+        links: []
+    }),
+    pack({
+        key: 'CV-194', sprint: 'Sprint 23', summary: 'Print every section in the selected language, and let search find the lab and the studio',
+        assignee: 'LO', assigneeName: 'Luis Ortega', points: 5, due: '12 Oct', cycle: 7,
+        description: 'Some print sections stayed English. The lab and the studio need to be findable.',
+        practice: { qa: ['Postman · GET simulador.html and qa-lab.html · title present'], devops: ['Jenkins deploys the updated sitemap'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '25 Sep 09:22', text: 'I reviewed a non-English print and whole sections were still English. Also tell Google the lab and the studio exist.' },
+            { who: 'Samira Haddad · QA', when: '8 Oct 09:30', text: 'CV-198 lists the sections that stayed English.' },
+            { who: 'Luis Ortega · Dev', when: '12 Oct 16:40', text: 'Print dictionaries and the two sitemaps closed. Done.' }
+        ],
+        links: ['CV-198 Print sections stayed English']
+    }),
+    pack({
+        key: 'CV-198', sprint: 'Sprint 23', type: 'Bug', blocks: 'CV-194', summary: 'Print sections stayed in English',
+        assignee: 'LO', assigneeName: 'Luis Ortega', reporter: 'Samira Haddad', points: 3, due: '11 Oct', cycle: 4,
+        description: 'The screen translated. Role bullets and a few print headings did not.',
+        comments: [
+            { who: 'Samira Haddad · QA', when: '8 Oct 09:35', text: 'Blocks CV-194. Spanish print, English bullets.' },
+            { who: 'Luis Ortega · Dev', when: '11 Oct 18:00', text: 'Those keys are in the print dictionaries now. Done.' }
+        ],
+        links: ['Blocks CV-194']
+    }),
+    pack({
+        key: 'CV-202', sprint: 'Sprint 23', summary: 'A print of six to eight pages, with links, that leads with the work',
+        assignee: 'RS', assigneeName: 'Rita Solano', reporter: 'Carlos Muñoz', points: 5, due: '13 Oct', cycle: 8,
+        labels: ['print', 'design'],
+        attachments: ['Figma · print-spread.fig', 'Visio · print-order.vsdx', 'draw.io · link-map.drawio'],
+        practice: { design: ['Figma · print-spread.fig', 'Visio · print-order.vsdx', 'draw.io · link-map.drawio', 'Miro · what a recruiter reads first'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '25 Sep 09:35', text: 'Compare the print with what a serious CV looks like now.' },
+            { who: 'Carlos Muñoz · PO', when: '25 Sep 09:47', text: 'Same facts, different order, so the relevant work is first. Contact and companies should be links.' },
+            { who: 'Carlos Muñoz · PO', when: '25 Sep 09:59', text: 'The two new sites need a short pitch, not an internal name.' },
+            { who: 'Elena Vargas · PM', when: '10 Oct 09:00', text: 'The sample page must not stay on the live site. It was a sample.' },
+            { who: 'Rita Solano · Design', when: '13 Oct 15:10', text: 'Print order signed in Visio. Done.' }
+        ],
+        links: []
+    }),
+    pack({
+        key: 'CV-206', sprint: 'Sprint 23', summary: 'Toolbar captions, mobile share, and one public domain',
+        assignee: 'DA', assigneeName: 'Dana Alves', points: 5, due: '14 Oct', cycle: 7,
+        practice: { design: ['Figma · mobile-toolbar.fig'], devops: ['The domain cutover is CV-210'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '25 Sep 10:42', text: 'Captions under the toolbar icons. Mobile share is off the screen. Mobile icons should match desktop.' },
+            { who: 'Carlos Muñoz · PO', when: '25 Sep 10:47', text: 'We have carlosandmunoz.com. The CV should use it.' },
+            { who: 'Dana Alves · Dev', when: '14 Oct 16:00', text: 'Captions and the mobile bar are Done. The domain moved with Jordan.' }
+        ],
+        links: ['CV-210 Domain cutover']
+    }),
+    pack({
+        key: 'CV-210', sprint: 'Sprint 23', summary: 'Serve the three sites on carlosandmunoz.com',
+        assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Carlos Muñoz', points: 5, due: '14 Oct', cycle: 8,
+        labels: ['devops'], components: ['GitHub Pages', 'Google Cloud'],
+        practice: { devops: ['Jenkins deploys main to Pages', 'CircleCI was the alternate and was not used', 'TravisCI was retired in this sprint'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '25 Sep 11:07', text: 'The domain is in Google Cloud because of Squarespace. Do the real change there.' },
+            { who: 'Jordan White · DevOps', when: '12 Oct 10:00', text: 'Pages stays the host. The domain points at it. TravisCI is not in the path.' },
+            { who: 'Samira Haddad · QA', when: '14 Oct 11:20', text: 'CV, lab, and studio answer on the domain. Done.' }
+        ],
+        links: ['CV-206 Toolbar and domain']
+    }),
+    pack({
+        key: 'CV-214', sprint: 'Sprint 23', summary: 'The lab runs theme, language, share, print, and the phone cases',
+        assignee: 'SH', assigneeName: 'Samira Haddad', points: 5, due: '15 Oct', cycle: 6,
+        labels: ['qa'],
+        practice: { qa: ['Postman · share URLs respond', 'Playwright covers theme, three languages, print links, and downloads'], dev: ['SonarQube on the new cases', 'JUnit not used · these are browser cases'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '25 Sep 14:06', text: 'The recording missed dark and light, three languages back to the original, share links, print in a random language, print links, and downloads.' },
+            { who: 'Elena Vargas · PM', when: '15 Oct 16:30', text: 'Those cases are in the catalog. Sprint 23 closes.' }
+        ],
+        links: ['CV-180 The lab']
+    }),
+    pack({
+        key: 'CV-410', sprint: 'Backlog', column: 'Backlog', summary: 'A Looker Studio board for the morning report',
+        assignee: 'EV', assigneeName: 'Elena Vargas', reporter: 'Carlos Muñoz', points: 3, due: '',
+        description: 'The morning email exists. A Looker board where the same counts can be filtered does not.',
+        gaps: ['No dataset named.', 'No audience.', 'No environment.'],
+        practice: { design: ['Miro · report-audience'] },
+        comments: [
+            { who: 'Elena Vargas · PM', when: '28 Sep 08:20', text: 'Backlog. Not this sprint. The email is enough until someone asks for a board.' }
+        ]
+    }),
+    pack({
+        key: 'CV-414', sprint: 'Backlog', column: 'Backlog', summary: 'Turn on App Check for the public forms',
+        assignee: 'JW', assigneeName: 'Jordan White', points: 3, due: '',
+        labels: ['devops'],
+        description: 'Messages and ratings accept traffic with the Firebase key in the page. App Check is the next gate.',
+        gaps: ['No site key.', 'No rollout order.'],
+        practice: { devops: ['Jenkins would ship the key only after Stage'] },
+        comments: [
+            { who: 'Amara Diallo · TL', when: '28 Sep 08:25', text: 'Backlog until CV-384 has a Stage. Do not invent a key in the client.' }
+        ]
+    }),
+    pack({
+        key: 'CV-418', sprint: 'Backlog', column: 'Backlog', summary: 'Point the Analytics stream at carlosandmunoz.com',
+        assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Carlos Muñoz', points: 2, due: '',
+        description: 'The stream is associated with the domain and the display URL still shows the GitHub Pages host.',
+        practice: { devops: ['This is a console edit, not a Jenkins job'] },
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '27 Sep 15:00', text: 'I have to change that URL myself. Leave it in the backlog so we do not forget.' }
+        ]
+    }),
+    pack({
+        key: 'CV-422', sprint: 'Backlog', column: 'Backlog', summary: 'A billing budget on the Firebase project',
+        assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Elena Vargas', points: 2, due: '',
+        practice: { devops: ['Google Cloud budget · not CircleCI, not TravisCI'] },
+        comments: [
+            { who: 'Elena Vargas · PM', when: '27 Sep 15:10', text: 'Backlog. The API we can call cannot create the budget. Jordan does it in the console.' }
+        ]
+    }),
+    pack({
+        key: 'CV-426', sprint: 'Backlog', column: 'Backlog', summary: 'Store authenticator backup codes with the owner',
+        assignee: 'CM', assigneeName: 'Carlos Muñoz', reporter: 'Elena Vargas', points: 1, due: '',
+        description: 'MFA is on. The backup codes live only in the authenticator app.',
+        comments: [
+            { who: 'Elena Vargas · PM', when: '26 Sep 09:00', text: 'Backlog, and it is Carlos’s to do. We do not put the codes in the repo.' }
+        ]
+    }),
+    pack({
+        key: 'CV-430', sprint: 'Backlog', column: 'Backlog', summary: 'Sign the next UAT path in Visio before the sprint starts',
+        assignee: 'RS', assigneeName: 'Rita Solano', reporter: 'Noah Patel', points: 2, due: '',
+        labels: ['design'],
+        attachments: ['Visio · next-uat.vsdx'],
+        practice: { design: ['Visio · next-uat.vsdx', 'draw.io · environment-lanes.drawio', 'Miro · who signs UAT'] },
+        comments: [
+            { who: 'Noah Patel · BA', when: '28 Sep 08:50', text: 'Backlog. Sprint 24 already started without this diagram. The next sprint does not.' }
+        ]
+    }),
+    pack({
+        key: 'CV-434', sprint: 'Backlog', column: 'Backlog', summary: 'Fail the Jenkins job when Snyk reports a high finding',
+        assignee: 'JW', assigneeName: 'Jordan White', reporter: 'Amara Diallo', points: 3, due: '',
+        practice: { dev: ['Snyk on the test dependencies'], devops: ['Jenkins gate · CircleCI not in the path'] },
+        comments: [
+            { who: 'Amara Diallo · TL', when: '28 Sep 09:00', text: 'Backlog. Snyk is named in the practice and it does not block a publish yet.' }
+        ]
+    }),
+    pack({
+        key: 'CV-438', sprint: 'Backlog', column: 'Backlog', summary: 'Publish the Postman collection for the public pages',
+        assignee: 'SH', assigneeName: 'Samira Haddad', points: 2, due: '',
+        labels: ['qa'],
+        practice: { qa: ['Postman · CV, lab, studio, sitemap, robots'] },
+        comments: [
+            { who: 'Samira Haddad · QA', when: '28 Sep 09:05', text: 'Backlog. The checks exist inside the lab. A collection someone can import does not.' }
+        ]
+    })
+];
+TICKETS.push(...HISTORY);
+
+const PRACTICE = {
+    'CV-301': { design: ['Figma · portrait-states.fig', 'draw.io · photo-kind.drawio'], dev: ['SonarQube on cv-editor.js', 'Snyk on the page dependencies'], qa: ['Postman · GET /assets/avatars/placeholder.svg'] },
+    'CV-334': { design: ['Figma · switch-and-marks.fig'], dev: ['JUnit-style checks are not this page · the switch is covered in the lab'] },
+    'CV-340': { design: ['Figma · cv-studio-rail.fig', 'Miro · customizer-flow', 'Visio · editor-map.vsdx', 'draw.io · card-anatomy.drawio'] },
+    'CV-348': { dev: ['SonarQube would flag the hidden select', 'New Relic browser would show the dead clicks'], qa: ['Postman does not open a menu · this bug is CV-352'] },
+    'CV-380': { devops: ['Jenkins publishes main to Pages', 'CircleCI is the unused alternate', 'TravisCI is retired'], dev: ['Grafana and Splunk are the places a failed publish would show'] },
+    'CV-384': { devops: ['Jenkins does not deploy Firebase rules until Stage is named'], dev: ['Snyk does not review security rules'] }
+};
+TICKETS.forEach((ticket) => { if (PRACTICE[ticket.key]) ticket.practice = PRACTICE[ticket.key]; });
+function attachDesign(key, bucket, name) {
+    const ticket = TICKETS.find(item => item.key === key);
+    if (!ticket) return;
+    ticket.practice = ticket.practice || {};
+    const list = ticket.practice[bucket] || [];
+    if (!list.includes(name)) ticket.practice[bucket] = list.concat(name);
+}
+attachDesign('CV-124', 'design', 'Miro · four-agent-flow');
+attachDesign('CV-132', 'devops', 'draw.io · pages-pipeline.drawio');
+attachDesign('CV-132', 'devops', 'Visio · jenkins-pages.vsdx');
+attachDesign('CV-156', 'devops', 'Visio · morning-report.vsdx');
+attachDesign('CV-210', 'devops', 'draw.io · domain-cutover.drawio');
+attachDesign('CV-314', 'design', 'draw.io · competency-links.drawio');
+attachDesign('CV-321', 'design', 'Figma · ai-expertise.fig');
+attachDesign('CV-380', 'devops', 'Visio · release-path.vsdx');
+attachDesign('CV-384', 'design', 'Visio · firebase-photos.vsdx');
+attachDesign('CV-384', 'design', 'draw.io · photo-write-path.drawio');
+
 const EXTRA = {
     'PAY-241': { fixVersion: '2026.09', due: '30 Sep', subtasks: ['ACS redirect keeps the order UUID', '8 minute timeout voids the hold', 'Apple Pay stays exempt'] },
     'PAY-246': { fixVersion: '2026.09', due: '28 Sep', subtasks: ['Idempotency-Key required', 'Retry returns the original capture'] },
@@ -856,6 +1736,21 @@ const WALKS = {
         { what: 'Build a signature timestamp 6 minutes old', where: 'Webhook fixture', when: 'Before the POST', why: 'The tolerance has to end somewhere' },
         { what: 'POST /v2/webhooks/stripe', where: 'Payments API', when: 'The late event arrives', why: 'Replay of an old body is the attack the check exists for' },
         { what: 'Assert HTTP 400 SIGNATURE_STALE and no event row', where: 'Response · event table', when: 'After the call', why: 'Stale events must not move money' }
+    ],
+    'XT-1701': [
+        { what: 'Open the public CV and read both seals', where: 'Portrait and footer', when: 'Page load', why: 'The trademark has to be the same mark in both places' },
+        { what: 'Read the letters and the portrait name', where: 'Seal text · accessible name', when: 'On load', why: 'CAM is the default until the owner publishes other letters' },
+        { what: 'Assert both seals read CAM and the portrait is named Trademark, CAM', where: 'Portrait seal · footer seal', when: 'After load', why: 'A second mark with different letters is not a trademark' }
+    ],
+    'XT-1702': [
+        { what: 'Open CV content on Profile', where: 'Admin · CV content · Profile', when: 'Signed in', why: 'The letters are edited with the name and the title' },
+        { what: 'Replace the letters with qa', where: 'Trademark · Letters', when: 'While typing', why: 'The preview has to follow the field, in uppercase' },
+        { what: 'Assert the preview reads QA, then clear the field and assert CAM', where: 'Seal preview', when: 'After each edit', why: 'An empty field must not publish a blank seal' }
+    ],
+    'XT-1703': [
+        { what: 'Open the public CV on the current look', where: 'Portrait seal', when: 'Golden Gate, or whichever look is kept', why: 'The mark has to move with the theme' },
+        { what: 'Read the fill, the blur, and the letter color', where: 'Computed style of the seal', when: 'On screen', why: 'A separate palette is the bug this case closes' },
+        { what: 'Assert the paper shows through at about 60 percent, the blur matches the cards, and the letters use the accent ink', where: 'Portrait seal', when: 'After paint', why: 'The photo should show through, and the letters should stay readable' }
     ]
 };
 
@@ -878,7 +1773,9 @@ const state = {
     ink: null,
     awaitingSave: false,
     focusCase: null,
-    verify: { ac: false, auto: false, sev: false, notes: false }
+    verify: { ac: false, auto: false, sev: false, notes: false },
+    release: { target: '', cadence: '', structure: '', infra: '' },
+    sprint: 'Sprint 24'
 };
 
 const viewEl = document.getElementById('view');
@@ -922,7 +1819,7 @@ function renderAgents() {
     }).join('');
 }
 function agentDone(id) {
-    if (id === 'a1') return state.tickets.every(t => t.decision);
+    if (id === 'a1') return rehearsalTickets().every(t => t.decision);
     if (id === 'a2') return state.tickets.some(t => t.tests.some(x => x.reviewed));
     if (id === 'a3') return state.results.length > 0;
     if (id === 'a4') return Object.values(state.verify).every(Boolean);
@@ -938,6 +1835,7 @@ function setView(name) {
     if (name === 'auto') renderAuto();
     if (name === 'verify') renderVerify();
     if (name === 'report') renderReport();
+    if (name === 'flow') renderFlow();
     if (window.SiteI18n) SiteI18n.refreshTranslation();
     if (previous !== name) track('sim_view', 'Simulator', name, { previous_view: previous });
 }
@@ -952,8 +1850,8 @@ const BOARDS = {
         accent: '#0052cc',
         noun: 'issue',
         blurb: 'A Scrum board. Each card is an issue with a key, a type, story points, and an assignee.',
-        columns: { 'To Do': 'To Do', 'In Progress': 'In Progress', 'In Review': 'In Review', 'Ready for QA': 'Ready for QA', 'Done': 'Done' },
-        tones: { 'To Do': '#6b778c', 'In Progress': '#0052cc', 'In Review': '#ffab00', 'Ready for QA': '#6554c0', 'Done': '#36b37e' },
+        columns: { 'Backlog': 'Backlog', 'To Do': 'To Do', 'In Progress': 'In Progress', 'In Review': 'In Review', 'Ready for QA': 'Ready for QA', 'Done': 'Done' },
+        tones: { 'Backlog': '#97a0af', 'To Do': '#6b778c', 'In Progress': '#0052cc', 'In Review': '#ffab00', 'Ready for QA': '#6554c0', 'Done': '#36b37e' },
         fields: { status: 'Status', assignee: 'Assignee', points: 'Story points', sprint: 'Sprint' }
     },
     azure: {
@@ -963,8 +1861,8 @@ const BOARDS = {
         accent: '#0078d4',
         noun: 'work item',
         blurb: 'A sprint board of work items. Each card shows the ID, the state, who it is assigned to, and the effort.',
-        columns: { 'To Do': 'New', 'In Progress': 'Active', 'In Review': 'Resolved', 'Ready for QA': 'Ready for test', 'Done': 'Closed' },
-        tones: { 'To Do': '#0078d4', 'In Progress': '#0078d4', 'In Review': '#8661c5', 'Ready for QA': '#f2c811', 'Done': '#107c10' },
+        columns: { 'Backlog': 'Backlog', 'To Do': 'New', 'In Progress': 'Active', 'In Review': 'Resolved', 'Ready for QA': 'Ready for test', 'Done': 'Closed' },
+        tones: { 'Backlog': '#605e5c', 'To Do': '#0078d4', 'In Progress': '#0078d4', 'In Review': '#8661c5', 'Ready for QA': '#f2c811', 'Done': '#107c10' },
         fields: { status: 'State', assignee: 'Assigned to', points: 'Effort', sprint: 'Iteration' }
     },
     monday: {
@@ -974,8 +1872,8 @@ const BOARDS = {
         accent: '#ff3d57',
         noun: 'item',
         blurb: 'A table of items in colored groups. Status, owner, and priority are columns on the row.',
-        columns: { 'To Do': 'Not started', 'In Progress': 'Working on it', 'In Review': 'Waiting for review', 'Ready for QA': 'Ready for QA', 'Done': 'Done' },
-        tones: { 'To Do': '#c4c4c4', 'In Progress': '#fdab3d', 'In Review': '#a25ddc', 'Ready for QA': '#579bfc', 'Done': '#00c875' },
+        columns: { 'Backlog': 'Backlog', 'To Do': 'Not started', 'In Progress': 'Working on it', 'In Review': 'Waiting for review', 'Ready for QA': 'Ready for QA', 'Done': 'Done' },
+        tones: { 'Backlog': '#c4c4c4', 'To Do': '#c4c4c4', 'In Progress': '#fdab3d', 'In Review': '#a25ddc', 'Ready for QA': '#579bfc', 'Done': '#00c875' },
         fields: { status: 'Status', assignee: 'Owner', points: 'Numbers', sprint: 'Board' }
     },
     trello: {
@@ -985,8 +1883,8 @@ const BOARDS = {
         accent: '#0079bf',
         noun: 'card',
         blurb: 'Lists of cards. A card has a title, color labels, and members. The list is the status.',
-        columns: { 'To Do': 'To Do', 'In Progress': 'Doing', 'In Review': 'Review', 'Ready for QA': 'QA', 'Done': 'Done' },
-        tones: { 'To Do': '#0079bf', 'In Progress': '#0079bf', 'In Review': '#0079bf', 'Ready for QA': '#0079bf', 'Done': '#0079bf' },
+        columns: { 'Backlog': 'Backlog', 'To Do': 'To Do', 'In Progress': 'Doing', 'In Review': 'Review', 'Ready for QA': 'QA', 'Done': 'Done' },
+        tones: { 'Backlog': '#0079bf', 'To Do': '#0079bf', 'In Progress': '#0079bf', 'In Review': '#0079bf', 'Ready for QA': '#0079bf', 'Done': '#0079bf' },
         fields: { status: 'List', assignee: 'Members', points: 'Checklist', sprint: 'Board' }
     },
     linear: {
@@ -996,8 +1894,8 @@ const BOARDS = {
         accent: '#5e6ad2',
         noun: 'issue',
         blurb: 'Issues grouped by status. Each row is an identifier, a priority, a title, and an assignee.',
-        columns: { 'To Do': 'Todo', 'In Progress': 'In Progress', 'In Review': 'In Review', 'Ready for QA': 'In QA', 'Done': 'Done' },
-        tones: { 'To Do': '#8a8f98', 'In Progress': '#f2c94c', 'In Review': '#5e6ad2', 'Ready for QA': '#f2994a', 'Done': '#4cb782' },
+        columns: { 'Backlog': 'Backlog', 'To Do': 'Todo', 'In Progress': 'In Progress', 'In Review': 'In Review', 'Ready for QA': 'In QA', 'Done': 'Done' },
+        tones: { 'Backlog': '#8a8f98', 'To Do': '#8a8f98', 'In Progress': '#f2c94c', 'In Review': '#5e6ad2', 'Ready for QA': '#f2994a', 'Done': '#4cb782' },
         fields: { status: 'Status', assignee: 'Assignee', points: 'Estimate', sprint: 'Cycle' }
     },
     asana: {
@@ -1007,9 +1905,20 @@ const BOARDS = {
         accent: '#f06a6a',
         noun: 'task',
         blurb: 'Tasks in sections. A task has a name and an assignee, and the section is where it stands.',
-        columns: { 'To Do': 'To do', 'In Progress': 'In progress', 'In Review': 'Review', 'Ready for QA': 'QA', 'Done': 'Complete' },
-        tones: { 'To Do': '#6d6e6f', 'In Progress': '#f06a6a', 'In Review': '#f06a6a', 'Ready for QA': '#f06a6a', 'Done': '#25a244' },
+        columns: { 'Backlog': 'Backlog', 'To Do': 'To do', 'In Progress': 'In progress', 'In Review': 'Review', 'Ready for QA': 'QA', 'Done': 'Complete' },
+        tones: { 'Backlog': '#6d6e6f', 'To Do': '#6d6e6f', 'In Progress': '#f06a6a', 'In Review': '#f06a6a', 'Ready for QA': '#f06a6a', 'Done': '#25a244' },
         fields: { status: 'Section', assignee: 'Assignee', points: 'Points', sprint: 'Project' }
+    },
+    project: {
+        name: 'MS Project',
+        nav: 'MS Project',
+        crumb: 'Interactive CV · Gantt',
+        accent: '#217346',
+        noun: 'task',
+        blurb: 'A task list with sprint, percent complete, resource, and the story a bug blocks.',
+        columns: { 'Backlog': 'Backlog', 'To Do': 'Not started', 'In Progress': 'In progress', 'In Review': 'In review', 'Ready for QA': 'Ready for test', 'Done': 'Complete' },
+        tones: { 'Backlog': '#6d6e6f', 'To Do': '#6d6e6f', 'In Progress': '#217346', 'In Review': '#217346', 'Ready for QA': '#c65911', 'Done': '#107c10' },
+        fields: { status: 'Status', assignee: 'Resource', points: 'Duration', sprint: 'Sprint' }
     }
 };
 
@@ -1031,12 +1940,13 @@ function applyBoardChrome() {
 
 function chooseBoard(id) {
     if (!BOARDS[id]) return;
+    const picking = state.pickingBoard;
     state.board = id;
     state.pickingBoard = false;
-    document.querySelectorAll('[data-board]').forEach(btn => { btn.disabled = true; });
+    if (picking) document.querySelectorAll('[data-board]').forEach(btn => { btn.disabled = true; });
     applyBoardChrome();
-    resume(id);
-    if (state.view === 'board' && !state.running) renderBoard();
+    if (picking) resume(id);
+    if (state.view === 'board') renderBoard();
 }
 
 function boardPickerHtml() {
@@ -1049,7 +1959,7 @@ function boardPickerHtml() {
         </article>`).join('');
     return `
         <h2 style="margin:0">Which board should this sprint use?</h2>
-        <p style="color:var(--muted);max-width:74ch">Agent 1 reads the same stories on the board you pick. Linear and Asana sit with Jira, Azure DevOps, Monday, and Trello.</p>
+        <p style="color:var(--muted);max-width:74ch">Agent 1 reads the same stories on the board you pick. Jira, Azure DevOps, Monday, Trello, Linear, Asana, and MS Project show the same sprint, including the backlog and the closed sprints.</p>
         <div class="platform-pick board-pick">${cards}</div>`;
 }
 
@@ -1122,14 +2032,63 @@ function mondayRow(t, stage) {
         <span>${t.points}</span>`, 'monday-row');
 }
 
+function boardStages() {
+    return state.sprint === 'Backlog' ? ['Backlog'] : ['To Do', 'In Progress', 'In Review', 'Ready for QA', 'Done'];
+}
+
+function ticketsInView() {
+    return state.tickets.filter(ticket => (ticket.sprint || 'Sprint 24') === state.sprint);
+}
+
+function boardSwitch() {
+    const chips = Object.entries(BOARDS).map(([id, board]) => `<button type="button" class="sprint-chip${state.board === id ? ' on' : ''}" data-board-view="${id}">${board.nav}</button>`).join('');
+    return `<p class="switch-label">Board</p><div class="sprint-switch">${chips}</div>`;
+}
+
+function sprintSwitch() {
+    return `<p class="switch-label">Sprint</p><div class="sprint-switch">${['Backlog', 'Sprint 20', 'Sprint 21', 'Sprint 22', 'Sprint 23', 'Sprint 24'].map(name => `<button type="button" class="sprint-chip${state.sprint === name ? ' on' : ''}" data-sprint="${name}">${name}</button>`).join('')}</div>`;
+}
+
+function projectCard(ticket) {
+    const pct = { Backlog: 0, 'To Do': 10, 'In Progress': 45, 'In Review': 70, 'Ready for QA': 85, Done: 100 }[ticket.column] || 0;
+    return ticketShell(ticket, `
+        <span class="sum">${ticket.summary}</span>
+        <span>${ticket.sprint}</span>
+        <span>${pct}%</span>
+        <span class="avatar" title="${ticket.assigneeName}">${ticket.assignee}</span>
+        <span>${ticket.blocks || '—'}</span>`, 'project-line');
+}
+
 function columnMarkup(cardFor) {
     const board = currentBoard();
-    return STAGES.map(stage => {
-        const items = state.tickets.filter(t => t.column === stage);
+    return boardStages().map(stage => {
+        const items = ticketsInView().filter(t => t.column === stage);
         const cards = items.map(t => cardFor(t, stage)).join('');
         const tone = board.tones[stage];
         return `<div class="col" style="--col-accent:${tone}"><h3><span>${board.columns[stage]}</span><span class="col-count">${items.length}</span></h3><div class="col-body">${cards || '<div class="col-empty">Empty</div>'}</div></div>`;
     }).join('');
+}
+
+function rehearsalTickets() {
+    return state.tickets.filter(t => t.rehearse !== false);
+}
+
+function deliveryStrip() {
+    const people = PEOPLE.map(p => `<span class="who" title="${p.name} · ${p.duty}"><b>${p.initials}</b> ${p.role}</span>`).join('');
+    const counts = boardStages().map(stage => `<span>${stage} ${ticketsInView().filter(t => t.column === stage).length}</span>`).join('');
+    const bugs = state.tickets.filter(t => t.type === 'Bug' && t.column !== 'Done').length;
+    return `<div class="delivery-strip"><div class="who-row">${people}</div><div class="health-row">${counts}<span>${bugs} open bugs</span><button type="button" class="btn btn-ghost" id="open-flow">Sprint analytics</button></div></div>`;
+}
+
+function bindDeliveryStrip() {
+    const open = document.getElementById('open-flow');
+    if (open) open.onclick = () => setView('flow');
+    document.querySelectorAll('[data-sprint]').forEach(button => {
+        button.onclick = () => { state.sprint = button.dataset.sprint; renderBoard(); };
+    });
+    document.querySelectorAll('[data-board-view]').forEach(button => {
+        button.onclick = () => chooseBoard(button.dataset.boardView);
+    });
 }
 
 function renderBoard() {
@@ -1140,18 +2099,27 @@ function renderBoard() {
         return;
     }
     const board = currentBoard();
-    const faces = { jira: jiraCard, azure: azureCard, trello: trelloCard, linear: linearCard, asana: asanaCard };
+    const faces = { jira: jiraCard, azure: azureCard, trello: trelloCard, linear: linearCard, asana: asanaCard, project: projectCard };
     viewEl.className = 'board-host board-' + state.board;
+    const toolbar = `<div class="board-toolbar"><b>${board.name}</b><span>${state.sprint} · same tickets on every board</span></div>${boardSwitch()}${sprintSwitch()}${deliveryStrip()}`;
+    if (state.board === 'project') {
+        const rows = ticketsInView().map(projectCard).join('') || '<div class="col-empty">No tasks in this sprint</div>';
+        viewEl.innerHTML = `${toolbar}<div class="project-head"><span>Task</span><span>Sprint</span><span>%</span><span>Resource</span><span>Blocks</span></div>${rows}`;
+        bindDeliveryStrip();
+        return;
+    }
     if (state.board === 'monday') {
-        const groups = STAGES.map(stage => {
-            const items = state.tickets.filter(t => t.column === stage);
+        const groups = boardStages().map(stage => {
+            const items = ticketsInView().filter(t => t.column === stage);
             const rows = items.map(t => mondayRow(t, stage)).join('') || '<div class="col-empty">Empty group</div>';
             return `<section class="monday-group" style="--g:${board.tones[stage]}"><h3>${board.columns[stage]} <span class="col-count">${items.length}</span></h3>${rows}</section>`;
         }).join('');
-        viewEl.innerHTML = `<div class="board-toolbar"><b>PayStream sprint</b><span>Main table</span></div><div class="board-cols"><div class="monday-cols"><span>Item</span><span>Owner</span><span>Status</span><span>Priority</span><span>SP</span></div>${groups}</div>`;
+        viewEl.innerHTML = `${toolbar}<div class="board-cols"><div class="monday-cols"><span>Item</span><span>Owner</span><span>Status</span><span>Priority</span><span>SP</span></div>${groups}</div>`;
+        bindDeliveryStrip();
         return;
     }
-    viewEl.innerHTML = `<div class="board-toolbar"><b>${board.name}</b><span>${board.crumb}</span></div><div class="board-cols">${columnMarkup(faces[state.board] || jiraCard)}</div>`;
+    viewEl.innerHTML = `${toolbar}<div class="board-cols">${columnMarkup(faces[state.board] || jiraCard)}</div>`;
+    bindDeliveryStrip();
 }
 
 function ensureLaser(el) {
@@ -1245,6 +2213,8 @@ function openTicket(key, opts = {}) {
                 </div>
                 <div id="tab-desc">
                     <p style="white-space:pre-wrap;line-height:1.55">${t.description}</p>
+                    ${(t.gaps || []).length ? `<div class="intake-gaps"><b>Filed with gaps</b><ul>${t.gaps.map(g => `<li>${escapeHtml(g)}</li>`).join('')}</ul></div>` : ''}
+                    ${t.blocks ? `<p><strong>Blocks</strong> <button type="button" class="btn btn-ghost" onclick="openTicket('${t.blocks}')">${t.blocks}</button></p>` : ''}
                 </div>
                 <div id="tab-ac" hidden>
                     <div class="ac" id="acBox">${escapeHtml(ac)}</div>
@@ -1260,9 +2230,13 @@ function openTicket(key, opts = {}) {
                 </div>
                 <div id="tab-res" hidden>
                     <p><strong>Attachments</strong></p>
-                    ${t.attachments.map(a => `<div class="card" style="margin-bottom:8px">📎 ${a} · click-through demo resource</div>`).join('')}
+                    ${t.attachments.map(a => `<div class="card" style="margin-bottom:8px">📎 ${linkText(a)}</div>`).join('')}
                     <p><strong>Linked work</strong></p>
                     ${t.links.map(a => `<div class="linked">${a}</div>`).join('')}
+                    ${practiceBlock('Design · Visio, draw.io, Miro, Figma', t.practice && t.practice.design)}
+                    ${practiceBlock('Development · JUnit, SonarQube, New Relic, Snyk, Splunk, Grafana', t.practice && t.practice.dev)}
+                    ${practiceBlock('DevOps · Jenkins, CircleCI, TravisCI', t.practice && t.practice.devops)}
+                    ${practiceBlock('QA · Postman', t.practice && t.practice.qa)}
                 </div>
                 <div id="tab-act" hidden>
                     ${t.comments.map(c => `<div class="card" style="margin-bottom:8px"><b>${c.who}</b> · ${c.when}<div>${c.text}</div></div>`).join('')}
@@ -1280,7 +2254,7 @@ function openTicket(key, opts = {}) {
                 <div class="field"><span>Environment</span><b>${t.env}</b></div>
                 <div class="field"><span>Fix version</span><b>${t.fixVersion || '—'}</b></div>
                 <div class="field"><span>Due</span><b>${t.due || '—'}</b></div>
-                <div class="field"><span>Linked tests</span><b>${t.tests.length} test cases</b></div>
+                <div class="field"><span>Linked tests</span><b>${t.tests.length} test cases</b>${(t.tests || []).map(tc => `<div class="linked">${tc.id} · ${escapeHtml(tc.title)}</div>`).join('')}</div>
                 <div class="field"><span>Subtasks</span><b>${(t.subtasks || []).join(' · ') || '—'}</b></div>
             </aside>
             </div>
@@ -1296,6 +2270,37 @@ function openTicket(key, opts = {}) {
     if (opts.propose) {
         modal.querySelector('[data-tab="ac"]').click();
     }
+}
+
+function designHref(text) {
+    const rules = [
+        [/firebase|photo-write/, 'firebase'],
+        [/pages-pipeline|jenkins-pages|morning-report|domain-cutover/, 'pipeline'],
+        [/next-uat|environment-lanes|release-path/, 'release'],
+        [/competency-links|ai-expertise/, 'competency'],
+        [/cv-studio-rail|customizer|editor-map|card-anatomy|switch-and-marks/, 'rail'],
+        [/portrait|photo-kind/, 'photo'],
+        [/print|link-map|recruiter|report-audience/, 'print'],
+        [/harbor|look-and-feel|theme-flow|token-map|glance|mobile-toolbar|tour-progress/, 'harbor'],
+        [/language-menu/, 'language'],
+        [/four-agent|sprint-lanes|agent-handoff/, 'agents'],
+        [/toolbar-icons|icon-map/, 'icons']
+    ];
+    const hit = rules.find(([pattern]) => pattern.test(text));
+    return hit ? `designs/view.html?d=${hit[1]}` : '';
+}
+
+function linkText(item) {
+    const href = designHref(item);
+    const draw = String(item).match(/([\w.-]+\.drawio)/);
+    const file = draw ? ` · <a href="designs/${draw[1]}" target="_blank" rel="noopener">open draw.io</a>` : '';
+    if (!href) return `${escapeHtml(item)}${file}`;
+    return `<a href="${href}" target="_blank" rel="noopener">${escapeHtml(item)}</a>${file}`;
+}
+
+function practiceBlock(title, items) {
+    if (!items || !items.length) return '';
+    return `<p><strong>${title}</strong></p>${items.map(item => `<div class="card" style="margin-bottom:8px">${linkText(item)}</div>`).join('')}`;
 }
 
 function closeModal() {
@@ -1572,6 +2577,27 @@ function signOff() {
     setView('report');
 }
 
+function readStudioRuns() {
+    const seeded = [
+        { sprint: 'Sprint 20', when: '23 Sep 2026', board: 'Jira', note: 'Icons and the four-agent handoff. Jenkins chosen over CircleCI and TravisCI.', passed: 5, total: 5 },
+        { sprint: 'Sprint 21', when: '24 Sep 2026', board: 'Azure DevOps', note: 'Six languages, SEO, and the tour. A print section still came out in English until that bug closed.', passed: 7, total: 7 },
+        { sprint: 'Sprint 22', when: '25 Sep 2026', board: 'Monday.com', note: 'Harbor theme and the regression lab. The first lab pass was too fast to follow.', passed: 5, total: 5 },
+        { sprint: 'Sprint 23', when: '26 Sep 2026', board: 'MS Project', note: 'Print packet and the domain cutover. TravisCI left the path.', passed: 8, total: 8 },
+        { sprint: 'Sprint 24', when: '28 Sep 2026', board: 'Jira', note: 'Dropdowns and AI Expertise passed on the preview. Photo rules are not deployed. DevOps has not named the release.', passed: 4, total: 8 }
+    ];
+    let extra = [];
+    try { extra = JSON.parse(localStorage.getItem('studio-run-history') || '[]'); } catch (err) { extra = []; }
+    return seeded.concat(Array.isArray(extra) ? extra : []);
+}
+
+function saveStudioRun(record) {
+    let extra = [];
+    try { extra = JSON.parse(localStorage.getItem('studio-run-history') || '[]'); } catch (err) { extra = []; }
+    if (!Array.isArray(extra)) extra = [];
+    extra.push(record);
+    localStorage.setItem('studio-run-history', JSON.stringify(extra.slice(-12)));
+}
+
 function renderReport() {
     viewEl.className = 'tests';
     const accepted = state.tickets.filter(t => t.decision === 'accept').length;
@@ -1588,7 +2614,109 @@ function renderReport() {
             <div class="card"><h3>Agent 3 · Automation</h3><p>${passed}/${state.results.length} scripted runs passed</p></div>
             <div class="card"><h3>Agent 4 · Verification</h3><p>${Object.values(state.verify).every(Boolean) ? 'Increment signed off' : 'Pending sign-off'}</p></div>
         </div>
-        <p style="color:var(--muted)">Open Report to check the language, the graphs, and the case lines, then download or print. The Runners tab on the right keeps the console from this pass.</p>`;
+        <p style="color:var(--muted)">Open Report to check the language, the graphs, and the case lines, then download or print. The Runners tab on the right keeps the console from this pass.</p>
+        <h3>Studio runs</h3>
+        <div class="card" id="studio-history">${readStudioRuns().map(run => `<div class="run-row"><b>${escapeHtml(run.sprint)}</b><span>${escapeHtml(run.when)}</span><span>${escapeHtml(run.board)} · ${escapeHtml(run.note)} · ${run.passed}/${run.total} closed</span></div>`).join('')}</div>`;
+}
+
+function renderFlow() {
+    viewEl.className = 'tests';
+    const points = (list) => list.reduce((sum, ticket) => sum + (Number(ticket.points) || 0), 0);
+    const program = state.tickets.filter(ticket => ticket.epic === 'Interactive CV');
+    const committed = points(state.tickets);
+    const done = points(state.tickets.filter(ticket => ticket.column === 'Done'));
+    const remaining = committed - done;
+    const openBugs = program.filter(ticket => ticket.type === 'Bug' && ticket.column !== 'Done');
+    const wip = state.tickets.filter(ticket => ticket.column === 'In Progress').length;
+    const added = program.filter(ticket => ticket.added).length;
+    const vague = program.filter(ticket => !/QA|Stage|UAT|production|Pages|preview/i.test(ticket.env));
+    const days = ['22', '23', '24', '25', '26', '27', '28'];
+    const max = Math.max(committed, 1);
+    const ideal = days.map((_, index) => Math.round(committed * (1 - index / (days.length - 1))));
+    const actual = days.map((_, index) => Math.round(committed - (committed - remaining) * (index / (days.length - 1))));
+    const burn = days.map((day, index) => `<div class="bar-row"><span>${day} Sep</span><div class="bar" title="Ideal ${ideal[index]}"><i style="width:${Math.round(actual[index] / max * 100)}%"></i></div><span>${actual[index]}</span></div>`).join('');
+    const cols = STAGES.map(stage => {
+        const stagePoints = points(state.tickets.filter(ticket => ticket.column === stage));
+        return `<div class="bar-row"><span>${stage}</span><div class="bar"><i style="width:${Math.round(stagePoints / max * 100)}%"></i></div><span>${stagePoints}</span></div>`;
+    }).join('');
+    const load = {};
+    state.tickets.forEach(ticket => {
+        if (!load[ticket.assignee]) load[ticket.assignee] = { name: ticket.assigneeName, open: 0, points: 0 };
+        if (ticket.column !== 'Done') {
+            load[ticket.assignee].open += 1;
+            load[ticket.assignee].points += Number(ticket.points) || 0;
+        }
+    });
+    const people = Object.values(load).map(person => `<div class="bar-row"><span>${escapeHtml(person.name.split(' ')[0])}</span><div class="bar"><i style="width:${Math.round(person.points / max * 100)}%"></i></div><span>${person.open}</span></div>`).join('');
+    const bugs = program.filter(ticket => ticket.type === 'Bug').map(ticket => `<div class="linked">${ticket.key} · ${escapeHtml(ticket.summary)} · ${ticket.column} · blocks ${ticket.blocks || '—'}</div>`).join('');
+    const choice = (field, options) => options.map(([id, label]) => `<button type="button" class="${state.release[field] === id ? 'on' : ''}" data-release="${field}" data-value="${id}">${label}</button>`).join('');
+    const finished = program.filter(ticket => ticket.column === 'Done' && ticket.cycle);
+    const cycleAvg = finished.length ? (finished.reduce((sum, ticket) => sum + ticket.cycle, 0) / finished.length).toFixed(1) : '—';
+    viewEl.innerHTML = `
+        <h2 style="margin-top:0">Sprint 24 analytics</h2>
+        <p style="color:var(--muted)">Commitment, flow, defects, cycle time, and the release DevOps still has to name. QA, Stage, and UAT are the preview areas. Production is GitHub Pages from main.</p>
+        <div class="flow-grid">
+            <article class="metric"><span>Commitment</span><b>${committed} SP</b></article>
+            <article class="metric"><span>Done</span><b>${done} SP</b></article>
+            <article class="metric"><span>Remaining</span><b>${remaining} SP</b></article>
+            <article class="metric"><span>Open bugs</span><b>${openBugs.length}</b></article>
+            <article class="metric"><span>In progress</span><b>${wip}</b></article>
+            <article class="metric"><span>Added mid-sprint</span><b>${added}</b></article>
+            <article class="metric"><span>Avg cycle time</span><b>${cycleAvg} d</b></article>
+            <article class="metric"><span>Thin environments</span><b>${vague.length}</b></article>
+        </div>
+        <div class="grid2" style="margin-top:12px">
+            <article class="card"><h3>Burndown · points still open</h3><p style="color:var(--muted)">The bar is remaining work. The title on each row is the ideal line for that day.</p>${burn}</article>
+            <article class="card"><h3>Points by column</h3>${cols}</article>
+            <article class="card"><h3>Open items by person</h3>${people}</article>
+            <article class="card"><h3>Bugs tied to stories</h3>${bugs}</article>
+        </div>
+        <article class="card" style="margin-top:12px"><h3>Closed sprints</h3>${['Sprint 20', 'Sprint 21', 'Sprint 22', 'Sprint 23'].map(name => { const rows = state.tickets.filter(ticket => ticket.sprint === name); const bugs = rows.filter(ticket => ticket.type === 'Bug').length; return `<div class="linked">${name} · ${rows.length} tickets · ${points(rows)} SP · ${bugs} corrections · closed</div>`; }).join('')}<p style="color:var(--muted)">Each of those started as a day of requests and ran like a one-to-two week sprint. Open a card for the stakeholder thread. The backlog is the work that has not entered a sprint.</p></article>
+        <article class="card" style="margin-top:12px">
+            <h3>DevOps · where this increment goes</h3>
+            <p style="color:var(--muted)">Jordan White names the target, the cadence, the branch model, and the infrastructure. CV-380 leaves To Do only when all four are chosen. This pace is the release cadence, separate from the demo speed in the header.</p>
+            <div class="release-grid">
+                <div class="choice"><b>Where</b>${choice('target', [['qa', 'QA preview'], ['stage', 'Stage'], ['uat', 'UAT'], ['pages', 'GitHub Pages production']])}</div>
+                <div class="choice"><b>Pace</b>${choice('cadence', [['merge', 'Each merge to main'], ['sprint', 'End of sprint'], ['manual', 'Manual']])}</div>
+                <div class="choice"><b>Structure</b>${choice('structure', [['trunk', 'Trunk on main'], ['release', 'Release branch']])}</div>
+                <div class="choice"><b>Infrastructure</b>${choice('infra', [['pages', 'Pages only'], ['rules', 'Pages + Firebase rules'], ['full', 'Pages + Functions + rules']])}</div>
+            </div>
+        </article>`;
+    viewEl.querySelectorAll('[data-release]').forEach(button => {
+        button.onclick = () => decideRelease(button.dataset.release, button.dataset.value);
+    });
+}
+
+function decideRelease(field, value) {
+    state.release[field] = value;
+    const ticket = state.tickets.find(item => item.key === 'CV-380');
+    const ready = state.release.target && state.release.cadence && state.release.structure && state.release.infra;
+    if (ticket && ready && ticket.column === 'To Do') {
+        ticket.column = 'In Review';
+        ticket.comments.push({
+            who: 'Jordan White · DevOps',
+            when: '28 Sep',
+            text: `Target ${state.release.target}, cadence ${state.release.cadence}, ${state.release.structure}, ${state.release.infra}. Moved To Do → In Review.`
+        });
+        log('JW', `CV-380 To Do → In Review. ${state.release.target} · ${state.release.cadence}.`);
+    }
+    if (state.view === 'flow') renderFlow();
+    if (state.view === 'board') renderBoard();
+}
+
+async function nudgeDelivery(moves) {
+    for (const move of moves) {
+        const ticket = state.tickets.find(item => item.key === move.key);
+        if (!ticket || (ticket.flowStep || 0) >= move.step) continue;
+        const from = ticket.column;
+        ticket.flowStep = move.step;
+        if (from === move.to) continue;
+        ticket.column = move.to;
+        ticket.comments.push({ who: move.who, when: '28 Sep', text: `${move.note} Moved ${from} → ${move.to}.` });
+        log(move.src, `${ticket.key} ${from} → ${move.to}. ${move.note}`);
+        if (state.view === 'board') renderBoard();
+        await sleep(360);
+    }
 }
 
 async function runSprint() {
@@ -1608,7 +2736,7 @@ async function runSprint() {
     state.agent = 'a1'; renderAgents();
     state.pickingBoard = true;
     armWait();
-    banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — choose the board this sprint should use. Jira, Azure DevOps, Monday, Trello, Linear, or Asana.';
+    banner.innerHTML = '<strong>Agent 1 · Ticket Steward</strong> — choose the board this sprint should use. Jira, Azure DevOps, Monday, Trello, Linear, Asana, or MS Project.';
     if (window.SiteI18n) SiteI18n.refreshTranslation();
     setView('board');
     showPhaseConsole(true);
@@ -1630,13 +2758,18 @@ async function runSprint() {
     if (window.SiteI18n) SiteI18n.refreshTranslation();
     setView('board');
     log('A1', 'Standing by to review Sprint 24 stories.');
-    const cleanFlags = state.tickets.map(() => Math.random() < 0.45);
+    await nudgeDelivery([
+        { key: 'CV-348', to: 'In Review', step: 1, src: 'DA', who: 'Dana Alves · Dev', note: 'Dropdown panel opens above the page. Pulling CV-348 into review.' },
+        { key: 'CV-352', to: 'Ready for QA', step: 1, src: 'SH', who: 'Samira Haddad · QA', note: 'The bug follows its story. CV-352 is ready for a pass on Section, skills, and years.' }
+    ]);
+    const queue = rehearsalTickets();
+    const cleanFlags = queue.map(() => Math.random() < 0.45);
     if (!cleanFlags.some(Boolean)) cleanFlags[Math.floor(Math.random() * cleanFlags.length)] = true;
     if (cleanFlags.every(Boolean)) cleanFlags[Math.floor(Math.random() * cleanFlags.length)] = false;
 
-    for (let index = 0; index < state.tickets.length; index++) {
+    for (let index = 0; index < queue.length; index++) {
         armWait();
-        const t = state.tickets[index];
+        const t = queue[index];
         t.clean = cleanFlags[index];
         clearConsoles();
         const wrap = document.getElementById('wrap-' + t.key);
@@ -1840,7 +2973,21 @@ async function runSprint() {
     await agentThink(testHosts, 'A4', 'waiting for you to tick every control, then sign off.', 'dec');
     await waitUser();
     state.tickets.forEach(t => { if (t.tests.some(tc => tc.include)) t.column = 'Done'; });
+    await nudgeDelivery([
+        { key: 'CV-327', to: 'Done', step: 2, src: 'SH', who: 'Samira Haddad · QA', note: 'Dates, years, and stars passed on the QA preview.' },
+        { key: 'CV-361', to: 'Done', step: 2, src: 'SH', who: 'Samira Haddad · QA', note: 'The ON/OFF switch toggles. Closing the bug on CV-334.' },
+        { key: 'CV-334', to: 'Done', step: 2, src: 'LO', who: 'Luis Ortega · Dev', note: 'CV-334 follows its bug into Done.' },
+        { key: 'CV-370', to: 'In Review', step: 2, src: 'LO', who: 'Luis Ortega · Dev', note: 'AI practice survives a published toolkit. CV-370 moves to review, still tied to CV-321.' }
+    ]);
     banner.innerHTML = '<strong>Sprint 24 complete.</strong> Review the report or reset to run again.';
+    saveStudioRun({
+        sprint: 'Sprint 24',
+        when: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+        board: currentBoard().name,
+        note: 'Four-agent rehearsal finished in this browser.',
+        passed: state.results.filter(row => row.ok).length,
+        total: state.results.length || 0
+    });
     if (window.SiteI18n) SiteI18n.refreshTranslation();
     state.running = false;
     state.focusCase = null;
@@ -2130,7 +3277,7 @@ const STUDIO_TOUR = {
     name: 'QA Studio',
     key: 'hasSeenStudioTour',
     steps: [
-        { selector: '#nav', title: 'Sprint views', body: 'Five views of one increment: the board, the test tool, the automation lab, verification, and the report. A pulse marks the control for this step. Agent 1 asks which board first: Jira, Azure DevOps, Monday, Trello, Linear, or Asana. This page wears the same look as the CV. Golden Gate is the default until another look is kept in Admin.', demoMs: 1700 },
+        { selector: '#nav', title: 'Sprint views', body: 'The board, the test tool, the automation lab, verification, the report, and sprint analytics. The board chips sit above the sprint chips, so Azure DevOps, Monday, Trello, Linear, Asana, and MS Project open without starting the agents. This page wears the same look as the CV. Golden Gate is the default until another look is kept in Admin.', demoMs: 1700 },
         { selector: '#agentPills', title: 'Four agents', body: 'Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. The clip is one pass: the story moves, the cases are written on screen, the script runs, then the increment is signed off.', demoMs: 4000, preview: 'studio' },
         { selector: '#runBtn', title: 'Run the sprint', body: 'The run starts with the board question. Each agent then waits for you: accept or keep the story, save the cases, pick the runners, and sign off.', demoMs: 1800 },
         { selector: '#studio-pace', title: 'Pace', body: 'The line runs from faster on the left to slower on the right. 0.5 holds the least between actions, 2.0 holds the most, including the moment the Test Designer writes each step.', demoMs: 1500 },

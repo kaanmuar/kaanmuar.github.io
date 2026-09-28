@@ -246,7 +246,7 @@ STU-06 Studio report stays English until a language is chosen
     [Tags]    STU-06
     STU-06    index.html    ${FALSE}
 
-STU-07 Sprint board holds six stories including refunds and webhooks
+STU-07 Sprint board holds the PayStream rehearsal and the Interactive CV delivery
     [Tags]    STU-07
     STU-07    index.html    ${FALSE}
 
