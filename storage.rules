@@ -20,6 +20,14 @@ service firebase.storage {
       allow update, delete: if isOwner();
     }
 
+    match /profile-photos/{fileName} {
+      allow get: if true;
+      allow create: if isOwner()
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType == 'image/jpeg';
+      allow update, delete: if isOwner();
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
