@@ -1,0 +1,16 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="firebase" name="Profile photo path">
+    <mxGraphModel dx="800" dy="500" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+        <mxCell id="2" value="Browser JPEG &lt; 2MB" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="280" y="40" width="200" height="50" as="geometry"/></mxCell>
+        <mxCell id="3" value="Storage profile-photos&#10;public read · owner write" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;" vertex="1" parent="1"><mxGeometry x="260" y="150" width="240" height="60" as="geometry"/></mxCell>
+        <mxCell id="4" value="Firestore cvPhotos&#10;url + createdAt · owner create" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;" vertex="1" parent="1"><mxGeometry x="260" y="270" width="240" height="60" as="geometry"/></mxCell>
+        <mxCell id="5" value="Public CV reads the URL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;" vertex="1" parent="1"><mxGeometry x="280" y="390" width="200" height="50" as="geometry"/></mxCell>
+        <mxCell id="6" style="endArrow=block;html=1;" edge="1" parent="1" source="2" target="3"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="7" style="endArrow=block;html=1;" edge="1" parent="1" source="3" target="4"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="8" style="endArrow=block;html=1;" edge="1" parent="1" source="4" target="5"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

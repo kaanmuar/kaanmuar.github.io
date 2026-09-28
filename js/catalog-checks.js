@@ -721,11 +721,11 @@
     },
     'STU-04': async function () {
       var html = await textOf('simulador.html');
-      ['Jira', 'Azure DevOps', 'Monday.com', 'Trello', 'Linear', 'Asana'].forEach(function (name) {
+      ['Jira', 'Azure DevOps', 'Monday.com', 'Trello', 'Linear', 'Asana', 'MS Project'].forEach(function (name) {
         assert(html.includes(name), name + ' board missing');
       });
       assert(html.includes('data-board'), 'board choice missing');
-      return 'six boards offered';
+      return 'seven boards offered';
     },
     'STU-05': async function () {
       var html = await textOf('simulador.html');
@@ -739,10 +739,11 @@
     },
     'STU-07': async function () {
       var html = await textOf('simulador.html');
-      ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264'].forEach(function (key) {
+      ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264', 'CV-301', 'CV-321', 'CV-352', 'CV-380', 'CV-442', 'CV-448', 'XT-1701', 'XT-1702', 'XT-1703'].forEach(function (key) {
         assert(html.includes("key: '" + key + "'"), key + ' missing');
       });
-      return 'six sprint stories';
+      assert(html.includes('data-view="flow"'), 'sprint analytics missing');
+      return 'rehearsal set and CV delivery tickets';
     },
     'MOB-01': async function () {
       assert(global.innerWidth <= 430, 'not phone-wide: ' + global.innerWidth);

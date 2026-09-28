@@ -3733,6 +3733,17 @@
                 const profile = live.profile || {};
                 const name = document.getElementById('main-name');
                 if (name && profile.name) name.textContent = clean(profile.name, 80);
+                if (profile.mark) {
+                    const letters = clean(profile.mark, 8).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4) || 'CAM';
+                    document.querySelectorAll('[data-trademark]').forEach((mark) => {
+                        const seal = mark.querySelector('.trademark-seal');
+                        if (seal) {
+                            seal.textContent = letters;
+                            seal.dataset.count = String(letters.length);
+                        }
+                        if (mark.getAttribute('role') === 'img') mark.setAttribute('aria-label', 'Trademark, ' + letters);
+                    });
+                }
                 const certs = document.getElementById('main-certifications');
                 if (certs && profile.certs != null) certs.textContent = clean(profile.certs, 120);
                 const photo = document.getElementById('profile-photo');

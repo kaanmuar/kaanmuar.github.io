@@ -77,7 +77,7 @@
     ================================================================== -->
     <!-- Compiled Tailwind CSS (see `npm run build:css`) -->
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="css/cv.css">
+    <link rel="stylesheet" href="css/cv.css?v=20260928f">
     <link rel="stylesheet" href="css/site-look.css">
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
@@ -289,7 +289,7 @@
                 <div class="flex flex-col items-center">
                     <div class="relative">
                         <img id="profile-photo" src="assets/profile.jpg?v=20260925" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400 cursor-pointer" alt="Profile photo of Carlos Muñoz Ardila" tabindex="0" role="button" aria-label="View larger profile photo">
-                        <div class="trademark-logo absolute top-0 right-0" aria-hidden="true">CAM</div>
+                        <span class="trademark" data-trademark role="img" aria-label="Trademark, CAM"><span class="trademark-seal" data-count="3">CAM</span></span>
                     </div>
                     <div class="mt-5 text-center">
                         <h1 id="main-name" class="text-2xl font-bold whitespace-nowrap">CARLOS A. MUÑOZ</h1>
@@ -589,7 +589,7 @@
                         <p>&copy; <span id="cv-year">2026</span> Carlos A. Muñoz</p>
                         <span aria-hidden="true">|</span>
                         <p>Interactive CV</p>
-                        <div class="trademark-logo ml-1" aria-hidden="true">CAM</div>
+                        <span class="trademark is-footer" data-trademark aria-hidden="true"><span class="trademark-seal" data-count="3">CAM</span></span>
                         <span aria-hidden="true">|</span>
                         <a id="cv-pdf-link" href="/?download=pdf" data-translate-key="footer_pdf">Download PDF</a>
                     </div>
@@ -753,6 +753,6 @@
 |                         APPLICATION JAVASCRIPT                      |
 ================================================================== -->
 <script src="js/cv-data.js?v=20260928"></script>
-<script type="module" src="js/cv-app.js?v=20260928b"></script>
+<script type="module" src="js/cv-app.js?v=20260928c"></script>
 </body>
 </html>
