@@ -211,8 +211,10 @@
 
 <div id="login-overlay">
     <div class="login-box">
-        <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
+        <h2 id="login-title" class="text-2xl font-bold mb-4">Admin Login</h2>
         <form id="login-form"><div class="mb-4"><label for="email" class="block font-medium mb-1">Email</label><input type="email" id="email" required class="w-full p-2 border border-gray-300 rounded-md"></div><div class="mb-4"><label for="password" class="block font-medium mb-1">Password</label><input type="password" id="password" required class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Login</button><p id="login-error" class="text-red-600 text-sm mt-2"></p></form>
+        <form id="mfa-form" hidden><p class="text-sm mb-3">Enter the 6-digit code from your authenticator app.</p><div class="mb-4"><label for="mfa-code" class="block font-medium mb-1">Authenticator code</label><input type="text" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Continue</button><button type="button" id="mfa-back" class="w-full mt-2 p-2 font-medium">Use a different account</button><p id="mfa-error" class="text-red-600 text-sm mt-2"></p></form>
+        <form id="mfa-enroll" hidden><p id="mfa-enroll-lead" class="text-sm mb-3">Scan this with the authenticator app on your phone, then enter the 6-digit code.</p><canvas id="mfa-qr" class="mx-auto mb-3" width="200" height="200" hidden></canvas><p id="mfa-secret-line" class="text-sm mb-3" hidden>Key, if you type it instead: <code id="mfa-secret"></code></p><div class="mb-4"><label for="mfa-enroll-code" class="block font-medium mb-1">Authenticator code</label><input type="text" id="mfa-enroll-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" id="mfa-enroll-submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Turn on</button><button type="button" id="mfa-enroll-cancel" class="w-full mt-2 p-2 font-medium">Log out</button><p id="mfa-enroll-error" class="text-red-600 text-sm mt-2"></p></form>
         <p class="text-center mt-4"><a href="index.html" id="admin-home" class="text-cyan-700 underline">← Back to CV</a></p>
     </div>
 </div>
@@ -431,10 +433,9 @@
     <script src="js/cv-data.js"></script>
     <script type="module">
     // Firebase Imports
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-    // MODIFIED: Added addDoc for new testimonial creation
-    import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, getDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, multiFactor, TotpMultiFactorGenerator, getMultiFactorResolver, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, getDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { createCvEditor } from "./js/cv-editor.js";
 
     // Firebase Config
@@ -448,6 +449,10 @@
     let allMessages = [], allRatings = [], allBlockedSenders = [];
     let statsCharts = [];
     let dashboardReady = false;
+    let mfaResolver = null;
+    let totpSecret = null;
+    let enrollmentFinished = false;
+    let enrollmentTask = null;
     // Values match the CV contact form (`#message-topic`), not display labels.
     const MESSAGE_TOPICS = [
         { value: 'opportunity', label: 'Job Opportunity / Collaboration' },
@@ -481,6 +486,10 @@
 
     // DOM Elements
     const loginOverlay = document.getElementById('login-overlay'), dashboard = document.getElementById('dashboard'), logoutBtn = document.getElementById('logout-btn');
+    const loginForm = document.getElementById('login-form');
+    const loginTitle = document.getElementById('login-title');
+    const mfaForm = document.getElementById('mfa-form');
+    const enrollForm = document.getElementById('mfa-enroll');
     const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn'), cv: document.getElementById('cv-tab-btn'), styles: document.getElementById('styles-tab-btn') };
     const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane'), cv: document.getElementById('cv-pane'), styles: document.getElementById('styles-pane') };
     const lists = { messages: document.getElementById('messages-list'), ratings: document.getElementById('ratings-list'), rejected: document.getElementById('rejected-list'), blocked: document.getElementById('blocked-list') };
@@ -490,15 +499,139 @@
     let currentResponseData = {};
 
     // --- Auth ---
-    onAuthStateChanged(auth, user => { if (user) { loginOverlay.style.display = 'none'; dashboard.classList.remove('hidden'); initDashboard(); } else { loginOverlay.style.display = 'flex'; dashboard.classList.add('hidden'); } });
+    function showPasswordForm() {
+        enrollmentFinished = false;
+        mfaResolver = null;
+        totpSecret = null;
+        enrollmentTask = null;
+        loginTitle.textContent = 'Admin Login';
+        loginForm.hidden = false;
+        mfaForm.hidden = true;
+        enrollForm.hidden = true;
+        loginOverlay.style.display = 'flex';
+        dashboard.classList.add('hidden');
+    }
+
+    function showDashboard() {
+        loginOverlay.style.display = 'none';
+        dashboard.classList.remove('hidden');
+        initDashboard();
+    }
+
+    function codeFrom(input) {
+        return String(input.value || '').replace(/\D/g, '').slice(0, 6);
+    }
+
+    function startEnrollment(user) {
+        if (enrollmentTask) return enrollmentTask;
+        enrollmentTask = runEnrollment(user);
+        return enrollmentTask;
+    }
+
+    async function runEnrollment(user) {
+        loginTitle.textContent = 'Authenticator';
+        loginForm.hidden = true;
+        mfaForm.hidden = true;
+        enrollForm.hidden = false;
+        loginOverlay.style.display = 'flex';
+        dashboard.classList.add('hidden');
+        const note = document.getElementById('mfa-enroll-error');
+        note.textContent = '';
+        if (!user.emailVerified) {
+            try { await sendEmailVerification(user); } catch (error) { console.error(error); }
+            note.textContent = '';
+            document.getElementById('mfa-enroll-lead').textContent = 'Confirm the email Firebase just sent, then press the button below.';
+            document.getElementById('mfa-enroll-submit').textContent = 'I confirmed the email';
+            return;
+        }
+        document.getElementById('mfa-enroll-submit').textContent = 'Turn on';
+        document.getElementById('mfa-enroll-lead').textContent = 'Scan this with the authenticator app on your phone, then enter the 6-digit code.';
+        if (totpSecret) return;
+        try {
+            const session = await multiFactor(user).getSession();
+            totpSecret = await TotpMultiFactorGenerator.generateSecret(session);
+            const url = totpSecret.generateQrCodeUrl(user.email || 'admin', 'Carlos CV Admin');
+            document.getElementById('mfa-secret').textContent = totpSecret.secretKey;
+            document.getElementById('mfa-secret-line').hidden = false;
+            const canvas = document.getElementById('mfa-qr');
+            try {
+                const QR = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');
+                await QR.default.toCanvas(canvas, url, { width: 200, margin: 1 });
+                canvas.hidden = false;
+            } catch (error) {
+                canvas.hidden = true;
+                console.error(error);
+            }
+        } catch (error) {
+            console.error(error);
+            note.textContent = 'The authenticator could not be started. Sign out and try again.';
+        }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user) { showPasswordForm(); return; }
+        if (enrollmentFinished || multiFactor(user).enrolledFactors.length) { showDashboard(); return; }
+        startEnrollment(user);
+    });
     document.getElementById('login-form').addEventListener('submit', (e) => {
         e.preventDefault();
         document.getElementById('login-error').textContent = '';
-        signInWithEmailAndPassword(auth, e.target.email.value.trim(), e.target.password.value).catch(err => {
+        signInWithEmailAndPassword(auth, e.target.email.value.trim(), e.target.password.value).catch((err) => {
+            if (err.code === 'auth/multi-factor-auth-required') {
+                mfaResolver = getMultiFactorResolver(auth, err);
+                loginTitle.textContent = 'Authenticator';
+                loginForm.hidden = true;
+                mfaForm.hidden = false;
+                document.getElementById('mfa-code').focus();
+                return;
+            }
             document.getElementById('login-error').textContent = 'Login failed. Check the email and password.';
             console.error(err);
         });
     });
+    mfaForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const note = document.getElementById('mfa-error');
+        note.textContent = '';
+        const code = codeFrom(document.getElementById('mfa-code'));
+        if (!mfaResolver || code.length !== 6) { note.textContent = 'Enter the 6-digit code.'; return; }
+        try {
+            const assertion = TotpMultiFactorGenerator.assertionForSignIn(mfaResolver.hints[0].uid, code);
+            await mfaResolver.resolveSignIn(assertion);
+        } catch (error) {
+            note.textContent = 'That code did not match. Use the newest code from the app.';
+            console.error(error);
+        }
+    });
+    document.getElementById('mfa-back').addEventListener('click', () => signOut(auth));
+    enrollForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const note = document.getElementById('mfa-enroll-error');
+        note.textContent = '';
+        const user = auth.currentUser;
+        if (!user) return;
+        if (!user.emailVerified) {
+            await user.reload();
+            if (!auth.currentUser.emailVerified) { note.textContent = 'The email is not confirmed yet.'; return; }
+            totpSecret = null;
+            enrollmentTask = null;
+            startEnrollment(auth.currentUser);
+            return;
+        }
+        const code = codeFrom(document.getElementById('mfa-enroll-code'));
+        if (!totpSecret || code.length !== 6) { note.textContent = 'Enter the 6-digit code from the app.'; return; }
+        try {
+            const assertion = TotpMultiFactorGenerator.assertionForEnrollment(totpSecret, code);
+            await multiFactor(user).enroll(assertion, 'Authenticator');
+            enrollmentFinished = true;
+            totpSecret = null;
+            showDashboard();
+        } catch (error) {
+            note.textContent = 'That code did not match. Use the newest code from the app.';
+            console.error(error);
+        }
+    });
+    document.getElementById('mfa-enroll-cancel').addEventListener('click', () => signOut(auth));
     logoutBtn.addEventListener('click', () => signOut(auth));
 
     // --- Init ---

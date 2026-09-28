@@ -1,7 +1,8 @@
     // Import Firebase modules
     // ** MODIFIED **: Added query and where for the new function
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-functions.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
     // IMPORTANT: Actual Firebase configuration
@@ -17,6 +18,7 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const functions = getFunctions(app);
     const storage = getStorage(app);
 
     const PRINT_COPY = {
@@ -361,6 +363,8 @@
                 hasAutoOpenedRating: false,
                 // **NEW**: A set to hold the emails of blocked senders
                 blockList: new Set(),
+                captchaRequired: false,
+                captchaIds: { message: '', rating: '' },
                 // --- NEW STATE ---
                 chartIndex: 0,
                 chartPaused: false,
@@ -875,24 +879,6 @@
                     console.warn('CV access note was not saved:', error && error.code ? error.code : error);
                 });
             },
-
-            /**
-             * Fetches the blocklist from Firestore and stores it in the state.
-             */
-            async _loadBlocklist() {
-                try {
-                    const querySnapshot = await getDocs(collection(db, "blocked_senders"));
-                    const blockedEmails = new Set();
-                    querySnapshot.forEach(doc => {
-                        blockedEmails.add(doc.id.toLowerCase());
-                    });
-                    this.state.blockList = blockedEmails;
-                    console.log("Blocklist loaded successfully.");
-                } catch (error) {
-                    console.error("Error loading blocklist: ", error);
-                }
-            },
-
 
             _createWatermark() {
                 const canvas = document.createElement('canvas');
@@ -1819,7 +1805,7 @@
                             if (this.state.activeTopic === id) this._resetFilters({ silent: true });
                             else this._applyCompetencyFocus(id);
                         } else if (this.state.activeTopic && !this.state.isTourActive) {
-                            const keep = target.closest('.topic-match, #tour-tooltip, #tour-overlay, #contact-widget, #contact-widget-fab, .mobile-toolbar-wrapper, #image-modal, .info-icon-container, #reset-filter, #theme-toggle, #tour-start-btn, #language-selector, #sim-launch-btn, #qa-lab-btn, #print-btn, #export-selector, #social-share-selector');
+                            const keep = target.closest('.topic-match, #tour-tooltip, #tour-overlay, #contact-widget, #contact-widget-fab, .mobile-toolbar-wrapper, #image-modal, .info-icon-container, #reset-filter, #theme-toggle, #tour-start-btn, #language-selector, #sim-launch-btn, #qa-lab-btn, #admin-login-btn, #admin-login-btn-mobile, #print-btn, #export-selector, #social-share-selector');
                             if (!keep) {
                                 this._resetFilters({ silent: true });
                                 return;
@@ -2421,6 +2407,10 @@
 
                 messageForm.addEventListener('input', () => this._updateMessageButtonState());
                 ratingForm.addEventListener('input', () => this._updateRatingButtonState());
+                const messageRefresh = document.getElementById('message-captcha-refresh');
+                const ratingRefresh = document.getElementById('rating-captcha-refresh');
+                if (messageRefresh) messageRefresh.addEventListener('click', () => this._loadFormChallenge('message'));
+                if (ratingRefresh) ratingRefresh.addEventListener('click', () => this._loadFormChallenge('rating'));
 
                 fileUpload.addEventListener('change', () => this._handleFileAttachment());
 
@@ -2501,7 +2491,7 @@
                 const isTopicValid = messageTopic.value.trim() !== '';
                 const isMessageValid = senderMessage.value.trim().length >= 10;
 
-                sendMessageBtn.disabled = !(isNameValid && isEmailValid && isTopicValid && isMessageValid);
+                sendMessageBtn.disabled = !(isNameValid && isEmailValid && isTopicValid && isMessageValid && this._captchaReady('message'));
             },
 
             _updateRatingButtonState() {
@@ -2510,7 +2500,101 @@
                 const isEmailValid = /^\S+@\S+\.\S+$/.test(raterEmail.value.trim());
                 const isRatingValid = parseInt(ratingValue.value, 10) > 0;
 
-                sendRatingBtn.disabled = !(isNameValid && isEmailValid && isRatingValid);
+                sendRatingBtn.disabled = !(isNameValid && isEmailValid && isRatingValid && this._captchaReady('rating'));
+            },
+
+            _captchaReady(kind) {
+                if (!this.state.captchaRequired) return true;
+                const input = document.getElementById(kind + '-captcha-answer');
+                return !!input && input.value.trim().length === 5;
+            },
+
+            _watchFormCaptcha() {
+                onSnapshot(doc(db, 'abuse', 'forms'), (snap) => {
+                    const data = snap.exists() ? snap.data() : null;
+                    const until = data && data.until && typeof data.until.toMillis === 'function' ? data.until.toMillis() : 0;
+                    const on = !!(data && data.captcha === true && until > Date.now());
+                    if (on === this.state.captchaRequired) return;
+                    this.state.captchaRequired = on;
+                    this._syncFormCaptcha();
+                }, () => {
+                    this.state.captchaRequired = false;
+                });
+            },
+
+            _syncFormCaptcha() {
+                const on = !!this.state.captchaRequired;
+                const widget = document.getElementById('contact-widget');
+                if (widget) widget.classList.toggle('captcha-on', on);
+                ['message', 'rating'].forEach((kind) => {
+                    const box = document.getElementById(kind + '-captcha');
+                    if (box) box.hidden = !on;
+                    if (on && box) box.scrollIntoView({ block: 'nearest' });
+                    if (on) this._loadFormChallenge(kind);
+                });
+                this._updateMessageButtonState();
+                this._updateRatingButtonState();
+            },
+
+            async _loadFormChallenge(kind) {
+                const image = document.getElementById(kind + '-captcha-image');
+                const input = document.getElementById(kind + '-captcha-answer');
+                const error = document.getElementById(kind + '-captcha-error');
+                if (!image) return;
+                if (input) input.value = '';
+                if (error) error.style.display = 'none';
+                try {
+                    const ask = httpsCallable(functions, 'getFormChallenge');
+                    const result = await ask({});
+                    if (!result.data || !result.data.required) {
+                        this.state.captchaRequired = false;
+                        const widget = document.getElementById('contact-widget');
+                        if (widget) widget.classList.remove('captcha-on');
+                        ['message', 'rating'].forEach((name) => {
+                            const box = document.getElementById(name + '-captcha');
+                            if (box) box.hidden = true;
+                        });
+                        this._updateMessageButtonState();
+                        this._updateRatingButtonState();
+                        return;
+                    }
+                    this.state.captchaIds[kind] = result.data.id;
+                    image.src = result.data.image;
+                } catch (error) {
+                    console.warn('Form check was not ready', error && error.code ? error.code : error);
+                }
+                this._updateMessageButtonState();
+                this._updateRatingButtonState();
+            },
+
+            async _storeForm(kind, payload) {
+                if (!this.state.captchaRequired) {
+                    await addDoc(collection(db, kind === 'message' ? 'messages' : 'ratings'), payload);
+                    return;
+                }
+                const answer = document.getElementById(kind + '-captcha-answer').value;
+                const send = httpsCallable(functions, 'submitGuardedForm');
+                try {
+                    await send(Object.assign({
+                        kind,
+                        challengeId: this.state.captchaIds[kind],
+                        answer
+                    }, payload, { createdAt: null }));
+                } catch (error) {
+                    const code = String(error && error.code || '');
+                    if (code.indexOf('invalid-argument') !== -1) {
+                        const err = document.getElementById(kind + '-captcha-error');
+                        if (err) {
+                            err.textContent = this._t().captcha_error || 'Those characters did not match. Try the new set.';
+                            err.style.display = 'block';
+                        }
+                        await this._loadFormChallenge(kind);
+                        const mismatch = new Error('captcha');
+                        mismatch.captcha = true;
+                        throw mismatch;
+                    }
+                    throw error;
+                }
             },
 
             _handleFileAttachment() {
@@ -2570,7 +2654,7 @@
                         fileURL = await getDownloadURL(snapshot.ref);
                     }
 
-                    await addDoc(collection(db, 'messages'), {
+                    await this._storeForm('message', {
                         name: senderName.value.trim(),
                         email,
                         topic: messageTopic.value,
@@ -2587,6 +2671,7 @@
                     this._resetMessageForm();
 
                 } catch (error) {
+                    if (error && error.captcha) return;
                     console.error("Error sending message:", error);
                     this._showStatusMessage('error');
                 } finally {
@@ -2613,7 +2698,7 @@
                 this._setButtonSendingState(sendRatingBtn, true);
 
                 try {
-                    await addDoc(collection(db, 'ratings'), {
+                    await this._storeForm('rating', {
                         name: raterName.value.trim(),
                         email,
                         rating: parseInt(ratingValue.value, 10),
@@ -2629,6 +2714,7 @@
                     this._resetRatingForm();
 
                 } catch (error) {
+                    if (error && error.captcha) return;
                     console.error("Error submitting rating:", error);
                     this._showStatusMessage('error');
                 } finally {
@@ -3726,7 +3812,6 @@
                 this._renderAll();
                 this._forceShowAllContent();
                 this._initStickyObserver();
-                this._loadBlocklist();
                 this._applyUrlLanguage();
                 this._applyInitialTheme();
                 this._createWatermark();
@@ -3736,6 +3821,7 @@
                 this._initScrollAnimations();
                 this._initUrlHighlighting();
                 this._initContactWidget();
+                this._watchFormCaptcha();
                 this._initScrollTrigger();
                 this._noteCvAccess();
 

@@ -1,0 +1,123 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'kaanmuar@gmail.com';
+    }
+
+    function only(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+
+    function text(field, minLen, maxLen) {
+      return request.resource.data[field] is string
+        && request.resource.data[field].size() >= minLen
+        && request.resource.data[field].size() <= maxLen;
+    }
+
+    function visitorEmail() {
+      return request.resource.data.email is string
+        && request.resource.data.email.size() <= 120
+        && request.resource.data.email.matches('^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}$');
+    }
+
+    function senderAllowed() {
+      return !exists(/databases/$(database)/documents/blocked_senders/$(request.resource.data.email));
+    }
+
+    function captchaQuiet() {
+      return !exists(/databases/$(database)/documents/abuse/forms)
+        || get(/databases/$(database)/documents/abuse/forms).data.captcha != true
+        || get(/databases/$(database)/documents/abuse/forms).data.until <= request.time;
+    }
+
+    match /messages/{id} {
+      allow get, list: if isOwner();
+      allow create: if captchaQuiet()
+        && senderAllowed()
+        && only(['name', 'email', 'topic', 'message', 'fileURL', 'status', 'createdAt'])
+        && text('name', 2, 120)
+        && visitorEmail()
+        && request.resource.data.topic in ['opportunity', 'inquiry', 'feedback', 'other']
+        && text('message', 10, 8000)
+        && request.resource.data.fileURL is string
+        && request.resource.data.fileURL.size() <= 2048
+        && (request.resource.data.fileURL == '' || request.resource.data.fileURL.matches('^https://.+'))
+        && request.resource.data.status == 'inbox'
+        && request.resource.data.createdAt == request.time;
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'rejectedAt', 'restoredAt', 'response', 'respondedAt', 'isPublicResponse'
+        ]);
+      allow delete: if false;
+    }
+
+    match /ratings/{id} {
+      allow get, list: if isOwner();
+      allow create: if captchaQuiet()
+        && senderAllowed()
+        && only(['name', 'email', 'rating', 'comment', 'status', 'isAnonymous', 'createdAt'])
+        && text('name', 2, 120)
+        && visitorEmail()
+        && request.resource.data.rating in [1, 2, 3, 4, 5]
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() <= 4000
+        && request.resource.data.status == 'pending'
+        && request.resource.data.isAnonymous == false
+        && request.resource.data.createdAt == request.time;
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'isAnonymous', 'response', 'respondedAt', 'isPublicResponse'
+        ]);
+      allow delete: if false;
+    }
+
+    match /testimonials/{id} {
+      allow get, list: if true;
+      allow create, update, delete: if isOwner();
+    }
+
+    match /visits/{id} {
+      allow get, list, update, delete: if false;
+      allow create: if only(['source', 'lang', 'referrerHost', 'createdAt'])
+        && request.resource.data.source == 'cv'
+        && request.resource.data.lang is string
+        && request.resource.data.lang.size() <= 12
+        && request.resource.data.referrerHost is string
+        && request.resource.data.referrerHost.size() <= 80
+        && request.resource.data.createdAt == request.time;
+    }
+
+    match /blocked_senders/{emailId} {
+      allow get, list: if isOwner();
+      allow create, update: if isOwner()
+        && request.resource.data.keys().hasOnly(['blockedAt'])
+        && request.resource.data.blockedAt == request.time;
+      allow delete: if isOwner();
+    }
+
+    match /cvContent/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if isOwner() && id == 'live';
+    }
+
+    match /abuse/{id} {
+      allow get: if id == 'forms';
+      allow list, create, update, delete: if false;
+    }
+
+    match /mail/{id} {
+      allow read, write: if false;
+    }
+
+    match /notification_state/{id} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

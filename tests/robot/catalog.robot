@@ -178,7 +178,7 @@ SEC-06 lang query does not execute script
     [Tags]    SEC-06
     SEC-06    index.html    ${FALSE}
 
-SEC-07 Public chrome does not link to admin.html
+SEC-07 Only the login control opens admin
     [Tags]    SEC-07
     SEC-07    index.html    ${FALSE}
 

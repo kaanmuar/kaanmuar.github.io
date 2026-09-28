@@ -48,14 +48,17 @@ describe('Security and SEO', () => {
     cy.wrap(hits).should('deep.equal', []);
   });
 
-  it('public chrome does not link to admin.html', () => {
+  it('the login control is the only public link to admin', () => {
     cy.visitCV();
-    cy.get('a[href*="admin.html"]').should('have.length', 0);
+    cy.get('a[href*="admin.html"]').should('have.length', 2);
+    cy.get('#admin-login-btn').should('have.attr', 'href', 'admin.html');
+    cy.get('#admin-login-btn-mobile').should('have.attr', 'href', 'admin.html');
     cy.visit('/simulador.html', {
       onBeforeLoad(win) {
         win.sessionStorage.setItem('hasSeenStudioTour', 'true');
       }
     });
-    cy.get('a[href*="admin.html"]').should('have.length', 0);
+    cy.get('a[href*="admin.html"]').should('have.length', 1);
+    cy.get('#admin-login-btn').should('have.attr', 'href', 'admin.html');
   });
 });

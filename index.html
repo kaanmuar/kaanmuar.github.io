@@ -356,6 +356,11 @@
                                 <span class="tool-caption" data-translate-key="toolbar_lab">Lab</span>
                                 <span class="tooltiptext" data-translate-key="tooltip_qa_lab">CV regression lab</span>
                             </button>
+                            <a id="admin-login-btn-mobile" class="tooltip tool-btn" href="admin.html">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                <span class="tool-caption" data-translate-key="toolbar_admin">Login</span>
+                                <span class="tooltiptext" data-translate-key="tooltip_admin">Admin login</span>
+                            </a>
 
                             <button id="print-btn-mobile" class="tooltip tool-btn"><svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tool-caption" data-translate-key="toolbar_print">Print</span><span class="tooltiptext" data-translate-key="tooltip_print"></span></button>
 
@@ -445,6 +450,11 @@
                             <span class="tool-caption" data-translate-key="toolbar_lab">Lab</span>
                             <span class="tooltiptext" data-translate-key="tooltip_qa_lab">CV regression lab</span>
                         </button>
+                        <a id="admin-login-btn" class="tooltip tool-btn" href="admin.html">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            <span class="tool-caption" data-translate-key="toolbar_admin">Login</span>
+                            <span class="tooltiptext" data-translate-key="tooltip_admin">Admin login</span>
+                        </a>
 
                         <button id="print-btn" class="tooltip tool-btn">
                             <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
@@ -646,6 +656,15 @@
                     <div id="file-upload-status" class="text-gray-500 dark:text-gray-400" aria-live="polite"></div>
                 </div>
                 </div>
+                <div id="message-captcha" class="form-captcha" hidden>
+                    <label for="message-captcha-answer" data-translate-key="captcha_label">Type the characters</label>
+                    <div class="form-captcha-row">
+                        <img id="message-captcha-image" alt="" width="168" height="56">
+                        <button type="button" id="message-captcha-refresh" class="form-captcha-refresh" data-translate-key="captcha_refresh">New characters</button>
+                    </div>
+                    <input type="text" id="message-captcha-answer" autocomplete="off" autocapitalize="characters" maxlength="5" spellcheck="false" aria-describedby="message-captcha-error">
+                    <div id="message-captcha-error" class="error-message" role="alert"></div>
+                </div>
                 <button id="send-message-btn" type="submit" class="submit-btn" disabled>
                     <span class="btn-text" data-translate-key="form_button_send">Send Message</span>
                     <div class="spinner"></div>
@@ -683,6 +702,15 @@
                 <div class="form-group">
                     <label for="rater-comment" data-translate-key="form_label_comments">Comments (Optional)</label>
                     <textarea id="rater-comment" name="comment" rows="3"></textarea>
+                </div>
+                <div id="rating-captcha" class="form-captcha" hidden>
+                    <label for="rating-captcha-answer" data-translate-key="captcha_label">Type the characters</label>
+                    <div class="form-captcha-row">
+                        <img id="rating-captcha-image" alt="" width="168" height="56">
+                        <button type="button" id="rating-captcha-refresh" class="form-captcha-refresh" data-translate-key="captcha_refresh">New characters</button>
+                    </div>
+                    <input type="text" id="rating-captcha-answer" autocomplete="off" autocapitalize="characters" maxlength="5" spellcheck="false" aria-describedby="rating-captcha-error">
+                    <div id="rating-captcha-error" class="error-message" role="alert"></div>
                 </div>
                 <button id="send-rating-btn" type="submit" class="submit-btn" disabled>
                     <span class="btn-text" data-translate-key="form_button_submit_rating">Submit Rating</span>
