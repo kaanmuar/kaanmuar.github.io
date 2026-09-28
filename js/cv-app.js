@@ -33,7 +33,7 @@
             cert_label_security: 'Information Security:',
             footer_lab: 'QA regression lab — run the Playwright, Cypress, and Robot suite in the browser',
             footer_studio: 'SDLC studio — try the Jira, Xray, and test-automation sprint',
-            footer_capabilities: 'Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, seven competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.',
+            footer_capabilities: 'Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, eight competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.',
             footer_pdf: 'Download PDF',
             roles: [
                 'Senior QA & Program Consultant',
@@ -63,7 +63,7 @@
             cert_label_security: 'Seguridad de la información:',
             footer_lab: 'Laboratorio de regresión QA — ejecuta Playwright, Cypress y Robot en el navegador',
             footer_studio: 'Estudio SDLC — prueba el sprint de Jira, Xray y automatización',
-            footer_capabilities: 'Se lee en inglés, español, portugués, alemán, francés e italiano. Incluye un recorrido guiado, temas claro y oscuro, siete filtros de competencias, un toolkit, una línea de tiempo, impresión y descargas en PDF, JPG, Word, JSON y texto plano.',
+            footer_capabilities: 'Se lee en inglés, español, portugués, alemán, francés e italiano. Incluye un recorrido guiado, temas claro y oscuro, ocho filtros de competencias, un toolkit, una línea de tiempo, impresión y descargas en PDF, JPG, Word, JSON y texto plano.',
             footer_pdf: 'Descargar PDF',
             roles: [
                 'Consultor Senior de QA y Programas',
@@ -93,7 +93,7 @@
             cert_label_security: 'Segurança da informação:',
             footer_lab: 'Laboratório de regressão de QA — execute Playwright, Cypress e Robot no navegador',
             footer_studio: 'Estúdio SDLC — experimente o sprint de Jira, Xray e automação de testes',
-            footer_capabilities: 'Leitura em inglês, espanhol, português, alemão, francês e italiano. Inclui um tour guiado, temas claro e escuro, sete filtros de competências, um toolkit, uma linha do tempo, impressão e downloads em PDF, JPG, Word, JSON e texto simples.',
+            footer_capabilities: 'Leitura em inglês, espanhol, português, alemão, francês e italiano. Inclui um tour guiado, temas claro e escuro, oito filtros de competências, um toolkit, uma linha do tempo, impressão e downloads em PDF, JPG, Word, JSON e texto simples.',
             footer_pdf: 'Baixar PDF',
             roles: [
                 'Consultor Sênior de QA e Programas',
@@ -123,7 +123,7 @@
             cert_label_security: 'Informationssicherheit:',
             footer_lab: 'QA-Regressionslabor — Playwright, Cypress und Robot im Browser ausführen',
             footer_studio: 'SDLC-Studio — Jira-, Xray- und Testautomatisierungs-Sprint ausprobieren',
-            footer_capabilities: 'Lesbar auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Enthält eine Führung, helles und dunkles Design, sieben Kompetenzfilter, ein Toolkit, eine Zeitachse, Druck und Downloads als PDF, JPG, Word, JSON und Klartext.',
+            footer_capabilities: 'Lesbar auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Enthält eine Führung, helles und dunkles Design, acht Kompetenzfilter, ein Toolkit, eine Zeitachse, Druck und Downloads als PDF, JPG, Word, JSON und Klartext.',
             footer_pdf: 'PDF herunterladen',
             roles: [
                 'Senior QA- und Programmberater',
@@ -153,7 +153,7 @@
             cert_label_security: 'Sécurité de l\'information :',
             footer_lab: 'Laboratoire de régression QA — lancez Playwright, Cypress et Robot dans le navigateur',
             footer_studio: 'Studio SDLC — essayez le sprint Jira, Xray et automatisation de tests',
-            footer_capabilities: 'Lisible en anglais, espagnol, portugais, allemand, français et italien. Comprend une visite guidée, les thèmes clair et sombre, sept filtres de compétences, une boîte à outils, une chronologie, l\'impression et des téléchargements PDF, JPG, Word, JSON et texte brut.',
+            footer_capabilities: 'Lisible en anglais, espagnol, portugais, allemand, français et italien. Comprend une visite guidée, les thèmes clair et sombre, huit filtres de compétences, une boîte à outils, une chronologie, l\'impression et des téléchargements PDF, JPG, Word, JSON et texte brut.',
             footer_pdf: 'Télécharger le PDF',
             roles: [
                 'Consultant senior QA et programmes',
@@ -183,7 +183,7 @@
             cert_label_security: 'Sicurezza delle informazioni:',
             footer_lab: 'Laboratorio di regressione QA — esegui Playwright, Cypress e Robot nel browser',
             footer_studio: 'Studio SDLC — prova lo sprint Jira, Xray e automazione dei test',
-            footer_capabilities: 'Leggibile in inglese, spagnolo, portoghese, tedesco, francese e italiano. Include un tour guidato, temi chiaro e scuro, sette filtri delle competenze, un toolkit, una linea del tempo, stampa e download in PDF, JPG, Word, JSON e testo semplice.',
+            footer_capabilities: 'Leggibile in inglese, spagnolo, portoghese, tedesco, francese e italiano. Include un tour guidato, temi chiaro e scuro, otto filtri delle competenze, un toolkit, una linea del tempo, stampa e download in PDF, JPG, Word, JSON e testo semplice.',
             footer_pdf: 'Scarica il PDF',
             roles: [
                 'Consulente senior QA e programmi',
@@ -224,7 +224,8 @@
             print_cat_cloud: 'Cloud and delivery',
             print_cat_analytics: 'Observability and security',
             print_cat_platform: 'Platforms',
-            print_cat_system: 'Systems'
+            print_cat_system: 'Systems',
+            print_cat_ai: 'AI'
         },
         es: {
             print_see_work: 'Mira el trabajo tú mismo',
@@ -245,7 +246,8 @@
             print_cat_cloud: 'Nube y entrega',
             print_cat_analytics: 'Observabilidad y seguridad',
             print_cat_platform: 'Plataformas',
-            print_cat_system: 'Sistemas'
+            print_cat_system: 'Sistemas',
+            print_cat_ai: 'IA'
         },
         pt: {
             print_see_work: 'Veja o trabalho você mesmo',
@@ -266,7 +268,8 @@
             print_cat_cloud: 'Nuvem e entrega',
             print_cat_analytics: 'Observabilidade e segurança',
             print_cat_platform: 'Plataformas',
-            print_cat_system: 'Sistemas'
+            print_cat_system: 'Sistemas',
+            print_cat_ai: 'IA'
         },
         de: {
             print_see_work: 'Sieh dir die Arbeit selbst an',
@@ -287,7 +290,8 @@
             print_cat_cloud: 'Cloud und Lieferung',
             print_cat_analytics: 'Beobachtbarkeit und Sicherheit',
             print_cat_platform: 'Plattformen',
-            print_cat_system: 'Systeme'
+            print_cat_system: 'Systeme',
+            print_cat_ai: 'KI'
         },
         fr: {
             print_see_work: 'Voyez le travail par vous-même',
@@ -308,7 +312,8 @@
             print_cat_cloud: 'Cloud et livraison',
             print_cat_analytics: 'Observabilité et sécurité',
             print_cat_platform: 'Plateformes',
-            print_cat_system: 'Systèmes'
+            print_cat_system: 'Systèmes',
+            print_cat_ai: 'IA'
         },
         it: {
             print_see_work: 'Guarda il lavoro di persona',
@@ -329,7 +334,8 @@
             print_cat_cloud: 'Cloud e delivery',
             print_cat_analytics: 'Osservabilità e sicurezza',
             print_cat_platform: 'Piattaforme',
-            print_cat_system: 'Sistemi'
+            print_cat_system: 'Sistemi',
+            print_cat_ai: 'IA'
         }
     };
 
@@ -898,7 +904,7 @@
             },
 
             _renderToolkit() {
-                const toolkitOrder = ['pm', 'qa', 'lang', 'cloud', 'db', 'analytics', 'platform', 'system'];
+                const toolkitOrder = ['pm', 'qa', 'lang', 'cloud', 'db', 'analytics', 'platform', 'system', 'ai'];
                 const container = this.DOMElements.toolkitContainer;
                 container.innerHTML = '';
                 toolkitOrder.forEach(key => {
@@ -1130,7 +1136,8 @@
                         ['cloud', 'infographics_cat_cloud', 'Cloud & DevOps'],
                         ['analytics', 'infographics_cat_analytics', 'Analytics'],
                         ['platform', 'infographics_cat_platform', 'Platforms'],
-                        ['system', 'infographics_cat_system', 'Systems']
+                        ['system', 'infographics_cat_system', 'Systems'],
+                        ['ai', 'infographics_cat_ai', 'AI practice']
                     ];
                     this._renderDonutChart(container, order.map(([id, key, fallback]) => ({
                         label: this._s(key, fallback),
@@ -1353,12 +1360,15 @@
                     'Kanban': ['Kanban', 'Trello'],
                     'CMMI': ['CMMI', 'ISO Standards'],
                     'ISO Standards': ['ISO Standards', 'CISA', 'CISM', 'CISSP'],
-                    'Risk Mgmt': ['Risk Management', 'Owasp', 'Strategic Planning', 'CMMI', 'ISO Standards']
+                    'Risk Mgmt': ['Risk Management', 'Owasp', 'Strategic Planning', 'CMMI', 'ISO Standards'],
+                    'AI Expertise': ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations']
                 };
                 return competencyMap[competencyLabel] || [];
             },
 
             _topicSignatures(topicId) {
+                const live = this._liveTopics && this._liveTopics[topicId];
+                if (live && Array.isArray(live.skills) && live.skills.length) return live.skills;
                 const map = {
                     pm: ['MS Project', 'Strategic Planning', 'Risk Management', 'TestRail', 'Stakeholder Mgmt'],
                     qa: ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon'],
@@ -1366,16 +1376,21 @@
                     devops: ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP'],
                     cloud: ['AWS', 'Azure DevOps', 'GCP', 'Docker'],
                     strategy: ['Strategic Planning', 'Risk Management', 'CMMI', 'ISO Standards'],
-                    relations: ['Stakeholder Mgmt']
+                    relations: ['Stakeholder Mgmt'],
+                    ai: ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations']
                 };
                 return map[topicId] || this._skillsForTopic(topicId);
             },
 
-            _topicMatchesTech(topicId, tech) {
-                return this._topicSignatures(topicId).some((s) => tech.includes(s));
+            _topicMatchesTech(topicId, tech, index) {
+                const live = this._liveTopics && this._liveTopics[topicId];
+                if (live && Array.isArray(live.roles) && live.roles.length && live.roles.map(Number).includes(index)) return true;
+                return this._topicSignatures(topicId).some((skill) => tech.includes(skill));
             },
 
             _skillsForTopic(topicId) {
+                const live = this._liveTopics && this._liveTopics[topicId];
+                if (live && Array.isArray(live.skills) && live.skills.length) return live.skills;
                 const radar = {
                     pm: 'Project Mgmt',
                     qa: 'QA & Automation',
@@ -1383,7 +1398,8 @@
                     devops: 'DevOps Strategy',
                     cloud: 'Cloud Platforms',
                     strategy: 'Risk Mgmt',
-                    relations: 'Stakeholder Mgmt'
+                    relations: 'Stakeholder Mgmt',
+                    ai: 'AI Expertise'
                 }[topicId];
                 return radar ? this._getSkillsForCompetency(radar) : [];
             },
@@ -1505,10 +1521,10 @@
                 document.querySelectorAll('.filter-match, .filter-no-match').forEach(el => el.classList.remove('filter-match', 'filter-no-match'));
 
                 let visibleCount = 0;
-                document.querySelectorAll('#experience-container .experience-item').forEach(item => {
+                document.querySelectorAll('#experience-container .experience-item').forEach((item, index) => {
                     const tech = JSON.parse(item.dataset.tech);
                     const isMatch = this.state.activeTopic
-                        ? this._topicMatchesTech(this.state.activeTopic, tech)
+                        ? this._topicMatchesTech(this.state.activeTopic, tech, index)
                         : (!hasFilters || [...skills].every(s => tech.includes(s)));
 
                     item.style.display = 'block';
@@ -1525,10 +1541,10 @@
                     }
                 });
 
-                document.querySelectorAll('#timeline-container .timeline-item').forEach(item => {
+                document.querySelectorAll('#timeline-container .timeline-item').forEach((item, index) => {
                     const tech = JSON.parse(item.dataset.tech);
                     const isMatch = this.state.activeTopic
-                        ? this._topicMatchesTech(this.state.activeTopic, tech)
+                        ? this._topicMatchesTech(this.state.activeTopic, tech, index)
                         : (!hasFilters || [...skills].every(s => tech.includes(s)));
                     item.classList.toggle('filtered-out', (hasFilters || this.state.activeTopic) && !isMatch);
                 });
@@ -3517,11 +3533,19 @@
                 if (!Array.isArray(base.techUsed)) base.techUsed = [];
                 if (!base.details) base.details = {};
                 const bullets = role.bullets || {};
+                const fileDetails = (source >= 0 && fileExperiences[source] && fileExperiences[source].details) || {};
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
                     const lines = Array.isArray(bullets[lang])
                         ? bullets[lang].map((line) => this._cleanLiveText(line, 400)).filter(Boolean).slice(0, 8)
                         : [];
-                    if (lines.length) base.details[lang] = lines;
+                    const fileLines = Array.isArray(fileDetails[lang]) ? fileDetails[lang] : [];
+                    const publishedIsPrefix = lines.length > 0 && fileLines.length > lines.length
+                        && lines.every((line, at) => line === this._cleanLiveText(fileLines[at], 400));
+                    if (publishedIsPrefix) {
+                        base.details[lang] = fileLines.map((line) => this._cleanLiveText(line, 400)).filter(Boolean).slice(0, 8);
+                    } else if (lines.length) {
+                        base.details[lang] = lines;
+                    }
                 });
                 const english = (base.details.en && base.details.en.length) ? base.details.en : [title];
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
@@ -3595,6 +3619,30 @@
                 if (live.glance && live.glance.note) keys.infographics_live = clean(live.glance.note, 120);
                 if (live.education && live.education.educationTitle) keys.education_subheading = clean(live.education.educationTitle, 80);
                 if (live.education && live.education.certsTitle) keys.certs_subheading = clean(live.education.certsTitle, 80);
+                const feedback = live.feedback || {};
+                const testimonials = feedback.testimonials || {};
+                const messageForm = feedback.message || {};
+                const ratingForm = feedback.rating || {};
+                const fields = feedback.fields || {};
+                if (testimonials.title) keys.testimonials_title = clean(testimonials.title, 80);
+                if (messageForm.tab) keys.widget_tab_message = clean(messageForm.tab, 40);
+                if (messageForm.lead) keys.widget_message_lead = clean(messageForm.lead, 180);
+                if (messageForm.topic) keys.form_label_topic = clean(messageForm.topic, 40);
+                if (messageForm.body) keys.form_label_message = clean(messageForm.body, 40);
+                if (messageForm.attachment) keys.form_label_attachment = clean(messageForm.attachment, 60);
+                if (messageForm.attach) keys.form_button_attach = clean(messageForm.attach, 40);
+                if (messageForm.send) keys.form_button_send = clean(messageForm.send, 40);
+                if (ratingForm.tab) keys.widget_tab_rate = clean(ratingForm.tab, 40);
+                if (ratingForm.lead) keys.widget_rating_lead = clean(ratingForm.lead, 180);
+                if (ratingForm.label) keys.form_label_rating = clean(ratingForm.label, 40);
+                if (ratingForm.comments) keys.form_label_comments = clean(ratingForm.comments, 60);
+                if (ratingForm.submit) keys.form_button_submit_rating = clean(ratingForm.submit, 40);
+                if (fields.name) keys.form_label_name = clean(fields.name, 40);
+                if (fields.email) keys.form_label_email = clean(fields.email, 40);
+                const topicKeys = { default: 'topic_option_default', opportunity: 'topic_option_opportunity', inquiry: 'topic_option_inquiry', feedback: 'topic_option_feedback', other: 'topic_option_other' };
+                (feedback.topics || []).forEach((item) => {
+                    if (item && topicKeys[item.id] && item.label) keys[topicKeys[item.id]] = clean(item.label, 80);
+                });
                 if (live.theme && live.theme.label) keys.toolbar_theme = clean(live.theme.label, 40);
                 if (live.theme && live.theme.tooltip) keys.tooltip_theme = clean(live.theme.tooltip, 80);
                 (live.toolbar && live.toolbar.items || []).forEach((item) => {
@@ -3614,8 +3662,11 @@
                 });
                 if (Array.isArray(live.toolkit && live.toolkit.groups)) {
                     const next = {};
+                    const seen = new Set();
                     live.toolkit.groups.forEach((group) => {
-                        if (!group.key || group.hidden) return;
+                        if (!group.key) return;
+                        seen.add(group.key);
+                        if (group.hidden) return;
                         const previous = this._fileSkills[group.key] || [];
                         next[group.key] = (group.skills || []).filter((skill) => skill && !skill.hidden && clean(skill.name, 60)).map((skill) => {
                             const name = clean(skill.name, 60);
@@ -3623,6 +3674,9 @@
                             const stars = Math.min(5, Math.max(1, Number(skill.stars) || old.stars || 3));
                             return { name, stars, years: clean(skill.years, 20) || old.years || '', icon: old.icon || 'assets/icons/puzzle.svg' };
                         });
+                    });
+                    Object.keys(this._fileSkills || {}).forEach((key) => {
+                        if (!seen.has(key)) next[key] = JSON.parse(JSON.stringify(this._fileSkills[key]));
                     });
                     this.data.skills = next;
                 }
@@ -3636,6 +3690,21 @@
                 this._renderGlanceKpis();
                 this._forceShowAllContent();
                 this.translatePage(this.state.lang || 'en');
+                this._populateTopicDropdown();
+            },
+
+            _ratingGlyph(mark) {
+                return { star: '★', check: '✓', circle: '●', thumb: '👍', diamond: '◆', shield: '⛨' }[mark] || '★';
+            },
+
+            _livePortrait(profile) {
+                const kind = profile.photoKind || (profile.photoRemoved ? 'placeholder' : '');
+                if (kind === 'placeholder' || profile.photoRemoved) return 'assets/avatars/placeholder.svg';
+                if (kind === 'avatar' && /^(atlas|nova|cedar|iris|sol|marlow)$/.test(profile.avatar || '')) return 'assets/avatars/' + profile.avatar + '.svg';
+                const src = String(profile.photo || '');
+                if (src.indexOf('data:image/') === 0) return src;
+                if (/^https:\/\/(firebasestorage\.googleapis\.com|storage\.googleapis\.com)\//.test(src)) return src;
+                return '';
             },
 
             _applyLiveChrome() {
@@ -3668,11 +3737,34 @@
                 if (certs && profile.certs != null) certs.textContent = clean(profile.certs, 120);
                 const photo = document.getElementById('profile-photo');
                 if (photo) {
-                    if (profile.photoRemoved) photo.classList.add('cv-live-off');
-                    else {
-                        photo.classList.remove('cv-live-off');
-                        if (profile.photo && String(profile.photo).indexOf('data:image/') === 0) photo.src = profile.photo;
+                    const portrait = this._livePortrait(profile);
+                    photo.classList.remove('cv-live-off');
+                    if (portrait) photo.src = portrait;
+                }
+                const feedback = live.feedback;
+                if (feedback) {
+                    const widgetOn = !(feedback.widget && feedback.widget.hidden);
+                    const messageOn = widgetOn && !(feedback.message && feedback.message.hidden);
+                    const ratingOn = widgetOn && !(feedback.rating && feedback.rating.hidden);
+                    show('testimonials-section', !(feedback.testimonials && feedback.testimonials.hidden));
+                    show('contact-widget', widgetOn && (messageOn || ratingOn));
+                    show('contact-widget-fab', widgetOn && (messageOn || ratingOn));
+                    show('message-tab', messageOn);
+                    show('message-pane', messageOn);
+                    show('rating-tab', ratingOn);
+                    show('rating-pane', ratingOn);
+                    if (!messageOn && ratingOn) {
+                        const messageTab = document.getElementById('message-tab');
+                        const ratingTab = document.getElementById('rating-tab');
+                        const messagePane = document.getElementById('message-pane');
+                        const ratingPane = document.getElementById('rating-pane');
+                        if (messageTab) { messageTab.classList.remove('active'); messageTab.setAttribute('aria-selected', 'false'); }
+                        if (messagePane) messagePane.classList.remove('active');
+                        if (ratingTab) { ratingTab.classList.add('active'); ratingTab.setAttribute('aria-selected', 'true'); }
+                        if (ratingPane) ratingPane.classList.add('active');
                     }
+                    const glyph = this._ratingGlyph(feedback.rating && feedback.rating.mark);
+                    document.querySelectorAll('#star-rating .star').forEach((star) => { star.textContent = glyph; });
                 }
                 const contact = live.contact || {};
                 ['phone', 'email', 'linkedin', 'whatsapp', 'telegram', 'location'].forEach((key) => {
@@ -3724,9 +3816,14 @@
                 show('competencies-section', !(live.competencies && live.competencies.hidden));
                 if (live.competencies && Array.isArray(live.competencies.items)) {
                     const list = document.getElementById('competencies-list');
+                    this._liveTopics = {};
                     if (list) {
                         list.innerHTML = live.competencies.items.filter((item) => item && !item.hidden && clean(item.label, 80)).map((item) => {
                             const id = (clean(item.id, 24).toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'topic');
+                            this._liveTopics[id] = {
+                                skills: Array.isArray(item.skills) ? item.skills.filter((name) => typeof name === 'string') : [],
+                                roles: Array.isArray(item.roles) ? item.roles.map(Number).filter((value) => !Number.isNaN(value)) : []
+                            };
                             return `<li><button type="button" class="competency-item" data-competency="${this._esc(id)}" aria-pressed="false">${this._esc(clean(item.label, 80))}</button></li>`;
                         }).join('');
                     }

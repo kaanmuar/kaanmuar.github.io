@@ -78,7 +78,7 @@ FN-15 Core competency filters and dims unrelated CV content
     [Tags]    FN-15
     FN-15    index.html    ${FALSE}
 
-FN-16 All seven core competencies are clickable filters
+FN-16 All eight core competencies are clickable filters
     [Tags]    FN-16
     FN-16    index.html    ${FALSE}
 

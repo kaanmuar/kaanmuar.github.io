@@ -1,4 +1,4 @@
-const TOPICS = ['pm', 'qa', 'lead', 'devops', 'cloud', 'strategy', 'relations'];
+const TOPICS = ['pm', 'qa', 'lead', 'devops', 'cloud', 'strategy', 'relations', 'ai'];
 
 describe('Core competency filters', () => {
   beforeEach(() => {
@@ -6,8 +6,8 @@ describe('Core competency filters', () => {
     cy.visitCV();
   });
 
-  it('exposes seven clickable competency buttons', () => {
-    cy.get('.competency-item').should('have.length', 7).and('have.attr', 'aria-pressed', 'false');
+  it('exposes eight clickable competency buttons', () => {
+    cy.get('.competency-item').should('have.length', 8).and('have.attr', 'aria-pressed', 'false');
     TOPICS.forEach((id) => {
       cy.get(`.competency-item[data-competency="${id}"]`).should('be.visible');
     });
@@ -19,7 +19,7 @@ describe('Core competency filters', () => {
       cy.get('html').should('have.class', 'topic-focus');
       cy.get(`.competency-item[data-competency="${id}"]`).should('have.attr', 'aria-pressed', 'true');
       cy.get('.competency-item.topic-match').should('have.length', 1);
-      cy.get('.competency-item.topic-dim').should('have.length', 6);
+      cy.get('.competency-item.topic-dim').should('have.length', 7);
       cy.get('.experience-item.topic-match').should('exist');
       cy.get('.experience-item.topic-dim').should('exist');
       cy.get('.timeline-item.topic-match').should('exist');

@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const { CVPage } = require('./CVPage.js');
 const { forceGlancePair, prepareCV, waitForCVApp } = require('./helpers.js');
 
-const TOPICS = ['pm', 'qa', 'lead', 'devops', 'cloud', 'strategy', 'relations'];
+const TOPICS = ['pm', 'qa', 'lead', 'devops', 'cloud', 'strategy', 'relations', 'ai'];
 
 test.describe('Core competency filters', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,9 +10,9 @@ test.describe('Core competency filters', () => {
     await cv.visit({ theme: 'light' });
   });
 
-  test('exposes seven clickable competency buttons', async ({ page }) => {
+  test('exposes eight clickable competency buttons', async ({ page }) => {
     const items = page.locator('.competency-item');
-    await expect(items).toHaveCount(7);
+    await expect(items).toHaveCount(8);
     for (const id of TOPICS) {
       await expect(page.locator(`.competency-item[data-competency="${id}"]`)).toBeVisible();
       await expect(page.locator(`.competency-item[data-competency="${id}"]`)).toHaveAttribute('aria-pressed', 'false');
@@ -25,7 +25,7 @@ test.describe('Core competency filters', () => {
       await expect(page.locator('html')).toHaveClass(/topic-focus/);
       await expect(page.locator(`.competency-item[data-competency="${id}"]`)).toHaveAttribute('aria-pressed', 'true');
       await expect(page.locator('.competency-item.topic-match')).toHaveCount(1);
-      await expect(page.locator('.competency-item.topic-dim')).toHaveCount(6);
+      await expect(page.locator('.competency-item.topic-dim')).toHaveCount(7);
       await expect(page.locator('.experience-item.topic-match')).not.toHaveCount(0);
       await expect(page.locator('.experience-item.topic-dim')).not.toHaveCount(0);
       await expect(page.locator('.timeline-item.topic-match')).not.toHaveCount(0);
