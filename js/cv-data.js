@@ -73,6 +73,13 @@
                         { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'assets/icons/database.svg'},
                         { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/eclipseide/2C2255'},
                         { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'assets/icons/terminal.svg'}
+                    ],
+                    ai: [
+                        { name: 'Cursor', stars: 5, years: '1 Yr', icon: 'assets/icons/puzzle.svg' },
+                        { name: 'Claude', stars: 5, years: '1 Yr', icon: 'assets/icons/brain.svg' },
+                        { name: 'GitHub Copilot', stars: 4, years: '1 Yr', icon: 'assets/icons/puzzle.svg' },
+                        { name: 'ChatGPT', stars: 5, years: '1 Yr', icon: 'assets/icons/brain.svg' },
+                        { name: 'Custom personalizations', stars: 4, years: '1 Yr', icon: 'assets/icons/strategy.svg' }
                     ]
                 },
                 experiences: [
@@ -84,45 +91,51 @@
                                 'Acted as a key technical interviewer for QA roles (from Junior to Architect), establishing a high bar for talent acquisition and ensuring team excellence.',
                                 'Architected and implemented scalable test automation strategies using Cypress, Playwright, WebdriverIO, and Selenium for various client applications.',
                                 'Provided expert consultancy on specialized automation, including for Salesforce (Provar) and ServiceNow (ATF) ecosystems.',
-                                'Managed project workflows and defect tracking using Jira and TestRail, providing clear visibility to all stakeholders.'
+                                'Managed project workflows and defect tracking using Jira and TestRail, providing clear visibility to all stakeholders.',
+                                'Over the last year, applied AI in delivery work with Cursor, Claude, GitHub Copilot, and ChatGPT, including custom personalizations for the QA and project workflow.'
                             ],
                             es: [
                                 'Presté servicios expertos de QA y liderazgo de proyectos en más de 15 proyectos de clientes en diversos sectores, incluidos FinTech, HealthTech y retail.',
                                 'Actué como entrevistador técnico clave para roles de QA (desde Junior hasta Arquitecto), estableciendo un alto estándar para la adquisición de talento y asegurando la excelencia del equipo.',
                                 'Diseñé e implementé estrategias de automatización de pruebas escalables utilizando Cypress, Playwright, WebdriverIO y Selenium para diversas aplicaciones de clientes.',
                                 'Proporcioné consultoría experta en automatización especializada, incluyendo para ecosistemas de Salesforce (Provar) y ServiceNow (ATF).',
-                                'Gestioné los flujos de trabajo del proyecto, el seguimiento de defectos y los informes utilizando Jira y TestRail, proporcionando una visibilidad clara a todas las partes interesadas.'
+                                'Gestioné los flujos de trabajo del proyecto, el seguimiento de defectos y los informes utilizando Jira y TestRail, proporcionando una visibilidad clara a todas las partes interesadas.',
+                                'Durante el último año apliqué IA en el trabajo de entrega con Cursor, Claude, GitHub Copilot y ChatGPT, con personalizaciones propias para el flujo de QA y de proyecto.'
                             ],
                             pt: [
                                 'Forneci serviços especializados de QA e liderança de projetos em mais de 15 projetos de clientes em diversos setores, incluindo FinTech, HealthTech e varejo.',
                                 'Atuei como entrevistador técnico principal para vagas de QA (de Júnior a Arquiteto), estabelecendo um alto padrão para aquisição de talentos e garantindo a excelência da equipe.',
                                 'Arquitetei e implementei estratégias de automação de testes escaláveis usando Cypress, Playwright, WebdriverIO e Selenium para várias aplicações de clientes.',
                                 'Forneci consultoria especializada em automação, inclusive para ecossistemas Salesforce (Provar) e ServiceNow (ATF).',
-                                'Gerenciei fluxos de trabalho de projetos, rastreamento de defeitos e relatórios usando Jira e TestRail, proporcionando visibilidade clara para todos os stakeholders.'
+                                'Gerenciei fluxos de trabalho de projetos, rastreamento de defeitos e relatórios usando Jira e TestRail, proporcionando visibilidade clara para todos os stakeholders.',
+                                'No último ano, apliquei IA no trabalho de entrega com Cursor, Claude, GitHub Copilot e ChatGPT, incluindo personalizações próprias para o fluxo de QA e de projeto.'
                             ],
                             de: [
                                 'Erbringung von Experten-QA- und Projektleitungsdiensten für über 15 Kundenprojekte in verschiedenen Sektoren, einschließlich FinTech, HealthTech und Einzelhandel.',
                                 'Fungierte als wichtiger technischer Interviewer für QA-Rollen (vom Junior bis zum Architekten), um einen hohen Standard bei der Talentakquise zu etablieren und die Team-Exzellenz zu sichern.',
                                 'Architektur und Implementierung skalierbarer Testautomatisierungsstrategien mit Cypress, Playwright, WebdriverIO und Selenium für verschiedene Kundenanwendungen.',
                                 'Bereitstellung von Fachberatung zu spezialisierter Automatisierung, einschließlich für Salesforce (Provar)- und ServiceNow (ATF)-Ökosysteme.',
-                                'Verwaltung von Projekt-Workflows, Fehlerverfolgung und Berichterstattung mit Jira und TestRail, um allen Beteiligten klare Sichtbarkeit zu bieten.'
+                                'Verwaltung von Projekt-Workflows, Fehlerverfolgung und Berichterstattung mit Jira und TestRail, um allen Beteiligten klare Sichtbarkeit zu bieten.',
+                                'Im letzten Jahr setzte ich KI in der Lieferarbeit mit Cursor, Claude, GitHub Copilot und ChatGPT ein, einschließlich eigener Anpassungen für den QA- und Projektablauf.'
                             ],
                             fr: [
                                 'Fourniture de services experts en QA et en direction de projet pour plus de 15 projets clients dans divers secteurs, notamment la FinTech, la HealthTech et le commerce de détail.',
                                 'A agi en tant qu\'intervieweur technique clé pour les rôles QA (du Junior à l\'Architecte), établissant une norme élevée pour l\'acquisition de talents et garantissant l\'excellence de l\'équipe.',
                                 'Conception et mise en œuvre de stratégies d\'automatisation des tests évolutives à l\'aide de Cypress, Playwright, WebdriverIO et Selenium pour diverses applications clientes.',
                                 'Fourniture de conseils experts sur l\'automatisation spécialisée, y compris pour les écosystèmes Salesforce (Provar) et ServiceNow (ATF).',
-                                'Gestion des flux de travail de projet, du suivi des bogues et des rapports à l\'aide de Jira et TestRail, offrant une visibilité claire à toutes les parties prenantes.'
+                                'Gestion des flux de travail de projet, du suivi des bogues et des rapports à l\'aide de Jira et TestRail, offrant une visibilité claire à toutes les parties prenantes.',
+                                'Au cours de la dernière année, j\'ai appliqué l\'IA au travail de livraison avec Cursor, Claude, GitHub Copilot et ChatGPT, y compris des personnalisations pour le flux QA et projet.'
                             ],
                             it: [
                                 'Fornitura di servizi esperti di QA e di leadership di progetto per oltre 15 progetti di clienti in diversi settori, tra cui FinTech, HealthTech e retail.',
                                 'Ho agito come intervistatore tecnico chiave per i ruoli di QA (da Junior ad Architetto), stabilendo uno standard elevato per l\'acquisizione di talenti e garantendo l\'eccellenza del team.',
                                 'Progettazione e implementazione di strategie de automazione dei test scalabili utilizzando Cypress, Playwright, WebdriverIO e Selenium per varie applicazioni dei clienti.',
                                 'Fornitura di consulenza esperta sull\'automazione specializzata, anche per gli ecosistemi Salesforce (Provar) e ServiceNow (ATF).',
-                                'Gestione dei flussi de lavoro dei progetti, del tracciamento dei difetti e della reportistica utilizzando Jira e TestRail, fornendo una chiara visibilità a tutti gli stakeholder.'
+                                'Gestione dei flussi de lavoro dei progetti, del tracciamento dei difetti e della reportistica utilizzando Jira e TestRail, fornendo una chiara visibilità a tutti gli stakeholder.',
+                                'Nell\'ultimo anno ho applicato l\'IA al lavoro di consegna con Cursor, Claude, GitHub Copilot e ChatGPT, incluse personalizzazioni per il flusso di QA e di progetto.'
                             ]
                         },
-                        techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'WebdriverIO', 'TestNG', 'Jasmin', 'Provar', 'ServiceNow ATF', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Gauge', 'Testlio', 'New Relic', 'Jest', 'Mocha', 'Chai', 'Watir']
+                        techUsed: ['Agile', 'Scrum', 'Kanban', 'Jira', 'TestRail', 'Cypress', 'Playwright', 'Selenium', 'WebdriverIO', 'TestNG', 'Jasmin', 'Provar', 'ServiceNow ATF', 'JavaScript', 'TypeScript', 'Appium', 'Katalon', 'Gauge', 'Testlio', 'New Relic', 'Jest', 'Mocha', 'Chai', 'Watir', 'Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations']
                     },
                     {
                         title: 'Senior Technical Project Manager & Consultant', company: 'RockStar Coders Agency', logo: 'assets/icons/star.svg', dates: 'Apr 2019 - Mar 2021',
@@ -772,6 +785,7 @@
                         competency_cloud: "Cloud Platforms (AWS, Azure, GCP)",
                         competency_strategy: "Strategic Business Acumen",
                         competency_relations: "Stakeholder & Client Relations",
+                        competency_ai: "AI Expertise",
                         competency_focus_status: "Focusing %TOPIC%. Click anywhere else to restore.",
                         languages_title: "Languages",
                         lang_native: "Native",
@@ -791,6 +805,7 @@
                         toolkit_analytics: "Analytics & Monitoring:",
                         toolkit_platform: "Platforms & Business Tools:",
                         toolkit_system: "General & System Tools:",
+                        toolkit_ai: "AI practice:",
                         experience_title: "Professional Experience",
                         education_title: "Education & Certifications",
                         infographics_title: "Career at a Glance",
@@ -960,6 +975,7 @@
                         competency_cloud: "Plataformas en la Nube (AWS, Azure, GCP)",
                         competency_strategy: "Visión Estratégica de Negocio",
                         competency_relations: "Relaciones con Clientes",
+                        competency_ai: "Experiencia en IA",
                         competency_focus_status: "Enfocando %TOPIC%. Haz clic en cualquier otro lugar para restaurar.",
                         languages_title: "Idiomas",
                         lang_native: "Nativo",
@@ -979,6 +995,7 @@
                         toolkit_analytics: "Analítica y Monitoreo:",
                         toolkit_platform: "Plataformas y Herramientas de Negocio:",
                         toolkit_system: "Herramientas Generales y de Sistema:",
+                        toolkit_ai: "Práctica de IA:",
                         experience_title: "Experiencia Profesional",
                         education_title: "Educación y Certificaciones",
                         infographics_title: "Carrera en un Vistazo",
@@ -1149,6 +1166,7 @@
                         competency_cloud: "Plataformas de Nuvem (AWS, Azure, GCP)",
                         competency_strategy: "Visão Estratégica de Negócios",
                         competency_relations: "Relações com Stakeholders e Clientes",
+                        competency_ai: "Experiência em IA",
                         competency_focus_status: "Foco em %TOPIC%. Clique em qualquer outro lugar para restaurar.",
                         languages_title: "Idiomas",
                         lang_native: "Nativo",
@@ -1168,6 +1186,7 @@
                         toolkit_analytics: "Análise e Monitoramento:",
                         toolkit_platform: "Plataformas e Ferramentas de Negócio:",
                         toolkit_system: "Ferramentas Gerais e de Sistema:",
+                        toolkit_ai: "Prática de IA:",
                         experience_title: "Experiência Profissional",
                         education_title: "Educação e Certificações",
                         infographics_title: "Carreira em Resumo",
@@ -1337,6 +1356,7 @@
                         competency_cloud: "Cloud-Plattformen (AWS, Azure, GCP)",
                         competency_strategy: "Strategisches Geschäftsverständnis",
                         competency_relations: "Stakeholder- & Kundenbeziehungen",
+                        competency_ai: "KI-Expertise",
                         competency_focus_status: "Fokus auf %TOPIC%. Klicken Sie irgendwo sonst, um zurückzusetzen.",
                         languages_title: "Sprachen",
                         lang_native: "Muttersprache",
@@ -1356,6 +1376,7 @@
                         toolkit_analytics: "Analyse & Überwachung:",
                         toolkit_platform: "Plattformen & Business-Tools:",
                         toolkit_system: "Allgemeine & System-Tools:",
+                        toolkit_ai: "KI-Praxis:",
                         experience_title: "Berufserfahrung",
                         education_title: "Ausbildung & Zertifizierungen",
                         infographics_title: "Karriere im Überblick",
@@ -1525,6 +1546,7 @@
                         competency_cloud: "Plateformes Cloud (AWS, Azure, GCP)",
                         competency_strategy: "Sens Stratégique des Affaires",
                         competency_relations: "Relations avec les Parties Prenantes et Clients",
+                        competency_ai: "Expertise en IA",
                         competency_focus_status: "Focus sur %TOPIC%. Cliquez ailleurs pour rétablir la vue.",
                         languages_title: "Langues",
                         lang_native: "Natif",
@@ -1544,6 +1566,7 @@
                         toolkit_analytics: "Analyse & Surveillance:",
                         toolkit_platform: "Plateformes & Outils Métier:",
                         toolkit_system: "Outils Généraux & Système:",
+                        toolkit_ai: "Pratique IA :",
                         experience_title: "Expérience Professionnelle",
                         education_title: "Formation & Certifications",
                         infographics_title: "Carrière en un Coup d'Œil",
@@ -1713,6 +1736,7 @@
                         competency_cloud: "Piattaforme Cloud (AWS, Azure, GCP)",
                         competency_strategy: "Acume Strategico Aziendale",
                         competency_relations: "Relazioni con Stakeholder e Clienti",
+                        competency_ai: "Competenza IA",
                         competency_focus_status: "Focus su %TOPIC%. Fai clic altrove per ripristinare.",
                         languages_title: "Lingue",
                         lang_native: "Nativo",
@@ -1732,6 +1756,7 @@
                         toolkit_analytics: "Analisi e Monitoraggio:",
                         toolkit_platform: "Piattaforme e Strumenti Aziendali:",
                         toolkit_system: "Strumenti Generali e di Sistema:",
+                        toolkit_ai: "Pratica IA:",
                         experience_title: "Esperienza Professionale",
                         education_title: "Istruzione e Certificazioni",
                         infographics_title: "Carriera in Breve",

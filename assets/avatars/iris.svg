@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-label="Iris">
+  <circle cx="40" cy="40" r="40" fill="#e7eef2"/>
+  <path d="M16 74c5-18 14-25 24-25s19 7 24 25" fill="#7a3048"/>
+  <circle cx="40" cy="33" r="13" fill="#f0d2b4"/>
+  <path d="M22 40c2-18 10-26 18-26s16 8 18 26c-4-6-10-9-18-9s-14 3-18 9z" fill="#6b3a28"/>
+  <circle cx="35" cy="33" r="1.2" fill="#2b241c"/>
+  <circle cx="45" cy="33" r="1.2" fill="#2b241c"/>
+</svg>

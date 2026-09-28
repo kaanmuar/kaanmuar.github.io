@@ -131,6 +131,16 @@ service cloud.firestore {
       allow create, update, delete: if isOwner() && id == 'live';
     }
 
+    match /cvPhotos/{id} {
+      allow get, list: if isOwner();
+      allow create: if isOwner()
+        && request.resource.data.keys().hasOnly(['url', 'createdAt'])
+        && request.resource.data.url is string
+        && request.resource.data.url.size() < 500
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
     match /abuse/{id} {
       allow get: if id == 'forms';
       allow list, create, update, delete: if false;

@@ -356,17 +356,17 @@
     },
     {
       id: 'FN-16', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
-      title: 'All seven core competencies are clickable filters',
+      title: 'All eight core competencies are clickable filters',
       where: '#competencies-list .competency-item',
       when: 'Sidebar competencies are rendered.',
-      how: 'Exactly seven buttons: pm qa lead devops cloud strategy relations.',
+      how: 'Exactly eight buttons: pm qa lead devops cloud strategy relations ai.',
       async run({ cv }) {
         const items = [...cv.document.querySelectorAll('.competency-item')];
         const ids = items.map((el) => el.dataset.competency);
-        assert(items.length === 7, 'expected 7 competencies, got ' + items.length);
-        assert(ids.join(',') === 'pm,qa,lead,devops,cloud,strategy,relations', 'unexpected ids: ' + ids.join(','));
+        assert(items.length === 8, 'expected 8 competencies, got ' + items.length);
+        assert(ids.join(',') === 'pm,qa,lead,devops,cloud,strategy,relations,ai', 'unexpected ids: ' + ids.join(','));
         items.forEach((el) => assert(el.getAttribute('aria-pressed') === 'false', el.dataset.competency + ' should start unpressed'));
-        return '7 competency filters';
+        return '8 competency filters';
       }
     },
     {

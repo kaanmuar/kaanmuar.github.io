@@ -16,7 +16,7 @@
   {"id":"FN-13","layer":"Functional","title":"Empty message form stays disabled","path":"index.html","phone":false},
   {"id":"FN-14","layer":"Functional","title":"Tour starts, waits for Next, then closes","path":"index.html","phone":false},
   {"id":"FN-15","layer":"Functional","title":"Core competency filters and dims unrelated CV content","path":"index.html","phone":false},
-  {"id":"FN-16","layer":"Functional","title":"All seven core competencies are clickable filters","path":"index.html","phone":false},
+  {"id":"FN-16","layer":"Functional","title":"All eight core competencies are clickable filters","path":"index.html","phone":false},
   {"id":"FN-17","layer":"Functional","title":"Clicking the same competency again restores the CV","path":"index.html","phone":false},
   {"id":"FN-18","layer":"Functional","title":"Switching competencies moves the highlight","path":"index.html","phone":false},
   {"id":"FN-19","layer":"Functional","title":"?topic=qa deep-links the competency filter","path":"index.html?topic=qa","phone":false},
