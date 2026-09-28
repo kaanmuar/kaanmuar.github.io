@@ -41,7 +41,7 @@ The same cases the public suites cover, runnable in the browser against an ifram
 * The catalog scrolls the running case into view. **Dashboard** opens as a splash (close, Escape, or backdrop).
 * Filters include Smoke, Functional, Security, A11y, Admin, Studio, and Mobile.
 * **Report** opens the file options before anything is printed. English is the default language. Graphs, case lines, and the runner comparison are included. Saved runs can be selected, downloaded, printed, or compared.
-* **Runners** on the right edge splits the native view: case list on the left, that runner’s console on the right.
+* **Runners** on the right edge streams each framework’s own process log. Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium are separate suites. The lab does not copy one result into the other tabs. `npm run lab:runners` starts the local process bridge.
 * A lab tour (`hasSeenLabTour`) walks the catalog, filters, scripts, language, suite repo, sprint studio, indicators, pace, watch or background, runners, run, the live page, the native runner logs, the report file, the dashboard, and how to open the tour again. A pulse marks each step. **Live system under test** plays a 4-second clip of checks turning green.
 
 ### Admin panel (`admin.html`)
@@ -58,14 +58,14 @@ The same cases the public suites cover, runnable in the browser against an ifram
 | :------------ | :------------------------------------------------------ |
 | **Frontend** | `HTML5`, `CSS3`, `Vanilla JavaScript (ES6 modules)`, `Tailwind CSS v4`, `Chart.js` |
 | **Backend** | `Firebase (Authentication, Firestore, Storage)` |
-| **Testing** | `Playwright`, `Cypress`, `Robot Framework`, plus in-browser Selenium, WebdriverIO, and Appium views in `js/qa-lab.js` |
+| **Testing** | `Playwright`, `Cypress`, `Robot Framework`, `Selenium WebDriver`, `WebdriverIO`, and `Appium` (each has its own suite and log) |
 | **Analytics** | `Google Analytics` (`js/site-analytics.js`) |
 
 ---
 
 ## 🧪 Automated Testing
 
-`npm test` runs Playwright and Cypress. `npm run test:full` also runs Robot. Playwright starts a local static server on port `8765` when one is not already running.
+`npm test` runs Playwright and Cypress. `npm run test:full` also runs Robot. `npm run test:selenium`, `npm run test:wdio`, and `npm run test:appium` run those suites on their own. `npm run lab:runners` lets the lab page stream each process log. Playwright starts a local static server on port `8765` when one is not already running.
 
 The catalog on [qa-lab.html](https://carlosandmunoz.com/qa-lab.html) lists every case and links to the suite file on `main`.
 

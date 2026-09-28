@@ -1,0 +1,250 @@
+html[data-look] body {
+    background-color: var(--bg, var(--bg-primary));
+    background-image: var(--look-gradient);
+    background-attachment: fixed;
+    color: var(--text, var(--text-secondary));
+}
+
+html[data-look] .main-container,
+html[data-look] .login-box,
+html[data-look] .item-card,
+html[data-look] .filter-container,
+html[data-look] .stat-kpi,
+html[data-look] .stats-card,
+html[data-look] .cv-column,
+html[data-look] .cv-card,
+html[data-look] .response-modal-box,
+html[data-look] .kpi,
+html[data-look] .case-row,
+html[data-look] .detail,
+html[data-look] .fw-ask-card,
+html[data-look] .dash-modal,
+html[data-look] .card,
+html[data-look] .col,
+html[data-look] .ticket,
+html[data-look] .panel {
+    background: var(--look-card);
+    border-color: var(--look-edge);
+    border-radius: var(--look-radius);
+    backdrop-filter: blur(var(--look-blur)) saturate(1.35);
+    -webkit-backdrop-filter: blur(var(--look-blur)) saturate(1.35);
+}
+
+html[data-look] .topbar,
+html[data-look] .tab-bar,
+html[data-look] .admin-bar {
+    background: var(--look-card);
+    border-color: var(--look-edge);
+    backdrop-filter: blur(var(--look-blur)) saturate(1.45);
+    -webkit-backdrop-filter: blur(var(--look-blur)) saturate(1.45);
+}
+
+html[data-look] .sidebar,
+html[data-look] .rail,
+html[data-look] .nav,
+html[data-look] .runner-drawer,
+html[data-look] .mobile-header-controls {
+    background-color: var(--look-bar);
+    background-image: var(--look-bar-gradient);
+    background-attachment: fixed;
+}
+
+html[data-look] .sidebar .text-cyan-400,
+html[data-look] .sidebar a:hover,
+html[data-look] .sidebar .competency-item:hover,
+html[data-look] .sidebar .competency-item:focus-visible,
+html[data-look] .sidebar .competency-item[aria-pressed="true"] {
+    color: var(--sidebar-accent) !important;
+    text-decoration-color: var(--sidebar-accent);
+}
+
+html[data-look] .sidebar .border-cyan-400 {
+    border-color: color-mix(in srgb, var(--sidebar-accent) 55%, transparent) !important;
+}
+
+html[data-look] .sidebar hr {
+    border-color: color-mix(in srgb, var(--text-sidebar-secondary) 35%, transparent);
+    opacity: 1;
+}
+
+html[data-look] .admin-bar,
+html[data-look] .admin-bar h1 {
+    color: var(--text-primary);
+}
+
+html[data-look] .admin-kicker,
+html[data-look] .admin-bar a {
+    color: var(--accent-ink) !important;
+}
+
+html[data-look] .tab-btn.active,
+html[data-look] .btn-primary,
+html[data-look] .bg-cyan-600,
+html[data-look] #dashboard .bg-cyan-600,
+html[data-look] .login-box .bg-cyan-600,
+html[data-look] #cv-pane .bg-cyan-600 {
+    background-color: var(--accent) !important;
+    color: var(--on-accent) !important;
+}
+
+html[data-look] .text-cyan-400,
+html[data-look] .text-cyan-600,
+html[data-look] .text-cyan-700,
+html[data-look] .text-cyan-800,
+html[data-look] .login-box .text-cyan-700,
+html[data-look] #dashboard .text-cyan-700,
+html[data-look] #dashboard .text-cyan-800 {
+    color: var(--accent) !important;
+}
+
+html[data-look] .cv-btn,
+html[data-look] #style-keep {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+}
+
+html[data-look] #style-keep {
+    background: var(--accent);
+    color: var(--on-accent);
+}
+
+#styles-pane h2,
+#styles-pane h3 {
+    font-family: "Source Serif 4", Georgia, serif;
+}
+
+.style-actions,
+.style-color-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.style-actions {
+    margin: 0.75rem 0 1rem;
+}
+
+#style-undo:disabled,
+#style-preview:disabled,
+#style-keep:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+#style-status {
+    margin: 0 0 1rem;
+    font-weight: 600;
+}
+
+.style-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 0.75rem;
+}
+
+.style-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    text-align: left;
+    cursor: pointer;
+    padding: 0.7rem;
+    border: 1px solid var(--border-color, #d5dce3);
+    border-radius: 16px;
+    background: var(--look-card, #fff);
+    color: var(--text-primary, #12181f);
+}
+
+.style-card strong {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 1.05rem;
+}
+
+.style-card em,
+.style-card span {
+    font-style: normal;
+    font-size: 0.78rem;
+    color: var(--text-secondary, #4a5560);
+}
+
+.style-card.is-on {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.style-card-wash {
+    display: block;
+    width: 100%;
+    height: 42px;
+    border-radius: 10px;
+    margin-bottom: 0.35rem;
+}
+
+.style-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0.4rem 0 0.8rem;
+}
+
+.style-swatch {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(18, 24, 31, 0.18);
+    cursor: pointer;
+    padding: 0;
+}
+
+.style-swatch.is-on {
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+.style-color-row input[type="color"] {
+    width: 2.6rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.style-minis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.7rem;
+    margin-top: 0.8rem;
+}
+
+.style-mini {
+    min-height: 108px;
+    padding: 0.55rem;
+    border: 1px solid rgba(18, 24, 31, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.style-mini-bar {
+    height: 10px;
+    border-radius: 999px;
+}
+
+.style-mini-chip,
+.style-mini-btn {
+    border-radius: 999px;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.style-mini strong {
+    font-size: 0.8rem;
+}
+
+@media (max-width: 720px) {
+    .style-minis { grid-template-columns: 1fr 1fr; }
+}

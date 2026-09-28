@@ -1,0 +1,18 @@
+[
+  {"platform":"here","id":"here","group":"here","label":"This device"},
+  {"platform":"profile","id":"s24","group":"phone","label":"Samsung Galaxy S24 · Android 15","width":360,"height":780,"api":35},
+  {"platform":"profile","id":"s24u","group":"phone","label":"Samsung Galaxy S24 Ultra · Android 15","width":384,"height":824,"api":35},
+  {"platform":"profile","id":"s25","group":"phone","label":"Samsung Galaxy S25 · Android 16","width":360,"height":780,"api":36},
+  {"platform":"profile","id":"s25u","group":"phone","label":"Samsung Galaxy S25 Ultra · Android 16","width":384,"height":824,"api":36},
+  {"platform":"profile","id":"s26u","group":"phone","label":"Samsung Galaxy S26 Ultra · Android 16","width":384,"height":832,"api":36},
+  {"platform":"profile","id":"pixel9","group":"phone","label":"Google Pixel 9 · Android 15","width":412,"height":892,"api":35},
+  {"platform":"profile","id":"pixel10","group":"phone","label":"Google Pixel 10 · Android 16","width":412,"height":892,"api":36},
+  {"platform":"profile","id":"oneplus13","group":"phone","label":"OnePlus 13 · Android 15","width":412,"height":892,"api":35},
+  {"platform":"profile","id":"oneplus15","group":"phone","label":"OnePlus 15 · Android 16","width":412,"height":892,"api":36},
+  {"platform":"profile","id":"xiaomi15u","group":"phone","label":"Xiaomi 15 Ultra · Android 15","width":412,"height":892,"api":35},
+  {"platform":"profile","id":"xiaomi17","group":"phone","label":"Xiaomi 17 Pro · Android 16","width":412,"height":915,"api":36},
+  {"platform":"profile","id":"moto-edge60","group":"phone","label":"Motorola Edge 60 · Android 15","width":412,"height":915,"api":35},
+  {"platform":"profile","id":"moto-razr60","group":"phone","label":"Motorola Razr 60 Ultra · Android 16","width":412,"height":892,"api":36},
+  {"platform":"profile","id":"tab-s10","group":"tablet","label":"Samsung Galaxy Tab S10 · Android 15","width":800,"height":1280,"api":35},
+  {"platform":"profile","id":"pixel-tab","group":"tablet","label":"Google Pixel Tablet · Android 15","width":800,"height":1280,"api":35}
+]
