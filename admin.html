@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: Inter, system-ui, sans-serif; background-color: #eef2f4; color: #4a5560; }
@@ -181,25 +180,51 @@
             display: flex; justify-content: space-between; align-items: center; gap: 1rem;
             background: #1a2430; color: #f4f7f8; margin: -1.5rem -1.5rem 1.25rem; padding: 1.15rem 1.5rem; border-radius: 0 0 20px 20px;
         }
-        .admin-kicker { margin: 0; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8fd0d5; }
         .admin-bar h1 { margin: 0; color: #f4f7f8; font-size: 1.7rem; }
+        .section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .section-tools { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+        .source-switch { display: inline-flex; border: 1px solid #d5dce3; border-radius: 999px; background: #fff; padding: 3px; gap: 2px; }
+        .source-switch button { border: 0; background: transparent; color: #4a5560; border-radius: 999px; padding: 0.35rem 0.7rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+        .source-switch button.on { background: #0d6e76; color: #fff; }
+        .source-switch button span { font-weight: 600; opacity: 0.85; }
+        .mail-badge { display: inline-block; margin-left: 0.4rem; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 0.1rem 0.45rem; vertical-align: middle; }
+        .mail-badge.is-real { background: #d7ecee; color: #08545b; }
+        .mail-badge.is-test { background: #f3e6d0; color: #8a4b08; }
+        .list-scroll { max-height: min(62vh, 680px); overflow: auto; padding-right: 0.2rem; }
         .admin-bar a { color: #8fd0d5 !important; }
-        .stats-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-bottom: 1rem; }
+        .stats-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .stats-head h2 { font-family: "Source Serif 4", Georgia, serif; margin: 0; }
+        .stats-head p { margin: 0.2rem 0 0; color: #5c6b76; font-size: 0.85rem; }
+        .stats-tools { display: flex; align-items: flex-end; gap: 0.75rem; flex-wrap: wrap; }
         .stats-head .filter-label { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
         .stats-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
-        .stat-kpi { background: #fff; border: 1px solid #d5dce3; border-radius: 14px; padding: 0.85rem 0.95rem; box-shadow: 0 10px 30px rgba(18, 24, 31, 0.05); }
-        .stat-kpi span { display: block; font-size: 0.75rem; color: #4a5560; }
-        .stat-kpi strong { display: block; margin-top: 0.2rem; font-family: "Source Serif 4", Georgia, serif; font-size: 1.55rem; color: #12181f; }
-        .stat-kpi em { display: block; margin-top: 0.3rem; font-style: normal; font-size: 0.72rem; color: #6b7280; }
+        .stat-kpi { position: relative; overflow: hidden; background: linear-gradient(180deg, #fff, #f4f7f8); border: 1px solid #d5dce3; border-radius: 12px; padding: 0.85rem 0.95rem 0.85rem 1.05rem; box-shadow: 0 8px 24px rgba(18, 24, 31, 0.06); }
+        .stat-kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #0d6e76; }
+        .stat-kpi:nth-child(2)::before { background: #b45309; }
+        .stat-kpi:nth-child(3)::before { background: #3d7a82; }
+        .stat-kpi:nth-child(4)::before { background: #0f766e; }
+        .stat-kpi:nth-child(5)::before { background: #b42318; }
+        .stat-kpi:nth-child(6)::before { background: #4a5560; }
+        .stat-kpi span { display: block; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: #5c6b76; }
+        .stat-kpi strong { display: block; margin-top: 0.15rem; font-family: "Source Serif 4", Georgia, serif; font-size: 1.7rem; color: #12181f; line-height: 1.1; }
+        .stat-kpi em { display: block; margin-top: 0.35rem; font-style: normal; font-size: 0.72rem; color: #6b7280; }
         .stat-kpi em.up { color: #0d6e76; }
         .stat-kpi em.down { color: #b42318; }
-        .stats-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 0.85rem; }
-        .stats-card { background: #fff; border: 1px solid #d5dce3; border-radius: 16px; padding: 1rem; box-shadow: 0 10px 30px rgba(18, 24, 31, 0.05); }
-        .stats-card h3 { margin: 0 0 0.6rem; font-size: 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
+        .stats-card { background: linear-gradient(180deg, rgba(13, 110, 118, 0.08), transparent 48px), #fff; border: 1px solid #d5dce3; border-radius: 16px; padding: 1rem 1rem 0.85rem; box-shadow: 0 10px 30px rgba(18, 24, 31, 0.06); }
+        .stats-card h3 { margin: 0 0 0.65rem; font-family: "Source Serif 4", Georgia, serif; font-size: 1.05rem; color: #12181f; }
         .stats-wide { grid-column: 1 / -1; }
+        .stats-chart svg { width: 100%; height: auto; display: block; }
+        .stats-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 0.85rem; margin-top: 0.55rem; font-size: 0.75rem; color: #4a5560; }
+        .stats-legend i { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 2px; margin-right: 0.3rem; vertical-align: middle; }
+        .stats-empty { margin: 0.4rem 0 0.2rem; color: #5c6b76; font-size: 0.85rem; }
+        .split-row { display: grid; grid-template-columns: 52px 1fr auto; gap: 0.45rem; align-items: center; margin: 0.55rem 0; font-size: 0.8rem; }
+        .h-meter { height: 10px; border-radius: 999px; background: #e6ebf0; overflow: hidden; }
+        .h-meter span { display: block; height: 100%; border-radius: 999px; }
         @media (max-width: 980px) {
             .cv-columns-2, .cv-columns-3 { grid-template-columns: 1fr; }
-            .stats-kpis, .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stats-kpis { grid-template-columns: 1fr 1fr; }
+            .stats-grid { grid-template-columns: 1fr; }
             .admin-bar { margin-left: -1rem; margin-right: -1rem; }
         }
     </style>
@@ -221,7 +246,7 @@
 
 <main id="dashboard" class="container mx-auto p-4 md:p-6 hidden">
     <header class="admin-bar">
-        <div><p class="admin-kicker">Interactive CV</p><h1>Admin</h1></div>
+        <h1>Admin</h1>
         <div class="flex items-center gap-3"><a href="index.html" id="admin-home-dash" class="underline">← Back to CV</a><button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600">Logout</button></div>
     </header>
 
@@ -257,10 +282,17 @@
     </div>
 
     <!-- Messages Pane -->
-    <div id="messages-pane">
-        <div class="flex justify-between items-center mb-4">
+    <div id="messages-pane" data-source="real">
+        <div class="section-head">
             <div class="title-container"><h2 class="text-2xl font-semibold">Inbox Messages</h2><span id="messages-count" class="font-medium text-gray-500"></span></div>
-            <div id="messages-bulk-actions" class="bulk-actions-container"></div>
+            <div class="section-tools">
+                <div class="source-switch" role="group" aria-label="Inbox emails">
+                    <button type="button" data-mail="real" class="on" aria-pressed="true">Real <span data-source-count="real">0</span></button>
+                    <button type="button" data-mail="test" aria-pressed="false">Tests <span data-source-count="test">0</span></button>
+                    <button type="button" data-mail="all" aria-pressed="false">All <span data-source-count="all">0</span></button>
+                </div>
+                <div id="messages-bulk-actions" class="bulk-actions-container"></div>
+            </div>
         </div>
         <div class="filter-container">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -276,14 +308,21 @@
                 <button class="filter-apply-btn bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Apply Filters</button>
             </div>
         </div>
-        <div id="messages-list" class="space-y-4"></div>
+        <div id="messages-list" class="list-scroll space-y-4"></div>
     </div>
 
     <!-- CV Ratings Pane -->
-    <div id="ratings-pane" class="hidden">
-        <div class="flex justify-between items-center mb-4">
+    <div id="ratings-pane" class="hidden" data-source="real">
+        <div class="section-head">
             <div class="title-container"><h2 class="text-2xl font-semibold">CV Ratings</h2><div id="ratings-new-indicator" class="hidden new-indicator"></div><span id="ratings-count" class="font-medium text-gray-500"></span></div>
-            <div id="ratings-bulk-actions" class="bulk-actions-container"></div>
+            <div class="section-tools">
+                <div class="source-switch" role="group" aria-label="Rating emails">
+                    <button type="button" data-mail="real" class="on" aria-pressed="true">Real <span data-source-count="real">0</span></button>
+                    <button type="button" data-mail="test" aria-pressed="false">Tests <span data-source-count="test">0</span></button>
+                    <button type="button" data-mail="all" aria-pressed="false">All <span data-source-count="all">0</span></button>
+                </div>
+                <div id="ratings-bulk-actions" class="bulk-actions-container"></div>
+            </div>
         </div>
         <div class="filter-container">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -298,12 +337,19 @@
                 <button class="filter-apply-btn bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Apply Filters</button>
             </div>
         </div>
-        <div id="ratings-list" class="space-y-4"></div>
+        <div id="ratings-list" class="list-scroll space-y-4"></div>
     </div>
 
     <!-- Other Panes (Rejected, Blocked, Stats) -->
-    <div id="rejected-pane" class="hidden">
-        <div class="flex justify-between items-center mb-4"><div class="title-container"><h2 class="text-2xl font-semibold">Rejected Messages</h2><span id="rejected-count" class="font-medium text-gray-500"></span></div></div>
+    <div id="rejected-pane" class="hidden" data-source="real">
+        <div class="section-head">
+            <div class="title-container"><h2 class="text-2xl font-semibold">Rejected Messages</h2><span id="rejected-count" class="font-medium text-gray-500"></span></div>
+            <div class="source-switch" role="group" aria-label="Rejected emails">
+                <button type="button" data-mail="real" class="on" aria-pressed="true">Real <span data-source-count="real">0</span></button>
+                <button type="button" data-mail="test" aria-pressed="false">Tests <span data-source-count="test">0</span></button>
+                <button type="button" data-mail="all" aria-pressed="false">All <span data-source-count="all">0</span></button>
+            </div>
+        </div>
         <div class="filter-container">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div><label class="filter-label" for="rej-filter-name">Name</label><input type="text" id="rej-filter-name" placeholder="Filter by Name..."></div>
@@ -315,10 +361,17 @@
                 <button class="filter-apply-btn bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Apply Filters</button>
             </div>
         </div>
-        <div id="rejected-list" class="space-y-4"></div>
+        <div id="rejected-list" class="list-scroll space-y-4"></div>
     </div>
-    <div id="blocked-pane" class="hidden">
-        <div class="flex justify-between items-center mb-4"><div class="title-container"><h2 class="text-2xl font-semibold">Blocked Senders</h2><span id="blocked-count" class="font-medium text-gray-500"></span></div></div>
+    <div id="blocked-pane" class="hidden" data-source="real">
+        <div class="section-head">
+            <div class="title-container"><h2 class="text-2xl font-semibold">Blocked Senders</h2><span id="blocked-count" class="font-medium text-gray-500"></span></div>
+            <div class="source-switch" role="group" aria-label="Blocked emails">
+                <button type="button" data-mail="real" class="on" aria-pressed="true">Real <span data-source-count="real">0</span></button>
+                <button type="button" data-mail="test" aria-pressed="false">Tests <span data-source-count="test">0</span></button>
+                <button type="button" data-mail="all" aria-pressed="false">All <span data-source-count="all">0</span></button>
+            </div>
+        </div>
         <div class="filter-container">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div><label class="filter-label" for="block-filter-email">Email</label><input type="email" id="block-filter-email" placeholder="Filter by Email..."></div>
@@ -329,19 +382,27 @@
                 <button class="filter-apply-btn bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700">Apply Filters</button>
             </div>
         </div>
-        <div id="blocked-list" class="space-y-4"></div>
+        <div id="blocked-list" class="list-scroll space-y-4"></div>
     </div>
-    <div id="stats-pane" class="hidden">
+    <div id="stats-pane" class="hidden" data-source="real">
         <div class="stats-head">
-            <div><h2 class="text-2xl font-semibold">Statistics</h2><p class="text-gray-600">Messages, ratings, and moderation across the CV.</p></div>
-            <label class="filter-label" for="stats-range">Range<select id="stats-range"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select></label>
+            <div><h2>Statistics</h2><p id="stats-note">Real emails in this range. Tests stay out until you switch.</p></div>
+            <div class="stats-tools">
+                <div class="source-switch" role="group" aria-label="Statistics emails">
+                    <button type="button" data-mail="real" class="on" aria-pressed="true">Real <span data-source-count="real">0</span></button>
+                    <button type="button" data-mail="test" aria-pressed="false">Tests <span data-source-count="test">0</span></button>
+                    <button type="button" data-mail="all" aria-pressed="false">All <span data-source-count="all">0</span></button>
+                </div>
+                <label class="filter-label" for="stats-range">Range<select id="stats-range"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select></label>
+            </div>
         </div>
         <div id="stats-kpis" class="stats-kpis"></div>
         <div class="stats-grid">
-            <section class="stats-card stats-wide"><h3>Activity</h3><canvas id="stats-trend"></canvas></section>
-            <section class="stats-card"><h3>Rating mix</h3><canvas id="stats-ratings"></canvas></section>
-            <section class="stats-card"><h3>Review status</h3><canvas id="stats-status"></canvas></section>
-            <section class="stats-card stats-wide"><h3>Message topics</h3><canvas id="stats-topics"></canvas></section>
+            <section class="stats-card stats-wide"><h3>Activity</h3><div id="stats-trend" class="stats-chart"></div></section>
+            <section class="stats-card"><h3>Real and test</h3><div id="stats-split"></div></section>
+            <section class="stats-card"><h3>Rating mix</h3><div id="stats-ratings" class="stats-chart"></div></section>
+            <section class="stats-card"><h3>Review status</h3><div id="stats-status" class="stats-chart"></div></section>
+            <section class="stats-card stats-wide"><h3>Message topics</h3><div id="stats-topics" class="stats-chart"></div></section>
         </div>
     </div>
 
@@ -447,7 +508,6 @@
 
     // Global State
     let allMessages = [], allRatings = [], allBlockedSenders = [];
-    let statsCharts = [];
     let dashboardReady = false;
     let mfaResolver = null;
     let totpSecret = null;
@@ -657,6 +717,19 @@
         if (tabKey === 'stats') renderStatisticsGraph();
     }
     Object.keys(tabButtons).forEach(key => tabButtons[key].addEventListener('click', () => switchTab(key)));
+    document.querySelectorAll('.source-switch button').forEach((button) => {
+        button.addEventListener('click', () => {
+            const pane = button.closest('[data-source]');
+            if (!pane) return;
+            pane.dataset.source = button.dataset.mail;
+            pane.querySelectorAll('.source-switch button').forEach((peer) => {
+                const on = peer === button;
+                peer.classList.toggle('on', on);
+                peer.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+            applyAllFilters();
+        });
+    });
 
     function populateStaticDropdowns() {
         const topicSelect = document.getElementById('msg-filter-topic-select');
@@ -724,6 +797,11 @@
 
         updateFilterCounts(inboxMessages, allRatings);
         updateNewIndicators();
+        paintSourceCounts('messages-pane', inboxMessages, (item) => item.email);
+        paintSourceCounts('ratings-pane', allRatings.filter(r => !blockedEmails.includes(senderEmail(r))), (item) => item.email);
+        paintSourceCounts('rejected-pane', rejectedMessages, (item) => item.email);
+        paintSourceCounts('blocked-pane', allBlockedSenders, (item) => item.id);
+        if (!panes.stats.classList.contains('hidden')) renderStatisticsGraph();
         openRequestedResponse();
     }
 
@@ -763,6 +841,42 @@
         return true;
     };
 
+    function isTestEmail(email) {
+        const value = String(email || '').trim().toLowerCase();
+        const at = value.lastIndexOf('@');
+        if (at < 1) return true;
+        const local = value.slice(0, at);
+        const domain = value.slice(at + 1);
+        if (/^(example\.(com|org|net)|test\.com|mailinator\.com|localhost|invalid)$/.test(domain)) return true;
+        if (/\.(test|example|invalid)$/.test(domain)) return true;
+        if (/(^|[.+_-])(playwright|cypress|selenium|appium|webdriver|robotframework|qa-?lab)([.+_-]|$)/.test(local)) return true;
+        if (/^(pw|cy|e2e|test)[_-]/.test(local)) return true;
+        return false;
+    }
+
+    function passesSource(paneId, email) {
+        const pane = document.getElementById(paneId);
+        const mode = pane ? (pane.dataset.source || 'real') : 'real';
+        if (mode === 'all') return true;
+        const test = isTestEmail(email);
+        return mode === 'test' ? test : !test;
+    }
+
+    function paintSourceCounts(paneId, items, emailOf) {
+        const pane = document.getElementById(paneId);
+        if (!pane) return;
+        const test = items.filter((item) => isTestEmail(emailOf(item))).length;
+        const counts = { all: items.length, test, real: items.length - test };
+        pane.querySelectorAll('[data-source-count]').forEach((node) => {
+            node.textContent = String(counts[node.dataset.sourceCount] || 0);
+        });
+    }
+
+    function mailBadge(email) {
+        const test = isTestEmail(email);
+        return `<span class="mail-badge ${test ? 'is-test' : 'is-real'}">${test ? 'Test' : 'Real'}</span>`;
+    }
+
     function filterMessageCard(msg, forRender = false) {
         if (forRender) return renderMessageCard(msg);
         const name = document.getElementById('msg-filter-name').value.toLowerCase();
@@ -785,7 +899,8 @@
             (!email || (msg.email || '').toLowerCase().includes(email)) &&
             topicMatch &&
             dateInRange(msgDate, dateStart, dateEnd) &&
-            (attachment === '' || (attachment === 'yes' && msg.fileURL) || (attachment === 'no' && !msg.fileURL));
+            (attachment === '' || (attachment === 'yes' && msg.fileURL) || (attachment === 'no' && !msg.fileURL)) &&
+            passesSource('messages-pane', msg.email);
     }
 
     function filterRatingCard(r, forRender = false) {
@@ -802,7 +917,8 @@
             (!email || (r.email || '').toLowerCase().includes(email)) &&
             dateInRange(rDate, dateStart, dateEnd) &&
             (!rate || String(r.rating) === rate) &&
-            (!status || r.status === status);
+            (!status || r.status === status) &&
+            passesSource('ratings-pane', r.email);
     }
 
     function filterRejectedMessageCard(msg, forRender = false) {
@@ -814,7 +930,8 @@
         const rejDate = localDay(msg.rejectedAt);
         return (!name || (msg.name || '').toLowerCase().includes(name)) &&
             (!email || (msg.email || '').toLowerCase().includes(email)) &&
-            dateInRange(rejDate, dateStart, dateEnd);
+            dateInRange(rejDate, dateStart, dateEnd) &&
+            passesSource('rejected-pane', msg.email);
     }
 
     function filterBlockedSenderCard(user, forRender = false) {
@@ -824,7 +941,8 @@
         const dateEnd = document.getElementById('block-filter-date-end').value;
         const blockDate = localDay(user.blockedAt);
         return (!email || (user.id || '').toLowerCase().includes(email)) &&
-            dateInRange(blockDate, dateStart, dateEnd);
+            dateInRange(blockDate, dateStart, dateEnd) &&
+            passesSource('blocked-pane', user.id);
     }
 
     function updateFilterCounts(messages, ratings) {
@@ -845,7 +963,18 @@
 
     // --- Rendering ---
     function renderList(container, items, renderer) {
-        container.innerHTML = items.length ? items.map(renderer).join('') : '<p class="text-center text-gray-500 py-4">No items to display.</p>';
+        if (!items.length) {
+            const pane = container.closest('[data-source]');
+            const mode = pane ? pane.dataset.source : 'all';
+            const empty = mode === 'real'
+                ? 'No real emails in this view. Switch to Tests or All.'
+                : mode === 'test'
+                    ? 'No test emails in this view.'
+                    : 'No items to display.';
+            container.innerHTML = `<p class="text-center text-gray-500 py-4">${empty}</p>`;
+        } else {
+            container.innerHTML = items.map(renderer).join('');
+        }
         addCardEventListeners();
     }
 
@@ -857,7 +986,7 @@
     function renderMessageCard(msg) {
         const date = msg.createdAt ? msg.createdAt.toDate().toLocaleString() : 'N/A';
         const fileHref = safeHttps(msg.fileURL);
-        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${escapeHtml(msg.name)} <span class="font-normal text-sm text-gray-500">&lt;${escapeHtml(msg.email)}&gt;</span></p><p class="text-sm text-gray-600"><strong>Topic:</strong> ${escapeHtml(topicLabel(msg.topic))}</p></div><span class="text-xs text-gray-500 mb-2">${escapeHtml(date)}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${escapeHtml(msg.message)}</p><p class="text-sm">${fileHref ? `<a href="${escapeHtml(fileHref)}" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline">View Attachment</a>` : 'No attachment'}</p>`;
+        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${escapeHtml(msg.name)} <span class="font-normal text-sm text-gray-500">&lt;${escapeHtml(msg.email)}&gt;</span>${mailBadge(msg.email)}</p><p class="text-sm text-gray-600"><strong>Topic:</strong> ${escapeHtml(topicLabel(msg.topic))}</p></div><span class="text-xs text-gray-500 mb-2">${escapeHtml(date)}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mb-2">${escapeHtml(msg.message)}</p><p class="text-sm">${fileHref ? `<a href="${escapeHtml(fileHref)}" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:underline">View Attachment</a>` : 'No attachment'}</p>`;
         const actions = `<button data-action="respond" data-type="message" data-id="${escapeHtml(msg.id)}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Respond</button><button data-action="reject-msg" data-id="${escapeHtml(msg.id)}" class="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600">Reject</button><button data-action="block" data-email="${escapeHtml(msg.email)}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
         return createCardHTML(msg, content, actions);
     }
@@ -872,20 +1001,20 @@
         else if (r.status === 'approved') actions += `<button data-action="retract" data-id="${id}" class="bg-gray-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-gray-600">Retract</button>`;
         else if (r.status === 'rejected') actions += `<button data-action="restore" data-id="${id}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore</button>`;
         actions += `<button data-action="block" data-email="${escapeHtml(r.email)}" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600">Block Sender</button>`;
-        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${escapeHtml(r.name)} <span class="font-normal text-sm text-gray-500">&lt;${escapeHtml(r.email)}&gt;</span></p><p class="text-xl text-yellow-400">${stars}</p></div><div class="text-right"><div class="flex items-center gap-2 mb-1"><span class="status-dot status-${escapeHtml(r.status || 'pending')}"></span><span class="text-sm font-medium capitalize">${escapeHtml(r.status || 'pending')}</span></div><span class="text-xs text-gray-500 mb-2 block">${escapeHtml(date)}</span></div></div>${r.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${escapeHtml(r.comment)}</p>` : ''}`;
+        const content = `<div class="flex justify-between items-start mb-2"><div><p class="font-bold text-lg">${escapeHtml(r.name)} <span class="font-normal text-sm text-gray-500">&lt;${escapeHtml(r.email)}&gt;</span>${mailBadge(r.email)}</p><p class="text-xl text-yellow-400">${stars}</p></div><div class="text-right"><div class="flex items-center gap-2 mb-1"><span class="status-dot status-${escapeHtml(r.status || 'pending')}"></span><span class="text-sm font-medium capitalize">${escapeHtml(r.status || 'pending')}</span></div><span class="text-xs text-gray-500 mb-2 block">${escapeHtml(date)}</span></div></div>${r.comment ? `<p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md mt-2">${escapeHtml(r.comment)}</p>` : ''}`;
         return createCardHTML(r, content, actions);
     }
 
     function renderRejectedMessageCard(msg) {
         const date = msg.rejectedAt ? `Rejected: ${msg.rejectedAt.toDate().toLocaleString()}` : 'N/A';
-        const content = `<div class="flex justify-between items-start mb-2"><p class="font-bold text-lg">${escapeHtml(msg.name)} <span class="font-normal text-sm text-gray-500">&lt;${escapeHtml(msg.email)}&gt;</span></p><span class="text-xs text-gray-500">${escapeHtml(date)}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md">${escapeHtml(msg.message)}</p>`;
+        const content = `<div class="flex justify-between items-start mb-2"><p class="font-bold text-lg">${escapeHtml(msg.name)} <span class="font-normal text-sm text-gray-500">&lt;${escapeHtml(msg.email)}&gt;</span>${mailBadge(msg.email)}</p><span class="text-xs text-gray-500">${escapeHtml(date)}</span></div><p class="text-gray-700 whitespace-pre-wrap p-2 bg-gray-50 rounded-md">${escapeHtml(msg.message)}</p>`;
         const actions = `<button data-action="restore-msg" data-id="${escapeHtml(msg.id)}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Restore to Inbox</button>`;
         return createCardHTML(msg, content, actions);
     }
 
     function renderBlockedSenderCard(user) {
         const date = user.blockedAt ? `Blocked: ${user.blockedAt.toDate().toLocaleString()}` : 'N/A';
-        const content = `<div class="flex justify-between items-center"><p class="font-bold text-lg">${escapeHtml(user.id)}</p><span class="text-xs text-gray-500">${escapeHtml(date)}</span></div>`;
+        const content = `<div class="flex justify-between items-center"><p class="font-bold text-lg">${escapeHtml(user.id)}${mailBadge(user.id)}</p><span class="text-xs text-gray-500">${escapeHtml(date)}</span></div>`;
         const actions = `<button data-action="unblock" data-email="${escapeHtml(user.id)}" class="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-blue-600">Unblock Sender</button>`;
         return `<div class="item-card p-4">${content}<div class="flex items-center flex-wrap gap-2 mt-2">${actions}</div></div>`;
     }
@@ -1010,7 +1139,8 @@
         document.querySelectorAll('.bulk-actions-container button').forEach(btn => btn.addEventListener('click', (e) => e.currentTarget.nextElementSibling.classList.toggle('show-dropdown')));
         document.querySelectorAll('.bulk-actions-dropdown a').forEach(a => a.addEventListener('click', (e) => {
             const action = e.target.dataset.bulkAction;
-            const paneId = e.target.closest('.bulk-actions-container').parentElement.parentElement.id;
+            const pane = e.target.closest('[id$="-pane"]');
+            const paneId = pane ? pane.id : '';
             handleBulkAction(action, paneId);
             e.target.parentElement.classList.remove('show-dropdown');
         }));
@@ -1061,18 +1191,28 @@
         const previousStart = span ? shiftDay(span * 2) : '';
         const inRange = (item, field) => dateInRange(localDay(item[field]), start, '');
         const inPrevious = (item, field) => span && dateInRange(localDay(item[field]), previousStart, previousEnd);
-        const messages = allMessages.filter((item) => inRange(item, 'createdAt'));
-        const ratings = allRatings.filter((item) => inRange(item, 'createdAt'));
-        const rejected = allMessages.filter((item) => item.status === 'rejected' && inRange(item, 'rejectedAt'));
-        const blocked = allBlockedSenders.filter((item) => inRange(item, 'blockedAt'));
+        const mode = (document.getElementById('stats-pane') || {}).dataset.source || 'real';
+        const keep = (item, email) => passesSource('stats-pane', email);
+        const rangedMessages = allMessages.filter((item) => inRange(item, 'createdAt'));
+        const rangedRatings = allRatings.filter((item) => inRange(item, 'createdAt'));
+        paintSourceCounts('stats-pane', rangedMessages.concat(rangedRatings), (item) => item.email);
+        const note = document.getElementById('stats-note');
+        if (note) {
+            const label = mode === 'test' ? 'Test emails' : mode === 'all' ? 'Real and test emails' : 'Real emails';
+            note.textContent = span ? `${label} from the last ${span} days.` : `${label} for all time.`;
+        }
+        const messages = rangedMessages.filter((item) => keep(item, item.email));
+        const ratings = rangedRatings.filter((item) => keep(item, item.email));
+        const rejected = allMessages.filter((item) => item.status === 'rejected' && inRange(item, 'rejectedAt') && keep(item, item.email));
+        const blocked = allBlockedSenders.filter((item) => inRange(item, 'blockedAt') && keep(item, item.id));
         const pending = ratings.filter((item) => item.status === 'pending').length;
         const approved = ratings.filter((item) => item.status === 'approved').length;
         const avg = ratings.length ? (ratings.reduce((sum, item) => sum + (Number(item.rating) || 0), 0) / ratings.length) : 0;
-        const priorMessages = allMessages.filter((item) => inPrevious(item, 'createdAt')).length;
-        const priorRatings = allRatings.filter((item) => inPrevious(item, 'createdAt'));
+        const priorMessages = allMessages.filter((item) => inPrevious(item, 'createdAt') && keep(item, item.email)).length;
+        const priorRatings = allRatings.filter((item) => inPrevious(item, 'createdAt') && keep(item, item.email));
         const priorAvg = priorRatings.length ? priorRatings.reduce((sum, item) => sum + (Number(item.rating) || 0), 0) / priorRatings.length : 0;
-        const priorRejected = allMessages.filter((item) => item.status === 'rejected' && inPrevious(item, 'rejectedAt')).length;
-        const priorBlocked = allBlockedSenders.filter((item) => inPrevious(item, 'blockedAt')).length;
+        const priorRejected = allMessages.filter((item) => item.status === 'rejected' && inPrevious(item, 'rejectedAt') && keep(item, item.email)).length;
+        const priorBlocked = allBlockedSenders.filter((item) => inPrevious(item, 'blockedAt') && keep(item, item.id)).length;
         const delta = (current, previous, digits) => {
             if (!span) return '';
             const diff = Number(current) - Number(previous);
@@ -1092,6 +1232,14 @@
             ];
             kpis.innerHTML = cards.map(([label, value, change]) => `<div class="stat-kpi"><span>${label}</span><strong>${value}</strong>${change || ''}</div>`).join('');
         }
+        const realCount = rangedMessages.concat(rangedRatings).filter((item) => !isTestEmail(item.email)).length;
+        const testCount = rangedMessages.concat(rangedRatings).filter((item) => isTestEmail(item.email)).length;
+        const split = document.getElementById('stats-split');
+        if (split) {
+            const total = Math.max(realCount + testCount, 1);
+            const row = (label, count, color) => `<div class="split-row"><span>${label}</span><div class="h-meter"><span style="width:${Math.round((count / total) * 100)}%;background:${color}"></span></div><b>${count}</b></div>`;
+            split.innerHTML = row('Real', realCount, '#0d6e76') + row('Test', testCount, '#b45309') + '<p class="stats-empty">This mix ignores the Real / Tests switch, so the test load stays visible.</p>';
+        }
         const days = new Map();
         const bump = (item, field, key) => {
             const day = localDay(item[field]);
@@ -1102,51 +1250,92 @@
         messages.forEach((item) => bump(item, 'createdAt', 'messages'));
         ratings.forEach((item) => bump(item, 'createdAt', 'ratings'));
         const labels = [...days.keys()].sort();
-        const chartLabels = labels.length ? labels : ['No data'];
-        const ink = '#0d6e76';
-        const sand = '#b45309';
-        statsCharts.forEach((chart) => chart.destroy());
-        statsCharts = [];
-        const make = (id, config) => {
-            const canvas = document.getElementById(id);
-            if (!canvas) return;
-            statsCharts.push(new Chart(canvas.getContext('2d'), config));
-        };
-        make('stats-trend', {
-            type: 'line',
-            data: {
-                labels: chartLabels,
-                datasets: [
-                    { label: 'Messages', data: chartLabels.map((label) => (days.get(label) || {}).messages || 0), borderColor: ink, backgroundColor: 'rgba(13,110,118,0.15)', fill: true, tension: 0.3 },
-                    { label: 'Ratings', data: chartLabels.map((label) => (days.get(label) || {}).ratings || 0), borderColor: sand, backgroundColor: 'rgba(180,83,9,0.12)', fill: true, tension: 0.3 }
-                ]
-            },
-            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { position: 'bottom' } } }
-        });
+        const trend = document.getElementById('stats-trend');
+        if (trend) trend.innerHTML = activityChart(labels, labels.map((label) => (days.get(label) || {}).messages || 0), labels.map((label) => (days.get(label) || {}).ratings || 0));
         const starCounts = [1, 2, 3, 4, 5].map((star) => ratings.filter((item) => Number(item.rating) === star).length);
-        make('stats-ratings', {
-            type: 'doughnut',
-            data: { labels: ['1 star', '2 stars', '3 stars', '4 stars', '5 stars'], datasets: [{ data: starCounts, backgroundColor: ['#b42318', '#b45309', '#c4a574', '#3d7a82', '#0d6e76'] }] },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-        });
-        make('stats-status', {
-            type: 'doughnut',
-            data: { labels: ['Pending', 'Approved', 'Rejected'], datasets: [{ data: [pending, approved, ratings.filter((item) => item.status === 'rejected').length], backgroundColor: ['#b45309', '#0d6e76', '#b42318'] }] },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-        });
+        const ratingsChart = document.getElementById('stats-ratings');
+        if (ratingsChart) ratingsChart.innerHTML = donutChart(starCounts, ['1 star', '2 stars', '3 stars', '4 stars', '5 stars'], ['#b42318', '#b45309', '#c4a574', '#3d7a82', '#0d6e76'], 'Ratings');
+        const rejectedRatings = ratings.filter((item) => item.status === 'rejected').length;
+        const statusChart = document.getElementById('stats-status');
+        if (statusChart) statusChart.innerHTML = donutChart([pending, approved, rejectedRatings], ['Pending', 'Approved', 'Rejected'], ['#b45309', '#0d6e76', '#b42318'], 'Reviews');
         const topics = new Map();
         messages.forEach((item) => {
-            const topic = item.topic || 'Unspecified';
+            const topic = topicLabel(item.topic || 'Unspecified');
             topics.set(topic, (topics.get(topic) || 0) + 1);
         });
-        const topicLabels = [...topics.keys()];
-        make('stats-topics', {
-            type: 'bar',
-            data: { labels: topicLabels.length ? topicLabels : ['No data'], datasets: [{ label: 'Messages', data: topicLabels.length ? topicLabels.map((label) => topics.get(label)) : [0], backgroundColor: '#0d6e76' }] },
-            options: { responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
-        });
+        const topicChart = document.getElementById('stats-topics');
+        if (topicChart) topicChart.innerHTML = barChart([...topics.entries()].map(([label, value]) => ({ label, value })));
     }
 
+    function activityChart(labels, messages, ratings) {
+        if (!labels.length) return '<p class="stats-empty">No activity in this range.</p>';
+        const w = 640;
+        const h = 200;
+        const pad = 28;
+        const max = Math.max(1, ...messages, ...ratings);
+        const x = (i) => pad + (labels.length === 1 ? (w - pad * 2) / 2 : (i / (labels.length - 1)) * (w - pad * 2));
+        const y = (v) => h - pad - (v / max) * (h - pad * 2);
+        const area = (series) => `M ${x(0)} ${h - pad} L ${series.map((v, i) => `${x(i)} ${y(v)}`).join(' L ')} L ${x(series.length - 1)} ${h - pad} Z`;
+        const line = (series) => series.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+        const step = Math.max(1, Math.ceil(labels.length / 6));
+        const ticks = labels.map((label, i) => (i === 0 || i === labels.length - 1 || i % step === 0)
+            ? `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" font-size="10" fill="#5c6b76">${escapeHtml(label.slice(5))}</text>`
+            : '').join('');
+        return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Messages and ratings over time">
+            <defs>
+                <linearGradient id="stats-msg-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d6e76" stop-opacity="0.35"/><stop offset="1" stop-color="#0d6e76" stop-opacity="0.02"/></linearGradient>
+                <linearGradient id="stats-rate-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b45309" stop-opacity="0.28"/><stop offset="1" stop-color="#b45309" stop-opacity="0.02"/></linearGradient>
+            </defs>
+            <path d="${area(messages)}" fill="url(#stats-msg-fill)"></path>
+            <path d="${area(ratings)}" fill="url(#stats-rate-fill)"></path>
+            <polyline fill="none" stroke="#0d6e76" stroke-width="2.5" points="${line(messages)}"></polyline>
+            <polyline fill="none" stroke="#b45309" stroke-width="2.5" points="${line(ratings)}"></polyline>
+            ${ticks}
+        </svg>
+        <div class="stats-legend"><span><i style="background:#0d6e76"></i>Messages</span><span><i style="background:#b45309"></i>Ratings</span></div>`;
+    }
+
+    function donutChart(values, names, colors, center) {
+        const total = values.reduce((sum, value) => sum + value, 0);
+        if (!total) return '<p class="stats-empty">Nothing in this range.</p>';
+        const r = 46;
+        const c = 2 * Math.PI * r;
+        let offset = 0;
+        const arcs = values.map((value, i) => {
+            const len = (value / total) * c;
+            const arc = `<circle cx="70" cy="70" r="${r}" fill="none" stroke="${colors[i]}" stroke-width="16" stroke-dasharray="${len} ${c - len}" stroke-dashoffset="${-offset}" transform="rotate(-90 70 70)"></circle>`;
+            offset += len;
+            return value ? arc : '';
+        }).join('');
+        const legend = names.map((name, i) => `<span><i style="background:${colors[i]}"></i>${escapeHtml(name)} ${values[i]}</span>`).join('');
+        return `<svg viewBox="0 0 140 140" role="img" aria-label="${escapeHtml(center)}">
+            <circle cx="70" cy="70" r="${r}" fill="none" stroke="#e6ebf0" stroke-width="16"></circle>
+            ${arcs}
+            <text x="70" y="66" text-anchor="middle" font-size="22" font-weight="700" fill="#12181f">${total}</text>
+            <text x="70" y="82" text-anchor="middle" font-size="10" fill="#5c6b76">${escapeHtml(center)}</text>
+        </svg><div class="stats-legend">${legend}</div>`;
+    }
+
+    function barChart(rows) {
+        const data = rows.filter((row) => row.value > 0);
+        if (!data.length) return '<p class="stats-empty">No messages in this range.</p>';
+        const max = Math.max(...data.map((row) => row.value), 1);
+        const barH = 18;
+        const gap = 12;
+        const left = 168;
+        const width = 640;
+        const height = data.length * (barH + gap) + 8;
+        const bars = data.map((row, i) => {
+            const y = 6 + i * (barH + gap);
+            const w = Math.max(6, (row.value / max) * (width - left - 36));
+            const label = row.label.length > 26 ? `${row.label.slice(0, 25)}…` : row.label;
+            return `<text x="0" y="${y + 13}" font-size="11" fill="#5c6b76">${escapeHtml(label)}</text>
+                <rect x="${left}" y="${y}" width="${width - left - 28}" height="${barH}" rx="4" fill="#e6ebf0"></rect>
+                <rect x="${left}" y="${y}" width="${w}" height="${barH}" rx="4" fill="#0d6e76"></rect>
+                <text x="${left + w + 6}" y="${y + 13}" font-size="11" fill="#12181f">${row.value}</text>`;
+        }).join('');
+        return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Messages by topic">${bars}</svg>`;
+    }
 
     function placeMenu(button, panel) {
         const rect = button.getBoundingClientRect();

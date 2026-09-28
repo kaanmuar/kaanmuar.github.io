@@ -24,12 +24,19 @@ exports.AdminPage = class AdminPage {
     await this.page.goto('/admin.html');
   }
 
+  authenticatorStep() {
+    return this.page.locator('#mfa-enroll:visible, #mfa-form:visible');
+  }
+
   async login(email, password) {
     await this.goto();
     await this.emailInput.fill(email);
     await this.passwordInput.fill(password);
     await this.submitButton.click();
-    await expect(this.dashboard).toBeVisible({ timeout: 15000 });
+    await expect(this.dashboard).toBeHidden({ timeout: 15000 });
+    await expect(this.page.locator('#login-title')).toHaveText('Authenticator');
+    await expect(this.authenticatorStep()).toHaveCount(1);
+    await expect(this.authenticatorStep()).toBeVisible();
   }
 
   async navigateToTab(tabName) {
