@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Design files · Interactive CV</title>
+    <link rel="stylesheet" href="design.css">
+</head>
+<body>
+<header>
+    <div>
+        <strong id="title">Design file</strong>
+        <p id="blurb"></p>
+    </div>
+    <a id="source" href="cv-rail.drawio">Open the draw.io file</a>
+</header>
+<nav id="nav"></nav>
+<main>
+    <section class="sheet" id="rail">
+        <p class="kicker">Figma · cv-studio-rail.fig · taken from the CV content editor</p>
+        <div class="figma">
+            <aside>
+                <p class="kicker">Layers</p>
+                <button class="on" type="button">Step rail</button>
+                <button type="button">Canvas / About</button>
+                <button type="button">Competency card</button>
+                <button type="button">ON switch</button>
+            </aside>
+            <div class="frame">
+                <div class="rail">
+                    <p class="kicker">Steps</p>
+                    <span>1 Profile</span><span class="on">2 About</span><span>3 Career</span><span>4 Toolkit</span><span>5 Education</span><span>6 Share</span><span>7 Theme</span><span>8 Messages</span><span>9 Review</span>
+                </div>
+                <div class="card">
+                    <b>AI Expertise</b>
+                    <p>ON keeps it on the CV. Chips are the skills and the role, not a loose label.</p>
+                    <span class="chip">Cursor</span><span class="chip">Claude</span><span class="chip">GitHub Copilot</span><span class="chip">ChatGPT</span><span class="chip">Custom personalizations</span><span class="chip">Team International</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="sheet" id="icons">
+        <p class="kicker">Figma · toolbar-icons.fig · draw.io · icon-map.drawio</p>
+        <div class="card">
+            <p>Sprint 20. The published CV showed broken images where a toolkit icon pointed at a missing file. The map keeps a local SVG for every skill that failed.</p>
+            <span class="chip">Agile</span><span class="chip">Risk</span><span class="chip">Strategy</span><span class="chip">Playwright</span><span class="chip">Brain</span><span class="chip">Puzzle</span>
+        </div>
+    </section>
+    <section class="sheet" id="language">
+        <p class="kicker">Figma · language-menu.fig · one English source, six languages</p>
+        <div class="card">
+            <p>The public CV menu writes the page in English, Spanish, Portuguese, German, French, or Italian. Print and the tooltips follow the same choice. A section that stayed in English was a bug, not a second source.</p>
+            <span class="chip">EN</span><span class="chip">ES</span><span class="chip">PT</span><span class="chip">DE</span><span class="chip">FR</span><span class="chip">IT</span>
+        </div>
+    </section>
+    <section class="sheet" id="agents">
+        <p class="kicker">Miro · four-agent-flow · Visio · sprint-lanes.vsdx</p>
+        <div class="miro">
+            <article class="note a"><b>1 · Ticket Steward</b>Reads the story. The user accepts or keeps the rewrite.</article>
+            <span class="arrow">→</span>
+            <article class="note b"><b>2 · Test Designer</b>Writes the case in Zephyr, Xray, or TestRail. The user picks what runs.</article>
+            <span class="arrow">→</span>
+            <article class="note c"><b>3 · Automation Engineer</b>Playwright, Cypress, Robot, and the others the user checks.</article>
+            <span class="arrow">→</span>
+            <article class="note d"><b>4 · Release Verifier</b>Definition of Done. Nothing moves to the next agent until the user says so.</article>
+        </div>
+    </section>
+    <section class="sheet" id="harbor">
+        <p class="kicker">Figma · harbor.fig · Miro · look-and-feel · the CV and the studio share one theme</p>
+        <div class="frame" style="grid-template-columns:1fr 1fr">
+            <div class="card"><b>Light</b><p>Harbor paper, teal actions, the same header on the CV, the lab, and the studio.</p></div>
+            <div class="card" style="background:#14202b;color:#fff"><b>Dark</b><p>One switch. If the CV is dark, the studio is dark.</p></div>
+        </div>
+    </section>
+    <section class="sheet" id="photo">
+        <p class="kicker">draw.io · photo-kind.drawio · Figma · portrait-states.fig</p>
+        <div class="lanes">
+            <b>Portrait</b>
+            <div class="lane"><span class="box">Upload a JPEG</span><span class="box">Pick an avatar</span><span class="box">Placeholder</span><span class="box alt">History row</span></div>
+        </div>
+    </section>
+    <section class="sheet" id="competency">
+        <p class="kicker">draw.io · competency-links.drawio · Figma · ai-expertise.fig</p>
+        <div class="lanes">
+            <b>Filter</b>
+            <div class="lane"><span class="box">AI Expertise</span><span>→</span><span class="box">Cursor · Claude · Copilot · ChatGPT · Custom personalizations</span><span>→</span><span class="box">Team International · Jan 2021 – Present</span></div>
+        </div>
+        <p>The other seven competencies dim. That is the public CV, not a separate list.</p>
+    </section>
+    <section class="sheet" id="print">
+        <p class="kicker">Figma · print-spread.fig · Visio · print-order.vsdx</p>
+        <div class="card">
+            <p>Six to eight pages. The selected language, not English left behind in a section. Contact and company names are links. The studio and the lab are pitched in a sentence a stranger can read.</p>
+        </div>
+    </section>
+    <section class="sheet" id="release">
+        <p class="kicker">Visio · release-path.vsdx · draw.io · environment-lanes.drawio</p>
+        <div class="lanes">
+            <b>DevOps</b>
+            <div class="lane"><span class="box">QA preview</span><span>→</span><span class="box">Stage</span><span>→</span><span class="box">UAT</span><span>→</span><span class="box alt">GitHub Pages from main</span></div>
+        </div>
+        <p>CircleCI and TravisCI were considered. Jenkins is the path that publishes.</p>
+    </section>
+    <section class="sheet" id="firebase">
+        <p class="kicker">Visio · firebase-photos.vsdx · draw.io · photo-write-path.drawio · backend</p>
+        <div class="lanes">
+            <b>Browser</b><div class="lane"><span class="box">JPEG under 2MB</span></div>
+            <b>Storage</b><div class="lane"><span class="box">profile-photos/{file}.jpg · public read · owner write</span></div>
+            <b>Firestore</b><div class="lane"><span class="box">cvPhotos · url + createdAt · owner create</span></div>
+            <b>CV</b><div class="lane"><span class="box alt">Public page reads the URL. A stranger cannot write.</span></div>
+        </div>
+        <p>Until those rules are deployed, the history stays in this browser.</p>
+    </section>
+    <section class="sheet" id="pipeline">
+        <p class="kicker">draw.io · pages-pipeline.drawio · Visio · jenkins-pages.vsdx · Visio · morning-report.vsdx · backend</p>
+        <div class="lanes">
+            <b>Git</b><div class="lane"><span class="box">main</span></div>
+            <b>Jenkins</b><div class="lane"><span class="box">Build the static site</span><span class="box alt">CircleCI and TravisCI are not in this path</span></div>
+            <b>Pages</b><div class="lane"><span class="box">carlosandmunoz.com · CV, lab, studio</span></div>
+            <b>Functions</b><div class="lane"><span class="box">Node 22 · morning report from site events · admin stays noindex</span></div>
+        </div>
+    </section>
+    <p class="file" id="downloads"></p>
+    <footer class="note-line">These boards are the design record for the sprints. Figma and Miro frames are drawn here from the live UI. The draw.io files open in diagrams.net. Visio can import the same SVG-style layout from the draw.io file.</footer>
+</main>
+<script>
+const sheets = {
+    rail: ['Figma · CV content rail', 'The step rail and the AI Expertise card, from the admin editor.', 'cv-rail.drawio'],
+    icons: ['Figma · toolbar icons', 'Sprint 20. Broken remote icons, replaced with files the site hosts.', 'icon-map.drawio'],
+    language: ['Figma · language menu', 'Six languages from one English source. Print follows the same choice.', 'theme-flow.drawio'],
+    agents: ['Miro · four agents', 'The handoff. The next agent starts only when the user says so.', 'four-agents.drawio'],
+    harbor: ['Figma · Harbor', 'One look. Light and dark move together on the CV and the studio.', 'theme-flow.drawio'],
+    photo: ['draw.io · portrait', 'Upload, avatar, placeholder, or a picture already used.', 'photo-kind.drawio'],
+    competency: ['draw.io · competency links', 'AI Expertise stays tied to the five tools and the current role.', 'competency-links.drawio'],
+    print: ['Figma · print', 'The packet a recruiter keeps. Language, links, and the two sites.', 'print-order.drawio'],
+    release: ['Visio · release path', 'QA, Stage, UAT, then GitHub Pages.', 'release-path.drawio'],
+    firebase: ['Visio · photo storage', 'Backend path for a profile photo.', 'firebase-photos.drawio'],
+    pipeline: ['draw.io · publish path', 'Jenkins, Pages, and the morning report.', 'pages-pipeline.drawio']
+};
+const params = new URLSearchParams(location.search);
+const current = sheets[params.get('d')] ? params.get('d') : 'rail';
+document.getElementById('nav').innerHTML = Object.entries(sheets).map(([id, row]) => `<a href="?d=${id}" class="${id === current ? 'on' : ''}">${row[0].split(' · ')[0]} · ${id}</a>`).join('');
+document.getElementById(current).classList.add('on');
+document.getElementById('title').textContent = sheets[current][0];
+document.getElementById('blurb').textContent = sheets[current][1];
+document.getElementById('source').href = sheets[current][2];
+document.getElementById('source').textContent = 'Open ' + sheets[current][2];
+</script>
+</body>
+</html>

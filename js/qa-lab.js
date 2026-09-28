@@ -1332,14 +1332,14 @@
       title: 'Studio asks which board the sprint should use',
       where: 'simulador.html BOARDS',
       when: 'Static parse of the studio script.',
-      how: 'Jira, Azure DevOps, Monday.com, Trello, Linear, and Asana are offered.',
+      how: 'Jira, Azure DevOps, Monday.com, Trello, Linear, Asana, and MS Project are offered.',
       async run() {
         const html = await fetchText('simulador.html');
-        ['Jira', 'Azure DevOps', 'Monday.com', 'Trello', 'Linear', 'Asana'].forEach((name) => {
+        ['Jira', 'Azure DevOps', 'Monday.com', 'Trello', 'Linear', 'Asana', 'MS Project'].forEach((name) => {
           assert(html.includes(name), name + ' board missing');
         });
         assert(html.includes('data-board'), 'board choice missing');
-        return 'six boards offered';
+        return 'seven boards offered';
       }
     },
     {
@@ -1392,16 +1392,17 @@
     },
     {
       id: 'STU-07', layer: 'Studio', fw: ['Playwright', 'Cypress', 'Robot'],
-      title: 'Sprint board holds six stories including refunds and webhooks',
+      title: 'Sprint board holds the PayStream rehearsal and the Interactive CV delivery',
       where: 'simulador.html TICKETS',
       when: 'Static parse of the studio script.',
-      how: 'PAY-241, PAY-246, PAY-251, PAY-255, PAY-260, and PAY-264 are on the board.',
+      how: 'PAY-241 through PAY-264 stay on the board, with CV-301, CV-321, CV-352, CV-380, and the trademark story CV-442, its bug CV-448, and cases XT-1701, XT-1702, and XT-1703.',
       async run() {
         const html = await fetchText('simulador.html');
-        ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264'].forEach((key) => {
+        ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264', 'CV-301', 'CV-321', 'CV-352', 'CV-380', 'CV-442', 'CV-448', 'XT-1701', 'XT-1702', 'XT-1703'].forEach((key) => {
           assert(html.includes("key: '" + key + "'"), key + ' missing');
         });
-        return 'six sprint stories';
+        assert(html.includes('data-view="flow"'), 'sprint analytics missing');
+        return 'rehearsal set and CV delivery tickets';
       }
     },
     {

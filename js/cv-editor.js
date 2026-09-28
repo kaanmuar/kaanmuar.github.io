@@ -152,7 +152,7 @@ export function createCvEditor(deps) {
         const skillCount = Object.values(skills).reduce((sum, list) => sum + list.length, 0);
         const companies = new Set((data && data.experiences || []).map((exp) => exp.company)).size;
         draft = {
-            profile: { name: 'CARLOS A. MUÑOZ', title: t.job_title || '', certs: 'CSPM | ISTQB | CISA | CISSP', photo: '', photoRemoved: false, photoKind: 'file', avatar: '' },
+            profile: { name: 'CARLOS A. MUÑOZ', title: t.job_title || '', certs: 'CSPM | ISTQB | CISA | CISSP', mark: 'CAM', photo: '', photoRemoved: false, photoKind: 'file', avatar: '' },
             contact: {
                 shown: true, title: t.contact_title || 'Contact',
                 phone: { shown: true, label: 'Phone Number', value: '+57 320 919 1010' },
@@ -539,6 +539,7 @@ export function createCvEditor(deps) {
             draft.profile.photoKind = draft.profile.photoRemoved ? 'placeholder' : (draft.profile.photo ? 'upload' : 'file');
             draft.profile.avatar = '';
         }
+        if (draft.profile && !draft.profile.mark) draft.profile.mark = 'CAM';
         if (!draft.contact.extras) draft.contact.extras = [];
         ensureLinkedContent();
         takeBaseline();
@@ -676,7 +677,12 @@ export function createCvEditor(deps) {
         return `<label class="cv-switch">${nameHtml}<input type="checkbox" ${name} ${on ? 'checked' : ''}> <span class="cv-switch-ui" aria-hidden="true"></span><span class="cv-switch-state"></span></label>`;
     }
 
-    function textField(label, name, value, max, opts) {
+    function markLetters(value) {
+    const cleaned = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+    return cleaned || 'CAM';
+}
+
+function textField(label, name, value, max, opts) {
         const extra = opts || {};
         const disabled = extra.disabled ? ' disabled' : '';
         const cls = extra.className ? ` class="${extra.className}"` : '';
@@ -730,6 +736,14 @@ export function createCvEditor(deps) {
             <div class="cv-avatar-row">${avatars}</div>
             <p class="cv-kicker">Uploaded photos</p>
             <div class="cv-avatar-row">${history || '<p class="cv-note">No uploads yet.</p>'}</div>
+            <p class="cv-kicker">Trademark</p>
+            <div class="cv-mark-row">
+                <span class="trademark is-preview" aria-hidden="true"><span class="trademark-seal" id="cv-mark-preview" data-count="${markLetters(profile.mark).length}">${esc(markLetters(profile.mark))}</span></span>
+                <div>
+                    ${textField('Letters', 'data-bind="profile.mark"', markLetters(profile.mark), 4)}
+                    <p class="cv-note">Up to four letters. The seal sits on the portrait and again in the footer.</p>
+                </div>
+            </div>
             ${textField('Name', 'data-bind="profile.name"', profile.name, 80)}
             ${textField('Title', 'data-bind="profile.title"', profile.title, 160)}
             ${textField('Credential line', 'data-bind="profile.certs"', profile.certs, 120)}`;
@@ -1095,6 +1109,7 @@ export function createCvEditor(deps) {
             name: profile.name,
             title: profile.title,
             certs: profile.certs,
+            mark: markLetters(profile.mark),
             photoKind: kind,
             avatar: kind === 'avatar' ? profile.avatar : '',
             photo: kind === 'upload' ? profile.photo : '',
@@ -1320,7 +1335,18 @@ export function createCvEditor(deps) {
             }
             render();
         });
-        body.addEventListener('input', () => {
+        body.addEventListener('input', (event) => {
+            const field = event.target;
+            if (field.matches && field.matches('[data-bind="profile.mark"]')) {
+                const next = String(field.value).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+                if (field.value !== next) field.value = next;
+                const seal = document.getElementById('cv-mark-preview');
+                const shown = next || 'CAM';
+                if (seal) {
+                    seal.textContent = shown;
+                    seal.dataset.count = String(shown.length);
+                }
+            }
             read();
         });
         body.addEventListener('change', async (event) => {
