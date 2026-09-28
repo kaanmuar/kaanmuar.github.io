@@ -224,6 +224,8 @@ async function sendOwnerEmail({ subject, intro, rows, body, respondUrl }) {
 exports.notifyOwnerOnMessage = withMail.firestore
   .document("messages/{messageId}")
   .onCreate(async (snap) => {
+    try { await noteFormBurst(); }
+    catch (error) { console.error("Form burst note failed:", error); }
     const data = snap.data() || {};
     const topic = TOPIC_LABELS[data.topic] || data.topic || "—";
     try {
@@ -248,6 +250,8 @@ exports.notifyOwnerOnMessage = withMail.firestore
 exports.notifyOwnerOnRating = withMail.firestore
   .document("ratings/{ratingId}")
   .onCreate(async (snap) => {
+    try { await noteFormBurst(); }
+    catch (error) { console.error("Form burst note failed:", error); }
     const data = snap.data() || {};
     const score = Math.min(5, Math.max(0, Number(data.rating) || 0));
     try {
@@ -308,3 +312,167 @@ exports.notifyOwnerOnVisit = withMail.firestore
     }
     return null;
   });
+
+const crypto = require("crypto");
+const FORM_WINDOW_MS = 10 * 60 * 1000;
+const FORM_BURST = 8;
+const FORM_HOLD_MS = 30 * 60 * 1000;
+const CHALLENGE_MS = 5 * 60 * 1000;
+const CAPTCHA_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function hashAnswer(value) {
+  return crypto.createHash("sha256").update(String(value || "").trim().toLowerCase()).digest("hex");
+}
+
+function randomCaptchaText() {
+  let text = "";
+  for (let i = 0; i < 5; i++) text += CAPTCHA_ALPHABET[crypto.randomInt(CAPTCHA_ALPHABET.length)];
+  return text;
+}
+
+function captchaImage(text) {
+  const glyphs = text.split("").map((ch, i) => {
+    const x = 16 + i * 30;
+    const y = 38 + (i % 2 === 0 ? -4 : 6);
+    const rot = (i * 8) - 16;
+    return `<text x="${x}" y="${y}" transform="rotate(${rot} ${x} ${y})" font-family="Georgia,serif" font-size="28" fill="#1a2832">${ch}</text>`;
+  }).join("");
+  const lines = [0, 1, 2, 3].map((n) => {
+    const y = 10 + n * 12;
+    return `<line x1="0" y1="${y}" x2="168" y2="${y + 6}" stroke="#8aa0ad" stroke-width="1"/>`;
+  }).join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="168" height="56" viewBox="0 0 168 56"><rect width="168" height="56" fill="#f4f7f8"/>${lines}${glyphs}</svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+async function formGate() {
+  const snap = await admin.firestore().doc("abuse/forms").get();
+  if (!snap.exists) return { required: false };
+  const data = snap.data() || {};
+  const until = data.until && data.until.toMillis ? data.until.toMillis() : 0;
+  return { required: data.captcha === true && until > Date.now() };
+}
+
+async function noteFormBurst() {
+  const ref = admin.firestore().doc("abuse/forms");
+  await admin.firestore().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const now = Date.now();
+    const prev = snap.exists ? snap.data() : {};
+    const start = prev.windowStart && prev.windowStart.toMillis ? prev.windowStart.toMillis() : 0;
+    const until = prev.until && prev.until.toMillis ? prev.until.toMillis() : 0;
+    const holding = prev.captcha === true && until > now;
+    if (holding) {
+      tx.set(ref, { count: (prev.count || 0) + 1 }, { merge: true });
+      return;
+    }
+    if (!start || now - start > FORM_WINDOW_MS) {
+      tx.set(ref, {
+        windowStart: admin.firestore.Timestamp.fromMillis(now),
+        count: 1,
+        captcha: false,
+        until: null
+      });
+      return;
+    }
+    const count = (prev.count || 0) + 1;
+    const captcha = count >= FORM_BURST;
+    tx.set(ref, {
+      windowStart: prev.windowStart,
+      count,
+      captcha,
+      until: captcha ? admin.firestore.Timestamp.fromMillis(now + FORM_HOLD_MS) : null
+    });
+  });
+}
+
+exports.getFormChallenge = functions.https.onCall(async () => {
+  const gate = await formGate();
+  if (!gate.required) return { required: false };
+  const text = randomCaptchaText();
+  const ref = admin.firestore().collection("form_challenges").doc();
+  await ref.set({
+    answer: hashAnswer(text),
+    expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + CHALLENGE_MS)
+  });
+  return { required: true, id: ref.id, image: captchaImage(text) };
+});
+
+function cleanText(value, max) {
+  return String(value == null ? "" : value).trim().slice(0, max);
+}
+
+exports.submitGuardedForm = functions.https.onCall(async (data) => {
+  const gate = await formGate();
+  if (!gate.required) {
+    throw new functions.https.HttpsError("failed-precondition", "The form check is not active.");
+  }
+  const payload = data || {};
+  const kind = payload.kind === "rating" ? "rating" : (payload.kind === "message" ? "message" : "");
+  if (!kind) throw new functions.https.HttpsError("invalid-argument", "Unknown form.");
+  const challengeId = String(payload.challengeId || "");
+  const ref = challengeId ? admin.firestore().collection("form_challenges").doc(challengeId) : null;
+  const challenge = ref ? await ref.get() : null;
+  const expires = challenge && challenge.exists && challenge.data().expiresAt && challenge.data().expiresAt.toMillis
+    ? challenge.data().expiresAt.toMillis()
+    : 0;
+  const expected = challenge && challenge.exists ? String(challenge.data().answer || "") : "";
+  const given = hashAnswer(payload.answer);
+  let match = false;
+  try {
+    match = expected.length === given.length && crypto.timingSafeEqual(Buffer.from(given, "hex"), Buffer.from(expected, "hex"));
+  } catch (error) {
+    match = false;
+  }
+  if (challenge && challenge.exists) await ref.delete();
+  if (!challenge || !challenge.exists || expires < Date.now() || !match) {
+    throw new functions.https.HttpsError("invalid-argument", "The characters did not match.");
+  }
+
+  const email = cleanText(payload.email, 120).toLowerCase();
+  if (!/^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/.test(email)) {
+    throw new functions.https.HttpsError("invalid-argument", "Check the email.");
+  }
+  const blocked = await admin.firestore().doc("blocked_senders/" + email).get();
+  if (blocked.exists) throw new functions.https.HttpsError("permission-denied", "Could not send.");
+  const name = cleanText(payload.name, 120);
+  if (name.length < 2) throw new functions.https.HttpsError("invalid-argument", "Check the name.");
+
+  if (kind === "message") {
+    const topic = cleanText(payload.topic, 40);
+    const message = cleanText(payload.message, 8000);
+    const fileURL = cleanText(payload.fileURL, 2048);
+    if (!["opportunity", "inquiry", "feedback", "other"].includes(topic) || message.length < 10) {
+      throw new functions.https.HttpsError("invalid-argument", "Check the message.");
+    }
+    if (fileURL && !/^https:\/\/.+/.test(fileURL)) {
+      throw new functions.https.HttpsError("invalid-argument", "Check the attachment.");
+    }
+    await admin.firestore().collection("messages").add({
+      name,
+      email,
+      topic,
+      message,
+      fileURL,
+      status: "inbox",
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    return { ok: true };
+  }
+
+  const rating = Number(payload.rating);
+  const comment = cleanText(payload.comment, 4000);
+  if ([1, 2, 3, 4, 5].indexOf(rating) === -1) {
+    throw new functions.https.HttpsError("invalid-argument", "Check the rating.");
+  }
+  await admin.firestore().collection("ratings").add({
+    name,
+    email,
+    rating,
+    comment,
+    status: "pending",
+    isAnonymous: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+  return { ok: true };
+});
