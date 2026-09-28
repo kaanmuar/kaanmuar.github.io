@@ -86,7 +86,7 @@ npm run test:playwright
 npx playwright show-report
 ```
 
-Coverage includes smoke assets, CV behavior, competency filters (all seven topics, toggle, outside click, reset, theme, `?topic=` / `?competency=`, radar, SEO, tour order, phone), studio and lab tours, dashboard splash, security/SEO, accessibility (`axe-core`), and mobile at 390×844.
+Coverage includes smoke assets, CV behavior, competency filters (all seven topics, toggle, outside click, reset, theme, `?topic=` / `?competency=`, radar, SEO, tour order, phone), studio and lab tours, dashboard splash, security/SEO, accessibility (`axe-core`), and mobile at 390×844. Authenticated admin tests need `ADMIN_PASSWORD`. After a correct password they expect the authenticator step, and they do not open the dashboard.
 
 </details>
 
@@ -100,7 +100,7 @@ npm run test:cypress
 
 Specs: `cv_spec.cy.js`, `competency_spec.cy.js`, `simulator_spec.cy.js`, `qa_lab_spec.cy.js`, `catalog_spec.cy.js`, `mobile_spec.cy.js`, `security_spec.cy.js`, `a11y_spec.cy.js`, `admin_spec.cy.js`.
 
-Authenticated admin tests need `ADMIN_PASSWORD` (and optional `ADMIN_EMAIL`) in the Cypress env. Accessibility checks use `cypress-axe`.
+Authenticated admin tests need `ADMIN_PASSWORD` (and optional `ADMIN_EMAIL`) in the Cypress env. After a correct password they expect the authenticator step, and they do not open the dashboard. Accessibility checks use `cypress-axe`.
 
 </details>
 

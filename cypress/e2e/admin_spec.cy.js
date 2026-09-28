@@ -42,25 +42,26 @@ describe('Admin panel', () => {
     beforeEach(function () {
       if (!hasAdminPassword) this.skip();
       cy.loginAdmin();
-      cy.visit('/admin.html');
-      cy.get('#dashboard').should('be.visible');
     });
 
-    it('shows dashboard tabs after login', () => {
-      cy.get('#messages-tab-btn').should('be.visible');
-      cy.get('#ratings-tab-btn').should('be.visible');
-      cy.get('#rejected-tab-btn').should('be.visible');
-      cy.get('#blocked-tab-btn').should('be.visible');
-      cy.get('#stats-tab-btn').should('be.visible');
+    it('keeps the dashboard behind the authenticator', () => {
+      cy.get('#messages-tab-btn').should('not.be.visible');
     });
 
-    it('can switch between admin tabs', () => {
-      cy.get('#ratings-tab-btn').click();
-      cy.get('#ratings-pane').should('be.visible');
-      cy.get('#stats-tab-btn').click();
-      cy.get('#stats-pane').should('be.visible');
-      cy.get('#messages-tab-btn').click();
-      cy.get('#messages-pane').should('be.visible');
+    it('asks for a 6-digit code on the authenticator step', () => {
+      cy.get('#mfa-form:visible, #mfa-enroll:visible').within(() => {
+        cy.contains('label', 'Authenticator code').should('be.visible');
+        cy.get('input[inputmode="numeric"]').should('be.visible');
+      });
+    });
+
+    it('a short code stays on the authenticator step', () => {
+      cy.get('#mfa-form:visible, #mfa-enroll:visible').within(() => {
+        cy.get('input[inputmode="numeric"]').type('12');
+        cy.get('button[type="submit"]').click();
+        cy.get('#mfa-error, #mfa-enroll-error').invoke('text').should('not.be.empty');
+      });
+      cy.get('#dashboard').should('not.be.visible');
     });
   });
 });
