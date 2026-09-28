@@ -67,14 +67,17 @@ test.describe('Security and SEO', () => {
     expect(hits).toEqual([]);
   });
 
-  test('admin HTML is not linked from the public CV chrome', async ({ page }) => {
+  test('the login control is the only public link to admin', async ({ page }) => {
     await openCV(page);
-    await expect(page.locator('a[href*="admin.html"]')).toHaveCount(0);
+    await expect(page.locator('a[href*="admin.html"]')).toHaveCount(2);
+    await expect(page.locator('#admin-login-btn')).toHaveAttribute('href', 'admin.html');
+    await expect(page.locator('#admin-login-btn-mobile')).toHaveAttribute('href', 'admin.html');
   });
 
-  test('simulator does not expose admin routes', async ({ page }) => {
+  test('simulator login control is the only link to admin', async ({ page }) => {
     await skipSiteTours(page);
     await page.goto('/simulador.html');
-    await expect(page.locator('a[href*="admin.html"]')).toHaveCount(0);
+    await expect(page.locator('a[href*="admin.html"]')).toHaveCount(1);
+    await expect(page.locator('#admin-login-btn')).toHaveAttribute('href', 'admin.html');
   });
 });

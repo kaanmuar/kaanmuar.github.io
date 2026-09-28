@@ -853,7 +853,7 @@ export function createCvEditor(deps) {
     }
 
     function hint(error) {
-        if (error && error.code === 'permission-denied') return 'Firestore blocked this. In Firebase, project carlosm-interactive-cv, allow anyone to read cvContent and only a signed-in user to write it.';
+        if (error && error.code === 'permission-denied') return 'Firestore blocked this. Sign in with the admin account. Only that account can write cvContent.';
         return (error && error.message) || 'The CV copy could not be saved.';
     }
 

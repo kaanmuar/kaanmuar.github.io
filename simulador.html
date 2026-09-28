@@ -493,6 +493,7 @@
     <div class="agents" id="agentPills"></div>
     <div class="actions">
         <a class="btn btn-ghost" id="homeBtn" href="index.html">← CV</a>
+        <a class="btn btn-ghost" id="admin-login-btn" href="admin.html">Login</a>
         <button class="btn btn-ghost" id="tour-start-btn" type="button">How this studio works</button>
         <div class="lang-wrap notranslate" id="langWrap">
             <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
@@ -2129,12 +2130,12 @@ const STUDIO_TOUR = {
     name: 'QA Studio',
     key: 'hasSeenStudioTour',
     steps: [
-        { selector: '#nav', title: 'Sprint views', body: 'Five views of one increment: the board, the test tool, the automation lab, verification, and the report. A pulse marks the control for this step. Agent 1 asks which board first: Jira, Azure DevOps, Monday, Trello, Linear, or Asana.', demoMs: 1700 },
+        { selector: '#nav', title: 'Sprint views', body: 'Five views of one increment: the board, the test tool, the automation lab, verification, and the report. A pulse marks the control for this step. Agent 1 asks which board first: Jira, Azure DevOps, Monday, Trello, Linear, or Asana. This page wears the same look as the CV. Golden Gate is the default until another look is kept in Admin.', demoMs: 1700 },
         { selector: '#agentPills', title: 'Four agents', body: 'Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. The clip is one pass: the story moves, the cases are written on screen, the script runs, then the increment is signed off.', demoMs: 4000, preview: 'studio' },
         { selector: '#runBtn', title: 'Run the sprint', body: 'The run starts with the board question. Each agent then waits for you: accept or keep the story, save the cases, pick the runners, and sign off.', demoMs: 1800 },
         { selector: '#studio-pace', title: 'Pace', body: 'The line runs from faster on the left to slower on the right. 0.5 holds the least between actions, 2.0 holds the most, including the moment the Test Designer writes each step.', demoMs: 1500 },
         { selector: '#view', title: 'Tickets and artifacts', body: 'The board matches the tool you picked. Open a story to read it. After the stories, choose Zephyr, Xray, or TestRail and watch the Test Designer write each step into that tool.', demoMs: 1700 },
-        { selector: '#runner-edge', title: 'Runner console', body: 'Runners slides in from the right. Each tab is that framework’s own log: Playwright’s list reporter, Cypress’s command log, Robot’s keyword log, Selenium IDE, the WebdriverIO spec reporter, or the Appium server log.', demoMs: 1600, prepare: () => openStudioRunners() },
+        { selector: '#runner-edge', title: 'Runner console', body: 'Runners slides in from the right. Each tab is that framework’s sprint log. The regression lab is where Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium run as their own processes, and the drawer there follows the one that is running.', demoMs: 1600, prepare: () => openStudioRunners() },
         { selector: '#studio-report-open', title: 'Sprint report file', body: 'Report opens the file options. English is the default. Pick another language, leave the graphs on, check the preview, then download or print.', demoMs: 1600 },
         { selector: '#log', title: 'Agent log', body: 'Each line is the latest action: what the agent did, where, and why. Earlier lines stay here if you need them.', demoMs: 1500 },
         { selector: 'a[href="qa-lab.html"]', title: 'CV regression lab', body: 'Opens the regression lab. The same checks run in the browser against this CV, with a catalog, a pace, watch or background, and a results dashboard.', demoMs: 1700 }

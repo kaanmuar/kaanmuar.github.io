@@ -697,16 +697,24 @@
     },
     {
       id: 'SEC-07', layer: 'Security', fw: ['Playwright', 'Cypress'],
-      title: 'Public chrome does not link to admin.html',
-      where: 'index.html and simulador.html anchors',
+      title: 'Only the login control opens admin',
+      where: 'index.html, simulador.html, and qa-lab.html anchors',
       when: 'Static parse of public pages.',
-      how: 'Zero hrefs containing admin.html.',
+      how: 'Each public page links to admin.html only from its Login control.',
       async run() {
-        const cv = await fetchText('index.html');
-        const studio = await fetchText('simulador.html');
-        assert(!/href\s*=\s*["'][^"']*admin\.html/.test(cv), 'CV links to admin');
-        assert(!/href\s*=\s*["'][^"']*admin\.html/.test(studio), 'studio links to admin');
-        return 'no public admin href';
+        const pages = [
+          ['index.html', 2],
+          ['simulador.html', 1],
+          ['qa-lab.html', 1]
+        ];
+        for (const [path, count] of pages) {
+          const html = await fetchText(path);
+          const tags = html.match(/<a\b[^>]*>/g) || [];
+          const links = tags.filter((tag) => /href\s*=\s*["']admin\.html["']/.test(tag));
+          assert(links.length === count, path + ' admin links ' + links.length);
+          links.forEach((tag) => assert(/id="admin-login-btn/.test(tag), path + ' admin href is not the login control'));
+        }
+        return 'login control only';
       }
     },
     {
@@ -3177,7 +3185,8 @@
           { selector: '#fw-picker', title: 'Which runners', body: 'Leave on the frameworks you want this pass to show: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, or several. A run with none selected waits until you pick one.', demoMs: 1700 },
           { selector: '#run-all', title: 'Run', body: 'Run this case, Run filtered, or Run full catalog. The active row stays in view while the checks proceed.', demoMs: 1600 },
           { selector: '#sut-wrap', title: 'Live system under test', body: 'The frame is the real CV, studio, or admin page. The checks act here, then the log under the frame records each one.', demoMs: 4000, preview: 'lab' },
-          { selector: '#runner-drawer', title: 'Native runners', body: 'Open Runners on the right edge. Each tab streams that framework’s own process across the catalog, in the browsers and devices chosen in the ask. A result from one is not copied into the others.', demoMs: 1800, prepare: () => { if (global.QALab) global.QALab.openRunners(); } },
+          { selector: '#runner-drawer', title: 'Native runners', body: 'Open Runners on the right edge. Each tab streams that framework’s own process across the catalog, in the browsers and devices chosen in the ask. When the process changes, the drawer and the Run with chip follow it and mark it Running. A result from one is not copied into the others.', demoMs: 1800, prepare: () => { if (global.QALab) global.QALab.openRunners(); } },
+          { selector: '#lab-observer', title: 'Observer', body: 'During a run this note watches for a frozen page, explains a failed check, and looks to see that the report is actually on screen. It never marks a case passed or failed.', demoMs: 1600 },
           { selector: '#report-open', title: 'Report file', body: 'Report opens the file options. English is the default. Pick another language, leave the graphs on, check the preview, then download or print.', demoMs: 1500 },
           { selector: '#dash-open', title: 'Dashboard', body: 'When the run finishes, the dashboard opens: charts, this session’s report, and the run history. Select past runs to download, print, or compare.', demoMs: 1800 },
           { selector: '#tour-start-btn', title: 'Open this tour again', body: 'This walkthrough stays closed after the first visit. How this lab works brings it back whenever you want it.', demoMs: 1600 }
