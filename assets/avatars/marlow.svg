@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-label="Marlow">
+  <circle cx="40" cy="40" r="40" fill="#e7eef2"/>
+  <path d="M16 74c4-18 14-25 24-25s20 7 24 25" fill="#243044"/>
+  <path d="M32 50h16v6H32z" fill="#f4f7f8"/>
+  <circle cx="40" cy="33" r="13" fill="#efd0b0"/>
+  <path d="M27 34c1-14 7-20 13-20s12 6 13 20c-3-4-8-6-13-6s-10 2-13 6z" fill="#4a3428"/>
+  <path d="M36 47h8" stroke="#243044" stroke-width="2"/>
+</svg>

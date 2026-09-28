@@ -15,7 +15,10 @@ const PARTS = {
     timeline: 'Career timeline',
     toolkit: 'Technical and management toolkit',
     experience: 'Professional experience',
-    education: 'Education and certifications'
+    education: 'Education and certifications',
+    testimonials: 'Testimonials',
+    messages: 'Message form',
+    ratings: 'Rating form'
 };
 const PAGES = [
     ['profile', 'Profile', ['identity', 'contact']],
@@ -25,8 +28,36 @@ const PAGES = [
     ['education', 'Education', ['education']],
     ['actions', 'Share and downloads', ['toolbar', 'share', 'downloads']],
     ['display', 'Theme and languages', ['theme', 'languages']],
+    ['feedback', 'Messages and ratings', ['testimonials', 'messages', 'ratings']],
     ['review', 'Review', []]
 ];
+const AVATARS = [
+    ['atlas', 'Atlas'],
+    ['nova', 'Nova'],
+    ['cedar', 'Cedar'],
+    ['iris', 'Iris'],
+    ['sol', 'Sol'],
+    ['marlow', 'Marlow']
+];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const RATING_MARKS = [
+    ['star', '★', 'Stars'],
+    ['check', '✓', 'Checks'],
+    ['circle', '●', 'Circles'],
+    ['thumb', '👍', 'Thumbs'],
+    ['diamond', '◆', 'Diamonds'],
+    ['shield', '⛨', 'Shields']
+];
+const COMPETENCY_LINKS = {
+    pm: ['Agile', 'Kanban', 'Scrum', 'Strategic Planning', 'Risk Management', 'Stakeholder Mgmt', 'Jira', 'TestRail', 'MS Project'],
+    qa: ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon'],
+    lead: ['Stakeholder Mgmt', 'Strategic Planning'],
+    devops: ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP'],
+    cloud: ['AWS', 'Azure DevOps', 'GCP', 'Docker'],
+    strategy: ['Strategic Planning', 'Risk Management', 'CMMI', 'ISO Standards'],
+    relations: ['Stakeholder Mgmt'],
+    ai: ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations']
+};
 const SHARE_URLS = {
     linkedin: 'https://www.linkedin.com/in/carlos-andres-m-2a60b8b/',
     x: 'https://x.com/',
@@ -75,8 +106,11 @@ function blankBullets() {
     return Object.fromEntries(LANGS.map((lang) => [lang, '']));
 }
 
+const PHOTO_HISTORY_KEY = 'cv-photo-history';
+const TOPIC_IDS = ['default', 'opportunity', 'inquiry', 'feedback', 'other'];
+
 export function createCvEditor(deps) {
-    const { db, auth, doc, getDoc, setDoc, deleteDoc, serverTimestamp } = deps;
+    const { db, auth, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, getDocs, query, orderBy, limit, addDoc, storage, ref, uploadString, getDownloadURL } = deps;
     const SECTION_KEYS = {
         identity: ['profile'],
         contact: ['contact'],
@@ -92,7 +126,10 @@ export function createCvEditor(deps) {
         timeline: ['timeline'],
         toolkit: ['toolkit'],
         experience: ['experience', 'roles'],
-        education: ['education']
+        education: ['education'],
+        testimonials: ['feedback'],
+        messages: ['feedback'],
+        ratings: ['feedback']
     };
     let draft = null;
     let baseline = null;
@@ -105,6 +142,7 @@ export function createCvEditor(deps) {
     let reviewStamp = 0;
     let reviewFrom = 'education';
     let bound = false;
+    let photoHistory = [];
 
     function seed() {
         const data = window.CVData;
@@ -114,7 +152,7 @@ export function createCvEditor(deps) {
         const skillCount = Object.values(skills).reduce((sum, list) => sum + list.length, 0);
         const companies = new Set((data && data.experiences || []).map((exp) => exp.company)).size;
         draft = {
-            profile: { name: 'CARLOS A. MUÑOZ', title: t.job_title || '', certs: 'CSPM | ISTQB | CISA | CISSP', photo: '', photoRemoved: false },
+            profile: { name: 'CARLOS A. MUÑOZ', title: t.job_title || '', certs: 'CSPM | ISTQB | CISA | CISSP', photo: '', photoRemoved: false, photoKind: 'file', avatar: '' },
             contact: {
                 shown: true, title: t.contact_title || 'Contact',
                 phone: { shown: true, label: 'Phone Number', value: '+57 320 919 1010' },
@@ -130,7 +168,13 @@ export function createCvEditor(deps) {
             summaryDetails: {},
             competencies: {
                 shown: true, title: t.competencies_title || 'Core Competencies',
-                items: ['pm', 'qa', 'lead', 'devops', 'cloud', 'strategy', 'relations'].map((id) => ({ id, label: t['competency_' + id] || id, shown: true }))
+                items: ['pm', 'qa', 'lead', 'devops', 'cloud', 'strategy', 'relations', 'ai'].map((id) => ({
+                    id,
+                    label: t['competency_' + id] || (id === 'ai' ? 'AI Expertise' : id),
+                    shown: true,
+                    skills: (COMPETENCY_LINKS[id] || []).slice(),
+                    roles: id === 'ai' ? [0] : []
+                }))
             },
             spoken: {
                 shown: true, title: t.languages_title || 'Languages',
@@ -201,6 +245,37 @@ export function createCvEditor(deps) {
                     { label: 'Quality Assurance:', value: 'CASQ, CAST, CSQA, ISTQB', shown: true },
                     { label: 'Information Security:', value: 'CISA, CISM, CISSP', shown: true }
                 ]
+            },
+            feedback: {
+                testimonials: { shown: true, title: t.testimonials_title || 'Testimonials & Feedback' },
+                widget: { shown: true },
+                fields: { name: t.form_label_name || 'Name', email: t.form_label_email || 'Email' },
+                message: {
+                    shown: true,
+                    tab: t.widget_tab_message || 'Message',
+                    lead: t.widget_message_lead || '',
+                    topic: t.form_label_topic || 'Topic',
+                    body: t.form_label_message || 'Message',
+                    attachment: t.form_label_attachment || 'Attachment (Optional)',
+                    attach: t.form_button_attach || 'Attach File',
+                    send: t.form_button_send || 'Send Message'
+                },
+                rating: {
+                    shown: true,
+                    tab: t.widget_tab_rate || 'Rate CV',
+                    lead: t.widget_rating_lead || '',
+                    label: t.form_label_rating || 'Overall Rating',
+                    comments: t.form_label_comments || 'Comments (Optional)',
+                    submit: t.form_button_submit_rating || 'Submit Rating',
+                    mark: 'star'
+                },
+                topics: [
+                    { id: 'default', label: t.topic_option_default || 'Select a topic...' },
+                    { id: 'opportunity', label: t.topic_option_opportunity || 'Job Opportunity / Collaboration' },
+                    { id: 'inquiry', label: t.topic_option_inquiry || 'Project Inquiry' },
+                    { id: 'feedback', label: t.topic_option_feedback || 'CV Feedback' },
+                    { id: 'other', label: t.topic_option_other || 'Other' }
+                ]
             }
         };
         LANGS.forEach((code) => {
@@ -209,6 +284,25 @@ export function createCvEditor(deps) {
             draft.summaryDetails[code] = { a: (dict && dict.summary_detail_1) || '', b: (dict && dict.summary_detail_2) || '' };
         });
         takeBaseline();
+    }
+
+    function ensureLinkedContent() {
+        if (!draft.competencies || !Array.isArray(draft.competencies.items)) return;
+        draft.competencies.items.forEach((item) => {
+            if (!Array.isArray(item.skills)) item.skills = (COMPETENCY_LINKS[item.id] || []).slice();
+            if (!Array.isArray(item.roles)) item.roles = item.id === 'ai' ? [0] : [];
+        });
+        if (!draft.competencies.items.some((item) => item.id === 'ai')) {
+            draft.competencies.items.push({ id: 'ai', label: 'AI Expertise', shown: true, skills: COMPETENCY_LINKS.ai.slice(), roles: [0] });
+        }
+        if (draft.toolkit && Array.isArray(draft.toolkit.groups) && !draft.toolkit.groups.some((group) => group.key === 'ai')) {
+            const fileSkills = (window.CVData && CVData.skills && CVData.skills.ai) || [];
+            draft.toolkit.groups.push({
+                key: 'ai', label: 'AI practice:', shown: true,
+                skills: fileSkills.map((skill) => ({ name: skill.name, years: skill.years || '1 Yr', stars: skill.stars || 4, shown: true }))
+            });
+        }
+        if (draft.feedback && draft.feedback.rating && !draft.feedback.rating.mark) draft.feedback.rating.mark = 'star';
     }
 
     function takeBaseline() {
@@ -438,10 +532,15 @@ export function createCvEditor(deps) {
             });
         }
         if (live.version !== 2) return;
-        ['profile', 'contact', 'competencies', 'spoken', 'toolbar', 'share', 'downloads', 'languages', 'theme', 'glance', 'timeline', 'toolkit', 'experience', 'education'].forEach((key) => {
+        ['profile', 'contact', 'competencies', 'spoken', 'toolbar', 'share', 'downloads', 'languages', 'theme', 'glance', 'timeline', 'toolkit', 'experience', 'education', 'feedback'].forEach((key) => {
             if (live[key]) draft[key] = revive(live[key]);
         });
+        if (draft.profile && !draft.profile.photoKind) {
+            draft.profile.photoKind = draft.profile.photoRemoved ? 'placeholder' : (draft.profile.photo ? 'upload' : 'file');
+            draft.profile.avatar = '';
+        }
         if (!draft.contact.extras) draft.contact.extras = [];
+        ensureLinkedContent();
         takeBaseline();
     }
 
@@ -475,6 +574,16 @@ export function createCvEditor(deps) {
             const role = draft.roles[Number(el.dataset.index)];
             if (role) role.bullets.en = el.value;
         });
+        body.querySelectorAll('[data-dates]').forEach((el) => {
+            const list = lookup(draft, el.dataset.dates);
+            const item = list && list[Number(el.dataset.index)];
+            if (!item) return;
+            const start = el.querySelector('[data-date-start]').value;
+            const present = el.querySelector('[data-date-present]').checked;
+            const end = el.querySelector('[data-date-end]').value;
+            const next = formatRange(start, end, present);
+            if (next) item.dates = next;
+        });
         if (skipped.has(section) && sectionDirty()) skipped.delete(section);
         syncSkip();
     }
@@ -505,8 +614,66 @@ export function createCvEditor(deps) {
         node[keys[keys.length - 1]] = value;
     }
 
+    function monthValue(chunk) {
+        const text = String(chunk || '').trim();
+        const named = text.match(/([A-Za-z]{3,})\s+(\d{4})/);
+        if (named) {
+            const month = MONTHS.findIndex((name) => name.toLowerCase() === named[1].slice(0, 3).toLowerCase());
+            if (month >= 0) return named[2] + '-' + String(month + 1).padStart(2, '0');
+        }
+        const iso = text.match(/(\d{4})-(\d{2})/);
+        return iso ? iso[1] + '-' + iso[2] : '';
+    }
+
+    function formatMonth(iso) {
+        const match = String(iso || '').match(/^(\d{4})-(\d{2})$/);
+        if (!match) return '';
+        const month = MONTHS[Number(match[2]) - 1];
+        return month ? month + ' ' + match[1] : '';
+    }
+
+    function formatRange(start, end, present) {
+        const left = formatMonth(start);
+        if (!left) return '';
+        if (present) return left + ' - Present';
+        const right = formatMonth(end);
+        return right ? left + ' - ' + right : left;
+    }
+
+    function dateRangeField(listName, index, value) {
+        const text = String(value || '');
+        const present = /present/i.test(text);
+        const parts = text.split(/\s+[-–—]\s+/);
+        const start = monthValue(parts[0]);
+        const end = present ? '' : monthValue(parts[1] || '');
+        return `<div class="cv-dates" data-dates="${esc(listName)}" data-index="${index}">
+            <div class="cv-field is-md"><label class="filter-label">From</label><input type="month" data-date-start value="${esc(start)}"></div>
+            <label class="cv-switch"><span class="cv-switch-name">Present</span><input type="checkbox" data-date-present ${present ? 'checked' : ''}> <span class="cv-switch-ui" aria-hidden="true"></span><span class="cv-switch-state"></span></label>
+            <div class="cv-field is-md"><label class="filter-label">To</label><input type="month" data-date-end value="${esc(end)}" ${present ? 'disabled' : ''}></div>
+        </div>`;
+    }
+
+    function yearField(listName, index, value) {
+        const current = String(value || '').trim();
+        const options = [];
+        for (let year = 1; year <= 20; year += 1) options.push(year === 1 ? '1 Yr' : year + ' Yrs');
+        ['5+ Yrs', '8+ Yrs', '10+ Yrs', '15+ Yrs', '20+ Yrs', '25+ Yrs', '30+ Yrs'].forEach((label) => {
+            if (!options.includes(label)) options.push(label);
+        });
+        if (current && !options.includes(current)) options.unshift(current);
+        const choices = options.map((label) => `<option value="${esc(label)}"${label === current ? ' selected' : ''}>${esc(label)}</option>`).join('');
+        return `<div class="cv-field is-sm"><label class="filter-label">Years</label><select data-list="${listName}" data-index="${index}" data-field="years">${choices}</select></div>`;
+    }
+
+    function starField(listName, index, value) {
+        const count = Math.min(5, Math.max(1, Number(value) || 3));
+        const buttons = [1, 2, 3, 4, 5].map((star) => `<button type="button" class="cv-star${star <= count ? ' is-on' : ''}" data-star="${star}" data-list="${listName}" data-index="${index}" aria-label="${star} of 5">★</button>`).join('');
+        return `<div class="cv-starline"><span class="filter-label">Stars</span><span class="cv-stars" role="radiogroup">${buttons}</span><input type="hidden" data-list="${listName}" data-index="${index}" data-field="stars" value="${count}"></div>`;
+    }
+
     function check(name, on, label) {
-        return `<label class="cv-check"><input type="checkbox" ${name} ${on ? 'checked' : ''}> ${esc(label || 'Show')}</label>`;
+        const nameHtml = label ? `<span class="cv-switch-name">${esc(label)}</span>` : '';
+        return `<label class="cv-switch">${nameHtml}<input type="checkbox" ${name} ${on ? 'checked' : ''}> <span class="cv-switch-ui" aria-hidden="true"></span><span class="cv-switch-state"></span></label>`;
     }
 
     function textField(label, name, value, max, opts) {
@@ -526,28 +693,46 @@ export function createCvEditor(deps) {
             syncSkip();
             return;
         }
-        const views = { identity: identityView, contact: contactView, summary: summaryView, competencies: competenciesView, spoken: spokenView, toolbar: toolbarView, share: shareView, downloads: downloadView, languages: languageView, theme: themeView, glance: glanceView, timeline: timelineView, toolkit: toolkitView, experience: experienceView, education: educationView };
+        const views = { identity: identityView, contact: contactView, summary: summaryView, competencies: competenciesView, spoken: spokenView, toolbar: toolbarView, share: shareView, downloads: downloadView, languages: languageView, theme: themeView, glance: glanceView, timeline: timelineView, toolkit: toolkitView, experience: experienceView, education: educationView, testimonials: testimonialsView, messages: messagesView, ratings: ratingsView };
         const parts = pageParts(section);
-        const layout = { about: 'cv-stack', actions: 'cv-stack', career: 'cv-stack', toolkit: 'cv-stack', education: 'cv-stack', display: 'cv-columns cv-columns-2 cv-compact' }[section] || `cv-columns cv-columns-${Math.min(parts.length, 3)}`;
+        const layout = { about: 'cv-stack', actions: 'cv-stack', career: 'cv-stack', toolkit: 'cv-stack', education: 'cv-stack', display: 'cv-columns cv-columns-2 cv-compact', feedback: 'cv-stack' }[section] || `cv-columns cv-columns-${Math.min(parts.length, 3)}`;
         body.innerHTML = `<div class="${layout}">${parts.map((part) => `<section class="cv-column"><h3 class="cv-column-title">${esc(PARTS[part] || part)}</h3>${views[part]()}</section>`).join('')}</div>`;
         if (window.mountAdminMenus) window.mountAdminMenus(document.getElementById('cv-pane'));
         syncSkip();
     }
 
+    function portraitSrc() {
+        const profile = draft.profile;
+        if (profile.photoKind === 'placeholder' || profile.photoRemoved) return 'assets/avatars/placeholder.svg';
+        if (profile.photoKind === 'avatar' && AVATARS.some(([id]) => id === profile.avatar)) return 'assets/avatars/' + profile.avatar + '.svg';
+        if (profile.photo) return profile.photo;
+        return 'assets/profile.jpg?v=20260925';
+    }
+
     function identityView() {
-        const photo = draft.profile.photoRemoved ? '' : (draft.profile.photo || 'assets/profile.jpg?v=20260925');
+        const profile = draft.profile;
+        const avatars = AVATARS.map(([id, label]) => `<button type="button" class="cv-avatar${profile.photoKind === 'avatar' && profile.avatar === id ? ' is-on' : ''}" data-avatar="${id}" title="${esc(label)}"><img src="assets/avatars/${id}.svg" alt="${esc(label)}"></button>`).join('');
+        const history = photoHistory.map((item, index) => `<button type="button" class="cv-avatar${profile.photo === item.src ? ' is-on' : ''}" data-history="${index}" title="Use this photo"><img src="${esc(item.src)}" alt=""></button>`).join('');
         return `
-            <div class="flex items-center gap-4">
-                <img id="cv-photo-preview" src="${esc(photo)}" alt="" style="width:96px;height:96px;object-fit:cover;border-radius:999px;${draft.profile.photoRemoved ? 'display:none' : ''}">
+            <div class="cv-portrait">
+                <img id="cv-photo-preview" src="${esc(portraitSrc())}" alt="">
                 <div>
-                    <label class="filter-label" for="cv-photo-file">Photo</label>
-                    <input id="cv-photo-file" type="file" accept="image/*">
-                    <button type="button" id="cv-photo-remove" class="bg-gray-200 text-gray-800 mt-2">Remove photo</button>
+                    <p class="cv-note">Use your portrait, an avatar, or the placeholder. Uploads stay in the row below so you can pick them again.</p>
+                    <label class="filter-label" for="cv-photo-file">Upload a photo</label>
+                    <input id="cv-photo-file" type="file" accept="image/jpeg,image/png,image/webp">
+                    <div class="cv-photo-actions">
+                        <button type="button" id="cv-photo-current" class="cv-btn${!profile.photoKind || profile.photoKind === 'file' ? ' is-on' : ''}">Current portrait</button>
+                        <button type="button" id="cv-photo-placeholder" class="cv-btn${profile.photoKind === 'placeholder' || profile.photoRemoved ? ' is-on' : ''}">Placeholder</button>
+                    </div>
                 </div>
             </div>
-            ${textField('Name', 'data-bind="profile.name"', draft.profile.name, 80)}
-            ${textField('Title', 'data-bind="profile.title"', draft.profile.title, 160)}
-            ${textField('Credential line', 'data-bind="profile.certs"', draft.profile.certs, 120)}`;
+            <p class="cv-kicker">Avatars</p>
+            <div class="cv-avatar-row">${avatars}</div>
+            <p class="cv-kicker">Uploaded photos</p>
+            <div class="cv-avatar-row">${history || '<p class="cv-note">No uploads yet.</p>'}</div>
+            ${textField('Name', 'data-bind="profile.name"', profile.name, 80)}
+            ${textField('Title', 'data-bind="profile.title"', profile.title, 160)}
+            ${textField('Credential line', 'data-bind="profile.certs"', profile.certs, 120)}`;
     }
 
     function contactView() {
@@ -594,9 +779,38 @@ export function createCvEditor(deps) {
     }
 
     function competenciesView() {
-        return `${check('data-bind="competencies.shown"', draft.competencies.shown)}
+        return `${check('data-bind="competencies.shown"', draft.competencies.shown, 'Section')}
             ${textField('Heading', 'data-bind="competencies.title"', draft.competencies.title, 80)}
-            ${draft.competencies.items.map((item, index) => `<div class="cv-line">${check(`data-list="competencies.items" data-index="${index}" data-field="shown"`, item.shown)} <div class="cv-field is-grow">${textField('Label', `data-list="competencies.items" data-index="${index}" data-field="label"`, item.label, 80)}</div> <button type="button" class="cv-btn" data-remove="competencies.items" data-index="${index}">Remove</button></div>`).join('')}
+            <p class="cv-note">Each competency is a filter. Link the toolkit skills and the roles it should keep in focus. AI Expertise already points at Cursor, Claude, Copilot, ChatGPT, custom personalizations, and the current role.</p>
+            ${draft.competencies.items.map((item, index) => {
+                const skills = item.skills || [];
+                const roles = item.roles || [];
+                const skillChips = skills.map((name) => `<button type="button" class="cv-chip is-on" data-link-skill="${esc(name)}" data-index="${index}" title="Remove ${esc(name)}">${esc(name)}</button>`).join('');
+                const skillOptions = draft.toolkit.groups.map((group) => {
+                    const choices = (group.skills || []).filter((skill) => skill.name && !skills.includes(skill.name)).map((skill) => `<option value="${esc(skill.name)}">${esc(skill.name)}</option>`).join('');
+                    return choices ? `<optgroup label="${esc(group.label)}">${choices}</optgroup>` : '';
+                }).join('');
+                const roleChips = roles.map((roleAt) => {
+                    const role = draft.roles[roleAt];
+                    const label = role ? (role.company || role.title) : 'Role';
+                    return `<button type="button" class="cv-chip is-on" data-link-role="${roleAt}" data-index="${index}" title="Remove ${esc(label)}">${esc(label)}</button>`;
+                }).join('');
+                const roleOptions = draft.roles.map((role, roleAt) => roles.includes(roleAt) ? '' : `<option value="${roleAt}">${esc((role.company || 'Role') + (role.dates ? ' · ' + role.dates : ''))}</option>`).join('');
+                return `<article class="cv-card">
+                    <div class="cv-line">${check(`data-list="competencies.items" data-index="${index}" data-field="shown"`, item.shown, 'On the CV')}
+                        <div class="cv-field is-grow">${textField('Competency', `data-list="competencies.items" data-index="${index}" data-field="label"`, item.label, 80)}</div>
+                        <button type="button" class="cv-btn" data-remove="competencies.items" data-index="${index}">Remove</button>
+                    </div>
+                    <p class="cv-kicker">Skills</p>
+                    <div class="cv-chips">${skillChips || '<span class="cv-note">No skills linked yet.</span>'}</div>
+                    <label class="filter-label">Link a skill</label>
+                    <select data-add-skill="${index}"><option value="">Choose a skill</option>${skillOptions}</select>
+                    <p class="cv-kicker">Experience</p>
+                    <div class="cv-chips">${roleChips || '<span class="cv-note">No roles linked yet. Skills still highlight a role when its technologies match.</span>'}</div>
+                    <label class="filter-label">Link a role</label>
+                    <select data-add-role="${index}"><option value="">Choose a role</option>${roleOptions}</select>
+                </article>`;
+            }).join('')}
             <button type="button" id="cv-add-competency" class="cv-btn">Add a competency</button>`;
     }
 
@@ -613,7 +827,7 @@ export function createCvEditor(deps) {
     }
 
     function toolbarView() {
-        return `<label class="cv-check"><input type="checkbox" data-bind="toolbar.hideCaptions" ${draft.toolbar.hideCaptions ? 'checked' : ''}> Hide captions</label>
+        return `${check('data-bind="toolbar.hideCaptions"', draft.toolbar.hideCaptions, 'Hide captions')}
             <div class="cv-grid">${draft.toolbar.items.map((item, index) => `<div class="cv-mini">${check(`data-list="toolbar.items" data-index="${index}" data-field="shown"`, item.shown)} ${textField('Label', `data-list="toolbar.items" data-index="${index}" data-field="label"`, item.label, 40)}</div>`).join('')}</div>`;
     }
 
@@ -655,7 +869,7 @@ export function createCvEditor(deps) {
 
     function glanceView() {
         return `${check('data-bind="glance.shown"', draft.glance.shown)}
-            ${check('data-bind="glance.charts"', draft.glance.charts).replace('> Show', '> Show charts')}
+            ${check('data-bind="glance.charts"', draft.glance.charts, 'Charts')}
             ${textField('Heading', 'data-bind="glance.title"', draft.glance.title, 80)}
             ${textField('Note', 'data-bind="glance.note"', draft.glance.note, 120)}
             ${draft.glance.kpis.map((item, index) => `<div class="cv-line">${check(`data-list="glance.kpis" data-index="${index}" data-field="shown"`, item.shown)} <div class="cv-field is-sm">${textField('Label', `data-list="glance.kpis" data-index="${index}" data-field="label"`, item.label, 40)}</div> <div class="cv-field is-xs">${textField('Value', `data-list="glance.kpis" data-index="${index}" data-field="value"`, item.value, 24)}</div> <button type="button" class="cv-btn" data-remove="glance.kpis" data-index="${index}">Remove</button></div>`).join('')}
@@ -675,8 +889,8 @@ export function createCvEditor(deps) {
                 <div class="cv-line">${check(`data-list="toolkit.groups" data-index="${groupAt}" data-field="shown"`, group.shown)} <div class="cv-field is-grow">${textField('Subsection', `data-list="toolkit.groups" data-index="${groupAt}" data-field="label"`, group.label, 80)}</div> <button type="button" class="cv-btn" data-remove="toolkit.groups" data-index="${groupAt}">Remove</button></div>
                 ${group.skills.map((skill, skillAt) => `<div class="cv-line">${check(`data-list="toolkit.groups.${groupAt}.skills" data-index="${skillAt}" data-field="shown"`, skill.shown)}
                     <div class="cv-field is-grow">${textField('Skill', `data-list="toolkit.groups.${groupAt}.skills" data-index="${skillAt}" data-field="name"`, skill.name, 60)}</div>
-                    <div class="cv-field is-xs">${textField('Years', `data-list="toolkit.groups.${groupAt}.skills" data-index="${skillAt}" data-field="years"`, skill.years, 20)}</div>
-                    <div class="cv-field is-xs"><label class="filter-label">Stars</label><input type="number" min="1" max="5" data-list="toolkit.groups.${groupAt}.skills" data-index="${skillAt}" data-field="stars" value="${Number(skill.stars) || 3}"></div>
+                    ${yearField(`toolkit.groups.${groupAt}.skills`, skillAt, skill.years)}
+                    ${starField(`toolkit.groups.${groupAt}.skills`, skillAt, skill.stars)}
                     <button type="button" class="cv-btn" data-remove="toolkit.groups.${groupAt}.skills" data-index="${skillAt}">Remove</button></div>`).join('')}
                 <button type="button" class="cv-btn" data-add="skill" data-index="${groupAt}">Add a skill</button>
             </section>`).join('')}
@@ -691,12 +905,12 @@ export function createCvEditor(deps) {
                     ${check(`data-list="roles" data-index="${index}" data-field="onTimeline"`, role.onTimeline, 'On timeline')}
                     <div class="cv-field is-grow">${textField('Title', `data-list="roles" data-index="${index}" data-field="title"`, role.title, 140)}</div>
                     <div class="cv-field is-md">${textField('Company', `data-list="roles" data-index="${index}" data-field="company"`, role.company, 140)}</div>
-                    <div class="cv-field is-md">${textField('Dates', `data-list="roles" data-index="${index}" data-field="dates"`, role.dates, 80)}</div>
+                    ${dateRangeField('roles', index, role.dates)}
                     <button type="button" class="cv-btn" data-remove="roles" data-index="${index}">Remove</button></div>
                 <label class="filter-label">Bullets, one per line</label><textarea data-bullets data-index="${index}" maxlength="3600">${esc(role.bullets.en || '')}</textarea>
             </article>`).join('')}
             <button type="button" id="cv-add-role" class="cv-btn">Add a role</button>
-            <p class="cv-note">Dates use English months, for example Jan 2026 - Present. Other languages follow the automatic translation.</p>`;
+            <p class="cv-note">Pick the start month, then either Present or an end month. The CV still shows the date as Jan 2021 - Present.</p>`;
     }
 
     function educationView() {
@@ -708,6 +922,46 @@ export function createCvEditor(deps) {
             ${textField('Certifications label', 'data-bind="education.certsTitle"', draft.education.certsTitle, 80)}
             ${draft.education.certs.map((item, index) => `<div class="cv-line">${check(`data-list="education.certs" data-index="${index}" data-field="shown"`, item.shown)} <div class="cv-field is-sm">${textField('Label', `data-list="education.certs" data-index="${index}" data-field="label"`, item.label, 60)}</div> <div class="cv-field is-grow">${textField('Value', `data-list="education.certs" data-index="${index}" data-field="value"`, item.value, 120)}</div> <button type="button" class="cv-btn" data-remove="education.certs" data-index="${index}">Remove</button></div>`).join('')}
             <button type="button" id="cv-add-cert" class="cv-btn">Add a certification</button>`;
+    }
+
+    function testimonialsView() {
+        const block = draft.feedback.testimonials;
+        return `${check('data-bind="feedback.testimonials.shown"', block.shown)}
+            ${textField('Heading', 'data-bind="feedback.testimonials.title"', block.title, 80)}
+            ${check('data-bind="feedback.widget.shown"', draft.feedback.widget.shown, 'Show the message button')}
+            <p class="cv-note">Approved ratings still appear here. The button opens the message and rating forms.</p>`;
+    }
+
+    function messagesView() {
+        const form = draft.feedback.message;
+        const fields = draft.feedback.fields;
+        return `${check('data-bind="feedback.message.shown"', form.shown, 'Show the message form')}
+            ${textField('Tab', 'data-bind="feedback.message.tab"', form.tab, 40)}
+            ${textField('Lead', 'data-bind="feedback.message.lead"', form.lead, 180)}
+            <div class="cv-inline">
+                <div class="cv-field is-sm">${textField('Name label', 'data-bind="feedback.fields.name"', fields.name, 40)}</div>
+                <div class="cv-field is-sm">${textField('Email label', 'data-bind="feedback.fields.email"', fields.email, 40)}</div>
+            </div>
+            ${textField('Topic label', 'data-bind="feedback.message.topic"', form.topic, 40)}
+            ${(draft.feedback.topics || []).map((item, index) => `<div class="cv-line"><div class="cv-field is-grow">${textField(item.id === 'default' ? 'Empty choice' : item.id, `data-list="feedback.topics" data-index="${index}" data-field="label"`, item.label, 80)}</div></div>`).join('')}
+            ${textField('Message label', 'data-bind="feedback.message.body"', form.body, 40)}
+            ${textField('Attachment label', 'data-bind="feedback.message.attachment"', form.attachment, 60)}
+            ${textField('Attach button', 'data-bind="feedback.message.attach"', form.attach, 40)}
+            ${textField('Send button', 'data-bind="feedback.message.send"', form.send, 40)}`;
+    }
+
+    function ratingsView() {
+        const form = draft.feedback.rating;
+        return `${check('data-bind="feedback.rating.shown"', form.shown, 'Show the rating form')}
+            ${textField('Tab', 'data-bind="feedback.rating.tab"', form.tab, 40)}
+            ${textField('Lead', 'data-bind="feedback.rating.lead"', form.lead, 180)}
+            ${textField('Rating label', 'data-bind="feedback.rating.label"', form.label, 40)}
+            ${textField('Comments label', 'data-bind="feedback.rating.comments"', form.comments, 60)}
+            ${textField('Submit button', 'data-bind="feedback.rating.submit"', form.submit, 40)}
+            <div class="cv-marks" role="radiogroup" aria-label="Rating mark">
+                ${RATING_MARKS.map(([id, glyph, label]) => `<button type="button" class="cv-mark${(form.mark || 'star') === id ? ' is-on' : ''}" data-mark="${id}" title="${esc(label)}" aria-label="${esc(label)}">${glyph}</button>`).join('')}
+            </div>
+            <p class="cv-note">Visitors still tap five marks. Name and email use the labels from the message form.</p>`;
     }
 
     function paint() {
@@ -749,13 +1003,11 @@ export function createCvEditor(deps) {
         const list = document.getElementById('cv-steps');
         const count = PAGES.length;
         if (list.children.length !== count) {
-            list.innerHTML = PAGES.map(([id, label], step) => `<li><button type="button" data-step="${id}" title="${esc(label)}">${step + 1}</button></li>`).join('');
+            list.innerHTML = PAGES.map(([id, label], step) => `<li><button type="button" data-step="${id}"><span>${step + 1}</span><em>${esc(label)}</em></button></li>`).join('');
         }
         [...list.querySelectorAll('button')].forEach((button, step) => {
-            const distance = Math.abs(step - index);
-            const anchor = step < 2 || step >= count - 2;
-            const size = distance === 0 ? 'is-current' : distance === 1 ? 'is-near' : distance === 2 ? 'is-mid' : anchor ? 'is-edge' : 'is-dot';
-            button.className = size + (skipped.has(PAGES[step][0]) ? ' is-skipped' : '');
+            const id = PAGES[step][0];
+            button.className = 'cv-step' + (step === index ? ' is-current' : '') + (skipped.has(id) ? ' is-skipped' : '');
             if (step === index) button.setAttribute('aria-current', 'step');
             else button.removeAttribute('aria-current');
         });
@@ -810,11 +1062,11 @@ export function createCvEditor(deps) {
         return {
             version: 2,
             machineTranslate: true,
-            profile: draft.profile,
+            profile: publishedProfile(),
             contact: flagNode(draft.contact),
             summary,
             summaryDetails,
-            competencies: { title: draft.competencies.title, hidden: draft.competencies.shown === false, items: packList(draft.competencies.items, ['id', 'label']) },
+            competencies: { title: draft.competencies.title, hidden: draft.competencies.shown === false, items: packList(draft.competencies.items, ['id', 'label', 'skills', 'roles']) },
             spoken: { title: draft.spoken.title, hidden: draft.spoken.shown === false, items: packList(draft.spoken.items, ['name', 'level', 'percent', 'flag']) },
             toolbar: { hideCaptions: draft.toolbar.hideCaptions === true, items: packList(draft.toolbar.items, ['id', 'label']) },
             share: { items: packList(draft.share.items, ['id', 'label']) },
@@ -831,8 +1083,95 @@ export function createCvEditor(deps) {
                 educationTitle: draft.education.educationTitle, certsTitle: draft.education.certsTitle,
                 degrees: packList(draft.education.degrees, ['degree', 'school']),
                 certs: packList(draft.education.certs, ['label', 'value'])
-            }
+            },
+            feedback: publishedFeedback()
         };
+    }
+
+    function publishedProfile() {
+        const profile = draft.profile;
+        const kind = profile.photoKind || (profile.photoRemoved ? 'placeholder' : 'file');
+        return {
+            name: profile.name,
+            title: profile.title,
+            certs: profile.certs,
+            photoKind: kind,
+            avatar: kind === 'avatar' ? profile.avatar : '',
+            photo: kind === 'upload' ? profile.photo : '',
+            photoRemoved: kind === 'placeholder'
+        };
+    }
+
+    function publishedFeedback() {
+        const flagged = flagNode(draft.feedback);
+        flagged.topics = TOPIC_IDS.map((id) => {
+            const found = (draft.feedback.topics || []).find((item) => item.id === id);
+            return { id, label: String((found && found.label) || '').slice(0, 80) };
+        });
+        return flagged;
+    }
+
+    function loadHistory() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(PHOTO_HISTORY_KEY) || '[]');
+            photoHistory = Array.isArray(saved) ? saved.filter((item) => item && item.src).slice(0, 12) : [];
+        } catch (error) {
+            photoHistory = [];
+        }
+    }
+
+    function saveHistory() {
+        try { localStorage.setItem(PHOTO_HISTORY_KEY, JSON.stringify(photoHistory.slice(0, 12))); } catch (error) { /* a full browser store still keeps the current photo */ }
+    }
+
+    function rememberPhoto(src) {
+        if (!src) return;
+        photoHistory = [{ src, at: Date.now() }, ...photoHistory.filter((item) => item.src !== src)].slice(0, 12);
+        saveHistory();
+    }
+
+    function useAvatar(id) {
+        if (!AVATARS.some(([key]) => key === id)) return;
+        draft.profile.photoKind = 'avatar';
+        draft.profile.avatar = id;
+        draft.profile.photo = '';
+        draft.profile.photoRemoved = false;
+    }
+
+    function useHistoryPhoto(index) {
+        const item = photoHistory[index];
+        if (!item) return;
+        draft.profile.photoKind = 'upload';
+        draft.profile.photo = item.src;
+        draft.profile.avatar = '';
+        draft.profile.photoRemoved = false;
+    }
+
+    async function storePhoto(dataUrl) {
+        if (!storage || !ref || !uploadString || !getDownloadURL || !auth.currentUser) return '';
+        try {
+            const fileRef = ref(storage, 'profile-photos/' + Date.now() + '.jpg');
+            await uploadString(fileRef, dataUrl, 'data_url');
+            const url = await getDownloadURL(fileRef);
+            if (addDoc && collection) await addDoc(collection(db, 'cvPhotos'), { url, createdAt: serverTimestamp() });
+            return url;
+        } catch (error) {
+            console.warn(error);
+            return '';
+        }
+    }
+
+    async function pullCloudHistory() {
+        if (!collection || !getDocs || !query || !orderBy || !limit || !auth.currentUser) return;
+        try {
+            const snap = await getDocs(query(collection(db, 'cvPhotos'), orderBy('createdAt', 'desc'), limit(12)));
+            const urls = [];
+            snap.forEach((item) => { if (item.data().url) urls.push(item.data().url); });
+            urls.reverse().forEach(rememberPhoto);
+            if (section === 'profile') render();
+        } catch (error) {
+            console.warn(error);
+        }
     }
 
     function flagNode(node) {
@@ -876,12 +1215,62 @@ export function createCvEditor(deps) {
     function bindBody() {
         const body = document.getElementById('cv-section-body');
         body.addEventListener('click', async (event) => {
+            if (event.target.closest('.cv-menu') || event.target.closest('.cv-menu-panel')) return;
             const remove = event.target.closest('[data-remove]');
             const add = event.target.closest('[data-add]');
+            const avatarBtn = event.target.closest('[data-avatar]');
+            const historyBtn = event.target.closest('[data-history]');
+            const star = event.target.closest('[data-star]');
+            const mark = event.target.closest('[data-mark]');
+            const skillChip = event.target.closest('[data-link-skill]');
+            const roleChip = event.target.closest('[data-link-role]');
             const id = event.target.id;
-            if (!remove && !id && !add) return;
-            if (event.target.closest('.cv-menu')) return;
+            if (!remove && !id && !add && !avatarBtn && !historyBtn && !star && !mark && !skillChip && !roleChip) return;
             read();
+            if (star) {
+                const hidden = star.closest('.cv-starline') && star.closest('.cv-starline').querySelector('input[data-field="stars"]');
+                if (hidden) hidden.value = star.dataset.star;
+                read();
+                render();
+                return;
+            }
+            if (mark) { draft.feedback.rating.mark = mark.dataset.mark; render(); return; }
+            if (skillChip) {
+                const item = draft.competencies.items[Number(skillChip.dataset.index)];
+                const name = skillChip.dataset.linkSkill;
+                if (!item || !name) return;
+                const skills = item.skills || [];
+                item.skills = skills.includes(name) ? skills.filter((skill) => skill !== name) : skills.concat(name);
+                render();
+                return;
+            }
+            if (roleChip) {
+                const item = draft.competencies.items[Number(roleChip.dataset.index)];
+                const roleAt = Number(roleChip.dataset.linkRole);
+                if (!item || Number.isNaN(roleAt)) return;
+                const roles = item.roles || [];
+                item.roles = roles.includes(roleAt) ? roles.filter((value) => value !== roleAt) : roles.concat(roleAt);
+                render();
+                return;
+            }
+            if (avatarBtn) { useAvatar(avatarBtn.dataset.avatar); render(); return; }
+            if (historyBtn) { useHistoryPhoto(Number(historyBtn.dataset.history)); render(); return; }
+            if (id === 'cv-photo-current') {
+                draft.profile.photoKind = 'file';
+                draft.profile.avatar = '';
+                draft.profile.photo = '';
+                draft.profile.photoRemoved = false;
+                render();
+                return;
+            }
+            if (id === 'cv-photo-placeholder') {
+                draft.profile.photoKind = 'placeholder';
+                draft.profile.avatar = '';
+                draft.profile.photo = '';
+                draft.profile.photoRemoved = true;
+                render();
+                return;
+            }
             if (remove) {
                 const list = lookup(draft, remove.dataset.remove);
                 const keep = remove.dataset.remove === 'roles' || remove.dataset.remove === 'toolkit.groups' ? 1 : 0;
@@ -895,8 +1284,7 @@ export function createCvEditor(deps) {
                 render();
                 return;
             }
-            if (id === 'cv-photo-remove') { draft.profile.photo = ''; draft.profile.photoRemoved = true; render(); return; }
-            if (id === 'cv-add-competency') draft.competencies.items.push({ id: 'c' + Date.now(), label: '', shown: true });
+            if (id === 'cv-add-competency') draft.competencies.items.push({ id: 'c' + Date.now(), label: '', shown: true, skills: [], roles: [] });
             if (id === 'cv-add-spoken') draft.spoken.items.push({ name: '', level: '', percent: 50, flag: '', shown: true });
             if (id === 'cv-add-share') draft.share.items.push({ id: 'link' + Date.now(), label: '', url: 'https://', shown: true, custom: true });
             if (id === 'cv-add-download') draft.downloads.items.push({ id: 'file' + Date.now(), label: '', url: 'https://', shown: true, custom: true });
@@ -937,11 +1325,36 @@ export function createCvEditor(deps) {
         });
         body.addEventListener('change', async (event) => {
             read();
+            if (event.target.matches('[data-date-present], [data-date-start], [data-date-end]')) { render(); return; }
+            if (event.target.matches('[data-add-skill]')) {
+                const item = draft.competencies.items[Number(event.target.dataset.addSkill)];
+                if (item && event.target.value) item.skills = (item.skills || []).concat(event.target.value);
+                render();
+                return;
+            }
+            if (event.target.matches('[data-add-role]')) {
+                const item = draft.competencies.items[Number(event.target.dataset.addRole)];
+                const roleAt = Number(event.target.value);
+                if (item && event.target.value !== '' && !Number.isNaN(roleAt)) item.roles = (item.roles || []).concat(roleAt);
+                render();
+                return;
+            }
             if (event.target.id === 'cv-photo-file' && event.target.files[0]) {
                 try {
-                    draft.profile.photo = await compress(event.target.files[0]);
+                    const dataUrl = await compress(event.target.files[0]);
+                    rememberPhoto(dataUrl);
+                    draft.profile.photo = dataUrl;
+                    draft.profile.photoKind = 'upload';
+                    draft.profile.avatar = '';
                     draft.profile.photoRemoved = false;
                     render();
+                    const url = await storePhoto(dataUrl);
+                    if (url) {
+                        photoHistory = photoHistory.map((item) => item.src === dataUrl ? { src: url, at: item.at } : item);
+                        saveHistory();
+                        if (draft.profile.photo === dataUrl) draft.profile.photo = url;
+                        if (section === 'profile') render();
+                    }
                 } catch (error) { message(error.message, false); }
                 return;
             }
@@ -982,6 +1395,7 @@ export function createCvEditor(deps) {
     function bind() {
         if (bound) return;
         bound = true;
+        loadHistory();
         seed();
         paint();
         document.getElementById('cv-status').textContent = 'The public CV is still using the file. Edits are in English, and the other languages follow the automatic translation.';
@@ -1035,6 +1449,7 @@ export function createCvEditor(deps) {
     }
 
     async function load() {
+        await pullCloudHistory();
         try {
             const snap = await getDoc(doc(db, 'cvContent', 'live'));
             if (!snap.exists()) return;

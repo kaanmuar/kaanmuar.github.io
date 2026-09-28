@@ -300,9 +300,9 @@
     'FN-16': async function () {
       var items = [].slice.call(document.querySelectorAll('.competency-item'));
       var ids = items.map(function (el) { return el.dataset.competency; });
-      assert(ids.join(',') === 'pm,qa,lead,devops,cloud,strategy,relations', 'unexpected ids: ' + ids.join(','));
+      assert(ids.join(',') === 'pm,qa,lead,devops,cloud,strategy,relations,ai', 'unexpected ids: ' + ids.join(','));
       items.forEach(function (el) { assert(el.getAttribute('aria-pressed') === 'false', el.dataset.competency + ' should start unpressed'); });
-      return '7 competency filters';
+      return '8 competency filters';
     },
     'FN-17': async function () {
       var btn = document.querySelector('.competency-item[data-competency="qa"]');

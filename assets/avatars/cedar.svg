@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-label="Cedar">
+  <circle cx="40" cy="40" r="40" fill="#e7eef2"/>
+  <path d="M17 74c4-17 13-24 23-24s19 7 23 24" fill="#3d5a4c"/>
+  <circle cx="40" cy="33" r="14" fill="#8d5a3c"/>
+  <path d="M26 31c2-11 7-15 14-15s12 4 14 15c-3-2-8-3-14-3s-11 1-14 3z" fill="#1c1612"/>
+  <path d="M32 42c2 4 5 6 8 6s6-2 8-6" fill="none" stroke="#1c1612" stroke-width="1.4"/>
+  <path d="M31 46c3 3 6 4 9 4s6-1 9-4c-2 5-6 7-9 7s-7-2-9-7z" fill="#1c1612"/>
+</svg>

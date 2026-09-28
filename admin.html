@@ -96,8 +96,13 @@
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230d6e76' stroke-width='1.6'/%3E%3C/svg%3E");
             background-repeat: no-repeat; background-position: right 0.7rem center; background-size: 0.7rem;
         }
+        #cv-pane .cv-menu > select, #dashboard .cv-menu > select {
+            position: absolute; width: 1px; height: 1px; max-width: none; padding: 0; border: 0;
+            opacity: 0; pointer-events: none; overflow: hidden;
+        }
         #cv-pane textarea { min-height: 6.5rem; }
         #cv-pane input[type="checkbox"] { width: 1rem; height: 1rem; max-width: none; padding: 0; accent-color: #0d6e76; background-image: none; }
+        #cv-pane .cv-switch input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
         #cv-pane input:disabled { background-color: #e8edf0; color: #6b7280; cursor: not-allowed; }
         #cv-pane .cv-check { display: flex; justify-content: flex-start; align-items: center; gap: 0.45rem; width: auto; margin-top: 0.65rem; font-size: 0.9rem; color: #12181f; }
         .cv-section-picker { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
@@ -142,7 +147,7 @@
         }
         .cv-menu select { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
         .cv-menu-panel {
-            position: fixed; z-index: 80; min-width: 12rem; max-height: min(20rem, 70vh);
+            position: fixed; z-index: 500; min-width: 12rem; max-height: min(20rem, 70vh);
             overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
             background: #fff; color: #12181f; border: 1px solid #d5dce3; border-radius: 10px;
             box-shadow: 0 16px 40px rgba(18, 24, 31, 0.18); padding: 0.3rem;
@@ -153,6 +158,7 @@
             background: #fff; color: #12181f; padding: 0.45rem 0.65rem; font-weight: 500;
         }
         .cv-menu-item:hover, .cv-menu-item.is-current { background: #d7ecee; color: #08545b; }
+        .cv-menu-label { padding: 0.45rem 0.65rem 0.15rem; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #5c6b76; }
         .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
         .cv-mini { background: #f7f8fa; border: 1px solid #d5dce3; border-radius: 10px; padding: 0.55rem 0.7rem; }
         .cv-note { margin-top: 0.5rem; font-size: 0.78rem; color: #4a5560; }
@@ -162,18 +168,63 @@
         .cv-actions button { font-weight: 700; border-radius: 8px; padding: 0.55rem 0.9rem; }
         .cv-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
         .cv-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #d5dce3; }
-        .cv-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; list-style: none; margin: 0.75rem 0 0; padding: 0; min-height: 2.6rem; }
-        .cv-steps button {
-            padding: 0; border-radius: 999px; border: 1px solid #d5dce3; background: #fff; font-weight: 700; color: #334155;
-            display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
-            transition: width 0.35s ease, height 0.35s ease, font-size 0.35s ease, background 0.35s ease, color 0.35s ease, border-color 0.35s ease, transform 0.35s ease;
+        .cv-studio { display: grid; grid-template-columns: 16.5rem minmax(0, 1fr); gap: 1rem; align-items: start; }
+        .cv-rail { position: sticky; top: 0.75rem; background: #1a2430; border-radius: 16px; padding: 0.85rem 0.7rem 0.7rem; }
+        .cv-rail .cv-kicker { color: #8fd0d5; margin: 0 0.35rem 0.45rem; }
+        .cv-steps { display: flex; flex-direction: column; gap: 0.2rem; list-style: none; margin: 0; padding: 0; }
+        .cv-steps li { flex: 0 0 auto; }
+        .cv-steps button.cv-step {
+            display: flex; flex-direction: row; align-items: center; gap: 0.45rem; width: 100%;
+            min-width: 0; max-width: none; padding: 0.4rem 0.45rem; border-radius: 10px;
+            border: 1px solid transparent; background: transparent; color: #d7e2e8; text-align: left; line-height: 1.15;
         }
-        .cv-steps button.is-dot { width: 0.4rem; height: 0.4rem; font-size: 0; border-color: transparent; background: #94a3b8; color: transparent; }
-        .cv-steps button.is-edge { width: 1.15rem; height: 1.15rem; font-size: 0.6rem; }
-        .cv-steps button.is-mid { width: 1.5rem; height: 1.5rem; font-size: 0.68rem; }
-        .cv-steps button.is-near { width: 1.9rem; height: 1.9rem; font-size: 0.78rem; }
-        .cv-steps button.is-current { width: 2.5rem; height: 2.5rem; font-size: 0.95rem; background: #0d6e76; border-color: #0d6e76; color: #fff; }
-        .cv-steps button.is-skipped:not(.is-current):not(.is-dot) { background: #e5e7eb; color: #64748b; }
+        .cv-steps button.cv-step:hover { background: rgba(255, 255, 255, 0.06); }
+        .cv-steps button.cv-step span {
+            width: 1.35rem; height: 1.35rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+            background: #243140; color: #f4f7f8; font-size: 0.72rem; font-weight: 700;
+        }
+        .cv-steps button.cv-step em { font-style: normal; font-size: 0.78rem; font-weight: 650; }
+        .cv-steps button.cv-step.is-current { background: #0d6e76; color: #fff; }
+        .cv-steps button.cv-step.is-current span { background: #fff; color: #0d6e76; }
+        .cv-steps button.cv-step.is-skipped:not(.is-current) { color: #8aa0ad; }
+        .cv-canvas { background: #f4f7f8; border: 1px solid #d5dce3; border-radius: 16px; padding: 1rem 1rem 0.85rem; box-shadow: 0 10px 30px rgba(18, 24, 31, 0.05); }
+        .cv-column { background: #fff; border: 1px solid #e1e7ec; border-radius: 14px; padding: 0.95rem 1rem 1rem; box-shadow: 0 8px 22px rgba(18, 24, 31, 0.04); }
+        .cv-column-title { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: transparent; color: #1a2430; border-radius: 0; padding: 0 0 0.55rem; margin: 0 0 0.35rem; font-size: 1.05rem; border-bottom: 1px solid #e6ebf0; }
+        .cv-switch { position: relative; display: inline-flex; align-items: center; gap: 0.45rem; width: auto; margin-top: 0.35rem; cursor: pointer; font-size: 0.82rem; color: #334155; }
+        .cv-switch-ui { width: 2.35rem; height: 1.3rem; border-radius: 999px; background: #c5ced6; position: relative; flex: 0 0 auto; }
+        .cv-switch-ui::after { content: ""; position: absolute; top: 2px; left: 2px; width: 1rem; height: 1rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(18, 24, 31, 0.25); transition: transform 0.15s ease; }
+        .cv-switch input:checked + .cv-switch-ui { background: #0d6e76; }
+        .cv-switch input:checked + .cv-switch-ui::after { transform: translateX(1.05rem); }
+        .cv-switch input:focus-visible + .cv-switch-ui { outline: 2px solid #0d6e76; outline-offset: 2px; }
+        .cv-switch-state { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; color: #64748b; }
+        .cv-switch-state::before { content: "OFF"; }
+        .cv-switch input:checked ~ .cv-switch-state::before { content: "ON"; color: #08545b; }
+        .cv-line .cv-switch { margin-top: 0; }
+        .cv-dates { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: flex-end; }
+        .cv-dates input[type="month"] { width: 11rem; }
+        .cv-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.35rem 0 0.7rem; }
+        .cv-chip { width: auto; margin: 0; border-radius: 999px; border: 1px solid #d5dce3; background: #fff; color: #334155; padding: 0.28rem 0.65rem; font-size: 0.75rem; font-weight: 650; }
+        .cv-chip.is-on { background: #0d6e76; border-color: #0d6e76; color: #fff; }
+        .cv-stars { display: inline-flex; gap: 0.1rem; }
+        .cv-star, .cv-mark { width: auto; margin: 0; padding: 0.1rem 0.2rem; border: 0; background: transparent; color: #c5ced6; font-size: 1.25rem; line-height: 1; }
+        .cv-star.is-on { color: #b45309; }
+        .cv-mark { border: 1px solid #d5dce3; border-radius: 10px; padding: 0.35rem 0.5rem; color: #334155; font-size: 1rem; }
+        .cv-mark.is-on { border-color: #0d6e76; background: #d7ecee; color: #08545b; }
+        .cv-starline, .cv-marks { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.45rem; }
+        @media (max-width: 900px) {
+            .cv-studio { grid-template-columns: 1fr; }
+            .cv-rail { position: static; }
+            .cv-steps { flex-direction: row; overflow-x: auto; }
+            .cv-steps button.cv-step { width: auto; min-width: 8.5rem; }
+        }
+        .cv-portrait { display: flex; gap: 1rem; align-items: flex-start; }
+        .cv-portrait img { width: 96px; height: 96px; object-fit: cover; border-radius: 999px; background: #e7eef2; flex: 0 0 auto; }
+        .cv-photo-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.45rem; }
+        .cv-kicker { margin: 0.35rem 0 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5c6b76; }
+        .cv-avatar-row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.35rem 0 0.75rem; }
+        .cv-avatar { width: 52px; height: 52px; padding: 0; border-radius: 999px; border: 2px solid #d5dce3; background: #fff; overflow: hidden; }
+        .cv-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cv-avatar.is-on, .cv-btn.is-on { border-color: #0d6e76; box-shadow: 0 0 0 2px #8fd0d5; }
         .cv-review-frame { width: 100%; height: 70vh; min-height: 28rem; border: 1px solid #d5dce3; border-radius: 12px; background: #fff; }
         #cv-pane .filter-label { display: block; margin-top: 0.65rem; font-weight: 600; color: #4a5560; }
         .admin-bar {
@@ -420,9 +471,14 @@
 
     <div id="cv-pane" class="hidden">
         <h2 class="text-2xl font-semibold mb-2">CV content</h2>
-        <p class="text-gray-600 mb-4">The steps follow the CV from top to bottom. Each list stays open, so you edit a row in place. You edit in English, and the other languages follow the automatic translation. Next keeps a change. Skip leaves an untouched step as it is. Preview checks the CV. Publish opens the snapshot, and Confirmation there is what goes live.</p>
+        <p class="text-gray-600 mb-4">Work down the CV from the rail. Each card is one part of the page. ON keeps it visible. A competency stays tied to the skills and roles it should highlight. English is the source, and the other languages follow the automatic translation. Preview checks the CV. Confirmation is what visitors see.</p>
         <p id="cv-status" class="text-sm text-gray-700 mb-4"></p>
-        <div class="bg-white p-4 rounded-lg shadow space-y-4">
+        <div class="cv-studio">
+            <aside class="cv-rail">
+                <p class="cv-kicker">Steps</p>
+                <ol id="cv-steps" class="cv-steps" aria-label="CV content steps"></ol>
+            </aside>
+            <div class="cv-canvas">
             <div class="cv-section-picker">
                 <label class="cv-section-label" for="cv-section">Section</label>
                 <select id="cv-section"></select>
@@ -455,8 +511,8 @@
                     <button type="button" id="cv-confirm" class="bg-cyan-600 text-white hidden">Confirmation</button>
                     <button type="button" id="cv-discard" class="bg-white text-red-700 border border-red-300 hidden">Discard</button>
                 </div>
-                <ol id="cv-steps" class="cv-steps" aria-label="CV content steps"></ol>
                 <p id="cv-message" class="text-sm" role="status"></p>
+            </div>
             </div>
         </div>
     </div>
@@ -503,12 +559,13 @@
             });
         }
     </script>
-    <script src="js/cv-data.js"></script>
+    <script src="js/cv-data.js?v=20260928"></script>
     <script type="module">
     // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, multiFactor, TotpMultiFactorGenerator, getMultiFactorResolver, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
     import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, getDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
     import { createCvEditor } from "./js/cv-editor.js";
 
     // Firebase Config
@@ -516,7 +573,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const cvEditor = createCvEditor({ db, auth, doc, getDoc, setDoc, deleteDoc, serverTimestamp });
+    const storage = getStorage(app);
+    const cvEditor = createCvEditor({ db, auth, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, getDocs, query, orderBy, limit, addDoc, storage, ref, uploadString, getDownloadURL });
 
     // Global State
     let allMessages = [], allRatings = [], allBlockedSenders = [];
@@ -1426,10 +1484,13 @@
 
     function closeMenus(except) {
         document.querySelectorAll('.cv-menu-panel').forEach((panel) => {
-            if (panel !== except) panel.hidden = true;
+            if (panel !== except) {
+                panel.hidden = true;
+                if (panel._home && panel.parentNode !== panel._home) panel._home.appendChild(panel);
+            }
         });
         document.querySelectorAll('.cv-menu-btn[aria-expanded="true"]').forEach((button) => {
-            if (!except || button.nextElementSibling !== except) button.setAttribute('aria-expanded', 'false');
+            if (!except || button._panel !== except) button.setAttribute('aria-expanded', 'false');
         });
     }
 
@@ -1468,10 +1529,12 @@
             }, { passive: false });
             wrap.appendChild(button);
             wrap.appendChild(panel);
+            panel._home = wrap;
+            button._panel = panel;
             const paintMenu = () => {
                 const current = select.options[select.selectedIndex];
                 button.textContent = current ? current.textContent : 'Choose';
-                panel.replaceChildren(...[...select.options].map((option) => {
+                const itemFor = (option) => {
                     const item = document.createElement('button');
                     item.type = 'button';
                     item.className = 'cv-menu-item' + (option.selected ? ' is-current' : '');
@@ -1482,10 +1545,24 @@
                         select.dispatchEvent(new Event('change', { bubbles: true }));
                         panel.hidden = true;
                         button.setAttribute('aria-expanded', 'false');
+                        if (panel._home) panel._home.appendChild(panel);
                         paintMenu();
                     });
                     return item;
-                }));
+                };
+                const nodes = [];
+                [...select.children].forEach((node) => {
+                    if (node.tagName === 'OPTGROUP') {
+                        const label = document.createElement('div');
+                        label.className = 'cv-menu-label';
+                        label.textContent = node.label;
+                        nodes.push(label);
+                        [...node.children].forEach((option) => nodes.push(itemFor(option)));
+                    } else {
+                        nodes.push(itemFor(node));
+                    }
+                });
+                panel.replaceChildren(...nodes);
             };
             select._paintMenu = paintMenu;
             paintMenu();
@@ -1495,7 +1572,12 @@
                 closeMenus(willOpen ? panel : null);
                 panel.hidden = !willOpen;
                 button.setAttribute('aria-expanded', String(willOpen));
-                if (willOpen) placeMenu(button, panel);
+                if (willOpen) {
+                    document.body.appendChild(panel);
+                    placeMenu(button, panel);
+                } else if (panel._home) {
+                    panel._home.appendChild(panel);
+                }
             });
             new MutationObserver(paintMenu).observe(select, { childList: true, subtree: true, characterData: true });
         });
@@ -1513,7 +1595,7 @@
         if (!event.target.matches('.bulk-actions-container button, .bulk-actions-container i')) {
             document.querySelectorAll('.bulk-actions-dropdown.show-dropdown').forEach((dropdown) => dropdown.classList.remove('show-dropdown'));
         }
-        if (!event.target.closest('.cv-menu')) closeMenus();
+        if (!event.target.closest('.cv-menu') && !event.target.closest('.cv-menu-panel')) closeMenus();
     };
 </script>
 </body>
