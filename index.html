@@ -78,8 +78,11 @@
     <!-- Compiled Tailwind CSS (see `npm run build:css`) -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="css/cv.css">
+    <link rel="stylesheet" href="css/site-look.css">
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
+    <script src="js/site-look.js"></script>
+    <script>SiteLook.boot();</script>
     <script src="js/site-i18n.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
@@ -571,10 +574,12 @@
                     </nav>
                     <p class="cv-capabilities" data-translate-key="footer_capabilities">Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, seven competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.</p>
                     <div class="flex justify-center items-center gap-2">
-                        <p>&copy; 2025 Carlos A. Muñoz</p>
+                        <p>&copy; <span id="cv-year">2026</span> Carlos A. Muñoz</p>
                         <span aria-hidden="true">|</span>
                         <p>Interactive CV</p>
                         <div class="trademark-logo ml-1" aria-hidden="true">CAM</div>
+                        <span aria-hidden="true">|</span>
+                        <a id="cv-pdf-link" href="/?download=pdf" data-translate-key="footer_pdf">Download PDF</a>
                     </div>
                 </footer>
             </main>
@@ -718,6 +723,6 @@
 |                         APPLICATION JAVASCRIPT                      |
 ================================================================== -->
 <script src="js/cv-data.js"></script>
-<script type="module" src="js/cv-app.js"></script>
+<script type="module" src="js/cv-app.js?v=20260928"></script>
 </body>
 </html>

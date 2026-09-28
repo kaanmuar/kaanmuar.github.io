@@ -48,6 +48,21 @@ module.exports = defineConfig({
     viewportHeight: 720,
     defaultCommandTimeout: 10000,
     setupNodeEvents(on, config) {
+      const { record, reset } = require('./tests/native/summary');
+      on('task', {
+        catalogReset() {
+          reset('Cypress');
+          return null;
+        },
+        catalogRecord(test) {
+          record('Cypress', test);
+          return null;
+        }
+      });
+      on('before:browser:launch', (browser, launchOptions) => {
+        if (browser.family === 'chromium' && launchOptions.args) launchOptions.args.push('--lang=en-US');
+        return launchOptions;
+      });
       require('@cypress/grep/src/plugin')(config);
       let serverProc;
       on('before:run', async (details) => {

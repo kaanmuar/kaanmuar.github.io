@@ -83,21 +83,59 @@
     return (app && (app.state.dictLang || app.state.lang)) || 'en';
   }
 
+  function clearGoogTrans() {
+    const expiry = 'Thu, 01 Jan 1970 00:00:00 UTC';
+    document.cookie = 'googtrans=; expires=' + expiry + '; path=/';
+    const host = location.hostname;
+    if (host) document.cookie = 'googtrans=; expires=' + expiry + '; path=/; domain=' + host;
+  }
+
+  function liveCv(cv) {
+    const frame = document.getElementById('sut');
+    const win = frame && frame.contentWindow;
+    const doc = frame && frame.contentDocument;
+    if (win && doc && win.CarlosMunozCV) return { window: win, document: doc };
+    return cv;
+  }
+
   async function chooseLang(cv, code) {
-    const sel = cv.document.getElementById('language-selector');
+    clearGoogTrans();
+    const page = liveCv(cv);
+    const sel = page.document.getElementById('language-selector');
     assert(sel, 'language selector missing');
-    let opt = cv.document.querySelector('#language-options .lang-option[data-lang="' + code + '"]');
+    let opt = page.document.querySelector('#language-options .lang-option[data-lang="' + code + '"]');
     if (!opt) {
       sel.click();
       await wait(150);
-      opt = cv.document.querySelector('#language-options .lang-option[data-lang="' + code + '"]');
+      opt = liveCv(cv).document.querySelector('#language-options .lang-option[data-lang="' + code + '"]');
     }
     assert(opt, 'language option missing: ' + code);
     opt.click();
-    await wait(350);
-    const title = cv.document.querySelector('[data-translate-key="summary_title"]');
+    const start = Date.now();
+    let title = null;
+    let seen = '';
+    while (Date.now() - start < 4000) {
+      const next = liveCv(cv);
+      title = next.document.querySelector('[data-translate-key="summary_title"]');
+      seen = currentLang(next);
+      if (title && LANG_TITLE[code].test(title.textContent || '') && seen === code) return title.textContent.trim();
+      await wait(100);
+    }
+    assert(false, code + ' summary was "' + (title ? title.textContent.trim() : '') + '"');
+  }
+
+  function langPath(code) {
+    return code && code !== 'en' ? 'index.html?lang=' + code : 'index.html';
+  }
+
+  async function summaryTitle(cv, code) {
+    const start = Date.now();
+    let title = cv.document.querySelector('[data-translate-key="summary_title"]');
+    while ((!title || !LANG_TITLE[code].test(title.textContent || '')) && Date.now() - start < 4000) {
+      await wait(100);
+      title = cv.document.querySelector('[data-translate-key="summary_title"]');
+    }
     assert(title && LANG_TITLE[code].test(title.textContent), code + ' summary was "' + (title ? title.textContent.trim() : '') + '"');
-    assert(currentLang(cv) === code, 'language state is ' + currentLang(cv) + ' after choosing ' + code);
     return title.textContent.trim();
   }
 
@@ -227,15 +265,23 @@
     },
     {
       id: 'FN-03', layer: 'Functional', fw: ['Playwright', 'Cypress'],
-      title: '?lang=de is honored on load',
-      where: '/index.html?lang=de',
-      when: 'Cold load with a language query.',
-      how: 'summary_title reads Berufliches Profil.',
-      async run({ loadCv }) {
-        const cv = await loadCv('index.html?lang=de');
-        const title = cv.document.querySelector('[data-translate-key="summary_title"]');
-        assert(/Berufliches Profil/i.test(title.textContent), 'German title missing: ' + title.textContent);
-        return title.textContent.trim();
+      title: 'A random language loads from the address, then the original returns',
+      where: '/index.html?lang= and [data-translate-key=summary_title]',
+      when: 'Cold load with a native language chosen at random.',
+      how: 'The summary title matches that language, then the language that was on screen at the start is restored.',
+      async run({ cv, loadCv }) {
+        const original = currentLang(cv);
+        const chosen = shuffle(NATIVE_LANGS.filter((code) => code !== original))[0];
+        try {
+          const next = await loadCv(langPath(chosen));
+          const title = await summaryTitle(next, chosen);
+          assert(currentLang(next) === chosen, 'loaded language is ' + currentLang(next));
+          return chosen + ' · ' + title;
+        } finally {
+          const restored = await loadCv(langPath(original));
+          if (currentLang(restored) !== original) await chooseLang(restored, original);
+          assert(currentLang(restored) === original, 'did not return to ' + original);
+        }
       }
     },
     {
@@ -1169,7 +1215,7 @@
           app._exportAsText();
           assert(notes.length === 0, notes.join(' | '));
           const names = files.map((file) => file.name);
-          ['CarlosMunozCV_Export.pdf', 'CarlosMunozCV_2025.jpg', 'CarlosMunozCV_ATS.doc', 'CarlosMunozCV_Export.txt', 'carlos_munoz_cv_' + chosen + '.json'].forEach((name) => {
+          ['CarlosMunozCV_Export.pdf', 'CarlosMunozCV.jpg', 'CarlosMunozCV_ATS.doc', 'CarlosMunozCV_Export.txt', 'carlos_munoz_cv_' + chosen + '.json'].forEach((name) => {
             assert(names.indexOf(name) !== -1, 'download missing ' + name + ' (got ' + names.join(', ') + ')');
           });
           const text = decodeDataUrl((files.find((file) => file.name === 'CarlosMunozCV_Export.txt') || {}).href || '');
@@ -1264,6 +1310,8 @@
         assert(html.includes('id="fw-ask"'), 'framework ask missing');
         assert(html.includes('id="runner-drawer"'), 'native runner view missing');
         assert(html.includes('id="view-slider"'), 'watch switch missing');
+        assert(html.includes('id="browser-ask-list"'), 'browser ask missing');
+        assert(html.includes('id="device-ask-list"'), 'device ask missing');
         assert(html.includes('QA LAB · CARLOS MUÑOZ') || html.includes('QA LAB'), 'report watermark missing');
         assert(html.includes('id="suite-repo"'), 'suite repo control missing');
         assert(html.includes('id="studio-link"'), 'sprint studio control missing');
@@ -1444,12 +1492,40 @@
     Playwright: 'tests',
     Cypress: 'cypress/e2e',
     Robot: 'tests/robot',
-    Selenium: 'js/qa-lab.js',
-    WebDriverIO: 'js/qa-lab.js',
-    Appium: 'js/qa-lab.js'
+    Selenium: 'selenium',
+    WebDriverIO: 'wdio',
+    Appium: 'appium'
+  };
+
+  const NATIVE_SPEC = {
+    Selenium: {
+      Smoke: 'selenium/smoke.spec.js', Functional: 'selenium/cv.spec.js', Security: 'selenium/security.spec.js',
+      Accessibility: 'selenium/a11y.spec.js', Studio: 'selenium/studio.spec.js', Admin: 'selenium/admin.spec.js',
+      Mobile: 'selenium/mobile.spec.js'
+    },
+    WebDriverIO: {
+      Smoke: 'wdio/smoke.spec.js', Functional: 'wdio/cv.spec.js', Security: 'wdio/security.spec.js',
+      Accessibility: 'wdio/a11y.spec.js', Studio: 'wdio/studio.spec.js', Admin: 'wdio/admin.spec.js',
+      Mobile: 'wdio/mobile.spec.js'
+    },
+    Appium: {
+      Smoke: 'appium/smoke.spec.js', Functional: 'appium/cv.spec.js', Security: 'appium/security.spec.js',
+      Accessibility: 'appium/a11y.spec.js', Studio: 'appium/studio.spec.js', Admin: 'appium/admin.spec.js',
+      Mobile: 'appium/mobile.spec.js'
+    }
   };
 
   const ALL_FW = ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'Appium'];
+  const BASE_BROWSERS = [
+    { id: 'chrome', label: 'Chrome' },
+    { id: 'firefox', label: 'Firefox' },
+    { id: 'edge', label: 'Edge' },
+    { id: 'safari', label: 'Safari' }
+  ];
+  const BASE_DEVICES = [
+    { platform: 'here', id: 'here', group: 'here', label: 'This device' },
+    { platform: 'profile', id: 's26u', group: 'phone', label: 'Samsung Galaxy S26 Ultra · Android 16', width: 384, height: 832, api: 36 }
+  ];
   const FW_KEY = 'qa-lab-frameworks';
 
   function runnersFor(c) {
@@ -1486,7 +1562,7 @@
     const row = SRC[c.id] || {};
     runnersFor(c).forEach((fw) => {
       if (row[fw]) items.push({ label: fw, href: blob(row[fw][0], row[fw][1]) });
-      else if (LAB_LINE[c.id] && (fw === 'Selenium' || fw === 'WebDriverIO' || fw === 'Appium')) items.push({ label: fw, href: blob('js/qa-lab.js', LAB_LINE[c.id]) });
+      else if (NATIVE_SPEC[fw] && NATIVE_SPEC[fw][c.layer]) items.push({ label: fw, href: blob(NATIVE_SPEC[fw][c.layer]) });
       else items.push({ label: fw, href: REPO + '/tree/' + BRANCH + '/' + FW_TREE[fw] });
     });
     return items;
@@ -1672,10 +1748,10 @@
     historyCap: 'Saved in this browser',
     historyEmpty: 'No saved runs in this browser yet.',
     runnerComparison: 'Runner comparison',
-    tied: 'Averages match because this is one browser run. Each bar only includes the cases that runner mirrors.',
+    tied: 'Each bar is that framework’s own process.',
     fastestLead: 'was fastest this session at',
     msAverage: 'ms average',
-    mirroredOnly: 'mirrored · run the catalog to compare speed',
+    mirroredOnly: 'no native log yet',
     passedOf: 'passed',
     colId: 'ID', colTitle: 'Title', colResult: 'Result', colMs: 'ms', colEvidence: 'Evidence',
     colType: 'Type', colWhere: 'Where', colHow: 'How',
@@ -1725,9 +1801,9 @@
       historyRate: 'Tasa de éxito de las ejecuciones guardadas', historyCap: 'Guardado en este navegador',
       historyEmpty: 'Aún no hay ejecuciones guardadas en este navegador.',
       runnerComparison: 'Comparación de ejecutores',
-      tied: 'Los promedios coinciden porque es una sola ejecución en el navegador. Cada barra incluye solo los casos que ese ejecutor refleja.',
+      tied: 'Cada barra es el proceso de ese framework.',
       fastestLead: 'fue el más rápido en esta sesión, con', msAverage: 'ms de promedio',
-      mirroredOnly: 'reflejados · ejecuta el catálogo para comparar la velocidad',
+      mirroredOnly: 'aún no hay log nativo',
       passedOf: 'aprobados', colTitle: 'Título', colResult: 'Resultado', colEvidence: 'Evidencia',
       colType: 'Tipo', colWhere: 'Dónde', colHow: 'Cómo', pass: 'APROBADO', fail: 'FALLIDO',
       security: 'Marca de seguridad: QA Lab · Carlos A. Muñoz',
@@ -1769,9 +1845,9 @@
       historyRate: 'Taxa de aprovação das execuções salvas', historyCap: 'Salvo neste navegador',
       historyEmpty: 'Ainda não há execuções salvas neste navegador.',
       runnerComparison: 'Comparação dos executores',
-      tied: 'As médias coincidem porque esta é uma única execução no navegador. Cada barra inclui só os casos que aquele executor espelha.',
+      tied: 'Cada barra é o processo daquele framework.',
       fastestLead: 'foi o mais rápido nesta sessão, com', msAverage: 'ms de média',
-      mirroredOnly: 'espelhados · execute o catálogo para comparar a velocidade',
+      mirroredOnly: 'ainda não há log nativo',
       passedOf: 'aprovados', colTitle: 'Título', colResult: 'Resultado', colEvidence: 'Evidência',
       colType: 'Tipo', colWhere: 'Onde', colHow: 'Como', pass: 'APROVADO', fail: 'REPROVADO',
       security: 'Marca de segurança: QA Lab · Carlos A. Muñoz',
@@ -1813,9 +1889,9 @@
       historyRate: 'Bestehensquote der gespeicherten Läufe', historyCap: 'In diesem Browser gespeichert',
       historyEmpty: 'In diesem Browser sind noch keine Läufe gespeichert.',
       runnerComparison: 'Runner-Vergleich',
-      tied: 'Die Mittelwerte sind gleich, weil es ein Browserlauf ist. Jeder Balken zählt nur die Fälle, die dieser Runner spiegelt.',
+      tied: 'Jeder Balken ist der eigene Prozess dieses Frameworks.',
       fastestLead: 'war in dieser Sitzung am schnellsten mit', msAverage: 'ms im Mittel',
-      mirroredOnly: 'gespiegelt · Katalog ausführen, um die Geschwindigkeit zu vergleichen',
+      mirroredOnly: 'noch kein natives Log',
       passedOf: 'bestanden', colTitle: 'Titel', colResult: 'Ergebnis', colEvidence: 'Nachweis',
       colType: 'Typ', colWhere: 'Wo', colHow: 'Wie', pass: 'BESTANDEN', fail: 'FEHLGESCHLAGEN',
       security: 'Sicherheitszeichen: QA Lab · Carlos A. Muñoz',
@@ -1857,9 +1933,9 @@
       historyRate: 'Taux de réussite des exécutions enregistrées', historyCap: 'Enregistré dans ce navigateur',
       historyEmpty: 'Aucune exécution enregistrée dans ce navigateur.',
       runnerComparison: 'Comparaison des exécuteurs',
-      tied: 'Les moyennes se valent parce qu’il s’agit d’une seule exécution dans le navigateur. Chaque barre ne compte que les cas que cet exécuteur reflète.',
+      tied: 'Chaque barre est le processus de ce framework.',
       fastestLead: 'a été le plus rapide cette session, à', msAverage: 'ms en moyenne',
-      mirroredOnly: 'reflétés · lancez le catalogue pour comparer la vitesse',
+      mirroredOnly: 'pas encore de journal natif',
       passedOf: 'réussis', colTitle: 'Titre', colResult: 'Résultat', colEvidence: 'Preuve',
       colType: 'Type', colWhere: 'Où', colHow: 'Comment', pass: 'RÉUSSI', fail: 'ÉCHOUÉ',
       security: 'Marque de sécurité : QA Lab · Carlos A. Muñoz',
@@ -1901,9 +1977,9 @@
       historyRate: 'Tasso di superamento delle esecuzioni salvate', historyCap: 'Salvato in questo browser',
       historyEmpty: 'Nessuna esecuzione salvata in questo browser.',
       runnerComparison: 'Confronto degli esecutori',
-      tied: 'Le medie coincidono perché è una sola esecuzione nel browser. Ogni barra include solo i casi che quell’esecutore rispecchia.',
+      tied: 'Ogni barra è il processo di quel framework.',
       fastestLead: 'è stato il più veloce in questa sessione, con', msAverage: 'ms di media',
-      mirroredOnly: 'rispecchiati · esegui il catalogo per confrontare la velocità',
+      mirroredOnly: 'nessun log nativo ancora',
       passedOf: 'superati', colTitle: 'Titolo', colResult: 'Risultato', colEvidence: 'Evidenza',
       colType: 'Tipo', colWhere: 'Dove', colHow: 'Come', pass: 'SUPERATO', fail: 'FALLITO',
       security: 'Marchio di sicurezza: QA Lab · Carlos A. Muñoz',
@@ -2166,16 +2242,15 @@
       { name: 'Appium', color: '#662d91' }
     ];
     const chosen = readFrameworks();
+    const summaries = (typeof Lab !== 'undefined' && Lab.nativeSummaries) || {};
     const rows = tones.filter((tone) => chosen.includes(tone.name)).map((tone) => {
-      const mirrored = CASES.filter((c) => runnersFor(c).includes(tone.name));
-      const ran = results.filter((r) => {
-        const c = CASES.find((item) => item.id === r.id);
-        return c && runnersFor(c).includes(tone.name) && chosen.includes(tone.name);
-      });
-      const passed = ran.filter((r) => r.ok).length;
-      const avg = ran.length ? Math.round(ran.reduce((sum, r) => sum + (r.ms || 0), 0) / ran.length) : 0;
-      const rate = ran.length ? Math.round((passed / ran.length) * 100) : 0;
-      return { ...tone, mirrored: mirrored.length, ran: ran.length, passed, avg, rate };
+      const native = summaries[tone.name];
+      const ranCases = native && Array.isArray(native.cases) ? native.cases : [];
+      const passed = ranCases.filter((item) => item.ok).length;
+      const ran = ranCases.length;
+      const avg = ran ? Math.round(ranCases.reduce((sum, item) => sum + (item.ms || 0), 0) / ran) : 0;
+      const rate = ran ? Math.round((passed / ran) * 100) : 0;
+      return { ...tone, ran, passed, avg, rate };
     });
     const ranked = rows.filter((row) => row.ran).slice().sort((a, b) => a.avg - b.avg);
     const fastest = ranked[0];
@@ -2188,8 +2263,8 @@
       line.className = 'fw-row';
       const width = row.ran ? Math.max(8, Math.round((row.avg / maxAvg) * 100)) : 0;
       const detail = row.ran
-        ? row.passed + '/' + row.ran + ' ' + (copy ? copy.passedOf : 'passed') + ' · ' + row.rate + '% · avg ' + row.avg + ' ms · ' + row.mirrored
-        : row.mirrored + ' ' + (copy ? copy.mirroredOnly : 'mirrored · run the catalog to compare speed');
+        ? row.passed + '/' + row.ran + ' ' + (copy ? copy.passedOf : 'passed') + ' · ' + row.rate + '% · avg ' + row.avg + ' ms'
+        : (copy ? copy.mirroredOnly : 'no native log yet');
       line.innerHTML = '<strong>' + row.name + '</strong><div class="fw-track"><span style="width:' + width + '%;background:' + row.color + '"></span></div><span class="fw-meta">' + detail + '</span>';
       wrap.appendChild(line);
     });
@@ -2197,7 +2272,7 @@
       const note = document.createElement('p');
       note.className = 'chart-cap';
       note.textContent = tied
-        ? (copy ? copy.tied : 'Averages match because this is one browser run. Each bar only includes the cases that framework mirrors.')
+        ? (copy ? copy.tied : 'Each bar is that framework’s own process.')
         : (copy ? fastest.name + ' ' + copy.fastestLead + ' ' + fastest.avg + ' ' + copy.msAverage + '.' : fastest.name + ' was fastest this session at ' + fastest.avg + ' ms average.');
       wrap.appendChild(note);
     }
@@ -2344,6 +2419,10 @@
     pace: readPace(),
     view: readView(),
     historyPick: new Set(),
+    nativeLogs: {},
+    nativeSummaries: {},
+    activeRunner: null,
+    runnerPinned: false,
 
     filtered() {
       if (this.filter === 'All') return CASES;
@@ -2358,6 +2437,7 @@
       row.innerHTML = html;
       el.appendChild(row);
       el.scrollTop = el.scrollHeight;
+      if (global.LabObserver) global.LabObserver.pulse();
     },
 
     renderCatalog() {
@@ -2415,7 +2495,10 @@
       CASES.forEach((c) => { byLayer[c.layer] = (byLayer[c.layer] || 0) + 1; });
       const byFw = {};
       readFrameworks().forEach((name) => { byFw[name] = 0; });
-      CASES.forEach((c) => runnersFor(c).forEach((f) => { if (byFw[f] != null) byFw[f] += 1; }));
+      Object.keys(byFw).forEach((name) => {
+        const native = this.nativeSummaries[name];
+        byFw[name] = native && native.cases ? native.cases.filter((item) => item.ok).length : 0;
+      });
       const durations = this.results.slice().sort((a, b) => b.ms - a.ms).slice(0, 8).map((r) => ({
         label: r.id, value: r.ms, color: r.ok ? '#0d6e76' : '#b42318'
       }));
@@ -2424,8 +2507,8 @@
       const cards = [
         { title: 'This run — pass rate', caption: 'Source: in-browser lab vs live pages · current session', node: donut(passed, failed, skipped) },
         { title: 'Catalog by test type', caption: 'Count of cases in the published suite map', node: bars(Object.entries(byLayer).map(([label, value]) => ({ label, value, color: layerColor(label) })), 'Cases by type') },
-        { title: 'Mirrored in each runner', caption: 'Cases shown in the runners you left on: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium', node: bars(Object.entries(byFw).map(([label, value]) => ({ label, value })), 'Framework coverage') },
-        { title: 'Automation frameworks — performance', caption: 'Same browser run. A case counts for every framework that mirrors it. Lower average time is the faster framework this session.', node: frameworkCompare(this.results) }
+        { title: 'Native framework results', caption: 'Pass counts from each framework’s own process. Empty until that process reports.', node: bars(Object.entries(byFw).map(([label, value]) => ({ label, value })), 'Native results') },
+        { title: 'Automation frameworks — performance', caption: 'Each bar is that framework’s own log. The lab catalog does not fill these bars.', node: frameworkCompare(this.results) }
       ];
       if (durations.length) {
         cards.push({ title: 'Slowest checks this run (ms)', caption: 'Wall time inside this browser, not CI agents', node: bars(durations, 'Duration ms') });
@@ -2476,7 +2559,7 @@
             <td>${r.id}</td>
             <td class="${r.ok ? 'pass' : 'fail'}">${r.ok ? 'PASSED' : 'FAILED'}</td>
             <td>${r.ms}</td>
-            <td>${(r.detail || r.error || '').replace(/</g, '&lt;')}</td>
+            <td>${(r.detail || r.error || '').replace(/</g, '&lt;')}${r.explain ? ' · ' + String(r.explain).replace(/</g, '&lt;') : ''}</td>
           </tr>`).join('')}</tbody>
         </table>
         <p class="muted">Security mark: QA Lab · Carlos A. Muñoz · ${stamp}</p>`
@@ -2488,7 +2571,7 @@
       if (!el) return;
       el.classList.add('qa-mark');
       if (!this.results.length) {
-        el.innerHTML = '<p class="muted">Run the suite to generate a report. I keep the same checks in Playwright, Cypress, Robot, Selenium, WebdriverIO and Appium; this lab is the version a visitor can watch.</p>';
+        el.innerHTML = '<p class="muted">The donut is this browser catalog. Each framework bar fills only after that framework’s own process reports.</p>';
         return;
       }
       const doc = this.reportMarkup();
@@ -2560,8 +2643,9 @@
         maxWidth: iframe.style.maxWidth
       };
       const setPhoneFrame = () => {
-        iframe.style.width = '390px';
-        iframe.style.height = '844px';
+        const picked = this.deviceFrame && this.deviceFrame.width && this.deviceFrame.width <= 500 ? this.deviceFrame : null;
+        iframe.style.width = (picked ? picked.width : 390) + 'px';
+        iframe.style.height = (picked ? picked.height : 844) + 'px';
         iframe.style.maxWidth = '100%';
       };
       const clearPhoneFrame = () => {
@@ -2639,16 +2723,107 @@
       }
     },
 
-    openAsk(ids) {
+    selectedBrowsers() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('qa-lab-browsers') || '[]');
+        if (Array.isArray(saved) && saved.length) return saved;
+      } catch (err) { /* ignore */ }
+      return ['chrome'];
+    },
+
+    selectedDevices() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('qa-lab-devices') || '[]');
+        if (Array.isArray(saved)) return saved;
+      } catch (err) { /* ignore */ }
+      return [];
+    },
+
+    runFrames() {
+      const picked = this.selectedDevices().filter((item) => item.platform === 'here' || item.platform === 'profile');
+      if (!picked.length) return [null];
+      return picked.map((item) => {
+        if (item.platform === 'here') {
+          if (window.innerWidth <= 820) {
+            return { label: 'This device', width: Math.max(320, Math.min(window.innerWidth, 430)), height: Math.max(700, window.innerHeight) };
+          }
+          return { label: 'This device', width: 0, height: 0 };
+        }
+        return { label: item.label, width: Number(item.width) || 390, height: Number(item.height) || 844 };
+      });
+    },
+
+    async openAsk(ids) {
       this.pendingIds = ids;
       const list = document.getElementById('fw-ask-list');
+      const browsers = document.getElementById('browser-ask-list');
+      const devices = document.getElementById('device-ask-list');
+      const note = document.getElementById('device-ask-note');
       const ask = document.getElementById('fw-ask');
-      if (!list || !ask) return;
+      if (!list || !ask || !browsers || !devices) return;
       const chosen = new Set(this.selectedFrameworks());
       list.innerHTML = ALL_FW.map((name) => {
         const label = name === 'WebDriverIO' ? 'WebdriverIO' : name;
         return '<label class="' + (chosen.has(name) ? 'on' : '') + '"><input type="checkbox" value="' + name + '"' + (chosen.has(name) ? ' checked' : '') + '> ' + label + '</label>';
       }).join('');
+      let targets = {
+        browsers: BASE_BROWSERS.slice(),
+        devices: BASE_DEVICES.slice(),
+        androidNote: 'Android 15 (API 35) and Android 16 (API 36). This computer’s SDK platform is API 37. The phones run at their screen size in this browser.'
+      };
+      try {
+        const file = await fetch('js/lab-devices.json', { cache: 'no-store' });
+        if (file.ok) targets.devices = await file.json();
+      } catch (err) { /* the short list above still works */ }
+      try {
+        const res = await fetch('http://127.0.0.1:8770/targets');
+        if (res.ok) {
+          const remote = await res.json();
+          const browserIds = new Set(targets.browsers.map((item) => item.id));
+          (remote.browsers || []).forEach((item) => {
+            if (!browserIds.has(item.id)) targets.browsers.push(item);
+          });
+          const deviceIds = new Set(targets.devices.map((item) => item.id));
+          (remote.devices || []).forEach((item) => {
+            if (!deviceIds.has(item.id)) targets.devices.push(item);
+          });
+          if (remote.androidNote) targets.androidNote = remote.androidNote;
+        }
+      } catch (err) { /* the built-in list still runs in this browser */ }
+      const savedBrowsers = new Set(this.selectedBrowsers());
+      browsers.innerHTML = (targets.browsers || []).map((item) => {
+        const on = savedBrowsers.has(item.id);
+        return '<label class="' + (on ? 'on' : '') + '"><input type="checkbox" value="' + item.id + '"' + (on ? ' checked' : '') + '> ' + item.label + '</label>';
+      }).join('') || '<span class="muted">Chrome</span>';
+      this.askDevices = targets.devices || [];
+      const savedDevices = new Set(this.selectedDevices().map((item) => item.id));
+      const bucket = (item) => {
+        if (item.group === 'here' || item.platform === 'here') return 'here';
+        if (item.group === 'tablet') return 'tablet';
+        if (item.group === 'phone' || item.platform === 'profile') return 'phone';
+        if (item.platform === 'ios') return 'ios';
+        if (item.platform === 'android') return 'android';
+        if (String(item.id).indexOf('skin:') === 0) return 'skin';
+        return 'phone';
+      };
+      const titles = { here: 'This screen', phone: 'Current phones', tablet: 'Tablets', ios: 'iOS simulators', android: 'Android emulators', skin: 'Device Manager skins' };
+      const grouped = {};
+      this.askDevices.forEach((item, index) => {
+        const key = bucket(item);
+        grouped[key] = grouped[key] || [];
+        const on = savedDevices.has(item.id);
+        grouped[key].push('<label class="' + (on ? 'on' : '') + '"><input type="checkbox" value="' + index + '"' + (on ? ' checked' : '') + '> ' + item.label + '</label>');
+      });
+      const order = ['here', 'phone', 'tablet', 'ios', 'android'];
+      devices.innerHTML = order.filter((key) => grouped[key]).map((key) =>
+        '<section class="fw-ask-group"><b>' + titles[key] + '</b><div class="fw-ask-list">' + grouped[key].join('') + '</div></section>'
+      ).join('') + (grouped.skin
+        ? '<details class="fw-ask-more"><summary>Device Manager skins</summary><div class="fw-ask-list">' + grouped.skin.join('') + '</div></details>'
+        : '');
+      if (note) note.textContent = targets.androidNote || 'Pick a browser and, if you want, a phone. The catalog runs in the browser you have open.';
+      ask.querySelectorAll('.fw-ask-list label input').forEach((box) => {
+        box.addEventListener('change', () => box.parentElement.classList.toggle('on', box.checked));
+      });
       ask.hidden = false;
     },
 
@@ -2660,6 +2835,13 @@
     confirmAsk() {
       const picked = [...document.querySelectorAll('#fw-ask-list input:checked')].map((box) => box.value);
       if (!picked.length) return;
+      const browsers = [...document.querySelectorAll('#browser-ask-list input:checked')].map((box) => box.value);
+      const deviceIdx = [...document.querySelectorAll('#device-ask-list input:checked')].map((box) => Number(box.value));
+      const devices = deviceIdx.map((index) => (this.askDevices || [])[index]).filter(Boolean);
+      try {
+        localStorage.setItem('qa-lab-browsers', JSON.stringify(browsers.length ? browsers : ['chrome']));
+        localStorage.setItem('qa-lab-devices', JSON.stringify(devices));
+      } catch (err) { /* ignore */ }
       document.querySelectorAll('#fw-picker input').forEach((box) => {
         box.checked = picked.includes(box.value);
       });
@@ -2694,8 +2876,12 @@
         return;
       }
       this.running = true;
+      this.holdLabLanguage();
       document.documentElement.classList.add('lab-running');
       this.openRunners();
+      this.launchNative(chosen, ids);
+      if (global.LabObserver) global.LabObserver.watch(this);
+      const frames = this.runFrames();
       this.pace = readPace();
       this.view = readView();
       this.syncViewUi();
@@ -2704,7 +2890,8 @@
       document.querySelectorAll('[data-pace]').forEach((b) => { b.disabled = true; });
       const pack = CASES.filter((c) => ids.includes(c.id));
       const holdMs = Math.round(this.pace * 1000);
-      this.log(`<b>LAB</b> Starting ${pack.length} case${pack.length === 1 ? '' : 's'} against ${location.origin} · pace ${formatPace(this.pace)} s · ${this.view === 'watch' ? 'Watch' : 'Background'}`);
+      const frameNames = frames.filter(Boolean).map((frame) => frame.label).join(', ');
+      this.log(`<b>LAB</b> Starting ${pack.length} case${pack.length === 1 ? '' : 's'} against ${location.origin}` + (frameNames ? ' · ' + frameNames : '') + ` · pace ${formatPace(this.pace)} s · ${this.view === 'watch' ? 'Watch' : 'Background'}`);
       const unlock = () => {
         this.running = false;
         document.documentElement.classList.remove('lab-running');
@@ -2713,17 +2900,27 @@
         document.querySelectorAll('[data-pace]').forEach((b) => { b.disabled = false; });
       };
       try {
+        for (const frame of frames) {
+        this.deviceFrame = frame && frame.width ? frame : null;
+        if (frames.length > 1 && frame) this.log('<b>LAB</b> ' + frame.label);
         await this.withTargets(async (ctx) => {
           const iframe = document.getElementById('sut');
+          const baseLang = currentLang(ctx.cv);
           const desktopFrame = {
             width: iframe.style.width,
             height: iframe.style.height,
             maxWidth: iframe.style.maxWidth
           };
           for (const c of pack) {
-            iframe.style.width = desktopFrame.width;
-            iframe.style.height = desktopFrame.height;
-            iframe.style.maxWidth = desktopFrame.maxWidth;
+            if (this.deviceFrame && this.deviceFrame.width) {
+              iframe.style.width = this.deviceFrame.width + 'px';
+              iframe.style.height = this.deviceFrame.height + 'px';
+              iframe.style.maxWidth = '100%';
+            } else {
+              iframe.style.width = desktopFrame.width;
+              iframe.style.height = desktopFrame.height;
+              iframe.style.maxWidth = desktopFrame.maxWidth;
+            }
             const src = iframe.getAttribute('src') || '';
             if (!/index\.html/i.test(src)) ctx.cv = await ctx.loadCv('index.html');
             else ctx.cv = { window: iframe.contentWindow, document: iframe.contentDocument };
@@ -2735,6 +2932,7 @@
             if (row) row.classList.add('running');
             this.log(`<span class="k">${c.id}</span> ${c.title}<div class="muted">where ${c.where}</div><div class="muted">when ${c.when}</div><div class="muted">how ${c.how}</div>`);
             this.activeCase = c.id;
+            if (global.LabObserver) global.LabObserver.pulse();
             this.renderRunners(this.runnerTab);
             await wait(holdMs);
             const t0 = performance.now();
@@ -2747,11 +2945,17 @@
             } catch (err) {
               const ms = Math.round(performance.now() - t0);
               this.results = this.results.filter((r) => r.id !== c.id);
-              this.results.push({ id: c.id, ok: false, ms, error: err.message, layer: c.layer });
+              const result = { id: c.id, ok: false, ms, error: err.message, layer: c.layer };
+              this.results.push(result);
               this.log(`<span class="fail">FAIL</span> ${c.id} · ${ms} ms · ${String(err.message).replace(/</g, '&lt;')}`);
+              if (global.LabObserver) await global.LabObserver.caseEnd(this, c, result);
             }
             if (row) row.classList.remove('running');
             this.activeCase = '';
+            const live = { window: iframe.contentWindow, document: iframe.contentDocument };
+            if (live.document && currentLang(live) !== baseLang) {
+              ctx.cv = await ctx.loadCv(langPath(baseLang));
+            }
             try {
               this.renderDetail();
               this.renderDashboard();
@@ -2763,18 +2967,22 @@
             await wait(holdMs);
           }
         });
+        }
         const passed = this.results.filter((r) => ids.includes(r.id) && r.ok).length;
         const failed = this.results.filter((r) => ids.includes(r.id) && !r.ok).length;
         writeHistory(this.snapshotRecord(ids));
         this.renderDashboard();
         this.log(`<b>LAB</b> Finished · ${passed} passed · ${failed} failed · ${pack.length} ran`);
         this.openDashboard();
+        if (global.LabObserver) global.LabObserver.runEnd(this, ids);
         if (global.SiteAnalytics) {
           global.SiteAnalytics.trackEvent('qa_lab_run', 'QA Lab', `${passed}/${pack.length}`, { passed, failed, pace: this.pace });
         }
       } catch (err) {
         this.log(`<span class="fail">LAB</span> stopped · ${String(err.message).replace(/</g, '&lt;')}`);
       } finally {
+        if (global.LabObserver) global.LabObserver.stop();
+        this.releaseLabLanguage();
         unlock();
       }
     },
@@ -2969,7 +3177,7 @@
           { selector: '#fw-picker', title: 'Which runners', body: 'Leave on the frameworks you want this pass to show: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, or several. A run with none selected waits until you pick one.', demoMs: 1700 },
           { selector: '#run-all', title: 'Run', body: 'Run this case, Run filtered, or Run full catalog. The active row stays in view while the checks proceed.', demoMs: 1600 },
           { selector: '#sut-wrap', title: 'Live system under test', body: 'The frame is the real CV, studio, or admin page. The checks act here, then the log under the frame records each one.', demoMs: 4000, preview: 'lab' },
-          { selector: '#runner-drawer', title: 'Native runners', body: 'Open Runners on the right edge. Each tab is that runner’s own log: Playwright’s list reporter, Cypress’s command log, Robot’s keyword log, Selenium IDE, the WebdriverIO spec reporter, or the Appium server log.', demoMs: 1800, prepare: () => { if (global.QALab) global.QALab.openRunners(); } },
+          { selector: '#runner-drawer', title: 'Native runners', body: 'Open Runners on the right edge. Each tab streams that framework’s own process across the catalog, in the browsers and devices chosen in the ask. A result from one is not copied into the others.', demoMs: 1800, prepare: () => { if (global.QALab) global.QALab.openRunners(); } },
           { selector: '#report-open', title: 'Report file', body: 'Report opens the file options. English is the default. Pick another language, leave the graphs on, check the preview, then download or print.', demoMs: 1500 },
           { selector: '#dash-open', title: 'Dashboard', body: 'When the run finishes, the dashboard opens: charts, this session’s report, and the run history. Select past runs to download, print, or compare.', demoMs: 1800 },
           { selector: '#tour-start-btn', title: 'Open this tour again', body: 'This walkthrough stays closed after the first visit. How this lab works brings it back whenever you want it.', demoMs: 1600 }
@@ -3049,6 +3257,35 @@
       });
     },
 
+    fwLabel(name) {
+      return name === 'WebDriverIO' ? 'WebdriverIO' : (name || '');
+    },
+
+    paintRunnerMarks() {
+      const live = this.activeRunner;
+      document.querySelectorAll('#fw-picker label').forEach((label) => {
+        const input = label.querySelector('input');
+        const name = input && input.value;
+        const on = !!live && name === live;
+        label.classList.toggle('is-running', on);
+        let badge = label.querySelector('.runner-live');
+        if (on && !badge) {
+          badge = document.createElement('em');
+          badge.className = 'runner-live';
+          badge.innerHTML = '<i class="runner-dot" aria-hidden="true"></i> Running';
+          label.appendChild(badge);
+        } else if (!on && badge) badge.remove();
+      });
+      const edge = document.getElementById('runner-edge');
+      if (edge) {
+        edge.textContent = live ? this.fwLabel(live) : 'Runners';
+        edge.classList.toggle('is-running', !!live);
+        edge.setAttribute('aria-label', live ? this.fwLabel(live) + ' is running' : 'Runners');
+      }
+      const head = document.querySelector('#runner-drawer .stage-head strong');
+      if (head) head.textContent = live ? this.fwLabel(live) + ' is running' : 'Native runners';
+    },
+
     renderRunners(active) {
       const tabs = document.getElementById('runner-tabs');
       const stage = document.getElementById('runner-stage');
@@ -3056,124 +3293,167 @@
       const chosen = this.selectedFrameworks();
       const current = chosen.includes(active) ? active : (chosen.includes(this.runnerTab) ? this.runnerTab : chosen[0]);
       this.runnerTab = current || '';
-      tabs.innerHTML = chosen.map((name) =>
-        '<button type="button" role="tab" data-runner="' + name + '" class="' + (name === current ? 'on' : '') + '" aria-selected="' + (name === current ? 'true' : 'false') + '">' + (name === 'WebDriverIO' ? 'WebdriverIO' : name) + '</button>'
-      ).join('') || '<span class="muted">Pick at least one runner.</span>';
+      tabs.innerHTML = chosen.map((name) => {
+        const running = name === this.activeRunner;
+        const label = this.fwLabel(name);
+        const cls = (name === current ? 'on' : '') + (running ? ' is-running' : '');
+        return '<button type="button" role="tab" data-runner="' + name + '" class="' + cls.trim() + '" aria-selected="' + (name === current ? 'true' : 'false') + '" aria-label="' + label + (running ? ', running' : '') + '">'
+          + (running ? '<i class="runner-dot" aria-hidden="true"></i>' : '')
+          + '<span>' + label + '</span>'
+          + (running ? '<em class="runner-live">Running</em>' : '')
+          + '</button>';
+      }).join('') || '<span class="muted">Pick at least one runner.</span>';
       tabs.querySelectorAll('[data-runner]').forEach((btn) => {
-        btn.onclick = () => this.renderRunners(btn.dataset.runner);
+        btn.onclick = () => {
+          const name = btn.dataset.runner;
+          this.runnerPinned = !!(this.activeRunner && name !== this.activeRunner);
+          this.renderRunners(name);
+        };
       });
-      stage.innerHTML = current ? this.runnerSkin(current) : '';
+      stage.innerHTML = current ? this.runnerBanner(current) + this.runnerSkin(current) : '';
       const log = stage.querySelector('.runner-console');
       if (log) log.scrollTop = log.scrollHeight;
+      const tab = tabs.querySelector('[data-runner="' + current + '"]');
+      if (tab && tab.scrollIntoView) tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      this.paintRunnerMarks();
+    },
+
+    runnerBanner(name) {
+      const live = this.activeRunner;
+      if (!live) return '';
+      const label = this.fwLabel(live);
+      if (live === name) return '<p class="runner-now"><i class="runner-dot" aria-hidden="true"></i> ' + label + ' is running</p>';
+      return '<p class="runner-now runner-now-other"><i class="runner-dot" aria-hidden="true"></i> ' + label + ' is running</p>';
+    },
+
+    noteNative(msg) {
+      if (!msg || !msg.fw || !this.nativeLogs[msg.fw]) return;
+      if (msg.line) this.nativeLogs[msg.fw].push(msg.line);
+      const changed = this.activeRunner !== msg.fw;
+      if (changed) {
+        this.activeRunner = msg.fw;
+        this.runnerPinned = false;
+        this.openRunners();
+      }
+      if (msg.summary) {
+        this.nativeSummaries[msg.fw] = msg.summary;
+        this.renderDashboard();
+        this.renderReport();
+      }
+      if (!this.runnerPinned || changed || this.runnerTab === msg.fw) {
+        this.renderRunners((!this.runnerPinned || changed) ? msg.fw : this.runnerTab);
+      } else this.paintRunnerMarks();
+      if (msg.summary && this.activeRunner === msg.fw) {
+        this.activeRunner = null;
+        this.renderRunners(this.runnerTab);
+      }
     },
 
     runnerRows(name) {
-      return this.results.filter((r) => {
-        const c = CASES.find((item) => item.id === r.id);
-        return c && runnersFor(c).includes(name);
+      const summary = this.nativeSummaries[name];
+      return summary && Array.isArray(summary.cases) ? summary.cases : [];
+    },
+
+    launchNative(frameworks, ids) {
+      this.nativeLogs = {};
+      frameworks.forEach((name) => { this.nativeLogs[name] = []; });
+      this.activeRunner = frameworks[0] || null;
+      this.runnerPinned = false;
+      this.renderRunners(frameworks[0] || this.runnerTab);
+      const fail = (message) => {
+        this.log('<span class="fail">NATIVE</span> ' + message);
+        frameworks.forEach((name) => {
+          this.nativeLogs[name] = this.nativeLogs[name] || [];
+          this.nativeLogs[name].push(message);
+        });
+        this.activeRunner = null;
+        this.renderRunners(this.runnerTab);
+      };
+      fetch('http://127.0.0.1:8770/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          frameworks,
+          ids: ids || [],
+          browsers: this.selectedBrowsers(),
+          devices: this.selectedDevices()
+        })
+      }).then((res) => {
+        if (res.status === 409) {
+          fail('A native run is already in progress.');
+          return null;
+        }
+        if (!res.ok || !res.body) {
+          fail('This browser is running the catalog against the site. Framework processes start when the runner is up, and that runner downloads Chrome, Firefox, and WebKit instead of using whatever is installed.');
+          return null;
+        }
+        return res.body.getReader();
+      }).then((reader) => {
+        if (!reader) return;
+        const dec = new TextDecoder();
+        let buf = '';
+        const pump = () => reader.read().then(({ done, value }) => {
+          if (done) {
+            this.activeRunner = null;
+            this.runnerPinned = false;
+            this.renderRunners(this.runnerTab);
+            return;
+          }
+          buf += dec.decode(value, { stream: true });
+          const parts = buf.split('\n');
+          buf = parts.pop();
+          parts.forEach((line) => {
+            if (!line.trim()) return;
+            let msg;
+            try { msg = JSON.parse(line); } catch (err) { return; }
+            this.noteNative(msg);
+          });
+          return pump();
+        });
+        return pump();
+      }).catch(() => {
+        fail('This browser is running the catalog against the site. Chrome, Firefox, Edge, and Safari do not have to be installed for that. Framework processes start when the runner is up.');
       });
     },
 
-    consoleSteps(name, c, r) {
-      const status = !r ? 'RUNNING' : (r.ok ? 'PASS' : 'FAIL');
-      const ms = r ? r.ms + ' ms' : '…';
-      const evidence = r ? (r.ok ? (r.detail || 'ok') : (r.error || 'failed')) : 'in progress';
-      const where = c.where || '';
-      const how = c.how || '';
-      const when = c.when || '';
-      if (name === 'Cypress') {
-        return [
-          'cy.visit  ' + where,
-          'cy.log  ' + when,
-          (r && !r.ok ? 'fail' : 'assert') + '  ' + c.id + '  ' + how,
-          status + '  ' + ms + '  ' + evidence
-        ];
-      }
-      if (name === 'Robot') {
-        return [
-          c.id + ' :: ' + c.title,
-          '  ' + how,
-          '  | ' + status + ' |  ' + ms + ' |',
-          '  ' + evidence,
-          '  where = ' + where
-        ];
-      }
-      if (name === 'Selenium') {
-        return [
-          '[info] Executing: | open | ' + where + ' | |',
-          '[info] Executing: | assert | ' + how + ' | |',
-          '[info] ' + c.id + '  ' + status + '  ' + ms,
-          '[info] ' + evidence
-        ];
-      }
-      if (name === 'WebDriverIO') {
-        return [
-          '[0-0] ' + status + ' in chrome — ' + c.id + ' ' + c.title,
-          '[0-0]   ' + how,
-          '[0-0]   ' + evidence,
-          '[0-0]   ' + ms
-        ];
-      }
-      if (name === 'Appium') {
-        return [
-          '[HTTP] --> POST /session  ' + c.id,
-          '[HTTP] --> POST /session/url  ' + where,
-          '[debug] ' + how,
-          '[HTTP] <-- ' + (!r ? '…' : (r.ok ? '200' : '500')) + '  ' + ms + '  ' + evidence
-        ];
-      }
-      return [
-        (!r ? '  ●' : (r.ok ? '  ✓' : '  ✘')) + '  ' + c.id + '  ' + c.title,
-        '     where  ' + where,
-        '     when   ' + when,
-        '     how    ' + how,
-        '     ' + status + '  ' + ms + '  ' + evidence
-      ];
-    },
-
-    runnerConsole(name, rows) {
+    runnerConsole(name) {
       const esc = (value) => String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;');
       const banner = {
-        Playwright: 'npx playwright test',
-        Cypress: 'cypress run  ·  command log',
-        Robot: 'robot  ·  console',
-        Selenium: 'Selenium IDE  ·  execution log',
-        WebDriverIO: 'wdio run  ·  spec reporter',
-        Appium: 'appium  ·  server log'
+        Playwright: 'playwright test',
+        Cypress: 'cypress run',
+        Robot: 'robot',
+        Selenium: 'mocha selenium',
+        WebDriverIO: 'wdio run',
+        Appium: 'appium + wdio'
       }[name] || name;
+      const lines = this.nativeLogs[name] || [];
       const blocks = ['<div>' + esc(banner) + '</div>'];
-      const live = this.activeCase && CASES.find((item) => item.id === this.activeCase && runnersFor(item).includes(name) && !rows.some((r) => r.id === this.activeCase));
-      const paint = (r, lines) => {
-        const cls = !r ? 'run' : (r.ok ? 'ok' : 'fail');
-        lines.forEach((line) => blocks.push('<div class="' + cls + '">' + esc(line) + '</div>'));
-        blocks.push('<div class="gap"></div>');
-      };
-      if (live) paint(null, this.consoleSteps(name, live, null));
-      rows.forEach((r) => {
-        const c = CASES.find((item) => item.id === r.id) || { id: r.id, title: r.id, where: '', when: '', how: '' };
-        paint(r, this.consoleSteps(name, c, r));
+      if (!lines.length) {
+        blocks.push('<div class="run">This process has not printed yet. A result from another runner is not copied here.</div>');
+        return blocks.join('');
+      }
+      lines.forEach((line) => {
+        const fail = /fail|error|exit [1-9]/i.test(line);
+        const ok = /passing|✓|passed/i.test(line) && !fail;
+        blocks.push('<div class="' + (fail ? 'fail' : (ok ? 'ok' : 'run')) + '">' + esc(line) + '</div>');
       });
-      if (!rows.length && !live) blocks.push('<div class="run">Idle. Start a run to stream this console.</div>');
       return blocks.join('');
     },
 
     runnerSkin(name) {
       const rows = this.runnerRows(name);
-      const live = this.activeCase && CASES.find((item) => item.id === this.activeCase && runnersFor(item).includes(name) && !rows.some((r) => r.id === this.activeCase));
-      const items = [];
-      if (live) items.push('<li class="run">● ' + live.id + '</li>');
-      if (rows.length) {
-        rows.forEach((r) => items.push('<li class="' + (r.ok ? 'ok' : 'fail') + '">' + (r.ok ? '✓' : '✗') + ' ' + r.id + '</li>'));
-      } else if (!live) items.push('<li class="run">waiting for a run</li>');
+      const items = rows.length
+        ? rows.map((row) => '<li class="' + (row.ok ? 'ok' : 'fail') + '">' + (row.ok ? '✓' : '✗') + ' ' + String(row.title || '').replace(/</g, '&lt;') + '</li>')
+        : ['<li class="run">waiting for this process</li>'];
       const titles = {
-        Playwright: ['Playwright Test', 'stdout'],
-        Cypress: ['Cypress specs', 'Command log'],
-        Robot: ['Robot tests', 'Console'],
-        Selenium: ['Selenium tests', 'IDE log'],
-        WebDriverIO: ['WebdriverIO specs', 'Reporter'],
-        Appium: ['Appium sessions', 'Server log']
+        Playwright: ['Playwright', 'Process log'],
+        Cypress: ['Cypress', 'Process log'],
+        Robot: ['Robot', 'Process log'],
+        Selenium: ['Selenium WebDriver', 'Process log'],
+        WebDriverIO: ['WebdriverIO', 'Process log'],
+        Appium: ['Appium', 'Process log']
       };
-      const pair = titles[name] || [name, 'Console'];
+      const pair = titles[name] || [name, 'Process log'];
       const klass = {
         Playwright: 'runner-play',
         Cypress: 'runner-cy',
@@ -3182,7 +3462,32 @@
         WebDriverIO: 'runner-wdio',
         Appium: 'runner-appium'
       }[name] || 'runner-play';
-      return '<div class="runner-split ' + klass + '"><section class="runner-cases"><b>' + pair[0] + '</b><ul>' + items.join('') + '</ul></section><section class="runner-console" aria-label="' + pair[1] + '"><b>' + pair[1] + '</b><div class="runner-log">' + this.runnerConsole(name, rows) + '</div></section></div>';
+      return '<div class="runner-split ' + klass + '"><section class="runner-cases"><b>' + pair[0] + '</b><ul>' + items.join('') + '</ul></section><section class="runner-console" aria-label="' + pair[1] + '"><b>' + pair[1] + '</b><div class="runner-log">' + this.runnerConsole(name) + '</div></section></div>';
+    },
+
+    holdLabLanguage() {
+      if (!global.SiteI18n) return;
+      this.labLangHeld = SiteI18n.current() || document.documentElement.lang || 'en';
+      this.applyLabLanguage(this.labLangHeld, false);
+    },
+
+    releaseLabLanguage() {
+      const lang = this.labLangHeld || (global.SiteI18n && SiteI18n.current()) || 'en';
+      this.labLangHeld = lang;
+      this.applyLabLanguage(lang, true);
+    },
+
+    applyLabLanguage(code, persist) {
+      const lang = (global.SiteI18n && SiteI18n.normalize(code)) || code || 'en';
+      document.documentElement.lang = lang;
+      const flag = document.getElementById('langFlag');
+      if (flag && global.SiteI18n) {
+        flag.src = SiteI18n.flagUrl(lang);
+        flag.alt = SiteI18n.displayName(lang);
+      }
+      if (!global.SiteI18n) return;
+      if (persist && SiteI18n.saved() !== lang) SiteI18n.persist(lang);
+      SiteI18n.applyMachineTranslate(lang);
     },
 
     mountLanguageMenu() {
@@ -3207,6 +3512,7 @@
           option.innerHTML = `<img src="${SiteI18n.flagUrl(meta.code)}" alt=""><span>${meta.native}</span>`;
           option.onclick = () => {
             if (global.SiteAnalytics) global.SiteAnalytics.trackEvent('qa_lab_language_change', 'QA Lab', meta.code);
+            this.labLangHeld = meta.code;
             SiteI18n.selectLanguage(meta.code);
             document.documentElement.lang = meta.code;
           };
@@ -3224,19 +3530,22 @@
       });
       document.addEventListener('click', () => wrap.classList.remove('open'));
       SiteI18n.resolve().then((lang) => {
-        syncFlag(lang);
-        document.documentElement.lang = lang || 'en';
+        this.labLangHeld = lang || 'en';
+        syncFlag(this.labLangHeld);
+        document.documentElement.lang = this.labLangHeld;
         SiteI18n.loadWidget();
-        SiteI18n.applyMachineTranslate(lang);
+        SiteI18n.applyMachineTranslate(this.labLangHeld);
       });
       SiteI18n.follow((lang) => {
-        syncFlag(lang);
-        document.documentElement.lang = lang || 'en';
-        SiteI18n.applyMachineTranslate(lang);
+        const keep = this.running ? (this.labLangHeld || 'en') : (lang || 'en');
+        if (!this.running) this.labLangHeld = keep;
+        syncFlag(keep);
+        this.applyLabLanguage(keep, !this.running);
       });
     },
 
     boot() {
+      if (global.LabObserver) global.LabObserver.boot();
       this.pace = readPace();
       this.view = readView();
       this.syncPaceUi();
