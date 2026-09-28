@@ -32,13 +32,14 @@ Cypress.Commands.add('loginAdmin', () => {
   if (!password) {
     throw new Error('Set Cypress env ADMIN_PASSWORD to run authenticated admin tests.');
   }
-  cy.session(['admin', email], () => {
-    cy.visit('/admin.html');
-    cy.get('#email').type(email);
-    cy.get('#password').type(password, { log: false });
-    cy.get('#login-form button[type="submit"]').click();
-    cy.get('#dashboard').should('be.visible');
-  });
+  cy.visit('/admin.html');
+  cy.get('#email').type(email);
+  cy.get('#password').type(password, { log: false });
+  cy.get('#login-form button[type="submit"]').click();
+  cy.get('#login-title').should('have.text', 'Authenticator');
+  cy.get('#dashboard').should('not.be.visible');
+  cy.get('#login-form').should('not.be.visible');
+  cy.get('#mfa-form:visible, #mfa-enroll:visible').should('have.length', 1);
 });
 
 Cypress.Commands.add('forceGlancePair', (index = 0) => {

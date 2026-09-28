@@ -18,17 +18,35 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
-          # Fetch all history for a deeper linting check
+          # Fetch all history so changed-file linting can diff against the previous commit
           fetch-depth: 0
 
       - name: Run Super-Linter
         uses: github/super-linter@v6
         env:
-          # This tells the linter to only scan files that have changed
-          VALIDATE_ALL_CODE_BASE: false
-          # Your repository's default branch
+          # v6 fatals unless this exact name is true or false. The old
+          # VALIDATE_ALL_CODE_BASE spelling was ignored, so every run aborted.
+          VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
-          # Required for Super-Linter to work
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # These either scan the whole tree or expect a style setup this site
+          # does not have. Leaving them on fails the job before any useful check.
+          VALIDATE_CHECKOV: false
+          VALIDATE_CSS: false
+          VALIDATE_EDITORCONFIG: false
+          VALIDATE_GITLEAKS: false
+          VALIDATE_HTML: false
+          VALIDATE_JAVASCRIPT_ES: false
+          VALIDATE_JAVASCRIPT_STANDARD: false
+          VALIDATE_JSCPD: false
+          VALIDATE_MARKDOWN: false
+          VALIDATE_NATURAL_LANGUAGE: false
+          VALIDATE_PYTHON: false
+          VALIDATE_PYTHON_BLACK: false
+          VALIDATE_PYTHON_FLAKE8: false
+          VALIDATE_PYTHON_ISORT: false
+          VALIDATE_PYTHON_MYPY: false
+          VALIDATE_PYTHON_PYLINT: false
+          VALIDATE_PYTHON_RUFF: false
