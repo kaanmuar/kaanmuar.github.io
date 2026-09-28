@@ -389,16 +389,16 @@
                 z-index: 130;
             }
 
-            /* --- FIX for Mobile Theme Switching --- */
             .sidebar {
-                background-color: #f3f4f6; /* Light mode background */
-                color: #1f2328; /* Light mode text */
+                background-color: var(--bg-sidebar);
+                background-image: var(--look-bar-gradient, none);
+                color: var(--text-sidebar-primary);
             }
             .sidebar h1, .sidebar h2, .sidebar h3 {
-                color: #111827;
+                color: var(--text-sidebar-primary);
             }
             .sidebar p, .sidebar span, .sidebar li, .sidebar a {
-                color: #4b5563;
+                color: var(--text-sidebar-secondary);
             }
             .dark-mode .sidebar {
                 background-color: var(--bg-sidebar); /* Re-applies dark mode variable */

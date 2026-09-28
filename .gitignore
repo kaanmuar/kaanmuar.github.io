@@ -9,3 +9,8 @@ playwright-report/
 test-results/
 robot-results/
 .venv-robot/
+selenium-results/
+wdio-results/
+appium-results/
+runner-results/
+.appium/

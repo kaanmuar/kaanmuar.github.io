@@ -203,6 +203,9 @@
             .admin-bar { margin-left: -1rem; margin-right: -1rem; }
         }
     </style>
+    <link rel="stylesheet" href="css/site-look.css">
+    <script src="js/site-look.js"></script>
+    <script>SiteLook.boot();</script>
 </head>
 <body>
 
@@ -227,6 +230,28 @@
         <button id="blocked-tab-btn" class="tab-btn">Blocked Senders</button>
         <button id="stats-tab-btn" class="tab-btn">Statistics</button>
         <button id="cv-tab-btn" class="tab-btn">CV content</button>
+        <button id="styles-tab-btn" class="tab-btn">Styles</button>
+    </div>
+
+    <div id="styles-pane" class="hidden">
+        <h2>Site styles</h2>
+        <p class="cv-note">Ten looks drawn from the interfaces people use most, starting with macOS Golden Gate. Choosing one updates the samples. Preview paints this page. Keep publishes it to the CV, Admin, Studio, and QA lab.</p>
+        <div class="style-actions">
+            <button type="button" id="style-undo" class="cv-btn">Undo</button>
+            <button type="button" id="style-preview" class="cv-btn">Preview</button>
+            <button type="button" id="style-keep" class="cv-btn">Keep</button>
+        </div>
+        <p id="style-status" class="cv-note"></p>
+        <div id="style-grid" class="style-grid"></div>
+        <h3>Color</h3>
+        <div id="style-swatches" class="style-swatches"></div>
+        <label class="style-color-row" for="style-color">Custom color <input type="color" id="style-color" value="#0d6e76"></label>
+        <div id="style-minis" class="style-minis">
+            <article class="style-mini"><span class="style-mini-bar"></span><strong>CV</strong><span class="style-mini-chip">Card</span><span class="style-mini-btn">Accent</span></article>
+            <article class="style-mini"><span class="style-mini-bar"></span><strong>Admin</strong><span class="style-mini-chip">Card</span><span class="style-mini-btn">Accent</span></article>
+            <article class="style-mini"><span class="style-mini-bar"></span><strong>Studio</strong><span class="style-mini-chip">Card</span><span class="style-mini-btn">Accent</span></article>
+            <article class="style-mini"><span class="style-mini-bar"></span><strong>QA lab</strong><span class="style-mini-chip">Card</span><span class="style-mini-btn">Accent</span></article>
+        </div>
     </div>
 
     <!-- Messages Pane -->
@@ -456,8 +481,8 @@
 
     // DOM Elements
     const loginOverlay = document.getElementById('login-overlay'), dashboard = document.getElementById('dashboard'), logoutBtn = document.getElementById('logout-btn');
-    const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn'), cv: document.getElementById('cv-tab-btn') };
-    const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane'), cv: document.getElementById('cv-pane') };
+    const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn'), cv: document.getElementById('cv-tab-btn'), styles: document.getElementById('styles-tab-btn') };
+    const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane'), cv: document.getElementById('cv-pane'), styles: document.getElementById('styles-pane') };
     const lists = { messages: document.getElementById('messages-list'), ratings: document.getElementById('ratings-list'), rejected: document.getElementById('rejected-list'), blocked: document.getElementById('blocked-list') };
     // NEW: Response Modal Elements
     const responseModalOverlay = document.getElementById('response-modal-overlay');
@@ -480,7 +505,6 @@
     function initDashboard() {
         if (dashboardReady) return;
         dashboardReady = true;
-        Object.keys(tabButtons).forEach(key => tabButtons[key].addEventListener('click', () => switchTab(key)));
         loadAllData();
         setupFilterListeners();
         setupBulkActionButtons();
@@ -499,6 +523,7 @@
         });
         if (tabKey === 'stats') renderStatisticsGraph();
     }
+    Object.keys(tabButtons).forEach(key => tabButtons[key].addEventListener('click', () => switchTab(key)));
 
     function populateStaticDropdowns() {
         const topicSelect = document.getElementById('msg-filter-topic-select');

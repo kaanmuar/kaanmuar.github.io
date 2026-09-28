@@ -32,6 +32,7 @@
             footer_lab: 'QA regression lab — run the Playwright, Cypress, and Robot suite in the browser',
             footer_studio: 'SDLC studio — try the Jira, Xray, and test-automation sprint',
             footer_capabilities: 'Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, seven competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.',
+            footer_pdf: 'Download PDF',
             roles: [
                 'Senior QA & Program Consultant',
                 'Senior Technical Project Manager & Consultant',
@@ -61,6 +62,7 @@
             footer_lab: 'Laboratorio de regresión QA — ejecuta Playwright, Cypress y Robot en el navegador',
             footer_studio: 'Estudio SDLC — prueba el sprint de Jira, Xray y automatización',
             footer_capabilities: 'Se lee en inglés, español, portugués, alemán, francés e italiano. Incluye un recorrido guiado, temas claro y oscuro, siete filtros de competencias, un toolkit, una línea de tiempo, impresión y descargas en PDF, JPG, Word, JSON y texto plano.',
+            footer_pdf: 'Descargar PDF',
             roles: [
                 'Consultor Senior de QA y Programas',
                 'Gerente Senior de Proyectos Técnicos y Consultor',
@@ -90,6 +92,7 @@
             footer_lab: 'Laboratório de regressão de QA — execute Playwright, Cypress e Robot no navegador',
             footer_studio: 'Estúdio SDLC — experimente o sprint de Jira, Xray e automação de testes',
             footer_capabilities: 'Leitura em inglês, espanhol, português, alemão, francês e italiano. Inclui um tour guiado, temas claro e escuro, sete filtros de competências, um toolkit, uma linha do tempo, impressão e downloads em PDF, JPG, Word, JSON e texto simples.',
+            footer_pdf: 'Baixar PDF',
             roles: [
                 'Consultor Sênior de QA e Programas',
                 'Gerente Sênior de Projetos Técnicos e Consultor',
@@ -119,6 +122,7 @@
             footer_lab: 'QA-Regressionslabor — Playwright, Cypress und Robot im Browser ausführen',
             footer_studio: 'SDLC-Studio — Jira-, Xray- und Testautomatisierungs-Sprint ausprobieren',
             footer_capabilities: 'Lesbar auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Enthält eine Führung, helles und dunkles Design, sieben Kompetenzfilter, ein Toolkit, eine Zeitachse, Druck und Downloads als PDF, JPG, Word, JSON und Klartext.',
+            footer_pdf: 'PDF herunterladen',
             roles: [
                 'Senior QA- und Programmberater',
                 'Senior Technical Project Manager und Berater',
@@ -148,6 +152,7 @@
             footer_lab: 'Laboratoire de régression QA — lancez Playwright, Cypress et Robot dans le navigateur',
             footer_studio: 'Studio SDLC — essayez le sprint Jira, Xray et automatisation de tests',
             footer_capabilities: 'Lisible en anglais, espagnol, portugais, allemand, français et italien. Comprend une visite guidée, les thèmes clair et sombre, sept filtres de compétences, une boîte à outils, une chronologie, l\'impression et des téléchargements PDF, JPG, Word, JSON et texte brut.',
+            footer_pdf: 'Télécharger le PDF',
             roles: [
                 'Consultant senior QA et programmes',
                 'Chef de projet technique senior et consultant',
@@ -177,6 +182,7 @@
             footer_lab: 'Laboratorio di regressione QA — esegui Playwright, Cypress e Robot nel browser',
             footer_studio: 'Studio SDLC — prova lo sprint Jira, Xray e automazione dei test',
             footer_capabilities: 'Leggibile in inglese, spagnolo, portoghese, tedesco, francese e italiano. Include un tour guidato, temi chiaro e scuro, sette filtri delle competenze, un toolkit, una linea del tempo, stampa e download in PDF, JPG, Word, JSON e testo semplice.',
+            footer_pdf: 'Scarica il PDF',
             roles: [
                 'Consulente senior QA e programmi',
                 'Senior Technical Project Manager e consulente',
@@ -2193,6 +2199,26 @@
                 }
             },
 
+            _stampYear() {
+                const el = document.getElementById('cv-year');
+                if (el) el.textContent = String(new Date().getFullYear());
+            },
+
+            _offerSharedDownload() {
+                const kind = (new URLSearchParams(window.location.search).get('download') || '').toLowerCase();
+                const run = {
+                    pdf: () => this._exportAsPDF_jsPDF(),
+                    jpg: () => this._exportAsJPG(),
+                    jpeg: () => this._exportAsJPG(),
+                    doc: () => this._exportAsATS(),
+                    word: () => this._exportAsATS(),
+                    txt: () => this._exportAsText(),
+                    text: () => this._exportAsText(),
+                    json: () => this._exportAsJSON()
+                }[kind];
+                if (run) run();
+            },
+
             async _bootLanguage() {
                 const lang = window.SiteI18n ? await SiteI18n.resolve() : (this.state.lang || 'en');
                 this.state.lang = lang;
@@ -3214,7 +3240,7 @@
                     });
                     const link = document.createElement('a');
                     link.href = canvas.toDataURL('image/jpeg', 0.95);
-                    link.download = 'CarlosMunozCV_2025.jpg';
+                    link.download = 'CarlosMunozCV.jpg';
                     link.click();
                 } catch (err) {
                     console.error('Error generating JPG:', err);
@@ -3713,10 +3739,13 @@
                 this._initScrollTrigger();
                 this._noteCvAccess();
 
-                this._bootLanguage();
-                if (new URLSearchParams(window.location.search).get('cvpreview') === '1') {
+                this._bootLanguage().then(() => this._offerSharedDownload());
+                const arrival = new URLSearchParams(window.location.search);
+                if (arrival.get('cvpreview') === '1' || arrival.get('download')) {
                     sessionStorage.setItem('hasSeenTour', '1');
+                    this.state.hasAutoOpenedRating = true;
                 }
+                this._stampYear();
 
                 // Load asynchronous content after the main UI is ready.
                 try { this._loadAndRenderReviews(); }
