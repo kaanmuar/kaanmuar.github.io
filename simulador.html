@@ -87,7 +87,7 @@
             page_location: window.location.href
         });
     </script>
-    <script src="js/site-analytics.js"></script>
+    <script src="js/site-analytics.js?v=20260928"></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
@@ -2153,6 +2153,7 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 
 renderAgents();
 setView('board');
+if (window.SiteAnalytics) SiteAnalytics.bind('studio');
 track('sim_loaded', 'Simulator', window.opener ? 'popup' : 'direct', {
     lang: new URLSearchParams(location.search).get('lang') || 'en'
 });
