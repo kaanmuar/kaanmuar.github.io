@@ -1374,11 +1374,45 @@
         }
         #tour-lift { display: none !important; }
         .tour-highlight {
-            animation: tour-click-pop 1.6s ease-in-out infinite;
-            border-radius: 8px;
+            position: relative;
+            z-index: 80;
+            animation: tour-ring 1.6s ease-in-out infinite;
+            border-radius: inherit;
+        }
+        @keyframes tour-ring {
+            0%, 100% { box-shadow: inset 0 0 0 3px var(--accent-on-dark); }
+            50% { box-shadow: inset 0 0 0 3px var(--accent-on-dark), inset 0 0 14px var(--accent-on-dark); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .tour-highlight { animation: none; box-shadow: 0 0 0 3px var(--pulse-blue); }
+            .tour-highlight { animation: none; box-shadow: inset 0 0 0 3px var(--accent-on-dark); }
+        }
+        @media (max-width: 767px) {
+            html.cv-tour { scroll-padding-top: 12px; scroll-padding-bottom: 46vh; }
+            html.cv-tour body { padding-bottom: 46vh; }
+            #tour-tooltip {
+                box-sizing: border-box;
+                left: 12px;
+                right: auto;
+                width: calc(100% - 24px);
+                max-width: calc(100% - 24px);
+                max-height: 42vh;
+                overflow: hidden;
+            }
+            #tour-tooltip-content { padding: 0.75rem 0.85rem; }
+            #tour-tooltip #tour-description { margin-top: 0.35rem; margin-bottom: 0.65rem; }
+            #contact-widget {
+                box-sizing: border-box;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                max-width: none;
+            }
+            #language-options-mobile,
+            #social-share-options-mobile-container,
+            #export-options-mobile-container {
+                min-width: 0;
+                max-width: 100%;
+            }
         }
 
         .tour-highlight-click {
