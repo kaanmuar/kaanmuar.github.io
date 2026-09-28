@@ -48,7 +48,7 @@ The same cases the public suites cover, runnable in the browser against an ifram
 ### Admin panel (`admin.html`)
 
 * **Firebase Authentication** (email/password). Login sits on the CV, studio, and lab toolbars and opens this page. The page is `noindex` and omitted from `sitemap.xml`. `robots.txt` disallows `/admin.html`, `/cypress/`, and `/tests/`.
-* Real-time inbox, ratings, search, private or public replies, testimonial approval, sender blocking, and a Chart.js stats view.
+* Real-time inbox, ratings, search, private or public replies, testimonial approval, sender blocking, and a statistics view for inbox mail and site activity.
 * **CV editor:** Signed-in edits for profile, about, career, toolkit, education, share, and display. Publish writes Firestore `cvContent/live`. The public CV shows that document only with `?cvpreview=1`.
 * **Styles:** Ten looks, starting with macOS Golden Gate. Preview paints the admin page. Undo returns to the last kept look. Keep publishes the look to the CV, Admin, Studio, and QA lab. A color palette and a custom color sit with the looks.
 
@@ -58,10 +58,10 @@ The same cases the public suites cover, runnable in the browser against an ifram
 
 | Category | Technologies |
 | :------------ | :------------------------------------------------------ |
-| **Frontend** | `HTML5`, `CSS3`, `Vanilla JavaScript (ES6 modules)`, `Tailwind CSS v4`, `Chart.js` |
+| **Frontend** | `HTML5`, `CSS3`, `Vanilla JavaScript (ES6 modules)`, `Tailwind CSS v4` |
 | **Backend** | `Firebase (Authentication, Firestore, Storage)` |
 | **Testing** | `Playwright`, `Cypress`, `Robot Framework`, `Selenium WebDriver`, `WebdriverIO`, and `Appium` (each has its own suite and log) |
-| **Analytics** | `Google Analytics` (`js/site-analytics.js`) |
+| **Analytics** | `Google Analytics` (`js/site-analytics.js`) and Firestore `site_events` |
 
 ---
 
@@ -154,8 +154,11 @@ npm run build:css
 2. Put the `firebaseConfig` object in `js/cv-app.js` and `admin.html`.
 3. Enable **Firestore** (production mode), **Authentication → Email/Password**, and **Storage**.
 4. Create the admin user under **Authentication → Users**. The first sign-in on `admin.html` shows a QR code. Scan it with an authenticator app and enter the 6-digit code. Later sign-ins ask for that code after the password.
-5. Rules live in `firestore.rules` and `storage.rules`. Deploy them with `firebase deploy --only firestore:rules,storage`. Visitors can send a message, a rating, and a visit note, and they can read testimonials and `cvContent/live`. Inbox data, the block list, and CV edits are limited to the admin account. `mail` and `notification_state` are closed to the browser; Cloud Functions use the Admin SDK. After 8 messages or ratings in 10 minutes, those two forms ask for the characters in the picture for 30 minutes. The check is verified in Cloud Functions, and a script cannot skip it and write the inbox directly.
+5. Rules live in `firestore.rules` and `storage.rules`. Deploy them with `firebase deploy --only firestore:rules,storage`. Visitors can send a message, a rating, and a visit note, and they can read testimonials and `cvContent/live`. They can also write a short `site_events` row for an open, click, export, or lab run. Inbox data, the block list, CV edits, and `site_reports` are limited to the admin account. `mail` and `notification_state` are closed to the browser; Cloud Functions use the Admin SDK. After 8 messages or ratings in 10 minutes, those two forms ask for the characters in the picture for 30 minutes. The check is verified in Cloud Functions, and a script cannot skip it and write the inbox directly.
 6. If the testimonials query asks for a composite index, open the console link from the browser error and create it.
+7. Cloud Functions run on Node 22. A morning job emails a daily report at 7:15, a weekly report on Monday at 7:30, and a monthly report on the 1st at 7:45, America/Bogota, through the existing SendGrid setup. The same counts appear on Admin → Statistics → Site activity. Counts start once these pages are published. Google Analytics still holds the older history.
+8. A Sunday 8:00 job exports Firestore to `gs://carlosm-interactive-cv-backups`. The bucket is private, and the Firestore service account can write to it. The Cloud Functions service account can start the export. If a backup cannot start, the same SendGrid path sends one failure note.
+9. Three items still need a click in the Google account. App Check still needs a real reCAPTCHA site key before it can be required on public writes; do not turn on enforcement without that key, or messages, ratings, and visits will be rejected. The billing budget API lives on the billing account’s project, and this Firebase login cannot enable it: open [Cloud Billing Budget API](https://console.developers.google.com/apis/api/billingbudgets.googleapis.com/overview?project=563584335869), enable it, then add a budget at [Billing budgets](https://console.cloud.google.com/billing/budgets). Search Console for `carlosandmunoz.com` is added at [Search Console](https://search.google.com/search-console). Looker Studio can email the older Google Analytics history for property `G-J8GNF5380F` on the same three schedules from [Looker Studio](https://lookerstudio.google.com/). The Firestore emails cover the counts collected after the site pages are published.
 
 </details>
 
@@ -177,7 +180,7 @@ npm run build:css
 │   ├── site-look.js        # Shared looks, preview, undo, and keep
 │   ├── site-i18n.js        # Language menu and machine translation
 │   ├── site-tour.js        # Shared tour pulse (lab and studio)
-│   ├── site-analytics.js   # GA helper
+│   ├── site-analytics.js   # GA events and site activity notes
 │   ├── catalog-checks.js   # Shared pass/fail checks for every runner
 │   ├── lab-observer.js     # Lab observer (stalls, failures, report)
 │   └── qa-lab.js           # Lab catalog, source links, runner focus

@@ -866,6 +866,7 @@
                 } catch (e) {
                     return;
                 }
+                if (window.SiteAnalytics) SiteAnalytics.noteVisit();
                 let referrerHost = '';
                 try {
                     referrerHost = document.referrer ? new URL(document.referrer).host : '';
@@ -2202,7 +2203,9 @@
                     text: () => this._exportAsText(),
                     json: () => this._exportAsJSON()
                 }[kind];
-                if (run) run();
+                if (!run) return;
+                this._trackEvent('export_cv', 'Export', 'link:' + kind);
+                run();
             },
 
             async _bootLanguage() {

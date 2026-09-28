@@ -89,6 +89,34 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
     }
 
+    match /site_events/{id} {
+      allow get, list: if isOwner();
+      allow update, delete: if false;
+      allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'createdAt'])
+        && request.resource.data.site in ['cv', 'studio', 'lab']
+        && (
+          (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
+          || (request.resource.data.kind == 'export' && request.resource.data.name in ['export_cv', 'print_cv', 'lab_report'])
+          || (request.resource.data.kind == 'run' && request.resource.data.name == 'lab_run')
+          || (request.resource.data.kind == 'click' && request.resource.data.name in [
+            'share_cv', 'open_simulator', 'open_qa_lab', 'open_contact_widget',
+            'submit_message', 'submit_rating', 'sim_run_sprint', 'sim_sprint_complete'
+          ])
+        )
+        && request.resource.data.label is string
+        && request.resource.data.label.size() <= 80
+        && request.resource.data.lang is string
+        && request.resource.data.lang.size() <= 12
+        && request.resource.data.referrerHost is string
+        && request.resource.data.referrerHost.size() <= 80
+        && request.resource.data.createdAt == request.time;
+    }
+
+    match /site_reports/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
+    }
+
     match /blocked_senders/{emailId} {
       allow get, list: if isOwner();
       allow create, update: if isOwner()

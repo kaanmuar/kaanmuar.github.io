@@ -180,9 +180,9 @@ function adminRespondUrl(type, id) {
   return url.toString();
 }
 
-async function sendOwnerEmail({ subject, intro, rows, body, respondUrl }) {
+async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLabel }) {
   const from = prepareMail();
-  if (!from) return;
+  if (!from) return false;
   const safeRows = (rows || []).filter((row) => row && row.value);
   const text = [
     intro,
@@ -201,7 +201,7 @@ async function sendOwnerEmail({ subject, intro, rows, body, respondUrl }) {
     ? "<div style=\"margin-top:16px;padding:16px;background:#f4f7f8;border-radius:8px;color:#1c2833;font-size:15px;line-height:1.5;white-space:pre-wrap;\">" + escapeHtml(body) + "</div>"
     : "";
   const buttonHtml = respondUrl
-    ? "<a href=\"" + escapeHtml(respondUrl) + "\" style=\"display:inline-block;margin-top:22px;background:#0e7490;color:#ffffff;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:12px 20px;border-radius:8px;\">Respond</a>"
+    ? "<a href=\"" + escapeHtml(respondUrl) + "\" style=\"display:inline-block;margin-top:22px;background:#0e7490;color:#ffffff;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:12px 20px;border-radius:8px;\">" + escapeHtml(buttonLabel || "Respond") + "</a>"
     : "";
   const html = "<!DOCTYPE html><html><body style=\"margin:0;padding:24px;background:#eef2f4;font-family:Georgia,'Times New Roman',serif;\">" +
     "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;\">" +
@@ -219,6 +219,7 @@ async function sendOwnerEmail({ subject, intro, rows, body, respondUrl }) {
     text: text,
     html: html
   });
+  return true;
 }
 
 exports.notifyOwnerOnMessage = withMail.firestore
@@ -475,4 +476,196 @@ exports.submitGuardedForm = functions.https.onCall(async (data) => {
     createdAt: admin.firestore.FieldValue.serverTimestamp()
   });
   return { ok: true };
+});
+
+function bogotaParts(date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const read = (type) => Number(parts.find((part) => part.type === type).value);
+  return { year: read("year"), month: read("month"), day: read("day") };
+}
+
+function bogotaStart(year, month, day) {
+  return new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
+}
+
+function shiftParts(parts, days) {
+  const shifted = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + days));
+  return { year: shifted.getUTCFullYear(), month: shifted.getUTCMonth() + 1, day: shifted.getUTCDate() };
+}
+
+function dateStamp(parts) {
+  return parts.year + "-" + String(parts.month).padStart(2, "0") + "-" + String(parts.day).padStart(2, "0");
+}
+
+function reportWindow(period, now) {
+  const today = bogotaParts(now);
+  if (period === "daily") {
+    const start = shiftParts(today, -1);
+    return { start: bogotaStart(start.year, start.month, start.day), end: bogotaStart(today.year, today.month, today.day), label: dateStamp(start) };
+  }
+  if (period === "weekly") {
+    const start = shiftParts(today, -7);
+    return { start: bogotaStart(start.year, start.month, start.day), end: bogotaStart(today.year, today.month, today.day), label: dateStamp(start) };
+  }
+  const firstThis = { year: today.year, month: today.month, day: 1 };
+  const firstPrev = today.month === 1
+    ? { year: today.year - 1, month: 12, day: 1 }
+    : { year: today.year, month: today.month - 1, day: 1 };
+  return {
+    start: bogotaStart(firstPrev.year, firstPrev.month, firstPrev.day),
+    end: bogotaStart(firstThis.year, firstThis.month, firstThis.day),
+    label: dateStamp(firstPrev).slice(0, 7)
+  };
+}
+
+function summarizeEvents(rows) {
+  const sites = {
+    cv: { opens: 0, clicks: 0, exports: 0, runs: 0 },
+    studio: { opens: 0, clicks: 0, exports: 0, runs: 0 },
+    lab: { opens: 0, clicks: 0, exports: 0, runs: 0 }
+  };
+  const exportsBy = {};
+  let opens = 0;
+  let clicks = 0;
+  let exportsCount = 0;
+  let runs = 0;
+  rows.forEach((row) => {
+    const bucket = sites[row.site] || sites.cv;
+    if (row.kind === "visit") {
+      opens += 1;
+      bucket.opens += 1;
+    } else if (row.kind === "export") {
+      exportsCount += 1;
+      bucket.exports += 1;
+      const key = String(row.name || "export").slice(0, 40);
+      exportsBy[key] = (exportsBy[key] || 0) + 1;
+    } else if (row.kind === "run") {
+      runs += 1;
+      bucket.runs += 1;
+    } else {
+      clicks += 1;
+      bucket.clicks += 1;
+    }
+  });
+  return { opens, clicks, exports: exportsCount, runs, sites, exportsBy };
+}
+
+async function loadEvents(start, end) {
+  const rows = [];
+  let cursor = null;
+  for (;;) {
+    let query = admin.firestore().collection("site_events")
+      .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(start))
+      .where("createdAt", "<", admin.firestore.Timestamp.fromDate(end))
+      .orderBy("createdAt", "asc")
+      .limit(400);
+    if (cursor) query = query.startAfter(cursor);
+    const snap = await query.get();
+    if (snap.empty) break;
+    snap.forEach((doc) => rows.push(doc.data() || {}));
+    cursor = snap.docs[snap.docs.length - 1];
+    if (snap.size < 400 || rows.length >= 20000) break;
+  }
+  return rows;
+}
+
+async function sendPeriodReport(period) {
+  const window = reportWindow(period, new Date());
+  const id = period + "-" + window.label;
+  const ref = admin.firestore().collection("site_reports").doc(id);
+  const claimed = await admin.firestore().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() || {} : {};
+    if (data.emailedAt) return false;
+    tx.set(ref, { period: period, label: window.label, sending: true }, { merge: true });
+    return true;
+  });
+  if (!claimed) return null;
+  try {
+    const summary = summarizeEvents(await loadEvents(window.start, window.end));
+    const siteLine = (name) => {
+      const row = summary.sites[name];
+      return row.opens + " opens, " + row.clicks + " clicks, " + row.exports + " exports, " + row.runs + " runs";
+    };
+    const exportLine = Object.keys(summary.exportsBy).length
+      ? Object.keys(summary.exportsBy).map((key) => key + " " + summary.exportsBy[key]).join(", ")
+      : "None";
+    await ref.set({
+      period: period,
+      label: window.label,
+      start: admin.firestore.Timestamp.fromDate(window.start),
+      end: admin.firestore.Timestamp.fromDate(window.end),
+      opens: summary.opens,
+      clicks: summary.clicks,
+      exports: summary.exports,
+      runs: summary.runs,
+      sites: summary.sites,
+      exportsBy: summary.exportsBy,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    const title = period.charAt(0).toUpperCase() + period.slice(1);
+    const sent = await sendOwnerEmail({
+      subject: title + " site report — " + window.label,
+      intro: title + " report for " + window.label,
+      rows: [
+        { label: "Opens", value: String(summary.opens) },
+        { label: "Clicks", value: String(summary.clicks) },
+        { label: "Exports", value: String(summary.exports) },
+        { label: "Lab runs", value: String(summary.runs) },
+        { label: "CV", value: siteLine("cv") },
+        { label: "Studio", value: siteLine("studio") },
+        { label: "Lab", value: siteLine("lab") },
+        { label: "Export types", value: exportLine }
+      ],
+      respondUrl: "https://carlosandmunoz.com/admin.html",
+      buttonLabel: "Open statistics"
+    });
+    if (!sent) throw new Error("Site report email was not sent.");
+    await ref.set({ emailedAt: admin.firestore.FieldValue.serverTimestamp(), sending: false }, { merge: true });
+  } catch (error) {
+    await ref.set({ sending: false }, { merge: true });
+    console.error(period + " site report failed:", error);
+    throw error;
+  }
+  return null;
+}
+
+function scheduleReport(cron, period) {
+  return withMail.pubsub.schedule(cron).timeZone("America/Bogota").onRun(() => sendPeriodReport(period));
+}
+
+exports.emailDailySiteReport = scheduleReport("15 7 * * *", "daily");
+exports.emailWeeklySiteReport = scheduleReport("30 7 * * 1", "weekly");
+exports.emailMonthlySiteReport = scheduleReport("45 7 1 * *", "monthly");
+
+exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("America/Bogota").onRun(async () => {
+  const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
+  const stamp = dateStamp(bogotaParts(new Date()));
+  try {
+    const firestore = require("@google-cloud/firestore");
+    const client = new firestore.v1.FirestoreAdminClient();
+    const [operation] = await client.exportDocuments({
+      name: client.databasePath(projectId, "(default)"),
+      outputUriPrefix: "gs://" + projectId + "-backups/firestore/" + stamp
+    });
+    console.log("Firestore export started:", operation && operation.name ? operation.name : stamp);
+  } catch (error) {
+    console.error("Firestore export failed:", error);
+    try {
+      await sendOwnerEmail({
+        subject: "Firestore backup did not start",
+        intro: "The weekly Firestore backup did not start",
+        rows: [{ label: "Day", value: stamp }],
+        body: clip(error && error.message ? error.message : "Export failed", 500)
+      });
+    } catch (mailError) {
+      console.error("Backup failure email failed:", mailError);
+    }
+  }
+  return null;
 });

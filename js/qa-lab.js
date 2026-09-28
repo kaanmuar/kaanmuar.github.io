@@ -2884,6 +2884,7 @@
         return;
       }
       this.running = true;
+      if (global.SiteAnalytics) SiteAnalytics.event('lab_run', 'Lab', ids.length === CASES.length ? 'full' : String(ids.length));
       this.holdLabLanguage();
       document.documentElement.classList.add('lab-running');
       this.openRunners();
@@ -3108,6 +3109,7 @@
     },
 
     downloadReport() {
+      if (global.SiteAnalytics) SiteAnalytics.event('lab_report', 'Lab', 'download');
       const file = new Blob([this.reportFile()], { type: 'text/html' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(file);
@@ -3117,6 +3119,7 @@
     },
 
     printReport() {
+      if (global.SiteAnalytics) SiteAnalytics.event('lab_report', 'Lab', 'print');
       const frame = document.createElement('iframe');
       frame.setAttribute('title', 'QA lab report print');
       frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
@@ -3554,6 +3557,10 @@
     },
 
     boot() {
+      if (global.SiteAnalytics) {
+        SiteAnalytics.bind('lab');
+        SiteAnalytics.noteVisit();
+      }
       if (global.LabObserver) global.LabObserver.boot();
       this.pace = readPace();
       this.view = readView();
