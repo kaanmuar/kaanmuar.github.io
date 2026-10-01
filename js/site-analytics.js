@@ -66,6 +66,7 @@
             label: String(label == null ? '' : label).slice(0, 80),
             lang: String(document.documentElement.lang || 'en').slice(0, 12),
             referrerHost: referrerHost.slice(0, 80),
+            screen: (root.innerWidth || 0) < 768 ? 'phone' : 'desktop',
             createdAt: fs.serverTimestamp()
         })).catch(() => {});
     }
