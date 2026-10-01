@@ -92,7 +92,7 @@ service cloud.firestore {
     match /site_events/{id} {
       allow get, list: if isOwner();
       allow update, delete: if false;
-      allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'createdAt'])
+      allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'screen', 'createdAt'])
         && request.resource.data.site in ['cv', 'studio', 'lab']
         && (
           (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
@@ -109,6 +109,7 @@ service cloud.firestore {
         && request.resource.data.lang.size() <= 12
         && request.resource.data.referrerHost is string
         && request.resource.data.referrerHost.size() <= 80
+        && (!('screen' in request.resource.data) || request.resource.data.screen in ['phone', 'desktop'])
         && request.resource.data.createdAt == request.time;
     }
 

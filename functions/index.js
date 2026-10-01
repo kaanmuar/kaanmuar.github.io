@@ -190,7 +190,7 @@ async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLa
     ...safeRows.map((row) => row.label + ": " + row.value),
     body ? "\n" + body : "",
     respondUrl ? "\nRespond: " + respondUrl : ""
-  ].join("\n").slice(0, 4000);
+  ].join("\n");
   const rowHtml = safeRows.map((row) =>
     "<tr>" +
     "<td style=\"padding:8px 16px 8px 0;color:#5c6b7a;font-size:13px;vertical-align:top;white-space:nowrap;\">" + escapeHtml(row.label) + "</td>" +
@@ -216,7 +216,7 @@ async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLa
     to: OWNER_EMAIL,
     from: from,
     subject: clip(subject, 140),
-    text: text,
+    text: text.slice(0, 8000),
     html: html
   });
   return true;
@@ -523,6 +523,80 @@ function reportWindow(period, now) {
   };
 }
 
+const ACTION_LABELS = {
+  share_cv: "Share",
+  open_simulator: "Open studio",
+  open_qa_lab: "Open lab",
+  open_contact_widget: "Contact",
+  submit_message: "Message",
+  submit_rating: "Rating",
+  sim_run_sprint: "Sprint start",
+  sim_sprint_complete: "Sprint finish"
+};
+
+const EXPORT_LABELS = {
+  export_cv: "CV file",
+  print_cv: "Print",
+  lab_report: "Lab report"
+};
+
+function bump(map, key) {
+  const name = String(key || "").slice(0, 80);
+  if (!name) return;
+  map[name] = (map[name] || 0) + 1;
+}
+
+function eventDate(row) {
+  const value = row && row.createdAt;
+  if (!value) return null;
+  if (typeof value.toDate === "function") return value.toDate();
+  if (value instanceof Date) return value;
+  if (value._seconds) return new Date(value._seconds * 1000);
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function bogotaHour(date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Bogota",
+    hour: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(date);
+  const hour = parts.find((part) => part.type === "hour");
+  return hour ? Number(hour.value) % 24 : 0;
+}
+
+function tallyLine(map, limit) {
+  const keys = Object.keys(map).sort((a, b) => map[b] - map[a] || a.localeCompare(b));
+  if (!keys.length) return "None";
+  return keys.slice(0, limit || 8).map((key) => key + " " + map[key]).join(", ");
+}
+
+function peakKey(map) {
+  const keys = Object.keys(map);
+  if (!keys.length) return "";
+  keys.sort((a, b) => map[b] - map[a] || a.localeCompare(b));
+  return keys[0];
+}
+
+function hourLine(hours) {
+  const key = peakKey(hours);
+  if (!key) return "None";
+  const hour = Number(key);
+  const next = String((hour + 1) % 24).padStart(2, "0");
+  return key + ":00–" + next + ":00 (" + hours[key] + " opens)";
+}
+
+function dayLine(days) {
+  const key = peakKey(days);
+  if (!key) return "None";
+  return key + " (" + days[key] + " opens)";
+}
+
+function screenLine(screens) {
+  return "Phone " + screens.phone + ", desktop " + screens.desktop + ", unrecorded " + screens.unrecorded;
+}
+
 function summarizeEvents(rows) {
   const sites = {
     cv: { opens: 0, clicks: 0, exports: 0, runs: 0 },
@@ -530,6 +604,12 @@ function summarizeEvents(rows) {
     lab: { opens: 0, clicks: 0, exports: 0, runs: 0 }
   };
   const exportsBy = {};
+  const actions = {};
+  const langs = {};
+  const referrers = {};
+  const days = {};
+  const hours = {};
+  const screens = { phone: 0, desktop: 0, unrecorded: 0 };
   let opens = 0;
   let clicks = 0;
   let exportsCount = 0;
@@ -539,20 +619,71 @@ function summarizeEvents(rows) {
     if (row.kind === "visit") {
       opens += 1;
       bucket.opens += 1;
+      bump(langs, row.lang || "en");
+      bump(referrers, row.referrerHost ? row.referrerHost : "Direct");
+      const screen = row.screen === "phone" || row.screen === "desktop" ? row.screen : "unrecorded";
+      screens[screen] += 1;
+      const when = eventDate(row);
+      if (when) {
+        bump(days, dateStamp(bogotaParts(when)));
+        bump(hours, String(bogotaHour(when)).padStart(2, "0"));
+      }
     } else if (row.kind === "export") {
       exportsCount += 1;
       bucket.exports += 1;
-      const key = String(row.name || "export").slice(0, 40);
-      exportsBy[key] = (exportsBy[key] || 0) + 1;
+      const raw = String(row.name || "export").slice(0, 40);
+      const label = EXPORT_LABELS[raw] || raw;
+      bump(exportsBy, row.label ? label + " (" + String(row.label).slice(0, 40) + ")" : label);
     } else if (row.kind === "run") {
       runs += 1;
       bucket.runs += 1;
     } else {
       clicks += 1;
       bucket.clicks += 1;
+      const raw = String(row.name || "click").slice(0, 40);
+      bump(actions, ACTION_LABELS[raw] || raw);
     }
   });
-  return { opens, clicks, exports: exportsCount, runs, sites, exportsBy };
+  return {
+    opens: opens,
+    clicks: clicks,
+    exports: exportsCount,
+    runs: runs,
+    sites: sites,
+    exportsBy: exportsBy,
+    actions: actions,
+    langs: langs,
+    referrers: referrers,
+    days: days,
+    hours: hours,
+    screens: screens,
+    busiestDay: dayLine(days),
+    busiestHour: hourLine(hours)
+  };
+}
+
+function previousWindow(period, current) {
+  const start = bogotaParts(current.start);
+  if (period === "daily") {
+    const prev = shiftParts(start, -1);
+    return { start: bogotaStart(prev.year, prev.month, prev.day), end: current.start, phrase: "previous day" };
+  }
+  if (period === "weekly") {
+    const prev = shiftParts(start, -7);
+    return { start: bogotaStart(prev.year, prev.month, prev.day), end: current.start, phrase: "previous 7 days" };
+  }
+  const first = start.month === 1
+    ? { year: start.year - 1, month: 12, day: 1 }
+    : { year: start.year, month: start.month - 1, day: 1 };
+  return { start: bogotaStart(first.year, first.month, first.day), end: current.start, phrase: "previous month" };
+}
+
+function compareLine(summary, previous, phrase) {
+  return "opens " + summary.opens + " vs " + previous.opens
+    + ", clicks " + summary.clicks + " vs " + previous.clicks
+    + ", exports " + summary.exports + " vs " + previous.exports
+    + ", lab runs " + summary.runs + " vs " + previous.runs
+    + " (" + phrase + ")";
 }
 
 async function loadEvents(start, end) {
@@ -574,6 +705,15 @@ async function loadEvents(start, end) {
   return rows;
 }
 
+async function countCreated(name, start, end) {
+  const snap = await admin.firestore().collection(name)
+    .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(start))
+    .where("createdAt", "<", admin.firestore.Timestamp.fromDate(end))
+    .count()
+    .get();
+  return snap.data().count;
+}
+
 async function sendPeriodReport(period) {
   const window = reportWindow(period, new Date());
   const id = period + "-" + window.label;
@@ -588,13 +728,20 @@ async function sendPeriodReport(period) {
   if (!claimed) return null;
   try {
     const summary = summarizeEvents(await loadEvents(window.start, window.end));
+    const earlier = previousWindow(period, window);
+    const previous = summarizeEvents(await loadEvents(earlier.start, earlier.end));
+    let messages = null;
+    let ratings = null;
+    try {
+      messages = await countCreated("messages", window.start, window.end);
+      ratings = await countCreated("ratings", window.start, window.end);
+    } catch (countError) {
+      console.error(period + " inbox counts skipped:", countError);
+    }
     const siteLine = (name) => {
       const row = summary.sites[name];
       return row.opens + " opens, " + row.clicks + " clicks, " + row.exports + " exports, " + row.runs + " runs";
     };
-    const exportLine = Object.keys(summary.exportsBy).length
-      ? Object.keys(summary.exportsBy).map((key) => key + " " + summary.exportsBy[key]).join(", ")
-      : "None";
     await ref.set({
       period: period,
       label: window.label,
@@ -606,22 +753,43 @@ async function sendPeriodReport(period) {
       runs: summary.runs,
       sites: summary.sites,
       exportsBy: summary.exportsBy,
+      actions: summary.actions,
+      langs: summary.langs,
+      referrers: summary.referrers,
+      days: summary.days,
+      hours: summary.hours,
+      screens: summary.screens,
+      busiestDay: summary.busiestDay,
+      busiestHour: summary.busiestHour,
+      previous: { opens: previous.opens, clicks: previous.clicks, exports: previous.exports, runs: previous.runs },
+      messages: messages,
+      ratings: ratings,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     const title = period.charAt(0).toUpperCase() + period.slice(1);
+    const rows = [
+      { label: "Opens", value: String(summary.opens) },
+      { label: "Clicks", value: String(summary.clicks) },
+      { label: "Exports", value: String(summary.exports) },
+      { label: "Lab runs", value: String(summary.runs) },
+      { label: "Versus", value: compareLine(summary, previous, earlier.phrase) },
+      { label: "CV", value: siteLine("cv") },
+      { label: "Studio", value: siteLine("studio") },
+      { label: "Lab", value: siteLine("lab") },
+      { label: "Languages", value: tallyLine(summary.langs) },
+      { label: "Referrers", value: tallyLine(summary.referrers) },
+      { label: "Actions", value: tallyLine(summary.actions) },
+      { label: "Export types", value: tallyLine(summary.exportsBy) },
+      { label: "Screen", value: screenLine(summary.screens) },
+      { label: "Busiest hour", value: summary.busiestHour + " America/Bogota" }
+    ];
+    if (period !== "daily") rows.push({ label: "Busiest day", value: summary.busiestDay });
+    if (messages != null) rows.push({ label: "Messages", value: String(messages) });
+    if (ratings != null) rows.push({ label: "Ratings", value: String(ratings) });
     const sent = await sendOwnerEmail({
       subject: title + " site report — " + window.label,
       intro: title + " report for " + window.label,
-      rows: [
-        { label: "Opens", value: String(summary.opens) },
-        { label: "Clicks", value: String(summary.clicks) },
-        { label: "Exports", value: String(summary.exports) },
-        { label: "Lab runs", value: String(summary.runs) },
-        { label: "CV", value: siteLine("cv") },
-        { label: "Studio", value: siteLine("studio") },
-        { label: "Lab", value: siteLine("lab") },
-        { label: "Export types", value: exportLine }
-      ],
+      rows: rows,
       respondUrl: "https://carlosandmunoz.com/admin.html",
       buttonLabel: "Open statistics"
     });
