@@ -53,17 +53,38 @@
         return dbPromise;
     }
 
+    const PLAIN_VISIT_LABELS = { cv: 1, studio: 1, lab: 1, popup: 1, direct: 1 };
+
+    function cvRefCode(raw) {
+        const code = String(raw || '').trim().toLowerCase();
+        if (!code || code.length > 40 || PLAIN_VISIT_LABELS[code]) return '';
+        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(code)) return '';
+        return code;
+    }
+
+    function readCvRef() {
+        const host = root.location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') return '';
+        try {
+            return cvRefCode(new URLSearchParams(root.location.search).get('cvref'));
+        } catch (e) {
+            return '';
+        }
+    }
+
     function record(kind, name, label) {
         if (root.top !== root.self || navigator.webdriver) return;
         const host = root.location.hostname;
         if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') return;
+        const visitCode = kind === 'visit' ? readCvRef() : '';
+        const storedLabel = visitCode || (label == null ? '' : label);
         let referrerHost = '';
         try { referrerHost = document.referrer ? new URL(document.referrer).host : ''; } catch (e) { referrerHost = ''; }
         database().then(({ fs, db }) => fs.addDoc(fs.collection(db, 'site_events'), {
             site: site,
             kind: kind,
             name: String(name).slice(0, 40),
-            label: String(label == null ? '' : label).slice(0, 80),
+            label: String(storedLabel).slice(0, 80),
             lang: String(document.documentElement.lang || 'en').slice(0, 12),
             referrerHost: referrerHost.slice(0, 80),
             screen: (root.innerWidth || 0) < 768 ? 'phone' : 'desktop',
@@ -100,13 +121,29 @@
         if (name === 'cv' || name === 'studio' || name === 'lab') site = name;
     }
 
+    function hideCvRef() {
+        const host = root.location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') return;
+        try {
+            const url = new URL(root.location.href);
+            if (!url.searchParams.has('cvref')) return;
+            url.searchParams.delete('cvref');
+            const next = url.pathname + url.search + url.hash;
+            root.history.replaceState(root.history.state, '', next || '/');
+        } catch (e) {}
+    }
+
     function noteVisit() {
         const key = 'site-noted-' + site;
         try {
-            if (sessionStorage.getItem(key) === '1') return;
+            if (sessionStorage.getItem(key) === '1') {
+                hideCvRef();
+                return;
+            }
             sessionStorage.setItem(key, '1');
         } catch (e) { return; }
-        event('visit', 'Visit', site);
+        event('visit', 'Visit', readCvRef() || site);
+        hideCvRef();
     }
 
     root.SiteAnalytics = {
