@@ -546,6 +546,15 @@ function bump(map, key) {
   map[name] = (map[name] || 0) + 1;
 }
 
+const PLAIN_VISIT_LABELS = { cv: true, studio: true, lab: true, popup: true, direct: true };
+
+function linkCode(label) {
+  const code = String(label || "").trim().toLowerCase();
+  if (!code || code.length > 40 || PLAIN_VISIT_LABELS[code]) return "";
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(code)) return "";
+  return code;
+}
+
 function eventDate(row) {
   const value = row && row.createdAt;
   if (!value) return null;
@@ -597,6 +606,12 @@ function screenLine(screens) {
   return "Phone " + screens.phone + ", desktop " + screens.desktop + ", unrecorded " + screens.unrecorded;
 }
 
+function linkLine(map) {
+  const keys = Object.keys(map).sort((a, b) => map[b] - map[a] || a.localeCompare(b));
+  if (!keys.length) return "";
+  return keys.slice(0, 8).map((key) => key + " " + map[key]).join(", ");
+}
+
 function summarizeEvents(rows) {
   const sites = {
     cv: { opens: 0, clicks: 0, exports: 0, runs: 0 },
@@ -610,6 +625,7 @@ function summarizeEvents(rows) {
   const days = {};
   const hours = {};
   const screens = { phone: 0, desktop: 0, unrecorded: 0 };
+  const linkOpens = {};
   let opens = 0;
   let clicks = 0;
   let exportsCount = 0;
@@ -619,6 +635,8 @@ function summarizeEvents(rows) {
     if (row.kind === "visit") {
       opens += 1;
       bucket.opens += 1;
+      const code = linkCode(row.label);
+      if (code) bump(linkOpens, code);
       bump(langs, row.lang || "en");
       bump(referrers, row.referrerHost ? row.referrerHost : "Direct");
       const screen = row.screen === "phone" || row.screen === "desktop" ? row.screen : "unrecorded";
@@ -657,6 +675,7 @@ function summarizeEvents(rows) {
     days: days,
     hours: hours,
     screens: screens,
+    linkOpens: linkOpens,
     busiestDay: dayLine(days),
     busiestHour: hourLine(hours)
   };
@@ -759,6 +778,7 @@ async function sendPeriodReport(period) {
       days: summary.days,
       hours: summary.hours,
       screens: summary.screens,
+      linkOpens: summary.linkOpens,
       busiestDay: summary.busiestDay,
       busiestHour: summary.busiestHour,
       previous: { opens: previous.opens, clicks: previous.clicks, exports: previous.exports, runs: previous.runs },
@@ -769,6 +789,7 @@ async function sendPeriodReport(period) {
     const title = period.charAt(0).toUpperCase() + period.slice(1);
     const rows = [
       { label: "Opens", value: String(summary.opens) },
+      { label: "Link opens", value: linkLine(summary.linkOpens) },
       { label: "Clicks", value: String(summary.clicks) },
       { label: "Exports", value: String(summary.exports) },
       { label: "Lab runs", value: String(summary.runs) },
