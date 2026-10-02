@@ -466,7 +466,7 @@
         </div>
         <section class="site-activity" id="site-activity" aria-live="polite">
             <div class="stats-head">
-                <div><h2>Site activity</h2><p>Opens, clicks, exports, lab runs, languages, referrers, actions, screens, and the busiest day and hour for the same range. Hours are America/Bogota. The morning emails use these counts, and they also compare the previous day, week, or month.</p></div>
+                <div><h2>Site activity</h2><p>Opens, clicks, exports, lab runs, link opens, languages, referrers, actions, screens, and the busiest day and hour for the same range. Hours are America/Bogota. The morning emails use these counts, and they also compare the previous day, week, or month.</p></div>
             </div>
             <div id="site-kpis" class="site-kpis"></div>
             <p id="site-compare" class="stats-empty"></p>
@@ -474,6 +474,7 @@
                 <section class="stats-card stats-wide"><h3>By site</h3><div id="site-sites" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Languages</h3><div id="site-langs" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Referrers</h3><div id="site-referrers" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Link opens</h3><div id="site-links" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Actions</h3><div id="site-actions" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Exports</h3><div id="site-exports" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Screen</h3><div id="site-screens" class="stats-chart"></div></section>
@@ -1364,6 +1365,15 @@
     };
     const SITE_EXPORT_LABELS = { export_cv: 'CV file', print_cv: 'Print', lab_report: 'Lab report' };
 
+    const PLAIN_VISIT_LABELS = { cv: 1, studio: 1, lab: 1, popup: 1, direct: 1 };
+
+    function linkCode(label) {
+        const code = String(label || '').trim().toLowerCase();
+        if (!code || code.length > 40 || PLAIN_VISIT_LABELS[code]) return '';
+        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(code)) return '';
+        return code;
+    }
+
     function siteBump(map, key) {
         const name = String(key || '').slice(0, 80);
         if (!name) return;
@@ -1401,7 +1411,7 @@
 
     function summarizeSiteEvents(rows) {
         const sites = { cv: { opens: 0, clicks: 0, exports: 0, runs: 0 }, studio: { opens: 0, clicks: 0, exports: 0, runs: 0 }, lab: { opens: 0, clicks: 0, exports: 0, runs: 0 } };
-        const exportsBy = {}, actions = {}, langs = {}, referrers = {}, days = {}, hours = {};
+        const exportsBy = {}, actions = {}, langs = {}, referrers = {}, days = {}, hours = {}, linkOpens = {};
         const screens = { phone: 0, desktop: 0, unrecorded: 0 };
         let opens = 0, clicks = 0, exports = 0, runs = 0;
         rows.forEach((row) => {
@@ -1409,6 +1419,8 @@
             if (row.kind === 'visit') {
                 opens += 1;
                 bucket.opens += 1;
+                const code = linkCode(row.label);
+                if (code) siteBump(linkOpens, code);
                 siteBump(langs, row.lang || 'en');
                 siteBump(referrers, row.referrerHost ? row.referrerHost : 'Direct');
                 const screen = row.screen === 'phone' || row.screen === 'desktop' ? row.screen : 'unrecorded';
@@ -1438,7 +1450,7 @@
         const hourKey = sitePeak(hours);
         const nextHour = hourKey ? String((Number(hourKey) + 1) % 24).padStart(2, '0') : '';
         return {
-            opens, clicks, exports, runs, sites, exportsBy, actions, langs, referrers, screens,
+            opens, clicks, exports, runs, sites, exportsBy, actions, langs, referrers, screens, linkOpens,
             busiestDay: dayKey ? `${dayKey} (${days[dayKey]} opens)` : 'None',
             busiestHour: hourKey ? `${hourKey}:00–${nextHour}:00 (${hours[hourKey]} opens)` : 'None'
         };
@@ -1478,6 +1490,8 @@
             const peaksHost = document.getElementById('site-peaks');
             if (langsHost) langsHost.innerHTML = siteBars(summary.langs);
             if (referrersHost) referrersHost.innerHTML = siteBars(summary.referrers);
+            const linksHost = document.getElementById('site-links');
+            if (linksHost) linksHost.innerHTML = siteBars(summary.linkOpens);
             if (actionsHost) actionsHost.innerHTML = siteBars(summary.actions);
             if (exportsHost) exportsHost.innerHTML = siteBars(summary.exportsBy);
             if (screensHost) screensHost.innerHTML = barChart([
