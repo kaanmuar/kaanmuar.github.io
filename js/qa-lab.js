@@ -2885,7 +2885,13 @@
         return;
       }
       this.running = true;
-      if (global.SiteAnalytics) SiteAnalytics.event('lab_run', 'Lab', ids.length === CASES.length ? 'full' : String(ids.length));
+      if (global.SiteAnalytics) {
+        SiteAnalytics.event('lab_run', 'QA Lab', ids.length === CASES.length ? 'full' : String(ids.length), {
+          pace: this.pace,
+          view: this.view,
+          frameworks: chosen.join(',')
+        });
+      }
       this.holdLabLanguage();
       document.documentElement.classList.add('lab-running');
       this.openRunners();
@@ -2986,7 +2992,13 @@
         this.openDashboard();
         if (global.LabObserver) global.LabObserver.runEnd(this, ids);
         if (global.SiteAnalytics) {
-          global.SiteAnalytics.trackEvent('qa_lab_run', 'QA Lab', `${passed}/${pack.length}`, { passed, failed, pace: this.pace });
+          global.SiteAnalytics.trackEvent('qa_lab_run', 'QA Lab', `${passed}/${pack.length}`, {
+            passed,
+            failed,
+            pace: this.pace,
+            view: this.view,
+            frameworks: (this.selectedFrameworks() || []).join(',')
+          });
         }
       } catch (err) {
         this.log(`<span class="fail">LAB</span> stopped · ${String(err.message).replace(/</g, '&lt;')}`);
@@ -3110,7 +3122,7 @@
     },
 
     downloadReport() {
-      if (global.SiteAnalytics) SiteAnalytics.event('lab_report', 'Lab', 'download');
+      if (global.SiteAnalytics) SiteAnalytics.event('lab_report', 'QA Lab', 'download');
       const file = new Blob([this.reportFile()], { type: 'text/html' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(file);
@@ -3120,7 +3132,7 @@
     },
 
     printReport() {
-      if (global.SiteAnalytics) SiteAnalytics.event('lab_report', 'Lab', 'print');
+      if (global.SiteAnalytics) SiteAnalytics.event('lab_report', 'QA Lab', 'print');
       const frame = document.createElement('iframe');
       frame.setAttribute('title', 'QA lab report print');
       frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';

@@ -531,14 +531,27 @@ const ACTION_LABELS = {
   submit_message: "Message",
   submit_rating: "Rating",
   sim_run_sprint: "Sprint start",
-  sim_sprint_complete: "Sprint finish"
+  sim_sprint_complete: "Sprint finish",
+  site_tour_start: "Tour",
+  open_clip: "Clip"
 };
 
 const EXPORT_LABELS = {
   export_cv: "CV file",
   print_cv: "Print",
-  lab_report: "Lab report"
+  lab_report: "Lab report",
+  studio_report: "Studio report"
 };
+
+function actionTitle(row) {
+  const raw = String(row.name || "click").slice(0, 40);
+  const title = ACTION_LABELS[raw] || raw;
+  const detail = String(row.label || "").trim().slice(0, 40);
+  if ((raw === "site_tour_start" || raw === "open_clip") && detail && detail !== "start") {
+    return title + " (" + detail + ")";
+  }
+  return title;
+}
 
 function bump(map, key) {
   const name = String(key || "").slice(0, 80);
@@ -658,8 +671,7 @@ function summarizeEvents(rows) {
     } else {
       clicks += 1;
       bucket.clicks += 1;
-      const raw = String(row.name || "click").slice(0, 40);
-      bump(actions, ACTION_LABELS[raw] || raw);
+      bump(actions, actionTitle(row));
     }
   });
   return {

@@ -87,7 +87,7 @@
             page_location: window.location.href
         });
     </script>
-    <script src="js/site-analytics.js?v=20261001e"></script>
+    <script src="js/site-analytics.js?v=20261002a"></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
@@ -611,7 +611,7 @@
 </div>
 
     <script src="js/site-i18n.js"></script>
-    <script src="js/site-tour.js?v=20260928e"></script>
+    <script src="js/site-tour.js?v=20261002a"></script>
     <script>
 const AGENTS = [
     { id: 'a1', name: 'Ticket Steward', role: 'Reads and rewrites the stories on the board' },
@@ -1788,7 +1788,7 @@ const banner = document.getElementById('banner');
 let gate = null;
 
 function track(eventName, category, label, extra) {
-    if (window.SiteAnalytics) SiteAnalytics.event(eventName, category, label, extra);
+    if (window.SiteAnalytics) SiteAnalytics.event(eventName, category === 'Simulator' ? 'SDLC Studio' : (category || 'SDLC Studio'), label, extra);
     else if (typeof gtag === 'function') gtag('event', eventName, Object.assign({ event_category: category, event_label: label }, extra || {}));
 }
 
@@ -3257,6 +3257,7 @@ function closeStudioReport() {
     if (frame) frame.srcdoc = '';
 }
 function printStudioReport() {
+    track('studio_report', 'SDLC Studio', 'print');
     const frame = document.createElement('iframe');
     frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
     document.body.appendChild(frame);
@@ -3266,6 +3267,7 @@ function printStudioReport() {
     setTimeout(() => { frame.contentWindow.focus(); frame.contentWindow.print(); setTimeout(() => frame.remove(), 800); }, 60);
 }
 function downloadStudioReport() {
+    track('studio_report', 'SDLC Studio', 'download');
     const file = new Blob([studioReportHtml()], { type: 'text/html' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(file);
@@ -3299,9 +3301,10 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
     track('sim_theme_change', 'Simulator', dark ? 'Dark Mode' : 'Light Mode');
 });
 
+if (window.SiteAnalytics) SiteAnalytics.bind('studio');
 renderAgents();
 setView('board');
-if (window.SiteAnalytics) SiteAnalytics.bind('studio');
+if (window.SiteAnalytics) SiteAnalytics.noteVisit();
 track('sim_loaded', 'Simulator', window.opener ? 'popup' : 'direct', {
     lang: new URLSearchParams(location.search).get('lang') || 'en'
 });
