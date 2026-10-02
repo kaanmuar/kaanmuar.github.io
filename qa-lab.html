@@ -153,6 +153,8 @@
         .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
         .intro { padding: 6px 16px 0; }
         .intro h1 { font-family: "Source Serif 4", Georgia, serif; font-size: 1.15rem; margin: 0; }
+        .clip-links { margin: 8px 0 0; }
+        .clip-links a { color: var(--cyan); font-weight: 600; }
         .intro p { margin: 2px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
         .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 8px 16px; }
         .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
@@ -536,6 +538,7 @@
 <section class="intro">
     <h1>The suite I run on this CV</h1>
     <p>The catalog runs in the browser you already have open, on a Mac, a Windows PC, or a phone. Chrome, Firefox, Edge, and Safari stay in the list even when those programs are not installed. Before a run, choose the browsers and the screen size. Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium each run as their own process when <code>npm run lab:runners</code> is up, and those processes bring their own browsers. A result from one is not copied into the others.</p>
+    <p class="clip-links"><a href="media/qa-lab-running.html">Watch a full catalog run</a> · <a href="media/qa-lab-tour.html">Watch the tour</a></p>
 </section>
 <section class="kpis" aria-label="Last run totals">
     <div class="kpi"><span>Passed</span><b id="kpi-pass">—</b></div>
