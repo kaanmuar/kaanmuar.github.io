@@ -13,10 +13,10 @@
     };
     const KINDS = {
         visit: 'visit',
-        sim_loaded: 'visit',
         export_cv: 'export',
         print_cv: 'export',
         lab_report: 'export',
+        studio_report: 'export',
         lab_run: 'run',
         share_cv: 'click',
         open_simulator: 'click',
@@ -25,7 +25,9 @@
         submit_message: 'click',
         submit_rating: 'click',
         sim_run_sprint: 'click',
-        sim_sprint_complete: 'click'
+        sim_sprint_complete: 'click',
+        site_tour_start: 'click',
+        open_clip: 'click'
     };
 
     function ready() {

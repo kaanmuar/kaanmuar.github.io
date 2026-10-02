@@ -1361,9 +1361,11 @@
         submit_message: 'Message',
         submit_rating: 'Rating',
         sim_run_sprint: 'Sprint start',
-        sim_sprint_complete: 'Sprint finish'
+        sim_sprint_complete: 'Sprint finish',
+        site_tour_start: 'Tour',
+        open_clip: 'Clip'
     };
-    const SITE_EXPORT_LABELS = { export_cv: 'CV file', print_cv: 'Print', lab_report: 'Lab report' };
+    const SITE_EXPORT_LABELS = { export_cv: 'CV file', print_cv: 'Print', lab_report: 'Lab report', studio_report: 'Studio report' };
 
     const PLAIN_VISIT_LABELS = { cv: 1, studio: 1, lab: 1, popup: 1, direct: 1 };
 
@@ -1372,6 +1374,16 @@
         if (!code || code.length > 40 || PLAIN_VISIT_LABELS[code]) return '';
         if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(code)) return '';
         return code;
+    }
+
+    function siteActionTitle(row) {
+        const raw = String(row.name || 'click').slice(0, 40);
+        const title = SITE_ACTION_LABELS[raw] || raw;
+        const detail = String(row.label || '').trim().slice(0, 40);
+        if ((raw === 'site_tour_start' || raw === 'open_clip') && detail && detail !== 'start') {
+            return title + ' (' + detail + ')';
+        }
+        return title;
     }
 
     function siteBump(map, key) {
@@ -1442,8 +1454,7 @@
             } else {
                 clicks += 1;
                 bucket.clicks += 1;
-                const raw = String(row.name || 'click').slice(0, 40);
-                siteBump(actions, SITE_ACTION_LABELS[raw] || raw);
+                siteBump(actions, siteActionTitle(row));
             }
         });
         const dayKey = sitePeak(days);

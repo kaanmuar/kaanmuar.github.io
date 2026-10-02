@@ -312,7 +312,7 @@
       }
       window.addEventListener('resize', onViewport);
       showStep();
-      if (global.SiteAnalytics) global.SiteAnalytics.trackEvent('site_tour_start', cfg.name || 'Tour', 'start');
+      if (global.SiteAnalytics) global.SiteAnalytics.trackEvent('site_tour_start', cfg.name || 'Tour', cfg.name || 'Tour');
     },
     next() {
       if (!cfg) return;
