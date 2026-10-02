@@ -96,11 +96,12 @@ service cloud.firestore {
         && request.resource.data.site in ['cv', 'studio', 'lab']
         && (
           (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
-          || (request.resource.data.kind == 'export' && request.resource.data.name in ['export_cv', 'print_cv', 'lab_report'])
+          || (request.resource.data.kind == 'export' && request.resource.data.name in ['export_cv', 'print_cv', 'lab_report', 'studio_report'])
           || (request.resource.data.kind == 'run' && request.resource.data.name == 'lab_run')
           || (request.resource.data.kind == 'click' && request.resource.data.name in [
             'share_cv', 'open_simulator', 'open_qa_lab', 'open_contact_widget',
-            'submit_message', 'submit_rating', 'sim_run_sprint', 'sim_sprint_complete'
+            'submit_message', 'submit_rating', 'sim_run_sprint', 'sim_sprint_complete',
+            'site_tour_start', 'open_clip'
           ])
         )
         && request.resource.data.label is string

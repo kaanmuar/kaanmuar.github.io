@@ -44,6 +44,27 @@
         "author": { "@type": "Person", "name": "Carlos A. Muñoz Ardila", "url": "https://carlosandmunoz.com/" }
     }
     </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-J8GNF5380F', {
+            anonymize_ip: true,
+            send_page_view: true,
+            page_title: document.title,
+            page_path: '/media/qa-lab-running.html',
+            page_location: window.location.href
+        });
+    </script>
+    <script src="../js/site-analytics.js?v=20261002a"></script>
+    <script>
+        if (window.SiteAnalytics) {
+            SiteAnalytics.bind('lab');
+            SiteAnalytics.noteVisit();
+            SiteAnalytics.event('open_clip', 'QA Lab', 'qa-lab-running');
+        }
+    </script>
     <script src="../js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="../js/site-look.js"></script>
