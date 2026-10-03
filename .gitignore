@@ -13,4 +13,7 @@ selenium-results/
 wdio-results/
 appium-results/
 runner-results/
+k6-results/
+jmeter-results/
+gatling/target/
 .appium/

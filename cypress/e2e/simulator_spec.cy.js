@@ -48,4 +48,21 @@ describe('Sprint studio', () => {
     cy.get('#site-tour-title').should('have.text', 'Four agents');
     cy.get('#site-tour-close').click();
   });
+
+  it('renames columns on Linear and keeps PAY-241', () => {
+    cy.get('[data-board-view="linear"]').click();
+    cy.get('#view').should('have.class', 'board-linear');
+    cy.get('#view .col h3 span:first-child').then(($spans) => {
+      expect([...$spans].map((span) => span.textContent.trim())).to.deep.equal(['Todo', 'In Progress', 'In Review', 'In QA', 'Done']);
+    });
+    cy.get('#view').should('contain', 'PAY-241');
+    cy.get('.nav button[data-view="board"]').should('have.text', 'Linear');
+  });
+
+  it('shows only Backlog and CV-410', () => {
+    cy.get('[data-sprint="Backlog"]').click();
+    cy.get('#view .col h3 span:first-child').should('have.text', 'Backlog');
+    cy.get('[data-sprint="Backlog"]').should('have.class', 'on');
+    cy.get('#view').should('contain', 'CV-410').and('not.contain', 'PAY-241');
+  });
 });

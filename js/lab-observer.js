@@ -115,7 +115,7 @@
                 how: 'A separate check covers the same surface without repeating ' + row.id + '.'
             });
         });
-        if (!drafts.length && known.size && known.size < 66) {
+        if (!drafts.length && known.size && known.size < 77) {
             drafts.push({
                 title: 'Cover a catalog id this pass did not run',
                 where: 'The case list',

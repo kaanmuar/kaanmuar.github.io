@@ -273,3 +273,47 @@ MOB-05 QA lab header does not cover the heading
 MOB-06 Admin login and back control fit the phone
     [Tags]    MOB-06
     MOB-06    admin.html    ${TRUE}
+
+PERF-01 CV page answers inside the latency budget
+    [Tags]    PERF-01
+    PERF-01    index.html    ${FALSE}
+
+PERF-02 QA lab page answers inside the latency budget
+    [Tags]    PERF-02
+    PERF-02    qa-lab.html    ${FALSE}
+
+PERF-03 Studio page answers inside the latency budget
+    [Tags]    PERF-03
+    PERF-03    simulador.html    ${FALSE}
+
+PERF-04 Stylesheet and CV script answer inside the latency budget
+    [Tags]    PERF-04
+    PERF-04    index.html    ${FALSE}
+
+SMK-03 Clip pages name the video, poster, and duration
+    [Tags]    SMK-03
+    SMK-03    index.html    ${FALSE}
+
+SEC-09 Sitemap hreflang lists every language and omits admin
+    [Tags]    SEC-09
+    SEC-09    index.html    ${FALSE}
+
+FN-35 Every language shows its own summary title
+    [Tags]    FN-35
+    FN-35    index.html    ${FALSE}
+
+FN-36 Profile photo is a dialog and Escape closes it
+    [Tags]    FN-36
+    FN-36    index.html    ${FALSE}
+
+FN-37 A short or invalid note keeps Send disabled
+    [Tags]    FN-37
+    FN-37    index.html    ${FALSE}
+
+STU-08 Linear renames the columns and keeps the Sprint 24 story
+    [Tags]    STU-08
+    STU-08    simulador.html    ${FALSE}
+
+STU-09 Backlog hides Sprint 24 and shows CV-410
+    [Tags]    STU-09
+    STU-09    simulador.html    ${FALSE}

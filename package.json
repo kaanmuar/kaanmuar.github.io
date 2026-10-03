@@ -14,6 +14,9 @@
     "test:selenium": "mocha \"selenium/**/*.spec.js\" --timeout 120000 --exit --reporter spec",
     "test:wdio": "wdio run wdio/wdio.conf.js",
     "test:appium": "node scripts/run-appium.js",
+    "test:k6": "node scripts/run-k6.js",
+    "test:jmeter": "node scripts/run-jmeter.js",
+    "test:gatling": "node scripts/run-gatling.js",
     "lab:runners": "node scripts/native-runner.js"
   },
   "author": "Carlos A. Muñoz",
