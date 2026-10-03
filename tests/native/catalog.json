@@ -64,5 +64,16 @@
   {"id":"MOB-03","layer":"Mobile","title":"Studio topbar stacks without clipping Run","path":"simulador.html","phone":true},
   {"id":"MOB-04","layer":"Mobile","title":"Studio page scrolls instead of locking the board","path":"simulador.html","phone":true},
   {"id":"MOB-05","layer":"Mobile","title":"QA lab header does not cover the heading","path":"qa-lab.html","phone":true},
-  {"id":"MOB-06","layer":"Mobile","title":"Admin login and back control fit the phone","path":"admin.html","phone":true}
+  {"id":"MOB-06","layer":"Mobile","title":"Admin login and back control fit the phone","path":"admin.html","phone":true},
+  {"id":"PERF-01","layer":"Performance","title":"CV page answers inside the latency budget","path":"index.html","phone":false},
+  {"id":"PERF-02","layer":"Performance","title":"QA lab page answers inside the latency budget","path":"qa-lab.html","phone":false},
+  {"id":"PERF-03","layer":"Performance","title":"Studio page answers inside the latency budget","path":"simulador.html","phone":false},
+  {"id":"PERF-04","layer":"Performance","title":"Stylesheet and CV script answer inside the latency budget","path":"index.html","phone":false},
+  {"id":"SMK-03","layer":"Smoke","title":"Clip pages name the video, poster, and duration","path":"index.html","phone":false},
+  {"id":"SEC-09","layer":"Security","title":"Sitemap hreflang lists every language and omits admin","path":"index.html","phone":false},
+  {"id":"FN-35","layer":"Functional","title":"Every language shows its own summary title","path":"index.html","phone":false},
+  {"id":"FN-36","layer":"Functional","title":"Profile photo is a dialog and Escape closes it","path":"index.html","phone":false},
+  {"id":"FN-37","layer":"Functional","title":"A short or invalid note keeps Send disabled","path":"index.html","phone":false},
+  {"id":"STU-08","layer":"Studio","title":"Linear renames the columns and keeps the Sprint 24 story","path":"simulador.html","phone":false},
+  {"id":"STU-09","layer":"Studio","title":"Backlog hides Sprint 24 and shows CV-410","path":"simulador.html","phone":false}
 ]

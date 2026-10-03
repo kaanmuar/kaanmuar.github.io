@@ -80,4 +80,42 @@ test.describe('Security and SEO', () => {
     await expect(page.locator('a[href*="admin.html"]')).toHaveCount(1);
     await expect(page.locator('#admin-login-btn')).toHaveAttribute('href', 'admin.html');
   });
+
+  test('clip pages name the video, poster, and duration', async ({ request }) => {
+    const clips = [
+      ['media/qa-lab-running.html', 'QA Lab running', 'PT54S', 'media/qa-lab-running.mp4', 'media/qa-lab-running.jpg'],
+      ['media/qa-lab-tour.html', 'QA Lab tour', 'PT41S', 'media/qa-lab-tour.mp4', 'media/qa-lab-tour.jpg'],
+      ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M33S', 'media/sdlc-studio-running.mp4', 'media/sdlc-studio-running.jpg'],
+      ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT26S', 'media/sdlc-studio-tour.mp4', 'media/sdlc-studio-tour.jpg']
+    ];
+    const sitemap = await (await request.get('/sitemap.xml')).text();
+    for (const [page, title, duration, video, poster] of clips) {
+      const html = await (await request.get('/' + page)).text();
+      expect(html).toContain('<h1>' + title + '</h1>');
+      expect(html).toContain('href="https://carlosandmunoz.com/' + page + '"');
+      expect(html).toContain('src="' + video.split('/').pop() + '"');
+      expect(html).toContain('poster="' + poster.split('/').pop() + '"');
+      expect(html).toContain('"duration": "' + duration + '"');
+      expect(html).not.toContain('admin.html');
+      expect(sitemap).toContain('https://carlosandmunoz.com/' + page);
+      const film = await request.head('/' + video);
+      expect(film.status()).toBe(200);
+      expect(film.headers()['content-type'] || '').toContain('video/mp4');
+      const still = await request.head('/' + poster);
+      expect(still.status()).toBe(200);
+      expect(still.headers()['content-type'] || '').toContain('image/jpeg');
+    }
+  });
+
+  test('sitemap hreflang lists every language and omits admin', async ({ request }) => {
+    const xml = await (await request.get('/sitemap.xml')).text();
+    expect(xml).not.toContain('admin.html');
+    for (const loc of ['https://carlosandmunoz.com/', 'https://carlosandmunoz.com/simulador.html', 'https://carlosandmunoz.com/qa-lab.html']) {
+      for (const code of ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default']) {
+        expect(xml).toContain('hreflang="' + code + '"');
+      }
+      expect(xml).toContain('hreflang="es" href="' + loc + '?lang=es"');
+      expect(xml).toContain('hreflang="it" href="' + loc + '?lang=it"');
+    }
+  });
 });

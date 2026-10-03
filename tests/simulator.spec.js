@@ -56,4 +56,20 @@ test.describe('Sprint studio', () => {
     await expect(page.locator('#site-tour-title')).toHaveText('Four agents');
     await page.locator('#site-tour-close').click();
   });
+
+  test('Linear renames the columns and keeps PAY-241', async ({ page }) => {
+    await page.locator('[data-board-view="linear"]').click();
+    await expect(page.locator('#view')).toHaveClass(/board-linear/);
+    await expect(page.locator('#view .col h3 span:first-child')).toHaveText(['Todo', 'In Progress', 'In Review', 'In QA', 'Done']);
+    await expect(page.locator('#view')).toContainText('PAY-241');
+    await expect(page.locator('.nav button[data-view="board"]')).toHaveText('Linear');
+  });
+
+  test('Backlog hides Sprint 24 and shows CV-410', async ({ page }) => {
+    await page.locator('[data-sprint="Backlog"]').click();
+    await expect(page.locator('#view .col h3 span:first-child')).toHaveText(['Backlog']);
+    await expect(page.locator('[data-sprint="Backlog"]')).toHaveClass(/on/);
+    await expect(page.locator('#view')).toContainText('CV-410');
+    await expect(page.locator('#view')).not.toContainText('PAY-241');
+  });
 });

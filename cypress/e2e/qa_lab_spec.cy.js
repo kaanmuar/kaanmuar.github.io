@@ -3,6 +3,7 @@ describe('CV regression lab', () => {
     cy.visit('/qa-lab.html', {
       onBeforeLoad(win) {
         win.localStorage.setItem('theme', 'light');
+        win.localStorage.setItem('cv-preferred-lang', 'en');
         win.sessionStorage.setItem('hasSeenLabTour', 'true');
         win.sessionStorage.setItem('hasSeenStudioTour', 'true');
         win.sessionStorage.setItem('qa-lab-fw-asked', '1');
@@ -12,12 +13,14 @@ describe('CV regression lab', () => {
 
   it('lists cases and explains where, when, and how', () => {
     cy.contains('h1', 'The suite I run on this CV').should('be.visible');
-    cy.get('.case-row').should('have.length', 66);
+    cy.get('.case-row').should('have.length', 77);
     cy.contains('.case-id', 'MOB-01').should('exist');
     cy.contains('.case-id', 'FN-15').should('exist');
     cy.contains('.case-id', 'FN-22').should('exist');
     cy.contains('.case-id', 'SEC-08').should('exist');
     cy.contains('.case-id', 'STU-03').should('exist');
+    cy.contains('.case-id', 'PERF-01').should('exist');
+    cy.get('[data-filter="Performance"]').should('be.visible');
     cy.get('.src-link').first().should('have.attr', 'href').and('include', 'github.com/kaanmuar/kaanmuar.github.io/blob/main/');
     cy.contains('a', 'Suite repo').should('have.attr', 'href', 'https://github.com/kaanmuar/kaanmuar.github.io');
     cy.get('#case-detail').should('contain', 'Where').and('contain', 'When').and('contain', 'How');

@@ -100,6 +100,17 @@
     assert(res.ok, path + ' returned ' + res.status);
     return res.text();
   }
+  var PERF_MS = 1500;
+  async function withinBudget(path, marker) {
+    var t0 = performance.now();
+    var res = await fetch(path, { cache: 'no-store' });
+    var ms = Math.round(performance.now() - t0);
+    assert(res.ok, path + ' returned ' + res.status);
+    var body = await res.text();
+    assert(body.indexOf(marker) !== -1, path + ' missing expected text');
+    assert(ms < PERF_MS, path + ' took ' + ms + 'ms');
+    return path + ' ' + ms + 'ms';
+  }
   async function printedHrefs() {
     var hrefs = [];
     var original = global.print;
@@ -793,8 +804,155 @@
       assert(getComputedStyle(overlay).display !== 'none', 'overlay hidden');
       assert(overlay.getBoundingClientRect().width >= Math.min(global.innerWidth, 300), 'overlay does not span the phone');
       return 'login + back at ' + global.innerWidth + 'px';
+    },
+    'PERF-01': async function () {
+      return withinBudget('/', 'Carlos Muñoz');
+    },
+    'PERF-02': async function () {
+      return withinBudget('/qa-lab.html', 'The suite I run on this CV');
+    },
+    'PERF-03': async function () {
+      return withinBudget('/simulador.html', 'Run 4-agent sprint');
+    },
+    'PERF-04': async function () {
+      var css = await withinBudget('/style.css', 'tailwindcss');
+      var app = await withinBudget('/js/cv-app.js', 'initializeApp');
+      return css + ' · ' + app;
+    },
+    'SMK-03': async function () {
+      var clips = [
+        ['media/qa-lab-running.html', 'QA Lab running', 'PT54S', 'media/qa-lab-running.mp4', 'media/qa-lab-running.jpg'],
+        ['media/qa-lab-tour.html', 'QA Lab tour', 'PT41S', 'media/qa-lab-tour.mp4', 'media/qa-lab-tour.jpg'],
+        ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M33S', 'media/sdlc-studio-running.mp4', 'media/sdlc-studio-running.jpg'],
+        ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT26S', 'media/sdlc-studio-tour.mp4', 'media/sdlc-studio-tour.jpg']
+      ];
+      var sitemap = await textOf('sitemap.xml');
+      for (var i = 0; i < clips.length; i++) {
+        var html = await textOf(clips[i][0]);
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        assert((doc.querySelector('h1') || {}).textContent === clips[i][1], clips[i][0] + ' heading');
+        assert((doc.querySelector('link[rel="canonical"]') || {}).getAttribute('href') === 'https://carlosandmunoz.com/' + clips[i][0], clips[i][0] + ' canonical');
+        assert((doc.querySelector('video source') || {}).getAttribute('src') === clips[i][3].split('/').pop(), clips[i][0] + ' video');
+        assert((doc.querySelector('video') || {}).getAttribute('poster') === clips[i][4].split('/').pop(), clips[i][0] + ' poster');
+        assert(html.indexOf('"duration": "' + clips[i][2] + '"') !== -1, clips[i][0] + ' duration');
+        assert(html.indexOf('admin.html') === -1, clips[i][0] + ' links admin');
+        assert(sitemap.indexOf('https://carlosandmunoz.com/' + clips[i][0]) !== -1, 'sitemap missing ' + clips[i][0]);
+        await headOk(clips[i][3], 'video/mp4');
+        await headOk(clips[i][4], 'image/jpeg');
+      }
+      return clips.length + ' clips with video, poster, and duration';
+    },
+    'SEC-09': async function () {
+      var xml = await textOf('sitemap.xml');
+      var doc = new DOMParser().parseFromString(xml, 'text/xml');
+      var want = ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default'];
+      var pages = ['https://carlosandmunoz.com/', 'https://carlosandmunoz.com/simulador.html', 'https://carlosandmunoz.com/qa-lab.html'];
+      var urls = [].slice.call(doc.getElementsByTagName('url'));
+      pages.forEach(function (loc) {
+        var url = urls.filter(function (node) { return (node.getElementsByTagName('loc')[0] || {}).textContent === loc; })[0];
+        assert(url, 'sitemap missing ' + loc);
+        var links = [].slice.call(url.getElementsByTagNameNS('http://www.w3.org/1999/xhtml', 'link'));
+        var langs = links.map(function (link) { return link.getAttribute('hreflang'); }).sort();
+        assert(langs.join(',') === want.slice().sort().join(','), loc + ' hreflang ' + langs.join(','));
+        want.forEach(function (code) {
+          if (code === 'x-default' || code === 'en') return;
+          var link = links.filter(function (item) { return item.getAttribute('hreflang') === code; })[0];
+          assert(link && link.getAttribute('href') === loc + '?lang=' + code, loc + ' ' + code);
+        });
+      });
+      assert(xml.indexOf('admin.html') === -1, 'admin leaked into sitemap');
+      return '7 hreflang codes on 3 pages';
+    },
+    'FN-35': async function () {
+      var original = currentLang();
+      var seen = [];
+      try {
+        for (var i = 0; i < LANGS.length; i++) seen.push(await chooseLang(LANGS[i]));
+        return seen.join(' · ');
+      } finally {
+        if (currentLang() !== original) await chooseLang(original);
+      }
+    },
+    'FN-36': async function () {
+      var photo = document.getElementById('profile-photo');
+      var modal = document.getElementById('image-modal');
+      photo.click();
+      assert(modal.classList.contains('visible'), 'modal did not open');
+      assert(modal.getAttribute('role') === 'dialog' && modal.getAttribute('aria-modal') === 'true', 'modal is not a dialog');
+      var focused = Date.now();
+      while (document.activeElement !== document.querySelector('.modal-close') && Date.now() - focused < 500) await wait(20);
+      assert(document.activeElement === document.querySelector('.modal-close'), 'close control did not take focus');
+      modal.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      assert(!modal.classList.contains('visible'), 'Escape did not close the photo');
+      return 'dialog, focus, Escape';
+    },
+    'FN-37': async function () {
+      document.getElementById('contact-widget-fab').click();
+      await wait(40);
+      var send = document.getElementById('send-message-btn');
+      ['sender-name', 'sender-email', 'message-topic', 'sender-message'].forEach(function (id) {
+        assert(document.querySelector('label[for="' + id + '"]'), 'label missing for ' + id);
+      });
+      fillField('sender-name', 'Al');
+      fillField('sender-email', 'not-an-email');
+      fillField('message-topic', 'inquiry');
+      fillField('sender-message', '123456789');
+      assert(send.disabled, 'send enabled before a valid note');
+      var email = document.getElementById('sender-email');
+      email.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+      await wait(20);
+      assert(email.classList.contains('invalid') && email.getAttribute('aria-invalid') === 'true', 'bad email was not marked');
+      fillField('sender-email', 'ada@example.com');
+      fillField('sender-message', '1234567890');
+      assert(!send.disabled, 'a complete note left send disabled');
+      document.getElementById('widget-close-btn').click();
+      return '9 characters blocked; 10 with a real email enabled send';
+    },
+    'STU-08': async function () {
+      var chip = document.querySelector('[data-board-view="linear"]');
+      assert(chip, 'Linear chip missing');
+      chip.click();
+      await wait(80);
+      var host = document.getElementById('view');
+      assert(host.classList.contains('board-linear'), 'host is not board-linear');
+      var names = columnNames(host);
+      assert(names.join('|') === 'Todo|In Progress|In Review|In QA|Done', 'Linear columns: ' + names.join('|'));
+      assert(host.textContent.indexOf('PAY-241') !== -1, 'PAY-241 left the Linear board');
+      assert(document.querySelector('.nav button[data-view="board"]').textContent === 'Linear', 'nav stayed on the previous board');
+      return 'Linear columns and PAY-241';
+    },
+    'STU-09': async function () {
+      var chip = document.querySelector('[data-sprint="Backlog"]');
+      assert(chip, 'Backlog chip missing');
+      chip.click();
+      await wait(80);
+      var host = document.getElementById('view');
+      var names = columnNames(host);
+      assert(names.join('|') === 'Backlog', 'columns: ' + names.join('|'));
+      assert(document.querySelector('[data-sprint="Backlog"]').classList.contains('on'), 'Backlog chip is not on');
+      assert(host.textContent.indexOf('CV-410') !== -1, 'CV-410 missing from Backlog');
+      assert(host.textContent.indexOf('PAY-241') === -1, 'Sprint 24 story stayed on Backlog');
+      return 'Backlog only · CV-410';
     }
   };
+
+  function fillField(id, value) {
+    var el = document.getElementById(id);
+    assert(el, id + ' missing');
+    el.value = value;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function columnNames(host) {
+    return [].slice.call(host.querySelectorAll('.col h3 span:first-child')).map(function (span) { return span.textContent.trim(); });
+  }
+
+  async function headOk(path, type) {
+    var res = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+    assert(res.ok, path + ' returned ' + res.status);
+    var got = res.headers.get('content-type') || '';
+    assert(got.indexOf(type) === 0, path + ' type ' + got);
+  }
 
   global.CatalogChecks = checks;
 })(window);
