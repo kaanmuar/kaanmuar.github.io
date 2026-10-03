@@ -61,4 +61,42 @@ describe('Security and SEO', () => {
     cy.get('a[href*="admin.html"]').should('have.length', 1);
     cy.get('#admin-login-btn').should('have.attr', 'href', 'admin.html');
   });
+
+  it('names each clip video, poster, and duration', () => {
+    const clips = [
+      ['media/qa-lab-running.html', 'QA Lab running', 'PT54S', 'qa-lab-running.mp4', 'qa-lab-running.jpg'],
+      ['media/qa-lab-tour.html', 'QA Lab tour', 'PT41S', 'qa-lab-tour.mp4', 'qa-lab-tour.jpg'],
+      ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M33S', 'sdlc-studio-running.mp4', 'sdlc-studio-running.jpg'],
+      ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT26S', 'sdlc-studio-tour.mp4', 'sdlc-studio-tour.jpg']
+    ];
+    cy.request('/sitemap.xml').its('body').then((sitemap) => {
+      clips.forEach(([page, title, duration, video, poster]) => {
+        expect(sitemap).to.include('https://carlosandmunoz.com/' + page);
+        cy.request('/' + page).its('body').then((html) => {
+          expect(html).to.include('<h1>' + title + '</h1>');
+          expect(html).to.include('"duration": "' + duration + '"');
+          expect(html).to.include('src="' + video + '"');
+          expect(html).to.include('poster="' + poster + '"');
+          expect(html).to.not.include('admin.html');
+        });
+      });
+    });
+    clips.forEach(([, , , video, poster]) => {
+      cy.request({ url: '/media/' + video, method: 'HEAD' }).its('headers').its('content-type').should('include', 'video/mp4');
+      cy.request({ url: '/media/' + poster, method: 'HEAD' }).its('headers').its('content-type').should('include', 'image/jpeg');
+    });
+  });
+
+  it('lists every hreflang and omits admin from the sitemap', () => {
+    cy.request('/sitemap.xml').its('body').then((xml) => {
+      expect(xml).to.not.include('admin.html');
+      ['https://carlosandmunoz.com/', 'https://carlosandmunoz.com/simulador.html', 'https://carlosandmunoz.com/qa-lab.html'].forEach((loc) => {
+        ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default'].forEach((code) => {
+          expect(xml).to.include('hreflang="' + code + '"');
+        });
+        expect(xml).to.include('hreflang="es" href="' + loc + '?lang=es"');
+        expect(xml).to.include('hreflang="it" href="' + loc + '?lang=it"');
+      });
+    });
+  });
 });

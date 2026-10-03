@@ -146,6 +146,62 @@ test.describe('CV desktop', () => {
     await page.locator('#tour-close-btn').click();
     await expect(page.locator('#tour-tooltip')).not.toBeVisible();
   });
+
+  test('every language shows its own summary title', async ({ page }) => {
+    const cv = new CVPage(page);
+    const titles = [
+      ['en', /Professional Summary/i],
+      ['es', /Resumen Profesional/i],
+      ['pt', /Resumo Profissional/i],
+      ['de', /Berufliches Profil/i],
+      ['fr', /Résumé Professionnel/i],
+      ['it', /Riepilogo Professionale/i]
+    ];
+    for (const [code, pattern] of titles) {
+      await cv.selectLanguage(code);
+      await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(pattern);
+    }
+    await cv.selectLanguage('en');
+  });
+
+  test('dark mode stores the theme and the theme color', async ({ page }) => {
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0d6e76');
+    await page.locator('#theme-toggle').click();
+    expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('dark');
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#10161d');
+    await page.locator('#theme-toggle').click();
+    expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('light');
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0d6e76');
+  });
+
+  test('profile photo dialog closes on Escape', async ({ page }) => {
+    await page.locator('#profile-photo').click();
+    const modal = page.locator('#image-modal');
+    await expect(modal).toHaveAttribute('role', 'dialog');
+    await expect(modal).toHaveAttribute('aria-modal', 'true');
+    await expect(page.locator('.modal-close')).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(modal).not.toHaveClass(/visible/);
+  });
+
+  test('a short or invalid note keeps Send disabled', async ({ page }) => {
+    await page.locator('#contact-widget-fab').click();
+    for (const id of ['sender-name', 'sender-email', 'message-topic', 'sender-message']) {
+      await expect(page.locator('label[for="' + id + '"]')).toBeVisible();
+    }
+    await page.locator('#sender-name').fill('Al');
+    await page.locator('#sender-email').fill('not-an-email');
+    await page.locator('#message-topic').selectOption('inquiry');
+    await page.locator('#sender-message').fill('123456789');
+    await expect(page.locator('#send-message-btn')).toBeDisabled();
+    await page.locator('#sender-email').blur();
+    await expect(page.locator('#sender-email')).toHaveClass(/invalid/);
+    await expect(page.locator('#sender-email')).toHaveAttribute('aria-invalid', 'true');
+    await page.locator('#sender-email').fill('ada@example.com');
+    await page.locator('#sender-message').fill('1234567890');
+    await expect(page.locator('#send-message-btn')).toBeEnabled();
+    await page.locator('#widget-close-btn').click();
+  });
 });
 
 test.describe('CV mobile', () => {

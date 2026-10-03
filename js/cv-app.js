@@ -31,8 +31,8 @@
             cert_label_pm: 'Project Management:',
             cert_label_qa: 'Quality Assurance:',
             cert_label_security: 'Information Security:',
-            footer_lab: 'QA regression lab — run the Playwright, Cypress, and Robot suite in the browser',
-            footer_studio: 'SDLC studio — try the Jira, Xray, and test-automation sprint',
+            footer_lab: 'QA regression lab — Playwright, Cypress, Robot, Selenium, k6, JMeter, and Gatling',
+            footer_studio: 'SDLC studio — Jira, Linear, Backlog, Xray, and the automation sprint',
             footer_capabilities: 'Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, eight competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.',
             footer_pdf: 'Download PDF',
             roles: [
@@ -61,8 +61,8 @@
             cert_label_pm: 'Gestión de proyectos:',
             cert_label_qa: 'Aseguramiento de calidad:',
             cert_label_security: 'Seguridad de la información:',
-            footer_lab: 'Laboratorio de regresión QA — ejecuta Playwright, Cypress y Robot en el navegador',
-            footer_studio: 'Estudio SDLC — prueba el sprint de Jira, Xray y automatización',
+            footer_lab: 'Laboratorio de regresión QA — Playwright, Cypress, Robot, Selenium, k6, JMeter y Gatling',
+            footer_studio: 'Estudio SDLC — Jira, Linear, Backlog, Xray y el sprint de automatización',
             footer_capabilities: 'Se lee en inglés, español, portugués, alemán, francés e italiano. Incluye un recorrido guiado, temas claro y oscuro, ocho filtros de competencias, un toolkit, una línea de tiempo, impresión y descargas en PDF, JPG, Word, JSON y texto plano.',
             footer_pdf: 'Descargar PDF',
             roles: [
@@ -91,8 +91,8 @@
             cert_label_pm: 'Gestão de projetos:',
             cert_label_qa: 'Garantia de qualidade:',
             cert_label_security: 'Segurança da informação:',
-            footer_lab: 'Laboratório de regressão de QA — execute Playwright, Cypress e Robot no navegador',
-            footer_studio: 'Estúdio SDLC — experimente o sprint de Jira, Xray e automação de testes',
+            footer_lab: 'Laboratório de regressão de QA — Playwright, Cypress, Robot, Selenium, k6, JMeter e Gatling',
+            footer_studio: 'Estúdio SDLC — Jira, Linear, Backlog, Xray e o sprint de automação',
             footer_capabilities: 'Leitura em inglês, espanhol, português, alemão, francês e italiano. Inclui um tour guiado, temas claro e escuro, oito filtros de competências, um toolkit, uma linha do tempo, impressão e downloads em PDF, JPG, Word, JSON e texto simples.',
             footer_pdf: 'Baixar PDF',
             roles: [
@@ -121,8 +121,8 @@
             cert_label_pm: 'Projektmanagement:',
             cert_label_qa: 'Qualitätssicherung:',
             cert_label_security: 'Informationssicherheit:',
-            footer_lab: 'QA-Regressionslabor — Playwright, Cypress und Robot im Browser ausführen',
-            footer_studio: 'SDLC-Studio — Jira-, Xray- und Testautomatisierungs-Sprint ausprobieren',
+            footer_lab: 'QA-Regressionslabor — Playwright, Cypress, Robot, Selenium, k6, JMeter und Gatling',
+            footer_studio: 'SDLC-Studio — Jira, Linear, Backlog, Xray und der Automatisierungs-Sprint',
             footer_capabilities: 'Lesbar auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Enthält eine Führung, helles und dunkles Design, acht Kompetenzfilter, ein Toolkit, eine Zeitachse, Druck und Downloads als PDF, JPG, Word, JSON und Klartext.',
             footer_pdf: 'PDF herunterladen',
             roles: [
@@ -151,8 +151,8 @@
             cert_label_pm: 'Gestion de projet :',
             cert_label_qa: 'Assurance qualité :',
             cert_label_security: 'Sécurité de l\'information :',
-            footer_lab: 'Laboratoire de régression QA — lancez Playwright, Cypress et Robot dans le navigateur',
-            footer_studio: 'Studio SDLC — essayez le sprint Jira, Xray et automatisation de tests',
+            footer_lab: 'Laboratoire de régression QA — Playwright, Cypress, Robot, Selenium, k6, JMeter et Gatling',
+            footer_studio: 'Studio SDLC — Jira, Linear, Backlog, Xray et le sprint d’automatisation',
             footer_capabilities: 'Lisible en anglais, espagnol, portugais, allemand, français et italien. Comprend une visite guidée, les thèmes clair et sombre, huit filtres de compétences, une boîte à outils, une chronologie, l\'impression et des téléchargements PDF, JPG, Word, JSON et texte brut.',
             footer_pdf: 'Télécharger le PDF',
             roles: [
@@ -181,8 +181,8 @@
             cert_label_pm: 'Gestione dei progetti:',
             cert_label_qa: 'Assicurazione qualità:',
             cert_label_security: 'Sicurezza delle informazioni:',
-            footer_lab: 'Laboratorio di regressione QA — esegui Playwright, Cypress e Robot nel browser',
-            footer_studio: 'Studio SDLC — prova lo sprint Jira, Xray e automazione dei test',
+            footer_lab: 'Laboratorio di regressione QA — Playwright, Cypress, Robot, Selenium, k6, JMeter e Gatling',
+            footer_studio: 'Studio SDLC — Jira, Linear, Backlog, Xray e lo sprint di automazione',
             footer_capabilities: 'Leggibile in inglese, spagnolo, portoghese, tedesco, francese e italiano. Include un tour guidato, temi chiaro e scuro, otto filtri delle competenze, un toolkit, una linea del tempo, stampa e download in PDF, JPG, Word, JSON e testo semplice.',
             footer_pdf: 'Scarica il PDF',
             roles: [
@@ -2195,8 +2195,22 @@
 
             _openModal() {
                 this.DOMElements.modalImage.src = this.DOMElements.profilePhoto.src;
-                this.DOMElements.imageModal.classList.add('visible');
-                this.DOMElements.modalClose.focus();
+                const modal = this.DOMElements.imageModal;
+                const close = this.DOMElements.modalClose;
+                modal.classList.add('visible');
+                let tries = 0;
+                const focusClose = () => {
+                    if (modal.classList.contains('visible')) close.focus();
+                };
+                focusClose();
+                const timer = setInterval(() => {
+                    tries += 1;
+                    if (document.activeElement === close || !modal.classList.contains('visible') || tries > 10) {
+                        clearInterval(timer);
+                        return;
+                    }
+                    focusClose();
+                }, 40);
                 this._trackEvent('view_photo', 'Interaction', 'Profile Photo Modal');
             },
 
@@ -3639,14 +3653,14 @@
                 const fields = feedback.fields || {};
                 if (testimonials.title) keys.testimonials_title = clean(testimonials.title, 80);
                 if (messageForm.tab) keys.widget_tab_message = clean(messageForm.tab, 40);
-                if (messageForm.lead) keys.widget_message_lead = clean(messageForm.lead, 180);
+                if (messageForm.lead && clean(messageForm.lead, 180) !== 'A note about a role, a project, or a question. I read every one.') keys.widget_message_lead = clean(messageForm.lead, 180);
                 if (messageForm.topic) keys.form_label_topic = clean(messageForm.topic, 40);
                 if (messageForm.body) keys.form_label_message = clean(messageForm.body, 40);
                 if (messageForm.attachment) keys.form_label_attachment = clean(messageForm.attachment, 60);
                 if (messageForm.attach) keys.form_button_attach = clean(messageForm.attach, 40);
                 if (messageForm.send) keys.form_button_send = clean(messageForm.send, 40);
                 if (ratingForm.tab) keys.widget_tab_rate = clean(ratingForm.tab, 40);
-                if (ratingForm.lead) keys.widget_rating_lead = clean(ratingForm.lead, 180);
+                if (ratingForm.lead && clean(ratingForm.lead, 180) !== 'Tap a star, then leave a line if you want. Approved notes appear in Testimonials.') keys.widget_rating_lead = clean(ratingForm.lead, 180);
                 if (ratingForm.label) keys.form_label_rating = clean(ratingForm.label, 40);
                 if (ratingForm.comments) keys.form_label_comments = clean(ratingForm.comments, 60);
                 if (ratingForm.submit) keys.form_button_submit_rating = clean(ratingForm.submit, 40);

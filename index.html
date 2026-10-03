@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Carlos A. Muñoz Ardila">
     <meta name="description" content="Carlos A. Muñoz builds a full QA path for companies that need a contractor, freelancer, advisor, or mentor. Senior QA architect with over 18 years, plus a free QA lab and SDLC studio.">
-    <meta name="keywords" content="Carlos Muñoz, IT Project Management, QA & Test Automation, Team Leadership, CI/CD, DevOps Strategy, Cloud Platforms, AWS, Azure DevOps, GCP, Stakeholder Relations, Strategic Business Acumen, Project Manager, QA Architect, freelance QA, QA contractor, QA advisor, QA mentor, QA path, Selenium, Cypress, Playwright, Robot Framework, Jira, Xray, Python, Java, JavaScript, ISTQB, CISA, CISSP, CSPM, SDLC studio, QA regression lab, Interactive CV, Resume, Medellin">
+    <meta name="keywords" content="Carlos Muñoz, IT Project Management, QA & Test Automation, Team Leadership, CI/CD, DevOps Strategy, Cloud Platforms, AWS, Azure DevOps, GCP, Stakeholder Relations, Strategic Business Acumen, Project Manager, QA Architect, freelance QA, QA contractor, QA advisor, QA mentor, QA path, Selenium, Cypress, Playwright, Robot Framework, k6, JMeter, Gatling, Jira, Xray, Python, Java, JavaScript, ISTQB, CISA, CISSP, CSPM, SDLC studio, QA regression lab, Interactive CV, Resume, Medellin">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -77,7 +77,7 @@
     ================================================================== -->
     <!-- Compiled Tailwind CSS (see `npm run build:css`) -->
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="css/cv.css?v=20260928h">
+    <link rel="stylesheet" href="css/cv.css?v=20261003">
     <link rel="stylesheet" href="css/site-look.css">
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
@@ -228,13 +228,14 @@
                     "url": "https://carlosandmunoz.com/simulador.html",
                     "applicationCategory": "DeveloperApplication",
                     "operatingSystem": "Web",
-                    "description": "Free in-browser four-agent SDLC studio. Ticket Steward rewrites Jira stories, Test Designer writes Gherkin and Xray cases, Automation Engineer generates Playwright, Cypress, and Robot scripts, and Release Verifier checks the Definition of Done.",
+                    "description": "Free in-browser four-agent SDLC studio. Ticket Steward rewrites the story on Jira, Azure DevOps, Monday, Trello, Linear, Asana, or MS Project, or on Backlog. Test Designer writes Gherkin and Xray cases, Automation Engineer generates Playwright, Cypress, and Robot scripts, and Release Verifier checks the Definition of Done.",
                     "featureList": [
-                        "Ticket Steward rewrites Jira stories",
+                        "Ticket Steward rewrites the story on the board you pick",
+                        "Board chips for Jira, Azure DevOps, Monday, Trello, Linear, Asana, and MS Project, plus a Backlog sprint",
                         "Test Designer writes Gherkin and Xray cases",
                         "Automation Engineer generates Playwright, Cypress, and Robot scripts",
                         "Release Verifier checks the Definition of Done and sprint sign-off",
-                        "Jira board, test design, automation lab, sprint verification, and sprint report",
+                        "Board, test design, automation lab, sprint verification, and sprint report",
                         "Reset and rerun the sprint",
                         "Guided tour",
                         "Light and dark theme",
@@ -252,10 +253,11 @@
                     "url": "https://carlosandmunoz.com/qa-lab.html",
                     "applicationCategory": "DeveloperApplication",
                     "operatingSystem": "Web",
-                    "description": "Free in-browser QA regression lab. Run the Playwright, Cypress, and Robot catalog against this CV, filter by smoke, functional, security, accessibility, admin, studio, or mobile, watch each check or run it in the background, then open the dashboard or download the text report.",
+                    "description": "Free in-browser QA regression lab. Run the Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium catalog against this CV, filter by smoke, functional, security, accessibility, admin, studio, mobile, or performance, watch each check or run it in the background. k6, JMeter, and Gatling load the same pages on a local server. Then open the dashboard or download the text report.",
                     "featureList": [
-                        "Playwright, Cypress, and Robot catalog against this CV",
-                        "Filters for smoke, functional, security, accessibility, admin, studio, and mobile",
+                        "Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium catalog against this CV",
+                        "k6, JMeter, and Gatling load the same pages on a local server",
+                        "Filters for smoke, functional, security, accessibility, admin, studio, mobile, and performance",
                         "Watch the run or execute in the background",
                         "Adjustable pace",
                         "Results dashboard",
@@ -581,8 +583,8 @@
                 <!-- Footer -->
                 <footer class="cv-footer no-print">
                     <nav class="cv-footer-tools" aria-label="Live tools">
-                        <a href="qa-lab.html" data-translate-key="footer_lab">QA regression lab — run the Playwright, Cypress, and Robot suite in the browser</a>
-                        <a href="simulador.html" data-translate-key="footer_studio">SDLC studio — try the Jira, Xray, and test-automation sprint</a>
+                        <a href="qa-lab.html" data-translate-key="footer_lab">QA regression lab — Playwright, Cypress, Robot, Selenium, k6, JMeter, and Gatling</a>
+                        <a href="simulador.html" data-translate-key="footer_studio">SDLC studio — Jira, Linear, Backlog, Xray, and the automation sprint</a>
                     </nav>
                     <p class="cv-capabilities" data-translate-key="footer_capabilities">Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, eight competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.</p>
                     <div class="flex justify-center items-center gap-2">
@@ -624,7 +626,7 @@
 
     <div class="widget-body">
         <div id="message-pane" class="widget-form-pane active" role="tabpanel" aria-labelledby="message-tab">
-            <p class="widget-lead" data-translate-key="widget_message_lead">A note about a role, a project, or a question. I read every one.</p>
+            <p class="widget-lead" data-translate-key="widget_message_lead">A note about a role, a project, or a question. Name, a real email, a topic, and at least 10 characters turn Send on. I read every one.</p>
             <form id="message-form" novalidate>
                 <div class="form-fields">
                 <div class="form-group">
@@ -675,7 +677,7 @@
         </div>
 
         <div id="rating-pane" class="widget-form-pane" role="tabpanel" aria-labelledby="rating-tab">
-            <p class="widget-lead" data-translate-key="widget_rating_lead">Tap a star, then leave a line if you want. Approved notes appear in Testimonials.</p>
+            <p class="widget-lead" data-translate-key="widget_rating_lead">Five stars set the rating. Leave a line if you want. Approved notes appear in Testimonials.</p>
             <form id="rating-form" novalidate>
                 <div class="form-group">
                     <label data-translate-key="form_label_rating">Overall Rating</label>
@@ -752,7 +754,7 @@
 <!-- =================================================================
 |                         APPLICATION JAVASCRIPT                      |
 ================================================================== -->
-<script src="js/cv-data.js?v=20260928"></script>
-<script type="module" src="js/cv-app.js?v=20260928e"></script>
+<script src="js/cv-data.js?v=20261003"></script>
+<script type="module" src="js/cv-app.js?v=20261003b"></script>
 </body>
 </html>

@@ -12,6 +12,19 @@
     return res.text();
   }
 
+  const PERF_MS = 1500;
+
+  async function withinBudget(path, marker) {
+    const t0 = performance.now();
+    const res = await fetch(path, { cache: 'no-store' });
+    const ms = Math.round(performance.now() - t0);
+    assert(res.ok, path + ' returned HTTP ' + res.status);
+    const body = await res.text();
+    assert(body.includes(marker), path + ' missing expected text');
+    assert(ms < PERF_MS, path + ' took ' + ms + 'ms');
+    return path + ' ' + ms + 'ms';
+  }
+
   function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -1419,6 +1432,226 @@
         assert(html.includes('id="opt-graphs" checked'), 'graphs are not on by default');
         return 'lab report options';
       }
+    },
+    {
+      id: 'PERF-01', layer: 'Performance', fw: ['k6', 'JMeter', 'Gatling'],
+      title: 'CV page answers inside the latency budget',
+      where: '/ , k6/load.js , jmeter/load.jmx , gatling/src/test/java/CvLoad.java',
+      when: 'One request in the lab. k6, JMeter, and Gatling each repeat it with 8 virtual users for 20 seconds.',
+      how: 'GET / returns 200, includes Carlos Muñoz, and finishes under 1500 ms. Each load tool fails when any request fails, checks drop below 99%, or p95 exceeds 2500 ms.',
+      async run() {
+        return withinBudget('/', 'Carlos Muñoz');
+      }
+    },
+    {
+      id: 'PERF-02', layer: 'Performance', fw: ['k6', 'JMeter', 'Gatling'],
+      title: 'QA lab page answers inside the latency budget',
+      where: '/qa-lab.html , k6/load.js , jmeter/load.jmx , gatling/src/test/java/CvLoad.java',
+      when: 'One request in the lab. k6, JMeter, and Gatling each repeat it with 8 virtual users for 20 seconds.',
+      how: 'GET /qa-lab.html returns 200, includes the suite heading, and finishes under 1500 ms. Each load tool fails when any request fails, checks drop below 99%, or p95 exceeds 2500 ms.',
+      async run() {
+        return withinBudget('/qa-lab.html', 'The suite I run on this CV');
+      }
+    },
+    {
+      id: 'PERF-03', layer: 'Performance', fw: ['k6', 'JMeter', 'Gatling'],
+      title: 'Studio page answers inside the latency budget',
+      where: '/simulador.html , k6/load.js , jmeter/load.jmx , gatling/src/test/java/CvLoad.java',
+      when: 'One request in the lab. k6, JMeter, and Gatling each repeat it with 8 virtual users for 20 seconds.',
+      how: 'GET /simulador.html returns 200, includes the sprint control, and finishes under 1500 ms. Each load tool fails when any request fails, checks drop below 99%, or p95 exceeds 2500 ms.',
+      async run() {
+        return withinBudget('/simulador.html', 'Run 4-agent sprint');
+      }
+    },
+    {
+      id: 'PERF-04', layer: 'Performance', fw: ['k6', 'JMeter', 'Gatling'],
+      title: 'Stylesheet and CV script answer inside the latency budget',
+      where: '/style.css , /js/cv-app.js , k6/load.js , jmeter/load.jmx , gatling/src/test/java/CvLoad.java',
+      when: 'One request each in the lab. k6, JMeter, and Gatling each repeat both with 8 virtual users for 20 seconds.',
+      how: 'Each asset returns 200 with its expected text and finishes under 1500 ms. Each load tool fails when any request fails, checks drop below 99%, or p95 exceeds 2500 ms.',
+      async run() {
+        const css = await withinBudget('/style.css', 'tailwindcss');
+        const app = await withinBudget('/js/cv-app.js', 'initializeApp');
+        return css + ' · ' + app;
+      }
+    },
+    {
+      id: 'SMK-03', layer: 'Smoke', fw: ['Playwright', 'Cypress'],
+      title: 'Clip pages name the video, poster, and duration',
+      where: 'media/qa-lab-running.html, qa-lab-tour.html, sdlc-studio-running.html, sdlc-studio-tour.html',
+      when: 'Each clip page, its mp4, and its jpg are fetched.',
+      how: 'Heading, canonical, video source, poster, and VideoObject duration match that clip. Sitemap lists the page. The mp4 is video/mp4 and the jpg is image/jpeg.',
+      async run() {
+        const clips = [
+          ['media/qa-lab-running.html', 'QA Lab running', 'PT54S', 'media/qa-lab-running.mp4', 'media/qa-lab-running.jpg'],
+          ['media/qa-lab-tour.html', 'QA Lab tour', 'PT41S', 'media/qa-lab-tour.mp4', 'media/qa-lab-tour.jpg'],
+          ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M33S', 'media/sdlc-studio-running.mp4', 'media/sdlc-studio-running.jpg'],
+          ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT26S', 'media/sdlc-studio-tour.mp4', 'media/sdlc-studio-tour.jpg']
+        ];
+        const sitemap = await fetchText('sitemap.xml');
+        for (const clip of clips) {
+          const html = await fetchText(clip[0]);
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          assert(doc.querySelector('h1')?.textContent === clip[1], clip[0] + ' heading');
+          assert(doc.querySelector('link[rel="canonical"]')?.getAttribute('href') === 'https://carlosandmunoz.com/' + clip[0], clip[0] + ' canonical');
+          assert(doc.querySelector('video source')?.getAttribute('src') === clip[3].split('/').pop(), clip[0] + ' video');
+          assert(doc.querySelector('video')?.getAttribute('poster') === clip[4].split('/').pop(), clip[0] + ' poster');
+          assert(html.includes('"duration": "' + clip[2] + '"'), clip[0] + ' duration');
+          assert(!html.includes('admin.html'), clip[0] + ' links admin');
+          assert(sitemap.includes('https://carlosandmunoz.com/' + clip[0]), 'sitemap missing ' + clip[0]);
+          for (const [path, type] of [[clip[3], 'video/mp4'], [clip[4], 'image/jpeg']]) {
+            const res = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+            assert(res.ok, path + ' returned HTTP ' + res.status);
+            assert((res.headers.get('content-type') || '').startsWith(type), path + ' type');
+          }
+        }
+        return clips.length + ' clips with video, poster, and duration';
+      }
+    },
+    {
+      id: 'SEC-09', layer: 'Security', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Sitemap hreflang lists every language and omits admin',
+      where: 'sitemap.xml xhtml:link',
+      when: 'The CV, studio, and lab URL entries are parsed.',
+      how: 'Each of those three URLs has en, es, pt, de, fr, it, and x-default. es, pt, de, fr, and it point at ?lang=. admin.html is absent.',
+      async run() {
+        const xml = await fetchText('sitemap.xml');
+        const doc = new DOMParser().parseFromString(xml, 'text/xml');
+        const want = ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default'];
+        const pages = ['https://carlosandmunoz.com/', 'https://carlosandmunoz.com/simulador.html', 'https://carlosandmunoz.com/qa-lab.html'];
+        const urls = [...doc.getElementsByTagName('url')];
+        pages.forEach((loc) => {
+          const url = urls.find((node) => node.getElementsByTagName('loc')[0]?.textContent === loc);
+          assert(url, 'sitemap missing ' + loc);
+          const links = [...url.getElementsByTagNameNS('http://www.w3.org/1999/xhtml', 'link')];
+          const langs = links.map((link) => link.getAttribute('hreflang')).sort();
+          assert(langs.join(',') === [...want].sort().join(','), loc + ' hreflang ' + langs.join(','));
+          want.forEach((code) => {
+            if (code === 'x-default' || code === 'en') return;
+            const link = links.find((item) => item.getAttribute('hreflang') === code);
+            assert(link && link.getAttribute('href') === loc + '?lang=' + code, loc + ' ' + code);
+          });
+        });
+        assert(!xml.includes('admin.html'), 'admin leaked into sitemap');
+        return '7 hreflang codes on 3 pages';
+      }
+    },
+    {
+      id: 'FN-35', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Every language shows its own summary title',
+      where: '#language-options [data-lang] and [data-translate-key=summary_title]',
+      when: 'English, Spanish, Portuguese, German, French, and Italian are each selected.',
+      how: 'The summary title matches that language, then the language on screen at the start is restored.',
+      async run({ cv }) {
+        const original = currentLang(cv);
+        const seen = [];
+        try {
+          for (const code of NATIVE_LANGS) seen.push(await chooseLang(cv, code));
+          return seen.join(' · ');
+        } finally {
+          if (currentLang(cv) !== original) await chooseLang(cv, original);
+        }
+      }
+    },
+    {
+      id: 'FN-36', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'Profile photo is a dialog and Escape closes it',
+      where: '#profile-photo, #image-modal',
+      when: 'The photo is opened.',
+      how: 'The modal is role=dialog and aria-modal, the close control takes focus, and Escape removes visible.',
+      async run({ cv }) {
+        const doc = cv.document;
+        doc.getElementById('profile-photo').click();
+        const modal = doc.getElementById('image-modal');
+        assert(modal.classList.contains('visible'), 'modal did not open');
+        assert(modal.getAttribute('role') === 'dialog' && modal.getAttribute('aria-modal') === 'true', 'modal is not a dialog');
+        const focused = Date.now();
+        while (doc.activeElement !== doc.querySelector('.modal-close') && Date.now() - focused < 500) await wait(20);
+        assert(doc.activeElement === doc.querySelector('.modal-close'), 'close control did not take focus');
+        modal.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        assert(!modal.classList.contains('visible'), 'Escape did not close the photo');
+        return 'dialog, focus, Escape';
+      }
+    },
+    {
+      id: 'FN-37', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'A short or invalid note keeps Send disabled',
+      where: '#message-form #sender-name, #sender-email, #message-topic, #sender-message',
+      when: 'The message panel is open and the fields change. Send is never clicked.',
+      how: 'Each field has its label. Nine characters or a broken email leave Send disabled and mark the email aria-invalid. Ten characters plus ada@example.com enable Send.',
+      async run({ cv }) {
+        const doc = cv.document;
+        const fill = (id, value) => {
+          const el = doc.getElementById(id);
+          assert(el, id + ' missing');
+          el.value = value;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+        doc.getElementById('contact-widget-fab').click();
+        await wait(40);
+        const send = doc.getElementById('send-message-btn');
+        ['sender-name', 'sender-email', 'message-topic', 'sender-message'].forEach((id) => {
+          assert(doc.querySelector('label[for="' + id + '"]'), 'label missing for ' + id);
+        });
+        fill('sender-name', 'Al');
+        fill('sender-email', 'not-an-email');
+        fill('message-topic', 'inquiry');
+        fill('sender-message', '123456789');
+        assert(send.disabled, 'send enabled before a valid note');
+        const email = doc.getElementById('sender-email');
+        email.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+        await wait(20);
+        assert(email.classList.contains('invalid') && email.getAttribute('aria-invalid') === 'true', 'bad email was not marked');
+        fill('sender-email', 'ada@example.com');
+        fill('sender-message', '1234567890');
+        assert(!send.disabled, 'a complete note left send disabled');
+        doc.getElementById('widget-close-btn').click();
+        return '9 characters blocked; 10 with a real email enabled send';
+      }
+    },
+    {
+      id: 'STU-08', layer: 'Studio', fw: ['Playwright', 'Cypress'],
+      title: 'Linear renames the columns and keeps the Sprint 24 story',
+      where: 'simulador.html [data-board-view=linear]',
+      when: 'The Linear board chip is clicked.',
+      how: 'The board host is board-linear, columns are Todo, In Progress, In Review, In QA, and Done, PAY-241 is still on the board, and the nav reads Linear.',
+      async run({ loadCv }) {
+        const stu = await loadCv('simulador.html');
+        const doc = stu.document;
+        const chip = doc.querySelector('[data-board-view="linear"]');
+        assert(chip, 'Linear chip missing');
+        chip.click();
+        await wait(80);
+        const host = doc.getElementById('view');
+        assert(host.classList.contains('board-linear'), 'host is not board-linear');
+        const names = [...host.querySelectorAll('.col h3 span:first-child')].map((span) => span.textContent.trim());
+        assert(names.join('|') === 'Todo|In Progress|In Review|In QA|Done', 'Linear columns: ' + names.join('|'));
+        assert(host.textContent.includes('PAY-241'), 'PAY-241 left the Linear board');
+        assert(doc.querySelector('.nav button[data-view="board"]').textContent === 'Linear', 'nav stayed on the previous board');
+        return 'Linear columns and PAY-241';
+      }
+    },
+    {
+      id: 'STU-09', layer: 'Studio', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Backlog hides Sprint 24 and shows CV-410',
+      where: 'simulador.html [data-sprint=Backlog]',
+      when: 'The Backlog sprint chip is clicked.',
+      how: 'The only column is Backlog, the chip is on, CV-410 is visible, and PAY-241 is not.',
+      async run({ loadCv }) {
+        const stu = await loadCv('simulador.html');
+        const doc = stu.document;
+        const chip = doc.querySelector('[data-sprint="Backlog"]');
+        assert(chip, 'Backlog chip missing');
+        chip.click();
+        await wait(80);
+        const host = doc.getElementById('view');
+        const names = [...host.querySelectorAll('.col h3 span:first-child')].map((span) => span.textContent.trim());
+        assert(names.join('|') === 'Backlog', 'columns: ' + names.join('|'));
+        assert(doc.querySelector('[data-sprint="Backlog"]').classList.contains('on'), 'Backlog chip is not on');
+        assert(host.textContent.includes('CV-410'), 'CV-410 missing from Backlog');
+        assert(!host.textContent.includes('PAY-241'), 'Sprint 24 story stayed on Backlog');
+        return 'Backlog only · CV-410';
+      }
     }
   ];
 
@@ -1438,7 +1671,9 @@
     'A11Y-01': 684, 'A11Y-02': 701, 'A11Y-03': 713, 'A11Y-04': 728, 'A11Y-05': 749, 'A11Y-06': 770,
     'ADM-01': 591, 'ADM-02': 604, 'ADM-03': 617,
     'STU-01': 630, 'STU-02': 643, 'STU-03': 658,
-    'MOB-01': 500, 'MOB-02': 518, 'MOB-03': 532, 'MOB-04': 553, 'MOB-05': 570, 'MOB-06': 588
+    'MOB-01': 500, 'MOB-02': 518, 'MOB-03': 532, 'MOB-04': 553, 'MOB-05': 570, 'MOB-06': 588,
+    'PERF-01': 1437, 'PERF-02': 1447, 'PERF-03': 1457, 'PERF-04': 1467,
+    'SMK-03': 1479, 'SEC-09': 1512, 'FN-35': 1540, 'FN-36': 1557, 'FN-37': 1577, 'STU-08': 1613, 'STU-09': 1635
   };
   const SRC = {
     'SMK-01': { Playwright: ['tests/smoke.spec.js', 5] },
@@ -1490,7 +1725,18 @@
     'MOB-03': { Playwright: ['tests/mobile.spec.js', 28], Cypress: ['cypress/e2e/mobile_spec.cy.js', 17], Robot: ['tests/robot/mobile_suite.robot', 20] },
     'MOB-04': { Playwright: ['tests/mobile.spec.js', 28], Cypress: ['cypress/e2e/mobile_spec.cy.js', 17] },
     'MOB-05': { Playwright: ['tests/mobile.spec.js', 49], Cypress: ['cypress/e2e/mobile_spec.cy.js', 36], Robot: ['tests/robot/mobile_suite.robot', 28] },
-    'MOB-06': { Playwright: ['tests/mobile.spec.js', 63], Cypress: ['cypress/e2e/mobile_spec.cy.js', 53], Robot: ['tests/robot/mobile_suite.robot', 36] }
+    'MOB-06': { Playwright: ['tests/mobile.spec.js', 63], Cypress: ['cypress/e2e/mobile_spec.cy.js', 53], Robot: ['tests/robot/mobile_suite.robot', 36] },
+    'PERF-01': { k6: ['k6/load.js', 27], JMeter: ['jmeter/pages.csv', 2], Gatling: ['gatling/src/test/java/CvLoad.java', 22] },
+    'PERF-02': { k6: ['k6/load.js', 28], JMeter: ['jmeter/pages.csv', 3], Gatling: ['gatling/src/test/java/CvLoad.java', 23] },
+    'PERF-03': { k6: ['k6/load.js', 29], JMeter: ['jmeter/pages.csv', 4], Gatling: ['gatling/src/test/java/CvLoad.java', 24] },
+    'PERF-04': { k6: ['k6/load.js', 30], JMeter: ['jmeter/pages.csv', 5], Gatling: ['gatling/src/test/java/CvLoad.java', 25] },
+    'SMK-03': { Playwright: ['tests/security.spec.js', 84], Cypress: ['cypress/e2e/security_spec.cy.js', 65] },
+    'SEC-09': { Playwright: ['tests/security.spec.js', 110], Cypress: ['cypress/e2e/security_spec.cy.js', 90], Robot: ['tests/robot/catalog.robot', 297] },
+    'FN-35': { Playwright: ['tests/cv.spec.js', 150], Cypress: ['cypress/e2e/cv_spec.cy.js', 168], Robot: ['tests/robot/catalog.robot', 301] },
+    'FN-36': { Playwright: ['tests/cv.spec.js', 177], Cypress: ['cypress/e2e/cv_spec.cy.js', 194] },
+    'FN-37': { Playwright: ['tests/cv.spec.js', 187], Cypress: ['cypress/e2e/cv_spec.cy.js', 202] },
+    'STU-08': { Playwright: ['tests/simulator.spec.js', 60], Cypress: ['cypress/e2e/simulator_spec.cy.js', 52] },
+    'STU-09': { Playwright: ['tests/simulator.spec.js', 68], Cypress: ['cypress/e2e/simulator_spec.cy.js', 62], Robot: ['tests/robot/catalog.robot', 317] }
   };
 
   function blob(path, line) {
@@ -1503,7 +1749,10 @@
     Robot: 'tests/robot',
     Selenium: 'selenium',
     WebDriverIO: 'wdio',
-    Appium: 'appium'
+    Appium: 'appium',
+    k6: 'k6',
+    JMeter: 'jmeter',
+    Gatling: 'gatling'
   };
 
   const NATIVE_SPEC = {
@@ -1563,7 +1812,10 @@
     Robot: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M7.2 1.6h1.6V3h1.8A1.6 1.6 0 0 1 12.2 4.6v4.2A1.6 1.6 0 0 1 10.6 10.4H5.4A1.6 1.6 0 0 1 3.8 8.8V4.6A1.6 1.6 0 0 1 5.4 3h1.8V1.6zM6 6.1a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zm4 0a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zM6.2 12h3.6v1.4H6.2z"/></svg>',
     Selenium: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 2.2 4.4v7.2L8 14.8l5.8-3.2V4.4L8 1.2zm0 2.1 3.6 2v4.2L8 11.5 4.4 9.5V5.3L8 3.3z"/></svg>',
     WebDriverIO: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 3.2h12v1.6H2zm0 4h8v1.6H2zm0 4h10v1.6H2z"/></svg>',
-    Appium: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5 1.4h6v1.2H5zM4 3.2h8a1 1 0 0 1 1 1v8.2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4.2a1 1 0 0 1 1-1zm3 9.2h2v.8H7z"/></svg>'
+    Appium: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5 1.4h6v1.2H5zM4 3.2h8a1 1 0 0 1 1 1v8.2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4.2a1 1 0 0 1 1-1zm3 9.2h2v.8H7z"/></svg>',
+    k6: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 2.2a5.8 5.8 0 0 0-5.6 7.3h1.7A4.2 4.2 0 0 1 8 3.8a4.2 4.2 0 0 1 3.9 5.7h1.7A5.8 5.8 0 0 0 8 2.2zM7.2 8.6 11 5.4l.8 1-3.2 2.8H7.2z"/></svg>',
+    JMeter: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M3 2.2h10v2H3zm0 4.6h7v2H3zm0 4.6h10v2H3z"/></svg>',
+    Gatling: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2.2 12.6 8 2.4l5.8 10.2H2.2zm5.8-6.4 2.2 3.8H5.8L8 6.2z"/></svg>'
   };
 
   function sourceEntries(c) {
@@ -1608,7 +1860,8 @@
       Accessibility: '#3d7a82',
       Admin: '#b42318',
       Studio: '#0f766e',
-      Mobile: '#08545b'
+      Mobile: '#08545b',
+      Performance: '#1d4e89'
     }[layer] || '#4a5560';
   }
 
@@ -3189,12 +3442,12 @@
         name: 'QA Lab',
         key: 'hasSeenLabTour',
         steps: [
-          { selector: '#case-list', title: 'The catalog', body: 'Every check is a row: where it looks, when it runs, and how it asserts. A pulse marks the control for this step. The chips under the row open that same case in the lab and in each runner on GitHub.', demoMs: 1800 },
-          { selector: '.filters', title: 'Filter by type', body: 'Smoke, Functional, Security, A11y, Admin, Studio, or Mobile. Run filtered runs only the rows still on screen.', demoMs: 1500 },
-          { selector: '#case-list .src-links', title: 'Scripts and cases', body: 'Each chip is a real file: the lab check, then Playwright, Cypress, Robot, Selenium, WebdriverIO, or Appium. Click a chip to open that script.', demoMs: 1600 },
+          { selector: '#case-list', title: 'The catalog', body: 'Every check is a row: where it looks, when it runs, and how it asserts. Rows cover the pages, every language, the message form, the photo dialog, the studio board, the clip pages, and the load budget. A pulse marks the control for this step. The chips under the row open that same case in the lab and in each runner on GitHub.', demoMs: 1800 },
+          { selector: '.filters', title: 'Filter by type', body: 'Smoke, Functional, Security, A11y, Admin, Studio, Mobile, or Performance. Run filtered runs only the rows still on screen.', demoMs: 1500 },
+          { selector: '#case-list .src-links', title: 'Scripts and cases', body: 'Each chip is a real file: the lab check, then Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, k6, JMeter, or Gatling. Click a chip to open that script.', demoMs: 1600 },
           { selector: '#langWrap', title: 'Language', body: 'A language chosen here is the language on the CV, the studio, this lab, and admin. The same choice sticks when you move between them.', demoMs: 1600 },
           { selector: '#suite-repo', title: 'Suite repo', body: 'Suite repo opens the GitHub project that holds these checks. The chips on each row jump to the file. This link opens the whole project.', demoMs: 1400 },
-          { selector: '#studio-link', title: 'Sprint studio', body: 'Sprint studio opens the four-agent board. The language you picked here is the language the studio opens in.', demoMs: 1400 },
+          { selector: '#studio-link', title: 'Sprint studio', body: 'Sprint studio opens the four-agent board. Board chips include Linear, and the sprint chips include Backlog. The language you picked here is the language the studio opens in.', demoMs: 1400 },
           { selector: '.kpis', title: 'Suite run indicators', body: 'Passed, failed, skipped, and duration update as the catalog runs. They are the totals for this session, before the dashboard charts.', demoMs: 1500 },
           { selector: '.pace', title: 'Pace', body: 'The line runs from faster on the left to slower on the right. 0.5 holds the least between actions, 2.0 holds the most, so a first look is easier on the right.', demoMs: 1500 },
           { selector: '#view-slider', title: 'Watch or Background', body: 'The slider keeps one side on. Watch shows the live page. Background is the idle side until you choose it, and then the checks run off-screen.', demoMs: 1600 },

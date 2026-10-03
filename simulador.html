@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Free SDLC studio · Jira, Xray, and test automation</title>
-    <meta name="description" content="Free in-browser SDLC studio with four agents: Jira story rewrite, Gherkin and Xray cases, Playwright, Cypress, and Robot scripts, and a Definition of Done check. No account required.">
+    <meta name="description" content="Free in-browser SDLC studio with four agents. Pick Jira, Azure DevOps, Monday, Trello, Linear, Asana, or MS Project, or open Backlog. The agents rewrite the story, write Gherkin and Xray cases, generate Playwright, Cypress, and Robot scripts, and check the Definition of Done. No account required.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
-    <meta name="keywords" content="QA studio, Jira, Xray, TestRail, Gherkin, Playwright, Cypress, Robot Framework, SDLC, Definition of Done, sprint report, test automation, AI agents, Carlos Muñoz">
+    <meta name="keywords" content="QA studio, Jira, Azure DevOps, Monday, Trello, Linear, Asana, MS Project, Backlog, Xray, TestRail, Zephyr, Gherkin, Playwright, Cypress, Robot Framework, SDLC, Definition of Done, sprint report, test automation, AI agents, Carlos Muñoz">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow">
     <meta name="theme-color" content="#0d6e76">
@@ -24,12 +24,12 @@
     <meta property="og:locale:alternate" content="it_IT">
     <meta property="og:url" content="https://carlosandmunoz.com/simulador.html">
     <meta property="og:title" content="Free SDLC studio · Jira, Xray, and test automation">
-    <meta property="og:description" content="Four agents rewrite the Jira story, write Gherkin and Xray cases, generate Playwright, Cypress, and Robot scripts, and check the Definition of Done. Free, no account.">
+    <meta property="og:description" content="Four agents rewrite the story on Jira, Azure DevOps, Monday, Trello, Linear, Asana, or MS Project, including Backlog. They write Gherkin and Xray cases, generate Playwright, Cypress, and Robot scripts, and check the Definition of Done. Free, no account.">
     <meta property="og:image" content="https://carlosandmunoz.com/assets/profile.jpg?v=20260925">
     <meta property="og:image:alt" content="Portrait of Carlos A. Muñoz Ardila">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Free SDLC studio · Jira, Xray, and test automation">
-    <meta name="twitter:description" content="Free SDLC studio: Ticket Steward, Test Designer, Automation Engineer, and Release Verifier run a Jira-to-sign-off sprint in the browser.">
+    <meta name="twitter:description" content="Free SDLC studio: Ticket Steward, Test Designer, Automation Engineer, and Release Verifier run a sprint on Jira, Linear, or Backlog, through sign-off in the browser.">
     <meta name="twitter:image" content="https://carlosandmunoz.com/assets/profile.jpg?v=20260925">
     <meta name="twitter:image:alt" content="Portrait of Carlos A. Muñoz Ardila">
     <link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/simulador.html">
@@ -47,13 +47,14 @@
         "url": "https://carlosandmunoz.com/simulador.html",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Web",
-        "description": "Free in-browser SDLC studio. Ticket Steward rewrites Jira stories, Test Designer writes Gherkin and Xray cases, Automation Engineer generates Playwright, Cypress, and Robot scripts, and Release Verifier checks the Definition of Done. No account required.",
+        "description": "Free in-browser SDLC studio. Ticket Steward rewrites the story on Jira, Azure DevOps, Monday, Trello, Linear, Asana, or MS Project, or on Backlog. Test Designer writes Gherkin and Xray cases, Automation Engineer generates Playwright, Cypress, and Robot scripts, and Release Verifier checks the Definition of Done. No account required.",
         "featureList": [
-            "Ticket Steward rewrites Jira stories",
+            "Ticket Steward rewrites the story on the board you pick",
+            "Board chips for Jira, Azure DevOps, Monday, Trello, Linear, Asana, and MS Project, plus a Backlog sprint",
             "Test Designer writes Gherkin and Xray cases",
             "Automation Engineer generates Playwright, Cypress, and Robot scripts",
             "Release Verifier checks the Definition of Done and sprint sign-off",
-            "Jira board, test design, automation lab, sprint verification, and sprint report",
+            "Board, test design, automation lab, sprint verification, and sprint report",
             "Reset and rerun the sprint",
             "Guided tour",
             "Light and dark theme",
@@ -562,7 +563,7 @@
         <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests" target="_blank" rel="noopener noreferrer">Test suite on GitHub</a>
     </aside>
     <main class="workspace">
-        <p class="studio-lead">The board chips open the same tickets in Jira, Azure DevOps, Monday, Trello, Linear, Asana, and MS Project. Sprint report keeps the earlier studio runs. Design files open from a ticket’s Resources tab. <a href="media/sdlc-studio-running.html">Watch a sprint</a>. <a href="media/sdlc-studio-tour.html">Watch the tour</a>.</p>
+        <p class="studio-lead">The board chips open the same tickets in Jira, Azure DevOps, Monday, Trello, Linear, Asana, and MS Project. The sprint chips include Backlog. Sprint report keeps the earlier studio runs. Design files open from a ticket’s Resources tab. <a href="media/sdlc-studio-running.html">Watch a sprint</a>. <a href="media/sdlc-studio-tour.html">Watch the tour</a>.</p>
         <div class="phase-banner" id="banner">Explore the board, open any ticket, then start the four-agent sprint.</div>
         <div class="board" id="view"></div>
         <div class="phase-console" id="phaseConsole"></div>
@@ -3284,11 +3285,11 @@ const STUDIO_TOUR = {
         { selector: '#agentPills', title: 'Four agents', body: 'Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. The clip is one pass: the story moves, the cases are written on screen, the script runs, then the increment is signed off.', demoMs: 4000, preview: 'studio' },
         { selector: '#runBtn', title: 'Run the sprint', body: 'The run starts with the board question. Each agent then waits for you: accept or keep the story, save the cases, pick the runners, and sign off.', demoMs: 1800 },
         { selector: '#studio-pace', title: 'Pace', body: 'The line runs from faster on the left to slower on the right. 0.5 holds the least between actions, 2.0 holds the most, including the moment the Test Designer writes each step.', demoMs: 1500 },
-        { selector: '#view', title: 'Tickets and artifacts', body: 'The board matches the tool you picked. Open a story to read it. After the stories, choose Zephyr, Xray, or TestRail and watch the Test Designer write each step into that tool.', demoMs: 1700 },
+        { selector: '#view', title: 'Tickets and artifacts', body: 'The board matches the tool you picked. Open a story to read it. Sprint chips include Backlog, which hides the current sprint and shows the waiting stories. After the stories, choose Zephyr, Xray, or TestRail and watch the Test Designer write each step into that tool.', demoMs: 1700 },
         { selector: '#runner-edge', title: 'Runner console', body: 'Runners slides in from the right. Each tab is that framework’s sprint log. The regression lab is where Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium run as their own processes, and the drawer there follows the one that is running.', demoMs: 1600, prepare: () => openStudioRunners() },
         { selector: '#studio-report-open', title: 'Sprint report file', body: 'Report opens the file options. English is the default. Pick another language, leave the graphs on, check the preview, then download or print.', demoMs: 1600 },
         { selector: '#log', title: 'Agent log', body: 'Each line is the latest action: what the agent did, where, and why. Earlier lines stay here if you need them.', demoMs: 1500 },
-        { selector: 'a[href="qa-lab.html"]', title: 'CV regression lab', body: 'Opens the regression lab. The same checks run in the browser against this CV, with a catalog, a pace, watch or background, and a results dashboard.', demoMs: 1700 }
+        { selector: 'a[href="qa-lab.html"]', title: 'CV regression lab', body: 'Opens the regression lab. The same checks run in the browser against this CV, with a catalog, a pace, watch or background, and a results dashboard. Performance rows use k6, JMeter, and Gatling on the local server.', demoMs: 1700 }
     ]
 };
 if (window.SiteTour) {
