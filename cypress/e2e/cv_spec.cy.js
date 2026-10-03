@@ -165,6 +165,58 @@ describe('Interactive CV', () => {
       cvPage.tourTooltip.should('not.be.visible');
     });
 
+    it('shows a summary title for every language', () => {
+      const titles = [
+        ['en', /Professional Summary/i],
+        ['es', /Resumen Profesional/i],
+        ['pt', /Resumo Profissional/i],
+        ['de', /Berufliches Profil/i],
+        ['fr', /Résumé Professionnel/i],
+        ['it', /Riepilogo Professionale/i]
+      ];
+      titles.forEach(([code, pattern]) => {
+        cvPage.selectLanguage(code);
+        cy.get('[data-translate-key="summary_title"]').invoke('text').should('match', pattern);
+      });
+      cvPage.selectLanguage('en');
+    });
+
+    it('stores dark and light with the theme color', () => {
+      cy.get('meta[name="theme-color"]').should('have.attr', 'content', '#0d6e76');
+      cvPage.themeToggle.click();
+      cy.window().its('localStorage').invoke('getItem', 'theme').should('eq', 'dark');
+      cy.get('meta[name="theme-color"]').should('have.attr', 'content', '#10161d');
+      cvPage.themeToggle.click();
+      cy.window().its('localStorage').invoke('getItem', 'theme').should('eq', 'light');
+      cy.get('meta[name="theme-color"]').should('have.attr', 'content', '#0d6e76');
+    });
+
+    it('closes the photo dialog with Escape', () => {
+      cvPage.profilePhoto.click();
+      cvPage.imageModal.should('have.attr', 'role', 'dialog').and('have.attr', 'aria-modal', 'true');
+      cy.get('.modal-close').should('be.focused');
+      cy.get('#image-modal').trigger('keydown', { key: 'Escape' });
+      cvPage.imageModal.should('not.have.class', 'visible');
+    });
+
+    it('keeps Send disabled until the note is complete', () => {
+      cvPage.contactWidgetFab.click();
+      ['sender-name', 'sender-email', 'message-topic', 'sender-message'].forEach((id) => {
+        cy.get('label[for="' + id + '"]').should('be.visible');
+      });
+      cy.get('#sender-name').type('Al');
+      cy.get('#sender-email').type('not-an-email');
+      cy.get('#message-topic').select('inquiry');
+      cy.get('#sender-message').type('123456789');
+      cy.get('#send-message-btn').should('be.disabled');
+      cy.get('#sender-email').blur();
+      cy.get('#sender-email').should('have.class', 'invalid').and('have.attr', 'aria-invalid', 'true');
+      cy.get('#sender-email').clear().type('ada@example.com');
+      cy.get('#sender-message').clear().type('1234567890');
+      cy.get('#send-message-btn').should('not.be.disabled');
+      cy.get('#widget-close-btn').click();
+    });
+
     it('handles testimonials if any are published', () => {
       cvPage.testimonialsSection.scrollIntoView();
       cy.get('body').then(($body) => {

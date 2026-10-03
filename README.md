@@ -31,16 +31,16 @@ The page is markup, SEO, and JSON-LD. Content is `js/cv-data.js` (toolkit, exper
 
 ### SDLC studio (`simulador.html`)
 
-A four-agent sprint launched from the CV: Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. The first agent asks which board — **Jira**, **Azure DevOps**, **Monday.com**, **Trello**, **Linear**, **Asana**, or **MS Project** — and six PayStream stories render in that layout (3-D Secure, captures, accessibility, settlement, EU refunds, webhook signatures). The board chips above the sprint chips show the same tickets without starting the agents, including the Interactive CV stories and the bugs that corrected them. The trademark request is **CV-442**, the look bug is **CV-448**, and the new cases are **XT-1701**, **XT-1702**, and **XT-1703**. Sprint report lists the earlier studio runs. Later views are **Zephyr Scale**, **Xray**, or **TestRail**, then the runners you leave on (Playwright, Cypress, Robot, and optionally Selenium, WebdriverIO, and Appium), then release sign-off. **Runners** on the right edge slides in that framework’s sprint log. The regression lab is where those frameworks run as their own processes. **Pace** on the top bar is 0.5s to 2.0s. **Report** opens the sprint file: English by default, another language if you pick one, graphs included, then download or print with the QA lab mark. It wears the same look as the CV and has its own guided tour (`hasSeenStudioTour`): board, four agents, run, pace, tickets, the runner drawer, the report, the agent log, and the lab. The first step says the page uses that shared look. A pulse marks each step. The **Four agents** step plays the same 4-second agent clip as the CV tour.
+A four-agent sprint launched from the CV: Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. The first agent asks which board — **Jira**, **Azure DevOps**, **Monday.com**, **Trello**, **Linear**, **Asana**, or **MS Project** — and six PayStream stories render in that layout (3-D Secure, captures, accessibility, settlement, EU refunds, webhook signatures). The board chips above the sprint chips show the same tickets without starting the agents, including the Interactive CV stories and the bugs that corrected them. The sprint chips include Backlog, which hides the current sprint. The trademark request is **CV-442**, the look bug is **CV-448**, and the new cases are **XT-1701**, **XT-1702**, and **XT-1703**. Sprint report lists the earlier studio runs. Later views are **Zephyr Scale**, **Xray**, or **TestRail**, then the runners you leave on (Playwright, Cypress, Robot, and optionally Selenium, WebdriverIO, and Appium), then release sign-off. **Runners** on the right edge slides in that framework’s sprint log. The regression lab is where those frameworks run as their own processes. **Pace** on the top bar is 0.5s to 2.0s. **Report** opens the sprint file: English by default, another language if you pick one, graphs included, then download or print with the QA lab mark. It wears the same look as the CV and has its own guided tour (`hasSeenStudioTour`): board, four agents, run, pace, tickets, the runner drawer, the report, the agent log, and the lab. The first step says the page uses that shared look. A pulse marks each step. The **Four agents** step plays the same 4-second agent clip as the CV tour.
 
 ### CV regression lab (`qa-lab.html`)
 
-The same cases the public suites cover, runnable in the browser against an iframe of the CV, studio, or admin page. Each case links to its source on GitHub.
+The same cases the public suites cover, runnable in the browser against an iframe of the CV, studio, or admin page. Each case links to its source on GitHub. The catalog also checks every language, the message form, the photo dialog, Linear columns, the Backlog sprint, and the four clip pages.
 
 * **Watch** is the default so the visitor sees the actions. **Background** hides the iframe and keeps the log.
 * Pace holds are **0.5s, 1.0s, 1.5s, and 2.0s**.
 * The catalog scrolls the running case into view. **Dashboard** opens as a splash (close, Escape, or backdrop).
-* Filters include Smoke, Functional, Security, A11y, Admin, Studio, and Mobile.
+* Filters include Smoke, Functional, Security, A11y, Admin, Studio, Mobile, and Performance.
 * **Report** opens the file options before anything is printed. English is the default language. Graphs, case lines, and the runner comparison are included. Saved runs can be selected, downloaded, printed, or compared.
 * **Runners** on the right edge streams each framework’s own process log. Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium are separate suites. Before a run, the ask picks browsers and a screen size. When the process changes, the drawer and the **Run with** chip follow it and mark it **Running**. The lab does not copy one result into the other tabs. `npm run lab:runners` starts the local process bridge.
 * **Observer** sits under the live page. It watches for a frozen page, explains a failed check, and checks that the report is on screen. It does not mark a case passed or failed. A connected model can write that note. Without one, the note stays structural.
@@ -61,14 +61,14 @@ The same cases the public suites cover, runnable in the browser against an ifram
 | :------------ | :------------------------------------------------------ |
 | **Frontend** | `HTML5`, `CSS3`, `Vanilla JavaScript (ES6 modules)`, `Tailwind CSS v4` |
 | **Backend** | `Firebase (Authentication, Firestore, Storage)` |
-| **Testing** | `Playwright`, `Cypress`, `Robot Framework`, `Selenium WebDriver`, `WebdriverIO`, and `Appium` (each has its own suite and log) |
+| **Testing** | `Playwright`, `Cypress`, `Robot Framework`, `Selenium WebDriver`, `WebdriverIO`, `Appium`, `k6`, `JMeter`, and `Gatling` (each has its own suite and log) |
 | **Analytics** | `Google Analytics` (`js/site-analytics.js`) and Firestore `site_events` |
 
 ---
 
 ## 🧪 Automated Testing
 
-`npm test` runs Playwright and Cypress. `npm run test:full` also runs Robot. `npm run test:selenium`, `npm run test:wdio`, and `npm run test:appium` run those suites on their own. `npm run lab:runners` lets the lab page stream each process log. Playwright starts a local static server on port `8765` when one is not already running.
+`npm test` runs Playwright and Cypress. `npm run test:full` also runs Robot. `npm run test:selenium`, `npm run test:wdio`, and `npm run test:appium` run those suites on their own. `npm run test:k6`, `npm run test:jmeter`, and `npm run test:gatling` each load the CV, lab, studio, stylesheet, and CV script on port `8767`. `npm run lab:runners` lets the lab page stream each process log. Playwright starts a local static server on port `8765` when one is not already running.
 
 The catalog on [qa-lab.html](https://carlosandmunoz.com/qa-lab.html) lists every case and links to the suite file on `main`.
 
@@ -76,6 +76,9 @@ The catalog on [qa-lab.html](https://carlosandmunoz.com/qa-lab.html) lists every
 * Cypress: [`cypress/e2e/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/cypress/e2e)
 * Robot: [`tests/robot/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests/robot)
 * Lab runner: [`js/qa-lab.js`](https://github.com/kaanmuar/kaanmuar.github.io/blob/main/js/qa-lab.js)
+* k6: [`k6/load.js`](https://github.com/kaanmuar/kaanmuar.github.io/blob/main/k6/load.js)
+* JMeter: [`jmeter/load.jmx`](https://github.com/kaanmuar/kaanmuar.github.io/blob/main/jmeter/load.jmx)
+* Gatling: [`gatling/src/test/java/CvLoad.java`](https://github.com/kaanmuar/kaanmuar.github.io/blob/main/gatling/src/test/java/CvLoad.java)
 
 <details>
 <summary><strong>Click to view the Playwright Test Suite Guide</strong></summary>
@@ -118,6 +121,19 @@ Authenticated admin tests need `ADMIN_PASSWORD` (and optional `ADMIN_EMAIL`) in 
 | `catalog.robot` | The shared catalog, driven by `CatalogRunner.py` |
 | `mobile_suite.robot` | Phone chrome for CV, studio, lab, and admin |
 | `security_admin.robot` | `robots.txt`, sitemap, `noindex`, noopener, competency JSON-LD |
+
+</details>
+
+<details>
+<summary><strong>Click to view the Load Test Guide</strong></summary>
+
+Each command serves the folder on port `8767` and stays on `http://127.0.0.1:8767`. Eight virtual users request `/`, `/qa-lab.html`, `/simulador.html`, `/style.css`, and `/js/cv-app.js` for 20 seconds. The run fails when a request fails, a check drops below 99%, or p95 goes over 2500 ms. The lab Performance rows use the same pages with a 1500 ms budget for one request.
+
+| Command | Needs | Results |
+| :---- | :--- | :--- |
+| `npm run test:k6` | [k6](https://k6.io) | `k6-results/` |
+| `npm run test:jmeter` | Java and [JMeter](https://jmeter.apache.org/) | `jmeter-results/` |
+| `npm run test:gatling` | Java and [Maven](https://maven.apache.org/) | `gatling/target/gatling/` |
 
 </details>
 
@@ -186,6 +202,9 @@ npm run build:css
 │   ├── lab-observer.js     # Lab observer (stalls, failures, report)
 │   └── qa-lab.js           # Lab catalog, source links, runner focus
 ├── scripts/                # Local runner bridge for the lab
+├── k6/                     # k6 load suite for the public pages
+├── jmeter/                 # JMeter load plan for the same pages
+├── gatling/                # Gatling simulation for the same pages
 ├── selenium/               # Selenium catalog suite
 ├── wdio/                   # WebdriverIO catalog suite
 ├── appium/                 # Appium catalog suite

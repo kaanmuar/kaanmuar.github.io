@@ -4,14 +4,17 @@ const { skipSiteTours } = require('./helpers.js');
 test.describe('CV regression lab', () => {
   test.beforeEach(async ({ page }) => {
     await skipSiteTours(page);
-    await page.addInitScript(() => localStorage.setItem('theme', 'light'));
+    await page.addInitScript(() => {
+      localStorage.setItem('theme', 'light');
+      localStorage.setItem('cv-preferred-lang', 'en');
+    });
     await page.goto('/qa-lab.html');
   });
 
   test('lists the catalog with where/when/how for a case', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /The suite I run on this CV/i })).toBeVisible();
     await expect(page.locator('.case-row').first()).toBeVisible();
-    await expect(page.locator('.case-row')).toHaveCount(66);
+    await expect(page.locator('.case-row')).toHaveCount(77);
     await expect(page.locator('#case-detail')).toContainText('Where');
     await expect(page.locator('#case-detail')).toContainText('When');
     await expect(page.locator('#case-detail')).toContainText('How');
@@ -25,6 +28,8 @@ test.describe('CV regression lab', () => {
     await expect(page.locator('[data-view="watch"]')).toHaveClass(/on/);
     await expect(page.locator('#sut')).toBeVisible();
     await expect(page.locator('[data-filter="Mobile"]')).toBeVisible();
+    await expect(page.locator('[data-filter="Performance"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: /PERF-01/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
@@ -156,6 +161,13 @@ test.describe('CV regression lab', () => {
     expect(mobile).toBeGreaterThan(0);
     expect(mobile).toBeLessThan(all);
     await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
+  });
+
+  test('Performance filter lists the four budgets and their load tools', async ({ page }) => {
+    await page.locator('[data-filter="Performance"]').click();
+    await expect(page.locator('.case-row')).toHaveCount(4);
+    const item = page.locator('.case-item', { has: page.locator('.case-id', { hasText: 'PERF-01' }) });
+    await expect(item.locator('.src-link')).toHaveText(['Lab', 'k6', 'JMeter', 'Gatling']);
   });
 
   test('Functional filter still lists competency cases', async ({ page }) => {

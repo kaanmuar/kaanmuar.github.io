@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Free QA regression lab · Playwright, Cypress, Robot</title>
-    <meta name="description" content="Free in-browser QA regression lab. Run Playwright, Cypress, and Robot checks for smoke, functional, security, accessibility, admin, studio, and mobile. Watch the run, open the dashboard, or download the report.">
+    <meta name="description" content="Free in-browser QA regression lab. Run Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium checks for smoke, functional, security, accessibility, admin, studio, mobile, and performance. k6, JMeter, and Gatling load the same pages on a local server. Watch the run, open the dashboard, or download the report.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
-    <meta name="keywords" content="QA lab, regression testing, Playwright, Cypress, Robot Framework, smoke tests, functional tests, accessibility, security tests, mobile tests, test dashboard, interactive CV, Carlos Muñoz">
+    <meta name="keywords" content="QA lab, regression testing, Playwright, Cypress, Robot Framework, Selenium, WebdriverIO, Appium, k6, JMeter, Gatling, smoke tests, functional tests, accessibility, security tests, mobile tests, performance tests, test dashboard, interactive CV, Carlos Muñoz">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow">
     <meta name="theme-color" content="#0d6e76">
@@ -24,12 +24,12 @@
     <meta property="og:locale:alternate" content="it_IT">
     <meta property="og:url" content="https://carlosandmunoz.com/qa-lab.html">
     <meta property="og:title" content="Free QA regression lab · Playwright, Cypress, Robot">
-    <meta property="og:description" content="Open the lab and run Playwright, Cypress, and Robot checks against this CV. Filter by layer, set the pace, watch or run in the background, then open the dashboard or download the report.">
+    <meta property="og:description" content="Open the lab and run Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium checks against this CV. Filter by layer, set the pace, watch or run in the background. k6, JMeter, and Gatling load the same pages locally, then open the dashboard or download the report.">
     <meta property="og:image" content="https://carlosandmunoz.com/assets/profile.jpg?v=20260925">
     <meta property="og:image:alt" content="Portrait of Carlos A. Muñoz Ardila">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Free QA regression lab · Playwright, Cypress, Robot">
-    <meta name="twitter:description" content="Free Playwright, Cypress, and Robot lab: smoke, functional, security, accessibility, admin, studio, and mobile checks, with a dashboard and a text report.">
+    <meta name="twitter:description" content="Free Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium lab: smoke, functional, security, accessibility, admin, studio, mobile, and performance checks, plus k6, JMeter, and Gatling, with a dashboard and a text report.">
     <meta name="twitter:image" content="https://carlosandmunoz.com/assets/profile.jpg?v=20260925">
     <meta name="twitter:image:alt" content="Portrait of Carlos A. Muñoz Ardila">
     <link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-lab.html">
@@ -49,10 +49,11 @@
                 "url": "https://carlosandmunoz.com/qa-lab.html",
                 "applicationCategory": "DeveloperApplication",
                 "operatingSystem": "Web",
-                "description": "Free in-browser QA regression lab. Run the Playwright, Cypress, and Robot catalog against this CV, filter by smoke, functional, security, accessibility, admin, studio, or mobile, watch each check or run it in the background, then open the dashboard or download the text report.",
+                "description": "Free in-browser QA regression lab. Run the Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium catalog against this CV, filter by smoke, functional, security, accessibility, admin, studio, mobile, or performance, watch each check or run it in the background. k6, JMeter, and Gatling load the same pages on a local server. Then open the dashboard or download the text report.",
                 "featureList": [
-                    "Playwright, Cypress, and Robot catalog against this CV",
-                    "Filters for smoke, functional, security, accessibility, admin, studio, and mobile",
+                    "Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium catalog against this CV",
+                    "k6, JMeter, and Gatling load the same pages on a local server",
+                    "Filters for smoke, functional, security, accessibility, admin, studio, mobile, and performance",
                     "Watch the run or execute in the background",
                     "Adjustable pace",
                     "Results dashboard",
@@ -537,7 +538,7 @@
 </div>
 <section class="intro">
     <h1>The suite I run on this CV</h1>
-    <p>The catalog runs in the browser you already have open, on a Mac, a Windows PC, or a phone. Chrome, Firefox, Edge, and Safari stay in the list even when those programs are not installed. Before a run, choose the browsers and the screen size. Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium each run as their own process when <code>npm run lab:runners</code> is up, and those processes bring their own browsers. A result from one is not copied into the others.</p>
+    <p>The catalog runs in the browser you already have open, on a Mac, a Windows PC, or a phone. Chrome, Firefox, Edge, and Safari stay in the list even when those programs are not installed. Before a run, choose the browsers and the screen size. Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium each run as their own process when <code>npm run lab:runners</code> is up, and those processes bring their own browsers. A result from one is not copied into the others. The same catalog checks every language, the message form, the photo dialog, the Linear board, the Backlog sprint, and the four clip pages. Performance rows time the CV, the lab, the studio, and their main assets. <code>npm run test:k6</code>, <code>npm run test:jmeter</code>, and <code>npm run test:gatling</code> load those same pages on the local server.</p>
     <p class="clip-links"><a href="media/qa-lab-running.html">Watch a full catalog run</a> · <a href="media/qa-lab-tour.html">Watch the tour</a></p>
 </section>
 <section class="kpis" aria-label="Last run totals">
@@ -557,6 +558,7 @@
             <button type="button" data-filter="Admin">Admin</button>
             <button type="button" data-filter="Studio">Studio</button>
             <button type="button" data-filter="Mobile">Mobile</button>
+            <button type="button" data-filter="Performance">Performance</button>
         </div>
         <div class="count" id="case-count"></div>
         <div class="case-list" id="case-list" data-guide="2"></div>
@@ -661,7 +663,7 @@
 <script src="js/site-i18n.js"></script>
 <script src="js/site-tour.js?v=20261002a"></script>
 <script src="js/lab-observer.js"></script>
-<script src="js/qa-lab.js"></script>
+<script src="js/qa-lab.js?v=20261003"></script>
 <script>
     document.getElementById('theme-toggle').addEventListener('click', () => SiteTheme.toggle());
     QALab.boot();

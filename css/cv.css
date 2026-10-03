@@ -742,6 +742,11 @@
             flex-direction: column;
             max-height: min(78vh, 640px);
         }
+        #contact-widget.visible {
+            transform: none;
+            visibility: visible;
+            pointer-events: auto;
+        }
         /* NEW: Admin Response Block */
         .admin-response {
             margin-top: 0.9rem;
