@@ -137,7 +137,7 @@
         html.dark-mode { color-scheme: dark; }
         html { overflow-x: hidden; height: 100%; }
         body { min-height: 100vh; min-height: 100dvh; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--topbar); gap: 12px; flex-wrap: wrap; min-height: 56px; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 42%, transparent); -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5); gap: 12px; flex-wrap: wrap; min-height: 56px; position: sticky; top: 0; z-index: 40; }
         .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-family: "Source Serif 4", Georgia, serif; }
         .brand small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; }
         .brand a { color: inherit; text-decoration: none; }
@@ -481,7 +481,7 @@
             .lang-menu { right: auto; left: 0; width: min(220px, calc(100vw - 24px)); }
         }
     </style>
-    <link rel="stylesheet" href="css/site-look.css">
+    <link rel="stylesheet" href="css/site-look.css?v=20261006d">
 </head>
 <body>
 <header class="topbar">
