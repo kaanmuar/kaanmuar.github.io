@@ -3342,7 +3342,7 @@
                 const loadingIndicator = this._showExportOverlay(this._s('print_preparing', 'Preparing Print View...'));
                 const host = await this._renderRecruiterSheets();
                 try {
-                    const jsPDF = window.jsPDF;
+                const jsPDF = window.jsPDF;
                     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
                     const sheets = [...host.querySelectorAll('.sheet')];
                     for (let i = 0; i < sheets.length; i++) {
@@ -3351,7 +3351,7 @@
                         if (i > 0) doc.addPage();
                         doc.addImage(img, 'JPEG', 0, 0, 210, 297);
                     }
-                    doc.save('CarlosMunozCV_Export.pdf');
+                doc.save('CarlosMunozCV_Export.pdf');
                 } catch (err) {
                     console.error('Error generating PDF:', err);
                     alert('Sorry, an error occurred while generating the PDF.');
@@ -3468,49 +3468,52 @@
                 updateMobilePlaceholderHeight();
             },*/
             _initMobileStickyBar() {
-                const mobileToolbarWrapper = document.querySelector('.mobile-toolbar-wrapper');
-                if (!mobileToolbarWrapper) return;
+                const wrapper = document.querySelector('.mobile-toolbar-wrapper');
+                const toolbar = wrapper && wrapper.querySelector('.mobile-toolbar');
+                const home = wrapper && wrapper.parentNode;
+                if (!wrapper || !toolbar || !home) return;
 
-                // The placeholder prevents content from jumping when the toolbar becomes 'fixed'.
+                // Holds the toolbar's place only while it is docked to the viewport.
+                // It stays at 0 until then, so there is no blank band above Tools.
                 const placeholder = document.createElement('div');
-                // It's inserted right before the toolbar's wrapper.
-                mobileToolbarWrapper.parentNode.insertBefore(placeholder, mobileToolbarWrapper);
+                placeholder.setAttribute('data-toolbar-sentinel', '');
+                placeholder.style.cssText = 'display:block;height:0;margin:0;padding:0;border:0;overflow:hidden;';
+                home.insertBefore(placeholder, wrapper);
 
-                // This function ensures the placeholder has the same height as the toolbar.
-                const updateHeight = () => {
-                    requestAnimationFrame(() => {
-                        placeholder.style.height = `${mobileToolbarWrapper.offsetHeight}px`;
-                    });
+                let parked = false;
+
+                const release = () => {
+                    if (!parked) return;
+                    home.insertBefore(wrapper, placeholder.nextSibling);
+                    toolbar.classList.remove('is-sticky');
+                    placeholder.style.height = '0px';
+                    parked = false;
                 };
 
-                // This is the main logic that runs when the user scrolls.
-                const handleScroll = () => {
-                    const toolbar = mobileToolbarWrapper.querySelector('.mobile-toolbar');
-                    if (!toolbar) return;
+                const stick = () => {
+                    if (parked) return;
+                    // Measure before leaving the flow. The card's backdrop-filter
+                    // would otherwise trap position:fixed and scroll the bar away.
+                    placeholder.style.height = wrapper.offsetHeight + 'px';
+                    document.body.appendChild(wrapper);
+                    toolbar.classList.add('is-sticky');
+                    parked = true;
+                };
 
-                    // If we are on a desktop-sized screen, disable the sticky feature.
+                const handleScroll = () => {
                     if (window.innerWidth > 767) {
-                        toolbar.classList.remove('is-sticky');
-                        placeholder.style.display = 'none'; // Hide the placeholder
+                        release();
                         return;
                     }
-
-                    // On mobile, ensure the placeholder is visible.
-                    placeholder.style.display = 'block';
-
-                    // Check if the placeholder has scrolled off the top of the screen.
-                    const shouldBeSticky = placeholder.getBoundingClientRect().top < 0;
-
-                    // Add or remove the 'is-sticky' class from the toolbar based on the scroll position.
-                    toolbar.classList.toggle('is-sticky', shouldBeSticky);
+                    const anchor = parked ? placeholder : wrapper;
+                    if (anchor.getBoundingClientRect().top < 0) stick();
+                    else release();
                 };
 
-                // Attach the event listeners.
                 window.addEventListener('scroll', handleScroll, { passive: true });
-                window.addEventListener('resize', () => { updateHeight(); handleScroll(); }, { passive: true });
-
-                // Set the initial height.
-                updateHeight();
+                document.addEventListener('scroll', handleScroll, { passive: true });
+                window.addEventListener('resize', handleScroll, { passive: true });
+                handleScroll();
             },
 
             _initStickyObserver() {

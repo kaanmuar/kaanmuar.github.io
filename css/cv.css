@@ -348,17 +348,17 @@
                 backdrop-filter: var(--frost-blur);
                 transition: background-color 0.28s ease, box-shadow 0.28s ease;
             }
-            .mobile-toolbar-wrapper .mobile-toolbar.is-sticky {
+            .mobile-toolbar.is-sticky {
                 position: fixed;
                 top: 0.5rem;
                 left: 0.5rem;
                 right: 0.5rem;
                 width: auto;
-                z-index: 100;
-                background-color: var(--frost);
-                -webkit-backdrop-filter: var(--frost-blur);
-                backdrop-filter: var(--frost-blur);
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+                z-index: 200;
+                background-color: color-mix(in srgb, var(--bg-secondary) 42%, transparent);
+                -webkit-backdrop-filter: blur(var(--look-blur, 28px)) saturate(1.5);
+                backdrop-filter: blur(var(--look-blur, 28px)) saturate(1.5);
+                box-shadow: 0 8px 24px rgba(18, 24, 31, 0.12);
                 padding: 0.5rem;
             }
             .mobile-toolbar-wrapper .mobile-toolbar button,
@@ -1119,18 +1119,33 @@
                 backdrop-filter: var(--frost-blur);
                 transition: background-color 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease, border-radius 0.28s ease, padding 0.28s ease, margin 0.28s ease, top 0.28s ease;
             }
+            #page-header-controls {
+                flex-wrap: nowrap;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            #page-header-controls > .hidden.md\:flex {
+                flex-wrap: nowrap;
+                flex-shrink: 0;
+            }
+            #summary-heading {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
             body.header-is-stuck #page-header-controls,
             .dark-mode body.header-is-stuck #page-header-controls {
-                top: 1rem;
-                margin-left: 1rem;
-                margin-right: 1rem;
+                top: 0.65rem;
+                margin-left: 0;
+                margin-right: 0;
                 border-radius: 0.75rem;
                 border: 1px solid var(--border-color);
-                background-color: var(--frost);
-                -webkit-backdrop-filter: var(--frost-blur);
-                backdrop-filter: var(--frost-blur);
-                box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.1);
-                padding: 0.5rem 1.5rem;
+                background-color: color-mix(in srgb, var(--bg-secondary) 42%, transparent);
+                -webkit-backdrop-filter: blur(var(--look-blur, 28px)) saturate(1.5);
+                backdrop-filter: blur(var(--look-blur, 28px)) saturate(1.5);
+                box-shadow: 0 8px 24px rgba(18, 24, 31, 0.1);
+                padding: 0.4rem 0.75rem;
             }
 
             /* 1. Base style for ALL dropdowns (desktop and mobile) */
@@ -1179,20 +1194,27 @@
                 border-radius: 16px;
                 row-gap: 4px;
             }
-            .mobile-toolbar-wrapper .mobile-toolbar.is-sticky {
+            .mobile-toolbar.is-sticky,
+            body > .mobile-toolbar-wrapper .mobile-toolbar.is-sticky {
                 position: fixed;
                 top: 0.5rem;
                 left: 0.5rem;
                 right: 0.5rem;
                 width: auto;
-                z-index: 100;
-                background-color: var(--frost);
-                -webkit-backdrop-filter: var(--frost-blur);
-                backdrop-filter: var(--frost-blur);
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+                z-index: 200;
+                background-color: color-mix(in srgb, var(--bg-secondary) 42%, transparent);
+                -webkit-backdrop-filter: blur(var(--look-blur, 28px)) saturate(1.5);
+                backdrop-filter: blur(var(--look-blur, 28px)) saturate(1.5);
+                box-shadow: 0 8px 24px rgba(18, 24, 31, 0.12);
                 padding: 0.5rem;
                 border-radius: 16px;
-                border: 1px solid var(--border-color);
+                border: 1px solid color-mix(in srgb, white 55%, var(--border-color));
+            }
+            body > .mobile-toolbar-wrapper {
+                height: 0;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
             }
             /* This new rule fixes the mobile icon alignment */
             .mobile-toolbar > * {
@@ -1350,22 +1372,106 @@
 
         #tour-start-btn,
         #tour-start-btn-mobile {
+            position: relative;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            background-color: var(--bg-primary);
-            color: var(--cyan-brand);
-            border: 1px solid var(--cyan-brand);
-            animation: subtle-glow 3s infinite ease-in-out;
-            transition: background-color 0.2s;
-            height: 34px;
+            height: 36px;
+            padding: 0 14px 0 36px;
+            border: 0;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #b7f3f1 0%, #3ec4c8 34%, #14939b 100%);
+            color: #f7fffe;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            flex-shrink: 0;
+            overflow: visible;
+            z-index: 1;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.82),
+                inset 0 -1px 0 rgba(8, 70, 76, 0.22),
+                0 8px 16px rgba(13, 110, 118, 0.28);
+            animation: tour-arrive 1.15s ease-out 1;
+            transition: transform 0.28s cubic-bezier(.2, .8, .2, 1), filter 0.2s ease;
         }
-
+        #tour-start-btn { margin-left: 12px; }
+        #tour-start-btn::before,
+        #tour-start-btn-mobile::before {
+            content: "";
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            width: 26px;
+            height: 26px;
+            margin-top: -13px;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #ffffff 0%, #e7f8f7 100%);
+            box-shadow: 0 1px 2px rgba(8, 60, 66, 0.22), inset 0 1px 0 #fff;
+        }
+        #tour-start-btn::after,
+        #tour-start-btn-mobile::after {
+            content: "";
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            margin-top: -5px;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 5px 0 5px 8px;
+            border-color: transparent transparent transparent #0d6e76;
+        }
         #tour-start-btn:hover,
-        #tour-start-btn-mobile:hover { background-color: var(--accent-soft); }
-        .dark-mode #tour-start-btn:hover,
-        .dark-mode #tour-start-btn-mobile:hover { background-color: var(--accent-soft); }
+        #tour-start-btn-mobile:hover {
+            background: linear-gradient(180deg, #d7fffd 0%, #67d7da 36%, #1aa3ab 100%);
+            color: #f7fffe;
+            transform: scale(1.045);
+            filter: brightness(1.06);
+        }
+        #tour-start-btn:focus-visible,
+        #tour-start-btn-mobile:focus-visible {
+            outline: 2px solid #7fd3d6;
+            outline-offset: 3px;
+        }
+        #page-header-controls .tool-btn,
+        .mobile-toolbar .tool-btn {
+            position: relative;
+            isolation: isolate;
+            border-radius: 14px;
+            transition: transform 0.28s cubic-bezier(.2, .8, .2, 1);
+        }
+        #page-header-controls .tool-btn::before,
+        .mobile-toolbar .tool-btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 28px;
+            height: 28px;
+            margin-left: -14px;
+            border-radius: 50%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(183, 243, 241, 0.72) 48%, rgba(20, 147, 155, 0.28) 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 10px rgba(13, 110, 118, 0.18);
+            z-index: -1;
+            pointer-events: none;
+        }
+        #page-header-controls .tool-btn:hover,
+        .mobile-toolbar .tool-btn:hover,
+        #page-header-controls .tool-btn:focus-visible,
+        .mobile-toolbar .tool-btn:focus-visible {
+            transform: scale(1.06);
+        }
+        @keyframes tour-arrive {
+            0% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 0 0 0 rgba(126, 224, 226, 0.55); }
+            100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 0 0 12px rgba(126, 224, 226, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #tour-start-btn, #tour-start-btn-mobile,
+            #page-header-controls .tool-btn, .mobile-toolbar .tool-btn { animation: none; transition: none; }
+            #tour-start-btn:hover, #tour-start-btn-mobile:hover,
+            #page-header-controls .tool-btn:hover, .mobile-toolbar .tool-btn:hover { transform: none; filter: none; }
+        }
 
         #tour-overlay {
             display: none;
