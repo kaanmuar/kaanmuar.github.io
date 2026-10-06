@@ -344,10 +344,9 @@
         'RockStar Coders Agency': 'https://www.rockstarcoders.com',
         'Globant': 'https://www.globant.com',
         'Genius Sports': 'https://www.geniussports.com',
-        'Zagalabs': 'https://zagalabs.com',
+        'Zagalabs': 'https://zaga.co',
         'The Collective Intelligence Group': 'https://thecollectiveintelligencegroup.com',
-        'Bitgray': 'https://bitgray.co',
-        'Prodigious LATAM (Razorfish)': 'https://www.prodigious.com',
+        'Prodigious LATAM (Razorfish)': 'https://publicisproduction.com',
         'Advantech': 'https://www.advantech.com',
         'Intel Corporation': 'https://www.intel.com',
         'Belcorp': 'https://www.belcorp.com',
@@ -973,6 +972,14 @@
                 }[ch]));
             },
 
+            _companyMarkup(exp) {
+                const name = exp.company || '';
+                const href = PRINT_COMPANIES[name];
+                const inner = `<img src="${this._esc(exp.logo)}" class="company-logo" alt="" onerror="this.style.display='none'"><span>${this._esc(name)}</span>`;
+                if (!href) return `<span class="company-name">${inner}</span>`;
+                return `<a class="company-link" href="${this._esc(href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+            },
+
             _createExperienceEntry(exp, index) {
                 const bodyId = `experience-body-${index}`;
                 const headerId = `experience-header-${index}`;
@@ -985,15 +992,13 @@
                 }).join('');
                 return `
                     <div class="experience-item text-sm py-2 animate-on-scroll" data-tech='${JSON.stringify(exp.techUsed)}' id="experience-${index}">
-                        <div class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                            <button class="accordion-header w-full flex justify-between items-center" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}">
-                                <div class="flex-grow text-left">
-                                    <h4 class="text-base font-bold" data-translate-key="exp_${index}_title">${this._esc(title)}</h4>
-                                    <p class="text-sm italic flex items-center"><img src="${this._esc(exp.logo)}" class="company-logo" alt="${this._esc(exp.company)} Logo" onerror="this.style.display='none'">${this._esc(exp.company)}</p>
-                                </div>
-                                <p class="text-xs mr-4" data-raw-date="${this._esc(exp.dates)}">${this._esc(exp.dates)}</p>
-                                <svg class="accordion-icon w-5 h-5 transform transition-transform" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <div class="experience-heading p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                            <button class="accordion-header w-full flex justify-between items-start gap-2" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}" data-company="${this._esc(exp.company)}">
+                                <h4 class="text-base font-bold flex-grow text-left min-w-0" data-translate-key="exp_${index}_title">${this._esc(title)}</h4>
+                                <p class="text-xs whitespace-nowrap flex-shrink-0" data-raw-date="${this._esc(exp.dates)}">${this._esc(exp.dates)}</p>
+                                <svg class="accordion-icon w-5 h-5 flex-shrink-0 transform transition-transform" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
+                            <p class="text-sm italic company-line">${this._companyMarkup(exp)}</p>
                         </div>
                         <p class="experience-summary" data-translate-key="exp_${index}_summary">${this._esc((exp.details.en && exp.details.en[0] ? exp.details.en[0] : title).substring(0, 100))}...</p>
                         <div class="experience-body mt-2" id="${bodyId}" role="region" aria-labelledby="${headerId}">
@@ -1333,12 +1338,15 @@
                     }).join('');
                     content += `
                         <div class="timeline-item block p-2 rounded-md" data-tech='${JSON.stringify(exp.techUsed)}' id="timeline-exp-${index}">
-                            <div class="tooltip w-full" data-company-name="${exp.company}">
+                            <div class="tooltip w-full" data-company-name="${this._esc(exp.company)}">
                                 <a href="#experience-${index}" class="hover:bg-gray-100 dark:hover:bg-gray-700 block p-1 rounded-md">
                                     <p class="font-bold text-sm" data-translate-key="exp_${index}_title">${this._esc(typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || ''))}</p>
-                                    <div class="flex items-center gap-2 text-xs"><img src="${this._esc(exp.logo)}" class="company-logo" alt="${this._esc(exp.company)} Logo" onerror="this.style.display='none'"><span>${this._esc(exp.company)}</span><span class="text-gray-400" data-raw-date="${this._esc(exp.dates)}" data-date-prefix="| ">| ${this._esc(exp.dates)}</span></div>
-                                    <div class="timeline-tech-icons">${techIcons}</div>
                                 </a>
+                                <div class="flex items-center gap-2 text-xs px-1 pb-1">
+                                    ${this._companyMarkup(exp)}
+                                    <span class="text-gray-400" data-raw-date="${this._esc(exp.dates)}" data-date-prefix="| ">| ${this._esc(exp.dates)}</span>
+                                </div>
+                                <div class="timeline-tech-icons">${techIcons}</div>
                                 <span class="tooltiptext" data-translate-key="tooltip_timeline"></span>
                             </div>
                         </div>
@@ -1893,7 +1901,7 @@
                         }
 
                         const timelineItem = target.closest('.timeline-item');
-                        if (timelineItem) {
+                        if (timelineItem && !target.closest('.company-link')) {
                             this._trackEvent('timeline_click', 'Engagement', timelineItem.id || timelineItem.textContent.trim().slice(0, 80));
                             const link = timelineItem.querySelector('a[href^="#experience-"]');
                             const targetId = link && link.getAttribute('href').slice(1);
@@ -2037,7 +2045,7 @@
                     // NEW: Track event only when expanding
                     if (!isExpanded) {
                         const jobTitle = button.querySelector('h4')?.textContent || 'Unknown Title';
-                        const company = button.querySelector('p.italic')?.textContent || 'Unknown Company';
+                        const company = button.getAttribute('data-company') || 'Unknown Company';
                         this._trackEvent('expand_experience', 'Engagement', `${jobTitle} at ${company}`);
                     }
                 } else if (toolkitItem) {
