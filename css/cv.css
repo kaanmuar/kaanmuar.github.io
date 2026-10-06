@@ -168,6 +168,13 @@
         .company-logo { width: 14px; height: 14px; margin-right: 6px; border-radius: 3px; flex-shrink: 0; }
         .experience-body, #summary-details, .toolkit-body { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
         .accordion-header { border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+        .experience-heading .accordion-header { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; align-items: flex-start; }
+        .experience-heading .accordion-header h4 { min-width: 0; }
+        .company-line { margin: 0.15rem 0 0; }
+        .company-name, .company-link { display: inline-flex; align-items: center; max-width: 100%; }
+        .company-link { color: var(--accent, var(--cyan-brand)); text-decoration: underline; text-underline-offset: 2px; }
+        .company-link:hover { filter: brightness(1.12); }
+        .timeline-item .tooltip { flex-direction: column; align-items: stretch; width: 100%; }
         .tooltip { position: relative; display: inline-flex; }
         .tooltip .tooltiptext, .info-bubble { visibility: hidden; background-color: var(--frost); color: var(--text-primary); text-align: center; border-radius: 6px; padding: 5px 10px; position: absolute; z-index: 10; opacity: 1; pointer-events: none; border: 1px solid var(--border-color); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); transition: transform 0.2s ease, visibility 0.2s; white-space: nowrap; font-size: 12px; }
         .tooltip .tooltiptext { bottom: 125%; left: 50%; transform: translateX(-50%) translateY(4px); width: max-content; }
