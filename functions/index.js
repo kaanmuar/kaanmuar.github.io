@@ -533,7 +533,8 @@ const ACTION_LABELS = {
   sim_run_sprint: "Sprint start",
   sim_sprint_complete: "Sprint finish",
   site_tour_start: "Tour",
-  open_clip: "Clip"
+  open_clip: "Clip",
+  company_site: "Company site"
 };
 
 const EXPORT_LABELS = {
@@ -547,7 +548,7 @@ function actionTitle(row) {
   const raw = String(row.name || "click").slice(0, 40);
   const title = ACTION_LABELS[raw] || raw;
   const detail = String(row.label || "").trim().slice(0, 40);
-  if ((raw === "site_tour_start" || raw === "open_clip") && detail && detail !== "start") {
+  if ((raw === "site_tour_start" || raw === "open_clip" || raw === "company_site") && detail && detail !== "start") {
     return title + " (" + detail + ")";
   }
   return title;

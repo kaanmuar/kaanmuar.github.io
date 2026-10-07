@@ -310,6 +310,10 @@ FN-37 A short or invalid note keeps Send disabled
     [Tags]    FN-37
     FN-37    index.html    ${FALSE}
 
+FN-38 Company names open their sites and leave the job closed
+    [Tags]    FN-38
+    FN-38    index.html    ${FALSE}
+
 STU-08 Linear renames the columns and keeps the Sprint 24 story
     [Tags]    STU-08
     STU-08    simulador.html    ${FALSE}
