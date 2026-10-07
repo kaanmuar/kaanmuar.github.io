@@ -74,6 +74,7 @@
   {"id":"FN-35","layer":"Functional","title":"Every language shows its own summary title","path":"index.html","phone":false},
   {"id":"FN-36","layer":"Functional","title":"Profile photo is a dialog and Escape closes it","path":"index.html","phone":false},
   {"id":"FN-37","layer":"Functional","title":"A short or invalid note keeps Send disabled","path":"index.html","phone":false},
+  {"id":"FN-38","layer":"Functional","title":"Company names open their sites and leave the job closed","path":"index.html","phone":false},
   {"id":"STU-08","layer":"Studio","title":"Linear renames the columns and keeps the Sprint 24 story","path":"simulador.html","phone":false},
   {"id":"STU-09","layer":"Studio","title":"Backlog hides Sprint 24 and shows CV-410","path":"simulador.html","phone":false}
 ]

@@ -27,7 +27,8 @@
         sim_run_sprint: 'click',
         sim_sprint_complete: 'click',
         site_tour_start: 'click',
-        open_clip: 'click'
+        open_clip: 'click',
+        company_site: 'click'
     };
 
     function ready() {

@@ -88,7 +88,7 @@
             page_location: window.location.href
         });
     </script>
-    <script src="js/site-analytics.js?v=20261002a"></script>
+    <script src="js/site-analytics.js?v=20261006f"></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
@@ -1243,6 +1243,26 @@ const PROGRAM = [
         attachments: [],
         findings: 'The first seal was a separate object. The page is frosted glass.',
         tests: []
+    },
+    {
+        key: 'CV-452', rehearse: false, type: 'Story', epic: 'Interactive CV', column: 'Done',
+        summary: 'Link each company in professional experience to its live site',
+        priority: 'High', points: 2, assignee: 'DA', assigneeName: 'Dana Alves', reporter: 'Carlos Muñoz',
+        labels: ['cv', 'seo'], components: ['Public CV', 'QA lab'],
+        env: 'production · carlosandmunoz.com', sprint: 'Sprint 24', fixVersion: '2026.10', due: '6 Oct',
+        subtasks: ['Experience and timeline links', 'Print and export use the same sites', 'FN-38 in the lab catalog'],
+        description: 'Recruiters reading professional experience can open the company site. Zagalabs goes to zaga.co and Prodigious LATAM goes to publicisproduction.com. Bitgray, MCHC Consultance Inc., and S&G Consultance Ltd. stay as names. The sitemap stays a list of this site’s pages.',
+        ac: 'A company with a live site opens in a new tab and does not expand the job.',
+        proposedAc: 'Scenario: Team International opens its site\n  Given the first role\n  Then the company link is https://www.teaminternational.com\n  And the job stays closed\nScenario: Three names have no site\n  Then Bitgray, MCHC Consultance Inc., and S&G Consultance Ltd. are not links\nScenario: The sitemap is not a company directory\n  Then sitemap.xml does not list zaga.co or globant.com',
+        comments: [
+            { who: 'Carlos Muñoz · PO', when: '6 Oct 13:35', text: 'When a recruiter checks professional experience, they should be able to open the company site.' },
+            { who: 'Dana Alves · Dev', when: '6 Oct 18:48', text: 'Moved To Do → In Progress → Ready for QA → Done. Zaga and Publicis Production are the live destinations. FN-38 covers the page, the structured data, and the sitemap.' },
+            { who: 'Samira Haddad · QA', when: '6 Oct 19:20', text: 'FN-38 is in the lab catalog, Playwright, Cypress, and Robot. The sitemap still lists only our pages.' }
+        ],
+        links: ['FN-38 Company sites'],
+        attachments: [],
+        findings: 'The page Google already crawls carries the employers. A sitemap of company hosts would send search to those companies.',
+        tests: [{ id: 'FN-38', title: 'Company names open their sites and leave the job closed' }]
     }
 ];
 TICKETS.push(...PROGRAM);

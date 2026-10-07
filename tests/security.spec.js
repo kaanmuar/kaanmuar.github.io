@@ -23,6 +23,8 @@ test.describe('Security and SEO', () => {
         expect(xml).toContain('qa-lab.html?lang=es');
         expect(xml).toContain('qa-lab.html?lang=it');
         expect(xml).not.toContain('admin.html');
+        expect(xml).not.toContain('globant.com');
+        expect(xml).not.toContain('zaga.co');
   });
 
   test('admin is noindex', async ({ page }) => {
@@ -43,6 +45,9 @@ test.describe('Security and SEO', () => {
     const jsonLd = await page.locator('#person-structured-data').textContent();
     expect(jsonLd).toContain('Carlos');
     expect(jsonLd).toMatch(/18 (years|años)/i);
+    expect(jsonLd).toContain('https://www.teaminternational.com');
+    expect(jsonLd).toContain('https://zaga.co');
+    expect(jsonLd).toContain('https://publicisproduction.com');
     const competenciesLd = await page.locator('#competencies-structured-data').textContent();
     expect(competenciesLd).toContain('IT Project Management');
     expect(competenciesLd).toContain('DefinedTerm');

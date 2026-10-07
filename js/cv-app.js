@@ -1900,6 +1900,11 @@
                             this._handleLanguageChange(langOption.dataset.lang, !!target.closest('#language-options-mobile'));
                         }
 
+                        const companyLink = target.closest('.company-link');
+                        if (companyLink) {
+                            this._trackEvent('company_site', 'Engagement', companyLink.textContent.trim().slice(0, 80));
+                        }
+
                         const timelineItem = target.closest('.timeline-item');
                         if (timelineItem && !target.closest('.company-link')) {
                             this._trackEvent('timeline_click', 'Engagement', timelineItem.id || timelineItem.textContent.trim().slice(0, 80));
