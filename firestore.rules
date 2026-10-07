@@ -101,7 +101,7 @@ service cloud.firestore {
           || (request.resource.data.kind == 'click' && request.resource.data.name in [
             'share_cv', 'open_simulator', 'open_qa_lab', 'open_contact_widget',
             'submit_message', 'submit_rating', 'sim_run_sprint', 'sim_sprint_complete',
-            'site_tour_start', 'open_clip'
+            'site_tour_start', 'open_clip', 'company_site'
           ])
         )
         && request.resource.data.label is string

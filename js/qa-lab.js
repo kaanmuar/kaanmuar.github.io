@@ -1408,10 +1408,10 @@
       title: 'Sprint board holds the PayStream rehearsal and the Interactive CV delivery',
       where: 'simulador.html TICKETS',
       when: 'Static parse of the studio script.',
-      how: 'PAY-241 through PAY-264 stay on the board, with CV-301, CV-321, CV-352, CV-380, and the trademark story CV-442, its bug CV-448, and cases XT-1701, XT-1702, and XT-1703.',
+        how: 'PAY-241 through PAY-264 stay on the board, with CV-301, CV-321, CV-352, CV-380, the trademark story CV-442, its bug CV-448, the company-site story CV-452, and cases XT-1701, XT-1702, and XT-1703.',
       async run() {
         const html = await fetchText('simulador.html');
-        ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264', 'CV-301', 'CV-321', 'CV-352', 'CV-380', 'CV-442', 'CV-448', 'XT-1701', 'XT-1702', 'XT-1703'].forEach((key) => {
+        ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264', 'CV-301', 'CV-321', 'CV-352', 'CV-380', 'CV-442', 'CV-448', 'CV-452', 'XT-1701', 'XT-1702', 'XT-1703'].forEach((key) => {
           assert(html.includes("key: '" + key + "'"), key + ' missing');
         });
         assert(html.includes('data-view="flow"'), 'sprint analytics missing');
@@ -1610,6 +1610,38 @@
       }
     },
     {
+      id: 'FN-38', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Company names open their sites and leave the job closed',
+      where: '.company-link, .company-name, #person-structured-data, sitemap.xml',
+      when: 'The CV has rendered professional experience.',
+      how: 'Team International, Zagalabs, and Prodigious open the live sites in a new tab. The click does not expand the job. Bitgray, MCHC, and S&G stay plain text. The sitemap lists no company host.',
+      async run({ cv }) {
+        const doc = cv.document;
+        const team = doc.querySelector('#experience-0 .company-link');
+        assert(team && team.getAttribute('href') === 'https://www.teaminternational.com', 'current company link');
+        assert(team.getAttribute('target') === '_blank' && /noopener/.test(team.getAttribute('rel') || ''), 'company link is not a new tab');
+        const header = doc.getElementById('experience-header-0');
+        const before = header.getAttribute('aria-expanded');
+        team.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        assert(header.getAttribute('aria-expanded') === before, 'company click toggled the job');
+        const hrefOf = (needle) => {
+          const link = [...doc.querySelectorAll('.company-link')].find((a) => a.textContent.includes(needle));
+          return link && link.getAttribute('href');
+        };
+        assert(hrefOf('Zagalabs') === 'https://zaga.co', 'Zagalabs site');
+        assert(hrefOf('Prodigious') === 'https://publicisproduction.com', 'Prodigious site');
+        ['Bitgray', 'MCHC Consultance Inc.', 'S&G Consultance Ltd.'].forEach((name) => {
+          assert([...doc.querySelectorAll('.company-name')].some((node) => node.textContent.includes(name)), name + ' should stay plain');
+        });
+        const data = JSON.parse(doc.getElementById('person-structured-data').textContent);
+        assert(data.worksFor && data.worksFor.url === 'https://www.teaminternational.com', 'worksFor');
+        assert(data.affiliation.some((org) => org.url === 'https://zaga.co'), 'Zaga missing from structured data');
+        const xml = await fetchText('sitemap.xml');
+        assert(xml.indexOf('zaga.co') === -1 && xml.indexOf('globant.com') === -1, 'sitemap listed a company');
+        return '11 company sites; 3 names stay plain';
+      }
+    },
+    {
       id: 'STU-08', layer: 'Studio', fw: ['Playwright', 'Cypress'],
       title: 'Linear renames the columns and keeps the Sprint 24 story',
       where: 'simulador.html [data-board-view=linear]',
@@ -1673,7 +1705,7 @@
     'STU-01': 630, 'STU-02': 643, 'STU-03': 658,
     'MOB-01': 500, 'MOB-02': 518, 'MOB-03': 532, 'MOB-04': 553, 'MOB-05': 570, 'MOB-06': 588,
     'PERF-01': 1437, 'PERF-02': 1447, 'PERF-03': 1457, 'PERF-04': 1467,
-    'SMK-03': 1479, 'SEC-09': 1512, 'FN-35': 1540, 'FN-36': 1557, 'FN-37': 1577, 'STU-08': 1613, 'STU-09': 1635
+    'SMK-03': 1479, 'SEC-09': 1512, 'FN-35': 1540, 'FN-36': 1557, 'FN-37': 1577, 'FN-38': 1613, 'STU-08': 1645, 'STU-09': 1667
   };
   const SRC = {
     'SMK-01': { Playwright: ['tests/smoke.spec.js', 5] },
@@ -1735,8 +1767,9 @@
     'FN-35': { Playwright: ['tests/cv.spec.js', 150], Cypress: ['cypress/e2e/cv_spec.cy.js', 168], Robot: ['tests/robot/catalog.robot', 301] },
     'FN-36': { Playwright: ['tests/cv.spec.js', 177], Cypress: ['cypress/e2e/cv_spec.cy.js', 194] },
     'FN-37': { Playwright: ['tests/cv.spec.js', 187], Cypress: ['cypress/e2e/cv_spec.cy.js', 202] },
+    'FN-38': { Playwright: ['tests/cv.spec.js', 206], Cypress: ['cypress/e2e/cv_spec.cy.js', 220], Robot: ['tests/robot/catalog.robot', 313] },
     'STU-08': { Playwright: ['tests/simulator.spec.js', 60], Cypress: ['cypress/e2e/simulator_spec.cy.js', 52] },
-    'STU-09': { Playwright: ['tests/simulator.spec.js', 68], Cypress: ['cypress/e2e/simulator_spec.cy.js', 62], Robot: ['tests/robot/catalog.robot', 317] }
+    'STU-09': { Playwright: ['tests/simulator.spec.js', 68], Cypress: ['cypress/e2e/simulator_spec.cy.js', 62], Robot: ['tests/robot/catalog.robot', 321] }
   };
 
   function blob(path, line) {

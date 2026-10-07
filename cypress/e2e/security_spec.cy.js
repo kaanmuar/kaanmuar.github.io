@@ -16,6 +16,8 @@ describe('Security and SEO', () => {
       expect(xml).to.include('qa-lab.html');
       expect(xml).to.include('qa-lab.html?lang=es');
       expect(xml).not.to.include('admin.html');
+      expect(xml).not.to.include('globant.com');
+      expect(xml).not.to.include('zaga.co');
     });
   });
 
@@ -29,7 +31,7 @@ describe('Security and SEO', () => {
     cy.get('meta[name="robots"]').should('have.attr', 'content').and('match', /index/i);
     cy.get('link[rel="canonical"]').should('have.attr', 'href').and('include', 'carlosandmunoz.com');
     cy.get('#site-structured-data').invoke('text').should('include', 'featureList').and('include', 'QA regression lab');
-    cy.get('#person-structured-data').invoke('text').should('include', 'Carlos').and('match', /18 (years|años)/i);
+    cy.get('#person-structured-data').invoke('text').should('include', 'Carlos').and('match', /18 (years|años)/i).and('include', 'https://zaga.co').and('include', 'https://publicisproduction.com');
     cy.get('#competencies-structured-data').invoke('text').should('include', 'DefinedTerm').and('include', 'topic=pm');
     cy.get('meta[name="keywords"]').should('have.attr', 'content').and('include', 'IT Project Management');
   });
