@@ -957,6 +957,57 @@
       assert(host.textContent.indexOf('CV-410') !== -1, 'CV-410 missing from Backlog');
       assert(host.textContent.indexOf('PAY-241') === -1, 'Sprint 24 story stayed on Backlog');
       return 'Backlog only · CV-410';
+    },
+    'FN-39': async function () {
+      var seals = [].slice.call(document.querySelectorAll('[data-trademark] .trademark-seal')).map(function (el) { return (el.textContent || '').trim(); });
+      assert(seals.length >= 2, 'trademark seals missing');
+      assert(seals.every(function (text) { return text === 'CAM'; }), 'seals read ' + seals.join(', '));
+      var named = document.querySelector('[data-trademark][aria-label]');
+      assert(named && named.getAttribute('aria-label') === 'Trademark, CAM', 'portrait seal name');
+      return seals.length + ' seals read CAM';
+    },
+    'FN-40': async function () {
+      var known = ['golden', 'material', 'youtube', 'instagram', 'facebook', 'x', 'whatsapp', 'linkedin', 'tiktok', 'netflix'];
+      var look = document.documentElement.getAttribute('data-look') || '';
+      assert(known.indexOf(look) !== -1, 'unknown look ' + look);
+      var expected = 'golden';
+      try {
+        var saved = JSON.parse(localStorage.getItem('site-look') || 'null');
+        if (saved && known.indexOf(saved.id) !== -1) expected = saved.id;
+      } catch (err) { /* a broken value falls back to Golden Gate */ }
+      assert(look === expected, look + ' was on the page, ' + expected + ' was stored');
+      return look;
+    },
+    'FN-41': async function () {
+      var link = document.getElementById('cv-pdf-link');
+      assert(link, 'footer PDF link missing');
+      assert(link.getAttribute('href') === '/?download=pdf', 'href ' + link.getAttribute('href'));
+      return link.getAttribute('href');
+    },
+    'FN-42': async function () {
+      var names = [].slice.call(document.querySelectorAll('#fw-picker input')).map(function (el) { return el.value; });
+      ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'Appium', 'JMeter', 'Gatling'].forEach(function (name) {
+        assert(names.indexOf(name) !== -1, name + ' missing from the lab');
+      });
+      return names.length + ' runners';
+    },
+    'PERF-05': async function () {
+      return withinBudget('/favicon.svg', 'Carlos Muñoz CV');
+    },
+    'PERF-06': async function () {
+      var layout = await withinBudget('/css/cv.css', '.trademark');
+      var look = await withinBudget('/css/site-look.css', 'html[data-look]');
+      return layout + ' · ' + look;
+    },
+    'PERF-07': async function () {
+      var robots = await withinBudget('/robots.txt', 'User-agent');
+      var map = await withinBudget('/sitemap.xml', 'carlosandmunoz.com');
+      return robots + ' · ' + map;
+    },
+    'PERF-08': async function () {
+      var lab = await withinBudget('/js/qa-lab.js', 'Run with');
+      var look = await withinBudget('/js/site-look.js', 'Golden Gate');
+      return lab + ' · ' + look;
     }
   };
 

@@ -1,5 +1,6 @@
 const http = require('http');
 const fs = require('fs');
+const net = require('net');
 const path = require('path');
 
 const root = path.join(__dirname, '..');
@@ -30,8 +31,25 @@ function localBase(port) {
   return { base: url.origin, hostname: url.hostname, port: Number(url.port || port) };
 }
 
+function portOpen(port) {
+  return new Promise((resolve) => {
+    const socket = net.connect({ port, host: '127.0.0.1' }, () => {
+      socket.end();
+      resolve(true);
+    });
+    socket.on('error', () => resolve(false));
+  });
+}
+
 function startLoadServer(port) {
   const target = localBase(port);
+  return portOpen(target.port).then((open) => {
+    if (open) return { server: { close() {} }, base: target.base, port: target.port, reused: true };
+    return listenLoadServer(target);
+  });
+}
+
+function listenLoadServer(target) {
   const server = http.createServer((req, res) => {
     let rel = '/';
     try {
@@ -61,7 +79,7 @@ function startLoadServer(port) {
   });
   return new Promise((resolve, reject) => {
     server.once('error', reject);
-    server.listen(target.port, '127.0.0.1', () => resolve({ server, base: target.base, port: target.port }));
+    server.listen(target.port, '127.0.0.1', () => resolve({ server, base: target.base, port: target.port, reused: false }));
   });
 }
 

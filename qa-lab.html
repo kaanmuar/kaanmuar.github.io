@@ -432,6 +432,16 @@
         .runner-appium .ok { color: #3dd68c; }
         .runner-appium .fail { color: #ff6b6b; }
         .runner-appium .run { color: #ffd166; }
+        .runner-jmeter { background: #1c1214; color: #f3e6e4; }
+        .runner-jmeter b { color: #ff8a80; }
+        .runner-jmeter .ok { color: #8fd0a8; }
+        .runner-jmeter .fail { color: #ff8a80; }
+        .runner-jmeter .run { color: #ffd166; }
+        .runner-gatling { background: #16120e; color: #f4efe8; }
+        .runner-gatling b { color: #ffb074; }
+        .runner-gatling .ok { color: #8fd0a8; }
+        .runner-gatling .fail { color: #ff8a80; }
+        .runner-gatling .run { color: #ffd166; }
         .lang-wrap { position: relative; }
         .lang-toggle { background: none; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; cursor: pointer; display: inline-flex; }
         .lang-toggle img { width: 20px; height: 20px; border-radius: 50%; display: block; }
@@ -487,7 +497,7 @@
 <header class="topbar">
     <div class="brand">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#0d6e76"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="2"/></svg>
-        <div>CV regression lab<small>Playwright · Cypress · Robot · Selenium · WebdriverIO · Appium</small></div>
+        <div>CV regression lab<small>Playwright · Cypress · Robot · Selenium · WebdriverIO · Appium · JMeter · Gatling</small></div>
     </div>
     <div class="actions">
         <a class="btn btn-ghost" id="homeBtn" href="index.html">← CV</a>
@@ -538,7 +548,7 @@
 </div>
 <section class="intro">
     <h1>The suite I run on this CV</h1>
-    <p>The catalog runs in the browser you already have open, on a Mac, a Windows PC, or a phone. Chrome, Firefox, Edge, and Safari stay in the list even when those programs are not installed. Before a run, choose the browsers and the screen size. Playwright, Cypress, Robot, Selenium, WebdriverIO, and Appium each run as their own process when <code>npm run lab:runners</code> is up, and those processes bring their own browsers. A result from one is not copied into the others. The same catalog checks every language, the message form, the photo dialog, the Linear board, the Backlog sprint, and the four clip pages. Performance rows time the CV, the lab, the studio, and their main assets. <code>npm run test:k6</code>, <code>npm run test:jmeter</code>, and <code>npm run test:gatling</code> load those same pages on the local server.</p>
+    <p>The catalog runs in the browser you already have open, on a Mac, a Windows PC, or a phone. Chrome, Firefox, Edge, and Safari stay in the list even when those programs are not installed. Before a run, choose the browsers and the screen size. Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, and Gatling each run as their own process at the same time when <code>npm run lab:runners</code> is up. The browser runners bring their own browsers. JMeter and Gatling load the same pages with 8 virtual users for 20 seconds. A result from one is not copied into the others. The same catalog checks every language, the message form, the photo dialog, the Linear board, the Backlog sprint, and the four clip pages. Performance rows time the CV, the lab, the studio, and their main assets. <code>npm run test:k6</code>, <code>npm run test:jmeter</code>, and <code>npm run test:gatling</code> load those same pages on the local server.</p>
     <p class="clip-links"><a href="media/qa-lab-running.html">Watch a full catalog run</a> · <a href="media/qa-lab-tour.html">Watch the tour</a></p>
 </section>
 <section class="kpis" aria-label="Last run totals">
@@ -663,7 +673,7 @@
 <script src="js/site-i18n.js"></script>
 <script src="js/site-tour.js?v=20261002a"></script>
 <script src="js/lab-observer.js"></script>
-<script src="js/qa-lab.js?v=20261006f"></script>
+<script src="js/qa-lab.js?v=20261010b"></script>
 <script>
     document.getElementById('theme-toggle').addEventListener('click', () => SiteTheme.toggle());
     QALab.boot();

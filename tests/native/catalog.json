@@ -76,5 +76,13 @@
   {"id":"FN-37","layer":"Functional","title":"A short or invalid note keeps Send disabled","path":"index.html","phone":false},
   {"id":"FN-38","layer":"Functional","title":"Company names open their sites and leave the job closed","path":"index.html","phone":false},
   {"id":"STU-08","layer":"Studio","title":"Linear renames the columns and keeps the Sprint 24 story","path":"simulador.html","phone":false},
-  {"id":"STU-09","layer":"Studio","title":"Backlog hides Sprint 24 and shows CV-410","path":"simulador.html","phone":false}
+  {"id":"STU-09","layer":"Studio","title":"Backlog hides Sprint 24 and shows CV-410","path":"simulador.html","phone":false},
+  {"id":"FN-39","layer":"Functional","title":"Portrait and footer seals show the same trademark","path":"index.html","phone":false},
+  {"id":"FN-40","layer":"Functional","title":"Golden Gate is the look unless one was kept","path":"index.html","phone":false},
+  {"id":"FN-41","layer":"Functional","title":"Footer Download PDF is a direct file link","path":"index.html","phone":false},
+  {"id":"FN-42","layer":"Functional","title":"The lab offers JMeter and Gatling with the browser runners","path":"qa-lab.html","phone":false},
+  {"id":"PERF-05","layer":"Performance","title":"Favicon answers inside the latency budget","path":"index.html","phone":false},
+  {"id":"PERF-06","layer":"Performance","title":"CV layout and the shared look answer inside the latency budget","path":"index.html","phone":false},
+  {"id":"PERF-07","layer":"Performance","title":"robots.txt and the sitemap answer inside the latency budget","path":"index.html","phone":false},
+  {"id":"PERF-08","layer":"Performance","title":"Lab script and look script answer inside the latency budget","path":"qa-lab.html","phone":false}
 ]
