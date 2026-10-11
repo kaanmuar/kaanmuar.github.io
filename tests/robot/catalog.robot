@@ -321,3 +321,35 @@ STU-08 Linear renames the columns and keeps the Sprint 24 story
 STU-09 Backlog hides Sprint 24 and shows CV-410
     [Tags]    STU-09
     STU-09    simulador.html    ${FALSE}
+
+FN-39 Portrait and footer seals show the same trademark
+    [Tags]    FN-39
+    FN-39    index.html    ${FALSE}
+
+FN-40 Golden Gate is the look unless one was kept
+    [Tags]    FN-40
+    FN-40    index.html    ${FALSE}
+
+FN-41 Footer Download PDF is a direct file link
+    [Tags]    FN-41
+    FN-41    index.html    ${FALSE}
+
+FN-42 The lab offers JMeter and Gatling with the browser runners
+    [Tags]    FN-42
+    FN-42    qa-lab.html    ${FALSE}
+
+PERF-05 Favicon answers inside the latency budget
+    [Tags]    PERF-05
+    PERF-05    index.html    ${FALSE}
+
+PERF-06 CV layout and the shared look answer inside the latency budget
+    [Tags]    PERF-06
+    PERF-06    index.html    ${FALSE}
+
+PERF-07 robots.txt and the sitemap answer inside the latency budget
+    [Tags]    PERF-07
+    PERF-07    index.html    ${FALSE}
+
+PERF-08 Lab script and look script answer inside the latency budget
+    [Tags]    PERF-08
+    PERF-08    qa-lab.html    ${FALSE}

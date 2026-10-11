@@ -14,11 +14,11 @@ Open Lab In Desktop Browser
     Wait Until Element Is Visible    id:run-all    15s
 
 *** Test Cases ***
-Lab Catalog Lists Seventy Seven Cases And New Features
+Lab Catalog Lists Eighty Six Cases And New Features
     [Tags]    QA-Lab
     Open Lab In Desktop Browser
     ${count}=    Execute Javascript    return document.querySelectorAll('.case-row').length
-    Should Be Equal As Integers    ${count}    77
+    Should Be Equal As Integers    ${count}    86
     Page Should Contain    FN-15
     Page Should Contain    FN-23
     Page Should Contain    FN-28
