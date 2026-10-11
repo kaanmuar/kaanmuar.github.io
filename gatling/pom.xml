@@ -8,6 +8,7 @@
     <maven.compiler.release>11</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <baseUrl>http://127.0.0.1:8767</baseUrl>
+    <catalogIds></catalogIds>
     <gatling.version>3.16.0</gatling.version>
     <gatling-maven-plugin.version>4.21.12</gatling-maven-plugin.version>
   </properties>
@@ -29,6 +30,7 @@
           <simulationClass>CvLoad</simulationClass>
           <jvmArgs>
             <jvmArg>-DbaseUrl=${baseUrl}</jvmArg>
+            <jvmArg>-DcatalogIds=${catalogIds}</jvmArg>
           </jvmArgs>
         </configuration>
       </plugin>

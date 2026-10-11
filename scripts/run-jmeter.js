@@ -2,6 +2,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { root, startLoadServer } = require('./load-server');
+const { selectedPages, casesFromSamples, writeSummary } = require('./load-summary');
 
 function parseCsv(text) {
   return text.trim().split(/\n/).filter(Boolean).map((line) => {
@@ -21,63 +22,74 @@ function parseCsv(text) {
   });
 }
 
-function assertResults(file) {
+function samplesFromJtl(file) {
   const rows = parseCsv(fs.readFileSync(file, 'utf8'));
-  const header = rows[0];
+  const header = rows[0] || [];
   const elapsedAt = header.indexOf('elapsed');
   const successAt = header.indexOf('success');
-  const samples = rows.slice(1);
-  if (elapsedAt < 0 || successAt < 0 || !samples.length) {
-    console.error('JMeter did not record samples.');
-    return 1;
-  }
-  const elapsed = samples.map((row) => Number(row[elapsedAt])).filter((n) => !Number.isNaN(n)).sort((a, b) => a - b);
-  const failed = samples.filter((row) => row[successAt] !== 'true').length;
-  const p95 = elapsed[Math.min(elapsed.length - 1, Math.ceil(elapsed.length * 0.95) - 1)];
-  const failRate = failed / samples.length;
-  console.log('JMeter samples ' + samples.length + ', failed ' + failed + ', p95 ' + p95 + ' ms');
-  if (failRate >= 0.01 || p95 > 2500) {
-    console.error('JMeter thresholds failed: failed requests must stay under 1% and p95 must stay under 2500 ms.');
-    return 1;
-  }
-  return 0;
+  const labelAt = header.indexOf('label');
+  return rows.slice(1).map((row) => ({
+    id: labelAt >= 0 ? row[labelAt] : '',
+    ms: Number(row[elapsedAt]),
+    ok: row[successAt] === 'true'
+  })).filter((sample) => sample.id);
 }
 
 async function main() {
+  const pages = selectedPages();
+  console.log('JMeter · 8 virtual users · 20 seconds · ' + pages.length + ' requests in the plan');
+  if (!pages.length) {
+    console.log('No performance cases in this selection.');
+    writeSummary('JMeter', []);
+    return;
+  }
   let started;
   try {
     started = await startLoadServer(Number(process.env.TEST_PORT || 8767));
   } catch (err) {
     console.error(err.message);
+    writeSummary('JMeter', [{ title: 'JMeter', ok: false, ms: 0, error: err.message }]);
     process.exit(1);
   }
   const outDir = path.join(root, 'jmeter-results');
   fs.mkdirSync(outDir, { recursive: true });
   const results = path.join(outDir, 'results.jtl');
   if (fs.existsSync(results)) fs.unlinkSync(results);
+  const csv = path.join(outDir, 'pages.csv');
+  fs.writeFileSync(csv, 'path,marker,id\n' + pages.map((page) => '"' + page.path + '","' + page.marker + '","' + page.id + '"').join('\n') + '\n');
   const url = new URL(started.base);
-  const child = spawn('jmeter', [
-    '-n',
-    '-t', 'jmeter/load.jmx',
-    '-l', results,
-    '-j', path.join(outDir, 'jmeter.log'),
-    '-JHOST=' + url.hostname,
-    '-JPORT=' + url.port,
-    '-JCSV=' + path.join(root, 'jmeter', 'pages.csv'),
-    '-Jjmeter.save.saveservice.output_format=csv',
-    '-Jjmeter.save.saveservice.print_field_names=true'
-  ], { cwd: root, stdio: 'inherit' });
   const code = await new Promise((resolve) => {
+    const child = spawn('jmeter', [
+      '-n',
+      '-t', 'jmeter/load.jmx',
+      '-l', results,
+      '-j', path.join(outDir, 'jmeter.log'),
+      '-JHOST=' + url.hostname,
+      '-JPORT=' + url.port,
+      '-JCSV=' + csv,
+      '-Jjmeter.save.saveservice.output_format=csv',
+      '-Jjmeter.save.saveservice.print_field_names=true'
+    ], { cwd: root, stdio: 'inherit' });
     child.on('error', (err) => {
-      if (err.code === 'ENOENT') console.error('JMeter is not installed. Install Java and JMeter, then rerun npm run test:jmeter.');
-      else console.error(err.message);
+      const message = err.code === 'ENOENT'
+        ? 'JMeter is not installed. Install Java and JMeter, then rerun npm run test:jmeter.'
+        : err.message;
+      console.error(message);
+      writeSummary('JMeter', [{ title: 'JMeter', ok: false, ms: 0, error: message }]);
       resolve(1);
     });
     child.on('close', (status) => resolve(status == null ? 1 : status));
   });
-  started.server.close();
-  if (code !== 0) process.exit(code);
-  process.exit(assertResults(results));
+  if (!started.reused) started.server.close();
+  if (!fs.existsSync(results)) {
+    if (code === 0) writeSummary('JMeter', [{ title: 'JMeter', ok: false, ms: 0, error: 'JMeter did not record samples.' }]);
+    process.exit(code || 1);
+  }
+  const cases = casesFromSamples(samplesFromJtl(results));
+  writeSummary('JMeter', cases);
+  cases.forEach((row) => console.log((row.ok ? 'PASS' : 'FAIL') + ' ' + row.title + ' · p95 ' + row.ms + ' ms' + (row.error ? ' · ' + row.error : '')));
+  const failed = cases.filter((row) => !row.ok).length;
+  process.exit(code !== 0 || failed ? 1 : 0);
 }
 
 main();

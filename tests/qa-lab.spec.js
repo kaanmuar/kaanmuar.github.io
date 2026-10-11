@@ -14,7 +14,7 @@ test.describe('CV regression lab', () => {
   test('lists the catalog with where/when/how for a case', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /The suite I run on this CV/i })).toBeVisible();
     await expect(page.locator('.case-row').first()).toBeVisible();
-    await expect(page.locator('.case-row')).toHaveCount(77);
+    await expect(page.locator('.case-row')).toHaveCount(86);
     await expect(page.locator('#case-detail')).toContainText('Where');
     await expect(page.locator('#case-detail')).toContainText('When');
     await expect(page.locator('#case-detail')).toContainText('How');
@@ -40,7 +40,9 @@ test.describe('CV regression lab', () => {
     await expect(page.getByRole('button', { name: /FN-33/ })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Robot' })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Appium' })).toBeVisible();
-    await expect(page.locator('#fw-picker input')).toHaveCount(6);
+    await expect(page.getByRole('checkbox', { name: 'JMeter' })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'Gatling' })).toBeVisible();
+    await expect(page.locator('#fw-picker input')).toHaveCount(8);
     await expect(page.locator('#runner-edge')).toBeVisible();
     await expect(page.locator('#fw-ask')).toBeHidden();
     await expect(page.locator('#view-slider')).toBeVisible();
@@ -163,9 +165,11 @@ test.describe('CV regression lab', () => {
     await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
   });
 
-  test('Performance filter lists the four budgets and their load tools', async ({ page }) => {
+  test('Performance filter lists the eight budgets and their load tools', async ({ page }) => {
     await page.locator('[data-filter="Performance"]').click();
-    await expect(page.locator('.case-row')).toHaveCount(4);
+    await expect(page.locator('.case-row')).toHaveCount(8);
+    await expect(page.getByRole('button', { name: /PERF-05/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /PERF-08/ })).toBeVisible();
     const item = page.locator('.case-item', { has: page.locator('.case-id', { hasText: 'PERF-01' }) });
     await expect(item.locator('.src-link')).toHaveText(['Lab', 'k6', 'JMeter', 'Gatling']);
   });
@@ -174,6 +178,7 @@ test.describe('CV regression lab', () => {
     await page.locator('[data-filter="Functional"]').click();
     await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /FN-39/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /SMK-01/ })).toHaveCount(0);
   });
 
