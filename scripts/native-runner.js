@@ -4,6 +4,8 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const catalog = require('../tests/native/catalog.json');
+const { ensureServer } = require('../tests/native/server');
+const { startLoadServer } = require('./load-server');
 const { listTargets, XCODE } = require('./targets');
 
 const root = path.join(__dirname, '..');
@@ -41,6 +43,12 @@ const LAYERS = {
     Admin: ['appium/admin.spec.js'],
     Lab: ['appium/lab.spec.js'],
     Mobile: ['appium/mobile.spec.js']
+  },
+  JMeter: {
+    Performance: ['jmeter/load.jmx']
+  },
+  Gatling: {
+    Performance: ['gatling/src/test/java/CvLoad.java']
   },
   Playwright: {
     Smoke: ['tests/smoke.spec.js'],
@@ -129,6 +137,12 @@ function command(framework, browser, ids) {
   }
   if (framework === 'Robot') {
     return [node, path.join(root, 'scripts', 'run-robot-catalog.js')];
+  }
+  if (framework === 'JMeter') {
+    return files.length ? [node, path.join(root, 'scripts', 'run-jmeter.js')] : null;
+  }
+  if (framework === 'Gatling') {
+    return files.length ? [node, path.join(root, 'scripts', 'run-gatling.js')] : null;
   }
   if (!files.length) return null;
   if (framework === 'Selenium') {
@@ -219,6 +233,92 @@ async function observePrompt(prompt) {
   return { ok: true, text: String(content).slice(0, 1200), source: 'Ollama' };
 }
 
+function lineWriter(res) {
+  let chain = Promise.resolve();
+  return {
+    send(msg) {
+      const line = JSON.stringify(msg) + '\n';
+      chain = chain.then(() => new Promise((resolve) => {
+        if (res.writableEnded) return resolve();
+        res.write(line, () => resolve());
+      }));
+    },
+    flush() {
+      return chain;
+    }
+  };
+}
+
+async function runFramework(fw, ids, browsers, devices, catalogCount, send) {
+  const targets = (fw === 'JMeter' || fw === 'Gatling')
+    ? [{ browser: 'load' }]
+    : fw === 'Appium'
+      ? (devices.length ? devices.map((device) => ({ device })) : [{ browser: 'chrome' }])
+      : browsers.map((browser) => ({ browser }));
+  const merged = { framework: fw, cases: [] };
+  let code = 0;
+  fs.rmSync(path.join(resultsDir, fw + '.json'), { force: true });
+  send({ fw, line: 'catalog ' + catalogCount + ' cases' });
+  for (const target of targets) {
+    const browser = target.browser || 'chrome';
+    if (fw === 'Cypress' && browser === 'safari') {
+      send({ fw, line: 'Cypress does not drive Safari. Pick Chrome, Firefox, or Edge for Cypress.' });
+      code = 1;
+      continue;
+    }
+    const bundle = browser === 'firefox' ? 'firefox' : (browser === 'safari' ? 'webkit' : 'chromium');
+    const label = (fw === 'JMeter' || fw === 'Gatling')
+      ? '8 virtual users · 20s'
+      : (target.device ? target.device.label : (bundle === 'webkit' ? 'webkit' : browser));
+    const extra = {
+      TARGET_BROWSER: label,
+      CATALOG_IDS: ids.join(','),
+      CYPRESS_CATALOG_IDS: ids.join(','),
+      ROBOT_BROWSER: browser,
+      ROBOT_IDS: ids.join(','),
+      PW_BROWSER: bundle
+    };
+    if (fw === 'JMeter' || fw === 'Gatling') {
+      extra.TEST_PORT = '8767';
+      extra.BASE_URL = 'http://127.0.0.1:8767';
+    }
+    if (browser === 'edge' && edgeInstalled()) extra.PW_CHANNEL = 'msedge';
+    if (target.device && (target.device.platform === 'ios' || target.device.avd)) {
+      extra.APPIUM_DEVICE = JSON.stringify(target.device);
+      extra.APPIUM_DEVICE_LABEL = target.device.label;
+      extra.TARGET_BROWSER = target.device.label;
+    } else if (target.device && target.device.width) {
+      extra.APPIUM_VIEWPORT = target.device.width + 'x' + target.device.height;
+      extra.APPIUM_DEVICE_LABEL = target.device.label;
+      extra.TARGET_BROWSER = target.device.label;
+    }
+    if (fw === 'Playwright') {
+      const install = [process.execPath, path.join(root, 'node_modules', '@playwright', 'test', 'cli.js'), 'install', bundle];
+      send({ fw, line: '$ ' + install.join(' ') });
+      await runProcess(install, extra, (line) => send({ fw, line }));
+    }
+    if (browser === 'edge' && !edgeInstalled()) {
+      send({ fw, line: 'Edge is not installed on this host. This pass uses the bundled Chromium browser.' });
+    }
+    if (browser === 'safari' && process.platform !== 'darwin' && fw !== 'Playwright') {
+      send({ fw, line: 'Safari is a macOS browser. This host runs that pass in bundled WebKit.' });
+    }
+    const args = command(fw, browser, ids);
+    if (!args) {
+      send({ fw, line: 'No catalog files for ' + label });
+      code = 1;
+      continue;
+    }
+    send({ fw, line: '$ ' + args.join(' ') + '  [' + label + ']' });
+    const partCode = await runProcess(args, extra, (line) => send({ fw, line }));
+    const part = readSummary(fw);
+    if (part && Array.isArray(part.cases)) merged.cases.push(...part.cases);
+    if (partCode) code = partCode;
+  }
+  fs.writeFileSync(path.join(resultsDir, fw + '.json'), JSON.stringify(merged, null, 2));
+  send({ fw, code, summary: merged, line: 'exit ' + code + ' · ' + merged.cases.length + ' recorded' });
+}
+
 let busy = false;
 
 const server = http.createServer((req, res) => {
@@ -274,6 +374,8 @@ const server = http.createServer((req, res) => {
   req.on('end', async () => {
     busy = true;
     res.writeHead(200, { 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-cache' });
+    const writer = lineWriter(res);
+    let load = null;
     try {
       const payload = JSON.parse(body || '{}');
       const frameworks = (payload.frameworks || []).filter((name) => LAYERS[name]);
@@ -282,74 +384,17 @@ const server = http.createServer((req, res) => {
       const ids = sanitizeIds(payload.ids);
       const catalogCount = ids.length || catalog.length;
       fs.mkdirSync(resultsDir, { recursive: true });
-      for (const fw of frameworks) {
-        const targets = fw === 'Appium'
-          ? (devices.length ? devices.map((device) => ({ device })) : [{ browser: 'chrome' }])
-          : browsers.map((browser) => ({ browser }));
-        const merged = { framework: fw, cases: [] };
-        let code = 0;
-        fs.rmSync(path.join(resultsDir, fw + '.json'), { force: true });
-        res.write(JSON.stringify({ fw, line: 'catalog ' + catalogCount + ' cases' }) + '\n');
-        for (const target of targets) {
-          const browser = target.browser || 'chrome';
-          if (fw === 'Cypress' && browser === 'safari') {
-            res.write(JSON.stringify({ fw, line: 'Cypress does not drive Safari. Pick Chrome, Firefox, or Edge for Cypress.' }) + '\n');
-            code = 1;
-            continue;
-          }
-          const bundle = browser === 'firefox' ? 'firefox' : (browser === 'safari' ? 'webkit' : 'chromium');
-          const label = target.device ? target.device.label : (bundle === 'webkit' ? 'webkit' : browser);
-          const extra = {
-            TARGET_BROWSER: label,
-            CATALOG_IDS: ids.join(','),
-            CYPRESS_CATALOG_IDS: ids.join(','),
-            ROBOT_BROWSER: browser,
-            ROBOT_IDS: ids.join(','),
-            PW_BROWSER: bundle
-          };
-          if (browser === 'edge' && edgeInstalled()) extra.PW_CHANNEL = 'msedge';
-          if (target.device && (target.device.platform === 'ios' || target.device.avd)) {
-            extra.APPIUM_DEVICE = JSON.stringify(target.device);
-            extra.APPIUM_DEVICE_LABEL = target.device.label;
-            extra.TARGET_BROWSER = target.device.label;
-          } else if (target.device && target.device.width) {
-            extra.APPIUM_VIEWPORT = target.device.width + 'x' + target.device.height;
-            extra.APPIUM_DEVICE_LABEL = target.device.label;
-            extra.TARGET_BROWSER = target.device.label;
-          }
-          if (fw === 'Playwright') {
-            const install = [process.execPath, path.join(root, 'node_modules', '@playwright', 'test', 'cli.js'), 'install', bundle];
-            res.write(JSON.stringify({ fw, line: '$ ' + install.join(' ') }) + '\n');
-            await runProcess(install, extra, (line) => {
-              res.write(JSON.stringify({ fw, line }) + '\n');
-            });
-          }
-          if (browser === 'edge' && !edgeInstalled()) {
-            res.write(JSON.stringify({ fw, line: 'Edge is not installed on this host. This pass uses the bundled Chromium browser.' }) + '\n');
-          }
-          if (browser === 'safari' && process.platform !== 'darwin' && fw !== 'Playwright') {
-            res.write(JSON.stringify({ fw, line: 'Safari is a macOS browser. This host runs that pass in bundled WebKit.' }) + '\n');
-          }
-          const args = command(fw, browser, ids);
-          if (!args) {
-            res.write(JSON.stringify({ fw, line: 'No catalog files for ' + label }) + '\n');
-            code = 1;
-            continue;
-          }
-          res.write(JSON.stringify({ fw, line: '$ ' + args.join(' ') + '  [' + label + ']' }) + '\n');
-          const partCode = await runProcess(args, extra, (line) => {
-            res.write(JSON.stringify({ fw, line }) + '\n');
-          });
-          const part = readSummary(fw);
-          if (part && Array.isArray(part.cases)) merged.cases.push(...part.cases);
-          if (partCode) code = partCode;
-        }
-        fs.writeFileSync(path.join(resultsDir, fw + '.json'), JSON.stringify(merged, null, 2));
-        res.write(JSON.stringify({ fw, code, summary: merged, line: 'exit ' + code + ' · ' + merged.cases.length + ' recorded' }) + '\n');
-      }
+      await ensureServer();
+      load = frameworks.some((fw) => fw === 'JMeter' || fw === 'Gatling') ? await startLoadServer(8767) : null;
+      await Promise.all(frameworks.map((fw) => runFramework(fw, ids, browsers, devices, catalogCount, writer.send).catch((err) => {
+        writer.send({ fw, code: 1, summary: { framework: fw, cases: [] }, line: String(err.message || err) });
+      })));
+      await writer.flush();
     } catch (err) {
-      res.write(JSON.stringify({ fw: 'runner', line: String(err.message || err) }) + '\n');
+      writer.send({ fw: 'Playwright', line: String(err.message || err) });
+      await writer.flush();
     } finally {
+      if (load && !load.reused) load.server.close();
       busy = false;
       res.end();
     }

@@ -2,7 +2,7 @@
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="CV load" enabled="true">
-      <stringProp name="TestPlan.comments">PERF-01..PERF-04. Eight threads for 20 seconds on the local server. A sample fails when status is not 200, the marker is missing, or the sample exceeds 2500 ms.</stringProp>
+      <stringProp name="TestPlan.comments">PERF-01..PERF-08. Eight threads for 20 seconds on the local server. A sample fails when status is not 200, the marker is missing, or the sample exceeds 2500 ms.</stringProp>
       <boolProp name="TestPlan.functional_mode">false</boolProp>
       <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
@@ -33,10 +33,10 @@
           <boolProp name="recycle">true</boolProp>
           <stringProp name="shareMode">shareMode.all</stringProp>
           <boolProp name="stopThread">false</boolProp>
-          <stringProp name="variableNames">path,marker</stringProp>
+          <stringProp name="variableNames">path,marker,id</stringProp>
         </CSVDataSet>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="${path}" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="${id}" enabled="true">
           <stringProp name="HTTPSampler.domain">${__P(HOST,127.0.0.1)}</stringProp>
           <stringProp name="HTTPSampler.port">${__P(PORT,8767)}</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>

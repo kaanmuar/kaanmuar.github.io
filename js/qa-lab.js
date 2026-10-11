@@ -1684,6 +1684,114 @@
         assert(!host.textContent.includes('PAY-241'), 'Sprint 24 story stayed on Backlog');
         return 'Backlog only · CV-410';
       }
+    },
+    {
+      id: 'FN-39', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'Portrait and footer seals show the same trademark',
+      where: '[data-trademark] .trademark-seal',
+      when: 'The CV has finished painting.',
+      how: 'Both seals read CAM, and the portrait seal is named Trademark, CAM.',
+      async run({ cv }) {
+        const seals = [...cv.document.querySelectorAll('[data-trademark] .trademark-seal')].map((el) => (el.textContent || '').trim());
+        assert(seals.length >= 2, 'trademark seals missing');
+        assert(seals.every((text) => text === 'CAM'), 'seals read ' + seals.join(', '));
+        const named = cv.document.querySelector('[data-trademark][aria-label]');
+        assert(named && named.getAttribute('aria-label') === 'Trademark, CAM', 'portrait seal name');
+        return seals.length + ' seals read CAM';
+      }
+    },
+    {
+      id: 'FN-40', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'Golden Gate is the look unless one was kept',
+      where: 'html[data-look], localStorage site-look',
+      when: 'After the shared look script paints the CV.',
+      how: 'data-look is golden when nothing is stored. A kept look stays the one on the page. The id is one of the ten looks.',
+      async run({ cv }) {
+        const known = ['golden', 'material', 'youtube', 'instagram', 'facebook', 'x', 'whatsapp', 'linkedin', 'tiktok', 'netflix'];
+        const look = cv.document.documentElement.dataset.look || '';
+        assert(known.includes(look), 'unknown look ' + look);
+        let expected = 'golden';
+        try {
+          const saved = JSON.parse(cv.window.localStorage.getItem('site-look') || 'null');
+          if (saved && known.includes(saved.id)) expected = saved.id;
+        } catch (err) { /* a broken value falls back to Golden Gate */ }
+        assert(look === expected, look + ' was on the page, ' + expected + ' was stored');
+        return look;
+      }
+    },
+    {
+      id: 'FN-41', layer: 'Functional', fw: ['Playwright', 'Cypress', 'Robot'],
+      title: 'Footer Download PDF is a direct file link',
+      where: '#cv-pdf-link',
+      when: 'The CV footer is on screen.',
+      how: 'The link href is /?download=pdf.',
+      async run({ cv }) {
+        const link = cv.document.getElementById('cv-pdf-link');
+        assert(link, 'footer PDF link missing');
+        assert(link.getAttribute('href') === '/?download=pdf', 'href ' + link.getAttribute('href'));
+        return link.getAttribute('href');
+      }
+    },
+    {
+      id: 'FN-42', layer: 'Functional', fw: ['Playwright', 'Cypress'],
+      title: 'The lab offers JMeter and Gatling with the browser runners',
+      where: 'qa-lab.html #fw-picker',
+      when: 'The lab has painted the runner list.',
+      how: 'The picker includes Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, and Gatling.',
+      async run({ loadCv }) {
+        const lab = await loadCv('qa-lab.html');
+        const names = [...lab.document.querySelectorAll('#fw-picker input')].map((el) => el.value);
+        ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'Appium', 'JMeter', 'Gatling'].forEach((name) => {
+          assert(names.includes(name), name + ' missing from the lab');
+        });
+        return names.length + ' runners';
+      }
+    },
+    {
+      id: 'PERF-05', layer: 'Performance', fw: ['k6', 'JMeter', 'Gatling'],
+      title: 'Favicon answers inside the latency budget',
+      where: '/favicon.svg , k6/load.js , jmeter/load.jmx , gatling/src/test/java/CvLoad.java',
+      when: 'One request in the lab. k6, JMeter, and Gatling each repeat it with 8 virtual users for 20 seconds.',
+      how: 'GET /favicon.svg returns 200, includes the CV mark, and finishes under 1500 ms. Each load tool fails when any request fails, checks drop below 99%, or p95 exceeds 2500 ms.',
+      async run() {
+        return withinBudget('/favicon.svg', 'Carlos Muñoz CV');
+      }
+    },
+    {
+      id: 'PERF-06', layer: 'Performance', fw: ['k6', 'JMeter', 'Gatling'],
+      title: 'CV layout and the shared look answer inside the latency budget',
+      where: '/css/cv.css , /css/site-look.css , k6/load.js , jmeter/load.jmx , gatling/src/test/java/CvLoad.java',
+      when: 'One request each in the lab. k6, JMeter, and Gatling each repeat both with 8 virtual users for 20 seconds.',
+      how: 'Each stylesheet returns 200 with its expected text and finishes under 1500 ms. Each load tool fails when any request fails, checks drop below 99%, or p95 exceeds 2500 ms.',
+      async run() {
+        const layout = await withinBudget('/css/cv.css', '.trademark');
+        const look = await withinBudget('/css/site-look.css', 'html[data-look]');
+        return layout + ' · ' + look;
+      }
+    },
+    {
+      id: 'PERF-07', layer: 'Performance', fw: ['k6', 'JMeter', 'Gatling'],
+      title: 'robots.txt and the sitemap answer inside the latency budget',
+      where: '/robots.txt , /sitemap.xml , k6/load.js , jmeter/load.jmx , gatling/src/test/java/CvLoad.java',
+      when: 'One request each in the lab. k6, JMeter, and Gatling each repeat both with 8 virtual users for 20 seconds.',
+      how: 'Each file returns 200 with its expected text and finishes under 1500 ms. Each load tool fails when any request fails, checks drop below 99%, or p95 exceeds 2500 ms.',
+      async run() {
+        const robots = await withinBudget('/robots.txt', 'User-agent');
+        const map = await withinBudget('/sitemap.xml', 'carlosandmunoz.com');
+        return robots + ' · ' + map;
+      }
+    },
+    {
+      id: 'PERF-08', layer: 'Performance', fw: ['k6', 'JMeter', 'Gatling'],
+      title: 'Lab script and look script answer inside the latency budget',
+      where: '/js/qa-lab.js , /js/site-look.js , k6/load.js , jmeter/load.jmx , gatling/src/test/java/CvLoad.java',
+      when: 'One request each in the lab. k6, JMeter, and Gatling each repeat both with 8 virtual users for 20 seconds.',
+      how: 'Each script returns 200 with its expected text and finishes under 1500 ms. Each load tool fails when any request fails, checks drop below 99%, or p95 exceeds 2500 ms.',
+      async run() {
+        const lab = await withinBudget('/js/qa-lab.js', 'Run with');
+        const look = await withinBudget('/js/site-look.js', 'Golden Gate');
+        return lab + ' · ' + look;
+      }
     }
   ];
 
@@ -1705,7 +1813,9 @@
     'STU-01': 630, 'STU-02': 643, 'STU-03': 658,
     'MOB-01': 500, 'MOB-02': 518, 'MOB-03': 532, 'MOB-04': 553, 'MOB-05': 570, 'MOB-06': 588,
     'PERF-01': 1437, 'PERF-02': 1447, 'PERF-03': 1457, 'PERF-04': 1467,
-    'SMK-03': 1479, 'SEC-09': 1512, 'FN-35': 1540, 'FN-36': 1557, 'FN-37': 1577, 'FN-38': 1613, 'STU-08': 1645, 'STU-09': 1667
+    'SMK-03': 1479, 'SEC-09': 1512, 'FN-35': 1540, 'FN-36': 1557, 'FN-37': 1577, 'FN-38': 1613, 'STU-08': 1645, 'STU-09': 1667,
+    'FN-39': 1689, 'FN-40': 1704, 'FN-41': 1723, 'FN-42': 1736,
+    'PERF-05': 1751, 'PERF-06': 1761, 'PERF-07': 1773, 'PERF-08': 1785
   };
   const SRC = {
     'SMK-01': { Playwright: ['tests/smoke.spec.js', 5] },
@@ -1758,10 +1868,14 @@
     'MOB-04': { Playwright: ['tests/mobile.spec.js', 28], Cypress: ['cypress/e2e/mobile_spec.cy.js', 17] },
     'MOB-05': { Playwright: ['tests/mobile.spec.js', 49], Cypress: ['cypress/e2e/mobile_spec.cy.js', 36], Robot: ['tests/robot/mobile_suite.robot', 28] },
     'MOB-06': { Playwright: ['tests/mobile.spec.js', 63], Cypress: ['cypress/e2e/mobile_spec.cy.js', 53], Robot: ['tests/robot/mobile_suite.robot', 36] },
-    'PERF-01': { k6: ['k6/load.js', 27], JMeter: ['jmeter/pages.csv', 2], Gatling: ['gatling/src/test/java/CvLoad.java', 22] },
-    'PERF-02': { k6: ['k6/load.js', 28], JMeter: ['jmeter/pages.csv', 3], Gatling: ['gatling/src/test/java/CvLoad.java', 23] },
-    'PERF-03': { k6: ['k6/load.js', 29], JMeter: ['jmeter/pages.csv', 4], Gatling: ['gatling/src/test/java/CvLoad.java', 24] },
-    'PERF-04': { k6: ['k6/load.js', 30], JMeter: ['jmeter/pages.csv', 5], Gatling: ['gatling/src/test/java/CvLoad.java', 25] },
+    'PERF-01': { k6: ['k6/load.js', 28], JMeter: ['jmeter/pages.csv', 2], Gatling: ['gatling/src/test/java/CvLoad.java', 33] },
+    'PERF-02': { k6: ['k6/load.js', 29], JMeter: ['jmeter/pages.csv', 3], Gatling: ['gatling/src/test/java/CvLoad.java', 34] },
+    'PERF-03': { k6: ['k6/load.js', 30], JMeter: ['jmeter/pages.csv', 4], Gatling: ['gatling/src/test/java/CvLoad.java', 35] },
+    'PERF-04': { k6: ['k6/load.js', 31], JMeter: ['jmeter/pages.csv', 5], Gatling: ['gatling/src/test/java/CvLoad.java', 36] },
+    'PERF-05': { k6: ['k6/load.js', 33], JMeter: ['jmeter/pages.csv', 7], Gatling: ['gatling/src/test/java/CvLoad.java', 40] },
+    'PERF-06': { k6: ['k6/load.js', 34], JMeter: ['jmeter/pages.csv', 8], Gatling: ['gatling/src/test/java/CvLoad.java', 41] },
+    'PERF-07': { k6: ['k6/load.js', 36], JMeter: ['jmeter/pages.csv', 10], Gatling: ['gatling/src/test/java/CvLoad.java', 45] },
+    'PERF-08': { k6: ['k6/load.js', 38], JMeter: ['jmeter/pages.csv', 12], Gatling: ['gatling/src/test/java/CvLoad.java', 49] },
     'SMK-03': { Playwright: ['tests/security.spec.js', 84], Cypress: ['cypress/e2e/security_spec.cy.js', 65] },
     'SEC-09': { Playwright: ['tests/security.spec.js', 110], Cypress: ['cypress/e2e/security_spec.cy.js', 90], Robot: ['tests/robot/catalog.robot', 297] },
     'FN-35': { Playwright: ['tests/cv.spec.js', 150], Cypress: ['cypress/e2e/cv_spec.cy.js', 168], Robot: ['tests/robot/catalog.robot', 301] },
@@ -1806,7 +1920,9 @@
     }
   };
 
-  const ALL_FW = ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'Appium'];
+  const ALL_FW = ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'Appium', 'JMeter', 'Gatling'];
+  const LOAD_FW = ['JMeter', 'Gatling'];
+  const FW_SEEN = 'qa-lab-frameworks-load';
   const BASE_BROWSERS = [
     { id: 'chrome', label: 'Chrome' },
     { id: 'firefox', label: 'Firefox' },
@@ -1833,7 +1949,15 @@
   function readFrameworks() {
     try {
       const saved = JSON.parse(localStorage.getItem(FW_KEY) || 'null');
-      if (Array.isArray(saved) && saved.length) return saved.filter((name) => ALL_FW.includes(name));
+      if (Array.isArray(saved) && saved.length) {
+        const known = saved.filter((name) => ALL_FW.includes(name));
+        if (!localStorage.getItem(FW_SEEN)) {
+          LOAD_FW.forEach((name) => { if (!known.includes(name)) known.push(name); });
+          localStorage.setItem(FW_KEY, JSON.stringify(known));
+          localStorage.setItem(FW_SEEN, '1');
+        }
+        return known;
+      }
     } catch (err) { /* ignore */ }
     return ALL_FW.slice();
   }
@@ -2534,7 +2658,9 @@
       { name: 'Robot', color: '#c4a574' },
       { name: 'Selenium', color: '#43b02a' },
       { name: 'WebDriverIO', color: '#ea5907' },
-      { name: 'Appium', color: '#662d91' }
+      { name: 'Appium', color: '#662d91' },
+      { name: 'JMeter', color: '#d22128' },
+      { name: 'Gatling', color: '#e85d04' }
     ];
     const chosen = readFrameworks();
     const summaries = (typeof Lab !== 'undefined' && Lab.nativeSummaries) || {};
@@ -2716,6 +2842,7 @@
     historyPick: new Set(),
     nativeLogs: {},
     nativeSummaries: {},
+    runningRunners: {},
     activeRunner: null,
     runnerPinned: false,
 
@@ -3477,17 +3604,17 @@
         steps: [
           { selector: '#case-list', title: 'The catalog', body: 'Every check is a row: where it looks, when it runs, and how it asserts. Rows cover the pages, every language, the message form, the photo dialog, the studio board, the clip pages, and the load budget. A pulse marks the control for this step. The chips under the row open that same case in the lab and in each runner on GitHub.', demoMs: 1800 },
           { selector: '.filters', title: 'Filter by type', body: 'Smoke, Functional, Security, A11y, Admin, Studio, Mobile, or Performance. Run filtered runs only the rows still on screen.', demoMs: 1500 },
-          { selector: '#case-list .src-links', title: 'Scripts and cases', body: 'Each chip is a real file: the lab check, then Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, k6, JMeter, or Gatling. Click a chip to open that script.', demoMs: 1600 },
+          { selector: '#case-list .src-links', title: 'Scripts and cases', body: 'Each chip is a real file: the lab check, then Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, k6, JMeter, or Gatling. JMeter and Gatling are runners on the right edge, the same way the browser frameworks are. Click a chip to open that script.', demoMs: 1600 },
           { selector: '#langWrap', title: 'Language', body: 'A language chosen here is the language on the CV, the studio, this lab, and admin. The same choice sticks when you move between them.', demoMs: 1600 },
           { selector: '#suite-repo', title: 'Suite repo', body: 'Suite repo opens the GitHub project that holds these checks. The chips on each row jump to the file. This link opens the whole project.', demoMs: 1400 },
           { selector: '#studio-link', title: 'Sprint studio', body: 'Sprint studio opens the four-agent board. Board chips include Linear, and the sprint chips include Backlog. The language you picked here is the language the studio opens in.', demoMs: 1400 },
           { selector: '.kpis', title: 'Suite run indicators', body: 'Passed, failed, skipped, and duration update as the catalog runs. They are the totals for this session, before the dashboard charts.', demoMs: 1500 },
           { selector: '.pace', title: 'Pace', body: 'The line runs from faster on the left to slower on the right. 0.5 holds the least between actions, 2.0 holds the most, so a first look is easier on the right.', demoMs: 1500 },
           { selector: '#view-slider', title: 'Watch or Background', body: 'The slider keeps one side on. Watch shows the live page. Background is the idle side until you choose it, and then the checks run off-screen.', demoMs: 1600 },
-          { selector: '#fw-picker', title: 'Which runners', body: 'Leave on the frameworks you want this pass to show: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, or several. A run with none selected waits until you pick one.', demoMs: 1700 },
+          { selector: '#fw-picker', title: 'Which runners', body: 'Leave on the frameworks you want this pass to show: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling, or several. JMeter and Gatling load the pages on the local server. A run with none selected waits until you pick one.', demoMs: 1700 },
           { selector: '#run-all', title: 'Run', body: 'Run this case, Run filtered, or Run full catalog. The active row stays in view while the checks proceed.', demoMs: 1600 },
           { selector: '#sut-wrap', title: 'Live system under test', body: 'The frame is the real CV, studio, or admin page. The checks act here, then the log under the frame records each one.', demoMs: 4000, preview: 'lab' },
-          { selector: '#runner-drawer', title: 'Native runners', body: 'Open Runners on the right edge. Each tab streams that framework’s own process across the catalog, in the browsers and devices chosen in the ask. When the process changes, the drawer and the Run with chip follow it and mark it Running. A result from one is not copied into the others.', demoMs: 1800, prepare: () => { if (global.QALab) global.QALab.openRunners(); } },
+          { selector: '#runner-drawer', title: 'Native runners', body: 'Open Runners on the right edge. Each tab streams that framework’s own process across the catalog, in the browsers and devices chosen in the ask. The selected frameworks run at the same time. The drawer stays on the open tab, and every running chip stays marked Running. A result from one is not copied into the others.', demoMs: 1800, prepare: () => { if (global.QALab) global.QALab.openRunners(); } },
           { selector: '#lab-observer', title: 'Observer', body: 'During a run this note watches for a frozen page, explains a failed check, and looks to see that the report is actually on screen. It never marks a case passed or failed.', demoMs: 1600 },
           { selector: '#report-open', title: 'Report file', body: 'Report opens the file options. English is the default. Pick another language, leave the graphs on, check the preview, then download or print.', demoMs: 1500 },
           { selector: '#dash-open', title: 'Dashboard', body: 'When the run finishes, the dashboard opens: charts, this session’s report, and the run history. Select past runs to download, print, or compare.', demoMs: 1800 },
@@ -3572,12 +3699,16 @@
       return name === 'WebDriverIO' ? 'WebdriverIO' : (name || '');
     },
 
+    runningNames() {
+      return Object.keys(this.runningRunners || {});
+    },
+
     paintRunnerMarks() {
-      const live = this.activeRunner;
+      const live = this.runningNames();
       document.querySelectorAll('#fw-picker label').forEach((label) => {
         const input = label.querySelector('input');
         const name = input && input.value;
-        const on = !!live && name === live;
+        const on = !!name && live.includes(name);
         label.classList.toggle('is-running', on);
         let badge = label.querySelector('.runner-live');
         if (on && !badge) {
@@ -3588,13 +3719,14 @@
         } else if (!on && badge) badge.remove();
       });
       const edge = document.getElementById('runner-edge');
+      const edgeLabel = live.length === 1 ? this.fwLabel(live[0]) : (live.length > 1 ? live.length + ' running' : 'Runners');
       if (edge) {
-        edge.textContent = live ? this.fwLabel(live) : 'Runners';
-        edge.classList.toggle('is-running', !!live);
-        edge.setAttribute('aria-label', live ? this.fwLabel(live) + ' is running' : 'Runners');
+        edge.textContent = edgeLabel;
+        edge.classList.toggle('is-running', live.length > 0);
+        edge.setAttribute('aria-label', live.length ? edgeLabel : 'Runners');
       }
       const head = document.querySelector('#runner-drawer .stage-head strong');
-      if (head) head.textContent = live ? this.fwLabel(live) + ' is running' : 'Native runners';
+      if (head) head.textContent = live.length ? edgeLabel : 'Native runners';
     },
 
     renderRunners(active) {
@@ -3605,7 +3737,7 @@
       const current = chosen.includes(active) ? active : (chosen.includes(this.runnerTab) ? this.runnerTab : chosen[0]);
       this.runnerTab = current || '';
       tabs.innerHTML = chosen.map((name) => {
-        const running = name === this.activeRunner;
+        const running = !!this.runningRunners[name];
         const label = this.fwLabel(name);
         const cls = (name === current ? 'on' : '') + (running ? ' is-running' : '');
         return '<button type="button" role="tab" data-runner="' + name + '" class="' + cls.trim() + '" aria-selected="' + (name === current ? 'true' : 'false') + '" aria-label="' + label + (running ? ', running' : '') + '">'
@@ -3617,7 +3749,7 @@
       tabs.querySelectorAll('[data-runner]').forEach((btn) => {
         btn.onclick = () => {
           const name = btn.dataset.runner;
-          this.runnerPinned = !!(this.activeRunner && name !== this.activeRunner);
+          this.runnerPinned = true;
           this.renderRunners(name);
         };
       });
@@ -3629,35 +3761,29 @@
       this.paintRunnerMarks();
     },
 
-    runnerBanner(name) {
-      const live = this.activeRunner;
-      if (!live) return '';
-      const label = this.fwLabel(live);
-      if (live === name) return '<p class="runner-now"><i class="runner-dot" aria-hidden="true"></i> ' + label + ' is running</p>';
-      return '<p class="runner-now runner-now-other"><i class="runner-dot" aria-hidden="true"></i> ' + label + ' is running</p>';
+    runnerBanner() {
+      const names = this.runningNames().map((item) => this.fwLabel(item));
+      if (!names.length) return '';
+      const label = names.length === 1 ? names[0] : (names.length === 2 ? names.join(' and ') : names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1]);
+      const verb = names.length === 1 ? ' is running' : ' are running';
+      return '<p class="runner-now"><i class="runner-dot" aria-hidden="true"></i> ' + label + verb + '</p>';
     },
 
     noteNative(msg) {
       if (!msg || !msg.fw || !this.nativeLogs[msg.fw]) return;
       if (msg.line) this.nativeLogs[msg.fw].push(msg.line);
-      const changed = this.activeRunner !== msg.fw;
-      if (changed) {
-        this.activeRunner = msg.fw;
-        this.runnerPinned = false;
-        this.openRunners();
-      }
       if (msg.summary) {
+        delete this.runningRunners[msg.fw];
         this.nativeSummaries[msg.fw] = msg.summary;
         this.renderDashboard();
         this.renderReport();
+      } else {
+        this.runningRunners[msg.fw] = true;
       }
-      if (!this.runnerPinned || changed || this.runnerTab === msg.fw) {
-        this.renderRunners((!this.runnerPinned || changed) ? msg.fw : this.runnerTab);
-      } else this.paintRunnerMarks();
-      if (msg.summary && this.activeRunner === msg.fw) {
-        this.activeRunner = null;
-        this.renderRunners(this.runnerTab);
-      }
+      const still = this.runningNames();
+      this.activeRunner = still[0] || null;
+      if (this.runnerTab === msg.fw || msg.summary) this.renderRunners(this.runnerTab);
+      else this.paintRunnerMarks();
     },
 
     runnerRows(name) {
@@ -3667,7 +3793,11 @@
 
     launchNative(frameworks, ids) {
       this.nativeLogs = {};
-      frameworks.forEach((name) => { this.nativeLogs[name] = []; });
+      this.runningRunners = {};
+      frameworks.forEach((name) => {
+        this.nativeLogs[name] = [];
+        this.runningRunners[name] = true;
+      });
       this.activeRunner = frameworks[0] || null;
       this.runnerPinned = false;
       this.renderRunners(frameworks[0] || this.runnerTab);
@@ -3677,6 +3807,7 @@
           this.nativeLogs[name] = this.nativeLogs[name] || [];
           this.nativeLogs[name].push(message);
         });
+        this.runningRunners = {};
         this.activeRunner = null;
         this.renderRunners(this.runnerTab);
       };
@@ -3705,6 +3836,7 @@
         let buf = '';
         const pump = () => reader.read().then(({ done, value }) => {
           if (done) {
+            this.runningRunners = {};
             this.activeRunner = null;
             this.runnerPinned = false;
             this.renderRunners(this.runnerTab);
@@ -3735,7 +3867,9 @@
         Robot: 'robot',
         Selenium: 'mocha selenium',
         WebDriverIO: 'wdio run',
-        Appium: 'appium + wdio'
+        Appium: 'appium + wdio',
+        JMeter: 'jmeter -n -t jmeter/load.jmx',
+        Gatling: 'mvn gatling:test'
       }[name] || name;
       const lines = this.nativeLogs[name] || [];
       const blocks = ['<div>' + esc(banner) + '</div>'];
@@ -3762,7 +3896,9 @@
         Robot: ['Robot', 'Process log'],
         Selenium: ['Selenium WebDriver', 'Process log'],
         WebDriverIO: ['WebdriverIO', 'Process log'],
-        Appium: ['Appium', 'Process log']
+        Appium: ['Appium', 'Process log'],
+        JMeter: ['JMeter', 'Process log'],
+        Gatling: ['Gatling', 'Process log']
       };
       const pair = titles[name] || [name, 'Process log'];
       const klass = {
@@ -3771,7 +3907,9 @@
         Robot: 'runner-robot',
         Selenium: 'runner-ide',
         WebDriverIO: 'runner-wdio',
-        Appium: 'runner-appium'
+        Appium: 'runner-appium',
+        JMeter: 'runner-jmeter',
+        Gatling: 'runner-gatling'
       }[name] || 'runner-play';
       return '<div class="runner-split ' + klass + '"><section class="runner-cases"><b>' + pair[0] + '</b><ul>' + items.join('') + '</ul></section><section class="runner-console" aria-label="' + pair[1] + '"><b>' + pair[1] + '</b><div class="runner-log">' + this.runnerConsole(name) + '</div></section></div>';
     },
