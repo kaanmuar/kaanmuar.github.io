@@ -216,11 +216,18 @@
             const box = document.getElementById("pay-lines");
             const names = (purpose === "report" || (purpose === "new-run" && billing !== "scope")) ? frameworkList.concat(toolList) : [];
             box.hidden = names.length === 0;
-            box.innerHTML = names.map((name, index) => {
+            box.replaceChildren();
+            names.forEach((name, index) => {
                 const step = index + 1;
                 const off = step <= 1 ? 0 : step <= 3 ? 10 : step <= 5 ? 15 : step <= 7 ? 20 : step <= 9 ? 25 : step <= 11 ? 30 : step <= 13 ? 35 : 40;
-                return "<li><span>" + step + " · " + name + " · " + (off ? off + "% off" : "full price") + "</span><b>" + money(centsForIndex(step) / 100) + " USD</b></li>";
-            }).join("");
+                const line = document.createElement("li");
+                const label = document.createElement("span");
+                const amount = document.createElement("b");
+                label.textContent = step + " · " + name + " · " + (off ? off + "% off" : "full price");
+                amount.textContent = money(centsForIndex(step) / 100) + " USD";
+                line.append(label, amount);
+                box.append(line);
+            });
         }
         function endpoint() {
             const host = location.hostname;

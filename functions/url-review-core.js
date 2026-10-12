@@ -768,7 +768,6 @@ function setCookies(headers) {
 function decode(value) {
   const text = String(value || "")
     .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, "\"")
     .replace(/&#39;|&apos;/gi, "'")
     .replace(/&lt;/gi, "<")
@@ -780,7 +779,8 @@ function decode(value) {
     .replace(/&#(\d+);/g, (entity, dec) => {
       const code = Number(dec);
       return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
-    });
+    })
+    .replace(/&amp;/gi, "&");
   return text.replace(/\s+/g, " ").trim();
 }
 
