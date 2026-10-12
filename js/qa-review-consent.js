@@ -60,7 +60,40 @@
     onAllow: function (fn) { if (allowed()) fn(); else listeners.push(fn); }
   };
 
+  function noteOpen() {
+    if (root.top !== root.self || navigator.webdriver) return;
+    const host = root.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") return;
+    try {
+      if (sessionStorage.getItem("qa-review-open-noted") === "1") return;
+      sessionStorage.setItem("qa-review-open-noted", "1");
+    } catch (error) { return; }
+    const page = (root.location.pathname.split("/").pop() || "qa-review.html").slice(0, 80);
+    let referrerHost = "";
+    try { referrerHost = document.referrer ? new URL(document.referrer).host : ""; } catch (error) { referrerHost = ""; }
+    const query = String(root.location.search || "").slice(0, 120);
+    const zone = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").slice(0, 60);
+    const languages = (navigator.languages || []).slice(0, 6).join(",").slice(0, 80);
+    fetch("https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/opened", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "omit",
+      keepalive: true,
+      body: JSON.stringify({
+        page: page,
+        query: query,
+        lang: String(document.documentElement.lang || "en").slice(0, 12),
+        referrerHost: referrerHost.slice(0, 80),
+        screen: (root.innerWidth || 0) < 768 ? "phone" : "desktop",
+        timezone: zone,
+        languages: languages,
+        title: String(document.title || "").slice(0, 120)
+      })
+    }).catch(function () {});
+  }
+
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
   else mount();
   if (allowed()) loadAnalytics();
+  noteOpen();
 })(window);
