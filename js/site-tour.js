@@ -6,15 +6,18 @@
     }
     #site-tour-overlay.on { display: block; }
     .site-tour-hit {
-      animation: site-tour-pulse 1.6s ease-in-out infinite;
-      border-radius: inherit;
+      animation: site-tour-pulse 1.5s ease-in-out infinite;
+      border-radius: 12px;
+      position: relative;
+      z-index: 25;
+      transform-origin: center;
     }
     @keyframes site-tour-pulse {
-      0%, 100% { box-shadow: inset 0 0 0 3px #4db3bb; }
-      50% { box-shadow: inset 0 0 0 3px #4db3bb, inset 0 0 14px #4db3bb; }
+      0%, 100% { box-shadow: 0 0 8px 3px #0d6e76; transform: scale(1); }
+      50% { box-shadow: 0 0 16px 8px rgba(13, 110, 118, 0.55); transform: scale(1.045); }
     }
     @media (prefers-reduced-motion: reduce) {
-      .site-tour-hit { animation: none; box-shadow: inset 0 0 0 3px #4db3bb; }
+      .site-tour-hit { animation: none; box-shadow: 0 0 0 3px #0d6e76; transform: none; }
     }
     #site-tour-tooltip {
       display: none; position: fixed; z-index: 4600; left: 12px; bottom: 12px; box-sizing: border-box;
