@@ -7,6 +7,8 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 ## Pages
 
 - Review: https://carlosandmunoz.com/qa-review.html
+- Review, Spanish headline: https://carlosandmunoz.com/qa-review-es.html
+- Review, Portuguese headline: https://carlosandmunoz.com/qa-review-pt.html
 - Facts: https://carlosandmunoz.com/qa-review.html#service-facts
 - Disclaimers: https://carlosandmunoz.com/qa-review-legal.html
 - Languages: English, Spanish, Portuguese, German, French, Italian. Add ?lang=es, pt, de, fr, or it.
