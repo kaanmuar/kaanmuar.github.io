@@ -130,9 +130,11 @@ function itemsFromRss(xml, sourceName) {
 function getText(url, redirects) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
+      family: 4,
       headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/rss+xml, application/xml, text/xml, */*"
+        "User-Agent": "Mozilla/5.0 (compatible; QA-lab-URL-Review/1.0; +https://carlosandmunoz.com/qa-review.html)",
+        "Accept": "application/rss+xml, application/xml, text/xml, */*",
+        "Accept-Encoding": "identity"
       }
     }, (res) => {
       const status = res.statusCode || 0;
@@ -162,7 +164,7 @@ function getText(url, redirects) {
       });
       res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     });
-    req.setTimeout(8000, () => req.destroy(new Error("timeout")));
+    req.setTimeout(12000, () => req.destroy(new Error("timeout")));
     req.on("error", reject);
   });
 }
@@ -218,6 +220,7 @@ async function loadNews(options) {
     try {
       return itemsFromRss(await getText(feed.url, 0), feed.name);
     } catch (error) {
+      console.error("News feed failed:", feed.name, error && error.message);
       return [];
     }
   }));
