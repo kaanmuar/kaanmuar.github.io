@@ -180,7 +180,7 @@ function adminRespondUrl(type, id) {
   return url.toString();
 }
 
-async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLabel }) {
+async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLabel, to }) {
   const from = prepareMail();
   if (!from) return false;
   const safeRows = (rows || []).filter((row) => row && row.value);
@@ -213,7 +213,7 @@ async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLa
     buttonHtml +
     "</td></tr></table></body></html>";
   await sgMail.send({
-    to: OWNER_EMAIL,
+    to: to || OWNER_EMAIL,
     from: from,
     subject: clip(subject, 140),
     text: text.slice(0, 8000),
@@ -870,4 +870,498 @@ exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("
     }
   }
   return null;
+});
+
+const urlReview = require("./url-review-core");
+const newsWire = require("./news-wire");
+const reviewDesk = require("./url-review-desk");
+const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
+
+async function rememberReview(kind, source) {
+  const note = reviewDesk.alertFrom(kind, source || {});
+  try {
+    await admin.firestore().collection("url_review_alerts").add({
+      at: note.at,
+      kind: note.kind,
+      title: note.title,
+      detail: note.detail,
+      runId: note.runId,
+      url: note.url,
+      name: note.name,
+      email: note.email,
+      status: note.status,
+      priceUsd: note.priceUsd,
+      paid: note.paid
+    });
+  } catch (error) {
+    console.error("Review alert record failed:", error);
+  }
+  try {
+    await sendOwnerEmail({
+      to: REVIEW_ALERT_TO,
+      subject: note.subject,
+      intro: note.title,
+      rows: note.rows,
+      body: note.detail
+    });
+  } catch (error) {
+    console.error("Review alert mail failed:", error);
+  }
+}
+const REVIEW_ORIGINS = new Set([
+  "https://carlosandmunoz.com",
+  "https://www.carlosandmunoz.com",
+  "https://kaanmuar.github.io",
+  "http://127.0.0.1:8765",
+  "http://localhost:8765"
+]);
+
+function reviewOrigin(req) {
+  const origin = String(req.get("origin") || "");
+  return REVIEW_ORIGINS.has(origin) ? origin : "https://carlosandmunoz.com";
+}
+
+async function reviewRowsFor(deviceId, ip) {
+  const col = admin.firestore().collection("url_reviews");
+  const [byDevice, byIp] = await Promise.all([
+    deviceId ? col.where("deviceId", "==", deviceId).limit(20).get() : Promise.resolve({ docs: [] }),
+    ip ? col.where("ip", "==", ip).limit(20).get() : Promise.resolve({ docs: [] })
+  ]);
+  const map = new Map();
+  byDevice.docs.concat(byIp.docs).forEach((doc) => map.set(doc.id, Object.assign({ id: doc.id }, doc.data())));
+  return Array.from(map.values()).map((row) => Object.assign({}, row, {
+    createdAt: row.createdAt && row.createdAt.toDate ? row.createdAt.toDate().toISOString() : row.createdAt
+  }));
+}
+
+exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+  const origin = reviewOrigin(req);
+  res.set("Access-Control-Allow-Origin", origin);
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+  res.set("Access-Control-Allow-Credentials", "true");
+  res.set("Cache-Control", "no-store");
+  if (req.method === "OPTIONS") {
+    res.status(204).send("");
+    return;
+  }
+  const pathName = String(req.path || "/");
+  if (req.method === "GET" && pathName.indexOf("/news") !== -1) {
+    try {
+      const news = await newsWire.loadNews({
+        country: req.query.country,
+        lang: req.query.lang,
+        city: req.query.city
+      });
+      res.status(200).json(news);
+    } catch (error) {
+      res.status(200).json({ country: "", lang: "en", items: [] });
+    }
+    return;
+  }
+  if (req.method === "POST" && pathName.indexOf("/stop") !== -1) {
+    const runId = String((req.body && req.body.runId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    if (runId) {
+      await admin.firestore().collection("url_review_stops").doc(runId).set({ at: new Date().toISOString() });
+    }
+    res.status(200).json({ ok: true });
+    return;
+  }
+  if (req.method === "POST" && pathName.indexOf("/capture") !== -1) {
+    const reportId = String((req.body && req.body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const kind = ["print", "printscreen", "copy", "case-print"].indexOf(String((req.body && req.body.kind) || "")) === -1 ? "" : String(req.body.kind);
+    const deviceId = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 16);
+    if (!reportId || !kind) {
+      res.status(400).json({ error: "The capture note was incomplete." });
+      return;
+    }
+    await admin.firestore().collection("url_review_captures").add({
+      reportId,
+      kind,
+      deviceId,
+      at: new Date().toISOString()
+    });
+    await rememberReview("capture", { id: reportId, reportId, kind, status: "capture", deviceId });
+    res.status(200).json({ ok: true });
+    return;
+  }
+  if (req.method === "GET" && pathName.indexOf("/checkout/quote") !== -1) {
+    try {
+      const priced = req.query.purpose === "credentials"
+        ? urlReview.priceForCredentials()
+        : req.query.purpose === "alerts"
+          ? urlReview.priceForAlerts(req.query.count)
+          : req.query.layers
+            ? urlReview.priceForLayers(String(req.query.layers || ""))
+            : req.query.pages
+          ? urlReview.priceForRun({
+            frameworks: String(req.query.frameworks || ""),
+            tools: String(req.query.tools || ""),
+            pages: req.query.pages,
+            depth: req.query.depth,
+            billing: String(req.query.billing || "")
+          })
+          : urlReview.priceFor(String(req.query.frameworks || ""), String(req.query.tools || ""));
+      const quote = await urlReview.copQuote(priced.usd);
+      res.status(200).json({
+        usd: priced.usd,
+        cop: quote.pesos,
+        rate: quote.rate,
+        count: priced.count,
+        frameworks: priced.frameworks,
+        tools: priced.tools || [],
+        discount: priced.discount || [],
+        pages: priced.pages,
+        depth: priced.depth,
+        billing: priced.billing,
+        frameworkUsd: priced.frameworkUsd,
+        scopeUsd: priced.scopeUsd,
+        pageUsd: priced.pageUsd,
+        depthUsd: priced.depthUsd,
+        perFramework: priced.each
+      });
+    } catch (error) {
+      res.status(error.status || 502).json({ error: error.message || "The peso price could not be loaded." });
+    }
+    return;
+  }
+  if (req.method === "POST" && pathName.indexOf("/checkout") !== -1) {
+    const purpose = ["report", "cases", "credentials", "alerts"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
+    const reportId = String((req.body && req.body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const deviceId = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 16);
+    const choice = urlReview.paymentChoice((req.body && req.body.provider) || "paypal");
+    if (!choice) {
+      res.status(400).json({ error: "PayPal is the payment method for this review. No charge was made." });
+      return;
+    }
+    const keys = {
+      secret: process.env.STRIPE_SECRET_KEY || "",
+      wompiKey: process.env.WOMPI_PRIVATE_KEY || "",
+      mercadoPagoToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
+      paypalClientId: process.env.PAYPAL_CLIENT_ID || "",
+      paypalSecret: process.env.PAYPAL_CLIENT_SECRET || "",
+      paypalMode: process.env.PAYPAL_MODE || ""
+    };
+    try {
+      if (pathName.indexOf("/confirm") !== -1) {
+        const result = await urlReview.inspectPayment(Object.assign({
+          provider: choice,
+          sessionId: String((req.body && req.body.sessionId) || "")
+        }, keys));
+        if (!result.paid) {
+          res.status(402).json({
+            paid: false,
+            pending: !!result.pending,
+            error: result.pending ? "The payment is still pending. Nothing was unlocked." : "The payment is not confirmed. No charge was recorded here."
+          });
+          return;
+        }
+        const existing = await admin.firestore().collection("url_reviews").where("sessionId", "==", result.sessionId).limit(1).get();
+        if (!existing.empty) {
+          const prior = existing.docs[0].data() || {};
+          res.status(200).json({ paid: true, purpose: prior.purpose === "report" ? "report" : "new-run" });
+          return;
+        }
+        let paidPurpose = result.purpose === "report" ? "report" : "new-run";
+        let paidReport = String(result.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+        let payer = String(result.deviceId || deviceId).replace(/[^a-f0-9]/g, "").slice(0, 32);
+        let paidFrameworks = result.frameworks || [];
+        let paidTools = result.tools || [];
+        let paidPrice = result.amount || 0;
+        if (choice !== "stripe") {
+          const openSnap = await admin.firestore().collection("url_reviews").doc(result.reference).get();
+          const open = openSnap.exists ? openSnap.data() : null;
+          const sameLink = !result.linkId || (open && open.externalId === result.linkId);
+          if (!open || open.status !== "checkout-open" || open.provider !== result.provider || open.amount !== result.amount || !sameLink) {
+            res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
+            return;
+          }
+          paidPurpose = open.purpose === "report" ? "report" : "new-run";
+          paidReport = String(open.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+          payer = String(open.deviceId || deviceId).replace(/[^a-f0-9]/g, "").slice(0, 32);
+          paidFrameworks = open.frameworks || [];
+          paidTools = open.tools || [];
+          paidPrice = open.priceUsd || result.amount;
+          result.pages = open.pages;
+          result.depth = open.depth;
+          result.billing = open.billing;
+        }
+        if (paidPurpose === "report" && paidReport) {
+          await admin.firestore().collection("url_reviews").doc(paidReport).set({
+            paid: true,
+            sessionId: result.sessionId,
+            provider: result.provider
+          }, { merge: true });
+          await rememberReview("paid", {
+            id: paidReport,
+            status: "paid-report",
+            paid: true,
+            priceUsd: paidPrice,
+            provider: result.provider,
+            purpose: paidPurpose,
+            frameworks: paidFrameworks
+          });
+        } else {
+          const credit = {
+            status: "run-credit",
+            paid: true,
+            provider: result.provider,
+            method: choice,
+            deviceId: payer,
+            sessionId: result.sessionId,
+            purpose: paidPurpose,
+            frameworks: paidFrameworks,
+            tools: paidTools,
+            pages: result.pages || urlReview.INCLUDED_PAGES,
+            depth: result.depth || urlReview.INCLUDED_DEPTH,
+            billing: result.billing || "run",
+            createdAt: new Date().toISOString(),
+            priceUsd: paidPrice,
+            amount: result.amount,
+            currency: result.currency
+          };
+          await admin.firestore().collection("url_reviews").add(credit);
+          await rememberReview("run-paid", credit);
+        }
+        res.status(200).json({ paid: true, purpose: paidPurpose });
+        return;
+      }
+      const reference = crypto.randomBytes(8).toString("hex");
+      let priced = null;
+      if (purpose === "cases") {
+        priced = urlReview.priceForLayers((req.body && req.body.layers) || []);
+      } else if (purpose === "credentials") {
+        priced = urlReview.priceForCredentials();
+      } else if (purpose === "alerts") {
+        priced = urlReview.priceForAlerts(req.body && req.body.alertCount);
+      } else if (purpose === "report") {
+        const reportSnap = await admin.firestore().collection("url_reviews").doc(reportId).get();
+        const reportData = reportSnap.exists ? reportSnap.data() : {};
+        priced = urlReview.priceFor((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools));
+      } else {
+        priced = urlReview.priceForRun({
+          frameworks: (req.body && req.body.frameworks) || [],
+          tools: req.body && req.body.tools,
+          pages: req.body && req.body.pages,
+          depth: req.body && req.body.depth,
+          billing: req.body && req.body.billing
+        });
+      }
+      const base = origin + "/qa-review-pay.html?purpose=" + purpose + "&provider=" + choice;
+      const successUrl = choice === "stripe"
+        ? base + "&result=success&session_id={CHECKOUT_SESSION_ID}"
+        : base + "&result=success&reference=" + reference;
+      const cancelUrl = base + "&result=cancel" + (choice === "stripe" ? "" : "&reference=" + reference);
+      const pendingUrl = base + "&result=pending" + (choice === "stripe" ? "" : "&reference=" + reference);
+      const session = await urlReview.startCheckout(Object.assign({
+        provider: choice,
+        purpose,
+        reportId,
+        deviceId,
+        reference,
+        frameworks: priced.frameworks || [],
+        tools: priced.tools || [],
+        layers: priced.layers || [],
+        pages: priced.pages,
+        depth: priced.depth,
+        billing: priced.billing,
+        alertCount: priced.alertCount,
+        priceUsd: priced.usd,
+        successUrl,
+        cancelUrl,
+        pendingUrl
+      }, keys));
+      await admin.firestore().collection("url_reviews").doc(reference).set({
+        status: "checkout-open",
+        provider: urlReview.paymentProvider(choice),
+        method: choice,
+        externalId: session.id,
+        reference,
+        purpose,
+        reportId,
+        deviceId,
+        frameworks: priced.frameworks || [],
+        tools: priced.tools || [],
+        layers: priced.layers || [],
+        pages: priced.pages || null,
+        depth: priced.depth || null,
+        billing: priced.billing || "",
+        priceUsd: priced.usd,
+        amount: session.amount,
+        currency: session.currency,
+        paid: false,
+        createdAt: new Date().toISOString()
+      });
+      await rememberReview("checkout", {
+        id: reference,
+        status: "checkout-open",
+        purpose,
+        reportId,
+        priceUsd: priced.usd,
+        frameworks: priced.frameworks || [],
+        paid: false
+      });
+      res.status(200).json({ url: session.url, id: session.id, provider: session.provider, currency: session.currency, amount: session.amount });
+    } catch (error) {
+      res.status(error.status || 502).json({
+        error: error.message || "Payment could not be started.",
+        paymentRequired: true,
+        priceUsd: urlReview.PRICE_USD
+      });
+    }
+    return;
+  }
+  if (req.method === "POST" && pathName.indexOf("/pay") !== -1) {
+    res.status(402).json({
+      paymentRequired: true,
+      priceUsd: urlReview.PRICE_USD,
+      error: "Reopening a report asks for payment. A card payment is not connected on this page."
+    });
+    return;
+  }
+  if (req.method === "GET") {
+    const id = String(req.query.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    if (!id) {
+      res.status(400).json({ error: "Missing report id." });
+      return;
+    }
+    const snap = await admin.firestore().collection("url_reviews").doc(id).get();
+    if (!snap.exists) {
+      res.status(404).json({ error: "That report was not found." });
+      return;
+    }
+    const data = snap.data() || {};
+    if (!data.paid) {
+      let priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] };
+      try { priced = urlReview.priceFor(data.frameworks || []); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] }; }
+      res.status(402).json({
+        paymentRequired: true,
+        priceUsd: priced.usd,
+        frameworks: priced.frameworks,
+        id: id,
+        host: data.report && data.report.host,
+        status: data.status || ""
+      });
+      return;
+    }
+    res.status(200).json({ report: data.report || null, frameworks: data.frameworks || [], paid: true });
+    return;
+  }
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Use POST." });
+    return;
+  }
+  const hintedDevice = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const intake = await urlReview.screenIntake(req.body || {}, req.headers);
+  if (!intake.ok) {
+    res.status(intake.status || 400).json({ error: intake.error, fields: intake.fields || [] });
+    return;
+  }
+  const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const ip = req.ip || "";
+  const decision = urlReview.judgeAttempts(await reviewRowsFor(deviceId, ip), { deviceId, ip }, intake.value);
+  if (decision.ok && decision.consumeId) {
+    await admin.firestore().collection("url_reviews").add({
+      status: "run-credit-used",
+      creditId: decision.consumeId,
+      deviceId,
+      createdAt: new Date().toISOString()
+    });
+    await rememberReview("credit", { status: "run-credit-used", deviceId, creditId: decision.consumeId });
+  }
+  if (!decision.ok) {
+    const denied = {
+      createdAt: new Date().toISOString(),
+      status: decision.code === "payment" ? "payment-due" : "blocked",
+      deviceId,
+      ip,
+      name: intake.value.name,
+      email: intake.value.email,
+      reason: intake.value.reason,
+      requestedUrl: intake.value.url,
+      log: [{ at: new Date().toISOString(), text: decision.message }]
+    };
+    await admin.firestore().collection("url_reviews").add(denied);
+    await rememberReview(denied.status === "payment-due" ? "payment-due" : "blocked", denied);
+    res.status(decision.code === "payment" ? 402 : 429).json({
+      error: decision.message,
+      paymentRequired: decision.code === "payment",
+      purpose: decision.code === "payment" ? "new-run" : "",
+      priceUsd: decision.priceUsd || 0,
+      frameworks: decision.frameworks || [],
+      pages: decision.pages,
+      depth: decision.depth,
+      billing: decision.billing || "",
+      frameworkUsd: decision.frameworkUsd,
+      scopeUsd: decision.scopeUsd,
+      pageUsd: decision.pageUsd,
+      depthUsd: decision.depthUsd
+    });
+    return;
+  }
+  const runId = String((req.body && req.body.runId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  let stopped = false;
+  const stopTimer = runId ? setInterval(async () => {
+    try {
+      const snap = await admin.firestore().collection("url_review_stops").doc(runId).get();
+      if (snap.exists) stopped = true;
+    } catch (error) {
+      console.error("URL review stop check failed:", error);
+    }
+  }, 800) : null;
+  res.on("close", () => {
+    if (!res.writableEnded) stopped = true;
+  });
+  res.status(200);
+  res.set("Content-Type", "application/x-ndjson; charset=utf-8");
+  const writeLine = (payload) => {
+    if (!res.writableEnded) res.write(JSON.stringify(payload) + "\n");
+  };
+  try {
+    await rememberReview("started", {
+      runId,
+      name: intake.value.name,
+      email: intake.value.email,
+      requestedUrl: intake.value.url,
+      status: "running",
+      frameworks: intake.value.frameworks,
+      pages: intake.value.pages,
+      depth: intake.value.depth,
+      reason: intake.value.reason
+    });
+    const report = await urlReview.reviewTarget(intake.value.url, {
+      log: (text) => writeLine({ type: "log", text }),
+      stopped: () => stopped,
+      maxPages: intake.value.pages,
+      maxDepth: intake.value.depth
+    });
+    const record = urlReview.intakeRecord(intake.value, report, {
+      ip,
+      deviceId,
+      userAgent: req.get("user-agent"),
+      acceptLanguage: req.get("accept-language"),
+      country: req.get("x-appengine-country") || "",
+      region: req.get("x-appengine-region") || "",
+      city: req.get("x-appengine-city") || ""
+    });
+    await admin.firestore().collection("url_reviews").doc(report.id).set(record);
+    await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
+    writeLine({ type: "done", report, frameworks: record.frameworks, paid: false, priceUsd: record.priceUsd });
+    res.end();
+  } catch (error) {
+    console.error("URL review failed:", error);
+    await rememberReview("failed", {
+      runId,
+      name: intake.value.name,
+      email: intake.value.email,
+      requestedUrl: intake.value.url,
+      status: "failed",
+      reason: error.message || "The review failed."
+    });
+    writeLine({ type: "error", error: error.message || "The review failed." });
+    res.end();
+  } finally {
+    if (stopTimer) clearInterval(stopTimer);
+    if (runId) admin.firestore().collection("url_review_stops").doc(runId).delete().catch(() => {});
+  }
 });

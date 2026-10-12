@@ -17,7 +17,8 @@
     "test:k6": "node scripts/run-k6.js",
     "test:jmeter": "node scripts/run-jmeter.js",
     "test:gatling": "node scripts/run-gatling.js",
-    "lab:runners": "node scripts/native-runner.js"
+    "lab:runners": "node scripts/native-runner.js",
+    "review:server": "node scripts/url-review-server.js"
   },
   "author": "Carlos A. Muñoz",
   "license": "ISC",
