@@ -93,7 +93,7 @@ service cloud.firestore {
       allow get, list: if isOwner();
       allow update, delete: if false;
       allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'screen', 'createdAt'])
-        && request.resource.data.site in ['cv', 'studio', 'lab']
+        && request.resource.data.site in ['cv', 'studio', 'lab', 'review']
         && (
           (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
           || (request.resource.data.kind == 'export' && request.resource.data.name in ['export_cv', 'print_cv', 'lab_report', 'studio_report'])
@@ -146,6 +146,16 @@ service cloud.firestore {
     match /abuse/{id} {
       allow get: if id == 'forms';
       allow list, create, update, delete: if false;
+    }
+
+    match /url_reviews/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
+    }
+
+    match /url_review_alerts/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
     }
 
     match /mail/{id} {
