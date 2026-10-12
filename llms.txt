@@ -1,0 +1,33 @@
+# QA-lab URL Review
+
+QA-lab URL Review reads one public https address and proposes test cases. It does not run those cases, sign in, submit a form, or generate load. It is not a certification.
+
+The operator is a natural person domiciled in Colombia. Contact is the form on https://carlosandmunoz.com/ and qa@carlosandmunoz.com. A lawyer has not reviewed the disclaimers.
+
+## Pages
+
+- Review: https://carlosandmunoz.com/qa-review.html
+- Facts: https://carlosandmunoz.com/qa-review.html#service-facts
+- Disclaimers: https://carlosandmunoz.com/qa-review-legal.html
+- Languages: English, Spanish, Portuguese, German, French, Italian. Add ?lang=es, pt, de, fr, or it.
+
+## What a review names
+
+Frameworks: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling.
+Tools, only when they apply, and never launched: axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar, Copado.
+The report can also list technologies, pages read, public signals, and public write-ups. Secrets are not copied. A missing header is not proof of a break-in.
+
+## Price
+
+The first selection is 19 USD. Further selections step down by 10, 15, 20, 25, 30, 35, then 40 percent.
+A return within 30 days takes another 10 percent off the first time, 15 percent the second, and 20 percent after that. A selection never falls under 9.50 USD.
+A 30-day history pass is Glance 15 USD, Return 49 USD, Bench 189 USD, or Studio 399 USD. These are 30-day passes, not a repeating charge. PayPal collects a payment. The amount is shown before the payer confirms.
+The included first completed review is 20 pages and 2 links deep.
+
+## News
+
+The news strip uses the country of the connection and the language selected on the page. Headlines come from publisher feeds. The page does not invent a headline.
+
+## Not for indexing
+
+Payment, sign-in, and the operator desk are not public catalogs. The payment page and the sign-in page ask crawlers not to index them.

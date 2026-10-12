@@ -7,3 +7,5 @@ Disallow: /tests/
 Disallow: /functions/
 
 Sitemap: https://carlosandmunoz.com/sitemap.xml
+
+# Facts for answer engines: https://carlosandmunoz.com/llms.txt
