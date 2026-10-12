@@ -2,6 +2,14 @@
   "functions": {
     "source": "functions"
   },
+  "hosting": {
+    "public": "desk-host",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      { "source": "/desk", "function": "reviewUrl" },
+      { "source": "/desk/**", "function": "reviewUrl" }
+    ]
+  },
   "firestore": {
     "rules": "firestore.rules"
   },

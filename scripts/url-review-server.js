@@ -60,8 +60,6 @@ const activeRuns = new Map();
 const signInCodes = new Map();
 const accountSessions = new Map();
 const deskSessions = new Map();
-const DESK_GOOGLE_EMAIL = (process.env.DESK_GOOGLE_EMAIL || "kaanmuar@gmail.com").trim().toLowerCase();
-const FIREBASE_WEB_KEY = "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w";
 const FILE = path.join(__dirname, "..", "runner-results", "url-reviews.jsonl");
 const ALERT_FILE = path.join(__dirname, "..", "runner-results", "url-review-alerts.jsonl");
 const ALLOW = new Set([
@@ -127,21 +125,8 @@ function deskOperator(req) {
   return session;
 }
 
-async function verifyDeskGoogle(idToken) {
-  const token = String(idToken || "").trim();
-  if (token.length < 20 || token.length > 4000) return null;
-  const response = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + FIREBASE_WEB_KEY, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ idToken: token })
-  });
-  const body = await response.json().catch(() => ({}));
-  const user = body && Array.isArray(body.users) ? body.users[0] : null;
-  if (!user || user.emailVerified !== true) return null;
-  const google = (user.providerUserInfo || []).some((item) => item && item.providerId === "google.com");
-  const email = String(user.email || "").trim().toLowerCase();
-  if (!google || email !== DESK_GOOGLE_EMAIL) return null;
-  return email;
+function verifyDeskGoogle(idToken) {
+  return desk.verifyOperator(idToken);
 }
 
 function seedAlerts() {
