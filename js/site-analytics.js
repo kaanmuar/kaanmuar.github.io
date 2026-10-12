@@ -27,6 +27,32 @@
         sim_run_sprint: 'click',
         sim_sprint_complete: 'click',
         site_tour_start: 'click',
+        qa_review_start: 'run',
+        qa_review_done: 'run',
+        qa_review_stop: 'click',
+        qa_review_share: 'click',
+        qa_review_pay_open: 'click',
+        qa_review_pay_view: 'click',
+        qa_review_checkout: 'click',
+        qa_review_pay_result: 'click',
+        qa_review_legal: 'click',
+        qa_review_legal_country: 'click',
+        qa_review_blocked: 'click',
+        qa_review_terms: 'click',
+        qa_review_follow_up: 'click',
+        qa_review_reason: 'click',
+        qa_review_frameworks: 'click',
+        qa_review_scope: 'click',
+        qa_review_tools: 'click',
+        qa_review_print: 'click',
+        qa_review_news: 'click',
+        qa_review_alerts: 'click',
+        qa_review_credentials: 'click',
+        qa_review_cases: 'click',
+        qa_review_language_change: 'click',
+        qa_review_account_code: 'click',
+        qa_review_account_enter: 'click',
+        qa_review_account_stop: 'click',
         open_clip: 'click',
         company_site: 'click'
     };
@@ -121,7 +147,7 @@
     }
 
     function bind(name) {
-        if (name === 'cv' || name === 'studio' || name === 'lab') site = name;
+        if (name === 'cv' || name === 'studio' || name === 'lab' || name === 'review') site = name;
     }
 
     function hideCvRef() {
