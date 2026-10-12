@@ -946,6 +946,74 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     return;
   }
   const pathName = String(req.path || "/");
+  const deskName = pathName.indexOf("/desk/data") !== -1
+    ? "data"
+    : pathName.indexOf("/desk/pass") !== -1
+      ? "pass"
+      : (pathName === "/desk" || pathName.endsWith("/desk"))
+        ? "page"
+        : "";
+  if (deskName) {
+    res.set("X-Robots-Tag", "noindex");
+    if (deskName === "page" && req.method === "GET") {
+      res.set("Content-Type", "text/html; charset=utf-8");
+      res.status(200).send(reviewDesk.PAGE);
+      return;
+    }
+    const presented = String(req.get("authorization") || "");
+    const bearer = presented.toLowerCase().startsWith("bearer ") ? presented.slice(7).trim() : "";
+    let operator = null;
+    if (bearer) {
+      try { operator = await reviewDesk.verifyOperator(bearer); } catch (error) { operator = null; }
+    }
+    if (!operator) {
+      res.status(bearer ? 403 : 401).json({ error: bearer ? "This Google account cannot open the desk." : "Sign in with the operator Google account." });
+      return;
+    }
+    if (deskName === "data" && req.method === "GET") {
+      const [reviewSnap, alertSnap] = await Promise.all([
+        admin.firestore().collection("url_reviews").limit(400).get(),
+        admin.firestore().collection("url_review_alerts").limit(80).get()
+      ]);
+      const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
+      const records = reviewSnap.docs.map((doc) => {
+        const data = doc.data() || {};
+        return Object.assign({ id: doc.id }, data, { createdAt: stamp(data.createdAt) });
+      });
+      const alerts = alertSnap.docs.map((doc) => {
+        const data = doc.data() || {};
+        return Object.assign({ id: doc.id }, data, { at: stamp(data.at) });
+      });
+      res.status(200).json(reviewDesk.snapshot(records, alerts, []));
+      return;
+    }
+    if (deskName === "pass" && req.method === "POST") {
+      const email = String((req.body && req.body.email) || "").trim().toLowerCase();
+      const offers = require("./url-review-offers");
+      const chosen = offers.planById((req.body && req.body.plan) || "glance");
+      if (!email || email.indexOf("@") === -1) {
+        res.status(400).json({ error: "That address is missing." });
+        return;
+      }
+      const until = new Date(Date.now() + chosen.days * 24 * 60 * 60 * 1000).toISOString();
+      const record = {
+        status: "monthly-pass",
+        email,
+        plan: chosen.id,
+        priceUsd: chosen.usd,
+        paid: false,
+        localPass: true,
+        paidUntil: until,
+        createdAt: new Date().toISOString()
+      };
+      await admin.firestore().collection("url_reviews").add(record);
+      await rememberReview("monthly", record);
+      res.status(200).json({ ok: true, paidUntil: until, charged: false });
+      return;
+    }
+    res.status(405).json({ error: "Use the desk sign-in." });
+    return;
+  }
   if (req.method === "GET" && pathName.indexOf("/news") !== -1) {
     try {
       const news = await newsWire.loadNews({

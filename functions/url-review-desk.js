@@ -288,14 +288,14 @@ const PAGE = `<!DOCTYPE html>
 <body class="desk-locked">
   <header>
     <h1>Review desk</h1>
-    <p class="lede">Runs kept on this machine. This page asks again every few seconds. Customer sign-in is at <a href="/account">/account</a>.</p>
+    <p class="lede">Runs for this review. This page asks again every few seconds. Customer sign-in is separate from this desk.</p>
     <button id="desk-out" type="button">Sign out</button>
     <div class="stats" id="stats"></div>
   </header>
   <main>
     <section id="desk-gate">
       <h2>Operator sign-in</h2>
-      <p>Continue with the operator Google account. Any other Google account stays outside. Open this page at <a href="http://localhost:8768/desk">localhost:8768/desk</a> so Google accepts the sign-in.</p>
+      <p>Continue with the operator Google account. Any other Google account stays outside.</p>
       <button id="desk-google" type="button">Continue with Google</button>
       <p id="desk-gate-note" class="empty"></p>
     </section>
@@ -313,7 +313,7 @@ const PAGE = `<!DOCTYPE html>
     </section>
     <section>
       <h2>Follow-up notes</h2>
-      <p class="empty">A note stays here until the person checks the box. Nothing in this list is mailed from this machine.</p>
+      <p class="empty">A note stays here until the person checks the box. Nothing in this list is mailed.</p>
       <div id="notes"></div>
     </section>
     <section>
@@ -571,11 +571,22 @@ const PAGE = `<!DOCTYPE html>
       });
     }
 
+    function deskBase() {
+      const path = location.pathname;
+      const at = path.indexOf("/desk");
+      return at > 0 ? path.slice(0, at) : "";
+    }
+    async function deskHeaders() {
+      const headers = { "content-type": "application/json" };
+      const auth = deskApp();
+      if (auth && auth.currentUser) headers.authorization = "Bearer " + await auth.currentUser.getIdToken();
+      return headers;
+    }
     async function openPass(email) {
-      await fetch("/desk/pass", {
+      await fetch(deskBase() + "/desk/pass", {
         method: "POST",
         credentials: "include",
-        headers: { "content-type": "application/json" },
+        headers: await deskHeaders(),
         body: JSON.stringify({ email: email, plan: "glance" })
       });
       load();
@@ -588,9 +599,14 @@ const PAGE = `<!DOCTYPE html>
       document.body.classList.remove("desk-locked");
     }
     async function load() {
-      const response = await fetch("/desk/data", { cache: "no-store", credentials: "include" });
-      if (response.status === 401) {
+      const headers = await deskHeaders();
+      const response = await fetch(deskBase() + "/desk/data", { cache: "no-store", credentials: "include", headers: headers });
+      if (response.status === 401 || response.status === 403) {
         lockDesk();
+        if (response.status === 403) {
+          const note = document.getElementById("desk-gate-note");
+          if (note) note.textContent = "This Google account cannot open the desk.";
+        }
         return;
       }
       if (!response.ok) return;
@@ -611,16 +627,19 @@ const PAGE = `<!DOCTYPE html>
     }
     async function finishDesk(user) {
       const note = document.getElementById("desk-gate-note");
-      const idToken = await user.getIdToken();
-      const res = await fetch("/desk/session", {
-        method: "POST",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ idToken: idToken })
-      });
-      if (!res.ok) {
-        note.textContent = "This Google account cannot open the desk.";
-        return;
+      const local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+      if (local) {
+        const idToken = await user.getIdToken();
+        const res = await fetch(deskBase() + "/desk/session", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ idToken: idToken })
+        });
+        if (!res.ok) {
+          note.textContent = "This Google account cannot open the desk.";
+          return;
+        }
       }
       note.textContent = "";
       load();
@@ -645,20 +664,25 @@ const PAGE = `<!DOCTYPE html>
           return;
         }
         if (code === "auth/unauthorized-domain") {
-          note.textContent = "Open this desk at localhost:8768/desk and try again.";
+          note.textContent = "Google did not accept this desk address.";
           return;
         }
-        note.textContent = "Google did not complete the sign-in. Use localhost:8768/desk and try again.";
+        note.textContent = "Google did not complete the sign-in.";
       }
     });
     const startingAuth = deskApp();
     if (startingAuth) {
+      startingAuth.onAuthStateChanged((user) => {
+        if (user) load();
+      });
       startingAuth.getRedirectResult().then((result) => {
         if (result && result.user) finishDesk(result.user);
       }).catch(() => {});
     }
     document.getElementById("desk-out").addEventListener("click", async () => {
-      await fetch("/desk/logout", { method: "POST", credentials: "include" });
+      const auth = deskApp();
+      if (auth && auth.currentUser) await auth.signOut();
+      await fetch(deskBase() + "/desk/logout", { method: "POST", credentials: "include" });
       lockDesk();
     });
     qEl.addEventListener("input", render);
@@ -669,10 +693,34 @@ const PAGE = `<!DOCTYPE html>
 </body>
 </html>`;
 
+const DESK_FIREBASE_KEY = "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w";
+
+function operatorEmail() {
+  return (process.env.DESK_GOOGLE_EMAIL || "kaanmuar@gmail.com").trim().toLowerCase();
+}
+
+async function verifyOperator(idToken) {
+  const token = String(idToken || "").trim();
+  if (token.length < 20 || token.length > 4000) return null;
+  const response = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + DESK_FIREBASE_KEY, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ idToken: token })
+  });
+  const body = await response.json().catch(() => ({}));
+  const user = body && Array.isArray(body.users) ? body.users[0] : null;
+  if (!user || user.emailVerified !== true) return null;
+  const google = (user.providerUserInfo || []).some((item) => item && item.providerId === "google.com");
+  const email = String(user.email || "").trim().toLowerCase();
+  if (!google || email !== operatorEmail()) return null;
+  return email;
+}
+
 module.exports = {
   kindFor,
   alertFrom,
   alertsFromHistory,
   snapshot,
+  verifyOperator,
   PAGE
 };
