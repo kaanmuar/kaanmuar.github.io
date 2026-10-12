@@ -93,15 +93,22 @@ service cloud.firestore {
       allow get, list: if isOwner();
       allow update, delete: if false;
       allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'screen', 'createdAt'])
-        && request.resource.data.site in ['cv', 'studio', 'lab']
+        && request.resource.data.site in ['cv', 'studio', 'lab', 'review']
         && (
           (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
           || (request.resource.data.kind == 'export' && request.resource.data.name in ['export_cv', 'print_cv', 'lab_report', 'studio_report'])
-          || (request.resource.data.kind == 'run' && request.resource.data.name == 'lab_run')
+          || (request.resource.data.kind == 'run' && request.resource.data.name in ['lab_run', 'qa_review_start', 'qa_review_done'])
           || (request.resource.data.kind == 'click' && request.resource.data.name in [
             'share_cv', 'open_simulator', 'open_qa_lab', 'open_contact_widget',
             'submit_message', 'submit_rating', 'sim_run_sprint', 'sim_sprint_complete',
-            'site_tour_start', 'open_clip', 'company_site'
+            'site_tour_start', 'open_clip', 'company_site',
+            'qa_review_stop', 'qa_review_share', 'qa_review_pay_open', 'qa_review_pay_view',
+            'qa_review_checkout', 'qa_review_pay_result', 'qa_review_legal', 'qa_review_legal_country',
+            'qa_review_blocked', 'qa_review_terms', 'qa_review_follow_up', 'qa_review_reason',
+            'qa_review_frameworks', 'qa_review_scope', 'qa_review_tools', 'qa_review_print',
+            'qa_review_news', 'qa_review_alerts', 'qa_review_credentials', 'qa_review_cases',
+            'qa_review_language_change', 'qa_review_account_code', 'qa_review_account_enter',
+            'qa_review_account_stop'
           ])
         )
         && request.resource.data.label is string
@@ -146,6 +153,16 @@ service cloud.firestore {
     match /abuse/{id} {
       allow get: if id == 'forms';
       allow list, create, update, delete: if false;
+    }
+
+    match /url_reviews/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
+    }
+
+    match /url_review_alerts/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
     }
 
     match /mail/{id} {
