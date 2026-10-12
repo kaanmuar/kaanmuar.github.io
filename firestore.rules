@@ -165,6 +165,16 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /url_review_opens/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
+    }
+
+    match /url_review_reports/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
+    }
+
     match /mail/{id} {
       allow read, write: if false;
     }

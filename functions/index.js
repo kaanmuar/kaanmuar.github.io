@@ -630,7 +630,8 @@ function summarizeEvents(rows) {
   const sites = {
     cv: { opens: 0, clicks: 0, exports: 0, runs: 0 },
     studio: { opens: 0, clicks: 0, exports: 0, runs: 0 },
-    lab: { opens: 0, clicks: 0, exports: 0, runs: 0 }
+    lab: { opens: 0, clicks: 0, exports: 0, runs: 0 },
+    review: { opens: 0, clicks: 0, exports: 0, runs: 0 }
   };
   const exportsBy = {};
   const actions = {};
@@ -810,6 +811,7 @@ async function sendPeriodReport(period) {
       { label: "CV", value: siteLine("cv") },
       { label: "Studio", value: siteLine("studio") },
       { label: "Lab", value: siteLine("lab") },
+      { label: "Review", value: siteLine("review") },
       { label: "Languages", value: tallyLine(summary.langs) },
       { label: "Referrers", value: tallyLine(summary.referrers) },
       { label: "Actions", value: tallyLine(summary.actions) },
@@ -845,6 +847,107 @@ exports.emailDailySiteReport = scheduleReport("15 7 * * *", "daily");
 exports.emailWeeklySiteReport = scheduleReport("30 7 * * 1", "weekly");
 exports.emailMonthlySiteReport = scheduleReport("45 7 1 * *", "monthly");
 
+const reviewMail = require("./url-review-mail");
+
+async function loadBound(name, field, startVal, endVal) {
+  const rows = [];
+  let cursor = null;
+  for (;;) {
+    let query = admin.firestore().collection(name)
+      .where(field, ">=", startVal)
+      .where(field, "<", endVal)
+      .orderBy(field, "asc")
+      .limit(400);
+    if (cursor) query = query.startAfter(cursor);
+    const snap = await query.get();
+    if (snap.empty) break;
+    snap.forEach((doc) => rows.push(Object.assign({ id: doc.id }, doc.data() || {})));
+    cursor = snap.docs[snap.docs.length - 1];
+    if (snap.size < 400 || rows.length >= 5000) break;
+  }
+  return rows;
+}
+
+async function sendReviewPeriodReport(period) {
+  const window = reportWindow(period, new Date());
+  const id = "review-" + period + "-" + window.label;
+  const ref = admin.firestore().collection("url_review_reports").doc(id);
+  const claimed = await admin.firestore().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() || {} : {};
+    if (data.emailedAt) return false;
+    tx.set(ref, { period: period, label: window.label, sending: true }, { merge: true });
+    return true;
+  });
+  if (!claimed) return null;
+  try {
+    const startStamp = admin.firestore.Timestamp.fromDate(window.start);
+    const endStamp = admin.firestore.Timestamp.fromDate(window.end);
+    const [opens, reviews, captures, alerts] = await Promise.all([
+      loadBound("url_review_opens", "createdAt", startStamp, endStamp),
+      loadBound("url_reviews", "createdAt", window.start.toISOString(), window.end.toISOString()),
+      loadBound("url_review_captures", "at", window.start.toISOString(), window.end.toISOString()),
+      loadBound("url_review_alerts", "at", window.start.toISOString(), window.end.toISOString())
+    ]);
+    const summary = reviewMail.summarizePeriod(opens, reviews, captures, alerts);
+    const earlier = previousWindow(period, window);
+    const [priorOpens, priorReviews] = await Promise.all([
+      loadBound("url_review_opens", "createdAt", admin.firestore.Timestamp.fromDate(earlier.start), startStamp),
+      loadBound("url_reviews", "createdAt", earlier.start.toISOString(), window.start.toISOString())
+    ]);
+    const previous = reviewMail.summarizePeriod(priorOpens, priorReviews, [], []);
+    await ref.set({
+      period: period,
+      label: window.label,
+      start: startStamp,
+      end: endStamp,
+      opens: summary.opens,
+      reviews: summary.reviews,
+      captures: summary.captures,
+      alerts: summary.alerts,
+      paidUsd: summary.paidUsd,
+      paidCount: summary.paidCount,
+      pages: summary.pages,
+      countries: summary.countries,
+      cities: summary.cities,
+      langs: summary.langs,
+      referrers: summary.referrers,
+      screens: summary.screens,
+      zones: summary.zones,
+      hours: summary.hours,
+      statuses: summary.statuses,
+      hosts: summary.hosts,
+      frameworks: summary.frameworks,
+      reasons: summary.reasons,
+      captureKinds: summary.captureKinds,
+      previous: { opens: previous.opens, reviews: previous.reviews, paidUsd: previous.paidUsd },
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    const title = period.charAt(0).toUpperCase() + period.slice(1);
+    const sent = await sendOwnerEmail({
+      subject: title + " URL review — " + window.label,
+      intro: title + " QA-lab URL Review report for " + window.label,
+      rows: reviewMail.reportRows(summary, previous, earlier.phrase),
+      body: summary.body
+    });
+    if (!sent) throw new Error("URL review report email was not sent.");
+    await ref.set({ emailedAt: admin.firestore.FieldValue.serverTimestamp(), sending: false }, { merge: true });
+  } catch (error) {
+    await ref.set({ sending: false }, { merge: true });
+    console.error(period + " URL review report failed:", error);
+    throw error;
+  }
+  return null;
+}
+
+function scheduleReviewReport(cron, period) {
+  return withMail.pubsub.schedule(cron).timeZone("America/Bogota").onRun(() => sendReviewPeriodReport(period));
+}
+
+exports.emailDailyReviewReport = scheduleReviewReport("20 7 * * *", "daily");
+exports.emailWeeklyReviewReport = scheduleReviewReport("35 7 * * 1", "weekly");
+exports.emailMonthlyReviewReport = scheduleReviewReport("50 7 1 * *", "monthly");
+
 exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("America/Bogota").onRun(async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
   const stamp = dateStamp(bogotaParts(new Date()));
@@ -871,6 +974,46 @@ exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("
   }
   return null;
 });
+
+async function noteReviewOpen(req) {
+  const record = reviewMail.openRecord(req.body || {}, {
+    ip: req.ip || "",
+    userAgent: req.get("user-agent"),
+    acceptLanguage: req.get("accept-language"),
+    country: req.get("x-appengine-country") || "",
+    region: req.get("x-appengine-region") || "",
+    city: req.get("x-appengine-city") || ""
+  });
+  if (!record) return;
+  const stateRef = admin.firestore().doc("notification_state/review_access");
+  const windowMs = 15 * 60 * 1000;
+  let shouldSend = false;
+  let grouped = 0;
+  await admin.firestore().runTransaction(async (tx) => {
+    const state = await tx.get(stateRef);
+    const previous = state.exists ? state.data() : {};
+    const last = previous.lastSentAt && previous.lastSentAt.toMillis ? previous.lastSentAt.toMillis() : 0;
+    if (Date.now() - last < windowMs) {
+      tx.set(stateRef, { pending: (previous.pending || 0) + 1 }, { merge: true });
+      return;
+    }
+    grouped = previous.pending || 0;
+    shouldSend = true;
+    tx.set(stateRef, {
+      lastSentAt: admin.firestore.FieldValue.serverTimestamp(),
+      pending: 0
+    }, { merge: true });
+  });
+  await admin.firestore().collection("url_review_opens").add(Object.assign({}, record, {
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  }));
+  if (!shouldSend) return;
+  await sendOwnerEmail({
+    subject: "QA-lab URL Review was opened",
+    intro: "Someone opened the QA-lab URL Review",
+    rows: reviewMail.openRows(record, grouped)
+  });
+}
 
 const urlReview = require("./url-review-core");
 const newsWire = require("./news-wire");
@@ -1025,6 +1168,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     } catch (error) {
       res.status(200).json({ country: "", lang: "en", items: [] });
     }
+    return;
+  }
+  if (req.method === "POST" && pathName.indexOf("/opened") !== -1) {
+    const originHeader = String(req.get("origin") || "");
+    if (!REVIEW_ORIGINS.has(originHeader)) {
+      res.status(403).json({ error: "This page cannot note an open." });
+      return;
+    }
+    try {
+      await noteReviewOpen(req);
+    } catch (error) {
+      console.error("URL review open note failed:", error);
+    }
+    res.status(204).send("");
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/stop") !== -1) {
