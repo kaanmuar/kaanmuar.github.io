@@ -46,11 +46,33 @@ function openRecord(body, meta) {
   };
 }
 
+function pushUrl(found, value) {
+  const text = clip(value, 300);
+  if (!text || !/^https?:\/\//i.test(text)) return;
+  if (found.indexOf(text) === -1) found.push(text);
+}
+
+function reviewUrls(source) {
+  const found = [];
+  const row = source || {};
+  const report = row.report || {};
+  pushUrl(found, row.requestedUrl);
+  pushUrl(found, row.url);
+  pushUrl(found, row.clientUrl);
+  pushUrl(found, report.finalUrl);
+  const pages = Array.isArray(report.pages) ? report.pages : (Array.isArray(row.pagesRead) ? row.pagesRead : []);
+  pages.forEach((page) => pushUrl(found, page && typeof page === "object" ? page.url : page));
+  return found.slice(0, 40);
+}
+
 function openRows(record, grouped) {
   const place = [record.city, record.region, record.country].filter(Boolean).join(", ");
-  return [
+  const urls = Array.isArray(record.urls) ? record.urls : reviewUrls(record);
+  const rows = [
     { label: "Page", value: record.page + (record.query || "") },
     { label: "Title", value: record.title },
+    { label: "Name", value: record.name },
+    { label: "Email", value: record.email },
     { label: "Language", value: record.lang },
     { label: "Languages", value: record.languages },
     { label: "Referrer", value: record.referrerHost || "Direct" },
@@ -59,9 +81,11 @@ function openRows(record, grouped) {
     { label: "Place", value: place },
     { label: "Network", value: record.ip },
     { label: "Browser", value: record.userAgent },
-    { label: "Accept-Language", value: record.acceptLanguage },
-    grouped ? { label: "Also", value: grouped + " more opens in the last 15 minutes" } : null
+    { label: "Accept-Language", value: record.acceptLanguage }
   ];
+  urls.forEach((url, index) => rows.push({ label: index === 0 ? "Sites" : "Site", value: url }));
+  if (grouped) rows.push({ label: "Also", value: grouped + " more opens in the last 15 minutes" });
+  return rows;
 }
 
 function whenOf(row) {
@@ -169,6 +193,7 @@ function summarizePeriod(opens, reviews, captures, alerts) {
     row.referrerHost || "Direct",
     row.screen,
     row.ip,
+    (Array.isArray(row.urls) ? row.urls : reviewUrls(row)).join(" | "),
     row.userAgent
   ]));
   const reviewLines = (reviews || []).slice(0, 30).map((row) => {
@@ -266,6 +291,7 @@ function reportRows(summary, previous, phrase) {
 module.exports = {
   openRecord,
   openRows,
+  reviewUrls,
   summarizePeriod,
   reportRows
 };
