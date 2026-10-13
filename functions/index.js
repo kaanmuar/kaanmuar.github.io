@@ -1015,6 +1015,39 @@ async function noteReviewOpen(req) {
   });
 }
 
+async function mailReviewedSites(ip, source) {
+  const urls = reviewMail.reviewUrls(source);
+  if (!urls.length) return;
+  let record = null;
+  const address = clip(ip, 80);
+  if (address) {
+    const snap = await admin.firestore().collection("url_review_opens").where("ip", "==", address).limit(8).get();
+    let newest = null;
+    snap.docs.forEach((doc) => {
+      const data = doc.data() || {};
+      const when = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0;
+      if (!newest || when >= newest.when) newest = { when, data, ref: doc.ref };
+    });
+    if (newest) {
+      record = newest.data;
+      await newest.ref.set({ urls }, { merge: true });
+    }
+  }
+  const merged = Object.assign({}, record || {}, {
+    name: (source && source.name) || "",
+    email: (source && source.email) || "",
+    requestedUrl: source && source.requestedUrl,
+    clientUrl: source && source.clientUrl,
+    report: source && source.report,
+    urls
+  });
+  await sendOwnerEmail({
+    subject: "QA-lab URL Review was opened",
+    intro: "Someone opened the QA-lab URL Review",
+    rows: reviewMail.openRows(merged, 0)
+  });
+}
+
 const urlReview = require("./url-review-core");
 const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
@@ -1504,10 +1537,12 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       email: intake.value.email,
       reason: intake.value.reason,
       requestedUrl: intake.value.url,
+      clientUrl: intake.value.clientUrl,
       log: [{ at: new Date().toISOString(), text: decision.message }]
     };
     await admin.firestore().collection("url_reviews").add(denied);
     await rememberReview(denied.status === "payment-due" ? "payment-due" : "blocked", denied);
+    await mailReviewedSites(ip, denied);
     res.status(decision.code === "payment" ? 402 : 429).json({
       error: decision.message,
       paymentRequired: decision.code === "payment",
@@ -1571,18 +1606,22 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     });
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
+    await mailReviewedSites(ip, record);
     writeLine({ type: "done", report, frameworks: record.frameworks, paid: false, priceUsd: record.priceUsd });
     res.end();
   } catch (error) {
     console.error("URL review failed:", error);
-    await rememberReview("failed", {
+    const failed = {
       runId,
       name: intake.value.name,
       email: intake.value.email,
       requestedUrl: intake.value.url,
+      clientUrl: intake.value.clientUrl,
       status: "failed",
       reason: error.message || "The review failed."
-    });
+    };
+    await rememberReview("failed", failed);
+    await mailReviewedSites(ip, failed);
     writeLine({ type: "error", error: error.message || "The review failed." });
     res.end();
   } finally {
