@@ -123,8 +123,13 @@
   paintFrameworks();
   paintScope();
   paintReasons();
-  termsForm.addEventListener("change", () => {
-    accept.disabled = [...termsForm.querySelectorAll('input[type="checkbox"]')].some((box) => !box.checked);
+  const termsAll = document.getElementById("terms-all");
+  const termBoxes = () => [...termsForm.querySelectorAll('input[type="checkbox"][name^="t"]')];
+  termsForm.addEventListener("change", (event) => {
+    const boxes = termBoxes();
+    if (termsAll && event.target === termsAll) boxes.forEach((box) => { box.checked = termsAll.checked; });
+    else if (termsAll) termsAll.checked = boxes.length > 0 && boxes.every((box) => box.checked);
+    accept.disabled = boxes.some((box) => !box.checked);
   });
   termsForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -484,7 +489,7 @@
       '<article class="card"><h2>Practices worth implementing</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString() : "";
     document.getElementById("report-cover").innerHTML =
-      '<div><img class="cover-logo" src="assets/qa-review-mark.svg" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || "Report") + '</h2><p class="muted">' + esc(when) + "</p>" +
+      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261013c" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || "Report") + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
       '<div><p class="report-kicker">' + ((report.counts && report.counts.cases) || 0) + ' proposed cases</p><p>' + esc(report.statement || "") + "</p></div>";
     document.getElementById("print-mark").textContent = "";
