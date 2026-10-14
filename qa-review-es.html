@@ -368,7 +368,7 @@
         .reasons label:has(input:checked) { background: color-mix(in srgb, var(--cyan) 14%, var(--card)); }
         .url-row { display: flex; align-items: center; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; overflow: hidden; }
         .url-row span { padding: 10px 0 10px 12px; color: var(--muted); font-family: "Fira Code", ui-monospace, monospace; font-size: 13px; }
-        .url-row input { border: 0; background: transparent; border-radius: 0; }
+        .url-row input { border: 0; background: transparent; border-radius: 0; min-width: 0; flex: 1; width: 100%; }
         .fws { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; border: 1px solid transparent; border-radius: 12px; padding: 4px; }
         .fws label { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 500; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
         .scope { border: 0; margin: 16px 0 0; padding: 0; }
@@ -458,13 +458,55 @@
         body.paid-copy #paid-line { display: block; }
         body.paid-copy .mark { display: none; }
         @media (max-width: 800px) {
+            body { overflow-x: hidden; }
+            a, .log, td { overflow-wrap: anywhere; }
+            .topbar { padding: 8px 12px; gap: 6px 8px; align-items: center; justify-content: flex-start; }
+            .topbar::after { content: ""; order: 5; flex: 1 0 100%; height: 0; }
+            .topbar .brand { order: 1; flex: 0 0 auto; margin-right: auto; min-width: 0; font-size: 1.15rem; }
+            .topbar .logo { width: 30px; height: 30px; }
+            .topbar .actions { display: contents; }
+            .topbar #langWrap { order: 2; }
+            .topbar #theme-toggle { order: 3; }
+            .topbar #share-open { order: 4; }
+            .topbar .actions > a.btn,
+            .topbar #tour-start-btn { order: 10; }
+            .topbar .btn { padding: 8px 10px; font-size: 12px; }
+            html[data-look] .topbar #tour-start-btn { height: 34px; margin-left: 0; padding: 0 12px 0 32px; font-size: 12px; }
+            main { padding: 12px 14px 96px; }
+            .display { font-size: 2.15rem; }
+            h1 { font-size: 1.65rem; }
+            .lede { font-size: 15px; margin-bottom: 12px; }
+            .stage { gap: 8px; margin: 0; }
+            .stage-art { height: 210px; }
+            .stage-rig { height: 190px; }
+            .reel3d { height: 180px; top: 0; }
+            .facts { gap: 10px; }
+            .facts li { flex: 1; min-width: 0; }
+            .facts b { font-size: 1.55rem; }
+            .facts span { font-size: 11px; line-height: 1.25; }
+            .ribbon { margin: 10px 0 14px; }
+            .card { padding: 14px; border-radius: 14px; }
             .grid-2, .split, .kpis, .work, .visuals, .report-cover, .ticks, .stage, .tool-list { grid-template-columns: 1fr; }
             #run-panel, .work-side { grid-column: 1; grid-row: auto; }
-            .display { font-size: 2.5rem; }
-            h1 { font-size: 2rem; }
             .log-card { position: static; min-height: 0; }
-            .log { max-height: 320px; }
-            .lang-menu { right: auto; left: 0; width: min(220px, calc(100vw - 24px)); }
+            .log { max-height: 240px; }
+            .lang-menu { width: min(220px, calc(100vw - 24px)); }
+            .gate { padding: 12px 12px 176px; }
+            .gate-card { padding: 16px; }
+            .gate .btn { min-height: 44px; }
+            .check { font-size: 15px; }
+            .check input { width: 18px; height: 18px; flex: none; }
+            input[type="text"], input[type="email"], textarea { font-size: 16px; }
+            .reasons label, .fws label { min-height: 36px; }
+            .row-actions .btn { flex: 1; text-align: center; min-height: 44px; }
+            .cookie-note { left: 10px; right: 10px; bottom: 10px; padding: 12px; }
+            .cookie-note p { font-size: 13px; margin-bottom: 10px; }
+            .cookie-actions { justify-content: stretch; }
+            .cookie-actions button { flex: 1; min-height: 40px; }
+            .bar-row { grid-template-columns: 84px 1fr 24px; }
+            .dash-overlay { padding: 8px; }
+            .dash-modal { width: 100%; margin: 0 auto 16px; padding: 14px; border-radius: 16px; }
+            .report-toolbar .actions { width: 100%; margin-left: 0; }
         }
         @media (min-width: 901px) {
             body #site-tour-tooltip { left: auto; right: 16px; }
