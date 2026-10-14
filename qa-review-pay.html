@@ -64,6 +64,16 @@
         .cookie-actions button { border-radius: 999px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
         #cookie-necessary { background: transparent; color: #12181f; border: 1px solid #d5dce3; }
         #cookie-allow { background: #0d6e76; color: #fff; border: 0; }
+        @media (max-width: 800px) {
+            body { padding: 12px 12px 180px; place-items: start center; }
+            .sheet { padding: 20px 16px 16px; border-radius: 18px; }
+            h1 { font-size: 1.8rem; }
+            .price { font-size: 3.2rem; }
+            .actions { flex-wrap: wrap; }
+            .actions .btn { flex: 1; text-align: center; min-height: 44px; }
+            .cookie-note { left: 10px; right: 10px; bottom: 10px; padding: 12px; }
+            .cookie-actions button { flex: 1; min-height: 40px; }
+        }
     </style>
 </head>
 <body class="preview-copy">
