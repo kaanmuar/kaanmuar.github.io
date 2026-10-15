@@ -21,7 +21,8 @@
       send_page_view: true,
       page_title: document.title,
       page_path: location.pathname,
-      page_location: location.href
+      page_location: location.href,
+      content_group: "QA-lab URL Review"
     });
     const script = document.createElement("script");
     script.async = true;

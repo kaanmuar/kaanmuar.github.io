@@ -127,7 +127,7 @@ function bump(map, key) {
 function tally(map, limit) {
   const keys = Object.keys(map).sort((a, b) => map[b] - map[a] || a.localeCompare(b));
   if (!keys.length) return "None";
-  return keys.slice(0, limit || 8).map((key) => key + " " + map[key]).join(", ");
+  return keys.slice(0, limit || 40).map((key) => key + " " + map[key]).join(", ");
 }
 
 function hostOf(row) {
@@ -185,7 +185,7 @@ function summarizePeriod(opens, reviews, captures, alerts) {
   });
   (captures || []).forEach((row) => bump(captureKinds, row.kind || "capture"));
   const paid = money(reviews || []);
-  const openLines = (opens || []).slice(0, 40).map((row) => line([
+  const openLines = (opens || []).slice(0, 120).map((row) => line([
     bogotaLabel(whenOf(row)),
     row.page,
     row.lang,
@@ -196,7 +196,7 @@ function summarizePeriod(opens, reviews, captures, alerts) {
     (Array.isArray(row.urls) ? row.urls : reviewUrls(row)).join(" | "),
     row.userAgent
   ]));
-  const reviewLines = (reviews || []).slice(0, 30).map((row) => {
+  const reviewLines = (reviews || []).slice(0, 80).map((row) => {
     const report = row.report || {};
     const counts = report.counts || {};
     const signals = Array.isArray(report.alerts) ? report.alerts.length : 0;
@@ -217,13 +217,13 @@ function summarizePeriod(opens, reviews, captures, alerts) {
       row.reasonCode || clip(row.reason, 80)
     ]);
   });
-  const captureLines = (captures || []).slice(0, 20).map((row) => line([
+  const captureLines = (captures || []).slice(0, 40).map((row) => line([
     bogotaLabel(whenOf(row)),
     row.kind,
     row.reportId,
     row.deviceId
   ]));
-  const alertLines = (alerts || []).slice(0, 20).map((row) => line([
+  const alertLines = (alerts || []).slice(0, 40).map((row) => line([
     bogotaLabel(whenOf(row)),
     row.kind || row.status,
     row.title,
@@ -238,7 +238,7 @@ function summarizePeriod(opens, reviews, captures, alerts) {
     more(reviewLines.length, (reviews || []).length, "reviews"),
     captureLines.length ? "\nCopies and prints\n" + captureLines.join("\n") : "",
     alertLines.length ? "\nAlerts already sent\n" + alertLines.join("\n") : ""
-  ].filter(Boolean).join("\n").slice(0, 6500);
+  ].filter(Boolean).join("\n").slice(0, 12000);
   return {
     opens: (opens || []).length,
     reviews: (reviews || []).length,

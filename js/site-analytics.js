@@ -61,9 +61,13 @@
         return typeof root.gtag === 'function';
     }
 
+    function boardName() {
+        return site === 'review' ? 'url-review' : 'cv';
+    }
+
     function track(eventName, params) {
         if (!ready() || !eventName) return;
-        root.gtag('event', eventName, params || {});
+        root.gtag('event', eventName, Object.assign({ board: boardName(), site: site }, params || {}));
     }
 
     function database() {
@@ -117,6 +121,10 @@
             lang: String(document.documentElement.lang || 'en').slice(0, 12),
             referrerHost: referrerHost.slice(0, 80),
             screen: (root.innerWidth || 0) < 768 ? 'phone' : 'desktop',
+            page: ((root.location.pathname || '').split('/').pop() || 'index.html').slice(0, 80),
+            title: String(document.title || '').slice(0, 120),
+            timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || '').slice(0, 60),
+            languages: (navigator.languages || []).slice(0, 6).join(',').slice(0, 80),
             createdAt: fs.serverTimestamp()
         })).catch(() => {});
     }
@@ -142,7 +150,9 @@
         root.gtag('event', 'page_view', {
             page_path: path || root.location.pathname,
             page_title: title || document.title,
-            page_location: root.location.href
+            page_location: root.location.href,
+            board: boardName(),
+            site: site
         });
     }
 
@@ -162,7 +172,7 @@
         } catch (e) {}
     }
 
-    function noteVisit() {
+    function noteVisit(options) {
         const key = 'site-noted-' + site;
         try {
             if (sessionStorage.getItem(key) === '1') {
@@ -171,6 +181,11 @@
             }
             sessionStorage.setItem(key, '1');
         } catch (e) { return; }
+        if (options && options.stored) {
+            track('visit', { event_category: 'Visit', event_label: readCvRef() || site });
+            hideCvRef();
+            return;
+        }
         event('visit', 'Visit', readCvRef() || site);
         hideCvRef();
     }
