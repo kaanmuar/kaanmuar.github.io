@@ -884,19 +884,41 @@
                 } catch (e) {
                     return;
                 }
-                if (window.SiteAnalytics) SiteAnalytics.noteVisit();
                 let referrerHost = '';
                 try {
                     referrerHost = document.referrer ? new URL(document.referrer).host : '';
                 } catch (e) { /* ignore */ }
-                addDoc(collection(db, 'visits'), {
-                    source: 'cv',
+                const payload = {
+                    page: (window.location.pathname.split('/').pop() || 'index.html').slice(0, 80),
+                    query: String(window.location.search || '').slice(0, 120),
                     lang: String(document.documentElement.lang || 'en').slice(0, 12),
                     referrerHost: referrerHost.slice(0, 80),
-                    createdAt: serverTimestamp()
-                }).catch((error) => {
-                    console.warn('CV access note was not saved:', error && error.code ? error.code : error);
-                });
+                    screen: (window.innerWidth || 0) < 768 ? 'phone' : 'desktop',
+                    timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || '').slice(0, 60),
+                    languages: (navigator.languages || []).slice(0, 6).join(',').slice(0, 80),
+                    title: String(document.title || '').slice(0, 120)
+                };
+                const fallback = () => {
+                    if (window.SiteAnalytics) SiteAnalytics.noteVisit();
+                    addDoc(collection(db, 'visits'), {
+                        source: 'cv',
+                        lang: payload.lang,
+                        referrerHost: payload.referrerHost,
+                        createdAt: serverTimestamp()
+                    }).catch((error) => {
+                        console.warn('CV access note was not saved:', error && error.code ? error.code : error);
+                    });
+                };
+                fetch('https://us-central1-carlosm-interactive-cv.cloudfunctions.net/noteCvVisit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'omit',
+                    keepalive: true,
+                    body: JSON.stringify(payload)
+                }).then((res) => {
+                    if (!res.ok) throw new Error('status');
+                    if (window.SiteAnalytics) SiteAnalytics.noteVisit({ stored: true });
+                }).catch(fallback);
             },
 
             _createWatermark() {
