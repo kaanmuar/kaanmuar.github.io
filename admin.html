@@ -466,7 +466,7 @@
         </div>
         <section class="site-activity" id="site-activity" aria-live="polite">
             <div class="stats-head">
-                <div><h2>Site activity</h2><p>Opens, clicks, exports, lab runs, link opens, languages, referrers, actions, screens, and the busiest day and hour for the same range. Hours are America/Bogota. The morning emails use these counts, and they also compare the previous day, week, or month.</p></div>
+                <div><h2>CV site</h2><p>GA4 content group “CV site”, event parameter board=cv. This board is the CV, the studio, and the regression lab. The 15-minute, daily, weekly, and monthly emails use the same counts. Hours are America/Bogota.</p></div>
             </div>
             <div id="site-kpis" class="site-kpis"></div>
             <p id="site-compare" class="stats-empty"></p>
@@ -478,8 +478,31 @@
                 <section class="stats-card"><h3>Actions</h3><div id="site-actions" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Exports</h3><div id="site-exports" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Screen</h3><div id="site-screens" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Pages</h3><div id="site-pages" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Countries</h3><div id="site-countries" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Cities</h3><div id="site-cities" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Time zones</h3><div id="site-zones" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Busiest</h3><div id="site-peaks"></div></section>
                 <section class="stats-card"><h3>Mailed reports</h3><div id="site-reports"></div></section>
+            </div>
+        </section>
+        <section class="site-activity" id="review-activity" aria-live="polite">
+            <div class="stats-head">
+                <div><h2>QA-lab URL Review</h2><p>GA4 content group “QA-lab URL Review”, event parameter board=url-review. Opens, reviews, payment, places, languages, hosts, and frameworks for the same range. The 15-minute, daily, weekly, and monthly emails use these counts.</p></div>
+            </div>
+            <div id="review-kpis" class="site-kpis"></div>
+            <p id="review-compare" class="stats-empty"></p>
+            <div class="stats-grid">
+                <section class="stats-card"><h3>Pages</h3><div id="review-pages" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Statuses</h3><div id="review-statuses" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Hosts</h3><div id="review-hosts" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Frameworks</h3><div id="review-frameworks" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Countries</h3><div id="review-countries" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Cities</h3><div id="review-cities" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Languages</h3><div id="review-langs" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Referrers</h3><div id="review-referrers" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Screens</h3><div id="review-screens" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Mailed reports</h3><div id="review-reports"></div></section>
             </div>
         </section>
     </div>
@@ -1351,6 +1374,7 @@
         const topicChart = document.getElementById('stats-topics');
         if (topicChart) topicChart.innerHTML = barChart([...topics.entries()].map(([label, value]) => ({ label, value })));
         loadSiteActivity();
+        loadReviewActivity();
     }
 
     const SITE_ACTION_LABELS = {
@@ -1426,9 +1450,15 @@
         const sites = { cv: { opens: 0, clicks: 0, exports: 0, runs: 0 }, studio: { opens: 0, clicks: 0, exports: 0, runs: 0 }, lab: { opens: 0, clicks: 0, exports: 0, runs: 0 } };
         const exportsBy = {}, actions = {}, langs = {}, referrers = {}, days = {}, hours = {}, linkOpens = {};
         const screens = { phone: 0, desktop: 0, unrecorded: 0 };
+        const pages = {}, countries = {}, cities = {}, zones = {};
         let opens = 0, clicks = 0, exports = 0, runs = 0;
         rows.forEach((row) => {
+            if (row.site === 'review') return;
             const bucket = sites[row.site] || sites.cv;
+            if (row.page) siteBump(pages, row.page);
+            if (row.country) siteBump(countries, row.country);
+            if (row.city) siteBump(cities, row.city);
+            if (row.timezone) siteBump(zones, row.timezone);
             if (row.kind === 'visit') {
                 opens += 1;
                 bucket.opens += 1;
@@ -1463,6 +1493,7 @@
         const nextHour = hourKey ? String((Number(hourKey) + 1) % 24).padStart(2, '0') : '';
         return {
             opens, clicks, exports, runs, sites, exportsBy, actions, langs, referrers, screens, linkOpens,
+            pages, countries, cities, zones,
             busiestDay: dayKey ? `${dayKey} (${days[dayKey]} opens)` : 'None',
             busiestHour: hourKey ? `${hourKey}:00–${nextHour}:00 (${hours[hourKey]} opens)` : 'None'
         };
@@ -1511,6 +1542,14 @@
                 { label: 'Desktop', value: summary.screens.desktop },
                 { label: 'Unrecorded', value: summary.screens.unrecorded }
             ], 'Nothing in this range.');
+            const pagesHost = document.getElementById('site-pages');
+            const countriesHost = document.getElementById('site-countries');
+            const citiesHost = document.getElementById('site-cities');
+            const zonesHost = document.getElementById('site-zones');
+            if (pagesHost) pagesHost.innerHTML = siteBars(summary.pages);
+            if (countriesHost) countriesHost.innerHTML = siteBars(summary.countries);
+            if (citiesHost) citiesHost.innerHTML = siteBars(summary.cities);
+            if (zonesHost) zonesHost.innerHTML = siteBars(summary.zones);
             if (peaksHost) peaksHost.innerHTML = `<p class="stats-empty">Busiest day: ${escapeHtml(summary.busiestDay)}</p><p class="stats-empty">Busiest hour: ${escapeHtml(summary.busiestHour)}, America/Bogota</p>`;
             const compareHost = document.getElementById('site-compare');
             if (compareHost) {
@@ -1520,7 +1559,7 @@
                     prevStart.setDate(prevStart.getDate() - Number(range));
                     try {
                         const prevSnap = await getDocs(query(collection(db, 'site_events'), where('createdAt', '>=', prevStart), where('createdAt', '<', start), orderBy('createdAt', 'desc'), limit(2000)));
-                        const prior = summarizeSiteEvents(prevSnap.docs.map((item) => item.data()));
+                        const prior = summarizeSiteEvents(prevSnap.docs.map((item) => item.data()).filter((row) => row.site !== 'review'));
                         compareHost.textContent = `Previous ${range} days: opens ${summary.opens} vs ${prior.opens}, clicks ${summary.clicks} vs ${prior.clicks}, exports ${summary.exports} vs ${prior.exports}, lab runs ${summary.runs} vs ${prior.runs}.`;
                     } catch (compareError) {
                         compareHost.textContent = '';
@@ -1544,6 +1583,87 @@
                 : '<p class="stats-empty">The first morning email has not gone out yet.</p>';
         } catch (error) {
             reportsHost.innerHTML = '<p class="stats-empty">Mailed reports are not available yet.</p>';
+        }
+    }
+
+    async function loadReviewActivity() {
+        const host = document.getElementById('review-kpis');
+        if (!host || !auth.currentUser) return;
+        const range = (document.getElementById('stats-range') || {}).value || '30';
+        const start = new Date();
+        if (range === 'all') start.setFullYear(start.getFullYear() - 5);
+        else start.setDate(start.getDate() - Number(range));
+        const paint = (id, map) => {
+            const node = document.getElementById(id);
+            if (node) node.innerHTML = siteBars(map);
+        };
+        try {
+            const [openSnap, reviewSnap] = await Promise.all([
+                getDocs(query(collection(db, 'url_review_opens'), where('createdAt', '>=', start), orderBy('createdAt', 'desc'), limit(500))),
+                getDocs(query(collection(db, 'url_reviews'), where('createdAt', '>=', start.toISOString()), orderBy('createdAt', 'desc'), limit(500)))
+            ]);
+            const opens = openSnap.docs.map((item) => item.data());
+            const reviews = reviewSnap.docs.map((item) => item.data());
+            const pages = {}, countries = {}, cities = {}, langs = {}, referrers = {}, screens = {}, statuses = {}, hosts = {}, frameworks = {};
+            opens.forEach((row) => {
+                siteBump(pages, row.page);
+                siteBump(countries, row.country || 'unknown');
+                siteBump(cities, row.city || 'unknown');
+                siteBump(langs, row.lang || 'en');
+                siteBump(referrers, row.referrerHost || 'Direct');
+                siteBump(screens, row.screen || 'unrecorded');
+            });
+            let paid = 0;
+            let paidUsd = 0;
+            reviews.forEach((row) => {
+                siteBump(statuses, row.status || 'unknown');
+                let hostName = '';
+                try { hostName = new URL(String(row.requestedUrl || row.url || '')).hostname; } catch (error) { hostName = ''; }
+                siteBump(hosts, hostName || 'none');
+                (Array.isArray(row.frameworks) ? row.frameworks : []).forEach((name) => siteBump(frameworks, name));
+                if (row.paid === true) {
+                    paid += 1;
+                    paidUsd += Number(row.priceUsd) || 0;
+                }
+            });
+            const cards = [['Opens', opens.length], ['Reviews', reviews.length], ['Paid', paid + ' · ' + (Math.round(paidUsd * 100) / 100) + ' USD']];
+            host.innerHTML = cards.map(([label, value]) => `<div class="stat-kpi"><span>${label}</span><strong>${value}</strong></div>`).join('');
+            paint('review-pages', pages);
+            paint('review-statuses', statuses);
+            paint('review-hosts', hosts);
+            paint('review-frameworks', frameworks);
+            paint('review-countries', countries);
+            paint('review-cities', cities);
+            paint('review-langs', langs);
+            paint('review-referrers', referrers);
+            paint('review-screens', screens);
+            const compareHost = document.getElementById('review-compare');
+            if (compareHost) {
+                compareHost.textContent = '';
+                if (range !== 'all') {
+                    const prevStart = new Date(start.getTime());
+                    prevStart.setDate(prevStart.getDate() - Number(range));
+                    try {
+                        const [priorOpens, priorReviews] = await Promise.all([
+                            getDocs(query(collection(db, 'url_review_opens'), where('createdAt', '>=', prevStart), where('createdAt', '<', start), orderBy('createdAt', 'desc'), limit(500))),
+                            getDocs(query(collection(db, 'url_reviews'), where('createdAt', '>=', prevStart.toISOString()), where('createdAt', '<', start.toISOString()), orderBy('createdAt', 'desc'), limit(500)))
+                        ]);
+                        compareHost.textContent = `Previous ${range} days: opens ${opens.length} vs ${priorOpens.size}, reviews ${reviews.length} vs ${priorReviews.size}.`;
+                    } catch (compareError) {
+                        compareHost.textContent = '';
+                    }
+                }
+            }
+            const reportsHost = document.getElementById('review-reports');
+            if (reportsHost) {
+                const reports = await getDocs(collection(db, 'url_review_reports'));
+                const mailed = reports.docs.map((item) => Object.assign({ id: item.id }, item.data())).filter((item) => item.emailedAt).sort((a, b) => b.id.localeCompare(a.id)).slice(0, 8);
+                reportsHost.innerHTML = mailed.length
+                    ? mailed.map((item) => `<p class="stats-empty">${escapeHtml(item.period || 'report')} ${escapeHtml(item.label || '')} · ${item.opens || 0} opens · ${item.reviews || 0} reviews</p>`).join('')
+                    : '<p class="stats-empty">The first URL review email has not gone out yet.</p>';
+            }
+        } catch (error) {
+            host.innerHTML = '<p class="stats-empty">URL review activity is not available yet.</p>';
         }
     }
 

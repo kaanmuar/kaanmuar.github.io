@@ -92,7 +92,7 @@ service cloud.firestore {
     match /site_events/{id} {
       allow get, list: if isOwner();
       allow update, delete: if false;
-      allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'screen', 'createdAt'])
+      allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'screen', 'page', 'title', 'timezone', 'languages', 'createdAt'])
         && request.resource.data.site in ['cv', 'studio', 'lab', 'review']
         && (
           (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
@@ -118,6 +118,10 @@ service cloud.firestore {
         && request.resource.data.referrerHost is string
         && request.resource.data.referrerHost.size() <= 80
         && (!('screen' in request.resource.data) || request.resource.data.screen in ['phone', 'desktop'])
+        && (!('page' in request.resource.data) || (request.resource.data.page is string && request.resource.data.page.size() <= 80))
+        && (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 120))
+        && (!('timezone' in request.resource.data) || (request.resource.data.timezone is string && request.resource.data.timezone.size() <= 60))
+        && (!('languages' in request.resource.data) || (request.resource.data.languages is string && request.resource.data.languages.size() <= 80))
         && request.resource.data.createdAt == request.time;
     }
 
