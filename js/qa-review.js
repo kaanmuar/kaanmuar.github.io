@@ -965,7 +965,7 @@
           option.innerHTML = '<img src="' + SiteI18n.flagUrl(meta.code) + '" alt=""><span>' + meta.native + "</span>";
           option.onclick = () => {
             if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_language_change", "URL Review", meta.code);
-            const page = meta.code === "es" ? "qa-review-es.html" : meta.code === "pt" ? "qa-review-pt.html" : "qa-review.html";
+            const page = ["es", "pt", "de", "fr", "it"].includes(meta.code) ? "qa-review-" + meta.code + ".html" : "qa-review.html";
             const here = location.pathname.split("/").pop() || "qa-review.html";
             if (page !== here) {
               SiteI18n.persist(meta.code);
