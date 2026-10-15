@@ -6,6 +6,9 @@ const PAGES = new Set([
   "qa-review.html",
   "qa-review-es.html",
   "qa-review-pt.html",
+  "qa-review-de.html",
+  "qa-review-fr.html",
+  "qa-review-it.html",
   "qa-review-pay.html",
   "qa-review-account.html",
   "qa-review-legal.html"
