@@ -9,9 +9,28 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - Review: https://carlosandmunoz.com/qa-review.html
 - Review, Spanish headline: https://carlosandmunoz.com/qa-review-es.html
 - Review, Portuguese headline: https://carlosandmunoz.com/qa-review-pt.html
+- Review, German headline: https://carlosandmunoz.com/qa-review-de.html
+- Review, French headline: https://carlosandmunoz.com/qa-review-fr.html
+- Review, Italian headline: https://carlosandmunoz.com/qa-review-it.html
 - Facts: https://carlosandmunoz.com/qa-review.html#service-facts
 - Disclaimers: https://carlosandmunoz.com/qa-review-legal.html
-- Languages: English, Spanish, Portuguese, German, French, Italian. Add ?lang=es, pt, de, fr, or it.
+- Languages: English, Spanish, Portuguese, German, French, Italian.
+
+## Elsewhere
+
+- YouTube: https://www.youtube.com/@qalaburlreview
+- X: https://x.com/qalaburlreview
+- LinkedIn: https://www.linkedin.com/company/qalab-url-review
+
+## Films
+
+- A tactical read (English): https://www.youtube.com/watch?v=jW4T-qQK01E
+- The included first read (English): https://www.youtube.com/watch?v=OKvR95YHAng
+- Una lectura táctica (Spanish): https://www.youtube.com/watch?v=Cenj3l_0osA
+- Uma leitura tática (Portuguese): https://www.youtube.com/watch?v=GwLZ1WuLSpU
+- Eine taktische Lesung (German): https://www.youtube.com/watch?v=AMIO6n_6Ok8
+- La première lecture (French): https://www.youtube.com/watch?v=JpyBMIeXTL0
+- La prima lettura (Italian): https://www.youtube.com/watch?v=MiXooYDM-Uo
 
 ## What a review names
 
