@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Post studio frame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=block" rel="stylesheet">
+<style>
+  :root {
+    --ink: #050c0f; --ink-2: #0a1a1f; --cyan: #4db3bb; --cyan-hi: #7ef6fb; --teal: #0d6e76;
+    --gold: #e2c48a; --cream: #f6f1e8; --text: #eef6f7; --muted: #a9bcc1; --line: rgba(126, 246, 251, .22);
+    --glass: rgba(14, 34, 40, .55); --glass-hi: rgba(255, 255, 255, .06); --amber: #f0b45a; --ok: #6fe3b1;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: transparent; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+  #c { position: relative; overflow: hidden; background: var(--ink); }
+  #c.transparent { background: transparent; }
+
+  .bg, .bg img, .shade, .glow, .grain, .grid { position: absolute; inset: 0; }
+  .bg img { width: 100%; height: 100%; object-fit: cover; filter: saturate(1.15) contrast(1.05); }
+  .shade { background: linear-gradient(180deg, rgba(5, 12, 15, .25) 0%, rgba(5, 12, 15, .62) 38%, rgba(5, 12, 15, .9) 70%, #050c0f 100%); }
+  .glow { background: radial-gradient(60% 40% at 85% 8%, rgba(77, 179, 187, .28), transparent 70%), radial-gradient(50% 35% at 0% 100%, rgba(226, 196, 138, .16), transparent 70%); }
+  .grid { background-image: linear-gradient(rgba(126, 246, 251, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(126, 246, 251, .05) 1px, transparent 1px); background-size: 60px 60px; -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 45%, transparent 100%); }
+  .grain { opacity: .09; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+  .stack { position: absolute; inset: 0; display: flex; flex-direction: column; padding: var(--pad); gap: var(--gap); }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex: none; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand svg { width: var(--mark); height: var(--mark); flex: none; filter: drop-shadow(0 6px 18px rgba(77, 179, 187, .35)); }
+  .brand b { display: block; font-weight: 700; font-size: var(--brand); letter-spacing: .14em; text-transform: uppercase; }
+  .brand small { display: block; margin-top: 4px; color: var(--muted); font-size: calc(var(--brand) * .82); letter-spacing: .04em; }
+  .chip { display: inline-flex; align-items: center; gap: 10px; border: 1.5px solid var(--line); background: rgba(10, 30, 36, .55); border-radius: 999px; padding: .45em 1em; font-size: var(--chip); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--cyan-hi); backdrop-filter: blur(10px); white-space: nowrap; }
+  .chip i { width: .55em; height: .55em; border-radius: 50%; background: var(--gold); box-shadow: 0 0 14px var(--gold); }
+
+  .title { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: var(--title); line-height: .98; letter-spacing: -0.025em; text-wrap: balance; }
+  .title span { display: block; }
+  .title em { font-style: italic; background: linear-gradient(92deg, var(--cyan-hi) 0%, #b8f3ea 45%, var(--gold) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
+  .sub { margin: 0; font-size: var(--sub); line-height: 1.38; color: #cfe0e3; max-width: 30em; text-wrap: pretty; }
+
+  .visual { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: calc(var(--gap) * .7); }
+  .glass { background: linear-gradient(160deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .02)); border: 1.5px solid rgba(126, 246, 251, .2); border-radius: var(--r); backdrop-filter: blur(16px); box-shadow: 0 30px 80px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .08); }
+
+  .urlbar { display: flex; align-items: center; gap: 14px; padding: calc(var(--u) * 1.1) calc(var(--u) * 1.2); font-family: "Fira Code", monospace; font-size: var(--mono); }
+  .urlbar .lock { width: 1em; height: 1em; color: var(--ok); flex: none; }
+  .urlbar .scheme { color: var(--muted); }
+  .urlbar .host { color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; }
+  .urlbar .host::after { content: ""; display: inline-block; width: .55em; height: 1.05em; margin-left: 4px; vertical-align: -0.15em; background: var(--cyan-hi); }
+  .urlbar .go { font-family: Inter, sans-serif; font-weight: 700; font-size: .9em; padding: .55em 1.2em; border-radius: 999px; background: linear-gradient(135deg, #12a3ad, #0d6e76); color: #fff; box-shadow: 0 8px 24px rgba(18, 163, 173, .45); }
+
+  .cases-head { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--small); color: var(--muted); letter-spacing: .1em; text-transform: uppercase; font-weight: 600; }
+  .cases-head b { color: var(--gold); font-family: "Fira Code", monospace; letter-spacing: 0; text-transform: none; }
+  .cases { display: flex; flex-direction: column; gap: calc(var(--u) * .7); }
+  .case { display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; align-items: center; padding: calc(var(--u) * .9) calc(var(--u) * 1.1); }
+  .case:nth-child(2) { margin-left: calc(var(--u) * 1.4); }
+  .case:nth-child(3) { margin-left: calc(var(--u) * 2.8); }
+  .case .id { font-family: "Fira Code", monospace; font-weight: 600; font-size: var(--mono); color: var(--ink); background: linear-gradient(135deg, var(--gold), #f4dcae); border-radius: 10px; padding: .25em .6em; grid-row: span 2; }
+  .case .t { font-size: var(--case); font-weight: 600; line-height: 1.25; }
+  .case .l { font-size: var(--small); color: var(--cyan-hi); letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--u) * .8); }
+  .stat { padding: calc(var(--u) * 1.1); text-align: left; }
+  .stat b { display: block; font-family: "Instrument Serif", serif; font-weight: 400; font-size: var(--stat); line-height: .95; letter-spacing: -0.03em; background: linear-gradient(180deg, #fff, var(--cyan-hi)); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
+  .stat:last-child b { background: linear-gradient(180deg, #fff3d9, var(--gold)); -webkit-background-clip: text; background-clip: text; }
+  .stat span { display: block; margin-top: 10px; font-size: var(--small); color: var(--muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+
+  .tiles { display: grid; grid-template-columns: repeat(var(--cols, 2), 1fr); gap: calc(var(--u) * .6); }
+  .tile { padding: calc(var(--u) * .85) calc(var(--u) * 1); display: flex; flex-direction: column; gap: 6px; position: relative; overflow: hidden; }
+  .tile b { font-family: "Instrument Serif", serif; font-weight: 400; font-size: var(--tile); line-height: 1; letter-spacing: -0.02em; }
+  .tile span { font-size: var(--small); color: var(--muted); font-weight: 500; }
+  .tile i { position: absolute; top: calc(var(--u) * .7); right: calc(var(--u) * .8); font-style: normal; font-family: "Fira Code", monospace; font-size: var(--small); color: var(--gold); }
+  .tile::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: linear-gradient(180deg, var(--cyan-hi), var(--gold)); }
+
+  .marks { display: grid; grid-template-columns: repeat(2, 1fr); gap: calc(var(--u) * .7); }
+  .markcard { padding: calc(var(--u) * 1) calc(var(--u) * 1.1); }
+  .markcard span { display: inline-block; font-size: var(--small); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: .25em .7em; border-radius: 999px; }
+  .markcard.ok span { color: #062b20; background: var(--ok); }
+  .markcard.no span { color: #2b1703; background: var(--amber); }
+  .markcard b { display: block; margin-top: 12px; font-family: "Fira Code", monospace; font-weight: 600; font-size: var(--markname); }
+  .markcard.no { border-color: rgba(240, 180, 90, .45); }
+
+  .chart { padding: calc(var(--u) * 1.1) calc(var(--u) * 1.2); display: flex; flex-direction: column; gap: calc(var(--u) * .55); }
+  .chart h3 { margin: 0 0 6px; font-size: var(--small); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+  .bar { display: grid; grid-template-columns: 6.2em 1fr 4.4em; gap: 14px; align-items: center; font-family: "Fira Code", monospace; font-size: var(--mono); }
+  .bar .track { height: .62em; border-radius: 999px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+  .bar .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #12a3ad, var(--cyan-hi)); box-shadow: 0 0 16px rgba(126, 246, 251, .5); }
+  .bar.slow .fill { background: linear-gradient(90deg, #c98a2e, var(--gold)); box-shadow: 0 0 16px rgba(226, 196, 138, .5); }
+  .bar em { font-style: normal; color: var(--muted); text-align: right; }
+
+  .layers { display: flex; flex-wrap: wrap; gap: calc(var(--u) * .45); }
+  .layer { display: inline-flex; align-items: center; gap: 10px; padding: .45em .8em; border-radius: 14px; font-size: var(--layer); font-weight: 600; border: 1.5px solid rgba(126, 246, 251, .22); background: rgba(10, 30, 36, .6); }
+  .layer code { font-family: "Fira Code", monospace; color: var(--gold); font-size: .78em; }
+
+  .bullets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: calc(var(--u) * .45); flex: none; }
+  .bullets li { display: flex; gap: 14px; align-items: flex-start; font-size: var(--bullet); font-weight: 500; color: #dbe9eb; line-height: 1.3; }
+  .bullets li::before { content: ""; flex: none; width: .95em; height: .95em; margin-top: .14em; border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--cyan-hi), var(--teal)); box-shadow: 0 0 12px rgba(126, 246, 251, .6); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><circle cx='10' cy='10' r='10' fill='black'/><path d='M5.5 10.5l3 3 6-7' stroke='white' stroke-width='2.4' fill='none'/></svg>"); }
+
+  .foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: calc(var(--u) * .8); border-top: 1.5px solid rgba(126, 246, 251, .14); }
+  .foot .left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .included { font-family: "Fira Code", monospace; font-size: var(--small); color: var(--gold); }
+  .domain { font-family: "Fira Code", monospace; font-size: var(--small); color: var(--muted); }
+  .cta { flex: none; display: inline-flex; align-items: center; gap: 12px; font-weight: 700; font-size: var(--ctaf); color: #04191c; padding: .75em 1.35em; border-radius: 999px; background: linear-gradient(135deg, var(--cyan-hi), #43c6c6 55%, var(--gold)); box-shadow: 0 14px 40px rgba(77, 179, 187, .45); white-space: nowrap; }
+  .cta svg { width: 1em; height: 1em; }
+  .swipe { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: var(--chip); color: var(--gold); letter-spacing: .08em; text-transform: uppercase; }
+
+  /* Sizes */
+  .size-portrait { --pad: 68px; --gap: 30px; --u: 26px; --r: 24px; --mark: 58px; --brand: 17px; --chip: 18px; --title: 112px; --sub: 29px; --mono: 24px; --small: 19px; --case: 25px; --stat: 108px; --tile: 44px; --markname: 40px; --layer: 21px; --bullet: 26px; --ctaf: 24px; }
+  .size-story { --pad: 84px; --gap: 44px; --u: 30px; --r: 28px; --mark: 66px; --brand: 19px; --chip: 21px; --title: 132px; --sub: 34px; --mono: 27px; --small: 21px; --case: 29px; --stat: 126px; --tile: 52px; --markname: 46px; --layer: 25px; --bullet: 31px; --ctaf: 28px; }
+  .size-story .stack { padding-top: 140px; padding-bottom: 150px; }
+  .size-landscape { --pad: 64px; --gap: 26px; --u: 24px; --r: 22px; --mark: 54px; --brand: 16px; --chip: 16px; --title: 96px; --sub: 25px; --mono: 21px; --small: 17px; --case: 22px; --stat: 92px; --tile: 38px; --markname: 34px; --layer: 18px; --bullet: 22px; --ctaf: 21px; }
+  .size-landscape .stack { display: grid; grid-template-columns: 1.05fr .95fr; grid-template-rows: auto 1fr auto; column-gap: 56px; row-gap: 26px; }
+  .size-landscape .top, .size-landscape .foot { grid-column: 1 / -1; }
+  .size-landscape .copy { grid-column: 1; display: flex; flex-direction: column; gap: 22px; justify-content: center; min-height: 0; }
+  .size-landscape .visual { grid-column: 2; grid-row: 2; }
+  .size-portrait.layout-layers { --layer: 27px; }
+  .size-story.layout-layers { --layer: 33px; }
+  .size-landscape.layout-layers { --layer: 19px; }
+  .copy { display: flex; flex-direction: column; gap: var(--gap); flex: none; }
+
+  /* Video frame: the clip shows through the hole. */
+  .mode-vframe .stack { padding: 70px 64px 64px; }
+  .mode-vframe { --title: 108px; }
+  .mode-vframe .vtop .title { margin-top: auto; }
+  .hole-ring { position: absolute; left: 20px; top: 660px; width: 1040px; height: 585px; border-radius: 26px; box-shadow: 0 0 0 2px rgba(126, 246, 251, .55), 0 0 60px rgba(77, 179, 187, .45), 0 0 0 10px rgba(5, 12, 15, .35); pointer-events: none; }
+  .mode-vframe .vtop { height: 560px; display: flex; flex-direction: column; gap: 26px; }
+  .mode-vframe .vbottom { position: absolute; left: 64px; right: 64px; bottom: 70px; display: flex; flex-direction: column; gap: 22px; align-items: center; text-align: center; }
+
+  .center { align-items: center; justify-content: center; text-align: center; }
+  .center .sub { margin: 0 auto; }
+  .bigmark svg { width: 190px; height: 190px; filter: drop-shadow(0 18px 60px rgba(77, 179, 187, .55)); }
+  .fine { font-size: var(--small); color: var(--muted); max-width: 34em; line-height: 1.45; margin: 0 auto; }
+
+  .capwrap { display: flex; justify-content: center; padding: 10px 40px; }
+  .cap { max-width: 960px; text-align: center; font-weight: 700; font-size: 44px; line-height: 1.22; color: #fff; padding: 18px 30px; border-radius: 22px; background: rgba(5, 14, 17, .78); border: 1.5px solid rgba(126, 246, 251, .28); box-shadow: 0 12px 40px rgba(0, 0, 0, .45); text-wrap: balance; }
+
+  .slide-index { font-family: "Fira Code", monospace; font-size: 26px; color: var(--gold); letter-spacing: .06em; }
+  .slide-name { font-family: "Instrument Serif", serif; font-size: 156px; line-height: .95; letter-spacing: -0.03em; margin: 0; }
+  .slide-name.mid { font-size: 112px; }
+  .slide-tag { font-size: 36px; color: var(--cyan-hi); font-weight: 600; }
+  .filecard { display: flex; align-items: center; gap: 28px; padding: 30px 34px; }
+  .filecard .ext { font-family: "Fira Code", monospace; font-weight: 600; font-size: 40px; color: var(--ink); background: linear-gradient(135deg, var(--gold), #f4dcae); border-radius: 18px; padding: 26px 22px; }
+  .filecard b { display: block; font-family: "Fira Code", monospace; font-size: 30px; font-weight: 500; }
+  .filecard span { display: block; margin-top: 8px; color: var(--muted); font-size: 22px; }
+  .pair { display: flex; flex-direction: column; gap: 44px; }
+  .pair .layer-name { font-family: "Instrument Serif", serif; font-size: 96px; line-height: 1; margin: 0 0 18px; letter-spacing: -0.02em; }
+</style>
+</head>
+<body>
+<div id="c"></div>
+<script>
+const MARK = '<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#102226"/><rect x="1.5" y="1.5" width="61" height="61" rx="14.5" fill="none" stroke="#4db3bb" stroke-width="1.6"/><path d="M32 11 L15 45 L32 38 Z" fill="#4db3bb" fill-opacity=".28" stroke="#7ef6fb" stroke-width="1.35" stroke-linejoin="round"/><path d="M32 11 L49 45 L32 38 Z" fill="#e2c48a" fill-opacity=".42" stroke="#e2c48a" stroke-width="1.35" stroke-linejoin="round"/><path d="M15 45 L49 45 L32 53 Z" fill="#4db3bb" fill-opacity=".16" stroke="#7ef6fb" stroke-width="1.2" stroke-linejoin="round"/><path d="M32 11 L32 53" fill="none" stroke="#e9fdff" stroke-width="1.15" stroke-linecap="round"/><g fill="#e9fdff"><circle cx="18" cy="49" r="1.35"/><circle cx="46" cy="49" r="1.15"/></g><circle cx="40" cy="28" r="1.5" fill="#fff6e4"/></svg>';
+const ARROW = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M11 5l5 5-5 5"/></svg>';
+const LOCK = '<svg class="lock" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="9" width="12" height="9" rx="2"/><path d="M7 9V6a3 3 0 0 1 6 0v3"/></svg>';
+const SIZES = { portrait: [1080, 1350], landscape: [1600, 900], story: [1080, 1920], slide: [1080, 1350], video: [1080, 1920] };
+
+function esc(text) {
+  return String(text == null ? "" : text).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+}
+function line(text) {
+  const raw = String(text);
+  const em = raw.match(/^\*(.*)\*$/);
+  return em ? "<span><em>" + esc(em[1]) + "</em></span>" : "<span>" + esc(raw) + "</span>";
+}
+function title(lines, cls) { return '<h1 class="title ' + (cls || "") + '">' + lines.map(line).join("") + "</h1>"; }
+function backdrop(art) {
+  return '<div class="bg"><img src="../../media/qa-review-stage/qa-email-' + esc(art) + '.jpg" alt=""></div><div class="shade"></div><div class="glow"></div><div class="grid"></div><div class="grain"></div>';
+}
+function brand(ui) { return '<div class="brand">' + MARK + "<div><b>QA-lab URL Review</b><small>" + esc(ui.by) + "</small></div></div>"; }
+function topBar(s, extra) { return '<header class="top">' + brand(s.ui) + (extra || '<span class="chip"><i></i>' + esc(s.copy.kicker) + "</span>") + "</header>"; }
+function bullets(list) { return '<ul class="bullets">' + list.map((b) => "<li>" + esc(b) + "</li>").join("") + "</ul>"; }
+function foot(s, right) {
+  return '<footer class="foot"><div class="left"><span class="included">' + esc(s.ui.included) + '</span><span class="domain">carlosandmunoz.com/qa-review</span></div>' + (right || '<span class="cta">' + esc(s.ui.ctaShort) + ARROW + "</span>") + "</footer>";
+}
+function caseCards(s) {
+  const rows = (s.cards || []).map((id) => s.layers.find((l) => l[0] === id)).filter(Boolean);
+  return '<div class="cases-head"><span>' + esc(s.ui.cases) + "</span><b>" + esc(s.ui.example) + '</b></div><div class="cases">' + rows.map((l) =>
+    '<div class="case glass"><span class="id">' + esc(l[0]) + '</span><span class="t">' + esc(l[1]) + '</span><span class="l">' + esc(l[2]) + "</span></div>").join("") + "</div>";
+}
+function urlbar(s) { return '<div class="urlbar glass">' + LOCK + '<span class="scheme">https://</span><span class="host">' + esc(s.ui.url.replace("https://", "")) + '</span><span class="go">' + esc(s.ui.review) + "</span></div>"; }
+
+function visual(s) {
+  const c = s.copy;
+  if (s.layout === "hero") return urlbar(s) + caseCards(s);
+  if (s.layout === "problem") return caseCards(s);
+  if (s.layout === "offer") return '<div class="stats">' + c.stats.map((st) => '<div class="stat glass"><b>' + esc(st[0]) + "</b><span>" + esc(st[1]) + "</span></div>").join("") + "</div>" + urlbar(s);
+  if (s.layout === "tiles") {
+    const cols = s.size === "landscape" ? 2 : 2;
+    return '<div class="tiles" style="--cols:' + cols + '">' + s.tileRows.map((t) => '<div class="tile glass"><b>' + esc(t[0]) + "</b><span>" + esc(t[1]) + "</span>" + (t[2] ? "<i>" + esc(t[2]) + "</i>" : "") + "</div>").join("") + "</div>";
+  }
+  if (s.layout === "signals") return '<div class="marks">' + s.marks.map((m) => '<div class="markcard glass ' + (m[1] ? "ok" : "no") + '"><span>' + esc(m[1] ? s.ui.present : s.ui.missing) + "</span><b>" + esc(m[0]) + "</b></div>").join("") + "</div>" + caseCards(Object.assign({}, s, { cards: ["SEC-01"] }));
+  if (s.layout === "chart") {
+    const max = Math.max.apply(null, s.bars.map((b) => b[1]));
+    return '<div class="chart glass"><h3>' + esc(c.chart) + "</h3>" + s.bars.map((b) => '<div class="bar ' + (b[1] >= 250 ? "slow" : "") + '"><span>' + esc(b[0]) + '</span><div class="track"><div class="fill" style="width:' + Math.round((b[1] / max) * 100) + '%"></div></div><em>' + b[1] + " ms</em></div>").join("") + "</div>";
+  }
+  if (s.layout === "layers") return '<div class="layers">' + s.layers.map((l) => '<span class="layer"><code>' + esc(l[0]) + "</code>" + esc(l[2]) + "</span>").join("") + "</div>";
+  return "";
+}
+
+function still(s) {
+  const c = s.copy;
+  const swipe = s.swipe ? '<span class="swipe">' + esc(s.ui.swipe) + ARROW + "</span>" : null;
+  const showBullets = s.layout !== "layers" || s.size !== "landscape";
+  if (s.size === "landscape") {
+    return backdrop(s.art) + '<div class="stack">' + topBar(s) + '<div class="copy">' + title(c.title) + '<p class="sub">' + esc(c.sub) + "</p>" + (showBullets ? bullets(c.bullets) : "") + '</div><div class="visual">' + visual(s) + "</div>" + foot(s) + "</div>";
+  }
+  const sub = s.layout === "tiles" ? "" : '<p class="sub">' + esc(c.sub) + "</p>";
+  return backdrop(s.art) + '<div class="stack">' + topBar(s, swipe ? '<span class="chip"><i></i>' + esc(c.kicker) + "</span>" : null) + '<div class="copy">' + title(c.title) + sub + '</div><div class="visual">' + visual(s) + "</div>" + (s.layout === "layers" ? "" : bullets(c.bullets)) + foot(s, swipe) + "</div>";
+}
+
+function hook(s) {
+  return backdrop(s.art) + '<div class="stack center" style="padding:120px 80px">' + topBar(s, " ") + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:44px;align-items:center"><span class="chip"><i></i>' + esc(s.copy.kicker) + "</span>" + title(s.copy.title) + '<p class="sub" style="max-width:24em">' + esc(s.copy.hook) + "</p></div></div>";
+}
+
+function vframe(s) {
+  return backdrop(s.art) + '<div class="stack"><div class="vtop">' + topBar(s) + title(s.copy.title) + '</div><div class="vbottom"><span class="included">' + esc(s.ui.included) + '</span><span class="cta">' + esc(s.ui.cta) + ARROW + '</span><span class="domain">carlosandmunoz.com/qa-review</span></div></div>';
+}
+
+function endcard(s) {
+  return backdrop(s.art) + '<div class="stack center" style="gap:46px">' +
+    '<div class="bigmark">' + MARK + "</div>" + title(s.ui.endTitle) +
+    '<span class="included">' + esc(s.ui.included) + "</span>" +
+    '<p class="fine">' + esc(s.ui.price) + "</p>" +
+    '<span class="cta">' + esc(s.ui.cta) + ARROW + "</span>" +
+    '<span class="domain">carlosandmunoz.com/qa-review</span>' +
+    '<p class="fine" style="opacity:.75">' + esc(s.ui.footnote) + "</p></div>";
+}
+
+function itemSlide(s) {
+  const it = s.item;
+  const head = topBar(s, '<span class="slide-index">' + esc(it.index) + "</span>");
+  let body = "";
+  if (it.kind === "framework") {
+    body = '<div style="display:flex;flex-direction:column;gap:22px"><h2 class="slide-name' + (it.name.length > 9 ? " mid" : "") + '">' + esc(it.name) + '</h2><span class="slide-tag">' + esc(it.tag) + "</span></div>" +
+      '<div class="cases-head"><span>' + esc(s.ui.cases) + "</span><b>" + esc(it.name) + '</b></div><div class="cases">' + it.cases.map((l) => '<div class="case glass"><span class="id">' + esc(l[0]) + '</span><span class="t">' + esc(l[1]) + '</span><span class="l">' + esc(l[2]) + "</span></div>").join("") + "</div>";
+  } else if (it.kind === "export") {
+    body = '<div style="display:flex;flex-direction:column;gap:22px"><h2 class="slide-name' + (it.name.length > 9 ? " mid" : "") + '">' + esc(it.name) + '</h2><span class="slide-tag">' + esc(it.tag) + "</span></div>" +
+      '<div class="filecard glass"><span class="ext">' + esc(it.ext) + "</span><div><b>qa-lab-cases" + esc(it.ext) + "</b><span>" + esc(s.ui.file) + " · " + esc(it.name) + "</span></div></div>" +
+      '<div class="cases">' + it.cases.map((l) => '<div class="case glass"><span class="id">' + esc(l[0]) + '</span><span class="t">' + esc(l[1]) + '</span><span class="l">' + esc(l[2]) + "</span></div>").join("") + "</div>";
+  } else {
+    body = '<div class="pair">' + it.pair.map((l) => '<div><h2 class="layer-name">' + esc(l[2]) + '</h2><div class="case glass"><span class="id">' + esc(l[0]) + '</span><span class="t">' + esc(l[1]) + '</span><span class="l">' + esc(s.ui.cases) + "</span></div></div>").join("") + "</div>";
+  }
+  return backdrop(s.art) + '<div class="stack">' + head + '<div class="visual" style="justify-content:center;gap:40px">' + body + "</div>" + foot(s, '<span class="swipe">' + esc(s.ui.swipe) + ARROW + "</span>") + "</div>";
+}
+
+function caption(s) { return '<div class="capwrap"><div class="cap">' + esc(s.text) + "</div></div>"; }
+
+function fit() {
+  const stack = document.querySelector(".stack");
+  const t = document.querySelector(".title");
+  if (!stack || !t) return;
+  let guard = 0;
+  const vtop = document.querySelector(".vtop");
+  const vis = document.querySelector(".visual");
+  const over = () => (vtop && vtop.scrollHeight > vtop.clientHeight + 16) || (vis && vis.scrollHeight > vis.clientHeight + 1) || stack.scrollHeight > stack.clientHeight + 1 || stack.scrollWidth > stack.clientWidth + 1 || Array.from(document.querySelectorAll(".title span")).some((sp) => sp.scrollWidth > stack.clientWidth);
+  const root = document.getElementById("c");
+  while (over() && guard < 40) {
+    root.style.setProperty("--title", Math.round(parseFloat(getComputedStyle(t).fontSize) * 0.96) + "px");
+    if (guard > 6) {
+      ["--sub", "--bullet", "--case", "--stat", "--tile", "--layer", "--gap"].forEach((name) => {
+        const base = parseFloat(getComputedStyle(root).getPropertyValue(name));
+        if (base) root.style.setProperty(name, Math.max(base * 0.97, 14) + "px");
+      });
+    }
+    guard += 1;
+  }
+}
+
+window.render = async function render(spec) {
+  const root = document.getElementById("c");
+  const dims = spec.mode === "caption" ? [1080, 0] : (SIZES[spec.size] || SIZES.portrait);
+  const sizeClass = spec.size === "video" ? "story" : spec.size === "slide" ? "portrait" : spec.size;
+  root.className = "size-" + sizeClass + " mode-" + spec.mode + " layout-" + (spec.layout || "none") + (spec.mode === "caption" || spec.mode === "vframe" ? " transparent" : "");
+  root.removeAttribute("style");
+  root.style.width = dims[0] + "px";
+  if (spec.mode !== "caption") root.style.height = dims[1] + "px";
+  let html = "";
+  if (spec.mode === "still") html = still(spec);
+  else if (spec.mode === "hook") html = hook(spec);
+  else if (spec.mode === "vframe") html = vframe(spec);
+  else if (spec.mode === "end") html = endcard(spec);
+  else if (spec.mode === "item") html = itemSlide(spec);
+  else if (spec.mode === "caption") html = caption(spec);
+  root.innerHTML = html;
+  if (spec.mode === "vframe") {
+    root.style.clipPath = 'path(evenodd, "M0 0 H1080 V1920 H0 Z M46 660 H1034 A26 26 0 0 1 1060 686 V1219 A26 26 0 0 1 1034 1245 H46 A26 26 0 0 1 20 1219 V686 A26 26 0 0 1 46 660 Z")';
+  }
+  await document.fonts.ready;
+  await Promise.all(Array.from(document.images).map((img) => img.complete ? null : new Promise((ok) => { img.onload = ok; img.onerror = ok; })));
+  if (spec.mode !== "caption") fit();
+  if (spec.mode === "vframe") {
+    const ring = document.createElement("div");
+    ring.className = "hole-ring";
+    document.body.appendChild(ring);
+  } else {
+    document.querySelectorAll(".hole-ring").forEach((el) => el.remove());
+  }
+  const box = root.getBoundingClientRect();
+  return { width: Math.round(box.width), height: Math.round(box.height) };
+};
+</script>
+</body>
+</html>
