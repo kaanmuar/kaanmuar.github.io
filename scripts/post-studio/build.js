@@ -286,6 +286,8 @@ function community(lang) {
   const list = L.map((l) => "- **" + l[2] + "** (`" + l[0] + "`): " + l[1]).join("\n");
 
   fs.writeFileSync(path.join(dir, "devto-en.md"), [
+    "<!-- Before publishing: DEV does not allow AI-assisted articles that promote your own product (dev.to/guidelines-for-ai-assisted-articles-on-dev). Rewrite this in your own words and keep the closing plug to one or two sentences, or keep the text, add an AI-assistance note, and delete the disclosure paragraph with the link. -->",
+    "",
     "---",
     "title: 20 kinds of test cases a public page already tells you about",
     "published: false",
@@ -318,7 +320,7 @@ function community(lang) {
   ].join("\n"));
 
   fs.writeFileSync(path.join(dir, "reddit-en.md"), [
-    "<!-- Before posting: read the current self-promotion rules of each subreddit and post only where links to your own tool are allowed. Keep the disclosure. -->",
+    "<!-- Both subreddits forbid promoting tools: r/QualityAssurance rule 1 is \"No product advertising\", and r/softwaretesting forbids links to commercial testing tools and names offenders in a pinned thread. These are discussion posts only: no link, no product name. If someone asks what you use, say you built a tool for it, without a link. Re-read the rules before posting; mods change them. -->",
     "",
     "# r/QualityAssurance",
     "",
@@ -334,8 +336,6 @@ function community(lang) {
     "",
     "Which kinds do you always cover, and which ones do you think are noise on a first pass?",
     "",
-    "*Disclosure: I built a tool that proposes this list from a public read ([QA-lab URL Review](" + url("reddit") + ")). It does not run tests, sign in, or generate load. Happy to share the full list here without the link if links are not welcome.*",
-    "",
     "---",
     "",
     "# r/softwaretesting",
@@ -347,15 +347,15 @@ function community(lang) {
     list,
     "",
     "What would you add or drop?",
-    "",
-    "*Disclosure: this list is what my tool, [QA-lab URL Review](" + url("reddit") + "), proposes from a public page. It proposes cases only; it does not run them.*",
     ""
   ].join("\n"));
 
   fs.writeFileSync(path.join(dir, "mot-en.md"), [
+    "<!-- The Club welcomes tool vendors who say who they are and why they want feedback (club.ministryoftesting.com/guidelines); other self-promotion belongs only in Blogs, Books, Videos & Audio. A new account opening with a product post is the usual removal trigger, so answer a few questions there for a week or two first. -->",
+    "",
     "# Ministry of Testing Club: feedback request",
     "",
-    "**Category:** Tools / Feedback",
+    "**Category:** Discussions, tags: tools, automation",
     "",
     "**Title:** Feedback wanted: proposing test cases from a public read of a page",
     "",
