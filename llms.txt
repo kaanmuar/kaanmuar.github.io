@@ -21,6 +21,9 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - YouTube: https://www.youtube.com/@qalaburlreview
 - X: https://x.com/qalaburlreview
 - LinkedIn: https://www.linkedin.com/company/qalab-url-review
+- TikTok: https://www.tiktok.com/@qalaburlreview
+- DEV: https://dev.to/qalaburlreview
+- Reddit: https://www.reddit.com/user/qalaburlreview/
 
 ## Films
 
@@ -37,6 +40,8 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 Frameworks: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling.
 Tools, only when they apply, and never launched: axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar, Copado.
 The report can also list technologies, pages read, public signals, and public write-ups. Secrets are not copied. A missing header is not proof of a break-in.
+Cases are named for a framework. The review does not write or run test scripts.
+Case exports: Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, PDF.
 
 ## Price
 
