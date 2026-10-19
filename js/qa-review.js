@@ -566,8 +566,8 @@
     GEO: "How AI answers can read and cite the site",
     Analytics: "Tags, consent, campaign tracking",
     Security: "Headers, TLS, DNS, exposure",
-    Accessibility: "What the HTML says to assistive tech",
-    Performance: "HTML speed, weight, layout shift"
+    Accessibility: "Markup, axe-core, and the phone layout",
+    Performance: "Speed, weight, paint, and layout shift"
   };
   let findingFilter = { area: "All", verdict: "open" };
 
@@ -676,6 +676,83 @@
         img.replaceWith(stand);
       }, { once: true });
     });
+  }
+
+  function paintBrowser(report) {
+    const host = document.getElementById("browser-pass");
+    if (!host) return;
+    const b = report.browser;
+    if (!b || !b.ok) {
+      host.innerHTML = '<p class="muted">' + (b && b.error
+        ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML read only."
+        : "This review ran without the headless browser, so the checks come from the HTML read only.") + "</p>";
+      return;
+    }
+    const start = b.start || {};
+    const vit = start.vitals || {};
+    const consent = b.consent || {};
+    const before = consent.before || { vendors: [], cookies: [] };
+    const after = consent.rejected ? consent.after : null;
+    const hits = (rows) => (rows || []).reduce((sum, row) => sum + (row.hits || 0), 0);
+    const beforeBad = hits(before.vendors) + (before.cookies || []).length;
+    const afterBad = after ? hits(after.vendors) + (after.cookies || []).length : 0;
+    const axePages = (b.axe && b.axe.ran && b.axe.pages) || [];
+    const rules = new Map();
+    axePages.forEach((page) => (page.violations || []).forEach((rule) => {
+      const row = rules.get(rule.id) || { id: rule.id, impact: rule.impact, help: rule.help, helpUrl: rule.helpUrl, nodes: 0, pages: 0 };
+      row.nodes += rule.nodes;
+      row.pages += 1;
+      rules.set(rule.id, row);
+    }));
+    const mobile = b.mobile || {};
+    const errors = (b.console && b.console.errors) || 0;
+    const failed = (b.failed && b.failed.count) || 0;
+    const tiles = [
+      ["Before a choice", beforeBad ? (consent.banner ? "fail" : "risk") : "pass", beforeBad ? beforeBad + " tracking signal" + (beforeBad === 1 ? "" : "s") : "Nothing tracked"],
+      ["After Reject", after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? afterBad + " still tracked" : "Tracking stopped") : (consent.banner ? "Reject not found" : "No banner showed")],
+      ["axe-core", axePages.length ? (rules.size ? "fail" : "pass") : "unknown", axePages.length ? rules.size + " rules fail on " + axePages.length + " page" + (axePages.length === 1 ? "" : "s") : "Did not run"],
+      ["Phone width", mobile.width ? (mobile.overflow > 2 ? "fail" : "pass") : "unknown", mobile.width ? (mobile.overflow > 2 ? mobile.overflow + " px too wide" : "Fits " + mobile.width + " px") : "Not checked"],
+      ["Largest paint", vit.lcp ? (vit.lcp > 4000 ? "fail" : vit.lcp > 2500 ? "risk" : "pass") : "unknown", vit.lcp ? (vit.lcp / 1000).toFixed(1) + " s, lab" : "Not measured"],
+      ["Layout shift", start.status ? (vit.cls > 0.25 ? "fail" : vit.cls > 0.1 ? "risk" : "pass") : "unknown", String(vit.cls || 0)],
+      ["Text in the HTML", start.renderedWords > 150 ? (start.share < 40 ? "risk" : "pass") : "unknown", (start.share == null ? 100 : start.share) + "% of what people see"],
+      ["Load errors", errors || failed ? "risk" : "pass", errors + " script · " + failed + " file"]
+    ];
+    const cell = (row) => {
+      if (!row) return "—";
+      const parts = [];
+      if (row.hits) parts.push(row.hits + " tracking request" + (row.hits === 1 ? "" : "s"));
+      if (row.denied) parts.push(row.denied + " cookieless ping" + (row.denied === 1 ? "" : "s"));
+      if (row.loads && !parts.length) parts.push("script loaded, nothing sent");
+      return parts.join(" · ") || "—";
+    };
+    const names = [];
+    (before.vendors || []).concat(after ? after.vendors || [] : []).forEach((row) => { if (names.indexOf(row.name) === -1) names.push(row.name); });
+    const find = (rows, name) => (rows || []).find((row) => row.name === name);
+    const cookieList = (rows) => (rows || []).length ? rows.slice(0, 6).map((row) => row.name + (row.third ? " (" + row.domain + ")" : "")).join(", ") + (rows.length > 6 ? " …" : "") : "None";
+    const consentRows = names.map((name) => "<tr><td><strong>" + esc(name) + "</strong></td><td>" + esc(cell(find(before.vendors, name))) + "</td><td>" + (after ? esc(cell(find(after.vendors, name))) : "—") + "</td></tr>").join("") +
+      '<tr><td><strong>Tracking cookies</strong></td><td class="notranslate" translate="no">' + esc(cookieList(before.cookies)) + '</td><td class="notranslate" translate="no">' + (after ? esc(cookieList(after.cookies)) + (after.kept ? " · " + after.kept + " kept from before" : "") : "—") + "</td></tr>";
+    const bannerLine = consent.banner
+      ? (consent.banner === "A cookie banner" ? "A cookie banner" : esc(consent.banner)) + " was showing." + (after ? " The review pressed “" + esc(consent.rejectLabel) + "” and reloaded the page." : consent.banner === "Sourcepoint" ? " It sits in a frame, so Reject was not pressed." : " No reject button was found on its first layer.")
+      : "No cookie banner appeared on the first visit.";
+    const order = { critical: 4, serious: 3, moderate: 2, minor: 1 };
+    const axeRows = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, 10).map((rule) =>
+      "<tr><td>" + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rule.impact) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
+    const shots = b.shots || {};
+    const textRows = [{ path: start.finalPath || "/", share: start.share, words: start.renderedWords, raw: start.rawWords }].concat((b.pages || []).filter((page) => !page.error).map((page) => ({ path: page.path, share: page.share, words: page.renderedWords, raw: page.rawWords })));
+    host.innerHTML =
+      '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
+      (shots.desktop || shots.mobile ? '<div class="shots">' +
+        (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="The start page on a first visit at 1280 px wide" loading="lazy"><figcaption>First visit, 1280 px wide, before any choice.</figcaption></figure>' : "<div></div>") +
+        (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="The start page at a 390 px phone width" loading="lazy"><figcaption>Phone, 390 px.</figcaption></figure>' : "") + "</div>" : "") +
+      '<div class="split"><article class="card"><h3>Tracking before and after a choice</h3><p class="muted">' + bannerLine + " Cookieless pings are Google tags with Consent Mode denied.</p>" +
+      '<table class="mini-table"><thead><tr><th>Tool</th><th>Before a choice</th><th>After Reject</th></tr></thead><tbody>' + consentRows + "</tbody></table></article>" +
+      '<article class="card"><h3>Text in the HTML compared with the page people see</h3><p class="muted">Most AI crawlers do not run JavaScript, so they only get the words in the HTML.</p>' +
+      '<table class="mini-table"><thead><tr><th>Page</th><th>In the HTML</th><th>Words seen</th></tr></thead><tbody>' + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" +
+      '<article class="card" style="margin-top:12px"><h3>axe-core on the rendered pages</h3>' + (axePages.length
+        ? (axeRows ? '<table class="mini-table"><thead><tr><th>Rule</th><th>Impact</th><th>Elements</th><th>Pages</th></tr></thead><tbody>' + axeRows + "</tbody></table>" : '<p class="muted">No WCAG 2.2 AA rule failed on ' + axePages.length + " page" + (axePages.length === 1 ? "" : "s") + ". Automated rules catch about a third of real issues.</p>") +
+          '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
+        : '<p class="muted">axe-core did not finish in the time the browser had.</p>') + "</article>" +
+      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + " Lab numbers come from one unthrottled load.</p>";
   }
 
   function paintGeo(ins) {
@@ -874,6 +951,7 @@
     if (!ins) return;
     paintHealth(ins);
     paintFixFirst(ins, paid);
+    paintBrowser(report);
     paintPreviews(ins);
     paintGeo(ins);
     paintAnalytics(ins);
