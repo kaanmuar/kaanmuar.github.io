@@ -1231,7 +1231,7 @@ function hasTech(names, pattern) {
 }
 
 const REVIEW_TOOLS = [
-  ["axe-core", "This document can be opened in a browser. axe-core is named on the accessibility cases and is not run here."],
+  ["axe-core", "axe-core runs in this review's headless browser on up to three pages when that pass answers. Selecting it adds the same checks to the scripts, so your pipeline runs them on every build."],
   ["Lighthouse", "A public document was read. Lighthouse would score the rendered page later. It is not run here."],
   ["BrowserStack", "Browser cases are in this list. A later cross-browser pass could use BrowserStack. It is not started here."],
   ["Applitools", "The page has a visual surface. Applitools would compare a later screenshot. This review did not take one."],
@@ -1639,6 +1639,12 @@ async function reviewTarget(rawUrl, hooks) {
   }
   const homeInspect = inspect(first.body, first.headers, first.url);
   const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt).catch(() => ({}));
+  const canBrowse = !stopped && typeof controls.browse === "function";
+  const browsePaths = (homeInspect.links || []).filter((url) => !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
+  const browserPromise = canBrowse
+    ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths })).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+    : Promise.resolve(null);
+  if (canBrowse) note("Opening the start page in a headless browser alongside the read.");
   const pages = [{
     url: first.url,
     requested: first.requested,
@@ -1735,9 +1741,14 @@ async function reviewTarget(rawUrl, hooks) {
   const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
   let extras = {};
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
+  let browser = null;
+  try { browser = await browserPromise; } catch (error) { browser = null; }
+  if (browser && browser.ok) note("The browser pass finished in " + Math.round((browser.ms || 0) / 1000) + " s: " + ((browser.axe && browser.axe.pages.length) || 1) + " page" + ((browser.axe && browser.axe.pages.length) > 1 ? "s" : "") + " checked with axe-core" + (browser.consent && browser.consent.rejected ? ", and the cookie banner's reject button was pressed once" : "") + ".");
+  else if (browser) note("The browser pass did not finish (" + (browser.error || "no answer") + "). The report uses the HTML read only.");
   let analysis = null;
   try {
     analysis = insights.analyze({
+      browser,
       pages,
       robotsText,
       extras,
@@ -1762,7 +1773,7 @@ async function reviewTarget(rawUrl, hooks) {
   try { mentions = await mentionsPromise; } catch (error) { mentions = []; }
   note(mentions.length ? mentions.length + " public write-ups were listed for this host." : "No public write-up was retrieved on this pass.");
   note(alerts.length ? alerts.length + " public signals were listed. The tail of each one stays closed until that section is paid." : "No leak or missing control of the kinds this read watches was seen on the first page.");
-  note(tools.length ? "Tools that apply: " + tools.map((item) => item.name).join(", ") + ". None of them are launched." : "None of axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar, or Copado apply to this page.");
+  note(tools.length ? "Tools that apply: " + tools.map((item) => item.name).join(", ") + "." + (browser && browser.ok && browser.axe && browser.axe.ran ? " axe-core ran in the headless browser. The others are not launched." : " None of them are launched.") : "None of axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar, or Copado apply to this page.");
   const publishedPages = pages.map((page) => ({
     url: page.url,
     path: page.path,
@@ -1774,7 +1785,7 @@ async function reviewTarget(rawUrl, hooks) {
     from: page.from || "",
     error: page.error || ""
   }));
-  return {
+  const result = {
     id: reportId,
     fetchedAt,
     finalUrl: first.url,
@@ -1795,6 +1806,7 @@ async function reviewTarget(rawUrl, hooks) {
     alerts,
     mentions,
     insights: analysis,
+    browser: browser && browser.ok ? browser : (browser ? { ok: false, error: String(browser.error || "") } : null),
     signature,
     counts: {
       pages: pages.length,
@@ -1825,6 +1837,8 @@ async function reviewTarget(rawUrl, hooks) {
       ? "This review was stopped. The cases below use only the pages read before the stop. None of them were executed."
       : "These cases are proposed from a public read. None of them were executed."
   };
+  if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
+  return result;
 }
 
 function stoppedReport(rawUrl, lines, host, scope) {
