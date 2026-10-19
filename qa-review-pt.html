@@ -411,6 +411,33 @@
         .v-risk { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
         .v-pass { color: var(--green); border-color: color-mix(in srgb, var(--green) 45%, var(--line)); }
         .v-person { color: var(--muted); }
+        .s-critical, .s-high { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
+        .s-critical { background: color-mix(in srgb, var(--red) 12%, var(--card)); }
+        .s-medium { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
+        .s-low { color: var(--muted); }
+        .exec-head { display: flex; gap: 12px; align-items: flex-start; }
+        .exec-head p { margin: 2px 0 0; font-size: 1.05rem; }
+        .exec-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
+        .exec-cols h3 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; margin: 0 0 6px; }
+        .exec-cols ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+        .exec-cols li { margin: 0 0 6px; }
+        .exec-cols .meta-line { display: block; margin: 0; }
+        .gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 4px; }
+        .gauge { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
+        .gauge-top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+        .gauge-top b { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
+        .gauge.pass .gauge-top span { color: var(--green); } .gauge.risk .gauge-top span { color: var(--amber); } .gauge.fail .gauge-top span { color: var(--red); }
+        .gauge-top span { font-weight: 700; }
+        .gauge-bar { position: relative; display: flex; height: 8px; border-radius: 999px; overflow: visible; margin: 10px 0 4px; }
+        .gauge-bar i { display: block; height: 100%; }
+        .gauge-bar i:nth-child(1) { background: var(--green); border-radius: 999px 0 0 999px; }
+        .gauge-bar i:nth-child(2) { background: var(--amber); }
+        .gauge-bar i:nth-child(3) { flex: 1; background: var(--red); border-radius: 0 999px 999px 0; }
+        .gauge-bar u { position: absolute; top: -4px; width: 3px; height: 16px; margin-left: -1.5px; background: var(--text); border-radius: 2px; }
+        .table-scroll { overflow-x: auto; }
+        .sec-matrix td.ok { color: var(--green); text-align: center; }
+        .sec-matrix td.no { color: var(--red); text-align: center; font-weight: 700; }
+        .sec-matrix th:not(:first-child) { text-align: center; }
         .areas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
         .area { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); text-align: left; font: inherit; color: inherit; cursor: pointer; }
         .area:hover, .area:focus-visible { border-color: var(--cyan); }
@@ -484,6 +511,7 @@
         @media (max-width: 800px) {
             .health { grid-template-columns: 1fr; justify-items: center; }
             .areas, .stat-row, .checks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .exec-cols, .gauges { grid-template-columns: 1fr; }
             .previews, .fixkit-list { grid-template-columns: 1fr; }
         }
         @media print { .ai-view, .code-peek { max-height: none; } }
@@ -784,6 +812,9 @@
             body.paid-copy .print-mark { opacity: .08; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='520' height='220'><text x='20' y='120' fill='%230d6e76' font-size='15' font-family='sans-serif' transform='rotate(-24 260 110)'>QA-lab URL Review · Carlos Muñoz · carlosandmunoz.com</text></svg>"); }
             body.printing-cases .dash-overlay, body.printing-cases .topbar, body.printing-cases .gate, body.printing-cases #intake, body.printing-cases #run-panel, body.printing-cases .stage, body.printing-cases .ribbon, body.printing-cases .wire { display: none !important; }
             body.printing-cases .case-print { display: block !important; }
+            body.printing-exec #report > :not(#report-cover):not(#exec):not(:has(#exec)) { display: none !important; }
+            body.printing-exec #report .fold-panel:has(#exec) { display: block !important; }
+            body.printing-exec #review-app, body.printing-exec .cookie-note, body.printing-exec .dash-modal > :not(#report) { display: none !important; }
             .capture-note { display: none; }
             body.capture-hold #report { display: none !important; }
             body.capture-hold .capture-note { display: block !important; margin: 0; font: 16px/1.5 Georgia, serif; color: #12181f; }
@@ -1054,6 +1085,8 @@
         <p class="lede" id="report-statement"></p>
         <p class="notranslate" id="paid-line">This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).</p>
         <div class="kpis" id="kpis"></div>
+        <h2 data-insight>One-page summary</h2>
+        <article class="card" data-insight id="exec"></article>
         <h2 data-insight>Health score</h2>
         <div data-insight id="health"></div>
         <h2 data-insight>Fix first</h2>
@@ -1191,6 +1224,6 @@
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261023b"></script>
-<script src="js/qa-review.js?v=20261024a"></script>
+<script src="js/qa-review.js?v=20261025a"></script>
 </body>
 </html>
