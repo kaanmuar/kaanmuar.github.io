@@ -1,0 +1,51 @@
+Text,Image URL,Tags,Posting Time
+"We read GOV.UK. It scores 91.
+
+Give every page a canonical link, even when only one address serves it. One line settles which URL ranks.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=govuk","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/01-govuk.jpg","real-runs","2026-10-28 08:50"
+"Bogotá city hall: SEO 97.
+
+One site, one GA4 property, one gtag.js. If two teams need the data, share access instead of adding a tag.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bogota","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg","real-runs","2026-10-30 15:10"
+"WHO's fact sheets end in a stray semicolon.
+
+Run every JSON-LD block through a JSON validator before release. One character can void the entire block.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=who","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg","real-runs","2026-11-01 12:45"
+"GOV.CO is empty until JavaScript runs.
+
+Render the main text on the server, or prerender the start page. View source should show what a visitor reads.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=govco","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/04-govco.jpg","real-runs","2026-11-03 10:30"
+"The BBC decides who may read it.
+
+Blocking AI training and blocking AI answers are separate choices. Name each crawler in robots.txt on purpose.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bbc","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg","real-runs","2026-11-05 19:50"
+"TransMilenio lets search write its pitch.
+
+Write a description of about 150 characters for your ten most visited pages, starting with the home page.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=transmilenio","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/06-transmilenio.jpg","real-runs","2026-11-07 18:45"
+"Python.org reads well. Its site name is missing.
+
+Add ""name"" to your WebSite JSON-LD, written exactly as you want the site named in search results.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=python","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/07-python.jpg","real-runs","2026-11-09 18:00"
+"Bancolombia's site won't let you zoom.
+
+Drop maximum-scale and user-scalable=no from your viewport tag. Zoom is how many people read.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bancolombia","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg","real-runs","2026-11-11 12:20"
+"The UN home page never says its language.
+
+Put lang on the html tag of every language version: lang=""en"", lang=""fr"", lang=""ar"". One attribute per page.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=un","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg","real-runs","2026-11-13 16:15"
+"NASA is wide open to AI search.
+
+Four headers close most of that gap: Content-Security-Policy, X-Content-Type-Options, Referrer-Policy, and Permissions-Policy.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-2026-10&utm_content=nasa","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/10-nasa.jpg","real-runs","2026-11-15 16:30"
