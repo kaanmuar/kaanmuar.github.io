@@ -480,13 +480,20 @@ function analyze(input) {
   });
 
   // SEO
-  const broken = pages.map((page, index) => ({ page, index })).filter(({ page }) => page.depth > 0 && (!page.status || page.status >= 400));
+  const broken = pages.map((page, index) => ({ page, index })).filter(({ page }) => page.depth > 0 && page.status >= 400);
+  const unanswered = pages.filter((page) => page.depth > 0 && !page.status);
+  if (unanswered.length) {
+    add("SEO", "person", "info", "seo-unanswered-links", plural(unanswered.length, "internal link", "internal links") + " did not answer in time",
+      unanswered.slice(0, 5).map((page) => (page.path || page.url) + ": " + (page.error || "no answer")).join(". ") + ". A slow answer on one read is not proof the page is broken.",
+      "Open each address again. If it stays slow, look at the server or cache for that path.",
+      { pages: unanswered.map((page) => page.path || page.url), cases: ["FN-06", "LK-01"] });
+  }
   if (broken.length) {
     add("SEO", "fail", "high", "seo-broken-links", plural(broken.length, "internal link leads", "internal links lead") + " to an error",
       broken.slice(0, 5).map(({ page, index }) => (page.path || page.url) + " answered " + (page.status || page.error || "nothing") + (sources.get(index) ? ", linked from " + sample(sources.get(index), 2) : "")).join(". ") + ".",
       "Fix or remove each link, or redirect the old address with a 301 to the closest live page.",
       { pages: broken.map(({ page }) => page.path || page.url), effort: "hours", cases: ["FN-06", "LK-01"] });
-  } else if (pages.length > 1) {
+  } else if (pages.length > 1 && !unanswered.length) {
     add("SEO", "pass", "info", "seo-broken-links", "Every internal link that was opened answered", plural(pages.length - 1, "linked page") + " answered without an error.", "", { cases: ["FN-06", "LK-01"] });
   }
 

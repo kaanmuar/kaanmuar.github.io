@@ -290,12 +290,16 @@ async function domFacts(page) {
     document.querySelectorAll("nav a[href], header a[href], [role=navigation] a[href], main a[href]").forEach((node) => {
       if (nav.length >= 8) return;
       const raw = node.getAttribute("href") || "";
-      if (!raw || /['\\]/.test(raw) || raw.charAt(0) === "#" || /^(mailto|tel|javascript):/i.test(raw) || node.target === "_blank" || node.hasAttribute("download")) return;
+      if (!raw || /['\\#]/.test(raw) || /^(mailto|tel|javascript):/i.test(raw) || node.target === "_blank" || node.hasAttribute("download")) return;
       let url;
       try { url = new URL(raw, location.href); } catch (error) { return; }
       if (url.hostname !== here || url.pathname === startPath || seen.has(url.pathname) || /\/(wp-)?admin|log-?out|sign-?out|\.(pdf|zip|docx?|xlsx?)$/i.test(url.pathname)) return;
-      const text = (node.textContent || "").replace(/\s+/g, " ").trim();
-      if (text.length < 2 || text.length > 60 || !visible(node)) return;
+      if (/\/(19|20)\d{2}[\/-](0?[1-9]|1[0-2]|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[\/-]/i.test(url.pathname)) return;
+      const bits = [];
+      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) bits.push(walker.currentNode.nodeValue);
+      const text = bits.join(" ").replace(/\s+/g, " ").trim();
+      if (text.length < 2 || text.length > 60 || !/\p{L}{2}/u.test(text) || !visible(node)) return;
       const value = raw.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
       const options = [node.id && /^[A-Za-z][\w-]*$/.test(node.id) ? "#" + node.id : "", 'a[href="' + value + '"]', 'header a[href="' + value + '"]', 'nav a[href="' + value + '"]', 'main a[href="' + value + '"]'].filter(Boolean);
       const selector = options.find((option) => unique(option) && document.querySelector(option) === node);
