@@ -1551,7 +1551,7 @@
     else termsForm.addEventListener("submit", () => setTimeout(openShared, 0), { once: true });
   }
 
-  const CASE_LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
+  const CASE_LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
   const EXPORT_KEY = "qa-review-case-export";
   const caseExport = document.getElementById("case-export");
   const caseFormats = document.getElementById("case-formats");

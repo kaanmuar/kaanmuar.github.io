@@ -43,12 +43,16 @@
     if (!paths.length) paths.push(startPath);
     const slow = pages.slice().sort((a, b) => (b.ms || 0) - (a.ms || 0))[0];
     const observed = report.observed || {};
+    const geo = (report.insights && report.insights.geo) || {};
     return {
       base: start.origin,
       host: start.host,
       startPath,
       paths,
       slowPath: slow ? String(slow.path).split("#")[0] : startPath,
+      entityPath: geo.entityPath || "",
+      answerPath: geo.answerPath || "",
+      datedPath: geo.datedPath || "",
       scripts: Number(observed.scripts) || 0,
       h1: Array.isArray(observed.h1) && observed.h1[0] ? oneLine(observed.h1[0]) : "",
       label: "QA-lab URL Review · " + (report.host || start.host)
@@ -58,6 +62,8 @@
   function count(path, selector, op, n) {
     return { kind: "count", path, selector, op, n };
   }
+
+  const AI_BLOCK = "^user-agent:\\s*(?:OAI-SearchBot|ChatGPT-User|PerplexityBot|Perplexity-User|Claude-SearchBot|Claude-User|\\*)\\s*$(?:\\s*^user-agent:[^\\n]*$)*\\s*^disallow:\\s*/\\s*$";
 
   function checkFor(item, ctx) {
     const at = ctx.startPath;
@@ -94,6 +100,12 @@
       case "SEC-07": return { kind: "headerNoDigits", path: at, name: "server" };
       case "RS-01": return { kind: "notFound" };
       case "SEO-03": return { kind: "robotsSitemap" };
+      case "GEO-01": return { kind: "text", path: "/robots.txt", pattern: AI_BLOCK, match: false };
+      case "GEO-02": return { kind: "text", path: "/llms.txt", pattern: "^>\\s*\\S", match: true };
+      case "GEO-03": return { kind: "text", path: at, pattern: "<(?:p|h[1-4]|li|span|a|td)[^>]*>\\s*[^\\s<>{};=][^<>{};=]{40,}<", match: true };
+      case "GEO-04": return { kind: "text", path: ctx.entityPath || at, pattern: "@type.{1,6}(?:\\w*Organization|Corporation|LocalBusiness|Person|ProfessionalService|NGO|Store|Restaurant)", match: true };
+      case "GEO-05": return { kind: "text", path: ctx.answerPath || at, pattern: "FAQPage|QAPage|<h[2-6][^>]*>(?:\\s*<[^>]+>)*\\s*(?:\\u00bf|[^<]{2,200}\\?\\s*<)", match: true };
+      case "GEO-06": return { kind: "text", path: ctx.datedPath || at, pattern: "datePublished|dateModified|article:published_time|article:modified_time|<time\\b[^>]*datetime", match: true };
       case "PF-01": return { kind: "budget", path: at, ms: 800, bytes: 1500000 };
       case "PF-03": return { kind: "budget", path: ctx.slowPath, ms: 800, bytes: 1500000 };
       case "MB-01":
@@ -107,7 +119,7 @@
     }
   }
 
-  const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "budget", "viewport", "linksResolve"];
+  const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "text", "budget", "viewport", "linksResolve"];
 
   function supports(framework, check) {
     if (framework === "Appium" || framework === "Maestro") return check.kind === "viewport";
@@ -172,6 +184,9 @@
       case "robotsSitemap":
         body.push("const res = await request.get(BASE + \"/robots.txt\");", "expect(await res.text()).toMatch(/^sitemap:/im);");
         break;
+      case "text":
+        body.push("const res = await request.get(BASE + " + q(check.path) + ");", "expect(await res.text())." + (check.match ? "" : "not.") + "toMatch(new RegExp(" + q(check.pattern) + ", \"im\"));");
+        break;
       case "budget":
         body.push("const started = Date.now();", "const res = await request.get(BASE + " + q(check.path) + ");", "const body = await res.body();", "expect(res.status()).toBeLessThan(400);", "expect(Date.now() - started).toBeLessThan(" + check.ms + ");", "expect(body.length).toBeLessThan(" + check.bytes + ");");
         break;
@@ -234,6 +249,9 @@
         break;
       case "robotsSitemap":
         body.push("cy.request(BASE + \"/robots.txt\").its(\"body\").should(\"match\", /^sitemap:/im);");
+        break;
+      case "text":
+        body.push("cy.request({ url: BASE + " + q(check.path) + ", failOnStatusCode: false }).its(\"body\").should(\"" + (check.match ? "match" : "not.match") + "\", new RegExp(" + q(check.pattern) + ", \"im\"));");
         break;
       case "budget":
         body.push("cy.request(BASE + " + q(check.path) + ").then((res) => {", "  expect(res.status).to.be.lessThan(400);", "  expect(res.duration).to.be.lessThan(" + check.ms + ");", "  expect(String(res.body).length).to.be.lessThan(" + check.bytes + ");", "});");
@@ -301,6 +319,9 @@
         break;
       case "robotsSitemap":
         body.push("text = requests.get(BASE + \"/robots.txt\", timeout=30).text", "assert re.search(r\"^sitemap:\", text, re.I | re.M)");
+        break;
+      case "text":
+        body.push("text = requests.get(BASE + " + q(check.path) + ", timeout=30).text", "assert " + (check.match ? "" : "not ") + "re.search(r\"" + check.pattern + "\", text, re.I | re.M)");
         break;
       case "budget":
         body.push("started = time.perf_counter()", "res = requests.get(BASE + " + q(check.path) + ", timeout=30)", "elapsed_ms = (time.perf_counter() - started) * 1000", "assert res.status_code < 400", "assert elapsed_ms < " + check.ms, "assert len(res.content) < " + check.bytes);
@@ -370,6 +391,9 @@
       case "robotsSitemap":
         lines.push("    ${resp}=    GET    ${BASE}/robots.txt", "    Should Match Regexp    ${resp.text}    (?im)^sitemap:");
         break;
+      case "text":
+        lines.push("    ${resp}=    GET    ${BASE}" + check.path + "    expected_status=any", "    Should " + (check.match ? "" : "Not ") + "Match Regexp    ${resp.text}    (?im)" + check.pattern.replace(/\\/g, "\\\\"));
+        break;
       case "budget":
         lines.push("    ${resp}=    GET    ${BASE}" + check.path, "    Should Be True    ${resp.status_code} < 400", "    Should Be True    ${resp.elapsed.total_seconds()} < " + (check.ms / 1000), "    ${size}=    Get Length    ${resp.content}", "    Should Be True    ${size} < " + check.bytes);
         break;
@@ -429,6 +453,9 @@
         break;
       case "robotsSitemap":
         body.push("const res = await fetch(BASE + \"/robots.txt\");", "expect(await res.text()).toMatch(/^sitemap:/im);");
+        break;
+      case "text":
+        body.push("const res = await fetch(BASE + " + q(check.path) + ");", "expect(await res.text())." + (check.match ? "" : "not.") + "toMatch(new RegExp(" + q(check.pattern) + ", \"im\"));");
         break;
       case "budget":
         body.push("const started = Date.now();", "const res = await fetch(BASE + " + q(check.path) + ");", "const body = await res.arrayBuffer();", "expect(res.status).toBeLessThan(400);", "expect(Date.now() - started).toBeLessThan(" + check.ms + ");", "expect(body.byteLength).toBeLessThan(" + check.bytes + ");");
@@ -558,6 +585,9 @@
       case "robotsSitemap":
         body.push("const res = await fetch(BASE + \"/robots.txt\");", A.match("await res.text()", "/^sitemap:/im"));
         break;
+      case "text":
+        body.push("const res = await fetch(BASE + " + q(check.path) + ");", (check.match ? A.match : A.noMatch)("await res.text()", "new RegExp(" + q(check.pattern) + ", \"im\")"));
+        break;
       case "budget":
         body.push("const started = Date.now();", "const res = await fetch(BASE + " + q(check.path) + ");", "const body = await res.arrayBuffer();", A.lt("res.status", 400), A.lt("Date.now() - started", check.ms), A.lt("body.byteLength", check.bytes));
         break;
@@ -657,6 +687,9 @@
       case "robotsSitemap":
         body.push("String robots = new String(get(BASE + \"/robots.txt\").body(), StandardCharsets.UTF_8);", ok("Pattern.compile(\"^sitemap:\", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(robots).find()", "\"sitemap\""));
         break;
+      case "text":
+        body.push("String text = new String(get(BASE + " + q(check.path) + ").body(), StandardCharsets.UTF_8);", ok((check.match ? "" : "!") + "Pattern.compile(" + q(check.pattern) + ", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(text).find()", q(check.path)));
+        break;
       case "budget":
         body.push("long started = System.nanoTime();", "HttpResponse<byte[]> res = get(BASE + " + q(check.path) + ");", "long elapsedMs = (System.nanoTime() - started) / 1_000_000;", ok("res.statusCode() < 400", "\"status \" + res.statusCode()"), ok("elapsedMs < " + check.ms, "elapsedMs + \" ms\""), ok("res.body().length < " + check.bytes, "res.body().length + \" bytes\""));
         break;
@@ -748,6 +781,9 @@
       case "robotsSitemap":
         body.push("expect(http_get(BASE + \"/robots.txt\").body.to_s).to match(/^sitemap:/i)");
         break;
+      case "text":
+        body.push("expect(http_get(BASE + " + rb(check.path) + ").body.to_s)." + (check.match ? "to" : "not_to") + " match(Regexp.new(" + rb(check.pattern) + ", Regexp::IGNORECASE))");
+        break;
       case "budget":
         body.push("started = Process.clock_gettime(Process::CLOCK_MONOTONIC)", "res = http_get(BASE + " + rb(check.path) + ")", "elapsed_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000", "expect(res.code.to_i).to be < 400", "expect(elapsed_ms).to be < " + check.ms, "expect(res.body.to_s.bytesize).to be < " + check.bytes);
         break;
@@ -831,6 +867,9 @@
         break;
       case "robotsSitemap":
         steps.push("Then robots.txt advertises a sitemap");
+        break;
+      case "text":
+        steps.push("Then the body of " + gq(check.path) + (check.match ? " matches " : " does not match ") + gq(check.pattern));
         break;
       case "budget":
         steps.push("Then " + gq(check.path) + " answers within " + check.ms + " ms and under " + check.bytes + " bytes");
@@ -1013,6 +1052,13 @@ Then(/^robots\.txt advertises a sitemap$/, async function () {
   assert.match(await res.text(), /^sitemap:/im);
 });
 
+Then(/^the body of "([^"]*)" (matches|does not match) "([^"]*)"$/, async function (path, verb, pattern) {
+  const res = await fetch(BASE + path);
+  const text = await res.text();
+  if (verb === "matches") assert.match(text, new RegExp(pattern, "im"));
+  else assert.doesNotMatch(text, new RegExp(pattern, "im"));
+});
+
 Then(/^"([^"]*)" answers within (\d+) ms and under (\d+) bytes$/, async function (path, ms, bytes) {
   const started = Date.now();
   const res = await fetch(BASE + path);
@@ -1152,6 +1198,12 @@ def not_found(context):
 def robots_sitemap(context):
     text = requests.get(BASE + "/robots.txt", timeout=30).text
     assert re.search(r"^sitemap:", text, re.I | re.M)
+
+
+@step(r'the body of "(?P<path>[^"]*)" (?P<verb>matches|does not match) "(?P<pattern>[^"]*)"')
+def body_matches(context, path, verb, pattern):
+    text = requests.get(BASE + path, timeout=30).text
+    assert bool(re.search(pattern, text, re.I | re.M)) == (verb == "matches"), path
 
 
 @step(r'"(?P<path>[^"]*)" answers within (?P<ms>\d+) ms and under (?P<size>\d+) bytes')
@@ -1317,6 +1369,13 @@ namespace QaLab
         {
             var text = Get(BaseUrl + "/robots.txt").Content.ReadAsStringAsync().GetAwaiter().GetResult();
             Assert.That(Regex.IsMatch(text, "^sitemap:", RegexOptions.IgnoreCase | RegexOptions.Multiline), Is.True);
+        }
+
+        [StepDefinition(@"^the body of ""([^""]*)"" (matches|does not match) ""([^""]*)""$")]
+        public void BodyMatches(string path, string verb, string pattern)
+        {
+            var text = Get(BaseUrl + path).Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            Assert.That(Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline), Is.EqualTo(verb == "matches"), path);
         }
 
         [StepDefinition(@"^""([^""]*)"" answers within (\d+) ms and under (\d+) bytes$")]
