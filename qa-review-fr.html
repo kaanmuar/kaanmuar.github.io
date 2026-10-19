@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <title>La page parle déjà. · QA-lab URL Review</title>
-    <meta name="description" content="QA-lab URL Review lit une page https publique et propose des cas de test pour Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter et Gatling. Il nomme axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar et Copado lorsqu’ils s’appliquent. Il ne les exécute pas. La page peut être lue en anglais, espagnol, portugais, allemand, français et italien.">
+    <meta name="description" content="QA-lab URL Review lit une page https publique et propose des cas de test, avec des scripts de départ, pour Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling et k6. Il nomme axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar et Copado lorsqu’ils s’appliquent. Il ne les exécute pas. La page peut être lue en anglais, espagnol, portugais, allemand, français et italien.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
-    <meta name="keywords" content="QA lab, URL review, proposed test cases, Playwright, Cypress, Robot Framework, Selenium, WebdriverIO, Appium, JMeter, Gatling, axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar, Copado, accessibility review, security headers, public page review, QA services">
+    <meta name="keywords" content="QA lab, URL review, proposed test cases, Playwright, Cypress, Robot Framework, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling, k6, test automation scripts, axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, Copado, accessibility review, security headers, public page review, QA services">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large">
     <meta name="language" content="French">
@@ -27,7 +27,7 @@
     <meta property="og:locale:alternate" content="it_IT">
     <meta property="og:url" content="https://carlosandmunoz.com/qa-review-fr.html">
     <meta property="og:title" content="La page parle déjà. · QA-lab URL Review">
-    <meta property="og:description" content="Une lecture https publique, une liste de technologies et des cas de QA proposés pour huit frameworks. Les outils spécialisés sont nommés lorsqu’ils s’appliquent et ne sont pas lancés. Six langues.">
+    <meta property="og:description" content="Une lecture https publique, une liste de technologies et des cas de QA proposés avec des scripts de départ pour vingt frameworks. Les outils spécialisés sont nommés lorsqu’ils s’appliquent et ne sont pas lancés. Six langues.">
     <meta property="og:image" content="https://carlosandmunoz.com/assets/qa-review-share.png?v=20261012">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
@@ -55,13 +55,14 @@
                 "url": "https://carlosandmunoz.com/qa-review-fr.html",
                 "applicationCategory": "DeveloperApplication",
                 "operatingSystem": "Web",
-                "description": "Submit a public https URL. The review reads the page, names technologies and linked pages, and proposes test cases for Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, and Gatling. It does not run them.",
+                "description": "Submit a public https URL. The review reads the page, names technologies and linked pages, and proposes test cases, with starting scripts, for Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling, and k6. It does not run them.",
                 "featureList": [
                     "Public https read of a site",
                     "Technology and linked-page summary",
                     "Proposed cases in 20 kinds",
-                    "Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, and Gatling",
-                    "axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar, and Copado named when they apply",
+                    "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling, and k6",
+                    "Starting automation scripts for every chosen framework",
+                    "axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado named when they apply",
                     "Public signals and public write-ups",
                     "Live review log and a stop control",
                     "News from the country of the connection, in the page language",
@@ -235,7 +236,7 @@
                         "name": "Which tools can a review name?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, and Gatling are the frameworks. axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply. None of them are launched."
+                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling, and k6 are the frameworks. axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply. None of them are launched against your site."
                         }
                     },
                     {
@@ -243,7 +244,7 @@
                         "name": "Which languages can the page be read in?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "The page is written in English and can be read in Spanish, Portuguese, German, French, and Italian. The news strip follows the country of the connection and the language of the page. A review reads a public page, describes the response, and proposes cases. The disclaimers state those rules, and the rules that apply in the country of the site under review. A lawyer has not reviewed them."
+                            "text": "The page is written in English and can be read in Spanish, Portuguese, German, French, and Italian. The news strip follows the country of the connection and the language of the page. A review reads a public page, tells you what it found, and suggests test cases your team can use. The disclaimers explain how that works, including what applies in the country of the site you are reviewing."
                         }
                     },
                     {
@@ -251,7 +252,7 @@
                         "name": "Can it write Playwright or Cypress tests from a URL?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "It proposes test cases from one public https address and names each case for the framework your team uses: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, or Gatling. It does not write or run the scripts."
+                            "text": "Yes. It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each. The scripts are yours to run; the review never runs them."
                         }
                     },
                     {
@@ -267,7 +268,7 @@
                         "name": "How much of a site does a review read?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "The included first read covers twenty pages, two links deep. A wider read is priced on the page."
+                            "text": "Your first review is included: up to twenty pages, two links deep. Want a wider or deeper look? You see the price before anything starts."
                         }
                     },
                     {
@@ -275,7 +276,7 @@
                         "name": "Where can the cases go?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Case export is priced on the page."
+                            "text": "Automation scripts as a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Every format carries the scripts for your frameworks. Case export is priced on the page."
                         }
                     }
                 ]
@@ -523,6 +524,8 @@
         .url-row input { border: 0; background: transparent; border-radius: 0; min-width: 0; flex: 1; width: 100%; }
         .fws { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; border: 1px solid transparent; border-radius: 12px; padding: 4px; }
         .fws label { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 500; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
+        .fw-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
+        .fw-group-name { flex-basis: 100%; margin: 6px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
         .scope { border: 0; margin: 16px 0 0; padding: 0; }
         .scope legend { font-weight: 650; padding: 0; }
         .scope-note { margin: 8px 0 0; }
@@ -736,7 +739,7 @@
             <label class="check"><input type="checkbox" name="t8"> The report is shown once. Seeing, downloading, printing, or sharing it again asks for payment. The amount is shown then. The opening of each proposed case stays readable. The rest of the case stays blurred until that payment is confirmed.</label>
             <label class="check"><input type="checkbox" name="t9"> If I say I have a username and password, I am allowed to use that login on the site I submit. This page does not ask for the password. A signed-in run is paid before it starts, and the password is not stored in the review record. The public read still does not sign in. Signals in the report are what the public response showed. They are not proof of a break-in. The tail of each signal stays blurred until that section is paid.</label>
             <label class="check"><input type="checkbox" name="t10"> I ask for the service to start during any withdrawal period. I acknowledge that a consumer in the European Union, under Directive 2011/83/EU, Article 16, and a consumer in the United Kingdom, under the Consumer Contracts Regulations 2013, regulation 36(2), loses the right to withdraw only once the service has been fully performed. A withdrawal right those rules keep is not waived.</label>
-            <p class="records-note" id="records-note">Records keep your name, email, reason, URL, selected frameworks, the review log, whether you stopped, time, IP address, browser, and language. When the host provides it, a country code is stored too. They are kept for 12 months. The page text is not sent to a model vendor. A password is not collected and is not stored. A shared link contains the report only, and opening it again asks for payment. A follow-up note is sent only if you check that box on the request. At most three notes in a week. Reply stop to end them. Version 2026-10-20. These are disclaimers. A lawyer has not reviewed them.</p>
+            <p class="records-note" id="records-note">Records keep your name, email, reason, URL, selected frameworks, the review log, whether you stopped, time, IP address, browser, and language. When the host provides it, a country code is stored too. They are kept for 12 months. The page text is not sent to a model vendor. A password is not collected and is not stored. A shared link contains the report only, and opening it again asks for payment. Follow-up notes only arrive if you ask for them on the request: no more than three a week, and a reply of "stop" ends them anytime. Version 2026-10-20.</p>
             <button class="btn btn-primary" id="accept" type="submit" disabled>Accept and continue</button>
         </form>
     </div>
@@ -754,7 +757,7 @@
             <p class="lede">Bring an address the world can open. Leave with cases a release would want written down, named for the tools your team already trusts.</p>
             <ul class="facts">
                 <li><b>20</b><span>kinds of cases</span></li>
-                <li><b>8</b><span>tools you already know</span></li>
+                <li><b>20</b><span>frameworks you already know</span></li>
                 <li><b>1</b><span>address to begin</span></li>
             </ul>
         </div>
@@ -792,19 +795,19 @@
             <dt>A public read, and a list of cases</dt>
             <dd>QA-lab URL Review fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load.</dd>
             <dt>Frameworks and tools</dt>
-            <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, and Gatling are the frameworks. axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply. None of them are launched.</dd>
-            <dt>Playwright and Cypress cases</dt>
-            <dd>It proposes test cases from one public https address and names each case for the framework your team uses: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, or Gatling. It does not write or run the scripts.</dd>
+            <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling, and k6 are the frameworks. axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply. None of them are launched against your site.</dd>
+            <dt>Automation scripts</dt>
+            <dd>It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each. The scripts are yours to run; the review never runs them.</dd>
             <dt>Your site</dt>
             <dd>It only reads public pages. It does not sign in, submit forms, or generate load, and it does not run the cases it proposes.</dd>
             <dt>How far it reads</dt>
-            <dd>The included first read covers twenty pages, two links deep. A wider read is priced on the page.</dd>
+            <dd>Your first review is included: up to twenty pages, two links deep. Want a wider or deeper look? You see the price before anything starts.</dd>
             <dt>Where cases go</dt>
-            <dd>Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Case export is priced on the page.</dd>
+            <dd>Automation scripts as a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Every format carries the scripts for your frameworks. Case export is priced on the page.</dd>
             <dt>Language</dt>
             <dd>The page is written in English and can be read in Spanish, Portuguese, German, French, and Italian. The news strip follows the country of the connection and the language of the page.</dd>
             <dt>Rules</dt>
-            <dd>A review reads a public page, describes the response, and proposes cases. The disclaimers state those rules, and the rules that apply in the country of the site under review. A lawyer has not reviewed them.</dd>
+            <dd>A review reads a public page, tells you what it found, and suggests test cases your team can use. The disclaimers explain how that works, including what applies in the country of the site you are reviewing.</dd>
             <dt>Elsewhere</dt>
             <dd>Films and notes on <a href="https://www.youtube.com/@qalaburlreview" rel="me noopener" target="_blank">YouTube</a>, <a href="https://www.tiktok.com/@qalaburlreview" rel="me noopener" target="_blank">TikTok</a>, <a href="https://x.com/qalaburlreview" rel="me noopener" target="_blank">X</a>, <a href="https://www.linkedin.com/company/qalab-url-review" rel="me noopener" target="_blank">LinkedIn</a>, <a href="https://dev.to/qalaburlreview" rel="me noopener" target="_blank">DEV</a>, and <a href="https://www.reddit.com/user/qalaburlreview/" rel="me noopener" target="_blank">Reddit</a>.</dd>
         </dl>
@@ -826,8 +829,8 @@
                     <p class="mail-note muted" id="own-note" hidden>Use an email at the same domain as the site. This page checks that the mailbox domain matches the host. It does not prove you are the legal owner.</p>
                 </div>
             </div>
-                    <p class="mail-note muted">The email domain is checked for a mail server when you start. That does not prove the mailbox itself exists.</p>
-            <label class="check"><input id="follow-up" name="followUp" type="checkbox" disabled> Send me a note about running this page again. At most three notes in a week, in the language of this browser. I can stop them by replying stop.</label>
+                    <p class="mail-note muted">We quickly check that this address can receive email, so anything we send about your review actually reaches you.</p>
+            <label class="check"><input id="follow-up" name="followUp" type="checkbox" disabled> Remind me when it is worth reviewing this page again. No more than three short notes a week, in my language. A reply of "stop" ends them anytime.</label>
             <fieldset class="reasons" id="reasons">
                 <legend>Reasons for this review</legend>
             </fieldset>
@@ -1054,7 +1057,7 @@
 <script src="js/site-i18n.js?v=20261018a"></script>
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
-<script src="js/qa-review-scripts.js?v=20261020a"></script>
-<script src="js/qa-review.js?v=20261020i"></script>
+<script src="js/qa-review-scripts.js?v=20261020b"></script>
+<script src="js/qa-review.js?v=20261020j"></script>
 </body>
 </html>
