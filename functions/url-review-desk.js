@@ -713,7 +713,8 @@ const PAGE = `<!DOCTYPE html>
           note.textContent = "Google did not accept this desk address.";
           return;
         }
-        note.textContent = "Google did not complete the sign-in.";
+        console.error("Desk sign-in failed:", error);
+        note.textContent = "Google did not complete the sign-in (" + (code || (error && error.message) || "no code") + ").";
       }
     });
     const startingAuth = deskApp();
@@ -723,7 +724,11 @@ const PAGE = `<!DOCTYPE html>
       });
       startingAuth.getRedirectResult().then((result) => {
         if (result && result.user) finishDesk(result.user);
-      }).catch(() => {});
+      }).catch((error) => {
+        console.error("Desk redirect sign-in failed:", error);
+        const note = document.getElementById("desk-gate-note");
+        if (note) note.textContent = "Google did not complete the sign-in (" + ((error && (error.code || error.message)) || "no code") + ").";
+      });
     }
     document.getElementById("desk-out").addEventListener("click", async () => {
       const auth = deskApp();
