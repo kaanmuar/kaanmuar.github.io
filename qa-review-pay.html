@@ -32,6 +32,8 @@
         .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; color: inherit; text-decoration: none; font-family: "Instrument Serif", Georgia, serif; font-size: 1.4rem; }
         .brand small { display: block; font-family: Inter, system-ui, sans-serif; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
         .logo { width: 36px; height: 36px; display: block; }
+        .test-mode { margin: 0 0 12px; padding: 8px 12px; border-radius: 10px; background: #fff3c4; color: #5a4300; border: 1px solid #e0b93a; font-size: 13px; font-weight: 700; }
+        .test-mode[hidden] { display: none; }
         .eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); }
         h1 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 2.4rem; margin: 8px 0; letter-spacing: -0.03em; }
         .price { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 4.6rem; letter-spacing: -0.04em; line-height: .9; }
@@ -80,6 +82,7 @@
     <div class="mark" aria-hidden="true"></div>
     <main class="sheet">
         <a class="brand" href="qa-review.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span>QA-lab<small>URL Review</small></span></a>
+        <p class="test-mode" id="test-mode" role="status" hidden>Test mode · PayPal sandbox. Pay with a sandbox buyer account. No real money moves.</p>
         <p class="eyebrow">Payment</p>
         <h1 id="pay-heading">One new review</h1>
         <p class="price">—</p>
@@ -247,6 +250,20 @@
         function deviceId() {
             try { return localStorage.getItem("qa-review-device") || ""; } catch (error) { return ""; }
         }
+        function testKey() {
+            try {
+                const given = params.get("qatest");
+                if (given === "off") localStorage.removeItem("qa-review-test-key");
+                else if (given) localStorage.setItem("qa-review-test-key", given);
+                return localStorage.getItem("qa-review-test-key") || "";
+            } catch (error) { return ""; }
+        }
+        document.getElementById("test-mode").hidden = !testKey();
+        if (params.has("qatest")) {
+            const clean = new URL(location.href);
+            clean.searchParams.delete("qatest");
+            history.replaceState(null, "", clean.pathname + clean.search + clean.hash);
+        }
         const note = document.getElementById("pay-note");
         const charge = document.getElementById("charge");
         const priceEl = document.querySelector(".price");
@@ -355,7 +372,7 @@
                 method: "POST",
                 credentials: "include",
                 headers: { "content-type": "application/json" },
-                body: JSON.stringify({ sessionId: sessionId, purpose: purpose, provider: provider, deviceId: deviceId() })
+                body: JSON.stringify({ sessionId: sessionId, purpose: purpose, provider: provider, deviceId: deviceId(), testKey: testKey() })
             });
             const body = await res.json();
             note.textContent = body.paid ? (names[provider] || "The payment service") + " confirmed the payment." : (body.error || "The payment was not confirmed. No charge was recorded here.");
@@ -392,7 +409,7 @@
                     method: "POST",
                     credentials: "include",
                     headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount })
+                    body: JSON.stringify({ purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, testKey: testKey() })
                 });
                 const body = await res.json();
                 if (res.ok && body.url) {

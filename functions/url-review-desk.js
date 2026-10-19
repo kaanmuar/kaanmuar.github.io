@@ -75,6 +75,7 @@ function rowsFor(source) {
   add("Signals", Array.isArray(report.alerts) ? report.alerts.length : "");
   add("Price", source.priceUsd != null && source.priceUsd !== "" ? String(source.priceUsd) + " USD" : "");
   add("Paid", source.paid === true ? "Yes" : "");
+  add("Mode", source.test === true ? "Test, PayPal sandbox. No real money moved." : "");
   add("Purpose", source.purpose);
   add("Capture", source.kind);
   return items;
@@ -82,7 +83,7 @@ function rowsFor(source) {
 
 function alertFrom(kind, source) {
   const key = TITLES[kind] ? kind : (kindFor(source) || "report");
-  const title = TITLES[key] || "A review event";
+  const title = (source && source.test === true ? "Test · " : "") + (TITLES[key] || "A review event");
   const rows = rowsFor(source || {});
   const at = whenOf(source || {}) || new Date().toISOString();
   return {
@@ -148,6 +149,7 @@ function summary(row, index) {
     technologies: technologies.slice(0, 8).map((item) => clip(item.name || "", 40)).filter(Boolean),
     priceUsd: row.priceUsd != null ? row.priceUsd : null,
     paid: row.paid === true,
+    test: row.test === true,
     free: row.free === true,
     provider: clip(row.provider || "", 20),
     purpose: clip(row.purpose || "", 20),
@@ -205,7 +207,8 @@ function snapshot(records, alerts, active) {
     runs: runs.length,
     running: (active || []).length,
     reports: runs.filter((row) => row.status === "complete" || row.status === "stopped").length,
-    paid: runs.filter((row) => !row.free && (row.paid || row.status === "paid-report" || row.status === "run-credit")).length,
+    paid: runs.filter((row) => !row.free && !row.test && (row.paid || row.status === "paid-report" || row.status === "run-credit")).length,
+    test: runs.filter((row) => row.test).length,
     free: runs.filter((row) => row.free).length,
     waiting: runs.filter((row) => row.status === "payment-due").length,
     refused: runs.filter((row) => row.status === "blocked").length,
@@ -398,6 +401,7 @@ const PAGE = `<!DOCTYPE html>
         ["Running", tally.running || 0],
         ["Reports", tally.reports || 0],
         ["Paid", tally.paid || 0],
+        ["Test payments", tally.test || 0],
         ["Free", tally.free || 0],
         ["Waiting", tally.waiting || 0],
         ["Refused", tally.refused || 0],
@@ -455,7 +459,7 @@ const PAGE = `<!DOCTYPE html>
       shown.forEach((run) => {
         const tr = document.createElement("tr");
         tr.setAttribute("aria-selected", run.id === selected ? "true" : "false");
-        [when(run.at), run.status, run.name || run.email, run.host || run.url, run.language, run.pageCount, run.caseCount, run.signalCount, run.priceUsd == null ? "—" : run.priceUsd + " USD", run.free ? "Free" : run.paid ? "Yes" : "No", run.followUp ? "Asked" : "—"].forEach((value) => {
+        [when(run.at), run.status, run.name || run.email, run.host || run.url, run.language, run.pageCount, run.caseCount, run.signalCount, run.priceUsd == null ? "—" : run.priceUsd + " USD", run.free ? "Free" : run.test ? "Test" : run.paid ? "Yes" : "No", run.followUp ? "Asked" : "—"].forEach((value) => {
           tr.appendChild(node("td", text(value)));
         });
         tr.addEventListener("click", () => { selected = run.id; render(); });
@@ -494,7 +498,7 @@ const PAGE = `<!DOCTYPE html>
       line(dl, "Cases", picked.caseCount);
       line(dl, "Signals", picked.signalCount);
       line(dl, "Price", picked.priceUsd == null ? "—" : picked.priceUsd + " USD");
-      line(dl, "Paid", picked.free ? "Free run" : picked.paid ? "Yes" : "No");
+      line(dl, "Paid", picked.free ? "Free run" : picked.test ? "Test (sandbox)" : picked.paid ? "Yes" : "No");
       line(dl, "Signature", picked.mark);
       line(dl, "Browser", picked.userAgent);
       line(dl, "Network", [picked.ip, picked.city, picked.country].filter(Boolean).join(" · "));
