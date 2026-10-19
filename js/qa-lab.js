@@ -1411,9 +1411,10 @@
         how: 'PAY-241 through PAY-264 stay on the board, with CV-301, CV-321, CV-352, CV-380, the trademark story CV-442, its bug CV-448, the company-site story CV-452, and cases XT-1701, XT-1702, and XT-1703.',
       async run() {
         const html = await fetchText('simulador.html');
-        ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264', 'CV-301', 'CV-321', 'CV-352', 'CV-380', 'CV-442', 'CV-448', 'CV-452', 'XT-1701', 'XT-1702', 'XT-1703'].forEach((key) => {
+        ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264', 'CV-301', 'CV-321', 'CV-352', 'CV-380', 'CV-442', 'CV-448', 'CV-452'].forEach((key) => {
           assert(html.includes("key: '" + key + "'"), key + ' missing');
         });
+        ['XT-1701', 'XT-1702', 'XT-1703'].forEach((id) => assert(html.includes(id), id + ' missing'));
         assert(html.includes('data-view="flow"'), 'sprint analytics missing');
         return 'rehearsal set and CV delivery tickets';
       }

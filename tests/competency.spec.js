@@ -27,9 +27,11 @@ test.describe('Core competency filters', () => {
       await expect(page.locator('.competency-item.topic-match')).toHaveCount(1);
       await expect(page.locator('.competency-item.topic-dim')).toHaveCount(7);
       await expect(page.locator('.experience-item.topic-match')).not.toHaveCount(0);
-      await expect(page.locator('.experience-item.topic-dim')).not.toHaveCount(0);
+      const roles = await page.locator('#experience-container .experience-item').count();
+      await expect(page.locator('#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim')).toHaveCount(roles);
       await expect(page.locator('.timeline-item.topic-match')).not.toHaveCount(0);
-      await expect(page.locator('.timeline-item.filtered-out')).not.toHaveCount(0);
+      const dots = await page.locator('#timeline-container .timeline-item').count();
+      await expect(page.locator('#timeline-container .timeline-item.topic-match, #timeline-container .timeline-item.topic-dim')).toHaveCount(dots);
       await expect(page.locator('#languages-section')).toHaveClass(/topic-dim/);
     });
   }

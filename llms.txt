@@ -13,6 +13,7 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - [Review, German headline](https://carlosandmunoz.com/qa-review-de.html)
 - [Review, French headline](https://carlosandmunoz.com/qa-review-fr.html)
 - [Review, Italian headline](https://carlosandmunoz.com/qa-review-it.html)
+- [How it works, a guided tour](https://carlosandmunoz.com/qa-review-guide.html): who it helps, the six steps, how to read the six scores, and what a review never does
 - [Facts](https://carlosandmunoz.com/qa-review.html#service-facts)
 - [Sample report, this site's own review](https://carlosandmunoz.com/qa-review.html?sample=1)
 - [Disclaimers](https://carlosandmunoz.com/qa-review-legal.html)

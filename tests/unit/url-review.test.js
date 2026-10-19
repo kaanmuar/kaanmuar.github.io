@@ -100,6 +100,17 @@ test.describe("scoring", () => {
     assert.equal(verdict(insights.analyze({ pages: [home, gone] }), "seo-broken-links"), "fail");
   });
 
+  test("a partly read sitemap does not report pages as missing from it", () => {
+    const inspect = core.analyzeHtml(HTML, STRONG_HEADERS, URL_);
+    const pages = [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect }];
+    const sitemap = { source: URL_ + "sitemap.xml", status: 200, urls: [URL_ + "other"] };
+    const full = insights.analyze({ pages, extras: { sitemap } });
+    const partial = insights.analyze({ pages, extras: { sitemap: Object.assign({ partial: true }, sitemap) } });
+    assert.equal(verdict(full, "seo-sitemap-missing-pages"), "risk");
+    assert.equal(verdict(partial, "seo-sitemap-missing-pages"), "missing");
+    assert.equal(verdict(partial, "seo-sitemap"), "pass");
+  });
+
   test("the same read scores the same way twice", () => {
     assert.deepEqual(analyzeOne(STRONG_HEADERS).score, analyzeOne(STRONG_HEADERS).score);
   });

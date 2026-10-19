@@ -1447,7 +1447,7 @@
                 return radar ? this._getSkillsForCompetency(radar) : [];
             },
 
-            _applyCompetencyFocus(topicId) {
+            _applyCompetencyFocus(topicId, { restore = false } = {}) {
                 const skills = this._skillsForTopic(topicId);
                 if (!skills.length) return;
                 this._resetFilters({ silent: true });
@@ -1473,7 +1473,7 @@
                 const name = label ? label.textContent.trim() : topicId;
                 const status = (this._s('competency_focus_status', 'Focusing %TOPIC%. Click anywhere else to restore.')).replace('%TOPIC%', name);
                 if (this.DOMElements.filterStatus) this.DOMElements.filterStatus.textContent = status;
-                this._trackEvent('competency_filter', 'Competencies', topicId);
+                if (!restore) this._trackEvent('competency_filter', 'Competencies', topicId);
             },
 
             _clearTopicClasses() {
@@ -2933,8 +2933,11 @@
                     }).map((net) => {
                         const row = shareMenu.find((item) => item.id === net.id);
                         const label = row && this._cleanLiveText(row.label, 40);
-                        const url = row && /^https:\/\//i.test(row.url || '') ? row.url : '';
-                        return { ...net, name: label || net.name, url: url || net.url };
+                        // The editor seeds built-in rows with network homepages and profiles; only a URL that carries this page is a share link.
+                        let query = '';
+                        try { query = decodeURIComponent(String((row && row.url) || '').split(/[?#]/).slice(1).join('?')); } catch (e) { query = ''; }
+                        const sharesPage = /^https:\/\//i.test((row && row.url) || '') && /carlosandmunoz\.com|kaanmuar\.github\.io/i.test(query);
+                        return { ...net, name: label || net.name, url: sharesPage ? row.url : net.url };
                     });
                     shareMenu.filter((item) => item && item.custom && item.hidden !== true && /^https:\/\//i.test(item.url || '')).forEach((item) => {
                         networks.push({
@@ -3782,6 +3785,7 @@
             },
 
             _refreshAfterLiveCv() {
+                const activeTopic = this.state.activeTopic;
                 this._populateAllTranslations();
                 this._renderToolkit();
                 this._renderExperiences();
@@ -3790,6 +3794,7 @@
                 this._forceShowAllContent();
                 this.translatePage(this.state.lang || 'en');
                 this._populateTopicDropdown();
+                if (activeTopic) this._applyCompetencyFocus(activeTopic, { restore: true });
             },
 
             _ratingGlyph(mark) {
@@ -3956,16 +3961,35 @@
                 if (live.education) {
                     const degrees = document.querySelector('#education-section [aria-labelledby="education-subheading"] .mt-2');
                     const certList = document.querySelector('#education-section [aria-labelledby="certs-subheading"] .mt-2');
+                    // The file rows carry the competency topic and translation key; published rows keep them while the label is unchanged.
+                    const fileRows = (list) => (list ? [...list.querySelectorAll('p')].map((p) => {
+                        const strong = p.querySelector('[data-translate-key]');
+                        return { topic: p.getAttribute('data-topic') || '', key: strong ? strong.getAttribute('data-translate-key') : '' };
+                    }) : []);
+                    if (!this._fileEduRows) this._fileEduRows = { degrees: fileRows(degrees), certs: fileRows(certList) };
+                    const english = this.data.translations.en || {};
+                    const current = this._t() || {};
+                    const row = (rows, label, at) => {
+                        const match = rows.find((r) => r.key && clean(english[r.key], 120) === label);
+                        const base = match || rows[at] || {};
+                        const topic = base.topic ? ` data-topic="${this._esc(base.topic)}"` : '';
+                        const text = match && current[match.key] ? current[match.key] : label;
+                        const key = match ? ` data-translate-key="${this._esc(match.key)}"` : '';
+                        return { topic, key, text };
+                    };
                     if (degrees && Array.isArray(live.education.degrees)) {
-                        degrees.innerHTML = live.education.degrees.filter((item) => item && !item.hidden && clean(item.degree, 120)).map((item) => (
-                            `<p><strong class="font-medium">${this._esc(clean(item.degree, 120))}</strong> - ${this._esc(clean(item.school, 80))}</p>`
-                        )).join('');
+                        degrees.innerHTML = live.education.degrees.filter((item) => item && !item.hidden && clean(item.degree, 120)).map((item, at) => {
+                            const r = row(this._fileEduRows.degrees, clean(item.degree, 120), at);
+                            return `<p${r.topic}><strong class="font-medium"${r.key}>${this._esc(r.text)}</strong> - ${this._esc(clean(item.school, 80))}</p>`;
+                        }).join('');
                     }
                     if (certList && Array.isArray(live.education.certs)) {
-                        certList.innerHTML = live.education.certs.filter((item) => item && !item.hidden && clean(item.label, 60)).map((item) => (
-                            `<p><strong class="font-medium">${this._esc(clean(item.label, 60))}</strong> ${this._esc(clean(item.value, 120))}</p>`
-                        )).join('');
+                        certList.innerHTML = live.education.certs.filter((item) => item && !item.hidden && clean(item.label, 60)).map((item, at) => {
+                            const r = row(this._fileEduRows.certs, clean(item.label, 60), at);
+                            return `<p${r.topic}><strong class="font-medium"${r.key}>${this._esc(r.text)}</strong> ${this._esc(clean(item.value, 120))}</p>`;
+                        }).join('');
                     }
+                    if (this.state.activeTopic) this._paintTopicClasses();
                 }
                 const glanceOff = !!(live.glance && live.glance.hidden);
                 const chartsOff = glanceOff || !!(live.glance && live.glance.chartsHidden);

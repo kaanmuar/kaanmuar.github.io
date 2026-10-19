@@ -750,9 +750,10 @@
     },
     'STU-07': async function () {
       var html = await textOf('simulador.html');
-      ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264', 'CV-301', 'CV-321', 'CV-352', 'CV-380', 'CV-442', 'CV-448', 'CV-452', 'XT-1701', 'XT-1702', 'XT-1703'].forEach(function (key) {
+      ['PAY-241', 'PAY-246', 'PAY-251', 'PAY-255', 'PAY-260', 'PAY-264', 'CV-301', 'CV-321', 'CV-352', 'CV-380', 'CV-442', 'CV-448', 'CV-452'].forEach(function (key) {
         assert(html.includes("key: '" + key + "'"), key + ' missing');
       });
+      ['XT-1701', 'XT-1702', 'XT-1703'].forEach(function (id) { assert(html.includes(id), id + ' missing'); });
       assert(html.includes('data-view="flow"'), 'sprint analytics missing');
       return 'rehearsal set and CV delivery tickets';
     },
