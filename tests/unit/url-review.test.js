@@ -223,9 +223,8 @@ FIXTURES.forEach(({ name, report }) => {
     });
 
     test("scripts stay on the reviewed host", () => {
-      const host = report.host.replace(/\./g, "\\.");
       const playwright = byPath.get("playwright/qa-lab.spec.ts");
-      assert.match(playwright, new RegExp("const HOST = \"" + host + "\""));
+      assert.ok(playwright.includes(`const HOST = "${report.host}"`));
     });
   });
 });
