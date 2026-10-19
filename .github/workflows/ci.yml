@@ -10,6 +10,21 @@ on:
   workflow_dispatch:
 
 jobs:
+  url-review-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: URL review scoring, journeys, pricing, guards, and generated scripts
+        run: npm run test:review
+
   run-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 45

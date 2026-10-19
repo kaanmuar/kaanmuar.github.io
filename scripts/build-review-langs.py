@@ -115,7 +115,7 @@ def build(source, code):
     s = swap(s, '<div class="brand"><a href="qa-review.html">', f'<div class="brand"><a href="{page}">')
     flag_en = 'src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English"'
     s = swap(s, flag_en, f'src="https://hatscripts.github.io/circle-flags/flags/{code}.svg" alt="{t["native"]}"', 2)
-    s = swap(s, '<h1 id="gate-title">Before a single address is read.</h1>', f'<h1 id="gate-title" lang="{code}" translate="no">{t["gate"]}</h1>')
+    s = swap(s, '<h2 id="gate-title">Before a single address is read.</h2>', f'<h2 id="gate-title" lang="{code}" translate="no">{t["gate"]}</h2>')
     d = t["display"]
     s = swap(
         s,
