@@ -2,6 +2,7 @@
   const TERMS_KEY = "qa-review-terms";
   const DEVICE_KEY = "qa-review-device";
   const SHOWN_KEY = "qa-review-shown";
+  const SAMPLE_URL = "assets/qa-review-sample.json";
   const TERMS_VERSION = "2026-10-20";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
@@ -1149,15 +1150,23 @@
   function render(payload) {
     const report = payload.report;
     if (!report) return;
-    if (!payload.paid && seenBefore(report.id) && liveId !== report.id) {
+    const sample = !!payload.sample;
+    if (!sample && !payload.paid && seenBefore(report.id) && liveId !== report.id) {
       openPay({ priceUsd: reviewUsd(payload.frameworks || []), frameworks: payload.frameworks || [] });
       return;
     }
     current = payload;
     liveId = report.id;
-    remember(report.id);
+    if (!sample) remember(report.id);
     applyCopyMode(!!payload.paid);
-    shareOpen.disabled = false;
+    if (!sample) shareOpen.disabled = false;
+    dash.classList.toggle("is-sample", sample);
+    const sampleNote = document.getElementById("sample-note");
+    sampleNote.hidden = !sample;
+    if (sample) {
+      const when = new Date(report.fetchedAt);
+      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way a free report is: the opening of each case is readable and the rest stays blurred. Close it to read the disclaimers and review your own address.";
+    }
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
     const state = report.status === "stopped" ? "Stopped" : "Complete";
@@ -1401,7 +1410,31 @@
   function closeDashboard() {
     dash.classList.remove("open");
     document.body.style.overflow = "";
+    if (current && current.sample) {
+      current = null;
+      liveId = "";
+      dash.classList.remove("is-sample");
+      document.getElementById("sample-note").hidden = true;
+    }
   }
+
+  async function openSample() {
+    const button = document.getElementById("sample-open");
+    if (button) button.disabled = true;
+    try {
+      const res = await fetch(SAMPLE_URL, { cache: "no-cache" });
+      if (!res.ok) throw new Error("status " + res.status);
+      const body = await res.json();
+      render({ report: body.report, frameworks: body.frameworks, paid: false, sample: true });
+    } catch (error) {
+      if (button) button.textContent = "The sample could not be opened";
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  document.getElementById("sample-open").addEventListener("click", openSample);
+  if (new URLSearchParams(location.search).get("sample") === "1") openSample();
 
   shareOpen.addEventListener("click", () => {
     if (!current) return;

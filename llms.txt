@@ -14,6 +14,7 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - [Review, French headline](https://carlosandmunoz.com/qa-review-fr.html)
 - [Review, Italian headline](https://carlosandmunoz.com/qa-review-it.html)
 - [Facts](https://carlosandmunoz.com/qa-review.html#service-facts)
+- [Sample report, this site's own review](https://carlosandmunoz.com/qa-review.html?sample=1)
 - [Disclaimers](https://carlosandmunoz.com/qa-review-legal.html)
 - Languages: English, Spanish, Portuguese, German, French, Italian.
 
@@ -52,7 +53,7 @@ Case exports: automation scripts (ZIP, one suite per framework), Excel, TestRail
 
 ## Price
 
-The first selection is 19 USD. Further selections step down by 10, 15, 20, 25, 30, 35, then 40 percent.
+The first selection is 19 USD at full price. The 2nd and 3rd selections are 10 percent off, the 4th and 5th 15 percent, then 20, 25, 30, and 35 percent for each following pair, and 40 percent from the 14th on.
 A return within 30 days takes another 10 percent off the first time, 15 percent the second, and 20 percent after that. A selection never falls under 9.50 USD.
 The included first completed review is 20 pages and 2 links deep.
 

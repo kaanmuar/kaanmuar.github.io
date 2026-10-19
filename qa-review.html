@@ -745,6 +745,11 @@
         .muted { color: var(--muted); }
         .gate { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 88%, #000); z-index: 40; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px; overflow: auto; }
         .gate[hidden] { display: none; }
+        .sample-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+        .sample-note { position: relative; z-index: 5; margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 10px; background: var(--panel); }
+        .dash-overlay.is-sample .report-toolbar .actions > :not(#dash-close),
+        .dash-overlay.is-sample #share-link, .dash-overlay.is-sample #tool-block, .dash-overlay.is-sample #alarm-open,
+        .dash-overlay.is-sample #credential-run { display: none !important; }
         .gate-card { width: min(720px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
         .check { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 14px; line-height: 1.45; }
         .check input { margin-top: 3px; }
@@ -871,6 +876,7 @@
             </div>
         </div>
         <p class="lede">Every control on this page stays off until you accept. The review fetches public pages, opens up to three of them in a headless browser, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. It also asks Google PageSpeed Insights to score the start page, so Google receives that address. It does not run the cases, sign in, submit forms, or generate load. The language control is on this screen.</p>
+        <p class="sample-line"><button class="btn btn-ghost" id="sample-open" type="button">See a sample report</button> It is this site's own review, blurred the way a free report is. Nothing is sent to open it.</p>
         <form id="terms-form">
             <p class="records-note"><b>Disclaimers.</b> Read these before you check a box. <a id="legal-origin" href="qa-review-legal.html">Local and national disclaimers, for Colombia, where this service is operated</a>. <a id="legal-site" href="qa-review-legal.html">International disclaimers, for the country of the site you submit</a>.</p>
             <label class="check"><input type="checkbox" id="terms-all"> Select all</label>
@@ -1088,6 +1094,7 @@
             </div>
         </div>
         <p id="share-link" class="muted"></p>
+        <p id="sample-note" class="sample-note" hidden></p>
         <section id="report">
         <header class="report-cover" id="report-cover"></header>
         <p class="lede" id="report-statement"></p>
@@ -1231,6 +1238,6 @@
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
-<script src="js/qa-review.js?v=20261027a"></script>
+<script src="js/qa-review.js?v=20261027b"></script>
 </body>
 </html>
