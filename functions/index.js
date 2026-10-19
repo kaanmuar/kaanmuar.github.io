@@ -1469,6 +1469,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         let paidTools = result.tools || [];
         let paidPrice = result.amount || 0;
         if (choice !== "stripe") {
+          if (!result.reference) {
+            res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
+            return;
+          }
           const openSnap = await admin.firestore().collection("url_reviews").doc(result.reference).get();
           const open = openSnap.exists ? openSnap.data() : null;
           const sameLink = !result.linkId || (open && open.externalId === result.linkId);
