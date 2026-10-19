@@ -2448,7 +2448,7 @@ function paypalPaid(order) {
   return {
     paid,
     pending: !paid && (order.status === "APPROVED" || order.status === "PAYER_ACTION_REQUIRED"),
-    reference: String(unit.custom_id || "").replace(/[^a-f0-9]/g, "").slice(0, 16),
+    reference: String(unit.custom_id || capture.custom_id || "").replace(/[^a-f0-9]/g, "").slice(0, 16),
     amount: paid ? amount : 0
   };
 }
