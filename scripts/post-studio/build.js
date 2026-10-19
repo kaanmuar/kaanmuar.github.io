@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* Renders the QA-lab URL Review social kit: stills, carousels, reels, captions, Buffer CSVs.
    node scripts/post-studio/build.js [--langs en,es] [--posts talking,frameworks] [--skip-video]
-     [--start 2026-10-19] [--batch launch-2026-10] [--image-base https://...] [--out dir] */
+     [--start 2026-10-19] [--batch launch-2026-10] [--image-base https://...] [--out dir]
+    [--clean] [--pictures dir] */
 
 const fs = require("fs");
 const path = require("path");
@@ -36,6 +37,8 @@ const LANGS = opts.langs ? String(opts.langs).split(",") : studio.LANGS;
 const POSTS = opts.posts ? studio.POSTS.filter((p) => String(opts.posts).split(",").includes(p.id)) : studio.POSTS;
 const START = opts.start || "2026-10-19";
 const SKIP_VIDEO = Boolean(opts["skip-video"]);
+const PICTURES = opts.pictures ? path.resolve(ROOT, opts.pictures) : path.join(DEMOS, "pictures");
+if (opts.clean) for (const lang of Object.keys(studio.UI)) studio.UI[lang] = Object.assign({}, studio.UI[lang], { by: "", price: "" });
 
 const HOOK = 2.6;
 const END = 3.4;
@@ -106,7 +109,7 @@ function captions(post, lang) {
   let title = c.hook;
   if (title.length > 90) title = title.slice(0, 90).replace(/\s+\S*$/, "") + "…";
   out.youtubeTitle = title + " #Shorts";
-  out.youtube = [c.body, ui.included, ui.price, ui.cta + ": " + link(lang, "youtube", post), ui.footnote, hashtags(post, lang, 3)].join("\n\n");
+  out.youtube = [c.body, ui.included, ui.price, ui.cta + ": " + link(lang, "youtube", post), ui.footnote, hashtags(post, lang, 3)].filter(Boolean).join("\n\n");
   out.story = ui.cta + " · " + link(lang, "instagram-story", post);
   return out;
 }
@@ -215,8 +218,10 @@ function carouselItems(post, lang) {
   }
   const all = layersFor(lang);
   const items = [];
+  const pad = (n) => String(n).padStart(2, "0");
   for (let i = 0; i < all.length; i += 2) {
-    items.push({ kind: "layers", index: String(i + 1).padStart(2, "0") + "–" + String(i + 2).padStart(2, "0") + " / 20", pair: all.slice(i, i + 2) });
+    const pair = all.slice(i, i + 2);
+    items.push({ kind: "layers", index: pad(i + 1) + (pair.length > 1 ? "–" + pad(i + 2) : "") + " / " + pad(all.length), pair });
   }
   return items;
 }
@@ -224,7 +229,7 @@ function carouselItems(post, lang) {
 function videoFor(post, lang, voice, files) {
   const speech = speechFor(post, lang);
   const wav = path.join(DEMOS, "voices", post.clip.picture + "__" + lang + "-" + voice + ".wav");
-  const picture = path.join(DEMOS, "pictures", post.clip.picture + ".mp4");
+  const picture = path.join(PICTURES, post.clip.picture + ".mp4");
   const tl = timeline(speech, wav);
   const main = tl.dur + VOICE_LEAD + 1.0;
   const picDur = probe(picture);
@@ -289,7 +294,7 @@ function community(lang) {
     "<!-- Before publishing: DEV does not allow AI-assisted articles that promote your own product (dev.to/guidelines-for-ai-assisted-articles-on-dev). Rewrite this in your own words and keep the closing plug to one or two sentences, or keep the text, add an AI-assistance note, and delete the disclosure paragraph with the link. -->",
     "",
     "---",
-    "title: 20 kinds of test cases a public page already tells you about",
+    "title: " + L.length + " kinds of test cases a public page already tells you about",
     "published: false",
     "description: A checklist for the first read of a page you have never tested, with one example case per kind.",
     "tags: testing, qa, webdev, a11y",
@@ -326,7 +331,7 @@ function community(lang) {
     "",
     "**Title:** What do you check first when you are handed a public page you have never tested?",
     "",
-    "I have been writing down the first-read checklist I use on an unfamiliar site, and it ended up as 20 kinds of cases: functional, content, links, forms, accessibility, security headers, privacy, SEO, performance, load, mobile, internationalization, resilience, compatibility, media, analytics, commerce, visual, platform, and API.",
+    "I have been writing down the first-read checklist I use on an unfamiliar site, and it ended up as " + L.length + " kinds of cases: functional, content, links, forms, accessibility, security headers, privacy, SEO, GEO (whether AI answer engines can read the site), performance, load, mobile, internationalization, resilience, compatibility, media, analytics, commerce, visual, platform, and API.",
     "",
     "Three examples of how I phrase them:",
     "",
@@ -340,7 +345,7 @@ function community(lang) {
     "",
     "# r/softwaretesting",
     "",
-    "**Title:** A 20-kind checklist for the first read of a public web page (feedback welcome)",
+    "**Title:** A " + L.length + "-kind checklist for the first read of a public web page (feedback welcome)",
     "",
     "Sharing the checklist I start from before writing automation for a site I do not know yet:",
     "",
@@ -359,13 +364,13 @@ function community(lang) {
     "",
     "**Title:** Feedback wanted: proposing test cases from a public read of a page",
     "",
-    "Hi all, I am Carlos, a senior QA and program consultant in Colombia. I built QA-lab URL Review: you paste a public https address, it reads the response and the same-host links (20 pages, 2 links deep on the included review), and it proposes test cases across 20 kinds, named for Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, or Gatling.",
+    "Hi all, I am Carlos, a senior QA and program consultant in Colombia. I built QA-lab URL Review: you paste a public https address, it reads the response and the same-host links (20 pages, 2 links deep on the included review), and it proposes test cases across " + L.length + " kinds, with starting scripts for 20 frameworks, from Playwright, Cypress, and Selenium to Cucumber, Appium, and k6.",
     "",
     "What it deliberately does not do: run the cases, sign in, submit forms, or generate load. Security headers are reported as signals, not proof, and the report is not a certification.",
     "",
     "I would value this community's eye on three things:",
     "",
-    "1. Are the 20 kinds the right split, or would you merge or add any?",
+    "1. Are the " + L.length + " kinds the right split, or would you merge or add any?",
     "2. Is a proposed case list useful on its own, or only once it is exported to Jira with Xray, TestRail, Zephyr, or Azure DevOps?",
     "3. Where does a first-read list like this fit in your process: before a release, on an inherited site, or somewhere else?",
     "",

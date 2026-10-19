@@ -2,12 +2,12 @@
   const KEY = "site-analytics";
   const REVIEW_KEY = "qa-review-analytics";
   const COPY = {
-    en: { note: "This site stores your language and theme. Google Analytics runs without cookies until you allow it, and counts visits in aggregate.", keep: "Keep only what is required", allow: "Allow analytics", settings: "Cookie settings" },
-    es: { note: "Este sitio guarda tu idioma y tu tema. Google Analytics funciona sin cookies hasta que lo permitas, y cuenta las visitas en conjunto.", keep: "Solo lo necesario", allow: "Permitir analítica", settings: "Configuración de cookies" },
-    pt: { note: "Este site guarda o seu idioma e o seu tema. O Google Analytics funciona sem cookies até você permitir e conta as visitas em conjunto.", keep: "Só o necessário", allow: "Permitir analytics", settings: "Configurações de cookies" },
-    de: { note: "Diese Website speichert Ihre Sprache und Ihr Design. Google Analytics läuft ohne Cookies, bis Sie es erlauben, und zählt Besuche nur gesammelt.", keep: "Nur das Nötige", allow: "Analytics erlauben", settings: "Cookie-Einstellungen" },
-    fr: { note: "Ce site garde votre langue et votre thème. Google Analytics fonctionne sans cookies tant que vous ne l’autorisez pas, et compte les visites de façon agrégée.", keep: "Le strict nécessaire", allow: "Autoriser l’analyse", settings: "Paramètres des cookies" },
-    it: { note: "Questo sito salva la lingua e il tema. Google Analytics funziona senza cookie finché non lo consenti e conta le visite in forma aggregata.", keep: "Solo il necessario", allow: "Consenti analytics", settings: "Impostazioni cookie" }
+    en: { note: "This site stores your language and theme. Google Analytics runs without cookies until you allow it, and counts visits in aggregate. Google Translate sets Google cookies, so it loads only after you allow it or pick a language from the menu.", keep: "Keep only what is required", allow: "Allow analytics and translation", settings: "Cookie settings" },
+    es: { note: "Este sitio guarda tu idioma y tu tema. Google Analytics funciona sin cookies hasta que lo permitas, y cuenta las visitas en conjunto. Google Translate pone cookies de Google, así que solo carga cuando lo permites o eliges un idioma en el menú.", keep: "Solo lo necesario", allow: "Permitir analítica y traducción", settings: "Configuración de cookies" },
+    pt: { note: "Este site guarda o seu idioma e o seu tema. O Google Analytics funciona sem cookies até você permitir e conta as visitas em conjunto. O Google Tradutor coloca cookies do Google, então só carrega quando você permite ou escolhe um idioma no menu.", keep: "Só o necessário", allow: "Permitir analytics e tradução", settings: "Configurações de cookies" },
+    de: { note: "Diese Website speichert Ihre Sprache und Ihr Design. Google Analytics läuft ohne Cookies, bis Sie es erlauben, und zählt Besuche nur gesammelt. Google Übersetzer setzt Google-Cookies und lädt daher erst, wenn Sie es erlauben oder im Menü eine Sprache wählen.", keep: "Nur das Nötige", allow: "Analytics und Übersetzung erlauben", settings: "Cookie-Einstellungen" },
+    fr: { note: "Ce site garde votre langue et votre thème. Google Analytics fonctionne sans cookies tant que vous ne l’autorisez pas, et compte les visites de façon agrégée. Google Traduction dépose des cookies Google : il ne se charge que si vous l’autorisez ou choisissez une langue dans le menu.", keep: "Le strict nécessaire", allow: "Autoriser l’analyse et la traduction", settings: "Paramètres des cookies" },
+    it: { note: "Questo sito salva la lingua e il tema. Google Analytics funziona senza cookie finché non lo consenti e conta le visite in forma aggregata. Google Traduttore imposta cookie di Google, quindi si carica solo se lo consenti o scegli una lingua dal menu.", keep: "Solo il necessario", allow: "Consenti analytics e traduzione", settings: "Impostazioni cookie" }
   };
 
   function read(key) {
@@ -36,6 +36,7 @@
     apply(value);
     const bar = document.getElementById("site-consent");
     if (bar) bar.hidden = true;
+    root.dispatchEvent(new CustomEvent("site-consent", { detail: value }));
   }
 
   function style() {

@@ -165,7 +165,7 @@ function title(lines, cls) { return '<h1 class="title ' + (cls || "") + '">' + l
 function backdrop(art) {
   return '<div class="bg"><img src="../../media/qa-review-stage/qa-email-' + esc(art) + '.jpg" alt=""></div><div class="shade"></div><div class="glow"></div><div class="grid"></div><div class="grain"></div>';
 }
-function brand(ui) { return '<div class="brand">' + MARK + "<div><b>QA-lab URL Review</b><small>" + esc(ui.by) + "</small></div></div>"; }
+function brand(ui) { return '<div class="brand">' + MARK + "<div><b>QA-lab URL Review</b>" + (ui.by ? "<small>" + esc(ui.by) + "</small>" : "") + "</div></div>"; }
 function topBar(s, extra) { return '<header class="top">' + brand(s.ui) + (extra || '<span class="chip"><i></i>' + esc(s.copy.kicker) + "</span>") + "</header>"; }
 function bullets(list) { return '<ul class="bullets">' + list.map((b) => "<li>" + esc(b) + "</li>").join("") + "</ul>"; }
 function foot(s, right) {
@@ -219,7 +219,7 @@ function endcard(s) {
   return backdrop(s.art) + '<div class="stack center" style="gap:46px">' +
     '<div class="bigmark">' + MARK + "</div>" + title(s.ui.endTitle) +
     '<span class="included">' + esc(s.ui.included) + "</span>" +
-    '<p class="fine">' + esc(s.ui.price) + "</p>" +
+    (s.ui.price ? '<p class="fine">' + esc(s.ui.price) + "</p>" : "") +
     '<span class="cta">' + esc(s.ui.cta) + ARROW + "</span>" +
     '<span class="domain">carlosandmunoz.com/qa-review</span>' +
     '<p class="fine" style="opacity:.75">' + esc(s.ui.footnote) + "</p></div>";

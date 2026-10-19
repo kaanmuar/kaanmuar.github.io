@@ -726,12 +726,34 @@
     });
   }
 
+  function gaugeHtml(label, value, good, poor, max, text) {
+    const state = value <= good ? "pass" : value <= poor ? "risk" : "fail";
+    const at = Math.min(100, (value / max) * 100);
+    return '<div class="gauge ' + state + '"><div class="gauge-top"><b>' + esc(label) + "</b><span>" + esc(text) + "</span></div>" +
+      '<div class="gauge-bar" role="img" aria-label="' + esc(label + " " + text + ", " + (state === "pass" ? "good" : state === "risk" ? "needs improvement" : "poor")) + '">' +
+      '<i style="width:' + (good / max * 100).toFixed(1) + '%"></i><i style="width:' + ((poor - good) / max * 100).toFixed(1) + '%"></i><i></i><u style="left:' + at.toFixed(1) + '%"></u></div></div>';
+  }
+
+  function speedBlock(psi) {
+    if (!psi || !psi.ok) return "";
+    const field = psi.field;
+    const lighthouse = "Lighthouse scored performance " + psi.score + "/100 on a simulated mid-range phone over slow 4G.";
+    if (!field) return '<p class="meta-line">PageSpeed Insights: Chrome has too few visits to publish real-user numbers for this site. ' + esc(lighthouse) + "</p>";
+    const rows = [];
+    if (field.lcp) rows.push(gaugeHtml("Largest Contentful Paint", field.lcp.p75, 2500, 4000, 6000, (field.lcp.p75 / 1000).toFixed(1) + " s"));
+    if (field.inp) rows.push(gaugeHtml("Interaction to Next Paint", field.inp.p75, 200, 500, 800, field.inp.p75 + " ms"));
+    if (field.cls) rows.push(gaugeHtml("Cumulative Layout Shift", field.cls.p75, 0.1, 0.25, 0.5, String(field.cls.p75)));
+    return '<h3 class="speed-title">Real visitors</h3><div class="gauges">' + rows.join("") + "</div>" +
+      '<p class="meta-line">75th percentile of real Chrome visits over the last 28 days ' + (field.scope === "page" ? "on this page" : "across the whole site, because this page has too little traffic on its own") + ", from the Chrome UX Report through PageSpeed Insights. " + esc(lighthouse) + "</p>";
+  }
+
   function paintBrowser(report) {
     const host = document.getElementById("browser-pass");
     if (!host) return;
     const b = report.browser;
+    const speed = speedBlock(report.pagespeed);
     if (!b || !b.ok) {
-      host.innerHTML = '<p class="muted">' + (b && b.error
+      host.innerHTML = speed + '<p class="muted">' + (b && b.error
         ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML read only."
         : "This review ran without the headless browser, so the checks come from the HTML read only.") + "</p>";
       return;
@@ -786,13 +808,7 @@
     const order = { critical: 4, serious: 3, moderate: 2, minor: 1 };
     const axeRows = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, 10).map((rule) =>
       "<tr><td>" + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rule.impact) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
-    const gauge = (label, value, good, poor, max, text) => {
-      const state = value <= good ? "pass" : value <= poor ? "risk" : "fail";
-      const at = Math.min(100, (value / max) * 100);
-      return '<div class="gauge ' + state + '"><div class="gauge-top"><b>' + esc(label) + "</b><span>" + esc(text) + "</span></div>" +
-        '<div class="gauge-bar" role="img" aria-label="' + esc(label + " " + text + ", " + (state === "pass" ? "good" : state === "risk" ? "needs improvement" : "poor")) + '">' +
-        '<i style="width:' + (good / max * 100).toFixed(1) + '%"></i><i style="width:' + ((poor - good) / max * 100).toFixed(1) + '%"></i><i></i><u style="left:' + at.toFixed(1) + '%"></u></div></div>';
-    };
+    const gauge = gaugeHtml;
     const gauges = start.status ? '<div class="gauges">' +
       gauge("Largest Contentful Paint", vit.lcp || 0, 2500, 4000, 6000, ((vit.lcp || 0) / 1000).toFixed(1) + " s") +
       gauge("Cumulative Layout Shift", vit.cls || 0, 0.1, 0.25, 0.5, String(vit.cls || 0)) +
@@ -802,7 +818,7 @@
     const shotCount = ["desktop", "tablet", "mobile"].filter((key) => shots[key]).length;
     const textRows = [{ path: start.finalPath || "/", share: start.share, words: start.renderedWords, raw: start.rawWords }].concat((b.pages || []).filter((page) => !page.error).map((page) => ({ path: page.path, share: page.share, words: page.renderedWords, raw: page.rawWords })));
     host.innerHTML =
-      '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + gauges +
+      '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + speed + (gauges && report.pagespeed && report.pagespeed.field ? '<h3 class="speed-title">One lab load</h3>' : "") + gauges +
       (shots.desktop || shots.mobile ? '<div class="shots' + (shotCount === 3 ? " shots-3" : "") + '">' +
         (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="The start page on a first visit at 1280 px wide" loading="lazy"><figcaption>First visit, 1280 px wide, before any choice.</figcaption></figure>' : "<div></div>") +
         (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="The start page at a 768 px tablet width" loading="lazy"><figcaption>Tablet, 768 px.</figcaption></figure>' : "") +
