@@ -9,6 +9,7 @@ const https = require("https");
 const net = require("net");
 const crypto = require("crypto");
 const { URL } = require("url");
+const insights = require("./url-review-insights");
 
 const TERMS_VERSION = "2026-10-20";
 const PRICE_PER_FRAMEWORK = 19;
@@ -651,7 +652,7 @@ function requestOnce(target, pinned, isStopped) {
     const req = lib.request({
       protocol: target.protocol,
       hostname: target.hostname,
-      port: target.port || 443,
+      port: target.port || (target.protocol === "http:" ? 80 : 443),
       path: target.pathname + target.search,
       method: "GET",
       timeout: PAGE_TIMEOUT_MS,
@@ -674,6 +675,11 @@ function requestOnce(target, pinned, isStopped) {
       const chunks = [];
       let size = 0;
       let failed = null;
+      let cert = null;
+      try {
+        const peer = res.socket && res.socket.getPeerCertificate ? res.socket.getPeerCertificate() : null;
+        if (peer && peer.valid_to) cert = { validTo: peer.valid_to, issuer: clean((peer.issuer && (peer.issuer.O || peer.issuer.CN)) || "", 80) };
+      } catch (error) { cert = null; }
       res.on("data", (chunk) => {
         size += chunk.length;
         if (size > MAX_BYTES) {
@@ -685,7 +691,7 @@ function requestOnce(target, pinned, isStopped) {
       });
       res.on("end", () => {
         if (failed) finish(reject, failed);
-        else finish(resolve, { status: res.statusCode || 0, headers: res.headers, body: Buffer.concat(chunks).toString("utf8") });
+        else finish(resolve, { status: res.statusCode || 0, headers: res.headers, body: Buffer.concat(chunks).toString("utf8"), cert });
       });
       res.on("error", (error) => finish(reject, error));
     });
@@ -732,9 +738,12 @@ async function fetchPublic(raw, isStopped, onPulse) {
       }
       return {
         url: current.toString(),
+        requested: String(raw),
+        hops: hop,
         status: res.status,
         headers: res.headers,
         body: res.body,
+        cert: res.cert,
         ms: Date.now() - started
       };
     }
@@ -787,7 +796,7 @@ function decode(value) {
 }
 
 function attr(tag, name) {
-  const match = String(tag).match(new RegExp(name + "\\s*=\\s*(\"([^\"]*)\"|'([^']*)'|([^\\s>]+))", "i"));
+  const match = String(tag).match(new RegExp("[\\s\"'/]" + name + "\\s*=\\s*(\"([^\"]*)\"|'([^']*)'|([^\\s>]+))", "i"));
   return match ? decode(match[2] || match[3] || match[4] || "") : "";
 }
 
@@ -808,6 +817,9 @@ function sameHost(from, href) {
     if (next.hostname !== base.hostname) return "";
     if (next.port && next.port !== "443") return "";
     next.hash = "";
+    [...next.searchParams.keys()].forEach((key) => {
+      if (/^(utm_[a-z]+|gclid|fbclid|msclkid|mc_cid|mc_eid|intcmp|cmp|_ga|_gl|yclid|igshid)$/i.test(key)) next.searchParams.delete(key);
+    });
     return next.toString();
   } catch (error) {
     return "";
@@ -873,25 +885,162 @@ function technologies(html, headers) {
   });
 }
 
+function visibleText(html) {
+  return decode(String(html || "")
+    .replace(/<(script|style|noscript|template|svg|head)\b[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]+>/g, " "));
+}
+
+function outline(html) {
+  const heads = [];
+  const re = /<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let match;
+  while ((match = re.exec(String(html || ""))) && heads.length < 30) {
+    const text = decode(match[2].replace(/<[^>]+>/g, " "));
+    if (text) heads.push({ level: Number(match[1]), text: clean(text, 120) });
+  }
+  return heads;
+}
+
+function homeText(html) {
+  const text = visibleText(html);
+  return { text: text.slice(0, 1600), chars: text.length, words: text ? text.split(/\s+/).length : 0, outline: outline(html) };
+}
+
+const ANALYTICS_TAGS = [
+  ["Google Analytics 4", /gtag\(|googletagmanager\.com\/gtag\/js|google-analytics\.com\/g\//, /["'=](G-[A-Z0-9]{6,12})["'&]/g],
+  ["Universal Analytics", /["'=]UA-\d{4,10}-\d{1,4}["'&]/, /["'=](UA-\d{4,10}-\d{1,4})["'&]/g],
+  ["Google Tag Manager", /googletagmanager\.com\/gtm\.js|GTM-[A-Z0-9]{4,9}/, /(GTM-[A-Z0-9]{4,9})\b/g],
+  ["Google Ads", /["'=]AW-\d{6,12}["'&]/, /["'=](AW-\d{6,12})["'&]/g],
+  ["Meta Pixel", /connect\.facebook\.net\/[^"']*\/fbevents\.js|fbq\(\s*['"]init/, /fbq\(\s*['"]init['"]\s*,\s*['"]?(\d{8,20})/g],
+  ["LinkedIn Insight", /snap\.licdn\.com|_linkedin_partner_id/, /_linkedin_partner_id\s*=\s*["']?(\d{3,12})/g],
+  ["TikTok Pixel", /analytics\.tiktok\.com|ttq\.load\(/, /ttq\.load\(\s*['"]([A-Z0-9]{10,30})/g],
+  ["X Pixel", /static\.ads-twitter\.com|twq\(\s*['"]config/, null],
+  ["Pinterest Tag", /s\.pinimg\.com\/ct\/core\.js|pintrk\(/, null],
+  ["Microsoft Ads UET", /bat\.bing\.com\/bat\.js/, /\bti\s*:\s*["']?(\d{5,12})/g],
+  ["Hotjar", /static\.hotjar\.com|hjid\s*:/, /hjid\s*:\s*(\d{4,10})/g],
+  ["Microsoft Clarity", /clarity\.ms\/tag|["']clarity["']\s*,\s*["']script["']/, /clarity\.ms\/tag\/([a-z0-9]{6,14})|["']clarity["']\s*,\s*["']script["']\s*,\s*["']([a-z0-9]{6,14})/g],
+  ["HubSpot", /js\.hs-scripts\.com|js\.hs-analytics\.net/, /js\.hs-scripts\.com\/(\d{3,12})/g],
+  ["Adobe Analytics", /assets\.adobedtm\.com|AppMeasurement/, null],
+  ["Matomo", /matomo\.js|piwik\.js|_paq\.push/, null],
+  ["Plausible", /plausible\.io\/js|\/js\/script\.js["'][^>]*data-domain/, null],
+  ["Fathom", /cdn\.usefathom\.com/, null],
+  ["Umami", /cloud\.umami\.is|\/umami\.js|data-website-id=/, null],
+  ["PostHog", /posthog\.init|posthog-js|\.posthog\.com/, null],
+  ["Segment", /cdn\.segment\.com|analytics\.load\(/, null],
+  ["Mixpanel", /cdn\.mxpnl\.com|mixpanel\.init/, null],
+  ["Amplitude", /cdn\.amplitude\.com|amplitude\.init|amplitude\.getInstance/, null],
+  ["Heap", /cdn\.heapanalytics\.com|heap\.load\(/, null],
+  ["Vercel Analytics", /\/_vercel\/insights\/script\.js|va\.vercel-scripts\.com/, null],
+  ["Cloudflare Web Analytics", /static\.cloudflareinsights\.com\/beacon/, null],
+  ["Yandex Metrica", /mc\.yandex\.ru\/metrika/, null]
+];
+
+const CONSENT_TOOLS = [
+  ["OneTrust", /cdn\.cookielaw\.org|otSDKStub|optanon/i],
+  ["Cookiebot", /consent\.cookiebot\.com|Cookiebot/],
+  ["Usercentrics", /usercentrics/i],
+  ["CookieYes", /cookieyes/i],
+  ["iubenda", /iubenda/i],
+  ["Didomi", /didomi/i],
+  ["Termly", /termly\.io/i],
+  ["Osano", /cmp\.osano\.com/i],
+  ["Complianz", /complianz/i],
+  ["Quantcast Choice", /quantcast\.mgr|cmp\.quantcast/i],
+  ["TrustArc", /trustarc|consent\.truste/i],
+  ["Klaro", /klaro(\.min)?\.js|klaroConfig/],
+  ["CookieConsent", /cookieconsent(\.min)?\.js|CookieConsent\.run/i],
+  ["Borlabs", /borlabs-cookie/i],
+  ["Axeptio", /axeptio/i],
+  ["Sourcepoint", /sp-prod\.net|sourcepoint/i],
+  ["Google consent messages", /fundingchoicesmessages\.google\.com/i]
+];
+
+function analyticsScan(html) {
+  const body = String(html || "");
+  const tags = [];
+  ANALYTICS_TAGS.forEach(([name, present, idPattern]) => {
+    if (!present.test(body)) return;
+    const ids = [];
+    if (idPattern) {
+      idPattern.lastIndex = 0;
+      let match;
+      while ((match = idPattern.exec(body)) && ids.length < 6) {
+        const id = match[1] || match[2];
+        if (id && ids.indexOf(id) === -1) ids.push(id);
+      }
+    }
+    tags.push({ name, ids });
+  });
+  const consent = CONSENT_TOOLS.filter(([, pattern]) => pattern.test(body)).map(([name]) => name);
+  let consentMode = null;
+  const mode = body.match(/gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([\s\S]{0,600}?)\}/);
+  if (mode) {
+    const analytics = (mode[1].match(/analytics_storage['"]?\s*:\s*['"](denied|granted)/) || [])[1] || "";
+    consentMode = { analytics, v2: /ad_user_data/.test(mode[1]) && /ad_personalization/.test(mode[1]) };
+  }
+  const ga4 = (tags.find((tag) => tag.name === "Google Analytics 4") || { ids: [] }).ids;
+  return {
+    tags,
+    consent,
+    consentMode,
+    ga4,
+    gtagLoads: (body.match(/googletagmanager\.com\/gtag\/js/g) || []).length,
+    loader: /<script\b[^>]*\ssrc\s*=\s*["'][^"']*(analytics|gtag|gtm|tracking|tagmanager)[^"']*["']/i.test(body),
+    dataLayer: /dataLayer\s*=|dataLayer\.push/.test(body)
+  };
+}
+
+function schemaScan(html) {
+  const result = { errors: 0, items: [] };
+  const blocks = String(html || "").match(/<script\b[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi) || [];
+  const take = (node) => {
+    if (!node || typeof node !== "object" || result.items.length >= 20) return;
+    if (Array.isArray(node)) { node.forEach(take); return; }
+    if (Array.isArray(node["@graph"])) node["@graph"].forEach(take);
+    const raw = node["@type"];
+    const types = (Array.isArray(raw) ? raw : raw ? [raw] : []).map((type) => clean(String(type).replace(/^https?:\/\/schema\.org\//, ""), 60)).filter(Boolean);
+    if (!types.length) return;
+    const sameAs = node.sameAs ? (Array.isArray(node.sameAs) ? node.sameAs : [node.sameAs]).filter((item) => typeof item === "string").slice(0, 12).map((item) => clean(item, 200)) : [];
+    result.items.push({ types: types.slice(0, 4), props: Object.keys(node).filter((key) => key.charAt(0) !== "@").slice(0, 40), sameAs });
+  };
+  blocks.slice(0, 12).forEach((block) => {
+    const text = block.replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, "").trim();
+    if (!text) return;
+    try { take(JSON.parse(text)); } catch (error) { result.errors += 1; }
+  });
+  return result;
+}
+
+const SOCIAL_HOSTS = /(^|\.)(linkedin\.com|twitter\.com|x\.com|facebook\.com|instagram\.com|github\.com|youtube\.com|tiktok\.com|threads\.net|bsky\.app|pinterest\.com|behance\.net|dribbble\.com|medium\.com|mastodon\.social|wa\.me|whatsapp\.com)$/i;
+
 function inspect(html, headers, pageUrl) {
   const title = textOf(html, "title");
   const description = collect(html, "meta").map((tag) => attr(tag, "name").toLowerCase() === "description" ? attr(tag, "content") : "").find(Boolean) || "";
   const canonical = collect(html, "link").map((tag) => attr(tag, "rel").toLowerCase() === "canonical" ? attr(tag, "href") : "").find(Boolean) || "";
   const htmlTag = (html.match(/<html\b[^>]*>/i) || [""])[0];
   const lang = attr(htmlTag, "lang");
-  const h1 = (html.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/gi) || []).map((tag) => decode(tag.replace(/<[^>]+>/g, " "))).filter(Boolean);
-  const images = collect(html, "img");
+  const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<template\b[\s\S]*?<\/template>/gi, " ");
+  const h1 = (markup.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/gi) || []).map((tag) => decode(tag.replace(/<[^>]+>/g, " "))).filter(Boolean);
+  const images = collect(markup, "img");
   const missingAlt = images.filter((tag) => !attr(tag, "alt")).length;
-  const forms = collect(html, "form").length;
-  const password = /<input\b[^>]*type\s*=\s*["']?password/i.test(html);
-  const buttons = (html.match(/<button\b/gi) || []).length;
-  const unlabeled = (html.match(/<input\b[^>]*>/gi) || []).filter((tag) => {
+  const forms = collect(markup, "form").length;
+  const password = /<input\b[^>]*type\s*=\s*["']?password/i.test(markup);
+  const buttons = (markup.match(/<button\b/gi) || []).length;
+  const labelFor = new Set(collect(markup, "label").map((tag) => attr(tag, "for")).filter(Boolean));
+  const unlabeled = (markup.replace(/<label\b[\s\S]*?<\/label>/gi, " ").match(/<(?:input|select|textarea)\b[^>]*>/gi) || []).filter((tag) => {
     const type = attr(tag, "type").toLowerCase();
-    return type !== "hidden" && type !== "submit" && !attr(tag, "aria-label") && !attr(tag, "id");
+    if (/^(hidden|submit|button|reset|image)$/.test(type)) return false;
+    if (attr(tag, "aria-label") || attr(tag, "aria-labelledby") || attr(tag, "title")) return false;
+    const id = attr(tag, "id");
+    return !(id && labelFor.has(id));
   }).length;
   const links = [];
-  collect(html, "a").forEach((tag) => {
-    const href = sameHost(pageUrl, attr(tag, "href"));
+  collect(markup, "a").forEach((tag) => {
+    const raw = attr(tag, "href");
+    if (/\$\{|\{\{|%7B/i.test(raw)) return;
+    const href = sameHost(pageUrl, raw);
     if (href && links.length < 100) links.push(href);
   });
   const scripts = collect(html, "script").map((tag) => attr(tag, "src")).filter(Boolean);
@@ -908,6 +1057,57 @@ function inspect(html, headers, pageUrl) {
       if (host && host !== pageHost && scriptHosts.indexOf(host) === -1 && scriptHosts.length < 12) scriptHosts.push(host);
     } catch (error) { /* a relative script stays on this host */ }
   });
+  const absolute = (href) => {
+    if (!href) return "";
+    try { return clean(new URL(href, pageUrl).toString(), 400); } catch (error) { return ""; }
+  };
+  const foreignHosts = (list, max) => {
+    const out = [];
+    list.forEach((href) => {
+      try {
+        const parsed = new URL(href, pageUrl);
+        if (/^https?:$/.test(parsed.protocol) && parsed.hostname && parsed.hostname !== pageHost && out.indexOf(parsed.hostname) === -1 && out.length < max) out.push(parsed.hostname);
+      } catch (error) { /* skip a malformed address */ }
+    });
+    return out;
+  };
+  const metaValue = (key) => metas.map((tag) => {
+    const name = (attr(tag, "property") || attr(tag, "name")).toLowerCase();
+    return name === key ? attr(tag, "content") : "";
+  }).find(Boolean) || "";
+  const viewportContent = metaValue("viewport").toLowerCase();
+  const head = (html.match(/<head\b[\s\S]*?<\/head>/i) || [""])[0];
+  const scriptTags = collect(html, "script");
+  const crossScripts = scriptTags.filter((tag) => {
+    const src = attr(tag, "src");
+    if (!src) return false;
+    try { return new URL(src, pageUrl).hostname !== pageHost; } catch (error) { return false; }
+  });
+  const sriMissing = foreignHosts(crossScripts.filter((tag) => !attr(tag, "integrity")).map((tag) => attr(tag, "src")), 20);
+  const inlineScripts = (html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || []).filter((block) => {
+    const open = block.match(/^<script\b[^>]*>/i)[0];
+    if (attr(open, "src")) return false;
+    const type = attr(open, "type").toLowerCase();
+    if (type && !/javascript|module|^text\/babel$/.test(type)) return false;
+    return /\S/.test(block.replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, ""));
+  }).length + (html.match(/<[a-z][^>]*\son(?:click|load|error|submit|change|mouseover|focus|blur|input|keydown|keyup)\s*=/gi) || []).length;
+  const inlineStyles = (html.match(/<style\b/gi) || []).length + (html.match(/<[a-z][^>]*\sstyle\s*=/gi) || []).length;
+  const text = visibleText(html);
+  const socialLinks = [];
+  collect(markup, "a").forEach((tag) => {
+    const href = absolute(attr(tag, "href"));
+    try {
+      const parsed = new URL(href);
+      if (parsed.protocol === "https:" && SOCIAL_HOSTS.test(parsed.hostname) && parsed.pathname.length > 1 && !/\/(share|sharer|intent|shareArticle)/i.test(parsed.pathname) && socialLinks.indexOf(href) === -1 && socialLinks.length < 12) socialLinks.push(href);
+    } catch (error) { /* not a profile link */ }
+  });
+  const piiLinks = collect(markup, "a").filter((tag) => {
+    const href = attr(tag, "href");
+    return !/^mailto:/i.test(href) && /[?&][^=&#\s]+=[^&#\s]*(?:@|%40)[^&#\s]*\.[a-z]{2,}/i.test(href);
+  }).length;
+  const hreflang = linksAll.filter((tag) => attr(tag, "rel").toLowerCase().indexOf("alternate") !== -1 && attr(tag, "hreflang"))
+    .slice(0, 30).map((tag) => ({ lang: clean(attr(tag, "hreflang").toLowerCase(), 16), href: absolute(attr(tag, "href")) }));
+  const iconTag = linksAll.find((tag) => /(^|\s)(icon|shortcut icon|apple-touch-icon)(\s|$)/i.test(attr(tag, "rel")));
   const signals = {
     viewport: /<meta\b[^>]*\bname\s*=\s*(?:["']viewport["']|viewport\b)/i.test(html),
     styled: /<style\b/i.test(html),
@@ -915,9 +1115,9 @@ function inspect(html, headers, pageUrl) {
     twitter: metas.some((tag) => /^twitter:/i.test(attr(tag, "name"))),
     jsonLd: (html.match(/application\/ld\+json/gi) || []).length,
     iframes: (html.match(/<iframe\b/gi) || []).length,
-    untitledFrames: (html.match(/<iframe\b[^>]*>/gi) || []).filter((tag) => !attr(tag, "title")).length,
+    untitledFrames: (markup.match(/<iframe\b[^>]*>/gi) || []).filter((tag) => !attr(tag, "title")).length,
     h2: (html.match(/<h2\b/gi) || []).length,
-    mixed: (html.match(/\bhttp:\/\/[^"'>\s]+/gi) || []).length,
+    mixed: (markup.match(/<(?:script|img|iframe|source|video|audio|embed|track)\b[^>]*\ssrc\s*=\s*["']?http:\/\//gi) || []).length + linksAll.filter((tag) => /stylesheet|icon|preload|manifest/i.test(attr(tag, "rel")) && /^http:\/\//i.test(attr(tag, "href"))).length,
     hreflang: linksAll.filter((tag) => attr(tag, "rel").toLowerCase().indexOf("alternate") !== -1 && attr(tag, "hreflang")).length,
     skip: /<a\b[^>]*href\s*=\s*["']#[^"']+/i.test(html),
     main: /<main\b/i.test(html),
@@ -931,11 +1131,17 @@ function inspect(html, headers, pageUrl) {
     video: (html.match(/<video\b/gi) || []).length,
     permissions: header(headers, "permissions-policy") || header(headers, "feature-policy"),
     thirdParty: scriptHosts,
-    imgNoSize: (html.match(/<img\b[^>]*>/gi) || []).filter((tag) => !attr(tag, "width") && !attr(tag, "height")).length,
+    imgNoSize: (markup.match(/<img\b[^>]*>/gi) || []).filter((tag) => !attr(tag, "width") && !attr(tag, "height")).length,
     robotsMeta: metas.some((tag) => attr(tag, "name").toLowerCase() === "robots"),
     cacheControl: header(headers, "cache-control"),
     apiHint: /graphql|wp-json|openapi|swagger/i.test(html.slice(0, 200000)),
-    manifest: linksAll.some((tag) => /manifest/i.test(attr(tag, "rel")))
+    manifest: linksAll.some((tag) => /manifest/i.test(attr(tag, "rel"))),
+    appShell: text.length < 300 && /<div\b[^>]*\bid\s*=\s*["'](root|app|__next|__nuxt|svelte|___gatsby)["'][^>]*>\s*<\/div>/i.test(html),
+    zoomBlocked: /user-scalable\s*=\s*(no|0)\b/.test(viewportContent) || /maximum-scale\s*=\s*(1(\.0+)?|0?\.\d+)\b/.test(viewportContent),
+    positiveTabindex: (html.match(/\btabindex\s*=\s*["']?[1-9]/gi) || []).length,
+    blockingScripts: collect(head, "script").filter((tag) => attr(tag, "src") && !/\b(async|defer)\b/i.test(tag) && attr(tag, "type").toLowerCase() !== "module").length,
+    inlineScripts,
+    inlineStyles
   };
   return {
     title: clean(title, 180),
@@ -957,6 +1163,44 @@ function inspect(html, headers, pageUrl) {
     bytes: Buffer.byteLength(html),
     technologies: technologies(html + " " + generator, headers),
     cookies: setCookies(headers),
+    words: text ? text.split(/\s+/).length : 0,
+    questionHeadings: outline(html).filter((item) => item.level > 1 && (/\?$/.test(item.text) || /^¿/.test(item.text))).length,
+    author: clean(metaValue("author") || metaValue("article:author"), 120),
+    dated: !!(metaValue("article:published_time") || metaValue("article:modified_time") || /<time\b[^>]*datetime\s*=/i.test(html)),
+    icon: iconTag ? absolute(attr(iconTag, "href")) : "",
+    seo: {
+      robots: clean(metaValue("robots"), 160),
+      googlebot: clean(metaValue("googlebot"), 160),
+      xRobots: clean(header(headers, "x-robots-tag"), 160),
+      canonicalAbs: absolute(canonical),
+      hreflang
+    },
+    social: {
+      ogTitle: clean(metaValue("og:title"), 200),
+      ogDescription: clean(metaValue("og:description"), 300),
+      ogImage: absolute(metaValue("og:image") || metaValue("og:image:url")),
+      ogUrl: absolute(metaValue("og:url")),
+      ogSiteName: clean(metaValue("og:site_name"), 120),
+      ogType: clean(metaValue("og:type"), 40),
+      twitterCard: clean(metaValue("twitter:card"), 40),
+      twitterImage: absolute(metaValue("twitter:image"))
+    },
+    schema: schemaScan(html),
+    analytics: analyticsScan(html),
+    socialLinks,
+    piiLinks,
+    sri: { cross: crossScripts.length, missing: sriMissing },
+    resources: {
+      scripts: foreignHosts(scripts, 30),
+      styles: foreignHosts(linksAll.filter((tag) => /stylesheet|preload/i.test(attr(tag, "rel"))).map((tag) => attr(tag, "href")), 20),
+      images: foreignHosts(images.map((tag) => attr(tag, "src")), 20),
+      frames: foreignHosts(collect(html, "iframe").map((tag) => attr(tag, "src")), 12),
+      forms: foreignHosts(collect(html, "form").map((tag) => attr(tag, "action")), 8)
+    },
+    rawHeaders: {
+      permissions: clean(header(headers, "permissions-policy") || header(headers, "feature-policy"), 300),
+      poweredBy: clean(header(headers, "x-powered-by"), 120)
+    },
     headers: {
       csp: header(headers, "content-security-policy"),
       hsts: header(headers, "strict-transport-security"),
@@ -1053,7 +1297,7 @@ function propose(pages, robotsBlocked, limits) {
   addCase(cases, { id: "LK-03", layer: "Links", title: "A crawler honors robots.txt for linked pages", why: (robotsBlocked ? robotsBlocked + " linked URLs were skipped because robots.txt disallows them for this agent." : "No linked URL was skipped for robots.txt during this read.") + " The start URL is still fetched. A later crawler case would log each skipped path.", fw: browser });
   addCase(cases, { id: "LK-04", layer: "Links", title: "In-page anchors and repeated hrefs stay intentional", why: "Same-host hrefs were deduped before the crawl. A UI case would open repeated navigation items once and check that a hash target exists on the page.", fw: browser });
   if (face.forms) {
-    addCase(cases, { id: "FM-01", layer: "Forms", title: "Visible fields have labels", why: face.forms + " form(s) are present. " + face.unlabeled + " inputs had neither an id nor an aria-label. Nothing was submitted. A later case would pair each control with its label.", fw: browser });
+    addCase(cases, { id: "FM-01", layer: "Forms", title: "Visible fields have labels", why: face.forms + " form(s) are present. " + face.unlabeled + " controls had no label element, aria-label, aria-labelledby, or title. Nothing was submitted. A later case would pair each control with its label.", fw: browser });
     addCase(cases, { id: "FM-02", layer: "Forms", title: "A later functional run uses a test account the owner provides", why: "Submitting the form is a different act from reading it. The account, the fixture data, and the expected confirmation stay outside this review.", fw: browser });
     addCase(cases, { id: "FM-04", layer: "Forms", title: "Required fields block an empty submit", why: sig.required + " inputs were marked required in the HTML. A browser case would submit the empty form and expect the constraint message, without creating a record.", fw: browser });
   }
@@ -1077,7 +1321,7 @@ function propose(pages, robotsBlocked, limits) {
   }
   addCase(cases, { id: "SEC-07", layer: "Security", title: "Response headers do not need to reveal the server build", why: (face.headers.server ? "Server header: " + face.headers.server + "." : "No Server header was sent.") + " The case records the header and does not treat a product name as a vulnerability by itself.", fw: browser });
   addCase(cases, { id: "SEC-08", layer: "Security", title: "A permissions policy limits powerful features", why: (sig.permissions ? "A permissions policy is present." : "No permissions-policy header was found.") + " Camera, microphone, and geolocation would be expected to stay disabled unless the page needs them.", fw: browser });
-  addCase(cases, { id: "SEC-09", layer: "Security", title: "The HTML does not reference plain http resources", why: (sig.mixed || 0) + " http:// references were counted in the markup. Mixed content would be confirmed in a browser console, not by downloading those URLs here.", fw: browser });
+  addCase(cases, { id: "SEC-09", layer: "Security", title: "The HTML does not reference plain http resources", why: (sig.mixed || 0) + " scripts, images, frames, or stylesheets load over plain http. Mixed content would be confirmed in a browser console, not by downloading those URLs here.", fw: browser });
   addCase(cases, { id: "PR-01", layer: "Privacy", title: "A privacy notice is linked from the page", why: (sig.privacyLink ? "The HTML mentions a privacy or legal destination." : "No privacy or legal wording was found in the markup.") + " Confirm the link in a browser before treating it as found.", fw: browser });
   addCase(cases, { id: "PR-02", layer: "Privacy", title: "Third-party scripts are named before they run", why: (sig.thirdParty || []).length + " other hosts were referenced by script src" + ((sig.thirdParty || []).length ? " (" + sig.thirdParty.slice(0, 4).join(", ") + ")." : ".") + " A privacy case would load the page with tags blocked and then with consent.", fw: browser });
   addCase(cases, { id: "PR-03", layer: "Privacy", title: "A consent notice is present when tags or cookies appear before a choice", why: (sig.consent ? "Cookie or consent wording was found in the HTML." : "No cookie or consent wording was found.") + " The case would assert the notice before analytics storage is written.", fw: browser });
@@ -1156,7 +1400,7 @@ function buildAlerts(html, inspect, path) {
   const loose = ((inspect && inspect.cookies) || []).filter((cookie) => !cookie.secure || !cookie.httpOnly);
   if (loose.length) push("Exposure", "A cookie is missing Secure or HttpOnly", loose.length + " cookies on the first response lack Secure or HttpOnly. A session cookie in that state can be read by script or sent on plain http. This read did not use the cookie.");
   const mixed = inspect && inspect.signals && inspect.signals.mixed;
-  if (mixed) push("Exposure", "The HTML names plain http resources", mixed + " http:// references were counted in the markup. A browser would warn on some of them. Those URLs were not downloaded here.");
+  if (mixed) push("Exposure", "The HTML names plain http resources", mixed + " scripts, images, frames, or stylesheets load over plain http. A browser would warn on some of them. Those URLs were not downloaded here.");
   return alerts;
 }
 
@@ -1213,6 +1457,124 @@ function lookupMentions(hostname) {
   });
 }
 
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(fallback), ms))]);
+}
+
+async function fetchExtra(url, halt) {
+  try {
+    const res = await fetchPublic(url, halt);
+    const type = header(res.headers, "content-type");
+    return {
+      status: res.status,
+      url: res.url,
+      body: String(res.body || "").slice(0, 600000),
+      html: /text\/html|application\/xhtml/i.test(type) || /^\s*<(!doctype|html)/i.test(res.body || "")
+    };
+  } catch (error) {
+    if (error && error.code === "STOPPED") throw error;
+    return { status: 0, error: clean(error.message, 120), body: "" };
+  }
+}
+
+function sitemapLocs(xml) {
+  const locs = [];
+  const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
+  let match;
+  while ((match = re.exec(String(xml || ""))) && locs.length < 5000) locs.push(decode(match[1].replace(/<!\[CDATA\[|\]\]>/g, "")));
+  return locs;
+}
+
+async function readSitemap(origin, robotsText, halt) {
+  const listed = [];
+  String(robotsText || "").split(/\r?\n/).forEach((line) => {
+    const match = line.match(/^\s*sitemap\s*:\s*(\S+)/i);
+    if (match && listed.length < 5) listed.push(match[1]);
+  });
+  const host = new URL(origin).hostname;
+  const upgraded = listed.map((url) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === "http:" && parsed.hostname === host) parsed.protocol = "https:";
+      return parsed.toString();
+    } catch (error) { return url; }
+  });
+  const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url) && !/\.gz$/i.test(url));
+  let last = { status: 0 };
+  for (let i = 0; i < candidates.length && i < 3; i += 1) {
+    const res = await fetchExtra(candidates[i], halt);
+    last = res;
+    if (res.status !== 200 || res.html) continue;
+    let urls = sitemapLocs(res.body);
+    if (/<sitemapindex\b/i.test(res.body)) {
+      const children = urls.filter((url) => /^https:\/\//i.test(url) && !/\.gz$/i.test(url)).slice(0, 3);
+      urls = [];
+      for (let j = 0; j < children.length; j += 1) {
+        const child = await fetchExtra(children[j], halt);
+        if (child.status === 200 && !child.html) urls = urls.concat(sitemapLocs(child.body));
+        if (urls.length >= 5000) break;
+      }
+    }
+    if (urls.length) return { source: candidates[i], status: 200, urls: urls.slice(0, 5000) };
+  }
+  return { source: candidates[0] || "", status: last.status || 0, urls: [] };
+}
+
+async function dnsFacts(hostname) {
+  const domain = registrable(hostname);
+  const txt = (name) => withTimeout(dns.resolveTxt(name).then((rows) => rows.map((parts) => parts.join(""))).catch(() => []), 5000, []);
+  const [root, dmarc, mx, caa] = await Promise.all([
+    txt(domain),
+    txt("_dmarc." + domain),
+    withTimeout(dns.resolveMx(domain).catch(() => []), 5000, []),
+    withTimeout(dns.resolveCaa(domain).catch(() => []), 5000, [])
+  ]);
+  return {
+    domain,
+    spf: clean(root.find((row) => /^v=spf1/i.test(row)) || "", 300),
+    dmarc: clean(dmarc.find((row) => /^v=DMARC1/i.test(row)) || "", 300),
+    mx: mx.slice(0, 5).map((row) => clean(row.exchange, 120)),
+    caa: caa.slice(0, 5).map((row) => clean(row.issue || row.issuewild || row.iodef || "", 120))
+  };
+}
+
+async function plainHttp(hostname, halt) {
+  try {
+    const pinned = await assertPublic(hostname);
+    const res = await requestOnce(new URL("http://" + hostname + "/"), pinned, halt);
+    return { status: res.status, location: clean(header(res.headers, "location"), 300) };
+  } catch (error) {
+    if (error && error.code === "STOPPED") throw error;
+    return { error: clean(error.message, 120) };
+  }
+}
+
+async function gatherExtras(first, robotsText, robotsGroups, halt) {
+  const origin = new URL(first.url);
+  const allowed = (path) => !robotsGroups.length || robotsAllows(path, robotsGroups);
+  const utmUrl = new URL(first.url);
+  utmUrl.searchParams.set("utm_source", "qa-lab-review");
+  utmUrl.searchParams.set("utm_medium", "audit");
+  utmUrl.searchParams.set("utm_campaign", "redirect-check");
+  const missingPath = "/qa-lab-review-" + crypto.randomBytes(4).toString("hex") + "-not-found";
+  let validTo = first.cert && first.cert.validTo;
+  const tls = validTo && !isNaN(Date.parse(validTo))
+    ? { validTo: new Date(Date.parse(validTo)).toISOString().slice(0, 10), daysLeft: Math.floor((Date.parse(validTo) - Date.now()) / 86400000), issuer: first.cert.issuer || "" }
+    : null;
+  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo] = await Promise.all([
+    readSitemap(origin.origin, robotsText, halt).catch(() => ({ status: 0, urls: [] })),
+    fetchExtra(origin.origin + "/llms.txt", halt),
+    fetchExtra(origin.origin + "/llms-full.txt", halt),
+    fetchExtra(origin.origin + "/.well-known/security.txt", halt),
+    allowed(pagePath(utmUrl.toString())) ? fetchPublic(utmUrl.toString(), halt).then((res) => ({ status: res.status, finalUrl: res.url, kept: new URL(res.url).searchParams.get("utm_source") === "qa-lab-review" })).catch(() => null) : Promise.resolve(null),
+    allowed(missingPath) ? fetchExtra(origin.origin + missingPath, halt).then((res) => ({ status: res.status, title: res.html ? clean(textOf(res.body, "title"), 120) : "" })) : Promise.resolve(null),
+    plainHttp(origin.hostname, halt),
+    dnsFacts(origin.hostname).catch(() => null)
+  ]);
+  const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
+  return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo };
+}
+
 async function reviewTarget(rawUrl, hooks) {
   const controls = hooks || {};
   const lines = [];
@@ -1249,6 +1611,7 @@ async function reviewTarget(rawUrl, hooks) {
   const origin = new URL(first.url);
   const mentionsPromise = lookupMentions(origin.hostname);
   let robots = [];
+  let robotsText = "";
   let robotsNote = "robots.txt was not read.";
   let stopped = halt();
   try {
@@ -1256,7 +1619,8 @@ async function reviewTarget(rawUrl, hooks) {
       note("Reading robots.txt.");
       const robotsUrl = origin.origin + "/robots.txt";
       const robotsRes = await fetchPublic(robotsUrl, halt, note);
-    if (robotsRes.status === 200) {
+    if (robotsRes.status === 200 && !/^\s*<(!doctype|html)/i.test(robotsRes.body)) {
+      robotsText = robotsRes.body.slice(0, 200000);
       robots = parseRobots(robotsRes.body);
       robotsNote = "robots.txt was read (" + robots.length + " rules). Linked pages that disallow this agent are skipped.";
     } else robotsNote = "robots.txt returned status " + robotsRes.status + ". Linked pages stay inside the page cap.";
@@ -1266,14 +1630,18 @@ async function reviewTarget(rawUrl, hooks) {
     else robotsNote = "robots.txt could not be read. Linked pages were still capped.";
   }
   const homeInspect = inspect(first.body, first.headers, first.url);
+  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt).catch(() => ({}));
   const pages = [{
     url: first.url,
+    requested: first.requested,
+    hops: first.hops,
     path: pagePath(first.url),
     status: first.status,
     ms: first.ms,
     bytes: homeInspect.bytes,
     title: homeInspect.title,
     depth: 0,
+    from: "",
     inspect: homeInspect,
     html: first.body
   }];
@@ -1306,14 +1674,19 @@ async function reviewTarget(rawUrl, hooks) {
         const childType = header(child.headers, "content-type");
         if (!/text\/html|application\/xhtml\+xml/i.test(childType)) continue;
         const childInspect = inspect(child.body, child.headers, child.url);
+        if (child.url !== next && seen.has(child.url)) continue;
+        seen.add(child.url);
         pages.push({
           url: child.url,
+          requested: next,
+          hops: child.hops,
           path: pagePath(child.url),
           status: child.status,
           ms: child.ms,
           bytes: childInspect.bytes,
           title: childInspect.title,
           depth: page.depth + 1,
+          from: page.path,
           inspect: childInspect,
           html: ""
         });
@@ -1321,12 +1694,15 @@ async function reviewTarget(rawUrl, hooks) {
         if (error && error.code === "STOPPED") { stopped = true; break; }
         pages.push({
           url: next,
+          requested: next,
+          hops: 0,
           path: path,
           status: 0,
           ms: 0,
           bytes: 0,
           title: "",
           depth: page.depth + 1,
+          from: page.path,
           error: clean(error.message, 160),
           inspect: null,
           html: ""
@@ -1348,10 +1724,32 @@ async function reviewTarget(rawUrl, hooks) {
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   const byLayer = {};
   cases.forEach((item) => { byLayer[item.layer] = (byLayer[item.layer] || 0) + 1; });
+  const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
+  let extras = {};
+  try { extras = await extrasPromise; } catch (error) { extras = {}; }
+  let analysis = null;
+  try {
+    analysis = insights.analyze({
+      pages,
+      robotsText,
+      extras,
+      alerts,
+      technologies: technologiesFound,
+      homeText: homeText(first.body),
+      limits: { maxPages: chosen.pages, maxDepth: chosen.depth, pagesRead: pages.length, timedOut: Date.now() >= deadline }
+    });
+    cases.forEach((item) => {
+      const verdict = analysis.caseVerdicts[item.id];
+      if (verdict) Object.assign(item, { verdict: verdict.verdict, severity: verdict.severity, finding: verdict.finding });
+    });
+    note("Scored " + analysis.findings.length + " checks: " + analysis.score.totals.fail + " fail, " + analysis.score.totals.risk + " at risk, " + analysis.score.totals.pass + " pass. Health " + analysis.score.overall + "/100.");
+  } catch (error) {
+    console.error("URL review insights failed:", error);
+    note("The scored checks could not be written for this read. The proposed cases are unaffected.");
+  }
   const reportId = crypto.randomBytes(9).toString("hex");
   const fetchedAt = new Date().toISOString();
   const signature = signReport({ id: reportId, fetchedAt, host: origin.hostname, cases });
-  const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
   let mentions = [];
   try { mentions = await mentionsPromise; } catch (error) { mentions = []; }
   note(mentions.length ? mentions.length + " public write-ups were listed for this host." : "No public write-up was retrieved on this pass.");
@@ -1365,6 +1763,7 @@ async function reviewTarget(rawUrl, hooks) {
     bytes: page.bytes,
     title: page.title,
     depth: page.depth,
+    from: page.from || "",
     error: page.error || ""
   }));
   return {
@@ -1387,6 +1786,7 @@ async function reviewTarget(rawUrl, hooks) {
     tools,
     alerts,
     mentions,
+    insights: analysis,
     signature,
     counts: {
       pages: pages.length,

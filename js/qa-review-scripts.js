@@ -1921,7 +1921,113 @@ namespace QaLab
     if (k6Entries.length) files.push({ path: FILES.k6, content: k6Script(k6Entries, ctx, sign) });
     const used = ORDER.filter((fw) => counts[fw]);
     files.unshift({ path: "README.md", content: readme(ctx, sign, used, counts) });
+    const flow = workflow(used, ctx);
+    if (flow) files.push({ path: ".github/workflows/qa-lab.yml", content: flow });
+    fixKitFiles(report, ctx).forEach((file) => files.push(file));
     return { files, frameworks: used };
+  }
+
+  const CI_STEPS = {
+    Playwright: { setup: "node", run: ["npm init -y && npm i -D @playwright/test", "npx playwright install --with-deps chromium", "npx playwright test playwright/qa-lab.spec.ts"] },
+    Cypress: { setup: "node", run: ["npm init -y && npm i -D cypress", "echo \"module.exports = { e2e: { supportFile: false, specPattern: 'cypress/e2e/**/*.cy.js' } }\" > cypress.config.js", "npx cypress run --spec cypress/e2e/qa-lab.cy.js"] },
+    Robot: { setup: "python", run: ["pip install robotframework robotframework-seleniumlibrary robotframework-requests", "robot robot/qa_lab.robot"] },
+    Selenium: { setup: "python", run: ["pip install selenium pytest requests", "pytest selenium/test_qa_lab.py"] },
+    Watir: { setup: "ruby", run: ["gem install watir rspec", "rspec watir/spec/qa_lab_spec.rb"] },
+    Cucumber: { setup: "node", dir: "cucumber", run: ["npm init -y && npm i -D @cucumber/cucumber playwright", "npx playwright install --with-deps chromium", "npx cucumber-js"] },
+    Behave: { setup: "python", dir: "behave", run: ["pip install behave selenium requests", "behave"] },
+    Reqnroll: { setup: "dotnet", dir: "reqnroll", run: ["dotnet test"] },
+    Jest: { setup: "node", dir: "jest", run: ["npm init -y && npm i -D jest playwright", "npx playwright install --with-deps chromium", "npx jest"] },
+    Vitest: { setup: "node", dir: "vitest", run: ["npm init -y && npm i -D vitest playwright", "npx playwright install --with-deps chromium", "npx vitest run"] },
+    Mocha: { setup: "node", dir: "mocha", run: ["npm init -y && npm i -D mocha playwright", "npx playwright install --with-deps chromium", "npx mocha --timeout 60000"] },
+    k6: { setup: "k6", run: ["k6 run k6/qa-lab.js"] }
+  };
+
+  const CI_SETUP = {
+    node: ["      - uses: actions/setup-node@v4", "        with:", "          node-version: 20"],
+    python: ["      - uses: actions/setup-python@v5", "        with:", "          python-version: \"3.12\""],
+    ruby: ["      - uses: ruby/setup-ruby@v1", "        with:", "          ruby-version: \"3.3\""],
+    dotnet: ["      - uses: actions/setup-dotnet@v4", "        with:", "          dotnet-version: \"8.0.x\""],
+    k6: ["      - uses: grafana/setup-k6-action@v1"]
+  };
+
+  function workflow(used, ctx) {
+    const runnable = used.filter((fw) => CI_STEPS[fw]);
+    if (!runnable.length) return "";
+    const local = used.filter((fw) => !CI_STEPS[fw]);
+    const lines = [
+      "# QA-lab checks for " + ctx.base,
+      "# Copy the contents of this folder to the root of a repository. The jobs run on every push, by hand, and once a day.",
+      local.length ? "# " + local.join(", ") + " need a local project or a device and are not in this workflow. See README.md." : "",
+      "name: QA-lab checks",
+      "on:",
+      "  push:",
+      "  workflow_dispatch:",
+      "  schedule:",
+      "    - cron: \"17 6 * * *\"",
+      "jobs:"
+    ].filter(Boolean);
+    runnable.forEach((fw) => {
+      const step = CI_STEPS[fw];
+      lines.push("  " + fw.toLowerCase() + ":", "    name: " + fw, "    runs-on: ubuntu-latest", "    timeout-minutes: 20", "    steps:", "      - uses: actions/checkout@v4");
+      CI_SETUP[step.setup].forEach((line) => lines.push(line));
+      step.run.forEach((command) => {
+        lines.push("      - run: " + JSON.stringify(command));
+        if (step.dir) lines.push("        working-directory: " + step.dir);
+      });
+    });
+    return lines.join("\n") + "\n";
+  }
+
+  function headerFiles(headers, hosting) {
+    const list = headers || [];
+    const quoted = (value) => String(value).replace(/"/g, "\\\"");
+    const json = (wrap) => JSON.stringify(wrap(list.map((item) => ({ key: item.name, value: item.value }))), null, 2) + "\n";
+    const files = [
+      { host: "Netlify", path: "fix-kit/headers/netlify-or-cloudflare-pages/_headers", content: "/*\n" + list.map((item) => "  " + item.name + ": " + item.value).join("\n") + "\n" },
+      { host: "Cloudflare", path: "fix-kit/headers/netlify-or-cloudflare-pages/_headers", content: "" },
+      { host: "Vercel", path: "fix-kit/headers/vercel.json", content: json((rows) => ({ headers: [{ source: "/(.*)", headers: rows }] })) },
+      { host: "Firebase Hosting", path: "fix-kit/headers/firebase.json", content: json((rows) => ({ hosting: { headers: [{ source: "**", headers: rows }] } })) },
+      { host: "nginx", path: "fix-kit/headers/nginx.conf", content: "# Inside the server block that serves https\n" + list.map((item) => "add_header " + item.name + " \"" + quoted(item.value) + "\" always;").join("\n") + "\n" },
+      { host: "Apache", path: "fix-kit/headers/apache.htaccess", content: "<IfModule mod_headers.c>\n" + list.map((item) => "  Header always set " + item.name + " \"" + quoted(item.value) + "\"").join("\n") + "\n</IfModule>\n" }
+    ].filter((file) => file.content);
+    files.sort((a, b) => (a.host === hosting ? -1 : 0) - (b.host === hosting ? -1 : 0));
+    return files.map((file) => ({ path: file.path, content: file.content }));
+  }
+
+  function fixKitFiles(report, ctx) {
+    const ins = report && report.insights;
+    const kit = ins && ins.fixkit;
+    if (!kit) return [];
+    const files = headerFiles(kit.headers, kit.hosting);
+    files.push({ path: "fix-kit/csp-report-only.txt", content: "Content-Security-Policy-Report-Only: " + kit.csp + "\n\n# Built from the hosts this read saw. Deploy it as Report-Only, add a report-to endpoint, watch for a week, then rename the header to Content-Security-Policy.\n# 'unsafe-inline' appears only when the page has inline scripts or styles. Replace it with nonces or hashes when you can.\n" });
+    if (kit.jsonLd) files.push({ path: "fix-kit/structured-data.html", content: "<!-- Paste inside <head>. Check the values, add a logo URL if it is missing, then validate at https://validator.schema.org -->\n<script type=\"application/ld+json\">\n" + JSON.stringify(kit.jsonLd, null, 2) + "\n</script>\n" });
+    if (kit.llmsTxt) files.push({ path: "fix-kit/llms.txt", content: kit.llmsTxt });
+    if (kit.securityTxt) files.push({ path: "fix-kit/.well-known/security.txt", content: kit.securityTxt });
+    if ((kit.dns || []).length) files.push({ path: "fix-kit/dns-records.txt", content: "# Add these at your DNS provider. Replace the placeholders first.\n" + kit.dns.map((row) => row.name + "\t" + row.type + "\t" + row.value).join("\n") + "\n" });
+    const top = (ins.findings || []).filter((item) => item.rank).slice(0, 15);
+    const score = ins.score || {};
+    const lines = [
+      "# Fix kit for " + ctx.base,
+      "",
+      "Health " + (score.overall != null ? score.overall + "/100 (" + score.grade + ")" : "not scored") + ". " + (ins.summary || ""),
+      "",
+      "These files were written from a public read. Review each value before you deploy it. Nothing here was applied to the site.",
+      "",
+      "## Fix first",
+      ""
+    ];
+    top.forEach((item) => {
+      lines.push(item.rank + ". **" + item.title + "** (" + item.area + ", " + item.severity + ", " + item.effort + ")");
+      lines.push("   " + item.evidence);
+      if (item.fix) lines.push("   Fix: " + item.fix);
+      lines.push("");
+    });
+    lines.push("## Files", "");
+    files.forEach((file) => lines.push("- `" + file.path.replace(/^fix-kit\//, "") + "`"));
+    if (kit.hosting === "GitHub Pages") lines.push("", "GitHub Pages cannot send custom headers. Put Cloudflare (or another CDN) in front and use the `_headers` file there, or move to a host that supports headers.");
+    else if (kit.hosting) lines.push("", "The site looks hosted on " + kit.hosting + ", so that header file is listed first.");
+    files.unshift({ path: "fix-kit/README.md", content: lines.join("\n") + "\n" });
+    return files;
   }
 
   const CRC_TABLE = (() => {
