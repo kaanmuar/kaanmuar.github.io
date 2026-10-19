@@ -123,32 +123,32 @@ function planById(id) {
 const COPY = {
   en: {
     return: ["The page is still talking.", "Your case list for {host} is sitting where you left it. A return run in the next 30 days takes {percent}% off the schedule. The first selection stays 19 USD before that. Reply to this note, or open the review and run it again.", "Come back to the case list"],
-    paid: ["You already opened the door.", "The first payment for {host} is in. A 30-day history pass keeps every saved report open. Glance is 15 USD. A return run still takes {percent}% off the schedule. Reply if you want a call-back and leave a number in the reply.", "Your report can stay open"],
+    paid: ["You already opened the door.", "The first payment for {host} is in. A return run in the next 30 days takes {percent}% off the schedule. Reply if you want a call-back and leave a number in the reply.", "Your next run costs less"],
     offer: ["Three notes a week, then quiet.", "The return table is 10% on the first return, 15% on the second, and 20% after that. It never prices a selection under 9.50 USD. {host} can be read again whenever you are ready.", "A return price is waiting"]
   },
   es: {
     return: ["La página sigue hablando.", "La lista de casos de {host} sigue donde la dejaste. Un regreso en los próximos 30 días baja {percent}% el tarifario. La primera selección sigue en 19 USD antes de eso. Responde esta nota, o abre la revisión y córrela otra vez.", "Vuelve a la lista de casos"],
-    paid: ["Ya abriste la puerta.", "El primer pago de {host} quedó. Un pase de 30 días deja abiertos los informes guardados. Glance cuesta 15 USD. Un regreso también baja {percent}% el tarifario. Si quieres que te llamemos, responde y deja un número.", "Tu informe puede seguir abierto"],
+    paid: ["Ya abriste la puerta.", "El primer pago de {host} quedó. Un regreso en los próximos 30 días baja {percent}% el tarifario. Si quieres que te llamemos, responde y deja un número.", "Tu próxima revisión cuesta menos"],
     offer: ["Tres notas por semana, y después silencio.", "El regreso baja 10% la primera vez, 15% la segunda, y 20% desde la tercera. Ninguna selección queda bajo 9.50 USD. {host} se puede leer de nuevo cuando quieras.", "Hay un precio de regreso"]
   },
   pt: {
     return: ["A página ainda está falando.", "A lista de casos de {host} continua onde você a deixou. Uma volta em 30 dias tira {percent}% da tabela. A primeira seleção continua 19 USD antes disso. Responda, ou abra a revisão e rode de novo.", "Volte para a lista de casos"],
-    paid: ["Você já abriu a porta.", "O primeiro pagamento de {host} entrou. Um passe de 30 dias mantém os relatórios abertos. Glance custa 15 USD. A volta também tira {percent}% da tabela. Se quiser um retorno de chamada, responda e deixe um número.", "Seu relatório pode continuar aberto"],
+    paid: ["Você já abriu a porta.", "O primeiro pagamento de {host} entrou. Uma volta em 30 dias tira {percent}% da tabela. Se quiser um retorno de chamada, responda e deixe um número.", "Sua próxima revisão custa menos"],
     offer: ["Três notas por semana, depois silêncio.", "A volta tira 10% na primeira, 15% na segunda e 20% a partir da terceira. Nenhuma seleção fica abaixo de 9,50 USD. {host} pode ser lido de novo quando você quiser.", "Há um preço de volta"]
   },
   de: {
     return: ["Die Seite redet noch.", "Die Fallliste für {host} liegt noch da. Eine Rückkehr in 30 Tagen nimmt {percent}% von der Staffel. Die erste Auswahl bleibt 19 USD davor. Antworte auf diese Notiz, oder öffne die Prüfung erneut.", "Komm zurück zur Fallliste"],
-    paid: ["Die Tür ist schon offen.", "Die erste Zahlung für {host} ist da. Ein Pass für 30 Tage lässt die Berichte offen. Glance kostet 15 USD. Eine Rückkehr nimmt zusätzlich {percent}% von der Staffel. Wenn du einen Rückruf willst, antworte und lass eine Nummer da.", "Dein Bericht kann offen bleiben"],
+    paid: ["Die Tür ist schon offen.", "Die erste Zahlung für {host} ist da. Eine Rückkehr in 30 Tagen nimmt {percent}% von der Staffel. Wenn du einen Rückruf willst, antworte und lass eine Nummer da.", "Deine nächste Prüfung kostet weniger"],
     offer: ["Drei Notizen in der Woche, dann Ruhe.", "Die Rückkehr nimmt 10% beim ersten Mal, 15% beim zweiten und 20% ab dem dritten. Keine Auswahl fällt unter 9,50 USD. {host} kann wieder gelesen werden, wenn du soweit bist.", "Ein Rückkehrpreis wartet"]
   },
   fr: {
     return: ["La page parle encore.", "La liste de cas pour {host} est toujours là. Un retour dans les 30 jours retire {percent}% du barème. La première sélection reste à 19 USD avant cela. Répondez à cette note, ou ouvrez la revue à nouveau.", "Revenez à la liste de cas"],
-    paid: ["La porte est déjà ouverte.", "Le premier paiement pour {host} est passé. Un passe de 30 jours garde les rapports ouverts. Glance coûte 15 USD. Un retour retire aussi {percent}% du barème. Pour un rappel, répondez et laissez un numéro.", "Votre rapport peut rester ouvert"],
+    paid: ["La porte est déjà ouverte.", "Le premier paiement pour {host} est passé. Un retour dans les 30 jours retire {percent}% du barème. Pour un rappel, répondez et laissez un numéro.", "Votre prochaine revue coûte moins"],
     offer: ["Trois notes par semaine, puis le silence.", "Le retour retire 10% la première fois, 15% la deuxième, et 20% ensuite. Aucune sélection ne descend sous 9,50 USD. {host} peut être relu quand vous voulez.", "Un prix de retour attend"]
   },
   it: {
     return: ["La pagina sta ancora parlando.", "L'elenco dei casi per {host} è ancora lì. Un ritorno entro 30 giorni toglie il {percent}% dallo scaglione. La prima voce resta 19 USD prima di quello. Rispondi a questa nota, oppure apri di nuovo la revisione.", "Torna all'elenco dei casi"],
-    paid: ["La porta è già aperta.", "Il primo pagamento per {host} è arrivato. Un pass di 30 giorni tiene aperti i rapporti. Glance costa 15 USD. Un ritorno toglie anche il {percent}% dallo scaglione. Se vuoi una richiamata, rispondi e lascia un numero.", "Il rapporto può restare aperto"],
+    paid: ["La porta è già aperta.", "Il primo pagamento per {host} è arrivato. Un ritorno entro 30 giorni toglie il {percent}% dallo scaglione. Se vuoi una richiamata, rispondi e lascia un numero.", "La prossima revisione costa meno"],
     offer: ["Tre note a settimana, poi silenzio.", "Il ritorno toglie il 10% la prima volta, il 15% la seconda e il 20% dalla terza. Nessuna voce scende sotto 9,50 USD. {host} si può leggere di nuovo quando vuoi.", "C'è un prezzo di ritorno"]
   }
 };

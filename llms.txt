@@ -51,7 +51,6 @@ Case exports: automation scripts (ZIP, one suite per framework), Excel, TestRail
 
 The first selection is 19 USD. Further selections step down by 10, 15, 20, 25, 30, 35, then 40 percent.
 A return within 30 days takes another 10 percent off the first time, 15 percent the second, and 20 percent after that. A selection never falls under 9.50 USD.
-A 30-day history pass is Glance 15 USD, Return 49 USD, Bench 189 USD, or Studio 399 USD. These are 30-day passes, not a repeating charge. PayPal collects a payment. The amount is shown before the payer confirms.
 The included first completed review is 20 pages and 2 links deep.
 
 ## News
