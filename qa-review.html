@@ -306,13 +306,13 @@
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
-            --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76;
+            --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; --on-cyan: #fff;
             --green: #0f766e; --amber: #b45309; --red: #b42318;
             --frost: rgba(247, 248, 250, .92); --frost-blur: blur(10px);
         }
         html.dark-mode {
             --bg: #10161d; --panel: #161d26; --panel-2: #0c1118; --card: #1a2430;
-            --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb;
+            --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; --on-cyan: #10161d;
             --green: #5fb89a; --amber: #c4a574; --red: #e07a73;
             --frost: rgba(22, 29, 38, .92);
             color-scheme: dark;
@@ -530,8 +530,8 @@
         .cookie-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
         .cookie-actions button { border-radius: 999px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
         #cookie-necessary { background: transparent; color: var(--text); border: 1px solid var(--line); }
-        #cookie-allow { background: var(--cyan); color: #fff; border: 0; }
-        h1 { font-family: "Instrument Serif", "Source Serif 4", Georgia, serif; font-weight: 400; font-size: 2.4rem; margin: 0 0 8px; letter-spacing: -0.03em; }
+        #cookie-allow { background: var(--cyan); color: var(--on-cyan); border: 0; }
+        h1, #gate-title { font-family: "Instrument Serif", "Source Serif 4", Georgia, serif; font-weight: 400; font-size: 2.4rem; margin: 0 0 8px; letter-spacing: -0.03em; }
         .display { font-size: clamp(2.7rem, 5.4vw, 4.6rem); line-height: .9; letter-spacing: -0.035em; margin: 0 0 14px; }
         .display span { display: block; }
         .display-em { font-style: italic; color: var(--cyan); }
@@ -771,7 +771,7 @@
             html[data-look] .topbar #tour-start-btn { height: 34px; margin-left: 0; padding: 0 12px 0 32px; font-size: 12px; }
             main { padding: 12px 14px 96px; }
             .display { font-size: 2.15rem; }
-            h1 { font-size: 1.65rem; }
+            h1, #gate-title { font-size: 1.65rem; }
             .lede { font-size: 15px; margin-bottom: 12px; }
             .stage { gap: 8px; margin: 0; }
             .stage-art { height: 210px; }
@@ -861,7 +861,7 @@
         <div class="gate-head">
             <div>
                 <img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36">
-                <h1 id="gate-title">Before a single address is read.</h1>
+                <h2 id="gate-title">Before a single address is read.</h2>
             </div>
             <div class="lang-wrap notranslate" id="langWrapGate">
                 <button class="lang-toggle" id="langToggleGate" type="button" aria-label="Language">

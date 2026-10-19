@@ -103,7 +103,7 @@
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
             --line: #d5dce3; --text: #12181f; --muted: #4a5560; --blue: #0d6e76;
-            --cyan: #0d6e76; --purple: #3d7a82; --green: #0f766e; --amber: #b45309;
+            --cyan: #0d6e76; --on-cyan: #fff; --purple: #3d7a82; --green: #0f766e; --amber: #b45309;
             --red: #b42318; --jira: #0d6e76; --story: #5a9e7a;
             --topbar: #f7f8fa; --banner: #eef2f4; --col: #e8edf0;
             --nav-active: #d7ecee; --nav-active-text: #08545b;
@@ -117,7 +117,7 @@
         html.dark-mode {
             --bg: #10161d; --panel: #161d26; --panel-2: #0c1118; --card: #1a2430;
             --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --blue: #4db3bb;
-            --cyan: #4db3bb; --purple: #7aa8ad; --green: #5fb89a; --amber: #c4a574;
+            --cyan: #4db3bb; --on-cyan: #10161d; --purple: #7aa8ad; --green: #5fb89a; --amber: #c4a574;
             --red: #e07a73; --jira: #0d6e76; --story: #5a9e7a;
             --topbar: #0c1118; --banner: #121a22; --col: #0f172a;
             --nav-active: #1a3338; --nav-active-text: #fff;
@@ -139,6 +139,7 @@
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 42%, transparent); -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5); gap: 12px; flex-wrap: wrap; min-height: 56px; position: sticky; top: 0; z-index: 40; }
         .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-family: "Source Serif 4", Georgia, serif; }
         .brand small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; }
+        .brand h1 { margin: 0; font: inherit; }
         .agents { display: flex; gap: 8px; flex-wrap: wrap; }
         .agent { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
         .agent.active { border-color: var(--cyan); color: var(--agent-active-text); background: var(--agent-active-bg); }
@@ -182,7 +183,7 @@
         .ticket-key { font-family: "Fira Code", monospace; color: var(--muted); }
         .ticket-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
         .ticket-chips span { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: var(--panel-2); color: var(--muted); }
-        .avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--cyan); color: #fff; font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+        .avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--cyan); color: var(--on-cyan); font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
         .laser {
             pointer-events: none;
             position: absolute;
@@ -524,7 +525,7 @@
 <header class="topbar">
     <div class="brand">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#0d6e76"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="2"/></svg>
-        <div>PayStream · QA Studio<small>Active sprint board · 4 specialized agents</small></div>
+        <h1>PayStream · QA Studio<small>Active sprint board · 4 specialized agents</small></h1>
     </div>
     <div class="agents" id="agentPills"></div>
     <div class="actions">
@@ -2091,7 +2092,7 @@ function columnMarkup(cardFor) {
         const items = ticketsInView().filter(t => t.column === stage);
         const cards = items.map(t => cardFor(t, stage)).join('');
         const tone = board.tones[stage];
-        return `<div class="col" style="--col-accent:${tone}"><h3><span>${board.columns[stage]}</span><span class="col-count">${items.length}</span></h3><div class="col-body">${cards || '<div class="col-empty">Empty</div>'}</div></div>`;
+        return `<div class="col" style="--col-accent:${tone}"><h3><span>${board.columns[stage]}</span><span class="col-count">${items.length}</span></h3><div class="col-body" tabindex="0" aria-label="${board.columns[stage]}">${cards || '<div class="col-empty">Empty</div>'}</div></div>`;
     }).join('');
 }
 

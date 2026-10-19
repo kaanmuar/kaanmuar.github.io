@@ -123,7 +123,7 @@
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
-            --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76;
+            --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; --on-cyan: #fff;
             --green: #0f766e; --amber: #b45309; --red: #b42318;
             --topbar: #f7f8fa; --console: #12181f; --console-text: #8fd0d5;
             --frost: color-mix(in srgb, var(--panel) 82%, white);
@@ -131,7 +131,7 @@
         }
         html.dark-mode {
             --bg: #10161d; --panel: #161d26; --panel-2: #0c1118; --card: #1a2430;
-            --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb;
+            --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; --on-cyan: #10161d;
             --green: #5fb89a; --amber: #c4a574; --red: #e07a73;
             --topbar: #0c1118; --console: #020617; --console-text: #8fd0d5;
             --frost: color-mix(in srgb, var(--panel) 58%, #6d7c8c);
@@ -309,7 +309,8 @@
             display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line);
             border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer;
         }
-        .fw-picker label.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
+        .fw-picker label.on { background: var(--cyan); color: var(--on-cyan); border-color: var(--cyan); }
+        .lab-main { display: contents; }
         .fw-picker label.is-running { box-shadow: 0 0 0 2px #e8b84a; }
         .fw-picker .runner-live {
             display: inline-flex; align-items: center; gap: 4px; font-style: normal;
@@ -318,7 +319,7 @@
         .fw-picker input { accent-color: #fff; }
         .runner-edge {
             position: fixed; right: 0; top: 42%; z-index: 35; border: 0; border-radius: 8px 0 0 8px;
-            background: var(--cyan); color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .04em;
+            background: var(--cyan); color: var(--on-cyan); font-weight: 700; font-size: 12px; letter-spacing: .04em;
             padding: 12px 8px; cursor: pointer; writing-mode: vertical-rl;
         }
         .runner-edge.is-running { background: #6a4a08; box-shadow: -4px 0 0 #e8b84a; }
@@ -541,6 +542,7 @@
         <button class="btn btn-primary" id="run-all" data-guide="5" type="button">Run full catalog</button>
     </div>
 </header>
+<main class="lab-main">
 <div class="toolrow" id="lab-tools">
     <a class="btn btn-ghost" id="suite-repo" href="https://github.com/kaanmuar/kaanmuar.github.io" target="_blank" rel="noopener noreferrer">Suite repo</a>
     <a class="btn btn-ghost" id="studio-link" href="simulador.html">Sprint studio</a>
@@ -597,6 +599,7 @@
         </div>
     </div>
 </div>
+</main>
 <button class="runner-edge" id="runner-edge" type="button">Runners</button>
 <aside id="runner-drawer" class="runner-drawer" aria-label="Native runner views">
     <div class="stage-head">
