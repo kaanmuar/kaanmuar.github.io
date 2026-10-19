@@ -1734,16 +1734,19 @@
     },
     {
       id: 'FN-42', layer: 'Functional', fw: ['Playwright', 'Cypress'],
-      title: 'The lab offers JMeter and Gatling with the browser runners',
+      title: 'The lab offers all 20 frameworks, load tools included',
       where: 'qa-lab.html #fw-picker',
       when: 'The lab has painted the runner list.',
-      how: 'The picker includes Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, and Gatling.',
+      how: 'The picker lists Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6, each with its logo.',
       async run({ loadCv }) {
         const lab = await loadCv('qa-lab.html');
-        const names = [...lab.document.querySelectorAll('#fw-picker input')].map((el) => el.value);
-        ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'Appium', 'JMeter', 'Gatling'].forEach((name) => {
+        const labels = [...lab.document.querySelectorAll('#fw-picker label')];
+        const names = labels.map((el) => (el.querySelector('input') || {}).value);
+        ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'CodeceptJS', 'Selenide', 'TestNG', 'Watir', 'Cucumber', 'Behave', 'Reqnroll', 'Jest', 'Vitest', 'Mocha', 'Appium', 'Maestro', 'JMeter', 'Gatling', 'k6'].forEach((name) => {
           assert(names.includes(name), name + ' missing from the lab');
         });
+        const bare = labels.filter((el) => !el.querySelector('img.fw-logo')).length;
+        assert(bare === 0, bare + ' runner(s) without a logo');
         return names.length + ' runners';
       }
     },
@@ -1798,24 +1801,24 @@
   const REPO = 'https://github.com/kaanmuar/kaanmuar.github.io';
   const BRANCH = 'main';
   const LAB_LINE = {
-    'SMK-01': 33, 'SMK-02': 45,
-    'FN-01': 58, 'FN-02': 76, 'FN-03': 98, 'FN-04': 111, 'FN-05': 126,     'FN-06': 139, 'FN-15': 160, 'FN-16': 181, 'FN-17': 196, 'FN-18': 214, 'FN-19': 231,
-    'FN-20': 247, 'FN-21': 263, 'FN-22': 280,
-    'FN-07': 298, 'FN-08': 313, 'FN-09': 328, 'FN-10': 341, 'FN-11': 353, 'FN-12': 366,
-    'FN-13': 379, 'FN-14': 399,
-    'FN-23': 917, 'FN-24': 937, 'FN-25': 956, 'FN-26': 997, 'FN-27': 1020, 'FN-28': 1045,
-    'FN-29': 1139, 'FN-30': 1159, 'FN-31': 1186, 'FN-32': 1199, 'FN-33': 1228, 'FN-34': 1292,
-    'STU-04': 1217, 'STU-05': 1248, 'STU-06': 1263, 'STU-07': 1278,
-    'SEC-01': 426, 'SEC-02': 441, 'SEC-03': 458, 'SEC-04': 470, 'SEC-05': 487, 'SEC-06': 500,
-    'SEC-07': 516, 'SEC-08': 530,
-    'A11Y-01': 684, 'A11Y-02': 701, 'A11Y-03': 713, 'A11Y-04': 728, 'A11Y-05': 749, 'A11Y-06': 770,
-    'ADM-01': 591, 'ADM-02': 604, 'ADM-03': 617,
-    'STU-01': 630, 'STU-02': 643, 'STU-03': 658,
-    'MOB-01': 500, 'MOB-02': 518, 'MOB-03': 532, 'MOB-04': 553, 'MOB-05': 570, 'MOB-06': 588,
+    'SMK-01': 219, 'SMK-02': 231,
+    'FN-01': 244, 'FN-02': 262, 'FN-03': 280, 'FN-04': 301, 'FN-05': 316,     'FN-06': 329, 'FN-15': 350, 'FN-16': 371, 'FN-17': 386, 'FN-18': 404, 'FN-19': 421,
+    'FN-20': 437, 'FN-21': 453, 'FN-22': 470,
+    'FN-07': 490, 'FN-08': 505, 'FN-09': 520, 'FN-10': 533, 'FN-11': 545, 'FN-12': 558,
+    'FN-13': 571, 'FN-14': 591,
+    'FN-23': 1045, 'FN-24': 1065, 'FN-25': 1084, 'FN-26': 1125, 'FN-27': 1148, 'FN-28': 1173,
+    'FN-29': 1262, 'FN-30': 1282, 'FN-31': 1309, 'FN-32': 1322, 'FN-33': 1359, 'FN-34': 1422,
+    'STU-04': 1344, 'STU-05': 1377, 'STU-06': 1392, 'STU-07': 1407,
+    'SEC-01': 621, 'SEC-02': 636, 'SEC-03': 654, 'SEC-04': 666, 'SEC-05': 683, 'SEC-06': 696,
+    'SEC-07': 712, 'SEC-08': 734,
+    'A11Y-01': 751, 'A11Y-02': 768, 'A11Y-03': 780, 'A11Y-04': 795, 'A11Y-05': 816, 'A11Y-06': 837,
+    'ADM-01': 855, 'ADM-02': 868, 'ADM-03': 881,
+    'STU-01': 894, 'STU-02': 907, 'STU-03': 922,
+    'MOB-01': 937, 'MOB-02': 955, 'MOB-03': 969, 'MOB-04': 990, 'MOB-05': 1007, 'MOB-06': 1026,
     'PERF-01': 1437, 'PERF-02': 1447, 'PERF-03': 1457, 'PERF-04': 1467,
     'SMK-03': 1479, 'SEC-09': 1512, 'FN-35': 1540, 'FN-36': 1557, 'FN-37': 1577, 'FN-38': 1613, 'STU-08': 1645, 'STU-09': 1667,
     'FN-39': 1689, 'FN-40': 1704, 'FN-41': 1723, 'FN-42': 1736,
-    'PERF-05': 1751, 'PERF-06': 1761, 'PERF-07': 1773, 'PERF-08': 1785
+    'PERF-05': 1754, 'PERF-06': 1764, 'PERF-07': 1776, 'PERF-08': 1788
   };
   const SRC = {
     'SMK-01': { Playwright: ['tests/smoke.spec.js', 5] },
@@ -1897,10 +1900,25 @@
     Selenium: 'selenium',
     WebDriverIO: 'wdio',
     Appium: 'appium',
+    Maestro: 'maestro/flows',
     k6: 'k6',
     JMeter: 'jmeter',
     Gatling: 'gatling'
   };
+
+  const CATALOG_SUITE = {
+    CodeceptJS: 'codeceptjs/catalog_test.js',
+    Selenide: 'selenide/src/test/java/lab/CatalogSelenideTest.java',
+    TestNG: 'testng/src/test/java/lab/CatalogTestNgTest.java',
+    Watir: 'watir/spec/catalog_spec.rb',
+    Cucumber: 'cucumber/features/catalog.feature',
+    Behave: 'behave/features/catalog.feature',
+    Reqnroll: 'reqnroll/Features/Catalog.feature',
+    Jest: 'jest/catalog.test.js',
+    Vitest: 'vitest/catalog.test.mjs',
+    Mocha: 'mocha/catalog.spec.js'
+  };
+  Object.keys(CATALOG_SUITE).forEach((fw) => { FW_TREE[fw] = CATALOG_SUITE[fw].split('/')[0]; });
 
   const NATIVE_SPEC = {
     Selenium: {
@@ -1920,9 +1938,12 @@
     }
   };
 
-  const ALL_FW = ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'Appium', 'JMeter', 'Gatling'];
-  const LOAD_FW = ['JMeter', 'Gatling'];
+  const BROWSER_FW = ['Selenium', 'WebDriverIO'].concat(Object.keys(CATALOG_SUITE));
+  const MOBILE_FW = ['Appium', 'Maestro'];
+  const LOAD_FW = ['JMeter', 'Gatling', 'k6'];
+  const ALL_FW = ['Playwright', 'Cypress', 'Robot'].concat(BROWSER_FW, MOBILE_FW, LOAD_FW);
   const FW_SEEN = 'qa-lab-frameworks-load';
+  const FW_SEEN_20 = 'qa-lab-frameworks-20';
   const BASE_BROWSERS = [
     { id: 'chrome', label: 'Chrome' },
     { id: 'firefox', label: 'Firefox' },
@@ -1937,12 +1958,9 @@
 
   function runnersFor(c) {
     const list = c.fw.slice();
-    if (c.layer === 'Mobile') {
-      if (!list.includes('Appium')) list.push('Appium');
-    } else if (list.includes('Playwright')) {
-      if (!list.includes('Selenium')) list.push('Selenium');
-      if (!list.includes('WebDriverIO')) list.push('WebDriverIO');
-    }
+    const add = (name) => { if (!list.includes(name)) list.push(name); };
+    if (list.includes('Playwright')) BROWSER_FW.forEach(add);
+    if (c.layer === 'Mobile') MOBILE_FW.forEach(add);
     return list;
   }
 
@@ -1951,35 +1969,39 @@
       const saved = JSON.parse(localStorage.getItem(FW_KEY) || 'null');
       if (Array.isArray(saved) && saved.length) {
         const known = saved.filter((name) => ALL_FW.includes(name));
-        if (!localStorage.getItem(FW_SEEN)) {
-          LOAD_FW.forEach((name) => { if (!known.includes(name)) known.push(name); });
-          localStorage.setItem(FW_KEY, JSON.stringify(known));
+        if (!localStorage.getItem(FW_SEEN) || !localStorage.getItem(FW_SEEN_20)) {
+          const added = (localStorage.getItem(FW_SEEN) ? [] : ['JMeter', 'Gatling']).concat(BROWSER_FW.slice(2), 'Maestro', 'k6');
+          added.forEach((name) => { if (!known.includes(name)) known.push(name); });
+          localStorage.setItem(FW_KEY, JSON.stringify(ALL_FW.filter((name) => known.includes(name))));
           localStorage.setItem(FW_SEEN, '1');
+          localStorage.setItem(FW_SEEN_20, '1');
         }
-        return known;
+        return ALL_FW.filter((name) => known.includes(name));
       }
     } catch (err) { /* ignore */ }
     return ALL_FW.slice();
   }
 
-  const FW_MARK = {
-    Lab: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.4 10.6 3.8 8l-1.1 1.1 3.7 3.7 7-7-1.1-1.1z"/></svg>',
-    Playwright: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2.2 11.6 8 1.8l5.8 9.8H2.2zm5.8-6.2 2.6 4.4H5.4L8 5.4z"/></svg>',
-    Cypress: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.4a6.6 6.6 0 1 0 0 13.2A6.6 6.6 0 0 0 8 1.4zm0 1.6c1.8 1.5 2.8 3.2 2.8 5s-1 3.5-2.8 5c-1.8-1.5-2.8-3.2-2.8-5s1-3.5 2.8-5z"/></svg>',
-    Robot: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M7.2 1.6h1.6V3h1.8A1.6 1.6 0 0 1 12.2 4.6v4.2A1.6 1.6 0 0 1 10.6 10.4H5.4A1.6 1.6 0 0 1 3.8 8.8V4.6A1.6 1.6 0 0 1 5.4 3h1.8V1.6zM6 6.1a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zm4 0a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8zM6.2 12h3.6v1.4H6.2z"/></svg>',
-    Selenium: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 2.2 4.4v7.2L8 14.8l5.8-3.2V4.4L8 1.2zm0 2.1 3.6 2v4.2L8 11.5 4.4 9.5V5.3L8 3.3z"/></svg>',
-    WebDriverIO: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 3.2h12v1.6H2zm0 4h8v1.6H2zm0 4h10v1.6H2z"/></svg>',
-    Appium: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5 1.4h6v1.2H5zM4 3.2h8a1 1 0 0 1 1 1v8.2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4.2a1 1 0 0 1 1-1zm3 9.2h2v.8H7z"/></svg>',
-    k6: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 2.2a5.8 5.8 0 0 0-5.6 7.3h1.7A4.2 4.2 0 0 1 8 3.8a4.2 4.2 0 0 1 3.9 5.7h1.7A5.8 5.8 0 0 0 8 2.2zM7.2 8.6 11 5.4l.8 1-3.2 2.8H7.2z"/></svg>',
-    JMeter: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M3 2.2h10v2H3zm0 4.6h7v2H3zm0 4.6h10v2H3z"/></svg>',
-    Gatling: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2.2 12.6 8 2.4l5.8 10.2H2.2zm5.8-6.4 2.2 3.8H5.8L8 6.2z"/></svg>'
+  const LAB_MARK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.4 10.6 3.8 8l-1.1 1.1 3.7 3.7 7-7-1.1-1.1z"/></svg>';
+  const FW_LOGO = {
+    Playwright: 'playwright.svg', Cypress: 'cypress.svg', Robot: 'robot.svg', Selenium: 'selenium.svg', WebDriverIO: 'webdriverio.svg',
+    CodeceptJS: 'codeceptjs.svg', Selenide: 'selenide.svg', TestNG: 'testng.svg', Watir: 'watir.png', Cucumber: 'cucumber.svg',
+    Behave: 'behave.png', Reqnroll: 'reqnroll.png', Jest: 'jest.svg', Vitest: 'vitest.svg', Mocha: 'mocha.svg',
+    Appium: 'appium.svg', Maestro: 'maestro.png', JMeter: 'jmeter.svg', Gatling: 'gatling.svg', k6: 'k6.svg'
   };
+
+  function fwMark(name, lazy) {
+    if (name === 'Lab') return LAB_MARK;
+    return FW_LOGO[name] ? '<img class="fw-logo" src="assets/frameworks/' + FW_LOGO[name] + '?v=20261022" alt="" width="14" height="14" decoding="async"' + (lazy ? ' loading="lazy"' : '') + '>' : '';
+  }
 
   function sourceEntries(c) {
     const items = [{ label: 'Lab', href: blob('js/qa-lab.js', LAB_LINE[c.id]) }];
     const row = SRC[c.id] || {};
     runnersFor(c).forEach((fw) => {
       if (row[fw]) items.push({ label: fw, href: blob(row[fw][0], row[fw][1]) });
+      else if (fw === 'Maestro') items.push({ label: fw, href: blob('maestro/flows/' + c.id.toLowerCase() + '.yaml') });
+      else if (CATALOG_SUITE[fw]) items.push({ label: fw, href: blob(CATALOG_SUITE[fw]) });
       else if (NATIVE_SPEC[fw] && NATIVE_SPEC[fw][c.layer]) items.push({ label: fw, href: blob(NATIVE_SPEC[fw][c.layer]) });
       else items.push({ label: fw, href: REPO + '/tree/' + BRANCH + '/' + FW_TREE[fw] });
     });
@@ -1988,7 +2010,7 @@
 
   function sourceHtml(c, extraClass) {
     return `<span class="src-links ${extraClass || ''}">${sourceEntries(c).map((item) =>
-      `<a class="src-link" href="${item.href}" target="_blank" rel="noopener noreferrer">${FW_MARK[item.label] || ''}<span>${item.label}</span></a>`
+      `<a class="src-link" href="${item.href}" target="_blank" rel="noopener noreferrer">${fwMark(item.label, true)}<span class="notranslate" translate="no">${item.label === 'WebDriverIO' ? 'WebdriverIO' : item.label}</span></a>`
     ).join('')}</span>`;
   }
 
@@ -2658,9 +2680,21 @@
       { name: 'Robot', color: '#c4a574' },
       { name: 'Selenium', color: '#43b02a' },
       { name: 'WebDriverIO', color: '#ea5907' },
+      { name: 'CodeceptJS', color: '#805ad5' },
+      { name: 'Selenide', color: '#2b8a3e' },
+      { name: 'TestNG', color: '#c92a2a' },
+      { name: 'Watir', color: '#1c7ed6' },
+      { name: 'Cucumber', color: '#23a050' },
+      { name: 'Behave', color: '#5c7cfa' },
+      { name: 'Reqnroll', color: '#82a90b' },
+      { name: 'Jest', color: '#99425b' },
+      { name: 'Vitest', color: '#729b1b' },
+      { name: 'Mocha', color: '#8d6748' },
       { name: 'Appium', color: '#662d91' },
+      { name: 'Maestro', color: '#343a40' },
       { name: 'JMeter', color: '#d22128' },
-      { name: 'Gatling', color: '#e85d04' }
+      { name: 'Gatling', color: '#e85d04' },
+      { name: 'k6', color: '#7d64ff' }
     ];
     const chosen = readFrameworks();
     const summaries = (typeof Lab !== 'undefined' && Lab.nativeSummaries) || {};
@@ -2686,7 +2720,7 @@
       const detail = row.ran
         ? row.passed + '/' + row.ran + ' ' + (copy ? copy.passedOf : 'passed') + ' · ' + row.rate + '% · avg ' + row.avg + ' ms'
         : (copy ? copy.mirroredOnly : 'no native log yet');
-      line.innerHTML = '<strong>' + row.name + '</strong><div class="fw-track"><span style="width:' + width + '%;background:' + row.color + '"></span></div><span class="fw-meta">' + detail + '</span>';
+      line.innerHTML = '<strong>' + (row.name === 'WebDriverIO' ? 'WebdriverIO' : row.name) + '</strong><div class="fw-track"><span style="width:' + width + '%;background:' + row.color + '"></span></div><span class="fw-meta">' + detail + '</span>';
       wrap.appendChild(line);
     });
     if (fastest) {
@@ -2892,7 +2926,7 @@
       const result = this.results.find((r) => r.id === c.id);
       el.innerHTML = `
         <h3>${c.id} · ${c.title}</h3>
-        <p class="muted">${runnersFor(c).join(' · ')}</p>
+        <p class="muted notranslate" translate="no">${runnersFor(c).map((name) => this.fwLabel(name)).join(' · ')}</p>
         ${sourceHtml(c, 'src-links-detail')}
         <dl class="spec">
           <dt>Where</dt><dd>${c.where}</dd>
@@ -3184,10 +3218,9 @@
       const ask = document.getElementById('fw-ask');
       if (!list || !ask || !browsers || !devices) return;
       const chosen = new Set(this.selectedFrameworks());
-      list.innerHTML = ALL_FW.map((name) => {
-        const label = name === 'WebDriverIO' ? 'WebdriverIO' : name;
-        return '<label class="' + (chosen.has(name) ? 'on' : '') + '"><input type="checkbox" value="' + name + '"' + (chosen.has(name) ? ' checked' : '') + '> ' + label + '</label>';
-      }).join('');
+      list.innerHTML = ALL_FW.map((name) =>
+        '<label class="' + (chosen.has(name) ? 'on' : '') + '"><input type="checkbox" value="' + name + '"' + (chosen.has(name) ? ' checked' : '') + '> ' + fwMark(name) + this.fwLabel(name) + '</label>'
+      ).join('');
       let targets = {
         browsers: BASE_BROWSERS.slice(),
         devices: BASE_DEVICES.slice(),
@@ -3604,17 +3637,17 @@
         steps: [
           { selector: '#case-list', title: 'The catalog', body: 'Every check is a row: where it looks, when it runs, and how it asserts. Rows cover the pages, every language, the message form, the photo dialog, the studio board, the clip pages, and the load budget. A pulse marks the control for this step. The chips under the row open that same case in the lab and in each runner on GitHub.', demoMs: 1800 },
           { selector: '.filters', title: 'Filter by type', body: 'Smoke, Functional, Security, A11y, Admin, Studio, Mobile, or Performance. Run filtered runs only the rows still on screen.', demoMs: 1500 },
-          { selector: '#case-list .src-links', title: 'Scripts and cases', body: 'Each chip is a real file: the lab check, then Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, k6, JMeter, or Gatling. JMeter and Gatling are runners on the right edge, the same way the browser frameworks are. Click a chip to open that script.', demoMs: 1600 },
+          { selector: '#case-list .src-links', title: 'Scripts and cases', body: 'Each chip is a real file: the lab check, then Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, or k6. Load tools are runners on the right edge, the same way the browser frameworks are. Click a chip to open that script.', demoMs: 1600 },
           { selector: '#langWrap', title: 'Language', body: 'A language chosen here is the language on the CV, the studio, this lab, and admin. The same choice sticks when you move between them.', demoMs: 1600 },
           { selector: '#suite-repo', title: 'Suite repo', body: 'Suite repo opens the GitHub project that holds these checks. The chips on each row jump to the file. This link opens the whole project.', demoMs: 1400 },
           { selector: '#studio-link', title: 'Sprint studio', body: 'Sprint studio opens the four-agent board. Board chips include Linear, and the sprint chips include Backlog. The language you picked here is the language the studio opens in.', demoMs: 1400 },
           { selector: '.kpis', title: 'Suite run indicators', body: 'Passed, failed, skipped, and duration update as the catalog runs. They are the totals for this session, before the dashboard charts.', demoMs: 1500 },
           { selector: '.pace', title: 'Pace', body: 'The line runs from faster on the left to slower on the right. 0.5 holds the least between actions, 2.0 holds the most, so a first look is easier on the right.', demoMs: 1500 },
           { selector: '#view-slider', title: 'Watch or Background', body: 'The slider keeps one side on. Watch shows the live page. Background is the idle side until you choose it, and then the checks run off-screen.', demoMs: 1600 },
-          { selector: '#fw-picker', title: 'Which runners', body: 'Leave on the frameworks you want this pass to show: Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling, or several. JMeter and Gatling load the pages on the local server. A run with none selected waits until you pick one.', demoMs: 1700 },
+          { selector: '#fw-picker', title: 'Which runners', body: 'Leave on the frameworks you want this pass to show. All 20 start selected: browser suites, Appium and Maestro for the phone rows, and JMeter, Gatling, and k6 for the load rows on the local server. A run with none selected waits until you pick one.', demoMs: 1700 },
           { selector: '#run-all', title: 'Run', body: 'Run this case, Run filtered, or Run full catalog. The active row stays in view while the checks proceed.', demoMs: 1600 },
           { selector: '#sut-wrap', title: 'Live system under test', body: 'The frame is the real CV, studio, or admin page. The checks act here, then the log under the frame records each one.', demoMs: 4000, preview: 'lab' },
-          { selector: '#runner-drawer', title: 'Native runners', body: 'Open Runners on the right edge. Each tab streams that framework’s own process across the catalog, in the browsers and devices chosen in the ask. The selected frameworks run at the same time. The drawer stays on the open tab, and every running chip stays marked Running. A result from one is not copied into the others.', demoMs: 1800, prepare: () => { if (global.QALab) global.QALab.openRunners(); } },
+          { selector: '#runner-drawer', title: 'Native runners', body: 'Open Runners on the right edge. Each tab streams that framework’s own process across the catalog, in the browsers and devices chosen in the ask. Four frameworks run at the same time and the rest wait their turn. The drawer stays on the open tab, and every running chip stays marked Running. A result from one is not copied into the others.', demoMs: 1800, prepare: () => { if (global.QALab) global.QALab.openRunners(); } },
           { selector: '#lab-observer', title: 'Observer', body: 'During a run this note watches for a frozen page, explains a failed check, and looks to see that the report is actually on screen. It never marks a case passed or failed.', demoMs: 1600 },
           { selector: '#report-open', title: 'Report file', body: 'Report opens the file options. English is the default. Pick another language, leave the graphs on, check the preview, then download or print.', demoMs: 1500 },
           { selector: '#dash-open', title: 'Dashboard', body: 'When the run finishes, the dashboard opens: charts, this session’s report, and the run history. Select past runs to download, print, or compare.', demoMs: 1800 },
@@ -3688,7 +3721,7 @@
       if (!host) return;
       const chosen = new Set(readFrameworks());
       host.innerHTML = '<span class="pace-label">Run with</span>' + ALL_FW.map((name) =>
-        '<label class="' + (chosen.has(name) ? 'on' : '') + '"><input type="checkbox" value="' + name + '"' + (chosen.has(name) ? ' checked' : '') + '> ' + (name === 'WebDriverIO' ? 'WebdriverIO' : name) + '</label>'
+        '<label class="' + (chosen.has(name) ? 'on' : '') + '"><input type="checkbox" value="' + name + '"' + (chosen.has(name) ? ' checked' : '') + '> ' + fwMark(name) + this.fwLabel(name) + '</label>'
       ).join('');
       host.querySelectorAll('input').forEach((box) => {
         box.addEventListener('change', () => this.saveFrameworks());
@@ -3742,7 +3775,7 @@
         const cls = (name === current ? 'on' : '') + (running ? ' is-running' : '');
         return '<button type="button" role="tab" data-runner="' + name + '" class="' + cls.trim() + '" aria-selected="' + (name === current ? 'true' : 'false') + '" aria-label="' + label + (running ? ', running' : '') + '">'
           + (running ? '<i class="runner-dot" aria-hidden="true"></i>' : '')
-          + '<span>' + label + '</span>'
+          + fwMark(name) + '<span>' + label + '</span>'
           + (running ? '<em class="runner-live">Running</em>' : '')
           + '</button>';
       }).join('') || '<span class="muted">Pick at least one runner.</span>';
@@ -3867,9 +3900,21 @@
         Robot: 'robot',
         Selenium: 'mocha selenium',
         WebDriverIO: 'wdio run',
+        CodeceptJS: 'codeceptjs run --config codeceptjs/codecept.conf.js',
+        Selenide: 'mvn -f selenide/pom.xml test',
+        TestNG: 'mvn -f testng/pom.xml test',
+        Watir: 'bundle exec rspec watir/spec/catalog_spec.rb',
+        Cucumber: 'cucumber-js cucumber/features/catalog.feature',
+        Behave: 'behave behave/features',
+        Reqnroll: 'dotnet test reqnroll/CatalogLab.csproj',
+        Jest: 'jest --config jest/jest.config.js',
+        Vitest: 'vitest run --config vitest/vitest.config.mjs',
+        Mocha: 'mocha mocha/catalog.spec.js',
         Appium: 'appium + wdio',
+        Maestro: 'maestro test maestro/flows --headless',
         JMeter: 'jmeter -n -t jmeter/load.jmx',
-        Gatling: 'mvn gatling:test'
+        Gatling: 'mvn gatling:test',
+        k6: 'k6 run k6/load.js'
       }[name] || name;
       const lines = this.nativeLogs[name] || [];
       const blocks = ['<div>' + esc(banner) + '</div>'];
@@ -3898,7 +3943,8 @@
         WebDriverIO: ['WebdriverIO', 'Process log'],
         Appium: ['Appium', 'Process log'],
         JMeter: ['JMeter', 'Process log'],
-        Gatling: ['Gatling', 'Process log']
+        Gatling: ['Gatling', 'Process log'],
+        k6: ['Grafana k6', 'Process log']
       };
       const pair = titles[name] || [name, 'Process log'];
       const klass = {
@@ -3907,9 +3953,21 @@
         Robot: 'runner-robot',
         Selenium: 'runner-ide',
         WebDriverIO: 'runner-wdio',
+        CodeceptJS: 'runner-play',
+        Jest: 'runner-play',
+        Vitest: 'runner-play',
+        Mocha: 'runner-play',
+        Cucumber: 'runner-cy',
+        Selenide: 'runner-ide',
+        TestNG: 'runner-ide',
+        Watir: 'runner-ide',
+        Behave: 'runner-robot',
+        Reqnroll: 'runner-robot',
         Appium: 'runner-appium',
+        Maestro: 'runner-appium',
         JMeter: 'runner-jmeter',
-        Gatling: 'runner-gatling'
+        Gatling: 'runner-gatling',
+        k6: 'runner-jmeter'
       }[name] || 'runner-play';
       return '<div class="runner-split ' + klass + '"><section class="runner-cases"><b>' + pair[0] + '</b><ul>' + items.join('') + '</ul></section><section class="runner-console" aria-label="' + pair[1] + '"><b>' + pair[1] + '</b><div class="runner-log">' + this.runnerConsole(name) + '</div></section></div>';
     },

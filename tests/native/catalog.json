@@ -80,7 +80,7 @@
   {"id":"FN-39","layer":"Functional","title":"Portrait and footer seals show the same trademark","path":"index.html","phone":false},
   {"id":"FN-40","layer":"Functional","title":"Golden Gate is the look unless one was kept","path":"index.html","phone":false},
   {"id":"FN-41","layer":"Functional","title":"Footer Download PDF is a direct file link","path":"index.html","phone":false},
-  {"id":"FN-42","layer":"Functional","title":"The lab offers JMeter and Gatling with the browser runners","path":"qa-lab.html","phone":false},
+  {"id":"FN-42","layer":"Functional","title":"The lab offers all 20 frameworks, load tools included","path":"qa-lab.html","phone":false},
   {"id":"PERF-05","layer":"Performance","title":"Favicon answers inside the latency budget","path":"index.html","phone":false},
   {"id":"PERF-06","layer":"Performance","title":"CV layout and the shared look answer inside the latency budget","path":"index.html","phone":false},
   {"id":"PERF-07","layer":"Performance","title":"robots.txt and the sitemap answer inside the latency budget","path":"index.html","phone":false},

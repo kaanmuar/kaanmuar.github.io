@@ -28,4 +28,8 @@ function record(framework, test) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-module.exports = { record, reset };
+function recordCase(framework, title, ok, ms, error) {
+  record(framework, { title, state: ok ? 'passed' : 'failed', duration: ms, err: ok ? null : { message: String(error || 'failed').split('\n')[0] } });
+}
+
+module.exports = { record, recordCase, reset };

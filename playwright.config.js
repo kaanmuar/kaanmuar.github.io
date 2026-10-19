@@ -20,7 +20,7 @@ module.exports = defineConfig({
     ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {})
   },
   webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
-    command: `python3 -m http.server ${port}`,
+    command: `python3 scripts/static-server.py ${port}`,
     url: baseURL,
     reuseExistingServer: true,
     timeout: 15000

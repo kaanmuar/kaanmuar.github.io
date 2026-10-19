@@ -23,5 +23,6 @@ function decorate(row) {
 const ALL = catalog.map(decorate);
 const wanted = wantedSet();
 const CASES = ALL.filter((item) => !wanted.size || wanted.has(item.id));
+const BROWSER_CASES = CASES.filter((item) => item.layer !== 'Performance');
 
-module.exports = { ALL, CASES, catalog };
+module.exports = { ALL, CASES, BROWSER_CASES, catalog };

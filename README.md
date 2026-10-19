@@ -42,7 +42,7 @@ The same cases the public suites cover, runnable in the browser against an ifram
 * The catalog scrolls the running case into view. **Dashboard** opens as a splash (close, Escape, or backdrop).
 * Filters include Smoke, Functional, Security, A11y, Admin, Studio, Mobile, and Performance.
 * **Report** opens the file options before anything is printed. English is the default language. Graphs, case lines, and the runner comparison are included. Saved runs can be selected, downloaded, printed, or compared.
-* **Runners** on the right edge streams each framework’s own process log. Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, and Gatling are separate suites. Before a run, the ask picks browsers and a screen size. The selected frameworks run at the same time. JMeter and Gatling load the pages with 8 virtual users for 20 seconds and write their own result file. The drawer stays on the open tab, and every running **Run with** chip stays marked **Running**. The lab does not copy one result into the other tabs. `npm run lab:runners` starts the local process bridge.
+* **Runners** on the right edge streams each framework’s own process log. All 20 frameworks are separate suites: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6. Before a run, the ask picks browsers and a screen size. Four frameworks run at the same time (`LAB_PARALLEL` changes that) and the rest wait their turn. JMeter, Gatling, and k6 load the pages with 8 virtual users for 20 seconds and write their own result file. Maestro runs the phone rows in Chromium at 390 x 844 through `tests/native/phone-harness.html`. The drawer stays on the open tab, and every running **Run with** chip stays marked **Running**. The lab does not copy one result into the other tabs. `npm run lab:runners` starts the local process bridge.
 * **Observer** sits under the live page. It watches for a frozen page, explains a failed check, and checks that the report is on screen. It does not mark a case passed or failed. A connected model can write that note. Without one, the note stays structural.
 * A lab tour (`hasSeenLabTour`) walks the catalog, filters, scripts, language, suite repo, sprint studio, indicators, pace, watch or background, which runners, run, the live page, the native runner logs, the observer, the report file, the dashboard, and how to open the tour again. A pulse marks each step. **Live system under test** plays a 4-second clip of checks turning green.
 
@@ -61,20 +61,24 @@ The same cases the public suites cover, runnable in the browser against an ifram
 | :------------ | :------------------------------------------------------ |
 | **Frontend** | `HTML5`, `CSS3`, `Vanilla JavaScript (ES6 modules)`, `Tailwind CSS v4` |
 | **Backend** | `Firebase (Authentication, Firestore, Storage)` |
-| **Testing** | `Playwright`, `Cypress`, `Robot Framework`, `Selenium WebDriver`, `WebdriverIO`, `Appium`, `k6`, `JMeter`, and `Gatling` (each has its own suite and log) |
+| **Testing** | `Playwright`, `Cypress`, `Robot Framework`, `Selenium WebDriver`, `WebdriverIO`, `CodeceptJS`, `Selenide`, `TestNG`, `Watir`, `Cucumber`, `Behave`, `Reqnroll`, `Jest`, `Vitest`, `Mocha`, `Appium`, `Maestro`, `k6`, `JMeter`, and `Gatling` (each has its own suite and log) |
 | **Analytics** | `Google Analytics` (`js/site-analytics.js`) and Firestore `site_events` |
 
 ---
 
 ## 🧪 Automated Testing
 
-`npm test` runs Playwright and Cypress. `npm run test:full` also runs Robot. `npm run test:selenium`, `npm run test:wdio`, and `npm run test:appium` run those suites on their own. `npm run test:k6`, `npm run test:jmeter`, and `npm run test:gatling` each load the CV, lab, studio, stylesheet, and CV script on port `8767`. `npm run lab:runners` lets the lab page stream each process log. Playwright starts a local static server on port `8765` when one is not already running.
+`npm test` runs Playwright and Cypress. `npm run test:full` also runs Robot. `npm run test:selenium`, `npm run test:wdio`, and `npm run test:appium` run those suites on their own. `npm run test:codeceptjs`, `test:jest`, `test:vitest`, `test:mocha`, and `test:cucumber` run the catalog through the Playwright library. `test:selenide` and `test:testng` need Java 17 and Maven, `test:reqnroll` needs the .NET 8 SDK, `test:behave` needs Python 3, `test:watir` needs Ruby 3, and `test:maestro` needs Maestro 2. Set `CATALOG_IDS=SMK-01,FN-01` to run a few rows. The Gherkin features and Maestro flows are generated from `tests/native/catalog.json` with `npm run build:catalog-suites`. `npm run test:k6`, `npm run test:jmeter`, and `npm run test:gatling` each load the CV, lab, studio, stylesheet, and CV script on port `8767`. `npm run lab:runners` lets the lab page stream each process log. Playwright starts a local static server on port `8765` when one is not already running.
 
 The catalog on [qa-lab.html](https://carlosandmunoz.com/qa-lab.html) lists every case and links to the suite file on `main`.
 
 * Playwright: [`tests/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests)
 * Cypress: [`cypress/e2e/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/cypress/e2e)
 * Robot: [`tests/robot/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests/robot)
+* CodeceptJS, Jest, Vitest, Mocha: [`codeceptjs/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/codeceptjs), [`jest/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/jest), [`vitest/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/vitest), [`mocha/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/mocha)
+* Selenide, TestNG, Watir: [`selenide/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/selenide), [`testng/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/testng), [`watir/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/watir)
+* Cucumber, Behave, Reqnroll: [`cucumber/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/cucumber), [`behave/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/behave), [`reqnroll/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/reqnroll)
+* Maestro: [`maestro/flows/`](https://github.com/kaanmuar/kaanmuar.github.io/tree/main/maestro/flows)
 * Lab runner: [`js/qa-lab.js`](https://github.com/kaanmuar/kaanmuar.github.io/blob/main/js/qa-lab.js)
 * k6: [`k6/load.js`](https://github.com/kaanmuar/kaanmuar.github.io/blob/main/k6/load.js)
 * JMeter: [`jmeter/load.jmx`](https://github.com/kaanmuar/kaanmuar.github.io/blob/main/jmeter/load.jmx)
@@ -157,7 +161,7 @@ cd kaanmuar.github.io
 npm install
 ```
 
-Serve the folder with any static server (Playwright uses `python3 -m http.server 8765`). Rebuild Tailwind after utility-class edits:
+Serve the folder with any static server (Playwright uses `python3 scripts/static-server.py 8765`, which is `http.server` with a deeper connection queue). Rebuild Tailwind after utility-class edits:
 
 ```bash
 npm run build:css
@@ -208,6 +212,10 @@ npm run build:css
 ├── selenium/               # Selenium catalog suite
 ├── wdio/                   # WebdriverIO catalog suite
 ├── appium/                 # Appium catalog suite
+├── maestro/flows/          # Maestro phone flows (generated)
+├── codeceptjs/ jest/ vitest/ mocha/   # Catalog suites on the Playwright library
+├── selenide/ testng/ watir/           # Java and Ruby WebDriver catalog suites
+├── cucumber/ behave/ reqnroll/        # Gherkin catalog suites (generated features)
 ├── simulador.html          # 4-agent SDLC studio
 ├── qa-lab.html             # Visitor-facing regression lab
 ├── admin.html              # Admin panel and Styles (noindex)

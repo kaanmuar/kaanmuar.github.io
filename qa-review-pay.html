@@ -108,7 +108,7 @@
         const purpose = ["report", "cases", "credentials", "alerts"].indexOf(purposeName) === -1 ? "new-run" : purposeName;
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_view", "URL Review", purpose);
         const alertCount = Math.max(0, Math.min(8, Math.round(Number(params.get("count")) || 0)));
-        const KNOWN = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "SpecFlow", "Jest", "Vitest", "Mocha", "Appium", "Calabash", "JMeter", "Gatling", "k6"];
+        const KNOWN = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha", "Appium", "Maestro", "JMeter", "Gatling", "k6"];
         const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
         const LAYER_NAMES = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
         let frameworkList = (params.get("frameworks") || "").split(",").map((name) => name.trim()).filter((name) => KNOWN.indexOf(name) !== -1);
