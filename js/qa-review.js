@@ -560,6 +560,330 @@
     document.getElementById("print-mark").textContent = "";
   }
 
+  const VERDICT_LABEL = { fail: "Fails now", risk: "At risk", pass: "Passes", person: "Needs a browser" };
+  const AREA_NOTE = {
+    SEO: "Indexing, sitemap, titles, structured data",
+    GEO: "How AI answers can read and cite the site",
+    Analytics: "Tags, consent, campaign tracking",
+    Security: "Headers, TLS, DNS, exposure",
+    Accessibility: "What the HTML says to assistive tech",
+    Performance: "HTML speed, weight, layout shift"
+  };
+  let findingFilter = { area: "All", verdict: "open" };
+
+  function gradeOf(score) {
+    if (score >= 90) return "A";
+    if (score >= 80) return "B";
+    if (score >= 70) return "C";
+    if (score >= 55) return "D";
+    return "F";
+  }
+
+  function scoreColor(score) {
+    if (score >= 80) return "var(--green)";
+    if (score >= 55) return "var(--amber)";
+    return "var(--red)";
+  }
+
+  function verdictBadge(verdict, severity) {
+    if (!verdict) return '<span class="badge">Proposed</span>';
+    return '<span class="badge v-' + esc(verdict) + '">' + esc(VERDICT_LABEL[verdict] || verdict) + "</span>" +
+      (severity && severity !== "info" ? '<span class="badge">' + esc(severity) + "</span>" : "");
+  }
+
+  function setInsightsVisible(on) {
+    document.querySelectorAll("[data-insight]").forEach((node) => { node.hidden = !on; });
+  }
+
+  function paintHealth(ins) {
+    const score = ins.score || {};
+    const value = score.overall || 0;
+    const circumference = 2 * Math.PI * 80;
+    const totals = score.totals || {};
+    const areas = score.areas || {};
+    document.getElementById("health").innerHTML =
+      '<article class="card"><div class="health">' +
+      '<div class="ring" role="img" aria-label="Health score ' + value + ' out of 100, grade ' + esc(score.grade || gradeOf(value)) + '">' +
+      '<svg viewBox="0 0 196 196"><circle class="ring-track" cx="98" cy="98" r="80"></circle><circle class="ring-value" cx="98" cy="98" r="80" stroke="' + scoreColor(value) + '" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + (circumference * (1 - value / 100)).toFixed(1) + '"></circle></svg>' +
+      "<b>" + value + "<small>Grade " + esc(score.grade || gradeOf(value)) + "</small></b></div>" +
+      '<div><p class="health-summary">' + esc(ins.summary || "") + "</p>" +
+      '<div class="verdict-chips">' + ["fail", "risk", "pass", "person"].map((key) =>
+        '<span class="vchip v-' + key + '"><b>' + (totals[key] || 0) + "</b>" + esc(VERDICT_LABEL[key]) + "</span>").join("") + "</div>" +
+      '<p class="meta-line">Every check below was measured from the public response, not guessed. Checks marked “Needs a browser” wait for a rendered run.</p></div></div>' +
+      '<div class="areas">' + Object.keys(AREA_NOTE).map((name) => {
+        const area = areas[name] || { score: 0, grade: "F", fail: 0, risk: 0, pass: 0 };
+        return '<button type="button" class="area" data-area="' + esc(name) + '"><div class="area-score"><span><b>' + area.score + "</b> " + esc(name) + '</span><span class="grade grade-' + esc(area.grade) + '">' + esc(area.grade) + "</span></div>" +
+          '<div class="bar"><i style="width:' + area.score + "%;background:" + scoreColor(area.score) + '"></i></div>' +
+          "<small>" + area.fail + " fail · " + area.risk + " at risk · " + area.pass + " pass — " + esc(AREA_NOTE[name]) + "</small></button>";
+      }).join("") + "</div></article>";
+    document.querySelectorAll("#health .area").forEach((button) => {
+      button.addEventListener("click", () => {
+        findingFilter = { area: button.getAttribute("data-area"), verdict: "all" };
+        paintFindings(current.report.insights, !!current.paid);
+        const target = document.getElementById("findings");
+        const panel = target.closest(".fold-panel");
+        if (panel && panel.hidden) {
+          const item = folds.find((one) => one.panel === panel);
+          if (item) setFold(item, true);
+        }
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
+
+  function paintFixFirst(ins, paid) {
+    const top = (ins.findings || []).filter((item) => item.rank).slice(0, 10);
+    document.getElementById("fix-first").innerHTML = top.length
+      ? '<p class="muted">Ranked by severity, how many pages it touches, and how long the fix takes.</p><ol class="fix-list">' + top.map((item) =>
+        '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(item.area) + "</span>" +
+        "<strong>" + esc(item.title) + "</strong>" +
+        '<p class="meta-line">' + fadeText(item.evidence, paid) + "</p>" +
+        (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
+        '<p class="meta-line">Effort: ' + esc(item.effort) + (item.count > 1 ? " · " + item.count + " places" : "") + "</p></div></li>").join("") + "</ol>"
+      : '<p class="muted">Nothing fails or is at risk in the checks this read can measure.</p>';
+  }
+
+  function cut(text, max) {
+    const raw = String(text || "");
+    return raw.length > max ? raw.slice(0, max - 1).replace(/\s+\S*$/, "") + " …" : raw;
+  }
+
+  function paintPreviews(ins) {
+    const g = (ins.previews && ins.previews.google) || {};
+    const s = (ins.previews && ins.previews.social) || {};
+    const icon = g.icon ? '<img src="' + esc(g.icon) + '" alt="" referrerpolicy="no-referrer" loading="lazy" data-fallback="dot">' : '<span class="serp-dot"></span>';
+    const notes = [];
+    if (g.titleCut) notes.push("The title is longer than about 60 characters, so Google cuts it.");
+    if (!g.description) notes.push("There is no meta description, so Google writes its own snippet from the page.");
+    else if (g.descriptionCut) notes.push("The description runs past about 158 characters and is cut.");
+    if (!g.icon) notes.push("No favicon is declared, so a blank globe shows instead.");
+    const shareNotes = [];
+    if (!s.image) shareNotes.push("No https og:image: most apps show a grey box or no card at all.");
+    if (s.fallback) shareNotes.push("Some Open Graph tags are missing, so apps fall back to the title and description.");
+    if (!s.card) shareNotes.push("No twitter:card tag: X shows a small link instead of a large card.");
+    document.getElementById("previews").innerHTML =
+      '<div><div class="serp notranslate" translate="no"><div class="serp-site">' + icon + "<div>" + esc(g.site || "") + "<small>https://" + esc(g.url || "") + "</small></div></div>" +
+      "<h3>" + esc(cut(g.title || "(no title)", 62)) + "</h3><p>" + esc(cut(g.description || "Google would pick a line of text from the page here.", 160)) + "</p></div>" +
+      '<p class="preview-note">' + esc(notes.join(" ") || "Title and description fit the space Google gives them.") + "</p></div>" +
+      '<div><div class="share notranslate" translate="no"><div class="share-img">' + (s.image ? '<img src="' + esc(s.image) + '" alt="" referrerpolicy="no-referrer" loading="lazy" data-fallback="image">' : "<span>No og:image</span>") + "</div>" +
+      '<div class="share-body"><small>' + esc(s.host || "") + "</small><strong>" + esc(cut(s.title || "(no title)", 90)) + "</strong><p>" + esc(s.description || "") + "</p></div></div>" +
+      '<p class="preview-note">' + esc(shareNotes.join(" ") || "LinkedIn, WhatsApp, Slack, and X have what they need for a full card.") + "</p></div>";
+    document.querySelectorAll("#previews img[data-fallback]").forEach((img) => {
+      img.addEventListener("error", () => {
+        const stand = document.createElement("span");
+        if (img.getAttribute("data-fallback") === "dot") stand.className = "serp-dot";
+        else stand.textContent = "The og:image did not load in this browser.";
+        img.replaceWith(stand);
+      }, { once: true });
+    });
+  }
+
+  function paintGeo(ins) {
+    const geo = ins.geo || {};
+    const view = geo.aiView || {};
+    const roles = [["answers", "Answer engines (cite pages in replies)"], ["search", "Search engines (also feed AI Overviews and Copilot)"], ["training", "Model training (blocking is a policy choice)"]];
+    const bots = roles.map(([role, label]) => {
+      const list = (geo.crawlers || []).filter((bot) => bot.role === role);
+      if (!list.length) return "";
+      return '<p class="bot-group">' + esc(label) + "</p>" + list.map((bot) =>
+        '<div class="bot' + (bot.allowed ? "" : " no") + '"><i aria-hidden="true">' + (bot.allowed ? "✓" : "✕") + '</i><div><span class="notranslate" translate="no">' + esc(bot.token) + "</span> — " + esc(bot.product) +
+        "<small>" + (bot.allowed ? (bot.blockedPages ? bot.blockedPages + " of the pages read are closed to it." : "Allowed.") : "Blocked" + (bot.rule ? " by " + esc(bot.rule) : "") + ".") + "</small></div></div>").join("");
+    }).join("");
+    const llms = geo.llms || {};
+    const entity = geo.entity;
+    const facts = [
+      ["llms.txt", llms.ok && llms.complete ? "pass" : "risk", llms.ok ? (llms.sections || 0) + " sections" + (llms.complete ? "" : ", incomplete") : "Not published"],
+      ["Entity", entity ? "pass" : "risk", entity ? entity.type + (entity.sameAs && entity.sameAs.length ? " · " + entity.sameAs.length + " profiles" : "") : "None"],
+      ["Text without JS", view.chars >= 900 ? "pass" : view.chars >= 300 ? "risk" : "fail", (view.chars || 0) + " characters"],
+      ["Q&A shape", geo.questionHeadings || (geo.schemaTypes || []).indexOf("FAQPage") !== -1 ? "pass" : "risk", (geo.questionHeadings || 0) + " question headings"]
+    ];
+    const outlineHtml = (view.outline || []).length ? '<ul class="ai-outline">' + view.outline.map((item) => '<li class="l' + item.level + '">H' + item.level + " · " + esc(item.text) + "</li>").join("") + "</ul>" : '<p class="muted">No h1 to h3 headings in the HTML.</p>';
+    document.getElementById("geo").innerHTML =
+      '<div class="checks-grid" style="margin-bottom:12px">' + facts.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
+      '<div class="split"><article class="card"><h3>The text an AI crawler receives</h3><p class="muted">Most AI crawlers do not run JavaScript. This is what the raw HTML of the start page hands them' + (view.appShell ? ", and the page is an empty app shell" : "") + ".</p>" +
+      '<div class="ai-view notranslate" translate="no">' + esc(view.text || "(no readable text)") + (view.chars > (view.text || "").length ? " …" : "") + "</div>" +
+      '<p class="meta-line">' + (view.words || 0) + " words · " + (view.chars || 0) + " characters</p><h3>Headings it can follow</h3>" + outlineHtml + "</article>" +
+      '<article class="card"><h3>Who may read the site</h3><p class="muted">' + (geo.robotsFound ? "From the rules in robots.txt, checked for each crawler." : "There is no robots.txt, so every crawler is allowed.") + "</p>" + bots + "</article></div>";
+  }
+
+  function paintAnalytics(ins) {
+    const a = ins.analytics || {};
+    const total = ((ins.seo && ins.seo.indexability) || []).filter((row) => row.status >= 200 && row.status < 300).length || 1;
+    const rows = (a.tags || []).map((tag) =>
+      "<tr><td><strong>" + esc(tag.name) + "</strong>" + (tag.cookieless ? ' <span class="badge v-pass">cookieless</span>' : "") + '</td><td class="notranslate" translate="no">' + esc((tag.ids || []).join(", ") || "—") + "</td><td>" + tag.pages + " of " + total + "</td></tr>").join("");
+    const consent = a.consentTools && a.consentTools.length ? a.consentTools.join(", ") : "None found";
+    const mode = a.consentMode ? "analytics_storage " + (a.consentMode.analytics || "unset") + (a.consentMode.v2 ? " · v2 signals present" : " · v2 signals missing") : "No default found";
+    const utm = a.utm ? (a.utm.kept ? "Kept through redirects" : "Stripped on " + a.utm.finalPath) : "Not tested";
+    document.getElementById("analytics").innerHTML =
+      '<div class="checks-grid" style="margin-bottom:12px">' +
+      '<div class="check-tile ' + ((a.tags || []).length ? "pass" : "risk") + '"><b>Tools</b>' + (a.tags || []).length + " found</div>" +
+      '<div class="check-tile ' + (a.consentTools && a.consentTools.length ? "pass" : ((a.tags || []).some((tag) => !tag.cookieless) ? "risk" : "unknown")) + '"><b>Consent tool</b>' + esc(consent) + "</div>" +
+      '<div class="check-tile ' + (a.consentMode ? (a.consentMode.analytics === "denied" && a.consentMode.v2 ? "pass" : "risk") : "unknown") + '"><b>Consent Mode</b>' + esc(mode) + "</div>" +
+      '<div class="check-tile ' + (a.utm ? (a.utm.kept ? "pass" : "fail") : "unknown") + '"><b>UTM parameters</b>' + esc(utm) + "</div></div>" +
+      '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>Tool</th><th>IDs</th><th>Pages with it</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">No known analytics or advertising tag was in the HTML of the pages read.</p>') +
+      ((a.untagged || []).length ? '<p class="meta-line">Pages without a tag: ' + esc(a.untagged.slice(0, 8).join(", ")) + "</p>" : "") + "</article>";
+  }
+
+  function paintSeo(ins) {
+    const seo = ins.seo || {};
+    const rows = seo.indexability || [];
+    const map = seo.sitemap || {};
+    const blocked = rows.filter((row) => !row.indexable);
+    const dup = (seo.duplicates && seo.duplicates.titles) || [];
+    document.getElementById("seo").innerHTML =
+      '<div class="stat-row"><div class="stat"><b>' + (seo.indexable || 0) + " / " + rows.length + '</b><span>Pages indexable</span></div>' +
+      '<div class="stat"><b>' + (map.found ? map.count : "—") + '</b><span>URLs in the sitemap</span></div>' +
+      '<div class="stat"><b>' + (map.found ? (map.notListed || []).length : "—") + '</b><span>Indexable, not in sitemap</span></div>' +
+      '<div class="stat"><b>' + dup.length + '</b><span>Shared titles</span></div></div>' +
+      '<article class="card">' + (blocked.length
+        ? '<table class="mini-table"><thead><tr><th>Page not indexable</th><th>Why</th></tr></thead><tbody>' + blocked.slice(0, 30).map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + esc(row.reason) + "</td></tr>").join("") + "</tbody></table>"
+        : '<p class="muted">Every page that was read can be indexed: status 200, no noindex, canonical to itself, open to Googlebot.</p>') +
+      ((map.listedNotIndexable || []).length ? '<p class="meta-line">In the sitemap but not indexable: ' + esc(map.listedNotIndexable.slice(0, 6).join(", ")) + "</p>" : "") +
+      ((map.notLinked || []).length ? '<p class="meta-line">In the sitemap but not linked from the pages read: ' + esc(map.notLinked.slice(0, 6).join(", ")) + (map.notLinked.length > 6 ? " …" : "") + "</p>" : "") +
+      ((seo.schemaTypes || []).length ? '<p class="meta-line">Structured data types: ' + esc(seo.schemaTypes.join(", ")) + "</p>" : "") + "</article>";
+  }
+
+  function paintGraph(ins) {
+    const host = document.getElementById("site-graph");
+    const graph = ins.graph || { nodes: [], edges: [] };
+    const nodes = graph.nodes || [];
+    if (nodes.length < 2) {
+      host.innerHTML = '<p class="muted">Only one page was read, so there is no link map to draw.</p>';
+      return;
+    }
+    const parent = nodes.map((node, index) => {
+      if (index === 0) return -1;
+      const found = nodes.findIndex((other) => other.path === node.from);
+      return found === -1 || found === index ? 0 : found;
+    });
+    const children = nodes.map(() => []);
+    parent.forEach((p, index) => { if (p >= 0) children[p].push(index); });
+    const leaves = nodes.map(() => 0);
+    const countLeaves = (index) => {
+      leaves[index] = children[index].length ? children[index].reduce((sum, child) => sum + countLeaves(child), 0) : 1;
+      return leaves[index];
+    };
+    countLeaves(0);
+    const maxDepth = Math.max.apply(null, nodes.map((node) => node.depth || 0).concat([1]));
+    const ring = 270 / maxDepth;
+    const pos = nodes.map(() => ({ x: 320, y: 320, a: 0 }));
+    const place = (index, start, end) => {
+      const mid = (start + end) / 2;
+      const r = (nodes[index].depth || 0) * ring;
+      pos[index] = { x: 320 + r * Math.cos(mid), y: 320 + r * Math.sin(mid), a: mid };
+      let cursor = start;
+      children[index].forEach((child) => {
+        const span = (end - start) * (leaves[child] / leaves[index]);
+        place(child, cursor, cursor + span);
+        cursor += span;
+      });
+    };
+    place(0, -Math.PI / 2, Math.PI * 1.5);
+    const color = (node, index) => {
+      if (index === 0) return "var(--text)";
+      if (!node.status || node.status >= 400) return "var(--red)";
+      if (node.ms > 1800) return "var(--amber)";
+      return "var(--green)";
+    };
+    const tree = new Set(parent.map((p, index) => p + ">" + index));
+    const extra = (graph.edges || []).filter((edge) => !tree.has(edge.s + ">" + edge.t) && !tree.has(edge.t + ">" + edge.s)).slice(0, 400);
+    const line = (a, b, cls) => '<line x1="' + pos[a].x.toFixed(1) + '" y1="' + pos[a].y.toFixed(1) + '" x2="' + pos[b].x.toFixed(1) + '" y2="' + pos[b].y.toFixed(1) + '" ' + cls + "></line>";
+    const svg = '<svg viewBox="0 0 640 640" role="img" aria-label="Link map of ' + nodes.length + ' pages">' +
+      extra.map((edge) => line(edge.s, edge.t, 'stroke="var(--line)" stroke-width="0.6" opacity="0.7"')).join("") +
+      parent.map((p, index) => p >= 0 ? line(p, index, 'stroke="var(--muted)" stroke-width="1.1" opacity="0.55"') : "").join("") +
+      nodes.map((node, index) => {
+        const r = index === 0 ? 11 : 4.5 + Math.min(6, (node.inbound || 0) / 2);
+        return '<circle tabindex="0" data-i="' + index + '" cx="' + pos[index].x.toFixed(1) + '" cy="' + pos[index].y.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + color(node, index) + '"><title>' + esc(node.path) + " · " + esc(node.status || "no answer") + " · " + esc(node.ms) + " ms · " + (node.inbound || 0) + " links in</title></circle>";
+      }).join("") +
+      (nodes.length <= 40 ? nodes.map((node, index) => {
+        if (index === 0) return "";
+        const label = String(node.path).replace(/\?.*$/, "").split("/").filter(Boolean).pop() || node.path;
+        const anchor = Math.cos(pos[index].a) >= 0 ? "start" : "end";
+        const dx = anchor === "start" ? 9 : -9;
+        return '<text x="' + (pos[index].x + dx).toFixed(1) + '" y="' + (pos[index].y + 3).toFixed(1) + '" text-anchor="' + anchor + '">' + esc(cut(label, 22)) + "</text>";
+      }).join("") : "") + "</svg>";
+    host.innerHTML = '<div class="graph-legend"><span style="--c:var(--text)">Start page</span><span style="--c:var(--green)">Answered</span><span style="--c:var(--amber)">Slower than 1.8 s</span><span style="--c:var(--red)">Error or no answer</span><span>Bigger dot = more links point to it</span></div>' +
+      '<div class="graph-wrap notranslate" translate="no">' + svg + '</div><p class="graph-detail" id="graph-detail">Select a dot to see the page.</p>';
+    const detail = document.getElementById("graph-detail");
+    const show = (event) => {
+      const circle = event.target.closest("circle");
+      if (!circle) return;
+      const node = nodes[Number(circle.getAttribute("data-i"))];
+      detail.textContent = node.path + " — status " + (node.status || "none") + ", " + node.ms + " ms, " + (node.inbound || 0) + " links in" + (node.from ? ", first found on " + node.from : "") + (node.title ? ". Title: " + node.title : "");
+    };
+    host.querySelector("svg").addEventListener("click", show);
+    host.querySelector("svg").addEventListener("focusin", show);
+  }
+
+  function paintSecurity(ins) {
+    const sec = ins.security || {};
+    const word = { pass: "In place", risk: "Missing or weak", fail: "Failing", unknown: "Not checked" };
+    document.getElementById("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
+      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(word[item.state] || item.state) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
+      (sec.tls ? '<p class="meta-line">TLS certificate valid until ' + esc(sec.tls.validTo) + " (" + sec.tls.daysLeft + " days)" + (sec.tls.issuer ? ", issued by " + esc(sec.tls.issuer) : "") + ".</p>" : "");
+  }
+
+  function paintFindings(ins, paid) {
+    const all = ins.findings || [];
+    const areas = ["All"].concat(Object.keys(AREA_NOTE));
+    const verdicts = [["open", "Fails and risks"], ["all", "Everything"], ["fail", "Fails now"], ["risk", "At risk"], ["pass", "Passes"], ["person", "Needs a browser"]];
+    const bar = document.getElementById("finding-filters");
+    bar.innerHTML = areas.map((name) => '<button type="button" data-area="' + esc(name) + '"' + (findingFilter.area === name ? ' class="on"' : "") + ">" + esc(name) + "</button>").join("") +
+      '<span style="width:12px;display:inline-block"></span>' +
+      verdicts.map(([key, label]) => '<button type="button" data-verdict="' + key + '"' + (findingFilter.verdict === key ? ' class="on"' : "") + ">" + esc(label) + "</button>").join("");
+    bar.onclick = (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      if (button.hasAttribute("data-area")) findingFilter.area = button.getAttribute("data-area");
+      if (button.hasAttribute("data-verdict")) findingFilter.verdict = button.getAttribute("data-verdict");
+      paintFindings(ins, paid);
+    };
+    const shown = all.filter((item) => (findingFilter.area === "All" || item.area === findingFilter.area) &&
+      (findingFilter.verdict === "all" || (findingFilter.verdict === "open" ? (item.verdict === "fail" || item.verdict === "risk") : item.verdict === findingFilter.verdict)));
+    document.getElementById("findings").innerHTML = shown.length ? shown.map((item) =>
+      '<div class="finding"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(item.area) + "</span></div>" +
+      "<strong>" + esc(item.title) + "</strong><p class=\"muted\">" + fadeText(item.evidence, paid) + "</p>" +
+      (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
+      ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + esc(item.pages.slice(0, 6).join(" · ")) + (item.pages.length > 6 ? " …" : "") + "</p>" : "") +
+      ((item.cases || []).length ? '<p class="meta-line">Test cases: ' + esc(item.cases.join(", ")) + "</p>" : "") + "</div>").join("")
+      : '<p class="muted">No check matches this filter.</p>';
+  }
+
+  function paintFixKit(ins, paid) {
+    const kit = ins.fixkit || {};
+    const missing = (kit.headers || []).filter((item) => item.missing);
+    const items = [
+      ["Security headers", missing.length ? missing.length + " missing headers, written for " + (kit.hosting || "Netlify, Vercel, nginx, Apache, and Firebase") + "." : "All headers are already sent. The files still carry the current set."],
+      ["Content-Security-Policy", "A Report-Only policy built from the " + ((kit.csp || "").match(/https:\/\//g) || []).length + " hosts this read saw. Deploy it, watch reports, then enforce."],
+      ["Structured data", kit.jsonLd ? "An Organization and WebSite JSON-LD draft with the profiles the page links." : "The site already publishes an entity. No draft needed."],
+      ["llms.txt", kit.llmsTxt ? "A draft listing the indexable pages with their descriptions." : "The site already publishes llms.txt."],
+      ["security.txt", kit.securityTxt ? "A draft with Contact, Expires, and Canonical. Replace the address with a real inbox." : "The site already publishes security.txt."],
+      ["DNS records", (kit.dns || []).length ? (kit.dns || []).length + " records to add (" + kit.dns.map((row) => row.type).join(", ") + ")." : "SPF, DMARC, and CAA need no change."],
+      ["GitHub Actions", "A workflow that runs the chosen framework scripts on every push and once a day."]
+    ];
+    const peek = "Content-Security-Policy-Report-Only: " + (kit.csp || "");
+    document.getElementById("fixkit").innerHTML =
+      '<p>The scripts ZIP now carries a <span class="notranslate" translate="no">fix-kit/</span> folder: copy-ready files made from this read.' + (kit.hosting ? " The site looks hosted on <strong>" + esc(kit.hosting) + "</strong>, so that file is listed first." : "") + "</p>" +
+      '<div class="fixkit-list">' + items.map(([title, body]) => "<article><strong>" + esc(title) + "</strong><span class=\"muted\">" + esc(body) + "</span></article>").join("") + "</div>" +
+      '<div class="code-peek notranslate" translate="no">' + fadeText(peek, paid) + "</div>";
+  }
+
+  function paintInsights(report, paid) {
+    const ins = report.insights;
+    setInsightsVisible(!!ins);
+    if (!ins) return;
+    paintHealth(ins);
+    paintFixFirst(ins, paid);
+    paintPreviews(ins);
+    paintGeo(ins);
+    paintAnalytics(ins);
+    paintSeo(ins);
+    paintGraph(ins);
+    paintSecurity(ins);
+    paintFindings(ins, paid);
+    paintFixKit(ins, paid);
+  }
+
   const folds = [];
 
   function fold(heading, nodes) {
@@ -647,7 +971,7 @@
       folds.forEach((item) => setFold(item, open));
     });
     bar.appendChild(all);
-    report.insertBefore(bar, glance);
+    report.insertBefore(bar, report.querySelector("h2[data-insight]") || glance);
     paintFoldAll();
   }
 
@@ -670,14 +994,21 @@
     const state = report.status === "stopped" ? "Stopped" : "Complete";
     const paid = !!payload.paid;
     paintVisuals(report, paid);
+    paintInsights(report, paid);
     document.getElementById("report-statement").textContent = "";
     const counts = report.counts || { pages: 0, technologies: 0, cases: 0, byLayer: {} };
-    document.getElementById("kpis").innerHTML = [
+    const score = report.insights && report.insights.score;
+    document.getElementById("kpis").innerHTML = (score ? [
+      [score.overall + "/100", "Health score"],
+      [score.totals.fail, "Fail now"],
+      [score.totals.risk, "At risk"],
+      [counts.pages, "Pages read"]
+    ] : [
       [counts.pages, "Pages read"],
       [counts.technologies, "Technologies"],
       [counts.cases, "Proposed cases"],
       [(report.observed && report.observed.ms) + " ms", "First response"]
-    ].map(([value, label]) => "<div class=\"kpi\"><b>" + esc(value) + "</b><span>" + label + "</span></div>").join("");
+    ]).map(([value, label]) => "<div class=\"kpi\"><b>" + esc(value) + "</b><span>" + label + "</span></div>").join("");
     const layers = Object.entries(counts.byLayer || {});
     const max = Math.max.apply(null, layers.map((pair) => pair[1]).concat([1]));
     document.getElementById("layers").innerHTML = layers.length ? layers.map(([name, count]) =>
@@ -736,7 +1067,7 @@
     document.getElementById("cases").innerHTML = shown.map((item) => {
       const extra = (item.also || []).filter(Boolean);
       const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
-      return '<article class="case"><div><span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">Proposed</span></div><strong>' + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + '</p><p class="muted fw-line">' + tools + "</p></article>";
+      return '<article class="case"><div><span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + '</p><p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
@@ -1306,6 +1637,8 @@
         cases: rows.map((row) => ({
           id: row.item.id,
           layer: row.item.layer,
+          verdict: row.item.verdict || "proposed",
+          severity: row.item.severity || "",
           title: row.item.title,
           step: row.parts.step,
           expected: row.parts.expected,
@@ -1347,17 +1680,19 @@
       azure: ["Work Item Type", "Title", "Test Step", "Step Action", "Step Expected", "Priority", "State", "Tags", "Automation scripts"],
       mantis: ["Summary", "Description", "Category", "Severity"]
     }[kind];
+    const rank = (item) => item.verdict === "fail" ? (item.severity === "critical" || item.severity === "high" ? 0 : 1) : item.verdict === "risk" ? (item.severity === "high" ? 1 : 2) : 2;
     const data = rows.map((row) => {
       const ref = sign.mark + " " + sign.sha256;
+      const level = rank(row.item);
       const code = scriptText(row.scripts);
       const withCode = (text) => code ? text + "\n\nAutomation scripts\n" + code : text;
       if (kind === "excel") return [row.item.id, row.item.layer, row.item.title, row.parts.step, row.parts.expected, row.frameworks, sign.mark, sign.sha256].concat(scriptCols.map((fw) => (row.scripts.find((one) => one.framework === fw) || { code: "" }).code));
-      if (kind === "testrail") return [row.item.title, row.item.layer, "Test Case (Text)", "Other", "Medium", row.parts.step, row.parts.expected, ref, code];
+      if (kind === "testrail") return [row.item.title, row.item.layer, "Test Case (Text)", "Other", ["High", "Medium", "Low"][level], row.parts.step, row.parts.expected, ref, code];
       if (kind === "xray") return [row.item.id, "Test", row.item.title, row.item.layer, "Manual", row.parts.step, "", row.parts.expected, ref, code];
-      if (kind === "zephyr") return [row.item.title, "Draft", "Normal", row.parts.expected, "Proposed from a public read. Not executed.", row.item.layer, ref, row.parts.step, row.parts.expected, code];
-      if (kind === "jira") return ["Task", row.item.title, withCode(row.item.id + " · " + row.item.layer + "\n" + row.parts.step + "\n" + row.parts.expected + "\n" + ref), "Medium", "QA-lab"];
-      if (kind === "azure") return ["Test Case", row.item.title, "1", row.parts.step, row.parts.expected, "2", "Design", ref, code];
-      return [row.item.title, withCode(row.item.id + " · " + row.parts.step + "\n" + row.parts.expected + "\n" + ref), "General", "minor"];
+      if (kind === "zephyr") return [row.item.title, "Draft", ["High", "Normal", "Low"][level], row.parts.expected, "Proposed from a public read. Not executed.", row.item.layer, ref, row.parts.step, row.parts.expected, code];
+      if (kind === "jira") return ["Task", row.item.title, withCode(row.item.id + " · " + row.item.layer + "\n" + row.parts.step + "\n" + row.parts.expected + "\n" + ref), ["High", "Medium", "Low"][level], "QA-lab"];
+      if (kind === "azure") return ["Test Case", row.item.title, "1", row.parts.step, row.parts.expected, String(level + 1), "Design", ref, code];
+      return [row.item.title, withCode(row.item.id + " · " + row.parts.step + "\n" + row.parts.expected + "\n" + ref), "General", ["major", "minor", "trivial"][level]];
     });
     const ext = kind === "excel" ? "csv" : "csv";
     download("qa-lab-" + kind + "-" + id + "." + ext, toCsv(table, data), "text/csv");
