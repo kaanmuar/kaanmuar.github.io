@@ -42,7 +42,11 @@ test.describe('CV regression lab', () => {
     await expect(page.getByRole('checkbox', { name: 'Appium' })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'JMeter' })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Gatling' })).toBeVisible();
-    await expect(page.locator('#fw-picker input')).toHaveCount(8);
+    await expect(page.getByRole('checkbox', { name: 'Reqnroll' })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'Maestro' })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'k6' })).toBeVisible();
+    await expect(page.locator('#fw-picker input')).toHaveCount(20);
+    await expect(page.locator('#fw-picker label:not(:has(img.fw-logo))')).toHaveCount(0);
     await expect(page.locator('#runner-edge')).toBeVisible();
     await expect(page.locator('#fw-ask')).toBeHidden();
     await expect(page.locator('#view-slider')).toBeVisible();
@@ -120,14 +124,13 @@ test.describe('CV regression lab', () => {
   test('catalog keeps the selected case scrolled into the list', async ({ page }) => {
     await page.getByRole('button', { name: /MOB-01/ }).click();
     await page.evaluate(() => window.QALab.focusCase('MOB-01'));
-    const inView = await page.evaluate(() => {
+    await expect.poll(() => page.evaluate(() => {
       const row = document.querySelector('.case-row[data-id="MOB-01"]');
       const list = document.getElementById('case-list');
       const rr = row.getBoundingClientRect();
       const lr = list.getBoundingClientRect();
       return rr.top >= lr.top - 2 && rr.bottom <= lr.bottom + 2;
-    });
-    expect(inView).toBeTruthy();
+    }), { timeout: 5000 }).toBeTruthy();
   });
 
   test('guided tour walks the lab controls', async ({ page }) => {

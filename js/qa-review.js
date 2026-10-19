@@ -12,23 +12,23 @@
   const PAID_LINE = "This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
   const FRAMEWORK_GROUPS = [
     ["Browser", ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir"]],
-    ["Behavior-driven", ["Cucumber", "Behave", "SpecFlow"]],
+    ["Behavior-driven", ["Cucumber", "Behave", "Reqnroll"]],
     ["JavaScript runners", ["Jest", "Vitest", "Mocha"]],
-    ["Mobile", ["Appium", "Calabash"]],
+    ["Mobile", ["Appium", "Maestro"]],
     ["Load and performance", ["JMeter", "Gatling", "k6"]]
   ];
   const FRAMEWORKS = FRAMEWORK_GROUPS.reduce((all, group) => all.concat(group[1]), []);
-  const DEFAULT_FRAMEWORKS = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "Appium", "JMeter", "Gatling"];
+  const DEFAULT_FRAMEWORKS = FRAMEWORKS.slice();
   const FRAMEWORK_LOGOS = {
     Playwright: "playwright.svg", Cypress: "cypress.svg", Robot: "robot.svg", Selenium: "selenium.svg", WebdriverIO: "webdriverio.svg",
     CodeceptJS: "codeceptjs.svg", Selenide: "selenide.svg", TestNG: "testng.svg", Watir: "watir.png",
-    Cucumber: "cucumber.svg", Behave: "behave.png", SpecFlow: "specflow.png",
+    Cucumber: "cucumber.svg", Behave: "behave.png", Reqnroll: "reqnroll.png",
     Jest: "jest.svg", Vitest: "vitest.svg", Mocha: "mocha.svg",
-    Appium: "appium.svg", Calabash: "calabash.png",
+    Appium: "appium.svg", Maestro: "maestro.png",
     JMeter: "jmeter.svg", Gatling: "gatling.svg", k6: "k6.svg"
   };
   const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
-  const PRODUCT_NAMES = FRAMEWORKS.concat(TOOLS, ["Robot Framework", "Selenium WebDriver", "Reqnroll", "Jira", "Xray", "Zephyr", "TestRail", "Azure Test Plans", "Mantis", "PayPal"]);
+  const PRODUCT_NAMES = FRAMEWORKS.concat(TOOLS, ["Robot Framework", "Selenium WebDriver", "Jira", "Xray", "Zephyr", "TestRail", "Azure Test Plans", "Mantis", "PayPal"]);
   const PRODUCT_PATTERN = new RegExp("\\b(?:" + PRODUCT_NAMES.slice().sort((a, b) => b.length - a.length).map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\b", "g");
   const REASONS = [
     { id: "own", label: "I own this site and want a test plan" },

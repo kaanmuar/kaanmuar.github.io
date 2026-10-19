@@ -36,7 +36,7 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 
 ## What a review names
 
-Frameworks (20): browser: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir. Behavior-driven: Cucumber, Behave, SpecFlow. JavaScript runners: Jest, Vitest, Mocha. Mobile: Appium, Calabash. Load and performance: JMeter, Gatling, k6.
+Frameworks (20): browser: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir. Behavior-driven: Cucumber, Behave, Reqnroll. JavaScript runners: Jest, Vitest, Mocha. Mobile: Appium, Maestro. Load and performance: JMeter, Gatling, k6.
 Tools, only when they apply, and never launched: axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, Copado.
 The report can also list technologies, pages read, public signals, and public write-ups. Secrets are not copied. A missing header is not proof of a break-in.
 Cases are written for each chosen framework. The case export carries a starting script per framework; the review never runs them.

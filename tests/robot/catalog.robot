@@ -334,7 +334,7 @@ FN-41 Footer Download PDF is a direct file link
     [Tags]    FN-41
     FN-41    index.html    ${FALSE}
 
-FN-42 The lab offers JMeter and Gatling with the browser runners
+FN-42 The lab offers all 20 frameworks, load tools included
     [Tags]    FN-42
     FN-42    qa-lab.html    ${FALSE}
 

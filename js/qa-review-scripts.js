@@ -5,7 +5,7 @@
 (function (root) {
   "use strict";
 
-  const ORDER = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "SpecFlow", "Jest", "Vitest", "Mocha", "Appium", "Calabash", "JMeter", "Gatling", "k6"];
+  const ORDER = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha", "Appium", "Maestro", "JMeter", "Gatling", "k6"];
   const LOAD_TOOLS = ["JMeter", "Gatling", "k6"];
   const MISSING_PATH = "/qa-lab-missing-page-404";
   const PHONE = { width: 390, height: 844 };
@@ -50,6 +50,7 @@
       paths,
       slowPath: slow ? String(slow.path).split("#")[0] : startPath,
       scripts: Number(observed.scripts) || 0,
+      h1: Array.isArray(observed.h1) && observed.h1[0] ? oneLine(observed.h1[0]) : "",
       label: "QA-lab URL Review · " + (report.host || start.host)
     };
   }
@@ -109,7 +110,7 @@
   const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "budget", "viewport", "linksResolve"];
 
   function supports(framework, check) {
-    if (framework === "Appium" || framework === "Calabash") return check.kind === "viewport";
+    if (framework === "Appium" || framework === "Maestro") return check.kind === "viewport";
     if (LOAD_TOOLS.indexOf(framework) !== -1) return check.kind === "budget" || check.kind === "load";
     return BROWSER_KINDS.indexOf(check.kind) !== -1;
   }
@@ -765,7 +766,7 @@
   }
 
   const OPS_WORD = { eq: "exactly", gte: "at least", lte: "at most" };
-  const GHERKIN_FW = ["Cucumber", "Behave", "SpecFlow", "Calabash"];
+  const GHERKIN_FW = ["Cucumber", "Behave", "Reqnroll"];
 
   function gq(value) {
     return "\"" + oneLine(value).replace(/"/g, "'") + "\"";
@@ -846,14 +847,58 @@
     return scenario(item, [], steps, notes);
   }
 
-  function calabash(item, check, parts) {
-    const notes = [parts.step, "Expected: " + parts.expected];
-    if (check.kind !== "viewport") {
-      return scenario(item, ["@manual", "@ignore"], ["Given this case is run by a person with access the owner provides"], notes);
-    }
-    const device = check.width >= TABLET.width ? "a tablet" : "a phone";
-    notes.push("Run on " + device + " (about " + check.width + " x " + check.height + " CSS pixels).");
-    return scenario(item, [], ["Given the web view opens " + gq(check.path), "Then the page does not scroll sideways", "Then the main heading is visible when the page has one"], notes);
+  function regexText(value) {
+    return oneLine(value).slice(0, 60).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function maestroFile(item) {
+    return "maestro/" + item.id.toLowerCase() + ".yaml";
+  }
+
+  function maestro(item, check, ctx, parts, sign) {
+    const mark = oneLine(sign && sign.mark);
+    const tablet = check.width >= TABLET.width;
+    const shot = item.id.toLowerCase() + "-" + (tablet ? "tablet" : "phone");
+    const heading = ctx.h1 ? regexText(ctx.h1) + ".*" : "";
+    const lines = [
+      "# " + ctx.label + (mark ? " · " + mark : ""),
+      "# " + name(item),
+      "# " + parts.step,
+      "# Expected: " + parts.expected,
+      "# Run on " + (tablet ? "a tablet" : "a phone") + " emulator or device with Chrome (about " + check.width + " x " + check.height + " CSS pixels).",
+      "# Maestro drives the device, not the page script: a sideways swipe that leaves the heading in place and the screenshots stand in for the overflow measurement.",
+      "appId: com.android.chrome",
+      "name: " + q(name(item)),
+      "tags:",
+      "  - " + (tablet ? "tablet" : "phone"),
+      "  - " + item.id,
+      "---",
+      "- launchApp:",
+      "    clearState: true",
+      "- runFlow:",
+      "    when:",
+      "      visible: \"(Use without an account|Accept & continue)\"",
+      "    commands:",
+      "      - tapOn: \"(Use without an account|Accept & continue)\"",
+      "- runFlow:",
+      "    when:",
+      "      visible: \"No thanks\"",
+      "    commands:",
+      "      - tapOn: \"No thanks\"",
+      "- openLink:",
+      "    link: " + q(ctx.base + check.path),
+      "    browser: true",
+      "- extendedWaitUntil:",
+      "    visible:",
+      "      id: \"com.android.chrome:id/url_bar\"",
+      "      text: " + q(".*" + regexText(ctx.host) + ".*"),
+      "    timeout: 30000"
+    ];
+    if (heading) lines.push("- extendedWaitUntil:", "    visible: " + q(heading), "    timeout: 30000");
+    lines.push("- takeScreenshot: " + shot + "-start", "- swipe:", "    direction: LEFT", "    duration: 400");
+    if (heading) lines.push("- assertVisible: " + q(heading));
+    lines.push("- takeScreenshot: " + shot + "-after-swipe");
+    return lines.join("\n") + "\n";
   }
 
   function fill(template, ctx, line) {
@@ -1132,9 +1177,8 @@ def after_all(context):
         context.holder["driver"].quit()
 `;
 
-  const SPECFLOW_STEPS = String.raw`// __LINE__
-// Step definitions for QaLab.feature. SpecFlow 3.9 with NUnit, Selenium WebDriver, and HttpClient.
-// SpecFlow reached end of life. For Reqnroll, swap the packages and replace "using TechTalk.SpecFlow;" with "using Reqnroll;".
+  const REQNROLL_STEPS = String.raw`// __LINE__
+// Step definitions for QaLab.feature. Reqnroll 3 with NUnit 4, Selenium WebDriver, and HttpClient.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -1143,7 +1187,7 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 namespace QaLab
 {
@@ -1208,7 +1252,7 @@ namespace QaLab
         [StepDefinition(@"^the ""([^""]*)"" element has a ""([^""]*)"" attribute$")]
         public void HasAttribute(string selector, string attr)
         {
-            var value = Driver.FindElement(By.CssSelector(selector)).GetAttribute(attr) ?? "";
+            var value = Driver.FindElement(By.CssSelector(selector)).GetDomAttribute(attr) ?? "";
             Assert.That(value.Trim(), Is.Not.Empty, selector + " " + attr);
         }
 
@@ -1233,13 +1277,13 @@ namespace QaLab
         public void Status(string path) => Assert.That((int)Get(BaseUrl + path).StatusCode, Is.LessThan(400), path);
 
         [StepDefinition(@"^each of these paths answers with a status below 400:$")]
-        public void StatusAll(Table table)
+        public void StatusAll(DataTable table)
         {
             foreach (var row in table.Rows) Assert.That((int)Get(BaseUrl + row["path"]).StatusCode, Is.LessThan(400), row["path"]);
         }
 
         [StepDefinition(@"^each of these paths has a page title:$")]
-        public void TitleAll(Table table)
+        public void TitleAll(DataTable table)
         {
             foreach (var row in table.Rows)
             {
@@ -1290,48 +1334,20 @@ namespace QaLab
 }
 `;
 
-  const SPECFLOW_PROJECT = String.raw`<Project Sdk="Microsoft.NET.Sdk">
+  const REQNROLL_PROJECT = String.raw`<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Include="NUnit" Version="3.14.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
-    <PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
-    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.9.74" />
-    <PackageReference Include="Selenium.WebDriver" Version="4.25.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="NUnit" Version="4.6.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.3.1" />
+    <PackageReference Include="Reqnroll.NUnit" Version="3.3.4" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.51.0" />
   </ItemGroup>
 </Project>
-`;
-
-  const CALABASH_STEPS = String.raw`# __LINE__
-# Step definitions for a Calabash Android run. The app under test shows the site in a WebView.
-require "calabash-android/calabash_steps"
-
-BASE = __BASE__
-
-Given(/^this case is run by a person with access the owner provides$/) do
-  pending "A person runs this case with access the owner provides."
-end
-
-Given(/^the web view opens "([^"]*)"$/) do |path|
-  url = (BASE + path).gsub("'", "%27")
-  evaluate_javascript("webView", "window.location.href = '" + url + "'; return 'ok';")
-  sleep 3
-end
-
-Then(/^the page does not scroll sideways$/) do
-  overflow = evaluate_javascript("webView", "return String(document.documentElement.scrollWidth - window.innerWidth);").first.to_i
-  raise "The page scrolls sideways by #{overflow} px" if overflow > 1
-end
-
-Then(/^the main heading is visible when the page has one$/) do
-  headings = query("webView css:'h1'")
-  raise "The main heading is not visible" if headings.any? && headings.first["rect"]["width"].to_i.zero?
-end
 `;
 
   const LOAD = {
@@ -1582,7 +1598,7 @@ end
     if (framework === "Selenide") return selenide(item, check, parts);
     if (framework === "TestNG") return testng(item, check, parts);
     if (framework === "Watir") return watir(item, check, parts);
-    if (framework === "Calabash") return calabash(item, check, parts);
+    if (framework === "Maestro") return maestro(item, check, ctx, parts, null);
     if (GHERKIN_FW.indexOf(framework) !== -1) return gherkin(item, check, parts);
     return "";
   }
@@ -1592,7 +1608,7 @@ end
     const check = checkFor(item, ctx);
     const parts = splitWhy(item.why);
     return frameworksFor(item, chosen)
-      .filter((framework) => LOAD_TOOLS.indexOf(framework) === -1 || supports(framework, check))
+      .filter((framework) => (LOAD_TOOLS.indexOf(framework) === -1 && framework !== "Maestro") || supports(framework, check))
       .map((framework) => ({ framework, code: snippetFor(framework, item, check, ctx, parts) }));
   }
 
@@ -1768,8 +1784,7 @@ end
       ].join("\n");
     }
     if (GHERKIN_FW.indexOf(framework) !== -1) {
-      const title = framework === "Calabash" ? ctx.label + " · mobile" : ctx.label;
-      return ["# " + line, "# Proposed from a public read. Review selectors and budgets before a run.", "Feature: " + title, ""].join("\n");
+      return ["# " + line, "# Proposed from a public read. Review selectors and budgets before a run.", "Feature: " + ctx.label, ""].join("\n");
     }
     return "";
   }
@@ -1792,8 +1807,7 @@ end
     const line = ctx.label + (mark ? " · " + mark : "");
     if (framework === "Cucumber") return [{ path: "cucumber/features/step_definitions/qa_lab.steps.js", content: fill(CUCUMBER_STEPS, ctx, line) }];
     if (framework === "Behave") return [{ path: "behave/features/steps/qa_lab_steps.py", content: fill(BEHAVE_STEPS, ctx, line) }, { path: "behave/features/environment.py", content: fill(BEHAVE_ENVIRONMENT, ctx, line) }];
-    if (framework === "SpecFlow") return [{ path: "specflow/Steps/QaLabSteps.cs", content: fill(SPECFLOW_STEPS, ctx, line) }, { path: "specflow/QaLab.Specs.csproj", content: SPECFLOW_PROJECT }];
-    if (framework === "Calabash") return [{ path: "calabash/features/step_definitions/qa_lab_steps.rb", content: fill(CALABASH_STEPS, ctx, line) }];
+    if (framework === "Reqnroll") return [{ path: "reqnroll/Steps/QaLabSteps.cs", content: fill(REQNROLL_STEPS, ctx, line) }, { path: "reqnroll/QaLab.Specs.csproj", content: REQNROLL_PROJECT }];
     return [];
   }
 
@@ -1809,12 +1823,11 @@ end
     Watir: "watir/spec/qa_lab_spec.rb",
     Cucumber: "cucumber/features/qa-lab.feature",
     Behave: "behave/features/qa_lab.feature",
-    SpecFlow: "specflow/Features/QaLab.feature",
+    Reqnroll: "reqnroll/Features/QaLab.feature",
     Jest: "jest/qa-lab.test.js",
     Vitest: "vitest/qa-lab.test.js",
     Mocha: "mocha/test/qa-lab.spec.js",
     Appium: "appium/test/specs/qa-lab.mobile.e2e.js",
-    Calabash: "calabash/features/qa_lab_mobile.feature",
     JMeter: "jmeter/qa-lab.jmx",
     k6: "k6/qa-lab.js"
   };
@@ -1845,11 +1858,11 @@ end
       Watir: ["gem install watir rspec", "rspec watir/spec/qa_lab_spec.rb"],
       Cucumber: ["cd cucumber && npm init -y && npm i -D @cucumber/cucumber playwright", "npx playwright install chromium", "npx cucumber-js"],
       Behave: ["pip install behave selenium requests", "cd behave && behave"],
-      SpecFlow: ["cd specflow && dotnet test", "SpecFlow reached end of life. To move to Reqnroll, swap the SpecFlow packages for Reqnroll.NUnit and replace \"using TechTalk.SpecFlow;\" with \"using Reqnroll;\"."],
+      Reqnroll: ["Install the .NET 8 SDK or later, then:", "cd reqnroll && dotnet test"],
       Jest: ["cd jest && npm init -y && npm i -D jest playwright", "npx playwright install chromium", "npx jest"],
       Vitest: ["cd vitest && npm init -y && npm i -D vitest playwright", "npx playwright install chromium", "npx vitest run"],
       Mocha: ["cd mocha && npm init -y && npm i -D mocha playwright", "npx playwright install chromium", "npx mocha --timeout 60000"],
-      Calabash: ["Calabash is archived upstream and runs on older Android toolchains. Build a small test app whose main screen is a WebView, then:", "gem install calabash-android", "cd calabash && calabash-android run <your-webview-app>.apk"],
+      Maestro: ["Install Maestro 2 (Java 17 or later): curl -fsSL \"https://get.maestro.mobile.dev\" | bash", "Start an Android emulator or plug in a device with Chrome, then:", "maestro test maestro/"],
       k6: ["Install k6: https://grafana.com/docs/k6/latest/set-up/install-k6/", "cd k6 && k6 run qa-lab.js", "Load scenarios start only with -e OWNER_APPROVED=yes. Add it only with the owner's written permission and an agreed window."],
       Appium: ["npm i -g appium && appium driver install uiautomator2", "Start an Android emulator with Chrome, then: cd appium && npm init wdio@latest . (Appium service, capabilities in the file header)", "npx wdio run wdio.conf.js --spec test/specs/qa-lab.mobile.e2e.js"],
       JMeter: ["Open jmeter/qa-lab.jmx in JMeter 5.6 or later. Load groups are disabled until the owner gives written permission.", "jmeter -n -t jmeter/qa-lab.jmx -l results.jtl"],
@@ -1871,6 +1884,7 @@ end
     const gatlingFiles = [];
     const jmeterGroups = [];
     const k6Entries = [];
+    const maestroFiles = [];
     (cases || []).forEach((item) => {
       const check = checkFor(item, ctx);
       const parts = splitWhy(item.why);
@@ -1881,6 +1895,9 @@ end
         } else if (framework === "JMeter") {
           if (!supports("JMeter", check)) return;
           jmeterGroups.push(jmeterGroup(item, check, ctx, parts));
+        } else if (framework === "Maestro") {
+          if (!supports("Maestro", check)) return;
+          maestroFiles.push({ path: maestroFile(item), content: maestro(item, check, ctx, parts, sign) });
         } else if (framework === "Gatling") {
           if (!supports("Gatling", check)) return;
           const file = gatling(item, check, ctx, parts);
@@ -1898,6 +1915,7 @@ end
       files.push({ path: FILES[framework], content: suite(framework, blocks[framework], ctx, sign) });
       companions(framework, ctx, sign).forEach((file) => files.push(file));
     });
+    maestroFiles.forEach((file) => files.push(file));
     if (jmeterGroups.length) files.push({ path: FILES.JMeter, content: jmeterPlan(jmeterGroups, ctx) });
     gatlingFiles.forEach((file) => files.push(file));
     if (k6Entries.length) files.push({ path: FILES.k6, content: k6Script(k6Entries, ctx, sign) });

@@ -985,10 +985,13 @@
       return link.getAttribute('href');
     },
     'FN-42': async function () {
-      var names = [].slice.call(document.querySelectorAll('#fw-picker input')).map(function (el) { return el.value; });
-      ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'Appium', 'JMeter', 'Gatling'].forEach(function (name) {
+      var labels = [].slice.call(document.querySelectorAll('#fw-picker label'));
+      var names = labels.map(function (el) { return (el.querySelector('input') || {}).value; });
+      ['Playwright', 'Cypress', 'Robot', 'Selenium', 'WebDriverIO', 'CodeceptJS', 'Selenide', 'TestNG', 'Watir', 'Cucumber', 'Behave', 'Reqnroll', 'Jest', 'Vitest', 'Mocha', 'Appium', 'Maestro', 'JMeter', 'Gatling', 'k6'].forEach(function (name) {
         assert(names.indexOf(name) !== -1, name + ' missing from the lab');
       });
+      var bare = labels.filter(function (el) { return !el.querySelector('img.fw-logo'); }).length;
+      assert(bare === 0, bare + ' runner(s) without a logo');
       return names.length + ' runners';
     },
     'PERF-05': async function () {

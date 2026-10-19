@@ -1,0 +1,14 @@
+# Generated from tests/native/catalog.json by scripts/build-catalog-suites.js. Edit the catalog, then rerun the script.
+# Maestro drives Chromium at its preset desktop size, so the harness page frames simulador.html at 390 x 844 and prints the verdict of the lab check.
+# npm run test:maestro passes -e LAB_BASE=http://127.0.0.1:8765.
+url: http://127.0.0.1:8765/tests/native/phone-harness.html
+name: "MOB-04 Studio page scrolls instead of locking the board"
+tags:
+  - Mobile
+  - MOB-04
+---
+- openLink: ${LAB_BASE}/tests/native/phone-harness.html?case=MOB-04&page=simulador.html
+- extendedWaitUntil:
+    visible: "(PASS|FAIL) MOB-04.*"
+    timeout: 120000
+- assertVisible: "PASS MOB-04.*"

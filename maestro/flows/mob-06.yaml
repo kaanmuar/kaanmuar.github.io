@@ -1,0 +1,14 @@
+# Generated from tests/native/catalog.json by scripts/build-catalog-suites.js. Edit the catalog, then rerun the script.
+# Maestro drives Chromium at its preset desktop size, so the harness page frames admin.html at 390 x 844 and prints the verdict of the lab check.
+# npm run test:maestro passes -e LAB_BASE=http://127.0.0.1:8765.
+url: http://127.0.0.1:8765/tests/native/phone-harness.html
+name: "MOB-06 Admin login and back control fit the phone"
+tags:
+  - Mobile
+  - MOB-06
+---
+- openLink: ${LAB_BASE}/tests/native/phone-harness.html?case=MOB-06&page=admin.html
+- extendedWaitUntil:
+    visible: "(PASS|FAIL) MOB-06.*"
+    timeout: 120000
+- assertVisible: "PASS MOB-06.*"
