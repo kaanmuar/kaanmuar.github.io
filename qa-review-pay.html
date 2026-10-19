@@ -110,7 +110,7 @@
         const alertCount = Math.max(0, Math.min(8, Math.round(Number(params.get("count")) || 0)));
         const KNOWN = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha", "Appium", "Maestro", "JMeter", "Gatling", "k6"];
         const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
-        const LAYER_NAMES = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
+        const LAYER_NAMES = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
         let frameworkList = (params.get("frameworks") || "").split(",").map((name) => name.trim()).filter((name) => KNOWN.indexOf(name) !== -1);
         let toolList = (params.get("tools") || "").split(",").map((name) => name.trim()).filter((name) => TOOLS.indexOf(name) !== -1);
         let layerList = (params.get("layers") || "").split(",").map((name) => name.trim()).filter((name) => LAYER_NAMES.indexOf(name) !== -1);
