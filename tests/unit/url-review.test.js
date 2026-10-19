@@ -111,6 +111,16 @@ test.describe("scoring", () => {
     assert.equal(verdict(partial, "seo-sitemap"), "pass");
   });
 
+  test("a compressed response is read as HTML even when it was not asked for", () => {
+    const zlib = require("node:zlib");
+    const html = Buffer.from(HTML);
+    assert.equal(core.decodeBody(zlib.gzipSync(html), "gzip"), HTML);
+    assert.equal(core.decodeBody(zlib.brotliCompressSync(html), "br"), HTML);
+    assert.equal(core.decodeBody(html, undefined), HTML);
+    const cut = zlib.gzipSync(Buffer.from(HTML.repeat(40)));
+    assert.ok(core.decodeBody(cut.subarray(0, Math.floor(cut.length / 2)), "gzip").startsWith("<!doctype html>"));
+  });
+
   test("the same read scores the same way twice", () => {
     assert.deepEqual(analyzeOne(STRONG_HEADERS).score, analyzeOne(STRONG_HEADERS).score);
   });
