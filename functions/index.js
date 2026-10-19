@@ -1210,6 +1210,21 @@ async function reviewRowsFor(deviceId, ip) {
   }));
 }
 
+const BROWSER_URL = process.env.BROWSER_URL || "https://europe-west1-carlosm-interactive-cv.cloudfunctions.net/reviewBrowser";
+
+async function browseForReview(job) {
+  const key = process.env.BROWSER_KEY;
+  if (!key) return null;
+  const res = await fetch(BROWSER_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-review-key": key },
+    body: JSON.stringify(job),
+    signal: AbortSignal.timeout(100000)
+  });
+  if (!res.ok) return { ok: false, error: res.status === 429 ? "the browser was busy" : "status " + res.status };
+  return res.json();
+}
+
 exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
   const origin = reviewOrigin(req);
   res.set("Access-Control-Allow-Origin", origin);
@@ -1723,7 +1738,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       log: (text) => writeLine({ type: "log", text }),
       stopped: () => stopped,
       maxPages: intake.value.pages,
-      maxDepth: intake.value.depth
+      maxDepth: intake.value.depth,
+      browse: browseForReview
     });
     const record = urlReview.intakeRecord(intake.value, report, {
       ip,
@@ -1758,5 +1774,29 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   } finally {
     if (stopTimer) clearInterval(stopTimer);
     if (runId) admin.firestore().collection("url_review_stops").doc(runId).delete().catch(() => {});
+  }
+});
+
+exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
+  region: "europe-west1",
+  memory: "4GiB",
+  cpu: 4,
+  concurrency: 1,
+  maxInstances: 3,
+  timeoutSeconds: 120
+}, async (req, res) => {
+  const key = process.env.BROWSER_KEY || "";
+  const given = String(req.get("x-review-key") || "");
+  const crypto = require("crypto");
+  if (req.method !== "POST" || !key || given.length !== key.length || !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key))) {
+    res.status(403).json({ ok: false, error: "Not allowed." });
+    return;
+  }
+  try {
+    const result = await require("./url-review-browser").browse(req.body || {});
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Browser pass failed:", error);
+    res.status(200).json({ ok: false, error: String((error && error.message) || "browser error").slice(0, 120) });
   }
 });

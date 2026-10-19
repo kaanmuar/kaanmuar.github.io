@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <title>La pagina sta già parlando. · QA-lab URL Review</title>
-    <meta name="description" content="QA-lab URL Review legge una pagina https pubblica e propone casi di test, con script iniziali, per Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling e k6. Nomina axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar e Copado quando si applicano. Non li esegue. La pagina può essere letta in inglese, spagnolo, portoghese, tedesco, francese e italiano.">
+    <meta name="description" content="QA-lab URL Review legge una pagina https pubblica e propone casi di test, con script iniziali, per Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling e k6. Apre fino a tre pagine in un browser headless per eseguire axe-core, registrare il tracciamento prima e dopo una scelta sui cookie e fare screenshot. Nomina Lighthouse, BrowserStack, Applitools, Percy, Provar e Copado quando si applicano, senza eseguirli. La pagina può essere letta in inglese, spagnolo, portoghese, tedesco, francese e italiano.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
     <meta name="keywords" content="QA lab, URL review, proposed test cases, Playwright, Cypress, Robot Framework, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, k6, test automation scripts, axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, Copado, accessibility review, security headers, public page review, QA services">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -27,7 +27,7 @@
     <meta property="og:locale:alternate" content="fr_FR">
     <meta property="og:url" content="https://carlosandmunoz.com/qa-review-it.html">
     <meta property="og:title" content="La pagina sta già parlando. · QA-lab URL Review">
-    <meta property="og:description" content="Una lettura https pubblica, un elenco di tecnologie e casi di QA proposti con script iniziali per venti framework. Gli strumenti specialistici vengono nominati quando si applicano e non vengono avviati. Sei lingue.">
+    <meta property="og:description" content="Una lettura https pubblica, un elenco di tecnologie e casi di QA proposti con script iniziali per venti framework. Un browser headless esegue axe-core, registra il tracciamento prima e dopo una scelta sui cookie e fa screenshot. Gli altri strumenti specialistici vengono nominati quando si applicano e non vengono avviati. Sei lingue.">
     <meta property="og:image" content="https://carlosandmunoz.com/assets/qa-review-share.png?v=20261012">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
@@ -61,6 +61,7 @@
                     "Technology and linked-page summary",
                     "Health score from 0 to 100 across SEO, GEO, analytics, security, accessibility, and performance",
                     "Every check marked fails now, at risk, passes, or needs a person, with evidence, a fix, and a fix-first rank",
+                    "A headless browser pass: tracking before and after Reject, axe-core, phone layout, lab paint, and screenshots",
                     "Google result and share-card previews",
                     "AI crawler access matrix and the text AI search sees without JavaScript",
                     "Analytics tag, consent, and campaign-link checks",
@@ -243,7 +244,7 @@
                         "name": "Which tools can a review name?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply. None of them are launched against your site."
+                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages. Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site."
                         }
                     },
                     {
@@ -453,6 +454,11 @@
         .check-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); font-size: 13px; }
         .check-tile b { display: block; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
         .check-tile.pass b { color: var(--green); } .check-tile.risk b { color: var(--amber); } .check-tile.fail b { color: var(--red); } .check-tile.unknown b { color: var(--muted); }
+        .shots { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 12px; align-items: start; margin: 12px 0; }
+        .shots figure { margin: 0; }
+        .shots img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
+        .shots figcaption { font-size: 12px; color: var(--muted); margin-top: 6px; }
+        @media (max-width: 640px) { .shots { grid-template-columns: minmax(0, 1fr) 110px; } }
         .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .mini-table th, .mini-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
         .mini-table th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
@@ -825,7 +831,7 @@
                 <div class="lang-menu" id="langMenuGate"></div>
             </div>
         </div>
-        <p class="lede">Every control on this page stays off until you accept. The review fetches public pages and proposes test cases. It does not run them, sign in, submit forms, or generate load. The language control is on this screen.</p>
+        <p class="lede">Every control on this page stays off until you accept. The review fetches public pages, opens up to three of them in a headless browser, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. It does not run the cases, sign in, submit forms, or generate load. The language control is on this screen.</p>
         <form id="terms-form">
             <p class="records-note"><b>Disclaimers.</b> Read these before you check a box. <a id="legal-origin" href="qa-review-legal.html">Local and national disclaimers, for Colombia, where this service is operated</a>. <a id="legal-site" href="qa-review-legal.html">International disclaimers, for the country of the site you submit</a>.</p>
             <label class="check"><input type="checkbox" id="terms-all"> Select all</label>
@@ -895,9 +901,9 @@
             <dt>A public read, and a list of cases</dt>
             <dd>QA-lab URL Review fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load.</dd>
             <dt>What the report scores</dt>
-            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages read, and what to fix first.</dd>
+            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages read, and what to fix first. A headless browser loads up to three pages from an EU address: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks a phone width, and keeps two screenshots.</dd>
             <dt>Frameworks and tools</dt>
-            <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply. None of them are launched against your site.</dd>
+            <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages. Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site.</dd>
             <dt>Automation scripts</dt>
             <dd>It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each, a GitHub Actions workflow that runs them, and a fix kit with header files for common hosts, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records. The scripts are yours to run; the review never runs them.</dd>
             <dt>Your site</dt>
@@ -1052,6 +1058,8 @@
         <div data-insight id="health"></div>
         <h2 data-insight>Fix first</h2>
         <article class="card" data-insight id="fix-first"></article>
+        <h2 data-insight>In a real browser</h2>
+        <div data-insight id="browser-pass"></div>
         <h2 data-insight>How it looks in Google and when shared</h2>
         <div class="previews" data-insight id="previews"></div>
         <h2 data-insight>What AI sees</h2>
@@ -1084,7 +1092,7 @@
         </div>
         <section id="tool-block" hidden>
             <h2>Tools that apply</h2>
-            <p class="muted" id="tool-note">Checked tools join the frameworks on the payment schedule. The amount is shown when you pay. None of these tools are launched.</p>
+            <p class="muted" id="tool-note">Checked tools join the frameworks on the payment schedule. The amount is shown when you pay. axe-core already ran in the review's headless browser. Checking it adds its checks to your scripts. The other tools are not launched.</p>
             <ol class="tool-list" id="tools"></ol>
         </section>
         <section class="alarm" id="alarm" hidden>
@@ -1183,6 +1191,6 @@
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261023b"></script>
-<script src="js/qa-review.js?v=20261023b"></script>
+<script src="js/qa-review.js?v=20261024a"></script>
 </body>
 </html>

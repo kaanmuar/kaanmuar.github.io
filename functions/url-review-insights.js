@@ -186,12 +186,162 @@ function hostingHint(technologies, headers) {
   return "";
 }
 
+const AXE_CASES = {
+  "image-alt": ["A11Y-01"], "role-img-alt": ["A11Y-01"], "input-image-alt": ["A11Y-01"], "svg-img-alt": ["A11Y-01"],
+  "landmark-one-main": ["A11Y-02"], "bypass": ["A11Y-02"], "region": ["A11Y-02"],
+  "heading-order": ["A11Y-03"], "page-has-heading-one": ["A11Y-03"], "empty-heading": ["A11Y-03"],
+  "color-contrast": ["A11Y-04"], "frame-title": ["A11Y-05"],
+  "label": ["FM-01"], "select-name": ["FM-01"], "html-has-lang": ["FN-04"], "html-lang-valid": ["FN-04"],
+  "meta-viewport": ["MB-01"], "target-size": ["MB-01"]
+};
+const AXE_RAW = { "image-alt": "a11y-alt", "frame-title": "a11y-frames", "html-has-lang": "a11y-lang", "landmark-one-main": "a11y-main", "label": "a11y-labels", "meta-viewport": "a11y-zoom" };
+const AXE_FIX = {
+  "color-contrast": "Darken the text or lighten the background until normal text reaches 4.5:1 and large text 3:1.",
+  "button-name": "Give each icon button visible text or an aria-label.",
+  "link-name": "Give each link text, or an aria-label when it only holds an icon.",
+  "image-alt": "Describe informative images. Give decorative ones alt=\"\".",
+  "role-img-alt": "Add aria-label or aria-labelledby to elements with role=\"img\".",
+  "label": "Pair each control with <label for>, wrap it in a label, or add aria-label.",
+  "label-content-name-mismatch": "Start the aria-label with the words that are visible on the control.",
+  "target-size": "Make tap targets at least 24 by 24 px, or leave that much space around them.",
+  "heading-order": "Step headings down one level at a time.",
+  "list": "Keep only li, script, or template directly inside ul and ol.",
+  "listitem": "Put each li inside a ul or ol.",
+  "scrollable-region-focusable": "Add tabindex=\"0\" to scrollable areas so keyboard users can scroll them.",
+  "aria-hidden-focus": "Remove focusable elements from aria-hidden containers, or drop aria-hidden.",
+  "duplicate-id-aria": "Give every element that ARIA points to a unique id.",
+  "nested-interactive": "Do not put links or buttons inside other links or buttons."
+};
+const AXE_SEVERITY = { critical: ["fail", "medium"], serious: ["fail", "low"], moderate: ["risk", "low"], minor: ["risk", "low"] };
+
+function browserChecks(b, add, ctx) {
+  const where = "Chromium from an EU address (Belgium)";
+  const start = b.start || {};
+  const consent = b.consent || null;
+
+  // Analytics: what fires before a choice, and after Reject.
+  if (consent) {
+    const live = (rows) => (rows || []).filter((row) => row.hits > 0);
+    const quiet = (rows) => (rows || []).filter((row) => row.denied > 0 && !row.hits);
+    const listHits = (rows) => rows.map((row) => row.name + " (" + plural(row.hits, "request") + ")").join(", ");
+    const listCookies = (rows) => rows.slice(0, 6).map((row) => row.name + (row.third ? " on " + row.domain : "")).join(", ");
+    const beforeHits = live(consent.before.vendors);
+    const beforeCookies = consent.before.cookies || [];
+    const denied = quiet(consent.before.vendors);
+    const bannerText = consent.banner ? (consent.banner === "A cookie banner" ? "A cookie banner was showing" : consent.banner + " was showing") : "No cookie banner appeared";
+    if (beforeHits.length || beforeCookies.length) {
+      const evidence = bannerText + ". Before any choice, " + where + " saw " +
+        [beforeHits.length ? listHits(beforeHits) : "", beforeCookies.length ? "cookies " + listCookies(beforeCookies) : ""].filter(Boolean).join(", and ") + ".";
+      add("Analytics", consent.banner ? "fail" : "risk", "high", "an-firing", consent.banner ? "Tracking starts before the visitor chooses" : "Tracking starts on load and no banner asks first", evidence,
+        "Hold every tag until consent, or set Google Consent Mode v2 defaults to denied before any tag loads. Block third-party embeds until the visitor agrees.", { effort: "hours", cases: ["AN-01", "PR-03"], count: beforeHits.length + beforeCookies.length });
+    } else if (consent.before.vendors.length || ctx.tags.length || ctx.consentTools.length) {
+      add("Analytics", "pass", "info", "an-firing", "No tracking request or cookie before a choice",
+        bannerText + ". " + (denied.length ? denied.map((row) => row.name).join(", ") + " only sent pings with Consent Mode denied, which store no cookie." : "No request reached a known tracking host and no tracking cookie was set."), "", { cases: ["AN-01"] });
+    }
+    if (consent.rejected && consent.after) {
+      const afterHits = live(consent.after.vendors);
+      const afterCookies = consent.after.cookies || [];
+      if (afterHits.length || afterCookies.length) {
+        add("Analytics", "fail", "high", "an-reject", "Tracking continues after Reject",
+          "After pressing \"" + consent.rejectLabel + "\" and reloading, " + [afterHits.length ? listHits(afterHits) : "", afterCookies.length ? "new cookies " + listCookies(afterCookies) : ""].filter(Boolean).join(", and ") + " still appeared.",
+          "Map every tag in the consent tool to a category and block it until that category is accepted.", { effort: "hours", cases: ["AN-01", "PR-03"] });
+      } else {
+        add("Analytics", "pass", "info", "an-reject", "Reject stops tracking", "After pressing \"" + consent.rejectLabel + "\" and reloading, no tracking request or new tracking cookie appeared.", "", { cases: ["AN-01", "PR-03"] });
+      }
+    } else if (consent.banner && consent.banner !== "Sourcepoint" && !consent.rejectLabel) {
+      add("Analytics", "risk", "medium", "an-reject", "The banner shows no reject button on its first layer",
+        consent.banner + " was showing, but no button labelled reject, decline, deny, or only necessary was found on it.",
+        "Put Reject all next to Accept all, at the same size and weight.", { effort: "minutes", cases: ["PR-03"] });
+    }
+  }
+
+  // Accessibility: axe-core on the rendered pages, and the phone width.
+  const axe = b.axe && b.axe.ran ? b.axe : null;
+  if (axe) {
+    const rules = new Map();
+    axe.pages.forEach((page) => (page.violations || []).forEach((rule) => {
+      const row = rules.get(rule.id) || { id: rule.id, impact: rule.impact, help: rule.help, helpUrl: rule.helpUrl, nodes: 0, pages: [], targets: rule.targets || [] };
+      row.nodes += rule.nodes;
+      if (row.pages.indexOf(page.path) === -1) row.pages.push(page.path);
+      const order = ["minor", "moderate", "serious", "critical"];
+      if (order.indexOf(rule.impact) > order.indexOf(row.impact)) row.impact = rule.impact;
+      rules.set(rule.id, row);
+    }));
+    const order = { critical: 4, serious: 3, moderate: 2, minor: 1 };
+    const list = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, 10);
+    list.forEach((rule) => {
+      const raw = AXE_RAW[rule.id];
+      if (raw && ctx.findings.some((item) => item.key === raw && item.verdict !== "pass")) return;
+      const [verdict, severity] = AXE_SEVERITY[rule.impact] || AXE_SEVERITY.minor;
+      add("Accessibility", verdict, severity, "ax-" + rule.id, rule.help,
+        "axe-core " + (axe.version || "") + " found " + plural(rule.nodes, "element") + " on " + sample(rule.pages, 3) + (rule.targets.length ? ", for example " + rule.targets.slice(0, 2).join(" and ") : "") + ". Impact: " + rule.impact + ".",
+        AXE_FIX[rule.id] || "Follow the rule guide at " + rule.helpUrl + ".", { pages: rule.pages, count: rule.nodes, effort: rule.nodes > 20 ? "hours" : "minutes", cases: AXE_CASES[rule.id] || [] });
+    });
+    const checked = axe.pages.length;
+    if (!rules.has("color-contrast")) add("Accessibility", "pass", "info", "a11y-contrast", "Text contrast passes axe-core", "No contrast failure on " + plural(checked, "page") + ". Keyboard focus order still needs a person.", "", { cases: ["A11Y-04"] });
+    if (!rules.size) add("Accessibility", "pass", "info", "ax-clean", "axe-core found no WCAG 2.2 AA violation", plural(checked, "rendered page") + " passed every automated rule. Automated rules catch about a third of real issues.", "");
+  }
+  const mobile = b.mobile && !b.mobile.error ? b.mobile : null;
+  if (mobile) {
+    if (mobile.overflow > 2) add("Accessibility", "fail", "medium", "a11y-reflow", "The page scrolls sideways on a phone",
+      "At " + mobile.width + " px the page is " + mobile.overflow + " px wider than the screen" + (mobile.offenders.length ? ". Widest elements: " + mobile.offenders.join(", ") : "") + ".",
+      "Give wide elements max-width: 100%, let tables scroll inside their own box, and avoid fixed widths.", { effort: "hours", cases: ["MB-01", "VIS-02"] });
+    else add("Accessibility", "pass", "info", "a11y-reflow", "The page fits a " + mobile.width + " px phone screen", "No sideways scroll in a phone-sized Chromium window.", "", { cases: ["MB-01", "VIS-02"] });
+    if (mobile.smallTargets && !(axe && axe.pages.some((page) => (page.violations || []).some((rule) => rule.id === "target-size")))) {
+      add("Accessibility", "risk", "low", "a11y-targets", plural(mobile.smallTargets, "tap target is", "tap targets are") + " too small on a phone",
+        "axe-core target-size at " + mobile.width + " px" + (mobile.targetSamples.length ? ", for example " + mobile.targetSamples.slice(0, 2).join(" and ") : "") + ".",
+        AXE_FIX["target-size"], { count: mobile.smallTargets, effort: "hours", cases: ["MB-01"] });
+    }
+  }
+
+  // GEO: the HTML compared with the rendered page.
+  if (start.renderedWords > 150) {
+    const thin = [{ path: start.finalPath || "/", share: start.share }].concat((b.pages || []).filter((page) => page.renderedWords > 150).map((page) => ({ path: page.path, share: page.share }))).filter((page) => page.share < 40);
+    if (thin.length) add("GEO", "risk", "medium", "geo-rendered", "AI crawlers see only part of the text people see",
+      thin.map((page) => page.path + " (" + page.share + "%)").slice(0, 3).join(", ") + ". The share is words in the HTML compared with words on the rendered page. Most AI crawlers do not run JavaScript.",
+      "Render the main content on the server or pre-render it at build time.", { pages: thin.map((page) => page.path), effort: "days", cases: ["GEO-03"] });
+    else add("GEO", "pass", "info", "geo-rendered", "The HTML carries the text people see", "The start page HTML holds " + start.share + "% of the words on the rendered page.", "", { cases: ["GEO-03"] });
+    if (start.h1 && start.h1InHtml === false) add("GEO", "risk", "low", "geo-h1-rendered", "The main heading appears only after JavaScript", "\"" + start.h1 + "\" is on the rendered page but not in the HTML.", "Put the h1 in the server HTML.", { effort: "hours", cases: ["GEO-03"] });
+  }
+
+  // Performance: lab vitals and what broke while loading.
+  const vitals = start.vitals || {};
+  const lab = "Measured once in " + where + " with no network throttling. A phone on mobile data will be slower.";
+  if (vitals.lcp) {
+    const secs = (vitals.lcp / 1000).toFixed(1) + " s";
+    if (vitals.lcp > 4000) add("Performance", "fail", "medium", "pf-lcp", "The largest element paints after " + secs, lab, "Serve the hero image in a modern format at the shown size, preload it, and cut render-blocking scripts.", { effort: "days" });
+    else if (vitals.lcp > 2500) add("Performance", "risk", "low", "pf-lcp", "The largest element paints after " + secs, lab + " Good is under 2.5 s.", "Preload the hero image and defer scripts that do not affect the first view.", { effort: "hours" });
+    else add("Performance", "pass", "info", "pf-lcp", "The largest element paints in " + secs, lab, "");
+  }
+  if (vitals.cls != null && start.status) {
+    if (vitals.cls > 0.25) add("Performance", "fail", "medium", "pf-cls-lab", "The layout shifts by " + vitals.cls + " while loading", lab + " Good is under 0.1.", "Reserve space for images, ads, embeds, and late banners.", { effort: "hours", cases: ["VIS-01"] });
+    else if (vitals.cls > 0.1) add("Performance", "risk", "low", "pf-cls-lab", "The layout shifts by " + vitals.cls + " while loading", lab + " Good is under 0.1.", "Reserve space for images, ads, embeds, and late banners.", { effort: "hours", cases: ["VIS-01"] });
+    else add("Performance", "pass", "info", "pf-cls-lab", "The layout holds still while loading", "Cumulative Layout Shift " + vitals.cls + ". " + lab, "", { cases: ["VIS-01"] });
+  }
+  if (vitals.tbt > 600) add("Performance", "risk", "low", "pf-tbt", "Scripts block the page for " + vitals.tbt + " ms", "Long tasks while loading add up to " + vitals.tbt + " ms of blocking time. " + lab, "Split large bundles and defer third-party scripts.", { effort: "days", cases: ["PF-02"] });
+  const failed = b.failed || {};
+  if (failed.count) {
+    const broken = (failed.samples || []).some((row) => row.type === "script" || row.type === "stylesheet" || row.status >= 500);
+    add("Performance", "risk", broken ? "medium" : "low", "pf-failed", plural(failed.count, "resource fails", "resources fail") + " to load",
+      (failed.samples || []).slice(0, 3).map((row) => row.url + " (" + (row.status || row.error) + ")").join(", ") + ".", "Fix or remove the broken references.", { count: failed.count, effort: "minutes" });
+  }
+  const errors = b.console || {};
+  if (errors.errors) add("Performance", "risk", "low", "pf-console", plural(errors.errors, "JavaScript error", "JavaScript errors") + " while loading",
+    (errors.samples || []).slice(0, 2).join(" | ") + ".", "Open the browser console on the start page and fix the errors in order.", { count: errors.errors, effort: "hours" });
+
+  // Security: what the browser actually requested over plain http.
+  const mixed = b.mixed || {};
+  if (mixed.count) add("Security", "fail", "medium", "sec-mixed-live", "The browser requested plain http resources", sample(mixed.samples, 3) + ".", "Load every resource over https.", { count: mixed.count, effort: "minutes", cases: ["SEC-09"] });
+  else if (start.status) add("Security", "pass", "info", "sec-mixed-live", "Every request in the browser used https", plural(start.requests || 0, "request") + " on the start page.", "", { cases: ["SEC-09"] });
+}
+
 function analyze(input) {
   const pages = input.pages || [];
   const home = pages[0] || {};
   const face = home.inspect || {};
   const extras = input.extras || {};
   const limits = input.limits || {};
+  const browsed = input.browser && input.browser.ok ? input.browser : null;
   const origin = (() => { try { return new URL(home.url).origin; } catch (error) { return ""; } })();
   const host = hostOf(home.url);
   const findings = [];
@@ -634,7 +784,7 @@ function analyze(input) {
   const homeTags = new Set(((face.analytics && face.analytics.tags) || []).map((tag) => tag.name));
   const untagged = homeTags.size ? read.filter((page) => !((page.inspect.analytics && page.inspect.analytics.tags) || []).length && !(page.inspect.analytics && page.inspect.analytics.loader)).map((page) => page.path) : [];
   if (!tags.length && consentTools.length) {
-    add("Analytics", "person", "info", "an-none", "Tags are probably loaded by a script", consentTools.join(", ") + " manages consent, but none of 26 known analytics tools is written in the HTML. The browser run lists what loads after the page starts.", "", { cases: ["AN-01"] });
+    if (!browsed) add("Analytics", "person", "info", "an-none", "Tags are probably loaded by a script", consentTools.join(", ") + " manages consent, but none of 26 known analytics tools is written in the HTML. The browser run lists what loads after the page starts.", "", { cases: ["AN-01"] });
   } else if (!tags.length) {
     add("Analytics", "risk", "low", "an-none", "No known analytics tag is in the HTML", "None of 26 known analytics tools appeared in the HTML of the pages read. A tag injected later by a script would not show here.",
       "If visits matter, add a measurement tool. A cookieless one such as Plausible or Cloudflare Web Analytics avoids a consent banner.", { effort: "hours", cases: ["AN-01"] });
@@ -678,7 +828,7 @@ function analyze(input) {
   } else if (consentTools.length) {
     add("Analytics", "pass", "info", "an-consent", "A consent tool is present", consentTools.join(", ") + " was found in the HTML.", "", { cases: ["PR-03"] });
   }
-  if (tracking.length) {
+  if (tracking.length && !browsed) {
     add("Analytics", "person", "info", "an-firing", "Whether tags fire before a choice needs a browser run",
       "A raw HTML read can see the tags but not the requests they send. The browser run records every hit before and after consent.", "", { cases: ["AN-01"] });
   }
@@ -804,7 +954,7 @@ function analyze(input) {
   if (frames.length) add("Accessibility", "risk", "low", "a11y-frames", "Embedded frames have no title", "On " + sample(frames.map((page) => page.path), 3) + ".", "Add title=\"…\" to each iframe.", { pages: frames.map((page) => page.path), effort: "minutes", cases: ["A11Y-05"] });
   const tabs = read.filter((page) => (page.inspect.signals && page.inspect.signals.positiveTabindex) > 0);
   if (tabs.length) add("Accessibility", "risk", "low", "a11y-tabindex", "Positive tabindex reorders the keyboard path", "On " + sample(tabs.map((page) => page.path), 3) + ".", "Use tabindex=\"0\" or the natural order.", { pages: tabs.map((page) => page.path), effort: "minutes" });
-  add("Accessibility", "person", "info", "a11y-render", "Contrast, focus order, and screen-reader output need a rendered page", "These are measured in the browser run with axe-core and a keyboard pass.", "", { cases: ["A11Y-04"] });
+  if (!(browsed && browsed.axe && browsed.axe.ran)) add("Accessibility", "person", "info", "a11y-render", "Contrast, focus order, and screen-reader output need a rendered page", "These are measured in the browser run with axe-core and a keyboard pass.", "", { cases: ["A11Y-04"] });
 
   // Performance
   const homeMs = home.ms || 0;
@@ -822,8 +972,10 @@ function analyze(input) {
   if (face.signals && !face.signals.cacheControl) add("Performance", "risk", "low", "pf-cache", "The start page sends no cache-control", "Browsers and CDNs guess how long to keep it.", "Send cache-control on HTML (for example max-age=0, must-revalidate) and long max-age on hashed assets.", { effort: "minutes", cases: ["RS-03"] });
   const thirdHosts = face.signals ? (face.signals.thirdParty || []).length : 0;
   if (thirdHosts > 8) add("Performance", "risk", "low", "pf-third", plural(thirdHosts, "other host serves", "other hosts serve") + " scripts on the start page", "Each host adds a DNS lookup and a connection.", "Remove tags nobody reads and self-host the rest.", { count: thirdHosts, effort: "hours" });
-  add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
+  if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
   if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was read", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were read. Slow responses use up the budget.", "");
+
+  if (browsed) browserChecks(browsed, add, { findings, tags, consentTools });
 
   // Rank and score.
   const actionable = findings.filter((item) => item.verdict === "fail" || item.verdict === "risk");
