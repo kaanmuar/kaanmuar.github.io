@@ -10,7 +10,7 @@ test.describe('Sprint studio', () => {
 
   test('loads the board and run control', async ({ page }) => {
     await expect(page.getByRole('button', { name: /Run 4-agent sprint/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Jira board/i })).toBeVisible();
+    await expect(page.locator('#nav').getByRole('button', { name: /Jira board/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /CV regression lab/i })).toBeVisible();
     await expect(page.locator('#homeBtn')).toBeVisible();
     await expect(page.locator('#tour-start-btn')).toBeVisible();
@@ -29,8 +29,8 @@ test.describe('Sprint studio', () => {
   test('nav can open Xray and automation views', async ({ page }) => {
     await page.getByRole('button', { name: /Xray \/ TestRail/i }).click();
     await page.getByRole('button', { name: /Automation lab/i }).click();
-    await page.getByRole('button', { name: /Jira board/i }).click();
-    await expect(page.getByRole('button', { name: /Jira board/i })).toBeVisible();
+    await page.locator('#nav').getByRole('button', { name: /Jira board/i }).click();
+    await expect(page.locator('#nav').getByRole('button', { name: /Jira board/i })).toBeVisible();
   });
 
   test('back control returns to the CV', async ({ page }) => {
