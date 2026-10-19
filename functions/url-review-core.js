@@ -301,12 +301,12 @@ function validateIntake(body) {
   };
 }
 
-async function screenIntake(body, headers) {
+async function screenIntake(body, headers, options) {
   const intake = validateIntake(body);
   if (intake.errors.length) {
     return { ok: false, status: 400, error: intake.errors[0].message, fields: intake.errors };
   }
-  const human = humanCheck(body, headers);
+  const human = options && options.trusted ? { ok: true } : humanCheck(body, headers);
   if (!human.ok) return { ok: false, status: 403, error: human.message, fields: [] };
   if (!(await emailCanReceive(intake.value.email))) {
     return { ok: false, status: 400, error: "That email domain does not accept mail.", fields: [{ field: "email", message: "That email domain does not accept mail." }] };
