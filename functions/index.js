@@ -1433,13 +1433,14 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       res.status(400).json({ error: "PayPal is the payment method for this review. No charge was made." });
       return;
     }
+    const testRun = urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY);
     const keys = {
       secret: process.env.STRIPE_SECRET_KEY || "",
       wompiKey: process.env.WOMPI_PRIVATE_KEY || "",
       mercadoPagoToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
-      paypalClientId: process.env.PAYPAL_CLIENT_ID || "",
-      paypalSecret: process.env.PAYPAL_CLIENT_SECRET || "",
-      paypalMode: process.env.PAYPAL_MODE || ""
+      paypalClientId: (testRun ? process.env.PAYPAL_SANDBOX_CLIENT_ID : process.env.PAYPAL_CLIENT_ID) || "",
+      paypalSecret: (testRun ? process.env.PAYPAL_SANDBOX_CLIENT_SECRET : process.env.PAYPAL_CLIENT_SECRET) || "",
+      paypalMode: testRun ? "sandbox" : (process.env.PAYPAL_MODE || "")
     };
     try {
       if (pathName.indexOf("/confirm") !== -1) {
@@ -1471,7 +1472,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           const openSnap = await admin.firestore().collection("url_reviews").doc(result.reference).get();
           const open = openSnap.exists ? openSnap.data() : null;
           const sameLink = !result.linkId || (open && open.externalId === result.linkId);
-          if (!open || open.status !== "checkout-open" || open.provider !== result.provider || open.amount !== result.amount || !sameLink) {
+          if (!open || open.status !== "checkout-open" || open.provider !== result.provider || open.amount !== result.amount || !sameLink || (open.test === true) !== testRun) {
             res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
             return;
           }
@@ -1489,12 +1490,14 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           await admin.firestore().collection("url_reviews").doc(paidReport).set({
             paid: true,
             sessionId: result.sessionId,
-            provider: result.provider
+            provider: result.provider,
+            test: testRun
           }, { merge: true });
           await rememberReview("paid", {
             id: paidReport,
             status: "paid-report",
             paid: true,
+            test: testRun,
             priceUsd: paidPrice,
             provider: result.provider,
             purpose: paidPurpose,
@@ -1504,6 +1507,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           const credit = {
             status: "run-credit",
             paid: true,
+            test: testRun,
             provider: result.provider,
             method: choice,
             deviceId: payer,
@@ -1589,11 +1593,13 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         amount: session.amount,
         currency: session.currency,
         paid: false,
+        test: testRun,
         createdAt: new Date().toISOString()
       });
       await rememberReview("checkout", {
         id: reference,
         status: "checkout-open",
+        test: testRun,
         purpose,
         reportId,
         priceUsd: priced.usd,
