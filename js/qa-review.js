@@ -19,7 +19,17 @@
   ];
   const FRAMEWORKS = FRAMEWORK_GROUPS.reduce((all, group) => all.concat(group[1]), []);
   const DEFAULT_FRAMEWORKS = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "Appium", "JMeter", "Gatling"];
+  const FRAMEWORK_LOGOS = {
+    Playwright: "playwright.svg", Cypress: "cypress.svg", Robot: "robot.svg", Selenium: "selenium.svg", WebdriverIO: "webdriverio.svg",
+    CodeceptJS: "codeceptjs.svg", Selenide: "selenide.svg", TestNG: "testng.svg", Watir: "watir.png",
+    Cucumber: "cucumber.svg", Behave: "behave.png", SpecFlow: "specflow.png",
+    Jest: "jest.svg", Vitest: "vitest.svg", Mocha: "mocha.svg",
+    Appium: "appium.svg", Calabash: "calabash.png",
+    JMeter: "jmeter.svg", Gatling: "gatling.svg", k6: "k6.svg"
+  };
   const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
+  const PRODUCT_NAMES = FRAMEWORKS.concat(TOOLS, ["Robot Framework", "Selenium WebDriver", "Reqnroll", "Jira", "Xray", "Zephyr", "TestRail", "Azure Test Plans", "Mantis", "PayPal"]);
+  const PRODUCT_PATTERN = new RegExp("\\b(?:" + PRODUCT_NAMES.slice().sort((a, b) => b.length - a.length).map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\b", "g");
   const REASONS = [
     { id: "own", label: "I own this site and want a test plan" },
     { id: "client", label: "A client asked me to propose coverage before a release" },
@@ -96,7 +106,7 @@
     box.innerHTML = FRAMEWORK_GROUPS.map((group) =>
       '<div class="fw-group" role="group" aria-label="' + group[0] + '"><span class="fw-group-name">' + group[0] + "</span>" +
       group[1].map((name) =>
-        '<label><input type="checkbox" name="fw" value="' + name + '"' + (DEFAULT_FRAMEWORKS.includes(name) ? " checked" : "") + " disabled> " + name + "</label>"
+        '<label><input type="checkbox" name="fw" value="' + name + '"' + (DEFAULT_FRAMEWORKS.includes(name) ? " checked" : "") + " disabled>" + fwLogo(name) + '<span translate="no">' + name + "</span></label>"
       ).join("") + "</div>"
     ).join("");
   }
@@ -135,6 +145,7 @@
   paintFrameworks();
   paintScope();
   paintReasons();
+  protectNames(document.body);
   const termsAll = document.getElementById("terms-all");
   const termBoxes = () => [...termsForm.querySelectorAll('input[type="checkbox"][name^="t"]')];
   termsForm.addEventListener("change", (event) => {
@@ -312,6 +323,45 @@
     if (!host || /\s/.test(host)) errors.push({ field: "url", message: "Enter a public page after https://." });
     if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: "Choose at least one framework for the proposed cases." });
     return errors;
+  }
+
+  function fwLogo(name) {
+    const file = FRAMEWORK_LOGOS[name];
+    return file ? '<img class="fw-logo" src="assets/frameworks/' + file + '?v=20261021" alt="" width="16" height="16" decoding="async">' : "";
+  }
+
+  function fwName(name) {
+    return '<span class="fw-name" translate="no">' + fwLogo(name) + esc(name) + "</span>";
+  }
+
+  function protectNames(root) {
+    if (!root) return;
+    const nodes = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!node.parentElement || node.parentElement.closest("script, style, textarea, pre, code, [translate=\"no\"]")) continue;
+      PRODUCT_PATTERN.lastIndex = 0;
+      if (PRODUCT_PATTERN.test(node.nodeValue)) nodes.push(node);
+    }
+    nodes.forEach((node) => {
+      const text = node.nodeValue;
+      const parts = document.createDocumentFragment();
+      let last = 0;
+      let match;
+      PRODUCT_PATTERN.lastIndex = 0;
+      while ((match = PRODUCT_PATTERN.exec(text))) {
+        parts.append(text.slice(last, match.index));
+        const span = document.createElement("span");
+        span.setAttribute("translate", "no");
+        span.className = "notranslate";
+        span.textContent = match[0];
+        parts.append(span);
+        last = match.index + match[0].length;
+      }
+      parts.append(text.slice(last));
+      node.replaceWith(parts);
+    });
   }
 
   function esc(value) {
@@ -685,11 +735,12 @@
     paintTools(report);
     document.getElementById("cases").innerHTML = shown.map((item) => {
       const extra = (item.also || []).filter(Boolean);
-      const tools = esc(item.fw.filter((fw) => picked.has(fw)).join(" · ")) + (extra.length ? " · " + esc(extra.join(" · ")) : "");
-      return '<article class="case"><div><span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">Proposed</span></div><strong>' + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + '</p><p class="muted">' + tools + "</p></article>";
+      const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
+      return '<article class="case"><div><span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">Proposed</span></div><strong>' + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + '</p><p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
+    protectNames(dash);
   }
 
   async function readStream(res) {
@@ -1279,7 +1330,8 @@
       const host = document.getElementById("case-print");
       host.innerHTML = '<p class="report-kicker">QA-lab URL Review</p><h1>' + esc(report.host || "Test cases") + "</h1><p class=\"sign-line\">" + esc(sign.mark) + "</p><p>SHA-256 " + esc(sign.sha256) + "</p>" +
         rows.map((row) => '<article><p class="case"><span class="id">' + esc(row.item.id) + "</span> " + esc(row.item.layer) + "</p><h2>" + esc(row.item.title) + "</h2><p>" + esc(row.parts.step) + "</p><p>" + esc(row.parts.expected) + "</p>" +
-          row.scripts.map((one) => '<p class="script-name">' + esc(one.framework) + "</p><pre>" + esc(one.code) + "</pre>").join("") + "</article>").join("");
+          row.scripts.map((one) => '<p class="script-name" translate="no">' + fwLogo(one.framework) + esc(one.framework) + '</p><pre translate="no">' + esc(one.code) + "</pre>").join("") + "</article>").join("");
+      protectNames(host);
       document.body.classList.add("printing-cases");
       registerCapture("case-print");
       window.print();
