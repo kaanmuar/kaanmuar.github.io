@@ -655,7 +655,7 @@
           deviceId: deviceId(),
           runId: runId,
           openedAt: openedAt,
-          company: document.getElementById("company").value,
+          company: (document.getElementById("hp-note") || { value: "" }).value,
           followUp: document.getElementById("follow-up").checked === true
         })
       });
