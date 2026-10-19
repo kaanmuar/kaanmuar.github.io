@@ -632,7 +632,7 @@ async function assertPublic(hostname) {
   return records[0].address;
 }
 
-function requestOnce(target, pinned, isStopped) {
+function requestOnce(target, pinned, isStopped, keepPartial) {
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
     let settled = false;
@@ -685,6 +685,12 @@ function requestOnce(target, pinned, isStopped) {
       res.on("data", (chunk) => {
         size += chunk.length;
         if (size > MAX_BYTES) {
+          if (keepPartial) {
+            chunks.push(chunk.subarray(0, chunk.length - (size - MAX_BYTES)));
+            req.destroy();
+            finish(resolve, { status: res.statusCode || 0, headers: res.headers, body: Buffer.concat(chunks).toString("utf8"), cert, truncated: true });
+            return;
+          }
           failed = new Error("The page is larger than the review limit.");
           giveUp(failed);
           return;
@@ -712,7 +718,7 @@ function requestOnce(target, pinned, isStopped) {
   });
 }
 
-async function fetchPublic(raw, isStopped, onPulse) {
+async function fetchPublic(raw, isStopped, onPulse, keepPartial) {
   let current = normalizeUrl(raw);
   const started = Date.now();
   let pulses = 0;
@@ -731,7 +737,7 @@ async function fetchPublic(raw, isStopped, onPulse) {
       }
       const pinned = await assertPublic(current.hostname);
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
-      const res = await requestOnce(current, pinned, isStopped);
+      const res = await requestOnce(current, pinned, isStopped, keepPartial);
       const location = res.headers.location;
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         if (onPulse) onPulse("The page redirected. Following the next public https address.");
@@ -745,6 +751,7 @@ async function fetchPublic(raw, isStopped, onPulse) {
         status: res.status,
         headers: res.headers,
         body: res.body,
+        truncated: !!res.truncated,
         cert: res.cert,
         ms: Date.now() - started
       };
@@ -1531,14 +1538,16 @@ function withTimeout(promise, ms, fallback) {
   return Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(fallback), ms))]);
 }
 
-async function fetchExtra(url, halt) {
+async function fetchExtra(url, halt, keepPartial) {
   try {
-    const res = await fetchPublic(url, halt);
+    const res = await fetchPublic(url, halt, null, keepPartial);
     const type = header(res.headers, "content-type");
+    const body = String(res.body || "");
     return {
       status: res.status,
       url: res.url,
-      body: String(res.body || "").slice(0, 600000),
+      truncated: !!res.truncated || body.length > 600000,
+      body: body.slice(0, 600000),
       html: /text\/html|application\/xhtml/i.test(type) || /^\s*<(!doctype|html)/i.test(res.body || "")
     };
   } catch (error) {
@@ -1557,8 +1566,10 @@ function sitemapLocs(xml) {
 
 async function readSitemap(origin, robotsText, halt) {
   const listed = [];
+  let listedTotal = 0;
   String(robotsText || "").split(/\r?\n/).forEach((line) => {
     const match = line.match(/^\s*sitemap\s*:\s*(\S+)/i);
+    if (match) listedTotal += 1;
     if (match && listed.length < 5) listed.push(match[1]);
   });
   const host = new URL(origin).hostname;
@@ -1572,20 +1583,25 @@ async function readSitemap(origin, robotsText, halt) {
   const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url) && !/\.gz$/i.test(url));
   let last = { status: 0 };
   for (let i = 0; i < candidates.length && i < 3; i += 1) {
-    const res = await fetchExtra(candidates[i], halt);
+    const res = await fetchExtra(candidates[i], halt, true);
     last = res;
     if (res.status !== 200 || res.html) continue;
     let urls = sitemapLocs(res.body);
+    let partial = !!res.truncated || listedTotal > 1;
     if (/<sitemapindex\b/i.test(res.body)) {
-      const children = urls.filter((url) => /^https:\/\//i.test(url) && !/\.gz$/i.test(url)).slice(0, 3);
+      const all = urls.filter((url) => /^https:\/\//i.test(url) && !/\.gz$/i.test(url));
+      const children = all.slice(0, 3);
+      if (all.length > children.length || all.length < urls.length) partial = true;
       urls = [];
       for (let j = 0; j < children.length; j += 1) {
-        const child = await fetchExtra(children[j], halt);
+        const child = await fetchExtra(children[j], halt, true);
         if (child.status === 200 && !child.html) urls = urls.concat(sitemapLocs(child.body));
+        if (child.truncated) partial = true;
         if (urls.length >= 5000) break;
       }
     }
-    if (urls.length) return { source: candidates[i], status: 200, urls: urls.slice(0, 5000) };
+    if (urls.length >= 5000) partial = true;
+    if (urls.length) return { source: candidates[i], status: 200, urls: urls.slice(0, 5000), partial };
   }
   return { source: candidates[0] || "", status: last.status || 0, urls: [] };
 }
@@ -2448,7 +2464,7 @@ function paypalPaid(order) {
   return {
     paid,
     pending: !paid && (order.status === "APPROVED" || order.status === "PAYER_ACTION_REQUIRED"),
-    reference: String(unit.custom_id || "").replace(/[^a-f0-9]/g, "").slice(0, 16),
+    reference: String(unit.custom_id || capture.custom_id || "").replace(/[^a-f0-9]/g, "").slice(0, 16),
     amount: paid ? amount : 0
   };
 }
