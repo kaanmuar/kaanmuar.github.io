@@ -1261,10 +1261,44 @@ function toolsForPage(face, sig, names) {
   return REVIEW_TOOLS.filter((pair) => fit[pair[0]]).map((pair) => ({ name: pair[0], why: pair[1] }));
 }
 
-function propose(pages, robotsBlocked, limits) {
+function withRendered(raw, dom) {
+  if (!dom) return raw;
+  const links = [...new Set((raw.links || []).concat(dom.links || []))];
+  const sig = Object.assign({}, raw.signals || {}, { iframes: Math.max((raw.signals && raw.signals.iframes) || 0, dom.iframes || 0) });
+  return Object.assign({}, raw, {
+    links,
+    renderedLinks: links.length - (raw.links || []).length,
+    forms: Math.max(raw.forms || 0, dom.forms || 0),
+    unlabeled: (dom.forms || 0) > (raw.forms || 0) ? dom.unlabeled : raw.unlabeled,
+    buttons: Math.max(raw.buttons || 0, dom.buttons || 0),
+    signals: sig
+  });
+}
+
+function journeys(pages, dom) {
+  const byPath = new Map();
+  pages.forEach((page) => {
+    const path = String(page.path || "").split(/[?#]/)[0];
+    if (path && !byPath.has(path)) byPath.set(path, page);
+  });
+  const start = String((pages[0] && pages[0].path) || "/");
+  const heading = (page) => {
+    const text = clean((page && page.inspect && page.inspect.h1 && page.inspect.h1[0]) || "", 200);
+    if (!text) return "";
+    return text.length > 40 ? text.slice(0, 40).replace(/\s+\S*$/, "") : text;
+  };
+  return ((dom && dom.nav) || [])
+    .map((link) => ({ link, page: byPath.get(link.target) }))
+    .filter((row) => !row.page || (row.page.status >= 200 && row.page.status < 400))
+    .sort((a, b) => ((b.page ? 2 : 0) + (b.link.where === "navigation" ? 1 : 0)) - ((a.page ? 2 : 0) + (a.link.where === "navigation" ? 1 : 0)))
+    .slice(0, 4)
+    .map((row) => ({ path: start, selector: row.link.selector, text: row.link.text, target: row.link.target, h1: heading(row.page), where: row.link.where }));
+}
+
+function propose(pages, robotsBlocked, limits, dom) {
   const cases = [];
   const home = pages[0];
-  const face = home.inspect || {};
+  const face = withRendered(home.inspect || {}, dom);
   const sig = face.signals || {};
   const browser = BROWSER_FW;
   const names = techNames(pages);
@@ -1294,9 +1328,22 @@ function propose(pages, robotsBlocked, limits) {
   addCase(cases, { id: "CT-05", layer: "Content", title: "The h1 and the title agree", why: (face.h1[0] ? "The first h1 is \"" + face.h1[0] + "\"." : "There is no h1 text to compare.") + " The title and the h1 do not have to be identical, and they should not describe different pages.", fw: browser });
   const capPages = (limits && limits.maxPages) || MAX_PAGES;
   const capDepth = (limits && limits.maxDepth) || MAX_DEPTH;
-  addCase(cases, { id: "LK-01", layer: "Links", title: "Same-host links discovered from the start page resolve", why: face.links.length + " same-host links were listed. This review opened at most " + capPages + " of them and did not click them. A later run would request each href and accept only an HTML document on this host.", fw: browser });
+  addCase(cases, { id: "LK-01", layer: "Links", title: "Same-host links discovered from the start page resolve", why: face.links.length + " same-host links were listed" + (face.renderedLinks ? ", " + face.renderedLinks + " of them only after JavaScript ran" : "") + ". This review opened at most " + capPages + " of them and did not click them. A later run would request each href and accept only an HTML document on this host.", fw: browser });
   addCase(cases, { id: "LK-02", layer: "Links", title: "The crawl stays inside the page cap and the host", why: pages.length + " HTML pages were saved, " + capDepth + " links deep at most, with a cap of " + capPages + " pages. A regression would fail if a link left the host or if the cap stopped hiding a broken primary path.", fw: browser });
   addCase(cases, { id: "LK-03", layer: "Links", title: "A crawler honors robots.txt for linked pages", why: (robotsBlocked ? robotsBlocked + " linked URLs were skipped because robots.txt disallows them for this agent." : "No linked URL was skipped for robots.txt during this read.") + " The start URL is still fetched. A later crawler case would log each skipped path.", fw: browser });
+  journeys(pages, dom).forEach((step, index) => {
+    addCase(cases, {
+      id: "JR-0" + (index + 1),
+      layer: "Functional",
+      title: "Clicking “" + step.text + "” opens " + step.target,
+      why: "The start page " + (step.where === "main" ? "content" : "navigation") + " links “" + step.text + "” to " + step.target + " (" + step.selector + ")." +
+        (step.h1 ? " The page read there has the heading “" + step.h1 + "”." : "") +
+        " A browser run would click the link at 1280 px, wait for " + step.target + (step.h1 ? ", and check the heading" : "") + ". Nothing is submitted." +
+        (dom.banner ? " " + (dom.banner === "A cookie banner" ? "A cookie banner" : "The " + dom.banner + " banner") + " covers the first visit, so close it before the click." : ""),
+      fw: browser,
+      journey: step
+    });
+  });
   if (face.links.length) addCase(cases, { id: "LK-04", layer: "Links", title: "In-page anchors and repeated hrefs stay intentional", why: "Same-host hrefs were deduped before the crawl. A UI case would open repeated navigation items once and check that a hash target exists on the page.", fw: browser });
   if (face.forms) {
     addCase(cases, { id: "FM-01", layer: "Forms", title: "Visible fields have labels", why: face.forms + " form(s) are present. " + face.unlabeled + " controls had no label element, aria-label, aria-labelledby, or title. Nothing was submitted. A later case would pair each control with its label.", fw: browser });
@@ -1736,15 +1783,15 @@ async function reviewTarget(rawUrl, hooks) {
     });
   });
   const technologiesFound = [...techMap.values()];
-  const cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth });
+  let browser = null;
+  try { browser = await browserPromise; } catch (error) { browser = null; }
+  const cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "" }, browser.start.dom) : null);
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   const byLayer = {};
   cases.forEach((item) => { byLayer[item.layer] = (byLayer[item.layer] || 0) + 1; });
   const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
   let extras = {};
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
-  let browser = null;
-  try { browser = await browserPromise; } catch (error) { browser = null; }
   if (browser && browser.ok) note("The browser pass finished in " + Math.round((browser.ms || 0) / 1000) + " s: " + ((browser.axe && browser.axe.pages.length) || 1) + " page" + ((browser.axe && browser.axe.pages.length) > 1 ? "s" : "") + " checked with axe-core" + (browser.consent && browser.consent.rejected ? ", and the cookie banner's reject button was pressed once" : "") + ".");
   else if (browser) note("The browser pass did not finish (" + (browser.error || "no answer") + "). The report uses the HTML read only.");
   let analysis = null;
@@ -2419,7 +2466,36 @@ async function inspectPayment(options) {
   return inspectPayPal(options);
 }
 
+function compareRuns(previous, report) {
+  const before = previous && previous.insights;
+  const now = report && report.insights;
+  if (!before || !now || !before.score || !now.score) return null;
+  const open = (ins) => new Map((ins.findings || []).filter((item) => item.verdict === "fail" || item.verdict === "risk").map((item) => [item.key, item.title]));
+  const was = open(before);
+  const is = open(now);
+  const fixed = [...was].filter(([key]) => !is.has(key)).map(([, title]) => title);
+  const fresh = [...is].filter(([key]) => !was.has(key)).map(([, title]) => title);
+  const areas = {};
+  Object.keys(now.score.areas || {}).forEach((name) => {
+    const old = (before.score.areas || {})[name];
+    if (old) areas[name] = { before: old.score, now: now.score.areas[name].score };
+  });
+  return {
+    previousId: previous.id || "",
+    previousAt: previous.fetchedAt || "",
+    before: before.score.overall || 0,
+    now: now.score.overall || 0,
+    areas,
+    fixed: fixed.slice(0, 12),
+    fixedCount: fixed.length,
+    fresh: fresh.slice(0, 12),
+    freshCount: fresh.length,
+    still: [...is.keys()].filter((key) => was.has(key)).length
+  };
+}
+
 module.exports = {
+  compareRuns,
   TERMS_VERSION,
   PRICE_USD,
   PRICE_PER_FRAMEWORK,

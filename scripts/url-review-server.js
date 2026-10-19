@@ -763,6 +763,10 @@ const server = http.createServer(async (req, res) => {
       region: "",
       city: ""
     });
+    const prior = readStore().filter((row) => row.email === intake.value.email && row.report && row.report.host === report.host && row.report.id !== report.id && row.report.insights && row.status !== "stopped")
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
+    const history = prior ? core.compareRuns(prior.report, report) : null;
+    if (history) report.history = history;
     writeRecord(record);
     line(res, { type: "done", report, frameworks: record.frameworks, paid: false, priceUsd: record.priceUsd });
     res.end();
