@@ -287,6 +287,11 @@ function browserChecks(b, add, ctx) {
       "At " + mobile.width + " px the page is " + mobile.overflow + " px wider than the screen" + (mobile.offenders.length ? ". Widest elements: " + mobile.offenders.join(", ") : "") + ".",
       "Give wide elements max-width: 100%, let tables scroll inside their own box, and avoid fixed widths.", { effort: "hours", cases: ["MB-01", "VIS-02"] });
     else add("Accessibility", "pass", "info", "a11y-reflow", "The page fits a " + mobile.width + " px phone screen", "No sideways scroll in a phone-sized Chromium window.", "", { cases: ["MB-01", "VIS-02"] });
+    const tablet = b.tablet || {};
+    if (tablet.width && tablet.overflow > 2) add("Accessibility", "fail", "low", "a11y-reflow-tablet", "The page scrolls sideways on a tablet",
+      "At " + tablet.width + " px the page is " + tablet.overflow + " px wider than the screen" + ((tablet.offenders || []).length ? ". Widest elements: " + tablet.offenders.join(", ") : "") + ". Layouts often break between the phone and desktop breakpoints.",
+      "Check the breakpoints between 600 and 1024 px, and give wide elements max-width: 100%.", { effort: "hours", cases: ["MB-02", "VIS-02"] });
+    else if (tablet.width) add("Accessibility", "pass", "info", "a11y-reflow-tablet", "The page fits a " + tablet.width + " px tablet screen", "No sideways scroll at tablet width.", "", { cases: ["MB-02"] });
     if (mobile.smallTargets && !(axe && axe.pages.some((page) => (page.violations || []).some((rule) => rule.id === "target-size")))) {
       add("Accessibility", "risk", "low", "a11y-targets", plural(mobile.smallTargets, "tap target is", "tap targets are") + " too small on a phone",
         "axe-core target-size at " + mobile.width + " px" + (mobile.targetSamples.length ? ", for example " + mobile.targetSamples.slice(0, 2).join(" and ") : "") + ".",
@@ -301,6 +306,11 @@ function browserChecks(b, add, ctx) {
       thin.map((page) => page.path + " (" + page.share + "%)").slice(0, 3).join(", ") + ". The share is words in the HTML compared with words on the rendered page. Most AI crawlers do not run JavaScript.",
       "Render the main content on the server or pre-render it at build time.", { pages: thin.map((page) => page.path), effort: "days", cases: ["GEO-03"] });
     else add("GEO", "pass", "info", "geo-rendered", "The HTML carries the text people see", "The start page HTML holds " + start.share + "% of the words on the rendered page.", "", { cases: ["GEO-03"] });
+    const dom = start.dom;
+    const rawLinks = ((ctx.face && ctx.face.links) || []).length;
+    if (dom && dom.links.length >= 5 && rawLinks < Math.max(3, dom.links.length / 4)) add("SEO", "risk", "medium", "seo-links-js", "Most links appear only after JavaScript runs",
+      "The HTML lists " + plural(rawLinks, "same-host link") + "; the rendered page lists " + dom.links.length + ". Crawlers that skip JavaScript cannot find the other pages, and this review's crawl could not follow them either.",
+      "Render navigation as plain <a href> links in the server HTML, and keep the sitemap complete.", { effort: "days", cases: ["LK-01", "SEO-03"] });
     if (start.h1 && start.h1InHtml === false) add("GEO", "risk", "low", "geo-h1-rendered", "The main heading appears only after JavaScript", "\"" + start.h1 + "\" is on the rendered page but not in the HTML.", "Put the h1 in the server HTML.", { effort: "hours", cases: ["GEO-03"] });
   }
 
@@ -1009,7 +1019,7 @@ function analyze(input) {
   if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
   if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was read", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were read. Slow responses use up the budget.", "");
 
-  if (browsed) browserChecks(browsed, add, { findings, tags, consentTools });
+  if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face });
 
   // Rank and score.
   const actionable = findings.filter((item) => item.verdict === "fail" || item.verdict === "risk");

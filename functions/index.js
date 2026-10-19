@@ -1751,6 +1751,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       city: req.get("x-appengine-city") || ""
     });
     if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
+    const history = await previousRun(intake.value.email, report);
+    if (history) {
+      report.history = history;
+      writeLine({ type: "log", text: "Compared with your review of " + report.host + " from " + String(history.previousAt).slice(0, 10) + ": " + history.fixedCount + " fixed, " + history.freshCount + " new." });
+    }
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     await mailReviewedSites(ip, record);
@@ -1776,6 +1781,24 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     if (runId) admin.firestore().collection("url_review_stops").doc(runId).delete().catch(() => {});
   }
 });
+
+async function previousRun(email, report) {
+  if (!email || !report || !report.host || !report.insights) return null;
+  try {
+    const snap = await admin.firestore().collection("url_reviews")
+      .where("email", "==", email)
+      .select("createdAt", "status", "report.id", "report.host", "report.fetchedAt", "report.insights.score", "report.insights.findings")
+      .limit(60)
+      .get();
+    const rows = snap.docs.map((doc) => doc.data())
+      .filter((row) => row.report && row.report.host === report.host && row.report.id !== report.id && row.report.insights && row.status !== "stopped")
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    return rows.length ? urlReview.compareRuns(rows[0].report, report) : null;
+  } catch (error) {
+    console.error("URL review history failed:", error);
+    return null;
+  }
+}
 
 exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
   region: "europe-west1",

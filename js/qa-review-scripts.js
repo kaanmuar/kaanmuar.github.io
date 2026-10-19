@@ -67,6 +67,7 @@
 
   function checkFor(item, ctx) {
     const at = ctx.startPath;
+    if (item.journey && item.journey.selector && item.journey.target) return Object.assign({ kind: "journey" }, item.journey);
     switch (item.id) {
       case "FN-01": return { kind: "status", path: at };
       case "FN-02": return { kind: "title", path: at };
@@ -119,7 +120,7 @@
     }
   }
 
-  const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "text", "budget", "viewport", "linksResolve"];
+  const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "text", "budget", "viewport", "linksResolve", "journey"];
 
   function supports(framework, check) {
     if (framework === "Appium" || framework === "Maestro") return check.kind === "viewport";
@@ -194,6 +195,11 @@
         body.push("await page.setViewportSize({ width: " + check.width + ", height: " + check.height + " });"); go(check.path);
         body.push("const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);", "expect(overflow).toBeLessThanOrEqual(1);");
         break;
+      case "journey":
+        body.push("await page.setViewportSize({ width: 1280, height: 800 });"); go(check.path);
+        body.push("const link = page.locator(" + q(check.selector) + ").first();", "expect(await page.evaluate(" + LABEL_JS + ", " + q(check.selector) + ")).toContain(" + q(check.text) + ");", "await link.click();", "await page.waitForURL((url) => url.pathname === " + q(check.target) + ");");
+        if (check.h1) body.push("expect(await page.evaluate(" + H1_JS + ")).toContain(" + q(check.h1) + ");");
+        break;
       case "linksResolve":
         go(check.path);
         body.push("const hrefs = await page.$$eval(\"a[href]\", (links) => links.map((link) => (link as HTMLAnchorElement).href.split(\"#\")[0]));", "const same = [...new Set(hrefs.filter((href) => href.startsWith(BASE)))].slice(0, " + check.max + ");", "for (const href of same) {", "  const res = await request.get(href);", "  expect.soft(res.status(), href).toBeLessThan(400);", "}");
@@ -260,6 +266,11 @@
         body.push("cy.viewport(" + check.width + ", " + check.height + ");"); go(check.path);
         body.push("cy.window().then((win) => {", "  expect(win.document.documentElement.scrollWidth - win.innerWidth).to.be.at.most(1);", "});");
         break;
+      case "journey":
+        body.push("cy.viewport(1280, 800);"); go(check.path);
+        body.push("cy.get(" + q(check.selector) + ").first().invoke(\"text\").then((text) => {", "  expect(text.replace(/\\s+/g, \" \")).to.include(" + q(check.text) + ");", "});", "cy.get(" + q(check.selector) + ").first().click();", "cy.location(\"pathname\").should(\"eq\", " + q(check.target) + ");");
+        if (check.h1) body.push("cy.get(\"h1\").first().invoke(\"text\").then((text) => {", "  expect(text.replace(/\\s+/g, \" \")).to.include(" + q(check.h1) + ");", "});");
+        break;
       case "linksResolve":
         go(check.path);
         body.push("cy.document().then((doc) => {", "  const hrefs = [...doc.querySelectorAll(\"a[href]\")].map((link) => link.href.split(\"#\")[0]);", "  [...new Set(hrefs.filter((href) => href.startsWith(BASE)))].slice(0, " + check.max + ").forEach((href) => {", "    cy.request({ url: href, failOnStatusCode: false }).its(\"status\").should(\"be.lessThan\", 400);", "  });", "});");
@@ -279,7 +290,7 @@
     if (check.kind === "manual") {
       return "@pytest.mark.skip(reason=\"A person runs this case with access the owner provides.\")\ndef " + pyName(item) + "():\n" + doc + "\n";
     }
-    const browser = ["title", "titleAll", "count", "attr", "metaLength", "viewport", "linksResolve"].indexOf(check.kind) !== -1;
+    const browser = ["title", "titleAll", "count", "attr", "metaLength", "viewport", "linksResolve", "journey"].indexOf(check.kind) !== -1;
     const body = [];
     const go = (path) => body.push("driver.get(BASE + " + q(path) + ")");
     switch (check.kind) {
@@ -329,6 +340,11 @@
       case "viewport":
         body.push("driver.set_window_size(" + check.width + ", " + check.height + ")"); go(check.path);
         body.push("overflow = driver.execute_script(\"return document.documentElement.scrollWidth - window.innerWidth\")", "assert overflow <= 1");
+        break;
+      case "journey":
+        body.push("driver.set_window_size(1280, 800)"); go(check.path);
+        body.push("assert " + q(check.text) + " in driver.execute_script(" + q(LABEL_SCRIPT) + ", " + q(check.selector) + ")", "driver.find_element(By.CSS_SELECTOR, " + q(check.selector) + ").click()", "for _ in range(75):", "    if driver.execute_script(" + q(PATH_SCRIPT) + ") == " + q(check.target) + ":", "        break", "    time.sleep(0.2)", "assert driver.execute_script(" + q(PATH_SCRIPT) + ") == " + q(check.target));
+        if (check.h1) body.push("assert " + q(check.h1) + " in driver.execute_script(" + q(H1_SCRIPT) + ")");
         break;
       case "linksResolve":
         go(check.path);
@@ -400,6 +416,12 @@
       case "viewport":
         open(check.path); lines.push("    Set Window Size    " + check.width + "    " + check.height, "    Reload Page", "    ${overflow}=    Execute Javascript    return document.documentElement.scrollWidth - window.innerWidth", "    Should Be True    ${overflow} <= 1"); close();
         break;
+      case "journey":
+        open(check.path);
+        lines.push("    Set Window Size    1280    800", "    ${label}=    Execute Javascript    return ((document.querySelector('" + check.selector + "') || {}).textContent || '').replace(/\\\\s+/g, ' ').trim();", "    Should Contain    ${label}    " + robotText(check.text), "    Click Element    css:" + check.selector, "    Wait For Condition    return location.pathname === '" + check.target.replace(/'/g, "") + "'");
+        if (check.h1) lines.push("    ${heading}=    Execute Javascript    return ((document.querySelector('h1') || {}).textContent || '').replace(/\\\\s+/g, ' ').trim();", "    Should Contain    ${heading}    " + robotText(check.h1));
+        close();
+        break;
       case "linksResolve":
         open(check.path); lines.push("    ${hrefs}=    Execute Javascript    return [...new Set([...document.querySelectorAll('a[href]')].map(a => a.href.split('#')[0]).filter(h => h.startsWith('${BASE}')))].slice(0, " + check.max + ")", "    FOR    ${href}    IN    @{hrefs}", "        ${resp}=    GET    ${href}    expected_status=any", "        Should Be True    ${resp.status_code} < 400    ${href}", "    END"); close();
         break;
@@ -464,6 +486,11 @@
         body.push("await browser.setWindowSize(" + check.width + ", " + check.height + ");"); go(check.path);
         body.push("const overflow = await browser.execute(() => document.documentElement.scrollWidth - window.innerWidth);", "expect(overflow).toBeLessThanOrEqual(1);");
         break;
+      case "journey":
+        body.push("await browser.setWindowSize(1280, 800);"); go(check.path);
+        body.push("expect(await browser.execute(" + LABEL_JS + ", " + q(check.selector) + ")).toContain(" + q(check.text) + ");", "await $(" + q(check.selector) + ").click();", "await browser.waitUntil(async () => (await browser.execute(" + PATH_JS + ")) === " + q(check.target) + ", { timeout: 15000 });");
+        if (check.h1) body.push("expect(await browser.execute(" + H1_JS + ")).toContain(" + q(check.h1) + ");");
+        break;
       case "linksResolve":
         go(check.path);
         body.push("const hrefs = await browser.execute((base, max) => [...new Set([...document.querySelectorAll(\"a[href]\")].map((link) => link.href.split(\"#\")[0]).filter((href) => href.startsWith(base)))].slice(0, max), BASE, " + check.max + ");", "for (const href of hrefs) {", "  const res = await fetch(href);", "  expect(res.status).toBeLessThan(400);", "}");
@@ -495,6 +522,12 @@
   const META_JS = "() => (document.querySelector('meta[name=\"description\"]') || {}).content || \"\"";
   const OVERFLOW_JS = "() => document.documentElement.scrollWidth - window.innerWidth";
   const LINKS_JS = "({ base, max }) => [...new Set([...document.querySelectorAll(\"a[href]\")].map((link) => link.href.split(\"#\")[0]).filter((href) => href.startsWith(base)))].slice(0, max)";
+  const PATH_JS = "() => location.pathname";
+  const H1_JS = "() => ((document.querySelector(\"h1\") || {}).textContent || \"\").replace(/\\s+/g, \" \").trim()";
+  const LABEL_JS = "(selector) => ((document.querySelector(selector) || {}).textContent || \"\").replace(/\\s+/g, \" \").trim()";
+  const PATH_SCRIPT = "return location.pathname;";
+  const H1_SCRIPT = "return ((document.querySelector('h1') || {}).textContent || '').replace(/\\s+/g, ' ').trim();";
+  const LABEL_SCRIPT = "return ((document.querySelector(arguments[0]) || {}).textContent || '').replace(/\\s+/g, ' ').trim();";
   const META_SCRIPT = "return (document.querySelector('meta[name=\"description\"]') || {}).content || '';";
   const OVERFLOW_SCRIPT = "return document.documentElement.scrollWidth - window.innerWidth;";
 
@@ -532,7 +565,9 @@
     title: "(await page.title()).trim()",
     attr: (selector, attr) => "((await page.locator(" + q(selector) + ").first().getAttribute(" + q(attr) + ")) || \"\").trim()",
     run: (fn, arg) => "await page.evaluate(" + fn + (arg ? ", " + arg : "") + ")",
-    size: (width, height) => "await page.setViewportSize({ width: " + width + ", height: " + height + " });"
+    size: (width, height) => "await page.setViewportSize({ width: " + width + ", height: " + height + " });",
+    click: (selector) => "await page.locator(" + q(selector) + ").first().click();",
+    waitPath: (target) => "await page.waitForURL((url) => url.pathname === " + q(target) + ");"
   };
 
   const CODECEPT_DOM = {
@@ -541,7 +576,9 @@
     title: "(await I.grabTitle()).trim()",
     attr: (selector, attr) => "((await I.grabAttributeFrom(" + q(selector) + ", " + q(attr) + ")) || \"\").trim()",
     run: (fn, arg) => "await I.executeScript(" + fn + (arg ? ", " + arg : "") + ")",
-    size: (width, height) => "await I.resizeWindow(" + width + ", " + height + ");"
+    size: (width, height) => "await I.resizeWindow(" + width + ", " + height + ");",
+    click: (selector) => "await I.click(" + q(selector) + ");",
+    waitPath: (target) => "await I.waitForFunction((path) => location.pathname === path, [" + q(target) + "], 15);"
   };
 
   function jsBody(check, A, D) {
@@ -595,6 +632,11 @@
         body.push(D.size(check.width, check.height)); go(check.path);
         body.push("const overflow = " + D.run(OVERFLOW_JS) + ";", A.lte("overflow", 1));
         break;
+      case "journey":
+        body.push(D.size(1280, 800)); go(check.path);
+        body.push("const label = " + D.run(LABEL_JS, q(check.selector)) + ";", A.match("label", "new RegExp(" + q(regexText(check.text)) + ")"), D.click(check.selector), D.waitPath(check.target));
+        if (check.h1) body.push("const heading = " + D.run(H1_JS) + ";", A.match("heading", "new RegExp(" + q(regexText(check.h1)) + ")"));
+        break;
       case "linksResolve":
         go(check.path);
         body.push("const hrefs = " + D.run(LINKS_JS, "{ base: BASE, max: " + check.max + " }") + ";", "for (const href of hrefs) {", "  const res = await fetch(href);", "  " + A.lt("res.status", 400, "href"), "}");
@@ -628,7 +670,8 @@
     attr: (selector, attr) => "Objects.toString($(" + q(selector) + ").getAttribute(" + q(attr) + "), \"\").trim()",
     run: (script, arg) => "executeJavaScript(" + q(script) + (arg ? ", " + arg : "") + ")",
     size: (width, height) => "WebDriverRunner.getWebDriver().manage().window().setSize(new Dimension(" + width + ", " + height + "));",
-    reload: "refresh();"
+    reload: "refresh();",
+    click: (selector) => "$(" + q(selector) + ").click();"
   };
 
   const WEBDRIVER_DOM = {
@@ -638,7 +681,8 @@
     attr: (selector, attr) => "Objects.toString(driver.findElement(By.cssSelector(" + q(selector) + ")).getAttribute(" + q(attr) + "), \"\").trim()",
     run: (script, arg) => "((JavascriptExecutor) driver).executeScript(" + q(script) + (arg ? ", " + arg : "") + ")",
     size: (width, height) => "driver.manage().window().setSize(new Dimension(" + width + ", " + height + "));",
-    reload: "driver.navigate().refresh();"
+    reload: "driver.navigate().refresh();",
+    click: (selector) => "driver.findElement(By.cssSelector(" + q(selector) + ")).click();"
   };
 
   function javaBody(check, D) {
@@ -696,6 +740,13 @@
       case "viewport":
         go(check.path); body.push(D.size(check.width, check.height), D.reload);
         body.push("long overflow = ((Number) " + D.run(OVERFLOW_SCRIPT) + ").longValue();", ok("overflow <= 1", "overflow + \" px\""));
+        break;
+      case "journey":
+        go(check.path); body.push(D.size(1280, 800), D.reload);
+        body.push("String label = Objects.toString(" + D.run(LABEL_SCRIPT, q(check.selector)) + ", \"\");", ok("label.contains(" + q(check.text) + ")", "label"), D.click(check.selector),
+          "for (int i = 0; i < 75 && !" + q(check.target) + ".equals(" + D.run(PATH_SCRIPT) + "); i++) Thread.sleep(200);",
+          ok(q(check.target) + ".equals(" + D.run(PATH_SCRIPT) + ")", q(check.target)));
+        if (check.h1) body.push("String heading = Objects.toString(" + D.run(H1_SCRIPT) + ", \"\");", ok("heading.contains(" + q(check.h1) + ")", "heading"));
         break;
       case "linksResolve":
         go(check.path);
@@ -791,6 +842,11 @@
         body.push("@browser.window.resize_to(" + check.width + ", " + check.height + ")"); go(rb(check.path));
         body.push("overflow = @browser.execute_script(" + rb(OVERFLOW_SCRIPT) + ")", "expect(overflow).to be <= 1");
         break;
+      case "journey":
+        body.push("@browser.window.resize_to(1280, 800)"); go(rb(check.path));
+        body.push("expect(@browser.execute_script(" + rb(LABEL_SCRIPT) + ", " + rb(check.selector) + ").to_s).to include(" + rb(check.text) + ")", "@browser.element(css: " + rb(check.selector) + ").click", "Watir::Wait.until(timeout: 15) { @browser.execute_script(" + rb(PATH_SCRIPT) + ") == " + rb(check.target) + " }");
+        if (check.h1) body.push("expect(@browser.execute_script(" + rb(H1_SCRIPT) + ").to_s).to include(" + rb(check.h1) + ")");
+        break;
       case "linksResolve":
         go(rb(check.path));
         body.push("hrefs = @browser.execute_script(" + rb(linksScript(check.max)) + ", BASE)", "hrefs.each do |href|", "  expect(http_get(href).code.to_i).to be < 400", "end");
@@ -876,6 +932,11 @@
         break;
       case "viewport":
         steps.push("Given the viewport is " + check.width + " by " + check.height + " pixels"); open(check.path); steps.push("Then the page does not scroll sideways");
+        break;
+      case "journey":
+        steps.push("Given the viewport is 1280 by 800 pixels"); open(check.path);
+        steps.push("When the visitor clicks the " + gq(check.selector) + " link labelled " + gq(check.text), "Then the address path becomes " + gq(check.target));
+        if (check.h1) steps.push("Then the first h1 contains " + gq(check.h1));
         break;
       case "linksResolve":
         open(check.path); steps.push("Then the first " + check.max + " same-host links on the page resolve");
@@ -1000,6 +1061,22 @@ Then(/^the meta description is between (\d+) and (\d+) characters long$/, async 
 Then(/^the page does not scroll sideways$/, async function () {
   const overflow = await this.page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   assert.ok(overflow <= 1, overflow + " px");
+});
+
+Then(/^the visitor clicks the "([^"]*)" link labelled "([^"]*)"$/, async function (selector, label) {
+  const link = this.page.locator(selector).first();
+  const text = ((await link.textContent()) || "").replace(/\s+/g, " ").trim();
+  assert.ok(text.includes(label), selector + ": " + text);
+  await link.click();
+});
+
+Then(/^the address path becomes "([^"]*)"$/, async function (path) {
+  await this.page.waitForURL((url) => url.pathname === path);
+});
+
+Then(/^the first h1 contains "([^"]*)"$/, async function (text) {
+  const heading = await this.page.evaluate(() => ((document.querySelector("h1") || {}).textContent || "").replace(/\s+/g, " ").trim());
+  assert.ok(heading.includes(text), heading);
 });
 
 Then(/^the first (\d+) same-host links on the page resolve$/, async function (max) {
@@ -1138,6 +1215,28 @@ def meta_length(context, low, high):
 def no_sideways(context):
     overflow = driver(context).execute_script("return document.documentElement.scrollWidth - window.innerWidth")
     assert overflow <= 1, f"{overflow} px"
+
+
+@step(r'the visitor clicks the "(?P<selector>[^"]*)" link labelled "(?P<label>[^"]*)"')
+def click_link(context, selector, label):
+    text = driver(context).execute_script("return ((document.querySelector(arguments[0]) || {}).textContent || '').replace(/\\s+/g, ' ').trim();", selector) or ""
+    assert label in text, f"{selector}: {text}"
+    driver(context).find_element(By.CSS_SELECTOR, selector).click()
+
+
+@step(r'the address path becomes "(?P<path>[^"]*)"')
+def path_becomes(context, path):
+    for _ in range(75):
+        if driver(context).execute_script("return location.pathname") == path:
+            return
+        time.sleep(0.2)
+    assert False, driver(context).current_url
+
+
+@step(r'the first h1 contains "(?P<text>[^"]*)"')
+def h1_contains(context, text):
+    heading = driver(context).execute_script("return ((document.querySelector('h1') || {}).textContent || '').replace(/\\s+/g, ' ').trim();") or ""
+    assert text in heading, heading
 
 
 @step(r"the first (?P<limit>\d+) same-host links on the page resolve")
@@ -1317,6 +1416,25 @@ namespace QaLab
 
         [StepDefinition(@"^the page does not scroll sideways$")]
         public void NoSideways() => Assert.That(Convert.ToInt64(Run("return document.documentElement.scrollWidth - window.innerWidth;")), Is.LessThanOrEqualTo(1));
+
+        [StepDefinition(@"^the visitor clicks the ""([^""]*)"" link labelled ""([^""]*)""$")]
+        public void ClickLink(string selector, string label)
+        {
+            var text = Convert.ToString(Run("return ((document.querySelector(arguments[0]) || {}).textContent || '').replace(/\\s+/g, ' ').trim();", selector)) ?? "";
+            Assert.That(text, Does.Contain(label), selector);
+            Driver.FindElement(By.CssSelector(selector)).Click();
+        }
+
+        [StepDefinition(@"^the address path becomes ""([^""]*)""$")]
+        public void PathBecomes(string path)
+        {
+            var watch = Stopwatch.StartNew();
+            while (Convert.ToString(Run("return location.pathname;")) != path && watch.ElapsedMilliseconds < 15000) System.Threading.Thread.Sleep(200);
+            Assert.That(Convert.ToString(Run("return location.pathname;")), Is.EqualTo(path));
+        }
+
+        [StepDefinition(@"^the first h1 contains ""([^""]*)""$")]
+        public void FirstH1Contains(string text) => Assert.That(Convert.ToString(Run("return ((document.querySelector('h1') || {}).textContent || '').replace(/\\s+/g, ' ').trim();")) ?? "", Does.Contain(text));
 
         [StepDefinition(@"^the first (\d+) same-host links on the page resolve$")]
         public void LinksResolve(int max)

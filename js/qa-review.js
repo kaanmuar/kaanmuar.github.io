@@ -614,7 +614,9 @@
       '<p class="meta-line">Every check below was measured from the public response, not guessed. Checks marked “Needs a browser” wait for a rendered run.</p></div></div>' +
       '<div class="areas">' + Object.keys(AREA_NOTE).map((name) => {
         const area = areas[name] || { score: 0, grade: "F", fail: 0, risk: 0, pass: 0 };
-        return '<button type="button" class="area" data-area="' + esc(name) + '"><div class="area-score"><span><b>' + area.score + "</b> " + esc(name) + '</span><span class="grade grade-' + esc(area.grade) + '">' + esc(area.grade) + "</span></div>" +
+        const past = current && current.report && current.report.history && current.report.history.areas && current.report.history.areas[name];
+        const moved = past ? area.score - past.before : 0;
+        return '<button type="button" class="area" data-area="' + esc(name) + '"><div class="area-score"><span><b>' + area.score + "</b> " + esc(name) + (moved ? ' <span class="delta ' + (moved > 0 ? "up" : "down") + '" title="Change since your last review">' + (moved > 0 ? "+" : "") + moved + "</span>" : "") + '</span><span class="grade grade-' + esc(area.grade) + '">' + esc(area.grade) + "</span></div>" +
           '<div class="bar"><i style="width:' + area.score + "%;background:" + scoreColor(area.score) + '"></i></div>' +
           "<small>" + area.fail + " fail · " + area.risk + " at risk · " + area.pass + " pass — " + esc(AREA_NOTE[name]) + "</small></button>";
       }).join("") + "</div></article>";
@@ -631,6 +633,17 @@
         target.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     });
+  }
+
+  function historyBlock(history) {
+    if (!history) return "";
+    const when = history.previousAt ? new Date(history.previousAt).toLocaleDateString() : "your last review";
+    const change = history.now - history.before;
+    const list = (rows, more) => rows.length ? "<ul>" + rows.slice(0, 5).map((title) => "<li>" + esc(title) + "</li>").join("") + "</ul>" + (more > 5 ? '<p class="meta-line">and ' + (more - 5) + " more</p>" : "") : '<p class="muted">None.</p>';
+    return '<div class="history"><p><strong>Since your review on ' + esc(when) + ":</strong> score " + history.before + " → " + history.now +
+      ' <span class="delta ' + (change > 0 ? "up" : change < 0 ? "down" : "") + '">' + (change > 0 ? "+" : "") + change + "</span>. " +
+      history.fixedCount + " fixed, " + history.freshCount + " new, " + history.still + " still open.</p>" +
+      '<div class="exec-cols history-cols"><div><h3>Fixed since then</h3>' + list(history.fixed, history.fixedCount) + "</div><div><h3>New since then</h3>" + list(history.fresh, history.freshCount) + "</div></div></div>";
   }
 
   function paintExec(report, ins) {
@@ -650,6 +663,7 @@
     const value = score.overall || 0;
     const letter = score.grade || gradeOf(value);
     host.innerHTML =
+      historyBlock(report.history) +
       '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(ins.summary || value + " out of 100.") + "</p></div>" +
       '<p class="meta-line">' + (sev.critical || 0) + " critical · " + (sev.high || 0) + " high · " + (sev.medium || 0) + " medium · " + (sev.low || 0) + " low · " +
       read + " page" + (read === 1 ? "" : "s") + " read" + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
@@ -739,6 +753,7 @@
       rules.set(rule.id, row);
     }));
     const mobile = b.mobile || {};
+    const tablet = b.tablet || {};
     const errors = (b.console && b.console.errors) || 0;
     const failed = (b.failed && b.failed.count) || 0;
     const tiles = [
@@ -747,7 +762,7 @@
       ["axe-core", axePages.length ? (rules.size ? "fail" : "pass") : "unknown", axePages.length ? rules.size + " rules fail on " + axePages.length + " page" + (axePages.length === 1 ? "" : "s") : "Did not run"],
       ["Phone width", mobile.width ? (mobile.overflow > 2 ? "fail" : "pass") : "unknown", mobile.width ? (mobile.overflow > 2 ? mobile.overflow + " px too wide" : "Fits " + mobile.width + " px") : "Not checked"],
       ["First paint", vit.fcp ? (vit.fcp > 3000 ? "fail" : vit.fcp > 1800 ? "risk" : "pass") : "unknown", vit.fcp ? (vit.fcp / 1000).toFixed(1) + " s, lab" : "Not measured"],
-      ["Pages opened", start.status ? "pass" : "unknown", (1 + (b.pages || []).filter((page) => !page.error).length) + " in the browser"],
+      ["Tablet width", tablet.width ? (tablet.overflow > 2 ? "fail" : "pass") : "unknown", tablet.width ? (tablet.overflow > 2 ? tablet.overflow + " px too wide" : "Fits " + tablet.width + " px") : "Not checked"],
       ["Text in the HTML", start.renderedWords > 150 ? (start.share < 40 ? "risk" : "pass") : "unknown", (start.share == null ? 100 : start.share) + "% of what people see"],
       ["Load errors", errors || failed ? "risk" : "pass", errors + " script · " + failed + " file"]
     ];
@@ -784,11 +799,13 @@
       gauge("Total Blocking Time", vit.tbt || 0, 200, 600, 1200, (vit.tbt || 0) + " ms") +
       '</div><p class="meta-line">Lab numbers from one cold load on the review server, not field data from real visitors. Green, amber, and red follow the Core Web Vitals thresholds.</p>' : "";
     const shots = b.shots || {};
+    const shotCount = ["desktop", "tablet", "mobile"].filter((key) => shots[key]).length;
     const textRows = [{ path: start.finalPath || "/", share: start.share, words: start.renderedWords, raw: start.rawWords }].concat((b.pages || []).filter((page) => !page.error).map((page) => ({ path: page.path, share: page.share, words: page.renderedWords, raw: page.rawWords })));
     host.innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + gauges +
-      (shots.desktop || shots.mobile ? '<div class="shots">' +
+      (shots.desktop || shots.mobile ? '<div class="shots' + (shotCount === 3 ? " shots-3" : "") + '">' +
         (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="The start page on a first visit at 1280 px wide" loading="lazy"><figcaption>First visit, 1280 px wide, before any choice.</figcaption></figure>' : "<div></div>") +
+        (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="The start page at a 768 px tablet width" loading="lazy"><figcaption>Tablet, 768 px.</figcaption></figure>' : "") +
         (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="The start page at a 390 px phone width" loading="lazy"><figcaption>Phone, 390 px.</figcaption></figure>' : "") + "</div>" : "") +
       '<div class="split"><article class="card"><h3>Tracking before and after a choice</h3><p class="muted">' + bannerLine + " Cookieless pings are Google tags with Consent Mode denied.</p>" +
       '<table class="mini-table"><thead><tr><th>Tool</th><th>Before a choice</th><th>After Reject</th></tr></thead><tbody>' + consentRows + "</tbody></table></article>" +
