@@ -345,6 +345,47 @@ function browserChecks(b, add, ctx) {
   else if (start.status) add("Security", "pass", "info", "sec-mixed-live", "Every request in the browser used https", plural(start.requests || 0, "request") + " on the start page.", "", { cases: ["SEC-09"] });
 }
 
+const FIELD_NAMES = { lcp: "Largest Contentful Paint", inp: "Interaction to Next Paint", cls: "Cumulative Layout Shift" };
+const FIELD_FIX = {
+  lcp: "Make the largest element arrive sooner: preload the hero image, serve it at the shown size in a modern format, and cut render-blocking scripts.",
+  inp: "Break up long JavaScript tasks behind clicks and taps, and defer third-party scripts.",
+  cls: "Reserve space for images, embeds, ads, and late banners."
+};
+const FIELD_CASES = { lcp: "PF-01", inp: "PF-02", cls: "VIS-01" };
+const FIELD_WORD = { FAST: "good", AVERAGE: "needs improvement", SLOW: "poor" };
+
+function speedChecks(psi, add) {
+  const field = psi.field;
+  const show = (key, metric) => key === "cls" ? String(metric.p75) : key === "inp" ? metric.p75 + " ms" : (metric.p75 / 1000).toFixed(1) + " s";
+  if (field) {
+    const keys = ["lcp", "inp", "cls"].filter((key) => field[key]);
+    const slow = keys.filter((key) => field[key].category === "SLOW");
+    const average = keys.filter((key) => field[key].category === "AVERAGE");
+    const evidence = "Real Chrome users over the last 28 days" + (field.scope === "page" ? " on this page" : " across the whole site, because this page has too little traffic on its own") + ", at the 75th percentile: " +
+      keys.map((key) => FIELD_NAMES[key] + " " + show(key, field[key]) + " (" + (FIELD_WORD[field[key].category] || "unrated") + ")").join(", ") + ". Source: Chrome UX Report through PageSpeed Insights.";
+    const worst = slow.concat(average);
+    const fix = worst.map((key) => FIELD_FIX[key]).join(" ");
+    const cases = (worst.length ? worst : keys).map((key) => FIELD_CASES[key]);
+    if (slow.length) add("Performance", "fail", "medium", "pf-field", "Core Web Vitals fail for real visitors", evidence, fix, { effort: "days", cases });
+    else if (average.length) add("Performance", "risk", "low", "pf-field", "Core Web Vitals need improvement for real visitors", evidence, fix, { effort: "hours", cases });
+    else add("Performance", "pass", "info", "pf-field", "Core Web Vitals pass for real visitors", evidence, "", { cases });
+  } else {
+    add("Performance", "person", "info", "pf-field", "Too few Chrome visits for real-user Core Web Vitals", "The Chrome UX Report publishes numbers only after a page or site has enough traffic over 28 days. The Lighthouse lab run below stands in.", "");
+  }
+  const lab = psi.lab || {};
+  const parts = [];
+  if (lab.lcp != null) parts.push("Largest Contentful Paint " + (lab.lcp / 1000).toFixed(1) + " s");
+  if (lab.tbt != null) parts.push("Total Blocking Time " + Math.round(lab.tbt) + " ms");
+  if (lab.cls != null) parts.push("Cumulative Layout Shift " + lab.cls);
+  if (lab.si != null) parts.push("Speed Index " + (lab.si / 1000).toFixed(1) + " s");
+  const evidence = "Lighthouse " + (psi.version || "") + " on a simulated mid-range phone over slow 4G" + (parts.length ? ": " + parts.join(", ") : "") + ".";
+  const title = "Lighthouse scores performance " + psi.score + "/100 on mobile";
+  const fix = "Open PageSpeed Insights for this URL and work through its opportunities, largest savings first.";
+  if (psi.score < 50) add("Performance", "fail", "medium", "pf-lighthouse", title, evidence, fix, { effort: "days", cases: ["PF-01", "PF-02"] });
+  else if (psi.score < 90) add("Performance", "risk", "low", "pf-lighthouse", title, evidence, fix, { effort: "hours", cases: ["PF-01", "PF-02"] });
+  else add("Performance", "pass", "info", "pf-lighthouse", title, evidence, "", { cases: ["PF-01", "PF-02"] });
+}
+
 function analyze(input) {
   const pages = input.pages || [];
   const home = pages[0] || {};
@@ -1016,7 +1057,8 @@ function analyze(input) {
   if (face.signals && !face.signals.cacheControl) add("Performance", "risk", "low", "pf-cache", "The start page sends no cache-control", "Browsers and CDNs guess how long to keep it.", "Send cache-control on HTML (for example max-age=0, must-revalidate) and long max-age on hashed assets.", { effort: "minutes", cases: ["RS-03"] });
   const thirdHosts = face.signals ? (face.signals.thirdParty || []).length : 0;
   if (thirdHosts > 8) add("Performance", "risk", "low", "pf-third", plural(thirdHosts, "other host serves", "other hosts serve") + " scripts on the start page", "Each host adds a DNS lookup and a connection.", "Remove tags nobody reads and self-host the rest.", { count: thirdHosts, effort: "hours" });
-  if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
+  if (input.pagespeed) speedChecks(input.pagespeed, add);
+  else if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
   if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was read", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were read. Slow responses use up the budget.", "");
 
   if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face });

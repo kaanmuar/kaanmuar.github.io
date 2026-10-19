@@ -1739,7 +1739,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       stopped: () => stopped,
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
-      browse: browseForReview
+      browse: browseForReview,
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined
     });
     const record = urlReview.intakeRecord(intake.value, report, {
       ip,

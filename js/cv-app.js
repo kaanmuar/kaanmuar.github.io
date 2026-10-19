@@ -1745,7 +1745,7 @@
 
             translatePage(lang) {
                 const requested = (window.SiteI18n && SiteI18n.normalize(lang)) || lang || 'en';
-                const machine = !!(this._liveDoc && this._liveDoc.machineTranslate && requested !== 'en');
+                const machine = !!(this._liveDoc && this._liveDoc.machineTranslate && requested !== 'en' && (!window.SiteI18n || SiteI18n.translateAllowed()));
                 const isNative = !machine && !!(window.SiteI18n ? SiteI18n.isNative(requested) : this.data.translations[requested]);
                 this.state.lang = requested;
                 this.state.dictLang = isNative ? requested : 'en';
@@ -1833,6 +1833,9 @@
                     this.DOMElements.tourStartBtn.addEventListener('click', () => this.startTour());
                     document.getElementById('tour-start-btn-mobile').addEventListener('click', () => this.startTour());
                     document.getElementById('theme-toggle-mobile').addEventListener('click', () => this._toggleTheme());
+                    window.addEventListener('site-translate-allowed', () => {
+                        if (this._liveDoc && this._liveDoc.machineTranslate && this.state.lang && this.state.lang !== 'en') this.translatePage(this.state.lang);
+                    });
                     document.getElementById('print-btn-mobile').addEventListener('click', () => {
                         this._trackEvent('print_cv', 'Interaction', 'Print Button Mobile');
                         this._exportAsPDF();

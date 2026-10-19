@@ -308,8 +308,36 @@
         }
     }
 
+    const TRANSLATE_KEY = 'site-translate';
+    let widgetHeld = false;
+
+    function readStore(key) {
+        try { return root.localStorage.getItem(key) || ''; } catch (e) { return ''; }
+    }
+
+    function translateAllowed() {
+        if (readStore(TRANSLATE_KEY) === 'picked') return true;
+        return (readStore('site-analytics') || readStore('qa-review-analytics')) === 'allow';
+    }
+
+    function grantTranslate() {
+        try { root.localStorage.setItem(TRANSLATE_KEY, 'picked'); } catch (e) { /* this view only */ }
+    }
+
+    function releaseWidget() {
+        if (!translateAllowed()) return;
+        const held = widgetHeld;
+        widgetHeld = false;
+        root.dispatchEvent(new CustomEvent('site-translate-allowed'));
+        if (held && pendingMachineLang && pendingMachineLang !== 'en') loadWidget();
+    }
+
     function loadWidget() {
         if (document.getElementById('google-translate-script')) return;
+        if (!translateAllowed()) {
+            widgetHeld = true;
+            return;
+        }
         if (!document.getElementById('google_translate_element')) {
             const holder = document.createElement('div');
             holder.id = 'google_translate_element';
@@ -400,6 +428,7 @@
 
     function selectLanguage(nextLang) {
         const next = persist(nextLang);
+        if (next !== 'en' && !usesDictionary(next)) grantTranslate();
         const url = new URL(root.location.href);
         url.searchParams.set('lang', next);
         if (needsReload(next)) {
@@ -413,6 +442,10 @@
     }
 
     applyEarlyCookie();
+    root.addEventListener('site-consent', releaseWidget);
+    root.addEventListener('storage', (event) => {
+        if (event && /^(site-analytics|qa-review-analytics|site-translate)$/.test(event.key || '')) releaseWidget();
+    });
 
     root.SiteI18n = {
         LANGUAGES,
@@ -435,6 +468,8 @@
         applyMachineTranslate,
         forceMachine,
         loadWidget,
+        translateAllowed,
+        grantTranslate,
         selectLanguage,
         follow,
         refreshTranslation,
