@@ -6,6 +6,10 @@
  * Reports go to previews/insights-test/<name>-current.json. The browser pass
  * runs when CHROME_PATH is set, and PageSpeed Insights when PAGESPEED_KEY is
  * set in the environment or in functions/.env.
+ *
+ *   node scripts/review-snapshot.js --sample https://carlosandmunoz.com/
+ *
+ * writes the public sample that qa-review.html opens before the disclaimers.
  */
 const fs = require("fs");
 const path = require("path");
@@ -13,6 +17,7 @@ const core = require("../functions/url-review-core");
 
 const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "previews", "insights-test");
+const SAMPLE = path.join(ROOT, "assets", "qa-review-sample.json");
 
 function loadEnvFile() {
   let text = "";
@@ -35,7 +40,21 @@ function summary(name, report) {
 
 async function main() {
   loadEnvFile();
-  const targets = process.argv.slice(2).map((arg) => {
+  const args = process.argv.slice(2);
+  if (args[0] === "--sample") {
+    if (!args[1]) {
+      console.error("Usage: node scripts/review-snapshot.js --sample https://example.com/");
+      process.exit(2);
+    }
+    const report = await core.reviewTarget(args[1], {
+      browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined
+    });
+    fs.writeFileSync(SAMPLE, JSON.stringify({ frameworks: core.FRAMEWORKS, report }) + "\n");
+    console.log(summary("sample", report) + " -> " + path.relative(ROOT, SAMPLE));
+    return;
+  }
+  const targets = args.map((arg) => {
     const eq = arg.indexOf("=");
     return { name: arg.slice(0, eq), url: arg.slice(eq + 1) };
   }).filter((t) => t.name && t.url);

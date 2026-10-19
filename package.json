@@ -32,7 +32,8 @@
     "test:gatling": "node scripts/run-gatling.js",
     "lab:runners": "node scripts/native-runner.js",
     "review:server": "node scripts/url-review-server.js",
-    "review:snapshot": "node scripts/review-snapshot.js"
+    "review:snapshot": "node scripts/review-snapshot.js",
+    "review:sample": "node scripts/review-snapshot.js --sample https://carlosandmunoz.com/"
   },
   "author": "Carlos A. Muñoz",
   "license": "ISC",
