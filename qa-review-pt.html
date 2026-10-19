@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <title>A página já está falando. · QA-lab URL Review</title>
-    <meta name="description" content="QA-lab URL Review lê uma página https pública e propõe casos de teste, com scripts iniciais, para Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling e k6. Abre até três páginas em um navegador headless para rodar o axe-core, registrar o rastreamento antes e depois de uma escolha de cookies e tirar capturas. Nomeia Lighthouse, BrowserStack, Applitools, Percy, Provar e Copado quando se aplicam, sem executá-los. A página pode ser lida em inglês, espanhol, português, alemão, francês e italiano.">
+    <meta name="description" content="QA-lab URL Review lê uma página https pública e propõe casos de teste, com scripts iniciais, para Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling e k6. Abre até três páginas em um navegador headless para rodar o axe-core, registrar o rastreamento antes e depois de uma escolha de cookies e tirar capturas. Roda o Lighthouse pelo Google PageSpeed Insights. Nomeia BrowserStack, Applitools, Percy, Provar e Copado quando se aplicam, sem executá-los. A página pode ser lida em inglês, espanhol, português, alemão, francês e italiano.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
     <meta name="keywords" content="QA lab, URL review, proposed test cases, Playwright, Cypress, Robot Framework, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, k6, test automation scripts, axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, Copado, accessibility review, security headers, public page review, QA services">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -70,7 +70,8 @@
                     "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6",
                     "Starting automation scripts for every chosen framework",
                     "GitHub Actions workflow and a fix kit with header files, a Report-Only CSP, and structured data, llms.txt, security.txt, and DNS drafts",
-                    "axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado named when they apply",
+                    "Lighthouse and real-user Core Web Vitals through PageSpeed Insights",
+                    "BrowserStack, Applitools, Percy, Provar, and Copado named when they apply",
                     "Public signals and public write-ups",
                     "Live review log and a stop control",
                     "News from the country of the connection, in the page language",
@@ -244,7 +245,7 @@
                         "name": "Which tools can a review name?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages. Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site."
+                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages, and Lighthouse runs on the start page through Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site."
                         }
                     },
                     {
@@ -293,7 +294,7 @@
     }
     </script>
     <script src="js/site-analytics.js?v=20261015a"></script>
-    <script src="js/qa-review-consent.js?v=20261023a"></script>
+    <script src="js/qa-review-consent.js?v=20261027a"></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
@@ -428,6 +429,7 @@
         .delta { font-size: 12px; font-weight: 700; color: var(--muted); }
         .delta.up { color: var(--green); } .delta.down { color: var(--red); }
         .gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 4px; }
+        .speed-title { margin: 14px 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #5b6672); }
         .gauge { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
         .gauge-top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
         .gauge-top b { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
@@ -868,7 +870,7 @@
                 <div class="lang-menu" id="langMenuGate"></div>
             </div>
         </div>
-        <p class="lede">Every control on this page stays off until you accept. The review fetches public pages, opens up to three of them in a headless browser, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. It does not run the cases, sign in, submit forms, or generate load. The language control is on this screen.</p>
+        <p class="lede">Every control on this page stays off until you accept. The review fetches public pages, opens up to three of them in a headless browser, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. It also asks Google PageSpeed Insights to score the start page, so Google receives that address. It does not run the cases, sign in, submit forms, or generate load. The language control is on this screen.</p>
         <form id="terms-form">
             <p class="records-note"><b>Disclaimers.</b> Read these before you check a box. <a id="legal-origin" href="qa-review-legal.html">Local and national disclaimers, for Colombia, where this service is operated</a>. <a id="legal-site" href="qa-review-legal.html">International disclaimers, for the country of the site you submit</a>.</p>
             <label class="check"><input type="checkbox" id="terms-all"> Select all</label>
@@ -940,7 +942,7 @@
             <dt>What the report scores</dt>
             <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages read, and what to fix first. A headless browser loads up to three pages from an EU address: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots.</dd>
             <dt>Frameworks and tools</dt>
-            <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages. Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site.</dd>
+            <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages, and Lighthouse runs on the start page through Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site.</dd>
             <dt>Automation scripts</dt>
             <dd>It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each, a GitHub Actions workflow that runs them, and a fix kit with header files for common hosts, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records. The scripts are yours to run; the review never runs them.</dd>
             <dt>Your site</dt>
@@ -1226,10 +1228,10 @@
     </div>
 </div>
 <script>try{localStorage.setItem("cv-preferred-lang","pt")}catch(e){}</script>
-<script src="js/site-i18n.js?v=20261018a"></script>
+<script src="js/site-i18n.js?v=20261027a"></script>
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
-<script src="js/qa-review.js?v=20261026b"></script>
+<script src="js/qa-review.js?v=20261027a"></script>
 </body>
 </html>
