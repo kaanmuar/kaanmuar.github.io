@@ -75,10 +75,11 @@
         }
     }
     </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied' });
+        try { if ((localStorage.getItem('site-analytics') || localStorage.getItem('qa-review-analytics')) === 'allow') gtag('consent', 'update', { analytics_storage: 'granted' }); } catch (e) {}
         gtag('js', new Date());
         gtag('config', 'G-J8GNF5380F', {
             anonymize_ip: true,
@@ -89,6 +90,8 @@
             content_group: 'CV site'
         });
     </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
+    <script src="js/site-consent.js?v=20261023a" defer></script>
     <script src="js/site-analytics.js?v=20261015a"></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
