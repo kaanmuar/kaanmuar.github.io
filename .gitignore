@@ -17,3 +17,14 @@ k6-results/
 jmeter-results/
 gatling/target/
 .appium/
+.venv-behave/
+codeceptjs-results/
+maestro-results/
+selenide/target/
+testng/target/
+reqnroll/bin/
+reqnroll/obj/
+watir/vendor/
+watir/.bundle/
+watir/Gemfile.lock
+reqnroll/Features/*.feature.cs

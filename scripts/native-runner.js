@@ -79,8 +79,40 @@ const LAYERS = {
     Admin: ['tests/robot/security_admin.robot'],
     Lab: ['tests/robot/qa_lab.robot'],
     Mobile: ['tests/robot/mobile_suite.robot']
+  },
+  CodeceptJS: everyBrowserLayer('codeceptjs/catalog_test.js'),
+  Selenide: everyBrowserLayer('selenide/src/test/java/lab/CatalogSelenideTest.java'),
+  TestNG: everyBrowserLayer('testng/src/test/java/lab/CatalogTestNgTest.java'),
+  Watir: everyBrowserLayer('watir/spec/catalog_spec.rb'),
+  Cucumber: everyBrowserLayer('cucumber/features/catalog.feature'),
+  Behave: everyBrowserLayer('behave/features/catalog.feature'),
+  Reqnroll: everyBrowserLayer('reqnroll/Features/Catalog.feature'),
+  Jest: everyBrowserLayer('jest/catalog.test.js'),
+  Vitest: everyBrowserLayer('vitest/catalog.test.mjs'),
+  Mocha: everyBrowserLayer('mocha/catalog.spec.js'),
+  Maestro: {
+    Mobile: ['maestro/flows']
+  },
+  k6: {
+    Performance: ['k6/load.js']
   }
 };
+
+function everyBrowserLayer(file) {
+  const map = {};
+  ['Smoke', 'Functional', 'Security', 'Accessibility', 'Studio', 'Admin', 'Lab', 'Mobile'].forEach((layer) => { map[layer] = [file]; });
+  return map;
+}
+
+const LOAD = ['JMeter', 'Gatling', 'k6'];
+const PLAYWRIGHT_LIBRARY = ['Playwright', 'CodeceptJS', 'Cucumber', 'Jest', 'Vitest', 'Mocha'];
+const WEBDRIVER_BROWSERS = {
+  Selenide: ['chrome', 'firefox'],
+  TestNG: ['chrome', 'firefox'],
+  Reqnroll: ['chrome', 'firefox'],
+  Watir: ['chrome', 'firefox']
+};
+const PARALLEL = Math.max(1, Number(process.env.LAB_PARALLEL) || 4);
 
 function filesFor(framework, ids) {
   const map = LAYERS[framework];
@@ -144,7 +176,25 @@ function command(framework, browser, ids) {
   if (framework === 'Gatling') {
     return files.length ? [node, path.join(root, 'scripts', 'run-gatling.js')] : null;
   }
+  if (framework === 'k6') {
+    return files.length ? [node, path.join(root, 'scripts', 'run-k6.js')] : null;
+  }
   if (!files.length) return null;
+  const bin = (pkg, file) => path.join(root, 'node_modules', pkg, file);
+  if (framework === 'CodeceptJS') return [node, bin('codeceptjs', 'bin/codecept.js'), 'run', '--config', 'codeceptjs/codecept.conf.js', '--steps'];
+  if (framework === 'Jest') return [node, bin('jest', 'bin/jest.js'), '--config', 'jest/jest.config.js', '--runInBand'];
+  if (framework === 'Vitest') return [node, bin('vitest', 'vitest.mjs'), 'run', '--config', 'vitest/vitest.config.mjs', '--reporter', 'verbose'];
+  if (framework === 'Mocha') return [node, bin('mocha', 'bin/mocha.js'), 'mocha/catalog.spec.js', '--timeout', '120000', '--exit', '--reporter', 'spec'];
+  if (framework === 'Cucumber') {
+    const args = [node, bin('@cucumber/cucumber', 'bin/cucumber.js'), 'cucumber/features/catalog.feature', '--require', 'cucumber/steps/catalog.steps.js', '--format', 'progress'];
+    if (ids.length) args.push('--tags', ids.map((id) => '@' + id).join(' or '));
+    return args;
+  }
+  if (framework === 'Selenide' || framework === 'TestNG') return [node, path.join(root, 'scripts', 'run-java-suite.js'), framework];
+  if (framework === 'Behave') return [node, path.join(root, 'scripts', 'run-behave.js')];
+  if (framework === 'Reqnroll') return [node, path.join(root, 'scripts', 'run-reqnroll.js')];
+  if (framework === 'Watir') return [node, path.join(root, 'scripts', 'run-watir.js')];
+  if (framework === 'Maestro') return [node, path.join(root, 'scripts', 'run-maestro.js')];
   if (framework === 'Selenium') {
     return [node, path.join(root, 'node_modules', 'mocha', 'bin', 'mocha.js'), ...files, '--timeout', '120000', '--exit', '--reporter', 'spec'];
   }
@@ -168,7 +218,7 @@ function runProcess(args, extra, onLine) {
       env: {
         ...process.env,
         BASE_URL: base,
-        TEST_PORT: '8765',
+        TEST_PORT: new URL(base).port || '8765',
         CYPRESS_BASE_URL: base,
         APPIUM_HOME: path.join(root, '.appium'),
         ...(fs.existsSync(XCODE) ? { DEVELOPER_DIR: XCODE } : {}),
@@ -250,11 +300,13 @@ function lineWriter(res) {
 }
 
 async function runFramework(fw, ids, browsers, devices, catalogCount, send) {
-  const targets = (fw === 'JMeter' || fw === 'Gatling')
+  const targets = LOAD.includes(fw)
     ? [{ browser: 'load' }]
-    : fw === 'Appium'
-      ? (devices.length ? devices.map((device) => ({ device })) : [{ browser: 'chrome' }])
-      : browsers.map((browser) => ({ browser }));
+    : fw === 'Maestro'
+      ? [{ browser: 'chrome', fixed: 'Chromium 390x844' }]
+      : fw === 'Appium'
+        ? (devices.length ? devices.map((device) => ({ device })) : [{ browser: 'chrome' }])
+        : browsers.map((browser) => ({ browser }));
   const merged = { framework: fw, cases: [] };
   let code = 0;
   fs.rmSync(path.join(resultsDir, fw + '.json'), { force: true });
@@ -266,10 +318,14 @@ async function runFramework(fw, ids, browsers, devices, catalogCount, send) {
       code = 1;
       continue;
     }
+    if (WEBDRIVER_BROWSERS[fw] && !WEBDRIVER_BROWSERS[fw].includes(browser)) {
+      send({ fw, line: fw + ' runs Chrome and Firefox in this lab. The ' + browser + ' pass is left to the other runners.' });
+      continue;
+    }
     const bundle = browser === 'firefox' ? 'firefox' : (browser === 'safari' ? 'webkit' : 'chromium');
-    const label = (fw === 'JMeter' || fw === 'Gatling')
+    const label = LOAD.includes(fw)
       ? '8 virtual users · 20s'
-      : (target.device ? target.device.label : (bundle === 'webkit' ? 'webkit' : browser));
+      : (target.fixed || (target.device ? target.device.label : (bundle === 'webkit' ? 'webkit' : browser)));
     const extra = {
       TARGET_BROWSER: label,
       CATALOG_IDS: ids.join(','),
@@ -278,7 +334,7 @@ async function runFramework(fw, ids, browsers, devices, catalogCount, send) {
       ROBOT_IDS: ids.join(','),
       PW_BROWSER: bundle
     };
-    if (fw === 'JMeter' || fw === 'Gatling') {
+    if (LOAD.includes(fw)) {
       extra.TEST_PORT = '8767';
       extra.BASE_URL = 'http://127.0.0.1:8767';
     }
@@ -292,7 +348,7 @@ async function runFramework(fw, ids, browsers, devices, catalogCount, send) {
       extra.APPIUM_DEVICE_LABEL = target.device.label;
       extra.TARGET_BROWSER = target.device.label;
     }
-    if (fw === 'Playwright') {
+    if (PLAYWRIGHT_LIBRARY.includes(fw)) {
       const install = [process.execPath, path.join(root, 'node_modules', '@playwright', 'test', 'cli.js'), 'install', bundle];
       send({ fw, line: '$ ' + install.join(' ') });
       await runProcess(install, extra, (line) => send({ fw, line }));
@@ -300,7 +356,7 @@ async function runFramework(fw, ids, browsers, devices, catalogCount, send) {
     if (browser === 'edge' && !edgeInstalled()) {
       send({ fw, line: 'Edge is not installed on this host. This pass uses the bundled Chromium browser.' });
     }
-    if (browser === 'safari' && process.platform !== 'darwin' && fw !== 'Playwright') {
+    if (browser === 'safari' && process.platform !== 'darwin' && !PLAYWRIGHT_LIBRARY.includes(fw)) {
       send({ fw, line: 'Safari is a macOS browser. This host runs that pass in bundled WebKit.' });
     }
     const args = command(fw, browser, ids);
@@ -385,10 +441,20 @@ const server = http.createServer((req, res) => {
       const catalogCount = ids.length || catalog.length;
       fs.mkdirSync(resultsDir, { recursive: true });
       await ensureServer();
-      load = frameworks.some((fw) => fw === 'JMeter' || fw === 'Gatling') ? await startLoadServer(8767) : null;
-      await Promise.all(frameworks.map((fw) => runFramework(fw, ids, browsers, devices, catalogCount, writer.send).catch((err) => {
-        writer.send({ fw, code: 1, summary: { framework: fw, cases: [] }, line: String(err.message || err) });
-      })));
+      load = frameworks.some((fw) => LOAD.includes(fw)) ? await startLoadServer(8767) : null;
+      const queue = frameworks.slice();
+      if (frameworks.length > PARALLEL) {
+        frameworks.slice(PARALLEL).forEach((fw) => writer.send({ fw, line: 'Queued. ' + PARALLEL + ' frameworks run at the same time on this host.' }));
+      }
+      const worker = async () => {
+        while (queue.length) {
+          const fw = queue.shift();
+          await runFramework(fw, ids, browsers, devices, catalogCount, writer.send).catch((err) => {
+            writer.send({ fw, code: 1, summary: { framework: fw, cases: [] }, line: String(err.message || err) });
+          });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(PARALLEL, frameworks.length) }, worker));
       await writer.flush();
     } catch (err) {
       writer.send({ fw: 'Playwright', line: String(err.message || err) });
@@ -401,6 +467,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(8770, '127.0.0.1', () => {
-  console.log('Native runner listening on http://127.0.0.1:8770');
+const RUNNER_PORT = Number(process.env.RUNNER_PORT) || 8770;
+server.listen(RUNNER_PORT, '127.0.0.1', () => {
+  console.log('Native runner listening on http://127.0.0.1:' + RUNNER_PORT);
 });

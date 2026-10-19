@@ -15,7 +15,7 @@ function portOpen(port) {
 
 async function ensureServer() {
   if (await portOpen(PORT)) return;
-  const child = spawn('python3', ['-m', 'http.server', String(PORT)], {
+  const child = spawn('python3', [require('path').join(__dirname, '..', '..', 'scripts', 'static-server.py'), String(PORT)], {
     cwd: require('path').join(__dirname, '..', '..'),
     stdio: 'ignore',
     detached: true
@@ -29,4 +29,6 @@ async function ensureServer() {
   throw new Error('Static server did not open on ' + PORT);
 }
 
-module.exports = { ensureServer, PORT, BASE: process.env.BASE_URL || ('http://127.0.0.1:' + PORT) };
+const FROM_ENV = /^https?:\/\//i.test(process.env.BASE_URL || '') ? process.env.BASE_URL.replace(/\/$/, '') : '';
+
+module.exports = { ensureServer, PORT, BASE: FROM_ENV || ('http://127.0.0.1:' + PORT) };

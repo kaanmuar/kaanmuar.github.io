@@ -67,7 +67,7 @@ module.exports = defineConfig({
       let serverProc;
       on('before:run', async (details) => {
         if (!(await isPortOpen(PORT))) {
-          serverProc = spawn('python3', ['-m', 'http.server', String(PORT)], {
+          serverProc = spawn('python3', ['scripts/static-server.py', String(PORT)], {
             cwd: config.projectRoot || process.cwd(),
             stdio: 'ignore'
           });
