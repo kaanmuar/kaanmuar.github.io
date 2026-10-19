@@ -19,8 +19,8 @@ LANGS = {
         "language": "Spanish",
         "native": "Español",
         "title": "La página ya está hablando.",
-        "description": "QA-lab URL Review lee una página https pública y propone casos de prueba para Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter y Gatling. Nombra axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar y Copado cuando corresponden. No los ejecuta. La página se puede leer en inglés, español, portugués, alemán, francés e italiano.",
-        "og_description": "Una lectura https pública, una lista de tecnologías y casos de QA propuestos para ocho frameworks. Las herramientas especializadas se nombran cuando corresponden y no se ejecutan. Seis idiomas.",
+        "description": "QA-lab URL Review lee una página https pública y propone casos de prueba, con scripts iniciales, para Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling y k6. Nombra axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar y Copado cuando corresponden. No los ejecuta. La página se puede leer en inglés, español, portugués, alemán, francés e italiano.",
+        "og_description": "Una lectura https pública, una lista de tecnologías y casos de QA propuestos con scripts iniciales para veinte frameworks. Las herramientas especializadas se nombran cuando corresponden y no se ejecutan. Seis idiomas.",
         "twitter_title": "Lee la página pública. Propón los casos.",
         "twitter_description": "Una lectura pública de un sitio https, una lista de tecnologías y casos de QA propuestos. Una revisión completada por navegador y red. El informe se muestra una vez.",
         "gate": "Antes de leer una sola dirección.",
@@ -30,8 +30,8 @@ LANGS = {
         "language": "Portuguese",
         "native": "Português",
         "title": "A página já está falando.",
-        "description": "QA-lab URL Review lê uma página https pública e propõe casos de teste para Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter e Gatling. Nomeia axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar e Copado quando se aplicam. Não os executa. A página pode ser lida em inglês, espanhol, português, alemão, francês e italiano.",
-        "og_description": "Uma leitura https pública, uma lista de tecnologias e casos de QA propostos para oito frameworks. As ferramentas especializadas são nomeadas quando se aplicam e não são executadas. Seis idiomas.",
+        "description": "QA-lab URL Review lê uma página https pública e propõe casos de teste, com scripts iniciais, para Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling e k6. Nomeia axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar e Copado quando se aplicam. Não os executa. A página pode ser lida em inglês, espanhol, português, alemão, francês e italiano.",
+        "og_description": "Uma leitura https pública, uma lista de tecnologias e casos de QA propostos com scripts iniciais para vinte frameworks. As ferramentas especializadas são nomeadas quando se aplicam e não são executadas. Seis idiomas.",
         "twitter_title": "Leia a página pública. Proponha os casos.",
         "twitter_description": "Uma leitura pública de um site https, uma lista de tecnologias e casos de QA propostos. Uma revisão concluída por navegador e rede. O relatório é mostrado uma vez.",
         "gate": "Antes de ler um único endereço.",
@@ -41,8 +41,8 @@ LANGS = {
         "language": "German",
         "native": "Deutsch",
         "title": "Die Seite spricht bereits.",
-        "description": "QA-lab URL Review liest eine öffentliche https-Seite und schlägt Testfälle für Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter und Gatling vor. Es nennt axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar und Copado, wenn sie zutreffen. Es führt sie nicht aus. Die Seite kann auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch gelesen werden.",
-        "og_description": "Eine öffentliche https-Lesung, eine Technologieliste und vorgeschlagene QA-Fälle für acht Frameworks. Spezialwerkzeuge werden genannt, wenn sie zutreffen, und nicht gestartet. Sechs Sprachen.",
+        "description": "QA-lab URL Review liest eine öffentliche https-Seite und schlägt Testfälle mit Startskripten für Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling und k6 vor. Es nennt axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar und Copado, wenn sie zutreffen. Es führt sie nicht aus. Die Seite kann auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch gelesen werden.",
+        "og_description": "Eine öffentliche https-Lesung, eine Technologieliste und vorgeschlagene QA-Fälle mit Startskripten für zwanzig Frameworks. Spezialwerkzeuge werden genannt, wenn sie zutreffen, und nicht gestartet. Sechs Sprachen.",
         "twitter_title": "Die öffentliche Seite lesen. Die Fälle vorschlagen.",
         "twitter_description": "Eine öffentliche Lesung einer https-Website, eine Technologieliste und vorgeschlagene QA-Fälle. Eine abgeschlossene Prüfung pro Browser und Netzwerk. Der Bericht wird einmal angezeigt.",
         "gate": "Bevor eine einzige Adresse gelesen wird.",
@@ -52,8 +52,8 @@ LANGS = {
         "language": "French",
         "native": "Français",
         "title": "La page parle déjà.",
-        "description": "QA-lab URL Review lit une page https publique et propose des cas de test pour Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter et Gatling. Il nomme axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar et Copado lorsqu’ils s’appliquent. Il ne les exécute pas. La page peut être lue en anglais, espagnol, portugais, allemand, français et italien.",
-        "og_description": "Une lecture https publique, une liste de technologies et des cas de QA proposés pour huit frameworks. Les outils spécialisés sont nommés lorsqu’ils s’appliquent et ne sont pas lancés. Six langues.",
+        "description": "QA-lab URL Review lit une page https publique et propose des cas de test, avec des scripts de départ, pour Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling et k6. Il nomme axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar et Copado lorsqu’ils s’appliquent. Il ne les exécute pas. La page peut être lue en anglais, espagnol, portugais, allemand, français et italien.",
+        "og_description": "Une lecture https publique, une liste de technologies et des cas de QA proposés avec des scripts de départ pour vingt frameworks. Les outils spécialisés sont nommés lorsqu’ils s’appliquent et ne sont pas lancés. Six langues.",
         "twitter_title": "Lire la page publique. Proposer les cas.",
         "twitter_description": "Une lecture publique d’un site https, une liste de technologies et des cas de QA proposés. Une revue terminée par navigateur et par réseau. Le rapport est affiché une fois.",
         "gate": "Avant de lire une seule adresse.",
@@ -63,8 +63,8 @@ LANGS = {
         "language": "Italian",
         "native": "Italiano",
         "title": "La pagina sta già parlando.",
-        "description": "QA-lab URL Review legge una pagina https pubblica e propone casi di test per Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter e Gatling. Nomina axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar e Copado quando si applicano. Non li esegue. La pagina può essere letta in inglese, spagnolo, portoghese, tedesco, francese e italiano.",
-        "og_description": "Una lettura https pubblica, un elenco di tecnologie e casi di QA proposti per otto framework. Gli strumenti specialistici vengono nominati quando si applicano e non vengono avviati. Sei lingue.",
+        "description": "QA-lab URL Review legge una pagina https pubblica e propone casi di test, con script iniziali, per Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, SpecFlow, Jest, Vitest, Mocha, Appium, Calabash, JMeter, Gatling e k6. Nomina axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar e Copado quando si applicano. Non li esegue. La pagina può essere letta in inglese, spagnolo, portoghese, tedesco, francese e italiano.",
+        "og_description": "Una lettura https pubblica, un elenco di tecnologie e casi di QA proposti con script iniziali per venti framework. Gli strumenti specialistici vengono nominati quando si applicano e non vengono avviati. Sei lingue.",
         "twitter_title": "Leggi la pagina pubblica. Proponi i casi.",
         "twitter_description": "Una lettura pubblica di un sito https, un elenco di tecnologie e casi di QA proposti. Una revisione completata per browser e rete. Il report viene mostrato una volta.",
         "gate": "Prima di leggere un solo indirizzo.",
@@ -130,7 +130,7 @@ def build(source, code):
         f"                <span>{d[2]}</span>\n"
         f"                <span>{d[3]}</span>",
     )
-    s = swap(s, '<script src="js/site-i18n.js"></script>', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js"></script>')
+    s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js')
     return page, s
 
 
