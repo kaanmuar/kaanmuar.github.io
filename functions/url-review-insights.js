@@ -656,8 +656,9 @@ function analyze(input) {
     });
   });
   if (schemaErrors) {
+    const brokenOn = read.filter((page) => page.inspect.schema && page.inspect.schema.errors).map((page) => page.path);
     add("SEO", "fail", "medium", "seo-schema-parse", plural(schemaErrors, "JSON-LD block does", "JSON-LD blocks do") + " not parse",
-      "A block that is not valid JSON is ignored by Google and by AI crawlers.", "Validate each block with the Schema Markup Validator and fix the JSON.", { count: schemaErrors, effort: "minutes", cases: ["CT-04"] });
+      "On " + sample(brokenOn, 4) + ". A block that is not valid JSON is ignored by Google and by AI crawlers.", "Validate each block with the Schema Markup Validator and fix the JSON.", { pages: brokenOn, count: schemaErrors, effort: "minutes", cases: ["CT-04"] });
   }
   if (schemaGaps.length) {
     add("SEO", "risk", "medium", "seo-schema-props", plural(schemaGaps.length, "structured data item misses", "structured data items miss") + " a property Google expects",
