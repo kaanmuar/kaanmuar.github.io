@@ -585,10 +585,11 @@ function analyze(input) {
   // Sitemap compared with the crawl.
   const sitemap = extras.sitemap || {};
   const sitemapSet = new Set((sitemap.urls || []).map(normal));
-  const sitemapReport = { found: !!(sitemap.urls && sitemap.urls.length), source: sitemap.source || "", count: (sitemap.urls || []).length, status: sitemap.status || 0, notListed: [], listedNotIndexable: [], notLinked: [], offHost: 0 };
+  const sitemapReport = { found: !!(sitemap.urls && sitemap.urls.length), source: sitemap.source || "", count: (sitemap.urls || []).length, status: sitemap.status || 0, partial: !!sitemap.partial, notListed: [], listedNotIndexable: [], notLinked: [], offHost: 0 };
   if (sitemapReport.found) {
     sitemapReport.offHost = (sitemap.urls || []).filter((url) => hostOf(url) !== host).length;
-    sitemapReport.notListed = indexable.filter((row) => !sitemapSet.has(normal(origin + row.path))).map((row) => row.path).slice(0, 40);
+    // A partial read cannot prove a page is absent from the rest of the sitemap.
+    if (!sitemapReport.partial) sitemapReport.notListed = indexable.filter((row) => !sitemapSet.has(normal(origin + row.path))).map((row) => row.path).slice(0, 40);
     sitemapReport.listedNotIndexable = indexability.filter((row) => !row.indexable && sitemapSet.has(normal(origin + row.path))).map((row) => row.path + " (" + row.reason + ")").slice(0, 40);
     const linked = new Set();
     pages.forEach((page) => ((page.inspect && page.inspect.links) || []).forEach((link) => linked.add(normal(link))));
@@ -604,10 +605,11 @@ function analyze(input) {
     }
     if (sitemapReport.offHost) {
       add("SEO", "risk", "medium", "seo-sitemap-offhost", plural(sitemapReport.offHost, "sitemap URL points", "sitemap URLs point") + " at another host or scheme",
-        "The sitemap should list only URLs on https://" + host + ".", "Regenerate the sitemap with the production https host.", { count: sitemapReport.offHost, effort: "minutes", cases: ["SEO-03"] });
+        "In " + pathOf(sitemapReport.source) + ". The sitemap should list only URLs on https://" + host + ".", "Regenerate the sitemap with the production https host.", { count: sitemapReport.offHost, effort: "minutes", cases: ["SEO-03"] });
     }
     if (!sitemapReport.listedNotIndexable.length && !sitemapReport.notListed.length && !sitemapReport.offHost) {
-      add("SEO", "pass", "info", "seo-sitemap", "The sitemap matches the pages that were read", plural(sitemapReport.count, "URL") + " in " + pathOf(sitemapReport.source) + ".", "", { cases: ["SEO-03"] });
+      if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", "A sitemap answers with valid URLs", "The first " + plural(sitemapReport.count, "URL") + " from " + pathOf(sitemapReport.source) + " were read; the sitemap is larger than one review reads.", "", { cases: ["SEO-03"] });
+      else add("SEO", "pass", "info", "seo-sitemap", "The sitemap matches the pages that were read", plural(sitemapReport.count, "URL") + " in " + pathOf(sitemapReport.source) + ".", "", { cases: ["SEO-03"] });
     }
   } else {
     add("SEO", "risk", "medium", "seo-sitemap", "No sitemap was found",
@@ -654,8 +656,9 @@ function analyze(input) {
     });
   });
   if (schemaErrors) {
+    const brokenOn = read.filter((page) => page.inspect.schema && page.inspect.schema.errors).map((page) => page.path);
     add("SEO", "fail", "medium", "seo-schema-parse", plural(schemaErrors, "JSON-LD block does", "JSON-LD blocks do") + " not parse",
-      "A block that is not valid JSON is ignored by Google and by AI crawlers.", "Validate each block with the Schema Markup Validator and fix the JSON.", { count: schemaErrors, effort: "minutes", cases: ["CT-04"] });
+      "On " + sample(brokenOn, 4) + ". A block that is not valid JSON is ignored by Google and by AI crawlers.", "Validate each block with the Schema Markup Validator and fix the JSON.", { pages: brokenOn, count: schemaErrors, effort: "minutes", cases: ["CT-04"] });
   }
   if (schemaGaps.length) {
     add("SEO", "risk", "medium", "seo-schema-props", plural(schemaGaps.length, "structured data item misses", "structured data items miss") + " a property Google expects",

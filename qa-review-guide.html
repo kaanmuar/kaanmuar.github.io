@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com;">
+    <title>How it works, a guided tour · QA-lab URL Review</title>
+    <meta name="description" content="A plain-language tour of QA-lab URL Review: who it helps, what happens from the first checkbox to the last export, how to read the six scores, and what the review will never do to your site.">
+    <meta name="keywords" content="QA-lab URL Review guide, how to review a website, website QA checklist, SEO GEO analytics security accessibility performance review, test cases from a URL, Playwright Cypress test cases">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <link rel="canonical" href="https://carlosandmunoz.com/qa-review-guide.html">
+    <link rel="sitemap" type="application/xml" href="https://carlosandmunoz.com/sitemap.xml">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="QA-lab URL Review">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="https://carlosandmunoz.com/qa-review-guide.html">
+    <meta property="og:title" content="How it works, a guided tour · QA-lab URL Review">
+    <meta property="og:description" content="Who it helps, what happens step by step, how to read the six scores, and what the review will never do to your site.">
+    <meta property="og:image" content="https://carlosandmunoz.com/assets/qa-review-share.png?v=20261012">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="How QA-lab URL Review works, a guided tour">
+    <meta name="twitter:description" content="From the first checkbox to the last export, in plain language.">
+    <meta name="twitter:image" content="https://carlosandmunoz.com/assets/qa-review-share.png?v=20261012">
+    <link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review-guide.html">
+    <link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qa-review-guide.html">
+    <link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qa-review-guide.html?lang=es">
+    <link rel="alternate" hreflang="pt" href="https://carlosandmunoz.com/qa-review-guide.html?lang=pt">
+    <link rel="alternate" hreflang="de" href="https://carlosandmunoz.com/qa-review-guide.html?lang=de">
+    <link rel="alternate" hreflang="fr" href="https://carlosandmunoz.com/qa-review-guide.html?lang=fr">
+    <link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-review-guide.html?lang=it">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebPage",
+                "name": "How it works, a guided tour · QA-lab URL Review",
+                "url": "https://carlosandmunoz.com/qa-review-guide.html",
+                "inLanguage": ["en", "es", "pt", "de", "fr", "it"],
+                "isPartOf": { "@type": "WebSite", "name": "QA-lab URL Review", "url": "https://carlosandmunoz.com/qa-review.html" },
+                "description": "Who QA-lab URL Review helps, what happens step by step, how to read the six scores, and what the review will never do to a site."
+            },
+            {
+                "@type": "HowTo",
+                "name": "Review a public website with QA-lab URL Review",
+                "description": "Read one public https address, score it across SEO, GEO, analytics, security, accessibility, and performance, and take home proposed test cases for your frameworks.",
+                "step": [
+                    { "@type": "HowToStep", "position": 1, "name": "Read the disclaimers", "text": "Every control stays off until you accept what the review will and will not do." },
+                    { "@type": "HowToStep", "position": 2, "name": "Say who is asking", "text": "Give a name, an email at the same domain as the site, and the reason for the review." },
+                    { "@type": "HowToStep", "position": 3, "name": "Paste the public address and pick frameworks", "text": "Enter one public https address and choose the frameworks your team uses." },
+                    { "@type": "HowToStep", "position": 4, "name": "Watch the read", "text": "The review reads up to twenty pages, two links deep, opens up to three in a headless browser, and asks PageSpeed Insights to score the start page." },
+                    { "@type": "HowToStep", "position": 5, "name": "Read the report", "text": "Six scores from 0 to 100, every check marked fails now, at risk, passes, or needs a person, and a fix-first list." },
+                    { "@type": "HowToStep", "position": 6, "name": "Take the cases home", "text": "Export proposed cases and starting scripts to a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, text, or PDF." }
+                ]
+            }
+        ]
+    }
+    </script>
+    <meta name="theme-color" content="#0d6e76">
+    <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+    <script src="js/site-theme.js"></script>
+    <script>SiteTheme.boot();</script>
+    <script src="js/site-look.js"></script>
+    <script>SiteLook.boot();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/site-look.css?v=20261006d">
+    <style>
+        :root { --bg: #eef2f4; --card: #fff; --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; --fail: #b3261e; --risk: #b26a00; --pass: #1b7f4b; --person: #5b5fc7; }
+        html.dark-mode { --bg: #10161d; --card: #1a2430; --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; --fail: #ff8a80; --risk: #ffc266; --pass: #6fd3a0; --person: #a9adff; color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: var(--text); font-family: Inter, system-ui, sans-serif; font-size: 16px; line-height: 1.6; background: radial-gradient(900px 420px at 0% -10%, rgba(13,110,118,.16), transparent 55%), radial-gradient(700px 380px at 110% 20%, rgba(91,95,199,.10), transparent 60%), var(--bg); }
+        header, main, footer { position: relative; z-index: 2; }
+        header { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 14px 20px; }
+        a { color: var(--cyan); }
+        main { max-width: 1040px; margin: 0 auto; padding: 8px 20px 72px; }
+        .brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-family: "Instrument Serif", Georgia, serif; font-size: 1.35rem; }
+        .brand small { display: block; font-family: Inter, system-ui, sans-serif; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+        .logo { width: 36px; height: 36px; display: block; }
+        .head-actions { display: flex; gap: 8px; align-items: center; }
+        .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; background: color-mix(in srgb, var(--card) 85%, transparent); }
+        .pill.primary { background: var(--cyan); border-color: var(--cyan); color: #fff; }
+        h1, h2 { font-family: "Instrument Serif", "Source Serif 4", Georgia, serif; font-weight: 400; letter-spacing: -0.03em; line-height: 1.05; }
+        h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); margin: 0 0 14px; }
+        h2 { font-size: clamp(1.9rem, 4vw, 2.6rem); margin: 0 0 10px; }
+        h3 { font-family: Inter, system-ui, sans-serif; font-size: 1.02rem; font-weight: 700; margin: 0 0 6px; }
+        .eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; color: var(--cyan); margin: 0 0 8px; }
+        .muted { color: var(--muted); }
+        .lede { font-size: 1.15rem; max-width: 640px; }
+        section { margin: 56px 0; }
+        .hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; align-items: center; margin-top: 18px; }
+        .hero-art { position: relative; aspect-ratio: 1 / 1; max-width: 400px; justify-self: center; width: 100%; }
+        .hero-art svg { width: 100%; height: 100%; overflow: visible; }
+        .wave { fill: none; stroke: var(--cyan); stroke-width: 2; opacity: 0; transform-origin: 250px 200px; animation: talk 3.2s ease-out infinite; }
+        .wave.w2 { animation-delay: .8s; } .wave.w3 { animation-delay: 1.6s; }
+        @keyframes talk { 0% { opacity: 0; transform: scale(.7); } 25% { opacity: .75; } 100% { opacity: 0; transform: scale(1.35); } }
+        .float { animation: bob 6s ease-in-out infinite; }
+        @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+        .card { background: color-mix(in srgb, var(--card) 92%, transparent); border: 1px solid var(--line); border-radius: 22px; padding: 20px; }
+        .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .situation { position: relative; overflow: hidden; transition: transform .25s ease, box-shadow .25s ease; }
+        .situation:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(13, 110, 118, .14); }
+        .situation .quote { font-family: "Instrument Serif", Georgia, serif; font-size: 1.35rem; line-height: 1.2; margin: 0 0 10px; }
+        .situation .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+        .tour { position: relative; padding-left: 0; list-style: none; margin: 18px 0 0; counter-reset: step; }
+        .tour::before { content: ""; position: absolute; left: 21px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(var(--cyan), color-mix(in srgb, var(--cyan) 15%, transparent)); }
+        .tour li { position: relative; padding: 0 0 26px 64px; counter-increment: step; }
+        .tour li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--card); border: 2px solid var(--cyan); color: var(--cyan); font-weight: 700; }
+        .tour .why { display: block; margin-top: 6px; font-size: 14px; color: var(--muted); border-left: 3px solid color-mix(in srgb, var(--cyan) 40%, transparent); padding-left: 10px; }
+        .scores { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+        .ring { text-align: center; }
+        .ring svg { width: 100%; max-width: 120px; height: auto; display: block; margin: 0 auto 6px; }
+        .ring .track { fill: none; stroke: var(--line); stroke-width: 10; }
+        .ring .arc { fill: none; stroke-width: 10; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 60px 60px; stroke-dasharray: 0 999; transition: stroke-dasharray 1.4s cubic-bezier(.2,.8,.2,1); }
+        .ring .num { font-family: "Instrument Serif", Georgia, serif; font-size: 30px; fill: var(--text); }
+        .ring b { display: block; font-size: 14px; }
+        .ring small { color: var(--muted); font-size: 12px; }
+        .legend { display: flex; gap: 14px; flex-wrap: wrap; margin: 14px 0 0; padding: 0; list-style: none; font-size: 14px; }
+        .legend li { display: flex; align-items: center; gap: 8px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .stack { display: flex; height: 14px; border-radius: 999px; overflow: hidden; margin-top: 12px; background: var(--line); }
+        .stack span { display: block; height: 100%; width: 0; transition: width 1.2s ease; }
+        .never { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+        .never .card { text-align: center; padding: 18px 14px; }
+        .never .x { font-size: 28px; line-height: 1; color: var(--fail); display: block; margin-bottom: 8px; }
+        .fixes { list-style: none; padding: 0; margin: 12px 0 0; }
+        .fixes li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 10px 0; border-top: 1px dashed var(--line); font-size: 15px; }
+        .fixes code { font-size: 13px; background: color-mix(in srgb, var(--cyan) 10%, transparent); padding: 1px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+        .badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; border-radius: 999px; padding: 3px 8px; align-self: start; text-align: center; }
+        .badge.fail { background: color-mix(in srgb, var(--fail) 16%, transparent); color: var(--fail); }
+        .badge.risk { background: color-mix(in srgb, var(--risk) 16%, transparent); color: var(--risk); }
+        .tips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .tip h3::before { content: "→ "; color: var(--cyan); }
+        details { border-top: 1px solid var(--line); padding: 14px 0; }
+        details summary { cursor: pointer; font-weight: 700; list-style: none; }
+        details summary::-webkit-details-marker { display: none; }
+        details summary::after { content: "+"; float: right; color: var(--cyan); font-size: 1.2rem; line-height: 1; }
+        details[open] summary::after { content: "–"; }
+        details p { margin: 8px 0 0; color: var(--muted); }
+        .closing { text-align: center; padding: 40px 20px; background: linear-gradient(135deg, color-mix(in srgb, var(--cyan) 14%, var(--card)), var(--card)); }
+        .closing .cta-row { justify-content: center; }
+        footer { max-width: 1040px; margin: 0 auto; padding: 0 20px 40px; font-size: 14px; color: var(--muted); }
+        .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+        .reveal.in { opacity: 1; transform: none; }
+        .cookie-note { position: fixed; z-index: 5; left: 16px; right: 16px; bottom: 16px; max-width: 720px; margin: 0 auto; padding: 16px 18px; border-radius: 18px; background: #fff; color: #12181f; border: 1px solid #d5dce3; box-shadow: 0 18px 50px rgba(8, 15, 25, .2); }
+        .cookie-note[hidden] { display: none; }
+        .cookie-note p { margin: 0 0 12px; font-size: 15px; line-height: 1.45; color: #12181f; }
+        .cookie-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+        .cookie-actions button { border-radius: 999px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
+        #cookie-necessary { background: transparent; color: #12181f; border: 1px solid #d5dce3; }
+        #cookie-allow { background: #0d6e76; color: #fff; border: 0; }
+        @media (max-width: 900px) {
+            .hero { grid-template-columns: 1fr; }
+            .hero-art { max-width: 280px; order: -1; }
+            .grid3, .tips { grid-template-columns: 1fr 1fr; }
+            .scores { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .never { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 600px) {
+            header { padding: 10px 14px; flex-wrap: wrap; }
+            main { padding: 8px 14px 180px; }
+            .grid3, .grid2, .tips { grid-template-columns: 1fr; }
+            .fixes li { grid-template-columns: 1fr; gap: 4px; }
+            .tour li { padding-left: 56px; }
+            .cookie-note { left: 10px; right: 10px; bottom: 10px; padding: 12px; }
+            .cookie-actions button { flex: 1; min-height: 40px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .wave, .float { animation: none; }
+            .wave { opacity: .4; }
+            .reveal { opacity: 1; transform: none; transition: none; }
+            .ring .arc, .stack span { transition: none; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <a class="brand" href="qa-review.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span>QA-lab<small>URL Review</small></span></a>
+    <div class="head-actions">
+        <a class="pill" href="qa-review.html?sample=1">Sample report</a>
+        <div class="lang-wrap notranslate" id="langWrap">
+            <button class="lang-toggle" id="langToggle" type="button" aria-label="Language" style="background:none;border:1px solid var(--line);border-radius:999px;padding:4px 6px;cursor:pointer">
+                <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English" width="20" height="20">
+            </button>
+            <div class="lang-menu" id="langMenu"></div>
+        </div>
+    </div>
+</header>
+<main>
+    <section class="hero" aria-labelledby="guide-title">
+        <div>
+            <p class="eyebrow">A guided tour</p>
+            <h1 id="guide-title">Your page is already talking. Here is how we listen.</h1>
+            <p class="lede">Every public page says a lot before anyone writes a test: what it is built with, what search engines and AI assistants can read, what it tracks, how it protects visitors, who it leaves out, and how fast it answers. QA-lab URL Review writes that down for you, then proposes the test cases your team would want on paper before shipping.</p>
+            <p class="muted">This tour takes about five minutes. No sign-up is needed to read it.</p>
+            <div class="cta-row">
+                <a class="pill primary" href="qa-review.html" data-track="guide_start_review">Start a review</a>
+                <a class="pill" href="#tour">Walk me through it</a>
+            </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+            <svg viewBox="0 0 400 400" role="presentation">
+                <defs>
+                    <linearGradient id="pageGrad" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#0d6e76"/><stop offset="1" stop-color="#5b5fc7"/></linearGradient>
+                </defs>
+                <circle class="wave" cx="250" cy="200" r="90"/>
+                <circle class="wave w2" cx="250" cy="200" r="90"/>
+                <circle class="wave w3" cx="250" cy="200" r="90"/>
+                <g class="float">
+                    <rect x="70" y="70" width="190" height="250" rx="18" fill="url(#pageGrad)" opacity=".95"/>
+                    <rect x="92" y="96" width="120" height="12" rx="6" fill="#fff" opacity=".9"/>
+                    <rect x="92" y="122" width="146" height="8" rx="4" fill="#fff" opacity=".55"/>
+                    <rect x="92" y="140" width="132" height="8" rx="4" fill="#fff" opacity=".55"/>
+                    <rect x="92" y="158" width="100" height="8" rx="4" fill="#fff" opacity=".55"/>
+                    <rect x="92" y="190" width="146" height="70" rx="10" fill="#fff" opacity=".18"/>
+                    <circle cx="118" cy="290" r="10" fill="#6fd3a0"/>
+                    <circle cx="148" cy="290" r="10" fill="#ffc266"/>
+                    <circle cx="178" cy="290" r="10" fill="#ff8a80"/>
+                    <path d="M260 180 q30 20 0 40" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+                </g>
+            </svg>
+        </div>
+    </section>
+
+    <section class="reveal" aria-labelledby="who-title">
+        <p class="eyebrow">Who it is for</p>
+        <h2 id="who-title">Maybe one of these sounds like your week</h2>
+        <p class="muted">A review is most useful when somebody has to make a decision about a site they did not build, or did not build recently.</p>
+        <div class="grid3" style="margin-top:16px">
+            <article class="card situation">
+                <span class="tag">You inherited a site</span>
+                <p class="quote">“No docs, no tests, and the person who built it left.”</p>
+                <p>Start with the technology list, the map of pages read, and the proposed functional cases. In one read you know what is under the hood and where to begin.</p>
+            </article>
+            <article class="card situation">
+                <span class="tag">Release is close</span>
+                <p class="quote">“The build is green. Does the public page still read right?”</p>
+                <p>Run it on the staging or production address the day before. The fix-first list tells you what is worth fixing now and what can wait for the next sprint.</p>
+            </article>
+            <article class="card situation">
+                <span class="tag">Can AI find us?</span>
+                <p class="quote">“Marketing asked if ChatGPT and Perplexity can cite our site.”</p>
+                <p>The GEO score and the AI crawler matrix show which assistants your robots.txt lets in, and the text they see when JavaScript does not run.</p>
+            </article>
+            <article class="card situation">
+                <span class="tag">Starting automation</span>
+                <p class="quote">“Playwright or Cypress? We have not written a single test.”</p>
+                <p>Pick the frameworks you already use or are considering. Every proposed case comes with a starting script for each one, so the team compares on real cases, not opinions.</p>
+            </article>
+            <article class="card situation">
+                <span class="tag">Agencies and freelancers</span>
+                <p class="quote">“I need a clear, honest first look before I quote.”</p>
+                <p>Review your client's public site with their address and your reason. The report is a snapshot and a proposal that you can walk through with them, never a certification.</p>
+            </article>
+            <article class="card situation">
+                <span class="tag">Privacy and consent</span>
+                <p class="quote">“Do we track people before they say yes?”</p>
+                <p>A headless browser records the tags that fire before and after it presses Reject on your cookie banner, once. You see what loads without consent.</p>
+            </article>
+        </div>
+    </section>
+
+    <section id="tour" class="reveal" aria-labelledby="tour-title">
+        <p class="eyebrow">The five-minute tour</p>
+        <h2 id="tour-title">From the first checkbox to the last export</h2>
+        <ol class="tour">
+            <li>
+                <h3>Read what the review will and will not do</h3>
+                Every control on the review page stays off until you accept the disclaimers. They take a minute, and they explain the rules for Colombia, where the service is operated, and for the country of the site you submit.
+                <span class="why">Why we ask: a review reads someone's public pages. You should know exactly what happens before a single address is opened.</span>
+            </li>
+            <li>
+                <h3>Say who is asking</h3>
+                Give your name, an email at the same domain as the site, and the reason for the review. If you review a client's site, add the client's name, email, and website.
+                <span class="why">Why we ask: there is a record of who asked, a site owner can ask us to stop and delete the report, and you can ask for a copy or deletion at any time.</span>
+            </li>
+            <li>
+                <h3>Paste one public address and pick your frameworks</h3>
+                One https address, plus the frameworks your team uses: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, or k6.
+                <span class="why">Tip: choose only the frameworks you would really run. Fewer frameworks make the export easier to read.</span>
+            </li>
+            <li>
+                <h3>Watch the read happen</h3>
+                The review reads up to twenty pages, two links deep. It opens up to three of them in a headless browser from an EU address, runs axe-core, checks phone and tablet widths, keeps three screenshots, and asks Google PageSpeed Insights to score the start page.
+                <span class="why">Good to know: in that browser it presses a cookie banner's reject button once and nothing else. Google receives the start address for the PageSpeed score.</span>
+            </li>
+            <li>
+                <h3>Read your report</h3>
+                Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and performance. Every check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see your Google result, your share card, a map of the pages read, and what to fix first.
+                <span class="why">Remember: the report is shown once. Take your notes, or keep it, while it is open.</span>
+            </li>
+            <li>
+                <h3>Take the cases home</h3>
+                Export the proposed cases to a ZIP of automation scripts, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. The export also brings a GitHub Actions workflow and a fix kit with header files, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records.
+                <span class="why">The scripts are yours to run. The review never runs them against your site.</span>
+            </li>
+        </ol>
+    </section>
+
+    <section class="reveal" aria-labelledby="read-title">
+        <p class="eyebrow">How to read the report</p>
+        <h2 id="read-title">We reviewed ourselves first</h2>
+        <p class="muted">These are the real scores from this site's own review on October 19, 2026: ten pages read, 72 cases proposed, overall 86 out of 100. It is the same report you can open as the <a href="qa-review.html?sample=1">sample report</a>.</p>
+        <div class="card" style="margin-top:14px">
+            <div class="scores" id="scores"></div>
+            <div class="stack" id="stack" aria-hidden="true"></div>
+            <ul class="legend" id="legend"></ul>
+        </div>
+        <div class="grid2" style="margin-top:14px">
+            <div class="card">
+                <h3>What the four marks mean</h3>
+                <p><strong style="color:var(--fail)">Fails now</strong> is a problem a visitor or a crawler can hit today. <strong style="color:var(--risk)">At risk</strong> works, but is fragile or incomplete. <strong style="color:var(--pass)">Passes</strong> is done well, and worth protecting with a test. <strong style="color:var(--person)">Needs a person</strong> is a judgment a machine should not make for you, such as whether a third-party script is worth its weight.</p>
+            </div>
+            <div class="card">
+                <h3>Where to start</h3>
+                <p>Read the fix-first list from the top. It ranks findings by how much they hurt and how little they cost to fix. Our own weakest area was security, at 54. The six fixes at the top were all response headers, a few lines of configuration each.</p>
+                <ul class="fixes" id="fixes"></ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="reveal" aria-labelledby="never-title">
+        <p class="eyebrow">Care for your site</p>
+        <h2 id="never-title">What a review will never do</h2>
+        <p class="muted">The review reads what any visitor can read. That is the whole point.</p>
+        <div class="never" style="margin-top:14px">
+            <div class="card"><span class="x" aria-hidden="true">✕</span><h3>Sign in</h3><p class="muted">It never asks for or stores a password.</p></div>
+            <div class="card"><span class="x" aria-hidden="true">✕</span><h3>Submit forms</h3><p class="muted">Your contact form and checkout stay untouched.</p></div>
+            <div class="card"><span class="x" aria-hidden="true">✕</span><h3>Generate load</h3><p class="muted">No load tests and no bots hammering your pages.</p></div>
+            <div class="card"><span class="x" aria-hidden="true">✕</span><h3>Run the cases</h3><p class="muted">It proposes them. Running them is your call.</p></div>
+        </div>
+    </section>
+
+    <section class="reveal" aria-labelledby="tips-title">
+        <p class="eyebrow">Tips from real reviews</p>
+        <h2 id="tips-title">Small things that keep showing up</h2>
+        <div class="tips" style="margin-top:14px">
+            <div class="card tip"><h3>Security headers are cheap</h3><p class="muted">HSTS, nosniff, Referrer-Policy, and frame protection are configuration, not code. Many hosts let you add them in an afternoon.</p></div>
+            <div class="card tip"><h3>AI search reads without JavaScript</h3><p class="muted">If your key facts only appear after scripts run, many answer engines never see them. Put the facts in the HTML.</p></div>
+            <div class="card tip"><h3>Consent means before, too</h3><p class="muted">Check what loads before the visitor chooses. A tag that fires before Reject is the most common analytics finding.</p></div>
+            <div class="card tip"><h3>Your share card is a first impression</h3><p class="muted">A missing og:image turns every shared link into a grey box. The report shows the card people actually see.</p></div>
+            <div class="card tip"><h3>Accessibility is a test, not a feeling</h3><p class="muted">axe-core findings come with the element and the rule. Turn the passing checks into tests so they stay passing.</p></div>
+            <div class="card tip"><h3>Speed is per page</h3><p class="muted">The report shows milliseconds for each page in the order it read them. The slowest page is rarely the home page.</p></div>
+        </div>
+    </section>
+
+    <section class="reveal" aria-labelledby="faq-title">
+        <p class="eyebrow">Questions people ask</p>
+        <h2 id="faq-title">Before you start</h2>
+        <details><summary>How much of a site does the first review read?</summary><p>Your first review is included: up to twenty pages, two links deep. A wider or deeper read asks for payment before it starts, and you see the amount first.</p></details>
+        <details><summary>Can I review a site I do not own?</summary><p>You can review any public https address with a real reason, and the email domain check records who asked. A site owner can ask this service to stop and to delete the report. Please do not republish their content from a shared report.</p></details>
+        <details><summary>Is the score a certification?</summary><p>No. The report is a snapshot and a proposal from one public read. It is not proof that a site is safe, fast, or compliant.</p></details>
+        <details><summary>What about signed-in pages?</summary><p>The public review never signs in. A verification that runs cases behind a login is a separate request to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a>, with a login you are allowed to use.</p></details>
+        <details><summary>Which languages can I read it in?</summary><p>The review page is written in English and can be read in Spanish, Portuguese, German, French, and Italian.</p></details>
+    </section>
+
+    <section class="card closing reveal" aria-labelledby="closing-title">
+        <h2 id="closing-title">Let your page do the talking</h2>
+        <p class="muted">One public address. Six scores. A list your team can start from on Monday.</p>
+        <div class="cta-row">
+            <a class="pill primary" href="qa-review.html" data-track="guide_start_review_bottom">Start a review</a>
+            <a class="pill" href="qa-review.html?sample=1" data-track="guide_sample">Open the sample report</a>
+            <a class="pill" href="media/qa-lab-tour.html">Watch the lab tour</a>
+        </div>
+    </section>
+</main>
+<footer>
+    <p><a href="qa-review.html">Review</a> · <a href="qa-review.html#service-facts">Facts</a> · <a href="qa-review-legal.html">Disclaimers</a> · <a href="https://www.youtube.com/@qalaburlreview" rel="noopener">YouTube</a> · <a href="https://www.linkedin.com/company/qalab-url-review" rel="noopener">LinkedIn</a> · <a href="https://x.com/qalaburlreview" rel="noopener">X</a> · <a href="https://www.tiktok.com/@qalaburlreview" rel="noopener">TikTok</a></p>
+</footer>
+<script src="js/site-analytics.js?v=20261015a"></script>
+<script src="js/qa-review-consent.js?v=20261027a"></script>
+<script src="js/site-i18n.js?v=20261027a"></script>
+<script>
+(function () {
+    const AREAS = [
+        ["SEO", 94, "Search results and share cards"],
+        ["GEO", 89, "AI search and answer engines"],
+        ["Analytics", 100, "Tags, consent, campaign links"],
+        ["Security", 54, "Headers and transport"],
+        ["Accessibility", 100, "axe-core on three pages"],
+        ["Performance", 88, "PageSpeed and response times"]
+    ];
+    const TOTALS = [["Fails now", 1, "var(--fail)"], ["At risk", 15, "var(--risk)"], ["Passes", 32, "var(--pass)"], ["Needs a person", 2, "var(--person)"]];
+    const FIXES = [
+        ["fail", "HSTS is not sent", "Strict-Transport-Security"],
+        ["risk", "Other sites can frame the page", "frame-ancestors 'self'"],
+        ["risk", "No content security policy", "Report-Only first, then enforce"],
+        ["risk", "X-Content-Type-Options is not sent", "nosniff"],
+        ["risk", "Referrer-Policy is not sent", "strict-origin-when-cross-origin"],
+        ["risk", "Permissions-Policy is not sent", "camera=(), microphone=(), geolocation=()"]
+    ];
+    const color = (n) => n >= 90 ? "var(--pass)" : n >= 70 ? "var(--risk)" : "var(--fail)";
+    const C = 2 * Math.PI * 50;
+    const scores = document.getElementById("scores");
+    scores.innerHTML = AREAS.map(([name, n, note]) => (
+        '<div class="ring"><svg viewBox="0 0 120 120" role="img" aria-label="' + name + ' ' + n + ' out of 100">' +
+        '<circle class="track" cx="60" cy="60" r="50"/><circle class="arc" cx="60" cy="60" r="50" style="stroke:' + color(n) + '" data-len="' + (C * n / 100).toFixed(1) + '"/>' +
+        '<text class="num" x="60" y="70" text-anchor="middle">' + n + '</text></svg><b>' + name + '</b><small>' + note + '</small></div>'
+    )).join("");
+    const sum = TOTALS.reduce((a, t) => a + t[1], 0);
+    document.getElementById("stack").innerHTML = TOTALS.map((t) => '<span style="background:' + t[2] + '" data-w="' + (t[1] / sum * 100).toFixed(2) + '"></span>').join("");
+    document.getElementById("legend").innerHTML = TOTALS.map((t) => '<li><span class="dot" style="background:' + t[2] + '"></span>' + t[0] + ' <strong>' + t[1] + '</strong></li>').join("");
+    document.getElementById("fixes").innerHTML = FIXES.map((f) => '<li><span class="badge ' + f[0] + '">' + (f[0] === "fail" ? "Fails now" : "At risk") + '</span><span>' + f[1] + '. <code>' + f[2] + '</code></span></li>').join("");
+
+    const fill = () => {
+        document.querySelectorAll(".ring .arc").forEach((arc) => { arc.style.strokeDasharray = arc.dataset.len + " " + C.toFixed(1); });
+        document.querySelectorAll("#stack span").forEach((s) => { s.style.width = s.dataset.w + "%"; });
+    };
+    const reveals = document.querySelectorAll(".reveal");
+    if ("IntersectionObserver" in window) {
+        const seen = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("in");
+                if (entry.target.contains(scores)) fill();
+                seen.unobserve(entry.target);
+            });
+        }, { threshold: 0.15 });
+        reveals.forEach((el) => seen.observe(el));
+    } else {
+        reveals.forEach((el) => el.classList.add("in"));
+        fill();
+    }
+
+    document.querySelectorAll("[data-track]").forEach((link) => link.addEventListener("click", () => {
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent(link.dataset.track, "URL Review guide", link.getAttribute("href"));
+    }));
+
+    if (window.SiteI18n) {
+        const menu = document.getElementById("langMenu");
+        const wrap = document.getElementById("langWrap");
+        menu.innerHTML = '<div class="lang-options-list"></div>';
+        menu.style.cssText = "display:none;position:absolute;right:0;top:36px;width:220px;background:#fff;border:1px solid #d5dce3;border-radius:12px;padding:8px;z-index:30";
+        wrap.style.position = "relative";
+        const list = menu.querySelector(".lang-options-list");
+        SiteI18n.orderedLanguages().forEach((meta) => {
+            const option = document.createElement("div");
+            option.style.cssText = "display:flex;gap:8px;align-items:center;padding:4px;cursor:pointer;color:#12181f";
+            option.innerHTML = '<img src="' + SiteI18n.flagUrl(meta.code) + '" alt="" width="18" height="18"><span>' + meta.native + "</span>";
+            option.onclick = () => SiteI18n.selectLanguage(meta.code);
+            list.appendChild(option);
+        });
+        document.getElementById("langToggle").onclick = (event) => {
+            event.stopPropagation();
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        };
+        document.addEventListener("click", () => { menu.style.display = "none"; });
+        SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));
+    }
+})();
+</script>
+</body>
+</html>
