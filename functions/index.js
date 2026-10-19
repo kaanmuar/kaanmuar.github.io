@@ -1186,6 +1186,8 @@ function freeRunKey(email) {
 async function hasFreeRuns(email) {
   const key = freeRunKey(email);
   if (!key) return false;
+  const listed = String(process.env.FREE_RUN_EMAILS || "").split(",").map(freeRunKey).filter(Boolean);
+  if (listed.indexOf(key) !== -1) return true;
   try {
     const snap = await admin.firestore().collection("url_review_free_runs").doc(key).get();
     return snap.exists;
