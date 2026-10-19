@@ -1177,6 +1177,24 @@ function reviewOrigin(req) {
   return REVIEW_ORIGINS.has(origin) ? origin : "https://carlosandmunoz.com";
 }
 
+function freeRunKey(email) {
+  const key = String(email || "").trim().toLowerCase();
+  if (!key || key.length > 160 || key.indexOf("@") === -1 || key.indexOf("/") !== -1) return "";
+  return key;
+}
+
+async function hasFreeRuns(email) {
+  const key = freeRunKey(email);
+  if (!key) return false;
+  try {
+    const snap = await admin.firestore().collection("url_review_free_runs").doc(key).get();
+    return snap.exists;
+  } catch (error) {
+    console.error("Free-run lookup failed:", error);
+    return false;
+  }
+}
+
 async function reviewRowsFor(deviceId, ip) {
   const col = admin.firestore().collection("url_reviews");
   const [byDevice, byIp] = await Promise.all([
@@ -1206,9 +1224,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     ? "data"
     : pathName.indexOf("/desk/pass") !== -1
       ? "pass"
-      : (pathName === "/desk" || pathName.endsWith("/desk"))
-        ? "page"
-        : "";
+      : pathName.indexOf("/desk/free") !== -1
+        ? "free"
+        : (pathName === "/desk" || pathName.endsWith("/desk"))
+          ? "page"
+          : "";
   if (deskName) {
     res.set("X-Robots-Tag", "noindex");
     if (deskName === "page" && req.method === "GET") {
@@ -1227,9 +1247,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     if (deskName === "data" && req.method === "GET") {
-      const [reviewSnap, alertSnap] = await Promise.all([
+      const [reviewSnap, alertSnap, freeSnap] = await Promise.all([
         admin.firestore().collection("url_reviews").limit(400).get(),
-        admin.firestore().collection("url_review_alerts").limit(80).get()
+        admin.firestore().collection("url_review_alerts").limit(80).get(),
+        admin.firestore().collection("url_review_free_runs").limit(200).get()
       ]);
       const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
       const records = reviewSnap.docs.map((doc) => {
@@ -1240,7 +1261,30 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         const data = doc.data() || {};
         return Object.assign({ id: doc.id }, data, { at: stamp(data.at) });
       });
-      res.status(200).json(reviewDesk.snapshot(records, alerts, []));
+      const freeRuns = freeSnap.docs.map((doc) => {
+        const data = doc.data() || {};
+        return { email: doc.id, note: data.note || "", at: stamp(data.at) };
+      });
+      res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, []), { freeRuns }));
+      return;
+    }
+    if (deskName === "free" && req.method === "POST") {
+      const key = freeRunKey(req.body && req.body.email);
+      if (!key) {
+        res.status(400).json({ error: "That address is missing." });
+        return;
+      }
+      const ref = admin.firestore().collection("url_review_free_runs").doc(key);
+      if (req.body && req.body.on === false) {
+        await ref.delete();
+      } else {
+        await ref.set({
+          note: String((req.body && req.body.note) || "").trim().slice(0, 120),
+          at: admin.firestore.FieldValue.serverTimestamp(),
+          by: operator
+        });
+      }
+      res.status(200).json({ ok: true, email: key, on: !(req.body && req.body.on === false) });
       return;
     }
     if (deskName === "pass" && req.method === "POST") {
@@ -1597,7 +1641,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   }
   const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
   const ip = req.ip || "";
-  const decision = urlReview.judgeAttempts(await reviewRowsFor(deviceId, ip), { deviceId, ip }, intake.value);
+  const free = await hasFreeRuns(intake.value.email);
+  const decision = free
+    ? { ok: true }
+    : urlReview.judgeAttempts(await reviewRowsFor(deviceId, ip), { deviceId, ip }, intake.value);
   if (decision.ok && decision.consumeId) {
     await admin.firestore().collection("url_reviews").add({
       status: "run-credit-used",
@@ -1684,10 +1731,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       region: req.get("x-appengine-region") || "",
       city: req.get("x-appengine-city") || ""
     });
+    if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     await mailReviewedSites(ip, record);
-    writeLine({ type: "done", report, frameworks: record.frameworks, paid: false, priceUsd: record.priceUsd });
+    writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
     res.end();
   } catch (error) {
     console.error("URL review failed:", error);

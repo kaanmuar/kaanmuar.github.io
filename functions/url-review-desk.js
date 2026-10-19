@@ -148,6 +148,7 @@ function summary(row, index) {
     technologies: technologies.slice(0, 8).map((item) => clip(item.name || "", 40)).filter(Boolean),
     priceUsd: row.priceUsd != null ? row.priceUsd : null,
     paid: row.paid === true,
+    free: row.free === true,
     provider: clip(row.provider || "", 20),
     purpose: clip(row.purpose || "", 20),
     capture: clip(row.kind || "", 20),
@@ -204,7 +205,8 @@ function snapshot(records, alerts, active) {
     runs: runs.length,
     running: (active || []).length,
     reports: runs.filter((row) => row.status === "complete" || row.status === "stopped").length,
-    paid: runs.filter((row) => row.paid || row.status === "paid-report" || row.status === "run-credit").length,
+    paid: runs.filter((row) => !row.free && (row.paid || row.status === "paid-report" || row.status === "run-credit")).length,
+    free: runs.filter((row) => row.free).length,
     waiting: runs.filter((row) => row.status === "payment-due").length,
     refused: runs.filter((row) => row.status === "blocked").length,
     checkout: runs.filter((row) => row.status === "checkout-open").length,
@@ -308,6 +310,16 @@ const PAGE = `<!DOCTYPE html>
       <div id="running"></div>
     </section>
     <section>
+      <h2>Free runs</h2>
+      <p class="empty">An address on this list runs as many reviews as it likes, at any size, with the full report open. Nothing is charged.</p>
+      <div class="tools">
+        <input id="free-email" type="email" placeholder="Email address" aria-label="Email for free runs">
+        <input id="free-note" type="text" placeholder="Who this is (optional)" aria-label="Note">
+        <button id="free-add" type="button">Add</button>
+      </div>
+      <div id="free-list"></div>
+    </section>
+    <section>
       <h2>Return prices and 30-day passes</h2>
       <div id="offers"></div>
     </section>
@@ -355,6 +367,9 @@ const PAGE = `<!DOCTYPE html>
     const detailEl = document.getElementById("detail");
     const offersEl = document.getElementById("offers");
     const notesEl = document.getElementById("notes");
+    const freeListEl = document.getElementById("free-list");
+    const freeEmailEl = document.getElementById("free-email");
+    const freeNoteEl = document.getElementById("free-note");
     const qEl = document.getElementById("q");
     const statusEl = document.getElementById("status");
     let data = { tally: {}, active: [], alerts: [], runs: [] };
@@ -383,6 +398,7 @@ const PAGE = `<!DOCTYPE html>
         ["Running", tally.running || 0],
         ["Reports", tally.reports || 0],
         ["Paid", tally.paid || 0],
+        ["Free", tally.free || 0],
         ["Waiting", tally.waiting || 0],
         ["Refused", tally.refused || 0],
         ["Checkouts", tally.checkout || 0],
@@ -399,6 +415,7 @@ const PAGE = `<!DOCTYPE html>
       document.title = (tally.running ? tally.running + " running · " : "") + "Review desk";
       renderOffers();
       renderNotes();
+      renderFree();
 
       alertsEl.replaceChildren();
       (data.alerts || []).slice(0, 12).forEach((alert) => {
@@ -438,7 +455,7 @@ const PAGE = `<!DOCTYPE html>
       shown.forEach((run) => {
         const tr = document.createElement("tr");
         tr.setAttribute("aria-selected", run.id === selected ? "true" : "false");
-        [when(run.at), run.status, run.name || run.email, run.host || run.url, run.language, run.pageCount, run.caseCount, run.signalCount, run.priceUsd == null ? "—" : run.priceUsd + " USD", run.paid ? "Yes" : "No", run.followUp ? "Asked" : "—"].forEach((value) => {
+        [when(run.at), run.status, run.name || run.email, run.host || run.url, run.language, run.pageCount, run.caseCount, run.signalCount, run.priceUsd == null ? "—" : run.priceUsd + " USD", run.free ? "Free" : run.paid ? "Yes" : "No", run.followUp ? "Asked" : "—"].forEach((value) => {
           tr.appendChild(node("td", text(value)));
         });
         tr.addEventListener("click", () => { selected = run.id; render(); });
@@ -477,7 +494,7 @@ const PAGE = `<!DOCTYPE html>
       line(dl, "Cases", picked.caseCount);
       line(dl, "Signals", picked.signalCount);
       line(dl, "Price", picked.priceUsd == null ? "—" : picked.priceUsd + " USD");
-      line(dl, "Paid", picked.paid ? "Yes" : "No");
+      line(dl, "Paid", picked.free ? "Free run" : picked.paid ? "Yes" : "No");
       line(dl, "Signature", picked.mark);
       line(dl, "Browser", picked.userAgent);
       line(dl, "Network", [picked.ip, picked.city, picked.country].filter(Boolean).join(" · "));
@@ -569,6 +586,35 @@ const PAGE = `<!DOCTYPE html>
         block.appendChild(meta);
         notesEl.appendChild(block);
       });
+    }
+
+    function renderFree() {
+      freeListEl.replaceChildren();
+      (data.freeRuns || []).forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        block.appendChild(node("b", item.email));
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = [item.note, item.at ? "added " + when(item.at) : ""].filter(Boolean).join(" · ");
+        block.appendChild(meta);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "Remove";
+        remove.addEventListener("click", () => setFree(item.email, false));
+        block.appendChild(remove);
+        freeListEl.appendChild(block);
+      });
+      if (!(data.freeRuns || []).length) freeListEl.appendChild(Object.assign(node("p", "No address has free runs."), { className: "empty" }));
+    }
+    async function setFree(email, on, note) {
+      await fetch(deskBase() + "/desk/free", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ email: email, on: on, note: note || "" })
+      });
+      load();
     }
 
     function deskBase() {
@@ -684,6 +730,13 @@ const PAGE = `<!DOCTYPE html>
       if (auth && auth.currentUser) await auth.signOut();
       await fetch(deskBase() + "/desk/logout", { method: "POST", credentials: "include" });
       lockDesk();
+    });
+    document.getElementById("free-add").addEventListener("click", async () => {
+      const email = freeEmailEl.value.trim().toLowerCase();
+      if (!email || email.indexOf("@") === -1) return;
+      await setFree(email, true, freeNoteEl.value.trim());
+      freeEmailEl.value = "";
+      freeNoteEl.value = "";
     });
     qEl.addEventListener("input", render);
     statusEl.addEventListener("change", render);
