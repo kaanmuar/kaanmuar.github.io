@@ -849,6 +849,38 @@ function analyze(input) {
   // Security
   const hdr = face.headers || {};
   const rawHeaders = face.rawHeaders || {};
+  const headerRows = read.map((page) => {
+    const h = page.inspect.headers || {};
+    const r = page.inspect.rawHeaders || {};
+    const jar = page.inspect.cookies || [];
+    return {
+      path: page.path,
+      hsts: !!h.hsts,
+      csp: !!h.csp,
+      frame: !!(h.frame || /frame-ancestors/i.test(h.csp || "")),
+      nosniff: !!h.nosniff,
+      referrer: !!h.referrer,
+      permissions: !!r.permissions,
+      cookies: jar.length,
+      looseCookies: jar.filter((cookie) => !cookie.secure).length
+    };
+  });
+  const spread = (key) => {
+    const missing = headerRows.filter((row) => !row[key]);
+    const text = headerRows.length < 2 ? "" : missing.length === headerRows.length ? " Missing on all " + headerRows.length + " pages read." : " Missing on " + missing.length + " of " + headerRows.length + " pages read.";
+    return { text, pages: missing.map((row) => row.path) };
+  };
+  const HEADER_LABEL = { hsts: "HSTS", csp: "Content-Security-Policy", frame: "frame protection", nosniff: "X-Content-Type-Options", referrer: "Referrer-Policy", permissions: "Permissions-Policy" };
+  const uneven = Object.keys(HEADER_LABEL).map((key) => {
+    const missing = headerRows.filter((row) => !row[key]);
+    return { key, missing, homeHas: headerRows.length ? headerRows[0][key] : false };
+  }).filter((item) => item.homeHas && item.missing.length);
+  if (uneven.length) {
+    const lacking = [...new Set([].concat.apply([], uneven.map((item) => item.missing.map((row) => row.path))))];
+    add("Security", "risk", "medium", "sec-headers-uneven", "Security headers on the start page are missing on other pages",
+      uneven.map((item) => HEADER_LABEL[item.key] + " on " + plural(item.missing.length, "page")).join(", ") + ", out of " + plural(headerRows.length, "page") + " read. Attackers pick the weakest page.",
+      "Set the headers once at the server, CDN, or host config so every response carries them.", { pages: lacking, count: lacking.length, effort: "minutes", cases: ["SEC-02", "SEC-03", "SEC-04"] });
+  }
   const httpCheck = extras.httpRedirect || null;
   if (httpCheck) {
     if (httpCheck.error) add("Security", "pass", "info", "sec-http", "Plain http does not serve the site", "Port 80 did not answer, so nothing is served without encryption.", "", { cases: ["SEC-01"] });
@@ -856,7 +888,7 @@ function analyze(input) {
     else if ([302, 303, 307].indexOf(httpCheck.status) !== -1 && /^https:/i.test(httpCheck.location || "")) add("Security", "risk", "low", "sec-http", "Plain http redirects to https with a temporary code", "http:// answered " + httpCheck.status + ". A 301 or 308 tells browsers and search engines the move is permanent.", "Use a 301 redirect from http to https.", { effort: "minutes", cases: ["SEC-01"] });
     else add("Security", "fail", "high", "sec-http", "Plain http serves the site without redirecting", "http:// answered " + httpCheck.status + (httpCheck.location ? " to " + httpCheck.location : "") + ". Visitors who type the address stay unencrypted.", "Redirect every http request to https with a 301, then add HSTS.", { effort: "minutes", cases: ["SEC-01"] });
   }
-  if (!hdr.hsts) add("Security", "fail", "medium", "sec-hsts", "HSTS is not sent", "strict-transport-security was absent on the start page. A first visit over http can be intercepted.", "Send Strict-Transport-Security: max-age=31536000; includeSubDomains.", { effort: "minutes", cases: ["SEC-02"] });
+  if (!hdr.hsts) add("Security", "fail", "medium", "sec-hsts", "HSTS is not sent", "strict-transport-security was absent on the start page." + spread("hsts").text + " A first visit over http can be intercepted.", "Send Strict-Transport-Security: max-age=31536000; includeSubDomains.", { pages: spread("hsts").pages, effort: "minutes", cases: ["SEC-02"] });
   else {
     const age = Number((String(hdr.hsts).match(/max-age\s*=\s*(\d+)/i) || [])[1] || 0);
     if (age < 15552000) add("Security", "risk", "low", "sec-hsts", "HSTS max-age is shorter than six months", "max-age=" + age + ".", "Raise max-age to at least 15552000 (one year is 31536000).", { effort: "minutes", cases: ["SEC-02"] });
@@ -864,8 +896,8 @@ function analyze(input) {
   }
   const csp = cspDirectives(hdr.csp);
   if (!hdr.csp) {
-    add("Security", "risk", "medium", "sec-csp", "No content security policy", "content-security-policy was absent. Injected scripts are not limited by the browser.",
-      "Start with the Report-Only policy in the fix kit, watch the reports for a week, then enforce it.", { effort: "hours", cases: ["SEC-03"] });
+    add("Security", "risk", "medium", "sec-csp", "No content security policy", "content-security-policy was absent on the start page." + spread("csp").text + " Injected scripts are not limited by the browser.",
+      "Start with the Report-Only policy in the fix kit, watch the reports for a week, then enforce it.", { pages: spread("csp").pages, effort: "hours", cases: ["SEC-03"] });
   } else {
     const scriptSrc = csp["script-src"] || csp["default-src"] || [];
     const issues = [];
@@ -879,21 +911,23 @@ function analyze(input) {
       "Replace 'unsafe-inline' with nonces or hashes, limit hosts, and add object-src 'none' and base-uri 'self'.", { count: issues.length, effort: "hours", cases: ["SEC-03"] });
     else add("Security", "pass", "info", "sec-csp", "The content security policy is strict", "No unsafe-inline, unsafe-eval, or wildcard was found in script-src.", "", { cases: ["SEC-03"] });
   }
-  if (!hdr.frame && !csp["frame-ancestors"]) add("Security", "risk", "medium", "sec-frame", "Other sites can frame the page", "Neither X-Frame-Options nor CSP frame-ancestors was sent, so the page can be framed for clickjacking.", "Send Content-Security-Policy: frame-ancestors 'self' (and X-Frame-Options: SAMEORIGIN for old browsers).", { effort: "minutes", cases: ["SEC-04"] });
+  if (!hdr.frame && !csp["frame-ancestors"]) add("Security", "risk", "medium", "sec-frame", "Other sites can frame the page", "Neither X-Frame-Options nor CSP frame-ancestors was sent, so the page can be framed for clickjacking." + spread("frame").text, "Send Content-Security-Policy: frame-ancestors 'self' (and X-Frame-Options: SAMEORIGIN for old browsers).", { pages: spread("frame").pages, effort: "minutes", cases: ["SEC-04"] });
   else add("Security", "pass", "info", "sec-frame", "Framing is limited", (hdr.frame ? "X-Frame-Options: " + hdr.frame : "frame-ancestors " + csp["frame-ancestors"].join(" ")) + ".", "", { cases: ["SEC-04"] });
-  if (!hdr.nosniff) add("Security", "risk", "low", "sec-nosniff", "X-Content-Type-Options is not sent", "Browsers may guess a file's type and run it as script.", "Send X-Content-Type-Options: nosniff.", { effort: "minutes", cases: ["SEC-04"] });
-  if (!hdr.referrer) add("Security", "risk", "low", "sec-referrer", "Referrer-Policy is not sent", "Browsers fall back to their default. An explicit policy keeps full URLs from leaking to other sites.", "Send Referrer-Policy: strict-origin-when-cross-origin.", { effort: "minutes", cases: ["SEC-05"] });
-  if (!rawHeaders.permissions) add("Security", "risk", "low", "sec-permissions", "Permissions-Policy is not sent", "Embedded content can ask for the camera, microphone, or location.", "Send Permissions-Policy: camera=(), microphone=(), geolocation=().", { effort: "minutes", cases: ["SEC-08"] });
+  if (!hdr.nosniff) add("Security", "risk", "low", "sec-nosniff", "X-Content-Type-Options is not sent", "Browsers may guess a file's type and run it as script." + spread("nosniff").text, "Send X-Content-Type-Options: nosniff.", { pages: spread("nosniff").pages, effort: "minutes", cases: ["SEC-04"] });
+  if (!hdr.referrer) add("Security", "risk", "low", "sec-referrer", "Referrer-Policy is not sent", "Browsers fall back to their default. An explicit policy keeps full URLs from leaking to other sites." + spread("referrer").text, "Send Referrer-Policy: strict-origin-when-cross-origin.", { pages: spread("referrer").pages, effort: "minutes", cases: ["SEC-05"] });
+  if (!rawHeaders.permissions) add("Security", "risk", "low", "sec-permissions", "Permissions-Policy is not sent", "Embedded content can ask for the camera, microphone, or location." + spread("permissions").text, "Send Permissions-Policy: camera=(), microphone=(), geolocation=().", { pages: spread("permissions").pages, effort: "minutes", cases: ["SEC-08"] });
   const cookieNames = (list) => [...new Set(list.map((cookie) => cookie.name))];
-  const insecure = cookieNames((face.cookies || []).filter((cookie) => !cookie.secure));
-  const exposedSession = cookieNames((face.cookies || []).filter((cookie) => !cookie.httpOnly && /sess|sid$|^sid|auth|token|login|jwt|csrf/i.test(cookie.name)));
+  const jar = [].concat.apply([], read.map((page) => (page.inspect.cookies || []).map((cookie) => Object.assign({ path: page.path }, cookie))));
+  const insecure = cookieNames(jar.filter((cookie) => !cookie.secure));
+  const exposedSession = cookieNames(jar.filter((cookie) => !cookie.httpOnly && /sess|sid$|^sid|auth|token|login|jwt|csrf/i.test(cookie.name)));
+  const cookiePages = [...new Set(jar.filter((cookie) => !cookie.secure || (!cookie.httpOnly && /sess|sid$|^sid|auth|token|login|jwt|csrf/i.test(cookie.name))).map((cookie) => cookie.path))];
   if (insecure.length || exposedSession.length) {
     add("Security", "risk", exposedSession.length ? "high" : "medium", "sec-cookies",
       [insecure.length ? plural(insecure.length, "cookie is", "cookies are") + " sent without Secure" : "", exposedSession.length ? plural(exposedSession.length, "session cookie is", "session cookies are") + " readable by scripts" : ""].filter(Boolean).join(", and "),
       (insecure.length ? "Without Secure: " + sample(insecure, 4) + ". " : "") + (exposedSession.length ? "Without HttpOnly: " + sample(exposedSession, 4) + ". A script injected into the page could steal the session." : ""),
-      "Set Secure on every cookie, and HttpOnly plus SameSite=Lax on session cookies.", { count: insecure.length + exposedSession.length, effort: "minutes", cases: ["SEC-06"] });
-  } else if ((face.cookies || []).length) {
-    add("Security", "pass", "info", "sec-cookies", "Cookies are Secure, and session cookies are HttpOnly", plural(cookieNames(face.cookies).length, "cookie") + " checked.", "", { cases: ["SEC-06"] });
+      "Set Secure on every cookie, and HttpOnly plus SameSite=Lax on session cookies.", { pages: cookiePages, count: insecure.length + exposedSession.length, effort: "minutes", cases: ["SEC-06"] });
+  } else if (jar.length) {
+    add("Security", "pass", "info", "sec-cookies", "Cookies are Secure, and session cookies are HttpOnly", plural(cookieNames(jar).length, "cookie") + " checked across " + plural(new Set(jar.map((cookie) => cookie.path)).size, "page") + ".", "", { cases: ["SEC-06"] });
   }
   const version = [hdr.server, rawHeaders.poweredBy].filter((value) => /\d+\.\d+/.test(value || ""));
   if (version.length) add("Security", "risk", "low", "sec-version", "Headers reveal a software version", version.join(", ") + ". Version numbers make it easier to match known flaws.", "Hide version numbers (server_tokens off, expose_php = Off).", { effort: "minutes", cases: ["SEC-07"] });
@@ -1088,7 +1122,8 @@ function analyze(input) {
       { label: "DMARC", state: dnsInfo && dnsInfo.domain ? (dnsInfo.dmarc && !/p\s*=\s*none/i.test(dnsInfo.dmarc) ? "pass" : "risk") : "unknown" },
       { label: "CAA", state: dnsInfo && dnsInfo.domain ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" }
     ],
-    tls: tls && tls.validTo ? { validTo: tls.validTo, daysLeft: tls.daysLeft, issuer: tls.issuer || "" } : null
+    tls: tls && tls.validTo ? { validTo: tls.validTo, daysLeft: tls.daysLeft, issuer: tls.issuer || "" } : null,
+    pages: headerRows.slice(0, 40)
   };
 
   return {
