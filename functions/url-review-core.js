@@ -2319,6 +2319,12 @@ async function inspectMercadoPago(options) {
   };
 }
 
+function testKeyMatches(given, expected) {
+  const a = Buffer.from(String(given || ""));
+  const b = Buffer.from(String(expected || ""));
+  return b.length >= 24 && a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 function paypalCredentials(options) {
   const id = String((options && options.paypalClientId) || "");
   const secret = String((options && options.paypalSecret) || "");
@@ -2561,6 +2567,7 @@ async function pageSpeed(url, key) {
 
 module.exports = {
   compareRuns,
+  testKeyMatches,
   pageSpeed,
   summarizePageSpeed,
   TERMS_VERSION,
