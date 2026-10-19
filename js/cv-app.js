@@ -1809,10 +1809,6 @@
                     document.querySelectorAll('[data-translate-key="tooltip_theme"]').forEach((el) => {
                         el.textContent = translation.tooltip_theme;
                     });
-                    ['theme-toggle', 'theme-toggle-mobile'].forEach((id) => {
-                        const btn = document.getElementById(id);
-                        if (btn) btn.setAttribute('aria-label', translation.tooltip_theme);
-                    });
                 }
                 this._refreshLocalizedDates();
                 this._createWatermark();
@@ -3915,7 +3911,7 @@
                             const pct = Math.min(100, Math.max(0, Number(item.percent) || 0));
                             const flag = /^[a-z]{2}$/i.test(item.flag || '') ? item.flag.toLowerCase() : '';
                             const flagImg = flag ? `<img src="https://hatscripts.github.io/circle-flags/flags/${flag}.svg" class="flag-icon" alt="">` : '';
-                            return `<div class="language"><div class="flex items-center justify-between"><div class="flex items-center">${flagImg}<span class="font-medium ml-2">${this._esc(clean(item.name, 40))}</span></div><span>${this._esc(clean(item.level, 24))}</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" role="img"><div class="bg-teal-400 h-1.5 rounded-full" style="width: ${pct}%"></div></div></div>`;
+                            return `<div class="language"><div class="flex items-center justify-between"><div class="flex items-center">${flagImg}<span class="font-medium ml-2">${this._esc(clean(item.name, 40))}</span></div><span>${this._esc(clean(item.level, 24))}</span></div><div class="w-full bg-gray-600 rounded-full h-1.5 mt-1" role="img" aria-label="${this._esc(clean(item.name, 40) + ': ' + clean(item.level, 24))}"><div class="bg-teal-400 h-1.5 rounded-full" style="width: ${pct}%"></div></div></div>`;
                         }).join('');
                     }
                 }

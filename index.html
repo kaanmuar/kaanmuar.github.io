@@ -81,15 +81,15 @@
     ================================================================== -->
     <!-- Compiled Tailwind CSS (see `npm run build:css`) -->
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="css/cv.css?v=20261006e">
+    <link rel="stylesheet" href="css/cv.css?v=20261019a">
     <link rel="stylesheet" href="css/site-look.css?v=20261006d">
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
     <script>SiteLook.boot();</script>
     <script src="js/site-i18n.js?v=20261027a"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js" integrity="sha384-NaWTHo/8YCBYJ59830LTz/P4aQZK1sS0SneOgAvhsIl3zBu8r9RevNg5lHCHAuQ/" crossorigin="anonymous"></script>
 
     <!-- Google Fonts for typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -342,10 +342,10 @@
                     <h3 class="text-lg font-semibold border-b-2 border-cyan-400 pb-2 mb-3" data-translate-key="tools_title">Tools</h3>
                     <div class="mobile-toolbar-wrapper">
                         <div class="mobile-toolbar">
-                            <button id="tour-start-btn-mobile" class="tool-wide text-xs font-semibold py-1 px-3 rounded-full" aria-label="Start CV Feature Tour">
+                            <button id="tour-start-btn-mobile" class="tool-wide text-xs font-semibold py-1 px-3 rounded-full">
                                 <span data-translate-key="tour_btn_label">How this Online CV works</span>
                             </button>
-                            <button id="theme-toggle-mobile" class="tooltip tool-btn" aria-label="Toggle dark mode">
+                            <button id="theme-toggle-mobile" class="tooltip tool-btn">
                                 <svg class="w-5 h-5 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                 <svg class="w-5 h-5 moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                                 <span class="tool-caption" data-translate-key="toolbar_theme">Theme</span>
@@ -437,7 +437,7 @@
 
                     <div class="hidden md:flex items-center flex-wrap justify-end gap-x-2 gap-y-1 no-print">
 
-                        <button id="theme-toggle" class="tooltip tool-btn" aria-label="Toggle dark mode">
+                        <button id="theme-toggle" class="tooltip tool-btn">
                             <svg class="w-5 h-5 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                             <svg class="w-5 h-5 moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                             <span class="tool-caption" data-translate-key="toolbar_theme">Theme</span>
@@ -449,7 +449,7 @@
                             <div id="social-share-options" class="dropdown"></div>
                         </div>
 
-                        <button id="tour-start-btn" class="tooltip text-xs font-semibold py-1 px-3 rounded-full" aria-label="Start CV Feature Tour">
+                        <button id="tour-start-btn" class="tooltip text-xs font-semibold py-1 px-3 rounded-full">
                             <span data-translate-key="tour_btn_label">How this Online CV works</span>
                         </button>
 
@@ -777,6 +777,6 @@
 |                         APPLICATION JAVASCRIPT                      |
 ================================================================== -->
 <script src="js/cv-data.js?v=20261003"></script>
-<script type="module" src="js/cv-app.js?v=20261027a"></script>
+<script type="module" src="js/cv-app.js?v=20261027b"></script>
 </body>
 </html>

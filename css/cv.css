@@ -172,7 +172,7 @@
         .experience-heading .accordion-header h4 { min-width: 0; }
         .company-line { margin: 0.15rem 0 0; }
         .company-name, .company-link { display: inline-flex; align-items: center; max-width: 100%; }
-        .company-link { color: var(--accent, var(--cyan-brand)); text-decoration: underline; text-underline-offset: 2px; }
+        .company-link { min-height: 24px; color: var(--accent, var(--cyan-brand)); text-decoration: underline; text-underline-offset: 2px; }
         .company-link:hover { filter: brightness(1.12); }
         .timeline-item .tooltip { flex-direction: column; align-items: stretch; width: 100%; }
         .tooltip { position: relative; display: inline-flex; }
@@ -556,19 +556,24 @@
         .chart-dots {
             display: flex;
             justify-content: center;
-            gap: 0.35rem;
-            margin-top: 0.65rem;
+            gap: 0;
+            margin-top: 0.4rem;
         }
+        /* 24px hit area (WCAG 2.2 target size); the visible dot stays 7px. */
         .chart-dot {
-            width: 7px;
-            height: 7px;
+            box-sizing: border-box;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             border: 0;
-            padding: 0;
+            padding: 8.5px;
             background: var(--border-color);
+            background-clip: content-box;
             cursor: pointer;
         }
-        .chart-dot.is-active { background: var(--accent); transform: scale(1.2); }
+        .dark-mode #expand-all-toolkit, .dark-mode #expand-all-exp { background-color: var(--border-color); color: var(--text-primary); }
+        .dark-mode #expand-all-toolkit:hover, .dark-mode #expand-all-exp:hover { background-color: #3a4654; }
+        .chart-dot.is-active { background-color: var(--accent); padding: 7.8px; }
         .chart-legend {
             display: flex;
             flex-wrap: wrap;

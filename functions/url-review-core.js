@@ -85,6 +85,8 @@ const MAX_DEPTH = 5;
 const MAX_BYTES = 2000000;
 const PAGE_TIMEOUT_MS = 8000;
 const TOTAL_MS = 170000;
+// Lighthouse mobile runs often outlast a short crawl's budget; reviewUrl's 180 s timeout leaves room.
+const SPEED_WAIT_MS = 80000;
 const RETAIN_MS = 365 * 24 * 60 * 60 * 1000;
 
 const TECH = [
@@ -1024,7 +1026,7 @@ function inspect(html, headers, pageUrl) {
   const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<template\b[\s\S]*?<\/template>/gi, " ");
   const h1 = (markup.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/gi) || []).map((tag) => decode(tag.replace(/<[^>]+>/g, " "))).filter(Boolean);
   const images = collect(markup, "img");
-  const missingAlt = images.filter((tag) => !attr(tag, "alt")).length;
+  const missingAlt = images.filter((tag) => !/[\s"'/]alt\s*=/i.test(tag)).length;
   const forms = collect(markup, "form").length;
   const password = /<input\b[^>]*type\s*=\s*["']?password/i.test(markup);
   const buttons = (markup.match(/<button\b/gi) || []).length;
@@ -1120,7 +1122,7 @@ function inspect(html, headers, pageUrl) {
     mixed: (markup.match(/<(?:script|img|iframe|source|video|audio|embed|track)\b[^>]*\ssrc\s*=\s*["']?http:\/\//gi) || []).length + linksAll.filter((tag) => /stylesheet|icon|preload|manifest/i.test(attr(tag, "rel")) && /^http:\/\//i.test(attr(tag, "href"))).length,
     hreflang: linksAll.filter((tag) => attr(tag, "rel").toLowerCase().indexOf("alternate") !== -1 && attr(tag, "hreflang")).length,
     skip: /<a\b[^>]*href\s*=\s*["']#[^"']+/i.test(html),
-    main: /<main\b/i.test(html),
+    main: /<main\b|\brole\s*=\s*["']?main\b/i.test(html),
     consent: /cookie|consent|gdpr|privacidad/i.test(html.slice(0, 120000)),
     privacyLink: /privacy|privacidad|legal|aviso/i.test(html),
     sitemap: /sitemap/i.test(html),
@@ -1275,6 +1277,16 @@ function withRendered(raw, dom) {
   });
 }
 
+const DATED_PATH = /\/(19|20)\d{2}[\/-](0?[1-9]|1[0-2]|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[\/-]/i;
+
+function lastingLink(link) {
+  const text = String((link && link.text) || "");
+  const selector = String((link && link.selector) || "");
+  if (!/\p{L}{2}/u.test(text)) return false;
+  if (/href="[^"]*#/.test(selector)) return false;
+  return !DATED_PATH.test(String((link && link.target) || ""));
+}
+
 function journeys(pages, dom) {
   const byPath = new Map();
   pages.forEach((page) => {
@@ -1288,6 +1300,7 @@ function journeys(pages, dom) {
     return text.length > 40 ? text.slice(0, 40).replace(/\s+\S*$/, "") : text;
   };
   return ((dom && dom.nav) || [])
+    .filter((link) => lastingLink(link))
     .map((link) => ({ link, page: byPath.get(link.target) }))
     .filter((row) => !row.page || (row.page.status >= 200 && row.page.status < 400))
     .sort((a, b) => ((b.page ? 2 : 0) + (b.link.where === "navigation" ? 1 : 0)) - ((a.page ? 2 : 0) + (a.link.where === "navigation" ? 1 : 0)))
@@ -1694,6 +1707,7 @@ async function reviewTarget(rawUrl, hooks) {
     ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths })).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
     : Promise.resolve(null);
   if (canBrowse) note("Opening the start page in a headless browser alongside the read.");
+  const speedUntil = Date.now() + SPEED_WAIT_MS;
   const speedPromise = !stopped && typeof controls.pagespeed === "function"
     ? Promise.resolve().then(() => controls.pagespeed(first.url)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
     : Promise.resolve(null);
@@ -1796,10 +1810,12 @@ async function reviewTarget(rawUrl, hooks) {
   let extras = {};
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
   let speed = null;
+  let speedTimer = null;
   try {
-    const wait = Math.max(3000, deadline - Date.now());
-    speed = await Promise.race([speedPromise, new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: "no answer in time" }), wait))]);
+    const wait = Math.max(3000, Math.max(deadline, speedUntil) - Date.now());
+    speed = await Promise.race([speedPromise, new Promise((resolve) => { speedTimer = setTimeout(() => resolve({ ok: false, error: "no answer in time" }), wait); })]);
   } catch (error) { speed = null; }
+  clearTimeout(speedTimer);
   if (speed && speed.ok) note("PageSpeed Insights answered: Lighthouse performance " + speed.score + "/100 on mobile" + (speed.field ? ", with real-user Chrome data for the " + (speed.field.scope === "page" ? "page" : "whole site") : ", without enough real-user Chrome data") + ".");
   else if (speed) note("PageSpeed Insights did not answer (" + (speed.error || "no answer") + "). The browser's lab values stand in.");
   if (browser && browser.ok) note("The browser pass finished in " + Math.round((browser.ms || 0) / 1000) + " s: " + ((browser.axe && browser.axe.pages.length) || 1) + " page" + ((browser.axe && browser.axe.pages.length) > 1 ? "s" : "") + " checked with axe-core" + (browser.consent && browser.consent.rejected ? ", and the cookie banner's reject button was pressed once" : "") + ".");
@@ -2587,6 +2603,7 @@ module.exports = {
   inspectPayment,
   judgeAttempts,
   reviewTarget,
+  journeys,
   toolsForPage,
   intakeRecord,
   analyzeHtml: inspect,
