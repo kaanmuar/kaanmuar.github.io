@@ -41,7 +41,7 @@ test.describe('Mobile — CV, Studio, QA Lab, Admin', () => {
         };
       });
     });
-    expect(icons).toHaveLength(8);
+    expect(icons).toHaveLength(9);
     for (const icon of icons) {
       expect(icon.overflow, icon.id).toBeFalsy();
       if (icon.id === 'tour-start-btn-mobile') {
