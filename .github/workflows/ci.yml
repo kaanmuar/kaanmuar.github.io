@@ -58,7 +58,7 @@ jobs:
       - name: Start static server
         run: |
           nohup python3 scripts/static-server.py 8765 > /tmp/static-server.log 2>&1 &
-          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8765/index.html > /dev/null && exit 0; sleep 1; done
+          for _ in $(seq 1 30); do curl -sf http://127.0.0.1:8765/index.html > /dev/null && exit 0; sleep 1; done
           cat /tmp/static-server.log; exit 1
 
       - name: Run Cypress Tests
