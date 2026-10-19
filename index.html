@@ -49,10 +49,11 @@
     <meta name="twitter:description" content="Carlos A. Muñoz builds a full QA path for companies that need a contractor, freelancer, advisor, or mentor. Senior QA architect with over 18 years, plus a free QA lab and SDLC studio.">
     <meta name="twitter:image" content="https://carlosandmunoz.com/assets/profile.jpg?v=20260925">
     <meta name="twitter:image:alt" content="Portrait of Carlos A. Muñoz Ardila">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied' });
+        try { if ((localStorage.getItem('site-analytics') || localStorage.getItem('qa-review-analytics')) === 'allow') gtag('consent', 'update', { analytics_storage: 'granted' }); } catch (e) {}
         gtag('js', new Date());
         gtag('config', 'G-J8GNF5380F', {
             anonymize_ip: true,
@@ -62,6 +63,8 @@
             content_group: 'CV site'
         });
     </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
+    <script src="js/site-consent.js?v=20261023a" defer></script>
     <script src="js/site-analytics.js?v=20261015a"></script>
 
     <!-- International SEO: hreflang tags -->
@@ -611,6 +614,8 @@
                         <span class="trademark is-footer" data-trademark aria-hidden="true"><span class="trademark-seal" data-count="3">CAM</span></span>
                         <span aria-hidden="true">|</span>
                         <a id="cv-pdf-link" href="/?download=pdf" data-translate-key="footer_pdf">Download PDF</a>
+                        <span aria-hidden="true">|</span>
+                        <button type="button" data-cookie-settings>Cookie settings</button>
                     </div>
                 </footer>
             </main>

@@ -3,7 +3,7 @@
   const listeners = [];
 
   function choice() {
-    try { return localStorage.getItem(KEY) || ""; } catch (error) { return ""; }
+    try { return localStorage.getItem(KEY) || localStorage.getItem("site-analytics") || ""; } catch (error) { return ""; }
   }
 
   function allowed() {
@@ -36,7 +36,10 @@
   }
 
   function remember(value) {
-    try { localStorage.setItem(KEY, value); } catch (error) { /* the choice applies for this view */ }
+    try {
+      localStorage.setItem(KEY, value);
+      localStorage.setItem("site-analytics", value);
+    } catch (error) { /* the choice applies for this view */ }
     const bar = document.getElementById("cookie-note");
     if (bar) bar.hidden = true;
     if (value === "allow") loadAnalytics();
