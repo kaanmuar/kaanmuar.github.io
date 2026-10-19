@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tips studio frame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=block" rel="stylesheet">
+<style>
+  :root { --ink: #050c0f; --cyan: #4db3bb; --cyan-hi: #7ef6fb; --gold: #e2c48a; --text: #eef6f7; --muted: #a9bcc1; --fail: #ff8a80; --risk: #f0b45a; --pass: #6fe3b1; --accent: #7ef6fb; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ink); }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+  #c { position: relative; overflow: hidden; background: radial-gradient(70% 45% at 85% 5%, rgba(77,179,187,.30), transparent 70%), radial-gradient(60% 40% at 0% 100%, rgba(185,166,255,.20), transparent 70%), linear-gradient(180deg, #071318, #050c0f 60%); }
+  .feed { width: 1080px; height: 1350px; --pad: 72px; --title: 104px; --body: 34px; --mono: 30px; --u: 26px; }
+  .story, .clip { width: 1080px; height: 1920px; --pad: 84px; --title: 118px; --body: 38px; --mono: 32px; --u: 30px; }
+
+  .floor { position: absolute; left: -50%; right: -50%; bottom: -12%; height: 62%; transform-origin: 50% 0; transform: perspective(900px) rotateX(72deg); background-image: linear-gradient(rgba(126,246,251,.16) 2px, transparent 2px), linear-gradient(90deg, rgba(126,246,251,.16) 2px, transparent 2px); background-size: 90px 90px; -webkit-mask-image: linear-gradient(180deg, transparent, #000 35%, #000); animation: drift 12s linear both; }
+  @keyframes drift { from { background-position: 0 0; } to { background-position: 0 360px; } }
+  .grain { position: absolute; inset: 0; opacity: .08; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+  .cube { position: absolute; width: var(--s); height: var(--s); transform-style: preserve-3d; transform: perspective(800px) rotateX(-20deg) rotateY(35deg); animation: spin 12s linear both; }
+  .clip .floor.a, .clip .cube.a { animation-timing-function: linear; }
+  .cube i { position: absolute; inset: 0; border: 2px solid rgba(126,246,251,.55); background: rgba(126,246,251,.06); box-shadow: inset 0 0 30px rgba(126,246,251,.15); }
+  .cube i:nth-child(1) { transform: translateZ(calc(var(--s) / 2)); }
+  .cube i:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); }
+  .cube i:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); }
+  .cube i:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
+  .cube i:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); }
+  .cube i:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
+  @keyframes spin { from { transform: perspective(800px) rotateX(-20deg) rotateY(0deg); } to { transform: perspective(800px) rotateX(-20deg) rotateY(240deg); } }
+
+  .stack { position: absolute; inset: 0; display: flex; flex-direction: column; padding: var(--pad); gap: calc(var(--u) * 1.2); }
+  .top { display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand svg { width: 64px; height: 64px; filter: drop-shadow(0 6px 18px rgba(77,179,187,.4)); }
+  .brand b { display: block; font-weight: 700; font-size: 24px; letter-spacing: .14em; text-transform: uppercase; }
+  .brand small { display: block; margin-top: 4px; color: var(--muted); font-size: 20px; }
+  .count { font-family: "Fira Code", monospace; font-size: 24px; color: var(--muted); }
+  .chip { align-self: flex-start; display: inline-flex; align-items: center; gap: 12px; border: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); background: rgba(10,30,36,.6); border-radius: 999px; padding: 10px 22px; font-size: 26px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .chip i { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 16px var(--accent); }
+  .title { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: var(--title); line-height: .98; letter-spacing: -0.025em; text-wrap: balance; }
+  .title span { display: block; }
+  .title em { font-style: italic; background: linear-gradient(92deg, var(--cyan-hi), #b8f3ea 45%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
+  .body { margin: 0; font-size: var(--body); line-height: 1.4; color: #cfe0e3; text-wrap: pretty; }
+
+  .scene { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; perspective: 1600px; }
+  .card3d { width: 100%; transform-style: preserve-3d; transform: rotateX(8deg) rotateY(-12deg); }
+  .glass { position: relative; background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.02)); border: 2px solid rgba(126,246,251,.24); border-radius: 30px; backdrop-filter: blur(16px); box-shadow: 0 40px 90px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12); padding: calc(var(--u) * 1.3); }
+  .glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; transform: translateZ(-60px); background: rgba(126,246,251,.08); filter: blur(30px); }
+  .code { font-family: "Fira Code", monospace; font-size: var(--mono); line-height: 1.5; white-space: pre; overflow: hidden; }
+  .code .ln { display: block; }
+  .code .ln b { color: var(--cyan-hi); font-weight: 500; }
+  .note { margin-top: calc(var(--u) * .7); font-size: calc(var(--body) * .72); color: var(--muted); }
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * .8); }
+  .vs .side { border-radius: 22px; padding: calc(var(--u) * .9); background: rgba(5,12,15,.45); border: 2px solid; }
+  .vs .side.fail { border-color: color-mix(in srgb, var(--fail) 55%, transparent); }
+  .vs .side.pass { border-color: color-mix(in srgb, var(--pass) 55%, transparent); transform: translateZ(40px); }
+  .vs h4 { margin: 0 0 12px; font-size: calc(var(--body) * .7); letter-spacing: .08em; text-transform: uppercase; }
+  .vs .fail h4 { color: var(--fail); } .vs .pass h4 { color: var(--pass); }
+  .vs .code { font-size: calc(var(--mono) * .78); white-space: pre-wrap; word-break: break-word; }
+  .rows { display: flex; flex-direction: column; gap: calc(var(--u) * .55); }
+  .row { display: grid; grid-template-columns: 54px 1fr; gap: 6px 18px; align-items: center; padding: calc(var(--u) * .55) calc(var(--u) * .7); border-radius: 18px; background: rgba(5,12,15,.4); }
+  .row .m { grid-row: span 2; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 28px; color: var(--ink); }
+  .row .m.pass { background: var(--pass); } .row .m.fail { background: var(--fail); } .row .m.risk { background: var(--risk); }
+  .row b { font-size: calc(var(--body) * .86); }
+  .row small { font-size: calc(var(--body) * .66); color: var(--muted); }
+  .bars { display: flex; flex-direction: column; gap: calc(var(--u) * .6); }
+  .bar { display: grid; grid-template-columns: 180px 1fr 170px; gap: 16px; align-items: center; font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .85); }
+  .bar .t { height: 30px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .bar .t span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--cyan-hi)); transform-origin: left; }
+  .bar.max .t span { background: linear-gradient(90deg, var(--risk), var(--fail)); }
+  .bar .v { text-align: right; color: var(--muted); }
+  .stat { text-align: center; padding: calc(var(--u) * 1.4) 0; }
+  .stat b { display: block; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: calc(var(--title) * 2); line-height: 1; background: linear-gradient(92deg, var(--cyan-hi), var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .stat small { font-size: calc(var(--body) * .8); color: var(--muted); }
+  .scores { display: grid; grid-template-columns: 250px 1fr; gap: calc(var(--u) * 1.1); align-items: center; }
+  .ring { position: relative; display: grid; place-items: center; }
+  .ring svg { width: 100%; height: auto; transform: rotate(-90deg); overflow: visible; }
+  .ring circle { fill: none; stroke-width: 10; }
+  .ring .bg { stroke: rgba(255,255,255,.08); }
+  .ring .fg { stroke-linecap: round; stroke-dasharray: var(--c); filter: drop-shadow(0 0 10px currentColor); }
+  .ring .fg.pass { color: var(--pass); stroke: var(--pass); } .ring .fg.risk { color: var(--risk); stroke: var(--risk); } .ring .fg.fail { color: var(--fail); stroke: var(--fail); }
+  .ring .n { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Instrument Serif", Georgia, serif; font-size: 44px; line-height: 1; }
+  .ring.big .n { font-size: 120px; background: linear-gradient(92deg, var(--cyan-hi), var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .ring.big .fg { stroke: url(#gold); color: var(--cyan-hi); stroke-width: 12; }
+  .areas { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--u) * .7) calc(var(--u) * .6); }
+  .area { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .area .ring { width: 118px; }
+  .area small { font-size: 20px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .feed .scores { grid-template-columns: 190px 1fr; }
+  .feed .area .ring { width: 92px; }
+  .feed .ring .n { font-size: 36px; }
+  .feed .ring.big .n { font-size: 92px; }
+  .feed .area small { font-size: 18px; }
+  .feed .glass:has(.scores) { padding: calc(var(--u) * .9) calc(var(--u) * 1.1); }
+  .scores-note { margin-top: calc(var(--u) * .9); font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .7); color: var(--muted); text-align: center; }
+  .clip .fg.a { animation-name: ring; animation-duration: 1.4s; }
+  @keyframes ring { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: var(--o); } }
+
+  .action { display: flex; gap: 18px; align-items: flex-start; padding: calc(var(--u) * .8) calc(var(--u) * 1); border-radius: 22px; background: linear-gradient(135deg, rgba(126,246,251,.14), rgba(226,196,138,.10)); border: 2px solid rgba(126,246,251,.25); font-size: calc(var(--body) * .86); line-height: 1.35; }
+  .action b { color: var(--gold); white-space: nowrap; }
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 20px; font-size: 21px; color: var(--muted); white-space: nowrap; }
+  .foot strong { color: var(--text); font-weight: 600; }
+
+  .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; text-align: center; padding: 120px; background: radial-gradient(60% 40% at 50% 45%, rgba(77,179,187,.35), transparent 70%), #050c0f; opacity: 0; }
+  .end svg { width: 180px; height: 180px; }
+  .end h2 { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 110px; line-height: 1; }
+  .end p { margin: 0; font-size: 40px; color: #cfe0e3; }
+  .end .url { white-space: nowrap; font-family: "Fira Code", monospace; font-size: 34px; color: var(--cyan-hi); border: 2px solid rgba(126,246,251,.35); border-radius: 999px; padding: 14px 30px; }
+
+  /* Clip choreography. Times are seconds in a 12 s clip; stills jump to the end of the main scene. */
+  .clip .a { animation-fill-mode: both; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
+  .clip .in-up { animation-name: inUp; animation-duration: .8s; }
+  @keyframes inUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: none; } }
+  .clip .card3d.a { animation-name: swing; animation-duration: 2.2s; }
+  @keyframes swing { from { opacity: 0; transform: rotateX(30deg) rotateY(-50deg) translateZ(-500px); } to { opacity: 1; transform: rotateX(8deg) rotateY(-12deg); } }
+  .clip .ln.a, .clip .row.a, .clip .side.a { animation-name: inUp; animation-duration: .6s; }
+  .clip .bar .t span.a { animation-name: grow; animation-duration: 1s; }
+  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .clip .end.a { animation-name: fadeEnd; animation-duration: .7s; }
+  @keyframes fadeEnd { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div id="c"></div>
+<script>
+const MARK = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#12a3ad"/><stop offset="1" stop-color="#0d6e76"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#g)"/><path d="M19 33l9 9 18-20" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const title = (lines) => lines.map((l) => "<span>" + esc(l).replace(/\*(.+?)\*/g, "<em>$1</em>") + "</span>").join("");
+const hl = (line) => esc(line).replace(/^(\s*)([\w-]+)(:)/, '$1<b>$2</b>$3').replace(/(&lt;\/?)([a-z0-9]+)/g, '$1<b>$2</b>');
+const MARKS = { pass: "✓", fail: "✕", risk: "!" };
+
+function visual(v, t0) {
+  let at = t0;
+  const step = (d) => { const s = at; at += d; return s; };
+  if (v.type === "code") {
+    return '<div class="glass"><div class="code">' + v.lines.map((l) => '<span class="ln a" style="animation-delay:' + step(.28).toFixed(2) + 's">' + (hl(l) || "&nbsp;") + "</span>").join("") + "</div>" + (v.note ? '<div class="note">' + esc(v.note) + "</div>" : "") + "</div>";
+  }
+  if (v.type === "versus") {
+    const side = (s) => '<div class="side a ' + s.mark + '" style="animation-delay:' + step(.6).toFixed(2) + 's"><h4>' + MARKS[s.mark] + " " + esc(s.label) + '</h4><div class="code">' + s.lines.map((l) => '<span class="ln">' + hl(l) + "</span>").join("") + "</div></div>";
+    return '<div class="glass"><div class="vs">' + side(v.left) + side(v.right) + "</div></div>";
+  }
+  if (v.type === "check") {
+    return '<div class="glass"><div class="rows">' + v.items.map((r) => '<div class="row a" style="animation-delay:' + step(.4).toFixed(2) + 's"><span class="m ' + r[2] + '">' + MARKS[r[2]] + "</span><b>" + esc(r[0]) + "</b><small>" + esc(r[1]) + "</small></div>").join("") + "</div></div>";
+  }
+  if (v.type === "bars") {
+    const max = Math.max(...v.items.map((i) => i[1]));
+    return '<div class="glass"><div class="bars">' + v.items.map((i) => '<div class="bar' + (i[1] === max ? " max" : "") + '"><span>' + esc(i[0]) + '</span><span class="t"><span class="a" style="width:' + (i[1] / max * 100).toFixed(1) + "%;animation-delay:" + step(.35).toFixed(2) + 's"></span></span><span class="v">' + i[1].toLocaleString("en-US") + " " + esc(v.unit) + "</span></div>").join("") + "</div>" + (v.note ? '<div class="note">' + esc(v.note) + "</div>" : "") + "</div>";
+  }
+  if (v.type === "scores") {
+    const ring = (score, r, cls, delay) => {
+      const c = 2 * Math.PI * r;
+      const o = c * (1 - score / 100);
+      const tone = score >= 90 ? "pass" : score >= 70 ? "risk" : "fail";
+      return '<svg viewBox="0 0 ' + (r * 2 + 24) + " " + (r * 2 + 24) + '"><defs><linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#7ef6fb"/><stop offset="1" stop-color="#e2c48a"/></linearGradient></defs>' +
+        '<circle class="bg" cx="' + (r + 12) + '" cy="' + (r + 12) + '" r="' + r + '"/>' +
+        '<circle class="fg a ' + (cls || tone) + '" cx="' + (r + 12) + '" cy="' + (r + 12) + '" r="' + r + '" style="--c:' + c.toFixed(1) + ";--o:" + o.toFixed(1) + ";stroke-dashoffset:" + o.toFixed(1) + ";animation-delay:" + delay.toFixed(2) + 's"/></svg>';
+    };
+    const big = '<div class="ring big">' + ring(v.overall, 110, "gold", step(.3)) + '<span class="n a in-up" style="animation-delay:' + (at - .1).toFixed(2) + 's">' + v.overall + "</span></div>";
+    const areas = v.areas.map((a) => '<div class="area"><div class="ring">' + ring(a[1], 46, "", step(.22)) + '<span class="n">' + a[1] + "</span></div><small>" + esc(a[0]) + "</small></div>").join("");
+    return '<div class="glass"><div class="scores">' + big + '<div class="areas">' + areas + "</div></div>" + (v.note ? '<div class="scores-note">' + esc(v.note) + "</div>" : "") + "</div>";
+  }
+  if (v.type === "stat") {
+    return '<div class="glass stat"><b class="a in-up" style="animation-delay:' + step(.5).toFixed(2) + 's">' + esc(v.value) + "</b><small>" + esc(v.caption) + "</small></div>";
+  }
+  return "";
+}
+
+window.paint = function (tip, cat, fmt, index, total, guideHost) {
+  const c = document.getElementById("c");
+  c.className = fmt;
+  c.style.setProperty("--accent", cat.color);
+  const tall = fmt !== "feed";
+  const cubes = tall
+    ? '<div class="cube a" style="--s:120px;left:820px;top:260px"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="cube a" style="--s:70px;left:900px;top:1330px;animation-direction:reverse"><i></i><i></i><i></i><i></i><i></i><i></i></div>'
+    : '<div class="cube a" style="--s:90px;left:900px;top:190px"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
+  c.innerHTML =
+    '<div class="floor a"></div>' + cubes + '<div class="grain"></div>' +
+    '<div class="stack">' +
+      '<div class="top a in-up" style="animation-delay:.1s"><div class="brand">' + MARK + '<div><b>QA-lab</b><small>URL Review</small></div></div><span class="count">' + esc(tip.counter || "Tip " + String(index + 1).padStart(2, "0") + " / " + total) + "</span></div>" +
+      '<span class="chip a in-up" style="animation-delay:.4s"><i></i>' + esc(cat.label) + "</span>" +
+      '<h1 class="title a in-up" style="animation-delay:.7s">' + title(tip.title) + "</h1>" +
+      '<p class="body a in-up" style="animation-delay:1.2s">' + esc(tip.body) + "</p>" +
+      '<div class="scene"><div class="card3d a" style="animation-delay:1.5s">' + visual(tip.visual, 2.6) + "</div></div>" +
+      '<div class="action a in-up" style="animation-delay:5s"><b>' + esc(tip.actionLabel || "Try this") + "</b><span>" + esc(tip.action) + "</span></div>" +
+      '<div class="foot a in-up" style="animation-delay:5.4s"><span>Guided tour · <strong>' + esc(guideHost) + "</strong></span><span>" + esc(tip.footRight || "Never runs your tests") + "</span></div>" +
+    "</div>" +
+    (fmt === "clip" ? '<div class="end a" style="animation-delay:10s">' + MARK.replace('viewBox', 'width="180" height="180" viewBox') + '<h2>Let your page<br><em style="font-style:italic">do the talking.</em></h2><p>How a public-page review works, step by step.</p><span class="url">' + esc(guideHost) + "</span></div>" : "");
+  if (fmt !== "clip") c.querySelectorAll(".a").forEach((el) => { el.style.animation = "none"; });
+  return document.fonts.ready.then(() => true);
+};
+
+window.seek = function (seconds) {
+  document.getAnimations().forEach((a) => { a.pause(); a.currentTime = seconds * 1000; });
+};
+</script>
+</body>
+</html>
