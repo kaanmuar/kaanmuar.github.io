@@ -50,10 +50,10 @@ function priceMatches(usd) {
     DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
   });
   if (scopes.indexOf(cents) !== -1) return true;
-  for (let count = 1; count <= 24; count += 1) {
+  for (let count = 1; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     const base = scheduleCents(count);
     if (base === cents) return true;
-    if (count <= 16 && scopes.some((extra) => base + extra === cents)) return true;
+    if (count <= FRAMEWORKS.length && scopes.some((extra) => base + extra === cents)) return true;
   }
   return false;
 }
@@ -72,10 +72,12 @@ const REASONS = [
   { id: "credentials", label: "I have a username and password for this site" },
   { id: "other", label: "Other" }
 ];
-const FRAMEWORKS = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "Appium", "JMeter", "Gatling"];
-const SPECIALIST_TOOLS = ["axe-core", "Lighthouse", "k6", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
+const BROWSER_FW = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "SpecFlow", "Jest", "Vitest", "Mocha"];
+const MOBILE_FW = ["Appium", "Calabash"];
+const LOAD_FW = ["JMeter", "Gatling", "k6"];
+const FRAMEWORKS = BROWSER_FW.concat(MOBILE_FW, LOAD_FW);
+const SPECIALIST_TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
 const LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
-const BROWSER_FW = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO"];
 const USER_AGENT = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
 const MAX_PAGES = 100;
 const MAX_DEPTH = 5;
@@ -987,7 +989,6 @@ function hasTech(names, pattern) {
 const REVIEW_TOOLS = [
   ["axe-core", "This document can be opened in a browser. axe-core is named on the accessibility cases and is not run here."],
   ["Lighthouse", "A public document was read. Lighthouse would score the rendered page later. It is not run here."],
-  ["k6", "This review proposes a load case. k6 would need written permission and a scheduled window. It is not started here."],
   ["BrowserStack", "Browser cases are in this list. A later cross-browser pass could use BrowserStack. It is not started here."],
   ["Applitools", "The page has a visual surface. Applitools would compare a later screenshot. This review did not take one."],
   ["Percy", "The page has a visual surface. Percy would compare a later screenshot. This review did not take one."],
@@ -1003,7 +1004,6 @@ function toolFit(face, sig, names) {
   return {
     "axe-core": a11y,
     Lighthouse: html,
-    k6: html,
     BrowserStack: html,
     Applitools: visual,
     Percy: visual,
@@ -1084,14 +1084,14 @@ function propose(pages, robotsBlocked, limits) {
   addCase(cases, { id: "SEO-01", layer: "SEO", title: "Title, description, canonical, and social tags agree", why: "Title and description were read from the HTML. Open Graph tags would be asserted in a later browser case against the same final URL.", fw: browser });
   addCase(cases, { id: "SEO-02", layer: "SEO", title: "Language alternates are explicit when the site has more than one language", why: (sig.hreflang || 0) + " hreflang alternate(s) were found. Each alternate would point at an https URL and include a self reference.", fw: browser });
   addCase(cases, { id: "SEO-03", layer: "SEO", title: "A sitemap is advertised from the page or robots.txt", why: (sig.sitemap ? "The word sitemap appears in the HTML." : "No sitemap reference was seen in the HTML.") + " This review does not fetch a sitemap and does not treat a missing link as a ranking claim.", fw: browser });
-  addCase(cases, { id: "PF-01", layer: "Performance", title: "The HTML document arrives inside a stated budget", why: "This read took " + home.ms + " ms and " + face.bytes + " bytes. That is one fetch, not a load test. A budget case would fail above 800 ms or 1.5 MB for the document alone. Lighthouse would score the rendered page later. It is not run here.", fw: browser.concat(["JMeter", "Gatling"]), also: named(["Lighthouse"]) });
-  addCase(cases, { id: "PF-02", layer: "Performance", title: "Script and stylesheet counts stay inside a budget", why: face.scripts + " external scripts and " + face.styles + " stylesheets were referenced. The later case would record the counts and the render-blocking ones.", fw: browser.concat(["JMeter", "Gatling"]) });
-  addCase(cases, { id: "PF-03", layer: "Performance", title: "The slowest page in this read stays inside the same budget", why: "The slowest saved response was " + (slow.path || home.url) + " at " + (slow.ms || 0) + " ms. The trend across the crawl is the order the pages were opened, not a history of previous days.", fw: browser.concat(["JMeter", "Gatling"]) });
-  addCase(cases, { id: "LD-01", layer: "Load", title: "An authorised baseline could repeat the document fetch", why: "JMeter, Gatling, or k6 would need written permission, a verified domain, and a scheduled window. This review did not open a single virtual user. The baseline would be one request per second for a few minutes.", fw: ["JMeter", "Gatling"], also: named(["k6"]) });
-  addCase(cases, { id: "LD-02", layer: "Load", title: "A ramp would add users only inside an agreed ceiling", why: "The proposal is a short ramp, then a hold, then a stop. Error rate and response time would be the gates. No profile is generated by this review.", fw: ["JMeter", "Gatling"] });
-  addCase(cases, { id: "LD-03", layer: "Load", title: "A spike would last seconds, not an open-ended flood", why: "A spike case belongs on a staging host or a window the owner schedules. The public read here is still one document at a time.", fw: ["JMeter", "Gatling"] });
-  addCase(cases, { id: "MB-01", layer: "Mobile", title: "The layout holds at a phone width", why: "A viewport meta tag " + (sig.viewport ? "is present." : "was not found.") + " Appium would open a phone profile later and compare the same h1 and primary link.", fw: browser.concat(["Appium"]) });
-  addCase(cases, { id: "MB-02", layer: "Mobile", title: "The same primary path works in a tablet width", why: "Width, orientation, and a touch scroll would be checked in Appium or a browser device profile. This HTML read did not resize a window.", fw: browser.concat(["Appium"]) });
+  addCase(cases, { id: "PF-01", layer: "Performance", title: "The HTML document arrives inside a stated budget", why: "This read took " + home.ms + " ms and " + face.bytes + " bytes. That is one fetch, not a load test. A budget case would fail above 800 ms or 1.5 MB for the document alone. Lighthouse would score the rendered page later. It is not run here.", fw: browser.concat(LOAD_FW), also: named(["Lighthouse"]) });
+  addCase(cases, { id: "PF-02", layer: "Performance", title: "Script and stylesheet counts stay inside a budget", why: face.scripts + " external scripts and " + face.styles + " stylesheets were referenced. The later case would record the counts and the render-blocking ones.", fw: browser.concat(LOAD_FW) });
+  addCase(cases, { id: "PF-03", layer: "Performance", title: "The slowest page in this read stays inside the same budget", why: "The slowest saved response was " + (slow.path || home.url) + " at " + (slow.ms || 0) + " ms. The trend across the crawl is the order the pages were opened, not a history of previous days.", fw: browser.concat(LOAD_FW) });
+  addCase(cases, { id: "LD-01", layer: "Load", title: "An authorised baseline could repeat the document fetch", why: "JMeter, Gatling, or k6 would need written permission, a verified domain, and a scheduled window. This review did not open a single virtual user. The baseline would be one request per second for a few minutes.", fw: LOAD_FW });
+  addCase(cases, { id: "LD-02", layer: "Load", title: "A ramp would add users only inside an agreed ceiling", why: "The proposal is a short ramp, then a hold, then a stop. Error rate and response time would be the gates. No profile is generated by this review.", fw: LOAD_FW });
+  addCase(cases, { id: "LD-03", layer: "Load", title: "A spike would last seconds, not an open-ended flood", why: "A spike case belongs on a staging host or a window the owner schedules. The public read here is still one document at a time.", fw: LOAD_FW });
+  addCase(cases, { id: "MB-01", layer: "Mobile", title: "The layout holds at a phone width", why: "A viewport meta tag " + (sig.viewport ? "is present." : "was not found.") + " Appium or Calabash would open a phone profile later and compare the same h1 and primary link.", fw: browser.concat(MOBILE_FW) });
+  addCase(cases, { id: "MB-02", layer: "Mobile", title: "The same primary path works in a tablet width", why: "Width, orientation, and a touch scroll would be checked in Appium, Calabash, or a browser device profile. This HTML read did not resize a window.", fw: browser.concat(MOBILE_FW) });
   addCase(cases, { id: "I18N-01", layer: "Internationalization", title: "The lang attribute matches the copy a person reads", why: (face.lang ? "Declared language: " + face.lang + "." : "No language was declared.") + " A bilingual page would need hreflang plus a visible language switch.", fw: browser });
   addCase(cases, { id: "I18N-02", layer: "Internationalization", title: "Direction and locale formats stay with the language", why: (sig.hreflang || 0) + " alternate language links were counted. Dates, currency, and layout direction would be asserted only for locales the site claims.", fw: browser });
   addCase(cases, { id: "RS-01", layer: "Resilience", title: "A missing path returns a deliberate not-found page", why: (failed.length ? "This read already saved a non-success status." : "This read did not save a 404.") + " A later case would request one unknown path and expect a branded not-found document, not a stack trace.", fw: browser });

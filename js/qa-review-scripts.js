@@ -5,7 +5,8 @@
 (function (root) {
   "use strict";
 
-  const ORDER = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "Appium", "JMeter", "Gatling"];
+  const ORDER = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "SpecFlow", "Jest", "Vitest", "Mocha", "Appium", "Calabash", "JMeter", "Gatling", "k6"];
+  const LOAD_TOOLS = ["JMeter", "Gatling", "k6"];
   const MISSING_PATH = "/qa-lab-missing-page-404";
   const PHONE = { width: 390, height: 844 };
   const TABLET = { width: 820, height: 1180 };
@@ -108,8 +109,8 @@
   const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "budget", "viewport", "linksResolve"];
 
   function supports(framework, check) {
-    if (framework === "Appium") return check.kind === "viewport";
-    if (framework === "JMeter" || framework === "Gatling") return check.kind === "budget" || check.kind === "load";
+    if (framework === "Appium" || framework === "Calabash") return check.kind === "viewport";
+    if (LOAD_TOOLS.indexOf(framework) !== -1) return check.kind === "budget" || check.kind === "load";
     return BROWSER_KINDS.indexOf(check.kind) !== -1;
   }
 
@@ -462,6 +463,877 @@
     return "it(" + q(name(item)) + ", async () => {\n" + indent(head.concat(body), "  ") + "\n});";
   }
 
+  const PERSON = "A person runs this case with access the owner provides.";
+  const META_JS = "() => (document.querySelector('meta[name=\"description\"]') || {}).content || \"\"";
+  const OVERFLOW_JS = "() => document.documentElement.scrollWidth - window.innerWidth";
+  const LINKS_JS = "({ base, max }) => [...new Set([...document.querySelectorAll(\"a[href]\")].map((link) => link.href.split(\"#\")[0]).filter((href) => href.startsWith(base)))].slice(0, max)";
+  const META_SCRIPT = "return (document.querySelector('meta[name=\"description\"]') || {}).content || '';";
+  const OVERFLOW_SCRIPT = "return document.documentElement.scrollWidth - window.innerWidth;";
+
+  function linksScript(max) {
+    return "return [...new Set([...document.querySelectorAll('a[href]')].map((a) => a.href.split('#')[0]).filter((h) => h.startsWith(arguments[0])))].slice(0, " + max + ");";
+  }
+
+  const EXPECT = {
+    lt: (a, b) => "expect(" + a + ").toBeLessThan(" + b + ");",
+    eq: (a, b) => "expect(" + a + ").toBe(" + b + ");",
+    gte: (a, b) => "expect(" + a + ").toBeGreaterThanOrEqual(" + b + ");",
+    lte: (a, b) => "expect(" + a + ").toBeLessThanOrEqual(" + b + ");",
+    match: (a, re) => "expect(" + a + ").toMatch(" + re + ");",
+    noMatch: (a, re) => "expect(" + a + ").not.toMatch(" + re + ");",
+    oneOf: (list, a) => "expect(" + list + ").toContain(" + a + ");",
+    truthy: (a) => "expect(" + a + ").toBeTruthy();",
+    filled: (a) => "expect(" + a + ").not.toBe(\"\");"
+  };
+
+  const ASSERT = {
+    lt: (a, b, why) => "assert.ok(" + a + " < " + b + (why ? ", " + why : "") + ");",
+    eq: (a, b, why) => "assert.equal(" + a + ", " + b + (why ? ", " + why : "") + ");",
+    gte: (a, b, why) => "assert.ok(" + a + " >= " + b + (why ? ", " + why : "") + ");",
+    lte: (a, b, why) => "assert.ok(" + a + " <= " + b + (why ? ", " + why : "") + ");",
+    match: (a, re) => "assert.match(" + a + ", " + re + ");",
+    noMatch: (a, re) => "assert.doesNotMatch(" + a + ", " + re + ");",
+    oneOf: (list, a) => "assert.ok(" + list + ".includes(" + a + "), String(" + a + "));",
+    truthy: (a, why) => "assert.ok(" + a + (why ? ", " + why : "") + ");",
+    filled: (a, why) => "assert.notEqual(" + a + ", \"\"" + (why ? ", " + why : "") + ");"
+  };
+
+  const PAGE_DOM = {
+    go: (url) => "await page.goto(BASE + " + url + ");",
+    count: (selector) => "await page.locator(" + q(selector) + ").count()",
+    title: "(await page.title()).trim()",
+    attr: (selector, attr) => "((await page.locator(" + q(selector) + ").first().getAttribute(" + q(attr) + ")) || \"\").trim()",
+    run: (fn, arg) => "await page.evaluate(" + fn + (arg ? ", " + arg : "") + ")",
+    size: (width, height) => "await page.setViewportSize({ width: " + width + ", height: " + height + " });"
+  };
+
+  const CODECEPT_DOM = {
+    go: (url) => "await I.amOnPage(BASE + " + url + ");",
+    count: (selector) => "await I.executeScript((selector) => document.querySelectorAll(selector).length, " + q(selector) + ")",
+    title: "(await I.grabTitle()).trim()",
+    attr: (selector, attr) => "((await I.grabAttributeFrom(" + q(selector) + ", " + q(attr) + ")) || \"\").trim()",
+    run: (fn, arg) => "await I.executeScript(" + fn + (arg ? ", " + arg : "") + ")",
+    size: (width, height) => "await I.resizeWindow(" + width + ", " + height + ");"
+  };
+
+  function jsBody(check, A, D) {
+    const body = [];
+    const go = (path) => body.push(D.go(q(path)));
+    switch (check.kind) {
+      case "status":
+        body.push("const res = await fetch(BASE + " + q(check.path) + ");", A.lt("res.status", 400));
+        break;
+      case "statusAll":
+        body.push("for (const path of " + JSON.stringify(check.paths) + ") {", "  const res = await fetch(BASE + path);", "  " + A.lt("res.status", 400, "path"), "}");
+        break;
+      case "title":
+        go(check.path); body.push("const title = " + D.title + ";", A.filled("title"));
+        break;
+      case "titleAll":
+        body.push("for (const path of " + JSON.stringify(check.paths) + ") {", "  " + D.go("path"), "  " + A.filled(D.title, "path"), "}");
+        break;
+      case "count":
+        go(check.path); body.push("const found = " + D.count(check.selector) + ";", A[check.op]("found", check.n));
+        break;
+      case "attr":
+        go(check.path); body.push("const value = " + D.attr(check.selector, check.attr) + ";", A.filled("value"));
+        break;
+      case "metaLength":
+        go(check.path); body.push("const description = " + D.run(META_JS) + ";", A.gte("description.length", check.min), A.lte("description.length", check.max));
+        break;
+      case "headers":
+        body.push("const res = await fetch(BASE + " + q(check.path) + ");");
+        check.rules.forEach((rule) => body.push(rule.pattern ? A.match("res.headers.get(" + q(rule.name) + ") || \"\"", "/" + rule.pattern + "/i") : A.truthy("res.headers.get(" + q(rule.name) + ")", q(rule.name))));
+        break;
+      case "headerNoDigits":
+        body.push("const res = await fetch(BASE + " + q(check.path) + ");", A.noMatch("res.headers.get(" + q(check.name) + ") || \"\"", "/\\d/"));
+        break;
+      case "httpsRedirect":
+        body.push("const res = await fetch(\"http://\" + HOST + \"/\", { redirect: \"manual\" });", A.oneOf("[301, 302, 307, 308]", "res.status"), A.match("res.headers.get(\"location\") || \"\"", "/^https:\\/\\//"));
+        break;
+      case "notFound":
+        body.push("const res = await fetch(BASE + " + q(MISSING_PATH) + ");", A.oneOf("[404, 410]", "res.status"));
+        break;
+      case "robotsSitemap":
+        body.push("const res = await fetch(BASE + \"/robots.txt\");", A.match("await res.text()", "/^sitemap:/im"));
+        break;
+      case "budget":
+        body.push("const started = Date.now();", "const res = await fetch(BASE + " + q(check.path) + ");", "const body = await res.arrayBuffer();", A.lt("res.status", 400), A.lt("Date.now() - started", check.ms), A.lt("body.byteLength", check.bytes));
+        break;
+      case "viewport":
+        body.push(D.size(check.width, check.height)); go(check.path);
+        body.push("const overflow = " + D.run(OVERFLOW_JS) + ";", A.lte("overflow", 1));
+        break;
+      case "linksResolve":
+        go(check.path);
+        body.push("const hrefs = " + D.run(LINKS_JS, "{ base: BASE, max: " + check.max + " }") + ";", "for (const href of hrefs) {", "  const res = await fetch(href);", "  " + A.lt("res.status", 400, "href"), "}");
+        break;
+      default:
+        break;
+    }
+    return body;
+  }
+
+  const RUNNERS = {
+    Jest: { test: "test", skip: "test.skip", args: "", A: EXPECT, D: PAGE_DOM },
+    Vitest: { test: "test", skip: "test.skip", args: "", A: EXPECT, D: PAGE_DOM },
+    Mocha: { test: "it", skip: "it.skip", args: "", A: ASSERT, D: PAGE_DOM },
+    CodeceptJS: { test: "Scenario", skip: "xScenario", args: "{ I }", A: ASSERT, D: CODECEPT_DOM }
+  };
+
+  function jsRunner(framework, item, check, parts) {
+    const runner = RUNNERS[framework];
+    const head = ["// " + parts.step, "// Expected: " + parts.expected];
+    if (check.kind === "manual") {
+      return runner.skip + "(" + q(name(item)) + ", () => {\n" + indent(head.concat(["// " + PERSON]), "  ") + "\n});";
+    }
+    return runner.test + "(" + q(name(item)) + ", async (" + runner.args + ") => {\n" + indent(head.concat(jsBody(check, runner.A, runner.D)), "  ") + "\n});";
+  }
+
+  const SELENIDE_DOM = {
+    go: (url) => "open(BASE + " + url + ");",
+    count: (selector) => "$$(" + q(selector) + ").size()",
+    title: "Objects.toString(title(), \"\").trim()",
+    attr: (selector, attr) => "Objects.toString($(" + q(selector) + ").getAttribute(" + q(attr) + "), \"\").trim()",
+    run: (script, arg) => "executeJavaScript(" + q(script) + (arg ? ", " + arg : "") + ")",
+    size: (width, height) => "WebDriverRunner.getWebDriver().manage().window().setSize(new Dimension(" + width + ", " + height + "));",
+    reload: "refresh();"
+  };
+
+  const WEBDRIVER_DOM = {
+    go: (url) => "driver.get(BASE + " + url + ");",
+    count: (selector) => "driver.findElements(By.cssSelector(" + q(selector) + ")).size()",
+    title: "Objects.toString(driver.getTitle(), \"\").trim()",
+    attr: (selector, attr) => "Objects.toString(driver.findElement(By.cssSelector(" + q(selector) + ")).getAttribute(" + q(attr) + "), \"\").trim()",
+    run: (script, arg) => "((JavascriptExecutor) driver).executeScript(" + q(script) + (arg ? ", " + arg : "") + ")",
+    size: (width, height) => "driver.manage().window().setSize(new Dimension(" + width + ", " + height + "));",
+    reload: "driver.navigate().refresh();"
+  };
+
+  function javaBody(check, D) {
+    const body = [];
+    const go = (path) => body.push(D.go(q(path)));
+    const ok = (condition, why) => "assertTrue(" + condition + ", " + why + ");";
+    const header = (rule) => "res.headers().firstValue(" + q(rule) + ").orElse(\"\")";
+    switch (check.kind) {
+      case "status":
+        body.push("HttpResponse<byte[]> res = get(BASE + " + q(check.path) + ");", ok("res.statusCode() < 400", "\"status \" + res.statusCode()"));
+        break;
+      case "statusAll":
+        body.push("for (String path : List.of(" + check.paths.map(q).join(", ") + ")) {", "  " + ok("get(BASE + path).statusCode() < 400", "path"), "}");
+        break;
+      case "title":
+        go(check.path); body.push(ok("!" + D.title + ".isEmpty()", "\"title\""));
+        break;
+      case "titleAll":
+        body.push("for (String path : List.of(" + check.paths.map(q).join(", ") + ")) {", "  " + D.go("path"), "  " + ok("!" + D.title + ".isEmpty()", "path"), "}");
+        break;
+      case "count":
+        go(check.path); body.push("int found = " + D.count(check.selector) + ";", ok("found " + OPS_PY[check.op] + " " + check.n, "\"found \" + found"));
+        break;
+      case "attr":
+        go(check.path); body.push(ok("!" + D.attr(check.selector, check.attr) + ".isEmpty()", q(check.selector + " " + check.attr)));
+        break;
+      case "metaLength":
+        go(check.path);
+        body.push("String description = Objects.toString(" + D.run(META_SCRIPT) + ", \"\");", ok("description.length() >= " + check.min + " && description.length() <= " + check.max, "\"length \" + description.length()"));
+        break;
+      case "headers":
+        body.push("HttpResponse<byte[]> res = get(BASE + " + q(check.path) + ");");
+        check.rules.forEach((rule) => body.push(rule.pattern
+          ? ok("Pattern.compile(" + q(rule.pattern) + ", Pattern.CASE_INSENSITIVE).matcher(" + header(rule.name) + ").find()", q(rule.name))
+          : ok("res.headers().firstValue(" + q(rule.name) + ").isPresent()", q(rule.name))));
+        break;
+      case "headerNoDigits":
+        body.push("HttpResponse<byte[]> res = get(BASE + " + q(check.path) + ");", ok("!Pattern.compile(\"\\\\d\").matcher(" + header(check.name) + ").find()", q(check.name)));
+        break;
+      case "httpsRedirect":
+        body.push("HttpResponse<byte[]> res = RAW.send(request(\"http://\" + HOST + \"/\"), HttpResponse.BodyHandlers.ofByteArray());", ok("List.of(301, 302, 307, 308).contains(res.statusCode())", "\"status \" + res.statusCode()"), ok(header("location") + ".startsWith(\"https://\")", "\"location\""));
+        break;
+      case "notFound":
+        body.push("int status = get(BASE + " + q(MISSING_PATH) + ").statusCode();", ok("status == 404 || status == 410", "\"status \" + status"));
+        break;
+      case "robotsSitemap":
+        body.push("String robots = new String(get(BASE + \"/robots.txt\").body(), StandardCharsets.UTF_8);", ok("Pattern.compile(\"^sitemap:\", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(robots).find()", "\"sitemap\""));
+        break;
+      case "budget":
+        body.push("long started = System.nanoTime();", "HttpResponse<byte[]> res = get(BASE + " + q(check.path) + ");", "long elapsedMs = (System.nanoTime() - started) / 1_000_000;", ok("res.statusCode() < 400", "\"status \" + res.statusCode()"), ok("elapsedMs < " + check.ms, "elapsedMs + \" ms\""), ok("res.body().length < " + check.bytes, "res.body().length + \" bytes\""));
+        break;
+      case "viewport":
+        go(check.path); body.push(D.size(check.width, check.height), D.reload);
+        body.push("long overflow = ((Number) " + D.run(OVERFLOW_SCRIPT) + ").longValue();", ok("overflow <= 1", "overflow + \" px\""));
+        break;
+      case "linksResolve":
+        go(check.path);
+        body.push("List<?> hrefs = (List<?>) " + D.run(linksScript(check.max), "BASE") + ";", "for (Object href : hrefs) {", "  " + ok("get(String.valueOf(href)).statusCode() < 400", "String.valueOf(href)"), "}");
+        break;
+      default:
+        break;
+    }
+    return body;
+  }
+
+  function javaMethod(item) {
+    return item.id.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }
+
+  function javaComments(parts) {
+    return ["// " + javaDoc(parts.step), "// Expected: " + javaDoc(parts.expected)];
+  }
+
+  function selenide(item, check, parts) {
+    const head = javaComments(parts);
+    if (check.kind === "manual") {
+      return ["@Test", "@Disabled(" + q(PERSON) + ")", "@DisplayName(" + q(name(item)) + ")", "void " + javaMethod(item) + "() {", indent(head, "  "), "}"].join("\n");
+    }
+    return ["@Test", "@DisplayName(" + q(name(item)) + ")", "void " + javaMethod(item) + "() throws Exception {", indent(head.concat(javaBody(check, SELENIDE_DOM)), "  "), "}"].join("\n");
+  }
+
+  function testng(item, check, parts) {
+    const head = javaComments(parts);
+    if (check.kind === "manual") {
+      return ["@Test(enabled = false, description = " + q(name(item)) + ")", "public void " + javaMethod(item) + "() {", indent(head.concat(["// " + PERSON]), "  "), "}"].join("\n");
+    }
+    return ["@Test(description = " + q(name(item)) + ")", "public void " + javaMethod(item) + "() throws Exception {", indent(head.concat(javaBody(check, WEBDRIVER_DOM)), "  "), "}"].join("\n");
+  }
+
+  function rb(value) {
+    return q(value).replace(/#/g, "\\#");
+  }
+
+  function watir(item, check, parts) {
+    const head = ["# " + parts.step, "# Expected: " + parts.expected];
+    if (check.kind === "manual") {
+      return "it " + rb(name(item)) + ", skip: " + rb(PERSON) + " do\n" + indent(head, "  ") + "\nend";
+    }
+    const body = [];
+    const go = (url) => body.push("@browser.goto(BASE + " + url + ")");
+    const opRuby = { eq: "eq(", gte: "be >= ", lte: "be <= " };
+    switch (check.kind) {
+      case "status":
+        body.push("expect(http_get(BASE + " + rb(check.path) + ").code.to_i).to be < 400");
+        break;
+      case "statusAll":
+        body.push("[" + check.paths.map(rb).join(", ") + "].each do |path|", "  expect(http_get(BASE + path).code.to_i).to be < 400", "end");
+        break;
+      case "title":
+        go(rb(check.path)); body.push("expect(@browser.title.strip).not_to be_empty");
+        break;
+      case "titleAll":
+        body.push("[" + check.paths.map(rb).join(", ") + "].each do |path|", "  @browser.goto(BASE + path)", "  expect(@browser.title.strip).not_to be_empty", "end");
+        break;
+      case "count":
+        go(rb(check.path)); body.push("found = @browser.elements(css: " + rb(check.selector) + ").count", "expect(found).to " + opRuby[check.op] + check.n + (check.op === "eq" ? ")" : ""));
+        break;
+      case "attr":
+        go(rb(check.path)); body.push("expect(@browser.element(css: " + rb(check.selector) + ").attribute_value(" + rb(check.attr) + ").to_s.strip).not_to be_empty");
+        break;
+      case "metaLength":
+        go(rb(check.path)); body.push("description = @browser.execute_script(" + rb(META_SCRIPT) + ").to_s", "expect(description.length).to be_between(" + check.min + ", " + check.max + ")");
+        break;
+      case "headers":
+        body.push("res = http_get(BASE + " + rb(check.path) + ")");
+        check.rules.forEach((rule) => body.push(rule.pattern ? "expect(res[" + rb(rule.name) + "].to_s).to match(/" + rule.pattern + "/i)" : "expect(res[" + rb(rule.name) + "]).not_to be_nil"));
+        break;
+      case "headerNoDigits":
+        body.push("res = http_get(BASE + " + rb(check.path) + ")", "expect(res[" + rb(check.name) + "].to_s).not_to match(/\\d/)");
+        break;
+      case "httpsRedirect":
+        body.push("res = http_get_raw(\"http://\" + HOST + \"/\")", "expect([301, 302, 307, 308]).to include(res.code.to_i)", "expect(res[\"location\"].to_s).to start_with(\"https://\")");
+        break;
+      case "notFound":
+        body.push("expect([404, 410]).to include(http_get(BASE + " + rb(MISSING_PATH) + ").code.to_i)");
+        break;
+      case "robotsSitemap":
+        body.push("expect(http_get(BASE + \"/robots.txt\").body.to_s).to match(/^sitemap:/i)");
+        break;
+      case "budget":
+        body.push("started = Process.clock_gettime(Process::CLOCK_MONOTONIC)", "res = http_get(BASE + " + rb(check.path) + ")", "elapsed_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000", "expect(res.code.to_i).to be < 400", "expect(elapsed_ms).to be < " + check.ms, "expect(res.body.to_s.bytesize).to be < " + check.bytes);
+        break;
+      case "viewport":
+        body.push("@browser.window.resize_to(" + check.width + ", " + check.height + ")"); go(rb(check.path));
+        body.push("overflow = @browser.execute_script(" + rb(OVERFLOW_SCRIPT) + ")", "expect(overflow).to be <= 1");
+        break;
+      case "linksResolve":
+        go(rb(check.path));
+        body.push("hrefs = @browser.execute_script(" + rb(linksScript(check.max)) + ", BASE)", "hrefs.each do |href|", "  expect(http_get(href).code.to_i).to be < 400", "end");
+        break;
+      default:
+        break;
+    }
+    return "it " + rb(name(item)) + " do\n" + indent(head.concat(body), "  ") + "\nend";
+  }
+
+  const OPS_WORD = { eq: "exactly", gte: "at least", lte: "at most" };
+  const GHERKIN_FW = ["Cucumber", "Behave", "SpecFlow", "Calabash"];
+
+  function gq(value) {
+    return "\"" + oneLine(value).replace(/"/g, "'") + "\"";
+  }
+
+  function gCell(value) {
+    return String(value).replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
+  }
+
+  function scenario(item, tags, steps, notes) {
+    let last = "";
+    const lines = steps.map((step) => {
+      if (step.charAt(0) === "|") return "    " + step;
+      const word = step.split(" ")[0];
+      const text = word === last ? "And" + step.slice(word.length) : step;
+      last = word;
+      return "  " + text;
+    });
+    return notes.map((note) => "# " + note).concat([["@" + item.id].concat(tags).join(" "), "Scenario: " + name(item)], lines).join("\n");
+  }
+
+  function gherkin(item, check, parts) {
+    const notes = [parts.step, "Expected: " + parts.expected];
+    const steps = [];
+    const open = (path) => steps.push("Given the page " + gq(path) + " is open");
+    const table = (paths) => ["| path |"].concat(paths.map((path) => "| " + gCell(path) + " |"));
+    switch (check.kind) {
+      case "status":
+        steps.push("Then " + gq(check.path) + " answers with a status below 400");
+        break;
+      case "statusAll":
+        steps.push("Then each of these paths answers with a status below 400:", ...table(check.paths));
+        break;
+      case "title":
+        open(check.path); steps.push("Then the page title is not empty");
+        break;
+      case "titleAll":
+        steps.push("Then each of these paths has a page title:", ...table(check.paths));
+        break;
+      case "count":
+        open(check.path); steps.push("Then the count of " + gq(check.selector) + " elements is " + OPS_WORD[check.op] + " " + check.n);
+        break;
+      case "attr":
+        open(check.path); steps.push("Then the " + gq(check.selector) + " element has a " + gq(check.attr) + " attribute");
+        break;
+      case "metaLength":
+        open(check.path); steps.push("Then the meta description is between " + check.min + " and " + check.max + " characters long");
+        break;
+      case "headers":
+        check.rules.forEach((rule) => steps.push(rule.pattern
+          ? "Then the " + gq(rule.name) + " header of " + gq(check.path) + " matches " + gq(rule.pattern)
+          : "Then " + gq(check.path) + " sends the " + gq(rule.name) + " header"));
+        break;
+      case "headerNoDigits":
+        steps.push("Then the " + gq(check.name) + " header of " + gq(check.path) + " shows no version number");
+        break;
+      case "httpsRedirect":
+        steps.push("Then plain http redirects to https");
+        break;
+      case "notFound":
+        steps.push("Then an unknown path answers with 404 or 410");
+        break;
+      case "robotsSitemap":
+        steps.push("Then robots.txt advertises a sitemap");
+        break;
+      case "budget":
+        steps.push("Then " + gq(check.path) + " answers within " + check.ms + " ms and under " + check.bytes + " bytes");
+        break;
+      case "viewport":
+        steps.push("Given the viewport is " + check.width + " by " + check.height + " pixels"); open(check.path); steps.push("Then the page does not scroll sideways");
+        break;
+      case "linksResolve":
+        open(check.path); steps.push("Then the first " + check.max + " same-host links on the page resolve");
+        break;
+      default:
+        return scenario(item, ["@manual", "@ignore"], ["Given this case is run by a person with access the owner provides"], notes);
+    }
+    return scenario(item, [], steps, notes);
+  }
+
+  function calabash(item, check, parts) {
+    const notes = [parts.step, "Expected: " + parts.expected];
+    if (check.kind !== "viewport") {
+      return scenario(item, ["@manual", "@ignore"], ["Given this case is run by a person with access the owner provides"], notes);
+    }
+    const device = check.width >= TABLET.width ? "a tablet" : "a phone";
+    notes.push("Run on " + device + " (about " + check.width + " x " + check.height + " CSS pixels).");
+    return scenario(item, [], ["Given the web view opens " + gq(check.path), "Then the page does not scroll sideways", "Then the main heading is visible when the page has one"], notes);
+  }
+
+  function fill(template, ctx, line) {
+    return template
+      .replace(/__LINE__/g, () => line)
+      .replace(/__BASE__/g, () => q(ctx.base))
+      .replace(/__HOST__/g, () => q(ctx.host))
+      .replace(/__MISSING__/g, () => q(MISSING_PATH));
+  }
+
+  const CUCUMBER_STEPS = String.raw`// __LINE__
+// Step definitions for qa-lab.feature. Runs with @cucumber/cucumber and the Playwright library on Node 18 or later.
+const { Given, Then, BeforeAll, AfterAll, Before, After, setDefaultTimeout } = require("@cucumber/cucumber");
+const assert = require("node:assert/strict");
+const { chromium } = require("playwright");
+
+const BASE = __BASE__;
+const HOST = __HOST__;
+const MISSING = __MISSING__;
+
+setDefaultTimeout(60 * 1000);
+let browser;
+BeforeAll(async () => { browser = await chromium.launch(); });
+AfterAll(async () => { await browser.close(); });
+Before(async function () { this.page = await browser.newPage(); });
+After(async function () { await this.page.close(); });
+
+Given(/^this case is run by a person with access the owner provides$/, function () {
+  return "skipped";
+});
+
+Given(/^the viewport is (\d+) by (\d+) pixels$/, async function (width, height) {
+  await this.page.setViewportSize({ width: Number(width), height: Number(height) });
+});
+
+Given(/^the page "([^"]*)" is open$/, async function (path) {
+  await this.page.goto(BASE + path);
+});
+
+Then(/^the page title is not empty$/, async function () {
+  assert.notEqual((await this.page.title()).trim(), "");
+});
+
+Then(/^the count of "([^"]*)" elements is (exactly|at least|at most) (\d+)$/, async function (selector, op, n) {
+  const found = await this.page.locator(selector).count();
+  const want = Number(n);
+  assert.ok(op === "exactly" ? found === want : op === "at least" ? found >= want : found <= want, selector + ": " + found);
+});
+
+Then(/^the "([^"]*)" element has a "([^"]*)" attribute$/, async function (selector, attr) {
+  const value = await this.page.locator(selector).first().getAttribute(attr);
+  assert.notEqual((value || "").trim(), "", selector + " " + attr);
+});
+
+Then(/^the meta description is between (\d+) and (\d+) characters long$/, async function (min, max) {
+  const description = await this.page.evaluate(() => (document.querySelector('meta[name="description"]') || {}).content || "");
+  assert.ok(description.length >= Number(min) && description.length <= Number(max), "length " + description.length);
+});
+
+Then(/^the page does not scroll sideways$/, async function () {
+  const overflow = await this.page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  assert.ok(overflow <= 1, overflow + " px");
+});
+
+Then(/^the first (\d+) same-host links on the page resolve$/, async function (max) {
+  const hrefs = await this.page.evaluate(({ base, limit }) => [...new Set([...document.querySelectorAll("a[href]")].map((link) => link.href.split("#")[0]).filter((href) => href.startsWith(base)))].slice(0, limit), { base: BASE, limit: Number(max) });
+  for (const href of hrefs) assert.ok((await fetch(href)).status < 400, href);
+});
+
+Then(/^"([^"]*)" answers with a status below 400$/, async function (path) {
+  assert.ok((await fetch(BASE + path)).status < 400, path);
+});
+
+Then(/^each of these paths answers with a status below 400:$/, async function (table) {
+  for (const row of table.hashes()) assert.ok((await fetch(BASE + row.path)).status < 400, row.path);
+});
+
+Then(/^each of these paths has a page title:$/, async function (table) {
+  for (const row of table.hashes()) {
+    await this.page.goto(BASE + row.path);
+    assert.notEqual((await this.page.title()).trim(), "", row.path);
+  }
+});
+
+Then(/^"([^"]*)" sends the "([^"]*)" header$/, async function (path, header) {
+  assert.ok((await fetch(BASE + path)).headers.get(header), header);
+});
+
+Then(/^the "([^"]*)" header of "([^"]*)" matches "([^"]*)"$/, async function (header, path, pattern) {
+  const res = await fetch(BASE + path);
+  assert.match(res.headers.get(header) || "", new RegExp(pattern, "i"));
+});
+
+Then(/^the "([^"]*)" header of "([^"]*)" shows no version number$/, async function (header, path) {
+  const res = await fetch(BASE + path);
+  assert.doesNotMatch(res.headers.get(header) || "", /\d/);
+});
+
+Then(/^plain http redirects to https$/, async function () {
+  const res = await fetch("http://" + HOST + "/", { redirect: "manual" });
+  assert.ok([301, 302, 307, 308].includes(res.status), String(res.status));
+  assert.match(res.headers.get("location") || "", /^https:\/\//);
+});
+
+Then(/^an unknown path answers with 404 or 410$/, async function () {
+  const res = await fetch(BASE + MISSING);
+  assert.ok([404, 410].includes(res.status), String(res.status));
+});
+
+Then(/^robots\.txt advertises a sitemap$/, async function () {
+  const res = await fetch(BASE + "/robots.txt");
+  assert.match(await res.text(), /^sitemap:/im);
+});
+
+Then(/^"([^"]*)" answers within (\d+) ms and under (\d+) bytes$/, async function (path, ms, bytes) {
+  const started = Date.now();
+  const res = await fetch(BASE + path);
+  const body = await res.arrayBuffer();
+  assert.ok(res.status < 400, String(res.status));
+  assert.ok(Date.now() - started < Number(ms), "slower than " + ms + " ms");
+  assert.ok(body.byteLength < Number(bytes), body.byteLength + " bytes");
+});
+`;
+
+  const BEHAVE_STEPS = String.raw`# __LINE__
+# Step definitions for qa_lab.feature. Runs with behave, Selenium, and requests.
+import re
+import time
+
+import requests
+from behave import step, use_step_matcher
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+use_step_matcher("re")
+
+BASE = __BASE__
+HOST = __HOST__
+MISSING = __MISSING__
+
+
+def driver(context):
+    if "driver" not in context.holder:
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless=new")
+        context.holder["driver"] = webdriver.Chrome(options=options)
+    return context.holder["driver"]
+
+
+@step(r"this case is run by a person with access the owner provides")
+def manual(context):
+    context.scenario.skip(reason="A person runs this case with access the owner provides.")
+
+
+@step(r"the viewport is (?P<width>\d+) by (?P<height>\d+) pixels")
+def viewport(context, width, height):
+    driver(context).set_window_size(int(width), int(height))
+
+
+@step(r'the page "(?P<path>[^"]*)" is open')
+def open_page(context, path):
+    driver(context).get(BASE + path)
+
+
+@step(r"the page title is not empty")
+def title_not_empty(context):
+    assert driver(context).title.strip()
+
+
+@step(r'the count of "(?P<selector>[^"]*)" elements is (?P<op>exactly|at least|at most) (?P<n>\d+)')
+def element_count(context, selector, op, n):
+    found = len(driver(context).find_elements(By.CSS_SELECTOR, selector))
+    want = int(n)
+    passed = found == want if op == "exactly" else found >= want if op == "at least" else found <= want
+    assert passed, f"{selector}: {found}"
+
+
+@step(r'the "(?P<selector>[^"]*)" element has a "(?P<attr>[^"]*)" attribute')
+def has_attribute(context, selector, attr):
+    value = driver(context).find_element(By.CSS_SELECTOR, selector).get_attribute(attr) or ""
+    assert value.strip(), f"{selector} {attr}"
+
+
+@step(r"the meta description is between (?P<low>\d+) and (?P<high>\d+) characters long")
+def meta_length(context, low, high):
+    description = driver(context).execute_script("return (document.querySelector('meta[name=\"description\"]') || {}).content || '';") or ""
+    assert int(low) <= len(description) <= int(high), f"length {len(description)}"
+
+
+@step(r"the page does not scroll sideways")
+def no_sideways(context):
+    overflow = driver(context).execute_script("return document.documentElement.scrollWidth - window.innerWidth")
+    assert overflow <= 1, f"{overflow} px"
+
+
+@step(r"the first (?P<limit>\d+) same-host links on the page resolve")
+def links_resolve(context, limit):
+    hrefs = driver(context).execute_script("return [...new Set([...document.querySelectorAll('a[href]')].map((a) => a.href.split('#')[0]).filter((h) => h.startsWith(arguments[0])))].slice(0, arguments[1]);", BASE, int(limit))
+    for href in hrefs:
+        assert requests.get(href, timeout=30).status_code < 400, href
+
+
+@step(r'"(?P<path>[^"]*)" answers with a status below 400')
+def status(context, path):
+    assert requests.get(BASE + path, timeout=30).status_code < 400, path
+
+
+@step(r"each of these paths answers with a status below 400:")
+def status_all(context):
+    for row in context.table:
+        assert requests.get(BASE + row["path"], timeout=30).status_code < 400, row["path"]
+
+
+@step(r"each of these paths has a page title:")
+def title_all(context):
+    for row in context.table:
+        driver(context).get(BASE + row["path"])
+        assert driver(context).title.strip(), row["path"]
+
+
+@step(r'"(?P<path>[^"]*)" sends the "(?P<header>[^"]*)" header')
+def sends_header(context, path, header):
+    assert requests.get(BASE + path, timeout=30).headers.get(header), header
+
+
+@step(r'the "(?P<header>[^"]*)" header of "(?P<path>[^"]*)" matches "(?P<pattern>[^"]*)"')
+def header_matches(context, header, path, pattern):
+    value = requests.get(BASE + path, timeout=30).headers.get(header, "")
+    assert re.search(pattern, value, re.I), header
+
+
+@step(r'the "(?P<header>[^"]*)" header of "(?P<path>[^"]*)" shows no version number')
+def header_no_digits(context, header, path):
+    value = requests.get(BASE + path, timeout=30).headers.get(header, "")
+    assert not re.search(r"\d", value), header
+
+
+@step(r"plain http redirects to https")
+def https_redirect(context):
+    res = requests.get("http://" + HOST + "/", allow_redirects=False, timeout=30)
+    assert res.status_code in (301, 302, 307, 308), res.status_code
+    assert res.headers.get("location", "").startswith("https://")
+
+
+@step(r"an unknown path answers with 404 or 410")
+def not_found(context):
+    assert requests.get(BASE + MISSING, timeout=30).status_code in (404, 410)
+
+
+@step(r"robots\.txt advertises a sitemap")
+def robots_sitemap(context):
+    text = requests.get(BASE + "/robots.txt", timeout=30).text
+    assert re.search(r"^sitemap:", text, re.I | re.M)
+
+
+@step(r'"(?P<path>[^"]*)" answers within (?P<ms>\d+) ms and under (?P<size>\d+) bytes')
+def budget(context, path, ms, size):
+    started = time.perf_counter()
+    res = requests.get(BASE + path, timeout=30)
+    elapsed_ms = (time.perf_counter() - started) * 1000
+    assert res.status_code < 400, res.status_code
+    assert elapsed_ms < int(ms), f"{elapsed_ms:.0f} ms"
+    assert len(res.content) < int(size), f"{len(res.content)} bytes"
+`;
+
+  const BEHAVE_ENVIRONMENT = String.raw`# __LINE__
+# Keeps one browser for the whole behave run and closes it at the end.
+
+
+def before_all(context):
+    context.holder = {}
+
+
+def after_all(context):
+    if context.holder.get("driver"):
+        context.holder["driver"].quit()
+`;
+
+  const SPECFLOW_STEPS = String.raw`// __LINE__
+// Step definitions for QaLab.feature. SpecFlow 3.9 with NUnit, Selenium WebDriver, and HttpClient.
+// SpecFlow reached end of life. For Reqnroll, swap the packages and replace "using TechTalk.SpecFlow;" with "using Reqnroll;".
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using NUnit.Framework;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using TechTalk.SpecFlow;
+
+namespace QaLab
+{
+    [Binding]
+    public class QaLabSteps
+    {
+        const string BaseUrl = __BASE__;
+        const string Host = __HOST__;
+        const string Missing = __MISSING__;
+        static readonly HttpClient Http = new HttpClient(new HttpClientHandler { AllowAutoRedirect = true }) { Timeout = TimeSpan.FromSeconds(30) };
+        static readonly HttpClient Raw = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(30) };
+        static IWebDriver driver;
+
+        static IWebDriver Driver
+        {
+            get
+            {
+                if (driver == null)
+                {
+                    var options = new ChromeOptions();
+                    options.AddArgument("--headless=new");
+                    driver = new ChromeDriver(options);
+                }
+                return driver;
+            }
+        }
+
+        static object Run(string script, params object[] args) => ((IJavaScriptExecutor)Driver).ExecuteScript(script, args);
+
+        static HttpResponseMessage Get(string url) => Http.GetAsync(url).GetAwaiter().GetResult();
+
+        static string Header(HttpResponseMessage res, string name)
+        {
+            if (res.Headers.TryGetValues(name, out var values)) return string.Join(", ", values);
+            if (res.Content.Headers.TryGetValues(name, out var content)) return string.Join(", ", content);
+            return "";
+        }
+
+        [AfterTestRun]
+        public static void Quit() => driver?.Quit();
+
+        [StepDefinition(@"^this case is run by a person with access the owner provides$")]
+        public void Manual() => Assert.Ignore("A person runs this case with access the owner provides.");
+
+        [StepDefinition(@"^the viewport is (\d+) by (\d+) pixels$")]
+        public void Viewport(int width, int height) => Driver.Manage().Window.Size = new System.Drawing.Size(width, height);
+
+        [StepDefinition(@"^the page ""([^""]*)"" is open$")]
+        public void OpenPage(string path) => Driver.Navigate().GoToUrl(BaseUrl + path);
+
+        [StepDefinition(@"^the page title is not empty$")]
+        public void TitleNotEmpty() => Assert.That(Driver.Title.Trim(), Is.Not.Empty);
+
+        [StepDefinition(@"^the count of ""([^""]*)"" elements is (exactly|at least|at most) (\d+)$")]
+        public void ElementCount(string selector, string op, int n)
+        {
+            var found = Driver.FindElements(By.CssSelector(selector)).Count;
+            var passed = op == "exactly" ? found == n : op == "at least" ? found >= n : found <= n;
+            Assert.That(passed, Is.True, selector + ": " + found);
+        }
+
+        [StepDefinition(@"^the ""([^""]*)"" element has a ""([^""]*)"" attribute$")]
+        public void HasAttribute(string selector, string attr)
+        {
+            var value = Driver.FindElement(By.CssSelector(selector)).GetAttribute(attr) ?? "";
+            Assert.That(value.Trim(), Is.Not.Empty, selector + " " + attr);
+        }
+
+        [StepDefinition(@"^the meta description is between (\d+) and (\d+) characters long$")]
+        public void MetaLength(int min, int max)
+        {
+            var description = Convert.ToString(Run("return (document.querySelector('meta[name=\"description\"]') || {}).content || '';")) ?? "";
+            Assert.That(description.Length, Is.InRange(min, max));
+        }
+
+        [StepDefinition(@"^the page does not scroll sideways$")]
+        public void NoSideways() => Assert.That(Convert.ToInt64(Run("return document.documentElement.scrollWidth - window.innerWidth;")), Is.LessThanOrEqualTo(1));
+
+        [StepDefinition(@"^the first (\d+) same-host links on the page resolve$")]
+        public void LinksResolve(int max)
+        {
+            var hrefs = (IReadOnlyCollection<object>)Run("return [...new Set([...document.querySelectorAll('a[href]')].map((a) => a.href.split('#')[0]).filter((h) => h.startsWith(arguments[0])))].slice(0, arguments[1]);", BaseUrl, max);
+            foreach (var href in hrefs) Assert.That((int)Get(href.ToString()).StatusCode, Is.LessThan(400), href.ToString());
+        }
+
+        [StepDefinition(@"^""([^""]*)"" answers with a status below 400$")]
+        public void Status(string path) => Assert.That((int)Get(BaseUrl + path).StatusCode, Is.LessThan(400), path);
+
+        [StepDefinition(@"^each of these paths answers with a status below 400:$")]
+        public void StatusAll(Table table)
+        {
+            foreach (var row in table.Rows) Assert.That((int)Get(BaseUrl + row["path"]).StatusCode, Is.LessThan(400), row["path"]);
+        }
+
+        [StepDefinition(@"^each of these paths has a page title:$")]
+        public void TitleAll(Table table)
+        {
+            foreach (var row in table.Rows)
+            {
+                Driver.Navigate().GoToUrl(BaseUrl + row["path"]);
+                Assert.That(Driver.Title.Trim(), Is.Not.Empty, row["path"]);
+            }
+        }
+
+        [StepDefinition(@"^""([^""]*)"" sends the ""([^""]*)"" header$")]
+        public void SendsHeader(string path, string header) => Assert.That(Header(Get(BaseUrl + path), header), Is.Not.Empty, header);
+
+        [StepDefinition(@"^the ""([^""]*)"" header of ""([^""]*)"" matches ""([^""]*)""$")]
+        public void HeaderMatches(string header, string path, string pattern) => Assert.That(Regex.IsMatch(Header(Get(BaseUrl + path), header), pattern, RegexOptions.IgnoreCase), Is.True, header);
+
+        [StepDefinition(@"^the ""([^""]*)"" header of ""([^""]*)"" shows no version number$")]
+        public void HeaderNoDigits(string header, string path) => Assert.That(Regex.IsMatch(Header(Get(BaseUrl + path), header), @"\d"), Is.False, header);
+
+        [StepDefinition(@"^plain http redirects to https$")]
+        public void HttpsRedirect()
+        {
+            var res = Raw.GetAsync("http://" + Host + "/").GetAwaiter().GetResult();
+            Assert.That(new[] { 301, 302, 307, 308 }, Does.Contain((int)res.StatusCode));
+            Assert.That(res.Headers.Location?.ToString() ?? "", Does.StartWith("https://"));
+        }
+
+        [StepDefinition(@"^an unknown path answers with 404 or 410$")]
+        public void NotFound() => Assert.That(new[] { 404, 410 }, Does.Contain((int)Get(BaseUrl + Missing).StatusCode));
+
+        [StepDefinition(@"^robots\.txt advertises a sitemap$")]
+        public void RobotsSitemap()
+        {
+            var text = Get(BaseUrl + "/robots.txt").Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            Assert.That(Regex.IsMatch(text, "^sitemap:", RegexOptions.IgnoreCase | RegexOptions.Multiline), Is.True);
+        }
+
+        [StepDefinition(@"^""([^""]*)"" answers within (\d+) ms and under (\d+) bytes$")]
+        public void Budget(string path, int ms, int bytes)
+        {
+            var watch = Stopwatch.StartNew();
+            var res = Get(BaseUrl + path);
+            var body = res.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+            watch.Stop();
+            Assert.That((int)res.StatusCode, Is.LessThan(400));
+            Assert.That(watch.ElapsedMilliseconds, Is.LessThan(ms));
+            Assert.That(body.Length, Is.LessThan(bytes));
+        }
+    }
+}
+`;
+
+  const SPECFLOW_PROJECT = String.raw`<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+    <PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
+    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.9.74" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.25.0" />
+  </ItemGroup>
+</Project>
+`;
+
+  const CALABASH_STEPS = String.raw`# __LINE__
+# Step definitions for a Calabash Android run. The app under test shows the site in a WebView.
+require "calabash-android/calabash_steps"
+
+BASE = __BASE__
+
+Given(/^this case is run by a person with access the owner provides$/) do
+  pending "A person runs this case with access the owner provides."
+end
+
+Given(/^the web view opens "([^"]*)"$/) do |path|
+  url = (BASE + path).gsub("'", "%27")
+  evaluate_javascript("webView", "window.location.href = '" + url + "'; return 'ok';")
+  sleep 3
+end
+
+Then(/^the page does not scroll sideways$/) do
+  overflow = evaluate_javascript("webView", "return String(document.documentElement.scrollWidth - window.innerWidth);").first.to_i
+  raise "The page scrolls sideways by #{overflow} px" if overflow > 1
+end
+
+Then(/^the main heading is visible when the page has one$/) do
+  headings = query("webView css:'h1'")
+  raise "The main heading is not visible" if headings.any? && headings.first["rect"]["width"].to_i.zero?
+end
+`;
+
   const LOAD = {
     baseline: { threads: 1, ramp: 1, seconds: 180, perThreadPerMinute: 60, note: "One request per second for three minutes." },
     ramp: { threads: 5, ramp: 120, seconds: 300, perThreadPerMinute: 60, note: "Ramp to five users over two minutes, then hold." },
@@ -610,6 +1482,86 @@
     return { cls, code: lines.join("\n") };
   }
 
+  function k6Key(item) {
+    return item.id.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  }
+
+  function k6Case(item, check, parts) {
+    const key = k6Key(item);
+    const isLoad = check.kind === "load";
+    let scenario;
+    let thresholds;
+    if (!isLoad) {
+      scenario = "{ executor: \"shared-iterations\", vus: 1, iterations: 1, exec: " + q(key) + " }";
+      thresholds = [["http_req_duration{scenario:" + key + "}", ["max<" + check.ms]], ["http_req_failed{scenario:" + key + "}", ["rate==0"]], ["checks{scenario:" + key + "}", ["rate==1"]]];
+    } else {
+      if (check.profile === "baseline") scenario = "{ executor: \"constant-arrival-rate\", rate: 1, timeUnit: \"1s\", duration: \"3m\", preAllocatedVUs: 2, maxVUs: 5, exec: " + q(key) + " }";
+      else if (check.profile === "ramp") scenario = "{ executor: \"ramping-arrival-rate\", startRate: 1, timeUnit: \"1s\", stages: [{ target: 5, duration: \"2m\" }, { target: 5, duration: \"3m\" }], preAllocatedVUs: 5, maxVUs: 10, exec: " + q(key) + " }";
+      else scenario = "{ executor: \"ramping-arrival-rate\", startRate: 0, timeUnit: \"1s\", stages: [{ target: 20, duration: \"5s\" }, { target: 20, duration: \"30s\" }], preAllocatedVUs: 20, maxVUs: 40, exec: " + q(key) + " }";
+      thresholds = [["http_req_failed{scenario:" + key + "}", ["rate<0.01"]], ["http_req_duration{scenario:" + key + "}", ["avg<1500"]]];
+    }
+    const fn = [
+      "// " + name(item),
+      "// " + parts.step,
+      "// Expected: " + parts.expected
+    ];
+    if (isLoad) fn.push("// " + LOAD[check.profile].note + " Starts only with OWNER_APPROVED=yes.");
+    fn.push("export function " + key + "() {");
+    if (isLoad) {
+      fn.push("  const res = http.get(BASE + " + q(check.path) + ");", "  check(res, { \"status below 400\": (r) => r.status < 400 });");
+    } else {
+      fn.push(
+        "  const res = http.get(BASE + " + q(check.path) + ", { responseType: \"binary\" });",
+        "  check(res, {",
+        "    \"status below 400\": (r) => r.status < 400,",
+        "    " + q("under " + check.ms + " ms") + ": (r) => r.timings.duration < " + check.ms + ",",
+        "    " + q("under " + check.bytes + " bytes") + ": (r) => r.body.byteLength < " + check.bytes + ",",
+        "  });"
+      );
+    }
+    fn.push("}");
+    return { key, isLoad, scenario, thresholds, fn: fn.join("\n") };
+  }
+
+  function k6Script(entries, ctx, sign) {
+    const mark = oneLine(sign && sign.mark);
+    const line = ctx.label + (mark ? " · " + mark : "");
+    const register = (entry) => ["scenarios." + entry.key + " = " + entry.scenario + ";"].concat(entry.thresholds.map((pair) => "thresholds[" + q(pair[0]) + "] = " + JSON.stringify(pair[1]) + ";"));
+    const budgets = entries.filter((entry) => !entry.isLoad);
+    const loads = entries.filter((entry) => entry.isLoad);
+    const lines = [
+      "// " + line,
+      "// Proposed from a public read. Runs with k6: k6 run qa-lab.js. Budget checks run once.",
+      "// Load scenarios start only with the site owner's written permission and an agreed window: k6 run -e OWNER_APPROVED=yes qa-lab.js",
+      "import http from \"k6/http\";",
+      "import { check } from \"k6\";",
+      "",
+      "const BASE = " + q(ctx.base) + ";",
+      "const APPROVED = __ENV.OWNER_APPROVED === \"yes\";",
+      "",
+      "const scenarios = {};",
+      "const thresholds = {};"
+    ];
+    budgets.forEach((entry) => lines.push(...register(entry)));
+    if (loads.length) {
+      lines.push("if (APPROVED) {");
+      loads.forEach((entry) => lines.push(indent(register(entry), "  ")));
+      lines.push("}");
+    }
+    lines.push(
+      "",
+      "export const options = { scenarios, thresholds };",
+      "",
+      "// Runs only when no scenario is enabled, so the script never starts load by accident.",
+      "export default function () {",
+      "  console.warn(\"No scenario enabled. Load scenarios need OWNER_APPROVED=yes and the owner's written permission.\");",
+      "}",
+      ""
+    );
+    entries.forEach((entry) => lines.push(entry.fn, ""));
+    return lines.join("\n");
+  }
+
   function frameworksFor(item, chosen) {
     const own = Array.isArray(item.fw) ? item.fw : (Array.isArray(item.frameworks) ? item.frameworks : []);
     const picked = Array.isArray(chosen) && chosen.length ? own.filter((fw) => chosen.indexOf(fw) !== -1) : own;
@@ -625,6 +1577,13 @@
     if (framework === "Appium") return appium(item, check, parts);
     if (framework === "JMeter") return jmeterGroup(item, check, ctx, parts);
     if (framework === "Gatling") return gatling(item, check, ctx, parts).code;
+    if (framework === "k6") return k6Script([k6Case(item, check, parts)], ctx, null);
+    if (RUNNERS[framework]) return jsRunner(framework, item, check, parts);
+    if (framework === "Selenide") return selenide(item, check, parts);
+    if (framework === "TestNG") return testng(item, check, parts);
+    if (framework === "Watir") return watir(item, check, parts);
+    if (framework === "Calabash") return calabash(item, check, parts);
+    if (GHERKIN_FW.indexOf(framework) !== -1) return gherkin(item, check, parts);
     return "";
   }
 
@@ -633,7 +1592,7 @@
     const check = checkFor(item, ctx);
     const parts = splitWhy(item.why);
     return frameworksFor(item, chosen)
-      .filter((framework) => (framework !== "JMeter" && framework !== "Gatling") || supports(framework, check))
+      .filter((framework) => LOAD_TOOLS.indexOf(framework) === -1 || supports(framework, check))
       .map((framework) => ({ framework, code: snippetFor(framework, item, check, ctx, parts) }));
   }
 
@@ -703,16 +1662,139 @@
         "*** Test Cases ***"
       ].join("\n");
     }
+    const consts = ["const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", ""];
+    const pageHooks = [
+      "let browser;",
+      "let page;",
+      "beforeAll(async () => { browser = await chromium.launch(); });",
+      "afterAll(async () => { await browser.close(); });",
+      "beforeEach(async () => { page = await browser.newPage(); });",
+      "afterEach(async () => { await page.close(); });",
+      ""
+    ];
+    if (framework === "Jest") {
+      return ["// " + line, "// Proposed from a public read. Runs with Jest and the Playwright library on Node 18 or later.", "const { chromium } = require(\"playwright\");", ""]
+        .concat(consts, ["jest.setTimeout(60000);"], pageHooks, ["describe(" + q(ctx.label) + ", () => {"]).join("\n");
+    }
+    if (framework === "Vitest") {
+      return ["// " + line, "// Proposed from a public read. Runs with Vitest and the Playwright library on Node 18 or later.", "import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from \"vitest\";", "import { chromium } from \"playwright\";", ""]
+        .concat(consts, ["vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });"], pageHooks, ["describe(" + q(ctx.label) + ", () => {"]).join("\n");
+    }
+    if (framework === "Mocha") {
+      return ["// " + line, "// Proposed from a public read. Runs with Mocha, node:assert, and the Playwright library on Node 18 or later.", "const assert = require(\"node:assert/strict\");", "const { chromium } = require(\"playwright\");", ""]
+        .concat(consts, pageHooks.map((hook) => hook.replace(/^beforeAll\(/, "before(").replace(/^afterAll\(/, "after(")), ["describe(" + q(ctx.label) + ", () => {"]).join("\n");
+    }
+    if (framework === "CodeceptJS") {
+      return ["// " + line, "// Proposed from a public read. Runs with CodeceptJS 3 and its Playwright helper on Node 18 or later.", "const assert = require(\"node:assert/strict\");", ""]
+        .concat(consts, ["Feature(" + q(ctx.label) + ");", ""]).join("\n");
+    }
+    const javaHttp = [
+      "  static final String BASE = " + q(ctx.base) + ";",
+      "  static final String HOST = " + q(ctx.host) + ";",
+      "  static final HttpClient HTTP = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();",
+      "  static final HttpClient RAW = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build();",
+      "",
+      "  static HttpRequest request(String url) {",
+      "    return HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(30)).build();",
+      "  }",
+      "",
+      "  static HttpResponse<byte[]> get(String url) throws Exception {",
+      "    return HTTP.send(request(url), HttpResponse.BodyHandlers.ofByteArray());",
+      "  }",
+      ""
+    ];
+    const javaImports = [
+      "import java.net.URI;",
+      "import java.net.http.HttpClient;",
+      "import java.net.http.HttpRequest;",
+      "import java.net.http.HttpResponse;",
+      "import java.nio.charset.StandardCharsets;",
+      "import java.time.Duration;",
+      "import java.util.List;",
+      "import java.util.Objects;",
+      "import java.util.regex.Pattern;"
+    ];
+    if (framework === "Selenide") {
+      return ["// " + javaDoc(line), "// Proposed from a public read. Runs with Selenide 7 and JUnit 5 on Java 17 or later.", "import static com.codeborne.selenide.Selenide.*;", "import static org.junit.jupiter.api.Assertions.assertTrue;", "", "import com.codeborne.selenide.Configuration;", "import com.codeborne.selenide.WebDriverRunner;"]
+        .concat(javaImports, ["import org.junit.jupiter.api.BeforeAll;", "import org.junit.jupiter.api.Disabled;", "import org.junit.jupiter.api.DisplayName;", "import org.junit.jupiter.api.Test;", "import org.openqa.selenium.Dimension;", "", "class QaLabSelenideTest {", ""], javaHttp, ["  @BeforeAll", "  static void setUp() {", "    Configuration.headless = true;", "  }", ""]).join("\n");
+    }
+    if (framework === "TestNG") {
+      return ["// " + javaDoc(line), "// Proposed from a public read. Runs with TestNG 7 and Selenium WebDriver 4 on Java 17 or later.", "import static org.testng.Assert.assertTrue;", ""]
+        .concat(javaImports, ["import org.openqa.selenium.By;", "import org.openqa.selenium.Dimension;", "import org.openqa.selenium.JavascriptExecutor;", "import org.openqa.selenium.WebDriver;", "import org.openqa.selenium.chrome.ChromeDriver;", "import org.openqa.selenium.chrome.ChromeOptions;", "import org.testng.annotations.AfterClass;", "import org.testng.annotations.BeforeClass;", "import org.testng.annotations.Test;", "", "public class QaLabTestNgTest {", ""], javaHttp, [
+          "  WebDriver driver;",
+          "",
+          "  @BeforeClass",
+          "  public void start() {",
+          "    ChromeOptions options = new ChromeOptions();",
+          "    options.addArguments(\"--headless=new\");",
+          "    driver = new ChromeDriver(options);",
+          "  }",
+          "",
+          "  @AfterClass(alwaysRun = true)",
+          "  public void stop() {",
+          "    if (driver != null) driver.quit();",
+          "  }",
+          ""
+        ]).join("\n");
+    }
+    if (framework === "Watir") {
+      return [
+        "# " + line,
+        "# Proposed from a public read. Runs with Watir 7 and RSpec on Ruby 3 or later.",
+        "require \"net/http\"",
+        "require \"uri\"",
+        "require \"watir\"",
+        "",
+        "BASE = " + rb(ctx.base),
+        "HOST = " + rb(ctx.host),
+        "",
+        "def http_get_raw(url)",
+        "  uri = URI(url)",
+        "  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == \"https\", open_timeout: 30, read_timeout: 30) do |http|",
+        "    http.request(Net::HTTP::Get.new(uri))",
+        "  end",
+        "end",
+        "",
+        "def http_get(url, hops = 5)",
+        "  res = http_get_raw(url)",
+        "  return res unless res.is_a?(Net::HTTPRedirection) && hops.positive?",
+        "  http_get(URI.join(url, res[\"location\"]).to_s, hops - 1)",
+        "end",
+        "",
+        "RSpec.describe " + rb(ctx.label) + " do",
+        "  before(:all) { @browser = Watir::Browser.new(:chrome, headless: true) }",
+        "  after(:all) { @browser&.close }",
+        ""
+      ].join("\n");
+    }
+    if (GHERKIN_FW.indexOf(framework) !== -1) {
+      const title = framework === "Calabash" ? ctx.label + " · mobile" : ctx.label;
+      return ["# " + line, "# Proposed from a public read. Review selectors and budgets before a run.", "Feature: " + title, ""].join("\n");
+    }
     return "";
   }
 
   function suite(framework, blocks, ctx, sign) {
-    if (framework === "Playwright" || framework === "Cypress" || framework === "WebdriverIO" || framework === "Appium") {
+    if (["Playwright", "Cypress", "WebdriverIO", "Appium", "Jest", "Vitest", "Mocha"].indexOf(framework) !== -1) {
       return header(framework, ctx, sign) + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\n});\n";
     }
     if (framework === "Selenium") return header(framework, ctx, sign) + blocks.join("\n\n");
     if (framework === "Robot") return header(framework, ctx, sign) + "\n" + blocks.join("\n\n") + "\n";
+    if (framework === "CodeceptJS") return header(framework, ctx, sign) + "\n" + blocks.join("\n\n") + "\n";
+    if (framework === "Selenide" || framework === "TestNG") return header(framework, ctx, sign) + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\n}\n";
+    if (framework === "Watir") return header(framework, ctx, sign) + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\nend\n";
+    if (GHERKIN_FW.indexOf(framework) !== -1) return header(framework, ctx, sign) + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\n";
     return "";
+  }
+
+  function companions(framework, ctx, sign) {
+    const mark = oneLine(sign && sign.mark);
+    const line = ctx.label + (mark ? " · " + mark : "");
+    if (framework === "Cucumber") return [{ path: "cucumber/features/step_definitions/qa_lab.steps.js", content: fill(CUCUMBER_STEPS, ctx, line) }];
+    if (framework === "Behave") return [{ path: "behave/features/steps/qa_lab_steps.py", content: fill(BEHAVE_STEPS, ctx, line) }, { path: "behave/features/environment.py", content: fill(BEHAVE_ENVIRONMENT, ctx, line) }];
+    if (framework === "SpecFlow") return [{ path: "specflow/Steps/QaLabSteps.cs", content: fill(SPECFLOW_STEPS, ctx, line) }, { path: "specflow/QaLab.Specs.csproj", content: SPECFLOW_PROJECT }];
+    if (framework === "Calabash") return [{ path: "calabash/features/step_definitions/qa_lab_steps.rb", content: fill(CALABASH_STEPS, ctx, line) }];
+    return [];
   }
 
   const FILES = {
@@ -721,8 +1803,20 @@
     Robot: "robot/qa_lab.robot",
     Selenium: "selenium/test_qa_lab.py",
     WebdriverIO: "webdriverio/test/specs/qa-lab.e2e.js",
+    CodeceptJS: "codeceptjs/qa_lab_test.js",
+    Selenide: "selenide/src/test/java/QaLabSelenideTest.java",
+    TestNG: "testng/src/test/java/QaLabTestNgTest.java",
+    Watir: "watir/spec/qa_lab_spec.rb",
+    Cucumber: "cucumber/features/qa-lab.feature",
+    Behave: "behave/features/qa_lab.feature",
+    SpecFlow: "specflow/Features/QaLab.feature",
+    Jest: "jest/qa-lab.test.js",
+    Vitest: "vitest/qa-lab.test.js",
+    Mocha: "mocha/test/qa-lab.spec.js",
     Appium: "appium/test/specs/qa-lab.mobile.e2e.js",
-    JMeter: "jmeter/qa-lab.jmx"
+    Calabash: "calabash/features/qa_lab_mobile.feature",
+    JMeter: "jmeter/qa-lab.jmx",
+    k6: "k6/qa-lab.js"
   };
 
   function readme(ctx, sign, used, counts) {
@@ -745,6 +1839,18 @@
       Robot: ["pip install robotframework robotframework-seleniumlibrary robotframework-requests", "robot robot/qa_lab.robot"],
       Selenium: ["pip install selenium pytest requests", "pytest selenium/test_qa_lab.py"],
       WebdriverIO: ["cd webdriverio && npm init wdio@latest . (Mocha framework, local Chrome)", "npx wdio run wdio.conf.js --spec test/specs/qa-lab.e2e.js"],
+      CodeceptJS: ["cd codeceptjs && npm init -y && npm i -D codeceptjs playwright", "npx codeceptjs init (Playwright helper, tests ./*_test.js)", "npx codeceptjs run"],
+      Selenide: ["Copy selenide/src into a Maven or Gradle project with com.codeborne:selenide 7 and org.junit.jupiter:junit-jupiter 5, on Java 17 or later.", "mvn test -Dtest=QaLabSelenideTest"],
+      TestNG: ["Copy testng/src into a Maven or Gradle project with org.testng:testng 7 and org.seleniumhq.selenium:selenium-java 4, on Java 17 or later.", "mvn test -Dtest=QaLabTestNgTest"],
+      Watir: ["gem install watir rspec", "rspec watir/spec/qa_lab_spec.rb"],
+      Cucumber: ["cd cucumber && npm init -y && npm i -D @cucumber/cucumber playwright", "npx playwright install chromium", "npx cucumber-js"],
+      Behave: ["pip install behave selenium requests", "cd behave && behave"],
+      SpecFlow: ["cd specflow && dotnet test", "SpecFlow reached end of life. To move to Reqnroll, swap the SpecFlow packages for Reqnroll.NUnit and replace \"using TechTalk.SpecFlow;\" with \"using Reqnroll;\"."],
+      Jest: ["cd jest && npm init -y && npm i -D jest playwright", "npx playwright install chromium", "npx jest"],
+      Vitest: ["cd vitest && npm init -y && npm i -D vitest playwright", "npx playwright install chromium", "npx vitest run"],
+      Mocha: ["cd mocha && npm init -y && npm i -D mocha playwright", "npx playwright install chromium", "npx mocha --timeout 60000"],
+      Calabash: ["Calabash is archived upstream and runs on older Android toolchains. Build a small test app whose main screen is a WebView, then:", "gem install calabash-android", "cd calabash && calabash-android run <your-webview-app>.apk"],
+      k6: ["Install k6: https://grafana.com/docs/k6/latest/set-up/install-k6/", "cd k6 && k6 run qa-lab.js", "Load scenarios start only with -e OWNER_APPROVED=yes. Add it only with the owner's written permission and an agreed window."],
       Appium: ["npm i -g appium && appium driver install uiautomator2", "Start an Android emulator with Chrome, then: cd appium && npm init wdio@latest . (Appium service, capabilities in the file header)", "npx wdio run wdio.conf.js --spec test/specs/qa-lab.mobile.e2e.js"],
       JMeter: ["Open jmeter/qa-lab.jmx in JMeter 5.6 or later. Load groups are disabled until the owner gives written permission.", "jmeter -n -t jmeter/qa-lab.jmx -l results.jtl"],
       Gatling: ["Copy gatling/*.java into src/test/java of a Gatling Maven project (Gatling 3.10 or later).", "mvn gatling:test -Dgatling.simulationClass=<ClassName>", "Load simulations refuse to start without -DownerApproved=yes. Add it only with the owner's written permission and an agreed window."]
@@ -764,11 +1870,15 @@
     const counts = {};
     const gatlingFiles = [];
     const jmeterGroups = [];
+    const k6Entries = [];
     (cases || []).forEach((item) => {
       const check = checkFor(item, ctx);
       const parts = splitWhy(item.why);
       frameworksFor(item, chosen).forEach((framework) => {
-        if (framework === "JMeter") {
+        if (framework === "k6") {
+          if (!supports("k6", check)) return;
+          k6Entries.push(k6Case(item, check, parts));
+        } else if (framework === "JMeter") {
           if (!supports("JMeter", check)) return;
           jmeterGroups.push(jmeterGroup(item, check, ctx, parts));
         } else if (framework === "Gatling") {
@@ -784,10 +1894,13 @@
     });
     const files = [];
     ORDER.forEach((framework) => {
-      if (blocks[framework] && blocks[framework].length) files.push({ path: FILES[framework], content: suite(framework, blocks[framework], ctx, sign) });
+      if (!blocks[framework] || !blocks[framework].length) return;
+      files.push({ path: FILES[framework], content: suite(framework, blocks[framework], ctx, sign) });
+      companions(framework, ctx, sign).forEach((file) => files.push(file));
     });
     if (jmeterGroups.length) files.push({ path: FILES.JMeter, content: jmeterPlan(jmeterGroups, ctx) });
     gatlingFiles.forEach((file) => files.push(file));
+    if (k6Entries.length) files.push({ path: FILES.k6, content: k6Script(k6Entries, ctx, sign) });
     const used = ORDER.filter((fw) => counts[fw]);
     files.unshift({ path: "README.md", content: readme(ctx, sign, used, counts) });
     return { files, frameworks: used };
