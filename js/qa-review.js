@@ -10,7 +10,16 @@
   const SITE_COUNTRY = { uk: "GB", gb: "GB", eu: "EU", de: "DE", fr: "FR", es: "ES", it: "IT", nl: "NL", pt: "PT", ie: "IE", be: "BE", at: "AT", se: "SE", pl: "PL", co: "CO", mx: "MX", br: "BR", ar: "AR", cl: "CL", pe: "PE", ca: "CA", au: "AU", nz: "NZ", in: "IN", jp: "JP", us: "US", za: "ZA" };
   const MARK = "QA-lab URL Review · Carlos Muñoz · https://carlosandmunoz.com · Preview copy · Not a certification";
   const PAID_LINE = "This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
-  const FRAMEWORKS = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "Appium", "JMeter", "Gatling"];
+  const FRAMEWORK_GROUPS = [
+    ["Browser", ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir"]],
+    ["Behavior-driven", ["Cucumber", "Behave", "SpecFlow"]],
+    ["JavaScript runners", ["Jest", "Vitest", "Mocha"]],
+    ["Mobile", ["Appium", "Calabash"]],
+    ["Load and performance", ["JMeter", "Gatling", "k6"]]
+  ];
+  const FRAMEWORKS = FRAMEWORK_GROUPS.reduce((all, group) => all.concat(group[1]), []);
+  const DEFAULT_FRAMEWORKS = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "Appium", "JMeter", "Gatling"];
+  const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
   const REASONS = [
     { id: "own", label: "I own this site and want a test plan" },
     { id: "client", label: "A client asked me to propose coverage before a release" },
@@ -84,8 +93,11 @@
 
   function paintFrameworks() {
     const box = document.getElementById("fw-picker");
-    box.innerHTML = FRAMEWORKS.map((name) =>
-      '<label><input type="checkbox" name="fw" value="' + name + '" checked disabled> ' + name + "</label>"
+    box.innerHTML = FRAMEWORK_GROUPS.map((group) =>
+      '<div class="fw-group" role="group" aria-label="' + group[0] + '"><span class="fw-group-name">' + group[0] + "</span>" +
+      group[1].map((name) =>
+        '<label><input type="checkbox" name="fw" value="' + name + '"' + (DEFAULT_FRAMEWORKS.includes(name) ? " checked" : "") + " disabled> " + name + "</label>"
+      ).join("") + "</div>"
     ).join("");
   }
 
@@ -376,14 +388,14 @@
     const boxes = document.querySelectorAll('#tools input[name="tool"]');
     if (boxes.length) return [...boxes].filter((box) => box.checked).map((box) => box.value);
     if (toolChoice) return [...toolChoice];
-    return ((current && current.report && current.report.tools) || []).map((item) => item.name);
+    return ((current && current.report && current.report.tools) || []).map((item) => item.name).filter((name) => TOOLS.includes(name));
   }
 
   function paintTools(report) {
     const block = document.getElementById("tool-block");
     const list = document.getElementById("tools");
     if (!block || !list) return;
-    const tools = report.tools || [];
+    const tools = (report.tools || []).filter((item) => TOOLS.includes(item.name));
     block.hidden = tools.length === 0;
     list.innerHTML = tools.map((item) => {
       const on = !toolChoice || toolChoice.has(item.name);
@@ -661,7 +673,7 @@
         if (name && extras.indexOf(name) === -1) extras.push(name);
       });
     });
-    const listed = new Set(["axe-core", "Lighthouse", "k6", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"]);
+    const listed = new Set(TOOLS.concat(FRAMEWORKS));
     const specialist = document.getElementById("specialist-tools");
     const otherTools = extras.filter((name) => !listed.has(name));
     if (specialist) {
@@ -1112,7 +1124,7 @@
       { selector: "#name", title: "Who is asking", body: "Name and email are required, and they are stored with the review. Changing them does not open a second completed review.", demoMs: 1500 },
       { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
       { selector: "#url-field", title: "The page", body: "Type the host and path. https:// is already in front of the box, so the review always asks for a public secure page.", demoMs: 1500 },
-      { selector: "#fw-picker", title: "Frameworks", body: "These names only filter the proposed cases. Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, and Gatling are not launched.", demoMs: 1600 },
+      { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
       { selector: "#review-btn", title: "Start the read", body: "Review checks the fields first. Then it reads public pages on that host and writes a line for each step.", demoMs: 1500 },
       { selector: "#run-log", title: "The log", body: "Watch the read here: the first page, robots.txt, and each linked page. The same lines are kept with the run.", demoMs: 1600 },
       { selector: "#stop-btn", title: "Stop", body: "Stop ends the read. Pages already saved stay in the report, and the record says the review was stopped.", demoMs: 1500 },
