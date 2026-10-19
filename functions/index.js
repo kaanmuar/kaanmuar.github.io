@@ -1636,14 +1636,14 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     return;
   }
   const hintedDevice = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-  const intake = await urlReview.screenIntake(req.body || {}, req.headers);
+  const free = await hasFreeRuns(req.body && req.body.email);
+  const intake = await urlReview.screenIntake(req.body || {}, req.headers, { trusted: free });
   if (!intake.ok) {
     res.status(intake.status || 400).json({ error: intake.error, fields: intake.fields || [] });
     return;
   }
   const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
   const ip = req.ip || "";
-  const free = await hasFreeRuns(intake.value.email);
   const decision = free
     ? { ok: true }
     : urlReview.judgeAttempts(await reviewRowsFor(deviceId, ip), { deviceId, ip }, intake.value);
