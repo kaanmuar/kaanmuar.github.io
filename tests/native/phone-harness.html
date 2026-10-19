@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Phone case harness · CV regression lab</title>
+    <style>
+        body { margin: 0; padding: 16px; font: 16px/1.4 system-ui, sans-serif; background: #f4f7f8; color: #17202a; display: flex; gap: 24px; align-items: flex-start; }
+        iframe { width: 390px; height: 844px; border: 1px solid #c8d1d8; border-radius: 18px; background: #fff; flex: none; }
+        #verdict { font-weight: 700; font-size: 20px; max-width: 36ch; }
+        #verdict.pass { color: #0d6e76; }
+        #verdict.fail { color: #b42318; }
+    </style>
+</head>
+<body>
+    <iframe id="phone" title="Phone-size page under test"></iframe>
+    <p id="verdict" role="status">WAIT</p>
+    <script>
+        (function () {
+            var params = new URLSearchParams(location.search);
+            var id = params.get('case') || '';
+            var page = params.get('page') || 'index.html';
+            var verdict = document.getElementById('verdict');
+            var frame = document.getElementById('phone');
+            function show(ok, message) {
+                verdict.className = ok ? 'pass' : 'fail';
+                verdict.textContent = (ok ? 'PASS ' : 'FAIL ') + id + (message ? ' · ' + message : '');
+            }
+            if (!/^[A-Z]+-\d+$/.test(id) || /^[a-z]+:|^\/\//i.test(page)) {
+                show(false, 'unknown case or page');
+                return;
+            }
+            sessionStorage.setItem('hasSeenTour', 'true');
+            sessionStorage.setItem('hasSeenStudioTour', 'true');
+            sessionStorage.setItem('hasSeenLabTour', 'true');
+            localStorage.setItem('qa-lab-fw-asked', '1');
+            localStorage.setItem('theme', 'light');
+            fetch('run-check.js', { cache: 'no-store' }).then(function (res) { return res.text(); }).then(function (body) {
+                frame.onload = function () {
+                    var win = frame.contentWindow;
+                    var src = new URL('../../js/catalog-checks.js', location.href).href;
+                    win.Function(body).call(win, src, id, function (message) {
+                        var text = String(message);
+                        if (text.indexOf('FAIL:') === 0) show(false, text.slice(5).trim());
+                        else show(true, text);
+                    });
+                };
+                frame.src = '../../' + page;
+            }).catch(function (err) {
+                show(false, 'run-check.js did not load: ' + (err && err.message ? err.message : err));
+            });
+        })();
+    </script>
+</body>
+</html>
