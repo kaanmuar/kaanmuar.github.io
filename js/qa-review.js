@@ -498,6 +498,99 @@
     document.getElementById("print-mark").textContent = "";
   }
 
+  const folds = [];
+
+  function fold(heading, nodes) {
+    if (!heading || !nodes.length) return;
+    const n = folds.length + 1;
+    const panel = document.createElement("div");
+    panel.className = "fold-panel";
+    panel.id = "fold-panel-" + n;
+    panel.setAttribute("role", "region");
+    nodes[0].parentNode.insertBefore(panel, nodes[0]);
+    nodes.forEach((node) => panel.appendChild(node));
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "fold-toggle";
+    button.id = "fold-toggle-" + n;
+    button.setAttribute("aria-expanded", "true");
+    button.setAttribute("aria-controls", panel.id);
+    const label = document.createElement("span");
+    while (heading.firstChild) label.appendChild(heading.firstChild);
+    const icon = document.createElement("span");
+    icon.className = "fold-icon";
+    icon.setAttribute("aria-hidden", "true");
+    button.append(label, icon);
+    heading.appendChild(button);
+    heading.classList.add("fold-head");
+    panel.setAttribute("aria-labelledby", button.id);
+    button.addEventListener("click", () => setFold(folds[n - 1], panel.hidden));
+    folds.push({ button, panel });
+  }
+
+  function setFold(item, open) {
+    item.panel.hidden = !open;
+    item.button.setAttribute("aria-expanded", String(open));
+    paintFoldAll();
+  }
+
+  function paintFoldAll() {
+    const all = document.getElementById("fold-all");
+    if (!all) return;
+    const anyOpen = folds.some((item) => !item.panel.hidden);
+    all.textContent = anyOpen ? "Collapse all" : "Expand all";
+    all.setAttribute("aria-expanded", String(anyOpen));
+  }
+
+  function followingUntilHeading(start) {
+    const nodes = [];
+    let node = start.nextElementSibling;
+    while (node && node.tagName !== "H2") {
+      nodes.push(node);
+      node = node.nextElementSibling;
+    }
+    return nodes;
+  }
+
+  function setupFolds() {
+    const report = document.getElementById("report");
+    const visuals = document.getElementById("report-visuals");
+    if (!report || !visuals) return;
+    const glance = document.createElement("h2");
+    glance.textContent = "At a glance";
+    report.insertBefore(glance, visuals);
+    const direct = [...report.children].filter((node) => node.tagName === "H2");
+    fold(glance, [visuals]);
+    report.querySelectorAll(".split > .card > h2").forEach((heading) => fold(heading, followingUntilHeading(heading)));
+    ["tool-block", "credential-run", "mentions-block"].forEach((id) => {
+      const heading = document.querySelector("#" + id + " > h2");
+      if (heading) fold(heading, followingUntilHeading(heading));
+    });
+    const alarmHead = document.querySelector("#alarm .alarm-head");
+    if (alarmHead) {
+      const rest = [];
+      for (let node = alarmHead.nextElementSibling; node; node = node.nextElementSibling) rest.push(node);
+      fold(alarmHead.querySelector("h2"), rest);
+    }
+    direct.filter((heading) => heading !== glance).forEach((heading) => fold(heading, followingUntilHeading(heading)));
+    const bar = document.createElement("div");
+    bar.className = "fold-bar no-print";
+    const all = document.createElement("button");
+    all.type = "button";
+    all.id = "fold-all";
+    all.className = "btn btn-ghost";
+    all.setAttribute("aria-controls", folds.map((item) => item.panel.id).join(" "));
+    all.addEventListener("click", () => {
+      const open = !folds.some((item) => !item.panel.hidden);
+      folds.forEach((item) => setFold(item, open));
+    });
+    bar.appendChild(all);
+    report.insertBefore(bar, glance);
+    paintFoldAll();
+  }
+
+  setupFolds();
+
   function render(payload) {
     const report = payload.report;
     if (!report) return;
@@ -1105,11 +1198,30 @@
     return (report && report.signature) || { mark: "", sha256: "", issuer: "QA-lab URL Review", origin: "https://carlosandmunoz.com", alg: "SHA-256" };
   }
 
+  function chosenFrameworks() {
+    return (current && current.frameworks && current.frameworks.length) ? current.frameworks : null;
+  }
+
+  function scriptsFor(report, item) {
+    if (!window.QAReviewScripts) return [];
+    try {
+      return QAReviewScripts.snippets(report, item, chosenFrameworks());
+    } catch (error) {
+      console.error("Script build failed for " + item.id, error);
+      return [];
+    }
+  }
+
+  function scriptText(scripts) {
+    return scripts.map((one) => "[" + one.framework + "]\n" + one.code).join("\n\n");
+  }
+
   function caseRows(report, layers) {
     const sign = signOf(report);
     return pickedCases(report, layers).map((item) => {
       const parts = splitWhy(item.why);
-      return { item, parts, frameworks: (item.frameworks || []).join(", "), sign };
+      const fw = item.fw || item.frameworks || [];
+      return { item, parts, fw, frameworks: fw.join(", "), scripts: scriptsFor(report, item), sign };
     });
   }
 
@@ -1117,6 +1229,12 @@
     const rows = caseRows(report, layers);
     const sign = signOf(report);
     const id = report.id || "report";
+    if (kind === "scripts") {
+      if (!window.QAReviewScripts) return;
+      const pack = QAReviewScripts.bundle(report, pickedCases(report, layers), chosenFrameworks());
+      download("qa-lab-scripts-" + id + ".zip", QAReviewScripts.zip(pack.files, "qa-lab-" + id), "application/zip");
+      return;
+    }
     if (kind === "json") {
       download("qa-lab-cases-" + id + ".json", JSON.stringify({
         signature: sign,
@@ -1128,7 +1246,8 @@
           title: row.item.title,
           step: row.parts.step,
           expected: row.parts.expected,
-          frameworks: row.item.frameworks || []
+          frameworks: row.fw,
+          scripts: row.scripts.reduce((all, one) => { all[one.framework] = one.code; return all; }, {})
         }))
       }, null, 2), "application/json");
       return;
@@ -1140,37 +1259,41 @@
         "SHA-256 " + sign.sha256,
         report.host + " · " + (report.fetchedAt || ""),
         ""
-      ].concat(rows.map((row) => [row.item.id + " · " + row.item.layer, row.item.title, row.parts.step, row.parts.expected, row.frameworks, ""].join("\n"))).join("\n");
+      ].concat(rows.map((row) => [row.item.id + " · " + row.item.layer, row.item.title, row.parts.step, row.parts.expected, row.frameworks].concat(row.scripts.length ? ["", scriptText(row.scripts)] : []).concat([""]).join("\n"))).join("\n");
       download("qa-lab-cases-" + id + ".txt", body, "text/plain");
       return;
     }
     if (kind === "pdf") {
       const host = document.getElementById("case-print");
       host.innerHTML = '<p class="report-kicker">QA-lab URL Review</p><h1>' + esc(report.host || "Test cases") + "</h1><p class=\"sign-line\">" + esc(sign.mark) + "</p><p>SHA-256 " + esc(sign.sha256) + "</p>" +
-        rows.map((row) => '<article><p class="case"><span class="id">' + esc(row.item.id) + "</span> " + esc(row.item.layer) + "</p><h2>" + esc(row.item.title) + "</h2><p>" + esc(row.parts.step) + "</p><p>" + esc(row.parts.expected) + "</p></article>").join("");
+        rows.map((row) => '<article><p class="case"><span class="id">' + esc(row.item.id) + "</span> " + esc(row.item.layer) + "</p><h2>" + esc(row.item.title) + "</h2><p>" + esc(row.parts.step) + "</p><p>" + esc(row.parts.expected) + "</p>" +
+          row.scripts.map((one) => '<p class="script-name">' + esc(one.framework) + "</p><pre>" + esc(one.code) + "</pre>").join("") + "</article>").join("");
       document.body.classList.add("printing-cases");
       registerCapture("case-print");
       window.print();
       return;
     }
+    const scriptCols = FRAMEWORKS.filter((fw) => rows.some((row) => row.scripts.some((one) => one.framework === fw)));
     const table = {
-      excel: ["ID", "Layer", "Title", "Step", "Expected result", "Frameworks", "QA-lab mark", "SHA-256"],
-      testrail: ["Title", "Section", "Template", "Type", "Priority", "Steps", "Expected Result", "References"],
-      xray: ["Issue Id", "Issue Type", "Summary", "Description", "Test Type", "Action", "Data", "Expected Result", "Labels"],
-      zephyr: ["Name", "Status", "Priority", "Objective", "Precondition", "Folder", "Labels", "Test Script (Step-by-Step) - Step", "Test Script (Step-by-Step) - Expected Result"],
+      excel: ["ID", "Layer", "Title", "Step", "Expected result", "Frameworks", "QA-lab mark", "SHA-256"].concat(scriptCols.map((fw) => fw + " script")),
+      testrail: ["Title", "Section", "Template", "Type", "Priority", "Steps", "Expected Result", "References", "Automation scripts"],
+      xray: ["Issue Id", "Issue Type", "Summary", "Description", "Test Type", "Action", "Data", "Expected Result", "Labels", "Automation scripts"],
+      zephyr: ["Name", "Status", "Priority", "Objective", "Precondition", "Folder", "Labels", "Test Script (Step-by-Step) - Step", "Test Script (Step-by-Step) - Expected Result", "Automation scripts"],
       jira: ["Issue Type", "Summary", "Description", "Priority", "Labels"],
-      azure: ["Work Item Type", "Title", "Test Step", "Step Action", "Step Expected", "Priority", "State", "Tags"],
+      azure: ["Work Item Type", "Title", "Test Step", "Step Action", "Step Expected", "Priority", "State", "Tags", "Automation scripts"],
       mantis: ["Summary", "Description", "Category", "Severity"]
     }[kind];
     const data = rows.map((row) => {
       const ref = sign.mark + " " + sign.sha256;
-      if (kind === "excel") return [row.item.id, row.item.layer, row.item.title, row.parts.step, row.parts.expected, row.frameworks, sign.mark, sign.sha256];
-      if (kind === "testrail") return [row.item.title, row.item.layer, "Test Case (Text)", "Other", "Medium", row.parts.step, row.parts.expected, ref];
-      if (kind === "xray") return [row.item.id, "Test", row.item.title, row.item.layer, "Manual", row.parts.step, "", row.parts.expected, ref];
-      if (kind === "zephyr") return [row.item.title, "Draft", "Normal", row.parts.expected, "Proposed from a public read. Not executed.", row.item.layer, ref, row.parts.step, row.parts.expected];
-      if (kind === "jira") return ["Task", row.item.title, row.item.id + " · " + row.item.layer + "\n" + row.parts.step + "\n" + row.parts.expected + "\n" + ref, "Medium", "QA-lab"];
-      if (kind === "azure") return ["Test Case", row.item.title, "1", row.parts.step, row.parts.expected, "2", "Design", ref];
-      return [row.item.title, row.item.id + " · " + row.parts.step + "\n" + row.parts.expected + "\n" + ref, "General", "minor"];
+      const code = scriptText(row.scripts);
+      const withCode = (text) => code ? text + "\n\nAutomation scripts\n" + code : text;
+      if (kind === "excel") return [row.item.id, row.item.layer, row.item.title, row.parts.step, row.parts.expected, row.frameworks, sign.mark, sign.sha256].concat(scriptCols.map((fw) => (row.scripts.find((one) => one.framework === fw) || { code: "" }).code));
+      if (kind === "testrail") return [row.item.title, row.item.layer, "Test Case (Text)", "Other", "Medium", row.parts.step, row.parts.expected, ref, code];
+      if (kind === "xray") return [row.item.id, "Test", row.item.title, row.item.layer, "Manual", row.parts.step, "", row.parts.expected, ref, code];
+      if (kind === "zephyr") return [row.item.title, "Draft", "Normal", row.parts.expected, "Proposed from a public read. Not executed.", row.item.layer, ref, row.parts.step, row.parts.expected, code];
+      if (kind === "jira") return ["Task", row.item.title, withCode(row.item.id + " · " + row.item.layer + "\n" + row.parts.step + "\n" + row.parts.expected + "\n" + ref), "Medium", "QA-lab"];
+      if (kind === "azure") return ["Test Case", row.item.title, "1", row.parts.step, row.parts.expected, "2", "Design", ref, code];
+      return [row.item.title, withCode(row.item.id + " · " + row.parts.step + "\n" + row.parts.expected + "\n" + ref), "General", "minor"];
     });
     const ext = kind === "excel" ? "csv" : "csv";
     download("qa-lab-" + kind + "-" + id + "." + ext, toCsv(table, data), "text/csv");
@@ -1284,6 +1407,7 @@
   });
 
   const FORMAT_CHOICES = [
+    ["scripts", "Automation scripts", "A ZIP with one suite per chosen framework, ready to edit and run"],
     ["excel", "Excel", "A CSV workbook Excel can open"],
     ["testrail", "TestRail", "CSV for a text test-case import"],
     ["xray", "Xray", "CSV of Test issues for Jira"],
