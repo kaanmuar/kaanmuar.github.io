@@ -7,6 +7,7 @@ const dns = require("dns").promises;
 const http = require("http");
 const https = require("https");
 const net = require("net");
+const zlib = require("zlib");
 const crypto = require("crypto");
 const { URL } = require("url");
 const insights = require("./url-review-insights");
@@ -632,6 +633,23 @@ async function assertPublic(hostname) {
   return records[0].address;
 }
 
+// Some servers compress the response even though the request sends no accept-encoding.
+function decodeBody(buffer, encoding) {
+  const kind = String(encoding || "").trim().toLowerCase();
+  const limit = { maxOutputLength: MAX_BYTES * 5 };
+  try {
+    if (kind === "gzip" || kind === "x-gzip") return zlib.gunzipSync(buffer, Object.assign({ finishFlush: zlib.constants.Z_SYNC_FLUSH }, limit)).toString("utf8");
+    if (kind === "deflate") {
+      try { return zlib.inflateSync(buffer, Object.assign({ finishFlush: zlib.constants.Z_SYNC_FLUSH }, limit)).toString("utf8"); }
+      catch (error) { return zlib.inflateRawSync(buffer, Object.assign({ finishFlush: zlib.constants.Z_SYNC_FLUSH }, limit)).toString("utf8"); }
+    }
+    if (kind === "br") return zlib.brotliDecompressSync(buffer, Object.assign({ finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH }, limit)).toString("utf8");
+  } catch (error) {
+    return "";
+  }
+  return buffer.toString("utf8");
+}
+
 function requestOnce(target, pinned, isStopped, keepPartial) {
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
@@ -682,13 +700,14 @@ function requestOnce(target, pinned, isStopped, keepPartial) {
         const peer = res.socket && res.socket.getPeerCertificate ? res.socket.getPeerCertificate() : null;
         if (peer && peer.valid_to) cert = { validTo: peer.valid_to, issuer: clean((peer.issuer && (peer.issuer.O || peer.issuer.CN)) || "", 80) };
       } catch (error) { cert = null; }
+      const encoding = res.headers["content-encoding"];
       res.on("data", (chunk) => {
         size += chunk.length;
         if (size > MAX_BYTES) {
           if (keepPartial) {
             chunks.push(chunk.subarray(0, chunk.length - (size - MAX_BYTES)));
             req.destroy();
-            finish(resolve, { status: res.statusCode || 0, headers: res.headers, body: Buffer.concat(chunks).toString("utf8"), cert, truncated: true });
+            finish(resolve, { status: res.statusCode || 0, headers: res.headers, body: decodeBody(Buffer.concat(chunks), encoding), cert, truncated: true });
             return;
           }
           failed = new Error("The page is larger than the review limit.");
@@ -699,7 +718,7 @@ function requestOnce(target, pinned, isStopped, keepPartial) {
       });
       res.on("end", () => {
         if (failed) finish(reject, failed);
-        else finish(resolve, { status: res.statusCode || 0, headers: res.headers, body: Buffer.concat(chunks).toString("utf8"), cert });
+        else finish(resolve, { status: res.statusCode || 0, headers: res.headers, body: decodeBody(Buffer.concat(chunks), encoding), cert });
       });
       res.on("error", (error) => finish(reject, error));
     });
@@ -2582,6 +2601,7 @@ async function pageSpeed(url, key) {
 }
 
 module.exports = {
+  decodeBody,
   compareRuns,
   testKeyMatches,
   pageSpeed,
