@@ -751,7 +751,8 @@ const server = http.createServer(async (req, res) => {
       log: (text) => line(res, { type: "log", text }),
       stopped: () => run.stopped,
       maxPages: intake.value.pages,
-      maxDepth: intake.value.depth
+      maxDepth: intake.value.depth,
+      browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined
     });
     const record = core.intakeRecord(intake.value, report, {
       ip: identity.ip,

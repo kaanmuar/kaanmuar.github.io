@@ -39,9 +39,10 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 ## What a review names
 
 Frameworks (20): browser: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir. Behavior-driven: Cucumber, Behave, Reqnroll. JavaScript runners: Jest, Vitest, Mocha. Mobile: Appium, Maestro. Load and performance: JMeter, Gatling, k6.
-Tools, only when they apply, and never launched: axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, Copado.
+axe-core runs in the review's headless browser. Named only when they apply, and never launched: Lighthouse, BrowserStack, Applitools, Percy, Provar, Copado.
 Kinds of cases (21): Functional, Content, Links, Accessibility, Security, Privacy, SEO, GEO, Performance, Load, Mobile, Internationalization, Resilience, Compatibility, Media, Analytics, Commerce, Forms, Visual, Platform, API.
 Every report scores six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with evidence, a fix, and an effort estimate. The report also shows a Google result preview, a share-card preview, an AI crawler matrix from robots.txt, a map of the pages read, and a fix-first list.
+A headless Chromium visit from an EU address (Belgium) loads the start page and up to two linked pages. It records which tracking requests and cookies appear before a cookie choice and after Reject, runs axe-core against WCAG 2.2 AA, compares the HTML text with the rendered text, checks a 390 px phone width, measures lab paint and layout shift, and keeps a desktop and a phone screenshot. Its only click is the banner's reject button.
 The report can also list technologies, pages read, public signals, and public write-ups. Secrets are not copied. A missing header is not proof of a break-in.
 Cases are written for each chosen framework. The case export carries a starting script per framework; the review never runs them.
 The script ZIP also holds a GitHub Actions workflow for the chosen frameworks and a fix kit: security headers for common hosts, a Report-Only content security policy, structured data, llms.txt, and security.txt drafts, and DNS records.
