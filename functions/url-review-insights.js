@@ -506,15 +506,15 @@ function analyze(input) {
   if (answerBlocked.length) {
     add("GEO", "fail", "high", "geo-crawlers", plural(answerBlocked.length, "AI answer or search crawler is", "AI answer or search crawlers are") + " blocked",
       answerBlocked.map((bot) => bot.token + " (" + bot.product + ")" + (bot.rule ? " by " + bot.rule : "")).slice(0, 5).join(", ") + ". These bots fetch pages to cite them in answers. Blocked means the site is not quoted there.",
-      "Allow the answer bots in robots.txt. Training bots can stay blocked if that is the policy.", { count: answerBlocked.length, effort: "minutes" });
+      "Allow the answer bots in robots.txt. Training bots can stay blocked if that is the policy.", { cases: ["GEO-01"], count: answerBlocked.length, effort: "minutes" });
   } else {
     add("GEO", "pass", "info", "geo-crawlers", "AI answer and search crawlers may read the start page",
-      robots.groups.length ? "robots.txt does not block ChatGPT search, Claude, Perplexity, Google, or Bing at the root." : "No robots.txt rules were found, so every crawler is allowed by default.", "");
+      robots.groups.length ? "robots.txt does not block ChatGPT search, Claude, Perplexity, Google, or Bing at the root." : "No robots.txt rules were found, so every crawler is allowed by default.", "", { cases: ["GEO-01"] });
   }
   if (partly.length) {
     add("GEO", "risk", "medium", "geo-crawlers-partial", "Some pages are closed to AI answer crawlers",
       partly.slice(0, 4).map((bot) => bot.token + " cannot read " + plural(bot.blockedPages, "page")).join(", ") + ".",
-      "Check that the closed paths are meant to stay out of AI answers.", { count: partly.length, effort: "minutes" });
+      "Check that the closed paths are meant to stay out of AI answers.", { cases: ["GEO-01"], count: partly.length, effort: "minutes" });
   }
   if (trainingBlocked.length) {
     add("GEO", "pass", "info", "geo-training", "Model-training crawlers are blocked by choice",
@@ -525,13 +525,13 @@ function analyze(input) {
   if ((homeText.chars || 0) < 300) {
     add("GEO", "fail", "high", "geo-js-only", "AI crawlers see an almost empty start page",
       "The HTML carries " + (homeText.chars || 0) + " characters of readable text" + (appShell ? " and an empty app root, so the content is drawn by JavaScript" : "") + ". Most AI crawlers do not run JavaScript.",
-      "Render the main content on the server or pre-render it at build time.", { effort: "days" });
+      "Render the main content on the server or pre-render it at build time.", { cases: ["GEO-03", "CMP-01"], effort: "days" });
   } else if ((homeText.chars || 0) < 900) {
     add("GEO", "risk", "medium", "geo-js-only", "AI crawlers see little text on the start page",
       "The HTML carries " + homeText.chars + " characters of readable text. AI answers quote what they can read without scripts.",
-      "Put the key facts (what, who, where, price, contact) in plain HTML text.", { effort: "hours" });
+      "Put the key facts (what, who, where, price, contact) in plain HTML text.", { cases: ["GEO-03", "CMP-01"], effort: "hours" });
   } else {
-    add("GEO", "pass", "info", "geo-js-only", "The start page reads well without JavaScript", homeText.chars + " characters of text are in the HTML.", "");
+    add("GEO", "pass", "info", "geo-js-only", "The start page reads well without JavaScript", homeText.chars + " characters of text are in the HTML.", "", { cases: ["GEO-03", "CMP-01"] });
   }
   const llms = extras.llms || {};
   const llmsReport = { status: llms.status || 0, ok: false, title: "", summary: "", sections: 0, links: 0, full: !!(extras.llmsFull && extras.llmsFull.status === 200 && !extras.llmsFull.html) };
@@ -550,53 +550,60 @@ function analyze(input) {
     llmsReport.complete = !gaps.length;
     add("GEO", gaps.length ? "risk" : "pass", "low", "geo-llms", gaps.length ? "llms.txt exists but lacks " + gaps.join(" and ") : "llms.txt is published",
       "/llms.txt has " + plural(llmsReport.sections, "section") + " and " + plural(llmsReport.links || llmsReport.bareLinks || 0, "link") + (llmsReport.full ? ", and /llms-full.txt is present." : "."),
-      gaps.length ? "Follow the llmstxt.org layout: # name, > summary, then ## sections of [title](url): note." : "", { effort: "minutes" });
+      gaps.length ? "Follow the llmstxt.org layout: # name, > summary, then ## sections of [title](url): note." : "", { cases: ["GEO-02"], effort: "minutes" });
   } else if (llms.status === 200 && llms.html) {
     add("GEO", "risk", "low", "geo-llms", "/llms.txt answers with an HTML page", "The address returns a web page, which usually means a catch-all route.",
-      "Serve a plain-text /llms.txt. The fix kit has a draft built from this read.", { effort: "minutes" });
+      "Serve a plain-text /llms.txt. The fix kit has a draft built from this read.", { cases: ["GEO-02"], effort: "minutes" });
   } else {
     add("GEO", "risk", "low", "geo-llms", "No llms.txt was found", "/llms.txt returned " + (llms.status || "nothing") + ". It is a proposed convention that some AI tools read to find the pages that matter.",
-      "Publish /llms.txt. The fix kit has a draft built from this read.", { effort: "minutes" });
+      "Publish /llms.txt. The fix kit has a draft built from this read.", { cases: ["GEO-02"], effort: "minutes" });
   }
   const homeSchema = (face.schema && face.schema.items) || [];
   const allItems = [].concat.apply([], read.map((page) => (page.inspect.schema && page.inspect.schema.items) || []));
-  const entity = homeSchema.find((item) => (item.types || []).some((type) => /^(Organization|Corporation|LocalBusiness|Person|NGO|EducationalOrganization|Store|Restaurant|ProfessionalService)$/.test(type)))
-    || allItems.find((item) => (item.types || []).some((type) => /^(Organization|LocalBusiness|Person)$/.test(type)));
+  const ENTITY = /^(\w*Organization|Corporation|LocalBusiness|Person|NGO|Store|Restaurant|ProfessionalService|OnlineBusiness)$/;
+  const isEntity = (item) => (item.types || []).some((type) => ENTITY.test(type));
+  const entityPage = homeSchema.some(isEntity) ? home : read.find((page) => ((page.inspect.schema && page.inspect.schema.items) || []).some(isEntity));
+  const entity = entityPage ? ((entityPage.inspect.schema && entityPage.inspect.schema.items) || []).find(isEntity) : null;
   const socialLinks = face.socialLinks || [];
   if (entity) {
     const missing = ["name", "url", ["logo", "image"], "sameAs"].filter((prop) => Array.isArray(prop) ? !prop.some((one) => entity.props.indexOf(one) !== -1) : entity.props.indexOf(prop) === -1)
       .map((prop) => Array.isArray(prop) ? prop.join(" or ") : prop);
     const unlisted = socialLinks.filter((link) => (entity.sameAs || []).map(normal).indexOf(normal(link)) === -1);
     if (missing.length || unlisted.length) {
+      add("GEO", "pass", "info", "geo-entity-present", "A " + entity.types[0] + " entity names who is behind the site", "It is published on " + pathOf(entityPage.url) + ".", "", { cases: ["GEO-04"] });
       add("GEO", "risk", "low", "geo-entity", "The " + entity.types[0] + " entity is incomplete",
         (missing.length ? "It lacks " + missing.join(", ") + ". " : "") + (unlisted.length ? plural(unlisted.length, "profile linked on the page is", "profiles linked on the page are") + " not in sameAs (" + sample(unlisted.map(hostOf), 3) + ")." : ""),
         "Complete the entity so AI answers connect the brand to its profiles. The fix kit has a draft.", { effort: "minutes" });
     } else {
-      add("GEO", "pass", "info", "geo-entity", "The " + entity.types[0] + " entity is complete", "name, url, image, and sameAs are present.", "");
+      add("GEO", "pass", "info", "geo-entity", "The " + entity.types[0] + " entity is complete", "name, url, image, and sameAs are present.", "", { cases: ["GEO-04"] });
     }
   } else {
     add("GEO", "risk", "medium", "geo-entity", "No Organization or Person entity describes who is behind the site",
       "AI answers lean on this to name the brand, its logo, and its profiles." + (socialLinks.length ? " The page links " + plural(socialLinks.length, "profile") + " that could go in sameAs." : ""),
-      "Add Organization (or Person) JSON-LD with name, url, logo, and sameAs. The fix kit has a draft.", { effort: "minutes" });
+      "Add Organization (or Person) JSON-LD with name, url, logo, and sameAs. The fix kit has a draft.", { cases: ["GEO-04"], effort: "minutes" });
   }
   const questionHeads = read.reduce((sum, page) => sum + (page.inspect.questionHeadings || 0), 0);
+  const answerPage = read.find((page) => (page.inspect.questionHeadings || 0) > 0 || ((page.inspect.schema && page.inspect.schema.items) || []).some((item) => (item.types || []).some((type) => /^(FAQPage|QAPage)$/.test(type))));
   const faq = schemaTypes.has("FAQPage") || schemaTypes.has("QAPage") || schemaTypes.has("HowTo");
   if (questionHeads || faq) {
     add("GEO", "pass", "info", "geo-answers", "Some content is shaped as questions and answers",
-      (faq ? "FAQ or HowTo structured data is present. " : "") + (questionHeads ? plural(questionHeads, "heading is", "headings are") + " phrased as a question." : ""), "");
+      (faq ? "FAQ or HowTo structured data is present. " : "") + (questionHeads ? plural(questionHeads, "heading is", "headings are") + " phrased as a question." : ""), "", { cases: ["GEO-05"] });
   } else {
     add("GEO", "risk", "low", "geo-answers", "No content is shaped as questions and answers",
       "No heading on the pages read is a question and no FAQ data was found. AI answers favour short, direct answers under a question.",
-      "Add an FAQ block with the questions customers ask, answered in two or three sentences each.", { effort: "hours" });
+      "Add an FAQ block with the questions customers ask, answered in two or three sentences each.", { cases: ["GEO-05"], effort: "hours" });
   }
-  const dated = read.some((page) => page.inspect.dated) || allItems.some((item) => item.props.indexOf("dateModified") !== -1 || item.props.indexOf("datePublished") !== -1);
+  const itemsOf = (page) => (page.inspect.schema && page.inspect.schema.items) || [];
+  const datedPage = read.find((page) => page.inspect.dated || itemsOf(page).some((item) => item.props.indexOf("dateModified") !== -1 || item.props.indexOf("datePublished") !== -1));
+  const dated = !!datedPage;
   const authored = read.some((page) => page.inspect.author) || allItems.some((item) => item.props.indexOf("author") !== -1);
   if (!dated || !authored) {
+    if (dated) add("GEO", "pass", "info", "geo-dated", "Pages show when they were published or changed", "A date was found on " + pathOf(datedPage.url) + ".", "", { cases: ["GEO-06"] });
     add("GEO", "risk", "low", "geo-trust", "Pages do not say " + [!authored ? "who wrote them" : "", !dated ? "when they were updated" : ""].filter(Boolean).join(" or "),
       "Author and date signals help search engines and AI answers judge whether a page is current and credible.",
-      "Show an author and a last-updated date on content pages, and add them to the JSON-LD.", { effort: "hours" });
+      "Show an author and a last-updated date on content pages, and add them to the JSON-LD.", { cases: dated ? [] : ["GEO-06"], effort: "hours" });
   } else {
-    add("GEO", "pass", "info", "geo-trust", "Pages carry author and date signals", "An author and a published or modified date were found.", "");
+    add("GEO", "pass", "info", "geo-trust", "Pages carry author and date signals", "An author and a published or modified date were found.", "", { cases: ["GEO-06"] });
   }
   const noai = read.filter((page) => /noai|noimageai/i.test([page.inspect.seo && page.inspect.seo.robots, page.inspect.seo && page.inspect.seo.xRobots].join(",")));
   if (noai.length) {
@@ -902,7 +909,10 @@ function analyze(input) {
     aiView: { text: (homeText.text || "").slice(0, 1600), chars: homeText.chars || 0, words: homeText.words || 0, outline: (homeText.outline || []).slice(0, 24), appShell },
     entity: entity ? { type: entity.types[0], props: entity.props.slice(0, 20), sameAs: (entity.sameAs || []).slice(0, 10) } : null,
     schemaTypes: [...schemaTypes].slice(0, 20),
-    questionHeadings: questionHeads
+    questionHeadings: questionHeads,
+    entityPath: entityPage ? pathOf(entityPage.url) : "",
+    answerPath: answerPage ? pathOf(answerPage.url) : "",
+    datedPath: datedPage ? pathOf(datedPage.url) : ""
   };
   const seo = {
     indexability: indexability.slice(0, 100),
