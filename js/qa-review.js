@@ -426,8 +426,11 @@
     const asked = payload.reasonCode === "credentials";
     box.hidden = !asked;
     if (!asked) return;
-    const open = credentialOpen(report.id);
-    document.getElementById("credential-run-copy").textContent = open
+    const free = payload.free === true;
+    const open = free || credentialOpen(report.id);
+    document.getElementById("credential-run-copy").textContent = free
+      ? "The signed-in run is included for this address. This page still does not take the password. Ask for the run at qa@carlosandmunoz.com when you are ready to share the login through a channel QA-lab names."
+      : open
       ? "Payment for the signed-in run is confirmed on this browser. This page still does not take the password. Ask for the run at qa@carlosandmunoz.com when you are ready to share the login through a channel QA-lab names."
       : "This page does not take the password. The signed-in run waits until it is paid. The amount is shown then.";
     document.getElementById("credential-open").hidden = open;
@@ -1257,6 +1260,11 @@
     const error = document.getElementById("case-export-error");
     if (!layers.length) {
       error.textContent = "Choose at least one kind.";
+      return;
+    }
+    if (current && current.free === true) {
+      caseExport.hidden = true;
+      openCaseFormats({ report: current.report, layers });
       return;
     }
     try {

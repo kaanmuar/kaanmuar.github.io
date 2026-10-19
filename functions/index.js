@@ -1615,7 +1615,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     const data = snap.data() || {};
-    if (!data.paid) {
+    const free = data.free === true || await hasFreeRuns(data.email);
+    if (!data.paid && !free) {
       let priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] };
       try { priced = urlReview.priceFor(data.frameworks || []); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] }; }
       res.status(402).json({
@@ -1628,7 +1629,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       });
       return;
     }
-    res.status(200).json({ report: data.report || null, frameworks: data.frameworks || [], paid: true });
+    res.status(200).json({ report: data.report || null, frameworks: data.frameworks || [], paid: true, free });
     return;
   }
   if (req.method !== "POST") {
@@ -1737,7 +1738,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     await mailReviewedSites(ip, record);
-    writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
+    writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
     res.end();
   } catch (error) {
     console.error("URL review failed:", error);
