@@ -1,45 +1,49 @@
 # QA-lab URL Review
 
+> Reads one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases written for 20 frameworks.
+
 QA-lab URL Review reads one public https address and proposes test cases. It does not run those cases, sign in, submit a form, or generate load. It is not a certification.
 
 The operator is a natural person domiciled in Colombia. Contact is the form on https://carlosandmunoz.com/ and qa@carlosandmunoz.com.
 ## Pages
 
-- Review: https://carlosandmunoz.com/qa-review.html
-- Review, Spanish headline: https://carlosandmunoz.com/qa-review-es.html
-- Review, Portuguese headline: https://carlosandmunoz.com/qa-review-pt.html
-- Review, German headline: https://carlosandmunoz.com/qa-review-de.html
-- Review, French headline: https://carlosandmunoz.com/qa-review-fr.html
-- Review, Italian headline: https://carlosandmunoz.com/qa-review-it.html
-- Facts: https://carlosandmunoz.com/qa-review.html#service-facts
-- Disclaimers: https://carlosandmunoz.com/qa-review-legal.html
+- [Review](https://carlosandmunoz.com/qa-review.html)
+- [Review, Spanish headline](https://carlosandmunoz.com/qa-review-es.html)
+- [Review, Portuguese headline](https://carlosandmunoz.com/qa-review-pt.html)
+- [Review, German headline](https://carlosandmunoz.com/qa-review-de.html)
+- [Review, French headline](https://carlosandmunoz.com/qa-review-fr.html)
+- [Review, Italian headline](https://carlosandmunoz.com/qa-review-it.html)
+- [Facts](https://carlosandmunoz.com/qa-review.html#service-facts)
+- [Disclaimers](https://carlosandmunoz.com/qa-review-legal.html)
 - Languages: English, Spanish, Portuguese, German, French, Italian.
 
 ## Elsewhere
 
-- YouTube: https://www.youtube.com/@qalaburlreview
-- X: https://x.com/qalaburlreview
-- LinkedIn: https://www.linkedin.com/company/qalab-url-review
-- TikTok: https://www.tiktok.com/@qalaburlreview
-- DEV: https://dev.to/qalaburlreview
-- Reddit: https://www.reddit.com/user/qalaburlreview/
+- [YouTube](https://www.youtube.com/@qalaburlreview)
+- [X](https://x.com/qalaburlreview)
+- [LinkedIn](https://www.linkedin.com/company/qalab-url-review)
+- [TikTok](https://www.tiktok.com/@qalaburlreview)
+- [DEV](https://dev.to/qalaburlreview)
+- [Reddit](https://www.reddit.com/user/qalaburlreview/)
 
 ## Films
 
-- A tactical read (English): https://www.youtube.com/watch?v=jW4T-qQK01E
-- The included first read (English): https://www.youtube.com/watch?v=OKvR95YHAng
-- Una lectura táctica (Spanish): https://www.youtube.com/watch?v=Cenj3l_0osA
-- Uma leitura tática (Portuguese): https://www.youtube.com/watch?v=GwLZ1WuLSpU
-- Eine taktische Lesung (German): https://www.youtube.com/watch?v=AMIO6n_6Ok8
-- La première lecture (French): https://www.youtube.com/watch?v=JpyBMIeXTL0
-- La prima lettura (Italian): https://www.youtube.com/watch?v=MiXooYDM-Uo
+- [A tactical read (English)](https://www.youtube.com/watch?v=jW4T-qQK01E)
+- [The included first read (English)](https://www.youtube.com/watch?v=OKvR95YHAng)
+- [Una lectura táctica (Spanish)](https://www.youtube.com/watch?v=Cenj3l_0osA)
+- [Uma leitura tática (Portuguese)](https://www.youtube.com/watch?v=GwLZ1WuLSpU)
+- [Eine taktische Lesung (German)](https://www.youtube.com/watch?v=AMIO6n_6Ok8)
+- [La première lecture (French)](https://www.youtube.com/watch?v=JpyBMIeXTL0)
+- [La prima lettura (Italian)](https://www.youtube.com/watch?v=MiXooYDM-Uo)
 
 ## What a review names
 
 Frameworks (20): browser: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir. Behavior-driven: Cucumber, Behave, Reqnroll. JavaScript runners: Jest, Vitest, Mocha. Mobile: Appium, Maestro. Load and performance: JMeter, Gatling, k6.
 Tools, only when they apply, and never launched: axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, Copado.
+Every report scores six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with evidence, a fix, and an effort estimate. The report also shows a Google result preview, a share-card preview, an AI crawler matrix from robots.txt, a map of the pages read, and a fix-first list.
 The report can also list technologies, pages read, public signals, and public write-ups. Secrets are not copied. A missing header is not proof of a break-in.
 Cases are written for each chosen framework. The case export carries a starting script per framework; the review never runs them.
+The script ZIP also holds a GitHub Actions workflow for the chosen frameworks and a fix kit: security headers for common hosts, a Report-Only content security policy, structured data, llms.txt, and security.txt drafts, and DNS records.
 Case exports: automation scripts (ZIP, one suite per framework), Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, PDF.
 
 ## Price

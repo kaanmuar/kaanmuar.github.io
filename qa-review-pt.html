@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <title>A página já está falando. · QA-lab URL Review</title>
     <meta name="description" content="QA-lab URL Review lê uma página https pública e propõe casos de teste, com scripts iniciais, para Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling e k6. Nomeia axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar e Copado quando se aplicam. Não os executa. A página pode ser lida em inglês, espanhol, português, alemão, francês e italiano.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
@@ -59,9 +59,16 @@
                 "featureList": [
                     "Public https read of a site",
                     "Technology and linked-page summary",
+                    "Health score from 0 to 100 across SEO, GEO, analytics, security, accessibility, and performance",
+                    "Every check marked fails now, at risk, passes, or needs a person, with evidence, a fix, and a fix-first rank",
+                    "Google result and share-card previews",
+                    "AI crawler access matrix and the text AI search sees without JavaScript",
+                    "Analytics tag, consent, and campaign-link checks",
+                    "Interactive map of the pages read",
                     "Proposed cases in 20 kinds",
                     "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6",
                     "Starting automation scripts for every chosen framework",
+                    "GitHub Actions workflow and a fix kit with header files, a Report-Only CSP, and structured data, llms.txt, security.txt, and DNS drafts",
                     "axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado named when they apply",
                     "Public signals and public write-ups",
                     "Live review log and a stop control",
@@ -385,6 +392,95 @@
         .advice strong { display: block; margin-bottom: 4px; }
         .case-note { font-size: 13px; }
         .case-fade { filter: blur(var(--fade, 3px)); opacity: .72; user-select: none; }
+        .health { display: grid; grid-template-columns: 210px 1fr; gap: 20px; align-items: center; }
+        .ring { position: relative; width: 196px; height: 196px; }
+        .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .ring circle { fill: none; stroke-width: 14; }
+        .ring .ring-track { stroke: var(--panel-2); }
+        .ring .ring-value { stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+        .ring b { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; font-family: "Source Serif 4", Georgia, serif; font-size: 3.4rem; line-height: 1; }
+        .ring b small { display: block; font-family: inherit; font-size: 11px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 8px; }
+        .grade { display: inline-grid; place-content: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 9px; font-weight: 700; color: #fff; font-size: 15px; }
+        .grade-A { background: var(--green); } .grade-B { background: color-mix(in srgb, var(--green) 60%, var(--amber)); } .grade-C { background: var(--amber); } .grade-D { background: color-mix(in srgb, var(--amber) 45%, var(--red)); } .grade-F { background: var(--red); }
+        .health-summary { font-size: 1.05rem; margin: 0 0 8px; }
+        .verdict-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+        .vchip { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12px; background: var(--card); }
+        .vchip b { font-size: 14px; margin-right: 4px; }
+        .v-fail { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
+        .v-risk { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
+        .v-pass { color: var(--green); border-color: color-mix(in srgb, var(--green) 45%, var(--line)); }
+        .v-person { color: var(--muted); }
+        .areas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+        .area { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); text-align: left; font: inherit; color: inherit; cursor: pointer; }
+        .area:hover, .area:focus-visible { border-color: var(--cyan); }
+        .area-score { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .area-score b { font-size: 1.35rem; font-family: "Source Serif 4", Georgia, serif; }
+        .area .bar { margin: 8px 0 6px; }
+        .area small { color: var(--muted); font-size: 11px; }
+        .fix-list { list-style: none; margin: 0; padding: 0; }
+        .fix-list li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+        .fix-list li:last-child { border-bottom: 0; }
+        .fix-rank { width: 28px; height: 28px; border-radius: 50%; display: grid; place-content: center; background: var(--panel-2); font-weight: 700; font-size: 13px; }
+        .badge { display: inline-block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; margin-right: 6px; vertical-align: 1px; }
+        .meta-line { font-size: 12px; color: var(--muted); margin: 3px 0 0; }
+        .fix-line { margin: 6px 0 0; padding-left: 10px; border-left: 3px solid var(--cyan); font-size: 13.5px; }
+        .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .serp { font-family: Arial, Helvetica, sans-serif; background: #fff; color: #202124; border-radius: 14px; padding: 16px 18px; border: 1px solid var(--line); }
+        .serp-site { display: flex; gap: 10px; align-items: center; font-size: 14px; line-height: 1.3; }
+        .serp-site img, .serp-site .serp-dot { width: 28px; height: 28px; border-radius: 50%; background: #f1f3f4; padding: 5px; object-fit: contain; flex: none; }
+        .serp-site small { display: block; color: #4d5156; font-size: 12px; }
+        .serp h3 { color: #1a0dab; font-size: 20px; font-weight: 400; margin: 8px 0 3px; line-height: 1.3; }
+        .serp p { color: #4d5156; font-size: 14px; line-height: 1.58; margin: 0; }
+        .share { background: #fff; color: #1d2226; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        .share-img { aspect-ratio: 1.91 / 1; background: #e9e5df; display: grid; place-content: center; color: #6b6259; font-size: 13px; text-align: center; padding: 0; }
+        .share-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .share-img span { padding: 0 18px; }
+        .share-body { padding: 10px 14px 12px; }
+        .share-body small { text-transform: uppercase; color: #666; font-size: 11px; letter-spacing: .04em; }
+        .share-body strong { display: block; font-size: 15px; margin: 3px 0; }
+        .share-body p { margin: 0; font-size: 13px; color: #555; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .preview-note { font-size: 12px; color: var(--muted); margin: 8px 2px 0; }
+        .ai-view { font-family: "Fira Code", ui-monospace, monospace; font-size: 12px; line-height: 1.6; background: var(--panel-2); border-radius: 12px; padding: 12px 14px; max-height: 290px; overflow: auto; white-space: pre-wrap; word-break: break-word; margin: 8px 0; }
+        .ai-outline { list-style: none; padding: 0; margin: 6px 0 0; font-size: 13px; }
+        .ai-outline li { padding: 2px 0; }
+        .ai-outline .l2 { padding-left: 14px; } .ai-outline .l3 { padding-left: 28px; color: var(--muted); }
+        .bot-group { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 12px 0 4px; }
+        .bot { display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: start; font-size: 13px; padding: 3px 0; }
+        .bot i { width: 18px; height: 18px; border-radius: 50%; display: grid; place-content: center; font-style: normal; font-size: 11px; color: #fff; background: var(--green); margin-top: 1px; }
+        .bot.no i { background: var(--red); }
+        .bot small { display: block; color: var(--muted); font-size: 11.5px; }
+        .checks-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+        .check-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); font-size: 13px; }
+        .check-tile b { display: block; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+        .check-tile.pass b { color: var(--green); } .check-tile.risk b { color: var(--amber); } .check-tile.fail b { color: var(--red); } .check-tile.unknown b { color: var(--muted); }
+        .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .mini-table th, .mini-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+        .mini-table th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+        .stat-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+        .stat { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
+        .stat b { display: block; font-size: 1.5rem; font-family: "Source Serif 4", Georgia, serif; }
+        .stat span { font-size: 11px; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; }
+        .graph-wrap svg { width: 100%; height: auto; max-height: 640px; display: block; }
+        .graph-wrap circle { cursor: pointer; }
+        .graph-wrap circle:focus { outline: none; stroke: var(--text); stroke-width: 3; }
+        .graph-wrap text { font-size: 10px; fill: var(--muted); pointer-events: none; }
+        .graph-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+        .graph-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; background: var(--c); vertical-align: -1px; }
+        .graph-detail { min-height: 22px; font-size: 13px; margin: 8px 0 0; }
+        .finding { padding: 12px 0; border-bottom: 1px solid var(--line); }
+        .finding:last-child { border-bottom: 0; }
+        .finding .id { font-family: "Fira Code", ui-monospace, monospace; font-size: 12px; color: var(--cyan); margin-right: 6px; }
+        .finding p { margin: 4px 0 0; }
+        .fixkit-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+        .fixkit-list article { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
+        .fixkit-list strong { display: block; margin-bottom: 2px; }
+        .code-peek { font-family: "Fira Code", ui-monospace, monospace; font-size: 11.5px; background: var(--panel-2); border-radius: 10px; padding: 10px 12px; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow: auto; margin: 8px 0 0; }
+        @media (max-width: 800px) {
+            .health { grid-template-columns: 1fr; justify-items: center; }
+            .areas, .stat-row, .checks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .previews, .fixkit-list { grid-template-columns: 1fr; }
+        }
+        @media print { .ai-view, .code-peek { max-height: none; } }
         .print-mark { display: none; position: fixed; inset: 0; z-index: 50; pointer-events: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='520' height='220'><text x='20' y='120' fill='%230d6e76' font-size='15' font-family='sans-serif' transform='rotate(-24 260 110)'>QA-lab URL Review · Carlos Muñoz · Preview copy · Not a certification</text></svg>"); background-repeat: repeat; opacity: .28; }
         .cookie-note { position: fixed; z-index: 55; left: 16px; right: 16px; bottom: 16px; max-width: 720px; margin: 0 auto; padding: 16px 18px; border-radius: 18px; background: var(--card); color: var(--text); border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(8, 14, 18, .28); }
         .cookie-note[hidden] { display: none; }
@@ -798,10 +894,12 @@
         <dl>
             <dt>A public read, and a list of cases</dt>
             <dd>QA-lab URL Review fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load.</dd>
+            <dt>What the report scores</dt>
+            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages read, and what to fix first.</dd>
             <dt>Frameworks and tools</dt>
             <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply. None of them are launched against your site.</dd>
             <dt>Automation scripts</dt>
-            <dd>It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each. The scripts are yours to run; the review never runs them.</dd>
+            <dd>It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each, a GitHub Actions workflow that runs them, and a fix kit with header files for common hosts, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records. The scripts are yours to run; the review never runs them.</dd>
             <dt>Your site</dt>
             <dd>It only reads public pages. It does not sign in, submit forms, or generate load, and it does not run the cases it proposes.</dd>
             <dt>How far it reads</dt>
@@ -950,6 +1048,29 @@
         <p class="lede" id="report-statement"></p>
         <p class="notranslate" id="paid-line">This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).</p>
         <div class="kpis" id="kpis"></div>
+        <h2 data-insight>Health score</h2>
+        <div data-insight id="health"></div>
+        <h2 data-insight>Fix first</h2>
+        <article class="card" data-insight id="fix-first"></article>
+        <h2 data-insight>How it looks in Google and when shared</h2>
+        <div class="previews" data-insight id="previews"></div>
+        <h2 data-insight>What AI sees</h2>
+        <div data-insight id="geo"></div>
+        <h2 data-insight>Analytics and consent</h2>
+        <div data-insight id="analytics"></div>
+        <h2 data-insight>Search visibility</h2>
+        <div data-insight id="seo"></div>
+        <h2 data-insight>Map of the pages read</h2>
+        <article class="card" data-insight id="site-graph"></article>
+        <h2 data-insight>Security and email</h2>
+        <article class="card" data-insight id="security"></article>
+        <h2 data-insight>Every check, with its verdict</h2>
+        <div data-insight>
+            <div class="filters" id="finding-filters"></div>
+            <article class="card" id="findings"></article>
+        </div>
+        <h2 data-insight>Fix kit</h2>
+        <article class="card" data-insight id="fixkit"></article>
         <div class="visuals" id="report-visuals"></div>
         <div class="split">
             <article class="card">
@@ -1061,7 +1182,7 @@
 <script src="js/site-i18n.js?v=20261018a"></script>
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
-<script src="js/qa-review-scripts.js?v=20261022a"></script>
-<script src="js/qa-review.js?v=20261022a"></script>
+<script src="js/qa-review-scripts.js?v=20261023a"></script>
+<script src="js/qa-review.js?v=20261023a"></script>
 </body>
 </html>
