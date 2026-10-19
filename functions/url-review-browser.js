@@ -2,7 +2,7 @@
  * Browser pass for the URL review: one headless Chromium visit per page.
  * Records which tracking requests and cookies appear before a choice and after Reject,
  * runs axe-core, compares the HTML text with the rendered text, checks a phone width,
- * and keeps two small screenshots. The only click is a cookie banner's reject button.
+ * checks a tablet width, and keeps three small screenshots. The only click is a cookie banner's reject button.
  */
 const fs = require("fs");
 const dns = require("dns").promises;
@@ -268,6 +268,59 @@ async function rendered(page) {
   }));
 }
 
+async function domFacts(page) {
+  return page.evaluate(() => {
+    const here = location.hostname;
+    const links = new Set();
+    document.querySelectorAll("a[href]").forEach((node) => {
+      try {
+        const url = new URL(node.getAttribute("href"), location.href);
+        if (url.hostname === here && /^https?:$/.test(url.protocol)) { url.hash = ""; links.add(url.href); }
+      } catch (error) { /* skip odd hrefs */ }
+    });
+    const startPath = location.pathname;
+    const nav = [];
+    const seen = new Set();
+    const visible = (node) => {
+      const rect = node.getBoundingClientRect();
+      const style = getComputedStyle(node);
+      return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+    };
+    const unique = (selector) => { try { return document.querySelectorAll(selector).length === 1; } catch (error) { return false; } };
+    document.querySelectorAll("nav a[href], header a[href], [role=navigation] a[href], main a[href]").forEach((node) => {
+      if (nav.length >= 8) return;
+      const raw = node.getAttribute("href") || "";
+      if (!raw || /['\\]/.test(raw) || raw.charAt(0) === "#" || /^(mailto|tel|javascript):/i.test(raw) || node.target === "_blank" || node.hasAttribute("download")) return;
+      let url;
+      try { url = new URL(raw, location.href); } catch (error) { return; }
+      if (url.hostname !== here || url.pathname === startPath || seen.has(url.pathname) || /\/(wp-)?admin|log-?out|sign-?out|\.(pdf|zip|docx?|xlsx?)$/i.test(url.pathname)) return;
+      const text = (node.textContent || "").replace(/\s+/g, " ").trim();
+      if (text.length < 2 || text.length > 60 || !visible(node)) return;
+      const value = raw.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+      const options = [node.id && /^[A-Za-z][\w-]*$/.test(node.id) ? "#" + node.id : "", 'a[href="' + value + '"]', 'header a[href="' + value + '"]', 'nav a[href="' + value + '"]', 'main a[href="' + value + '"]'].filter(Boolean);
+      const selector = options.find((option) => unique(option) && document.querySelector(option) === node);
+      if (!selector) return;
+      seen.add(url.pathname);
+      nav.push({ text, target: url.pathname, selector, where: node.closest("main") ? "main" : "navigation" });
+    });
+    const named = (node) => node.labels && node.labels.length || node.getAttribute("aria-label") || node.getAttribute("aria-labelledby") || node.getAttribute("title");
+    const controls = Array.from(document.querySelectorAll("input:not([type=hidden]):not([type=submit]):not([type=button]), select, textarea"));
+    return {
+      title: (document.title || "").trim().slice(0, 160),
+      lang: document.documentElement.getAttribute("lang") || "",
+      h1: Array.from(document.querySelectorAll("h1")).map((node) => (node.innerText || "").trim()).filter(Boolean).slice(0, 3),
+      links: Array.from(links).slice(0, 200),
+      forms: document.querySelectorAll("form").length,
+      unlabeled: controls.filter((node) => !named(node)).length,
+      buttons: document.querySelectorAll("button, [role=button]").length,
+      iframes: document.querySelectorAll("iframe").length,
+      images: document.querySelectorAll("img").length,
+      missingAlt: document.querySelectorAll("img:not([alt])").length,
+      nav
+    };
+  });
+}
+
 async function runAxe(page, rules) {
   try {
     const loaded = await page.evaluate(`(() => { if (window.axe && window.axe.run) return true; const define = undefined, module = undefined, exports = undefined; ${axeScript()}; if (!window.axe && typeof axe !== "undefined") window.axe = axe; return !!(window.axe && window.axe.run); })()`);
@@ -436,6 +489,8 @@ async function browse(job) {
     const first = await open(page, start);
     lap("load");
     const view = await rendered(page);
+    let dom = null;
+    try { dom = await domFacts(page); } catch (error) { dom = null; }
     lap("read");
     const rawText = htmlText(first.raw);
     const renderedWords = words(view.text);
@@ -454,7 +509,8 @@ async function browse(job) {
       h1InHtml: view.h1[0] ? rawNormal.includes(normal(view.h1[0])) : null,
       vitals: { lcp: vitals.lcp || 0, cls: Math.round((vitals.cls || 0) * 1000) / 1000, tbt: vitals.tbt || 0, fcp: vitals.fcp || 0 },
       requests: rec.state.requests,
-      hosts: rec.state.hosts.size
+      hosts: rec.state.hosts.size,
+      dom
     };
     try {
       result.shots = { desktop: "data:image/jpeg;base64," + await page.screenshot({ type: "jpeg", quality: 50, encoding: "base64", optimizeForSpeed: true, clip: { x: 0, y: 0, width: 1280, height: 800, scale: 0.5 } }) };
@@ -519,8 +575,20 @@ async function browse(job) {
         result.mobile.smallTargets = rule ? rule.nodes : 0;
         result.mobile.targetSamples = rule ? rule.targets : [];
         result.shots.mobile = "data:image/jpeg;base64," + await phone.screenshot({ type: "jpeg", quality: 50, encoding: "base64", captureBeyondViewport: false, optimizeForSpeed: true });
+        lap("phoneShot");
       } catch (error) {
         result.mobile = { error: trim(error.message, 120) };
+      }
+      if (result.mobile && !result.mobile.error && left() > 10000) {
+        try {
+          await phone.setViewport({ width: 768, height: 1024, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          result.tablet = await mobileCheck(phone);
+          result.shots.tablet = "data:image/jpeg;base64," + await phone.screenshot({ type: "jpeg", quality: 50, encoding: "base64", optimizeForSpeed: true, clip: { x: 0, y: 0, width: 768, height: 1024, scale: 0.5 } });
+        } catch (error) {
+          result.tablet = { error: trim(error.message, 120) };
+        }
+        lap("tablet");
       }
       await phoneContext.close();
       lap("phone");

@@ -61,7 +61,7 @@
                     "Technology and linked-page summary",
                     "Health score from 0 to 100 across SEO, GEO, analytics, security, accessibility, and performance",
                     "Every check marked fails now, at risk, passes, or needs a person, with evidence, a fix, and a fix-first rank",
-                    "A headless browser pass: tracking before and after Reject, axe-core, phone layout, lab paint, and screenshots",
+                    "A headless browser pass: tracking before and after Reject, axe-core, phone and tablet layout, lab paint, and screenshots",
                     "Google result and share-card previews",
                     "AI crawler access matrix and the text AI search sees without JavaScript",
                     "Analytics tag, consent, and campaign-link checks",
@@ -422,6 +422,11 @@
         .exec-cols ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
         .exec-cols li { margin: 0 0 6px; }
         .exec-cols .meta-line { display: block; margin: 0; }
+        .history { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px; }
+        .history p { margin: 0; }
+        .history-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .delta { font-size: 12px; font-weight: 700; color: var(--muted); }
+        .delta.up { color: var(--green); } .delta.down { color: var(--red); }
         .gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 4px; }
         .gauge { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
         .gauge-top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
@@ -485,7 +490,8 @@
         .shots figure { margin: 0; }
         .shots img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
         .shots figcaption { font-size: 12px; color: var(--muted); margin-top: 6px; }
-        @media (max-width: 640px) { .shots { grid-template-columns: minmax(0, 1fr) 110px; } }
+        .shots-3 { grid-template-columns: minmax(0, 1fr) 190px 120px; }
+        @media (max-width: 640px) { .shots { grid-template-columns: minmax(0, 1fr) 110px; } .shots-3 { grid-template-columns: 1fr 1fr; } .shots-3 figure:first-child { grid-column: 1 / -1; } }
         .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .mini-table th, .mini-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
         .mini-table th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
@@ -932,7 +938,7 @@
             <dt>A public read, and a list of cases</dt>
             <dd>QA-lab URL Review fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load.</dd>
             <dt>What the report scores</dt>
-            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages read, and what to fix first. A headless browser loads up to three pages from an EU address: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks a phone width, and keeps two screenshots.</dd>
+            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages read, and what to fix first. A headless browser loads up to three pages from an EU address: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots.</dd>
             <dt>Frameworks and tools</dt>
             <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages. Lighthouse, BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site.</dd>
             <dt>Automation scripts</dt>
@@ -1223,7 +1229,7 @@
 <script src="js/site-i18n.js?v=20261018a"></script>
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
-<script src="js/qa-review-scripts.js?v=20261023b"></script>
-<script src="js/qa-review.js?v=20261025a"></script>
+<script src="js/qa-review-scripts.js?v=20261026a"></script>
+<script src="js/qa-review.js?v=20261026b"></script>
 </body>
 </html>
