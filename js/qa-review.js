@@ -609,6 +609,8 @@
       '<div><p class="health-summary">' + esc(ins.summary || "") + "</p>" +
       '<div class="verdict-chips">' + ["fail", "risk", "pass", "person"].map((key) =>
         '<span class="vchip v-' + key + '"><b>' + (totals[key] || 0) + "</b>" + esc(VERDICT_LABEL[key]) + "</span>").join("") + "</div>" +
+      '<div class="verdict-chips" aria-label="Open problems by severity">' + ["critical", "high", "medium", "low"].map((key) =>
+        '<span class="vchip s-' + ((score.severities || {})[key] ? key : "low") + '"><b>' + ((score.severities || {})[key] || 0) + "</b>" + esc(key) + "</span>").join("") + "</div>" +
       '<p class="meta-line">Every check below was measured from the public response, not guessed. Checks marked “Needs a browser” wait for a rendered run.</p></div></div>' +
       '<div class="areas">' + Object.keys(AREA_NOTE).map((name) => {
         const area = areas[name] || { score: 0, grade: "F", fail: 0, risk: 0, pass: 0 };
@@ -627,6 +629,38 @@
           if (item) setFold(item, true);
         }
         target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
+
+  function paintExec(report, ins) {
+    const host = document.getElementById("exec");
+    if (!host) return;
+    const score = ins.score || {};
+    const ranked = (ins.findings || []).filter((item) => item.rank);
+    const risks = ranked.slice(0, 3);
+    const quick = ranked.filter((item) => item.effort === "minutes" && risks.indexOf(item) === -1).slice(0, 3);
+    const solid = Object.keys(AREA_NOTE).filter((name) => {
+      const area = (score.areas || {})[name];
+      return area && (area.grade === "A" || area.grade === "B");
+    });
+    const sev = score.severities || {};
+    const read = (report.limits && report.limits.pagesRead) || (report.pages || []).length;
+    const list = (rows) => rows.length ? "<ul>" + rows.map((item) => "<li><strong>" + esc(item.title) + '</strong> <span class="meta-line">' + esc(item.area) + "</span></li>").join("") + "</ul>" : '<p class="muted">None found.</p>';
+    const value = score.overall || 0;
+    const letter = score.grade || gradeOf(value);
+    host.innerHTML =
+      '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(ins.summary || value + " out of 100.") + "</p></div>" +
+      '<p class="meta-line">' + (sev.critical || 0) + " critical · " + (sev.high || 0) + " high · " + (sev.medium || 0) + " medium · " + (sev.low || 0) + " low · " +
+      read + " page" + (read === 1 ? "" : "s") + " read" + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
+      '<div class="exec-cols"><div><h3>Biggest risks</h3>' + list(risks) + "</div><div><h3>Quick wins</h3>" + list(quick) + "</div><div><h3>Already solid</h3>" +
+      (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(name) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">No area scores B or better yet.</p>') + "</div></div>" +
+      '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">Print this summary</button></p>';
+    document.getElementById("print-exec").addEventListener("click", () => {
+      spend("print", () => {
+        if (!current.paid) setStatus("The print sheet does not include the report. The attempt is recorded.", false);
+        document.body.classList.add("printing-exec");
+        window.print();
       });
     });
   }
@@ -712,8 +746,8 @@
       ["After Reject", after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? afterBad + " still tracked" : "Tracking stopped") : (consent.banner ? "Reject not found" : "No banner showed")],
       ["axe-core", axePages.length ? (rules.size ? "fail" : "pass") : "unknown", axePages.length ? rules.size + " rules fail on " + axePages.length + " page" + (axePages.length === 1 ? "" : "s") : "Did not run"],
       ["Phone width", mobile.width ? (mobile.overflow > 2 ? "fail" : "pass") : "unknown", mobile.width ? (mobile.overflow > 2 ? mobile.overflow + " px too wide" : "Fits " + mobile.width + " px") : "Not checked"],
-      ["Largest paint", vit.lcp ? (vit.lcp > 4000 ? "fail" : vit.lcp > 2500 ? "risk" : "pass") : "unknown", vit.lcp ? (vit.lcp / 1000).toFixed(1) + " s, lab" : "Not measured"],
-      ["Layout shift", start.status ? (vit.cls > 0.25 ? "fail" : vit.cls > 0.1 ? "risk" : "pass") : "unknown", String(vit.cls || 0)],
+      ["First paint", vit.fcp ? (vit.fcp > 3000 ? "fail" : vit.fcp > 1800 ? "risk" : "pass") : "unknown", vit.fcp ? (vit.fcp / 1000).toFixed(1) + " s, lab" : "Not measured"],
+      ["Pages opened", start.status ? "pass" : "unknown", (1 + (b.pages || []).filter((page) => !page.error).length) + " in the browser"],
       ["Text in the HTML", start.renderedWords > 150 ? (start.share < 40 ? "risk" : "pass") : "unknown", (start.share == null ? 100 : start.share) + "% of what people see"],
       ["Load errors", errors || failed ? "risk" : "pass", errors + " script · " + failed + " file"]
     ];
@@ -737,10 +771,22 @@
     const order = { critical: 4, serious: 3, moderate: 2, minor: 1 };
     const axeRows = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, 10).map((rule) =>
       "<tr><td>" + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rule.impact) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
+    const gauge = (label, value, good, poor, max, text) => {
+      const state = value <= good ? "pass" : value <= poor ? "risk" : "fail";
+      const at = Math.min(100, (value / max) * 100);
+      return '<div class="gauge ' + state + '"><div class="gauge-top"><b>' + esc(label) + "</b><span>" + esc(text) + "</span></div>" +
+        '<div class="gauge-bar" role="img" aria-label="' + esc(label + " " + text + ", " + (state === "pass" ? "good" : state === "risk" ? "needs improvement" : "poor")) + '">' +
+        '<i style="width:' + (good / max * 100).toFixed(1) + '%"></i><i style="width:' + ((poor - good) / max * 100).toFixed(1) + '%"></i><i></i><u style="left:' + at.toFixed(1) + '%"></u></div></div>';
+    };
+    const gauges = start.status ? '<div class="gauges">' +
+      gauge("Largest Contentful Paint", vit.lcp || 0, 2500, 4000, 6000, ((vit.lcp || 0) / 1000).toFixed(1) + " s") +
+      gauge("Cumulative Layout Shift", vit.cls || 0, 0.1, 0.25, 0.5, String(vit.cls || 0)) +
+      gauge("Total Blocking Time", vit.tbt || 0, 200, 600, 1200, (vit.tbt || 0) + " ms") +
+      '</div><p class="meta-line">Lab numbers from one cold load on the review server, not field data from real visitors. Green, amber, and red follow the Core Web Vitals thresholds.</p>' : "";
     const shots = b.shots || {};
     const textRows = [{ path: start.finalPath || "/", share: start.share, words: start.renderedWords, raw: start.rawWords }].concat((b.pages || []).filter((page) => !page.error).map((page) => ({ path: page.path, share: page.share, words: page.renderedWords, raw: page.rawWords })));
     host.innerHTML =
-      '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
+      '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + gauges +
       (shots.desktop || shots.mobile ? '<div class="shots">' +
         (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="The start page on a first visit at 1280 px wide" loading="lazy"><figcaption>First visit, 1280 px wide, before any choice.</figcaption></figure>' : "<div></div>") +
         (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="The start page at a 390 px phone width" loading="lazy"><figcaption>Phone, 390 px.</figcaption></figure>' : "") + "</div>" : "") +
@@ -897,7 +943,18 @@
     const word = { pass: "In place", risk: "Missing or weak", fail: "Failing", unknown: "Not checked" };
     document.getElementById("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
       '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(word[item.state] || item.state) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
-      (sec.tls ? '<p class="meta-line">TLS certificate valid until ' + esc(sec.tls.validTo) + " (" + sec.tls.daysLeft + " days)" + (sec.tls.issuer ? ", issued by " + esc(sec.tls.issuer) : "") + ".</p>" : "");
+      (sec.tls ? '<p class="meta-line">TLS certificate valid until ' + esc(sec.tls.validTo) + " (" + sec.tls.daysLeft + " days)" + (sec.tls.issuer ? ", issued by " + esc(sec.tls.issuer) : "") + ".</p>" : "") +
+      securityMatrix(sec.pages || []);
+  }
+
+  function securityMatrix(rows) {
+    if (rows.length < 2) return "";
+    const cols = [["hsts", "HSTS"], ["csp", "CSP"], ["frame", "Framing"], ["nosniff", "nosniff"], ["referrer", "Referrer"], ["permissions", "Permissions"]];
+    const mark = (on) => on ? '<td class="ok" aria-label="sent">✓</td>' : '<td class="no" aria-label="missing">✗</td>';
+    return '<h3>Headers on every page read</h3><p class="muted">A header set on the start page but missing elsewhere leaves those pages unprotected.</p>' +
+      '<div class="table-scroll"><table class="mini-table sec-matrix"><thead><tr><th>Page</th>' + cols.map(([, label]) => "<th>" + esc(label) + "</th>").join("") + "<th>Cookies</th></tr></thead><tbody>" +
+      rows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td>" + cols.map(([key]) => mark(row[key])).join("") +
+        "<td>" + (row.cookies ? row.cookies + (row.looseCookies ? ", " + row.looseCookies + " without Secure" : "") : "—") + "</td></tr>").join("") + "</tbody></table></div>";
   }
 
   function paintFindings(ins, paid) {
@@ -949,6 +1006,7 @@
     const ins = report.insights;
     setInsightsVisible(!!ins);
     if (!ins) return;
+    paintExec(report, ins);
     paintHealth(ins);
     paintFixFirst(ins, paid);
     paintBrowser(report);
@@ -1099,7 +1157,8 @@
       : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
     const obs = report.observed || {};
     const limits = report.limits || {};
-    document.getElementById("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(limits.robotsNote || "") + "</p>";
+    document.getElementById("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(limits.robotsNote || "") + "</p>" +
+      (limits.timedOut ? '<p class="muted">The time budget ended after ' + (limits.pagesRead || (report.pages || []).length) + " of up to " + (limits.maxPages || "?") + ' pages, usually because the site answered slowly. If pages that matter were left out, write to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a> with the report link and Carlos will look at a rerun.</p>' : "");
     paintAlarm(report, paid || alertsOpen(report.id));
     paintMentions(report);
     paintCredential(payload);
@@ -1377,6 +1436,7 @@
   window.addEventListener("afterprint", () => {
     document.body.classList.remove("capture-hold");
     document.body.classList.remove("printing-cases");
+    document.body.classList.remove("printing-exec");
   });
   document.addEventListener("keyup", (event) => {
     if (!dash.classList.contains("open")) return;
