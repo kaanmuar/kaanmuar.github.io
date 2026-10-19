@@ -164,6 +164,25 @@ test.describe('CV desktop', () => {
     await cv.selectLanguage('en');
   });
 
+  test('published English keeps translations unless the admin changed it', async ({ page }) => {
+    await prepareCV(page, { theme: 'light' });
+    await page.addInitScript(() => {
+      localStorage.setItem('cv-live-preview', JSON.stringify({
+        version: 2,
+        machineTranslate: true,
+        summary: { title: 'Professional Summary' },
+        competencies: { title: 'What I do best' },
+        roles: [{ source: 0, title: 'Senior QA & Program Consultant', company: 'Team International', dates: 'Jan 2021 - Present' }]
+      }));
+    });
+    await page.goto('/index.html?cvpreview=1&lang=de');
+    await waitForCVApp(page);
+    await expect(page.locator('#cv-preview-banner')).toBeVisible();
+    await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Berufliches Profil/i);
+    await expect(page.locator('[data-translate-key="competencies_title"]').first()).toHaveText('What I do best');
+    await expect(page.locator('h4[data-translate-key="exp_0_title"]')).toHaveText('Senior QA- und Programmberater');
+  });
+
   test('dark mode stores the theme and the theme color', async ({ page }) => {
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0d6e76');
     await page.locator('#theme-toggle').click();

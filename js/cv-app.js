@@ -3571,10 +3571,19 @@
                 this._fileExperiences = JSON.parse(JSON.stringify(window.CVData.experiences));
                 this._fileSummaries = {};
                 this._fileSkills = JSON.parse(JSON.stringify(window.CVData.skills));
+                this._fileTranslations = JSON.parse(JSON.stringify(window.CVData.translations));
+                this._fileRoles = {};
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
                     const dict = window.CVData.translations[lang];
                     this._fileSummaries[lang] = dict ? dict.summary_text : '';
+                    this._fileRoles[lang] = PRINT_COPY[lang] ? (PRINT_COPY[lang].roles || []).slice() : [];
                 });
+            },
+
+            // The admin edits English and copies it into every language slot. Where that English
+            // still matches the file, the file's own translation is the better text to show.
+            _keepsFileCopy(lang, value, liveEnglish, fileEnglish) {
+                return lang !== 'en' && value === liveEnglish && liveEnglish === fileEnglish;
             },
 
             _cleanLiveText(value, max) {
@@ -3598,14 +3607,18 @@
                 if (!base.details) base.details = {};
                 const bullets = role.bullets || {};
                 const fileDetails = (source >= 0 && fileExperiences[source] && fileExperiences[source].details) || {};
+                const cleanLines = (list, max) => (Array.isArray(list) ? list : []).map((line) => this._cleanLiveText(line, 400)).filter(Boolean).slice(0, max);
+                const liveEnglish = cleanLines(bullets.en, 8);
+                const fileEnglish = cleanLines(fileDetails.en, 8);
+                const englishFromFile = liveEnglish.length > 0 && liveEnglish.every((line, at) => line === fileEnglish[at]);
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
-                    const lines = Array.isArray(bullets[lang])
-                        ? bullets[lang].map((line) => this._cleanLiveText(line, 400)).filter(Boolean).slice(0, 8)
-                        : [];
+                    const lines = cleanLines(bullets[lang], 8);
                     const fileLines = Array.isArray(fileDetails[lang]) ? fileDetails[lang] : [];
                     const publishedIsPrefix = lines.length > 0 && fileLines.length > lines.length
                         && lines.every((line, at) => line === this._cleanLiveText(fileLines[at], 400));
-                    if (publishedIsPrefix) {
+                    if (lang !== 'en' && fileLines.length && englishFromFile && lines.join('\n') === liveEnglish.join('\n')) {
+                        base.details[lang] = cleanLines(fileLines, 8);
+                    } else if (publishedIsPrefix) {
                         base.details[lang] = fileLines.map((line) => this._cleanLiveText(line, 400)).filter(Boolean).slice(0, 8);
                     } else if (lines.length) {
                         base.details[lang] = lines;
@@ -3615,6 +3628,7 @@
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
                     if (!base.details[lang] || !base.details[lang].length) base.details[lang] = english.slice();
                 });
+                base.liveSource = source;
                 base.liveHidden = role.hidden === true;
                 base.onTimeline = role.onTimeline !== false;
                 return base;
@@ -3631,9 +3645,13 @@
                 this._liveDoc = null;
                 if (!live || (live.version !== 1 && live.version !== 2)) return false;
                 const summary = live.summary || {};
+                const summaryEnglish = this._cleanLiveText(summary.en, 1200);
+                const fileSummaryEnglish = this._cleanLiveText(this._fileSummaries.en, 1200);
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
                     const text = this._cleanLiveText(summary[lang], 1200);
-                    if (text && this.data.translations[lang]) this.data.translations[lang].summary_text = text;
+                    if (text && this.data.translations[lang] && !this._keepsFileCopy(lang, text, summaryEnglish, fileSummaryEnglish)) {
+                        this.data.translations[lang].summary_text = text;
+                    }
                 });
                 if (Array.isArray(live.roles) && live.roles.length) {
                     const next = live.roles.slice(0, 24).map((role) => this._roleFromLive(role, fileExperiences)).filter(Boolean);
@@ -3641,9 +3659,14 @@
                 }
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
                     if (!PRINT_COPY[lang]) return;
-                    PRINT_COPY[lang].roles = this.data.experiences.map((exp) => (
-                        typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '')
-                    ));
+                    PRINT_COPY[lang].roles = this.data.experiences.map((exp, at) => {
+                        const title = typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '');
+                        const source = Number.isInteger(exp.liveSource) ? exp.liveSource : at;
+                        const translated = this._fileRoles[lang][source];
+                        const plain = this._cleanLiveText(title, 140);
+                        const fileEnglish = this._cleanLiveText(this._fileRoles.en[source], 140);
+                        return translated && this._keepsFileCopy(lang, plain, plain, fileEnglish) ? translated : title;
+                    });
                 });
                 if (live.version === 2) this._absorbLiveContent(live);
                 this._liveDoc = live;
@@ -3651,11 +3674,16 @@
             },
 
             _stampAll(keys) {
+                const files = this._fileTranslations || {};
+                const fileEn = files.en || {};
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
                     const dict = this.data.translations[lang];
                     if (!dict) return;
+                    const fileDict = files[lang] || {};
                     Object.keys(keys).forEach((key) => {
-                        if (keys[key]) dict[key] = keys[key];
+                        if (!keys[key]) return;
+                        const unchanged = fileDict[key] && this._keepsFileCopy(lang, keys[key], keys[key], this._cleanLiveText(fileEn[key], 1200));
+                        dict[key] = unchanged ? fileDict[key] : keys[key];
                     });
                 });
             },
@@ -3717,12 +3745,19 @@
                 });
                 this._stampAll(keys);
                 const details = live.summaryDetails || {};
+                const detailsEnglish = details.en || {};
+                const files = this._fileTranslations || {};
+                const fileEn = files.en || {};
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
                     const pack = details[lang];
                     const dict = this.data.translations[lang];
                     if (!pack || !dict) return;
-                    dict.summary_detail_1 = clean(pack.a, 1200);
-                    dict.summary_detail_2 = pack.b ? clean(pack.b, 1200) : '';
+                    const fileDict = files[lang] || {};
+                    [['a', 'summary_detail_1'], ['b', 'summary_detail_2']].forEach(([part, key]) => {
+                        const text = pack[part] ? clean(pack[part], 1200) : '';
+                        const kept = fileDict[key] && this._keepsFileCopy(lang, text, clean(detailsEnglish[part], 1200), clean(fileEn[key], 1200));
+                        dict[key] = kept ? fileDict[key] : text;
+                    });
                 });
                 if (Array.isArray(live.toolkit && live.toolkit.groups)) {
                     const next = {};
