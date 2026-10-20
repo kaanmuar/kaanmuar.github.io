@@ -23,6 +23,10 @@ const langs = args.filter((a) => !a.startsWith("--"));
 const LANGS = langs.length ? langs : ["es", "pt", "de", "fr", "it"];
 const REVIEW_PAGE = { es: "qa-review-es.html", pt: "qa-review-pt.html", de: "qa-review-de.html", fr: "qa-review-fr.html", it: "qa-review-it.html" };
 
+function cell(text) {
+  return String(text).replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
+}
+
 function pages(lang) {
   return [
     ["URL Review + sample report", REVIEW_PAGE[lang] + "?sample=1"],
@@ -100,7 +104,7 @@ async function harvest(page) {
       lines.push("## " + label, "", "`" + url + "` · " + nodes.length + " translated strings (" + fonts + " machine-translated runs) · **" + hits.length + " flagged**", "");
       if (hits.length) {
         lines.push("| Rule | Text |", "| --- | --- |");
-        hits.forEach((h) => lines.push("| " + h.rule.replace(/\|/g, "\\|") + " | " + h.text.slice(0, 180).replace(/\|/g, "\\|") + (h.source === "curated" ? " *(curated)*" : "") + " |"));
+        hits.forEach((h) => lines.push("| " + cell(h.rule) + " | " + cell(h.text.slice(0, 180)) + (h.source === "curated" ? " *(curated)*" : "") + " |"));
         lines.push("");
       }
       fs.writeFileSync(path.join(OUT, lang + "-" + url.split(/[.?]/)[0] + (raw ? "-raw" : "") + ".json"), JSON.stringify(nodes, null, 1));
