@@ -583,7 +583,8 @@ test.describe("return price", () => {
     const preview = core.previewReport(report);
     const text = JSON.stringify(preview);
     assert.ok(!text.includes(secret));
-    assert.ok(!text.includes("cdn.example.com"));
+    assert.notEqual(preview.insights.fixkit.csp, report.insights.fixkit.csp);
+    assert.match(preview.insights.fixkit.csp, /^default-src 'self' /);
     assert.equal(preview.preview, true);
     assert.equal(preview.insights.score.overall, 63);
     assert.match(preview.insights.findings[0].evidence, /^Missing on 7 pages\. /);
