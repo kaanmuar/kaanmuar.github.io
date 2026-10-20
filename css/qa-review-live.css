@@ -33,6 +33,10 @@
 .live-chips button[aria-pressed="true"] { background: var(--lv-cyan); border-color: var(--lv-cyan); color: #06232a; }
 .live-chips button[aria-pressed="true"] small { color: #0b4650; }
 .live-chips button:disabled { opacity: .35; cursor: default; }
+.live-fselect { display: none; width: 100%; min-width: 0; box-sizing: border-box; height: 44px; padding: 0 34px 0 12px; border: 1px solid var(--lv-line); border-radius: 12px; color: var(--lv-text); font: 600 16px/1.2 Inter, system-ui, sans-serif; text-overflow: ellipsis; -webkit-appearance: none; appearance: none; cursor: pointer;
+    background: rgba(255, 255, 255, .045) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%239fb3b8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; }
+.live-fselect[data-on] { border-color: var(--lv-cyan); color: var(--lv-cyan); background-color: rgba(126, 246, 251, .08); }
+.live-fselect option { color: #0b1a20; background: #fff; }
 .live :focus-visible, .live-viewer :focus-visible { outline: 2px solid var(--lv-gold, #e2c48a); outline-offset: 2px; }
 
 .live-stage { position: relative; height: calc(var(--ch) + 96px); perspective: 1700px; perspective-origin: 50% 42%; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; outline: none; }
@@ -207,7 +211,10 @@ body.live-viewing { overflow: hidden; }
 @media (max-width: 760px) {
     .live { padding: 44px 0 40px; --cw: 268px; --ch: 430px; }
     .live-inner { padding: 0 14px; }
-    .live-frow { grid-template-columns: 1fr; gap: 4px; }
+    .live-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .live-frow { grid-template-columns: 1fr; gap: 5px; }
+    .live-chips { display: none; }
+    .live-fselect { display: block; }
     .live-stage { perspective: 1200px; }
     .live-viewer { padding: 0; }
     .lv-panel { border-radius: 0; min-height: 100%; border: 0; }
