@@ -466,6 +466,18 @@ test.describe("mail to the asker", () => {
     assert.equal(offers.queue([record, { status: "follow-stop", email: record.email }], now)[0].held, "This address asked to stop.");
   });
 
+  test("the PDF attachment keeps the opening of each line and never the hidden part", () => {
+    const pdf = customerMail.reportPdf(record);
+    assert.equal(pdf.filename, "qa-lab-example.com-informe-empanado.pdf");
+    assert.match(pdf.html, /Strict-Transport-Security/);
+    assert.ok(!pdf.html.includes(hidden));
+    assert.ok(!pdf.html.includes("The page has a title"));
+    assert.match(pdf.html, /qa-review-es\.html\?report=ab12cd34/);
+    assert.match(pdf.html, /data:image\/png;base64,/);
+    const mail = customerMail.reportMail(record, { stopUrl: "https://fn/notes/stop?t=1", attached: true });
+    assert.match(mail.html, /va adjunto en PDF/);
+  });
+
   test("a note opens the last report in the page language it was run in", () => {
     const note = offers.queue([record], now)[0];
     assert.equal(note.reportId, "ab12cd34");
@@ -555,6 +567,32 @@ test.describe("return price", () => {
     assert.equal(core.chargedUsd({ purpose: "report", frameworks: ["Playwright"], tools: [], priceUsd: 19 }).usd, 19);
     assert.throws(() => core.chargedUsd(Object.assign({}, base, { priceUsd: 5 })), /out of range/);
     assert.throws(() => core.chargedUsd(Object.assign({}, base, { priceUsd: 16.15, listUsd: 18 })), /does not match/);
+  });
+
+  test("a paid reopen sends a preview with the hidden part of each line replaced, and no fix-kit files", () => {
+    const secret = "send max-age=31536000 with includeSubDomains on every response";
+    const report = {
+      id: "ab12",
+      cases: [{ id: "SE-01", title: "Strict-Transport-Security is sent on the start page", why: "The header was missing. " + secret, steps: ["open"] }],
+      insights: {
+        score: { overall: 63 },
+        findings: [{ title: "HSTS", evidence: "Missing on 7 pages. " + secret, fix: "Add it. " + secret }],
+        fixkit: { csp: "default-src 'self' https://cdn.example.com", headers: [{ name: "HSTS", missing: true, value: secret }], jsonLd: "{...}" }
+      }
+    };
+    const preview = core.previewReport(report);
+    const text = JSON.stringify(preview);
+    assert.ok(!text.includes(secret));
+    assert.notEqual(preview.insights.fixkit.csp, report.insights.fixkit.csp);
+    assert.match(preview.insights.fixkit.csp, /^default-src 'self' /);
+    assert.equal(preview.preview, true);
+    assert.equal(preview.insights.score.overall, 63);
+    assert.match(preview.insights.findings[0].evidence, /^Missing on 7 pages\. /);
+    assert.equal(preview.insights.findings[0].evidence.length, report.insights.findings[0].evidence.length);
+    assert.equal(preview.cases[0].steps, undefined);
+    assert.deepEqual(preview.insights.fixkit.headers, [{ name: "HSTS", missing: true }]);
+    assert.equal(preview.insights.fixkit.jsonLd, true);
+    assert.ok(report.cases[0].steps, "the stored report is not changed");
   });
 
   test("the peso quote and the PayPal capture accept a discounted price, and nothing under the floor", () => {

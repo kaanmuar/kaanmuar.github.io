@@ -2732,6 +2732,52 @@ async function pageSpeed(url, key) {
   return summarizePageSpeed(await res.json());
 }
 
+const FILLER = "loremipsumdolorsitametconsectetur";
+
+function frostText(text) {
+  const raw = String(text || "");
+  const mark = raw.search(/[.!?](\s|$)/);
+  let cut = mark === -1 ? Math.max(28, Math.floor(raw.length * 0.36)) : mark + 1;
+  if (cut > raw.length - 12) cut = Math.max(16, Math.floor(raw.length * 0.42));
+  if (cut >= raw.length) return raw;
+  let at = 0;
+  return raw.slice(0, cut) + raw.slice(cut).replace(/\S/g, () => FILLER[at++ % FILLER.length]);
+}
+
+// The page blurs a free report with CSS, so a paid reopen sends only this copy:
+// the readable opening of each blurred line, filler for the rest, and no fix-kit files.
+function previewReport(report) {
+  const copy = JSON.parse(JSON.stringify(report || {}));
+  (copy.cases || []).forEach((item) => {
+    item.title = frostText(item.title);
+    item.why = frostText(item.why);
+    ["steps", "expected", "script", "scripts", "data"].forEach((key) => { delete item[key]; });
+  });
+  (copy.alerts || []).forEach((item) => {
+    item.title = frostText(item.title);
+    item.detail = frostText(item.detail);
+  });
+  const ins = copy.insights || {};
+  (ins.findings || []).forEach((item) => {
+    item.evidence = frostText(item.evidence);
+    item.fix = frostText(item.fix);
+  });
+  if (ins.fixkit) {
+    const kit = ins.fixkit;
+    ins.fixkit = {
+      hosting: kit.hosting || "",
+      csp: frostText(kit.csp),
+      headers: (kit.headers || []).map((row) => ({ name: row && row.name, missing: !!(row && row.missing) })),
+      dns: (kit.dns || []).map((row) => ({ type: row && row.type })),
+      jsonLd: !!kit.jsonLd,
+      llmsTxt: !!kit.llmsTxt,
+      securityTxt: !!kit.securityTxt
+    };
+  }
+  copy.preview = true;
+  return copy;
+}
+
 module.exports = {
   decodeBody,
   compareRuns,
@@ -2750,6 +2796,7 @@ module.exports = {
   chargedUsd,
   priceMatches,
   paypalPaid,
+  previewReport,
   priceForCredentials,
   priceForAlerts,
   normalizeFrameworks,

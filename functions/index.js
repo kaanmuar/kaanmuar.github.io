@@ -1146,10 +1146,10 @@ async function stopLinkFor(email, lang) {
   return REVIEW_FN_URL + "/notes/stop?t=" + token;
 }
 
-async function sendAskerMail(email, mail, stopUrl, category) {
+async function sendAskerMail(email, mail, stopUrl, category, attachments) {
   const from = prepareMail();
   if (!from) return false;
-  await sgMail.send({
+  await sgMail.send(Object.assign({
     to: email,
     from: from,
     replyTo: REVIEW_ALERT_TO,
@@ -1157,19 +1157,41 @@ async function sendAskerMail(email, mail, stopUrl, category) {
     text: mail.text,
     html: mail.html,
     categories: [category],
+    trackingSettings: { clickTracking: { enable: false, enableText: false } },
     headers: {
       "List-Unsubscribe": "<" + stopUrl + ">",
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"
     }
-  });
+  }, attachments && attachments.length ? { attachments } : {}));
   return true;
+}
+
+async function reportPdfFor(record) {
+  const key = process.env.BROWSER_KEY;
+  if (!key) return null;
+  try {
+    const page = customerMail.reportPdf(record);
+    const res = await fetch(BROWSER_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-review-key": key },
+      body: JSON.stringify({ kind: "pdf", html: page.html }),
+      signal: AbortSignal.timeout(60000)
+    });
+    const body = res.ok ? await res.json() : null;
+    if (!body || !body.ok || !body.pdf || body.pdf.length > 7000000) return null;
+    return { content: body.pdf, filename: page.filename, type: "application/pdf", disposition: "attachment" };
+  } catch (error) {
+    console.error("Report PDF failed:", error && error.message);
+    return null;
+  }
 }
 
 async function mailReportToAsker(record) {
   if (!record || !record.email || !record.report) return;
   if (record.status !== "complete" && record.status !== "stopped") return;
-  const stopUrl = await stopLinkFor(record.email, record.lang);
-  await sendAskerMail(record.email, customerMail.reportMail(record, { stopUrl }), stopUrl, "url-review-report");
+  const [stopUrl, pdf] = await Promise.all([stopLinkFor(record.email, record.lang), reportPdfFor(record)]);
+  const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf });
+  await sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []);
 }
 
 async function sendReviewNotes() {
@@ -1870,7 +1892,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         frameworks: priced.frameworks,
         id: id,
         host: data.report && data.report.host,
-        status: data.status || ""
+        status: data.status || "",
+        preview: data.report ? urlReview.previewReport(data.report) : null
       }, dealFields(deal)));
       return;
     }
@@ -2105,7 +2128,10 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
     return;
   }
   try {
-    const result = await require("./url-review-browser").browse(req.body || {});
+    const browserJob = require("./url-review-browser");
+    const result = req.body && req.body.kind === "pdf"
+      ? await browserJob.printPdf(req.body.html)
+      : await browserJob.browse(req.body || {});
     res.status(200).json(result);
   } catch (error) {
     console.error("Browser pass failed:", error);
