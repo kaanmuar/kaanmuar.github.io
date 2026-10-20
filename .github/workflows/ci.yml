@@ -1,4 +1,6 @@
-# .github/workflows/main.yml
+# .github/workflows/ci.yml
+# Merges are gated by Lint Code, url-review-unit, and playwright (branch ruleset on main).
+# Cypress, Robot, load, and the native catalogs report but do not block a merge.
 
 name: E2E and Visual Tests
 
@@ -8,6 +10,10 @@ on:
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   url-review-unit:
@@ -25,93 +31,38 @@ jobs:
       - name: URL review scoring, journeys, pricing, guards, and generated scripts
         run: npm run test:review
 
-  run-tests:
+  playwright:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-
+    timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
-      # Step 1: Checks out your repository's code
       - name: Check out repository
         uses: actions/checkout@v4
-
-      # Step 2: Sets up Node.js, which is needed to run npm
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      # Step 3: Installs all project dependencies (Cypress, Robot Framework, Playwright, etc.)
+          cache: npm
       - name: Install dependencies
         run: npm ci
-
-      # --- NEW: Step 4: Install Playwright Browsers ---
-      # This is the most important new step. It downloads the browsers (Chrome, Firefox, WebKit)
-      # that Playwright needs to run your tests inside the GitHub environment.
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      # --- Step 5: Run all test suites ---
-      # Each test run has "continue-on-error: true" so that if one suite fails,
-      # the others will still run and all reports will be generated.
-
-      # Cypress checks its baseUrl before its own server hook runs, and Robot expects a running server.
-      - name: Start static server
-        run: |
-          nohup python3 scripts/static-server.py 8765 > /tmp/static-server.log 2>&1 &
-          for _ in $(seq 1 30); do curl -sf http://127.0.0.1:8765/index.html > /dev/null && exit 0; sleep 1; done
-          cat /tmp/static-server.log; exit 1
-
-      - name: Run Cypress Tests
-        run: npm run test:cy
-        continue-on-error: true
-
-      - name: Run Playwright Tests
-        run: npm run test:playwright
-        continue-on-error: true
-
-      - name: Run Robot Framework Tests
-        run: npm run test:robot
-        continue-on-error: true
-
-      - name: Install k6
-        uses: grafana/setup-k6-action@v1
-
-      - name: Run k6 load tests
-        run: npm run test:k6
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
+        env:
+          CYPRESS_INSTALL_BINARY: 0
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
         with:
-          distribution: temurin
-          java-version: '17'
-          cache: maven
-          cache-dependency-path: gatling/pom.xml
-
-      - name: Install JMeter
-        run: |
-          curl -fsSL -o /tmp/jmeter.tgz https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
-          sudo tar -xzf /tmp/jmeter.tgz -C /opt
-          echo "/opt/apache-jmeter-5.6.3/bin" >> "$GITHUB_PATH"
-
-      - name: Run JMeter load tests
-        run: npm run test:jmeter
-
-      - name: Install Maven
-        run: sudo apt-get update && sudo apt-get install -y maven
-
-      - name: Run Gatling load tests
-        run: npm run test:gatling
-
-      # --- Step 6: Upload all test reports and artifacts ---
-
-      - name: Upload Cypress Test Report
-        if: always() # This runs even if tests fail
-        uses: actions/upload-artifact@v4
-        with:
-          name: cypress-test-report
-          path: cypress/reports/html
-
-      - name: Upload Playwright Test Report
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install Chromium system libraries
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      - name: Run Playwright tests
+        run: npx playwright test --workers=4
+      - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -119,12 +70,121 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-      - name: Upload Cypress Screenshots on Failure
-        if: failure() # This only runs if any previous step failed
+  cypress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: catalog
+            spec: cypress/e2e/catalog_spec.cy.js
+          - group: cv
+            spec: cypress/e2e/cv_spec.cy.js,cypress/e2e/admin_spec.cy.js
+          - group: competency
+            spec: cypress/e2e/competency_spec.cy.js,cypress/e2e/mobile_spec.cy.js,cypress/e2e/a11y_spec.cy.js
+          - group: lab
+            spec: cypress/e2e/qa_lab_spec.cy.js,cypress/e2e/security_spec.cy.js,cypress/e2e/simulator_spec.cy.js
+    name: cypress (${{ matrix.group }})
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Start static server
+        run: |
+          nohup python3 scripts/static-server.py 8765 > /tmp/static-server.log 2>&1 &
+          for _ in $(seq 1 30); do curl -sf http://127.0.0.1:8765/index.html > /dev/null && exit 0; sleep 1; done
+          cat /tmp/static-server.log; exit 1
+      - name: Run Cypress tests
+        run: npx cypress run --spec "${{ matrix.spec }}"
+        continue-on-error: true
+      - name: Upload Cypress report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-screenshots
-          path: cypress/screenshots
+          name: cypress-${{ matrix.group }}
+          path: |
+            cypress/reports/html
+            cypress/screenshots
+          if-no-files-found: ignore
+
+  robot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-robot.txt
+      - name: Start static server
+        run: |
+          nohup python3 scripts/static-server.py 8765 > /tmp/static-server.log 2>&1 &
+          for _ in $(seq 1 30); do curl -sf http://127.0.0.1:8765/index.html > /dev/null && exit 0; sleep 1; done
+          cat /tmp/static-server.log; exit 1
+      - name: Run Robot Framework tests
+        run: npm run test:robot
+        continue-on-error: true
+      - name: Upload Robot results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results
+          path: robot-results
+          if-no-files-found: ignore
+
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install k6
+        uses: grafana/setup-k6-action@v1
+      - name: Run k6 load tests
+        run: npm run test:k6
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: gatling/pom.xml
+      - name: Install JMeter
+        run: |
+          curl -fsSL -o /tmp/jmeter.tgz https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
+          sudo tar -xzf /tmp/jmeter.tgz -C /opt
+          echo "/opt/apache-jmeter-5.6.3/bin" >> "$GITHUB_PATH"
+      - name: Run JMeter load tests
+        run: npm run test:jmeter
+      - name: Install Maven
+        run: sudo apt-get update && sudo apt-get install -y maven
+      - name: Run Gatling load tests
+        run: npm run test:gatling
 
   catalog-browsers:
     runs-on: ubuntu-latest
@@ -136,8 +196,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
       - name: Install dependencies
         run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
       - name: Install Firefox
         uses: browser-actions/setup-firefox@v1
       - name: Selenium catalog on Chrome
@@ -168,8 +231,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
       - name: Install dependencies
         run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
       - name: Selenium catalog on Safari
         run: TARGET_BROWSER=safari npm run test:selenium
         continue-on-error: true
@@ -199,8 +265,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
       - name: Install dependencies
         run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
       - name: Appium catalog on an Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
