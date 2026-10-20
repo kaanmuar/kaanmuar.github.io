@@ -84,6 +84,7 @@
         <p class="test-mode" id="test-mode" role="status" hidden>Test mode · PayPal sandbox. Pay with a sandbox buyer account. No real money moves.</p>
         <p class="eyebrow">Payment</p>
         <h1 id="pay-heading">One new review</h1>
+        <div id="pay-deal" hidden></div>
         <p class="price">—</p>
         <p class="yield" id="pay-yield" hidden></p>
         <p id="pay-fx"></p>
@@ -104,8 +105,12 @@
     </main>
     <script src="js/site-analytics.js?v=20261019a"></script>
     <script src="js/qa-review-consent.js?v=20261027b"></script>
+    <script src="js/qa-review-deal.js?v=20261029a"></script>
     <script>
         const params = new URLSearchParams(location.search);
+        const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
+        let dealShown = false;
+        let listUsd = 0;
         const purposeName = params.get("purpose");
         const purpose = ["report", "cases", "credentials", "alerts"].indexOf(purposeName) === -1 ? "new-run" : purposeName;
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_view", "URL Review", purpose);
@@ -309,7 +314,13 @@
             }
             if (!pesos) {
                 priceEl.innerHTML = money(usd) + "<span>USD</span>";
+                priceEl.hidden = dealShown;
                 amountEl.textContent = money(usd) + " USD";
+                if (dealShown) {
+                    const was = document.createElement("s");
+                    was.textContent = money(listUsd) + " USD";
+                    amountEl.prepend(was, " ");
+                }
                 fx.textContent = "";
                 charge.disabled = false;
                 return;
@@ -343,12 +354,18 @@
                             ? "purpose=alerts&count=" + alertCount
                             : purpose === "new-run"
                                 ? "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&pages=" + pageCount + "&depth=" + depthCount + "&billing=" + billing
-                                : "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(","));
-                const res = await fetch(endpoint() + "/checkout/quote?" + query);
+                                : "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&purpose=report&reportId=" + encodeURIComponent(params.get("reportId") || "");
+                const deal = purpose === "report" || purpose === "new-run"
+                    ? "&deviceId=" + encodeURIComponent(deviceId()) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : "")
+                    : "";
+                const res = await fetch(endpoint() + "/checkout/quote?" + query + deal);
                 const body = await res.json();
                 if (!res.ok || !body.cop) throw new Error(body.error || "The peso price could not be loaded.");
                 quote = body;
                 if (body.usd) usd = body.usd;
+                listUsd = Number(body.listUsd) || 0;
+                dealShown = !!(window.ReviewDeal && ReviewDeal.render(document.getElementById("pay-deal"), body));
+                if (dealShown && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_deal_shown", "URL Review", body.discountSource || "return");
                 if (body.frameworks && body.frameworks.length) frameworkList = body.frameworks;
                 if (Array.isArray(body.tools)) toolList = body.tools.filter((name) => TOOLS.indexOf(name) !== -1);
                 if (body.pages) pageCount = body.pages;
@@ -408,7 +425,7 @@
                     method: "POST",
                     credentials: "include",
                     headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, testKey: testKey() })
+                    body: JSON.stringify({ purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, coupon: coupon, testKey: testKey() })
                 });
                 const body = await res.json();
                 if (res.ok && body.url) {

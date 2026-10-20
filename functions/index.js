@@ -1190,7 +1190,8 @@ async function sendReviewNotes() {
   for (const note of due) {
     try {
       const stopUrl = await stopLinkFor(note.email, note.lang);
-      const sent = await sendAskerMail(note.email, customerMail.noteMail(note, { stopUrl }), stopUrl, "url-review-note");
+      const coupon = await mintReturnCoupon(note);
+      const sent = await sendAskerMail(note.email, customerMail.noteMail(note, { stopUrl, coupon }), stopUrl, "url-review-note");
       if (sent) {
         await db.collection("url_review_notes").add({
           status: "follow-note",
@@ -1286,6 +1287,73 @@ async function reviewRowsFor(deviceId, ip) {
   return Array.from(map.values()).map((row) => Object.assign({}, row, {
     createdAt: row.createdAt && row.createdAt.toDate ? row.createdAt.toDate().toISOString() : row.createdAt
   }));
+}
+
+async function couponFor(code, purpose, reportId) {
+  const key = reviewOffers.cleanCode(code);
+  if (!key) return null;
+  try {
+    const snap = await admin.firestore().collection("url_review_coupons").doc(key).get();
+    const coupon = snap.exists ? Object.assign({ code: key }, snap.data()) : null;
+    return reviewOffers.couponOpen(coupon, purpose, reportId) ? coupon : null;
+  } catch (error) {
+    console.error("Coupon lookup failed:", error);
+    return null;
+  }
+}
+
+async function runsForEmail(email) {
+  if (!email) return [];
+  const snap = await admin.firestore().collection("url_reviews").where("email", "==", email).select("status", "createdAt").limit(60).get();
+  return snap.docs.map((doc) => doc.data());
+}
+
+async function returnPrice(priced, opts) {
+  const cents = Math.round(Number(priced.usd) * 100);
+  if (priced.billing === "scope") return reviewOffers.discountFor(cents, priced.count, {});
+  const coupon = await couponFor(opts.coupon, opts.purpose, opts.reportId);
+  const rows = opts.rows || (opts.purpose === "report" ? await runsForEmail(opts.email) : await reviewRowsFor(opts.deviceId, opts.ip));
+  return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon });
+}
+
+function dealFields(deal) {
+  return deal && deal.percent
+    ? { listUsd: deal.listUsd, percent: deal.percent, discountSource: deal.source, coupon: deal.code }
+    : {};
+}
+
+async function mintReturnCoupon(note) {
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const code = "BACK-" + Array.from({ length: 8 }, () => alphabet[crypto.randomInt(alphabet.length)]).join("");
+  await admin.firestore().collection("url_review_coupons").doc(code).set({
+    percent: Math.max(10, Number(note.percent) || 10),
+    purposes: ["report", "new-run"],
+    reportId: note.reportId || "",
+    email: note.email,
+    maxUses: 1,
+    uses: 0,
+    source: "return-note",
+    validUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date().toISOString()
+  });
+  return code;
+}
+
+async function redeemCoupon(code, record) {
+  const key = reviewOffers.cleanCode(code);
+  if (!key) return;
+  const db = admin.firestore();
+  try {
+    await db.runTransaction(async (tx) => {
+      const ref = db.collection("url_review_coupons").doc(key);
+      const snap = await tx.get(ref);
+      if (!snap.exists) return;
+      tx.update(ref, { uses: Number((snap.data() || {}).uses || 0) + 1, lastUsedAt: new Date().toISOString() });
+      tx.set(db.collection("url_review_redemptions").doc(), Object.assign({ code: key, at: new Date().toISOString() }, record));
+    });
+  } catch (error) {
+    console.error("Coupon redemption failed:", error);
+  }
 }
 
 const BROWSER_URL = process.env.BROWSER_URL || "https://europe-west1-carlosm-interactive-cv.cloudfunctions.net/reviewBrowser";
@@ -1516,9 +1584,28 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
             billing: String(req.query.billing || "")
           })
           : urlReview.priceFor(String(req.query.frameworks || ""), String(req.query.tools || ""));
-      const quote = await urlReview.copQuote(priced.usd);
-      res.status(200).json({
-        usd: priced.usd,
+      const quotePurpose = req.query.purpose === "report" ? "report" : (req.query.pages && !req.query.layers ? "new-run" : "");
+      let deal = null;
+      if (quotePurpose) {
+        const quoteReport = String(req.query.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+        let owner = {};
+        if (quotePurpose === "report" && quoteReport) {
+          const ownerSnap = await admin.firestore().collection("url_reviews").doc(quoteReport).get();
+          owner = ownerSnap.exists ? ownerSnap.data() : {};
+        }
+        deal = await returnPrice(priced, {
+          purpose: quotePurpose,
+          reportId: quoteReport,
+          email: owner.email,
+          before: owner.createdAt,
+          coupon: req.query.coupon,
+          deviceId: String(req.query.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32),
+          ip: req.ip || ""
+        });
+      }
+      const quote = await urlReview.copQuote(deal ? deal.usd : priced.usd);
+      res.status(200).json(Object.assign({
+        usd: deal ? deal.usd : priced.usd,
         cop: quote.pesos,
         rate: quote.rate,
         count: priced.count,
@@ -1533,7 +1620,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         pageUsd: priced.pageUsd,
         depthUsd: priced.depthUsd,
         perFramework: priced.each
-      });
+      }, dealFields(deal)));
     } catch (error) {
       res.status(error.status || 502).json({ error: error.message || "The peso price could not be loaded." });
     }
@@ -1601,6 +1688,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           paidFrameworks = open.frameworks || [];
           paidTools = open.tools || [];
           paidPrice = open.priceUsd || result.amount;
+          if (open.coupon) await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
           result.pages = open.pages;
           result.depth = open.depth;
           result.billing = open.billing;
@@ -1650,6 +1738,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       }
       const reference = crypto.randomBytes(8).toString("hex");
       let priced = null;
+      let reportData = {};
       if (purpose === "cases") {
         priced = urlReview.priceForLayers((req.body && req.body.layers) || []);
       } else if (purpose === "credentials") {
@@ -1658,7 +1747,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         priced = urlReview.priceForAlerts(req.body && req.body.alertCount);
       } else if (purpose === "report") {
         const reportSnap = await admin.firestore().collection("url_reviews").doc(reportId).get();
-        const reportData = reportSnap.exists ? reportSnap.data() : {};
+        reportData = reportSnap.exists ? reportSnap.data() : {};
         priced = urlReview.priceFor((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools));
       } else {
         priced = urlReview.priceForRun({
@@ -1669,6 +1758,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           billing: req.body && req.body.billing
         });
       }
+      let deal = null;
+      if (purpose === "report" || purpose === "new-run") {
+        deal = await returnPrice(priced, {
+          purpose,
+          reportId,
+          email: reportData.email,
+          before: reportData.createdAt,
+          coupon: req.body && req.body.coupon,
+          deviceId,
+          ip: req.ip || ""
+        });
+      }
+      const listUsd = priced.usd;
+      if (deal && deal.percent) priced = Object.assign({}, priced, { usd: deal.usd });
       const base = origin + "/qa-review-pay.html?purpose=" + purpose + "&provider=" + choice;
       const successUrl = choice === "stripe"
         ? base + "&result=success&session_id={CHECKOUT_SESSION_ID}"
@@ -1689,11 +1792,12 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         billing: priced.billing,
         alertCount: priced.alertCount,
         priceUsd: priced.usd,
+        listUsd,
         successUrl,
         cancelUrl,
         pendingUrl
       }, keys));
-      await admin.firestore().collection("url_reviews").doc(reference).set({
+      await admin.firestore().collection("url_reviews").doc(reference).set(Object.assign({
         status: "checkout-open",
         provider: urlReview.paymentProvider(choice),
         method: choice,
@@ -1714,7 +1818,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         paid: false,
         test: testRun,
         createdAt: new Date().toISOString()
-      });
+      }, dealFields(deal)));
       await rememberReview("checkout", {
         id: reference,
         status: "checkout-open",
@@ -1758,15 +1862,16 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     const free = data.free === true || await hasFreeRuns(data.email);
     if (!data.paid && !free) {
       let priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] };
-      try { priced = urlReview.priceFor(data.frameworks || []); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] }; }
-      res.status(402).json({
+      try { priced = urlReview.priceFor(data.frameworks || []); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [], count: 1 }; }
+      const deal = await returnPrice(priced, { purpose: "report", reportId: id, email: data.email, before: data.createdAt, coupon: req.query.coupon });
+      res.status(402).json(Object.assign({
         paymentRequired: true,
-        priceUsd: priced.usd,
+        priceUsd: deal.usd,
         frameworks: priced.frameworks,
         id: id,
         host: data.report && data.report.host,
         status: data.status || ""
-      });
+      }, dealFields(deal)));
       return;
     }
     res.status(200).json({ report: data.report || null, frameworks: data.frameworks || [], paid: true, free });
@@ -1785,9 +1890,18 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   }
   const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
   const ip = req.ip || "";
+  const priorRows = free ? [] : await reviewRowsFor(deviceId, ip);
   const decision = free
     ? { ok: true }
-    : urlReview.judgeAttempts(await reviewRowsFor(deviceId, ip), { deviceId, ip }, intake.value);
+    : urlReview.judgeAttempts(priorRows, { deviceId, ip }, intake.value);
+  if (!decision.ok && decision.code === "payment") {
+    const deal = await returnPrice({ usd: decision.priceUsd, count: decision.count, billing: decision.billing }, {
+      purpose: "new-run",
+      rows: priorRows,
+      coupon: req.body && req.body.coupon
+    });
+    Object.assign(decision, { priceUsd: deal.usd }, dealFields(deal));
+  }
   if (decision.ok && decision.consumeId) {
     await admin.firestore().collection("url_reviews").add({
       status: "run-credit-used",
@@ -1822,6 +1936,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       pages: decision.pages,
       depth: decision.depth,
       billing: decision.billing || "",
+      listUsd: decision.listUsd,
+      percent: decision.percent || 0,
+      discountSource: decision.discountSource || "",
+      coupon: decision.coupon || "",
       frameworkUsd: decision.frameworkUsd,
       scopeUsd: decision.scopeUsd,
       pageUsd: decision.pageUsd,

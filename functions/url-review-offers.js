@@ -89,6 +89,52 @@ function applyReturn(cents, count, n) {
   return { percent, cents: next, usd: next / 100, floorUsd: floor / 100 };
 }
 
+// The better of the return ladder and a coupon; they never stack, and the per-selection floor holds.
+function discountFor(cents, count, options) {
+  const opts = options || {};
+  const list = Math.max(0, Math.round(Number(cents) || 0));
+  const ladder = returnPercent(opts.returns);
+  const offered = opts.coupon ? Math.max(0, Math.min(90, Math.round(Number(opts.coupon.percent) || 0))) : 0;
+  const percent = Math.max(ladder, offered);
+  const floor = Math.min(list, Math.max(0, Math.round(Number(count) || 0)) * Math.round(core.PRICE_PER_FRAMEWORK * 50));
+  const next = percent ? Math.max(floor, Math.round(list * (100 - percent) / 100)) : list;
+  const shown = list && next < list ? Math.round((list - next) * 100 / list) : 0;
+  return {
+    listUsd: list / 100,
+    usd: next / 100,
+    cents: next,
+    percent: shown,
+    source: !shown ? "" : offered >= ladder ? "coupon" : "return",
+    code: shown && offered >= ladder && opts.coupon ? String(opts.coupon.code || "") : ""
+  };
+}
+
+function cleanCode(value) {
+  const code = String(value || "").trim().toUpperCase();
+  return /^[A-Z0-9-]{4,24}$/.test(code) ? code : "";
+}
+
+function couponOpen(coupon, purpose, reportId, now) {
+  if (!coupon || !(Number(coupon.percent) > 0)) return false;
+  const at = now ? new Date(now).getTime() : Date.now();
+  if (coupon.validUntil && Date.parse(coupon.validUntil) <= at) return false;
+  if (coupon.validFrom && Date.parse(coupon.validFrom) > at) return false;
+  if (Number(coupon.maxUses) > 0 && Number(coupon.uses || 0) >= Number(coupon.maxUses)) return false;
+  if (Array.isArray(coupon.purposes) && coupon.purposes.length && coupon.purposes.indexOf(purpose) === -1) return false;
+  if (purpose === "report" && coupon.reportId && coupon.reportId !== reportId) return false;
+  return true;
+}
+
+function returnsBefore(rows, before) {
+  const end = before ? Date.parse(before) : Date.now();
+  const month = 30 * 24 * 60 * 60 * 1000;
+  return (rows || []).filter((row) => {
+    if (!row || row.status !== "complete") return false;
+    const at = Date.parse(row.createdAt || "");
+    return at && at < end && end - at < month;
+  }).length;
+}
+
 function languageOf(header, country) {
   const tag = String(header || "").split(",")[0].trim().slice(0, 2).toLowerCase();
   if (LANGS.indexOf(tag) !== -1) return tag;
@@ -253,6 +299,10 @@ module.exports = {
   MONTHLY_PLANS,
   returnPercent,
   applyReturn,
+  discountFor,
+  cleanCode,
+  couponOpen,
+  returnsBefore,
   languageOf,
   catalog,
   planById,

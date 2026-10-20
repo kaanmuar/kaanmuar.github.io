@@ -511,6 +511,53 @@ test.describe("pricing", () => {
   });
 });
 
+test.describe("return price", () => {
+  const offers = require("../../functions/url-review-offers");
+  const now = Date.parse("2026-10-20T15:00:00Z");
+  const ago = (days) => new Date(now - days * 24 * 60 * 60 * 1000).toISOString();
+
+  test("the ladder and a coupon never stack; the better one wins", () => {
+    assert.deepEqual(offers.discountFor(1900, 1, { returns: 2 }), { listUsd: 19, usd: 16.15, cents: 1615, percent: 15, source: "return", code: "" });
+    const coupon = offers.discountFor(1900, 1, { returns: 1, coupon: { code: "BACK-TEST", percent: 20 } });
+    assert.equal(coupon.usd, 15.2);
+    assert.equal(coupon.source, "coupon");
+    assert.equal(coupon.code, "BACK-TEST");
+    assert.equal(offers.discountFor(1900, 1, { returns: 3, coupon: { code: "LOW", percent: 10 } }).source, "return");
+    assert.equal(offers.discountFor(1900, 1, {}).percent, 0);
+  });
+
+  test("no discount goes under 9.50 USD a selection", () => {
+    const deal = offers.discountFor(1900, 1, { coupon: { code: "BIG", percent: 90 } });
+    assert.equal(deal.usd, 9.5);
+    assert.equal(deal.percent, 50);
+  });
+
+  test("a coupon is open only inside its dates, uses, purposes, and report", () => {
+    const coupon = { percent: 15, purposes: ["report", "new-run"], reportId: "abc", maxUses: 1, uses: 0, validUntil: ago(-3) };
+    assert.equal(offers.couponOpen(coupon, "report", "abc", now), true);
+    assert.equal(offers.couponOpen(coupon, "report", "other", now), false);
+    assert.equal(offers.couponOpen(coupon, "new-run", "", now), true);
+    assert.equal(offers.couponOpen(coupon, "cases", "abc", now), false);
+    assert.equal(offers.couponOpen(Object.assign({}, coupon, { uses: 1 }), "report", "abc", now), false);
+    assert.equal(offers.couponOpen(Object.assign({}, coupon, { validUntil: ago(1) }), "report", "abc", now), false);
+    assert.equal(offers.cleanCode(" back-7q2m "), "BACK-7Q2M");
+    assert.equal(offers.cleanCode("<script>"), "");
+  });
+
+  test("returns count finished runs in the 30 days before", () => {
+    const rows = [{ status: "complete", createdAt: ago(2) }, { status: "complete", createdAt: ago(40) }, { status: "blocked", createdAt: ago(1) }];
+    assert.equal(offers.returnsBefore(rows, new Date(now).toISOString()), 1);
+  });
+
+  test("checkout takes a discounted charge only between the floor and the list price", () => {
+    const base = { purpose: "report", frameworks: ["Playwright"], tools: [], listUsd: 19 };
+    assert.equal(core.chargedUsd(Object.assign({}, base, { priceUsd: 16.15 })).usd, 16.15);
+    assert.equal(core.chargedUsd({ purpose: "report", frameworks: ["Playwright"], tools: [], priceUsd: 19 }).usd, 19);
+    assert.throws(() => core.chargedUsd(Object.assign({}, base, { priceUsd: 5 })), /out of range/);
+    assert.throws(() => core.chargedUsd(Object.assign({}, base, { priceUsd: 16.15, listUsd: 18 })), /does not match/);
+  });
+});
+
 test.describe("address guards", () => {
   test("private, loopback, link-local, and carrier addresses are refused", () => {
     ["10.0.0.1", "127.0.0.1", "169.254.169.254", "192.168.1.1", "100.64.0.1", "::1", "fd00::1"].forEach((ip) => assert.equal(core.ipBlocked(ip), true, ip));

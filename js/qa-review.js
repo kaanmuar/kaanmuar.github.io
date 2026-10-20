@@ -252,7 +252,15 @@
       params.set("depth", String(extra.depth || selectedDepth()));
       if (extra.billing) params.set("billing", extra.billing);
     }
+    const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
+    if (coupon && (purpose === "report" || purpose === "new-run")) params.set("coupon", coupon);
     return "qa-review-pay.html?" + params.toString();
+  }
+
+  function showDeal(hostId, priceId, body) {
+    const shown = !!(window.ReviewDeal && ReviewDeal.render(document.getElementById(hostId), body || {}));
+    document.getElementById(priceId).hidden = shown;
+    if (shown && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_deal_shown", "URL Review", (body && body.discountSource) || "return");
   }
 
   function reasonCode() {
@@ -1327,6 +1335,7 @@
           openedAt: openedAt,
           company: (document.getElementById("hp-note") || { value: "" }).value,
           lang: document.documentElement.lang || "en",
+          coupon: window.ReviewDeal ? ReviewDeal.code() : "",
           followUp: document.getElementById("follow-up").checked === true
         })
       });
@@ -1386,6 +1395,7 @@
     document.getElementById("pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
     document.getElementById("pay-detail").textContent = "Seeing it again, or downloading, printing, or sharing it again, costs " + formatUsd(usd) + " USD for " + selections + (selections === 1 ? " selection." : " selections.") + " Frameworks come first. Checked tools follow on the same discount. The first selection is 19 USD. A paid copy keeps one line: this report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
     document.getElementById("pay-btn").href = payQuery("report");
+    showDeal("pay-deal", "pay-price", body);
     payBox.hidden = false;
     const note = document.getElementById("pay-note");
     note.textContent = (body && body.error) || ("Reopening this report costs " + formatUsd(usd) + " USD.");
@@ -1406,6 +1416,7 @@
       ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider read."
       : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. Frameworks come first. Checked tools follow on the same discount. The amount is the schedule plus the size of the read.";
     document.getElementById("go-pay").href = payQuery("new-run", body || {});
+    showDeal("run-pay-deal", "run-pay-price", body);
     runPay.hidden = false;
   }
 
@@ -1740,7 +1751,8 @@
       if (app.inert) return;
       setStatus("Opening the saved report…", false);
       try {
-        const res = await fetch(endpoint() + "/review?id=" + encodeURIComponent(shared), { credentials: "include" });
+        const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
+        const res = await fetch(endpoint() + "/review?id=" + encodeURIComponent(shared) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : ""), { credentials: "include" });
         const body = await res.json();
         if (res.status === 402 || body.paymentRequired) {
           openPay(body);
