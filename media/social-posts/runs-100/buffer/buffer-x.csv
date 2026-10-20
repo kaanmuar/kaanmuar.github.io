@@ -53,12 +53,12 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&u
 
 Give every page one h1 that names it, even a visually hidden one on a front page. Headings are how many people navigate.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=guardian","https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg","real-runs","2026-11-27 18:55"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=guardian","https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg","real-runs","2026-11-27 18:55"
 "Al Jazeera marks text for voice, blocks AI.
 
 Decide crawler by crawler. Training bots and answer bots are separate user-agents, so each can get its own rule.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=aljazeera","https://carlosandmunoz.com/media/social-posts/runs-100/feed/12-aljazeera.jpg","real-runs","2026-11-28 14:45"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=aljazeera","https://carlosandmunoz.com/media/social-posts/runs-100/feed/12-aljazeera.jpg","real-runs","2026-11-28 14:45"
 "DW blocks framing. It skips nosniff.
 
 Send X-Content-Type-Options: nosniff on every response. One header stops browsers running a file as the wrong type.
@@ -73,7 +73,7 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&u
 
 List the script hosts you actually use, then drop 'unsafe-eval'. A policy that allows everything blocks nothing.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lemonde","https://carlosandmunoz.com/media/social-posts/runs-100/feed/15-lemonde.jpg","real-runs","2026-12-01 15:45"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lemonde","https://carlosandmunoz.com/media/social-posts/runs-100/feed/15-lemonde.jpg","real-runs","2026-12-01 15:45"
 "MIT's canonical tags point to its CMS.
 
 Canonical URLs must be public, live, and the page itself. Check them after every CMS or domain change.
@@ -103,7 +103,7 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&u
 
 Add the page's purpose to its title, in its own language. Each localized home page should stand on its own in search.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=kubernetes","https://carlosandmunoz.com/media/social-posts/runs-100/feed/21-kubernetes.jpg","real-runs","2026-12-07 19:25"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=kubernetes","https://carlosandmunoz.com/media/social-posts/runs-100/feed/21-kubernetes.jpg","real-runs","2026-12-07 19:25"
 "Apache.org runs without descriptions.
 
 Give each page a description of about 150 characters. Search and AI answers quote it when they introduce you.
@@ -153,7 +153,7 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&u
 
 Move bulky inline data out of the HTML and load it when needed. Smaller documents parse and paint sooner.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lonelyplanet","https://carlosandmunoz.com/media/social-posts/runs-100/feed/31-lonelyplanet.jpg","real-runs","2026-12-17 15:00"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lonelyplanet","https://carlosandmunoz.com/media/social-posts/runs-100/feed/31-lonelyplanet.jpg","real-runs","2026-12-17 15:00"
 "IKEA's home page is 1.9 MB of HTML.
 
 Measure HTML weight in CI with a budget. Inline state and repeated markup are the usual culprits.
@@ -243,7 +243,7 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&u
 
 Build the sitemap from canonical URLs: https, the www host you serve. Redirecting entries waste crawl.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mineducacion","https://carlosandmunoz.com/media/social-posts/runs-100/feed/49-mineducacion.jpg","real-runs","2027-01-04 14:25"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mineducacion","https://carlosandmunoz.com/media/social-posts/runs-100/feed/49-mineducacion.jpg","real-runs","2027-01-04 14:25"
 "MinSalud's home page links to 404s.
 
 Run a link check on your home page every week. It's the page most people start from.
@@ -268,12 +268,12 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&u
 
 Canonicals must use your public host. Check them after migrations, when internal hostnames leak in.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=procuraduria","https://carlosandmunoz.com/media/social-posts/runs-100/feed/54-procuraduria.jpg","real-runs","2027-01-09 14:15"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=procuraduria","https://carlosandmunoz.com/media/social-posts/runs-100/feed/54-procuraduria.jpg","real-runs","2027-01-09 14:15"
 "ICETEX's inner pages all point to the home.
 
 Each page's canonical should be its own URL. A template that defaults to the home URL hides every inner page.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icetex","https://carlosandmunoz.com/media/social-posts/runs-100/feed/55-icetex.jpg","real-runs","2027-01-10 14:15"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icetex","https://carlosandmunoz.com/media/social-posts/runs-100/feed/55-icetex.jpg","real-runs","2027-01-10 14:15"
 "ICFES's HTML takes 2 s to start.
 
 Cache the home page HTML at a CDN or in the server. Time to first byte is a floor for everything else.
@@ -298,7 +298,7 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&u
 
 Find the Largest Contentful Paint element on your home page and serve it first: preload, size, compress.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=davivienda","https://carlosandmunoz.com/media/social-posts/runs-100/feed/60-davivienda.jpg","real-runs","2027-01-15 19:45"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=davivienda","https://carlosandmunoz.com/media/social-posts/runs-100/feed/60-davivienda.jpg","real-runs","2027-01-15 19:45"
 "Movistar's headers have a value mix-up.
 
 Send X-Content-Type-Options: nosniff, and X-Frame-Options: SAMEORIGIN. Recheck headers after config changes.
@@ -368,7 +368,7 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&u
 
 Set canonicals to the exact public URL: https, your real host, no port. Check your CMS's public URL setting.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=bibliotecanacional","https://carlosandmunoz.com/media/social-posts/runs-100/feed/74-bibliotecanacional.jpg","real-runs","2027-01-29 17:30"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=bibliotecanacional","https://carlosandmunoz.com/media/social-posts/runs-100/feed/74-bibliotecanacional.jpg","real-runs","2027-01-29 17:30"
 "Supersalud loads no analytics tag.
 
 Measure something, even a privacy-first, cookie-free tool. You can't improve pages you can't see used.
@@ -443,7 +443,7 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&u
 
 Install the full chain your certificate authority provides, then test with openssl s_client or SSL Labs.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=planetario","https://carlosandmunoz.com/media/social-posts/runs-100/feed/89-planetario.jpg","real-runs","2027-02-13 09:55"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=planetario","https://carlosandmunoz.com/media/social-posts/runs-100/feed/89-planetario.jpg","real-runs","2027-02-13 09:55"
 "Antioquia's home is titled ""Inicio"".
 
 Put the organization's name in the home title, with what people come for. ""Home"" alone wastes the slot.

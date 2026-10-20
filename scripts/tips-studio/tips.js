@@ -196,11 +196,20 @@ function plainTitle(tip) { return tip.title.join(" ").replace(/\*/g, "").replace
 function hashtags(tip, n) { return tip.tags.slice(0, n).map((t) => "#" + t).join(" "); }
 
 // X counts every link as 23 characters; the text gets the rest of the 280 and the link always survives.
+// Buffer's bulk upload counts the link in full, so a post over 280 that way gets the bare link,
+// which X still turns into a link.
 function xPost(text, url) {
   const room = 280 - 23 - 2;
-  if (text.length <= room) return text + "\n\n" + url;
-  const cut = text.slice(0, room - 1);
-  return cut.slice(0, cut.lastIndexOf(" ")).replace(/[\s,.;:]+$/, "") + "…\n\n" + url;
+  const body = text.length <= room ? text : (() => {
+    const cut = text.slice(0, room - 1);
+    return cut.slice(0, cut.lastIndexOf(" ")).replace(/[\s,.;:]+$/, "") + "…";
+  })();
+  const post = body + "\n\n" + url;
+  return post.length <= 280 ? post : body + "\n\n" + bareLink(url);
+}
+
+function bareLink(url) {
+  return url.replace(/^https:\/\//, "").replace(/\.html(?=\?|$)/, "");
 }
 
 function captions(tip, index, total) {
