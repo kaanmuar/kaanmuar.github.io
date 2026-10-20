@@ -556,6 +556,18 @@ test.describe("return price", () => {
     assert.throws(() => core.chargedUsd(Object.assign({}, base, { priceUsd: 5 })), /out of range/);
     assert.throws(() => core.chargedUsd(Object.assign({}, base, { priceUsd: 16.15, listUsd: 18 })), /does not match/);
   });
+
+  test("the peso quote and the PayPal capture accept a discounted price, and nothing under the floor", () => {
+    assert.equal(core.priceMatches(19), true);
+    assert.equal(core.priceMatches(16.15), true);
+    assert.equal(core.priceMatches(9.5), true);
+    assert.equal(core.priceMatches(9.49), false);
+    assert.equal(core.priceMatches(500), false);
+    const order = (value) => ({ status: "COMPLETED", purchase_units: [{ custom_id: "ab12", payments: { captures: [{ status: "COMPLETED", amount: { value, currency_code: "USD" } }] } }] });
+    assert.equal(core.paypalPaid(order("16.15")).paid, true);
+    assert.equal(core.paypalPaid(order("16.15")).amount, 16.15);
+    assert.equal(core.paypalPaid(order("3.00")).paid, false);
+  });
 });
 
 test.describe("address guards", () => {
