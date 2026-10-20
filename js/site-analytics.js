@@ -190,6 +190,22 @@
         hideCvRef();
     }
 
+    const SOCIAL_HOSTS = {
+        'youtube.com': 'YouTube', 'x.com': 'X', 'twitter.com': 'X', 'linkedin.com': 'LinkedIn',
+        'tiktok.com': 'TikTok', 'dev.to': 'DEV', 'reddit.com': 'Reddit', 'github.com': 'GitHub'
+    };
+
+    // Share buttons and links with their own data-analytics-event / data-track already report.
+    document.addEventListener('click', (e) => {
+        const link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!link || link.closest('[data-analytics-event], [data-track]')) return;
+        let url;
+        try { url = new URL(link.href); } catch (err) { return; }
+        const network = SOCIAL_HOSTS[url.hostname.replace(/^www\./, '')];
+        if (!network || /share|intent|submit/i.test(url.pathname)) return;
+        track('social_click', { event_category: 'Social', event_label: network, link_url: url.origin + url.pathname });
+    }, true);
+
     root.SiteAnalytics = {
         id: MEASUREMENT_ID,
         track,

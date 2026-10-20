@@ -33,6 +33,7 @@
             cert_label_security: 'Information Security:',
             footer_lab: 'QA regression lab — 20 frameworks, from Playwright and Cypress to Reqnroll, Maestro, and k6',
             footer_studio: 'SDLC studio — Jira, Linear, Backlog, Xray, and the automation sprint',
+            footer_review: 'URL Review — scores a public site for SEO, AI search, analytics, security, accessibility, and speed',
             footer_capabilities: 'Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, eight competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.',
             footer_pdf: 'Download PDF',
             roles: [
@@ -63,6 +64,7 @@
             cert_label_security: 'Seguridad de la información:',
             footer_lab: 'Laboratorio de regresión QA — 20 frameworks, de Playwright y Cypress a Reqnroll, Maestro y k6',
             footer_studio: 'Estudio SDLC — Jira, Linear, Backlog, Xray y el sprint de automatización',
+            footer_review: 'URL Review — califica un sitio público en SEO, búsqueda con IA, analítica, seguridad, accesibilidad y velocidad',
             footer_capabilities: 'Se lee en inglés, español, portugués, alemán, francés e italiano. Incluye un recorrido guiado, temas claro y oscuro, ocho filtros de competencias, un toolkit, una línea de tiempo, impresión y descargas en PDF, JPG, Word, JSON y texto plano.',
             footer_pdf: 'Descargar PDF',
             roles: [
@@ -93,6 +95,7 @@
             cert_label_security: 'Segurança da informação:',
             footer_lab: 'Laboratório de regressão de QA — 20 frameworks, do Playwright e Cypress ao Reqnroll, Maestro e k6',
             footer_studio: 'Estúdio SDLC — Jira, Linear, Backlog, Xray e o sprint de automação',
+            footer_review: 'URL Review — avalia um site público em SEO, busca com IA, analytics, segurança, acessibilidade e velocidade',
             footer_capabilities: 'Leitura em inglês, espanhol, português, alemão, francês e italiano. Inclui um tour guiado, temas claro e escuro, oito filtros de competências, um toolkit, uma linha do tempo, impressão e downloads em PDF, JPG, Word, JSON e texto simples.',
             footer_pdf: 'Baixar PDF',
             roles: [
@@ -123,6 +126,7 @@
             cert_label_security: 'Informationssicherheit:',
             footer_lab: 'QA-Regressionslabor — 20 Frameworks, von Playwright und Cypress bis Reqnroll, Maestro und k6',
             footer_studio: 'SDLC-Studio — Jira, Linear, Backlog, Xray und der Automatisierungs-Sprint',
+            footer_review: 'URL Review — bewertet eine öffentliche Website nach SEO, KI-Suche, Analytics, Sicherheit, Barrierefreiheit und Tempo',
             footer_capabilities: 'Lesbar auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Enthält eine Führung, helles und dunkles Design, acht Kompetenzfilter, ein Toolkit, eine Zeitachse, Druck und Downloads als PDF, JPG, Word, JSON und Klartext.',
             footer_pdf: 'PDF herunterladen',
             roles: [
@@ -153,6 +157,7 @@
             cert_label_security: 'Sécurité de l\'information :',
             footer_lab: 'Laboratoire de régression QA — 20 frameworks, de Playwright et Cypress à Reqnroll, Maestro et k6',
             footer_studio: 'Studio SDLC — Jira, Linear, Backlog, Xray et le sprint d’automatisation',
+            footer_review: 'URL Review — note un site public en SEO, recherche IA, analytics, sécurité, accessibilité et vitesse',
             footer_capabilities: 'Lisible en anglais, espagnol, portugais, allemand, français et italien. Comprend une visite guidée, les thèmes clair et sombre, huit filtres de compétences, une boîte à outils, une chronologie, l\'impression et des téléchargements PDF, JPG, Word, JSON et texte brut.',
             footer_pdf: 'Télécharger le PDF',
             roles: [
@@ -183,6 +188,7 @@
             cert_label_security: 'Sicurezza delle informazioni:',
             footer_lab: 'Laboratorio di regressione QA — 20 framework, da Playwright e Cypress a Reqnroll, Maestro e k6',
             footer_studio: 'Studio SDLC — Jira, Linear, Backlog, Xray e lo sprint di automazione',
+            footer_review: 'URL Review — valuta un sito pubblico per SEO, ricerca con IA, analytics, sicurezza, accessibilità e velocità',
             footer_capabilities: 'Leggibile in inglese, spagnolo, portoghese, tedesco, francese e italiano. Include un tour guidato, temi chiaro e scuro, otto filtri delle competenze, un toolkit, una linea del tempo, stampa e download in PDF, JPG, Word, JSON e testo semplice.',
             footer_pdf: 'Scarica il PDF',
             roles: [
@@ -391,7 +397,8 @@
                     demoMs: 3100,
                     action: function() {
                         if (window.innerWidth < 768) return;
-                        this._openModal();
+                        // The tour dialog keeps keyboard focus; the photo opens only to be seen.
+                        this._openModal({ takeFocus: false });
                         setTimeout(() => this._closeModal(), 2500);
                     }
                 },
@@ -1874,7 +1881,7 @@
                         if (analyticsHit) {
                             this._trackEvent(
                                 analyticsHit.dataset.analyticsEvent,
-                                'Contact',
+                                analyticsHit.dataset.analyticsCategory || 'Contact',
                                 analyticsHit.dataset.analyticsLabel || analyticsHit.textContent.trim()
                             );
                         }
@@ -2055,7 +2062,7 @@
             /**
              * MODIFIED: Added analytics tracking for expanding a job experience.
              */
-            _handleAccordionToggle(button) {
+            _handleAccordionToggle(button, { quiet = false } = {}) {
                 const body = document.getElementById(button.getAttribute('aria-controls'));
                 const isExpanded = button.getAttribute('aria-expanded') === 'true';
                 button.setAttribute('aria-expanded', !isExpanded);
@@ -2069,7 +2076,7 @@
                     button.querySelector('.accordion-icon').style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
 
                     // NEW: Track event only when expanding
-                    if (!isExpanded) {
+                    if (!isExpanded && !quiet) {
                         const jobTitle = button.querySelector('h4')?.textContent || 'Unknown Title';
                         const company = button.getAttribute('data-company') || 'Unknown Company';
                         this._trackEvent('expand_experience', 'Engagement', `${jobTitle} at ${company}`);
@@ -2077,7 +2084,7 @@
                 } else if (toolkitItem) {
                     button.parentElement.nextElementSibling.style.display = isExpanded ? 'block' : 'none';
                     button.nextElementSibling.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
-                    if (!isExpanded) {
+                    if (!isExpanded && !quiet) {
                         this._trackEvent('expand_toolkit', 'Toolkit', button.textContent.trim().slice(0, 80));
                     }
                 }
@@ -2227,11 +2234,12 @@
                 this._renderInfographics();
             },
 
-            _openModal() {
+            _openModal({ takeFocus = true } = {}) {
                 this.DOMElements.modalImage.src = this.DOMElements.profilePhoto.src;
                 const modal = this.DOMElements.imageModal;
                 const close = this.DOMElements.modalClose;
                 modal.classList.add('visible');
+                if (!takeFocus) return;
                 let tries = 0;
                 const focusClose = () => {
                     if (modal.classList.contains('visible')) close.focus();
@@ -3786,6 +3794,9 @@
 
             _refreshAfterLiveCv() {
                 const activeTopic = this.state.activeTopic;
+                // The live CV can land after the reader has opened sections or picked skills; the re-render must keep both.
+                const openPanels = Array.from(document.querySelectorAll('.toolkit-header[aria-expanded="true"], .accordion-header[aria-expanded="true"]'))
+                    .map((header) => header.getAttribute('aria-controls'));
                 this._populateAllTranslations();
                 this._renderToolkit();
                 this._renderExperiences();
@@ -3794,6 +3805,16 @@
                 this._forceShowAllContent();
                 this.translatePage(this.state.lang || 'en');
                 this._populateTopicDropdown();
+                openPanels.forEach((id) => {
+                    const header = document.querySelector(`[aria-controls="${id}"]`);
+                    if (header && header.getAttribute('aria-expanded') !== 'true') this._handleAccordionToggle(header, { quiet: true });
+                });
+                document.querySelectorAll('.tech-tag').forEach((tag) => {
+                    const picked = this.state.selectedSkills.has(tag.dataset.skillName);
+                    tag.classList.toggle('selected', picked);
+                    tag.setAttribute('aria-pressed', String(picked));
+                });
+                if (this.state.selectedSkills.size && !activeTopic) this._filterExperiencesAndTimeline();
                 if (activeTopic) this._applyCompetencyFocus(activeTopic, { restore: true });
             },
 
@@ -4215,6 +4236,7 @@
                 this.state.isTourActive = true;
                 this.state.currentTourStep = 0;
                 this.state.tourDemoReady = false;
+                this.DOMElements.tourNextBtn.disabled = true;
                 this._tourReturn = document.activeElement;
                 document.documentElement.classList.add('cv-tour');
                 tourOverlay.style.display = 'block';
@@ -4498,7 +4520,8 @@
                     }
                     if (runActionAndAnimation) {
                         this._startTourProgress(step.demoMs || 2500);
-                    } else {
+                    } else if (this.state.tourDemoReady) {
+                        // A redraw (language switch, live CV) keeps the demo's own timer; it unlocks Next when it ends.
                         this._markTourDemoReady();
                     }
                 }, runActionAndAnimation ? 600 : 50);

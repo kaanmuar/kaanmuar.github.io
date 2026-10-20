@@ -30,7 +30,7 @@ Suite Teardown    Close All Browsers
     Click Element    css:.competency-item[data-competency="pm"]
     Wait Until Page Contains Element    css:html.topic-focus
     Page Should Contain Element    css:.experience-item.topic-match
-    Page Should Contain Element    css:.experience-item.topic-dim
+    Page Should Contain Element    css:#languages-section.topic-dim
     Click Element    id:languages-heading
     Wait Until Page Does Not Contain Element    css:html.topic-focus
 
