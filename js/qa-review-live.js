@@ -601,6 +601,7 @@
     if (!section.classList.contains("is-docked")) return;
     section.classList.remove("is-docked");
     document.body.style.overflow = "";
+    if (location.hash === "#live-reports") history.replaceState(history.state, "", location.pathname + location.search);
     const gateBtn = document.getElementById("live-open-gate");
     if (gateBtn) gateBtn.focus({ preventScroll: true });
   }
@@ -1004,7 +1005,9 @@
     bindCarousel();
     applyFilters();
     deepLink();
+    if (location.hash === "#live-reports") dock();
     window.addEventListener("hashchange", () => {
+      if (location.hash === "#live-reports") { dock(); return; }
       const match = location.hash.match(/^#live=([\w-]+)/);
       if (match && state.all.some((r) => r.id === match[1])) openReport(match[1], null, "link");
     });
