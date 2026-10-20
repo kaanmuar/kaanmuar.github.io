@@ -12,6 +12,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BASE = "https://carlosandmunoz.com/"
+# Spanish copy is Latin American (es-419, tú); Portuguese is Brazilian. A review analyzes pages; it never "reads" them.
 LOCALES = [("en", "en_US"), ("es", "es_CO"), ("pt", "pt_BR"), ("de", "de_DE"), ("fr", "fr_FR"), ("it", "it_IT")]
 
 LANGS = {
@@ -20,11 +21,11 @@ LANGS = {
         "native": "Español",
         "title": "La página ya está hablando.",
         "seo_title": "QA-lab URL Review: SEO, GEO y casos de prueba desde una URL",
-        "description": "Una página https pública, calificada en SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks.",
-        "og_description": "Una lectura https pública, una lista de tecnologías y casos de QA propuestos con scripts iniciales para veinte frameworks. Un navegador sin interfaz corre axe-core, registra el rastreo antes y después de una elección de cookies y toma capturas. Las demás herramientas se nombran cuando corresponden y no se ejecutan. Seis idiomas.",
-        "twitter_title": "Lee la página pública. Propón los casos.",
-        "twitter_description": "Una lectura pública de un sitio https, una lista de tecnologías y casos de QA propuestos. Una revisión completada por navegador y red. El informe se muestra una vez.",
-        "gate": "Antes de leer una sola dirección.",
+        "description": "Una página https pública, analizada y calificada en SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks.",
+        "og_description": "Un análisis público por https, calificado en SEO, GEO, analítica, seguridad, accesibilidad y rendimiento, con una lista de qué corregir primero y casos de QA propuestos con scripts iniciales para veinte frameworks. Un navegador sin interfaz ejecuta axe-core, registra el rastreo antes y después de una elección de cookies y toma capturas de pantalla. Las demás herramientas especializadas se nombran cuando corresponden y no se ejecutan. Seis idiomas.",
+        "twitter_title": "Analiza la página pública. Propón los casos.",
+        "twitter_description": "Un análisis público de un sitio https, una lista de tecnologías y casos de QA propuestos. Una revisión completada por navegador y red. El informe se muestra una sola vez.",
+        "gate": "Antes de analizar una sola dirección.",
         "display": ["La página", "ya está hablando.", "Escribimos la", "lista de pruebas."],
     },
     "pt": {
@@ -32,11 +33,11 @@ LANGS = {
         "native": "Português",
         "title": "A página já está falando.",
         "seo_title": "QA-lab URL Review: SEO, GEO e casos de teste de uma URL",
-        "description": "Uma página https pública, lida e avaliada em SEO, busca com IA (GEO), analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks.",
-        "og_description": "Uma leitura https pública, uma lista de tecnologias e casos de QA propostos com scripts iniciais para vinte frameworks. Um navegador headless roda o axe-core, registra o rastreamento antes e depois de uma escolha de cookies e tira capturas. As outras ferramentas são nomeadas quando se aplicam e não são executadas. Seis idiomas.",
-        "twitter_title": "Leia a página pública. Proponha os casos.",
-        "twitter_description": "Uma leitura pública de um site https, uma lista de tecnologias e casos de QA propostos. Uma revisão concluída por navegador e rede. O relatório é mostrado uma vez.",
-        "gate": "Antes de ler um único endereço.",
+        "description": "Uma página https pública, analisada e avaliada em SEO, busca com IA (GEO), analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks.",
+        "og_description": "Uma análise pública via https, avaliada em SEO, GEO, analytics, segurança, acessibilidade e desempenho, com uma lista do que corrigir primeiro e casos de QA propostos com scripts iniciais para vinte frameworks. Um navegador headless executa o axe-core, registra o rastreamento antes e depois de uma escolha de cookies e faz capturas de tela. As outras ferramentas especializadas são citadas quando se aplicam e não são executadas. Seis idiomas.",
+        "twitter_title": "Analise a página pública. Proponha os casos.",
+        "twitter_description": "Uma análise pública de um site https, uma lista de tecnologias e casos de QA propostos. Uma revisão concluída por navegador e rede. O relatório é mostrado uma vez.",
+        "gate": "Antes de analisar um único endereço.",
         "display": ["A página", "já está falando.", "Escrevemos a", "lista de testes."],
     },
     "de": {
@@ -44,11 +45,11 @@ LANGS = {
         "native": "Deutsch",
         "title": "Die Seite spricht bereits.",
         "seo_title": "QA-lab URL Review: SEO, GEO und Testfälle aus einer URL",
-        "description": "Eine öffentliche https-Seite, bewertet nach SEO, KI-Suche (GEO), Analytics, Sicherheit, Barrierefreiheit und Tempo, mit Testfällen für 20 Frameworks.",
-        "og_description": "Eine öffentliche https-Lesung, eine Technologieliste und vorgeschlagene QA-Fälle mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Andere Spezialwerkzeuge werden genannt, wenn sie zutreffen, und nicht gestartet. Sechs Sprachen.",
-        "twitter_title": "Die öffentliche Seite lesen. Die Fälle vorschlagen.",
-        "twitter_description": "Eine öffentliche Lesung einer https-Website, eine Technologieliste und vorgeschlagene QA-Fälle. Eine abgeschlossene Prüfung pro Browser und Netzwerk. Der Bericht wird einmal angezeigt.",
-        "gate": "Bevor eine einzige Adresse gelesen wird.",
+        "description": "Eine öffentliche https-Seite, geprüft und bewertet nach SEO, KI-Suche (GEO), Analytics, Sicherheit, Barrierefreiheit und Tempo, mit Testfällen für 20 Frameworks.",
+        "og_description": "Eine öffentliche https-Prüfung, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance, mit einer Liste der dringendsten Korrekturen und vorgeschlagenen QA-Fällen mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Andere Spezialwerkzeuge werden genannt, wenn sie zutreffen, und nicht gestartet. Sechs Sprachen.",
+        "twitter_title": "Die öffentliche Seite prüfen. Die Fälle vorschlagen.",
+        "twitter_description": "Eine öffentliche Prüfung einer https-Website, eine Technologieliste und vorgeschlagene QA-Fälle. Eine abgeschlossene Prüfung pro Browser und Netzwerk. Der Bericht wird einmal angezeigt.",
+        "gate": "Bevor eine einzige Adresse geprüft wird.",
         "display": ["Die Seite", "spricht bereits.", "Wir schreiben die", "Testliste."],
     },
     "fr": {
@@ -56,11 +57,11 @@ LANGS = {
         "native": "Français",
         "title": "La page parle déjà.",
         "seo_title": "QA-lab URL Review : SEO, GEO et cas de test depuis une URL",
-        "description": "Une page https publique, lue et notée en SEO, recherche IA (GEO), analytics, sécurité, accessibilité et vitesse, avec des cas de test pour 20 frameworks.",
-        "og_description": "Une lecture https publique, une liste de technologies et des cas de QA proposés avec des scripts de départ pour vingt frameworks. Un navigateur headless lance axe-core, relève le suivi avant et après un choix de cookies et prend des captures. Les autres outils spécialisés sont nommés lorsqu’ils s’appliquent et ne sont pas lancés. Six langues.",
-        "twitter_title": "Lire la page publique. Proposer les cas.",
-        "twitter_description": "Une lecture publique d’un site https, une liste de technologies et des cas de QA proposés. Une revue terminée par navigateur et par réseau. Le rapport est affiché une fois.",
-        "gate": "Avant de lire une seule adresse.",
+        "description": "Une page https publique, analysée et notée en SEO, recherche IA (GEO), analytics, sécurité, accessibilité et vitesse, avec des cas de test pour 20 frameworks.",
+        "og_description": "Une analyse publique en https, notée en SEO, GEO, analytics, sécurité, accessibilité et performance, avec une liste des corrections prioritaires et des cas de QA proposés avec des scripts de départ pour vingt frameworks. Un navigateur headless lance axe-core, relève le suivi avant et après un choix de cookies et prend des captures d’écran. Les autres outils spécialisés sont nommés lorsqu’ils s’appliquent et ne sont pas lancés. Six langues.",
+        "twitter_title": "Analyser la page publique. Proposer les cas.",
+        "twitter_description": "Une analyse publique d’un site https, une liste de technologies et des cas de QA proposés. Une analyse terminée par navigateur et par réseau. Le rapport est affiché une fois.",
+        "gate": "Avant d’analyser une seule adresse.",
         "display": ["La page", "parle déjà.", "Nous écrivons la", "liste de tests."],
     },
     "it": {
@@ -68,11 +69,11 @@ LANGS = {
         "native": "Italiano",
         "title": "La pagina sta già parlando.",
         "seo_title": "QA-lab URL Review: SEO, GEO e casi di test da un URL",
-        "description": "Una pagina https pubblica, letta e valutata per SEO, ricerca IA (GEO), analytics, sicurezza, accessibilità e velocità, con casi di test per 20 framework.",
-        "og_description": "Una lettura https pubblica, un elenco di tecnologie e casi di QA proposti con script iniziali per venti framework. Un browser headless esegue axe-core, registra il tracciamento prima e dopo una scelta sui cookie e fa screenshot. Gli altri strumenti specialistici vengono nominati quando si applicano e non vengono avviati. Sei lingue.",
-        "twitter_title": "Leggi la pagina pubblica. Proponi i casi.",
-        "twitter_description": "Una lettura pubblica di un sito https, un elenco di tecnologie e casi di QA proposti. Una revisione completata per browser e rete. Il report viene mostrato una volta.",
-        "gate": "Prima di leggere un solo indirizzo.",
+        "description": "Una pagina https pubblica, analizzata e valutata per SEO, ricerca IA (GEO), analytics, sicurezza, accessibilità e velocità, con casi di test per 20 framework.",
+        "og_description": "Un’analisi pubblica via https, valutata per SEO, GEO, analytics, sicurezza, accessibilità e prestazioni, con un elenco di cosa sistemare prima e casi di QA proposti con script iniziali per venti framework. Un browser headless esegue axe-core, registra il tracciamento prima e dopo una scelta sui cookie e fa screenshot. Gli altri strumenti specialistici vengono nominati quando si applicano e non vengono avviati. Sei lingue.",
+        "twitter_title": "Analizza la pagina pubblica. Proponi i casi.",
+        "twitter_description": "Un’analisi pubblica di un sito https, un elenco di tecnologie e casi di QA proposti. Una revisione completata per browser e rete. Il report viene mostrato una volta.",
+        "gate": "Prima di analizzare un solo indirizzo.",
         "display": ["La pagina", "sta già parlando.", "Scriviamo la", "lista dei test."],
     },
 }
