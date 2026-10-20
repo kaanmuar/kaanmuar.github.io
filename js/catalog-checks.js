@@ -302,7 +302,10 @@
       assert(document.documentElement.classList.contains('topic-focus'), 'topic-focus not applied');
       assert(btn.getAttribute('aria-pressed') === 'true', 'competency not pressed');
       assert(document.querySelector('.experience-item.topic-match'), 'no highlighted experience');
-      assert(document.querySelector('.experience-item.topic-dim'), 'no dimmed experience');
+      var roles = document.querySelectorAll('#experience-container .experience-item').length;
+      var sorted = document.querySelectorAll('#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim').length;
+      assert(sorted === roles, sorted + ' of ' + roles + ' roles were matched or dimmed');
+      assert(document.getElementById('languages-section').classList.contains('topic-dim'), 'unrelated sections were not dimmed');
       document.getElementById('languages-heading').dispatchEvent(new MouseEvent('click', { bubbles: true }));
       await wait(80);
       assert(!document.documentElement.classList.contains('topic-focus'), 'topic-focus stayed after outside click');
@@ -316,14 +319,14 @@
       return '8 competency filters';
     },
     'FN-17': async function () {
-      var btn = document.querySelector('.competency-item[data-competency="qa"]');
-      btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      function qa() { return document.querySelector('.competency-item[data-competency="qa"]'); }
+      qa().dispatchEvent(new MouseEvent('click', { bubbles: true }));
       await wait(80);
       assert(document.documentElement.classList.contains('topic-focus'), 'qa focus missing');
-      btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      qa().dispatchEvent(new MouseEvent('click', { bubbles: true }));
       await wait(80);
       assert(!document.documentElement.classList.contains('topic-focus'), 'toggle did not restore');
-      assert(btn.getAttribute('aria-pressed') === 'false', 'qa still pressed');
+      assert(qa().getAttribute('aria-pressed') === 'false', 'qa still pressed');
       return 'qa toggle restore';
     },
     'FN-18': async function () {
