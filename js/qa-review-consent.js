@@ -15,13 +15,17 @@
     root.__qaReviewAnalytics = true;
     root.dataLayer = root.dataLayer || [];
     root.gtag = root.gtag || function () { root.dataLayer.push(arguments); };
+    root.gtag("consent", "default", { ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied", analytics_storage: "granted" });
     root.gtag("js", new Date());
+    const page = new URL(location.href);
+    // A saved report id reopens that report, so it stays out of analytics.
+    page.searchParams.delete("report");
     root.gtag("config", "G-J8GNF5380F", {
       anonymize_ip: true,
       send_page_view: true,
       page_title: document.title,
       page_path: location.pathname,
-      page_location: location.href,
+      page_location: page.href,
       content_group: "QA-lab URL Review"
     });
     const script = document.createElement("script");

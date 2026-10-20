@@ -28,3 +28,4 @@ watir/vendor/
 watir/.bundle/
 watir/Gemfile.lock
 reqnroll/Features/*.feature.cs
+previews/
