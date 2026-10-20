@@ -3600,9 +3600,10 @@
       const item = row && (row.closest('.case-item') || row);
       const list = document.getElementById('case-list');
       if (item && list) {
-        const ir = item.getBoundingClientRect();
         const lr = list.getBoundingClientRect();
-        const top = list.scrollTop + (ir.top - lr.top) - (list.clientHeight / 2) + (ir.height / 2);
+        let tr = item.getBoundingClientRect();
+        if (tr.height > list.clientHeight) tr = row.getBoundingClientRect();
+        const top = list.scrollTop + (tr.top - lr.top) - Math.max(0, (list.clientHeight - tr.height) / 2);
         list.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
       }
       const detail = document.getElementById('case-detail');
