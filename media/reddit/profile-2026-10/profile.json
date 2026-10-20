@@ -1,0 +1,15 @@
+{
+  "batch": "profile-2026-10",
+  "username": "qalaburlreview",
+  "displayName": "QA-lab URL Review",
+  "about": "QA-lab URL Review analyzes a public https page and proposes the test cases: SEO, AI search, security, accessibility, speed. Scripts for 20 frameworks. Reports in 6 languages.",
+  "avatar": "assets/qa-review-logo.png",
+  "banner": "media/reddit/profile-2026-10/banner.jpg",
+  "links": [
+    { "type": "Custom URL", "label": "QA-lab URL Review", "url": "https://carlosandmunoz.com/qa-review.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link" },
+    { "type": "YouTube", "label": "YouTube", "url": "https://www.youtube.com/@qalaburlreview" },
+    { "type": "LinkedIn", "label": "LinkedIn", "url": "https://www.linkedin.com/company/qalab-url-review" },
+    { "type": "Custom URL", "label": "DEV", "url": "https://dev.to/qalaburlreview" },
+    { "type": "Twitter", "label": "X", "url": "https://x.com/qalaburlreview" }
+  ]
+}
