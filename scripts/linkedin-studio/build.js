@@ -27,9 +27,8 @@ function args() {
 const opts = args();
 const BATCH = opts.batch || "premium-2026-10";
 const OUT = path.join(ROOT, "media/linkedin", BATCH);
-const START = opts.start || "2026-10-21";
+const START = opts.start || "2026-10-20";
 const RENEWS = opts.renews || "2026-11-19";
-const PAGE_SLOT = "12:30";
 
 const SECTOR_LABELS = { opensource: "Open source", highered: "Higher education", devdocs: "Developer docs", fintech: "Fintech", humanitarian: "Humanitarian", international: "International" };
 const EXPORTS = ["Jira", "TestRail", "Xray", "Zephyr", "Azure DevOps", "Mantis", "Excel", "PDF", "JSON"];
@@ -124,8 +123,8 @@ function plan(copy) {
   add(START, "", "Set the custom button to " + copy.button.label, "Edit page > Buttons", "", copy.button.url);
   add(START, "", "Replace the tagline and the four highlights with the copy in page.json", "Edit page > Page info", "page.json");
   add(START, "", "Add competitors for the insights tab", "Analytics > Competitors", "");
-  add(addDays(START, 1), PAGE_SLOT, "Post the carousel PDF with the text in page.json (carouselPost), then pin it in Featured", "Page post", "carousel.pdf", link("social", "premium-carousel"));
-  add(addDays(START, 2), "", "Send this month's follow invitations to connections who work in QA, web, or marketing", "Invite to follow", "");
+  add(START, "", "Post the carousel PDF with the text in page.json (carouselPost), then pin it in Featured", "Page post", "carousel.pdf", link("social", "premium-carousel"));
+  add(START, "", "Send follow invitations to connections who work in QA, web, or marketing; credits are few, so pick only clear fits", "Invite to follow", "");
   mondaysBetween(START, RENEWS).forEach((d) => add(d, "", "Review who visited the page, competitor insights, and LinkedIn opens in admin; pin last week's best runs post in Featured", "Analytics, Featured", ""));
   add(addDays(RENEWS, -3), "", "Decide whether to keep Premium; export page analytics either way", "Premium features > Manage subscription", "");
   add(addDays(RENEWS, -1), "", "Last day to cancel before Premium renews on " + RENEWS, "Premium features > Manage subscription", "");
