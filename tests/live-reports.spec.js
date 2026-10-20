@@ -127,6 +127,17 @@ test.describe('Live reports', () => {
     await expect(page.locator('#gate')).toBeVisible();
   });
 
+  test('a #live-reports link opens the ring over the gate', async ({ page }) => {
+    await prime(page, { terms: false });
+    await page.goto('/qa-review.html#live-reports');
+    await expect(page.locator('#live-reports.is-docked')).toBeVisible();
+    await expect(page.locator('.live-card.is-active')).toBeVisible();
+    await page.locator('#live-back').click();
+    await expect(page.locator('#live-reports.is-docked')).toHaveCount(0);
+    await expect(page.locator('#gate')).toBeVisible();
+    expect(new URL(page.url()).hash).toBe('');
+  });
+
   test('the Spanish page translates the controls', async ({ page }) => {
     await prime(page);
     await page.goto('/qa-review-es.html');
