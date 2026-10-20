@@ -96,9 +96,21 @@ function pageCopy(t) {
       { text: "Reports in six languages", detail: "English, Spanish, Portuguese, French, +2" },
       { text: "First review included", detail: "Up to 20 pages, 2 links deep" }
     ].map((h) => ({ ...h, url: link("company_page", "premium-highlight") })),
-    competitors: "Pick up to nine pages that sell website audits or QA reviews to the same buyers. LinkedIn suggests similar pages in the competitor picker.",
+    competitors: ["Siteimprove", "Semrush", "Ahrefs", "Screaming Frog", "Sitebulb", "Lumar (formerly Deepcrawl)", "Silktide", "Deque Systems, Inc", "Testlio"],
     testimonial: "Leave off until a URL Review client gives a quote in their own words. Do not reuse CV testimonials here."
   };
+}
+
+function carouselPost(t, picks) {
+  const read = new Date(picks[0].read + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  return [
+    "What a URL Review finds on the best sites we read.",
+    "We read " + nf(t.reports) + " public sites, " + nf(t.pages) + " pages across " + t.countries + " countries. The top site in each of " + (["three", "four", "five", "six", "seven"][picks.length - 3] || picks.length) + " sectors still had one thing to fix first:",
+    picks.map((p) => "→ " + p.name + ", " + p.overall + ": " + p.fix).join("\n"),
+    "Swipe for the six area scores and what each site already does well.",
+    "One automated read of public pages on " + read + ". A starting point, not a verdict.\nYour first review is included, up to 20 pages: " + link("social", "premium-carousel"),
+    "#QA #SEO #Accessibility #WebPerformance"
+  ].join("\n\n");
 }
 
 function nf(n) {
@@ -112,7 +124,7 @@ function plan(copy) {
   add(START, "", "Set the custom button to " + copy.button.label, "Edit page > Buttons", "", copy.button.url);
   add(START, "", "Replace the tagline and the four highlights with the copy in page.json", "Edit page > Page info", "page.json");
   add(START, "", "Add competitors for the insights tab", "Analytics > Competitors", "");
-  add(addDays(START, 1), PAGE_SLOT, "Post the carousel PDF, then pin it in Featured", "Page post", "carousel.pdf", link("social", "premium-carousel"));
+  add(addDays(START, 1), PAGE_SLOT, "Post the carousel PDF with the text in page.json (carouselPost), then pin it in Featured", "Page post", "carousel.pdf", link("social", "premium-carousel"));
   add(addDays(START, 2), "", "Send this month's follow invitations to connections who work in QA, web, or marketing", "Invite to follow", "");
   mondaysBetween(START, RENEWS).forEach((d) => add(d, "", "Review who visited the page, competitor insights, and LinkedIn opens in admin; pin last week's best runs post in Featured", "Analytics, Featured", ""));
   add(addDays(RENEWS, -3), "", "Decide whether to keep Premium; export page analytics either way", "Premium features > Manage subscription", "");
@@ -135,8 +147,9 @@ function indexHtml(t, picks, copy, rows) {
     "<h2>Cover slideshow (1128×191, rendered at 2×)</h2>" + ["promise", "proof", "handoff"].map((v) => img("cover-" + v + ".png", 1128)).join("") +
     "<h2>Page copy</h2><p><b>Tagline:</b> " + esc(copy.tagline) + "</p><p><b>Button:</b> " + esc(copy.button.label) + " → <code>" + esc(copy.button.url) + "</code></p>" +
     "<p><b>Highlights:</b></p><ul>" + copy.highlights.map((h) => "<li>" + esc(h.text) + " · <i>" + esc(h.detail) + "</i>" + (h.featured ? " (featured)" : "") + "</li>").join("") + "</ul>" +
-    "<p><b>Competitors:</b> " + esc(copy.competitors) + "</p><p><b>Testimonial:</b> " + esc(copy.testimonial) + "</p>" +
+    "<p><b>Competitors:</b> " + esc(copy.competitors.join(", ")) + "</p><p><b>Testimonial:</b> " + esc(copy.testimonial) + "</p>" +
     '<h2>Carousel PDF</h2><p><a href="carousel.pdf">carousel.pdf</a> · ' + (picks.length + 2) + " pages</p>" +
+    '<p><b>Post text:</b></p><pre style="white-space:pre-wrap">' + esc(carouselPost(t, picks)) + "</pre>" +
     '<h2>Proof cards</h2><div class="row">' + picks.map((p) => "<div>" + img("proof-" + p.id + ".jpg", 260) + esc(p.name) + "</div>").join("") + "</div>" +
     '<h2>Month plan</h2><p><a href="plan.csv">plan.csv</a></p><table><tr><th>Date</th><th>Time</th><th>Action</th><th>Where</th><th>Asset</th></tr>' +
     rows.map((r) => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(r[2]) + (r[5] ? '<br><code>' + esc(r[5]) + "</code>" : "") + "</td><td>" + esc(r[3]) + "</td><td>" + esc(r[4]) + "</td></tr>").join("") +
@@ -195,11 +208,12 @@ async function main() {
     await shoot(page, { kind: "proof", data: { report: p } }, path.join(OUT, "proof-" + p.id + ".jpg"), [1080, 1350], 1);
     slides.push(path.join(OUT, "proof-" + p.id + ".jpg"));
   }
-  await slide({ kind: "page", variant: "close", data: { total } }, ".slide-close.jpg");  await pdfFrom(browser, slides, path.join(OUT, "carousel.pdf"));
+  await slide({ kind: "page", variant: "close", data: { total } }, ".slide-close.jpg");
+  await pdfFrom(browser, slides, path.join(OUT, "carousel.pdf"));
   slides.filter((f) => path.basename(f).startsWith(".slide-")).forEach((f) => fs.unlinkSync(f));
   await browser.close();
 
-  fs.writeFileSync(path.join(OUT, "page.json"), JSON.stringify(Object.assign({ batch: BATCH, renews: RENEWS, totals: t, carousel: picks.map((p) => p.id) }, copy), null, 2) + "\n");
+  fs.writeFileSync(path.join(OUT, "page.json"), JSON.stringify(Object.assign({ batch: BATCH, renews: RENEWS, totals: t, carousel: picks.map((p) => p.id), carouselPost: carouselPost(t, picks) }, copy), null, 2) + "\n");
   fs.writeFileSync(path.join(OUT, "plan.csv"), csv([["Date", "Time", "Action", "Where", "Asset", "Link"]].concat(rows)));
   fs.writeFileSync(path.join(OUT, "index.html"), indexHtml(t, picks, copy, rows));
   console.log("LinkedIn kit:", path.relative(ROOT, OUT), "· carousel", picks.map((p) => p.id).join(", "));

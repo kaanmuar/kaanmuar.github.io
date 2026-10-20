@@ -25,6 +25,7 @@
     "cloudflare",
     "worldbank"
   ],
+  "carouselPost": "What a URL Review finds on the best sites we read.\n\nWe read 114 public sites, 2,227 pages across 11 countries. The top site in each of five sectors still had one thing to fix first:\n\n→ MDN Web Docs, 95: Permissions-Policy is not sent\n→ GOV.UK, 92: 19 pages have no canonical link\n→ Node.js, 89: Other sites can frame the page\n→ Cloudflare, 88: Security headers on the start page are missing on other pages\n→ World Bank, 87: No content security policy\n\nSwipe for the six area scores and what each site already does well.\n\nOne automated read of public pages on 19 Oct 2026. A starting point, not a verdict.\nYour first review is included, up to 20 pages: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=social&utm_campaign=premium-carousel\n\n#QA #SEO #Accessibility #WebPerformance",
   "tagline": "One public URL in. A plain-language QA review out: SEO, AI search, analytics, security, accessibility, speed.",
   "button": {
     "label": "Visit website",
@@ -53,6 +54,16 @@
       "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-highlight"
     }
   ],
-  "competitors": "Pick up to nine pages that sell website audits or QA reviews to the same buyers. LinkedIn suggests similar pages in the competitor picker.",
+  "competitors": [
+    "Siteimprove",
+    "Semrush",
+    "Ahrefs",
+    "Screaming Frog",
+    "Sitebulb",
+    "Lumar (formerly Deepcrawl)",
+    "Silktide",
+    "Deque Systems, Inc",
+    "Testlio"
+  ],
   "testimonial": "Leave off until a URL Review client gives a quote in their own words. Do not reuse CV testimonials here."
 }
