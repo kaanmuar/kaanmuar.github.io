@@ -3,7 +3,7 @@ Date,Time,Action,Where,Asset,Link
 2026-10-20,,Set the custom button to Visit website,Edit page > Buttons,,https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-cta
 2026-10-20,,Replace the tagline and the four highlights with the copy in page.json,Edit page > Page info,page.json,
 2026-10-20,,Add competitors for the insights tab,Analytics > Competitors,,
-2026-10-20,,"Post the carousel PDF with the text in page.json (carouselPost), then pin it in Featured",Page post,carousel.pdf,https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=social&utm_campaign=premium-carousel
+2026-10-20,,"Post the carousel PDF with the title and text in page.json (carouselTitle, carouselPost), then pin it in Featured",Page post,carousel.pdf,https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=social&utm_campaign=premium-carousel
 2026-10-20,,"Send follow invitations to connections who work in QA, web, or marketing; credits are few, so pick only clear fits",Invite to follow,,
 2026-10-26,,"Review who visited the page, competitor insights, and LinkedIn opens in admin; pin last week's best runs post in Featured","Analytics, Featured",,
 2026-11-02,,"Review who visited the page, competitor insights, and LinkedIn opens in admin; pin last week's best runs post in Featured","Analytics, Featured",,

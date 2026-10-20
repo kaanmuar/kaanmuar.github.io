@@ -112,6 +112,10 @@ function carouselPost(t, picks) {
   ].join("\n\n");
 }
 
+// LinkedIn rejects document titles over 58 characters.
+const CAROUSEL_TITLE = "QA-lab URL Review: what it finds on the best sites we read";
+if (CAROUSEL_TITLE.length > 58) throw new Error("Carousel title is " + CAROUSEL_TITLE.length + " characters; LinkedIn allows 58");
+
 function nf(n) {
   return Number(n).toLocaleString("en-US");
 }
@@ -123,7 +127,7 @@ function plan(copy) {
   add(START, "", "Set the custom button to " + copy.button.label, "Edit page > Buttons", "", copy.button.url);
   add(START, "", "Replace the tagline and the four highlights with the copy in page.json", "Edit page > Page info", "page.json");
   add(START, "", "Add competitors for the insights tab", "Analytics > Competitors", "");
-  add(START, "", "Post the carousel PDF with the text in page.json (carouselPost), then pin it in Featured", "Page post", "carousel.pdf", link("social", "premium-carousel"));
+  add(START, "", "Post the carousel PDF with the title and text in page.json (carouselTitle, carouselPost), then pin it in Featured", "Page post", "carousel.pdf", link("social", "premium-carousel"));
   add(START, "", "Send follow invitations to connections who work in QA, web, or marketing; credits are few, so pick only clear fits", "Invite to follow", "");
   mondaysBetween(START, RENEWS).forEach((d) => add(d, "", "Review who visited the page, competitor insights, and LinkedIn opens in admin; pin last week's best runs post in Featured", "Analytics, Featured", ""));
   add(addDays(RENEWS, -3), "", "Decide whether to keep Premium; export page analytics either way", "Premium features > Manage subscription", "");
@@ -148,6 +152,7 @@ function indexHtml(t, picks, copy, rows) {
     "<p><b>Highlights:</b></p><ul>" + copy.highlights.map((h) => "<li>" + esc(h.text) + " · <i>" + esc(h.detail) + "</i>" + (h.featured ? " (featured)" : "") + "</li>").join("") + "</ul>" +
     "<p><b>Competitors:</b> " + esc(copy.competitors.join(", ")) + "</p><p><b>Testimonial:</b> " + esc(copy.testimonial) + "</p>" +
     '<h2>Carousel PDF</h2><p><a href="carousel.pdf">carousel.pdf</a> · ' + (picks.length + 2) + " pages</p>" +
+    "<p><b>Document title:</b> " + esc(CAROUSEL_TITLE) + "</p>" +
     '<p><b>Post text:</b></p><pre style="white-space:pre-wrap">' + esc(carouselPost(t, picks)) + "</pre>" +
     '<h2>Proof cards</h2><div class="row">' + picks.map((p) => "<div>" + img("proof-" + p.id + ".jpg", 260) + esc(p.name) + "</div>").join("") + "</div>" +
     '<h2>Month plan</h2><p><a href="plan.csv">plan.csv</a></p><table><tr><th>Date</th><th>Time</th><th>Action</th><th>Where</th><th>Asset</th></tr>' +
@@ -212,7 +217,7 @@ async function main() {
   slides.filter((f) => path.basename(f).startsWith(".slide-")).forEach((f) => fs.unlinkSync(f));
   await browser.close();
 
-  fs.writeFileSync(path.join(OUT, "page.json"), JSON.stringify(Object.assign({ batch: BATCH, renews: RENEWS, totals: t, carousel: picks.map((p) => p.id), carouselPost: carouselPost(t, picks) }, copy), null, 2) + "\n");
+  fs.writeFileSync(path.join(OUT, "page.json"), JSON.stringify(Object.assign({ batch: BATCH, renews: RENEWS, totals: t, carousel: picks.map((p) => p.id), carouselTitle: CAROUSEL_TITLE, carouselPost: carouselPost(t, picks) }, copy), null, 2) + "\n");
   fs.writeFileSync(path.join(OUT, "plan.csv"), csv([["Date", "Time", "Action", "Where", "Asset", "Link"]].concat(rows)));
   fs.writeFileSync(path.join(OUT, "index.html"), indexHtml(t, picks, copy, rows));
   console.log("LinkedIn kit:", path.relative(ROOT, OUT), "· carousel", picks.map((p) => p.id).join(", "));
