@@ -195,7 +195,7 @@ function summary(row, index) {
   };
 }
 
-function snapshot(records, alerts, active) {
+function snapshot(records, alerts, active, noteRows) {
   const list = Array.isArray(records) ? records : [];
   const index = new Map();
   list.forEach((row) => {
@@ -236,7 +236,7 @@ function snapshot(records, alerts, active) {
       status: clip(note.status, 40)
     })),
     offers: offers.catalog(),
-    followUps: offers.queue(list).slice(0, 40),
+    followUps: offers.queue(list.concat(Array.isArray(noteRows) ? noteRows : [])).slice(0, 40),
     runs
   };
 }

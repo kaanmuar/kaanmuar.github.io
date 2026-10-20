@@ -166,7 +166,8 @@ function messageFor(kind, lang, vars) {
     kind,
     subject: fill(row[2], vars),
     title: fill(row[0], vars),
-    text: body + "\n\nQA-lab URL Review\nhttps://carlosandmunoz.com/qa-review.html\nReply stop to end these notes."
+    body,
+    text: body + "\n\nQA-lab URL Review\nhttps://carlosandmunoz.com/qa-review.html"
   };
 }
 
@@ -201,7 +202,7 @@ function queue(records, now) {
     const paidOnce = rows.some((row) => row.paid === true || row.status === "paid-report" || row.status === "run-credit");
     const pass = passes.find((row) => String(row.email).toLowerCase() === email);
     const asked = rows.some((row) => row.followUp === true);
-    const lang = languageOf(latest && latest.acceptLanguage, latest && latest.country);
+    const lang = latest && LANGS.indexOf(latest.lang) !== -1 ? latest.lang : languageOf(latest && latest.acceptLanguage, latest && latest.country);
     const sent = rows.filter((row) => row.status === "follow-note").map((row) => Date.parse(row.createdAt || "")).filter((time) => time && at - time < week).sort((a, b) => b - a);
     const quiet = !lastRunAt || at - lastRunAt > week;
     let kind = "return";
@@ -213,6 +214,8 @@ function queue(records, now) {
     if (stopped.has(email)) held = "This address asked to stop.";
     else if (pass) held = "A 30-day pass is open. Notes wait.";
     else if (!asked) held = "This address did not ask for notes.";
+    else if (!lastRunAt) held = "No finished report yet.";
+    else if (at - lastRunAt > month) held = "The 30-day return window closed.";
     else if (sent.length >= 3) held = "Three notes already went out in seven days.";
     else if (sent[0] && at - sent[0] < gap) held = "The last note was inside 48 hours.";
     return {
@@ -221,6 +224,7 @@ function queue(records, now) {
       lang,
       kind,
       host,
+      reportId: (runs.length && runs[runs.length - 1].id) || "",
       percent: percent || 10,
       returns: prior,
       paidOnce,
@@ -230,6 +234,7 @@ function queue(records, now) {
       lastRun: lastRunAt ? new Date(lastRunAt).toISOString() : "",
       subject: note.subject,
       title: note.title,
+      body: note.body,
       text: note.text
     };
   }).sort((a, b) => Number(b.due) - Number(a.due) || String(a.email).localeCompare(String(b.email)));

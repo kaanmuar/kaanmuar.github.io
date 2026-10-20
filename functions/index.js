@@ -1132,6 +1132,84 @@ const urlReview = require("./url-review-core");
 const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
+const customerMail = require("./url-review-customer-mail");
+const reviewOffers = require("./url-review-offers");
+const REVIEW_FN_URL = process.env.REVIEW_FN_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
+
+async function stopLinkFor(email, lang) {
+  const token = crypto.randomBytes(16).toString("hex");
+  await admin.firestore().collection("url_review_stop_links").doc(token).set({
+    email: String(email || "").trim().toLowerCase(),
+    lang: customerMail.langOf(lang),
+    createdAt: new Date().toISOString()
+  });
+  return REVIEW_FN_URL + "/notes/stop?t=" + token;
+}
+
+async function sendAskerMail(email, mail, stopUrl, category) {
+  const from = prepareMail();
+  if (!from) return false;
+  await sgMail.send({
+    to: email,
+    from: from,
+    replyTo: REVIEW_ALERT_TO,
+    subject: mail.subject,
+    text: mail.text,
+    html: mail.html,
+    categories: [category],
+    headers: {
+      "List-Unsubscribe": "<" + stopUrl + ">",
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"
+    }
+  });
+  return true;
+}
+
+async function mailReportToAsker(record) {
+  if (!record || !record.email || !record.report) return;
+  if (record.status !== "complete" && record.status !== "stopped") return;
+  const stopUrl = await stopLinkFor(record.email, record.lang);
+  await sendAskerMail(record.email, customerMail.reportMail(record, { stopUrl }), stopUrl, "url-review-report");
+}
+
+async function sendReviewNotes() {
+  if (process.env.REVIEW_NOTES_LIVE !== "1") return null;
+  const db = admin.firestore();
+  const now = Date.now();
+  const since = new Date(now - 31 * 24 * 60 * 60 * 1000).toISOString();
+  const weekAgo = new Date(now - 8 * 24 * 60 * 60 * 1000).toISOString();
+  const [runSnap, passSnap, stopSnap, noteSnap] = await Promise.all([
+    db.collection("url_reviews").where("createdAt", ">", since)
+      .select("email", "status", "createdAt", "report.host", "name", "lang", "acceptLanguage", "country", "paid", "followUp").limit(2000).get(),
+    db.collection("url_reviews").where("status", "==", "monthly-pass").select("email", "status", "paidUntil").limit(500).get(),
+    db.collection("url_review_notes").where("status", "==", "follow-stop").select("email", "status").limit(5000).get(),
+    db.collection("url_review_notes").where("createdAt", ">", weekAgo).select("email", "status", "createdAt").limit(2000).get()
+  ]);
+  const rows = (snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  const records = rows(runSnap).concat(rows(passSnap), rows(stopSnap), rows(noteSnap));
+  const due = reviewOffers.queue(records, now).filter((note) => note.due).slice(0, 60);
+  for (const note of due) {
+    try {
+      const stopUrl = await stopLinkFor(note.email, note.lang);
+      const sent = await sendAskerMail(note.email, customerMail.noteMail(note, { stopUrl }), stopUrl, "url-review-note");
+      if (sent) {
+        await db.collection("url_review_notes").add({
+          status: "follow-note",
+          email: note.email,
+          kind: note.kind,
+          reportId: note.reportId || "",
+          createdAt: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error("Review note failed:", error);
+    }
+  }
+  return null;
+}
+
+// Monday to Saturday at 10:00 Bogotá: Ley 2300 de 2023 keeps commercial contact off Sundays and outside daytime hours.
+exports.sendReviewNotes = withMail.pubsub.schedule("0 10 * * 1-6").timeZone("America/Bogota").onRun(() => sendReviewNotes());
 
 async function rememberReview(kind, source) {
   const note = reviewDesk.alertFrom(kind, source || {});
@@ -1264,10 +1342,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     if (deskName === "data" && req.method === "GET") {
-      const [reviewSnap, alertSnap, freeSnap] = await Promise.all([
+      const [reviewSnap, alertSnap, freeSnap, noteSnap] = await Promise.all([
         admin.firestore().collection("url_reviews").limit(400).get(),
         admin.firestore().collection("url_review_alerts").limit(80).get(),
-        admin.firestore().collection("url_review_free_runs").limit(200).get()
+        admin.firestore().collection("url_review_free_runs").limit(200).get(),
+        admin.firestore().collection("url_review_notes").limit(1000).get()
       ]);
       const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
       const records = reviewSnap.docs.map((doc) => {
@@ -1282,7 +1361,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         const data = doc.data() || {};
         return { email: doc.id, note: data.note || "", at: stamp(data.at) };
       });
-      res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, []), { freeRuns }));
+      const notes = noteSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+      res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes), { freeRuns }));
       return;
     }
     if (deskName === "free" && req.method === "POST") {
@@ -1353,6 +1433,30 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     } catch (error) {
       res.status(200).json({ country: "", lang: "en", items: [] });
     }
+    return;
+  }
+  if (pathName.indexOf("/notes/stop") !== -1) {
+    res.set("X-Robots-Tag", "noindex");
+    res.set("Content-Type", "text/html; charset=utf-8");
+    const token = String(req.query.t || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const linkSnap = token.length === 32 ? await admin.firestore().collection("url_review_stop_links").doc(token).get() : null;
+    const link = linkSnap && linkSnap.exists ? linkSnap.data() : null;
+    if (!link || !link.email) {
+      res.status(404).send(customerMail.stopPage("en", "gone"));
+      return;
+    }
+    if (req.method !== "POST") {
+      res.status(200).send(customerMail.stopPage(link.lang, "ask"));
+      return;
+    }
+    await admin.firestore().collection("url_review_notes").add({
+      status: "follow-stop",
+      email: link.email,
+      via: "link",
+      createdAt: new Date().toISOString()
+    });
+    await rememberReview("follow-stop", { status: "follow-stop", email: link.email });
+    res.status(200).send(customerMail.stopPage(link.lang, "done", link.email));
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/opened") !== -1) {
@@ -1783,6 +1887,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     await mailReviewedSites(ip, record);
     writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
+    try {
+      await mailReportToAsker(record);
+    } catch (error) {
+      console.error("Report mail to the asker failed:", error);
+    }
     res.end();
   } catch (error) {
     console.error("URL review failed:", error);

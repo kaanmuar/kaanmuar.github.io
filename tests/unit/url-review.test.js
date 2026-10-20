@@ -418,6 +418,69 @@ test.describe("journeys", () => {
   });
 });
 
+test.describe("mail to the asker", () => {
+  const customerMail = require("../../functions/url-review-customer-mail");
+  const offers = require("../../functions/url-review-offers");
+  const day = 24 * 60 * 60 * 1000;
+  const now = Date.parse("2026-10-20T15:00:00Z");
+  const ago = (days) => new Date(now - days * day).toISOString();
+  const hidden = "is not sent on the start page or any page after it";
+  const record = {
+    id: "ab12cd34",
+    email: "asker@example.com",
+    lang: "es",
+    status: "complete",
+    followUp: true,
+    createdAt: ago(3),
+    report: {
+      host: "example.com",
+      counts: { pages: 7, cases: 42 },
+      insights: {
+        score: { overall: 63, grade: "C", areas: { SEO: { score: 81 }, GEO: { score: 40 }, Analytics: { score: 70 }, Security: { score: 55 }, Accessibility: { score: 90 }, Performance: { score: 30 } } },
+        findings: [
+          { verdict: "fail", rank: 1, area: "Security", severity: "high", title: "Strict-Transport-Security " + hidden },
+          { verdict: "pass", area: "SEO", title: "The page has a title" }
+        ]
+      }
+    }
+  };
+
+  test("the report mail keeps the scores open and cuts the rest of each finding on the server", () => {
+    const mail = customerMail.reportMail(record, { stopUrl: "https://fn/notes/stop?t=1" });
+    assert.equal(mail.lang, "es");
+    assert.match(mail.subject, /example\.com sacó 63\/100/);
+    assert.match(mail.html, /Seguridad/);
+    assert.match(mail.html, /Strict-Transport-Security/);
+    assert.ok(!mail.html.includes(hidden) && !mail.text.includes(hidden));
+    assert.ok(!mail.html.includes("The page has a title"));
+    assert.match(mail.html, /qa-review-es\.html\?report=ab12cd34/);
+    assert.match(mail.html, /mailto:qa@carlosandmunoz\.com/);
+    assert.match(mail.text, /notes\/stop\?t=1/);
+  });
+
+  test("a note waits 48 hours after the last one and ends 30 days after the last run", () => {
+    assert.equal(offers.queue([record], now)[0].due, true);
+    assert.equal(offers.queue([record, { status: "follow-note", email: record.email, createdAt: ago(1) }], now)[0].held, "The last note was inside 48 hours.");
+    assert.equal(offers.queue([Object.assign({}, record, { createdAt: ago(31) })], now)[0].held, "The 30-day return window closed.");
+    assert.equal(offers.queue([record, { status: "follow-stop", email: record.email }], now)[0].held, "This address asked to stop.");
+  });
+
+  test("a note opens the last report in the page language it was run in", () => {
+    const note = offers.queue([record], now)[0];
+    assert.equal(note.reportId, "ab12cd34");
+    assert.equal(note.lang, "es");
+    const mail = customerMail.noteMail(note, { stopUrl: "https://fn/notes/stop?t=2" });
+    assert.match(mail.html, /Abrir el último informe/);
+    assert.match(mail.html, /notes\/stop\?t=2/);
+  });
+
+  test("the stop page asks before it stops, so a link scanner cannot stop the notes", () => {
+    assert.match(customerMail.stopPage("fr", "ask"), /<form method="post">/);
+    assert.match(customerMail.stopPage("fr", "done", "a@b.co"), /a@b\.co/);
+    assert.ok(!customerMail.stopPage("en", "gone").includes("<form"));
+  });
+});
+
 test.describe("pricing", () => {
   test("the first framework is 19 USD and later ones step down in pairs", () => {
     assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(core.centsForIndex), [1900, 1710, 1710, 1615, 1615, 1520, 1520]);
