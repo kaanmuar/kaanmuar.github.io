@@ -533,7 +533,8 @@ function chargedUsd(options) {
           ? priceForRun(options)
           : priceFor(options && options.frameworks, options && options.tools);
   const usd = Number(options && options.priceUsd);
-  if (Math.round(usd * 100) !== priced.cents) {
+  const list = options && options.listUsd != null ? Number(options.listUsd) : usd;
+  if (Math.round(list * 100) !== priced.cents) {
     const error = new Error(purpose === "cases"
       ? "The charge does not match the selected kinds of test cases."
       : purpose === "new-run"
@@ -542,7 +543,15 @@ function chargedUsd(options) {
     error.status = 400;
     throw error;
   }
-  return priced;
+  const cents = Math.round(usd * 100);
+  if (cents === priced.cents) return priced;
+  const floor = Math.min(priced.cents, (Number(priced.count) || 0) * Math.round(PRICE_PER_FRAMEWORK * 50));
+  if (!(cents < priced.cents && cents >= floor)) {
+    const error = new Error("The discount on this charge is out of range. No charge was made.");
+    error.status = 400;
+    throw error;
+  }
+  return Object.assign({}, priced, { cents, usd: cents / 100 });
 }
 
 function sameScope(row, scope) {
@@ -586,6 +595,7 @@ function judgeAttempts(rows, identity, request) {
       ? "Another review asks for payment before it starts."
       : "A wider or deeper read asks for payment before it starts.",
     priceUsd: priced.usd,
+    count: priced.count,
     frameworks: priced.frameworks,
     tools: priced.tools,
     pages: priced.pages,
@@ -2736,6 +2746,7 @@ module.exports = {
   priceForLayers,
   priceForScope,
   priceForRun,
+  chargedUsd,
   priceForCredentials,
   priceForAlerts,
   normalizeFrameworks,
