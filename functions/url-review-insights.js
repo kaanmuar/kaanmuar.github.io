@@ -77,7 +77,7 @@ function normal(value) {
     url.hash = "";
     let path = url.pathname.replace(/\/index\.html?$/i, "/");
     if (path.length > 1) path = path.replace(/\/+$/, "");
-    return url.protocol + "//" + url.hostname.toLowerCase() + path + url.search;
+    return url.protocol + "//" + url.host.toLowerCase() + path + url.search;
   } catch (error) {
     return String(value || "");
   }
@@ -90,6 +90,28 @@ function pathOf(value) {
   } catch (error) {
     return String(value || "");
   }
+}
+
+// The path alone when the address stays on the page's scheme, host, and port; otherwise the whole URL.
+function shownAgainst(value, base) {
+  try {
+    const url = new URL(value);
+    return url.origin === new URL(base).origin ? url.pathname + url.search : url.toString();
+  } catch (error) {
+    return pathOf(value);
+  }
+}
+
+// Answers aimed at automated readers: a bot check, a refusal, or a rate limit. They say nothing about the page.
+function blockedAnswer(page) {
+  return !!page.challenge || page.status === 403 || page.status === 429 || (page.status === 503 && !!page.retryAfter);
+}
+
+function blockedReason(page) {
+  if (page.challenge) return "a " + page.challenge + " bot check";
+  if (page.status === 429) return "429, rate limited";
+  if (page.status === 503) return "503 with Retry-After";
+  return page.status + ", refused";
 }
 
 function plural(count, one, many) {
@@ -413,7 +435,7 @@ function analyze(input) {
     });
   };
 
-  const read = pages.filter((page) => page.inspect && page.status >= 200 && page.status < 300);
+  const read = pages.filter((page) => page.inspect && page.status >= 200 && page.status < 300 && (!page.challenge || page === home));
   const byUrl = new Map();
   pages.forEach((page) => {
     byUrl.set(normal(page.url), page);
@@ -425,23 +447,25 @@ function analyze(input) {
   const indexability = pages.map((page) => {
     const f = page.inspect;
     const path = page.path || pathOf(page.url);
-    if (!f) return { path, status: page.status || 0, indexable: false, reason: page.error || "Not read" };
+    if (!f) return { path, status: page.status || 0, indexable: false, reason: page.challenge ? page.challenge + " bot check" : page.error || "Not read" };
     const directives = [f.seo && f.seo.robots, f.seo && f.seo.googlebot, f.seo && f.seo.xRobots].filter(Boolean).join(", ").toLowerCase();
     const noindex = /\bnoindex\b|(^|[\s,])none([\s,]|$)/.test(directives);
     const canonical = f.seo && f.seo.canonicalAbs ? normal(f.seo.canonicalAbs) : "";
     const canonicalElsewhere = !!canonical && canonical !== normal(page.url);
+    const canonicalShown = canonical ? shownAgainst(f.seo.canonicalAbs, page.url) : "";
     const googleBlocked = robots.groups.length ? !robotsVerdict("googlebot", pathOf(page.url), robots.groups).allowed : false;
     let reason = "Indexable";
     if (page.status < 200 || page.status >= 300) reason = "Status " + page.status;
+    else if (page.challenge) reason = page.challenge + " bot check";
     else if (noindex) reason = "noindex";
     else if (googleBlocked) reason = "Blocked for Googlebot in robots.txt";
-    else if (canonicalElsewhere) reason = "Canonical points to " + pathOf(canonical);
+    else if (canonicalElsewhere) reason = "Canonical points to " + canonicalShown;
     return {
       path,
       status: page.status,
       indexable: reason === "Indexable",
       reason,
-      canonical: canonical ? pathOf(canonical) : "",
+      canonical: canonicalShown,
       robots: directives,
       redirected: !!page.hops,
       depth: page.depth || 0
@@ -480,24 +504,36 @@ function analyze(input) {
   });
 
   // SEO
-  const broken = pages.map((page, index) => ({ page, index })).filter(({ page }) => page.depth > 0 && page.status >= 400);
-  const unanswered = pages.filter((page) => page.depth > 0 && !page.status);
+  const linked = pages.filter((page) => page.depth > 0);
+  const blocked = linked.filter(blockedAnswer);
+  const broken = pages.map((page, index) => ({ page, index })).filter(({ page }) => page.depth > 0 && page.status >= 400 && !blockedAnswer(page));
+  const unanswered = pages.filter((page) => page.depth > 0 && !page.status && !page.challenge);
   if (unanswered.length) {
     add("SEO", "person", "info", "seo-unanswered-links", plural(unanswered.length, "internal link", "internal links") + " did not answer in time",
       unanswered.slice(0, 5).map((page) => (page.path || page.url) + ": " + (page.error || "no answer")).join(". ") + ". A slow answer on one read is not proof the page is broken.",
       "Open each address again. If it stays slow, look at the server or cache for that path.",
       { pages: unanswered.map((page) => page.path || page.url), cases: ["FN-06", "LK-01"] });
   }
+  if (blocked.length) {
+    add("SEO", "person", "info", "seo-blocked-links", plural(blocked.length, "internal link was", "internal links were") + " blocked for this reader",
+      sample(blocked.map((page) => (page.path || page.url) + " (" + blockedReason(page) + ")"), 4) + ". A block aimed at automated readers is not proof the page is broken, and those pages were not scored.",
+      "Open each address in a browser. If people get through, only automated readers are stopped; allow verified crawlers if search and AI answers should reach those pages.",
+      { pages: blocked.map((page) => page.path || page.url), cases: ["FN-06", "LK-01"] });
+  }
+  const partialRead = linked.length >= 2 && blocked.length * 2 > linked.length;
+  const warnings = [];
+  if (home.challenge) warnings.push("The start page answered with a " + home.challenge + " bot check instead of the site, so these scores describe that check page.");
+  if (partialRead) warnings.push("Partial read: " + blocked.length + " of " + plural(linked.length, "linked page") + " answered with a bot check or a block, so the scores rest mostly on the start page.");
   if (broken.length) {
     add("SEO", "fail", "high", "seo-broken-links", plural(broken.length, "internal link leads", "internal links lead") + " to an error",
       broken.slice(0, 5).map(({ page, index }) => (page.path || page.url) + " answered " + (page.status || page.error || "nothing") + (sources.get(index) ? ", linked from " + sample(sources.get(index), 2) : "")).join(". ") + ".",
       "Fix or remove each link, or redirect the old address with a 301 to the closest live page.",
       { pages: broken.map(({ page }) => page.path || page.url), effort: "hours", cases: ["FN-06", "LK-01"] });
-  } else if (pages.length > 1 && !unanswered.length) {
+  } else if (pages.length > 1 && !unanswered.length && !blocked.length) {
     add("SEO", "pass", "info", "seo-broken-links", "Every internal link that was opened answered", plural(pages.length - 1, "linked page") + " answered without an error.", "", { cases: ["FN-06", "LK-01"] });
   }
 
-  const redirected = pages.filter((page) => page.depth > 0 && page.hops > 0);
+  const redirected = pages.filter((page) => page.depth > 0 && page.hops > 0 && !blockedAnswer(page));
   if (redirected.length) {
     add("SEO", "risk", "low", "seo-internal-redirects", plural(redirected.length, "internal link goes", "internal links go") + " through a redirect",
       redirected.slice(0, 4).map((page) => pathOf(page.requested || "") + " → " + page.path).join(", ") + ". Each hop costs crawl budget and a little speed.",
@@ -604,8 +640,10 @@ function analyze(input) {
         sample(sitemapReport.notListed, 4) + ".", "Add them to the sitemap or regenerate it on each deploy.", { pages: sitemapReport.notListed, effort: "minutes", cases: ["SEO-03"] });
     }
     if (sitemapReport.offHost) {
+      const offHosts = {};
+      (sitemap.urls || []).map(hostOf).filter((name) => name !== host).forEach((name) => { offHosts[name || "an unreadable URL"] = (offHosts[name || "an unreadable URL"] || 0) + 1; });
       add("SEO", "risk", "medium", "seo-sitemap-offhost", plural(sitemapReport.offHost, "sitemap URL points", "sitemap URLs point") + " at another host or scheme",
-        "In " + pathOf(sitemapReport.source) + ". The sitemap should list only URLs on https://" + host + ".", "Regenerate the sitemap with the production https host.", { count: sitemapReport.offHost, effort: "minutes", cases: ["SEO-03"] });
+        "In " + pathOf(sitemapReport.source) + ": " + sample(Object.keys(offHosts).sort((a, b) => offHosts[b] - offHosts[a]).map((name) => name + " (" + offHosts[name] + ")"), 3) + ". The sitemap should list only URLs on https://" + host + ".", "Regenerate the sitemap with the production https host.", { count: sitemapReport.offHost, effort: "minutes", cases: ["SEO-03"] });
     }
     if (!sitemapReport.listedNotIndexable.length && !sitemapReport.notListed.length && !sitemapReport.offHost) {
       if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", "A sitemap answers with valid URLs", "The first " + plural(sitemapReport.count, "URL") + " from " + pathOf(sitemapReport.source) + " were read; the sitemap is larger than one review reads.", "", { cases: ["SEO-03"] });
@@ -625,7 +663,7 @@ function analyze(input) {
     const selfRef = alts.some((alt) => normal(alt.href) === normal(page.url));
     if (!selfRef) hreflangIssues.push(page.path + " has no self reference");
     alts.forEach((alt) => {
-      if (!/^(x-default|[a-z]{2,3}(-[a-z0-9]{2,4})?)$/i.test(alt.lang)) hreflangIssues.push(page.path + " uses an invalid code \"" + alt.lang + "\"");
+      if (!/^(x-default|[a-z]{2,3}(-[a-z]{4})?(-[a-z0-9]{2,4})?)$/i.test(alt.lang)) hreflangIssues.push(page.path + " uses an invalid code \"" + alt.lang + "\"");
       const target = byUrl.get(normal(alt.href));
       if (!target || !target.inspect || target === page || !indexablePaths.has(target.path)) return;
       const back = ((target.inspect.seo && target.inspect.seo.hreflang) || []).some((other) => normal(other.href) === normal(page.url));
@@ -944,9 +982,11 @@ function analyze(input) {
   }
   const httpCheck = extras.httpRedirect || null;
   if (httpCheck) {
+    const hops = httpCheck.statuses && httpCheck.statuses.length ? httpCheck.statuses : [httpCheck.status];
+    const answered = "http:// answered " + hops.join(" → ") + " to " + httpCheck.location + ".";
     if (httpCheck.error) add("Security", "pass", "info", "sec-http", "Plain http does not serve the site", "Port 80 did not answer, so nothing is served without encryption.", "", { cases: ["SEC-01"] });
-    else if ([301, 308].indexOf(httpCheck.status) !== -1 && /^https:/i.test(httpCheck.location || "")) add("Security", "pass", "info", "sec-http", "Plain http redirects permanently to https", "http:// answered " + httpCheck.status + " to " + httpCheck.location + ".", "", { cases: ["SEC-01"] });
-    else if ([302, 303, 307].indexOf(httpCheck.status) !== -1 && /^https:/i.test(httpCheck.location || "")) add("Security", "risk", "low", "sec-http", "Plain http redirects to https with a temporary code", "http:// answered " + httpCheck.status + ". A 301 or 308 tells browsers and search engines the move is permanent.", "Use a 301 redirect from http to https.", { effort: "minutes", cases: ["SEC-01"] });
+    else if (hops.every((code) => [301, 308].indexOf(code) !== -1) && /^https:/i.test(httpCheck.location || "")) add("Security", "pass", "info", "sec-http", "Plain http redirects permanently to https", answered, "", { cases: ["SEC-01"] });
+    else if (hops.every((code) => [301, 302, 303, 307, 308].indexOf(code) !== -1) && /^https:/i.test(httpCheck.location || "")) add("Security", "risk", "low", "sec-http", "Plain http redirects to https with a temporary code", answered + " A 301 or 308 tells browsers and search engines the move is permanent.", "Use a 301 redirect from http to https.", { effort: "minutes", cases: ["SEC-01"] });
     else add("Security", "fail", "high", "sec-http", "Plain http serves the site without redirecting", "http:// answered " + httpCheck.status + (httpCheck.location ? " to " + httpCheck.location : "") + ". Visitors who type the address stay unencrypted.", "Redirect every http request to https with a 301, then add HSTS.", { effort: "minutes", cases: ["SEC-01"] });
   }
   if (!hdr.hsts) add("Security", "fail", "medium", "sec-hsts", "HSTS is not sent", "strict-transport-security was absent on the start page." + spread("hsts").text + " A first visit over http can be intercepted.", "Send Strict-Transport-Security: max-age=31536000; includeSubDomains.", { pages: spread("hsts").pages, effort: "minutes", cases: ["SEC-02"] });
@@ -985,7 +1025,7 @@ function analyze(input) {
   if (insecure.length || exposedSession.length) {
     add("Security", "risk", exposedSession.length ? "high" : "medium", "sec-cookies",
       [insecure.length ? plural(insecure.length, "cookie is", "cookies are") + " sent without Secure" : "", exposedSession.length ? plural(exposedSession.length, "session cookie is", "session cookies are") + " readable by scripts" : ""].filter(Boolean).join(", and "),
-      (insecure.length ? "Without Secure: " + sample(insecure, 4) + ". " : "") + (exposedSession.length ? "Without HttpOnly: " + sample(exposedSession, 4) + ". A script injected into the page could steal the session." : ""),
+      (insecure.length ? "Without Secure: " + sample(insecure, 4) + ". " : "") + (exposedSession.length ? "Without HttpOnly: " + sample(exposedSession, 4) + ". A script injected into the page could steal the session. " : "") + "Set on " + sample(cookiePages, 3) + ".",
       "Set Secure on every cookie, and HttpOnly plus SameSite=Lax on session cookies.", { pages: cookiePages, count: insecure.length + exposedSession.length, effort: "minutes", cases: ["SEC-06"] });
   } else if (jar.length) {
     add("Security", "pass", "info", "sec-cookies", "Cookies are Secure, and session cookies are HttpOnly", plural(cookieNames(jar).length, "cookie") + " checked across " + plural(new Set(jar.map((cookie) => cookie.path)).size, "page") + ".", "", { cases: ["SEC-06"] });
@@ -1017,15 +1057,23 @@ function analyze(input) {
     }
   }
   const dnsInfo = extras.dns || null;
+  const dnsRead = (name) => !!(dnsInfo && dnsInfo.domain) && !(dnsInfo.unread || []).includes(name);
   if (dnsInfo && dnsInfo.domain) {
     const sendsMail = (dnsInfo.mx || []).length > 0;
-    if (sendsMail && !dnsInfo.spf) add("Security", "risk", "medium", "sec-spf", "The domain receives mail but publishes no SPF record", dnsInfo.domain + " has MX records and no v=spf1 TXT record. Anyone can send mail that claims to be from it.", "Publish an SPF record that lists the services that send your mail.", { effort: "minutes" });
-    if (!sendsMail && !dnsInfo.spf) add("Security", "risk", "low", "sec-spf", "The domain does not say it sends no mail", dnsInfo.domain + " has no MX and no SPF record.", "Publish TXT \"v=spf1 -all\" so mail claiming to come from it is rejected.", { effort: "minutes" });
-    if (!dnsInfo.dmarc) add("Security", "risk", sendsMail ? "medium" : "low", "sec-dmarc", "No DMARC policy", "_dmarc." + dnsInfo.domain + " has no v=DMARC1 record. Spoofed mail from this domain is not rejected, and Gmail and Yahoo now expect DMARC from bulk senders.", "Start with p=none and a rua address, then move to quarantine or reject.", { effort: "minutes" });
+    const unread = dnsInfo.unread || [];
+    // A lookup that timed out says nothing about the record, so it gets no finding either way.
+    const mailRead = dnsRead("spf") && dnsRead("mx");
+    if (mailRead && sendsMail && !dnsInfo.spf) add("Security", "risk", "medium", "sec-spf", "The domain receives mail but publishes no SPF record", dnsInfo.domain + " has MX records and no v=spf1 TXT record. Anyone can send mail that claims to be from it.", "Publish an SPF record that lists the services that send your mail.", { effort: "minutes" });
+    if (mailRead && !sendsMail && !dnsInfo.spf) {
+      if (dnsInfo.nullMx && /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "")) add("Security", "pass", "info", "sec-spf", "The domain says it handles no mail", dnsInfo.domain + " publishes a null MX (MX 0 .), so it accepts no mail, and its DMARC policy turns away mail sent in its name.", "");
+      else if (dnsInfo.nullMx) add("Security", "risk", "low", "sec-spf", "The domain refuses mail but does not say it sends none", dnsInfo.domain + " publishes a null MX (MX 0 .), so it accepts no mail, but it has no SPF record that rejects mail sent in its name.", "Publish TXT \"v=spf1 -all\" next to the null MX.", { effort: "minutes" });
+      else add("Security", "risk", "low", "sec-spf", "The domain does not say it sends no mail", dnsInfo.domain + " has no MX and no SPF record.", "Publish TXT \"v=spf1 -all\" so mail claiming to come from it is rejected.", { effort: "minutes" });
+    }
+    if (!dnsInfo.dmarc && !unread.includes("dmarc")) add("Security", "risk", sendsMail ? "medium" : "low", "sec-dmarc", "No DMARC policy", "_dmarc." + dnsInfo.domain + " has no v=DMARC1 record. Spoofed mail from this domain is not rejected, and Gmail and Yahoo now expect DMARC from bulk senders.", "Start with p=none and a rua address, then move to quarantine or reject.", { effort: "minutes" });
     else if (/p\s*=\s*none/i.test(dnsInfo.dmarc)) add("Security", "risk", "low", "sec-dmarc", "DMARC only monitors", "The policy is p=none, so spoofed mail is still delivered.", "Move to p=quarantine, then p=reject, once reports look clean.", { effort: "hours" });
-    else add("Security", "pass", "info", "sec-dmarc", "DMARC rejects or quarantines spoofed mail", dnsInfo.dmarc.slice(0, 120) + ".", "");
+    else if (dnsInfo.dmarc) add("Security", "pass", "info", "sec-dmarc", "DMARC rejects or quarantines spoofed mail", dnsInfo.dmarc.slice(0, 120) + ".", "");
     if (dnsInfo.spf && sendsMail) add("Security", "pass", "info", "sec-spf", "SPF is published", dnsInfo.spf.slice(0, 120) + ".", "");
-    if (!(dnsInfo.caa || []).length) add("Security", "risk", "low", "sec-caa", "No CAA record limits who may issue certificates", dnsInfo.domain + " has no CAA record, so any certificate authority may issue for it.", "Add a CAA record for the authority you use, for example 0 issue \"letsencrypt.org\".", { effort: "minutes" });
+    if (!(dnsInfo.caa || []).length && !unread.includes("caa")) add("Security", "risk", "low", "sec-caa", "No CAA record limits who may issue certificates", dnsInfo.domain + " has no CAA record, so any certificate authority may issue for it.", "Add a CAA record for the authority you use, for example 0 issue \"letsencrypt.org\".", { effort: "minutes" });
   }
   (input.alerts || []).filter((alert) => alert.level === "Leak").forEach((alert, index) => {
     add("Security", "fail", "critical", "sec-leak-" + index, alert.title, alert.detail, "Remove it from the page and rotate the secret.", { effort: "hours" });
@@ -1038,7 +1086,12 @@ function analyze(input) {
   else if (read.some((page) => page.inspect.images)) add("Accessibility", "pass", "info", "a11y-alt", "Every image has an alt attribute", "No image without alt was found.", "", { cases: ["A11Y-01"] });
   const unlabeledPages = read.filter((page) => (page.inspect.unlabeled || 0) > 0);
   if (unlabeledPages.length) add("Accessibility", "fail", "medium", "a11y-labels", plural(unlabeledPages.reduce((sum, page) => sum + page.inspect.unlabeled, 0), "form control has", "form controls have") + " no label", "On " + sample(unlabeledPages.map((page) => page.path), 4) + ". Screen readers announce them as an unnamed field.", "Pair each control with <label for>, wrap it in a label, or add aria-label.", { pages: unlabeledPages.map((page) => page.path), effort: "minutes", cases: ["FM-01"] });
+  const LANG_NAMES = { en: "English", es: "Spanish", pt: "Portuguese", fr: "French", de: "German", it: "Italian" };
+  const declared = String(face.lang || "").toLowerCase().split("-")[0];
   if (!face.lang) add("Accessibility", "fail", "medium", "a11y-lang", "The start page does not declare its language", "Screen readers pick the wrong voice and browsers offer the wrong translation.", "Set <html lang=\"…\">.", { effort: "minutes", cases: ["FN-04", "I18N-01"] });
+  else if (LANG_NAMES[declared] && LANG_NAMES[face.textLang] && face.textLang !== declared) add("Accessibility", "risk", "medium", "a11y-lang", "The declared language does not match the text",
+    "The start page declares lang=\"" + face.lang + "\" (" + LANG_NAMES[declared] + "), but its text reads as " + LANG_NAMES[face.textLang] + ". Screen readers would read it with the wrong voice.",
+    "Set <html lang=\"" + face.textLang + "\">, or the variant with the region, on pages written in " + LANG_NAMES[face.textLang] + ".", { effort: "minutes", cases: ["FN-04", "I18N-01"] });
   else add("Accessibility", "pass", "info", "a11y-lang", "The start page declares its language", "lang=\"" + face.lang + "\".", "", { cases: ["FN-04", "I18N-01"] });
   if (face.signals && face.signals.zoomBlocked) add("Accessibility", "fail", "medium", "a11y-zoom", "The viewport stops people from zooming", "The viewport tag sets user-scalable=no or maximum-scale=1.", "Remove user-scalable=no and maximum-scale from the viewport tag.", { effort: "minutes" });
   const noMain = read.filter((page) => !(page.inspect.signals && page.inspect.signals.main));
@@ -1112,7 +1165,7 @@ function analyze(input) {
   const severities = { critical: 0, high: 0, medium: 0, low: 0 };
   actionable.forEach((item) => { if (severities[item.severity] != null) severities[item.severity] += 1; });
   const top = actionable[0];
-  const summary = host + " scores " + overall + " out of 100 (" + grade(overall) + "). " +
+  const summary = warnings.join(" ") + (warnings.length ? " " : "") + host + " scores " + overall + " out of 100 (" + grade(overall) + "). " +
     plural(totals.fail, "check fails", "checks fail") + " now, " + plural(totals.risk, "is", "are") + " at risk, and " + totals.pass + " pass." +
     (top ? " Fix first: " + (/^[A-Z][a-z]/.test(top.title) ? top.title.charAt(0).toLowerCase() + top.title.slice(1) : top.title) + "." : "");
 
@@ -1171,7 +1224,7 @@ function analyze(input) {
   };
   const security = {
     headers: [
-      { label: "HTTPS redirect", state: httpCheck ? (httpCheck.error || [301, 308].indexOf(httpCheck.status) !== -1 ? "pass" : [302, 303, 307].indexOf(httpCheck.status) !== -1 ? "risk" : "fail") : "unknown" },
+      { label: "HTTPS redirect", state: httpCheck ? ({ pass: "pass", risk: "risk" }[(findings.find((item) => item.key === "sec-http") || {}).verdict] || "fail") : "unknown" },
       { label: "HSTS", state: hdr.hsts ? "pass" : "fail" },
       { label: "Content-Security-Policy", state: hdr.csp ? (findings.some((item) => item.key === "sec-csp" && item.verdict === "risk") ? "risk" : "pass") : "risk" },
       { label: "Frame protection", state: hdr.frame || csp["frame-ancestors"] ? "pass" : "risk" },
@@ -1180,9 +1233,9 @@ function analyze(input) {
       { label: "Permissions-Policy", state: rawHeaders.permissions ? "pass" : "risk" },
       { label: "TLS certificate", state: tls && tls.validTo ? (tls.daysLeft < 14 ? "fail" : tls.daysLeft < 30 ? "risk" : "pass") : "unknown" },
       { label: "security.txt", state: sec ? (findings.some((item) => item.key === "sec-securitytxt" && item.verdict === "pass") ? "pass" : "risk") : "unknown" },
-      { label: "SPF", state: dnsInfo && dnsInfo.domain ? (dnsInfo.spf ? "pass" : "risk") : "unknown" },
-      { label: "DMARC", state: dnsInfo && dnsInfo.domain ? (dnsInfo.dmarc && !/p\s*=\s*none/i.test(dnsInfo.dmarc) ? "pass" : "risk") : "unknown" },
-      { label: "CAA", state: dnsInfo && dnsInfo.domain ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" }
+      { label: "SPF", state: dnsRead("spf") ? (dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
+      { label: "DMARC", state: dnsRead("dmarc") ? (dnsInfo.dmarc && !/p\s*=\s*none/i.test(dnsInfo.dmarc) ? "pass" : "risk") : "unknown" },
+      { label: "CAA", state: dnsRead("caa") ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" }
     ],
     tls: tls && tls.validTo ? { validTo: tls.validTo, daysLeft: tls.daysLeft, issuer: tls.issuer || "" } : null,
     pages: headerRows.slice(0, 40)
@@ -1192,6 +1245,7 @@ function analyze(input) {
     version: 1,
     score: { overall, grade: grade(overall), areas, totals, severities },
     summary,
+    warnings,
     findings: ordered,
     caseVerdicts,
     previews,
@@ -1281,9 +1335,10 @@ function fixKit(ctx) {
   const dnsRecords = [];
   if (ctx.dnsInfo && ctx.dnsInfo.domain) {
     const mail = (ctx.dnsInfo.mx || []).length > 0;
-    if (!ctx.dnsInfo.spf) dnsRecords.push({ name: domain, type: "TXT", value: mail ? "v=spf1 include:<your mail provider> ~all" : "v=spf1 -all" });
-    if (!ctx.dnsInfo.dmarc) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: "v=DMARC1; p=none; rua=mailto:dmarc@" + domain });
-    if (!(ctx.dnsInfo.caa || []).length) dnsRecords.push({ name: domain, type: "CAA", value: "0 issue \"letsencrypt.org\"" });
+    const unread = ctx.dnsInfo.unread || [];
+    if (!ctx.dnsInfo.spf && !unread.includes("spf") && !unread.includes("mx")) dnsRecords.push({ name: domain, type: "TXT", value: mail ? "v=spf1 include:<your mail provider> ~all" : "v=spf1 -all" });
+    if (!ctx.dnsInfo.dmarc && !unread.includes("dmarc")) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: "v=DMARC1; p=none; rua=mailto:dmarc@" + domain });
+    if (!(ctx.dnsInfo.caa || []).length && !unread.includes("caa")) dnsRecords.push({ name: domain, type: "CAA", value: "0 issue \"letsencrypt.org\"" });
   }
   return {
     hosting: hostingHint(ctx.input && ctx.input.technologies, hdr),
