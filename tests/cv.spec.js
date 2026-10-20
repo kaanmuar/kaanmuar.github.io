@@ -62,8 +62,10 @@ test.describe('CV desktop', () => {
     await expect(page.locator('html')).toHaveClass(/topic-focus/);
     await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.experience-item.topic-match')).not.toHaveCount(0);
-    await expect(page.locator('.experience-item.topic-dim')).not.toHaveCount(0);
+    const roles = await page.locator('#experience-container .experience-item').count();
+    await expect(page.locator('#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim')).toHaveCount(roles);
     await expect(page.locator('.timeline-item.topic-match')).not.toHaveCount(0);
+    await expect(page.locator('#languages-section')).toHaveClass(/topic-dim/);
     await page.locator('#languages-heading').click({ force: true });
     await expect(page.locator('html')).not.toHaveClass(/topic-focus/);
     await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'false');

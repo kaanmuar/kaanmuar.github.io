@@ -957,8 +957,8 @@
                         tour_desc_finish: "The CV, the studio, and the regression lab are ready to try. Thank you for visiting.",
                         tour_title_education: "Education & Certifications",
                         tour_desc_education: "Degrees and the certifications I keep current: CSPM, ISTQB, CISA, and CISSP.",
-                        page_title: "Carlos Muñoz Ardila | QA Architect for contract, advisory, and a full QA path",
-                        meta_description: "Carlos A. Muñoz builds a full QA path for companies that need a contractor, freelancer, advisor, or mentor. Senior QA architect with over 18 years, plus a free QA lab and SDLC studio.",
+                        page_title: "Carlos Muñoz Ardila | QA Architect, contract and advisory",
+                        meta_description: "Carlos A. Muñoz, senior QA architect with over 18 years, builds a full QA path as a contractor, advisor, or mentor. Plus a free QA lab and SDLC studio.",
                         json_job_title: "Senior IT Project Manager, QA Architect & QA Leader",
                         json_description: "A Senior IT Project Manager and QA Architect with over 18 years of experience delivering high-quality, complex software solutions for global technology leaders. Expert in IT project management, QA automation, DevOps strategy, cloud platforms, and leading cross-functional teams. Available for contract, freelance, advisory, and mentoring, and to build a full QA path: strategy, automation, CI, and the team. This interactive CV adds competency filters, print and downloads, a free QA regression lab, and a free SDLC studio."
                     },
@@ -1147,8 +1147,8 @@
                         tour_desc_finish: "El CV, el estudio y el laboratorio de regresión están listos para probarse. Gracias por tu visita.",
                         tour_title_education: "Educación y Certificaciones",
                         tour_desc_education: "Títulos y las certificaciones que mantengo al día: CSPM, ISTQB, CISA y CISSP.",
-                        page_title: "Carlos Muñoz Ardila | Arquitecto QA para contrato, asesoría y un camino de QA",
-                        meta_description: "Carlos A. Muñoz construye un camino de QA completo para empresas que necesitan un contratista, freelancer, asesor o mentor. Arquitecto de QA con más de 18 años, más un laboratorio de QA y un estudio SDLC gratuitos.",
+                        page_title: "Carlos Muñoz Ardila | Arquitecto QA, contrato y asesoría",
+                        meta_description: "Carlos A. Muñoz, arquitecto QA sénior con más de 18 años, construye un camino de QA completo como contratista, asesor o mentor. Con laboratorio QA gratuito.",
                         json_job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA",
                         json_description: "Un Gerente de Proyectos de TI y Arquitecto de QA con más de 18 años de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de stakeholders y liderazgo de equipos multifuncionales. Disponible para contrato, freelance, asesoría y mentoría, y para construir un camino de QA completo: estrategia, automatización, CI y el equipo. Este CV interactivo añade filtros de competencias, impresión y descargas, un laboratorio de regresión QA gratuito y un estudio SDLC gratuito."
 
@@ -1338,8 +1338,8 @@
                         tour_desc_finish: "O CV, o estúdio e o laboratório de regressão estão prontos para experimentar. Obrigado pela visita.",
                         tour_title_education: "Educação e Certificações",
                         tour_desc_education: "Formação e as certificações que mantenho em dia: CSPM, ISTQB, CISA e CISSP.",
-                        page_title: "Carlos Muñoz Ardila | Arquiteto de QA para contrato, consultoria e um caminho de QA",
-                        meta_description: "Carlos A. Muñoz constrói um caminho completo de QA para empresas que precisam de um contratado, freelancer, consultor ou mentor. Arquiteto de QA com mais de 18 anos, além de um laboratório de QA e um estúdio SDLC gratuitos.",
+                        page_title: "Carlos Muñoz Ardila | Arquiteto QA, contrato e consultoria",
+                        meta_description: "Carlos A. Muñoz, arquiteto de QA sênior com mais de 18 anos, constrói um caminho de QA completo como contratado, consultor ou mentor. Com laboratório QA grátis.",
                         json_job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA",
                         json_description: "Um Gerente Sênior de Projetos de TI e Arquiteto de QA com mais de 18 anos de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais. Disponível para contrato, freelance, consultoria e mentoria, e para construir um caminho completo de QA. Este CV interativo acrescenta filtros de competências, impressão e downloads, um laboratório de regressão de QA gratuito e um estúdio SDLC gratuito."
                     },
@@ -1528,8 +1528,8 @@
                         tour_desc_finish: "Lebenslauf, Studio und Regressionslabor sind bereit zum Ausprobieren. Vielen Dank für Ihren Besuch.",
                         tour_title_education: "Ausbildung & Zertifizierungen",
                         tour_desc_education: "Abschlüsse und die Zertifizierungen, die ich aktuell halte: CSPM, ISTQB, CISA und CISSP.",
-                        page_title: "Carlos Muñoz Ardila | QA-Architekt für Vertrag, Beratung und einen QA-Weg",
-                        meta_description: "Carlos A. Muñoz baut einen vollständigen QA-Weg für Unternehmen, die einen Auftragnehmer, Freelancer, Berater oder Mentor brauchen. QA-Architekt mit über 18 Jahren Erfahrung, plus ein kostenloses QA-Labor und SDLC-Studio.",
+                        page_title: "Carlos Muñoz Ardila | QA-Architekt, Vertrag und Beratung",
+                        meta_description: "Carlos A. Muñoz, Senior-QA-Architekt mit über 18 Jahren, baut einen vollständigen QA-Weg als Auftragnehmer, Berater oder Mentor. Plus kostenloses QA-Labor.",
                         json_job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter",
                         json_description: "Ein Senior IT-Projektmanager und QA-Architekt mit über 18 Jahren Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams. Verfügbar für Vertrag, Freelance, Beratung und Mentoring und für den Aufbau eines vollständigen QA-Wegs. Dieser interaktive Lebenslauf ergänzt Kompetenzfilter, Druck und Downloads, ein kostenloses QA-Regressionslabor und ein kostenloses SDLC-Studio."
                     },
@@ -1718,8 +1718,8 @@
                         tour_desc_finish: "Le CV, le studio et le laboratoire de non-régression sont prêts à essayer. Merci de votre visite.",
                         tour_title_education: "Formation et Certifications",
                         tour_desc_education: "Diplômes et certifications que je maintiens à jour : CSPM, ISTQB, CISA et CISSP.",
-                        page_title: "Carlos Muñoz Ardila | Architecte QA pour contrat, conseil et un parcours QA",
-                        meta_description: "Carlos A. Muñoz construit un parcours QA complet pour les entreprises qui ont besoin d'un contractuel, d'un freelance, d'un conseiller ou d'un mentor. Architecte QA avec plus de 18 ans d'expérience, plus un laboratoire QA et un studio SDLC gratuits.",
+                        page_title: "Carlos Muñoz Ardila | Architecte QA, contrat et conseil",
+                        meta_description: "Carlos A. Muñoz, architecte QA senior avec plus de 18 ans, construit un parcours QA complet comme contractuel, conseiller ou mentor. Avec un labo QA gratuit.",
                         json_job_title: "Chef de Projet IT Senior, Architecte et Leader QA",
                         json_description: "Un Chef de Projet IT Senior et Architecte QA avec plus de 18 ans d'expérience dans la livraison de solutions logicielles de haute qualité et complexes pour des leaders technologiques mondiaux. Expert en planification stratégique, gestion des parties prenantes et direction d'équipes interfonctionnelles. Disponible en contrat, en freelance, en conseil et en mentorat, et pour construire un parcours QA complet. Ce CV interactif ajoute des filtres de compétences, l'impression et les téléchargements, un laboratoire de régression QA gratuit et un studio SDLC gratuit."
                     },
@@ -1908,8 +1908,8 @@
                         tour_desc_finish: "Il CV, lo studio e il lab di regressione sono pronti da provare. Grazie per la visita.",
                         tour_title_education: "Istruzione e Certificazioni",
                         tour_desc_education: "Titoli e certificazioni che tengo aggiornate: CSPM, ISTQB, CISA e CISSP.",
-                        page_title: "Carlos Muñoz Ardila | Architetto QA per contratto, consulenza e un percorso QA",
-                        meta_description: "Carlos A. Muñoz costruisce un percorso QA completo per le aziende che cercano un contractor, un freelance, un consulente o un mentor. Architetto QA con oltre 18 anni di esperienza, più un laboratorio QA e uno studio SDLC gratuiti.",
+                        page_title: "Carlos Muñoz Ardila | Architetto QA, contratto e consulenza",
+                        meta_description: "Carlos A. Muñoz, architetto QA senior con oltre 18 anni, costruisce un percorso QA completo come contractor, consulente o mentor. Con laboratorio QA gratuito.",
                         json_job_title: "Manager Senior di Progetti IT, Architetto e Leader QA",
                         json_description: "Un Senior IT Project Manager e Architetto QA con oltre 18 anni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali. Disponibile per contratto, freelance, consulenza e mentoring, e per costruire un percorso QA completo. Questo CV interattivo aggiunge filtri delle competenze, stampa e download, un laboratorio di regressione QA gratuito e uno studio SDLC gratuito."
                     },
