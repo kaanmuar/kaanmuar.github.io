@@ -374,8 +374,8 @@ function noteMail(note, options) {
   const lang = langOf(note && note.lang);
   const t = COPY[lang];
   const host = (note && note.host) || "your site";
-  const openUrl = pageUrl(lang, { report: note && note.reportId, utm_campaign: "note-" + ((note && note.kind) || "return") });
-  const anotherUrl = pageUrl(lang, { utm_campaign: "note-another" });
+  const openUrl = pageUrl(lang, { report: note && note.reportId, coupon: opts.coupon, utm_campaign: "note-" + ((note && note.kind) || "return") });
+  const anotherUrl = pageUrl(lang, { coupon: opts.coupon, utm_campaign: "note-another" });
   const inner = "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
     "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review &middot; " + esc(host) + "</p>" +
     "<p style=\"margin:0;font-size:26px;line-height:32px;color:#ffffff;font-weight:bold;\">" + esc(note && note.title) + "</p>" +
