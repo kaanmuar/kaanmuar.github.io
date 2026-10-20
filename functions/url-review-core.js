@@ -54,8 +54,9 @@ function priceMatches(usd) {
   if (scopes.indexOf(cents) !== -1) return true;
   for (let count = 1; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     const base = scheduleCents(count);
-    if (base === cents) return true;
-    if (count <= FRAMEWORKS.length && scopes.some((extra) => base + extra === cents)) return true;
+    const lists = [base].concat(count <= FRAMEWORKS.length ? scopes.map((extra) => base + extra) : []);
+    const floor = count * Math.round(PRICE_PER_FRAMEWORK * 50);
+    if (lists.some((list) => cents >= floor && cents <= list)) return true;
   }
   return false;
 }
@@ -2306,7 +2307,7 @@ let copCache = { at: 0, rate: 0 };
 async function copQuote(usd) {
   const dollars = Number(usd);
   if (!priceMatches(dollars)) {
-    const error = new Error("Choose at least one framework.");
+    const error = new Error("That amount is not a QA-lab price. No charge was made.");
     error.status = 400;
     throw error;
   }
@@ -2747,6 +2748,8 @@ module.exports = {
   priceForScope,
   priceForRun,
   chargedUsd,
+  priceMatches,
+  paypalPaid,
   priceForCredentials,
   priceForAlerts,
   normalizeFrameworks,
