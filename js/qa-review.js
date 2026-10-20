@@ -100,7 +100,7 @@
     reasonBox.disabled = true;
     stopBtn.disabled = true;
     sessionStorage.setItem(TERMS_KEY, TERMS_VERSION);
-    if (window.SiteTour) SiteTour.autoStart(reviewTour());
+    if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
   }
 
   function paintFrameworks() {
@@ -1160,7 +1160,7 @@
     const report = payload.report;
     if (!report) return;
     const sample = !!payload.sample;
-    if (!sample && !payload.paid && seenBefore(report.id) && liveId !== report.id) {
+    if (!sample && !payload.paid && !report.preview && seenBefore(report.id) && liveId !== report.id) {
       openPay({ priceUsd: reviewUsd(payload.frameworks || []), frameworks: payload.frameworks || [] });
       return;
     }
@@ -1389,7 +1389,7 @@
   function openPay(body) {
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_open", "URL Review", "report");
     const list = (body && body.frameworks) || (current && current.frameworks) || selectedFrameworks();
-    const tools = selectedTools();
+    const tools = body && body.frameworks && body.frameworks.length ? (body.tools || []) : selectedTools();
     const usd = (body && body.priceUsd) || reviewUsd(list, tools);
     const selections = list.length + tools.length;
     document.getElementById("pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
@@ -1740,7 +1740,7 @@
     if (tourButton) tourButton.addEventListener("click", () => {
       if (window.SiteTour) SiteTour.start(reviewTour());
     });
-    if (window.SiteTour && gate.hidden) SiteTour.autoStart(reviewTour());
+    if (window.SiteTour && gate.hidden && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
   }
 
   bootLanguageAndTour();
@@ -1755,8 +1755,11 @@
         const res = await fetch(endpoint() + "/review?id=" + encodeURIComponent(shared) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : ""), { credentials: "include" });
         const body = await res.json();
         if (res.status === 402 || body.paymentRequired) {
+          if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
           openPay(body);
-          setStatus("This report was already shown. Opening it again asks for payment.", true);
+          setStatus(body.preview
+            ? "Your last report of " + (body.host || "this site") + " is below, under the frost. Unlock it to read it in full."
+            : "This report was already shown. Opening it again asks for payment.", true);
           return;
         }
         if (!res.ok) throw new Error(body.error || "That report was not found.");
@@ -1766,7 +1769,18 @@
       }
     };
     if (!app.inert) openShared();
-    else termsForm.addEventListener("submit", () => setTimeout(openShared, 0), { once: true });
+    else {
+      const waiting = document.createElement("p");
+      waiting.className = "gate-waiting";
+      waiting.setAttribute("role", "status");
+      waiting.textContent = "Your report is waiting. Accept below and it opens right here.";
+      const title = document.getElementById("gate-title");
+      if (title) title.parentNode.insertBefore(waiting, title);
+      termsForm.addEventListener("submit", () => {
+        waiting.remove();
+        setTimeout(openShared, 0);
+      }, { once: true });
+    }
   }
 
   const CASE_LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
