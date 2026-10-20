@@ -91,11 +91,11 @@ function pageCopy(t) {
     tagline: "One public URL in. A plain-language QA review out: SEO, AI search, analytics, security, accessibility, speed.",
     button: { label: "Visit website", url: link("company_page", "premium-cta") },
     highlights: [
-      nf(t.reports) + " public sites reviewed in Live Reports",
-      nf(t.pages) + " pages read across " + t.countries + " countries",
-      "Proposed test cases for 20 frameworks",
-      "Reports in six languages"
-    ],
+      { text: nf(t.reports) + " public sites reviewed in Live Reports", detail: nf(t.pages) + " pages, " + t.countries + " countries", featured: true },
+      { text: "Proposed test cases for 20 frameworks", detail: "Exports to Jira, TestRail, Xray, Zephyr" },
+      { text: "Reports in six languages", detail: "English, Spanish, Portuguese, French, +2" },
+      { text: "First review included", detail: "Up to 20 pages, 2 links deep" }
+    ].map((h) => ({ ...h, url: link("company_page", "premium-highlight") })),
     competitors: "Pick up to nine pages that sell website audits or QA reviews to the same buyers. LinkedIn suggests similar pages in the competitor picker.",
     testimonial: "Leave off until a URL Review client gives a quote in their own words. Do not reuse CV testimonials here."
   };
@@ -134,7 +134,7 @@ function indexHtml(t, picks, copy, rows) {
     "<h1>LinkedIn Premium kit</h1><p>" + nf(t.reports) + " Live Reports · " + nf(t.pages) + " pages · " + t.countries + " countries · " + t.sectors + " sectors. Premium renews on " + esc(RENEWS) + ".</p>" +
     "<h2>Cover slideshow (1128×191, rendered at 2×)</h2>" + ["promise", "proof", "handoff"].map((v) => img("cover-" + v + ".png", 1128)).join("") +
     "<h2>Page copy</h2><p><b>Tagline:</b> " + esc(copy.tagline) + "</p><p><b>Button:</b> " + esc(copy.button.label) + " → <code>" + esc(copy.button.url) + "</code></p>" +
-    "<p><b>Highlights:</b></p><ul>" + copy.highlights.map((h) => "<li>" + esc(h) + "</li>").join("") + "</ul>" +
+    "<p><b>Highlights:</b></p><ul>" + copy.highlights.map((h) => "<li>" + esc(h.text) + " · <i>" + esc(h.detail) + "</i>" + (h.featured ? " (featured)" : "") + "</li>").join("") + "</ul>" +
     "<p><b>Competitors:</b> " + esc(copy.competitors) + "</p><p><b>Testimonial:</b> " + esc(copy.testimonial) + "</p>" +
     '<h2>Carousel PDF</h2><p><a href="carousel.pdf">carousel.pdf</a> · ' + (picks.length + 2) + " pages</p>" +
     '<h2>Proof cards</h2><div class="row">' + picks.map((p) => "<div>" + img("proof-" + p.id + ".jpg", 260) + esc(p.name) + "</div>").join("") + "</div>" +

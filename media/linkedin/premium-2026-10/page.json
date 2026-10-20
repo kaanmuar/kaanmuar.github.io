@@ -31,10 +31,27 @@
     "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-cta"
   },
   "highlights": [
-    "114 public sites reviewed in Live Reports",
-    "2,227 pages read across 11 countries",
-    "Proposed test cases for 20 frameworks",
-    "Reports in six languages"
+    {
+      "text": "114 public sites reviewed in Live Reports",
+      "detail": "2,227 pages, 11 countries",
+      "featured": true,
+      "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-highlight"
+    },
+    {
+      "text": "Proposed test cases for 20 frameworks",
+      "detail": "Exports to Jira, TestRail, Xray, Zephyr",
+      "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-highlight"
+    },
+    {
+      "text": "Reports in six languages",
+      "detail": "English, Spanish, Portuguese, French, +2",
+      "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-highlight"
+    },
+    {
+      "text": "First review included",
+      "detail": "Up to 20 pages, 2 links deep",
+      "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-highlight"
+    }
   ],
   "competitors": "Pick up to nine pages that sell website audits or QA reviews to the same buyers. LinkedIn suggests similar pages in the competitor picker.",
   "testimonial": "Leave off until a URL Review client gives a quote in their own words. Do not reuse CV testimonials here."
