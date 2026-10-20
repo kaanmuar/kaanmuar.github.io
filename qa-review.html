@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
-    <title>The page is already talking. · QA-lab URL Review</title>
-    <meta name="description" content="QA-lab URL Review reads a public https page and proposes test cases, with starting scripts, for Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6. It opens up to three pages in a headless browser to run axe-core, record tracking before and after a cookie choice, and take screenshots. Lighthouse runs through Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not run. The page can be read in English, Spanish, Portuguese, German, French, and Italian.">
+    <title>QA-lab URL Review: SEO, GEO, and QA test cases from a URL</title>
+    <meta name="description" content="One public https page, read and scored for SEO, AI search (GEO), analytics, security, accessibility, and speed, with proposed test cases for 20 frameworks.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
     <meta name="keywords" content="QA lab, URL review, proposed test cases, Playwright, Cypress, Robot Framework, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, k6, test automation scripts, axe-core, Lighthouse, BrowserStack, Applitools, Percy, Provar, Copado, accessibility review, security headers, public page review, QA services">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -16,6 +16,7 @@
     <link rel="canonical" href="https://carlosandmunoz.com/qa-review.html">
     <link rel="sitemap" type="application/xml" href="https://carlosandmunoz.com/sitemap.xml">
     <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="QA-lab URL Review">
@@ -34,6 +35,7 @@
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="QA-lab URL Review. The page is already talking.">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@qalaburlreview">
     <meta name="twitter:title" content="Read the public page. Propose the cases. · QA-lab URL Review">
     <meta name="twitter:description" content="A public read of one https site, a technology list, and proposed QA cases. One completed review per browser and network. The report is shown once.">
     <meta name="twitter:image" content="https://carlosandmunoz.com/assets/qa-review-share.png?v=20261012">
@@ -51,6 +53,7 @@
         "@graph": [
             {
                 "@type": "WebApplication",
+                "@id": "https://carlosandmunoz.com/qa-review.html#app",
                 "name": "QA-lab URL Review",
                 "url": "https://carlosandmunoz.com/qa-review.html",
                 "applicationCategory": "DeveloperApplication",
@@ -81,6 +84,12 @@
                 "inLanguage": ["en", "es", "pt", "de", "fr", "it"],
                 "areaServed": { "@type": "Place", "name": "Worldwide" },
                 "isAccessibleForFree": true,
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD",
+                    "description": "The first completed review is included: 20 pages, 2 links deep."
+                },
                 "publisher": { "@id": "https://carlosandmunoz.com/qa-review.html#organization" },
                 "subjectOf": [
                     {
@@ -186,11 +195,13 @@
                 ],
                 "author": {
                     "@type": "Person",
+                    "@id": "https://carlosandmunoz.com/#person",
                     "name": "Carlos A. Muñoz Ardila",
                     "url": "https://carlosandmunoz.com/"
                 },
                 "isPartOf": {
                     "@type": "WebSite",
+                    "@id": "https://carlosandmunoz.com/#website",
                     "name": "Carlos A. Muñoz — Interactive CV",
                     "url": "https://carlosandmunoz.com/"
                 }
@@ -200,8 +211,21 @@
                 "@id": "https://carlosandmunoz.com/qa-review.html#organization",
                 "name": "QA-lab URL Review",
                 "url": "https://carlosandmunoz.com/qa-review.html",
-                "logo": "https://carlosandmunoz.com/assets/qa-review-share.png",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://carlosandmunoz.com/assets/qa-review-logo.png",
+                    "width": 512,
+                    "height": 512
+                },
+                "image": "https://carlosandmunoz.com/assets/qa-review-share.png",
+                "description": "QA-lab URL Review reads one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases for 20 frameworks.",
                 "email": "qa@carlosandmunoz.com",
+                "founder": {
+                    "@type": "Person",
+                    "@id": "https://carlosandmunoz.com/#person",
+                    "name": "Carlos A. Muñoz Ardila",
+                    "url": "https://carlosandmunoz.com/"
+                },
                 "sameAs": [
                     "https://x.com/qalaburlreview",
                     "https://www.linkedin.com/company/qalab-url-review",
@@ -293,8 +317,8 @@
         ]
     }
     </script>
-    <script src="js/site-analytics.js?v=20261015a"></script>
-    <script src="js/qa-review-consent.js?v=20261027a"></script>
+    <script src="js/site-analytics.js?v=20261019a"></script>
+    <script src="js/qa-review-consent.js?v=20261027b"></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
@@ -303,6 +327,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/site-look.css?v=20261006d">
     <link rel="stylesheet" href="css/qa-review-folds.css?v=20261020a">
+    <link rel="stylesheet" href="css/qa-review-live.css?v=20261019a">
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
@@ -851,7 +876,7 @@
         <button class="btn btn-ghost" id="tour-start-btn" type="button">How this review works</button>
         <div class="lang-wrap notranslate" id="langWrap">
             <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
-                <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English">
+                <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English" width="20" height="20">
             </button>
             <div class="lang-menu" id="langMenu"></div>
         </div>
@@ -871,13 +896,14 @@
             </div>
             <div class="lang-wrap notranslate" id="langWrapGate">
                 <button class="lang-toggle" id="langToggleGate" type="button" aria-label="Language">
-                    <img id="langFlagGate" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English">
+                    <img id="langFlagGate" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English" width="20" height="20">
                 </button>
                 <div class="lang-menu" id="langMenuGate"></div>
             </div>
         </div>
         <p class="lede">Every control on this page stays off until you accept. The review fetches public pages, opens up to three of them in a headless browser, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. It also asks Google PageSpeed Insights to score the start page, so Google receives that address. It does not run the cases, sign in, submit forms, or generate load. The language control is on this screen.</p>
         <p class="sample-line"><button class="btn btn-ghost" id="sample-open" type="button">See a sample report</button> It is this site's own review, blurred the way a free report is. Nothing is sent to open it. New here? <a id="guide-open" href="qa-review-guide.html">Take the five-minute tour</a>.</p>
+        <p class="sample-line live-gate-line"><button class="btn btn-ghost" id="live-open-gate" type="button">Explore live reports</button> <span id="live-gate-copy">Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.</span></p>
         <form id="terms-form">
             <p class="records-note"><b>Disclaimers.</b> Read these before you check a box. <a id="legal-origin" href="qa-review-legal.html">Local and national disclaimers, for Colombia, where this service is operated</a>. <a id="legal-site" href="qa-review-legal.html">International disclaimers, for the country of the site you submit</a>.</p>
             <label class="check"><input type="checkbox" id="terms-all"> Select all</label>
@@ -913,18 +939,19 @@
                 <li><b>1</b><span>address to begin</span></li>
                 <li id="reviewed-fact" hidden><b id="reviewed-count" translate="no" aria-live="off">0</b><span>URLs reviewed so far</span></li>
             </ul>
+            <a class="live-jump" href="#live-reports">See live reports of real sites ↓</a>
         </div>
         <div class="stage-art" aria-hidden="true">
             <div class="scene">
                 <div class="stage-rig">
                     <div class="plane reel3d">
-                        <img class="dive-nodes" src="media/qa-review-stage/qa-email-nodes.jpg" alt="">
-                        <img class="dive-layers" src="media/qa-review-stage/qa-email-layers.jpg" alt="">
-                        <img class="dive-portal" src="media/qa-review-stage/qa-email-portal.jpg" alt="">
-                        <img class="dive-streams" src="media/qa-review-stage/qa-email-streams.jpg" alt="">
-                        <img class="dive-prism" src="media/qa-review-stage/qa-email-prism.jpg" alt="">
-                        <img class="dive-field" src="media/qa-review-stage/qa-email-field.jpg" alt="">
-                        <img class="dive-path" src="media/qa-review-stage/qa-email-path.jpg" alt="">
+                        <img class="dive-nodes" src="media/qa-review-stage/qa-email-nodes.jpg" alt="" width="1280" height="720">
+                        <img class="dive-layers" src="media/qa-review-stage/qa-email-layers.jpg" alt="" width="1280" height="720">
+                        <img class="dive-portal" src="media/qa-review-stage/qa-email-portal.jpg" alt="" width="1280" height="720">
+                        <img class="dive-streams" src="media/qa-review-stage/qa-email-streams.jpg" alt="" width="1280" height="720">
+                        <img class="dive-prism" src="media/qa-review-stage/qa-email-prism.jpg" alt="" width="1280" height="720">
+                        <img class="dive-field" src="media/qa-review-stage/qa-email-field.jpg" alt="" width="1280" height="720">
+                        <img class="dive-path" src="media/qa-review-stage/qa-email-path.jpg" alt="" width="1280" height="720">
                     </div>
                 </div>
             </div>
@@ -1057,6 +1084,19 @@
     </section>
     </div>
 </main>
+<section id="live-reports" class="live" aria-labelledby="live-title">
+    <div class="live-inner">
+        <header class="live-head">
+            <div>
+                <p class="eyebrow" data-live-eyebrow>Live reports</p>
+                <h2 id="live-title" class="live-title" data-live-title>Real sites. Real reads. <em>Open any of them.</em></h2>
+                <p class="live-lede" data-live-lede>Public sites read by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Open a report to see the scores, what to fix first, and what already works. View and share only.</p>
+            </div>
+            <button class="btn live-back" id="live-back" type="button">Back</button>
+        </header>
+        <div data-live-app><noscript><p class="live-lede">Live reports need JavaScript to open. As of October 19, 2026, the series holds 114 public sites in 26 sectors, each read that day by the same review anyone can run. The average overall score is 77 out of 100: SEO 68, GEO 85, analytics 86, security 68, accessibility 80, and performance 79. The highest overall scores are MDN Web Docs 95, GOV.UK 92, GitHub Docs 91, and Node.js 89. The series covers government portals such as GOV.UK, GOV.CO, and Alcaldía de Bogotá; newsrooms such as BBC, The Guardian, and El País; banks such as Bancolombia and Davivienda; universities such as MIT, Stanford, and Universidad de los Andes; open-source projects such as Python.org, Node.js, and Kubernetes; and transit systems such as TransMilenio and Metro de Medellín. Each report is one automated read of public pages, a starting point and not a verdict.</p></noscript></div>
+    </div>
+</section>
 <div id="dash-overlay" class="dash-overlay">
     <div class="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-title">
         <div class="sheet-mark" aria-hidden="true"></div>
@@ -1241,5 +1281,6 @@
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
 <script src="js/qa-review.js?v=20261027c"></script>
+<script src="js/qa-review-live.js?v=20261019a"></script>
 </body>
 </html>

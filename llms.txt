@@ -1,6 +1,23 @@
-# QA-lab URL Review
+# Carlos A. Muñoz: interactive CV, free QA tools, and QA-lab URL Review
 
-> Reads one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases written for 20 frameworks.
+> carlosandmunoz.com is the site of Carlos A. Muñoz Ardila, a senior QA architect and IT project manager with over 18 years of experience, based in Medellín, Colombia. It holds his interactive CV, a free QA regression lab, a free SDLC studio, and QA-lab URL Review, which reads one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases written for 20 frameworks.
+
+Full text for answer engines, in one file: https://carlosandmunoz.com/llms-full.txt
+
+## Carlos A. Muñoz
+
+- [Interactive CV](https://carlosandmunoz.com/): Senior IT Project Manager, QA Architect, and QA Leader. Available for contract, freelance, advisory, and mentoring, and to build a full QA path: strategy, automation, CI, and the team. Readable in English, Spanish, Portuguese, German, French, and Italian, with competency filters, a career timeline, print, and PDF, JPG, Word, JSON, and text downloads.
+- CV languages: [Spanish](https://carlosandmunoz.com/?lang=es), [Portuguese](https://carlosandmunoz.com/?lang=pt), [German](https://carlosandmunoz.com/?lang=de), [French](https://carlosandmunoz.com/?lang=fr), [Italian](https://carlosandmunoz.com/?lang=it)
+- [LinkedIn](https://www.linkedin.com/in/carlos-andres-m-2a60b8b/)
+- Contact: the form on the CV, or kaanmuar@gmail.com.
+
+## Free QA tools
+
+- [CV regression lab](https://carlosandmunoz.com/qa-lab.html): runs one catalog against the CV in 20 frameworks (Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, k6, JMeter, Gatling), with smoke, functional, security, accessibility, mobile, and performance filters, a results dashboard, and a text report. In the browser, free.
+- [SDLC studio](https://carlosandmunoz.com/simulador.html): four agents walk one sprint. Ticket Steward rewrites the story on Jira, Azure DevOps, Monday, Trello, Linear, Asana, MS Project, or Backlog; Test Designer writes Gherkin and Xray cases; Automation Engineer generates Playwright, Cypress, and Robot scripts; Release Verifier checks the Definition of Done. In the browser, free, no account.
+- [Clip: QA Lab running](https://carlosandmunoz.com/media/qa-lab-running.html), [QA Lab tour](https://carlosandmunoz.com/media/qa-lab-tour.html), [SDLC Studio sprint](https://carlosandmunoz.com/media/sdlc-studio-running.html), [SDLC Studio tour](https://carlosandmunoz.com/media/sdlc-studio-tour.html)
+
+## QA-lab URL Review
 
 QA-lab URL Review reads one public https address and proposes test cases. It does not run those cases, sign in, submit a form, or generate load. It is not a certification.
 
@@ -16,6 +33,7 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - [How it works, a guided tour](https://carlosandmunoz.com/qa-review-guide.html): who it helps, the six steps, how to read the six scores, and what a review never does
 - [Facts](https://carlosandmunoz.com/qa-review.html#service-facts)
 - [Sample report, this site's own review](https://carlosandmunoz.com/qa-review.html?sample=1)
+- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 114 real public sites read by the review, tagged by sector, country, and test type, view and share only
 - [Disclaimers](https://carlosandmunoz.com/qa-review-legal.html)
 - Languages: English, Spanish, Portuguese, German, French, Italian.
 

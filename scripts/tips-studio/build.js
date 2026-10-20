@@ -4,7 +4,8 @@
    node scripts/tips-studio/build.js [--tips hsts,contrast] [--skip-video] [--start 2026-10-26]
      [--batch tips-2026-10] [--seed 7] [--every 1]
    node scripts/tips-studio/build.js --source runs --start 2026-10-28 --every 4
-     renders the real-run scorecards from runs.js, in their listed order, one every 4 days. */
+     renders the real-run scorecards from runs.js, in their listed order, one every 4 days.
+   --source runs-100 loads runs-100.js the same way; its batch defaults to the module name. */
 
 const fs = require("fs");
 const path = require("path");
@@ -26,9 +27,10 @@ function args() {
 }
 
 const opts = args();
-const RUNS = opts.source === "runs";
-const studio = require(RUNS ? "./runs" : "./tips");
-const BATCH = opts.batch || (RUNS ? "runs-2026-10" : "tips-2026-10");
+const SOURCE = typeof opts.source === "string" && /^[\w-]+$/.test(opts.source) ? opts.source : "tips";
+const RUNS = SOURCE !== "tips";
+const studio = require("./" + SOURCE);
+const BATCH = opts.batch || (SOURCE === "runs" ? "runs-2026-10" : RUNS ? SOURCE : "tips-2026-10");
 const EVERY = Number(opts.every || 1);
 const OUT = path.join(ROOT, "media/social-posts", BATCH);
 const IMAGE_BASE = studio.SITE + "/media/social-posts/" + BATCH;
