@@ -22,6 +22,7 @@ for (const row of rows) {
       localStorage.setItem('theme', 'light');
     });
     await page.reload();
+    await page.waitForFunction(() => !document.getElementById('experience-container') || document.documentElement.dataset.cvSettled, null, { timeout: 20000 }).catch(() => {});
     await page.addScriptTag({ path: 'js/catalog-checks.js' });
     const message = await page.evaluate(async (id) => {
       const check = window.CatalogChecks && window.CatalogChecks[id];

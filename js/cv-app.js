@@ -1708,10 +1708,12 @@
                     'feedback': translation.topic_option_feedback,
                     'other': translation.topic_option_other
                 };
+                const picked = topicDropdown.value;
                 topicDropdown.innerHTML = '';
                 for (const [value, text] of Object.entries(topics)) {
                     topicDropdown.add(new Option(text, value));
                 }
+                if (picked in topics) topicDropdown.value = picked;
             },
 
             _t() {
@@ -4096,7 +4098,8 @@
                 if (!sessionStorage.getItem('hasSeenTour')) {
                     setTimeout(() => this.startTour(true), 1000);
                 }
-                this._loadLiveCv();
+                // Tests wait for data-cv-settled: the live CV re-renders the competencies and the topic list when it lands.
+                this._loadLiveCv().finally(() => { document.documentElement.dataset.cvSettled = '1'; });
             },
 
 
