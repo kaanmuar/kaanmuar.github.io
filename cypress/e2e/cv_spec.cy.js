@@ -86,7 +86,10 @@ describe('Interactive CV', () => {
       cy.get('html').should('have.class', 'topic-focus');
       cy.get('.competency-item[data-competency="pm"]').should('have.attr', 'aria-pressed', 'true');
       cy.get('.experience-item.topic-match').should('exist');
-      cy.get('.experience-item.topic-dim').should('exist');
+      cy.get('#experience-container .experience-item').then(($roles) => {
+        cy.get('#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim').should('have.length', $roles.length);
+      });
+      cy.get('#languages-section').should('have.class', 'topic-dim');
       cy.get('#languages-heading').click({ force: true });
       cy.get('html').should('not.have.class', 'topic-focus');
     });
