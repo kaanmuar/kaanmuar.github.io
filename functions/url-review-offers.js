@@ -120,53 +120,26 @@ function planById(id) {
   return MONTHLY_PLANS.find((plan) => plan.id === id) || MONTHLY_PLANS[0];
 }
 
-const COPY = {
-  en: {
-    return: ["The page is still talking.", "Your case list for {host} is sitting where you left it. A return run in the next 30 days takes {percent}% off the schedule. The first selection stays 19 USD before that. Reply to this note, or open the review and run it again.", "Come back to the case list"],
-    paid: ["You already opened the door.", "The first payment for {host} is in. A return run in the next 30 days takes {percent}% off the schedule. Reply if you want a call-back and leave a number in the reply.", "Your next run costs less"],
-    offer: ["Three notes a week, then quiet.", "The return table is 10% on the first return, 15% on the second, and 20% after that. It never prices a selection under 9.50 USD. {host} can be read again whenever you are ready.", "A return price is waiting"]
-  },
-  es: {
-    return: ["La página sigue hablando.", "La lista de casos de {host} sigue donde la dejaste. Un regreso en los próximos 30 días baja {percent}% el tarifario. La primera selección sigue en 19 USD antes de eso. Responde esta nota, o abre la revisión y córrela otra vez.", "Vuelve a la lista de casos"],
-    paid: ["Ya abriste la puerta.", "El primer pago de {host} quedó. Un regreso en los próximos 30 días baja {percent}% el tarifario. Si quieres que te llamemos, responde y deja un número.", "Tu próxima revisión cuesta menos"],
-    offer: ["Tres notas por semana, y después silencio.", "El regreso baja 10% la primera vez, 15% la segunda, y 20% desde la tercera. Ninguna selección queda bajo 9.50 USD. {host} se puede leer de nuevo cuando quieras.", "Hay un precio de regreso"]
-  },
-  pt: {
-    return: ["A página ainda está falando.", "A lista de casos de {host} continua onde você a deixou. Uma volta em 30 dias tira {percent}% da tabela. A primeira seleção continua 19 USD antes disso. Responda, ou abra a revisão e rode de novo.", "Volte para a lista de casos"],
-    paid: ["Você já abriu a porta.", "O primeiro pagamento de {host} entrou. Uma volta em 30 dias tira {percent}% da tabela. Se quiser um retorno de chamada, responda e deixe um número.", "Sua próxima revisão custa menos"],
-    offer: ["Três notas por semana, depois silêncio.", "A volta tira 10% na primeira, 15% na segunda e 20% a partir da terceira. Nenhuma seleção fica abaixo de 9,50 USD. {host} pode ser lido de novo quando você quiser.", "Há um preço de volta"]
-  },
-  de: {
-    return: ["Die Seite redet noch.", "Die Fallliste für {host} liegt noch da. Eine Rückkehr in 30 Tagen nimmt {percent}% von der Staffel. Die erste Auswahl bleibt 19 USD davor. Antworte auf diese Notiz, oder öffne die Prüfung erneut.", "Komm zurück zur Fallliste"],
-    paid: ["Die Tür ist schon offen.", "Die erste Zahlung für {host} ist da. Eine Rückkehr in 30 Tagen nimmt {percent}% von der Staffel. Wenn du einen Rückruf willst, antworte und lass eine Nummer da.", "Deine nächste Prüfung kostet weniger"],
-    offer: ["Drei Notizen in der Woche, dann Ruhe.", "Die Rückkehr nimmt 10% beim ersten Mal, 15% beim zweiten und 20% ab dem dritten. Keine Auswahl fällt unter 9,50 USD. {host} kann wieder gelesen werden, wenn du soweit bist.", "Ein Rückkehrpreis wartet"]
-  },
-  fr: {
-    return: ["La page parle encore.", "La liste de cas pour {host} est toujours là. Un retour dans les 30 jours retire {percent}% du barème. La première sélection reste à 19 USD avant cela. Répondez à cette note, ou ouvrez la revue à nouveau.", "Revenez à la liste de cas"],
-    paid: ["La porte est déjà ouverte.", "Le premier paiement pour {host} est passé. Un retour dans les 30 jours retire {percent}% du barème. Pour un rappel, répondez et laissez un numéro.", "Votre prochaine revue coûte moins"],
-    offer: ["Trois notes par semaine, puis le silence.", "Le retour retire 10% la première fois, 15% la deuxième, et 20% ensuite. Aucune sélection ne descend sous 9,50 USD. {host} peut être relu quand vous voulez.", "Un prix de retour attend"]
-  },
-  it: {
-    return: ["La pagina sta ancora parlando.", "L'elenco dei casi per {host} è ancora lì. Un ritorno entro 30 giorni toglie il {percent}% dallo scaglione. La prima voce resta 19 USD prima di quello. Rispondi a questa nota, oppure apri di nuovo la revisione.", "Torna all'elenco dei casi"],
-    paid: ["La porta è già aperta.", "Il primo pagamento per {host} è arrivato. Un ritorno entro 30 giorni toglie il {percent}% dallo scaglione. Se vuoi una richiamata, rispondi e lascia un numero.", "La prossima revisione costa meno"],
-    offer: ["Tre note a settimana, poi silenzio.", "Il ritorno toglie il 10% la prima volta, il 15% la seconda e il 20% dalla terza. Nessuna voce scende sotto 9,50 USD. {host} si può leggere di nuovo quando vuoi.", "C'è un prezzo di ritorno"]
-  }
-};
+const COPY = require("./url-review-note-copy");
 
 function fill(text, vars) {
   return String(text || "").replace(/\{(\w+)\}/g, (all, key) => (vars[key] == null ? all : String(vars[key])));
 }
 
-function messageFor(kind, lang, vars) {
+function messageFor(kind, lang, vars, turn) {
   const pack = COPY[LANGS.indexOf(lang) === -1 ? "en" : lang] || COPY.en;
-  const row = pack[kind] || pack.return;
+  const scenes = pack[kind] || pack.return;
+  const scene = Math.max(0, Math.round(Number(turn) || 0)) % scenes.length;
+  const row = scenes[scene];
   const body = fill(row[1], vars);
   return {
     lang: LANGS.indexOf(lang) === -1 ? "en" : lang,
     kind,
+    scene,
     subject: fill(row[2], vars),
     title: fill(row[0], vars),
-    text: body + "\n\nQA-lab URL Review\nhttps://carlosandmunoz.com/qa-review.html\nReply stop to end these notes."
+    body,
+    text: body + "\n\nQA-lab URL Review\nhttps://carlosandmunoz.com/qa-review.html"
   };
 }
 
@@ -201,18 +174,21 @@ function queue(records, now) {
     const paidOnce = rows.some((row) => row.paid === true || row.status === "paid-report" || row.status === "run-credit");
     const pass = passes.find((row) => String(row.email).toLowerCase() === email);
     const asked = rows.some((row) => row.followUp === true);
-    const lang = languageOf(latest && latest.acceptLanguage, latest && latest.country);
+    const lang = latest && LANGS.indexOf(latest.lang) !== -1 ? latest.lang : languageOf(latest && latest.acceptLanguage, latest && latest.country);
     const sent = rows.filter((row) => row.status === "follow-note").map((row) => Date.parse(row.createdAt || "")).filter((time) => time && at - time < week).sort((a, b) => b - a);
     const quiet = !lastRunAt || at - lastRunAt > week;
     let kind = "return";
     if (paidOnce && !pass) kind = "paid";
     else if (!quiet) kind = "offer";
     const host = (latest && latest.report && latest.report.host) || "";
-    const note = messageFor(kind, lang, { host: host || "the page", percent: percent || 10, name: (latest && latest.name) || "" });
+    const turn = rows.filter((row) => row.status === "follow-note").length;
+    const note = messageFor(kind, lang, { host: host || "the page" }, turn);
     let held = "";
     if (stopped.has(email)) held = "This address asked to stop.";
     else if (pass) held = "A 30-day pass is open. Notes wait.";
     else if (!asked) held = "This address did not ask for notes.";
+    else if (!lastRunAt) held = "No finished report yet.";
+    else if (at - lastRunAt > month) held = "The 30-day return window closed.";
     else if (sent.length >= 3) held = "Three notes already went out in seven days.";
     else if (sent[0] && at - sent[0] < gap) held = "The last note was inside 48 hours.";
     return {
@@ -221,6 +197,7 @@ function queue(records, now) {
       lang,
       kind,
       host,
+      reportId: (runs.length && runs[runs.length - 1].id) || "",
       percent: percent || 10,
       returns: prior,
       paidOnce,
@@ -228,8 +205,10 @@ function queue(records, now) {
       held,
       due: !held,
       lastRun: lastRunAt ? new Date(lastRunAt).toISOString() : "",
+      scene: note.scene,
       subject: note.subject,
       title: note.title,
+      body: note.body,
       text: note.text
     };
   }).sort((a, b) => Number(b.due) - Number(a.due) || String(a.email).localeCompare(String(b.email)));
