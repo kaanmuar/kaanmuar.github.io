@@ -163,6 +163,17 @@ const COPY = {
   }
 };
 
+const PDF_COPY = {
+  en: { badge: "Blurred preview", note: "The opening of each line is readable. The rest stays blurred until the report is unlocked.", findings: "Findings", cases: "Proposed test cases", moreCases: "+{n} more cases in the full report", unlock: "Unlock the full report", attached: "The blurred report is attached as a PDF.", fails: "fail now", risks: "at risk", read: "Read on {date}", file: "blurred-report", sev: { critical: "critical", high: "high", medium: "medium", low: "low" } },
+  es: { badge: "Vista previa empañada", note: "El comienzo de cada línea se puede leer. El resto sigue empañado hasta desbloquear el informe.", findings: "Hallazgos", cases: "Casos de prueba propuestos", moreCases: "+{n} casos más en el informe completo", unlock: "Desbloquear el informe completo", attached: "El informe empañado va adjunto en PDF.", fails: "fallan ahora", risks: "en riesgo", read: "Leído el {date}", file: "informe-empanado", sev: { critical: "crítico", high: "alto", medium: "medio", low: "bajo" } },
+  pt: { badge: "Prévia embaçada", note: "O início de cada linha pode ser lido. O resto fica embaçado até o relatório ser desbloqueado.", findings: "Achados", cases: "Casos de teste propostos", moreCases: "+{n} casos a mais no relatório completo", unlock: "Desbloquear o relatório completo", attached: "O relatório embaçado vai anexado em PDF.", fails: "falham agora", risks: "em risco", read: "Lido em {date}", file: "relatorio-embacado", sev: { critical: "crítico", high: "alto", medium: "médio", low: "baixo" } },
+  de: { badge: "Verschwommene Vorschau", note: "Der Anfang jeder Zeile ist lesbar. Der Rest bleibt verschwommen, bis der Bericht freigeschaltet ist.", findings: "Befunde", cases: "Vorgeschlagene Testfälle", moreCases: "+{n} weitere Fälle im vollständigen Bericht", unlock: "Vollständigen Bericht freischalten", attached: "Der verschwommene Bericht liegt als PDF bei.", fails: "schlagen fehl", risks: "gefährdet", read: "Gelesen am {date}", file: "verschwommener-bericht", sev: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig" } },
+  fr: { badge: "Aperçu flouté", note: "Le début de chaque ligne est lisible. Le reste reste flou jusqu'au déverrouillage du rapport.", findings: "Constats", cases: "Cas de test proposés", moreCases: "+{n} cas de plus dans le rapport complet", unlock: "Déverrouiller le rapport complet", attached: "Le rapport flouté est joint en PDF.", fails: "échouent", risks: "à risque", read: "Lu le {date}", file: "rapport-floute", sev: { critical: "critique", high: "élevé", medium: "moyen", low: "faible" } },
+  it: { badge: "Anteprima sfocata", note: "L'inizio di ogni riga è leggibile. Il resto resta sfocato finché il rapporto non viene sbloccato.", findings: "Risultati", cases: "Casi di test proposti", moreCases: "+{n} casi in più nel rapporto completo", unlock: "Sblocca il rapporto completo", attached: "Il rapporto sfocato è allegato in PDF.", fails: "falliscono ora", risks: "a rischio", read: "Letto il {date}", file: "rapporto-sfocato", sev: { critical: "critico", high: "alto", medium: "medio", low: "basso" } }
+};
+const PDF_CASES = 24;
+const FILLER_WORDS = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua".split(" ");
+
 function langOf(value) {
   const code = String(value || "").slice(0, 2).toLowerCase();
   return LANGS.indexOf(code) === -1 ? "en" : code;
@@ -335,6 +346,7 @@ function reportMail(record, options) {
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:18px 28px 22px;\">" +
     button(openUrl, t.open, true) + button(anotherUrl, t.another, false) +
     "<p style=\"margin:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.openNote) + "</p>" +
+    (opts.attached ? "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#0e7490;font-weight:bold;\">&#128206; " + esc(PDF_COPY[lang].attached) + "</p>" : "") +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
     deeperBlock(t, facts.host, facts.id);
@@ -353,6 +365,7 @@ function reportMail(record, options) {
     facts.moreCount ? fill(t.more, { n: facts.moreCount }) : "",
     "",
     t.open + ": " + openUrl,
+    opts.attached ? PDF_COPY[lang].attached : "",
     t.another + ": " + anotherUrl,
     "",
     t.deeper,
@@ -367,6 +380,133 @@ function reportMail(record, options) {
     text: text.slice(0, 16000),
     html: shell(lang, fill(t.preheader, { count: facts.total }), inner, footerHtml(t, facts.host, opts.stopUrl))
   };
+}
+
+function filler(length, seed) {
+  const out = [];
+  let size = 0;
+  let at = seed || 0;
+  while (size < length) {
+    const word = FILLER_WORDS[at++ % FILLER_WORDS.length];
+    out.push(word);
+    size += word.length + 1;
+  }
+  return out.join(" ");
+}
+
+let frostStrip = "";
+
+// One pre-blurred strip of filler words, cut into word-sized pieces. Chrome embeds it once,
+// where a CSS blur on live text would be rasterized per word and push the PDF past 2 MB.
+function stripUrl() {
+  if (!frostStrip) {
+    frostStrip = "data:image/png;base64," + require("fs").readFileSync(require("path").join(__dirname, "assets", "frost-strip.png")).toString("base64");
+  }
+  return frostStrip;
+}
+
+function frostedLine(text, seed) {
+  const cut = frost(text);
+  if (!cut.shown) return "";
+  let at = seed || 0;
+  const words = filler(cut.hidden, seed).split(" ").map((word) => {
+    at += 7;
+    return "<span class=\"fz\" style=\"width:" + (word.length * 0.5 + 0.2).toFixed(2) + "em;background-position:-" + (at % 38) + "em 50%\"></span>";
+  });
+  return esc(cut.shown) + " " + words.join(" ");
+}
+
+const PDF_STYLE = "@page{size:A4;margin:12mm 0 0}@page:first{margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0}" +
+  "body{font-family:Inter,'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10.5pt;line-height:1.45}" +
+  ".foot{position:fixed;bottom:0;left:0;right:0;height:11mm;padding:3mm 16mm 0;font-size:8pt;color:#64748b;display:flex;justify-content:space-between;border-top:1px solid #dbe3ea;background:#fff;z-index:2}" +
+  ".page{position:relative;z-index:1;padding:0 0 16mm}" +
+  ".hero{background:#0f172a;background-image:radial-gradient(circle at 85% 20%,rgba(94,234,212,.28),transparent 45%),linear-gradient(135deg,#0f172a 0%,#0e4a5c 60%,#0e7490 100%);color:#fff;padding:14mm 16mm 12mm;display:flex;gap:10mm;align-items:center}" +
+  ".hero .who{flex:1}.eyebrow{font-size:8.5pt;letter-spacing:.16em;text-transform:uppercase;color:#7dd3fc;margin:0 0 3mm}" +
+  ".host{font-family:Georgia,'Times New Roman',serif;font-size:26pt;line-height:1.1;margin:0 0 3mm;word-break:break-all}" +
+  ".meta{font-size:9pt;color:#cbd5e1;margin:0}.meta code{font-family:Menlo,Consolas,monospace;color:#e2e8f0}" +
+  ".badge{display:inline-block;margin-top:4mm;padding:1.2mm 3.4mm;border-radius:99px;background:rgba(94,234,212,.16);border:1px solid rgba(94,234,212,.55);color:#99f6e4;font-size:8.5pt;font-weight:700;letter-spacing:.04em}" +
+  ".ring{width:42mm;height:42mm;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}" +
+  ".ring div{width:33mm;height:33mm;border-radius:50%;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center}" +
+  ".ring b{font-size:30pt;line-height:1}.ring i{font-style:normal;font-size:8.5pt;color:#94a3b8}.ring em{font-style:normal;margin-top:1mm;padding:.6mm 2.6mm;border-radius:99px;font-size:9pt;font-weight:700;color:#fff}" +
+  ".stats{display:flex;gap:4mm;padding:0 16mm;margin-top:-6mm}" +
+  ".stat{flex:1;background:#fff;border:1px solid #dbe3ea;border-radius:4mm;padding:3.4mm 4mm}" +
+  ".stat b{display:block;font-size:17pt;line-height:1.1}.stat span{font-size:8pt;color:#64748b;text-transform:uppercase;letter-spacing:.06em}" +
+  ".sec{margin:7mm 16mm 0}.sec h2{font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:#0e7490;margin:0 0 3mm}" +
+  ".note{font-size:9pt;color:#475569;margin:0 0 3mm}" +
+  ".areas{display:grid;grid-template-columns:1fr 1fr;gap:2.4mm 8mm;background:#fff;border:1px solid #dbe3ea;border-radius:4mm;padding:5mm}" +
+  ".area{display:grid;grid-template-columns:27mm 1fr 9mm;align-items:center;gap:3mm;font-size:9.5pt}" +
+  ".bar{height:2.6mm;border-radius:2mm;background:#e5eaf0;overflow:hidden}.bar i{display:block;height:100%;border-radius:2mm}" +
+  ".area b{text-align:right}" +
+  ".finding{background:#fff;border:1px solid #dbe3ea;border-left:1.4mm solid #94a3b8;border-radius:3mm;padding:3.2mm 4mm;margin:0 0 2.6mm;break-inside:avoid}" +
+  ".finding .k{font-size:7.8pt;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin:0 0 1mm}" +
+  ".finding .t{font-weight:700;margin:0 0 1mm}.finding .e{color:#475569;margin:0;font-size:9.5pt}" +
+  ".fz{display:inline-block;height:1.25em;vertical-align:-.28em;background-repeat:repeat-x;background-size:auto 2.3em}" +
+  ".cases{display:grid;grid-template-columns:1fr 1fr;gap:2mm 5mm}" +
+  ".case{background:#fff;border:1px solid #e2e8f0;border-radius:2.6mm;padding:2.4mm 3mm;font-size:9pt;break-inside:avoid}" +
+  ".case code{font-family:Menlo,Consolas,monospace;font-size:7.8pt;color:#0e7490;margin-right:1.6mm}.case small{color:#64748b;font-size:7.8pt}" +
+  ".more{font-size:9pt;color:#64748b;margin:2.6mm 0 0}" +
+  ".cta{margin:8mm 16mm 0;border-radius:5mm;padding:7mm 8mm;color:#fff;background:#0f172a;background-image:linear-gradient(120deg,#0f172a 0%,#134e5e 100%);break-inside:avoid}" +
+  ".cta h3{margin:0 0 2mm;font-size:15pt}.cta p{margin:0 0 1.6mm;color:#cfe3ea;font-size:10pt}" +
+  ".btns{margin-top:4mm;display:flex;gap:3mm;flex-wrap:wrap}" +
+  ".btn{display:inline-block;padding:2.8mm 5mm;border-radius:2.6mm;font-weight:700;text-decoration:none;font-size:10pt}" +
+  ".btn.p{background:#5eead4;color:#0f172a}.btn.s{border:1px solid #5eead4;color:#99f6e4}";
+
+// A print page for the mail attachment. Hidden words are filler, so the PDF never carries them.
+function reportPdf(record, options) {
+  const opts = options || {};
+  const lang = langOf(opts.lang || (record && record.lang));
+  const t = COPY[lang];
+  const p = PDF_COPY[lang];
+  const report = (record && record.report) || {};
+  const ins = report.insights || {};
+  const facts = reportFacts(record);
+  const all = (Array.isArray(ins.findings) ? ins.findings : [])
+    .filter((item) => item && (item.verdict === "fail" || item.verdict === "risk"))
+    .sort((a, b) => (a.rank || 999) - (b.rank || 999));
+  const fails = all.filter((item) => item.verdict === "fail").length;
+  const overall = facts.score ? Number(facts.score.overall) || 0 : 0;
+  const ringColor = scoreColor(overall);
+  const when = new Date(report.fetchedAt || (record && record.createdAt) || Date.now());
+  const date = isNaN(when) ? "" : when.toISOString().slice(0, 10);
+  const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report-pdf" });
+  const areas = facts.score ? AREAS.map((area) => {
+    const row = (facts.score.areas || {})[area];
+    if (!row) return "";
+    const value = Math.max(0, Math.min(100, Number(row.score) || 0));
+    return "<div class=\"area\"><span>" + esc(t.areas[area] || area) + "</span><div class=\"bar\"><i style=\"width:" + value + "%;background:" + scoreColor(value) + "\"></i></div><b style=\"color:" + scoreColor(value) + "\">" + value + "</b></div>";
+  }).join("") : "";
+  const findings = all.map((item, index) =>
+    "<div class=\"finding\" style=\"border-left-color:" + (SEVERITY_COLOR[item.severity] || SEVERITY_COLOR.low) + "\">" +
+    "<p class=\"k\">" + esc(t.areas[item.area] || item.area || "") + " · " + esc(p.sev[item.severity] || item.severity || p.sev.low) + "</p>" +
+    "<p class=\"t\">" + frostedLine(item.title, index) + "</p>" +
+    (item.evidence ? "<p class=\"e\">" + frostedLine(item.evidence, index + 3) + "</p>" : "") +
+    "</div>"
+  ).join("");
+  const caseRows = (Array.isArray(report.cases) ? report.cases : []).slice(0, PDF_CASES).map((item, index) =>
+    "<div class=\"case\"><code>" + esc(item.id || "") + "</code><small>" + esc(item.layer || "") + "</small><br>" + frostedLine(item.title, index + 7) + "</div>"
+  ).join("");
+  const moreCases = Math.max(0, facts.cases - PDF_CASES);
+  const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + ".fz{background-image:url(" + stripUrl() + ")}</style></head><body>" +
+    "<div class=\"foot\"><span>QA-lab URL Review · carlosandmunoz.com/qa-review.html</span><span>" + esc(facts.id) + "</span></div>" +
+    "<div class=\"page\">" +
+    "<div class=\"hero\"><div class=\"who\"><p class=\"eyebrow\">QA-lab URL Review</p><p class=\"host\">" + esc(facts.host) + "</p>" +
+    "<p class=\"meta\">" + esc(fill(p.read, { date })) + " · <code>" + esc(facts.id) + "</code></p><span class=\"badge\">" + esc(p.badge) + "</span></div>" +
+    (facts.score ? "<div class=\"ring\" style=\"background:conic-gradient(" + ringColor + " " + overall * 3.6 + "deg,rgba(255,255,255,.14) 0)\"><div><b>" + overall + "</b><i>" + esc(t.outOf) + "</i><em style=\"background:" + ringColor + "\">" + esc(facts.score.grade || "") + "</em></div></div>" : "") +
+    "</div>" +
+    "<div class=\"stats\">" +
+    "<div class=\"stat\"><b>" + facts.pages + "</b><span>" + esc(t.pages) + "</span></div>" +
+    "<div class=\"stat\"><b>" + facts.cases + "</b><span>" + esc(t.cases) + "</span></div>" +
+    "<div class=\"stat\"><b style=\"color:#b91c1c\">" + fails + "</b><span>" + esc(p.fails) + "</span></div>" +
+    "<div class=\"stat\"><b style=\"color:#b45309\">" + (all.length - fails) + "</b><span>" + esc(p.risks) + "</span></div>" +
+    "</div>" +
+    (areas ? "<div class=\"sec\"><div class=\"areas\">" + areas + "</div></div>" : "") +
+    (findings ? "<div class=\"sec\"><h2>" + esc(p.findings) + "</h2><p class=\"note\">" + esc(p.note) + "</p>" + findings + "</div>" : "") +
+    (caseRows ? "<div class=\"sec\"><h2>" + esc(p.cases) + "</h2><div class=\"cases\">" + caseRows + "</div>" + (moreCases ? "<p class=\"more\">" + esc(fill(p.moreCases, { n: moreCases })) + "</p>" : "") + "</div>" : "") +
+    "<div class=\"cta\"><h3>" + esc(t.deeper) + "</h3>" + t.deeperLines.map((line) => "<p>→ " + esc(line) + "</p>").join("") +
+    "<div class=\"btns\"><a class=\"btn p\" href=\"" + esc(openUrl) + "\">" + esc(p.unlock) + "</a><a class=\"btn s\" href=\"" + esc(deeperUrl(t, facts.host, facts.id)) + "\">" + esc(t.deeperCta) + "</a></div></div>" +
+    "</div></body></html>";
+  const slug = facts.host.replace(/[^a-z0-9.-]/gi, "-").replace(/-+/g, "-").slice(0, 60);
+  return { html, filename: "qa-lab-" + slug + "-" + p.file + ".pdf" };
 }
 
 function noteMail(note, options) {
@@ -420,4 +560,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { LANGS, langOf, frost, reportFacts, reportMail, noteMail, stopPage, pageUrl };
+module.exports = { LANGS, langOf, frost, reportFacts, reportMail, reportPdf, noteMail, stopPage, pageUrl };

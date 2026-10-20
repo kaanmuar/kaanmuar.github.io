@@ -468,6 +468,21 @@ async function launch() {
   return puppeteer.launch({ executablePath: await chromium.executablePath(), headless: "shell", args });
 }
 
+async function printPdf(html) {
+  const browser = await launch();
+  try {
+    const page = await browser.newPage();
+    await page.setJavaScriptEnabled(false);
+    await page.setRequestInterception(true);
+    page.on("request", (req) => (req.url().startsWith("data:") ? req.continue() : req.abort()));
+    await page.setContent(String(html || ""), { waitUntil: "load", timeout: 20000 });
+    const pdf = await page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true, timeout: 30000 });
+    return { ok: true, pdf: Buffer.from(pdf).toString("base64") };
+  } finally {
+    await browser.close().catch(() => {});
+  }
+}
+
 async function browse(job) {
   const started = Date.now();
   const budget = Math.min(110000, Math.max(30000, Number(job && job.budgetMs) || 85000));
@@ -627,4 +642,4 @@ async function browse(job) {
   }
 }
 
-module.exports = { browse, REJECT_TEXT, blockedHost, vendorOf, htmlText, words, siteOf };
+module.exports = { browse, printPdf, REJECT_TEXT, blockedHost, vendorOf, htmlText, words, siteOf };
