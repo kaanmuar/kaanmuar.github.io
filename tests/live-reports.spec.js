@@ -160,3 +160,89 @@ test.describe('Live reports', () => {
     expect(sitemap).not.toContain('live-reports');
   });
 });
+
+test.describe('Live reports on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+  test('filters are four dropdowns and nothing scrolls sideways', async ({ page }) => {
+    const violations = watchCsp(page);
+    await prime(page);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('.live-card').first()).toBeAttached();
+    const selects = page.locator('#live-reports .live-fselect');
+    await expect(selects).toHaveCount(4);
+    for (const select of await selects.all()) await expect(select).toBeVisible();
+    await expect(page.locator('#live-reports .live-chips').first()).toBeHidden();
+    const wide = await page.evaluate(() => [...document.querySelectorAll('#live-reports .live-side *')]
+      .filter((el) => el.offsetParent && el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible')
+      .map((el) => el.className));
+    expect(wide).toEqual([]);
+    const filters = await page.locator('#live-filters').boundingBox();
+    expect(filters.height).toBeLessThan(200);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+
+    const total = await page.locator('.live-card:not([hidden])').count();
+    await page.locator('#live-f-scope').selectOption('local');
+    await expect(page.locator('#live-f-scope')).toHaveValue('local');
+    const local = await page.locator('.live-card:not([hidden])').count();
+    expect(local).toBeGreaterThan(0);
+    expect(local).toBeLessThan(total);
+    await expect(page.locator('.live-count')).toContainText('/ ' + local);
+    await expect(page.locator('#live-f-scope')).toBeFocused();
+    await page.locator('#live-f-scope').selectOption('');
+    await expect(page.locator('.live-card:not([hidden])')).toHaveCount(total);
+    expect(violations).toEqual([]);
+  });
+});
+
+test.describe('Live reports in Spanish', () => {
+  async function primeEs(page) {
+    await page.route(/translate\.(google|googleapis)\.com/, (route) => route.abort());
+    await page.addInitScript(() => {
+      try {
+        sessionStorage.setItem('qa-review-terms', '2026-10-20');
+        localStorage.setItem('hasSeenReviewTour', 'true');
+        localStorage.setItem('qa-review-analytics', 'necessary');
+        localStorage.setItem('site-translate', 'picked');
+      } catch (e) { /* storage is optional */ }
+    });
+  }
+
+  test('the copy says what to open and analyzes instead of reading', async ({ page }) => {
+    await primeEs(page);
+    await page.goto('/qa-review-es.html');
+    await expect(page.locator('.live-card').first()).toBeAttached();
+    await expect(page.locator('#live-title')).toHaveText(/Sitios reales\. Análisis reales\.\s*Abre el informe que quieras\./);
+    const lede = page.locator('[data-live-lede]');
+    await expect(lede).toContainText('analizados con la misma revisión que cualquiera puede ejecutar');
+    await expect(lede).toContainText('Recorre el carrusel');
+    await expect(lede).not.toContainText(/leídos|Gira el anillo|correr/);
+    await expect(page.locator('#live-gate-copy')).toHaveText(/^Análisis reales de sitios públicos/);
+    await expect(page.locator('#live-reports')).not.toContainText(/Lecturas|Leído|anillo|Cabeceras/);
+    await expect(page.locator('.lc-foot span').first()).toContainText('Analizado el');
+    await expect(page.locator('.lc-areas span').filter({ hasText: 'Velocidad' }).first()).toBeAttached();
+  });
+
+  test('a report shows native labels and tags', async ({ page }) => {
+    await primeEs(page);
+    await page.goto('/qa-review-es.html?live=govuk');
+    const viewer = page.locator('#live-viewer');
+    await expect(viewer.locator('.lv-fix li').first()).toBeVisible();
+    await expect(viewer.locator('.lv-brand-text')).toHaveText('QA-lab · Informe en vivo');
+    await expect(viewer.locator('.lv-ring small')).toHaveText('Nota A');
+    await expect(viewer.locator('.lv-area small').first()).toContainText(/fallan · \d+ en riesgo · \d+ pasan/);
+    await expect(viewer.locator('.lv-fair')).toContainText('Un análisis automático de páginas públicas');
+    await expect(viewer).toContainText('Bots de respuesta permitidos');
+    await expect(viewer).toContainText('#1 en Gobierno');
+    await expect(viewer).not.toContainText(/Answer bots|75th pct|GRADE |proposed cases ·|Live report|Training bots/);
+  });
+
+  test('curated headings replace machine-translation guesses', async ({ page }) => {
+    await primeEs(page);
+    await page.goto('/qa-review-es.html');
+    const heading = page.locator('#review-app summary h2').filter({ hasText: /revisión/ }).first();
+    await expect(heading).toHaveText('¿Qué es una revisión?');
+    await expect(heading).toHaveAttribute('translate', 'no');
+    await expect(page.locator('.brand span').first()).toHaveAttribute('translate', 'no');
+  });
+});
