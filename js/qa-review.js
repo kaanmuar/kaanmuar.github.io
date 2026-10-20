@@ -1326,6 +1326,7 @@
           runId: runId,
           openedAt: openedAt,
           company: (document.getElementById("hp-note") || { value: "" }).value,
+          lang: document.documentElement.lang || "en",
           followUp: document.getElementById("follow-up").checked === true
         })
       });
