@@ -1,0 +1,13 @@
+Date,Time,Action,Where,Asset,Link
+2026-10-21,,"Upload the three cover slides as the dynamic cover, in order: promise, proof, handoff",Edit page > Banner,cover-promise.png cover-proof.png cover-handoff.png,
+2026-10-21,,Set the custom button to Visit website,Edit page > Buttons,,https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-cta
+2026-10-21,,Replace the tagline and the four highlights with the copy in page.json,Edit page > Page info,page.json,
+2026-10-21,,Add competitors for the insights tab,Analytics > Competitors,,
+2026-10-22,12:30,"Post the carousel PDF, then pin it in Featured",Page post,carousel.pdf,https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=social&utm_campaign=premium-carousel
+2026-10-23,,"Send this month's follow invitations to connections who work in QA, web, or marketing",Invite to follow,,
+2026-10-26,,"Review who visited the page, competitor insights, and LinkedIn opens in admin; pin last week's best runs post in Featured","Analytics, Featured",,
+2026-11-02,,"Review who visited the page, competitor insights, and LinkedIn opens in admin; pin last week's best runs post in Featured","Analytics, Featured",,
+2026-11-09,,"Review who visited the page, competitor insights, and LinkedIn opens in admin; pin last week's best runs post in Featured","Analytics, Featured",,
+2026-11-16,,"Review who visited the page, competitor insights, and LinkedIn opens in admin; pin last week's best runs post in Featured","Analytics, Featured",,
+2026-11-16,,Decide whether to keep Premium; export page analytics either way,Premium features > Manage subscription,,
+2026-11-18,,Last day to cancel before Premium renews on 2026-11-19,Premium features > Manage subscription,,

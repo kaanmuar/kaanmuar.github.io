@@ -500,7 +500,7 @@
                 <section class="stats-card"><h3>Countries</h3><div id="review-countries" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Cities</h3><div id="review-cities" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Languages</h3><div id="review-langs" class="stats-chart"></div></section>
-                <section class="stats-card"><h3>Referrers</h3><div id="review-referrers" class="stats-chart"></div></section>
+                <section class="stats-card"><h3>Sources</h3><div id="review-referrers" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Screens</h3><div id="review-screens" class="stats-chart"></div></section>
                 <section class="stats-card"><h3>Mailed reports</h3><div id="review-reports"></div></section>
             </div>
@@ -1586,6 +1586,13 @@
         }
     }
 
+    function reviewOpenSource(row) {
+        let tagged = '';
+        try { tagged = new URLSearchParams(String(row.query || '')).get('utm_source') || ''; } catch (error) { tagged = ''; }
+        if (tagged) return tagged.toLowerCase().slice(0, 40) + ' (tagged link)';
+        return row.referrerHost || 'Direct';
+    }
+
     async function loadReviewActivity() {
         const host = document.getElementById('review-kpis');
         if (!host || !auth.currentUser) return;
@@ -1610,7 +1617,7 @@
                 siteBump(countries, row.country || 'unknown');
                 siteBump(cities, row.city || 'unknown');
                 siteBump(langs, row.lang || 'en');
-                siteBump(referrers, row.referrerHost || 'Direct');
+                siteBump(referrers, reviewOpenSource(row));
                 siteBump(screens, row.screen || 'unrecorded');
             });
             let paid = 0;

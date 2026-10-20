@@ -1,0 +1,41 @@
+{
+  "batch": "premium-2026-10",
+  "renews": "2026-11-19",
+  "totals": {
+    "reports": 114,
+    "pages": 2227,
+    "countries": 11,
+    "sectors": 26,
+    "exports": [
+      "Jira",
+      "TestRail",
+      "Xray",
+      "Zephyr",
+      "Azure DevOps",
+      "Mantis",
+      "Excel",
+      "PDF",
+      "JSON"
+    ]
+  },
+  "carousel": [
+    "mdn",
+    "govuk",
+    "nodejs",
+    "cloudflare",
+    "worldbank"
+  ],
+  "tagline": "One public URL in. A plain-language QA review out: SEO, AI search, analytics, security, accessibility, speed.",
+  "button": {
+    "label": "Visit website",
+    "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-cta"
+  },
+  "highlights": [
+    "114 public sites reviewed in Live Reports",
+    "2,227 pages read across 11 countries",
+    "Proposed test cases for 20 frameworks",
+    "Reports in six languages"
+  ],
+  "competitors": "Pick up to nine pages that sell website audits or QA reviews to the same buyers. LinkedIn suggests similar pages in the competitor picker.",
+  "testimonial": "Leave off until a URL Review client gives a quote in their own words. Do not reuse CV testimonials here."
+}
