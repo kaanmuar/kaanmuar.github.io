@@ -1324,8 +1324,7 @@ function dealFields(deal) {
 
 async function mintReturnCoupon(note) {
   const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  const bytes = crypto.randomBytes(8);
-  const code = "BACK-" + Array.from(bytes).map((byte) => alphabet[byte % alphabet.length]).join("");
+  const code = "BACK-" + Array.from({ length: 8 }, () => alphabet[crypto.randomInt(alphabet.length)]).join("");
   await admin.firestore().collection("url_review_coupons").doc(code).set({
     percent: Math.max(10, Number(note.percent) || 10),
     purposes: ["report", "new-run"],
