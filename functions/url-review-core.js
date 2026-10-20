@@ -633,21 +633,40 @@ async function assertPublic(hostname) {
   return records[0].address;
 }
 
-// Some servers compress the response even though the request sends no accept-encoding.
+// Inflates at most MAX_BYTES * 5; past that it keeps the start of the input, so a huge file still yields its first part.
+function inflateWithin(buffer, run) {
+  let input = buffer;
+  for (let tries = 0; tries < 8 && input.length; tries += 1) {
+    try { return run(input, { maxOutputLength: MAX_BYTES * 5 }); }
+    catch (error) {
+      if (!error || error.code !== "ERR_BUFFER_TOO_LARGE") throw error;
+      input = input.subarray(0, Math.floor(input.length / 2));
+    }
+  }
+  return Buffer.alloc(0);
+}
+
+function gunzip(buffer) {
+  return inflateWithin(buffer, (input, limit) => zlib.gunzipSync(input, Object.assign({ finishFlush: zlib.constants.Z_SYNC_FLUSH }, limit)));
+}
+
+// Some servers compress the response even though the request sends no accept-encoding,
+// and .gz files (sitemaps) arrive as gzip bytes with no content-encoding at all.
 function decodeBody(buffer, encoding) {
   const kind = String(encoding || "").trim().toLowerCase();
-  const limit = { maxOutputLength: MAX_BYTES * 5 };
+  const gzipped = (bytes) => bytes.length > 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
   try {
-    if (kind === "gzip" || kind === "x-gzip") return zlib.gunzipSync(buffer, Object.assign({ finishFlush: zlib.constants.Z_SYNC_FLUSH }, limit)).toString("utf8");
-    if (kind === "deflate") {
-      try { return zlib.inflateSync(buffer, Object.assign({ finishFlush: zlib.constants.Z_SYNC_FLUSH }, limit)).toString("utf8"); }
-      catch (error) { return zlib.inflateRawSync(buffer, Object.assign({ finishFlush: zlib.constants.Z_SYNC_FLUSH }, limit)).toString("utf8"); }
-    }
-    if (kind === "br") return zlib.brotliDecompressSync(buffer, Object.assign({ finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH }, limit)).toString("utf8");
+    let bytes = buffer;
+    if (kind === "gzip" || kind === "x-gzip") bytes = gunzip(buffer);
+    else if (kind === "deflate") {
+      try { bytes = inflateWithin(buffer, (input, limit) => zlib.inflateSync(input, Object.assign({ finishFlush: zlib.constants.Z_SYNC_FLUSH }, limit))); }
+      catch (error) { bytes = inflateWithin(buffer, (input, limit) => zlib.inflateRawSync(input, Object.assign({ finishFlush: zlib.constants.Z_SYNC_FLUSH }, limit))); }
+    } else if (kind === "br") bytes = inflateWithin(buffer, (input, limit) => zlib.brotliDecompressSync(input, Object.assign({ finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH }, limit)));
+    if (gzipped(bytes)) bytes = gunzip(bytes);
+    return bytes.toString("utf8");
   } catch (error) {
     return "";
   }
-  return buffer.toString("utf8");
 }
 
 function requestOnce(target, pinned, isStopped, keepPartial) {
@@ -828,6 +847,23 @@ function attr(tag, name) {
   return match ? decode(match[2] || match[3] || match[4] || "") : "";
 }
 
+// True for a bare attribute too (<img alt>), and never for the name inside another attribute's value.
+function hasAttr(tag, name) {
+  const bare = String(tag).replace(/"[^"]*"|'[^']*'/g, "\"\"");
+  return new RegExp("[\\s\"'/]" + name + "(?=[\\s=/>]|$)", "i").test(bare);
+}
+
+// Controls a browser does not render or expose, such as honeypots and toggled-off widgets.
+// Visually hidden classes (sr-only) stay counted: screen readers still reach those controls.
+function hiddenTag(tag) {
+  if (hasAttr(tag, "hidden") || hasAttr(tag, "inert")) return true;
+  if (attr(tag, "aria-hidden").toLowerCase() === "true") return true;
+  if (/(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\b/i.test(attr(tag, "style"))) return true;
+  const classes = attr(tag, "class").split(/\s+/).filter(Boolean);
+  return classes.some((name) => /^(?:d-none|hidden|is-hidden)$/.test(name)) &&
+    !classes.some((name) => /^(?:d-(?:sm|md|lg|xl|xxl)-|(?:sm|md|lg|xl|2xl):)/.test(name));
+}
+
 function collect(html, name) {
   return String(html || "").match(new RegExp("<" + name + "\\b[^>]*>", "gi")) || [];
 }
@@ -891,6 +927,31 @@ function robotsAllows(pathname, groups) {
   return !match || match.allow;
 }
 
+// Markers that appear on the challenge or block page itself. Snippets these vendors also add to normal
+// pages (Cloudflare's /cdn-cgi/challenge-platform/scripts/jsd, Radware ssConf, Incapsula resources, DataDome tags) are left out.
+const CHALLENGES = [
+  ["Cloudflare", /<title>\s*(?:Just a moment\.\.\.|Attention Required! \| Cloudflare)\s*<\/title>|window\._cf_chl_opt\b/i],
+  ["Radware", /<title>\s*Radware (?:Bot Manager Captcha|Captcha Page|Page)\s*<\/title>/i],
+  ["Akamai", /\/_sec\/cp_challenge\/|<title>\s*Access Denied\s*<\/title>[\s\S]{0,2000}errors\.edgesuite\.net/i],
+  ["Imperva", /Incapsula incident ID|_Incapsula_Resource\?CWUDNSAI=/i],
+  ["DataDome", /captcha-delivery\.com/i],
+  ["PerimeterX", /id=["']px-captcha["']|<title>\s*Access to this page has been denied\.?\s*<\/title>/i],
+  ["AWS WAF", /window\.gokuProps\s*=/],
+  ["Sucuri", /<title>\s*Sucuri WebSite Firewall - Access Denied\s*<\/title>/i],
+  ["Azure WAF", /<title>\s*Azure WAF\s*<\/title>/i]
+];
+
+function challengeOf(pageUrl, headers, body) {
+  if (/^challenge$/i.test(header(headers || {}, "cf-mitigated"))) return "Cloudflare";
+  try {
+    const params = new URL(pageUrl).searchParams;
+    if (params.has("ssa") && (params.has("ssb") || params.has("ssc"))) return "Radware";
+  } catch (error) { /* not a URL */ }
+  const head = String(body || "").slice(0, 200000);
+  const found = CHALLENGES.find(([, pattern]) => pattern.test(head));
+  return found ? found[0] : "";
+}
+
 function technologies(html, headers) {
   const haystack = html + "\n" + Object.entries(headers).map(([key, value]) => key + ": " + value).join("\n");
   const found = [];
@@ -918,6 +979,24 @@ function visibleText(html) {
     .replace(/<(script|style|noscript|template|svg|head)\b[\s\S]*?<\/\1>/gi, " ")
     .replace(/<!--[\s\S]*?-->/g, " ")
     .replace(/<[^>]+>/g, " "));
+}
+
+const STOPWORDS = {
+  en: "the and of to is for with that you are this from your our by be",
+  es: "el los las del y para por es su al se como más sus lo este",
+  pt: "os do da dos das não em um uma com ao são pelo pela você também",
+  fr: "le les des du et est pour dans avec sur aux vous nous qui une au",
+  de: "der die das und ist mit für auf den dem ein eine nicht sie wir zu",
+  it: "il gli della delle che per sono nel alla dei degli questo anche più ed è"
+};
+const STOPWORD_SETS = Object.keys(STOPWORDS).map((code) => [code, new Set(STOPWORDS[code].split(" "))]);
+
+// Names the language only when one clearly dominates: at least 40 common words and three times the runner-up.
+function textLanguage(text) {
+  const words = String(text || "").toLowerCase().match(/\p{L}+/gu) || [];
+  if (words.length < 150) return "";
+  const counts = STOPWORD_SETS.map(([code, set]) => [code, words.reduce((sum, word) => sum + (set.has(word) ? 1 : 0), 0)]).sort((a, b) => b[1] - a[1]);
+  return counts[0][1] >= 40 && counts[0][1] >= counts[1][1] * 3 ? counts[0][0] : "";
 }
 
 function outline(html) {
@@ -1048,11 +1127,12 @@ function inspect(html, headers, pageUrl) {
   const description = collect(html, "meta").map((tag) => attr(tag, "name").toLowerCase() === "description" ? attr(tag, "content") : "").find(Boolean) || "";
   const canonical = collect(html, "link").map((tag) => attr(tag, "rel").toLowerCase() === "canonical" ? attr(tag, "href") : "").find(Boolean) || "";
   const htmlTag = (html.match(/<html\b[^>]*>/i) || [""])[0];
-  const lang = attr(htmlTag, "lang");
   const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<template\b[\s\S]*?<\/template>/gi, " ");
+  // The HTML parser copies attributes of a stray later <html> tag onto the root when the root lacks them.
+  const lang = attr(htmlTag, "lang") || (hasAttr(htmlTag, "lang") ? "" : collect(markup.replace(/<!--[\s\S]*?-->/g, " "), "html").map((tag) => attr(tag, "lang")).find(Boolean) || "");
   const h1 = (markup.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/gi) || []).map((tag) => decode(tag.replace(/<[^>]+>/g, " "))).filter(Boolean);
   const images = collect(markup, "img");
-  const missingAlt = images.filter((tag) => !/[\s"'/]alt\s*=/i.test(tag)).length;
+  const missingAlt = images.filter((tag) => !hasAttr(tag, "alt")).length;
   const forms = collect(markup, "form").length;
   const password = /<input\b[^>]*type\s*=\s*["']?password/i.test(markup);
   const buttons = (markup.match(/<button\b/gi) || []).length;
@@ -1060,6 +1140,7 @@ function inspect(html, headers, pageUrl) {
   const unlabeled = (markup.replace(/<label\b[\s\S]*?<\/label>/gi, " ").match(/<(?:input|select|textarea)\b[^>]*>/gi) || []).filter((tag) => {
     const type = attr(tag, "type").toLowerCase();
     if (/^(hidden|submit|button|reset|image)$/.test(type)) return false;
+    if (hiddenTag(tag)) return false;
     if (attr(tag, "aria-label") || attr(tag, "aria-labelledby") || attr(tag, "title")) return false;
     const id = attr(tag, "id");
     return !(id && labelFor.has(id));
@@ -1129,9 +1210,17 @@ function inspect(html, headers, pageUrl) {
       if (parsed.protocol === "https:" && SOCIAL_HOSTS.test(parsed.hostname) && parsed.pathname.length > 1 && !/\/(share|sharer|intent|shareArticle)/i.test(parsed.pathname) && socialLinks.indexOf(href) === -1 && socialLinks.length < 12) socialLinks.push(href);
     } catch (error) { /* not a profile link */ }
   });
+  // Only links into the site's own domain: those URLs land in its analytics. An address inside a link
+  // to another domain (a calendar id, a profile on another site) is not recorded as a page of this site.
   const piiLinks = collect(markup, "a").filter((tag) => {
     const href = attr(tag, "href");
-    return !/^mailto:/i.test(href) && /[?&][^=&#\s]+=[^&#\s]*(?:@|%40)[^&#\s]*\.[a-z]{2,}/i.test(href);
+    if (/^mailto:/i.test(href)) return false;
+    let target;
+    try { target = new URL(href, pageUrl); } catch (error) { return false; }
+    if (!/^https?:$/.test(target.protocol) || registrable(target.hostname) !== registrable(pageHost)) return false;
+    const values = [];
+    target.searchParams.forEach((value) => values.push(value));
+    return values.some((value) => /[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(value) && !/@(?:group|import|resource)\.calendar\.google\.com\b/i.test(value));
   }).length;
   const hreflang = linksAll.filter((tag) => attr(tag, "rel").toLowerCase().indexOf("alternate") !== -1 && attr(tag, "hreflang"))
     .slice(0, 30).map((tag) => ({ lang: clean(attr(tag, "hreflang").toLowerCase(), 16), href: absolute(attr(tag, "href")) }));
@@ -1143,7 +1232,7 @@ function inspect(html, headers, pageUrl) {
     twitter: metas.some((tag) => /^twitter:/i.test(attr(tag, "name"))),
     jsonLd: (html.match(/application\/ld\+json/gi) || []).length,
     iframes: (html.match(/<iframe\b/gi) || []).length,
-    untitledFrames: (markup.match(/<iframe\b[^>]*>/gi) || []).filter((tag) => !attr(tag, "title")).length,
+    untitledFrames: collect(markup.replace(/<noscript\b[\s\S]*?<\/noscript>/gi, " "), "iframe").filter((tag) => !attr(tag, "title") && !hiddenTag(tag)).length,
     h2: (html.match(/<h2\b/gi) || []).length,
     mixed: (markup.match(/<(?:script|img|iframe|source|video|audio|embed|track)\b[^>]*\ssrc\s*=\s*["']?http:\/\//gi) || []).length + linksAll.filter((tag) => /stylesheet|icon|preload|manifest/i.test(attr(tag, "rel")) && /^http:\/\//i.test(attr(tag, "href"))).length,
     hreflang: linksAll.filter((tag) => attr(tag, "rel").toLowerCase().indexOf("alternate") !== -1 && attr(tag, "hreflang")).length,
@@ -1176,6 +1265,7 @@ function inspect(html, headers, pageUrl) {
     description: clean(description, 240),
     canonical: clean(canonical, 300),
     lang: clean(lang, 16),
+    textLang: textLanguage(text),
     h1: h1.slice(0, 4).map((item) => clean(item, 160)),
     images: images.length,
     missingAlt,
@@ -1599,7 +1689,7 @@ async function readSitemap(origin, robotsText, halt) {
       return parsed.toString();
     } catch (error) { return url; }
   });
-  const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url) && !/\.gz$/i.test(url));
+  const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
   let last = { status: 0 };
   for (let i = 0; i < candidates.length && i < 3; i += 1) {
     const res = await fetchExtra(candidates[i], halt, true);
@@ -1608,7 +1698,7 @@ async function readSitemap(origin, robotsText, halt) {
     let urls = sitemapLocs(res.body);
     let partial = !!res.truncated || listedTotal > 1;
     if (/<sitemapindex\b/i.test(res.body)) {
-      const all = urls.filter((url) => /^https:\/\//i.test(url) && !/\.gz$/i.test(url));
+      const all = urls.filter((url) => /^https:\/\//i.test(url));
       const children = all.slice(0, 3);
       if (all.length > children.length || all.length < urls.length) partial = true;
       urls = [];
@@ -1627,29 +1717,48 @@ async function readSitemap(origin, robotsText, halt) {
 
 async function dnsFacts(hostname) {
   const domain = registrable(hostname);
-  const txt = (name) => withTimeout(dns.resolveTxt(name).then((rows) => rows.map((parts) => parts.join(""))).catch(() => []), 5000, []);
+  // Only "no such data" means the record is absent; a timeout or server failure leaves it unread (null).
+  const settle = (promise) => withTimeout(promise.catch((err) => (/^(ENODATA|ENOTFOUND)$/.test(err && err.code) ? [] : null)), 5000, null);
+  const txt = (name) => settle(dns.resolveTxt(name).then((rows) => rows.map((parts) => parts.join(""))));
   const [root, dmarc, mx, caa] = await Promise.all([
     txt(domain),
     txt("_dmarc." + domain),
-    withTimeout(dns.resolveMx(domain).catch(() => []), 5000, []),
-    withTimeout(dns.resolveCaa(domain).catch(() => []), 5000, [])
+    settle(dns.resolveMx(domain)),
+    settle(dns.resolveCaa(domain))
   ]);
+  const unread = [["spf", root], ["dmarc", dmarc], ["mx", mx], ["caa", caa]].filter(([, rows]) => !rows).map(([name]) => name);
+  // RFC 7505: a single MX of "." (Node reports an empty exchange) means the domain accepts no mail.
+  const nullMx = !!mx && mx.length === 1 && /^\.?$/.test(String(mx[0].exchange || ""));
   return {
     domain,
-    spf: clean(root.find((row) => /^v=spf1/i.test(row)) || "", 300),
-    dmarc: clean(dmarc.find((row) => /^v=DMARC1/i.test(row)) || "", 300),
-    mx: mx.slice(0, 5).map((row) => clean(row.exchange, 120)),
-    caa: caa.slice(0, 5).map((row) => clean(row.issue || row.issuewild || row.iodef || "", 120))
+    spf: clean((root || []).find((row) => /^v=spf1/i.test(row)) || "", 300),
+    dmarc: clean((dmarc || []).find((row) => /^v=DMARC1/i.test(row)) || "", 300),
+    mx: nullMx ? [] : (mx || []).slice(0, 5).map((row) => clean(row.exchange, 120)),
+    nullMx,
+    caa: (caa || []).slice(0, 5).map((row) => clean(row.issue || row.issuewild || row.iodef || "", 120)),
+    unread
   };
 }
 
+// Follows plain-http hops (http://a → http://www.a → https://www.a) until one leaves for https.
 async function plainHttp(hostname, halt) {
+  const statuses = [];
+  let current = new URL("http://" + hostname + "/");
   try {
-    const pinned = await assertPublic(hostname);
-    const res = await requestOnce(new URL("http://" + hostname + "/"), pinned, halt);
-    return { status: res.status, location: clean(header(res.headers, "location"), 300) };
+    for (let hop = 0; hop < 5; hop += 1) {
+      const pinned = await assertPublic(current.hostname);
+      const res = await requestOnce(current, pinned, halt);
+      const raw = header(res.headers, "location");
+      statuses.push(res.status);
+      if (![301, 302, 303, 307, 308].includes(res.status) || !raw) return { status: statuses[0], statuses, location: clean(raw, 300) };
+      const next = new URL(raw, current);
+      if (next.protocol !== "http:" || (next.port && next.port !== "80")) return { status: statuses[0], statuses, location: clean(next.toString(), 300) };
+      current = next;
+    }
+    return { status: statuses[0], statuses, location: clean(current.toString(), 300) };
   } catch (error) {
     if (error && error.code === "STOPPED") throw error;
+    if (statuses.length) return { status: statuses[0], statuses, location: clean(current.toString(), 300) };
     return { error: clean(error.message, 120) };
   }
 }
@@ -1703,8 +1812,11 @@ async function reviewTarget(rawUrl, hooks) {
     throw error;
   }
   const type = header(first.headers, "content-type");
+  const firstChallenge = challengeOf(first.url, first.headers, first.body);
   if (first.status >= 400) {
-    const error = new Error("The URL returned status " + first.status + ".");
+    const error = new Error(firstChallenge
+      ? "The site answered with a " + firstChallenge + " bot check (status " + first.status + ") instead of the page."
+      : "The URL returned status " + first.status + ".");
     error.status = 422;
     throw error;
   }
@@ -1757,6 +1869,7 @@ async function reviewTarget(rawUrl, hooks) {
     title: homeInspect.title,
     depth: 0,
     from: "",
+    challenge: firstChallenge,
     inspect: homeInspect,
     html: first.body
   }];
@@ -1764,6 +1877,7 @@ async function reviewTarget(rawUrl, hooks) {
   let robotsBlocked = 0;
   let cursor = 0;
   note("First page answered " + first.status + " in " + first.ms + " ms. Title: " + (homeInspect.title || "none") + ". " + homeInspect.bytes + " bytes.");
+  if (firstChallenge) note("The start page is a " + firstChallenge + " bot check, not the site's own page. The scores describe that check page.");
   note(robotsNote);
   const linkCount = (homeInspect.links || []).length;
   note(linkCount + " same-host links were listed. This read opens at most " + chosen.pages + " HTML pages and " + chosen.depth + " links deep.");
@@ -1788,9 +1902,11 @@ async function reviewTarget(rawUrl, hooks) {
         const child = await fetchPublic(next, halt, note);
         const childType = header(child.headers, "content-type");
         if (!/text\/html|application\/xhtml\+xml/i.test(childType)) continue;
-        const childInspect = inspect(child.body, child.headers, child.url);
+        const challenge = challengeOf(child.url, child.headers, child.body);
+        const childInspect = challenge ? null : inspect(child.body, child.headers, child.url);
         if (child.url !== next && seen.has(child.url)) continue;
         seen.add(child.url);
+        if (challenge) note(path + " answered with a " + challenge + " bot check. It is not scored.");
         pages.push({
           url: child.url,
           requested: next,
@@ -1798,10 +1914,12 @@ async function reviewTarget(rawUrl, hooks) {
           path: pagePath(child.url),
           status: child.status,
           ms: child.ms,
-          bytes: childInspect.bytes,
-          title: childInspect.title,
+          bytes: childInspect ? childInspect.bytes : Buffer.byteLength(child.body || ""),
+          title: childInspect ? childInspect.title : clean(textOf(child.body, "title"), 180),
           depth: page.depth + 1,
           from: page.path,
+          challenge,
+          retryAfter: !!header(child.headers, "retry-after"),
           inspect: childInspect,
           html: ""
         });
@@ -1894,7 +2012,8 @@ async function reviewTarget(rawUrl, hooks) {
     title: page.title,
     depth: page.depth,
     from: page.from || "",
-    error: page.error || ""
+    error: page.error || "",
+    challenge: page.challenge || ""
   }));
   const result = {
     id: reportId,
@@ -2650,6 +2769,10 @@ module.exports = {
   toolsForPage,
   intakeRecord,
   analyzeHtml: inspect,
+  challengeOf,
+  dnsFacts,
+  plainHttp,
+  readSitemap,
   ipBlocked,
   hostBlocked
 };

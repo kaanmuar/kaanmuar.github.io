@@ -308,7 +308,8 @@ async function domFacts(page) {
       nav.push({ text, target: url.pathname, selector, where: node.closest("main") ? "main" : "navigation" });
     });
     const named = (node) => node.labels && node.labels.length || node.getAttribute("aria-label") || node.getAttribute("aria-labelledby") || node.getAttribute("title");
-    const controls = Array.from(document.querySelectorAll("input:not([type=hidden]):not([type=submit]):not([type=button]), select, textarea"));
+    const exposed = (node) => node.getClientRects().length > 0 && getComputedStyle(node).visibility !== "hidden" && !node.closest("[aria-hidden=true], [inert]");
+    const controls = Array.from(document.querySelectorAll("input:not([type=hidden]):not([type=submit]):not([type=button]), select, textarea")).filter(exposed);
     return {
       title: (document.title || "").trim().slice(0, 160),
       lang: document.documentElement.getAttribute("lang") || "",

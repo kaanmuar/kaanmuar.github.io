@@ -126,6 +126,271 @@ test.describe("scoring", () => {
   });
 });
 
+// Answers requests from a route table instead of the network, for the readers that follow links.
+function fakeNetwork(routes) {
+  const { EventEmitter } = require("node:events");
+  const dnsPromises = require("node:dns").promises;
+  const libs = [require("node:http"), require("node:https")];
+  const saved = { lookup: dnsPromises.lookup, requests: libs.map((lib) => lib.request) };
+  dnsPromises.lookup = async () => [{ address: "93.184.216.34", family: 4 }];
+  libs.forEach((lib) => {
+    lib.request = (options, onResponse) => {
+      const req = new EventEmitter();
+      req.destroy = () => {};
+      req.end = () => setImmediate(() => {
+        const route = routes[options.protocol + "//" + options.hostname + options.path] || { status: 404 };
+        const res = new EventEmitter();
+        Object.assign(res, { statusCode: route.status, headers: route.headers || {}, socket: null });
+        onResponse(res);
+        if (route.body) res.emit("data", Buffer.isBuffer(route.body) ? route.body : Buffer.from(route.body));
+        res.emit("end");
+      });
+      return req;
+    };
+  });
+  return () => {
+    dnsPromises.lookup = saved.lookup;
+    libs.forEach((lib, index) => { lib.request = saved.requests[index]; });
+  };
+}
+
+function analyzeHtmlPages(rows, extras) {
+  const pages = rows.map((row, index) => Object.assign({ path: new URL(row.url).pathname, status: 200, ms: 120, depth: index ? 1 : 0 }, row, {
+    inspect: row.html == null ? null : core.analyzeHtml(row.html, row.headers || STRONG_HEADERS, row.url)
+  }));
+  return insights.analyze({ pages, extras: extras || {} });
+}
+
+test.describe("false positives from the real-run series", () => {
+  const zlib = require("node:zlib");
+
+  test("a sitemap index whose children are .gz files is decompressed and read", async () => {
+    const child = (name) => zlib.gzipSync(Buffer.from("<?xml version=\"1.0\"?><urlset><url><loc>https://docs.example.org/" + name + "/a</loc></url><url><loc>https://docs.example.org/" + name + "/b</loc></url></urlset>"));
+    const restore = fakeNetwork({
+      "https://docs.example.org/sitemap.xml": { status: 200, headers: { "content-type": "application/xml" }, body: "<sitemapindex><sitemap><loc>https://docs.example.org/sitemaps/en/sitemap.xml.gz</loc></sitemap><sitemap><loc>https://docs.example.org/sitemaps/es/sitemap.xml.gz</loc></sitemap></sitemapindex>" },
+      "https://docs.example.org/sitemaps/en/sitemap.xml.gz": { status: 200, headers: { "content-type": "application/x-gzip" }, body: child("en") },
+      "https://docs.example.org/sitemaps/es/sitemap.xml.gz": { status: 200, headers: { "content-type": "application/x-gzip" }, body: child("es") }
+    });
+    try {
+      const sitemap = await core.readSitemap("https://docs.example.org", "Sitemap: https://docs.example.org/sitemap.xml\n", () => false);
+      assert.deepEqual(sitemap.urls, ["https://docs.example.org/en/a", "https://docs.example.org/en/b", "https://docs.example.org/es/a", "https://docs.example.org/es/b"]);
+    } finally {
+      restore();
+    }
+  });
+
+  test("gzip bytes without content-encoding decode, and an oversized archive keeps its start", () => {
+    const xml = "<?xml version=\"1.0\"?><urlset>" + "<url><loc>https://docs.example.org/page</loc></url>".repeat(300000) + "</urlset>";
+    assert.equal(core.decodeBody(zlib.gzipSync(Buffer.from("<urlset></urlset>")), undefined), "<urlset></urlset>");
+    const big = core.decodeBody(zlib.gzipSync(Buffer.from(xml)), undefined);
+    assert.ok(big.startsWith("<?xml version=\"1.0\"?><urlset><url><loc>"));
+    assert.ok(big.length > 600000 && big.length < xml.length);
+  });
+
+  test("hidden form controls are not counted as unlabeled, visually hidden ones still are", () => {
+    const html = "<form>" +
+      "<input type=\"text\" name=\"_hp\" tabindex=\"-1\" aria-hidden=\"true\">" +
+      "<input type=\"text\" class=\"d-none\" name=\"survey-token\">" +
+      "<select aria-hidden=\"true\" tabindex=\"-1\"></select>" +
+      "<input hidden name=\"a\"><input inert name=\"b\"><input style=\"display: none\" name=\"c\">" +
+      "<input class=\"sr-only\" name=\"seen-by-screen-readers\">" +
+      "<input class=\"hidden md:block\" name=\"shown-on-desktop\">" +
+      "</form>";
+    assert.equal(core.analyzeHtml(html, STRONG_HEADERS, URL_).unlabeled, 2);
+  });
+
+  test("a bare alt attribute is a valid empty alt", () => {
+    const html = "<main><img alt src=\"a.png\"><img src=\"b.png\" alt><img src=\"c.png\" title=\"the alt text is missing\"><img src=\"d.png\" data-alt></main>";
+    assert.equal(core.analyzeHtml(html, STRONG_HEADERS, URL_).missingAlt, 2);
+  });
+
+  test("rate-limited, refused, and bot-checked links are blocked, not broken", () => {
+    const result = analyzeHtmlPages([
+      { url: URL_, html: HTML },
+      { url: URL_ + "start/", status: 429, html: "" },
+      { url: URL_ + "community/", status: 403, html: "" },
+      { url: URL_ + "busy/", status: 503, retryAfter: true, html: "" },
+      { url: URL_ + "?ssa=1&ssb=2", status: 200, challenge: "Radware", html: null },
+      { url: URL_ + "gone/", status: 404, html: "" },
+      { url: URL_ + "down/", status: 503, html: "" },
+      { url: URL_ + "about/", html: HTML },
+      { url: URL_ + "contact/", html: HTML }
+    ]);
+    const broken = result.findings.find((item) => item.key === "seo-broken-links");
+    assert.equal(broken.verdict, "fail");
+    assert.deepEqual(broken.pages, ["/gone/", "/down/"]);
+    const blocked = result.findings.find((item) => item.key === "seo-blocked-links");
+    assert.equal(blocked.verdict, "person");
+    assert.equal(blocked.count, 4);
+    assert.deepEqual(result.warnings, []);
+  });
+
+  test("a read where most linked pages were blocked is reported as partial", () => {
+    const rows = [{ url: URL_, html: HTML }].concat([1, 2, 3, 4].map((n) => ({ url: URL_ + "p" + n, status: 403, html: "" })), [{ url: URL_ + "ok", html: HTML }]);
+    const result = analyzeHtmlPages(rows);
+    assert.equal(verdict(result, "seo-broken-links"), "missing");
+    assert.match(result.warnings[0], /^Partial read: 4 of 5 linked pages/);
+    assert.ok(result.summary.startsWith(result.warnings[0]));
+  });
+
+  test("emails only count when they ride in links into the site's own domain", () => {
+    const page = "https://kubernetes.example.com/";
+    const links = (hrefs) => core.analyzeHtml("<main>" + hrefs.map((href) => "<a href=\"" + href + "\">x</a>").join("") + "</main>", STRONG_HEADERS, page).piiLinks;
+    assert.equal(links(["https://calendar.google.com/calendar/embed?src=calendar%40kubernetes.example.com"]), 0);
+    assert.equal(links(["https://qa.debian.org/developer.php?login=someone%40example.de"]), 0);
+    assert.equal(links(["/events?cal=abc123%40group.calendar.google.com"]), 0);
+    assert.equal(links(["/signup?email=visitor%40example.org", "https://www.kubernetes.example.com/thanks?e=visitor@example.org"]), 2);
+  });
+
+  test("plain http that hops through http before https counts as a permanent redirect", async () => {
+    const restore = fakeNetwork({
+      "http://amnesty.example.org/": { status: 301, headers: { location: "http://amnesty.example.org/en/" } },
+      "http://amnesty.example.org/en/": { status: 301, headers: { location: "https://amnesty.example.org/en/" } }
+    });
+    let check;
+    try {
+      check = await core.plainHttp("amnesty.example.org", () => false);
+    } finally {
+      restore();
+    }
+    assert.deepEqual(check, { status: 301, statuses: [301, 301], location: "https://amnesty.example.org/en/" });
+    assert.equal(verdict(analyzeHtmlPages([{ url: URL_, html: HTML }], { httpRedirect: check }), "sec-http"), "pass");
+    assert.equal(verdict(analyzeHtmlPages([{ url: URL_, html: HTML }], { httpRedirect: { status: 301, statuses: [301, 302], location: "https://amnesty.example.org/en/" } }), "sec-http"), "risk");
+    assert.equal(verdict(analyzeHtmlPages([{ url: URL_, html: HTML }], { httpRedirect: { status: 301, statuses: [301, 200], location: "http://amnesty.example.org/en/" } }), "sec-http"), "fail");
+  });
+
+  test("hreflang accepts language-script-region tags and still rejects malformed ones", () => {
+    const alternates = (codes) => "<html lang=\"en\"><head><title>Example shop for garden tools</title>" + codes.map((code) => "<link rel=\"alternate\" hreflang=\"" + code + "\" href=\"" + URL_ + (code === "en" ? "" : code + "/") + "\">").join("") + "</head><body><main><h1>Garden tools</h1></main></body></html>";
+    assert.equal(verdict(analyzeHtmlPages([{ url: URL_, html: alternates(["en", "zh-Hans-CN", "zh-hant", "es-419", "x-default"]) }]), "seo-hreflang"), "pass");
+    const bad = analyzeHtmlPages([{ url: URL_, html: alternates(["en", "zh-hans-cn", "english"]) }]).findings.find((item) => item.key === "seo-hreflang");
+    assert.equal(bad.verdict, "risk");
+    assert.equal(bad.count, 1);
+    assert.match(bad.evidence, /"english"/);
+  });
+
+  test("bot-check pages are recognised without flagging the vendors' normal-page snippets", () => {
+    assert.equal(core.challengeOf("https://a.example/", {}, "<html><head><title>Just a moment...</title></head></html>"), "Cloudflare");
+    assert.equal(core.challengeOf("https://a.example/", { "cf-mitigated": "challenge" }, ""), "Cloudflare");
+    assert.equal(core.challengeOf("https://a.example/?ssa=7aeb&ssb=7304&ssc=https%3A%2F%2Fa.example", {}, ""), "Radware");
+    assert.equal(core.challengeOf("https://a.example/", {}, "<title>Radware Bot Manager Captcha</title>"), "Radware");
+    assert.equal(core.challengeOf("https://a.example/", {}, "<script>var dd={'host':'geo.captcha-delivery.com'}</script>"), "DataDome");
+    assert.equal(core.challengeOf("https://a.example/", {}, "<title>Request unsuccessful</title>Incapsula incident ID: 123"), "Imperva");
+    const normal = "<title>Shop</title><script src=\"/cdn-cgi/challenge-platform/scripts/jsd/main.js\"></script>" +
+      "<script>ssConf(\"cu\", \"validate.perfdrive.com, ssc\");</script><script src=\"/_Incapsula_Resource?SWJIYLWA=x\"></script><script src=\"https://js.datadome.co/tags.js\"></script>";
+    assert.equal(core.challengeOf("https://a.example/?page=2", {}, normal), "");
+  });
+
+  test("a bot-check start page puts a warning on top, and bot-checked links are not scored", () => {
+    const home = analyzeHtmlPages([{ url: URL_, html: "<title>Radware Page</title>", challenge: "Radware" }]);
+    assert.match(home.warnings[0], /start page answered with a Radware bot check/);
+    assert.ok(home.summary.startsWith(home.warnings[0]));
+    const child = analyzeHtmlPages([{ url: URL_, html: HTML }, { url: URL_ + "?ssa=1&ssb=2", challenge: "Radware", html: null }]);
+    assert.equal(child.findings.find((item) => item.key === "seo-title-missing").verdict, "pass");
+  });
+
+  test("canonical evidence shows the whole URL when the host or scheme changes", () => {
+    const page = (url, canonical) => ({ url, html: "<html lang=\"en\"><head><title>MIT education pages</title><link rel=\"canonical\" href=\"" + canonical + "\"></head><body><main><h1>Education</h1></main></body></html>" });
+    const result = analyzeHtmlPages([
+      page("https://www.mit.example.edu/", "https://www.mit.example.edu/"),
+      page("https://www.mit.example.edu/education/", "https://tlecms.mit.example.edu/education"),
+      page("https://www.mit.example.edu/research/", "http://www.mit.example.edu/research/"),
+      page("https://www.mit.example.edu/news/", "https://www.mit.example.edu/newsroom/")
+    ]);
+    const away = result.findings.find((item) => item.key === "seo-canonical-away");
+    assert.match(away.evidence, /\/education\/ → https:\/\/tlecms\.mit\.example\.edu\/education/);
+    assert.match(away.evidence, /\/research\/ → http:\/\/www\.mit\.example\.edu\/research\//);
+    assert.match(away.evidence, /\/news\/ → \/newsroom\//);
+  });
+
+  test("default ports in sitemap URLs stay on the host, and other hosts are named", () => {
+    const pages = [{ url: URL_, html: HTML }];
+    const onHost = analyzeHtmlPages(pages, { sitemap: { source: URL_ + "sitemap.xml", status: 200, urls: ["https://shop.example.com:443/", "https://shop.example.com:443/about"] } });
+    assert.equal(onHost.seo.sitemap.offHost, 0);
+    const offHost = analyzeHtmlPages(pages, { sitemap: { source: URL_ + "sitemap.xml", status: 200, urls: ["https://shop.example.com:443/", "https://assetsdev.example.com:443/a", "https://assetsdev.example.com/b", "https://assets.example.com/c"] } });
+    assert.match(offHost.findings.find((item) => item.key === "seo-sitemap-offhost").evidence, /assetsdev\.example\.com \(2\), assets\.example\.com \(1\)/);
+  });
+
+  test("a null MX is read as a domain that takes no mail", async () => {
+    const dnsPromises = require("node:dns").promises;
+    const saved = { mx: dnsPromises.resolveMx, txt: dnsPromises.resolveTxt, caa: dnsPromises.resolveCaa };
+    dnsPromises.resolveMx = async () => [{ exchange: "", priority: 0 }];
+    dnsPromises.resolveTxt = async (name) => name.startsWith("_dmarc.") ? [["v=DMARC1;p=reject;sp=reject"]] : [["google-site-verification=x"]];
+    dnsPromises.resolveCaa = async () => [];
+    let facts;
+    try {
+      facts = await core.dnsFacts("www.sura.example.co");
+    } finally {
+      Object.assign(dnsPromises, { resolveMx: saved.mx, resolveTxt: saved.txt, resolveCaa: saved.caa });
+    }
+    assert.equal(facts.nullMx, true);
+    assert.deepEqual(facts.mx, []);
+    assert.equal(verdict(analyzeHtmlPages([{ url: URL_, html: HTML }], { dns: facts }), "sec-spf"), "pass");
+    const noDmarc = analyzeHtmlPages([{ url: URL_, html: HTML }], { dns: Object.assign({}, facts, { dmarc: "" }) });
+    const spf = noDmarc.findings.find((item) => item.key === "sec-spf");
+    assert.deepEqual([spf.verdict, spf.severity], ["risk", "low"]);
+    assert.match(spf.title, /refuses mail/);
+    assert.equal(noDmarc.findings.find((item) => item.key === "sec-dmarc").severity, "low");
+  });
+
+  test("a DNS lookup that fails is unread, not a missing record", async () => {
+    const dnsPromises = require("node:dns").promises;
+    const saved = { mx: dnsPromises.resolveMx, txt: dnsPromises.resolveTxt, caa: dnsPromises.resolveCaa };
+    const failing = (code) => async () => { throw Object.assign(new Error(code), { code }); };
+    const facts = async (txt, caa) => {
+      dnsPromises.resolveMx = async () => [{ exchange: "mx.example.org", priority: 10 }];
+      dnsPromises.resolveTxt = txt;
+      dnsPromises.resolveCaa = caa;
+      try {
+        return await core.dnsFacts("www.example.org");
+      } finally {
+        Object.assign(dnsPromises, { resolveMx: saved.mx, resolveTxt: saved.txt, resolveCaa: saved.caa });
+      }
+    };
+    const timedOut = await facts(async (name) => { if (name.startsWith("_dmarc.")) throw Object.assign(new Error("ENODATA"), { code: "ENODATA" }); throw Object.assign(new Error("ETIMEOUT"), { code: "ETIMEOUT" }); }, failing("ESERVFAIL"));
+    assert.deepEqual(timedOut.unread, ["spf", "caa"]);
+    const unsure = analyzeHtmlPages([{ url: URL_, html: HTML }], { dns: timedOut });
+    assert.equal(verdict(unsure, "sec-spf"), "missing");
+    assert.equal(verdict(unsure, "sec-caa"), "missing");
+    assert.equal(verdict(unsure, "sec-dmarc"), "risk");
+    assert.equal(unsure.security.headers.find((item) => item.label === "SPF").state, "unknown");
+    const absent = await facts(failing("ENODATA"), failing("ENOTFOUND"));
+    assert.deepEqual(absent.unread, []);
+    const sure = analyzeHtmlPages([{ url: URL_, html: HTML }], { dns: absent });
+    assert.equal(verdict(sure, "sec-spf"), "risk");
+    assert.equal(verdict(sure, "sec-caa"), "risk");
+  });
+
+  test("the GTM noscript frame and hidden frames need no title, visible ones do", () => {
+    const html = "<body><noscript><iframe src=\"https://www.googletagmanager.com/ns.html?id=GTM-X\" height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>" +
+      "<iframe src=\"https://track.example/p\" style=\"display:none\"></iframe><iframe src=\"https://www.youtube.com/embed/x\"></iframe><iframe src=\"https://maps.example/\" title=\"Map\"></iframe></body>";
+    assert.equal(core.analyzeHtml(html, STRONG_HEADERS, URL_).signals.untitledFrames, 1);
+  });
+
+  test("a stray later <html lang> fills a root that has no lang, as browsers do", () => {
+    assert.equal(core.analyzeHtml("<!doctype html><html dir=\"ltr\"><head></head><body><html lang=\"es-ES\"><p>Hola</p></body></html>", STRONG_HEADERS, URL_).lang, "es-ES");
+    assert.equal(core.analyzeHtml("<html lang=\"\"><body><html lang=\"es-ES\"></body></html>", STRONG_HEADERS, URL_).lang, "");
+    assert.equal(core.analyzeHtml("<html><body><!-- <html lang=\"fr\"> --><script>document.write('<html lang=\"de\">')</script></body></html>", STRONG_HEADERS, URL_).lang, "");
+  });
+
+  test("a declared language that clearly differs from the text is flagged, short or mixed text is not", () => {
+    const spanish = "La Dirección de Impuestos y Aduanas Nacionales es la entidad del Estado que se encarga de los trámites de impuestos para los ciudadanos y las empresas del país, con servicios en línea para todos. ".repeat(12);
+    const english = "The service is open for all of the people who live in the city, and you can find the forms on this page with your account. ".repeat(12);
+    const page = (lang, text) => "<html lang=\"" + lang + "\"><head><title>Impuestos y aduanas</title></head><body><main><h1>Inicio</h1><p>" + text + "</p></main></body></html>";
+    const mismatch = analyzeHtmlPages([{ url: URL_, html: page("en", spanish) }]).findings.find((item) => item.key === "a11y-lang");
+    assert.deepEqual([mismatch.verdict, mismatch.severity], ["risk", "medium"]);
+    assert.match(mismatch.evidence, /lang="en" \(English\), but its text reads as Spanish/);
+    assert.equal(verdict(analyzeHtmlPages([{ url: URL_, html: page("es-CO", spanish) }]), "a11y-lang"), "pass");
+    assert.equal(verdict(analyzeHtmlPages([{ url: URL_, html: page("en", english) }]), "a11y-lang"), "pass");
+    assert.equal(verdict(analyzeHtmlPages([{ url: URL_, html: page("en", spanish.slice(0, 400)) }]), "a11y-lang"), "pass");
+    assert.equal(verdict(analyzeHtmlPages([{ url: URL_, html: page("en", spanish.slice(0, 1200) + english.slice(0, 1200)) }]), "a11y-lang"), "pass");
+  });
+
+  test("cookie flags are read per Set-Cookie header and in any case", () => {
+    const face = core.analyzeHtml(HTML, Object.assign({}, STRONG_HEADERS, { "set-cookie": ["JSESSIONID=1; Path=/; SECURE; HTTPONLY", "COOKIE_SUPPORT=true; Path=/; HttpOnly", "SERVER_ID=2; path=/; HttpOnly; Secure"] }), URL_);
+    assert.deepEqual(face.cookies.map((cookie) => [cookie.name, cookie.secure, cookie.httpOnly]), [["JSESSIONID", true, true], ["COOKIE_SUPPORT", false, true], ["SERVER_ID", true, true]]);
+  });
+});
+
 test.describe("journeys", () => {
   const pages = [
     { path: "/", status: 200 },
