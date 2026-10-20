@@ -1,0 +1,33 @@
+---
+description: Log every ticket, bug found during development, and design deliverable on the QA-lab URL Review GitHub board, tied to the ticket being developed
+alwaysApply: true
+---
+
+# GitHub Scrum board
+
+Board: GitHub Project 3 "QA-lab URL Review" (owner `kaanmuar`, id `PVT_kwHOALfwis4BmsxO`), repo `kaanmuar/kaanmuar.github.io`.
+Status field `PVTSSF_lAHOALfwis4BmsxOzhlUt04`: Backlog `3f4ac4fe`, Next `dc8fb26d`, Design `a8250664`, Dev `698df321`, QA `71ce1b86`, Stg `727e0727`, Prod `060490af`, Done `bebf6b88`.
+
+## Every piece of work has a ticket
+- Before starting, find the ticket for the request. If there is none, create it (`kind:request` + one `area:*` label), add it to the board, and move it to Design or Dev.
+- Move the ticket through the columns as the work moves, and reference it in the PR body.
+
+## Everything found during development is logged and tied to that ticket
+- Each bug, regression, incongruence (copy vs behaviour, page vs page, main vs production), or process slip found while working gets its own issue, even if it is fixed in the same PR.
+- Label `bug` + `area:*`. Title like the others: `BE: A null MX record was read as missing mail setup`.
+- Body: `**Kind:** Bug`, `**Area:**`, `**Found while:** #<ticket>`, `**Where it stands:**`, then `## What happened` and `## Fix`.
+- Link it as a sub-issue of the ticket being developed. Fixed: close it with "Fixed in #<PR>" and set Done. Not fixed: leave it open in Backlog.
+
+## Design deliverables are logged in the Design phase of the same ticket
+- Templates, layouts, images, logos, icons, share images, social posts, motion, copy and visual changes, and later updates or improvements to any of them each get an issue titled `Design: ...` with label `area:design`.
+- Link it as a sub-issue of the original ticket, set Status to Design while it is being made, and Done when it ships. In the body, list the decisions and the file paths, and link the live page.
+
+## Commands
+```bash
+gh issue create -R kaanmuar/kaanmuar.github.io --title "..." --body "..." --label bug --label area:be
+item=$(gh project item-add 3 --owner kaanmuar --url <issue-url> --format json -q .id)
+gh project item-edit --id "$item" --project-id PVT_kwHOALfwis4BmsxO --field-id PVTSSF_lAHOALfwis4BmsxOzhlUt04 --single-select-option-id bebf6b88
+gh api graphql -f query='mutation($p:ID!,$c:ID!){addSubIssue(input:{issueId:$p,subIssueId:$c}){issue{number}}}' \
+  -f p=$(gh issue view <ticket> --json id -q .id) -f c=$(gh issue view <child> --json id -q .id)
+gh issue close <child> --reason completed --comment "Fixed in #<PR>."
+```
