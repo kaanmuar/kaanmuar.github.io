@@ -607,6 +607,7 @@
         .facts { display: flex; gap: 22px; list-style: none; padding: 0; margin: 18px 0 0; }
         .facts b { display: block; font-family: "Instrument Serif", Georgia, serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.03em; line-height: 1; }
         .facts span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; letter-spacing: .04em; }
+        #reviewed-count { font-variant-numeric: tabular-nums; }
         .ribbon { overflow: hidden; margin: 18px 0 22px; border-block: 1px solid var(--line); }
         .ribbon-track { display: flex; width: max-content; gap: 0; animation: ribbon-drift 46s linear infinite; }
         .ribbon-track span { padding: 11px 0; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
@@ -910,6 +911,7 @@
                 <li><b>21</b><span>kinds of cases</span></li>
                 <li><b>20</b><span>frameworks you already know</span></li>
                 <li><b>1</b><span>address to begin</span></li>
+                <li id="reviewed-fact" hidden><b id="reviewed-count" translate="no" aria-live="off">0</b><span>URLs reviewed so far</span></li>
             </ul>
         </div>
         <div class="stage-art" aria-hidden="true">
@@ -1239,6 +1241,6 @@
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
-<script src="js/qa-review.js?v=20261027b"></script>
+<script src="js/qa-review.js?v=20261027c"></script>
 </body>
 </html>

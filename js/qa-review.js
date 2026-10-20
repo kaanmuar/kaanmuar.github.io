@@ -2165,4 +2165,48 @@
     if (window.SiteI18n && SiteI18n.follow) SiteI18n.follow(() => loadWire());
     if (reduced) window.setInterval(loadWire, 3 * 60 * 1000);
   }
+
+  const reviewedFact = document.getElementById("reviewed-fact");
+  const reviewedCount = document.getElementById("reviewed-count");
+  let reviewedShown = 0;
+  let reviewedFrame = 0;
+  function paintReviewed(target) {
+    const lang = window.SiteI18n && SiteI18n.current ? SiteI18n.current() : "en";
+    const format = (value) => Math.round(value).toLocaleString(lang || "en");
+    cancelAnimationFrame(reviewedFrame);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || target <= reviewedShown) {
+      reviewedShown = target;
+      reviewedCount.textContent = format(target);
+      return;
+    }
+    const from = reviewedShown;
+    const start = performance.now();
+    const duration = from ? 900 : 1600;
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      reviewedShown = from + (target - from) * (1 - Math.pow(1 - t, 3));
+      reviewedCount.textContent = format(reviewedShown);
+      if (t < 1) reviewedFrame = requestAnimationFrame(step);
+      else reviewedShown = target;
+    };
+    reviewedFrame = requestAnimationFrame(step);
+  }
+  async function loadReviewed() {
+    if (document.hidden) return;
+    try {
+      const response = await fetch(endpoint() + "/stats");
+      if (!response.ok) return;
+      const body = await response.json();
+      const pages = Number(body && body.pages) || 0;
+      if (!pages) return;
+      reviewedFact.hidden = false;
+      paintReviewed(pages);
+    } catch (error) {
+      return;
+    }
+  }
+  if (reviewedFact && reviewedCount) {
+    loadReviewed();
+    window.setInterval(loadReviewed, 2 * 60 * 1000);
+  }
 })();
