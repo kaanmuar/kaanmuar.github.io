@@ -21,7 +21,9 @@ describe('Core competency filters', () => {
       cy.get('.competency-item.topic-match').should('have.length', 1);
       cy.get('.competency-item.topic-dim').should('have.length', 7);
       cy.get('.experience-item.topic-match').should('exist');
-      cy.get('.experience-item.topic-dim').should('exist');
+      cy.get('#experience-container .experience-item').then(($roles) => {
+        cy.get('#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim').should('have.length', $roles.length);
+      });
       cy.get('.timeline-item.topic-match').should('exist');
       cy.get('#languages-section').should('have.class', 'topic-dim');
     });
