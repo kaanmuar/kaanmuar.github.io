@@ -306,6 +306,7 @@
         if (!triggerCombo(pendingMachineLang) && pendingMachineLang && pendingMachineLang !== 'en') {
             loadWidget();
         }
+        root.dispatchEvent(new CustomEvent('site-lang-applied', { detail: { lang: normalized } }));
     }
 
     const TRANSLATE_KEY = 'site-translate';

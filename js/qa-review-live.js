@@ -10,6 +10,7 @@
   const HUES = { government: 186, health: 160, media: 18, banking: 42, fintech: 280, transit: 140, opensource: 205, devdocs: 225, science: 255, highered: 330, education: 300, humanitarian: 0, international: 196, culture: 32, knowledge: 172, retail: 50, telecom: 268, energy: 58, travel: 120, airline: 210, insurance: 152, infrastructure: 24, standards: 240, sports: 100, apps: 12, rights: 350 };
   const STOP = new Set(["de", "del", "la", "el", "los", "las", "of", "the", "y", "and", "du", "da"]);
 
+  // A review analyzes a site; it never "reads" it. Spanish is Latin American (tú), Portuguese is Brazilian (você).
   const T = {
     en: {
       eyebrow: "Live reports", title: "Real sites. Real reads.", titleEm: "Open any of them.",
@@ -30,114 +31,250 @@
       hHeadline: "What the read found", hLesson: "The lesson", hAreas: "Six areas · gold tick is the series average", hFix: "Fix first", hWorks: "Already working",
       hAi: "AI crawlers", hSpeed: "Real-visitor speed", hSec: "Security headers", hCoverage: "Proposed coverage", hTags: "Tags",
       gWho: "Who", gScore: "How it scored", gStand: "Standouts", gTested: "Tested for", gBuilt: "Built with",
-      openFail: "This report could not be opened.", visit: "Visit site"
+      openFail: "This report could not be opened.", visit: "Visit site",
+      brand: "QA-lab · Live report", gradeWord: "Grade", average: "Series average {n}", areaLine: "{fail} fail · {risk} at risk · {pass} pass",
+      botsAllowed: "Answer bots allowed", botsBlocked: "Answer bots blocked", trainingOut: "Training bots opted out", none0: "none",
+      published: "published", notFound: "not found", noJs: "HTML without JavaScript", almostEmpty: "almost empty", words: "{n} words", schema: "Structured data",
+      notAvailable: "not available", lhMobile: "Lighthouse, mobile", p75: "75th pct.", good: "good", needsWork: "needs work", poor: "poor",
+      realVisitors: "Real visitors", noField: "not enough Chrome data", labTiming: "Lab LCP · TBT", pass: "pass", risk: "at risk", fail: "fail",
+      filterBy: "Filter by {group}", shareLine: "{name} scored {score}/100 ({grade}) in a QA-lab URL Review live report"
     },
     es: {
-      eyebrow: "Informes en vivo", title: "Sitios reales. Lecturas reales.", titleEm: "Abre cualquiera.",
-      lede: "<b>{n} sitios públicos</b>, leídos por la misma revisión que cualquiera puede correr: portales de gobierno, medios, bancos, universidades, proyectos de código abierto y sistemas de transporte. Gira el anillo, filtra por sector o país y abre un informe. Solo ver y compartir.",
-      explore: "Explorar {n} informes en vivo", gateLine: "Revisiones reales de sitios públicos, de GOV.UK a la Alcaldía de Bogotá. Solo ver y compartir.",
-      back: "Volver", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar giro", play: "Reanudar giro", open: "Abrir informe",
+      eyebrow: "Informes en vivo", title: "Sitios reales. Análisis reales.", titleEm: "Abre el informe que quieras.",
+      lede: "<b>{n} sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Solo para ver y compartir.",
+      explore: "Explorar {n} informes en vivo", gateLine: "Análisis reales de sitios públicos, desde GOV.UK hasta la Alcaldía de Bogotá. Solo para ver y compartir.",
+      back: "Volver", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
       carousel: "Carrusel de informes en vivo", all: "Todos", sector: "Sector", scope: "Alcance", country: "País", focus: "Tipo de prueba",
       worldwide: "Mundial", national: "Nacional", local: "Local", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
       none: "Ningún informe coincide con estos filtros.", clear: "Quitar filtros", loading: "Cargando informes en vivo…", failed: "No se pudieron cargar los informes en vivo.",
-      read: "Leído el {date}", page: "{n} página", pages: "{n} páginas", hint: "Arrastra, desliza o usa las flechas. Elige una tarjeta para abrirla.",
+      read: "Analizado el {date}", page: "{n} página", pages: "{n} páginas", hint: "Arrastra, desliza o usa las flechas del teclado. Elige una tarjeta para abrirla.",
       close: "Cerrar", share: "Compartir", copy: "Copiar enlace", copied: "Enlace copiado. Abre este informe.", shareOn: "Compartir en {net}", email: "Correo",
-      viewOnly: "Solo lectura. Este informe en vivo se puede abrir y compartir, no descargar, imprimir ni exportar.",
-      blocked: "Solo lectura. Comparte el enlace.", shot: "Una página no puede bloquear las capturas. La marca de agua queda en la imagen.",
-      printNote: "Los informes en vivo son de solo lectura y no se imprimen.", printLink: "Ábrelo o compártelo aquí:",
-      fair: "Una lectura automática de páginas públicas el {date}. Un punto de partida, no un veredicto.", own: "Revisa tu propio sitio",
+      viewOnly: "Solo para ver. Este informe en vivo se puede abrir y compartir, pero no descargar, imprimir ni exportar.",
+      blocked: "Solo para ver. Comparte el enlace.", shot: "Una página no puede bloquear las capturas de pantalla. La marca de agua queda en la imagen.",
+      printNote: "Los informes en vivo son solo para ver y no se imprimen.", printLink: "Ábrelo o compártelo aquí:",
+      fair: "Un análisis automático de páginas públicas del {date}. Un punto de partida, no un veredicto.", own: "Analiza tu propio sitio",
       rank: "<b>#{r}</b> de {n} en esta serie", rankSector: "<b>#{r}</b> de {n} en {sector}",
-      hHeadline: "Lo que encontró la lectura", hLesson: "La lección", hAreas: "Seis áreas · la marca dorada es el promedio de la serie", hFix: "Arreglar primero", hWorks: "Ya funciona",
-      hAi: "Rastreadores de IA", hSpeed: "Velocidad para visitantes reales", hSec: "Cabeceras de seguridad", hCoverage: "Cobertura propuesta", hTags: "Etiquetas",
-      gWho: "Quién", gScore: "Puntaje", gStand: "Destacados", gTested: "Probado en", gBuilt: "Hecho con",
-      openFail: "No se pudo abrir este informe.", visit: "Visitar sitio"
+      hHeadline: "Lo que encontró el análisis", hLesson: "La lección", hAreas: "Seis áreas · la marca dorada es el promedio de la serie", hFix: "Corregir primero", hWorks: "Ya funciona",
+      hAi: "Rastreadores de IA", hSpeed: "Velocidad para visitantes reales", hSec: "Encabezados de seguridad", hCoverage: "Cobertura propuesta", hTags: "Etiquetas",
+      gWho: "Quién", gScore: "Puntaje", gStand: "Destacados", gTested: "Qué se probó", gBuilt: "Hecho con",
+      openFail: "No se pudo abrir este informe.", visit: "Visitar el sitio",
+      brand: "QA-lab · Informe en vivo", gradeWord: "Nota", average: "Promedio de la serie: {n}", areaLine: "{fail} fallan · {risk} en riesgo · {pass} pasan",
+      botsAllowed: "Bots de respuesta permitidos", botsBlocked: "Bots de respuesta bloqueados", trainingOut: "Bots de entrenamiento excluidos", none0: "ninguno",
+      published: "publicado", notFound: "no encontrado", noJs: "HTML sin JavaScript", almostEmpty: "casi vacío", words: "{n} palabras", schema: "Datos estructurados",
+      notAvailable: "no disponible", lhMobile: "Lighthouse, móvil", p75: "percentil 75", good: "bueno", needsWork: "mejorable", poor: "deficiente",
+      realVisitors: "Visitantes reales", noField: "no hay suficientes datos de Chrome", labTiming: "LCP · TBT de laboratorio", pass: "pasa", risk: "en riesgo", fail: "falla",
+      filterBy: "Filtrar por {group}", shareLine: "{name} obtuvo {score}/100 ({grade}) en un informe en vivo de QA-lab URL Review"
     },
     pt: {
-      eyebrow: "Relatórios ao vivo", title: "Sites reais. Leituras reais.", titleEm: "Abra qualquer um.",
-      lede: "<b>{n} sites públicos</b>, lidos pela mesma revisão que qualquer pessoa pode rodar: portais de governo, redações, bancos, universidades, projetos de código aberto e sistemas de transporte. Gire o anel, filtre por setor ou país e abra um relatório. Só ver e compartilhar.",
-      explore: "Explorar {n} relatórios ao vivo", gateLine: "Revisões reais de sites públicos, do GOV.UK à Prefeitura de Bogotá. Só ver e compartilhar.",
-      back: "Voltar", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar giro", play: "Retomar giro", open: "Abrir relatório",
+      eyebrow: "Relatórios ao vivo", title: "Sites reais. Análises reais.", titleEm: "Abra o relatório que quiser.",
+      lede: "<b>{n} sites públicos</b>, analisados pela mesma revisão que qualquer pessoa pode executar: portais de governo, veículos de imprensa, bancos, universidades, projetos de código aberto e sistemas de transporte. Percorra o carrossel, filtre por setor ou país e abra um relatório. Só para ver e compartilhar.",
+      explore: "Explorar {n} relatórios ao vivo", gateLine: "Análises reais de sites públicos, do GOV.UK à Prefeitura de Bogotá. Só para ver e compartilhar.",
+      back: "Voltar", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
       carousel: "Carrossel de relatórios ao vivo", all: "Todos", sector: "Setor", scope: "Alcance", country: "País", focus: "Tipo de teste",
       worldwide: "Mundial", national: "Nacional", local: "Local", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
       none: "Nenhum relatório corresponde a estes filtros.", clear: "Limpar filtros", loading: "Carregando relatórios ao vivo…", failed: "Não foi possível carregar os relatórios ao vivo.",
-      read: "Lido em {date}", page: "{n} página", pages: "{n} páginas", hint: "Arraste, deslize ou use as setas. Escolha um cartão para abri-lo.",
+      read: "Analisado em {date}", page: "{n} página", pages: "{n} páginas", hint: "Arraste, deslize ou use as setas do teclado. Escolha um cartão para abri-lo.",
       close: "Fechar", share: "Compartilhar", copy: "Copiar link", copied: "Link copiado. Ele abre este relatório.", shareOn: "Compartilhar no {net}", email: "E-mail",
-      viewOnly: "Só leitura. Este relatório ao vivo pode ser aberto e compartilhado, não baixado, impresso nem exportado.",
-      blocked: "Só leitura. Compartilhe o link.", shot: "Uma página não consegue bloquear capturas de tela. A marca d’água fica na imagem.",
-      printNote: "Relatórios ao vivo são só leitura e não são impressos.", printLink: "Abra ou compartilhe aqui:",
-      fair: "Uma leitura automática de páginas públicas em {date}. Um ponto de partida, não um veredito.", own: "Revise o seu site",
+      viewOnly: "Só para ver. Este relatório ao vivo pode ser aberto e compartilhado, mas não baixado, impresso nem exportado.",
+      blocked: "Só para ver. Compartilhe o link.", shot: "Uma página não consegue bloquear capturas de tela. A marca d’água fica na imagem.",
+      printNote: "Relatórios ao vivo são só para ver e não são impressos.", printLink: "Abra ou compartilhe aqui:",
+      fair: "Uma análise automática de páginas públicas em {date}. Um ponto de partida, não um veredito.", own: "Analise o seu site",
       rank: "<b>#{r}</b> de {n} nesta série", rankSector: "<b>#{r}</b> de {n} em {sector}",
-      hHeadline: "O que a leitura encontrou", hLesson: "A lição", hAreas: "Seis áreas · a marca dourada é a média da série", hFix: "Corrigir primeiro", hWorks: "Já funciona",
+      hHeadline: "O que a análise encontrou", hLesson: "A lição", hAreas: "Seis áreas · a marca dourada é a média da série", hFix: "Corrigir primeiro", hWorks: "Já funciona",
       hAi: "Rastreadores de IA", hSpeed: "Velocidade para visitantes reais", hSec: "Cabeçalhos de segurança", hCoverage: "Cobertura proposta", hTags: "Etiquetas",
-      gWho: "Quem", gScore: "Pontuação", gStand: "Destaques", gTested: "Testado em", gBuilt: "Feito com",
-      openFail: "Não foi possível abrir este relatório.", visit: "Visitar site"
+      gWho: "Quem", gScore: "Pontuação", gStand: "Destaques", gTested: "O que foi testado", gBuilt: "Feito com",
+      openFail: "Não foi possível abrir este relatório.", visit: "Visitar o site",
+      brand: "QA-lab · Relatório ao vivo", gradeWord: "Nota", average: "Média da série: {n}", areaLine: "{fail} falham · {risk} em risco · {pass} passam",
+      botsAllowed: "Bots de resposta permitidos", botsBlocked: "Bots de resposta bloqueados", trainingOut: "Bots de treinamento excluídos", none0: "nenhum",
+      published: "publicado", notFound: "não encontrado", noJs: "HTML sem JavaScript", almostEmpty: "quase vazio", words: "{n} palavras", schema: "Dados estruturados",
+      notAvailable: "indisponível", lhMobile: "Lighthouse, celular", p75: "percentil 75", good: "bom", needsWork: "precisa melhorar", poor: "ruim",
+      realVisitors: "Visitantes reais", noField: "dados do Chrome insuficientes", labTiming: "LCP · TBT de laboratório", pass: "passa", risk: "em risco", fail: "falha",
+      filterBy: "Filtrar por {group}", shareLine: "{name} fez {score}/100 ({grade}) em um relatório ao vivo do QA-lab URL Review"
     },
     de: {
-      eyebrow: "Live-Berichte", title: "Echte Websites. Echte Prüfungen.", titleEm: "Öffnen Sie jede.",
-      lede: "<b>{n} öffentliche Websites</b>, gelesen von derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Drehen Sie den Ring, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Nur ansehen und teilen.",
+      eyebrow: "Live-Berichte", title: "Echte Websites. Echte Prüfungen.", titleEm: "Öffnen Sie jeden Bericht.",
+      lede: "<b>{n} öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Nur ansehen und teilen.",
       explore: "{n} Live-Berichte ansehen", gateLine: "Echte Prüfungen öffentlicher Websites, von GOV.UK bis zum Rathaus von Bogotá. Nur ansehen und teilen.",
-      back: "Zurück", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Drehung pausieren", play: "Drehung fortsetzen", open: "Bericht öffnen",
+      back: "Zurück", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
       carousel: "Karussell der Live-Berichte", all: "Alle", sector: "Branche", scope: "Reichweite", country: "Land", focus: "Testart",
       worldwide: "Weltweit", national: "National", local: "Lokal", global: "Global",
       status: "{i} von {n}: {name}, {score} von 100, Note {grade}.", slide: "{i} von {n}: {name}",
       none: "Kein Bericht passt zu diesen Filtern.", clear: "Filter löschen", loading: "Live-Berichte werden geladen…", failed: "Die Live-Berichte konnten nicht geladen werden.",
-      read: "Gelesen am {date}", page: "{n} Seite", pages: "{n} Seiten", hint: "Ziehen, wischen oder Pfeiltasten nutzen. Eine Karte wählen, um sie zu öffnen.",
+      read: "Geprüft am {date}", page: "{n} Seite", pages: "{n} Seiten", hint: "Ziehen, wischen oder Pfeiltasten nutzen. Eine Karte wählen, um sie zu öffnen.",
       close: "Schließen", share: "Teilen", copy: "Link kopieren", copied: "Link kopiert. Er öffnet diesen Bericht.", shareOn: "Auf {net} teilen", email: "E-Mail",
       viewOnly: "Nur ansehen. Dieser Live-Bericht kann geöffnet und geteilt, aber nicht heruntergeladen, gedruckt oder exportiert werden.",
       blocked: "Nur ansehen. Teilen Sie stattdessen den Link.", shot: "Eine Seite kann Screenshots nicht verhindern. Das Wasserzeichen bleibt im Bild.",
       printNote: "Live-Berichte sind nur zum Ansehen und werden nicht gedruckt.", printLink: "Hier öffnen oder teilen:",
-      fair: "Eine automatische Lesung öffentlicher Seiten am {date}. Ein Ausgangspunkt, kein Urteil.", own: "Eigene Website prüfen",
+      fair: "Eine automatische Prüfung öffentlicher Seiten am {date}. Ein Ausgangspunkt, kein Urteil.", own: "Eigene Website prüfen",
       rank: "<b>#{r}</b> von {n} in dieser Serie", rankSector: "<b>#{r}</b> von {n} in {sector}",
       hHeadline: "Was die Prüfung fand", hLesson: "Die Lehre", hAreas: "Sechs Bereiche · die goldene Marke ist der Serienschnitt", hFix: "Zuerst beheben", hWorks: "Funktioniert bereits",
       hAi: "KI-Crawler", hSpeed: "Tempo für echte Besucher", hSec: "Sicherheits-Header", hCoverage: "Vorgeschlagene Abdeckung", hTags: "Tags",
       gWho: "Wer", gScore: "Bewertung", gStand: "Highlights", gTested: "Geprüft auf", gBuilt: "Gebaut mit",
-      openFail: "Dieser Bericht konnte nicht geöffnet werden.", visit: "Website besuchen"
+      openFail: "Dieser Bericht konnte nicht geöffnet werden.", visit: "Website besuchen",
+      brand: "QA-lab · Live-Bericht", gradeWord: "Note", average: "Serienschnitt {n}", areaLine: "{fail} durchgefallen · {risk} gefährdet · {pass} bestanden",
+      botsAllowed: "Antwort-Bots erlaubt", botsBlocked: "Antwort-Bots gesperrt", trainingOut: "Trainings-Bots ausgeschlossen", none0: "keine",
+      published: "veröffentlicht", notFound: "nicht gefunden", noJs: "HTML ohne JavaScript", almostEmpty: "fast leer", words: "{n} Wörter", schema: "Strukturierte Daten",
+      notAvailable: "nicht verfügbar", lhMobile: "Lighthouse, mobil", p75: "75. Perzentil", good: "gut", needsWork: "verbesserungswürdig", poor: "schlecht",
+      realVisitors: "Echte Besucher", noField: "zu wenige Chrome-Daten", labTiming: "Labor-LCP · TBT", pass: "bestanden", risk: "gefährdet", fail: "durchgefallen",
+      filterBy: "Nach {group} filtern", shareLine: "{name} erreicht {score}/100 ({grade}) in einem Live-Bericht von QA-lab URL Review"
     },
     fr: {
-      eyebrow: "Rapports en direct", title: "De vrais sites. De vraies lectures.", titleEm: "Ouvrez celui que vous voulez.",
-      lede: "<b>{n} sites publics</b>, lus par la même revue que tout le monde peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Faites tourner l’anneau, filtrez par secteur ou pays, puis ouvrez un rapport. Consultation et partage uniquement.",
-      explore: "Explorer {n} rapports en direct", gateLine: "De vraies revues de sites publics, de GOV.UK à la mairie de Bogotá. Consultation et partage uniquement.",
-      back: "Retour", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre la rotation en pause", play: "Reprendre la rotation", open: "Ouvrir le rapport",
+      eyebrow: "Rapports en direct", title: "De vrais sites. De vraies analyses.", titleEm: "Ouvrez le rapport de votre choix.",
+      lede: "<b>{n} sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Consultation et partage uniquement.",
+      explore: "Explorer {n} rapports en direct", gateLine: "De vraies analyses de sites publics, de GOV.UK à la mairie de Bogotá. Consultation et partage uniquement.",
+      back: "Retour", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
       carousel: "Carrousel des rapports en direct", all: "Tous", sector: "Secteur", scope: "Portée", country: "Pays", focus: "Type de test",
       worldwide: "Mondial", national: "National", local: "Local", global: "Mondial",
       status: "{i} sur {n} : {name}, {score} sur 100, note {grade}.", slide: "{i} sur {n} : {name}",
       none: "Aucun rapport ne correspond à ces filtres.", clear: "Effacer les filtres", loading: "Chargement des rapports en direct…", failed: "Les rapports en direct n’ont pas pu être chargés.",
-      read: "Lu le {date}", page: "{n} page", pages: "{n} pages", hint: "Faites glisser, balayez ou utilisez les flèches. Choisissez une carte pour l’ouvrir.",
+      read: "Analysé le {date}", page: "{n} page", pages: "{n} pages", hint: "Faites glisser, balayez ou utilisez les flèches du clavier. Choisissez une carte pour l’ouvrir.",
       close: "Fermer", share: "Partager", copy: "Copier le lien", copied: "Lien copié. Il ouvre ce rapport.", shareOn: "Partager sur {net}", email: "E-mail",
-      viewOnly: "Consultation seule. Ce rapport en direct peut être ouvert et partagé, pas téléchargé, imprimé ni exporté.",
+      viewOnly: "Consultation seule. Ce rapport en direct peut être ouvert et partagé, mais pas téléchargé, imprimé ni exporté.",
       blocked: "Consultation seule. Partagez plutôt le lien.", shot: "Une page ne peut pas bloquer les captures d’écran. Le filigrane reste sur l’image.",
       printNote: "Les rapports en direct sont en consultation seule et ne s’impriment pas.", printLink: "Ouvrez-le ou partagez-le ici :",
-      fair: "Une lecture automatique de pages publiques le {date}. Un point de départ, pas un verdict.", own: "Faire la revue de votre site",
+      fair: "Une analyse automatique de pages publiques le {date}. Un point de départ, pas un verdict.", own: "Analyser votre site",
       rank: "<b>#{r}</b> sur {n} dans cette série", rankSector: "<b>#{r}</b> sur {n} en {sector}",
-      hHeadline: "Ce que la lecture a trouvé", hLesson: "La leçon", hAreas: "Six domaines · le repère doré est la moyenne de la série", hFix: "À corriger d’abord", hWorks: "Ce qui fonctionne déjà",
+      hHeadline: "Ce que l’analyse a trouvé", hLesson: "La leçon", hAreas: "Six domaines · le repère doré est la moyenne de la série", hFix: "À corriger d’abord", hWorks: "Ce qui fonctionne déjà",
       hAi: "Robots d’IA", hSpeed: "Vitesse pour de vrais visiteurs", hSec: "En-têtes de sécurité", hCoverage: "Couverture proposée", hTags: "Étiquettes",
       gWho: "Qui", gScore: "Score", gStand: "Points forts", gTested: "Testé pour", gBuilt: "Construit avec",
-      openFail: "Ce rapport n’a pas pu être ouvert.", visit: "Visiter le site"
+      openFail: "Ce rapport n’a pas pu être ouvert.", visit: "Visiter le site",
+      brand: "QA-lab · Rapport en direct", gradeWord: "Note", average: "Moyenne de la série : {n}", areaLine: "{fail} en échec · {risk} à risque · {pass} réussis",
+      botsAllowed: "Robots de réponse autorisés", botsBlocked: "Robots de réponse bloqués", trainingOut: "Robots d’entraînement exclus", none0: "aucun",
+      published: "publié", notFound: "introuvable", noJs: "HTML sans JavaScript", almostEmpty: "presque vide", words: "{n} mots", schema: "Données structurées",
+      notAvailable: "indisponible", lhMobile: "Lighthouse, mobile", p75: "75e centile", good: "bon", needsWork: "à améliorer", poor: "mauvais",
+      realVisitors: "Visiteurs réels", noField: "pas assez de données Chrome", labTiming: "LCP · TBT en labo", pass: "réussi", risk: "à risque", fail: "en échec",
+      filterBy: "Filtrer par {group}", shareLine: "{name} obtient {score}/100 ({grade}) dans un rapport en direct de QA-lab URL Review"
     },
     it: {
-      eyebrow: "Report dal vivo", title: "Siti veri. Letture vere.", titleEm: "Aprine uno qualsiasi.",
-      lede: "<b>{n} siti pubblici</b>, letti dalla stessa revisione che chiunque può avviare: portali pubblici, redazioni, banche, università, progetti open source e trasporti. Gira l’anello, filtra per settore o paese e apri un report. Solo visualizzazione e condivisione.",
-      explore: "Esplora {n} report dal vivo", gateLine: "Revisioni reali di siti pubblici, da GOV.UK al comune di Bogotá. Solo visualizzazione e condivisione.",
-      back: "Indietro", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa la rotazione", play: "Riprendi la rotazione", open: "Apri il report",
+      eyebrow: "Report dal vivo", title: "Siti veri. Analisi vere.", titleEm: "Apri il report che vuoi.",
+      lede: "<b>{n} siti pubblici</b>, analizzati con la stessa revisione che chiunque può avviare: portali pubblici, redazioni, banche, università, progetti open source e trasporti. Scorri il carosello, filtra per settore o paese e apri un report. Solo visualizzazione e condivisione.",
+      explore: "Esplora {n} report dal vivo", gateLine: "Analisi reali di siti pubblici, da GOV.UK al comune di Bogotá. Solo visualizzazione e condivisione.",
+      back: "Indietro", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
       carousel: "Carosello dei report dal vivo", all: "Tutti", sector: "Settore", scope: "Portata", country: "Paese", focus: "Tipo di test",
       worldwide: "Mondiale", national: "Nazionale", local: "Locale", global: "Globale",
       status: "{i} di {n}: {name}, {score} su 100, voto {grade}.", slide: "{i} di {n}: {name}",
       none: "Nessun report corrisponde a questi filtri.", clear: "Azzera i filtri", loading: "Caricamento dei report dal vivo…", failed: "Non è stato possibile caricare i report dal vivo.",
-      read: "Letto il {date}", page: "{n} pagina", pages: "{n} pagine", hint: "Trascina, scorri o usa le frecce. Scegli una scheda per aprirla.",
+      read: "Analizzato il {date}", page: "{n} pagina", pages: "{n} pagine", hint: "Trascina, scorri o usa le frecce della tastiera. Scegli una scheda per aprirla.",
       close: "Chiudi", share: "Condividi", copy: "Copia link", copied: "Link copiato. Apre questo report.", shareOn: "Condividi su {net}", email: "E-mail",
-      viewOnly: "Solo visualizzazione. Questo report dal vivo si può aprire e condividere, non scaricare, stampare o esportare.",
+      viewOnly: "Solo visualizzazione. Questo report dal vivo si può aprire e condividere, ma non scaricare, stampare o esportare.",
       blocked: "Solo visualizzazione. Condividi il link.", shot: "Una pagina non può bloccare gli screenshot. La filigrana resta nell’immagine.",
       printNote: "I report dal vivo sono solo da visualizzare e non si stampano.", printLink: "Aprilo o condividilo qui:",
-      fair: "Una lettura automatica di pagine pubbliche il {date}. Un punto di partenza, non un verdetto.", own: "Fai la revisione del tuo sito",
+      fair: "Un’analisi automatica di pagine pubbliche il {date}. Un punto di partenza, non un verdetto.", own: "Analizza il tuo sito",
       rank: "<b>#{r}</b> su {n} in questa serie", rankSector: "<b>#{r}</b> su {n} in {sector}",
-      hHeadline: "Cosa ha trovato la lettura", hLesson: "La lezione", hAreas: "Sei aree · la tacca dorata è la media della serie", hFix: "Da sistemare prima", hWorks: "Funziona già",
+      hHeadline: "Cosa ha trovato l’analisi", hLesson: "La lezione", hAreas: "Sei aree · la tacca dorata è la media della serie", hFix: "Da sistemare prima", hWorks: "Funziona già",
       hAi: "Crawler IA", hSpeed: "Velocità per visitatori reali", hSec: "Header di sicurezza", hCoverage: "Copertura proposta", hTags: "Tag",
       gWho: "Chi", gScore: "Punteggio", gStand: "In evidenza", gTested: "Testato per", gBuilt: "Fatto con",
-      openFail: "Non è stato possibile aprire questo report.", visit: "Visita il sito"
+      openFail: "Non è stato possibile aprire questo report.", visit: "Visita il sito",
+      brand: "QA-lab · Report dal vivo", gradeWord: "Voto", average: "Media della serie: {n}", areaLine: "{fail} falliti · {risk} a rischio · {pass} superati",
+      botsAllowed: "Bot di risposta ammessi", botsBlocked: "Bot di risposta bloccati", trainingOut: "Bot di addestramento esclusi", none0: "nessuno",
+      published: "pubblicato", notFound: "non trovato", noJs: "HTML senza JavaScript", almostEmpty: "quasi vuoto", words: "{n} parole", schema: "Dati strutturati",
+      notAvailable: "non disponibile", lhMobile: "Lighthouse, mobile", p75: "75° percentile", good: "buono", needsWork: "da migliorare", poor: "scarso",
+      realVisitors: "Visitatori reali", noField: "dati Chrome insufficienti", labTiming: "LCP · TBT di laboratorio", pass: "superato", risk: "a rischio", fail: "fallito",
+      filterBy: "Filtra per {group}", shareLine: "{name} ottiene {score}/100 ({grade}) in un report dal vivo di QA-lab URL Review"
     }
   };
+
+  const AREA_T = {
+    es: { full: { Analytics: "Analítica", Security: "Seguridad", Accessibility: "Accesibilidad", Performance: "Rendimiento" }, short: { Analytics: "Analítica", Security: "Seguridad", Accessibility: "Accesib.", Performance: "Velocidad" } },
+    pt: { full: { Analytics: "Analytics", Security: "Segurança", Accessibility: "Acessibilidade", Performance: "Desempenho" }, short: { Security: "Segurança", Accessibility: "Acessib.", Performance: "Rapidez" } },
+    de: { full: { Analytics: "Analytics", Security: "Sicherheit", Accessibility: "Barrierefreiheit", Performance: "Performance" }, short: { Security: "Sicherheit", Accessibility: "Zugängl.", Performance: "Tempo" } },
+    fr: { full: { Analytics: "Analytics", Security: "Sécurité", Accessibility: "Accessibilité", Performance: "Performance" }, short: { Security: "Sécurité", Accessibility: "Access.", Performance: "Vitesse" } },
+    it: { full: { Analytics: "Analytics", Security: "Sicurezza", Accessibility: "Accessibilità", Performance: "Prestazioni" }, short: { Security: "Sicurezza", Accessibility: "Access.", Performance: "Velocità" } }
+  };
+
+  // Report tags arrive in English from the build; these give each one a native label.
+  const TAG_RULES = [
+    ["versions", /^(\d+) language versions$/], ["lighthouse", /^Lighthouse (\d+) mobile$/], ["gradeTag", /^Grade ([A-F]) · (\d+)$/],
+    ["onePage", /^1 page read$/], ["pagesRead", /^(\d+) pages read$/], ["tests", /^(\d+) proposed cases · (\d+) test types$/],
+    ["top", /^Top (\d+) of (\d+)$/], ["best", /^Best (\w+) in the series$/], ["inSector", /^#(\d+) in (.+)$/]
+  ];
+  const TAG_T = {
+    es: {
+      versions: "{1} versiones de idioma", lighthouse: "Lighthouse {1} en móvil", gradeTag: "Nota {1} · {2}", onePage: "1 página analizada", pagesRead: "{1} páginas analizadas",
+      tests: "{1} casos propuestos · {2} tipos de prueba", top: "Top {1} de {2}", best: "Mejor {area} de la serie", inSector: "#{1} en {sector}",
+      fixed: {
+        "AI-search ready": "Listo para búsqueda con IA", "Blocks AI answer bots": "Bloquea bots de respuesta de IA", "Core Web Vitals pass": "Aprueba Core Web Vitals",
+        "JS-only HTML": "HTML que depende de JS", "JSON-LD that does not parse": "JSON-LD con errores", "No page language": "Sin idioma de página",
+        "Opts out of AI training": "Excluido del entrenamiento de IA", "Pinch-zoom blocked": "Zoom táctil bloqueado", "Strict CSP": "CSP estricta",
+        "Zero failing checks": "Ninguna verificación fallida", "llms.txt published": "llms.txt publicado",
+        "Top tier · 90+": "Excelente · 90+", "Strong · 80–89": "Muy bueno · 80–89", "Solid · 70–79": "Bueno · 70–79", "Fair · 60–69": "Aceptable · 60–69", "Needs work · under 60": "Por mejorar · menos de 60",
+        "Company": "Empresa", "City government": "Gobierno local", "Public agency": "Entidad pública", "Nonprofit": "Sin ánimo de lucro", "Intergovernmental": "Intergubernamental",
+        "Open-source project": "Proyecto de código abierto", "State-owned company": "Empresa estatal", "University": "Universidad", "National government": "Gobierno nacional",
+        "Public broadcaster": "Medio público", "Regional government": "Gobierno regional",
+        "Latin America": "América Latina", "North America": "Norteamérica", "Europe": "Europa", "Middle East": "Medio Oriente", "Global": "Global"
+      }
+    },
+    pt: {
+      versions: "{1} versões de idioma", lighthouse: "Lighthouse {1} no celular", gradeTag: "Nota {1} · {2}", onePage: "1 página analisada", pagesRead: "{1} páginas analisadas",
+      tests: "{1} casos propostos · {2} tipos de teste", top: "Top {1} de {2}", best: "Melhor {area} da série", inSector: "#{1} em {sector}",
+      fixed: {
+        "AI-search ready": "Pronto para busca com IA", "Blocks AI answer bots": "Bloqueia bots de resposta de IA", "Core Web Vitals pass": "Aprovado nos Core Web Vitals",
+        "JS-only HTML": "HTML que depende de JS", "JSON-LD that does not parse": "JSON-LD com erros", "No page language": "Sem idioma da página",
+        "Opts out of AI training": "Fora do treinamento de IA", "Pinch-zoom blocked": "Zoom de pinça bloqueado", "Strict CSP": "CSP estrita",
+        "Zero failing checks": "Nenhuma verificação com falha", "llms.txt published": "llms.txt publicado",
+        "Top tier · 90+": "Excelente · 90+", "Strong · 80–89": "Muito bom · 80–89", "Solid · 70–79": "Bom · 70–79", "Fair · 60–69": "Regular · 60–69", "Needs work · under 60": "Precisa melhorar · abaixo de 60",
+        "Company": "Empresa", "City government": "Prefeitura", "Public agency": "Órgão público", "Nonprofit": "Sem fins lucrativos", "Intergovernmental": "Intergovernamental",
+        "Open-source project": "Projeto de código aberto", "State-owned company": "Empresa estatal", "University": "Universidade", "National government": "Governo nacional",
+        "Public broadcaster": "Emissora pública", "Regional government": "Governo regional",
+        "Latin America": "América Latina", "North America": "América do Norte", "Europe": "Europa", "Middle East": "Oriente Médio", "Global": "Global"
+      }
+    },
+    de: {
+      versions: "{1} Sprachversionen", lighthouse: "Lighthouse {1} mobil", gradeTag: "Note {1} · {2}", onePage: "1 Seite geprüft", pagesRead: "{1} Seiten geprüft",
+      tests: "{1} vorgeschlagene Fälle · {2} Testarten", top: "Top {1} von {2}", best: "{area}: Bestwert der Serie", inSector: "#{1} in {sector}",
+      fixed: {
+        "AI-search ready": "Bereit für KI-Suche", "Blocks AI answer bots": "Sperrt KI-Antwort-Bots", "Core Web Vitals pass": "Core Web Vitals bestanden",
+        "JS-only HTML": "HTML nur mit JS", "JSON-LD that does not parse": "Fehlerhaftes JSON-LD", "No page language": "Keine Seitensprache",
+        "Opts out of AI training": "Kein KI-Training", "Pinch-zoom blocked": "Zoomen gesperrt", "Strict CSP": "Strenge CSP",
+        "Zero failing checks": "Keine fehlgeschlagene Prüfung", "llms.txt published": "llms.txt veröffentlicht",
+        "Top tier · 90+": "Spitzenklasse · 90+", "Strong · 80–89": "Stark · 80–89", "Solid · 70–79": "Solide · 70–79", "Fair · 60–69": "Ausreichend · 60–69", "Needs work · under 60": "Ausbaufähig · unter 60",
+        "Company": "Unternehmen", "City government": "Stadtverwaltung", "Public agency": "Behörde", "Nonprofit": "Gemeinnützig", "Intergovernmental": "Zwischenstaatlich",
+        "Open-source project": "Open-Source-Projekt", "State-owned company": "Staatsunternehmen", "University": "Universität", "National government": "Nationale Regierung",
+        "Public broadcaster": "Öffentlich-rechtlicher Sender", "Regional government": "Regionalregierung",
+        "Latin America": "Lateinamerika", "North America": "Nordamerika", "Europe": "Europa", "Middle East": "Naher Osten", "Global": "Global"
+      }
+    },
+    fr: {
+      versions: "{1} versions linguistiques", lighthouse: "Lighthouse {1} sur mobile", gradeTag: "Note {1} · {2}", onePage: "1 page analysée", pagesRead: "{1} pages analysées",
+      tests: "{1} cas proposés · {2} types de test", top: "Top {1} sur {2}", best: "Meilleur score {area} de la série", inSector: "#{1} en {sector}",
+      fixed: {
+        "AI-search ready": "Prêt pour la recherche IA", "Blocks AI answer bots": "Bloque les robots de réponse IA", "Core Web Vitals pass": "Core Web Vitals réussis",
+        "JS-only HTML": "HTML uniquement en JS", "JSON-LD that does not parse": "JSON-LD invalide", "No page language": "Langue de page absente",
+        "Opts out of AI training": "Refuse l’entraînement IA", "Pinch-zoom blocked": "Zoom tactile bloqué", "Strict CSP": "CSP stricte",
+        "Zero failing checks": "Aucun contrôle en échec", "llms.txt published": "llms.txt publié",
+        "Top tier · 90+": "Excellence · 90+", "Strong · 80–89": "Très bon · 80–89", "Solid · 70–79": "Solide · 70–79", "Fair · 60–69": "Correct · 60–69", "Needs work · under 60": "À améliorer · moins de 60",
+        "Company": "Entreprise", "City government": "Municipalité", "Public agency": "Organisme public", "Nonprofit": "Association", "Intergovernmental": "Intergouvernemental",
+        "Open-source project": "Projet open source", "State-owned company": "Entreprise publique", "University": "Université", "National government": "Gouvernement national",
+        "Public broadcaster": "Média public", "Regional government": "Gouvernement régional",
+        "Latin America": "Amérique latine", "North America": "Amérique du Nord", "Europe": "Europe", "Middle East": "Moyen-Orient", "Global": "Mondial"
+      }
+    },
+    it: {
+      versions: "{1} versioni linguistiche", lighthouse: "Lighthouse {1} su mobile", gradeTag: "Voto {1} · {2}", onePage: "1 pagina analizzata", pagesRead: "{1} pagine analizzate",
+      tests: "{1} casi proposti · {2} tipi di test", top: "Top {1} su {2}", best: "Miglior {area} della serie", inSector: "#{1} in {sector}",
+      fixed: {
+        "AI-search ready": "Pronto per la ricerca IA", "Blocks AI answer bots": "Blocca i bot di risposta IA", "Core Web Vitals pass": "Core Web Vitals superati",
+        "JS-only HTML": "HTML solo con JS", "JSON-LD that does not parse": "JSON-LD non valido", "No page language": "Lingua della pagina assente",
+        "Opts out of AI training": "Escluso dall’addestramento IA", "Pinch-zoom blocked": "Zoom bloccato", "Strict CSP": "CSP rigorosa",
+        "Zero failing checks": "Nessun controllo fallito", "llms.txt published": "llms.txt pubblicato",
+        "Top tier · 90+": "Eccellente · 90+", "Strong · 80–89": "Molto buono · 80–89", "Solid · 70–79": "Buono · 70–79", "Fair · 60–69": "Discreto · 60–69", "Needs work · under 60": "Da migliorare · sotto 60",
+        "Company": "Azienda", "City government": "Comune", "Public agency": "Ente pubblico", "Nonprofit": "Non profit", "Intergovernmental": "Intergovernativo",
+        "Open-source project": "Progetto open source", "State-owned company": "Azienda statale", "University": "Università", "National government": "Governo nazionale",
+        "Public broadcaster": "Emittente pubblica", "Regional government": "Governo regionale",
+        "Latin America": "America Latina", "North America": "Nord America", "Europe": "Europa", "Middle East": "Medio Oriente", "Global": "Globale"
+      }
+    }
+  };
+  const SEV_T = {
+    es: { critical: "crítico", high: "alto", medium: "medio", low: "bajo", info: "info" },
+    pt: { critical: "crítico", high: "alto", medium: "médio", low: "baixo", info: "info" },
+    de: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig", info: "Info" },
+    fr: { critical: "critique", high: "élevé", medium: "moyen", low: "faible", info: "info" },
+    it: { critical: "critico", high: "alto", medium: "medio", low: "basso", info: "info" }
+  };
+  const NAME_TAGS = new Set(["hosting", "tech", "analytics", "consent", "lang"]);
 
   const SECTOR_T = {
     es: { government: "Gobierno", health: "Salud pública", media: "Noticias y medios", banking: "Banca y finanzas", fintech: "Fintech", transit: "Transporte y movilidad", opensource: "Código abierto", devdocs: "Documentación técnica", science: "Espacio y ciencia", highered: "Educación superior", education: "Educación", humanitarian: "Humanitario", international: "Organismos internacionales", culture: "Museos, bibliotecas y cultura", knowledge: "Conocimiento abierto", retail: "Comercio y e-commerce", telecom: "Telecomunicaciones", energy: "Energía y servicios públicos", travel: "Viajes y turismo", airline: "Aerolínea", insurance: "Seguros y salud", infrastructure: "Infraestructura de internet", standards: "Estándares web", sports: "Deporte y recreación", apps: "Apps y domicilios", rights: "Derechos humanos y digitales" },
@@ -147,7 +284,7 @@
     it: { government: "Governo", health: "Sanità pubblica", media: "Notizie e media", banking: "Banche e finanza", fintech: "Fintech", transit: "Trasporti e mobilità", opensource: "Open source", devdocs: "Documentazione tecnica", science: "Spazio e scienza", highered: "Università", education: "Istruzione", humanitarian: "Umanitario", international: "Organizzazioni internazionali", culture: "Musei, biblioteche e cultura", knowledge: "Conoscenza aperta", retail: "Retail ed e-commerce", telecom: "Telecomunicazioni", energy: "Energia e servizi pubblici", travel: "Viaggi e turismo", airline: "Compagnia aerea", insurance: "Assicurazioni e sanità", infrastructure: "Infrastruttura internet", standards: "Standard web", sports: "Sport e tempo libero", apps: "App e consegne", rights: "Diritti umani e digitali" }
   };
   const FOCUS_T = {
-    es: { seo: "SEO", geo: "GEO · búsqueda con IA", schema: "Datos estructurados", a11y: "Accesibilidad", security: "Cabeceras de seguridad", performance: "Rendimiento · Core Web Vitals", analytics: "Analítica y consentimiento", i18n: "Internacionalización" },
+    es: { seo: "SEO", geo: "GEO · búsqueda con IA", schema: "Datos estructurados", a11y: "Accesibilidad", security: "Encabezados de seguridad", performance: "Rendimiento · Core Web Vitals", analytics: "Analítica y consentimiento", i18n: "Internacionalización" },
     pt: { seo: "SEO", geo: "GEO · busca com IA", schema: "Dados estruturados", a11y: "Acessibilidade", security: "Cabeçalhos de segurança", performance: "Desempenho · Core Web Vitals", analytics: "Analytics e consentimento", i18n: "Internacionalização" },
     de: { seo: "SEO", geo: "GEO · KI-Suche", schema: "Strukturierte Daten", a11y: "Barrierefreiheit", security: "Sicherheits-Header", performance: "Performance · Core Web Vitals", analytics: "Analytics und Einwilligung", i18n: "Internationalisierung" },
     fr: { seo: "SEO", geo: "GEO · recherche IA", schema: "Données structurées", a11y: "Accessibilité", security: "En-têtes de sécurité", performance: "Performance · Core Web Vitals", analytics: "Analytics et consentement", i18n: "Internationalisation" },
@@ -196,6 +333,43 @@
     return text;
   }
   function nt() { return state.lang === "en" ? "" : ' translate="no"'; }
+  function areaName(area, short) {
+    const book = AREA_T[state.lang];
+    if (!book) return short ? SHORT[area] : area;
+    return (short ? book.short[area] || book.full[area] || SHORT[area] : book.full[area]) || area;
+  }
+  function sevName(sev) {
+    return (SEV_T[state.lang] && SEV_T[state.lang][sev]) || sev;
+  }
+  function localTag(tag) {
+    const book = TAG_T[state.lang];
+    if (!book) return null;
+    if (book.fixed[tag.t]) return book.fixed[tag.t];
+    for (const [key, re] of TAG_RULES) {
+      const m = re.exec(tag.t);
+      if (!m) continue;
+      let sector = "";
+      if (key === "inSector" && state.index) {
+        const k = Object.keys(state.index.sectors || {}).find((s) => state.index.sectors[s] === m[2]);
+        if (!k) return null;
+        sector = sectorLabel(k);
+      }
+      return book[key].replace(/\{(\d)\}/g, (all, i) => m[i]).replace("{area}", areaName(m[1])).replace("{sector}", sector);
+    }
+    return null;
+  }
+  function tagText(tag) {
+    if (tag.g === "sector") return sectorLabel(tag.k);
+    if (tag.g === "scope") return t(tag.k);
+    if (tag.g === "focus") return focusLabel(tag.k);
+    return localTag(tag) || tag.t;
+  }
+  function tagKeep(tag) {
+    return state.lang !== "en" && (NAME_TAGS.has(tag.g) || ["sector", "scope", "focus"].includes(tag.g) || !!localTag(tag));
+  }
+  function headlineHtml(lines) {
+    return (lines || []).map((line) => (line.em ? "<em>" + esc(line.t) + "</em>" : esc(line.t))).join(" ");
+  }
   function sectorLabel(key) {
     const local = SECTOR_T[state.lang] && SECTOR_T[state.lang][key];
     return local || (state.index && state.index.sectors[key]) || key;
@@ -251,16 +425,16 @@
     const out = [chip(r.flag + " " + (r.city || countryName(r.country)), "", nt())];
     if (r.sector) out.push(chip(sectorLabel(r.sector), "t-sector", nt()));
     const rank = r.tags.find((x) => x.g === "rank");
-    if (rank) out.push(chip(rank.t, "t-rank"));
-    r.tags.filter((x) => x.g === "badge").slice(0, rank ? 2 : 3).forEach((b) => out.push(chip(b.t, "t-" + b.tone)));
+    if (rank) out.push(chip(tagText(rank), "t-rank", tagKeep(rank) ? nt() : ""));
+    r.tags.filter((x) => x.g === "badge").slice(0, rank ? 2 : 3).forEach((b) => out.push(chip(tagText(b), "t-" + b.tone, tagKeep(b) ? nt() : "")));
     return out.join("");
   }
   function cardHtml(r) {
-    const head = (r.headline || []).map((line) => (line.em ? "<em>" + esc(line.t) + "</em>" : esc(line.t))).join(" ");
-    const areas = AREAS.map((a) => '<li><span>' + SHORT[a] + '</span><i><u style="width:' + r.areas[a] + "%;background:" + color(r.areas[a]) + '"></u></i><b>' + r.areas[a] + "</b></li>").join("");
-    return '<div class="lc-top"><span class="lc-mono" aria-hidden="true">' + esc(monogram(r.name)) + '</span><div class="lc-id"><b class="lc-name">' + esc(r.name) + '</b><span class="lc-host notranslate">' + esc(r.host) + '</span></div><span class="lc-scope s-' + r.scope.toLowerCase() + '"' + nt() + ">" + esc(t(r.scope.toLowerCase())) + "</span></div>" +
+    const head = headlineHtml(r.headline);
+    const areas = AREAS.map((a) => '<li><span' + nt() + ">" + esc(areaName(a, true)) + '</span><i><u style="width:' + r.areas[a] + "%;background:" + color(r.areas[a]) + '"></u></i><b>' + r.areas[a] + "</b></li>").join("");
+    return '<div class="lc-top"><span class="lc-mono notranslate" translate="no" aria-hidden="true">' + esc(monogram(r.name)) + '</span><div class="lc-id"><b class="lc-name notranslate" translate="no">' + esc(r.name) + '</b><span class="lc-host notranslate">' + esc(r.host) + '</span></div><span class="lc-scope s-' + r.scope.toLowerCase() + '"' + nt() + ">" + esc(t(r.scope.toLowerCase())) + "</span></div>" +
       '<p class="lc-headline">' + head + "</p>" +
-      '<div class="lc-score"><div class="lc-ring">' + ringSvg(r.overall, 92, 8) + "<b>" + r.overall + "<small>" + esc(r.grade) + '</small></b></div><ul class="lc-areas">' + areas + "</ul></div>" +
+      '<div class="lc-score"><div class="lc-ring">' + ringSvg(r.overall, 92, 8) + '<b class="notranslate" translate="no">' + r.overall + "<small>" + esc(r.grade) + '</small></b></div><ul class="lc-areas">' + areas + "</ul></div>" +
       '<ul class="lc-tags">' + cardChips(r) + "</ul>" +
       '<div class="lc-foot"><span' + nt() + ">" + esc(t("read", { date: dateText(r.read) })) + " · " + esc(t(r.pages === 1 ? "page" : "pages", { n: r.pages })) + '</span><button class="lc-open" type="button" tabindex="-1"' + nt() + ">" + esc(t("open")) + " →</button></div>";
   }
@@ -345,8 +519,23 @@
           const on = state.filters[group] === v;
           return '<button type="button" data-g="' + group + '" data-v="' + esc(v) + '" aria-pressed="' + on + '"' + (n || on ? "" : " disabled") + nt() + ">" + esc(valueLabel(group, v)) + "<small>" + n + "</small></button>";
         }));
-      return '<div class="live-frow" role="group" aria-label="' + esc(t(group)) + '"><span class="live-flabel"' + nt() + ">" + esc(t(group)) + '</span><div class="live-chips">' + buttons.join("") + "</div></div>";
+      const options = ['<option value=""' + (state.filters[group] ? "" : " selected") + ">" + esc(t("all")) + " (" + allCount + ")</option>"]
+        .concat(values.map((v) => {
+          const n = live.get(v) || 0;
+          const on = state.filters[group] === v;
+          return '<option value="' + esc(v) + '"' + (on ? " selected" : "") + (n || on ? "" : " disabled") + ">" + esc(valueLabel(group, v)) + " (" + n + ")</option>";
+        }));
+      const id = "live-f-" + group;
+      return '<div class="live-frow" role="group" aria-label="' + esc(t(group)) + '"><label class="live-flabel" for="' + id + '"' + nt() + ">" + esc(t(group)) + "</label>" +
+        '<div class="live-chips">' + buttons.join("") + "</div>" +
+        '<select class="live-fselect" id="' + id + '" data-g="' + group + '"' + (state.filters[group] ? ' data-on=""' : "") + nt() + ">" + options.join("") + "</select></div>";
     }).join("");
+  }
+  function chooseFilter(group, value, method) {
+    state.filters[group] = value;
+    track("qa_review_live_filter", group + ":" + (value || "all") + (method ? ":" + method : ""));
+    stopAuto();
+    applyFilters();
   }
 
   function applyFilters(keepId) {
@@ -469,10 +658,15 @@
       if (!button || button.disabled) return;
       const group = button.dataset.g;
       const value = button.dataset.v;
-      state.filters[group] = state.filters[group] === value ? "" : value;
-      track("qa_review_live_filter", group + ":" + (state.filters[group] || "all"));
-      stopAuto();
-      applyFilters();
+      chooseFilter(group, state.filters[group] === value ? "" : value);
+    });
+    filtersEl.addEventListener("change", (event) => {
+      const select = event.target.closest("select[data-g]");
+      if (!select) return;
+      const group = select.dataset.g;
+      chooseFilter(group, select.value, "select");
+      const again = filtersEl.querySelector('select[data-g="' + group + '"]');
+      if (again) again.focus({ preventScroll: true });
     });
     empty.querySelector("button").addEventListener("click", () => {
       Object.keys(state.filters).forEach((k) => { state.filters[k] = ""; });
@@ -594,7 +788,7 @@
     lastD.clear();
     layout();
     section.scrollTop = 0;
-    const first = filtersEl.querySelector("button");
+    const first = [...filtersEl.querySelectorAll("button, select")].find((el) => el.offsetParent !== null);
     if (first) first.focus({ preventScroll: true });
   }
   function undock() {
@@ -617,7 +811,7 @@
     viewer.setAttribute("aria-modal", "true");
     viewer.setAttribute("aria-labelledby", "lv-name");
     viewer.innerHTML = '<div class="lv-panel" tabindex="-1"><div class="lv-mark" aria-hidden="true"></div>' +
-      '<header class="lv-bar"><div class="lv-brand"><img src="assets/qa-review-mark.svg?v=20261013c" alt="" width="28" height="28"><span>QA-lab · Live report</span></div><div class="lv-actions"></div></header>' +
+      '<header class="lv-bar"><div class="lv-brand"><img src="assets/qa-review-mark.svg?v=20261013c" alt="" width="28" height="28"><span class="lv-brand-text"></span></div><div class="lv-actions"></div></header>' +
       '<div class="lv-body"></div></div>';
     document.body.appendChild(viewer);
     vbody = viewer.querySelector(".lv-body");
@@ -699,8 +893,8 @@
   }
   function shareText() {
     const r = state.all.find((x) => x.id === state.openId);
-    if (!r) return "QA-lab URL Review live report";
-    return r.name + " scored " + r.overall + "/100 (" + r.grade + ") in a QA-lab URL Review live report: " + AREAS.map((a) => SHORT[a] + " " + r.areas[a]).join(" · ");
+    if (!r) return t("brand");
+    return t("shareLine", { name: r.name, score: r.overall, grade: r.grade }) + ": " + AREAS.map((a) => areaName(a, true) + " " + r.areas[a]).join(" · ");
   }
   function shareTo(net) {
     const url = shareUrl(net);
@@ -770,6 +964,9 @@
   }
 
   function paintActions() {
+    const brand = viewer.querySelector(".lv-brand-text");
+    brand.textContent = t("brand");
+    if (state.lang !== "en") brand.setAttribute("translate", "no"); else brand.removeAttribute("translate");
     const actions = viewer.querySelector(".lv-actions");
     const native = navigator.share ? '<button class="lv-btn primary" type="button" data-act="native"' + nt() + ">" + ICONS.share + "<span>" + esc(t("share")) + "</span></button>" : "";
     const nets = NETS.map(([net, label]) => {
@@ -834,11 +1031,14 @@
 
   function ms(value) { return value >= 1000 ? (value / 1000).toFixed(1) + " s" : Math.round(value) + " ms"; }
   function catClass(cat) { return cat === "FAST" ? "c-good" : cat === "AVERAGE" ? "c-mid" : cat === "SLOW" ? "c-bad" : ""; }
-  function catText(cat) { return cat === "FAST" ? "good" : cat === "AVERAGE" ? "needs work" : cat === "SLOW" ? "poor" : "—"; }
+  function catText(cat) { return cat === "FAST" ? t("good") : cat === "AVERAGE" ? t("needsWork") : cat === "SLOW" ? t("poor") : "—"; }
+  function kv(label, value, cls, style) {
+    return '<div class="lv-kv"' + nt() + "><span>" + esc(label) + '</span><b' + (cls ? ' class="' + cls + '"' : "") + (style ? ' style="' + style + '"' : "") + ">" + value + "</b></div>";
+  }
 
   function viewerHtml(d) {
     const avg = (state.index && state.index.averages && state.index.averages.areas) || {};
-    const head = (d.headline || []).map((line) => (line.em ? "<em>" + esc(line.t) + "</em>" : esc(line.t))).join(" ");
+    const head = headlineHtml(d.headline);
     const place = d.flag + " " + (d.city ? esc(d.city) + ", " : "") + esc(countryName(d.country));
     const rank = d.rank ? '<p class="lv-rank"' + nt() + ">" + t("rank", { r: d.rank.overall.rank, n: d.rank.overall.of }) +
       (d.rank.sector.of > 1 ? "<br>" + t("rankSector", { r: d.rank.sector.rank, n: d.rank.sector.of, sector: esc(sectorLabel(d.sector)) }) : "") + "</p>" : "";
@@ -846,40 +1046,40 @@
     const areas = AREAS.map((a) => {
       const s = d.score.areas[a];
       const mean = avg[a];
-      return '<div class="lv-area"><div class="lv-area-top"><span>' + esc(a) + "</span><b>" + s.score + '</b></div><i><u style="width:' + s.score + "%;background:" + color(s.score) + '"></u>' +
-        (mean ? '<s style="left:' + mean + '%" title="Series average ' + mean + '"></s>' : "") + "</i><small>" + s.fail + " fail · " + s.risk + " at risk · " + s.pass + " pass</small></div>";
+      return '<div class="lv-area"' + nt() + '><div class="lv-area-top"><span>' + esc(areaName(a)) + "</span><b>" + s.score + '</b></div><i><u style="width:' + s.score + "%;background:" + color(s.score) + '"></u>' +
+        (mean ? '<s style="left:' + mean + '%" title="' + esc(t("average", { n: mean })) + '"></s>' : "") + "</i><small>" + esc(t("areaLine", { fail: s.fail, risk: s.risk, pass: s.pass })) + "</small></div>";
     }).join("");
 
-    const fix = (d.fix || []).map((f) => '<li><strong><span class="lv-sev sev-' + esc(f.severity) + '">' + esc(f.severity) + '</span><span class="lv-area-tag">' + esc(f.area) + "</span>" + esc(f.title) + "</strong>" +
+    const fix = (d.fix || []).map((f) => '<li><strong><span class="lv-sev sev-' + esc(f.severity) + '"' + nt() + ">" + esc(sevName(f.severity)) + '</span><span class="lv-area-tag"' + nt() + ">" + esc(areaName(f.area)) + "</span>" + esc(f.title) + "</strong>" +
       (f.evidence ? "<p>" + esc(f.evidence) + "</p>" : "") + (f.fix ? '<p class="fix">' + esc(f.fix) + (f.effort ? " <small>· " + esc(f.effort) + "</small>" : "") + "</p>" : "") + "</li>").join("");
-    const works = (d.works || []).map((w) => "<li><span>" + esc(w.title) + "<small>" + esc(w.area) + "</small></span></li>").join("");
+    const works = (d.works || []).map((w) => "<li><span>" + esc(w.title) + "<small" + nt() + ">" + esc(areaName(w.area)) + "</small></span></li>").join("");
 
     const g = d.geo || {};
     const blocked = g.answersBlocked || [];
-    const ai = '<div class="lv-kv"><span>Answer bots allowed</span><b class="' + (blocked.length ? "c-mid" : "c-good") + '">' + (g.answersAllowed || 0) + "</b></div>" +
-      '<div class="lv-kv"><span>Answer bots blocked</span><b class="' + (blocked.length ? "c-bad" : "") + '">' + (blocked.length || "none") + "</b></div>" +
+    const ai = kv(t("botsAllowed"), g.answersAllowed || 0, blocked.length ? "c-mid" : "c-good") +
+      kv(t("botsBlocked"), blocked.length || esc(t("none0")), blocked.length ? "c-bad" : "") +
       (blocked.length ? '<div class="lv-chips lv-bots">' + blocked.map((b) => '<span class="lchip t-warn notranslate">' + esc(b) + "</span>").join("") + "</div>" : "") +
-      '<div class="lv-kv"><span>Training bots opted out</span><b>' + (g.trainingBlocked && g.trainingBlocked.length ? g.trainingBlocked.length : "none") + "</b></div>" +
-      '<div class="lv-kv"><span>llms.txt</span><b class="' + (g.llms ? "c-good" : "") + '">' + (g.llms ? "published" : "not found") + "</b></div>" +
-      '<div class="lv-kv"><span>HTML without JavaScript</span><b class="' + (g.jsOnly ? "c-bad" : "c-good") + '">' + (g.jsOnly ? "almost empty" : (g.words || 0) + " words") + "</b></div>" +
-      (g.schema && g.schema.length ? '<div class="lv-kv"><span>Structured data</span><b>' + esc(g.schema.slice(0, 4).join(", ")) + "</b></div>" : "");
+      kv(t("trainingOut"), g.trainingBlocked && g.trainingBlocked.length ? g.trainingBlocked.length : esc(t("none0"))) +
+      kv("llms.txt", esc(g.llms ? t("published") : t("notFound")), g.llms ? "c-good" : "") +
+      kv(t("noJs"), esc(g.jsOnly ? t("almostEmpty") : t("words", { n: g.words || 0 })), g.jsOnly ? "c-bad" : "c-good") +
+      (g.schema && g.schema.length ? kv(t("schema"), esc(g.schema.slice(0, 4).join(", "))) : "");
 
     const sp = d.speed;
-    let speed = '<div class="lv-kv"><span>PageSpeed Insights</span><b>not available</b></div>';
+    let speed = kv("PageSpeed Insights", esc(t("notAvailable")));
     if (sp) {
-      speed = '<div class="lv-kv"><span>Lighthouse, mobile</span><b style="color:' + color(sp.lighthouse) + '">' + sp.lighthouse + "/100</b></div>";
+      speed = kv(t("lhMobile"), sp.lighthouse + "/100", "", "color:" + color(sp.lighthouse));
       const f = sp.field;
       if (f && (f.lcp || f.inp || f.cls)) {
-        if (f.lcp) speed += '<div class="lv-kv"><span>LCP · 75th pct.</span><b class="' + catClass(f.lcp.category) + '">' + ms(f.lcp.p75) + " · " + catText(f.lcp.category) + "</b></div>";
-        if (f.inp) speed += '<div class="lv-kv"><span>INP · 75th pct.</span><b class="' + catClass(f.inp.category) + '">' + ms(f.inp.p75) + " · " + catText(f.inp.category) + "</b></div>";
-        if (f.cls) speed += '<div class="lv-kv"><span>CLS · 75th pct.</span><b class="' + catClass(f.cls.category) + '">' + f.cls.p75 + " · " + catText(f.cls.category) + "</b></div>";
+        if (f.lcp) speed += kv("LCP · " + t("p75"), ms(f.lcp.p75) + " · " + esc(catText(f.lcp.category)), catClass(f.lcp.category));
+        if (f.inp) speed += kv("INP · " + t("p75"), ms(f.inp.p75) + " · " + esc(catText(f.inp.category)), catClass(f.inp.category));
+        if (f.cls) speed += kv("CLS · " + t("p75"), f.cls.p75 + " · " + esc(catText(f.cls.category)), catClass(f.cls.category));
       } else {
-        speed += '<div class="lv-kv"><span>Real visitors</span><b>not enough Chrome data</b></div>';
+        speed += kv(t("realVisitors"), esc(t("noField")));
       }
-      if (sp.lab && sp.lab.lcp) speed += '<div class="lv-kv"><span>Lab LCP · TBT</span><b>' + ms(sp.lab.lcp) + " · " + ms(sp.lab.tbt || 0) + "</b></div>";
+      if (sp.lab && sp.lab.lcp) speed += kv(t("labTiming"), ms(sp.lab.lcp) + " · " + ms(sp.lab.tbt || 0));
     }
 
-    const sec = '<div class="lv-sec">' + (d.security || []).map((h) => '<span class="st-' + esc(h.state) + '" title="' + esc(h.state) + '">' + esc(h.label) + "</span>").join("") + "</div>";
+    const sec = '<div class="lv-sec">' + (d.security || []).map((h) => '<span class="st-' + esc(h.state) + '" title="' + esc(t(h.state) || h.state) + '">' + esc(h.label) + "</span>").join("") + "</div>";
 
     const layers = Object.entries((d.coverage && d.coverage.layers) || {}).sort((a, b) => b[1] - a[1]).map(([k, v]) => '<span class="lchip">' + esc(k) + " · " + v + "</span>").join("");
 
@@ -890,28 +1090,22 @@
       ["gTested", ["focus", "tests", "pages"]],
       ["gBuilt", ["hosting", "tech", "analytics", "consent", "lang"]]
     ];
-    const tagLabel = (tag) => {
-      if (tag.g === "sector") return sectorLabel(tag.k);
-      if (tag.g === "scope") return t(tag.k);
-      if (tag.g === "place") return place.replace(/&amp;/g, "&");
-      if (tag.g === "focus") return focusLabel(tag.k);
-      return tag.t;
-    };
+    const tagLabel = (tag) => (tag.g === "place" ? place.replace(/&amp;/g, "&") : tagText(tag));
     const tagCls = (tag) => (tag.g === "rank" ? "t-rank" : tag.g === "sector" ? "t-sector" : tag.tone ? "t-" + tag.tone : "");
     const tags = groups.map(([label, list]) => {
       const items = (d.tags || []).filter((tag) => list.includes(tag.g));
       if (!items.length) return "";
-      return '<div class="lv-tg"><span' + nt() + ">" + esc(t(label)) + '</span><div class="lv-chips">' + items.map((tag) => '<span class="lchip ' + tagCls(tag) + '">' + esc(tagLabel(tag)) + "</span>").join("") + "</div></div>";
+      return '<div class="lv-tg"><span' + nt() + ">" + esc(t(label)) + '</span><div class="lv-chips">' + items.map((tag) => '<span class="lchip ' + tagCls(tag) + '"' + (tagKeep(tag) || tag.g === "place" ? nt() : "") + ">" + esc(tagLabel(tag)) + "</span>").join("") + "</div></div>";
     }).join("");
 
     return '<div class="lv-hero"><div>' +
       '<p class="lv-meta"><span class="lv-scope s-' + esc(d.scope.toLowerCase()) + '"' + nt() + ">" + esc(t(d.scope.toLowerCase())) + "</span><span" + nt() + ">" + place + "</span><span>·</span><span" + nt() + ">" + esc(sectorLabel(d.sector)) + "</span><span>·</span><span" + nt() + ">" + esc(t("read", { date: dateText(d.read) })) + " · " + esc(t(d.pages === 1 ? "page" : "pages", { n: d.pages })) + "</span></p>" +
-      '<h2 class="lv-name" id="lv-name">' + esc(d.name) + "</h2>" +
+      '<h2 class="lv-name notranslate" id="lv-name" translate="no">' + esc(d.name) + "</h2>" +
       '<p class="lv-host"><span class="notranslate">' + esc(d.host) + '</span><a href="' + esc(d.url) + '" target="_blank" rel="noopener noreferrer nofollow"' + nt() + ">" + esc(t("visit")) + " ↗</a></p>" +
       '<p class="lv-headline">' + head + "</p>" +
       (d.body ? '<p class="lv-body-text">' + esc(d.body) + "</p>" : "") +
       (d.lesson ? '<p class="lv-lesson"><b' + nt() + ">" + esc(t("hLesson")) + "</b>" + esc(d.lesson) + "</p>" : "") +
-      '</div><div class="lv-scorebox"><div class="lv-ring">' + ringSvg(d.overall, 200, 14) + "<b>" + d.overall + "<small>GRADE " + esc(d.grade) + "</small></b></div>" + rank + "</div></div>" +
+      '</div><div class="lv-scorebox"><div class="lv-ring">' + ringSvg(d.overall, 200, 14) + '<b class="notranslate" translate="no">' + d.overall + "<small>" + esc(t("gradeWord")) + " " + esc(d.grade) + "</small></b></div>" + rank + "</div></div>" +
       '<p class="lv-h"' + nt() + ">" + esc(t("hAreas")) + '</p><div class="lv-areas">' + areas + "</div>" +
       '<div class="lv-cols" style="margin-top:16px"><section class="lv-card"><h3 class="lv-h"' + nt() + ">" + esc(t("hFix")) + '</h3><ol class="lv-fix">' + fix + "</ol></section>" +
       '<section class="lv-card"><h3 class="lv-h"' + nt() + ">" + esc(t("hWorks")) + '</h3><ul class="lv-works">' + works + "</ul></section></div>" +
