@@ -448,7 +448,8 @@ test.describe("mail to the asker", () => {
   test("the report mail keeps the scores open and cuts the rest of each finding on the server", () => {
     const mail = customerMail.reportMail(record, { stopUrl: "https://fn/notes/stop?t=1" });
     assert.equal(mail.lang, "es");
-    assert.match(mail.subject, /example\.com sacó 63\/100/);
+    assert.match(mail.subject, /example\.com/);
+    assert.match(mail.subject, /63/);
     assert.match(mail.html, /Seguridad/);
     assert.match(mail.html, /Strict-Transport-Security/);
     assert.ok(!mail.html.includes(hidden) && !mail.text.includes(hidden));
@@ -472,6 +473,23 @@ test.describe("mail to the asker", () => {
     const mail = customerMail.noteMail(note, { stopUrl: "https://fn/notes/stop?t=2" });
     assert.match(mail.html, /Abrir el último informe/);
     assert.match(mail.html, /notes\/stop\?t=2/);
+  });
+
+  test("notes are scenes, never the price rules, and the next note is a different scene", () => {
+    const copy = require("../../functions/url-review-note-copy");
+    customerMail.LANGS.forEach((lang) => {
+      ["return", "paid", "offer"].forEach((kind) => {
+        assert.ok(copy[lang][kind].length >= 5, lang + " " + kind);
+        assert.equal(copy[lang][kind].length, copy.en[kind].length, lang + " " + kind);
+        copy[lang][kind].forEach((row) => {
+          assert.equal(row.length, 3);
+          assert.ok(!/%|USD|\d/.test(row.join(" ")), lang + " " + kind + ": " + row[0]);
+        });
+      });
+    });
+    const first = offers.queue([record], now)[0];
+    const second = offers.queue([record, { status: "follow-note", email: record.email, createdAt: ago(3) }], now)[0];
+    assert.notEqual(first.title, second.title);
   });
 
   test("the stop page asks before it stops, so a link scanner cannot stop the notes", () => {

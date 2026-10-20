@@ -18,11 +18,11 @@ const SHOWN_FINDINGS = 5;
 
 const COPY = {
   en: {
-    subject: "{host} scored {score}/100. The rest is under frost.",
+    subjects: ["{host} scored {score}/100. The rest is under frost.", "{score}/100 for {host}. Here is where the points went.", "{host}: {score} out of 100, and a list worth reading."],
     subjectPlain: "Your review of {host} is in.",
     preheader: "Six scores are open. {count} findings wait under the blur.",
     title: "The review of {host} is in.",
-    lead: "The six scores are open. Each finding shows its first words; the rest stays frosted until the report is unlocked. Same rule as on the page.",
+    lead: "The six scores are in the clear. The findings sit under frost, with just enough showing to tell which ones matter.",
     outOf: "out of 100",
     pages: "pages read",
     cases: "proposed test cases",
@@ -42,11 +42,11 @@ const COPY = {
     page: ["Stop the follow-up notes?", "Stop them", "Done. No more follow-up notes go to {email}.", "This link no longer works."]
   },
   es: {
-    subject: "{host} sacó {score}/100. El resto sigue empañado.",
+    subjects: ["{host} sacó {score}/100. El resto sigue empañado.", "{score}/100 para {host}. Aquí está a dónde se fueron los puntos.", "{host}: {score} de 100, y una lista que vale la pena leer."],
     subjectPlain: "La revisión de {host} está lista.",
     preheader: "Los seis puntajes están abiertos. {count} hallazgos esperan bajo el desenfoque.",
     title: "La revisión de {host} está lista.",
-    lead: "Los seis puntajes están abiertos. Cada hallazgo muestra sus primeras palabras; el resto sigue empañado hasta desbloquear el informe. La misma regla que en la página.",
+    lead: "Los seis puntajes están a la vista. Los hallazgos siguen empañados, con lo justo para saber cuáles importan.",
     outOf: "de 100",
     pages: "páginas leídas",
     cases: "casos de prueba propuestos",
@@ -66,11 +66,11 @@ const COPY = {
     page: ["¿Dejar de recibir las notas?", "Sí, detenerlas", "Listo. No llegarán más notas a {email}.", "Este enlace ya no sirve."]
   },
   pt: {
-    subject: "{host} tirou {score}/100. O resto está embaçado.",
+    subjects: ["{host} tirou {score}/100. O resto está embaçado.", "{score}/100 para {host}. Veja para onde foram os pontos.", "{host}: {score} de 100, e uma lista que vale a leitura."],
     subjectPlain: "A revisão de {host} está pronta.",
     preheader: "As seis notas estão abertas. {count} achados esperam sob o desfoque.",
     title: "A revisão de {host} está pronta.",
-    lead: "As seis notas estão abertas. Cada achado mostra as primeiras palavras; o resto fica embaçado até o relatório ser desbloqueado. A mesma regra da página.",
+    lead: "As seis notas estão à vista. Os achados seguem embaçados, com o suficiente para saber quais importam.",
     outOf: "de 100",
     pages: "páginas lidas",
     cases: "casos de teste propostos",
@@ -90,11 +90,11 @@ const COPY = {
     page: ["Parar as notas?", "Sim, parar", "Pronto. Nenhuma nota a mais vai para {email}.", "Este link não vale mais."]
   },
   de: {
-    subject: "{host} hat {score}/100. Der Rest liegt unter Milchglas.",
+    subjects: ["{host} hat {score}/100. Der Rest liegt unter Milchglas.", "{score}/100 für {host}. Wo die Punkte verloren gingen.", "{host}: {score} von 100 und eine Liste, die sich lohnt."],
     subjectPlain: "Die Prüfung von {host} ist fertig.",
     preheader: "Die sechs Werte sind offen. {count} Befunde warten unter der Unschärfe.",
     title: "Die Prüfung von {host} ist fertig.",
-    lead: "Die sechs Werte sind offen. Jeder Befund zeigt seine ersten Wörter; der Rest bleibt unscharf, bis der Bericht freigeschaltet ist. Dieselbe Regel wie auf der Seite.",
+    lead: "Die sechs Werte liegen offen. Die Befunde stehen unter Milchglas, gerade so sichtbar, dass man erkennt, welche zählen.",
     outOf: "von 100",
     pages: "gelesene Seiten",
     cases: "vorgeschlagene Testfälle",
@@ -114,11 +114,11 @@ const COPY = {
     page: ["Keine Notizen mehr?", "Ja, stoppen", "Erledigt. An {email} gehen keine Notizen mehr.", "Dieser Link gilt nicht mehr."]
   },
   fr: {
-    subject: "{host} obtient {score}/100. Le reste est sous verre dépoli.",
+    subjects: ["{host} obtient {score}/100. Le reste est sous verre dépoli.", "{score}/100 pour {host}. Voici où sont partis les points.", "{host} : {score} sur 100, et une liste qui vaut la lecture."],
     subjectPlain: "La revue de {host} est prête.",
     preheader: "Les six notes sont ouvertes. {count} constats attendent sous le flou.",
     title: "La revue de {host} est prête.",
-    lead: "Les six notes sont ouvertes. Chaque constat montre ses premiers mots ; la suite reste floue jusqu'au déblocage du rapport. Même règle que sur la page.",
+    lead: "Les six notes sont à découvert. Les constats restent sous verre dépoli, juste assez visibles pour savoir lesquels comptent.",
     outOf: "sur 100",
     pages: "pages lues",
     cases: "cas de test proposés",
@@ -138,11 +138,11 @@ const COPY = {
     page: ["Arrêter les notes ?", "Oui, arrêter", "C'est fait. Plus aucune note n'ira à {email}.", "Ce lien n'est plus valide."]
   },
   it: {
-    subject: "{host} ha preso {score}/100. Il resto è sotto vetro smerigliato.",
+    subjects: ["{host} ha preso {score}/100. Il resto è sotto vetro smerigliato.", "{score}/100 per {host}. Ecco dove sono finiti i punti.", "{host}: {score} su 100, e una lista che vale la pena leggere."],
     subjectPlain: "La revisione di {host} è pronta.",
     preheader: "I sei punteggi sono aperti. {count} rilievi aspettano sotto la sfocatura.",
     title: "La revisione di {host} è pronta.",
-    lead: "I sei punteggi sono aperti. Ogni rilievo mostra le prime parole; il resto resta sfocato finché il report non viene sbloccato. La stessa regola della pagina.",
+    lead: "I sei punteggi sono in chiaro. I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.",
     outOf: "su 100",
     pages: "pagine lette",
     cases: "casi di test proposti",
@@ -338,8 +338,9 @@ function reportMail(record, options) {
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
     deeperBlock(t, facts.host, facts.id);
+  const pick = Array.from(facts.id).reduce((sum, char) => sum + char.charCodeAt(0), 0) % t.subjects.length;
   const subject = facts.score
-    ? fill(t.subject, { host: facts.host, score: Number(facts.score.overall) || 0 })
+    ? fill(t.subjects[pick], { host: facts.host, score: Number(facts.score.overall) || 0 })
     : fill(t.subjectPlain, { host: facts.host });
   const findingLines = facts.findings.map((item) => "- " + item.shown + " …");
   const text = [

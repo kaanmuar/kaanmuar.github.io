@@ -1177,13 +1177,12 @@ async function sendReviewNotes() {
   const db = admin.firestore();
   const now = Date.now();
   const since = new Date(now - 31 * 24 * 60 * 60 * 1000).toISOString();
-  const weekAgo = new Date(now - 8 * 24 * 60 * 60 * 1000).toISOString();
   const [runSnap, passSnap, stopSnap, noteSnap] = await Promise.all([
     db.collection("url_reviews").where("createdAt", ">", since)
       .select("email", "status", "createdAt", "report.host", "name", "lang", "acceptLanguage", "country", "paid", "followUp").limit(2000).get(),
     db.collection("url_reviews").where("status", "==", "monthly-pass").select("email", "status", "paidUntil").limit(500).get(),
     db.collection("url_review_notes").where("status", "==", "follow-stop").select("email", "status").limit(5000).get(),
-    db.collection("url_review_notes").where("createdAt", ">", weekAgo).select("email", "status", "createdAt").limit(2000).get()
+    db.collection("url_review_notes").where("createdAt", ">", since).select("email", "status", "createdAt").limit(5000).get()
   ]);
   const rows = (snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
   const records = rows(runSnap).concat(rows(passSnap), rows(stopSnap), rows(noteSnap));
@@ -1197,6 +1196,7 @@ async function sendReviewNotes() {
           status: "follow-note",
           email: note.email,
           kind: note.kind,
+          scene: note.scene,
           reportId: note.reportId || "",
           createdAt: new Date().toISOString()
         });
