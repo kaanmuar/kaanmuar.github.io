@@ -942,6 +942,8 @@
     statusEl = shell.querySelector(".live-status");
     playBtn = shell.querySelector(".live-play");
     filtersEl = shell.querySelector(".live-filters");
+    const slot = section.querySelector("[data-live-filters]");
+    if (slot) slot.appendChild(filtersEl);
   }
 
   function paintEmpty() {
@@ -1005,9 +1007,10 @@
     bindCarousel();
     applyFilters();
     deepLink();
-    if (location.hash === "#live-reports") dock();
+    const gated = () => { const gate = document.getElementById("gate"); return !!gate && !gate.hidden; };
+    if (location.hash === "#live-reports" && gated()) dock();
     window.addEventListener("hashchange", () => {
-      if (location.hash === "#live-reports") { dock(); return; }
+      if (location.hash === "#live-reports") { if (gated()) dock(); return; }
       const match = location.hash.match(/^#live=([\w-]+)/);
       if (match && state.all.some((r) => r.id === match[1])) openReport(match[1], null, "link");
     });

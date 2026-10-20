@@ -95,6 +95,7 @@
   function unlock() {
     gate.hidden = true;
     app.inert = false;
+    document.querySelectorAll("[data-gated]").forEach((el) => { el.inert = false; });
     fields().forEach((el) => { el.disabled = false; });
     reasonBox.disabled = true;
     stopBtn.disabled = true;
@@ -2079,19 +2080,29 @@
       '<a class="wire-item" href="' + esc(item.href) + '" target="_blank" rel="noopener noreferrer"><video class="wire-art" muted loop playsinline autoplay preload="auto" src="' + esc(WIRE_CLIPS[(clipStart + index) % WIRE_CLIPS.length]) + '"></video><span><strong>' + esc(item.title) + "</strong><small>" + esc(item.meta) + "</small></span></a>"
     ).join("");
   }
+  let wireKey = "";
   function paintWireRows() {
     const rows = wire.querySelectorAll(".wire-row");
     const waiting = [{ href: "qa-review.html", title: "The wire is waiting for headlines.", meta: "This pass did not retrieve a headline." }];
     const source = wireItems.length ? wireItems : waiting;
+    const key = source.map((item) => item.href + "|" + item.title).join("\n") + "@" + wire.clientWidth;
+    if (key === wireKey) return;
+    wireKey = key;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     rows.forEach((row, rowIndex) => {
       const track = row.querySelector(".wire-track");
       const slice = source.filter((item, index) => index % rows.length === rowIndex);
       const shown = slice.length ? slice : source.slice(0, 1);
       track.classList.remove("run");
-      track.innerHTML = wireMarkup(shown, rowIndex * 3);
+      track.innerHTML = '<div class="wire-set">' + wireMarkup(shown, rowIndex * 3) + "</div>";
+      const set = track.firstChild;
+      const unit = set.innerHTML;
+      for (let i = 0; i < 12 && set.scrollWidth < row.clientWidth; i++) set.insertAdjacentHTML("beforeend", unit);
+      if (!reduced) track.appendChild(set.cloneNode(true)).setAttribute("aria-hidden", "true");
+      track.querySelectorAll('[aria-hidden="true"] a').forEach((link) => { link.tabIndex = -1; });
       track.querySelectorAll("video").forEach((video) => { video.play().catch(() => {}); });
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      track.style.animationDuration = Math.max(28, shown.length * 7) + "s";
+      if (reduced) return;
+      track.style.animationDuration = Math.max(20, set.scrollWidth / 42).toFixed(1) + "s";
       track.getBoundingClientRect();
       track.classList.add("run");
     });
@@ -2147,19 +2158,18 @@
     });
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     paintWireRows();
-    wire.querySelectorAll(".wire-row").forEach((row) => {
-      if (reduced) return;
-      row.addEventListener("animationend", (event) => {
-        const track = row.querySelector(".wire-track");
-        if (event.target !== track) return;
-        if (Date.now() - wireAt > 3 * 60 * 1000) {
+    if (!reduced) {
+      wire.addEventListener("animationiteration", (event) => {
+        if (event.target.classList.contains("wire-track") && Date.now() - wireAt > 3 * 60 * 1000) {
+          wireAt = Date.now();
           loadWire();
-          return;
         }
-        track.classList.remove("run");
-        track.getBoundingClientRect();
-        track.classList.add("run");
       });
+    }
+    let wireResize = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(wireResize);
+      wireResize = setTimeout(paintWireRows, 250);
     });
     loadWire();
     if (window.SiteI18n && SiteI18n.follow) SiteI18n.follow(() => loadWire());

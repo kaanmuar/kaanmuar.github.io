@@ -327,7 +327,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/site-look.css?v=20261006d">
     <link rel="stylesheet" href="css/qa-review-folds.css?v=20261020a">
-    <link rel="stylesheet" href="css/qa-review-live.css?v=20261019a">
+    <link rel="stylesheet" href="css/qa-review-live.css?v=20261020a">
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
@@ -557,23 +557,23 @@
         #cookie-necessary { background: transparent; color: var(--text); border: 1px solid var(--line); }
         #cookie-allow { background: var(--cyan); color: var(--on-cyan); border: 0; }
         h1, #gate-title { font-family: "Instrument Serif", "Source Serif 4", Georgia, serif; font-weight: 400; font-size: 2.4rem; margin: 0 0 8px; letter-spacing: -0.03em; }
-        .display { font-size: clamp(2.7rem, 5.4vw, 4.6rem); line-height: .9; letter-spacing: -0.035em; margin: 0 0 14px; }
+        .display { font-size: clamp(2.4rem, 4.3vw, 3.7rem); line-height: .9; letter-spacing: -0.035em; margin: 0 0 12px; }
         .display span { display: block; }
         .display-em { font-style: italic; color: var(--cyan); }
         .display-quiet { margin-top: 12px; font-family: Inter, system-ui, sans-serif; font-size: .28em; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-        .stage { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); gap: 28px; align-items: center; margin: 8px 0 4px; }
-        .stage-art { position: relative; height: 420px; overflow: hidden; }
-        .scene { height: 100%; perspective: 1100px; }
-        .stage-rig { position: relative; width: min(460px, 100%); height: 380px; margin: 0 auto; transform-style: preserve-3d; animation: stage-yaw 36s ease-in-out infinite; }
+        .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr); gap: 32px; align-items: center; max-width: 1480px; margin: 0 auto; padding: 18px 20px 22px; box-sizing: border-box; overflow-x: clip; }
+        .stage-art { position: relative; height: 330px; }
+        .scene { height: 100%; perspective: 1300px; }
+        .stage-rig { position: relative; width: min(620px, 100%); height: 330px; margin: 0 auto; transform-style: preserve-3d; animation: stage-yaw 36s ease-in-out infinite; }
         .plane { position: absolute; transform-style: preserve-3d; }
         .reel3d {
-            width: min(400px, 100%); height: 360px; left: 50%; top: 8px;
-            margin-left: calc(min(400px, 100%) / -2); overflow: visible;
+            width: min(580px, 100%); height: 330px; left: 50%; top: 0;
+            margin-left: calc(min(580px, 100%) / -2); overflow: visible;
             background: transparent; transform-style: preserve-3d;
         }
         .reel3d > img,
         .reel3d > .clip {
-            position: absolute; width: 78%; height: 64%; left: 11%; top: 14%;
+            position: absolute; width: 88%; height: auto; aspect-ratio: 16 / 9; left: 6%; top: 8%;
             object-fit: cover; object-position: 50% 50%; border-radius: 22px; opacity: 0;
             box-shadow: 0 28px 46px rgba(8, 14, 18, .42), 0 0 0 1px rgba(77, 179, 187, .28);
             transform-style: preserve-3d; backface-visibility: hidden;
@@ -608,20 +608,21 @@
             0%, 16.96%, 100% { opacity: 0; transform: translate3d(0, 0, 22px); }
             2.68%, 14.29% { opacity: 1; transform: translate3d(0, 0, 28px); }
         }
-        .wire { width: 100vw; margin: 10px calc(50% - 50vw) 4px; overflow: hidden; border-block: 1px solid var(--line); background: color-mix(in srgb, var(--card) 88%, var(--cyan)); }
+        .wire { overflow: hidden; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--card) 88%, var(--cyan)); }
         .wire-row { display: flex; overflow: hidden; border-bottom: 1px solid var(--line); }
         .wire-row:last-child { border-bottom: 0; }
-        .wire-track { display: flex; width: max-content; will-change: transform; }
-        .wire-row[data-dir="ltr"] .wire-track.run { animation: wire-ltr 16s linear; }
-        .wire-row[data-dir="rtl"] .wire-track.run { animation: wire-rtl 16s linear; }
-        .wire-row:hover .wire-track { animation-play-state: paused; }
-        .wire-item { display: flex; align-items: center; gap: 8px; padding: 3px 14px; color: inherit; text-decoration: none; white-space: nowrap; }
+        .wire-track, .wire-set { display: flex; width: max-content; }
+        .wire-track { will-change: transform; }
+        .wire-row[data-dir="ltr"] .wire-track.run { animation: wire-ltr 40s linear infinite; }
+        .wire-row[data-dir="rtl"] .wire-track.run { animation: wire-rtl 40s linear infinite; }
+        .wire:hover .wire-track.run, .wire:focus-within .wire-track.run { animation-play-state: paused; }
+        .wire-item { display: flex; align-items: center; gap: 7px; padding: 2px 12px; color: inherit; text-decoration: none; white-space: nowrap; }
         .wire-item:hover strong { color: var(--cyan); }
-        .wire-art { width: 72px; height: 40px; flex: none; border-radius: 6px; object-fit: cover; background: #12181f; }
-        .wire-item strong { display: block; font-size: 12px; font-weight: 650; line-height: 1.2; }
-        .wire-item small { display: block; color: var(--muted); font-size: 10px; margin-top: 1px; }
-        @keyframes wire-ltr { from { transform: translateX(-100%); } to { transform: translateX(100vw); } }
-        @keyframes wire-rtl { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
+        .wire-art { width: 46px; height: 26px; flex: none; border-radius: 5px; object-fit: cover; background: #12181f; }
+        .wire-item strong { display: block; font-size: 11.5px; font-weight: 650; line-height: 1.2; }
+        .wire-item small { display: block; color: var(--muted); font-size: 9.5px; margin-top: 1px; }
+        @keyframes wire-ltr { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+        @keyframes wire-rtl { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         @media (prefers-reduced-motion: reduce) {
             .stage-rig, .reel3d > img, .reel3d > .clip, .wire-track, .wire-track.run, .ribbon-track, .alarm-lamp { animation: none; }
             .stage-rig { transform: rotateX(12deg) rotateY(-12deg); }
@@ -633,7 +634,7 @@
         .facts b { display: block; font-family: "Instrument Serif", Georgia, serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.03em; line-height: 1; }
         .facts span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; letter-spacing: .04em; }
         #reviewed-count { font-variant-numeric: tabular-nums; }
-        .ribbon { overflow: hidden; margin: 18px 0 22px; border-block: 1px solid var(--line); }
+        .ribbon { overflow: hidden; margin: 0 0 22px; border-block: 1px solid var(--line); }
         .ribbon-track { display: flex; width: max-content; gap: 0; animation: ribbon-drift 46s linear infinite; }
         .ribbon-track span { padding: 11px 0; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
         .ribbon-track span::before { content: "·"; margin: 0 16px; color: var(--cyan); }
@@ -804,15 +805,15 @@
             .display { font-size: 2.15rem; }
             h1, #gate-title { font-size: 1.65rem; }
             .lede { font-size: 15px; margin-bottom: 12px; }
-            .stage { gap: 8px; margin: 0; }
-            .stage-art { height: 210px; }
+            .stage { gap: 8px; padding: 12px 14px 16px; }
+            .stage-art { height: 200px; }
             .stage-rig { height: 190px; }
             .reel3d { height: 180px; top: 0; }
             .facts { gap: 10px; }
             .facts li { flex: 1; min-width: 0; }
             .facts b { font-size: 1.55rem; }
             .facts span { font-size: 11px; line-height: 1.25; }
-            .ribbon { margin: 10px 0 14px; }
+            .ribbon { margin: 0 0 14px; }
             .card { padding: 14px; border-radius: 14px; }
             .grid-2, .split, .kpis, .work, .visuals, .report-cover, .ticks, .stage, .tool-list { grid-template-columns: 1fr; }
             #run-panel, .work-side { grid-column: 1; grid-row: auto; }
@@ -922,8 +923,11 @@
         </form>
     </div>
 </div>
-<main id="review-app" inert>
-    <section class="stage">
+<section class="wire" aria-label="News" inert data-gated>
+    <div class="wire-row" data-dir="ltr"><div class="wire-track"></div></div>
+    <div class="wire-row" data-dir="rtl"><div class="wire-track"></div></div>
+</section>
+<section class="stage" aria-labelledby="studio-title" inert data-gated>
         <div class="stage-copy">
             <p class="eyebrow">QA-lab URL Review</p>
             <h1 id="studio-title" class="display" lang="es" translate="no">
@@ -956,11 +960,24 @@
                 </div>
             </div>
         </div>
-    </section>
-    <section class="wire" aria-label="News">
-        <div class="wire-row" data-dir="ltr"><div class="wire-track"></div></div>
-        <div class="wire-row" data-dir="rtl"><div class="wire-track"></div></div>
-    </section>
+</section>
+<section id="live-reports" class="live" aria-labelledby="live-title">
+    <div class="live-inner">
+        <div class="live-side">
+            <header class="live-head">
+                <div>
+                    <p class="eyebrow" data-live-eyebrow>Live reports</p>
+                    <h2 id="live-title" class="live-title" data-live-title>Real sites. Real reads. <em>Open any of them.</em></h2>
+                    <p class="live-lede" data-live-lede>Public sites read by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Open a report to see the scores, what to fix first, and what already works. View and share only.</p>
+                </div>
+                <button class="btn live-back" id="live-back" type="button">Back</button>
+            </header>
+            <div class="live-filters-slot" data-live-filters></div>
+        </div>
+        <div class="live-main" data-live-app><noscript><p class="live-lede">Live reports need JavaScript to open. As of October 19, 2026, the series holds 114 public sites in 26 sectors, each read that day by the same review anyone can run. The average overall score is 77 out of 100: SEO 68, GEO 85, analytics 86, security 68, accessibility 80, and performance 79. The highest overall scores are MDN Web Docs 95, GOV.UK 92, GitHub Docs 91, and Node.js 89. The series covers government portals such as GOV.UK, GOV.CO, and Alcaldía de Bogotá; newsrooms such as BBC, The Guardian, and El País; banks such as Bancolombia and Davivienda; universities such as MIT, Stanford, and Universidad de los Andes; open-source projects such as Python.org, Node.js, and Kubernetes; and transit systems such as TransMilenio and Metro de Medellín. Each report is one automated read of public pages, a starting point and not a verdict.</p></noscript></div>
+    </div>
+</section>
+<main id="review-app" inert>
     <div class="ribbon" aria-hidden="true">
         <div class="ribbon-track">
             <span>Functional</span><span>Content</span><span>Links</span><span>Accessibility</span><span>Security</span><span>Privacy</span><span>SEO</span><span>GEO</span><span>Performance</span><span>Load</span><span>Mobile</span><span>Internationalization</span><span>Resilience</span><span>Compatibility</span>
@@ -1084,19 +1101,6 @@
     </section>
     </div>
 </main>
-<section id="live-reports" class="live" aria-labelledby="live-title">
-    <div class="live-inner">
-        <header class="live-head">
-            <div>
-                <p class="eyebrow" data-live-eyebrow>Live reports</p>
-                <h2 id="live-title" class="live-title" data-live-title>Real sites. Real reads. <em>Open any of them.</em></h2>
-                <p class="live-lede" data-live-lede>Public sites read by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Open a report to see the scores, what to fix first, and what already works. View and share only.</p>
-            </div>
-            <button class="btn live-back" id="live-back" type="button">Back</button>
-        </header>
-        <div data-live-app><noscript><p class="live-lede">Live reports need JavaScript to open. As of October 19, 2026, the series holds 114 public sites in 26 sectors, each read that day by the same review anyone can run. The average overall score is 77 out of 100: SEO 68, GEO 85, analytics 86, security 68, accessibility 80, and performance 79. The highest overall scores are MDN Web Docs 95, GOV.UK 92, GitHub Docs 91, and Node.js 89. The series covers government portals such as GOV.UK, GOV.CO, and Alcaldía de Bogotá; newsrooms such as BBC, The Guardian, and El País; banks such as Bancolombia and Davivienda; universities such as MIT, Stanford, and Universidad de los Andes; open-source projects such as Python.org, Node.js, and Kubernetes; and transit systems such as TransMilenio and Metro de Medellín. Each report is one automated read of public pages, a starting point and not a verdict.</p></noscript></div>
-    </div>
-</section>
 <div id="dash-overlay" class="dash-overlay">
     <div class="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-title">
         <div class="sheet-mark" aria-hidden="true"></div>
@@ -1281,7 +1285,7 @@
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
-<script src="js/qa-review.js?v=20261027c"></script>
-<script src="js/qa-review-live.js?v=20261019b"></script>
+<script src="js/qa-review.js?v=20261027d"></script>
+<script src="js/qa-review-live.js?v=20261020a"></script>
 </body>
 </html>
