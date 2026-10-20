@@ -958,7 +958,7 @@
                         tour_title_education: "Education & Certifications",
                         tour_desc_education: "Degrees and the certifications I keep current: CSPM, ISTQB, CISA, and CISSP.",
                         page_title: "Carlos Muñoz Ardila | QA Architect, contract and advisory",
-                        meta_description: "Carlos A. Muñoz, senior QA architect with over 18 years, builds a full QA path as a contractor, advisor, or mentor. Plus a free QA lab and SDLC studio.",
+                        meta_description: "Carlos Muñoz Ardila, senior QA architect with over 18 years, builds a full QA path as a contractor, advisor, or mentor. Plus a free QA lab and SDLC studio.",
                         json_job_title: "Senior IT Project Manager, QA Architect & QA Leader",
                         json_description: "A Senior IT Project Manager and QA Architect with over 18 years of experience delivering high-quality, complex software solutions for global technology leaders. Expert in IT project management, QA automation, DevOps strategy, cloud platforms, and leading cross-functional teams. Available for contract, freelance, advisory, and mentoring, and to build a full QA path: strategy, automation, CI, and the team. This interactive CV adds competency filters, print and downloads, a free QA regression lab, and a free SDLC studio."
                     },
