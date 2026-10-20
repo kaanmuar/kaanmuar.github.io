@@ -1331,6 +1331,17 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(405).json({ error: "Use the desk sign-in." });
     return;
   }
+  if (req.method === "GET" && pathName.indexOf("/stats") !== -1) {
+    try {
+      const data = await reviewTotals();
+      res.set("Cache-Control", "public, max-age=60");
+      res.status(200).json({ pages: Number(data.pages) || 0, reviews: Number(data.reviews) || 0 });
+    } catch (error) {
+      console.error("Review totals failed:", error);
+      res.status(503).json({ error: "The totals are not available right now." });
+    }
+    return;
+  }
   if (req.method === "GET" && pathName.indexOf("/news") !== -1) {
     try {
       const news = await newsWire.loadNews({
@@ -1768,6 +1779,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       writeLine({ type: "log", text: "Compared with your review of " + report.host + " from " + String(history.previousAt).slice(0, 10) + ": " + history.fixedCount + " fixed, " + history.freshCount + " new." });
     }
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
+    await countReviewed(report);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     await mailReviewedSites(ip, record);
     writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
@@ -1792,6 +1804,45 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     if (runId) admin.firestore().collection("url_review_stops").doc(runId).delete().catch(() => {});
   }
 });
+
+async function reviewTotals() {
+  const ref = admin.firestore().collection("url_review_stats").doc("totals");
+  const snap = await ref.get();
+  if (snap.exists) return snap.data();
+  const { AggregateField } = admin.firestore;
+  const done = admin.firestore().collection("url_reviews").where("report.limits.pagesRead", ">", 0);
+  const sums = (await done.aggregate({
+    pages: AggregateField.sum("report.limits.pagesRead"),
+    reviews: AggregateField.count()
+  }).get()).data();
+  const seeded = { pages: Number(sums.pages) || 0, reviews: Number(sums.reviews) || 0 };
+  try {
+    await ref.create(Object.assign({ seededAt: admin.firestore.FieldValue.serverTimestamp() }, seeded));
+  } catch (error) {
+    if (error.code !== 6) throw error;
+    return (await ref.get()).data();
+  }
+  return seeded;
+}
+
+async function countReviewed(report) {
+  const pages = Number(report && report.limits && report.limits.pagesRead) || 0;
+  if (!pages) return;
+  try {
+    const ref = admin.firestore().collection("url_review_stats").doc("totals");
+    if (!(await ref.get()).exists) {
+      await reviewTotals();
+      return;
+    }
+    await ref.set({
+      pages: admin.firestore.FieldValue.increment(pages),
+      reviews: admin.firestore.FieldValue.increment(1),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.error("Review totals update failed:", error);
+  }
+}
 
 async function previousRun(email, report) {
   if (!email || !report || !report.host || !report.insights) return null;
