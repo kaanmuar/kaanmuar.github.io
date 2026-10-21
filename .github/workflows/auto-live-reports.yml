@@ -34,6 +34,15 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Require the Buffer key
+        if: ${{ !inputs.dry_run }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          if [ -z "$BUFFER_API_KEY" ]; then
+            echo "::error::Add the BUFFER_API_KEY secret (Buffer → Settings → API). Nothing is published until then, so no review loses its post."
+            exit 1
+          fi
       - name: Check out repository
         uses: actions/checkout@v4
         with:
@@ -105,9 +114,7 @@ jobs:
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           CLIP_BASE: https://github.com/${{ github.repository }}/releases/download/${{ steps.reports.outputs.batch }}
-        run: |
-          if [ -z "$BUFFER_API_KEY" ]; then echo "::warning::BUFFER_API_KEY is not set; the batch is rendered and released but not queued."; exit 0; fi
-          node scripts/buffer-queue.js --batch "${{ steps.reports.outputs.batch }}"
+        run: node scripts/buffer-queue.js --batch "${{ steps.reports.outputs.batch }}"
 
       - name: Summary
         if: always()
