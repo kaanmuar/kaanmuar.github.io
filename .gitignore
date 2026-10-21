@@ -29,3 +29,4 @@ watir/.bundle/
 watir/Gemfile.lock
 reqnroll/Features/*.feature.cs
 previews/
+media/url-review-demos/
