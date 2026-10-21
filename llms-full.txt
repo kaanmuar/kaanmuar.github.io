@@ -193,7 +193,7 @@ One public address. Six scores. A list your team can start from on Monday.
 
 ## Live reports (https://carlosandmunoz.com/qa-review.html#live-reports)
 
-As of 2026-10-21, the series holds 237 public sites in 27 sectors, each read once by QA-lab URL Review (up to 20 pages). Average overall score 77; area averages: SEO 68, GEO 84, Analytics 86, Security 67, Accessibility 81, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
+As of 2026-10-21, the series holds 239 public sites in 27 sectors, each read once by QA-lab URL Review (up to 100 pages). Average overall score 76; area averages: SEO 68, GEO 84, Analytics 86, Security 67, Accessibility 80, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
 
 Site | Sector | Scope | Place | Read | Overall | Report
 MDN Web Docs | Developer docs | Worldwide | San Francisco, US | 2026-10-19 | 95 | https://carlosandmunoz.com/qa-review.html?live=mdn
@@ -420,6 +420,7 @@ FIDE | Sports & recreation | Worldwide | Lausanne, CH | 2026-10-21 | 64 | https:
 Secretaría Distrital de Planeación | Government | Local | Bogotá, CO | 2026-10-21 | 64 | https://carlosandmunoz.com/qa-review.html?live=sdp
 Secretaría de Educación de Bogotá | Education | Local | Bogotá, CO | 2026-10-19 | 64 | https://carlosandmunoz.com/qa-review.html?live=educacionbogota
 gob.mx | Government | National | Mexico City, MX | 2026-10-21 | 64 | https://carlosandmunoz.com/qa-review.html?live=gobmx
+teaminternational.com |  | Requested | Requested | 2026-10-19 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com
 Alcaldía de Pereira | Government | Local | Pereira, CO | 2026-10-19 | 63 | https://carlosandmunoz.com/qa-review.html?live=pereira
 Canada.ca | Government | National | Ottawa, CA | 2026-10-21 | 63 | https://carlosandmunoz.com/qa-review.html?live=canadaca
 Procuraduría General | Government | National | Bogotá, CO | 2026-10-19 | 63 | https://carlosandmunoz.com/qa-review.html?live=procuraduria
@@ -433,3 +434,4 @@ Gobernación de Santander | Government | Regional | Bucaramanga, CO | 2026-10-21
 Gobernación de Risaralda | Government | Regional | Pereira, CO | 2026-10-21 | 55 | https://carlosandmunoz.com/qa-review.html?live=risaralda
 ITU | Telecom | Worldwide | Geneva, CH | 2026-10-21 | 53 | https://carlosandmunoz.com/qa-review.html?live=itu
 Universidad de Antioquia | Higher education | Local | Medellín, CO | 2026-10-19 | 53 | https://carlosandmunoz.com/qa-review.html?live=udea
+epssura.com |  | Requested | Requested | 2026-10-20 | 40 | https://carlosandmunoz.com/qa-review.html?live=u-epssura-com
