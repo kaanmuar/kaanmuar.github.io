@@ -992,6 +992,47 @@ test("a re-run is held for the owner, and the report opens without payment once 
   assert.match(mail.body, /No asker was emailed\./);
 });
 
+test("a new cause class opens one bug, from failures the probe still sees and from failed re-runs", () => {
+  const stuck = (at, extra) => failedAt(at, Object.assign({
+    cause: { id: "timeout", label: "The site took too long" },
+    error: { message: "The page took too long. https://shop.example.com/p?token=abc ana@example.com" },
+    diagnosis: { cause: "timeout", cleared: false, rerun: false, nowLabel: "The plain read fails: The page took too long." },
+    probe: { dns: { addresses: ["1.2.3.4"] }, plain: { hops: [], error: "The page took too long.", code: "ETIMEDOUT" } },
+    lines: [{ t: 0, text: "Reading https://shop.example.com/?ref=mail" }, { t: 9, text: "Ana <ana@example.com> and Mia <mia@example.org> asked about Analytics" }]
+  }, extra || {}));
+  const a = stuck("2026-10-23T10:00:00Z");
+  const b = stuck("2026-10-24T10:00:00Z", { url: "https://indriver.com/", host: "indriver.com", lines: [] });
+  const cleared = failedAt("2026-10-24T11:00:00Z");
+  const dns = stuck("2026-10-24T12:00:00Z", { cause: { id: "dns" } });
+  const settled = stuck("2026-10-24T13:00:00Z", { rerun: { status: "held", at: "2026-10-25T11:30:00Z" } });
+  const oldBot = stuck("2026-10-21T15:00:00Z", { cause: { id: "bot-protection" } });
+  const newBot = stuck("2026-10-22T15:00:00Z", { cause: { id: "bot-protection" }, probe: { dns: { addresses: [] }, plain: { hops: [{ location: "/es" }], status: 403, contentType: "text/html", server: "cloudflare", challenge: "Cloudflare" }, browser: { ok: true, untagged: true, docStatus: 403, challenge: "Cloudflare", words: 12 } } });
+  const rerun = { id: "x1", status: "failed", at: "2026-10-22T11:30:00Z", host: "bbva.com.co", failureIds: ["f1", "f2"], trigger: { label: "Sites behind bot protection are read in headless Chrome (#319, shipped after the failure)" }, error: { message: "The site's bot protection refused the review (status 403)." }, cause: { id: "bot-protection" }, lines: [] };
+  const held = Object.assign({}, rerun, { id: "x2", status: "held", cause: null });
+
+  const bugs = failures.bugPlan([a, b, cleared, dns, settled, oldBot, newBot], [rerun, held], []);
+  assert.deepEqual(bugs.map((bug) => [bug.key, bug.runs]), [["timeout", 2], ["bot-protection-319", 2]]);
+  const [timeout, bot] = bugs;
+  assert.equal(timeout.title, "BE: URL reviews failed because the site took too long");
+  assert.deepEqual(timeout.hosts, ["indriver.com", "bbva.com.co"]);
+  assert.match(timeout.body, /^\*\*Kind:\*\* Bug\n\*\*Area:\*\* BE\n\*\*Found while:\*\* #320/);
+  assert.match(timeout.body, /2 URL review runs failed with the cause class `timeout` \(The site took too long\) from 2026-10-23 to 2026-10-24, on 2 sites: indriver\.com, bbva\.com\.co\./);
+  assert.match(timeout.body, /- 2026-10-24 10:00 UTC, failed run `f-2026-10-24T10:00:00Z` on indriver\.com: /);
+  assert.match(timeout.body, /- DNS: 1 addresses\n- Plain read with the review UA: fails \(The page took too long\., ETIMEDOUT\)\n- Headless Chrome: not tried/);
+  assert.match(timeout.body, /### Last log lines of `f-2026-10-23T10:00:00Z`\n```\nReading https:\/\/shop\.example\.com\/\?…\n\[asker\] <\[asker\]> and Mia <\[email\]> asked about Analytics\n```/);
+  assert.doesNotMatch(timeout.body, /ana@|mia@|token=|Ana /);
+  assert.match(timeout.body, /adds a row to `FIXES` in `functions\/url-review-failures\.js` with cause `timeout`/);
+
+  assert.equal(bot.title, "BE: After #319, URL reviews still failed because the site's bot protection refused the review");
+  assert.match(bot.body, /#319 \(Sites behind bot protection are read in headless Chrome\) shipped before these runs/);
+  assert.match(bot.body, /failed re-run `x1` of 2 failures on bbva\.com\.co: The site's bot protection refused the review \(status 403\)\. Why it ran: /);
+  assert.match(bot.body, /status 403, text\/html, server cloudflare, Cloudflare bot check, after 1 redirect\n- Headless Chrome \(untagged\): status 403, Cloudflare bot check, 12 words/);
+
+  assert.deepEqual(failures.bugPlan([a, b, newBot], [rerun], ["timeout"]).map((bug) => bug.key), ["bot-protection-319"]);
+  assert.deepEqual(failures.bugPlan([], [], []), []);
+  assert.equal(failures.bugPlan([stuck("2026-10-23T10:00:00Z", { cause: { id: "unknown" } })], [], [])[0].title, "BE: URL reviews failed for a reason with no class yet");
+});
+
 test("the review desk lists re-runs with their report summary and log", () => {
   const desk = require("../../functions/url-review-desk");
   const group = failures.rerunPlan([failedAt("2026-10-22T10:00:00Z")], [], 8).runs[0];
