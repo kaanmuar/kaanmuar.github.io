@@ -6,6 +6,8 @@
    --per-day N posts N a day per channel, each in its own part of the channel window; --after N
    counts posts already ahead of this batch in the stream; --schedule-only rewrites the calendar,
    captions, and Buffer CSVs without rendering.
+   Buffer CSVs leave Tags blank: bulk upload rejects any tag the account doesn't have. Bulk upload takes
+   no alt text outside Pinterest, so buffer/alt-text.csv lists it per post to paste in the composer.
    node scripts/tips-studio/build.js --source runs --start 2026-10-28 --every 4
      renders the real-run scorecards from runs.js, in their listed order, one every 4 days.
    --source runs-100 loads runs-100.js the same way; its batch defaults to the module name. */
@@ -78,6 +80,27 @@ function randomTime(window, rand, slot) {
 }
 function csvCell(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }
 
+const MARK_WORDS = { pass: "pass", fail: "fail", risk: "warning" };
+function describe(v) {
+  const note = v.note ? ". " + v.note.replace(/ · /g, ", ") : "";
+  const code = (lines) => lines.map((l) => l.trim()).filter(Boolean).join(" ");
+  if (v.type === "scores") return "Overall score " + v.overall + " of 100. " + v.areas.map((a) => a[0] + " " + a[1]).join(", ") + note;
+  if (v.type === "code") return "Code: " + code(v.lines) + note;
+  if (v.type === "versus") return [v.left, v.right].map((s) => s.label + " (" + MARK_WORDS[s.mark] + "): " + s.lines.join(", ")).join(". ");
+  if (v.type === "check") return "Checklist: " + v.items.map((r) => r[0] + ", " + r[1] + " (" + MARK_WORDS[r[2]] + ")").join("; ");
+  if (v.type === "bars") return "Bar chart: " + v.items.map((i) => i[0] + " " + i[1].toLocaleString("en-US") + " " + v.unit).join(", ") + note;
+  if (v.type === "stat") return v.value + ", " + v.caption;
+  return "";
+}
+// LinkedIn caps image alt text at 300 characters, the lowest of the networks Buffer posts to.
+function sentences(parts) { return parts.filter(Boolean).map((p) => /[.?!…]$/.test(p) ? p : p + ".").join(" "); }
+function altText(tip) {
+  const head = sentences([studio.CATS[tip.cat].label.replace(/ · /g, ", ") + " card", studio.plainTitle(tip), describe(tip.visual)]);
+  const full = sentences([head, (tip.actionLabel || "Try this") + ": " + tip.action]);
+  if (full.length <= 300) return full;
+  return head.length <= 300 ? head : head.slice(0, 299).replace(/\s+\S*$/, "") + "…";
+}
+
 async function renderStill(page, tip, fmt, index, total, file) {
   const size = fmt === "feed" ? { width: 1080, height: 1350 } : { width: 1080, height: 1920 };
   await page.setViewportSize(size);
@@ -132,7 +155,7 @@ async function renderClip(page, tip, index, total, file, cover) {
     const date = day(START, Math.floor((AFTER + index) / PER_DAY) * EVERY);
     const slot = (AFTER + index) % PER_DAY;
     const cap = studio.captions(tip, index, total);
-    captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip) }, cap);
+    captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: altText(tip) }, cap);
     for (const channel of Object.keys(WINDOWS)) {
       const video = ["tiktok", "youtube"].includes(channel);
       rows.push({ date, time: randomTime(WINDOWS[channel], rand, slot), channel, slug,
@@ -147,8 +170,10 @@ async function renderClip(page, tip, index, total, file, cover) {
   fs.mkdirSync(path.join(OUT, "buffer"), { recursive: true });
   for (const channel of ["linkedin", "x", "facebook", "instagram"]) {
     const lines = ["Text,Image URL,Tags,Posting Time"].concat(rows.filter((r) => r.channel === channel).map((r) =>
-      [csvCell(r.text), csvCell(IMAGE_BASE + "/" + r.asset), csvCell(RUNS ? "real-runs" : "tips"), csvCell(r.date + " " + r.time)].join(",")));
+      [csvCell(r.text), csvCell(IMAGE_BASE + "/" + r.asset), csvCell(""), csvCell(r.date + " " + r.time)].join(",")));
     fs.writeFileSync(path.join(OUT, "buffer", "buffer-" + channel + ".csv"), lines.join("\n") + "\n");
   }
+  fs.writeFileSync(path.join(OUT, "buffer", "alt-text.csv"), ["Date,Post,Image URL,Alt Text"].concat(Object.keys(captions).map((slug) =>
+    [captions[slug].date, slug, csvCell(IMAGE_BASE + "/feed/" + slug + ".jpg"), csvCell(captions[slug].alt)].join(","))).join("\n") + "\n");
   console.log("wrote", Object.keys(captions).length, "captions,", rows.length, "calendar rows to", path.relative(ROOT, OUT));
 })().catch((err) => { console.error(err); process.exit(1); });

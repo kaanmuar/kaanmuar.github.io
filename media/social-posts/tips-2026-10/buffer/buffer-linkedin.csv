@@ -7,7 +7,7 @@ Try this today: Search your templates for <img without width. Add the intrinsic 
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=img-size
 
-#WebPerformance #CLS #CoreWebVitals #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg","tips","2026-10-26 07:50"
+#WebPerformance #CLS #CoreWebVitals #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg","","2026-10-26 07:50"
 "Release day: does the page still read right?
 
 Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.
@@ -16,7 +16,7 @@ Try this today: Add a five-minute public-page read to your release checklist, af
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=release-day
 
-#QA #ReleaseManagement #DevOps #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg","tips","2026-10-26 10:15"
+#QA #ReleaseManagement #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg","","2026-10-26 10:15"
 "We reviewed ourselves. Security: 54.
 
 Our own site scored 86 overall, and security was the weakest area. The six fixes at the top of the list were all response headers.
@@ -25,7 +25,7 @@ Try this today: Run the same headers check on your site. The first fixes are usu
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=self-review
 
-#QA #WebSecurity #BuildInPublic #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg","tips","2026-10-27 08:20"
+#QA #WebSecurity #BuildInPublic #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg","","2026-10-27 08:20"
 "The slowest page is rarely the home page.
 
 Teams tune the home page and forget the pages people reach from search. Measure every page you link to, in the order a visitor would open them.
@@ -34,7 +34,7 @@ Try this today: List your five most visited pages from analytics and time each o
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=slowest-page
 
-#WebPerformance #CoreWebVitals #QA #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg","tips","2026-10-27 09:15"
+#WebPerformance #CoreWebVitals #QA #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg","","2026-10-27 09:15"
 "Contrast is math, not taste.
 
 WCAG AA asks for a contrast ratio of at least 4.5 to 1 for body text and 3 to 1 for large text. Light grey on white rarely makes it.
@@ -43,7 +43,7 @@ Try this today: Check your muted text colour against its background in DevTools.
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=contrast
 
-#Accessibility #Design #WCAG #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg","tips","2026-10-28 08:25"
+#Accessibility #Design #WCAG #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg","","2026-10-28 08:25"
 "Tag campaign links the same way, every time.
 
 LinkedIn, linkedin and Linked-In become three sources in your reports. Pick one spelling and keep it.
@@ -52,7 +52,7 @@ Try this today: Make a shared sheet with the allowed sources and mediums. Link i
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=utm
 
-#Analytics #GA4 #UTM #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg","tips","2026-10-28 09:40"
+#Analytics #GA4 #UTM #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg","","2026-10-28 09:40"
 "Stop browsers guessing file types.
 
 Without nosniff, a browser may treat an uploaded text file as a script. One header turns that guessing off.
@@ -61,7 +61,7 @@ Try this today: Add it next to HSTS in the same rule, so both ship together.
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=nosniff
 
-#WebSecurity #AppSec #HTTPHeaders #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/07-nosniff.jpg","tips","2026-10-29 08:15"
+#WebSecurity #AppSec #HTTPHeaders #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/07-nosniff.jpg","","2026-10-29 08:15"
 "Every input needs a name.
 
 A placeholder disappears as soon as someone types, and screen readers may not announce it. A real label stays.
@@ -70,7 +70,7 @@ Try this today: Tab through your contact form with a screen reader on. Each fiel
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=input-names
 
-#Accessibility #a11y #WCAG #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg","tips","2026-10-29 10:25"
+#Accessibility #a11y #WCAG #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg","","2026-10-29 10:25"
 "llms.txt: a short brief for answer engines.
 
 A plain text file at your root that says what the site is, which pages matter, and how to contact you. Short beats complete.
@@ -79,7 +79,7 @@ Try this today: Write five lines about your site the way you would brief a new c
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=llms-txt
 
-#GEO #llmstxt #AISearch #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg","tips","2026-10-30 08:35"
+#GEO #llmstxt #AISearch #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg","","2026-10-30 08:35"
 "Put the mouse away. Can you reach everything?
 
 Menus, dialogs, and cookie banners are where keyboard users get stuck. Tab, Shift+Tab, Enter, and Escape should be enough.
@@ -88,7 +88,7 @@ Try this today: Do your main task on your own site with the keyboard only. Write
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=keyboard
 
-#Accessibility #a11y #UX #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg","tips","2026-10-30 10:30"
+#Accessibility #a11y #UX #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg","","2026-10-30 10:30"
 "One header. 180 days of HTTPS only.
 
 HSTS tells browsers to never load your site over plain HTTP again. It takes one line of configuration on most hosts.
@@ -97,7 +97,7 @@ Try this today: Run curl -sI on your domain and look for strict-transport-securi
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=hsts
 
-#WebSecurity #HTTPS #DevOps #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg","tips","2026-10-31 07:55"
+#WebSecurity #HTTPS #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg","","2026-10-31 07:55"
 "One h1 per page, saying what the page is.
 
 Logos and slogans often grab the h1. Search engines and screen readers both use it to understand the page.
@@ -106,7 +106,7 @@ Try this today: Read only the h1 of your top ten pages. Would a stranger know wh
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=one-h1
 
-#SEO #Accessibility #Content #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg","tips","2026-10-31 09:15"
+#SEO #Accessibility #Content #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg","","2026-10-31 09:15"
 "Consent means before, too.
 
 The most common analytics finding is a tag that fires before the visitor chooses. Check what loads on the first paint, not only after Accept.
@@ -115,7 +115,7 @@ Try this today: Open your site in a private window with DevTools on the Network 
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before
 
-#Analytics #Privacy #ConsentMode #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg","tips","2026-11-01 08:20"
+#Analytics #Privacy #ConsentMode #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg","","2026-11-01 08:20"
 "Your share card is a first impression.
 
 Without og:image and og:title, every link to your site shows up as a grey box in chats and feeds.
@@ -124,7 +124,7 @@ Try this today: Paste your link into a private chat with yourself. What people s
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=share-card
 
-#SEO #OpenGraph #Marketing #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg","tips","2026-11-01 10:00"
+#SEO #OpenGraph #Marketing #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg","","2026-11-01 10:00"
 "Start your CSP in Report-Only.
 
 An enforced policy written on day one breaks things. Report-Only shows what would be blocked, so you can enforce with confidence a week later.
@@ -133,7 +133,7 @@ Try this today: Ship the Report-Only header this week. Read the reports next wee
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=csp-report-only
 
-#WebSecurity #CSP #AppSec #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg","tips","2026-11-02 08:20"
+#WebSecurity #CSP #AppSec #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg","","2026-11-02 08:20"
 "Write the test list before the test code.
 
 Picking a framework is the second question. The first is what this page does and what a real person would try on it.
@@ -142,7 +142,7 @@ Try this today: Before your next automation sprint, write ten cases in plain lan
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=list-first
 
-#QA #TestAutomation #SoftwareTesting #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg","tips","2026-11-02 10:00"
+#QA #TestAutomation #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg","","2026-11-02 10:00"
 "robots.txt decides who may read you.
 
 AI crawlers each have their own user agent. Blocking them by accident and allowing them on purpose are both one line.
@@ -151,7 +151,7 @@ Try this today: Open yoursite.com/robots.txt today. Check that it says what you 
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=robots-ai
 
-#GEO #AISearch #robotsTxt #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg","tips","2026-11-03 07:45"
+#GEO #AISearch #robotsTxt #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg","","2026-11-03 07:45"
 "A broken link is a test you forgot to write.
 
 Links rot quietly. A small check on every release keeps the 404s out of your visitors' way.
@@ -160,7 +160,7 @@ Try this today: Collect the links from your footer and navigation. Assert each o
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=broken-links
 
-#QA #Playwright #TestAutomation #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/18-broken-links.jpg","tips","2026-11-03 09:15"
+#QA #Playwright #TestAutomation #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/18-broken-links.jpg","","2026-11-03 09:15"
 "Measure the action, not just the visit.
 
 Page views tell you someone arrived. An event on the form, the download, or the signup tells you whether the page worked.
@@ -169,7 +169,7 @@ Try this today: Pick the one action each key page exists for. Make sure an event
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=measure-action
 
-#Analytics #GA4 #CRO #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg","tips","2026-11-04 08:10"
+#Analytics #GA4 #CRO #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg","","2026-11-04 08:10"
 "AI search reads your HTML, not your app.
 
 Many answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.
@@ -178,7 +178,7 @@ Try this today: View source on your home page. Can you find what you sell and wh
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=html-first
 
-#GEO #AISearch #SEO #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg","tips","2026-11-04 09:55"
+#GEO #AISearch #SEO #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg","","2026-11-04 09:55"
 "One page, one canonical.
 
 When the same content answers at several addresses, ranking signals split between them. Tell search engines which address is the real one.
@@ -187,4 +187,4 @@ Try this today: Open your top page with and without a trailing slash and ?utm_ t
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=canonical
 
-#SEO #TechnicalSEO #WebDev #QA","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg","tips","2026-11-05 07:35"
+#SEO #TechnicalSEO #WebDev #QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg","","2026-11-05 07:35"
