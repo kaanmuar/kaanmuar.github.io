@@ -893,3 +893,112 @@ test("the diagnosis says whether a failure's cause has cleared", () => {
   const fine = failures.diagnose({ cause: failures.causeOf("The page took too long.") }, { dns: {}, plain: { status: 200, html: true } });
   assert.deepEqual([fine.now, fine.cleared, fine.rerun], ["readable", true, true]);
 });
+
+const failedAt = (at, extra) => Object.assign({
+  id: "f-" + at,
+  kind: "failed",
+  at,
+  url: "https://bbva.com.co/",
+  host: "bbva.com.co",
+  name: "Ana",
+  email: "ana@example.com",
+  cause: { id: "timeout" },
+  diagnosedAt: at,
+  diagnosis: { cause: "timeout", cleared: true, rerun: true, summary: "The site took too long. Cleared: The plain read gets the page now (status 200)." },
+  options: { pages: 10, depth: 1, frameworks: ["playwright"] },
+  intake: { lang: "es", reason: "QA" }
+}, extra || {});
+
+test("a failed run keeps what the asker sent, so a re-run can rebuild the record", () => {
+  const record = failures.failureRecord({ kind: "failed", url: "https://shop.example.com/", lang: "es", reason: "Audit", clientUrl: "https://client.example.com/", followUp: true, deviceId: "abc", error: "x" });
+  assert.deepEqual([record.intake.lang, record.intake.reason, record.intake.clientUrl, record.intake.followUp, record.intake.deviceId], ["es", "Audit", "https://client.example.com/", true, "abc"]);
+});
+
+test("a failure that has not cleared is probed again daily for a week", () => {
+  const now = Date.parse("2026-10-25T11:00:00Z");
+  const still = failedAt("2026-10-22T11:00:00Z", { diagnosis: { cause: "bot-protection", cleared: false, rerun: false } });
+  assert.equal(failures.recheckDue(still, now), true);
+  assert.equal(failures.recheckDue(Object.assign({}, still, { diagnosedAt: "2026-10-25T00:00:00Z" }), now), false);
+  assert.equal(failures.recheckDue(Object.assign({}, still, { at: "2026-10-17T11:00:00Z" }), now), false);
+  assert.equal(failures.recheckDue(Object.assign({}, still, { rerun: { status: "failed" } }), now), false);
+  assert.equal(failures.recheckDue(Object.assign({}, still, { diagnosis: { cause: "input", cleared: false } }), now), false);
+  assert.equal(failures.recheckDue(failedAt("2026-10-22T11:00:00Z"), now), false);
+  assert.equal(failures.recheckDue(Object.assign({}, still, { diagnosedAt: null }), now), false);
+});
+
+test("a failure re-runs when its cause clears or a fix to its cause ships after it", () => {
+  assert.equal(failures.rerunTrigger(failedAt("2026-10-22T11:00:00Z")).id, "cleared");
+  assert.equal(failures.rerunTrigger(failedAt("2026-10-22T11:00:00Z", { diagnosedAt: null })), null);
+  assert.equal(failures.rerunTrigger(failedAt("2026-10-22T11:00:00Z", { diagnosis: { cleared: false, rerun: false } })), null);
+  const bot = failedAt("2026-10-21T15:00:00Z", { cause: { id: "bot-protection" }, diagnosis: { cause: "bot-protection", cleared: false, rerun: false } });
+  const fix = failures.rerunTrigger(bot);
+  assert.deepEqual([fix.id, fix.ref], ["fix", "#319"]);
+  assert.match(fix.label, /headless Chrome \(#319, shipped after the failure\)/);
+  assert.equal(failures.rerunTrigger(Object.assign({}, bot, { at: "2026-10-21T21:00:00Z" })), null);
+  ["held", "sent", "dropped", "skipped"].forEach((status) => assert.equal(failures.rerunTrigger(Object.assign({}, bot, { rerun: { status, at: "2026-10-22T11:30:00Z" } })), null, status));
+  assert.equal(failures.rerunTrigger(failedAt("2026-10-22T11:00:00Z", { rerun: { status: "failed", at: "2026-10-23T11:30:00Z", cause: "unknown" } })), null);
+  const before = Object.assign({}, bot, { rerun: { status: "failed", at: "2026-10-21T18:00:00Z", cause: "bot-protection" } });
+  assert.equal(failures.rerunTrigger(before).id, "fix");
+  assert.equal(failures.rerunTrigger(failedAt("2026-10-22T11:00:00Z", { kind: "stopped" })), null);
+});
+
+test("re-runs are planned once per address and asker, newest first, and skipped when the asker reviewed again", () => {
+  const older = failedAt("2026-10-22T09:00:00Z", { options: { pages: 5 } });
+  const newer = failedAt("2026-10-22T10:00:00Z");
+  const other = failedAt("2026-10-23T10:00:00Z", { url: "https://indriver.com/", host: "indriver.com", email: "leo@example.com" });
+  const done = failedAt("2026-10-22T08:00:00Z", { url: "https://tennis.com.co/", host: "tennis.com.co", email: "max@example.com" });
+  const idle = failedAt("2026-10-22T08:00:00Z", { url: "https://lg.com.co/", diagnosis: { cleared: false, rerun: false } });
+  const reviewed = [
+    { email: "max@example.com", createdAt: "2026-10-22T12:00:00Z", status: "complete", report: { host: "www.tennis.com.co" } },
+    { email: "ana@example.com", createdAt: "2026-10-22T09:30:00Z", status: "complete", report: { host: "bbva.com.co" } },
+    { email: "leo@example.com", createdAt: "2026-10-24T10:00:00Z", status: "failed", report: { host: "indriver.com" } }
+  ];
+  const plan = failures.rerunPlan([older, newer, other, done, idle], reviewed, 8);
+  assert.deepEqual(plan.runs.map((run) => run.host), ["indriver.com", "bbva.com.co"]);
+  const bbva = plan.runs[1];
+  assert.deepEqual(bbva.failureIds, [newer.id, older.id]);
+  assert.deepEqual(bbva.options, newer.options);
+  assert.deepEqual(bbva.intake, { lang: "es", reason: "QA" });
+  assert.equal(bbva.trigger.id, "cleared");
+  assert.equal(plan.skipped.length, 1);
+  assert.match(plan.skipped[0].skip, /reviewed tennis\.com\.co again on 2026-10-22/);
+  assert.deepEqual(failures.rerunPlan([older, newer, other], [], 1).runs.map((run) => run.host), ["indriver.com"]);
+});
+
+test("a re-run is held for the owner, and the report opens without payment once sent", () => {
+  const group = failures.rerunPlan([failedAt("2026-10-22T10:00:00Z")], [], 8).runs[0];
+  const lines = Array.from({ length: 450 }, (_, i) => ({ t: i, text: "line " + i }));
+  const record = { id: "r1", status: "complete", email: "ana@example.com", paid: false, priceUsd: 12, createdAt: "2026-10-23T11:31:00Z", report: { host: "bbva.com.co" } };
+  const held = failures.rerunDoc(group, { record, lines, startedAt: 1000, endedAt: 61000 });
+  assert.deepEqual([held.status, held.reportId, held.error, held.cause, held.lines.length, held.lines[0].text], ["held", "r1", null, null, 400, "line 50"]);
+  assert.deepEqual(held.failureIds, ["f-2026-10-22T10:00:00Z"]);
+  assert.equal(held.expireAt.getTime() - 61000, 90 * 86400000);
+  assert.deepEqual(failures.rerunMark("x1", held), { at: held.at, id: "x1", status: "held", trigger: "cleared", cause: "" });
+
+  const failed = failures.rerunDoc(group, { error: new Error("The site's bot protection refused the review (status 403), in the plain read and in headless Chrome."), lines: [] });
+  assert.deepEqual([failed.status, failed.record, failed.cause.id], ["failed", null, "bot-protection"]);
+  assert.equal(failures.rerunMark("x2", failed).cause, "bot-protection");
+
+  const sent = failures.sentRecord(held, "2026-10-23T14:00:00Z");
+  assert.deepEqual([sent.id, sent.paid, sent.free, sent.priceUsd, sent.createdAt, sent.rerunAt], ["r1", true, true, 0, "2026-10-23T14:00:00Z", held.at]);
+  assert.deepEqual(sent.rerunOf, held.failureIds);
+  assert.equal(record.paid, false);
+
+  const mail = failures.rerunMail([Object.assign({}, held, { reportStatus: "stopped" }), failed]);
+  assert.equal(mail.subject, "URL review re-runs: 1 held for you, 1 failed again");
+  assert.match(mail.body, /Held for you: bbva\.com\.co for Ana <ana@example\.com>\nWhy it ran: The site took too long\. Cleared: /);
+  assert.match(mail.body, /Report r1, stopped before the last page/);
+  assert.match(mail.body, /Failed again: .*\n.*\nError: The site's bot protection/);
+  assert.match(mail.body, /No asker was emailed\./);
+});
+
+test("the review desk lists re-runs with their report summary and log", () => {
+  const desk = require("../../functions/url-review-desk");
+  const group = failures.rerunPlan([failedAt("2026-10-22T10:00:00Z")], [], 8).runs[0];
+  const held = failures.rerunDoc(group, { record: { id: "r1", status: "complete", report: { host: "bbva.com.co", counts: { pages: 9, cases: 31 }, alerts: [{ id: "a" }] } }, lines: [{ t: 0, text: "Re-run of a failed review" }] });
+  const [row] = desk.rerunRows([Object.assign({ id: "x1" }, held)]);
+  assert.deepEqual([row.id, row.status, row.host, row.failures, row.run.pageCount, row.run.caseCount, row.run.signalCount, row.log[0]], ["x1", "held", "bbva.com.co", 1, 9, 31, 1, "Re-run of a failed review"]);
+  assert.match(row.why, /^The site took too long\. Cleared/);
+  assert.match(desk.PAGE, /id="reruns"/);
+  assert.match(desk.PAGE, /\/desk\/rerun/);
+});
