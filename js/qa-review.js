@@ -3,7 +3,7 @@
   const DEVICE_KEY = "qa-review-device";
   const SHOWN_KEY = "qa-review-shown";
   const SAMPLE_URL = "assets/qa-review-sample.json";
-  const TERMS_VERSION = "2026-10-20";
+  const TERMS_VERSION = "2026-10-21";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PRICE = 19;

@@ -86,7 +86,7 @@ async function harvest(page) {
           localStorage.setItem("qa-review-analytics", "necessary");
           localStorage.setItem("site-analytics", "necessary");
           localStorage.setItem("cv-preferred-lang", code);
-          sessionStorage.setItem("qa-review-terms", "2026-10-20");
+          sessionStorage.setItem("qa-review-terms", "2026-10-21");
           if (off) window.__glossaryOff = true;
         } catch (e) { /* storage is optional */ }
       }, [lang, raw]);
