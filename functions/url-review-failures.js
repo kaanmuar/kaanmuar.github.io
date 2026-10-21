@@ -22,7 +22,7 @@ const CAUSES = [
   ["http-redirect", "The site redirected to http://", /an http:\/\/ address/i],
   ["redirect-loop", "The site redirected too many times", /redirected too many times/i],
   ["browser", "Headless Chrome did not finish", /headless Chrome did not finish/i],
-  ["bot-protection", "The site's bot protection refused the review", /bot protection|bot check/i],
+  ["bot-protection", "The site's bot protection refused the review", /bot protection|bot check|returned status (?:401|403|429)\b/i],
   ["status", "The site answered with an error status", /returned status \d+/i],
   ["not-html", "The address is not an HTML page", /did not return an HTML page/i],
   ["too-large", "The page is larger than the review limit", /larger than the review limit/i],
