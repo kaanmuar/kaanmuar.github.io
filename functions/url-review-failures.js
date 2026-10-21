@@ -293,8 +293,133 @@ function rerunMail(done) {
   };
 }
 
+// The address itself is refused, or its host does not resolve: the asker fixes these, not the review.
+const SITE_SIDE = ["input", "dns"];
+const BUG_ROWS = 12;
+const BUG_LOG_LINES = 15;
+
+const labelOf = (cause) => (CAUSES.find(([id]) => id === cause) || [])[1] || "The review failed for a reason with no class yet";
+
+function fixBefore(cause, at) {
+  return FIXES.filter((fix) => fix.cause === cause && msOf(fix.at) <= msOf(at)).sort((a, b) => msOf(b.at) - msOf(a.at))[0] || null;
+}
+
+// The issue is public: no asker names or emails, and no query strings, which can carry tokens.
+const wordOf = (word) => new RegExp("(^|[^\\w@.])" + word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![\\w@])", "gi");
+const scrubbed = (text, max, hidden) => clip((hidden || []).reduce((out, word) => out.replace(wordOf(word), "$1[asker]"), String(text == null ? "" : text))
+  .replace(/[^\s@<>"'(),;]+@[^\s@<>"'(),;]+\.[a-z]{2,}/gi, "[email]")
+  .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>)]*/gi, "$1?…"), max);
+
+// A failure is a lead while the probe still sees its cause and no re-run or later fix has settled it; a re-run is one when it failed.
+function bugLead(row, source) {
+  const doc = row || {};
+  const cause = (doc.cause && doc.cause.id) || "";
+  if (!cause || SITE_SIDE.includes(cause)) return null;
+  if (source === "failure") {
+    if (doc.kind !== "failed" || !doc.diagnosedAt || !doc.diagnosis || doc.diagnosis.cleared) return null;
+    if ((doc.rerun && doc.rerun.status !== "failed") || fixAfter(doc)) return null;
+  } else if (doc.status !== "failed" || FIXES.some((fix) => fix.cause === cause && msOf(fix.at) > msOf(doc.at))) {
+    return null;
+  }
+  const fix = fixBefore(cause, doc.at);
+  const intake = doc.intake || {};
+  const hidden = [doc.name, doc.email, intake.clientName, intake.clientEmail].map((word) => String(word || "").trim()).filter((word) => word.length > 2);
+  const scrub = (text, max) => scrubbed(text, max, hidden);
+  return {
+    key: fix ? cause + "-" + fix.ref.replace(/\D/g, "") : cause,
+    cause,
+    fix,
+    source,
+    id: clip(doc.id, 40),
+    at: String(doc.at || ""),
+    host: doc.host || hostOf(doc.url),
+    message: scrub(doc.error && doc.error.message, 300),
+    now: source === "failure" ? scrub(doc.diagnosis.nowLabel, 300) : "",
+    why: source === "rerun" && doc.trigger ? scrub(doc.trigger.label, 300) : "",
+    failures: source === "rerun" ? (doc.failureIds || []).length : 0,
+    probe: source === "failure" ? doc.probe || null : null,
+    lines: (Array.isArray(doc.lines) ? doc.lines : []).slice(-BUG_LOG_LINES).map((line) => scrub(line && line.text, 200).replace(/```/g, "'''"))
+  };
+}
+
+function probeLines(probe) {
+  const run = probe || {};
+  const out = [];
+  if (run.dns) out.push("DNS: " + (run.dns.error ? "does not resolve (" + run.dns.error + ")" : (run.dns.addresses || []).length + " addresses"));
+  const plain = run.plain;
+  if (!plain) return out;
+  const redirects = (plain.hops || []).filter((hop) => hop && hop.location).length;
+  out.push("Plain read with the review UA: " + (plain.httpRedirect
+    ? "redirects to " + scrubbed(plain.httpRedirect, 200)
+    : plain.error
+      ? "fails (" + scrubbed(plain.error, 160) + (plain.code ? ", " + plain.code : "") + ")"
+      : "status " + plain.status + ", " + (plain.contentType || "no content type") + (plain.server ? ", server " + plain.server : "") + (plain.challenge ? ", " + plain.challenge + " bot check" : ""))
+    + (redirects ? ", after " + redirects + " redirect" + (redirects === 1 ? "" : "s") : ""));
+  const browser = run.browser;
+  if (!browser) out.push("Headless Chrome: not tried");
+  else if (!browser.ok) out.push("Headless Chrome: did not finish (" + scrubbed(browser.error || "no answer", 160) + ")");
+  else out.push("Headless Chrome (" + (browser.untagged ? "untagged" : "tagged") + "): status " + (browser.docStatus || browser.status) + (browser.challenge ? ", " + browser.challenge + " bot check" : "") + ", " + (browser.words || 0) + " words");
+  return out;
+}
+
+function bugTitle(cause, fix) {
+  const label = labelOf(cause);
+  const still = fix ? "still " : "";
+  const reason = /^The review failed /.test(label)
+    ? "URL reviews " + still + label.replace(/^The review /, "")
+    : "URL reviews " + still + "failed because " + label.charAt(0).toLowerCase() + label.slice(1);
+  return "BE: " + (fix ? "After " + fix.ref + ", " + reason : reason);
+}
+
+function bugIssue(key, leads) {
+  const rows = leads.slice().sort((a, b) => b.at.localeCompare(a.at));
+  const { cause, fix } = rows[0];
+  const hosts = Array.from(new Set(rows.map((row) => row.host).filter(Boolean)));
+  const day = (at) => at.slice(0, 16).replace("T", " ");
+  const first = rows[rows.length - 1].at.slice(0, 10);
+  const last = rows[0].at.slice(0, 10);
+  const listed = rows.slice(0, BUG_ROWS).map((row) => "- " + day(row.at) + " UTC, " + (row.source === "rerun"
+    ? "failed re-run `" + row.id + "` of " + row.failures + " failure" + (row.failures === 1 ? "" : "s")
+    : "failed run `" + row.id + "`") + " on " + (row.host || "an unknown host") + ": " + (row.message || "no error text") + (row.now ? " Now: " + row.now : "") + (row.why ? " Why it ran: " + row.why : ""));
+  const probed = rows.find((row) => row.probe);
+  const logged = rows.find((row) => row.lines.length);
+  const tail = logged ? logged.lines : [];
+  const body = [
+    "**Kind:** Bug",
+    "**Area:** BE",
+    "**Found while:** #320, by the daily check of failed URL reviews",
+    "**Where it stands:** Backlog",
+    "",
+    "## What happened",
+    rows.length + " URL review run" + (rows.length === 1 ? "" : "s") + " failed with the cause class `" + cause + "` (" + labelOf(cause) + ") " + (first === last ? "on " + first : "from " + first + " to " + last) + ", on " + hosts.length + " site" + (hosts.length === 1 ? "" : "s") + ": " + hosts.slice(0, 8).join(", ") + (hosts.length > 8 ? " and " + (hosts.length - 8) + " more" : "") + "."
+      + (fix ? " " + fix.ref + " (" + fix.label + ") shipped before these runs, so it does not cover them." : "")
+      + " The daily probe still sees the cause, or a re-run failed again.",
+    "",
+    listed.join("\n") + (rows.length > BUG_ROWS ? "\n- and " + (rows.length - BUG_ROWS) + " more" : ""),
+    probed ? "\n### Probe of the latest failure (" + probed.host + ")\n" + probeLines(probed.probe).map((line) => "- " + line).join("\n") : null,
+    tail.length ? "\n### Last log lines of `" + logged.id + "`\n```\n" + tail.join("\n") + "\n```" : null,
+    "",
+    "## Fix",
+    "Not written yet. The full logs and probes are in Firestore (`url_review_failures`, `url_review_reruns`) and on the review desk. The PR that fixes this class adds a row to `FIXES` in `functions/url-review-failures.js` with cause `" + cause + "`, so these runs are re-run."
+  ].filter((part) => part !== null).join("\n");
+  return { key, cause, fix: fix ? fix.ref : "", title: bugTitle(cause, fix), body: body.slice(0, 60000), runs: rows.length, hosts, firstAt: rows[rows.length - 1].at, lastAt: rows[0].at };
+}
+
+// One bug per cause class, and per fix to that class: a class that fails again after its fix shipped is a new bug.
+function bugPlan(failures, reruns, filed) {
+  const known = new Set(Array.isArray(filed) ? filed : []);
+  const classes = new Map();
+  [[failures, "failure"], [reruns, "rerun"]].forEach(([rows, source]) => (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const lead = bugLead(row, source);
+    if (!lead || known.has(lead.key)) return;
+    classes.set(lead.key, (classes.get(lead.key) || []).concat(lead));
+  }));
+  return Array.from(classes.entries()).map(([key, leads]) => bugIssue(key, leads));
+}
+
 module.exports = {
   KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, FIXES,
   causeOf, failureRecord, failureFromAlert, stateOf, diagnose,
-  recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail
+  recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
+  bugPlan
 };

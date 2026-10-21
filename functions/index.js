@@ -1205,6 +1205,71 @@ exports.rerunReviewFailures = require("firebase-functions/v2/scheduler").onSched
   secrets: ["SENDGRID_API_KEY"]
 }, () => rerunReviewFailures());
 
+const BUG_REPO = "kaanmuar/kaanmuar.github.io";
+const BUG_TICKET = 320;
+const BOARD = { project: "PVT_kwHOALfwis4BmsxO", status: "PVTSSF_lAHOALfwis4BmsxOzhlUt04", backlog: "3f4ac4fe" };
+
+async function github(path, body, token) {
+  const res = await fetch("https://api.github.com" + path, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json", "User-Agent": "qa-lab-url-review", "X-GitHub-Api-Version": "2022-11-28" },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || (data.errors && data.errors.length)) throw new Error("GitHub " + path + " answered " + res.status + ": " + JSON.stringify(data.errors || data.message || "").slice(0, 300));
+  return data;
+}
+
+async function openFailureBug(bug, token) {
+  const issue = await github("/repos/" + BUG_REPO + "/issues", { title: bug.title, body: bug.body, labels: ["bug", "area:be"] }, token);
+  const board = github("/graphql", { query: "mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}", variables: { p: BOARD.project, c: issue.node_id } }, token)
+    .then((added) => github("/graphql", {
+      query: "mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){updateProjectV2ItemFieldValue(input:{projectId:$p,itemId:$i,fieldId:$f,value:{singleSelectOptionId:$o}}){projectV2Item{id}}}",
+      variables: { p: BOARD.project, i: added.data.addProjectV2ItemById.item.id, f: BOARD.status, o: BOARD.backlog }
+    }, token));
+  const parent = github("/repos/" + BUG_REPO + "/issues/" + BUG_TICKET + "/sub_issues", { sub_issue_id: issue.id }, token);
+  (await Promise.allSettled([board, parent])).filter((step) => step.status === "rejected")
+    .forEach((step) => console.error("Failure bug #" + issue.number + " was opened, but not filed on the board or under #" + BUG_TICKET + ":", step.reason));
+  return issue;
+}
+
+async function fileReviewFailureBugs() {
+  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  if (!token) {
+    console.log("URL review failure bugs: GITHUB_BUGS_TOKEN is not set, so no bug was opened.");
+    return null;
+  }
+  const db = admin.firestore();
+  const since = new Date(Date.now() - reviewFailures.RERUN_DAYS * 86400000).toISOString();
+  const read = (name) => db.collection(name).where("at", ">=", since).get().then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
+  const filed = db.collection("url_review_failure_bugs");
+  const [failed, reruns, known] = await Promise.all([read("url_review_failures"), read("url_review_reruns"), filed.select().get()]);
+  const bugs = reviewFailures.bugPlan(failed, reruns, known.docs.map((doc) => doc.id));
+  const opened = [];
+  for (const bug of bugs) {
+    const ref = filed.doc(bug.key);
+    try {
+      await ref.create({ cause: bug.cause, fix: bug.fix, title: bug.title, runs: bug.runs, hosts: bug.hosts.slice(0, 40), firstAt: bug.firstAt, lastAt: bug.lastAt, openedAt: new Date().toISOString(), issue: null });
+    } catch (error) {
+      if (error.code !== 6) console.error("Failure bug for " + bug.key + " could not be claimed:", error);
+      continue;
+    }
+    try {
+      const issue = await openFailureBug(bug, token);
+      await ref.update({ issue: issue.number, url: issue.html_url });
+      opened.push("#" + issue.number + " " + bug.key);
+    } catch (error) {
+      console.error("Failure bug for " + bug.key + " was not opened:", error);
+      await ref.delete();
+    }
+  }
+  console.log("URL review failure bugs: " + opened.length + " of " + bugs.length + " new cause classes opened" + (opened.length ? " (" + opened.join(", ") + ")" : "") + ".");
+  return null;
+}
+
+exports.fileReviewFailureBugs = functions.runWith({ timeoutSeconds: 120, memory: "512MB" })
+  .pubsub.schedule("5 7 * * *").timeZone("America/Bogota").onRun(() => fileReviewFailureBugs());
+
 exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("America/Bogota").onRun(async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
   const stamp = dateStamp(bogotaParts(new Date()));
