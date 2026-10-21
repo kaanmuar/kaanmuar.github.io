@@ -1,11 +1,11 @@
 Text,Image URL,Tags,Posting Time
-"We read GOV.UK. It scores 92.
+"We analyzed GOV.UK. It scores 92.
 
-Accessibility 100, a strict content security policy, and real visitors see the main content in 0.7 s. The one gap: 19 of the 20 pages read have no canonical link.
+Accessibility 100, a strict content security policy, and real visitors see the main content in 0.7 s. The one gap: 19 of the 20 pages analyzed have no canonical link.
 
 Lesson: Give every page a canonical link, even when only one address serves it. One line settles which URL ranks.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=govuk
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/01-govuk.jpg","","2026-11-05 18:05"
@@ -15,7 +15,7 @@ Every page has a title and a description, the sitemap answers, structured data p
 
 Lesson: One site, one GA4 property, one gtag.js. If two teams need the data, share access instead of adding a tag.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bogota
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg","","2026-11-06 13:55"
@@ -25,7 +25,7 @@ WHO welcomes AI answer crawlers and its pages read well without JavaScript: GEO 
 
 Lesson: Run every JSON-LD block through a JSON validator before release. One character can void the entire block.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=who
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg","","2026-11-06 16:15"
@@ -35,7 +35,7 @@ The portal for more than 78,000 government procedures sends an HTML body with al
 
 Lesson: Render the main text on the server, or prerender the start page. View source should show what a visitor reads.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=govco
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/04-govco.jpg","","2026-11-07 12:25"
@@ -45,17 +45,17 @@ DMARC reject, preloaded HSTS, and Core Web Vitals that pass for real visitors. I
 
 Lesson: Blocking AI training and blocking AI answers are separate choices. Name each crawler in robots.txt on purpose.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bbc
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg","","2026-11-07 16:55"
 "TransMilenio lets search write its pitch.
 
-Every linked page answers and AI crawlers are welcome. But none of the 20 pages read has a meta description, the start page included, so search engines write the snippet themselves.
+Every linked page answers and AI crawlers are welcome. But none of the 20 pages analyzed has a meta description, the start page included, so search engines write the snippet themselves.
 
 Lesson: Write a description of about 150 characters for your ten most visited pages, starting with the home page.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=transmilenio
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/06-transmilenio.jpg","","2026-11-08 12:05"
@@ -65,7 +65,7 @@ Every page has a title and a description, and the text reads without JavaScript.
 
 Lesson: Add ""name"" to your WebSite JSON-LD, written exactly as you want the site named in search results.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=python
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/07-python.jpg","","2026-11-08 16:30"
@@ -75,7 +75,7 @@ Language versions link to each other, share cards are complete, and pages read w
 
 Lesson: Drop maximum-scale and user-scalable=no from your viewport tag. Zoom is how many people read.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bancolombia
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg","","2026-11-09 12:55"
@@ -85,7 +85,7 @@ Links answer, campaign tags survive redirects, and AI answer crawlers are welcom
 
 Lesson: Put lang on the html tag of every language version: lang=""en"", lang=""fr"", lang=""ar"". One attribute per page.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=un
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg","","2026-11-09 16:25"
@@ -95,7 +95,7 @@ GEO scores 91: answer crawlers are welcome, structured data names the organizati
 
 Lesson: Four headers close most of that gap: Content-Security-Policy, X-Content-Type-Options, Referrer-Policy, and Permissions-Policy.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=nasa
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/10-nasa.jpg","","2026-11-10 14:25"

@@ -62,7 +62,7 @@ const TIPS = [
     id: "slowest-page", cat: "Perf",
     title: ["The slowest page", "is rarely *the home page.*"],
     body: "Teams tune the home page and forget the pages people reach from search. Measure every page you link to, in the order a visitor would open them.",
-    visual: { type: "bars", unit: "ms", items: [["/", 320], ["/pricing", 410], ["/blog", 1240], ["/contact", 380]], note: "Example read, response time per page" },
+    visual: { type: "bars", unit: "ms", items: [["/", 320], ["/pricing", 410], ["/blog", 1240], ["/contact", 380]], note: "Example analysis, response time per page" },
     action: "List your five most visited pages from analytics and time each one. Fix the slowest first.",
     tags: ["WebPerformance", "CoreWebVitals", "QA"]
   },
@@ -156,10 +156,10 @@ const TIPS = [
   },
   {
     id: "release-day", cat: "QA",
-    title: ["Release day:", "*does the page still read right?*"],
+    title: ["Release day:", "*is the page still right?*"],
     body: "Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.",
     visual: { type: "check", items: [["Build", "Green", "pass"], ["Smoke tests", "Passed", "pass"], ["Title and description", "Still there", "pass"], ["Share card", "Image changed?", "risk"], ["Consent banner", "Nothing fires before a choice?", "risk"]] },
-    action: "Add a five-minute public-page read to your release checklist, after deploy and before the announcement.",
+    action: "Add a five-minute public-page check to your release checklist, after deploy and before the announcement.",
     tags: ["QA", "ReleaseManagement", "DevOps"]
   },
   {
