@@ -4,6 +4,7 @@
 
 const SITE = "https://carlosandmunoz.com";
 const GUIDE = SITE + "/qa-review-guide.html";
+const BRAND = "#QAlab";
 
 const CATS = {
   QA: { label: "QA", color: "#7ef6fb" },
@@ -220,14 +221,14 @@ function captions(tip, index, total) {
   const head = plainTitle(tip);
   const counter = "Tip " + (index + 1) + "/" + total;
   return {
-    linkedin: [head, "", tip.body, "", "Try this today: " + tip.action, "", "How a public-page review works, step by step: " + link("linkedin", tip), "", hashtags(tip, 3) + " #QA"].join("\n"),
+    linkedin: [head, "", tip.body, "", "Try this today: " + tip.action, "", "How a public-page review works, step by step: " + link("linkedin", tip), "", hashtags(tip, 3) + " #QA " + BRAND].join("\n"),
     x: xPost(head + "\n\n" + tip.action, link("x", tip)),
-    instagram: [head, "", tip.body, "", "Try this: " + tip.action, "", "Full guide: link in bio.", "", hashtags(tip, 3) + " #QA #WebDev #QAlab"].join("\n"),
-    facebook: [head, "", tip.body, "", "Try this: " + tip.action, "", link("facebook", tip)].join("\n"),
-    tiktok: head + " " + tip.action + " " + hashtags(tip, 3) + " #QA #techtok",
+    instagram: [head, "", tip.body, "", "Try this: " + tip.action, "", "Full guide: link in bio.", "", hashtags(tip, 3) + " #QA #WebDev " + BRAND].join("\n"),
+    facebook: [head, "", tip.body, "", "Try this: " + tip.action, "", link("facebook", tip), "", BRAND].join("\n"),
+    tiktok: head + " " + tip.action + " " + hashtags(tip, 3) + " #QA #techtok " + BRAND,
     youtubeTitle: (head + " #Shorts").slice(0, 100),
     youtube: [tip.body, "", "Try this: " + tip.action, "", "Guide: " + link("youtube", tip), "", counter + " · QA-lab URL Review"].join("\n")
   };
 }
 
-module.exports = { SITE, GUIDE, CATS, TIPS, captions, link, plainTitle, xPost };
+module.exports = { SITE, GUIDE, BRAND, CATS, TIPS, captions, link, plainTitle, xPost };

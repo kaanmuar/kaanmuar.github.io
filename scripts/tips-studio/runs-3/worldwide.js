@@ -4,7 +4,7 @@ module.exports = [
   {
     id: "ilo", report: "r3-ilo", scope: "Worldwide",
     title: ["ILO: secure and fast,", "*but no entity markup.*"],
-    body: "security.txt is published, HSTS covers subdomains, and DMARC rejects spoofed mail. But no page read carries JSON-LD, so the Facebook, LinkedIn and YouTube profiles it links are never tied to the ILO.",
+    body: "security.txt is published, HSTS covers subdomains, and DMARC rejects spoofed mail. But no page analyzed carries JSON-LD, so the Facebook, LinkedIn and YouTube profiles it links are never tied to the ILO.",
     action: "Add Organization markup with url, logo and sameAs so AI answers name you right.",
     tags: ["GEO", "StructuredData", "UnitedNations"]
   },
@@ -18,7 +18,7 @@ module.exports = [
   {
     id: "wmo", report: "r3-wmo", scope: "Worldwide",
     title: ["WMO's sitemap points", "*at other hosts.*"],
-    body: "HSTS is sent with preload, every image read has alt text, and language versions link back to each other. But the sitemap lists 878 community.wmo.int URLs, and search engines skip sitemap URLs from another host.",
+    body: "HSTS is sent with preload, every image analyzed has alt text, and language versions link back to each other. But the sitemap lists 878 community.wmo.int URLs, and search engines skip sitemap URLs from another host.",
     action: "Keep each sitemap to its own host. Give each subdomain its own sitemap, named in that subdomain's robots.txt.",
     tags: ["SEO", "Sitemap", "Weather"]
   },
@@ -39,21 +39,21 @@ module.exports = [
   {
     id: "unwomen", report: "r3-unwomen", scope: "Worldwide",
     title: ["UN Women: complete,", "*but heavy pages.*"],
-    body: "Every page read has a meta description, every image has alt text, and HSTS is preloaded. But /en sends over 700 KB of HTML before any image or script, and all 17 pages read weigh more than 500 KB.",
+    body: "Every page analyzed has a meta description, every image has alt text, and HSTS is preloaded. But /en sends over 700 KB of HTML before any image or script, and all 17 pages analyzed weigh more than 500 KB.",
     action: "Move what inflates the HTML, like inline data or repeated menus, into cached files.",
     tags: ["Performance", "PageWeight", "UNWomen"]
   },
   {
     id: "ietf", report: "r3-ietf", scope: "Worldwide",
     title: ["IETF writes the RFCs,", "*but no security.txt.*"],
-    body: "Framing is denied, every page read has a meta description, and Core Web Vitals pass for real visitors. But /.well-known/security.txt answers 404, so a researcher has no published place to report a flaw.",
+    body: "Framing is denied, every page analyzed has a meta description, and Core Web Vitals pass for real visitors. But /.well-known/security.txt answers 404, so a researcher has no published place to report a flaw.",
     action: "Publish /.well-known/security.txt with Contact and Expires lines, per RFC 9116.",
     tags: ["Security", "SecurityTxt", "OpenStandards"]
   },
   {
     id: "postgresql", report: "r3-postgresql", scope: "Worldwide",
     title: ["PostgreSQL's search box", "*has no name.*"],
-    body: "HSTS is sent, framing is denied by both header and CSP, and every image read has alt text. But the search box on every page has only a placeholder, so screen readers announce it as an unnamed field.",
+    body: "HSTS is sent, framing is denied by both header and CSP, and every image analyzed has alt text. But the search box on every page has only a placeholder, so screen readers announce it as an unnamed field.",
     action: "Give each input a <label> or an aria-label. Placeholder text vanishes on typing and is not a name.",
     tags: ["Accessibility", "Forms", "PostgreSQL"]
   },
@@ -74,7 +74,7 @@ module.exports = [
   {
     id: "vuejs", report: "r3-vuejs", scope: "Worldwide",
     title: ["Vue.js lists 94 links", "*but names no entity.*"],
-    body: "Every page read has a meta description and every image alt text, HSTS is on, and an llms.txt lists 94 links. But no page read carries JSON-LD, so search and AI answers get no entity naming the project.",
+    body: "Every page analyzed has a meta description and every image alt text, HSTS is on, and an llms.txt lists 94 links. But no page analyzed carries JSON-LD, so search and AI answers get no entity naming the project.",
     action: "Add WebSite and Organization blocks with sameAs links to GitHub and social profiles.",
     tags: ["GEO", "JSONLD", "VueJS"]
   },
@@ -88,14 +88,14 @@ module.exports = [
   {
     id: "blender", report: "r3-blender", scope: "Worldwide",
     title: ["Blender: security.txt,", "*no main landmark.*"],
-    body: "security.txt is published, DMARC rejects spoofed mail, framing is limited, and Core Web Vitals pass for real visitors. But none of the 20 pages read has a <main> element for screen readers to jump to.",
+    body: "security.txt is published, DMARC rejects spoofed mail, framing is limited, and Core Web Vitals pass for real visitors. But none of the 20 pages analyzed has a <main> element for screen readers to jump to.",
     action: "Wrap each template's content in one <main> element, and point a skip link at it.",
     tags: ["Accessibility", "Landmarks", "Blender"]
   },
   {
     id: "openstreetmap", report: "r3-osm", scope: "Worldwide",
     title: ["OpenStreetMap's search", "*has no label.*"],
-    body: "HSTS is preloaded, security.txt is published, cookies are Secure, and every image read has alt text. But the Search, From and To boxes on the start page have only placeholders, so screen readers can't name them.",
+    body: "HSTS is preloaded, security.txt is published, cookies are Secure, and every image analyzed has alt text. But the Search, From and To boxes on the start page have only placeholders, so screen readers can't name them.",
     action: "Add a visually hidden <label> or an aria-label to each map input, matching its placeholder.",
     tags: ["Accessibility", "Forms", "OpenData"]
   },
@@ -109,21 +109,21 @@ module.exports = [
   {
     id: "shopify", report: "r3-shopify", scope: "Worldwide",
     title: ["Shopify: rich entity,", "*but frameable.*"],
-    body: "A Corporation entity with seven sameAs links, an llms.txt, security.txt, and HSTS with preload. But the pages read send neither X-Frame-Options nor a CSP frame-ancestors, so any site can frame them.",
+    body: "A Corporation entity with seven sameAs links, an llms.txt, security.txt, and HSTS with preload. But the pages analyzed send neither X-Frame-Options nor a CSP frame-ancestors, so any site can frame them.",
     action: "Send Content-Security-Policy: frame-ancestors 'self' on pages that no partner needs to embed.",
     tags: ["Security", "Clickjacking", "Ecommerce"]
   },
   {
     id: "figma", report: "r3-figma", scope: "Worldwide",
     title: ["Figma guards its pages,", "*but has no llms.txt.*"],
-    body: "Every image read has alt text, security.txt is published, HSTS is preloaded, and robots.txt blocks GPTBot, CCBot and Google-Extended while answer bots may read. But /llms.txt answers with a 404.",
+    body: "Every image analyzed has alt text, security.txt is published, HSTS is preloaded, and robots.txt blocks GPTBot, CCBot and Google-Extended while answer bots may read. But /llms.txt answers with a 404.",
     action: "Publish an llms.txt that lists your key pages with one-line summaries. Some AI tools read it first.",
     tags: ["GEO", "LlmsTxt", "Design"]
   },
   {
     id: "oneworld", report: "r3-oneworld", scope: "Worldwide",
     title: ["oneworld: fast,", "*but zoom is locked.*"],
-    body: "Core Web Vitals pass for real visitors, every page read has a meta description, and an llms.txt is published. But the viewport sets maximum-scale=1 and user-scalable=no, so people can't pinch to zoom.",
+    body: "Core Web Vitals pass for real visitors, every page analyzed has a meta description, and an llms.txt is published. But the viewport sets maximum-scale=1 and user-scalable=no, so people can't pinch to zoom.",
     action: "Drop maximum-scale and user-scalable from the viewport so people can zoom to 200%.",
     tags: ["Accessibility", "Zoom", "Airlines"]
   },
@@ -144,7 +144,7 @@ module.exports = [
   {
     id: "wipo", report: "r3-wipo", scope: "Worldwide",
     title: ["WIPO grants analytics", "*before anyone agrees.*"],
-    body: "DMARC rejects spoofed mail, language versions link back to each other, and pages read well without JavaScript. But the Consent Mode default sets analytics_storage and ad_storage to granted before a visitor chooses.",
+    body: "DMARC rejects spoofed mail, language versions link back to each other, and pages analyzed well without JavaScript. But the Consent Mode default sets analytics_storage and ad_storage to granted before a visitor chooses.",
     action: "Default both to denied where consent is required, and grant them on acceptance.",
     tags: ["Analytics", "ConsentMode", "Privacy"]
   },
@@ -158,7 +158,7 @@ module.exports = [
   {
     id: "ted", report: "r3-ted", scope: "Worldwide",
     title: ["TED: ideas worth", "*zooming into.*"],
-    body: "HSTS is on, every image read has alt text, talks carry author and date, and Consent Mode starts denied. But the viewport sets maximum-scale=1.0 and user-scalable=no, which blocks pinch zoom on phones.",
+    body: "HSTS is on, every image analyzed has alt text, talks carry author and date, and Consent Mode starts denied. But the viewport sets maximum-scale=1.0 and user-scalable=no, which blocks pinch zoom on phones.",
     action: "Drop maximum-scale and user-scalable=no from the viewport, so people with low vision can enlarge text.",
     tags: ["Accessibility", "Zoom", "TEDTalks"]
   },
@@ -172,21 +172,21 @@ module.exports = [
   {
     id: "gavi", report: "r3-gavi", scope: "Worldwide",
     title: ["Gavi: strong headers,", "*no structured data.*"],
-    body: "HSTS for two years, framing limited, DMARC set to reject, and an llms.txt with 11 sections. But none of the 20 pages read carries JSON-LD, so search and AI answers get no entity for the alliance.",
+    body: "HSTS for two years, framing limited, DMARC set to reject, and an llms.txt with 11 sections. But none of the 20 pages analyzed carries JSON-LD, so search and AI answers get no entity for the alliance.",
     action: "Start with one Organization block on the home page: name, url, logo, and sameAs to your official profiles.",
     tags: ["GEO", "JSONLD", "GlobalHealth"]
   },
   {
     id: "scouts", report: "r3-scout", scope: "Worldwide",
     title: ["Scouts: a consent tool,", "*no Consent Mode.*"],
-    body: "HSTS is preloaded, every image read has alt text, every page a meta description, and language versions link back. OneTrust loads, but no Consent Mode default is set, so Google tags may fire before a choice.",
+    body: "HSTS is preloaded, every image analyzed has alt text, every page a meta description, and language versions link back. OneTrust loads, but no Consent Mode default is set, so Google tags may fire before a choice.",
     action: "Set consent defaults to denied before Tag Manager loads; OneTrust then updates them.",
     tags: ["Analytics", "ConsentMode", "Scouting"]
   },
   {
     id: "globalfund", report: "r3-globalfund", scope: "Worldwide",
     title: ["The Global Fund", "*sets no cache rules.*"],
-    body: "DMARC rejects spoofed mail, every image read has alt text, every page a meta description, and Core Web Vitals pass for real visitors. But the start page sends no Cache-Control, so browsers and CDNs guess.",
+    body: "DMARC rejects spoofed mail, every image analyzed has alt text, every page a meta description, and Core Web Vitals pass for real visitors. But the start page sends no Cache-Control, so browsers and CDNs guess.",
     action: "Send Cache-Control on HTML, such as a short max-age, and a long max-age on fingerprinted assets.",
     tags: ["Performance", "Caching", "PublicHealth"]
   },
@@ -207,14 +207,14 @@ module.exports = [
   {
     id: "libreoffice", report: "r3-libreoffice", scope: "Worldwide",
     title: ["LibreOffice links share", "*without a preview.*"],
-    body: "HSTS covers subdomains, framing is denied, every page read has a meta description, and the sitemap matches the pages read. But the start page has no og: or twitter: tags, so shared links get a bare preview.",
+    body: "HSTS covers subdomains, framing is denied, every page analyzed has a meta description, and the sitemap matches the pages analyzed. But the start page has no og: or twitter: tags, so shared links get a bare preview.",
     action: "Add og:title, og:description, og:image and og:url to each template, plus twitter:card.",
     tags: ["SEO", "OpenGraph", "LibreOffice"]
   },
   {
     id: "msc", report: "r3-msc", scope: "Worldwide",
     title: ["MSC: Tag Manager", "*with no consent tool.*"],
-    body: "Every image read has alt text, every page a meta description, cookies are Secure, and an llms.txt is published. But Google Tag Manager loads and no consent tool or Consent Mode default appears in the HTML.",
+    body: "Every image analyzed has alt text, every page a meta description, cookies are Secure, and an llms.txt is published. But Google Tag Manager loads and no consent tool or Consent Mode default appears in the HTML.",
     action: "Add a consent tool, set Consent Mode defaults to denied, and fire tags only after a visitor agrees.",
     tags: ["Analytics", "Consent", "Sustainability"]
   }

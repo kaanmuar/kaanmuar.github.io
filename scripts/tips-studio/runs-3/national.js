@@ -24,7 +24,7 @@ module.exports = [
     report: "r3-fiscaliaco",
     scope: "National",
     title: ["Fiscalía's pages", "*share one title.*"],
-    body: "A meta description on every page read, Organization JSON-LD, preloaded HSTS, and a Permissions-Policy. But the home, Quiénes somos, and Misión y visión pages are all titled just \"Fiscalía General de la Nación\".",
+    body: "A meta description on every page analyzed, Organization JSON-LD, preloaded HSTS, and a Permissions-Policy. But the home, Quiénes somos, and Misión y visión pages are all titled just \"Fiscalía General de la Nación\".",
     action: "Lead each title with the page topic, then the institution, so results stand apart.",
     tags: ["SEO", "PageTitles", "GovTech"]
   },
@@ -33,7 +33,7 @@ module.exports = [
     report: "r3-argentinagob",
     scope: "National",
     title: ["Argentina.gob.ar waits", "*on 28 scripts.*"],
-    body: "A meta description on every page read, full share cards, a sitemap, and every internal link opened answered. But the home page head loads 28 scripts with no async or defer, and nothing paints until each one arrives.",
+    body: "A meta description on every page analyzed, full share cards, a sitemap, and every internal link opened answered. But the home page head loads 28 scripts with no async or defer, and nothing paints until each one arrives.",
     action: "Add defer to scripts the first screen doesn't need. The page can paint while they load.",
     tags: ["Performance", "RenderBlocking", "GovTech"]
   },
@@ -51,7 +51,7 @@ module.exports = [
     report: "r3-gobpe",
     scope: "National",
     title: ["Gob.pe still answers", "*on plain http.*"],
-    body: "A meta description on every page read, full share cards, real 404s, and every internal link opened answered. But the plain-http address serves the whole portal with a 200, no redirect, so typed addresses stay unencrypted.",
+    body: "A meta description on every page analyzed, full share cards, real 404s, and every internal link opened answered. But the plain-http address serves the whole portal with a 200, no redirect, so typed addresses stay unencrypted.",
     action: "Redirect every http request to https with a 301. HSTS only protects people who have visited before.",
     tags: ["Security", "HTTPS", "GovTech"]
   },
@@ -60,7 +60,7 @@ module.exports = [
     report: "r3-ramajudicial",
     scope: "National",
     title: ["Rama Judicial's site", "*sends no HSTS.*"],
-    body: "A sitemap with valid URLs, cookies that are Secure and HttpOnly, framing limited, and a fast home page. But no page read sends HSTS, and plain http answers with a temporary 307, so a first visit can be downgraded.",
+    body: "A sitemap with valid URLs, cookies that are Secure and HttpOnly, framing limited, and a fast home page. But no page analyzed sends HSTS, and plain http answers with a temporary 307, so a first visit can be downgraded.",
     action: "Send HSTS with a one-year max-age, and make the http redirect a 301 or 308.",
     tags: ["Security", "HSTS", "GovTech"]
   },
@@ -96,7 +96,7 @@ module.exports = [
     report: "r3-superfinanciera",
     scope: "National",
     title: ["Superfinanciera's map", "*lists a private IP.*"],
-    body: "A meta description on every page read, HSTS, a permanent https redirect, and FAQ-style content. But all of its sitemaps, about 66,000 URLs, point at a 10.x internal IP address no crawler can reach.",
+    body: "A meta description on every page analyzed, HSTS, a permanent https redirect, and FAQ-style content. But all of its sitemaps, about 66,000 URLs, point at a 10.x internal IP address no crawler can reach.",
     action: "Build sitemap URLs from the public https host, and recheck after any server move.",
     tags: ["SEO", "Sitemap", "Finance"]
   },
@@ -132,7 +132,7 @@ module.exports = [
     report: "r3-fnaco",
     scope: "National",
     title: ["FNA's product pages", "*point back home.*"],
-    body: "Descriptions and share cards on every page read, Consent Mode that starts in denied, and every link opened answered. But Ahorro, Cesantías, and other product pages name the home page as their canonical URL.",
+    body: "Descriptions and share cards on every page analyzed, Consent Mode that starts in denied, and every link opened answered. But Ahorro, Cesantías, and other product pages name the home page as their canonical URL.",
     action: "Give each page a self-referencing canonical. Pointing it home asks search to drop the page from results.",
     tags: ["SEO", "Canonical", "Finance"]
   },
@@ -159,7 +159,7 @@ module.exports = [
     report: "r3-govtnz",
     scope: "National",
     title: ["Govt.nz's home page", "*is slow to arrive.*"],
-    body: "A meta description on every page read, full share cards, Secure cookies, HSTS, and alt text on every image. But the home page HTML took 1.6 to 3.3 seconds to arrive in each read, before any image or script loads.",
+    body: "A meta description on every page analyzed, full share cards, Secure cookies, HSTS, and alt text on every image. But the home page HTML took 1.6 to 3.3 seconds to arrive in each run, before any image or script loads.",
     action: "Cache the home page HTML at the edge. Good sites deliver it in under 0.8 s.",
     tags: ["Performance", "TTFB", "GovTech"]
   },
@@ -168,7 +168,7 @@ module.exports = [
     report: "r3-invima",
     scope: "National",
     title: ["Invima's site", "*sends no HSTS.*"],
-    body: "Share cards with an image, a sitemap with valid URLs, a permanent https redirect, and every internal link opened answered. But no page read sends HSTS, so a browser's first visit can still be steered to plain http.",
+    body: "Share cards with an image, a sitemap with valid URLs, a permanent https redirect, and every internal link opened answered. But no page analyzed sends HSTS, so a browser's first visit can still be steered to plain http.",
     action: "Send HSTS, max-age=31536000, on every https response, then consider preload.",
     tags: ["Security", "HSTS", "Health"]
   },
@@ -195,7 +195,7 @@ module.exports = [
     report: "r3-govsg",
     scope: "National",
     title: ["Gov.sg's sitemap lists", "*a noindex page.*"],
-    body: "A GovernmentOrganization entity, descriptions and share cards on every page read, and alt text on every image. But /explainers/ is listed in the sitemap while telling search engines not to index it.",
+    body: "A GovernmentOrganization entity, descriptions and share cards on every page analyzed, and alt text on every image. But /explainers/ is listed in the sitemap while telling search engines not to index it.",
     action: "List only pages you want indexed; a noindex entry sends crawlers mixed signals.",
     tags: ["SEO", "Sitemap", "GovTech"]
   },
@@ -204,7 +204,7 @@ module.exports = [
     report: "r3-alkosto",
     scope: "National",
     title: ["Alkosto's images", "*arrive without a size.*"],
-    body: "Organization and store JSON-LD, a meta description on every page read, HSTS, and DMARC that guards its mail. But 184 of the 195 images on the home page carry no width or height, so the layout jumps as they load.",
+    body: "Organization and store JSON-LD, a meta description on every page analyzed, HSTS, and DMARC that guards its mail. But 184 of the 195 images on the home page carry no width or height, so the layout jumps as they load.",
     action: "Set width and height on every img, or an aspect-ratio in CSS. The browser then reserves the space early.",
     tags: ["Performance", "CLS", "Retail"]
   },
@@ -222,7 +222,7 @@ module.exports = [
     report: "r3-caracoltv",
     scope: "National",
     title: ["Caracol TV blocks", "*ChatGPT's visits.*"],
-    body: "Descriptions and share cards on every page read, a NewsMediaOrganization entity, and alt text on every image. But robots.txt disallows ChatGPT-User, the agent that opens a page when a person asks ChatGPT about it.",
+    body: "Descriptions and share cards on every page analyzed, a NewsMediaOrganization entity, and alt text on every image. But robots.txt disallows ChatGPT-User, the agent that opens a page when a person asks ChatGPT about it.",
     action: "Block training crawlers if you choose, but allow user-triggered agents. They bring readers to your pages.",
     tags: ["GEO", "AISearch", "Media"]
   },
@@ -231,7 +231,7 @@ module.exports = [
     report: "r3-usagov",
     scope: "National",
     title: ["USA.gov's Organization", "*has no name.*"],
-    body: "Language alternates, a sitemap that matches the pages read, alt text on every image, and Core Web Vitals that pass for real visitors. But its Organization JSON-LD has a logo and URL with no name or sameAs.",
+    body: "Language alternates, a sitemap that matches the pages analyzed, alt text on every image, and Core Web Vitals that pass for real visitors. But its Organization JSON-LD has a logo and URL with no name or sameAs.",
     action: "Name the organization and list its official profiles in sameAs. AI answers use them to say who runs the site.",
     tags: ["GEO", "StructuredData", "GovTech"]
   },
@@ -249,7 +249,7 @@ module.exports = [
     report: "r3-defensoriaco",
     scope: "National",
     title: ["Defensoría's HTML", "*weighs over 1 MB.*"],
-    body: "Language alternates, HSTS, alt text on every image, and every internal link opened answered. But the home page HTML weighs about 1.2 MB before any image or script, and all 20 pages read top 500 KB.",
+    body: "Language alternates, HSTS, alt text on every image, and every internal link opened answered. But the home page HTML weighs about 1.2 MB before any image or script, and all 20 pages analyzed top 500 KB.",
     action: "Move inline data, styles, and menus out of the HTML. Phones parse every byte first.",
     tags: ["Performance", "PageWeight", "GovTech"]
   },
