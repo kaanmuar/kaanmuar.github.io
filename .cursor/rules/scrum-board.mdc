@@ -17,6 +17,7 @@ Status field `PVTSSF_lAHOALfwis4BmsxOzhlUt04`: Backlog `3f4ac4fe`, Next `dc8fb26
 - Label `bug` + `area:*`. Title like the others: `BE: A null MX record was read as missing mail setup`.
 - Body: `**Kind:** Bug`, `**Area:**`, `**Found while:** #<ticket>`, `**Where it stands:**`, then `## What happened` and `## Fix`.
 - Link it as a sub-issue of the ticket being developed. Fixed: close it with "Fixed in #<PR>" and set Done. Not fixed: leave it open in Backlog.
+- A PR that fixes a URL review failure cause class adds a row to `FIXES` in `functions/url-review-failures.js` (cause, merge time, PR), so the failed runs it covers are re-run.
 
 ## Design deliverables are logged in the Design phase of the same ticket
 - Templates, layouts, images, logos, icons, share images, social posts, motion, copy and visual changes, and later updates or improvements to any of them each get an issue titled `Design: ...` with label `area:design`.

@@ -241,6 +241,27 @@ function snapshot(records, alerts, active, noteRows) {
   };
 }
 
+function rerunRows(docs) {
+  return (Array.isArray(docs) ? docs : []).map((row) => ({
+    id: clip(row.id, 40),
+    at: row.at || "",
+    status: clip(row.status, 20),
+    url: clip(row.url, 300),
+    host: clip(row.host, 120),
+    name: clip(row.name, 120),
+    email: clip(row.email, 160),
+    why: clip(row.trigger && row.trigger.label, 300),
+    failures: Array.isArray(row.failureIds) ? row.failureIds.length : 0,
+    reportStatus: clip(row.reportStatus, 20),
+    error: clip(row.error && row.error.message, 600),
+    decidedAt: row.decidedAt || "",
+    by: clip(row.by, 160),
+    mailError: clip(row.mailError, 200),
+    run: row.record ? summary(row.record, new Map()) : null,
+    log: (Array.isArray(row.lines) ? row.lines : []).slice(-30).map((line) => clip(line && line.text, 220))
+  }));
+}
+
 const PAGE = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -313,6 +334,11 @@ const PAGE = `<!DOCTYPE html>
       <div id="running"></div>
     </section>
     <section>
+      <h2>Re-runs</h2>
+      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it, and a sent report opens without payment.</p>
+      <div id="reruns"></div>
+    </section>
+    <section>
       <h2>Free runs</h2>
       <p class="empty">An address on this list runs as many reviews as it likes, at any size, with the full report open. Nothing is charged.</p>
       <div class="tools">
@@ -371,6 +397,7 @@ const PAGE = `<!DOCTYPE html>
     const offersEl = document.getElementById("offers");
     const notesEl = document.getElementById("notes");
     const freeListEl = document.getElementById("free-list");
+    const rerunsEl = document.getElementById("reruns");
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
     const qEl = document.getElementById("q");
@@ -420,6 +447,7 @@ const PAGE = `<!DOCTYPE html>
       renderOffers();
       renderNotes();
       renderFree();
+      renderReruns();
 
       alertsEl.replaceChildren();
       (data.alerts || []).slice(0, 12).forEach((alert) => {
@@ -611,6 +639,62 @@ const PAGE = `<!DOCTYPE html>
       });
       if (!(data.freeRuns || []).length) freeListEl.appendChild(Object.assign(node("p", "No address has free runs."), { className: "empty" }));
     }
+    function renderReruns() {
+      rerunsEl.replaceChildren();
+      const labels = { held: "Held for you", sent: "Sent", dropped: "Dropped", failed: "Failed again" };
+      (data.reruns || []).forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        block.appendChild(node("b", (labels[item.status] || item.status) + " · " + (item.host || item.url)));
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        const run = item.run;
+        meta.textContent = [
+          when(item.at),
+          item.name || item.email,
+          item.email,
+          item.failures > 1 ? item.failures + " failures" : "",
+          run ? run.pageCount + " pages, " + run.caseCount + " cases, " + run.signalCount + " signals" : "",
+          item.reportStatus === "stopped" ? "stopped before the last page" : "",
+          item.decidedAt ? item.status + " " + when(item.decidedAt) + (item.by ? " by " + item.by : "") : "",
+          item.mailError ? "mail failed: " + item.mailError : ""
+        ].filter(Boolean).join(" · ");
+        block.appendChild(meta);
+        block.appendChild(node("p", item.why));
+        if (item.error) block.appendChild(node("p", "Error: " + item.error));
+        if (item.log && item.log.length) {
+          const more = document.createElement("details");
+          more.appendChild(node("summary", "Log"));
+          more.appendChild(node("pre", item.log.join("\\n")));
+          block.appendChild(more);
+        }
+        if (item.status === "held") {
+          const send = document.createElement("button");
+          send.type = "button";
+          send.textContent = "Send to " + (item.email || "the asker");
+          send.disabled = !item.email;
+          send.addEventListener("click", () => decideRerun(item.id, true, send));
+          const drop = document.createElement("button");
+          drop.type = "button";
+          drop.textContent = "Drop";
+          drop.addEventListener("click", () => decideRerun(item.id, false, drop));
+          block.appendChild(send);
+          block.appendChild(drop);
+        }
+        rerunsEl.appendChild(block);
+      });
+      if (!(data.reruns || []).length) rerunsEl.appendChild(Object.assign(node("p", "No failed review has run again yet."), { className: "empty" }));
+    }
+    async function decideRerun(id, send, button) {
+      button.disabled = true;
+      await fetch(deskBase() + "/desk/rerun", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ id: id, send: send })
+      });
+      load();
+    }
     async function setFree(email, on, note) {
       await fetch(deskBase() + "/desk/free", {
         method: "POST",
@@ -783,6 +867,7 @@ module.exports = {
   alertFrom,
   alertsFromHistory,
   snapshot,
+  rerunRows,
   verifyOperator,
   PAGE
 };
