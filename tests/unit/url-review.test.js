@@ -4,7 +4,7 @@
  *
  *   npm run test:review
  *
- * Fixtures are trimmed reports from real reads (scripts/review-snapshot.js).
+ * Fixtures are trimmed reports from real reviews (scripts/review-snapshot.js).
  */
 const test = require("node:test");
 const assert = require("node:assert/strict");

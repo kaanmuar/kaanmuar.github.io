@@ -78,7 +78,7 @@
                     "Public signals and public write-ups",
                     "Live review log and a stop control",
                     "News from the country of the connection, in the page language",
-                    "Rules for a public read and a list of proposed cases",
+                    "Rules for a public analysis and a list of proposed cases",
                     "English, Spanish, Portuguese, German, French, and Italian"
                 ],
                 "inLanguage": ["en", "es", "pt", "de", "fr", "it"],
@@ -104,8 +104,8 @@
                     },
                     {
                         "@type": "VideoObject",
-                        "name": "QA-lab URL Review. The included first read",
-                        "description": "QA-lab URL Review reads a public page and describes it back to you. This film shows the included first read: twenty pages, two links deep.",
+                        "name": "QA-lab URL Review. The included first review",
+                        "description": "QA-lab URL Review reads a public page and describes it back to you. This film shows the included first review: twenty pages, two links deep.",
                         "inLanguage": "en",
                         "uploadDate": "2026-10-14T05:41:51+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/OKvR95YHAng/hqdefault.jpg",
@@ -915,9 +915,9 @@
             <label class="check"><input type="checkbox" name="t4"> The report is a snapshot and a proposal. It is not a certification that the site is safe, fast, or compliant.</label>
             <label class="check"><input type="checkbox" name="t5"> I give my name, email, and reason so there is a record of who asked. I can ask for a copy or deletion through the contact form on the CV.</label>
             <label class="check"><input type="checkbox" name="t6"> A site owner can ask this service to stop and to delete the report. I will not use a shared report to republish their content.</label>
-            <label class="check"><input type="checkbox" name="t7"> The included first review is 20 pages and 2 links deep. A wider or deeper read, and each later run, asks for payment before it starts. The amount is shown at that moment, on the payment page. A different name or email does not skip that charge. Stopped reviews are kept. Three stops in a day pause further reviews.</label>
+            <label class="check"><input type="checkbox" name="t7"> The included first review is 20 pages and 2 links deep. A wider or deeper review, and each later run, asks for payment before it starts. The amount is shown at that moment, on the payment page. A different name or email does not skip that charge. Stopped reviews are kept. Three stops in a day pause further reviews.</label>
             <label class="check"><input type="checkbox" name="t8"> The report is shown once. Seeing, downloading, printing, or sharing it again asks for payment. The amount is shown then. The opening of each proposed case stays readable. The rest of the case stays blurred until that payment is confirmed. A blurred copy of the scores and findings goes to my email when the review finishes.</label>
-            <label class="check"><input type="checkbox" name="t9"> If I say I have a username and password, I am allowed to use that login on the site I submit. This page does not ask for the password. A signed-in run is paid before it starts, and the password is not stored in the review record. The public read still does not sign in. Signals in the report are what the public response showed. They are not proof of a break-in. The tail of each signal stays blurred until that section is paid.</label>
+            <label class="check"><input type="checkbox" name="t9"> If I say I have a username and password, I am allowed to use that login on the site I submit. This page does not ask for the password. A signed-in run is paid before it starts, and the password is not stored in the review record. The public analysis still does not sign in. Signals in the report are what the public response showed. They are not proof of a break-in. The tail of each signal stays blurred until that section is paid.</label>
             <label class="check"><input type="checkbox" name="t10"> I ask for the service to start during any withdrawal period. I acknowledge that a consumer in the European Union, under Directive 2011/83/EU, Article 16, and a consumer in the United Kingdom, under the Consumer Contracts Regulations 2013, regulation 36(2), loses the right to withdraw only once the service has been fully performed. A withdrawal right those rules keep is not waived.</label>
             <p class="records-note" id="records-note">Records keep your name, email, reason, URL, selected frameworks, the review log, whether you stopped, time, IP address, browser, and language. When the host provides it, a country code is stored too. They are kept for 12 months. The page text is not sent to a model vendor. A password is not collected and is not stored. A shared link contains the report only, and opening it again asks for payment. Follow-up notes only arrive if you ask for them on the request: no more than three a week, and a reply of "stop" ends them anytime. Version 2026-10-20.</p>
             <button class="btn btn-primary" id="accept" type="submit" disabled>Accept and continue</button>
@@ -968,8 +968,8 @@
             <header class="live-head">
                 <div>
                     <p class="eyebrow" data-live-eyebrow>Live reports</p>
-                    <h2 id="live-title" class="live-title" data-live-title>Real sites. Real reads. <em>Open any of them.</em></h2>
-                    <p class="live-lede" data-live-lede>Public sites read by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Open a report to see the scores, what to fix first, and what already works. View and share only.</p>
+                    <h2 id="live-title" class="live-title" data-live-title>Real sites. Real reviews. <em>Open any of them.</em></h2>
+                    <p class="live-lede" data-live-lede>Public sites analyzed by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Open a report to see the scores, what to fix first, and what already works. View and share only.</p>
                 </div>
                 <button class="btn live-back" id="live-back" type="button">Back</button>
             </header>
@@ -990,7 +990,7 @@
     <details class="card service-facts" id="service-facts">
         <summary><h2>What a review is</h2></summary>
         <dl>
-            <dt>A public read, and a list of cases</dt>
+            <dt>A public analysis, and a list of cases</dt>
             <dd>QA-lab URL Review fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load.</dd>
             <dt>What the report scores</dt>
             <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages analyzed, and what to fix first. A headless browser loads up to three pages from an EU address: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots.</dd>
@@ -1041,7 +1041,7 @@
             </div>
             <div id="credential-note" class="verify-note" hidden>
                 <p><strong>A signed-in run</strong> needs a login you are allowed to use. This page does not take the password, and it does not store one.</p>
-                <p>Payment comes before that run. The amount is shown then. The public read still does not sign in.</p>
+                <p>Payment comes before that run. The amount is shown then. The public analysis still does not sign in.</p>
             </div>
             <div id="client-box" hidden>
                 <div class="grid-2">
@@ -1097,7 +1097,7 @@
     </div>
     <section id="run-panel" class="card log-card">
         <h2 style="margin-top:0">Review log</h2>
-        <p class="muted" id="report-once">Lines appear here while the pages are being read. Stop keeps the pages already saved and writes that stop into the report.</p>
+        <p class="muted" id="report-once">Lines appear here while the pages are being analyzed. Stop keeps the pages already saved and writes that stop into the report.</p>
         <ol class="log" id="run-log"></ol>
     </section>
     </div>

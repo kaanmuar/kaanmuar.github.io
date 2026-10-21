@@ -510,7 +510,7 @@ function analyze(input) {
   const unanswered = pages.filter((page) => page.depth > 0 && !page.status && !page.challenge);
   if (unanswered.length) {
     add("SEO", "person", "info", "seo-unanswered-links", plural(unanswered.length, "internal link", "internal links") + " did not answer in time",
-      unanswered.slice(0, 5).map((page) => (page.path || page.url) + ": " + (page.error || "no answer")).join(". ") + ". A slow answer on one read is not proof the page is broken.",
+      unanswered.slice(0, 5).map((page) => (page.path || page.url) + ": " + (page.error || "no answer")).join(". ") + ". A slow answer in one analysis is not proof the page is broken.",
       "Open each address again. If it stays slow, look at the server or cache for that path.",
       { pages: unanswered.map((page) => page.path || page.url), cases: ["FN-06", "LK-01"] });
   }
@@ -802,10 +802,10 @@ function analyze(input) {
       gaps.length ? "Follow the llmstxt.org layout: # name, > summary, then ## sections of [title](url): note." : "", { cases: ["GEO-02"], effort: "minutes" });
   } else if (llms.status === 200 && llms.html) {
     add("GEO", "risk", "low", "geo-llms", "/llms.txt answers with an HTML page", "The address returns a web page, which usually means a catch-all route.",
-      "Serve a plain-text /llms.txt. The fix kit has a draft built from this read.", { cases: ["GEO-02"], effort: "minutes" });
+      "Serve a plain-text /llms.txt. The fix kit has a draft built from this review.", { cases: ["GEO-02"], effort: "minutes" });
   } else {
     add("GEO", "risk", "low", "geo-llms", "No llms.txt was found", "/llms.txt returned " + (llms.status || "nothing") + ". It is a proposed convention that some AI tools read to find the pages that matter.",
-      "Publish /llms.txt. The fix kit has a draft built from this read.", { cases: ["GEO-02"], effort: "minutes" });
+      "Publish /llms.txt. The fix kit has a draft built from this review.", { cases: ["GEO-02"], effort: "minutes" });
   }
   const homeSchema = (face.schema && face.schema.items) || [];
   const allItems = [].concat.apply([], read.map((page) => (page.inspect.schema && page.inspect.schema.items) || []));

@@ -20,7 +20,7 @@ module.exports = {
       ["The second look catches what the first fix broke.", "Changes ripple. A new header, a moved menu, a lighter image can each break something nearby. A fresh run of {host} finds it before a visitor does.", "A second look at {host}"],
       ["There is a site next door.", "A client, a competitor, the landing page you launched last week. Point the review at it and compare it with {host}, side by side.", "Which site is next?"],
       ["Hand it to the team.", "The test cases from {host} export to Jira, TestRail, Xray, Zephyr, Azure DevOps, Excel, or PDF, so nobody retypes a thing.", "Your {host} test cases, in your team's tool"],
-      ["Go a level deeper.", "The first read looked at a slice of {host}. More pages and deeper links reach the forms, the checkout, and the corners nobody clicks during a demo.", "The corners of {host} nobody clicks"]
+      ["Go a level deeper.", "The first review looked at a slice of {host}. More pages and deeper links reach the forms, the checkout, and the corners nobody clicks during a demo.", "The corners of {host} nobody clicks"]
     ],
     offer: [
       ["While it is still fresh.", "You reviewed {host} this week. The details are still in your head, which makes this the best moment to read the full findings and fix the first one.", "While {host} is still fresh"],

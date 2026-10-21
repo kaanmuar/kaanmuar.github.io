@@ -539,7 +539,7 @@ function chargedUsd(options) {
     const error = new Error(purpose === "cases"
       ? "The charge does not match the selected kinds of test cases."
       : purpose === "new-run"
-        ? "The charge does not match this read."
+        ? "The charge does not match this review."
         : "The charge does not match the selected frameworks.");
     error.status = 400;
     throw error;
@@ -580,7 +580,7 @@ function judgeAttempts(rows, identity, request) {
     scope = priceForScope(askedPages, askedDepth);
     frameworksPriced = priceFor(frameworks, tools);
   } catch (error) {
-    return { ok: false, code: "invalid", message: error.message || "Choose the size of the read." };
+    return { ok: false, code: "invalid", message: error.message || "Choose the size of the review." };
   }
   const used = new Set(mine.filter((row) => row.status === "run-credit-used").map((row) => row.creditId));
   const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope));
@@ -594,7 +594,7 @@ function judgeAttempts(rows, identity, request) {
     code: "payment",
     message: completed
       ? "Another review asks for payment before it starts."
-      : "A wider or deeper read asks for payment before it starts.",
+      : "A wider or deeper review asks for payment before it starts.",
     priceUsd: priced.usd,
     count: priced.count,
     frameworks: priced.frameworks,
@@ -1461,9 +1461,9 @@ function propose(pages, robotsBlocked, limits, dom) {
   addCase(cases, { id: "FN-05", layer: "Functional", title: "Primary controls have an accessible name", why: face.buttons + " button elements were counted." + later + " Empty buttons and icon-only controls would fail.", fw: browser });
   addCase(cases, { id: "FN-06", layer: "Functional", title: "Discovered pages keep a successful document status", why: failed.length ? failed.length + " saved pages were outside 200–399." : pages.length + " saved pages stayed in the success range." + " A regression run would fail on a new 404 or 500 inside the same path list.", fw: browser });
   addCase(cases, { id: "FN-07", layer: "Functional", title: "Each saved page keeps a title", why: (untitled.length ? untitled.length + " saved pages had no title." : "Every saved page had a title.") + " Titles would be asserted per path, including pages reached through one link.", fw: browser });
-  if (duplicateTitles) addCase(cases, { id: "FN-08", layer: "Functional", title: "Titles stay distinct across the pages that were analyzed", why: duplicateTitles + " titles repeated inside this read. A content regression would flag two indexable URLs that share one title.", fw: browser });
+  if (duplicateTitles) addCase(cases, { id: "FN-08", layer: "Functional", title: "Titles stay distinct across the pages that were analyzed", why: duplicateTitles + " titles repeated inside this review. A content regression would flag two indexable URLs that share one title.", fw: browser });
   addCase(cases, { id: "CT-01", layer: "Content", title: "The meta description is present and short enough to read", why: (face.description ? "A description of " + face.description.length + " characters is present." : "No meta description was found.") + " The useful band for a snippet is about 50 to 160 characters.", fw: browser });
-  addCase(cases, { id: "CT-02", layer: "Content", title: "A canonical link points at the preferred URL", why: (face.canonical ? "Canonical is " + face.canonical + "." : "No canonical link was found.") + " The preferred URL would be compared with the final https address of this read.", fw: browser });
+  addCase(cases, { id: "CT-02", layer: "Content", title: "A canonical link points at the preferred URL", why: (face.canonical ? "Canonical is " + face.canonical + "." : "No canonical link was found.") + " The preferred URL would be compared with the final https address of this review.", fw: browser });
   addCase(cases, { id: "CT-03", layer: "Content", title: "Open Graph and Twitter cards describe the same page", why: (sig.openGraph ? "Open Graph tags are present." : "No Open Graph tag was found.") + (sig.twitter ? " A Twitter card tag is present." : " No Twitter card tag was found.") + " A later case would assert og:title, og:image, and the card type.", fw: browser });
   addCase(cases, { id: "CT-04", layer: "Content", title: "Structured data is valid when the page publishes it", why: (sig.jsonLd ? sig.jsonLd + " JSON-LD block(s) were found." : "No JSON-LD block was found.") + " The type would be checked against the visible page, for example an organization, article, or product.", fw: browser });
   addCase(cases, { id: "CT-05", layer: "Content", title: "The h1 and the title agree", why: (face.h1[0] ? "The first h1 is \"" + face.h1[0] + "\"." : "There is no h1 text to compare.") + " The title and the h1 do not have to be identical, and they should not describe different pages.", fw: browser });
@@ -1471,7 +1471,7 @@ function propose(pages, robotsBlocked, limits, dom) {
   const capDepth = (limits && limits.maxDepth) || MAX_DEPTH;
   addCase(cases, { id: "LK-01", layer: "Links", title: "Same-host links discovered from the start page resolve", why: face.links.length + " same-host links were listed" + (face.renderedLinks ? ", " + face.renderedLinks + " of them only after JavaScript ran" : "") + ". This review opened at most " + capPages + " of them and did not click them. A later run would request each href and accept only an HTML document on this host.", fw: browser });
   addCase(cases, { id: "LK-02", layer: "Links", title: "The crawl stays inside the page cap and the host", why: pages.length + " HTML pages were saved, " + capDepth + " links deep at most, with a cap of " + capPages + " pages. A regression would fail if a link left the host or if the cap stopped hiding a broken primary path.", fw: browser });
-  addCase(cases, { id: "LK-03", layer: "Links", title: "A crawler honors robots.txt for linked pages", why: (robotsBlocked ? robotsBlocked + " linked URLs were skipped because robots.txt disallows them for this agent." : "No linked URL was skipped for robots.txt during this read.") + " The start URL is still fetched. A later crawler case would log each skipped path.", fw: browser });
+  addCase(cases, { id: "LK-03", layer: "Links", title: "A crawler honors robots.txt for linked pages", why: (robotsBlocked ? robotsBlocked + " linked URLs were skipped because robots.txt disallows them for this agent." : "No linked URL was skipped for robots.txt during this review.") + " The start URL is still fetched. A later crawler case would log each skipped path.", fw: browser });
   journeys(pages, dom).forEach((step, index) => {
     addCase(cases, {
       id: "JR-0" + (index + 1),
@@ -1528,10 +1528,10 @@ function propose(pages, robotsBlocked, limits, dom) {
   addCase(cases, { id: "GEO-06", layer: "GEO", title: "Content pages show when they were published or changed", why: (face.dated ? "A published or modified date is present on the start page." : "No published or modified date was found on the start page.") + (face.author ? " An author is named." : " No author is named, which the report lists separately.") + " Search engines and AI answers weigh whether a page is current.", fw: browser });
   addCase(cases, { id: "PF-01", layer: "Performance", title: "The HTML document arrives inside a stated budget", why: "This read took " + home.ms + " ms and " + face.bytes + " bytes. That is one fetch, not a load test. A budget case would fail above 800 ms or 1.5 MB for the document alone. Lighthouse, through PageSpeed Insights, scores the rendered start page in the Performance findings.", fw: browser.concat(LOAD_FW), also: named(["Lighthouse"]) });
   addCase(cases, { id: "PF-02", layer: "Performance", title: "Script and stylesheet counts stay inside a budget", why: face.scripts + " external scripts and " + face.styles + " stylesheets were referenced. The later case would record the counts and the render-blocking ones.", fw: browser.concat(LOAD_FW) });
-  addCase(cases, { id: "PF-03", layer: "Performance", title: "The slowest page in this read stays inside the same budget", why: "The slowest saved response was " + (slow.path || home.url) + " at " + (slow.ms || 0) + " ms. The trend across the crawl is the order the pages were opened, not a history of previous days.", fw: browser.concat(LOAD_FW) });
+  addCase(cases, { id: "PF-03", layer: "Performance", title: "The slowest page in this review stays inside the same budget", why: "The slowest saved response was " + (slow.path || home.url) + " at " + (slow.ms || 0) + " ms. The trend across the crawl is the order the pages were opened, not a history of previous days.", fw: browser.concat(LOAD_FW) });
   addCase(cases, { id: "LD-01", layer: "Load", title: "An authorised baseline could repeat the document fetch", why: "JMeter, Gatling, or k6 would need written permission, a verified domain, and a scheduled window. This review did not open a single virtual user. The baseline would be one request per second for a few minutes.", fw: LOAD_FW });
   addCase(cases, { id: "LD-02", layer: "Load", title: "A ramp would add users only inside an agreed ceiling", why: "The proposal is a short ramp, then a hold, then a stop. Error rate and response time would be the gates. No profile is generated by this review.", fw: LOAD_FW });
-  addCase(cases, { id: "LD-03", layer: "Load", title: "A spike would last seconds, not an open-ended flood", why: "A spike case belongs on a staging host or a window the owner schedules. The public read here is still one document at a time.", fw: LOAD_FW });
+  addCase(cases, { id: "LD-03", layer: "Load", title: "A spike would last seconds, not an open-ended flood", why: "A spike case belongs on a staging host or a window the owner schedules. The public analysis here is still one document at a time.", fw: LOAD_FW });
   addCase(cases, { id: "MB-01", layer: "Mobile", title: "The layout holds at a phone width", why: "A viewport meta tag " + (sig.viewport ? "is present." : "was not found.") + " Appium or Maestro would open a phone profile later and compare the same h1 and primary link.", fw: browser.concat(MOBILE_FW) });
   addCase(cases, { id: "MB-02", layer: "Mobile", title: "The same primary path works in a tablet width", why: "Width, orientation, and a touch scroll would be checked in Appium, Maestro, or a browser device profile. This HTML read did not resize a window.", fw: browser.concat(MOBILE_FW) });
   addCase(cases, { id: "I18N-01", layer: "Internationalization", title: "The lang attribute matches the copy a person reads", why: (face.lang ? "Declared language: " + face.lang + "." : "No language was declared.") + " A bilingual page would need hreflang plus a visible language switch.", fw: browser });
@@ -1540,7 +1540,7 @@ function propose(pages, robotsBlocked, limits, dom) {
   addCase(cases, { id: "RS-02", layer: "Resilience", title: "A slow document fails the case instead of hanging the suite", why: "This review stops a single page at " + Math.round(PAGE_TIMEOUT_MS / 1000) + " seconds. A suite would use its own timeout and a screenshot of the last frame.", fw: browser });
   addCase(cases, { id: "RS-03", layer: "Resilience", title: "A repeat visit can reuse a cache policy the response already states", why: (sig.cacheControl ? "cache-control is present." : "No cache-control header was seen on the first response.") + " The later case would record the header. It would not flush a shared cache.", fw: browser });
   addCase(cases, { id: "CMP-01", layer: "Compatibility", title: "The page still explains itself when scripts do not run", why: (sig.noscript ? "A noscript element is present." : "No noscript element was found.") + " The case would disable JavaScript and check that the title and the main heading remain.", fw: browser });
-  addCase(cases, { id: "CMP-02", layer: "Compatibility", title: "The named stack is recorded with the case", why: "Markers seen in this read: " + stack + ". The case list is filtered by the frameworks you select. Those tools are not launched. A later cross-browser pass could use BrowserStack. It is not started here.", fw: browser, also: named(["BrowserStack"]) });
+  addCase(cases, { id: "CMP-02", layer: "Compatibility", title: "The named stack is recorded with the case", why: "Markers seen in this review: " + stack + ". The case list is filtered by the frameworks you select. Those tools are not launched. A later cross-browser pass could use BrowserStack. It is not started here.", fw: browser, also: named(["BrowserStack"]) });
   if (sig.manifest) addCase(cases, { id: "CMP-03", layer: "Compatibility", title: "An advertised manifest still leaves the page readable in a normal tab", why: "A manifest link is present. The case would open the page in a browser tab and confirm the title and the main heading. It would not install the app.", fw: browser });
   if (sig.video) addCase(cases, { id: "MED-01", layer: "Media", title: "Video exposes captions or a transcript path", why: sig.video + " video element(s) were counted. A later case would check tracks and would not download the media file.", fw: browser });
   if (hasTech(names, /Google Tag Manager|Google Analytics|HubSpot/i)) addCase(cases, { id: "AN-01", layer: "Analytics", title: "Analytics tags wait for a recorded choice when the page asks for consent", why: "An analytics marker was seen (" + stack + "). The case would compare a cold load with a load after consent, and it would not invent a consent click.", fw: browser });
@@ -1565,7 +1565,7 @@ function propose(pages, robotsBlocked, limits, dom) {
       id: "FN-" + String(20 + index),
       layer: "Functional",
       title: "Discovered page answers: " + page.path,
-      why: "Status " + (page.status || page.error || "unread") + " in " + (page.ms || 0) + " ms. Title: " + (page.title || "none") + ". The path stays on the same host and is not clicked beyond the read.",
+      why: "Status " + (page.status || page.error || "unread") + " in " + (page.ms || 0) + " ms. Title: " + (page.title || "none") + ". The path stays on the same host and is not clicked beyond the analysis.",
       fw: browser
     });
   });
@@ -1865,7 +1865,7 @@ async function reviewTarget(rawUrl, hooks) {
   const browserPromise = canBrowse
     ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths })).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
     : Promise.resolve(null);
-  if (canBrowse) note("Opening the start page in a headless browser alongside the read.");
+  if (canBrowse) note("Opening the start page in a headless browser alongside the analysis.");
   const speedUntil = Date.now() + SPEED_WAIT_MS;
   const speedPromise = !stopped && typeof controls.pagespeed === "function"
     ? Promise.resolve().then(() => controls.pagespeed(first.url)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
@@ -2005,7 +2005,7 @@ async function reviewTarget(rawUrl, hooks) {
     note("Scored " + analysis.findings.length + " checks: " + analysis.score.totals.fail + " fail, " + analysis.score.totals.risk + " at risk, " + analysis.score.totals.pass + " pass. Health " + analysis.score.overall + "/100.");
   } catch (error) {
     console.error("URL review insights failed:", error);
-    note("The scored checks could not be written for this read. The proposed cases are unaffected.");
+    note("The scored checks could not be written for this review. The proposed cases are unaffected.");
   }
   const reportId = crypto.randomBytes(9).toString("hex");
   const fetchedAt = new Date().toISOString();
@@ -2013,7 +2013,7 @@ async function reviewTarget(rawUrl, hooks) {
   let mentions = [];
   try { mentions = await mentionsPromise; } catch (error) { mentions = []; }
   note(mentions.length ? mentions.length + " public write-ups were listed for this host." : "No public write-up was retrieved on this pass.");
-  note(alerts.length ? alerts.length + " public signals were listed. The tail of each one stays closed until that section is paid." : "No leak or missing control of the kinds this read watches was seen on the first page.");
+  note(alerts.length ? alerts.length + " public signals were listed. The tail of each one stays closed until that section is paid." : "No leak or missing control of the kinds this review watches was seen on the first page.");
   note(tools.length ? "Tools that apply: " + tools.map((item) => item.name).join(", ") + "." + (browser && browser.ok && browser.axe && browser.axe.ran ? " axe-core ran in the headless browser." + (speed && speed.ok ? " Lighthouse ran through PageSpeed Insights." : "") + " The others are not launched." : (speed && speed.ok ? " Lighthouse ran through PageSpeed Insights. The others are not launched." : " None of them are launched.")) : "None of axe-core, Lighthouse, k6, BrowserStack, Applitools, Percy, Provar, or Copado apply to this page.");
   const publishedPages = pages.map((page) => ({
     url: page.url,
@@ -2078,7 +2078,7 @@ async function reviewTarget(rawUrl, hooks) {
     status: stopped ? "stopped" : "complete",
     statement: stopped
       ? "This review was stopped. The cases below use only the pages analyzed before the stop. None of them were executed."
-      : "These cases are proposed from a public read. None of them were executed."
+      : "These cases are proposed from a public analysis. None of them were executed."
   };
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
   return result;

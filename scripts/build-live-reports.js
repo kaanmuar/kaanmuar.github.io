@@ -412,7 +412,9 @@ function analyzedWording(text) {
     .replace(/\bPartial read:/g, "Partial analysis:")
     .replace(/\b(pages?|alternate)( that)? (was|were) read\b/g, "$1$2 $3 analyzed")
     .replace(/\bwere read([.;])/g, "were analyzed$1")
-    .replace(/\b(pages?) read\b(?! well| without)/g, "$1 analyzed");
+    .replace(/\b(pages?) read\b(?! well| without)/g, "$1 analyzed")
+    .replace(/\bthis read\b/g, "this review")
+    .replace(/\b([aA]|[oO]ne|The) public read\b/g, "$1 public analysis");
 }
 
 function scrub(text, max) {
