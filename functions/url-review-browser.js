@@ -483,7 +483,8 @@ async function printPdf(html) {
   }
 }
 
-async function browse(job) {
+async function browse(job, log) {
+  const say = typeof log === "function" ? (text) => { try { log(text); } catch (error) { /* a closed log must not stop the pass */ } } : () => {};
   const started = Date.now();
   const budget = Math.min(110000, Math.max(30000, Number(job && job.budgetMs) || 85000));
   const left = () => budget - (Date.now() - started);
@@ -493,6 +494,8 @@ async function browse(job) {
   const timing = {};
   let mark = Date.now();
   const lap = (name) => { const now = Date.now(); timing[name] = now - mark; mark = now; };
+  const skip = (step, need) => say(step + " was skipped: " + Math.round(left() / 1000) + " s were left of the browser's budget, and it needs " + Math.round(need / 1000) + " s.");
+  say("Starting headless Chromium.");
   const browser = await launch();
   lap("launch");
   try {
@@ -500,6 +503,7 @@ async function browse(job) {
     const ua = (await browser.userAgent()).replace(/HeadlessChrome/g, "Chrome") + " " + AGENT_TAG;
     const host = new URL(start).hostname;
     const result = { ok: true, engine: version.replace("HeadlessChrome", "Chromium"), at: new Date().toISOString(), pages: [] };
+    say(result.engine + " is up. Loading " + pathOf(start) + " at 1280×800 with no stored cookies.");
 
     // Cold visit on a desktop width: no stored choice, nothing clicked.
     const coldContext = await browser.createBrowserContext();
@@ -508,10 +512,12 @@ async function browse(job) {
     await page.evaluateOnNewDocument(VITALS);
     const first = await open(page, start);
     lap("load");
+    say(pathOf(first.finalUrl) + " loaded with status " + first.status + " in " + Math.round(timing.load / 100) / 10 + " s, after " + rec.state.requests + " requests to " + rec.state.hosts.size + " hosts.");
     const view = await rendered(page);
     let dom = null;
     try { dom = await domFacts(page); } catch (error) { dom = null; }
     lap("read");
+    say("Read the rendered page: " + words(view.text) + " words, compared with " + words(htmlText(first.raw)) + " in the raw HTML.");
     const rawText = htmlText(first.raw);
     const renderedWords = words(view.text);
     const rawWords = words(rawText);
@@ -538,8 +544,12 @@ async function browse(job) {
       result.shots = {};
     }
     lap("shot");
+    say("Core Web Vitals in the lab: LCP " + result.start.vitals.lcp + " ms, CLS " + result.start.vitals.cls + ", TBT " + result.start.vitals.tbt + " ms. Took the desktop screenshot.");
     const banner = await findBanner(page);
     const beforeCookies = await cookiesOf(coldContext, page, host);
+    say(banner.name
+      ? "Found the " + banner.name + " cookie banner" + (banner.rejectLabel ? " with a \"" + banner.rejectLabel + "\" button" : " with no reject button") + ". " + beforeCookies.length + " cookies were set before any choice."
+      : "No cookie banner was found. " + beforeCookies.length + " cookies were set on the first visit.");
     const consent = {
       banner: banner.name,
       rejectLabel: banner.rejectLabel,
@@ -548,11 +558,15 @@ async function browse(job) {
       after: null
     };
     if (left() > 25000) {
+      say("Running axe-core on " + pathOf(first.finalUrl) + ".");
       const axe = await runAxe(page);
       lap("axe");
       result.axe = { ran: axe.ran, version: axe.version || "", tags: AXE_TAGS, pages: [{ path: pathOf(first.finalUrl), violations: axe.violations }] };
-    }
+      say(axe.ran ? "axe-core " + axe.version + " found " + axe.violations.length + " rules broken on " + pathOf(first.finalUrl) + "." : "axe-core did not finish on " + pathOf(first.finalUrl) + (axe.error ? " (" + axe.error + ")" : "") + ".");
+    } else skip("axe-core", 25000);
+    if (banner.rejectLabel && left() <= 20000) skip("Pressing the reject button", 20000);
     if (banner.rejectLabel && left() > 20000) {
+      say("Pressing \"" + banner.rejectLabel + "\" and reloading to see which trackers stay.");
       try {
         const before = new Set(beforeCookies.map((cookie) => cookie.name + "@" + cookie.domain));
         await page.evaluate(() => { const node = document.querySelector("[data-qa-reject]"); if (node) node.click(); });
@@ -568,10 +582,13 @@ async function browse(job) {
           cookies: afterCookies.filter((cookie) => cookie.tracking && !before.has(cookie.name + "@" + cookie.domain)).slice(0, 20),
           kept: afterCookies.filter((cookie) => cookie.tracking && before.has(cookie.name + "@" + cookie.domain)).length
         };
+        say("After the reject: " + consent.after.cookies.length + " new tracking cookies, " + consent.after.kept + " kept from before.");
       } catch (error) {
         consent.rejectError = trim(error.message, 120);
+        say("The reject button could not be pressed (" + consent.rejectError + ").");
       }
     }
+    say(rec.state.errorCount + " console errors, " + rec.state.failedCount + " failed requests, and " + rec.state.mixed.length + " mixed-content requests on the desktop visit.");
     result.consent = consent;
     result.console = { errors: rec.state.errorCount, samples: rec.state.errors };
     result.failed = { count: rec.state.failedCount, samples: rec.state.failed };
@@ -580,6 +597,7 @@ async function browse(job) {
 
     // Phone width.
     if (left() > 15000) {
+      say("Loading " + pathOf(start) + " on a 390×844 phone (Android, touch).");
       const phoneContext = await browser.createBrowserContext();
       const phoneUa = ua.replace(/\([^)]*\)/, "(Linux; Android 14; Pixel 8)").replace(/Safari\//, "Mobile Safari/");
       const phone = await prepare(phoneContext, phoneUa, null, { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
@@ -588,35 +606,47 @@ async function browse(job) {
         lap("phoneLoad");
         result.mobile = await mobileCheck(phone);
         lap("phoneLayout");
+        say(result.mobile.overflow > 2 ? "On the phone the page is " + result.mobile.overflow + " px wider than the screen" + (result.mobile.offenders.length ? ", from " + result.mobile.offenders.join(", ") : "") + "." : "On the phone the page fits the screen width.");
         const taps = await runAxe(phone, ["target-size"]);
         lap("phoneAxe");
         const rule = taps.violations[0];
         result.mobile.targetsChecked = taps.ran;
         result.mobile.smallTargets = rule ? rule.nodes : 0;
         result.mobile.targetSamples = rule ? rule.targets : [];
+        say(taps.ran ? result.mobile.smallTargets + " tap targets are smaller than 24×24 px." : "The tap target check did not finish.");
         result.shots.mobile = "data:image/jpeg;base64," + await phone.screenshot({ type: "jpeg", quality: 50, encoding: "base64", captureBeyondViewport: false, optimizeForSpeed: true });
         lap("phoneShot");
+        say("Took the phone screenshot.");
       } catch (error) {
         result.mobile = { error: trim(error.message, 120) };
+        say("The phone visit failed (" + result.mobile.error + ").");
       }
+      if (result.mobile && !result.mobile.error && left() <= 10000) skip("The tablet check", 10000);
       if (result.mobile && !result.mobile.error && left() > 10000) {
+        say("Resizing to a 768×1024 tablet.");
         try {
           await phone.setViewport({ width: 768, height: 1024, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
           await new Promise((resolve) => setTimeout(resolve, 800));
           result.tablet = await mobileCheck(phone);
           result.shots.tablet = "data:image/jpeg;base64," + await phone.screenshot({ type: "jpeg", quality: 50, encoding: "base64", optimizeForSpeed: true, clip: { x: 0, y: 0, width: 768, height: 1024, scale: 0.5 } });
+          say(result.tablet.overflow > 2 ? "On the tablet the page is " + result.tablet.overflow + " px wider than the screen. Took the tablet screenshot." : "On the tablet the page fits the screen width. Took the tablet screenshot.");
         } catch (error) {
           result.tablet = { error: trim(error.message, 120) };
+          say("The tablet check failed (" + result.tablet.error + ").");
         }
         lap("tablet");
       }
       await phoneContext.close();
       lap("phone");
-    }
+    } else skip("The phone and tablet checks", 15000);
 
     // Up to two more pages for axe and the text comparison.
     for (const url of extra) {
-      if (left() < 20000) break;
+      if (left() < 20000) {
+        skip("Opening " + pathOf(url), 20000);
+        break;
+      }
+      say("Opening " + pathOf(url) + " for axe-core and the text comparison.");
       const context = await browser.createBrowserContext();
       const pageRec = recorder(true);
       const other = await prepare(context, ua, pageRec, { width: 1280, height: 800 });
@@ -628,12 +658,15 @@ async function browse(job) {
         const hw = words(htmlText(got.raw));
         result.pages.push({ path: pathOf(got.finalUrl), status: got.status, renderedWords: rw, rawWords: hw, share: rw ? Math.min(100, Math.round((hw / rw) * 100)) : 100, errors: pageRec.state.errorCount });
         if (result.axe && axe.ran) result.axe.pages.push({ path: pathOf(got.finalUrl), violations: axe.violations });
+        say(pathOf(got.finalUrl) + " answered " + got.status + ": " + rw + " rendered words, " + pageRec.state.errorCount + " console errors, " + (axe.ran ? axe.violations.length + " axe-core rules broken." : "axe-core not run."));
       } catch (error) {
         result.pages.push({ path: pathOf(url), status: 0, error: trim(error.message, 120) });
+        say(pathOf(url) + " could not be opened (" + trim(error.message, 120) + ").");
       }
       await context.close();
     }
     lap("extra");
+    say("Closing the browser.");
     result.timing = timing;
     result.ms = Date.now() - started;
     return result;
