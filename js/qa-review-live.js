@@ -13,8 +13,8 @@
   // A review analyzes a site; it never "reads" it. Spanish is Latin American (tú), Portuguese is Brazilian (você).
   const T = {
     en: {
-      eyebrow: "Live reports", title: "Real sites. Real reads.", titleEm: "Open any of them.",
-      lede: "<b>{n} public sites</b>, read by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Turn the ring, filter by sector or country, and open a report. View and share only.",
+      eyebrow: "Live reports", title: "Real sites. Real reviews.", titleEm: "Open any of them.",
+      lede: "<b>{n} public sites</b>, analyzed by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Turn the ring, filter by sector or country, and open a report. View and share only.",
       explore: "Explore {n} live reports", gateLine: "Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.",
       back: "Back", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
       carousel: "Live reports carousel", all: "All", sector: "Sector", scope: "Scope", country: "Country", focus: "Test focus",
@@ -26,9 +26,9 @@
       viewOnly: "View only. This live report can be opened and shared, not downloaded, printed, or exported.",
       blocked: "View only. Share the link instead.", shot: "Screenshots cannot be blocked by a page. The watermark stays on the picture.",
       printNote: "Live reports are view-only and are not printed.", printLink: "Open or share it here:",
-      fair: "One automated read of public pages on {date}. A starting point, not a verdict.", own: "Review your own site",
+      fair: "One automated analysis of public pages on {date}. A starting point, not a verdict.", own: "Review your own site",
       rank: "<b>#{r}</b> of {n} in this series", rankSector: "<b>#{r}</b> of {n} in {sector}",
-      hHeadline: "What the read found", hLesson: "The lesson", hAreas: "Six areas · gold tick is the series average", hFix: "Fix first", hWorks: "Already working",
+      hHeadline: "What the review found", hLesson: "The lesson", hAreas: "Six areas · gold tick is the series average", hFix: "Fix first", hWorks: "Already working",
       hAi: "AI crawlers", hSpeed: "Real-visitor speed", hSec: "Security headers", hCoverage: "Proposed coverage", hTags: "Tags",
       gWho: "Who", gScore: "How it scored", gStand: "Standouts", gTested: "Tested for", gBuilt: "Built with",
       openFail: "This report could not be opened.", visit: "Visit site",
