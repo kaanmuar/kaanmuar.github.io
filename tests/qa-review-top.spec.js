@@ -5,7 +5,7 @@ const items = Array.from({ length: 6 }, (_, i) => ({ href: 'https://example.com/
 async function prime(page, { terms = true } = {}) {
   await page.addInitScript((accepted) => {
     try {
-      if (accepted) sessionStorage.setItem('qa-review-terms', '2026-10-20');
+      if (accepted) sessionStorage.setItem('qa-review-terms', '2026-10-21');
       localStorage.setItem('hasSeenReviewTour', 'true');
       localStorage.setItem('qa-review-analytics', 'necessary');
       localStorage.setItem('cv-preferred-lang', 'en');

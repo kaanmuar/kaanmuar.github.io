@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 async function prime(page, { terms = true } = {}) {
   await page.addInitScript((accepted) => {
     try {
-      if (accepted) sessionStorage.setItem('qa-review-terms', '2026-10-20');
+      if (accepted) sessionStorage.setItem('qa-review-terms', '2026-10-21');
       localStorage.setItem('hasSeenReviewTour', 'true');
       localStorage.setItem('qa-review-analytics', 'necessary');
       localStorage.setItem('cv-preferred-lang', 'en');
@@ -207,7 +207,7 @@ test.describe('Live reports in Spanish', () => {
     await page.route(/translate\.(google|googleapis)\.com/, (route) => route.abort());
     await page.addInitScript(() => {
       try {
-        sessionStorage.setItem('qa-review-terms', '2026-10-20');
+        sessionStorage.setItem('qa-review-terms', '2026-10-21');
         localStorage.setItem('hasSeenReviewTour', 'true');
         localStorage.setItem('qa-review-analytics', 'necessary');
         localStorage.setItem('site-translate', 'picked');

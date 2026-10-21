@@ -12,7 +12,9 @@ const crypto = require("crypto");
 const { URL } = require("url");
 const insights = require("./url-review-insights");
 
-const TERMS_VERSION = "2026-10-20";
+const TERMS_VERSION = "2026-10-21";
+// A page loaded before a terms change still sends the version before it.
+const PREVIOUS_TERMS_VERSION = "2026-10-20";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 
@@ -248,7 +250,7 @@ function preformatUrl(input) {
 function validateIntake(body) {
   const src = body || {};
   const errors = [];
-  if (src.termsAccepted !== true || src.termsVersion !== TERMS_VERSION) fieldError(errors, "terms", "Accept the terms first.");
+  if (src.termsAccepted !== true || (src.termsVersion !== TERMS_VERSION && src.termsVersion !== PREVIOUS_TERMS_VERSION)) fieldError(errors, "terms", "Accept the terms first.");
   const name = clean(src.name, 120);
   const email = clean(src.email, 120).toLowerCase();
   const reasonCode = clean(src.reasonCode, 40);
@@ -297,7 +299,7 @@ function validateIntake(body) {
       pages: scope ? scope.pages : INCLUDED_PAGES,
       depth: scope ? scope.depth : INCLUDED_DEPTH,
       url: target.toString(),
-      termsVersion: TERMS_VERSION,
+      termsVersion: src.termsVersion,
       deviceId: clean(src.deviceId, 80),
       clientName,
       clientEmail,
@@ -2113,7 +2115,7 @@ function intakeRecord(value, report, meta) {
     id: report.id,
     createdAt: new Date(now).toISOString(),
     retainUntil: new Date(now + RETAIN_MS).toISOString(),
-    termsVersion: TERMS_VERSION,
+    termsVersion: value.termsVersion || TERMS_VERSION,
     name: value.name,
     email: value.email,
     reason: value.reason,
