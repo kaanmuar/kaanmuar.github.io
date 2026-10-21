@@ -1131,6 +1131,7 @@ async function mailReviewedSites(ip, source) {
 const urlReview = require("./url-review-core");
 const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
+const reviewPublish = require("./url-review-publish");
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
@@ -1499,6 +1500,31 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     res.status(405).json({ error: "Use the desk sign-in." });
+    return;
+  }
+  if (req.method === "GET" && pathName.indexOf("/publishable") !== -1) {
+    const key = process.env.PUBLISH_KEY || "";
+    const given = String(req.get("x-publish-key") || "");
+    const crypto = require("crypto");
+    if (!key || given.length !== key.length || !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key))) {
+      res.status(403).json({ error: "Not allowed." });
+      return;
+    }
+    const since = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(String(req.query.since || "")) ? String(req.query.since) : new Date(Date.now() - 864e5).toISOString();
+    try {
+      const [reviewSnap, unlistedSnap] = await Promise.all([
+        admin.firestore().collection("url_reviews").where("createdAt", ">", since).orderBy("createdAt").limit(500).get(),
+        admin.firestore().collection("url_review_unlisted").get()
+      ]);
+      const unlisted = unlistedSnap.docs.map((doc) => doc.id);
+      const records = reviewSnap.docs.map((doc) => doc.data());
+      const picked = reviewPublish.selectPublishable(records, unlisted);
+      const until = records.length ? records[records.length - 1].createdAt : since;
+      res.status(200).json({ since, until, read: records.length, held: picked.held, unlisted, reports: picked.reports });
+    } catch (error) {
+      console.error("Publishable reviews failed:", error);
+      res.status(503).json({ error: "The reviews are not available right now." });
+    }
     return;
   }
   if (req.method === "GET" && pathName.indexOf("/stats") !== -1) {
