@@ -1779,6 +1779,45 @@ async function plainHttp(hostname, halt) {
   }
 }
 
+// The failure diagnosis re-reads a start page the way the review does and keeps every hop, the size and any bot check.
+async function probeRead(raw) {
+  const started = Date.now();
+  const hops = [];
+  const took = () => Date.now() - started;
+  let current;
+  try {
+    current = normalizeUrl(raw);
+    for (let hop = 0; hop < 5; hop += 1) {
+      const pinned = await assertPublic(current.hostname);
+      const res = await requestOnce(current, pinned, null, true);
+      const location = header(res.headers, "location");
+      hops.push({ url: clean(current.toString(), 300), status: res.status, location: clean(location, 300) });
+      if ([301, 302, 303, 307, 308].includes(res.status) && location) {
+        const next = new URL(location, current);
+        if (next.protocol === "http:") return { hops, httpRedirect: clean(next.href, 300), ms: took() };
+        current = normalizeUrl(next.toString());
+        continue;
+      }
+      const type = header(res.headers, "content-type");
+      return {
+        hops,
+        url: current.toString(),
+        status: res.status,
+        contentType: clean(type, 120),
+        server: clean(header(res.headers, "server"), 80),
+        bytes: Buffer.byteLength(res.body || ""),
+        truncated: !!res.truncated,
+        html: /text\/html|application\/xhtml\+xml/i.test(type) || /<html[\s>]/i.test(res.body || ""),
+        challenge: challengeOf(current.toString(), res.headers, res.body),
+        ms: took()
+      };
+    }
+    return { hops, error: "The page redirected too many times.", ms: took() };
+  } catch (error) {
+    return { hops, error: clean((error && error.message) || "The read failed.", 160), code: clean((error && error.code) || "", 40), ms: took() };
+  }
+}
+
 function answered(name, res) {
   if (!res) return name + " was not read.";
   if (res.error) return name + " could not be read (" + res.error + ").";
@@ -2939,6 +2978,7 @@ module.exports = {
   challengeOf,
   dnsFacts,
   plainHttp,
+  probeRead,
   readSitemap,
   ipBlocked,
   hostBlocked

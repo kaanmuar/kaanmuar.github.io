@@ -577,6 +577,10 @@ async function browse(job, log) {
       try { html = await page.content(); } catch (error) { html = ""; }
       Object.assign(result.start, { finalUrl: first.finalUrl, docStatus: first.docStatus, headers: headersOf(first.docHeaders), html: html.slice(0, HTML_MAX), htmlCut: html.length > HTML_MAX });
     }
+    if (job.probe) {
+      result.timing = timing;
+      return result;
+    }
     try {
       result.shots = { desktop: "data:image/jpeg;base64," + await page.screenshot({ type: "jpeg", quality: 50, encoding: "base64", optimizeForSpeed: true, clip: { x: 0, y: 0, width: 1280, height: 800, scale: 0.5 } }) };
     } catch (error) {
