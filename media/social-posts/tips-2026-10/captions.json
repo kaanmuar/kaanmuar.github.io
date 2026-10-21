@@ -12,7 +12,7 @@
     "youtube": "When an image has no width and height, the page jumps as it loads. That shift is measured, and visitors feel it.\n\nTry this: Search your templates for <img without width. Add the intrinsic size to each one.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=img-size\n\nTip 1/21 · QA-lab URL Review"
   },
   "02-release-day": {
-    "date": "2026-10-27",
+    "date": "2026-10-26",
     "cat": "QA",
     "title": "Release day: does the page still read right?",
     "linkedin": "Release day: does the page still read right?\n\nGreen builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.\n\nTry this today: Add a five-minute public-page read to your release checklist, after deploy and before the announcement.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=release-day\n\n#QA #ReleaseManagement #DevOps #QA",
@@ -24,7 +24,7 @@
     "youtube": "Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.\n\nTry this: Add a five-minute public-page read to your release checklist, after deploy and before the announcement.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=release-day\n\nTip 2/21 · QA-lab URL Review"
   },
   "03-self-review": {
-    "date": "2026-10-28",
+    "date": "2026-10-27",
     "cat": "Field",
     "title": "We reviewed ourselves. Security: 54.",
     "linkedin": "We reviewed ourselves. Security: 54.\n\nOur own site scored 86 overall, and security was the weakest area. The six fixes at the top of the list were all response headers.\n\nTry this today: Run the same headers check on your site. The first fixes are usually configuration, not code.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=self-review\n\n#QA #WebSecurity #BuildInPublic #QA",
@@ -36,7 +36,7 @@
     "youtube": "Our own site scored 86 overall, and security was the weakest area. The six fixes at the top of the list were all response headers.\n\nTry this: Run the same headers check on your site. The first fixes are usually configuration, not code.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=self-review\n\nTip 3/21 · QA-lab URL Review"
   },
   "04-slowest-page": {
-    "date": "2026-10-29",
+    "date": "2026-10-27",
     "cat": "Perf",
     "title": "The slowest page is rarely the home page.",
     "linkedin": "The slowest page is rarely the home page.\n\nTeams tune the home page and forget the pages people reach from search. Measure every page you link to, in the order a visitor would open them.\n\nTry this today: List your five most visited pages from analytics and time each one. Fix the slowest first.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=slowest-page\n\n#WebPerformance #CoreWebVitals #QA #QA",
@@ -48,7 +48,7 @@
     "youtube": "Teams tune the home page and forget the pages people reach from search. Measure every page you link to, in the order a visitor would open them.\n\nTry this: List your five most visited pages from analytics and time each one. Fix the slowest first.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=slowest-page\n\nTip 4/21 · QA-lab URL Review"
   },
   "05-contrast": {
-    "date": "2026-10-30",
+    "date": "2026-10-28",
     "cat": "A11y",
     "title": "Contrast is math, not taste.",
     "linkedin": "Contrast is math, not taste.\n\nWCAG AA asks for a contrast ratio of at least 4.5 to 1 for body text and 3 to 1 for large text. Light grey on white rarely makes it.\n\nTry this today: Check your muted text colour against its background in DevTools. The colour picker shows the ratio.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=contrast\n\n#Accessibility #Design #WCAG #QA",
@@ -60,7 +60,7 @@
     "youtube": "WCAG AA asks for a contrast ratio of at least 4.5 to 1 for body text and 3 to 1 for large text. Light grey on white rarely makes it.\n\nTry this: Check your muted text colour against its background in DevTools. The colour picker shows the ratio.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=contrast\n\nTip 5/21 · QA-lab URL Review"
   },
   "06-utm": {
-    "date": "2026-10-31",
+    "date": "2026-10-28",
     "cat": "Analytics",
     "title": "Tag campaign links the same way, every time.",
     "linkedin": "Tag campaign links the same way, every time.\n\nLinkedIn, linkedin and Linked-In become three sources in your reports. Pick one spelling and keep it.\n\nTry this today: Make a shared sheet with the allowed sources and mediums. Link it from every campaign brief.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=utm\n\n#Analytics #GA4 #UTM #QA",
@@ -72,7 +72,7 @@
     "youtube": "LinkedIn, linkedin and Linked-In become three sources in your reports. Pick one spelling and keep it.\n\nTry this: Make a shared sheet with the allowed sources and mediums. Link it from every campaign brief.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=utm\n\nTip 6/21 · QA-lab URL Review"
   },
   "07-nosniff": {
-    "date": "2026-11-01",
+    "date": "2026-10-29",
     "cat": "Security",
     "title": "Stop browsers guessing file types.",
     "linkedin": "Stop browsers guessing file types.\n\nWithout nosniff, a browser may treat an uploaded text file as a script. One header turns that guessing off.\n\nTry this today: Add it next to HSTS in the same rule, so both ship together.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=nosniff\n\n#WebSecurity #AppSec #HTTPHeaders #QA",
@@ -84,7 +84,7 @@
     "youtube": "Without nosniff, a browser may treat an uploaded text file as a script. One header turns that guessing off.\n\nTry this: Add it next to HSTS in the same rule, so both ship together.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=nosniff\n\nTip 7/21 · QA-lab URL Review"
   },
   "08-input-names": {
-    "date": "2026-11-02",
+    "date": "2026-10-29",
     "cat": "A11y",
     "title": "Every input needs a name.",
     "linkedin": "Every input needs a name.\n\nA placeholder disappears as soon as someone types, and screen readers may not announce it. A real label stays.\n\nTry this today: Tab through your contact form with a screen reader on. Each field should say what it is.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=input-names\n\n#Accessibility #a11y #WCAG #QA",
@@ -96,7 +96,7 @@
     "youtube": "A placeholder disappears as soon as someone types, and screen readers may not announce it. A real label stays.\n\nTry this: Tab through your contact form with a screen reader on. Each field should say what it is.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=input-names\n\nTip 8/21 · QA-lab URL Review"
   },
   "09-llms-txt": {
-    "date": "2026-11-03",
+    "date": "2026-10-30",
     "cat": "GEO",
     "title": "llms.txt: a short brief for answer engines.",
     "linkedin": "llms.txt: a short brief for answer engines.\n\nA plain text file at your root that says what the site is, which pages matter, and how to contact you. Short beats complete.\n\nTry this today: Write five lines about your site the way you would brief a new colleague. Publish them as /llms.txt.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=llms-txt\n\n#GEO #llmstxt #AISearch #QA",
@@ -108,7 +108,7 @@
     "youtube": "A plain text file at your root that says what the site is, which pages matter, and how to contact you. Short beats complete.\n\nTry this: Write five lines about your site the way you would brief a new colleague. Publish them as /llms.txt.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=llms-txt\n\nTip 9/21 · QA-lab URL Review"
   },
   "10-keyboard": {
-    "date": "2026-11-04",
+    "date": "2026-10-30",
     "cat": "A11y",
     "title": "Put the mouse away. Can you reach everything?",
     "linkedin": "Put the mouse away. Can you reach everything?\n\nMenus, dialogs, and cookie banners are where keyboard users get stuck. Tab, Shift+Tab, Enter, and Escape should be enough.\n\nTry this today: Do your main task on your own site with the keyboard only. Write down every place you got stuck.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=keyboard\n\n#Accessibility #a11y #UX #QA",
@@ -120,7 +120,7 @@
     "youtube": "Menus, dialogs, and cookie banners are where keyboard users get stuck. Tab, Shift+Tab, Enter, and Escape should be enough.\n\nTry this: Do your main task on your own site with the keyboard only. Write down every place you got stuck.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=keyboard\n\nTip 10/21 · QA-lab URL Review"
   },
   "11-hsts": {
-    "date": "2026-11-05",
+    "date": "2026-10-31",
     "cat": "Security",
     "title": "One header. 180 days of HTTPS only.",
     "linkedin": "One header. 180 days of HTTPS only.\n\nHSTS tells browsers to never load your site over plain HTTP again. It takes one line of configuration on most hosts.\n\nTry this today: Run curl -sI on your domain and look for strict-transport-security. If it is missing, add it at your host or CDN.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=hsts\n\n#WebSecurity #HTTPS #DevOps #QA",
@@ -132,7 +132,7 @@
     "youtube": "HSTS tells browsers to never load your site over plain HTTP again. It takes one line of configuration on most hosts.\n\nTry this: Run curl -sI on your domain and look for strict-transport-security. If it is missing, add it at your host or CDN.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=hsts\n\nTip 11/21 · QA-lab URL Review"
   },
   "12-one-h1": {
-    "date": "2026-11-06",
+    "date": "2026-10-31",
     "cat": "SEO",
     "title": "One h1 per page, saying what the page is.",
     "linkedin": "One h1 per page, saying what the page is.\n\nLogos and slogans often grab the h1. Search engines and screen readers both use it to understand the page.\n\nTry this today: Read only the h1 of your top ten pages. Would a stranger know what each page is?\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=one-h1\n\n#SEO #Accessibility #Content #QA",
@@ -144,11 +144,11 @@
     "youtube": "Logos and slogans often grab the h1. Search engines and screen readers both use it to understand the page.\n\nTry this: Read only the h1 of your top ten pages. Would a stranger know what each page is?\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=one-h1\n\nTip 12/21 · QA-lab URL Review"
   },
   "13-consent-before": {
-    "date": "2026-11-07",
+    "date": "2026-11-01",
     "cat": "Analytics",
     "title": "Consent means before, too.",
     "linkedin": "Consent means before, too.\n\nThe most common analytics finding is a tag that fires before the visitor chooses. Check what loads on the first paint, not only after Accept.\n\nTry this today: Open your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before\n\n#Analytics #Privacy #ConsentMode #QA",
-    "x": "Consent means before, too.\n\nOpen your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything.\n\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before",
+    "x": "Consent means before, too.\n\nOpen your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything.\n\ncarlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before",
     "instagram": "Consent means before, too.\n\nThe most common analytics finding is a tag that fires before the visitor chooses. Check what loads on the first paint, not only after Accept.\n\nTry this: Open your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything.\n\nFull guide: link in bio.\n\n#Analytics #Privacy #ConsentMode #QA #WebDev #QAlab",
     "facebook": "Consent means before, too.\n\nThe most common analytics finding is a tag that fires before the visitor chooses. Check what loads on the first paint, not only after Accept.\n\nTry this: Open your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything.\n\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before",
     "tiktok": "Consent means before, too. Open your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything. #Analytics #Privacy #ConsentMode #QA #techtok",
@@ -156,7 +156,7 @@
     "youtube": "The most common analytics finding is a tag that fires before the visitor chooses. Check what loads on the first paint, not only after Accept.\n\nTry this: Open your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before\n\nTip 13/21 · QA-lab URL Review"
   },
   "14-share-card": {
-    "date": "2026-11-08",
+    "date": "2026-11-01",
     "cat": "SEO",
     "title": "Your share card is a first impression.",
     "linkedin": "Your share card is a first impression.\n\nWithout og:image and og:title, every link to your site shows up as a grey box in chats and feeds.\n\nTry this today: Paste your link into a private chat with yourself. What people see there is your real first impression.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=share-card\n\n#SEO #OpenGraph #Marketing #QA",
@@ -168,7 +168,7 @@
     "youtube": "Without og:image and og:title, every link to your site shows up as a grey box in chats and feeds.\n\nTry this: Paste your link into a private chat with yourself. What people see there is your real first impression.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=share-card\n\nTip 14/21 · QA-lab URL Review"
   },
   "15-csp-report-only": {
-    "date": "2026-11-09",
+    "date": "2026-11-02",
     "cat": "Security",
     "title": "Start your CSP in Report-Only.",
     "linkedin": "Start your CSP in Report-Only.\n\nAn enforced policy written on day one breaks things. Report-Only shows what would be blocked, so you can enforce with confidence a week later.\n\nTry this today: Ship the Report-Only header this week. Read the reports next week before you switch it on.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=csp-report-only\n\n#WebSecurity #CSP #AppSec #QA",
@@ -180,7 +180,7 @@
     "youtube": "An enforced policy written on day one breaks things. Report-Only shows what would be blocked, so you can enforce with confidence a week later.\n\nTry this: Ship the Report-Only header this week. Read the reports next week before you switch it on.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=csp-report-only\n\nTip 15/21 · QA-lab URL Review"
   },
   "16-list-first": {
-    "date": "2026-11-10",
+    "date": "2026-11-02",
     "cat": "QA",
     "title": "Write the test list before the test code.",
     "linkedin": "Write the test list before the test code.\n\nPicking a framework is the second question. The first is what this page does and what a real person would try on it.\n\nTry this today: Before your next automation sprint, write ten cases in plain language. Then choose the tool.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=list-first\n\n#QA #TestAutomation #SoftwareTesting #QA",
@@ -192,7 +192,7 @@
     "youtube": "Picking a framework is the second question. The first is what this page does and what a real person would try on it.\n\nTry this: Before your next automation sprint, write ten cases in plain language. Then choose the tool.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=list-first\n\nTip 16/21 · QA-lab URL Review"
   },
   "17-robots-ai": {
-    "date": "2026-11-11",
+    "date": "2026-11-03",
     "cat": "GEO",
     "title": "robots.txt decides who may read you.",
     "linkedin": "robots.txt decides who may read you.\n\nAI crawlers each have their own user agent. Blocking them by accident and allowing them on purpose are both one line.\n\nTry this today: Open yoursite.com/robots.txt today. Check that it says what you mean for search and AI crawlers.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=robots-ai\n\n#GEO #AISearch #robotsTxt #QA",
@@ -204,7 +204,7 @@
     "youtube": "AI crawlers each have their own user agent. Blocking them by accident and allowing them on purpose are both one line.\n\nTry this: Open yoursite.com/robots.txt today. Check that it says what you mean for search and AI crawlers.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=robots-ai\n\nTip 17/21 · QA-lab URL Review"
   },
   "18-broken-links": {
-    "date": "2026-11-12",
+    "date": "2026-11-03",
     "cat": "QA",
     "title": "A broken link is a test you forgot to write.",
     "linkedin": "A broken link is a test you forgot to write.\n\nLinks rot quietly. A small check on every release keeps the 404s out of your visitors' way.\n\nTry this today: Collect the links from your footer and navigation. Assert each one answers below 400.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=broken-links\n\n#QA #Playwright #TestAutomation #QA",
@@ -216,7 +216,7 @@
     "youtube": "Links rot quietly. A small check on every release keeps the 404s out of your visitors' way.\n\nTry this: Collect the links from your footer and navigation. Assert each one answers below 400.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=broken-links\n\nTip 18/21 · QA-lab URL Review"
   },
   "19-measure-action": {
-    "date": "2026-11-13",
+    "date": "2026-11-04",
     "cat": "Analytics",
     "title": "Measure the action, not just the visit.",
     "linkedin": "Measure the action, not just the visit.\n\nPage views tell you someone arrived. An event on the form, the download, or the signup tells you whether the page worked.\n\nTry this today: Pick the one action each key page exists for. Make sure an event fires only when it succeeds.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=measure-action\n\n#Analytics #GA4 #CRO #QA",
@@ -228,7 +228,7 @@
     "youtube": "Page views tell you someone arrived. An event on the form, the download, or the signup tells you whether the page worked.\n\nTry this: Pick the one action each key page exists for. Make sure an event fires only when it succeeds.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=measure-action\n\nTip 19/21 · QA-lab URL Review"
   },
   "20-html-first": {
-    "date": "2026-11-14",
+    "date": "2026-11-04",
     "cat": "GEO",
     "title": "AI search reads your HTML, not your app.",
     "linkedin": "AI search reads your HTML, not your app.\n\nMany answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.\n\nTry this today: View source on your home page. Can you find what you sell and who it is for, without running scripts?\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=html-first\n\n#GEO #AISearch #SEO #QA",
@@ -240,7 +240,7 @@
     "youtube": "Many answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.\n\nTry this: View source on your home page. Can you find what you sell and who it is for, without running scripts?\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=tips-2026-10&utm_content=html-first\n\nTip 20/21 · QA-lab URL Review"
   },
   "21-canonical": {
-    "date": "2026-11-15",
+    "date": "2026-11-05",
     "cat": "SEO",
     "title": "One page, one canonical.",
     "linkedin": "One page, one canonical.\n\nWhen the same content answers at several addresses, ranking signals split between them. Tell search engines which address is the real one.\n\nTry this today: Open your top page with and without a trailing slash and ?utm_ tags. Both should point to one canonical.\n\nHow a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=tips-2026-10&utm_content=canonical\n\n#SEO #TechnicalSEO #WebDev #QA",
