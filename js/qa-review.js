@@ -1974,6 +1974,10 @@
     if (!current || !current.report) return;
     const alerts = current.report.alerts || [];
     if (!alerts.length) return;
+    if (current.paid === true || current.free === true || alertsOpen(current.report.id)) {
+      paintAlarm(current.report, true);
+      return;
+    }
     try {
       sessionStorage.setItem("qa-review-alerts", JSON.stringify({
         reportId: current.report.id,
@@ -1992,6 +1996,10 @@
   });
   document.getElementById("credential-open").addEventListener("click", () => {
     if (!current || !current.report) return;
+    if (current.free === true || credentialOpen(current.report.id)) {
+      paintCredential(current);
+      return;
+    }
     try {
       sessionStorage.setItem("qa-review-credential", JSON.stringify({
         reportId: current.report.id,
