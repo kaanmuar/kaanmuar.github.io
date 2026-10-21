@@ -1,0 +1,9 @@
+---
+description: Social video clips always carry a six-language voice-over and the background bed
+alwaysApply: true
+---
+# Social clips are never muted
+- Every clip posted to TikTok, YouTube, or any video channel (tips, live runs, requested reviews) speaks in one of six languages in turn (en, es, pt, de, fr, it; woman, then man) over `media/url-review-demos/bed.wav`. Card text and captions match the clip's language.
+- Voices are the natural, upbeat Microsoft neural voices in `scripts/tips-studio/build.js` (edge-tts). Never Piper or other robotic voices.
+- Render through `scripts/tips-studio/build.js`; it translates, voices, and fails on a silent clip. Before uploading anything else, check `ffmpeg -af volumedetect` shows a peak above -30 dB.
+- If Google's free translator rate-limits, fill `<batch>/i18n.json` by agent in `translate.py`'s format.
