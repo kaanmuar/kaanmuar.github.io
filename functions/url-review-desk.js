@@ -492,7 +492,7 @@ const PAGE = `<!DOCTYPE html>
       line(dl, "Frameworks", (picked.frameworks || []).join(", "));
       line(dl, "Tools", (picked.tools || []).join(", "));
       line(dl, "Technologies", (picked.technologies || []).join(", "));
-      line(dl, "Pages read", picked.pageCount + " of " + text(picked.pages) + ", depth " + text(picked.depth));
+      line(dl, "Pages analyzed", picked.pageCount + " of " + text(picked.pages) + ", depth " + text(picked.depth));
       line(dl, "Forms", picked.forms);
       line(dl, "Images", text(picked.images) + ", missing alt " + text(picked.missingAlt));
       line(dl, "Cases", picked.caseCount);

@@ -68,7 +68,7 @@
                     "Google result and share-card previews",
                     "AI crawler access matrix and the text AI search sees without JavaScript",
                     "Analytics tag, consent, and campaign-link checks",
-                    "Interactive map of the pages read",
+                    "Interactive map of the pages analyzed",
                     "Proposed cases in 21 kinds, including GEO",
                     "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6",
                     "Starting automation scripts for every chosen framework",
@@ -993,7 +993,7 @@
             <dt>A public read, and a list of cases</dt>
             <dd>QA-lab URL Review fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load.</dd>
             <dt>What the report scores</dt>
-            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages read, and what to fix first. A headless browser loads up to three pages from an EU address: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots.</dd>
+            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages analyzed, and what to fix first. A headless browser loads up to three pages from an EU address: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots.</dd>
             <dt>Frameworks and tools</dt>
             <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages, and Lighthouse runs on the start page through Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site.</dd>
             <dt>Automation scripts</dt>
@@ -1163,7 +1163,7 @@
         <div data-insight id="analytics"></div>
         <h2 data-insight>Search visibility</h2>
         <div data-insight id="seo"></div>
-        <h2 data-insight>Map of the pages read</h2>
+        <h2 data-insight>Map of the pages analyzed</h2>
         <article class="card" data-insight id="site-graph"></article>
         <h2 data-insight>Security and email</h2>
         <article class="card" data-insight id="security"></article>
@@ -1214,7 +1214,7 @@
         </section>
         <h2>What the response showed</h2>
         <article class="card" id="observed"></article>
-        <h2>Pages read</h2>
+        <h2>Pages analyzed</h2>
         <article class="card"><table class="page-table"><thead><tr><th>Path</th><th>Status</th><th>ms</th><th>Title</th></tr></thead><tbody id="pages"></tbody></table></article>
         <h2>Review log kept with this run</h2>
         <article class="card"><ol class="log" id="report-log"></ol></article>

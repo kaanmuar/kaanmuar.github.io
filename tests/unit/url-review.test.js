@@ -225,11 +225,11 @@ test.describe("false positives from the real-run series", () => {
     assert.deepEqual(result.warnings, []);
   });
 
-  test("a read where most linked pages were blocked is reported as partial", () => {
+  test("a review where most linked pages were blocked is reported as partial", () => {
     const rows = [{ url: URL_, html: HTML }].concat([1, 2, 3, 4].map((n) => ({ url: URL_ + "p" + n, status: 403, html: "" })), [{ url: URL_ + "ok", html: HTML }]);
     const result = analyzeHtmlPages(rows);
     assert.equal(verdict(result, "seo-broken-links"), "missing");
-    assert.match(result.warnings[0], /^Partial read: 4 of 5 linked pages/);
+    assert.match(result.warnings[0], /^Partial analysis: 4 of 5 linked pages/);
     assert.ok(result.summary.startsWith(result.warnings[0]));
   });
 

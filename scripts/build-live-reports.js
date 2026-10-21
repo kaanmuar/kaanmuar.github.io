@@ -406,8 +406,17 @@ function loadRuns(file) {
   return vm.runInNewContext("(" + src.slice(open, end + 1) + ")", Object.create(null), { timeout: 1000 });
 }
 
+// Saved snapshots keep the engine copy of the day they ran; pages are analyzed, not read.
+function analyzedWording(text) {
+  return text
+    .replace(/\bPartial read:/g, "Partial analysis:")
+    .replace(/\b(pages?|alternate)( that)? (was|were) read\b/g, "$1$2 $3 analyzed")
+    .replace(/\bwere read([.;])/g, "were analyzed$1")
+    .replace(/\b(pages?) read\b(?! well| without)/g, "$1 analyzed");
+}
+
 function scrub(text, max) {
-  let value = String(text || "")
+  let value = analyzedWording(String(text || ""))
     .replace(/mailto:/gi, "")
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[address hidden]")
     .replace(/\s+/g, " ")
@@ -555,7 +564,7 @@ function build(run, series) {
   analyticsTools.forEach((t) => tags.push({ g: "analytics", k: t, t }));
   consentTools.forEach((t) => tags.push({ g: "consent", k: t, t }));
   if (obs.lang) tags.push({ g: "lang", k: obs.lang, t: "lang=" + obs.lang });
-  tags.push({ g: "pages", k: String(pages), t: pages + (pages === 1 ? " page read" : " pages read") });
+  tags.push({ g: "pages", k: String(pages), t: pages + (pages === 1 ? " page analyzed" : " pages analyzed") });
   tags.push({ g: "tests", k: "cases", t: ((report.counts && report.counts.cases) || 0) + " proposed cases · " + Object.keys(layers).length + " test types" });
 
   const fix = (ins.findings || [])
