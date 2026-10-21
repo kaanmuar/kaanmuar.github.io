@@ -51,7 +51,7 @@ module.exports = [
     report: "r3-gobpe",
     scope: "National",
     title: ["Gob.pe still answers", "*on plain http.*"],
-    body: "A meta description on every page read, full share cards, real 404s, and every internal link opened answered. But http://www.gob.pe/ serves the whole portal with a 200, no redirect, so typed addresses stay unencrypted.",
+    body: "A meta description on every page read, full share cards, real 404s, and every internal link opened answered. But the plain-http address serves the whole portal with a 200, no redirect, so typed addresses stay unencrypted.",
     action: "Redirect every http request to https with a 301. HSTS only protects people who have visited before.",
     tags: ["Security", "HTTPS", "GovTech"]
   },
@@ -96,7 +96,7 @@ module.exports = [
     report: "r3-superfinanciera",
     scope: "National",
     title: ["Superfinanciera's map", "*lists a private IP.*"],
-    body: "A meta description on every page read, HSTS, a permanent https redirect, and FAQ-style content. But all of its sitemaps, about 66,000 URLs, point at http://10.172.15.118, an internal address no crawler can reach.",
+    body: "A meta description on every page read, HSTS, a permanent https redirect, and FAQ-style content. But all of its sitemaps, about 66,000 URLs, point at a 10.x internal IP address no crawler can reach.",
     action: "Build sitemap URLs from the public https host, and recheck after any server move.",
     tags: ["SEO", "Sitemap", "Finance"]
   },

@@ -25,7 +25,7 @@ module.exports = [
   {
     id: "santander", report: "r3-santander", scope: "Regional",
     title: ["Santander answers", "*on plain http too.*"],
-    body: "Every page read has a title and a meta description, and https sends HSTS with preload. But http://santander.gov.co/ answers 200 instead of redirecting, so a first visit can stay unencrypted.",
+    body: "Every page read has a title and a meta description, and https sends HSTS with preload. But the plain-http home page answers 200 instead of redirecting, so a first visit can stay unencrypted.",
     action: "Answer plain http requests with a 301 to https, so no visit starts unencrypted.",
     tags: ["Security", "HTTPS", "GovTech"]
   },
