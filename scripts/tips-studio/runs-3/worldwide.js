@@ -68,7 +68,7 @@ module.exports = [
     id: "typescript", report: "r3-typescript", scope: "Worldwide",
     title: ["TypeScript: a sitemap", "*no one is told about.*"],
     body: "HSTS is preloaded, DMARC rejects spoofed mail, and Core Web Vitals pass for real visitors. A sitemap lives at /sitemap-index.xml, but /robots.txt answers 404, so no crawler is told where to find it.",
-    action: "Publish a robots.txt with one line: Sitemap: https://www.typescriptlang.org/sitemap-index.xml",
+    action: "Publish a robots.txt with one Sitemap line that names the sitemap index",
     tags: ["SEO", "RobotsTxt", "TypeScript"]
   },
   {
@@ -193,7 +193,7 @@ module.exports = [
   {
     id: "fide", report: "r3-fide", scope: "Worldwide",
     title: ["FIDE: plain http", "*still serves the site.*"],
-    body: "DMARC rejects spoofed mail, the sitemap answers with valid URLs, and the text reads without JavaScript. But http://www.fide.com/ answers 200 instead of redirecting, and no HSTS header is sent.",
+    body: "DMARC rejects spoofed mail, the sitemap answers with valid URLs, and the text reads without JavaScript. But the plain-http home page answers 200 instead of redirecting, and no HSTS header is sent.",
     action: "Redirect every http request to https with a 301, then add Strict-Transport-Security.",
     tags: ["Security", "HTTPS", "Chess"]
   },

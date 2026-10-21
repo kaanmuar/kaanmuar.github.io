@@ -52,7 +52,7 @@ const TIPS = RUNS.map((run, index) => {
 });
 
 function link(platform, run) {
-  return GUIDE + "?utm_source=" + platform + "&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=" + run.id;
+  return GUIDE + "?utm_source=" + platform + "&utm_medium=social&utm_campaign=runs-3-2027-01&utm_content=" + run.id;
 }
 
 function plainTitle(run) { return run.title.join(" ").replace(/\*/g, "").replace(/\s+/g, " ").trim(); }

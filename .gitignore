@@ -30,3 +30,7 @@ watir/Gemfile.lock
 reqnroll/Features/*.feature.cs
 previews/
 media/url-review-demos/
+media/social-posts/*/story/
+media/social-posts/*/clip/
+media/social-posts/*/cover/
+media/buffer-upload/
