@@ -2,6 +2,14 @@
 
 const { URL } = require("url");
 
+const BROWSER_READ_NOTE = "The site's bot protection refused the plain read; the page was read in headless Chrome.";
+const UNTAGGED_READ_NOTE = "The site's bot protection refused the plain read and headless Chrome while it carried the review tag; the page was read in headless Chrome without the tag.";
+const CUT_NOTE = "The start page is larger than 2 MB, so the review read its first 2 MB.";
+
+function botCheck(vendor) {
+  return (/^[aeiou]/i.test(vendor) ? "an " : "a ") + vendor + " bot check";
+}
+
 const AI_BOTS = [
   { token: "OAI-SearchBot", owner: "OpenAI", product: "ChatGPT search", role: "answers" },
   { token: "ChatGPT-User", owner: "OpenAI", product: "ChatGPT, when a person asks it to open a page", role: "answers" },
@@ -108,7 +116,7 @@ function blockedAnswer(page) {
 }
 
 function blockedReason(page) {
-  if (page.challenge) return "a " + page.challenge + " bot check";
+  if (page.challenge) return botCheck(page.challenge);
   if (page.status === 429) return "429, rate limited";
   if (page.status === 503) return "503 with Retry-After";
   return page.status + ", refused";
@@ -522,7 +530,9 @@ function analyze(input) {
   }
   const partialRead = linked.length >= 2 && blocked.length * 2 > linked.length;
   const warnings = [];
-  if (home.challenge) warnings.push("The start page answered with a " + home.challenge + " bot check instead of the site, so these scores describe that check page.");
+  if (home.readInBrowser) warnings.push(home.readInBrowser === "untagged" ? UNTAGGED_READ_NOTE : BROWSER_READ_NOTE);
+  if (home.cut) warnings.push(CUT_NOTE);
+  if (home.challenge) warnings.push("The start page answered with " + botCheck(home.challenge) + " instead of the site, so these scores describe that check page.");
   if (partialRead) warnings.push("Partial analysis: " + blocked.length + " of " + plural(linked.length, "linked page") + " answered with a bot check or a block, so the scores rest mostly on the start page.");
   if (broken.length) {
     add("SEO", "fail", "high", "seo-broken-links", plural(broken.length, "internal link leads", "internal links lead") + " to an error",
@@ -1351,4 +1361,4 @@ function fixKit(ctx) {
   };
 }
 
-module.exports = { analyze, parseRobotsFull, robotsVerdict, AI_BOTS, AREAS };
+module.exports = { analyze, parseRobotsFull, robotsVerdict, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, botCheck };

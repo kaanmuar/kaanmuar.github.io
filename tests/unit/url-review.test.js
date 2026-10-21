@@ -391,6 +391,60 @@ test.describe("false positives from the real-run series", () => {
   });
 });
 
+test.describe("start page reads", () => {
+  const BANK = "https://bank.example.com/";
+  const WAF = { status: 403, headers: { "content-type": "text/html" }, body: "<html><head><script>window.gokuProps = {};</script></head><body></body></html>" };
+  const review = async (routes, browse) => {
+    const restore = fakeNetwork(routes);
+    const lines = [];
+    try {
+      const report = await core.reviewTarget(BANK, { log: (text) => lines.push(text), browse });
+      return { report, lines };
+    } finally {
+      restore();
+    }
+  };
+
+  test("a refused plain read is built from headless Chrome's rendered page", async () => {
+    const jobs = [];
+    const browse = async (job) => {
+      jobs.push(job);
+      return { ok: true, ms: 9000, timing: { load: 2100 }, start: { status: 403, docStatus: 200, finalUrl: BANK, headers: STRONG_HEADERS, html: HTML.replace(/shop\.example\.com/g, "bank.example.com"), htmlCut: false } };
+    };
+    const { report, lines } = await review({ [BANK]: WAF }, browse);
+    assert.equal(jobs.length, 1);
+    assert.equal(jobs[0].html, true);
+    assert.equal(report.pages[0].status, 200);
+    assert.equal(report.pages[0].title, "Example shop for garden tools");
+    assert.ok(lines.includes(insights.BROWSER_READ_NOTE));
+    assert.ok(report.insights.warnings.includes(insights.BROWSER_READ_NOTE));
+
+    const untagged = await review({ [BANK]: WAF }, async (job) => Object.assign(await browse(job), { untagged: true }));
+    assert.ok(untagged.lines.includes(insights.UNTAGGED_READ_NOTE));
+    assert.ok(untagged.report.insights.warnings.includes(insights.UNTAGGED_READ_NOTE));
+    assert.ok(!untagged.report.insights.warnings.includes(insights.BROWSER_READ_NOTE));
+  });
+
+  test("when headless Chrome is refused too, the error names the bot protection", async () => {
+    const browse = async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: {}, html: WAF.body } });
+    await assert.rejects(review({ [BANK]: WAF }, browse), /^Error: The site's bot protection refused the review \(status 403, an AWS WAF bot check\), in the plain read and in headless Chrome\.$/);
+    await assert.rejects(review({ [BANK]: WAF }, async () => ({ ok: false, error: "the browser was busy" })), /refused the plain read \(status 403\), and headless Chrome did not finish \(the browser was busy\)/);
+  });
+
+  test("a redirect to http is named as such, not as a wrong address", async () => {
+    await assert.rejects(review({ [BANK]: { status: 301, headers: { location: "http://www.bank.example.com/co" } } }),
+      /^Error: The site redirected to http:\/\/www\.bank\.example\.com\/co, an http:\/\/ address\. The review only follows https\.$/);
+  });
+
+  test("a start page over 2 MB keeps its first 2 MB and says it was cut", async () => {
+    const big = HTML.replace("</main>", "<p>" + "garden ".repeat(400000) + "</p></main>");
+    const { report, lines } = await review({ [BANK]: { status: 200, headers: STRONG_HEADERS, body: big } });
+    assert.equal(report.pages[0].title, "Example shop for garden tools");
+    assert.ok(lines.includes(insights.CUT_NOTE));
+    assert.ok(report.insights.warnings.includes(insights.CUT_NOTE));
+  });
+});
+
 test.describe("journeys", () => {
   const pages = [
     { path: "/", status: 200 },

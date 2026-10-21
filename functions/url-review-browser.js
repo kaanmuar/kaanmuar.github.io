@@ -10,6 +10,7 @@ const dns = require("dns").promises;
 const AGENT_TAG = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
 const NAV_MS = 20000;
 const IDLE_MS = 5000;
+const HTML_MAX = 2000000;
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 const VENDORS = [
@@ -253,12 +254,32 @@ async function prepare(context, ua, rec, viewport) {
   return page;
 }
 
+// A JS bot check answers 403 and then reloads into the site, so the last main-frame document says whether the page got through.
 async function open(page, url) {
-  const res = await page.goto(url, { waitUntil: "load" });
-  await settle(page);
-  let raw = "";
-  try { raw = res ? await res.text() : ""; } catch (error) { raw = ""; }
-  return { status: res ? res.status() : 0, finalUrl: page.url(), raw };
+  let last = null;
+  const watch = (res) => {
+    try { if (res.request().isNavigationRequest() && res.frame() === page.mainFrame()) last = res; } catch (error) { /* detached frame */ }
+  };
+  page.on("response", watch);
+  try {
+    const res = await page.goto(url, { waitUntil: "load" });
+    await settle(page);
+    let raw = "";
+    try { raw = res ? await res.text() : ""; } catch (error) { raw = ""; }
+    const doc = last || res;
+    return { status: res ? res.status() : 0, finalUrl: page.url(), raw, docStatus: doc ? doc.status() : 0, docHeaders: doc ? doc.headers() : {} };
+  } finally {
+    page.off("response", watch);
+  }
+}
+
+function headersOf(raw) {
+  const out = {};
+  Object.entries(raw || {}).forEach(([key, value]) => {
+    const name = key.toLowerCase();
+    out[name] = name === "set-cookie" ? String(value).split("\n") : String(value);
+  });
+  return out;
 }
 
 async function rendered(page) {
@@ -500,17 +521,30 @@ async function browse(job, log) {
   lap("launch");
   try {
     const version = await browser.version();
-    const ua = (await browser.userAgent()).replace(/HeadlessChrome/g, "Chrome") + " " + AGENT_TAG;
+    const plainUa = (await browser.userAgent()).replace(/HeadlessChrome/g, "Chrome");
+    let ua = plainUa + " " + AGENT_TAG;
     const host = new URL(start).hostname;
     const result = { ok: true, engine: version.replace("HeadlessChrome", "Chromium"), at: new Date().toISOString(), pages: [] };
     say(result.engine + " is up. Loading " + pathOf(start) + " at 1280×800 with no stored cookies.");
 
     // Cold visit on a desktop width: no stored choice, nothing clicked.
-    const coldContext = await browser.createBrowserContext();
-    const rec = recorder(true);
-    const page = await prepare(coldContext, ua, rec, { width: 1280, height: 800 });
-    await page.evaluateOnNewDocument(VITALS);
-    const first = await open(page, start);
+    let coldContext, rec, page, first;
+    const visit = async () => {
+      coldContext = await browser.createBrowserContext();
+      rec = recorder(true);
+      page = await prepare(coldContext, ua, rec, { width: 1280, height: 800 });
+      await page.evaluateOnNewDocument(VITALS);
+      first = await open(page, start);
+    };
+    await visit();
+    // Some bot managers refuse a browser that names the review; only the start-page read for a refused plain read retries without the tag.
+    if (job.html && first.docStatus >= 400) {
+      say("The site refused Chrome with the review tag in its user agent (status " + first.docStatus + "). Loading " + pathOf(start) + " again as plain Chrome.");
+      await coldContext.close();
+      ua = plainUa;
+      result.untagged = true;
+      await visit();
+    }
     lap("load");
     say(pathOf(first.finalUrl) + " loaded with status " + first.status + " in " + Math.round(timing.load / 100) / 10 + " s, after " + rec.state.requests + " requests to " + rec.state.hosts.size + " hosts.");
     const view = await rendered(page);
@@ -538,6 +572,11 @@ async function browse(job, log) {
       hosts: rec.state.hosts.size,
       dom
     };
+    if (job.html) {
+      let html = "";
+      try { html = await page.content(); } catch (error) { html = ""; }
+      Object.assign(result.start, { finalUrl: first.finalUrl, docStatus: first.docStatus, headers: headersOf(first.docHeaders), html: html.slice(0, HTML_MAX), htmlCut: html.length > HTML_MAX });
+    }
     try {
       result.shots = { desktop: "data:image/jpeg;base64," + await page.screenshot({ type: "jpeg", quality: 50, encoding: "base64", optimizeForSpeed: true, clip: { x: 0, y: 0, width: 1280, height: 800, scale: 0.5 } }) };
     } catch (error) {
