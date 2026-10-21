@@ -71,7 +71,8 @@ jobs:
 
       - name: Render cards, stories, and clips
         if: steps.reports.outputs.social != '0'
-        run: node scripts/tips-studio/build.js --source runs-auto --batch "${{ steps.reports.outputs.batch }}" --start "$(date -u -d tomorrow +%F)"
+        # The day number moves the language cycle on, so small daily batches still reach all six.
+        run: node scripts/tips-studio/build.js --source runs-auto --batch "${{ steps.reports.outputs.batch }}" --start "$(date -u -d tomorrow +%F)" --lang-offset "$(( $(date -u +%s) / 86400 ))"
 
       - name: Rebuild llms-full.txt
         run: python3 scripts/build-llms-full.py
