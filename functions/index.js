@@ -1087,14 +1087,16 @@ async function diagnoseReviewFailures() {
   const since = new Date(Date.now() - 3 * 86400000).toISOString();
   const [alertSnap, savedSnap] = await Promise.all([
     db.collection("url_review_alerts").where("at", ">=", since).get(),
-    col.where("at", ">=", since).get()
+    col.where("at", ">=", new Date(Date.now() - reviewFailures.RECHECK_DAYS * 86400000).toISOString()).get()
   ]);
   const runIds = new Set(savedSnap.docs.map((doc) => doc.get("runId")).filter(Boolean));
   const urls = new Set(savedSnap.docs.map((doc) => doc.get("url")));
   const missing = alertSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))
     .filter((row) => row.kind === "failed" && (row.runId ? !runIds.has(row.runId) : !urls.has(row.url)));
   await Promise.all(missing.map((row) => col.doc(row.runId || "alert-" + row.id).set(reviewFailures.failureFromAlert(row))));
-  const pending = (await col.where("diagnosedAt", "==", null).limit(40).get()).docs;
+  const now = Date.now();
+  const recheck = savedSnap.docs.filter((doc) => reviewFailures.recheckDue(doc.data(), now));
+  const pending = (await col.where("diagnosedAt", "==", null).limit(40).get()).docs.concat(recheck).slice(0, 40);
   const byUrl = new Map();
   pending.forEach((doc) => byUrl.set(doc.get("url"), (byUrl.get(doc.get("url")) || []).concat(doc)));
   const queue = Array.from(byUrl.entries());
@@ -1114,17 +1116,94 @@ async function diagnoseReviewFailures() {
           ? { cause: "input", causeLabel: doc.get("cause").label, now: "input", nowLabel: "The address itself is refused, not the site", cleared: false, rerun: false, summary: doc.get("cause").label + "." }
           : reviewFailures.diagnose(doc.data(), probe),
         probe,
-        diagnosedAt: new Date().toISOString()
+        diagnosedAt: new Date().toISOString(),
+        checks: admin.firestore.FieldValue.increment(1)
       })));
     }
   };
   await Promise.all([worker(), worker()]);
-  console.log("URL review failures: " + missing.length + " taken from alerts, " + pending.length + " diagnosed across " + byUrl.size + " addresses.");
+  console.log("URL review failures: " + missing.length + " taken from alerts, " + pending.length + " diagnosed (" + recheck.length + " checked again) across " + byUrl.size + " addresses.");
   return null;
 }
 
 exports.diagnoseReviewFailures = functions.runWith({ timeoutSeconds: 540, memory: "512MB" })
   .pubsub.schedule("0 6 * * *").timeZone("America/Bogota").onRun(() => diagnoseReviewFailures());
+
+async function rerunFailure(group) {
+  const db = admin.firestore();
+  const ref = db.collection("url_review_reruns").doc();
+  const startedAt = Date.now();
+  const lines = [];
+  const log = (text) => { if (lines.length < 5000) lines.push({ t: Date.now() - startedAt, text }); };
+  const options = group.options || {};
+  let record = null;
+  let error = null;
+  try {
+    log("Re-run of a failed review of " + group.url + ". " + group.trigger.label);
+    const report = await urlReview.reviewTarget(group.url, {
+      log,
+      stopped: () => Date.now() - startedAt > 240000,
+      maxPages: options.pages || undefined,
+      maxDepth: options.depth || undefined,
+      browse: browseForReview,
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined
+    });
+    record = urlReview.intakeRecord(Object.assign({}, group.intake, {
+      url: group.url,
+      name: group.name,
+      email: group.email,
+      frameworks: options.frameworks || [],
+      pages: options.pages,
+      depth: options.depth
+    }), report, { deviceId: (group.intake || {}).deviceId });
+  } catch (caught) {
+    error = caught;
+  }
+  const doc = reviewFailures.rerunDoc(group, { record, error, lines, startedAt, endedAt: Date.now() });
+  await ref.set(doc);
+  const mark = reviewFailures.rerunMark(ref.id, doc);
+  await Promise.all(group.failureIds.map((id) => db.collection("url_review_failures").doc(id).update({ rerun: mark })));
+  return doc;
+}
+
+async function rerunReviewFailures() {
+  const db = admin.firestore();
+  const col = db.collection("url_review_failures");
+  const since = new Date(Date.now() - reviewFailures.RERUN_DAYS * 86400000).toISOString();
+  const rows = (await col.where("at", ">=", since).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  const emails = Array.from(new Set(rows.filter((row) => row.email && reviewFailures.rerunTrigger(row)).map((row) => row.email)));
+  const reviewed = [];
+  for (const email of emails) {
+    const snap = await db.collection("url_reviews").where("email", "==", email).select("email", "createdAt", "status", "report.host").limit(60).get();
+    snap.docs.forEach((doc) => reviewed.push(doc.data()));
+  }
+  const plan = reviewFailures.rerunPlan(rows, reviewed, 8);
+  const at = new Date().toISOString();
+  await Promise.all(plan.skipped.flatMap((group) => group.failureIds.map((id) => col.doc(id).update({ rerun: { at, status: "skipped", reason: group.skip } }))));
+  const started = Date.now();
+  const done = [];
+  for (const group of plan.runs) {
+    if (Date.now() - started > 1500000) break;
+    try {
+      done.push(await rerunFailure(group));
+    } catch (error) {
+      console.error("Re-run of " + group.url + " was not saved:", error);
+    }
+  }
+  console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped.");
+  if (!done.length) return null;
+  const mail = reviewFailures.rerunMail(done);
+  await sendOwnerEmail({ to: REVIEW_ALERT_TO, subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, respondUrl: REVIEW_FN_URL + "/desk", buttonLabel: "Open the review desk" });
+  return null;
+}
+
+exports.rerunReviewFailures = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: "30 6 * * *",
+  timeZone: "America/Bogota",
+  timeoutSeconds: 1800,
+  memory: "1GiB",
+  secrets: ["SENDGRID_API_KEY"]
+}, () => rerunReviewFailures());
 
 exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("America/Bogota").onRun(async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
@@ -1508,9 +1587,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       ? "pass"
       : pathName.indexOf("/desk/free") !== -1
         ? "free"
-        : (pathName === "/desk" || pathName.endsWith("/desk"))
-          ? "page"
-          : "";
+        : pathName.indexOf("/desk/rerun") !== -1
+          ? "rerun"
+          : (pathName === "/desk" || pathName.endsWith("/desk"))
+            ? "page"
+            : "";
   if (deskName) {
     res.set("X-Robots-Tag", "noindex");
     if (deskName === "page" && req.method === "GET") {
@@ -1529,11 +1610,12 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     if (deskName === "data" && req.method === "GET") {
-      const [reviewSnap, alertSnap, freeSnap, noteSnap] = await Promise.all([
+      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap] = await Promise.all([
         admin.firestore().collection("url_reviews").limit(400).get(),
         admin.firestore().collection("url_review_alerts").limit(80).get(),
         admin.firestore().collection("url_review_free_runs").limit(200).get(),
-        admin.firestore().collection("url_review_notes").limit(1000).get()
+        admin.firestore().collection("url_review_notes").limit(1000).get(),
+        admin.firestore().collection("url_review_reruns").orderBy("at", "desc").limit(30).get()
       ]);
       const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
       const records = reviewSnap.docs.map((doc) => {
@@ -1549,7 +1631,44 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         return { email: doc.id, note: data.note || "", at: stamp(data.at) };
       });
       const notes = noteSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
-      res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes), { freeRuns }));
+      const reruns = reviewDesk.rerunRows(rerunSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
+      res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes), { freeRuns, reruns }));
+      return;
+    }
+    if (deskName === "rerun" && req.method === "POST") {
+      const id = String((req.body && req.body.id) || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 40);
+      const send = req.body && req.body.send === true;
+      const db = admin.firestore();
+      const ref = db.collection("url_review_reruns").doc(id || "-");
+      const decidedAt = new Date().toISOString();
+      let doc = null;
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const data = snap.exists ? snap.data() : null;
+        if (!data || data.status !== "held" || !data.record) return;
+        doc = data;
+        tx.update(ref, { status: send ? "sent" : "dropped", decidedAt, by: operator });
+      });
+      if (!doc) {
+        res.status(409).json({ error: "That re-run is not waiting for a decision." });
+        return;
+      }
+      if (!send) {
+        res.status(200).json({ ok: true, status: "dropped" });
+        return;
+      }
+      const record = reviewFailures.sentRecord(doc, decidedAt);
+      await db.collection("url_reviews").doc(record.id).set(record);
+      await countReviewed(record.report);
+      let mailed = true;
+      try {
+        await mailReportToAsker(record);
+      } catch (error) {
+        mailed = false;
+        console.error("Re-run mail to the asker failed:", error);
+        await ref.update({ mailError: String((error && error.message) || "mail failed").slice(0, 200) });
+      }
+      res.status(200).json({ ok: true, status: "sent", reportId: record.id, mailed });
       return;
     }
     if (deskName === "free" && req.method === "POST") {
