@@ -1053,6 +1053,79 @@ exports.emailWeeklyReviewReport = scheduleReviewReport("35 7 * * 1", "weekly");
 exports.emailMonthlyReviewReport = scheduleReviewReport("50 7 1 * *", "monthly");
 exports.emailQuarterReviewReport = scheduleReviewReport("*/15 * * * *", "quarter");
 
+async function probeFailure(url) {
+  let host = "";
+  try { host = new URL(url).hostname; } catch (error) { host = ""; }
+  const probe = { at: new Date().toISOString() };
+  probe.dns = await require("dns").promises.lookup(host, { all: true, verbatim: true })
+    .then((rows) => ({ addresses: rows.slice(0, 6).map((row) => row.address) }), (error) => ({ error: String(error.code || error.message || "lookup failed").slice(0, 60) }));
+  if (probe.dns.error) return probe;
+  probe.plain = await urlReview.probeRead(url);
+  const plain = probe.plain;
+  const refused = !plain.error && !plain.httpRedirect && ((plain.status >= 400 && plain.status < 500) || !!plain.challenge);
+  if (!refused) return probe;
+  const started = Date.now();
+  const browsed = await browseForReview({ url: plain.url, paths: [], html: true, probe: true }, null)
+    .catch((error) => ({ ok: false, error: String((error && error.message) || "").slice(0, 120) }));
+  const view = browsed && browsed.ok && browsed.start ? browsed.start : null;
+  probe.browser = view ? {
+    ok: true,
+    untagged: !!browsed.untagged,
+    status: view.status || 0,
+    docStatus: view.docStatus || 0,
+    finalUrl: String(view.finalUrl || "").slice(0, 300),
+    challenge: view.html ? urlReview.challengeOf(view.finalUrl || plain.url, view.headers || {}, view.html) : "",
+    words: view.renderedWords || 0,
+    ms: Date.now() - started
+  } : { ok: false, error: browsed ? browsed.error || "no answer" : "no browser key", ms: Date.now() - started };
+  return probe;
+}
+
+async function diagnoseReviewFailures() {
+  const db = admin.firestore();
+  const col = db.collection("url_review_failures");
+  const since = new Date(Date.now() - 3 * 86400000).toISOString();
+  const [alertSnap, savedSnap] = await Promise.all([
+    db.collection("url_review_alerts").where("at", ">=", since).get(),
+    col.where("at", ">=", since).get()
+  ]);
+  const runIds = new Set(savedSnap.docs.map((doc) => doc.get("runId")).filter(Boolean));
+  const urls = new Set(savedSnap.docs.map((doc) => doc.get("url")));
+  const missing = alertSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))
+    .filter((row) => row.kind === "failed" && (row.runId ? !runIds.has(row.runId) : !urls.has(row.url)));
+  await Promise.all(missing.map((row) => col.doc(row.runId || "alert-" + row.id).set(reviewFailures.failureFromAlert(row))));
+  const pending = (await col.where("diagnosedAt", "==", null).limit(40).get()).docs;
+  const byUrl = new Map();
+  pending.forEach((doc) => byUrl.set(doc.get("url"), (byUrl.get(doc.get("url")) || []).concat(doc)));
+  const queue = Array.from(byUrl.entries());
+  const worker = async () => {
+    for (let next = queue.shift(); next; next = queue.shift()) {
+      const [url, docs] = next;
+      const input = docs.every((doc) => (doc.get("cause") || {}).id === "input");
+      let probe = null;
+      try {
+        probe = input ? null : JSON.parse(JSON.stringify(await probeFailure(url)));
+      } catch (error) {
+        console.error("Failure probe failed for " + url + ":", error);
+        continue;
+      }
+      await Promise.all(docs.map((doc) => doc.ref.update({
+        diagnosis: input
+          ? { cause: "input", causeLabel: doc.get("cause").label, now: "input", nowLabel: "The address itself is refused, not the site", cleared: false, rerun: false, summary: doc.get("cause").label + "." }
+          : reviewFailures.diagnose(doc.data(), probe),
+        probe,
+        diagnosedAt: new Date().toISOString()
+      })));
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  console.log("URL review failures: " + missing.length + " taken from alerts, " + pending.length + " diagnosed across " + byUrl.size + " addresses.");
+  return null;
+}
+
+exports.diagnoseReviewFailures = functions.runWith({ timeoutSeconds: 540, memory: "512MB" })
+  .pubsub.schedule("0 6 * * *").timeZone("America/Bogota").onRun(() => diagnoseReviewFailures());
+
 exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("America/Bogota").onRun(async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
   const stamp = dateStamp(bogotaParts(new Date()));
@@ -1131,6 +1204,7 @@ async function mailReviewedSites(ip, source) {
 const urlReview = require("./url-review-core");
 const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
+const reviewFailures = require("./url-review-failures");
 const reviewPublish = require("./url-review-publish");
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
@@ -2033,8 +2107,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   });
   res.status(200);
   res.set("Content-Type", "application/x-ndjson; charset=utf-8");
+  const runStarted = Date.now();
+  const runLines = [];
   const writeLine = (payload) => {
+    if (payload.type === "log" && runLines.length < 5000) runLines.push({ t: Date.now() - runStarted, text: payload.text });
     if (!res.writableEnded) res.write(JSON.stringify(payload) + "\n");
+  };
+  const saveRunLog = async (kind, error) => {
+    try {
+      const record = reviewFailures.failureRecord(Object.assign({}, intake.value, { kind, runId, error, lines: runLines, startedAt: runStarted, endedAt: Date.now() }));
+      const col = admin.firestore().collection("url_review_failures");
+      await (runId ? col.doc(runId) : col.doc()).set(record);
+    } catch (saveError) {
+      console.error("URL review log save failed:", saveError);
+    }
   };
   try {
     await rememberReview("started", {
@@ -2076,6 +2162,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
     await countReviewed(report);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
+    if (record.status === "stopped") await saveRunLog("stopped");
     await mailReviewedSites(ip, record);
     writeLine({ type: "log", text: "Report saved. Emailing a copy to " + intake.value.email + "." });
     writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
@@ -2097,6 +2184,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       reason: error.message || "The review failed."
     };
     await rememberReview("failed", failed);
+    await saveRunLog("failed", error);
     await mailReviewedSites(ip, failed);
     writeLine({ type: "error", error: error.message || "The review failed." });
     res.end();
