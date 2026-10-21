@@ -1056,3 +1056,85 @@ test("the review desk lists re-runs with their report summary and log", () => {
   assert.match(desk.PAGE, /id="reruns"/);
   assert.match(desk.PAGE, /\/desk\/rerun/);
 });
+
+test("the review reports carry a failure section with causes, sites, re-runs, open bugs and the trend", () => {
+  const bot = (at, host) => failedAt(at, { host, url: "https://" + host + "/", cause: { id: "bot-protection" }, diagnosis: { cleared: false, nowLabel: "The plain read is refused (status 403)" } });
+  const rows = [
+    bot("2026-10-21T19:40:00Z", "bancodebogota.com"),
+    bot("2026-10-21T19:41:00Z", "bancodebogota.com"),
+    Object.assign(bot("2026-10-21T19:42:00Z", "americanairlines.com"), { rerun: { status: "failed", at: "2026-10-21T22:06:00Z" } }),
+    failedAt("2026-10-21T20:00:00Z", { diagnosedAt: null, diagnosis: null }),
+    failedAt("2026-10-21T21:00:00Z"),
+    { kind: "stopped", at: "2026-10-21T21:30:00Z", host: "shop.example.com" }
+  ];
+  const section = failures.periodFailures({
+    failures: rows,
+    previous: [{ kind: "failed", cause: { id: "bot-protection" } }, { kind: "failed", cause: { id: "dns" } }, { kind: "stopped" }],
+    reruns: [{ status: "held" }, { status: "failed" }, { status: "failed" }],
+    bugs: [
+      { key: "bot-protection-319", issue: 330, title: "BE: After #319, URL reviews still failed", cause: "bot-protection", runs: 7, hosts: ["bancodebogota.com", "globant.com"] },
+      { key: "browser", issue: 331, title: "BE: URL reviews failed because headless Chrome did not finish", cause: "browser", runs: 1, hosts: ["americanairlines.com"] },
+      { key: "timeout", issue: 300, title: "Old", cause: "timeout", runs: 2, closedAt: "2026-10-20T00:00:00Z" },
+      { key: "claiming", issue: null }
+    ],
+    phrase: "previous day",
+    deskUrl: "https://desk.example/desk/failures"
+  });
+  const row = (label) => section.rows.find((item) => item.label === label).value;
+  assert.deepEqual([section.failed, section.stopped, section.previous, section.cleared], [5, 1, 2, 1]);
+  assert.equal(row("Failed runs"), "5 vs 2 (previous day); 1 stopped by the asker");
+  assert.equal(row("Failure causes"), "bot-protection 3 (1 before), timeout 2 (0 before), dns 0 (1 before)");
+  assert.equal(row("Diagnosis"), "1 cleared since, 3 still failing, 1 not probed yet");
+  assert.equal(row("Failed sites"), "bancodebogota.com 2, bbva.com.co 2, americanairlines.com 1");
+  assert.equal(row("Re-runs"), "1 held for you, 0 sent, 0 dropped, 2 failed again");
+  assert.equal(row("Failure bugs"), "#331 browser, #330 bot-protection open, 1 closed");
+  assert.deepEqual(section.openBugs, [331, 330]);
+  assert.match(section.body, /^Failed reviews\n2026-10-21 21:00 UTC · bbva\.com\.co · Ana · timeout · cleared: /);
+  assert.match(section.body, /2026-10-21 19:42 UTC · americanairlines\.com · Ana · bot-protection · now: The plain read is refused \(status 403\) · re-run failed again 2026-10-21/);
+  assert.match(section.body, /2026-10-21 20:00 UTC · bbva\.com\.co · Ana · timeout · not diagnosed yet/);
+  assert.match(section.body, /Open failure bugs\n#331 BE: URL reviews failed because headless Chrome did not finish \(1 run, americanairlines\.com\)\n#330 .* \(7 runs, bancodebogota\.com, globant\.com\)/);
+  assert.doesNotMatch(section.body, /#300/);
+  assert.match(section.body, /Each run's full log and probe: https:\/\/desk\.example\/desk\/failures$/);
+
+  const quiet = failures.periodFailures({});
+  assert.deepEqual(quiet.rows.map((item) => item.value), ["0 vs 0 (previous period); 0 stopped by the asker", "None", "0 cleared since, 0 still failing, 0 not probed yet", "None", "0 held for you, 0 sent, 0 dropped, 0 failed again", "None filed"]);
+  assert.match(quiet.body, /^Failed reviews\nNone\n\nOpen failure bugs\nNone$/);
+});
+
+test("the failures page lists runs without their log, and opens one with its full log, probe and re-run", () => {
+  const desk = require("../../functions/url-review-desk");
+  const lines = Array.from({ length: 3 }, (_, i) => ({ t: i * 1500, text: "line " + i }));
+  const doc = Object.assign(failedAt("2026-10-21T19:42:00Z", {
+    cause: { id: "bot-protection", label: "The site's bot protection refused the review" },
+    error: { message: "The URL returned status 403.", stack: ["at read"] },
+    diagnosis: { cleared: false, summary: "Still: refused." },
+    probe: { dns: { addresses: ["1.2.3.4"] }, plain: { hops: [], status: 403, contentType: "text/html", challenge: "Akamai" }, browser: { ok: false, error: "aborted" } },
+    rerun: { id: "x9", status: "failed", at: "2026-10-21T22:06:00Z" },
+    lines,
+    lineCount: 3,
+    timings: { ms: 4200, lastLineMs: 3000 },
+    checks: 2
+  }));
+  const row = failures.failureRow(doc);
+  assert.deepEqual([row.kind, row.host, row.cause, row.message, row.now, row.cleared, row.rerun, row.rerunId, row.lineCount, row.ms], ["failed", "bbva.com.co", "bot-protection", "The URL returned status 403.", "Still: refused.", false, "re-run failed again 2026-10-21", "x9", 3, 4200]);
+  assert.equal("lines" in row, false);
+  assert.equal(failures.failureRow({ kind: "stopped", url: "https://a.example/x" }).cause, "");
+  assert.equal(failures.failureRow(failedAt("2026-10-21T10:00:00Z", { diagnosis: { cleared: true, rerun: true } })).rerun, "re-run due");
+
+  const detail = failures.failureDetail(doc, { id: "x9", status: "failed", at: "2026-10-21T22:06:00Z", trigger: { label: "Fix shipped" }, error: { message: "Headless Chrome did not finish." }, lines: [{ t: 5, text: "Re-run" }] });
+  assert.deepEqual(detail.lines, lines);
+  assert.deepEqual(detail.probeLines, ["DNS: 1 addresses", "Plain read with the review UA: status 403, text/html, Akamai bot check", "Headless Chrome: did not finish (aborted)"]);
+  assert.deepEqual([detail.rerunDoc.why, detail.rerunDoc.error, detail.rerunDoc.lines[0].text], ["Fix shipped", "Headless Chrome did not finish.", "Re-run"]);
+  assert.equal(failures.failureDetail(doc, null).rerunDoc, null);
+
+  [desk.PAGE, desk.FAILURES_PAGE].forEach((page) => {
+    const inline = page.match(/<script>([\s\S]*?)<\/script>/)[1];
+    assert.doesNotThrow(() => new Function(inline));
+    assert.equal(inline.match(/function deskFetch/g).length, 1);
+    assert.match(page, /id="desk-gate"/);
+  });
+  assert.match(desk.PAGE, /deskFetch\("\/desk\/data"\)/);
+  assert.match(desk.PAGE, /href="desk\/failures"/);
+  assert.match(desk.FAILURES_PAGE, /deskFetch\("\/desk\/failures\/data"\)/);
+  assert.match(desk.FAILURES_PAGE, /href="\.\.\/desk"/);
+});

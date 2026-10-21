@@ -237,14 +237,22 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true }, origin, deviceHint);
     return;
   }
-  if (req.method === "GET" && url.pathname === "/desk") {
+  if (req.method === "GET" && (url.pathname === "/desk" || url.pathname === "/desk/failures")) {
     res.writeHead(200, {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
       "x-robots-tag": "noindex",
       "x-content-type-options": "nosniff"
     });
-    res.end(desk.PAGE);
+    res.end(url.pathname === "/desk" ? desk.PAGE : desk.FAILURES_PAGE);
+    return;
+  }
+  if (req.method === "GET" && url.pathname === "/desk/failures/data") {
+    if (!deskOperator(req)) {
+      sendJson(res, 401, { error: "Sign in with the operator Google account." }, origin, deviceHint);
+      return;
+    }
+    sendJson(res, 200, { failures: [], bugs: [], fixes: [] }, origin, deviceHint);
     return;
   }
   if (req.method === "POST" && url.pathname === "/desk/session") {

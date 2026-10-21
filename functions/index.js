@@ -969,18 +969,54 @@ async function loadBound(name, field, startVal, endVal) {
   return rows;
 }
 
+function loadSummaries(name, fields, start, end) {
+  return admin.firestore().collection(name)
+    .where("at", ">=", start.toISOString())
+    .where("at", "<", end.toISOString())
+    .select(...fields)
+    .limit(2000)
+    .get()
+    .then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
+}
+
+// A failure bug seen closed on GitHub is marked once, so only the open ones are asked about again.
+async function loadFailureBugs() {
+  const snap = await admin.firestore().collection("url_review_failure_bugs").get();
+  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  return Promise.all(snap.docs.map(async (doc) => {
+    const bug = Object.assign({ key: doc.id }, doc.data());
+    if (!bug.issue || bug.closedAt) return bug;
+    try {
+      const res = await fetch("https://api.github.com/repos/" + BUG_REPO + "/issues/" + bug.issue, {
+        headers: Object.assign({ Accept: "application/vnd.github+json", "User-Agent": "qa-lab-url-review", "X-GitHub-Api-Version": "2022-11-28" }, token ? { Authorization: "Bearer " + token } : {})
+      });
+      const issue = res.ok ? await res.json() : null;
+      if (issue && issue.state === "closed") {
+        bug.closedAt = issue.closed_at || new Date().toISOString();
+        await doc.ref.update({ closedAt: bug.closedAt });
+      }
+    } catch (error) {
+      console.error("Failure bug #" + bug.issue + " state was not read:", error);
+    }
+    return bug;
+  }));
+}
+
 async function sendReviewPeriodReport(period) {
   const window = period === "quarter" ? quarterWindow(new Date()) : reportWindow(period, new Date());
   const earlier = period === "quarter" ? previousQuarter(window) : previousWindow(period, window);
   const id = "review-" + period + "-" + window.label.replace(/[\s:]/g, "-");
   const startStamp = admin.firestore.Timestamp.fromDate(window.start);
   const endStamp = admin.firestore.Timestamp.fromDate(window.end);
-  const [opens, reviews, captures, alerts, pageEvents] = await Promise.all([
+  const [opens, reviews, captures, alerts, pageEvents, failed, priorFailed, reruns] = await Promise.all([
     loadBound("url_review_opens", "createdAt", startStamp, endStamp),
     loadBound("url_reviews", "createdAt", window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_captures", "at", window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_alerts", "at", window.start.toISOString(), window.end.toISOString()),
-    loadEvents(window.start, window.end).then((rows) => rows.filter((row) => row.site === "review"))
+    loadEvents(window.start, window.end).then((rows) => rows.filter((row) => row.site === "review")),
+    loadSummaries("url_review_failures", reviewFailures.SUMMARY_FIELDS, window.start, window.end),
+    loadSummaries("url_review_failures", ["kind", "cause"], earlier.start, window.start),
+    loadSummaries("url_review_reruns", reviewFailures.RERUN_FIELDS, window.start, window.end)
   ]);
   if (period === "quarter" && !opens.length && !reviews.length && !captures.length && !alerts.length && !pageEvents.length) return null;
   const ref = admin.firestore().collection("url_review_reports").doc(id);
@@ -999,6 +1035,15 @@ async function sendReviewPeriodReport(period) {
       loadBound("url_reviews", "createdAt", earlier.start.toISOString(), window.start.toISOString())
     ]);
     const previous = reviewMail.summarizePeriod(priorOpens, priorReviews, [], []);
+    const quiet = period === "quarter" && !failed.length && !reruns.length;
+    const failures = reviewFailures.periodFailures({
+      failures: failed,
+      previous: priorFailed,
+      reruns,
+      bugs: quiet ? [] : await loadFailureBugs(),
+      phrase: earlier.phrase,
+      deskUrl: REVIEW_FN_URL + "/desk/failures"
+    });
     await ref.set({
       period: period,
       label: window.label,
@@ -1024,6 +1069,7 @@ async function sendReviewPeriodReport(period) {
       reasons: summary.reasons,
       captureKinds: summary.captureKinds,
       previous: { opens: previous.opens, reviews: previous.reviews, paidUsd: previous.paidUsd },
+      failures: { failed: failures.failed, stopped: failures.stopped, previous: failures.previous, cleared: failures.cleared, causes: failures.causes, hosts: failures.hosts, reruns: failures.reruns, openBugs: failures.openBugs },
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     const title = period === "quarter" ? "15-minute" : period.charAt(0).toUpperCase() + period.slice(1);
@@ -1031,8 +1077,8 @@ async function sendReviewPeriodReport(period) {
     const sent = await sendOwnerEmail({
       subject: title + " URL review — " + window.label,
       intro: title + " QA-lab URL Review report for " + window.label,
-      rows: reviewMail.reportRows(summary, previous, earlier.phrase),
-      body: [summary.body, pageBody].filter(Boolean).join("\n\n")
+      rows: reviewMail.reportRows(summary, previous, earlier.phrase).concat(quiet ? [] : failures.rows),
+      body: [summary.body, quiet ? "" : failures.body, pageBody].filter(Boolean).join("\n\n")
     });
     if (!sent) throw new Error("URL review report email was not sent.");
     await ref.set({ emailedAt: admin.firestore.FieldValue.serverTimestamp(), sending: false }, { merge: true });
@@ -1646,22 +1692,31 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     return;
   }
   const pathName = String(req.path || "/");
-  const deskName = pathName.indexOf("/desk/data") !== -1
-    ? "data"
-    : pathName.indexOf("/desk/pass") !== -1
-      ? "pass"
-      : pathName.indexOf("/desk/free") !== -1
-        ? "free"
-        : pathName.indexOf("/desk/rerun") !== -1
-          ? "rerun"
-          : (pathName === "/desk" || pathName.endsWith("/desk"))
-            ? "page"
-            : "";
+  const deskRoutes = [
+    ["/desk/failures/data", "failures-data"],
+    ["/desk/data", "data"],
+    ["/desk/pass", "pass"],
+    ["/desk/free", "free"],
+    ["/desk/rerun", "rerun"]
+  ];
+  const routed = deskRoutes.find(([part]) => pathName.indexOf(part) !== -1);
+  const deskName = routed
+    ? routed[1]
+    : pathName.endsWith("/desk/failures")
+      ? "failures-page"
+      : (pathName === "/desk" || pathName.endsWith("/desk"))
+        ? "page"
+        : "";
   if (deskName) {
     res.set("X-Robots-Tag", "noindex");
     if (deskName === "page" && req.method === "GET") {
       res.set("Content-Type", "text/html; charset=utf-8");
       res.status(200).send(reviewDesk.PAGE);
+      return;
+    }
+    if (deskName === "failures-page" && req.method === "GET") {
+      res.set("Content-Type", "text/html; charset=utf-8");
+      res.status(200).send(reviewDesk.FAILURES_PAGE);
       return;
     }
     const presented = String(req.get("authorization") || "");
@@ -1698,6 +1753,34 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       const notes = noteSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
       const reruns = reviewDesk.rerunRows(rerunSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
       res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes), { freeRuns, reruns }));
+      return;
+    }
+    if (deskName === "failures-data" && req.method === "GET") {
+      const db = admin.firestore();
+      const id = String(req.query.id || "").replace(/[^A-Za-z0-9_.:-]/g, "").slice(0, 60);
+      if (id) {
+        const snap = await db.collection("url_review_failures").doc(id).get();
+        if (!snap.exists) {
+          res.status(404).json({ error: "That failure is not saved." });
+          return;
+        }
+        const data = Object.assign({ id }, snap.data());
+        const rerunId = data.rerun && data.rerun.id ? String(data.rerun.id) : "";
+        const rerun = rerunId ? await db.collection("url_review_reruns").doc(rerunId).get() : null;
+        res.status(200).json(reviewFailures.failureDetail(data, rerun && rerun.exists ? Object.assign({ id: rerunId }, rerun.data()) : null));
+        return;
+      }
+      const since = new Date(Date.now() - reviewFailures.KEEP_DAYS * 86400000).toISOString();
+      const [failSnap, bugSnap] = await Promise.all([
+        db.collection("url_review_failures").where("at", ">=", since).orderBy("at", "desc").select(...reviewFailures.SUMMARY_FIELDS).limit(500).get(),
+        db.collection("url_review_failure_bugs").get()
+      ]);
+      res.status(200).json({
+        failures: failSnap.docs.map((doc) => reviewFailures.failureRow(Object.assign({ id: doc.id }, doc.data()))),
+        bugs: bugSnap.docs.map((doc) => Object.assign({ key: doc.id }, doc.data())).filter((bug) => bug.issue).sort((a, b) => b.issue - a.issue)
+          .map((bug) => ({ key: bug.key, issue: bug.issue, url: bug.url || "", title: bug.title || "", cause: bug.cause || "", runs: bug.runs || 0, hosts: (bug.hosts || []).slice(0, 12), lastAt: bug.lastAt || "", closedAt: bug.closedAt || "" })),
+        fixes: reviewFailures.FIXES
+      });
       return;
     }
     if (deskName === "rerun" && req.method === "POST") {

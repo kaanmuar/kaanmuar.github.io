@@ -262,14 +262,7 @@ function rerunRows(docs) {
   }));
 }
 
-const PAGE = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <title>Review desk</title>
-  <style>
+const STYLE = `
     :root { color-scheme: light; --ink:#102027; --muted:#5c6e78; --line:#d5e0e4; --teal:#0d6e76; --paper:#f4f7f8; --card:#fff; }
     * { box-sizing: border-box; }
     body { margin: 0; font: 16px/1.45 Georgia, "Times New Roman", serif; color: var(--ink); background: var(--paper); }
@@ -309,22 +302,146 @@ const PAGE = `<!DOCTYPE html>
     body.desk-locked .stats, body.desk-locked #desk-out { display: none; }
     body.desk-locked #desk-gate { display: block; }
     #desk-out { margin-top: 12px; background: transparent; color: var(--teal); border: 1px solid var(--line); }
-  </style>
-</head>
-<body class="desk-locked">
-  <header>
-    <h1>Review desk</h1>
-    <p class="lede">Runs for this review. This page asks again every few seconds. Customer sign-in is separate from this desk.</p>
-    <button id="desk-out" type="button">Sign out</button>
-    <div class="stats" id="stats"></div>
-  </header>
-  <main>
+    .lede a, .alert a { color: var(--teal); }
+    .detail h2 { margin-top: 18px; }
+    .log { font: 12px/1.5 Menlo, Consolas, monospace; max-height: 520px; overflow: auto; background: var(--paper); border-radius: 8px; padding: 10px; }
+`;
+
+const GATE = `
     <section id="desk-gate">
       <h2>Operator sign-in</h2>
       <p>Continue with the operator Google account. Any other Google account stays outside.</p>
       <button id="desk-google" type="button">Continue with Google</button>
       <p id="desk-gate-note" class="empty"></p>
-    </section>
+    </section>`;
+
+// Each page that includes this defines load(), which reads its data through deskFetch().
+const SIGN_IN = `
+    function deskBase() {
+      const path = location.pathname;
+      const at = path.indexOf("/desk");
+      return at > 0 ? path.slice(0, at) : "";
+    }
+    async function deskHeaders() {
+      const headers = { "content-type": "application/json" };
+      const auth = deskApp();
+      if (auth && auth.currentUser) headers.authorization = "Bearer " + await auth.currentUser.getIdToken();
+      return headers;
+    }
+    function lockDesk() {
+      document.body.classList.add("desk-locked");
+    }
+    function unlockDesk() {
+      document.body.classList.remove("desk-locked");
+    }
+    async function deskFetch(path) {
+      const response = await fetch(deskBase() + path, { cache: "no-store", credentials: "include", headers: await deskHeaders() });
+      if (response.status === 401 || response.status === 403) {
+        lockDesk();
+        if (response.status === 403) {
+          const note = document.getElementById("desk-gate-note");
+          if (note) note.textContent = "This Google account cannot open the desk.";
+        }
+        return null;
+      }
+      if (!response.ok) return null;
+      unlockDesk();
+      return response.json();
+    }
+    function deskApp() {
+      if (!window.firebase || !firebase.auth) return null;
+      if (!firebase.apps.length) {
+        firebase.initializeApp({
+          apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
+          authDomain: "carlosm-interactive-cv.firebaseapp.com",
+          projectId: "carlosm-interactive-cv"
+        });
+      }
+      return firebase.auth();
+    }
+    async function finishDesk(user) {
+      const note = document.getElementById("desk-gate-note");
+      const local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+      if (local) {
+        const idToken = await user.getIdToken();
+        const res = await fetch(deskBase() + "/desk/session", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ idToken: idToken })
+        });
+        if (!res.ok) {
+          note.textContent = "This Google account cannot open the desk.";
+          return;
+        }
+      }
+      note.textContent = "";
+      load();
+    }
+    document.getElementById("desk-google").addEventListener("click", async () => {
+      const note = document.getElementById("desk-gate-note");
+      note.textContent = "Opening Google…";
+      const auth = deskApp();
+      if (!auth) {
+        note.textContent = "Google sign-in did not load.";
+        return;
+      }
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const cred = await auth.signInWithPopup(provider);
+        await finishDesk(cred.user);
+      } catch (error) {
+        const code = error && error.code;
+        if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
+          note.textContent = "Continuing in this window…";
+          auth.signInWithRedirect(provider);
+          return;
+        }
+        if (code === "auth/unauthorized-domain") {
+          note.textContent = "Google did not accept this desk address.";
+          return;
+        }
+        console.error("Desk sign-in failed:", error);
+        note.textContent = "Google did not complete the sign-in (" + (code || (error && error.message) || "no code") + ").";
+      }
+    });
+    const startingAuth = deskApp();
+    if (startingAuth) {
+      startingAuth.onAuthStateChanged((user) => {
+        if (user) load();
+      });
+      startingAuth.getRedirectResult().then((result) => {
+        if (result && result.user) finishDesk(result.user);
+      }).catch((error) => {
+        console.error("Desk redirect sign-in failed:", error);
+        const note = document.getElementById("desk-gate-note");
+        if (note) note.textContent = "Google did not complete the sign-in (" + ((error && (error.code || error.message)) || "no code") + ").";
+      });
+    }
+    document.getElementById("desk-out").addEventListener("click", async () => {
+      const auth = deskApp();
+      if (auth && auth.currentUser) await auth.signOut();
+      await fetch(deskBase() + "/desk/logout", { method: "POST", credentials: "include" });
+      lockDesk();
+    });`;
+
+const PAGE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Review desk</title>
+  <style>${STYLE}  </style>
+</head>
+<body class="desk-locked">
+  <header>
+    <h1>Review desk</h1>
+    <p class="lede">Runs for this review. This page asks again every few seconds. Customer sign-in is separate from this desk. <a href="desk/failures">Failed reviews</a></p>
+    <button id="desk-out" type="button">Sign out</button>
+    <div class="stats" id="stats"></div>
+  </header>
+  <main>${GATE}
     <section>
       <h2>Alerts</h2>
       <div id="alerts"></div>
@@ -705,17 +822,6 @@ const PAGE = `<!DOCTYPE html>
       load();
     }
 
-    function deskBase() {
-      const path = location.pathname;
-      const at = path.indexOf("/desk");
-      return at > 0 ? path.slice(0, at) : "";
-    }
-    async function deskHeaders() {
-      const headers = { "content-type": "application/json" };
-      const auth = deskApp();
-      if (auth && auth.currentUser) headers.authorization = "Bearer " + await auth.currentUser.getIdToken();
-      return headers;
-    }
     async function openPass(email) {
       await fetch(deskBase() + "/desk/pass", {
         method: "POST",
@@ -726,104 +832,13 @@ const PAGE = `<!DOCTYPE html>
       load();
     }
 
-    function lockDesk() {
-      document.body.classList.add("desk-locked");
-    }
-    function unlockDesk() {
-      document.body.classList.remove("desk-locked");
-    }
     async function load() {
-      const headers = await deskHeaders();
-      const response = await fetch(deskBase() + "/desk/data", { cache: "no-store", credentials: "include", headers: headers });
-      if (response.status === 401 || response.status === 403) {
-        lockDesk();
-        if (response.status === 403) {
-          const note = document.getElementById("desk-gate-note");
-          if (note) note.textContent = "This Google account cannot open the desk.";
-        }
-        return;
-      }
-      if (!response.ok) return;
-      unlockDesk();
-      data = await response.json();
+      const body = await deskFetch("/desk/data");
+      if (!body) return;
+      data = body;
       render();
     }
-    function deskApp() {
-      if (!window.firebase || !firebase.auth) return null;
-      if (!firebase.apps.length) {
-        firebase.initializeApp({
-          apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
-          authDomain: "carlosm-interactive-cv.firebaseapp.com",
-          projectId: "carlosm-interactive-cv"
-        });
-      }
-      return firebase.auth();
-    }
-    async function finishDesk(user) {
-      const note = document.getElementById("desk-gate-note");
-      const local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-      if (local) {
-        const idToken = await user.getIdToken();
-        const res = await fetch(deskBase() + "/desk/session", {
-          method: "POST",
-          credentials: "include",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ idToken: idToken })
-        });
-        if (!res.ok) {
-          note.textContent = "This Google account cannot open the desk.";
-          return;
-        }
-      }
-      note.textContent = "";
-      load();
-    }
-    document.getElementById("desk-google").addEventListener("click", async () => {
-      const note = document.getElementById("desk-gate-note");
-      note.textContent = "Opening Google…";
-      const auth = deskApp();
-      if (!auth) {
-        note.textContent = "Google sign-in did not load.";
-        return;
-      }
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try {
-        const cred = await auth.signInWithPopup(provider);
-        await finishDesk(cred.user);
-      } catch (error) {
-        const code = error && error.code;
-        if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
-          note.textContent = "Continuing in this window…";
-          auth.signInWithRedirect(provider);
-          return;
-        }
-        if (code === "auth/unauthorized-domain") {
-          note.textContent = "Google did not accept this desk address.";
-          return;
-        }
-        console.error("Desk sign-in failed:", error);
-        note.textContent = "Google did not complete the sign-in (" + (code || (error && error.message) || "no code") + ").";
-      }
-    });
-    const startingAuth = deskApp();
-    if (startingAuth) {
-      startingAuth.onAuthStateChanged((user) => {
-        if (user) load();
-      });
-      startingAuth.getRedirectResult().then((result) => {
-        if (result && result.user) finishDesk(result.user);
-      }).catch((error) => {
-        console.error("Desk redirect sign-in failed:", error);
-        const note = document.getElementById("desk-gate-note");
-        if (note) note.textContent = "Google did not complete the sign-in (" + ((error && (error.code || error.message)) || "no code") + ").";
-      });
-    }
-    document.getElementById("desk-out").addEventListener("click", async () => {
-      const auth = deskApp();
-      if (auth && auth.currentUser) await auth.signOut();
-      await fetch(deskBase() + "/desk/logout", { method: "POST", credentials: "include" });
-      lockDesk();
-    });
+${SIGN_IN}
     document.getElementById("free-add").addEventListener("click", async () => {
       const email = freeEmailEl.value.trim().toLowerCase();
       if (!email || email.indexOf("@") === -1) return;
@@ -835,6 +850,230 @@ const PAGE = `<!DOCTYPE html>
     statusEl.addEventListener("change", render);
     load();
     setInterval(load, 4000);
+  </script>
+</body>
+</html>`;
+
+const FAILURES_PAGE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Failed reviews · Review desk</title>
+  <style>${STYLE}  </style>
+</head>
+<body class="desk-locked">
+  <header>
+    <h1>Failed reviews</h1>
+    <p class="lede">Every failed or stopped review of the last 90 days, with its saved log, the daily probe of the site, and its re-run. <a href="../desk">Back to the desk</a></p>
+    <button id="desk-out" type="button">Sign out</button>
+    <div class="stats" id="stats"></div>
+  </header>
+  <main>${GATE}
+    <section>
+      <h2>Cause classes</h2>
+      <p class="empty">Each new cause class opens one GitHub bug. A PR that fixes a class adds a row to the fixes, and the failures it covers run again.</p>
+      <div id="bugs"></div>
+      <details>
+        <summary>Fixes shipped</summary>
+        <div id="fixes"></div>
+      </details>
+    </section>
+    <section>
+      <h2>Runs</h2>
+      <div class="tools">
+        <input id="q" type="search" placeholder="Site, name, or email" aria-label="Filter failures">
+        <select id="cause" aria-label="Cause"><option value="">Every cause</option></select>
+        <select id="kind" aria-label="Kind">
+          <option value="">Failed and stopped</option>
+          <option value="failed">Failed</option>
+          <option value="stopped">Stopped by the asker</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>When</th><th>Kind</th><th>Site</th><th>Who</th><th>Cause</th><th>Now</th><th>Re-run</th><th>Log</th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="detail" id="detail" hidden></div>
+    </section>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script>
+    const statsEl = document.getElementById("stats");
+    const bugsEl = document.getElementById("bugs");
+    const fixesEl = document.getElementById("fixes");
+    const rowsEl = document.getElementById("rows");
+    const detailEl = document.getElementById("detail");
+    const qEl = document.getElementById("q");
+    const causeEl = document.getElementById("cause");
+    const kindEl = document.getElementById("kind");
+    let data = { failures: [], bugs: [], fixes: [] };
+    let selected = "";
+
+    function text(value) { return value == null || value === "" ? "—" : String(value); }
+    function when(value) {
+      if (!value) return "—";
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+    }
+    function node(tag, content) {
+      const el = document.createElement(tag);
+      el.textContent = content == null ? "" : String(content);
+      return el;
+    }
+    function line(parent, label, value) {
+      parent.appendChild(node("dt", label));
+      parent.appendChild(node("dd", text(value)));
+    }
+    function count(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+    function seconds(ms) { return (Math.round((Number(ms) || 0) / 100) / 10).toFixed(1) + " s"; }
+    function logText(lines) {
+      return lines.map((row) => ("+" + seconds(row.t)).padStart(10) + "  " + row.text).join("\\n");
+    }
+
+    function render() {
+      const rows = data.failures || [];
+      const failed = rows.filter((row) => row.kind === "failed");
+      const open = (data.bugs || []).filter((bug) => !bug.closedAt);
+      const chips = [
+        ["Failed", failed.length],
+        ["Stopped", rows.length - failed.length],
+        ["Cleared since", failed.filter((row) => row.cleared).length],
+        ["Still failing", failed.filter((row) => row.diagnosedAt && !row.cleared).length],
+        ["Not probed yet", failed.filter((row) => !row.diagnosedAt).length],
+        ["Open bugs", open.length]
+      ];
+      statsEl.replaceChildren();
+      chips.forEach((chip) => {
+        const el = document.createElement("span");
+        el.className = "stat";
+        el.appendChild(node("b", chip[1] + " "));
+        el.appendChild(document.createTextNode(chip[0]));
+        statsEl.appendChild(el);
+      });
+
+      bugsEl.replaceChildren();
+      (data.bugs || []).forEach((bug) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        const title = document.createElement("b");
+        const link = node("a", "#" + bug.issue);
+        link.href = bug.url;
+        link.target = "_blank";
+        link.rel = "noopener";
+        title.appendChild(link);
+        title.appendChild(document.createTextNode(" " + bug.title));
+        block.appendChild(title);
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = [bug.closedAt ? "closed " + when(bug.closedAt) : "open", bug.cause, count(bug.runs, "run"), (bug.hosts || []).join(", "), "last " + when(bug.lastAt)].join(" · ");
+        block.appendChild(meta);
+        bugsEl.appendChild(block);
+      });
+      if (!(data.bugs || []).length) bugsEl.appendChild(Object.assign(node("p", "No cause class has a bug yet."), { className: "empty" }));
+      fixesEl.replaceChildren();
+      (data.fixes || []).forEach((fix) => fixesEl.appendChild(Object.assign(node("p", fix.ref + " · " + fix.cause + " · " + when(fix.at) + " · " + fix.label), { className: "meta" })));
+
+      const causes = Array.from(new Set(rows.map((row) => row.cause).filter(Boolean))).sort();
+      const chosen = causeEl.value;
+      causeEl.replaceChildren(Object.assign(node("option", "Every cause"), { value: "" }));
+      causes.forEach((cause) => causeEl.appendChild(Object.assign(node("option", cause), { value: cause })));
+      causeEl.value = causes.includes(chosen) ? chosen : "";
+
+      const q = qEl.value.trim().toLowerCase();
+      rowsEl.replaceChildren();
+      rows.filter((row) => (!causeEl.value || row.cause === causeEl.value)
+        && (!kindEl.value || row.kind === kindEl.value)
+        && (!q || [row.host, row.url, row.name, row.email].join(" ").toLowerCase().includes(q)))
+        .forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.setAttribute("aria-selected", String(row.id === selected));
+          [when(row.at), row.kind, row.host, row.name || row.email, row.cause, row.kind === "stopped" ? "" : row.diagnosedAt ? (row.cleared ? "Cleared" : "Still failing") : "Not probed yet", row.rerun, count(row.lineCount, "line")]
+            .forEach((value) => tr.appendChild(node("td", text(value))));
+          tr.addEventListener("click", () => openDetail(row.id));
+          rowsEl.appendChild(tr);
+        });
+      if (!rowsEl.children.length) {
+        const tr = document.createElement("tr");
+        const td = Object.assign(node("td", rows.length ? "No failure matches." : "No review has failed in the last 90 days."), { colSpan: 8, className: "empty" });
+        tr.appendChild(td);
+        rowsEl.appendChild(tr);
+      }
+    }
+
+    async function openDetail(id) {
+      selected = id;
+      render();
+      const item = await deskFetch("/desk/failures/data?id=" + encodeURIComponent(id));
+      if (!item || selected !== id) return;
+      detailEl.hidden = false;
+      detailEl.replaceChildren();
+      detailEl.appendChild(node("h2", (item.kind === "stopped" ? "Stopped: " : "Failed: ") + item.host));
+      const facts = document.createElement("dl");
+      line(facts, "When", when(item.at));
+      line(facts, "Address", item.url);
+      line(facts, "Who", [item.name, item.email].filter(Boolean).join(" · "));
+      line(facts, "Error", item.message);
+      line(facts, "Cause", item.cause ? item.cause + " · " + item.causeLabel : "");
+      line(facts, "Now", item.now ? item.now + " (probed " + count(item.checks, "time") + ", last " + when(item.diagnosedAt) + ")" : "");
+      line(facts, "Re-run", item.rerun);
+      const timings = item.timings || {};
+      line(facts, "Took", seconds(timings.ms) + ", last log line at " + seconds(timings.lastLineMs));
+      const options = item.options || {};
+      line(facts, "Asked for", [options.pages ? options.pages + " pages" : "", options.depth ? "depth " + options.depth : "", (options.frameworks || []).join(", ")].filter(Boolean).join(" · "));
+      line(facts, "Reason", (item.intake || {}).reason);
+      if (item.fromAlert) line(facts, "Log", "Taken from the alert; this run saved no log.");
+      detailEl.appendChild(facts);
+      if (item.error && (item.error.stack || []).length) {
+        const stack = document.createElement("details");
+        stack.appendChild(node("summary", "Stack"));
+        stack.appendChild(Object.assign(node("pre", item.error.stack.join("\\n")), { className: "log" }));
+        detailEl.appendChild(stack);
+      }
+      if (item.probe) {
+        detailEl.appendChild(node("h2", "Probe"));
+        const list = document.createElement("ul");
+        (item.probeLines || []).forEach((row) => list.appendChild(node("li", row)));
+        detailEl.appendChild(list);
+        const raw = document.createElement("details");
+        raw.appendChild(node("summary", "Everything the probe saw"));
+        raw.appendChild(Object.assign(node("pre", JSON.stringify(item.probe, null, 2)), { className: "log" }));
+        detailEl.appendChild(raw);
+      }
+      if ((item.lines || []).length) {
+        detailEl.appendChild(node("h2", "Log, " + count(item.lineCount, "line") + (item.linesCut ? " (" + item.linesCut + " from the middle were not kept)" : "")));
+        detailEl.appendChild(Object.assign(node("pre", logText(item.lines)), { className: "log" }));
+      }
+      const again = item.rerunDoc;
+      if (again) {
+        detailEl.appendChild(node("h2", "Re-run " + again.status + ", " + when(again.at)));
+        const rerunFacts = document.createElement("dl");
+        line(rerunFacts, "Why it ran", again.why);
+        line(rerunFacts, again.reportId ? "Report" : "Error", again.reportId || again.error);
+        detailEl.appendChild(rerunFacts);
+        if ((again.lines || []).length) detailEl.appendChild(Object.assign(node("pre", logText(again.lines)), { className: "log" }));
+      }
+      detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function load() {
+      const body = await deskFetch("/desk/failures/data");
+      if (!body) return;
+      data = body;
+      render();
+    }
+${SIGN_IN}
+    qEl.addEventListener("input", render);
+    causeEl.addEventListener("change", render);
+    kindEl.addEventListener("change", render);
+    load();
+    setInterval(load, 60000);
   </script>
 </body>
 </html>`;
@@ -869,5 +1108,6 @@ module.exports = {
   snapshot,
   rerunRows,
   verifyOperator,
-  PAGE
+  PAGE,
+  FAILURES_PAGE
 };

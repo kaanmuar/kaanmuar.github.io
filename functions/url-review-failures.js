@@ -420,9 +420,145 @@ function bugPlan(failures, reruns, filed) {
   return Array.from(classes.entries()).map(([key, leads]) => bugIssue(key, leads));
 }
 
+// The fields of a failure the reports and the desk list read; the log stays behind.
+const SUMMARY_FIELDS = ["kind", "at", "url", "host", "name", "email", "cause", "error.message", "diagnosis", "diagnosedAt", "checks", "rerun", "lineCount", "timings.ms", "fromAlert"];
+const RERUN_FIELDS = ["status", "at", "host", "name", "trigger", "cause", "error.message", "decidedAt"];
+const RERUN_STATES = [["held", "held for you"], ["sent", "sent"], ["dropped", "dropped"], ["failed", "failed again"]];
+const REPORT_ROWS = 60;
+
+function countBy(rows, keyOf) {
+  const counts = {};
+  rows.forEach((row) => {
+    const key = keyOf(row);
+    if (key) counts[key] = (counts[key] || 0) + 1;
+  });
+  return counts;
+}
+
+const ranked = (counts) => Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+const causeId = (row) => (row.cause && row.cause.id) || "unknown";
+const minute = (at) => String(at || "").slice(0, 16).replace("T", " ") + " UTC";
+
+function rerunState(row) {
+  const rerun = row.rerun;
+  if (!rerun) return row.diagnosis && row.diagnosis.rerun ? "re-run due" : "";
+  if (rerun.status === "skipped") return "re-run skipped: " + (rerun.reason || "no reason");
+  const label = (RERUN_STATES.find(([id]) => id === rerun.status) || [])[1] || rerun.status;
+  return "re-run " + label + " " + String(rerun.at || "").slice(0, 10);
+}
+
+// `bugs` are url_review_failure_bugs rows, with `closedAt` once GitHub shows the issue closed.
+function periodFailures(input) {
+  const source = input || {};
+  const rows = Array.isArray(source.failures) ? source.failures : [];
+  const failed = rows.filter((row) => row.kind === "failed").sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const stopped = rows.length - failed.length;
+  const before = (Array.isArray(source.previous) ? source.previous : []).filter((row) => row.kind === "failed");
+  const reruns = Array.isArray(source.reruns) ? source.reruns : [];
+  const bugs = (Array.isArray(source.bugs) ? source.bugs : []).filter((bug) => bug.issue).sort((a, b) => b.issue - a.issue);
+  const open = bugs.filter((bug) => !bug.closedAt);
+  const causes = countBy(failed, causeId);
+  const priorCauses = countBy(before, causeId);
+  const hosts = countBy(failed, (row) => row.host || hostOf(row.url));
+  const rerunCounts = countBy(reruns, (row) => row.status);
+  const cleared = failed.filter((row) => row.diagnosis && row.diagnosis.cleared).length;
+  const waiting = failed.filter((row) => !row.diagnosedAt).length;
+  const phrase = source.phrase || "previous period";
+  const causeList = Array.from(new Set(ranked(causes).concat(ranked(priorCauses))))
+    .map((id) => id + " " + (causes[id] || 0) + " (" + (priorCauses[id] || 0) + " before)");
+  const lines = failed.slice(0, REPORT_ROWS).map((row) => [
+    minute(row.at),
+    row.host || hostOf(row.url),
+    row.name,
+    causeId(row),
+    row.diagnosis ? (row.diagnosis.cleared ? "cleared: " : "now: ") + row.diagnosis.nowLabel : "not diagnosed yet",
+    rerunState(row)
+  ].filter(Boolean).join(" · "));
+  const bugLines = open.map((bug) => "#" + bug.issue + " " + bug.title + " (" + bug.runs + " run" + (bug.runs === 1 ? "" : "s") + ", " + (bug.hosts || []).slice(0, 4).join(", ") + ")");
+  const body = [
+    "Failed reviews",
+    lines.length ? lines.join("\n") : "None",
+    failed.length > lines.length ? "… and " + (failed.length - lines.length) + " more failed runs" : "",
+    "\nOpen failure bugs",
+    bugLines.length ? bugLines.join("\n") : "None",
+    source.deskUrl ? "\nEach run's full log and probe: " + source.deskUrl : ""
+  ].filter(Boolean).join("\n");
+  return {
+    failed: failed.length,
+    stopped,
+    previous: before.length,
+    cleared,
+    causes,
+    hosts,
+    reruns: rerunCounts,
+    openBugs: open.map((bug) => bug.issue),
+    rows: [
+      { label: "Failed runs", value: failed.length + " vs " + before.length + " (" + phrase + "); " + stopped + " stopped by the asker" },
+      { label: "Failure causes", value: causeList.join(", ") || "None" },
+      { label: "Diagnosis", value: cleared + " cleared since, " + (failed.length - cleared - waiting) + " still failing, " + waiting + " not probed yet" },
+      { label: "Failed sites", value: ranked(hosts).slice(0, 20).map((host) => host + " " + hosts[host]).join(", ") || "None" },
+      { label: "Re-runs", value: RERUN_STATES.map(([id, label]) => (rerunCounts[id] || 0) + " " + label).join(", ") },
+      { label: "Failure bugs", value: open.length ? open.map((bug) => "#" + bug.issue + " " + bug.cause).join(", ") + " open" + (bugs.length > open.length ? ", " + (bugs.length - open.length) + " closed" : "") : bugs.length ? "None open, " + bugs.length + " closed" : "None filed" }
+    ],
+    body: body.slice(0, 8000)
+  };
+}
+
+function failureRow(row) {
+  const doc = row || {};
+  return {
+    id: clip(doc.id, 60),
+    at: doc.at || "",
+    kind: doc.kind === "stopped" ? "stopped" : "failed",
+    url: clip(doc.url, 300),
+    host: doc.host || hostOf(doc.url),
+    name: clip(doc.name, 120),
+    email: clip(doc.email, 160),
+    cause: doc.kind === "stopped" ? "" : causeId(doc),
+    causeLabel: doc.cause ? clip(doc.cause.label, 200) : "",
+    message: clip(doc.error && doc.error.message, 600),
+    now: doc.diagnosis ? clip(doc.diagnosis.summary, 600) : "",
+    cleared: !!(doc.diagnosis && doc.diagnosis.cleared),
+    diagnosedAt: doc.diagnosedAt || "",
+    checks: Number(doc.checks) || 0,
+    rerun: rerunState(doc),
+    rerunId: doc.rerun && doc.rerun.id ? clip(doc.rerun.id, 40) : "",
+    lineCount: Number(doc.lineCount) || 0,
+    ms: Number(doc.timings && doc.timings.ms) || 0,
+    fromAlert: !!doc.fromAlert
+  };
+}
+
+const logLines = (lines) => (Array.isArray(lines) ? lines : []).map((line) => ({ t: Number(line && line.t) || 0, text: String((line && line.text) || "") }));
+
+function failureDetail(doc, rerun) {
+  const row = doc || {};
+  const again = rerun || null;
+  return Object.assign(failureRow(row), {
+    error: row.error || null,
+    diagnosis: row.diagnosis || null,
+    probe: row.probe || null,
+    probeLines: row.probe ? probeLines(row.probe) : [],
+    lines: logLines(row.lines),
+    linesCut: Number(row.linesCut) || 0,
+    timings: row.timings || null,
+    options: row.options || null,
+    intake: row.intake || null,
+    rerunDoc: again ? {
+      id: clip(again.id, 40),
+      at: again.at || "",
+      status: clip(again.status, 20),
+      why: clip(again.trigger && again.trigger.label, 300),
+      reportId: clip(again.reportId, 40),
+      error: clip(again.error && again.error.message, 600),
+      lines: logLines(again.lines)
+    } : null
+  });
+}
+
 module.exports = {
-  KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, FIXES,
+  KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
   causeOf, failureRecord, failureFromAlert, stateOf, diagnose,
   recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
-  bugPlan
+  bugPlan, periodFailures, failureRow, failureDetail
 };
