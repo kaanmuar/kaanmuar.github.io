@@ -1,6 +1,6 @@
 /* Real-run posts: one public site per post, scored by the same review anyone can run.
    Scores come from the saved report in previews/insights-test/<report>-current.json. Each claim in
-   the copy was checked against the live site on the read date. Lead with what the site does well,
+   the copy was checked against the live site on the analysis date. Lead with what the site does well,
    then one lesson any team can use. Posts carry no prices, no country, and no personal name. */
 
 const fs = require("fs");
@@ -20,8 +20,8 @@ const CATS = {
 const RUNS = [
   {
     id: "govuk", report: "govuk", scope: "Worldwide",
-    title: ["We read GOV.UK.", "*It scores {overall}.*"],
-    body: "Accessibility {Accessibility}, a strict content security policy, and real visitors see the main content in 0.7 s. The one gap: 19 of the 20 pages read have no canonical link.",
+    title: ["We analyzed GOV.UK.", "*It scores {overall}.*"],
+    body: "Accessibility {Accessibility}, a strict content security policy, and real visitors see the main content in 0.7 s. The one gap: 19 of the 20 pages analyzed have no canonical link.",
     action: "Give every page a canonical link, even when only one address serves it. One line settles which URL ranks.",
     tags: ["SEO", "WebPerformance", "Accessibility"]
   },
@@ -56,7 +56,7 @@ const RUNS = [
   {
     id: "transmilenio", report: "transmilenio", scope: "Local",
     title: ["TransMilenio lets", "*search write its pitch.*"],
-    body: "Every linked page answers and AI crawlers are welcome. But none of the 20 pages read has a meta description, the start page included, so search engines write the snippet themselves.",
+    body: "Every linked page answers and AI crawlers are welcome. But none of the 20 pages analyzed has a meta description, the start page included, so search engines write the snippet themselves.",
     action: "Write a description of about 150 characters for your ten most visited pages, starting with the home page.",
     tags: ["SEO", "MetaDescription", "SERP"]
   },
@@ -90,14 +90,14 @@ const RUNS = [
   }
 ];
 
-function readDate(iso) {
+function shortDate(iso) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 }
 
 const TIPS = RUNS.map((run, index) => {
   const report = JSON.parse(fs.readFileSync(path.join(REPORTS, run.report + "-current.json"), "utf8"));
   const score = report.insights.score;
-  const read = readDate(report.fetchedAt);
+  const analyzed = shortDate(report.fetchedAt);
   const fill = (text) => text.replace(/\{(\w+)\}/g, (all, key) => key === "overall" ? score.overall : score.areas[key] ? score.areas[key].score : all);
   return Object.assign({}, run, {
     title: run.title.map(fill),
@@ -106,14 +106,14 @@ const TIPS = RUNS.map((run, index) => {
     cat: run.scope,
     counter: "Real run " + String(index + 1).padStart(2, "0") + " / " + String(RUNS.length).padStart(2, "0"),
     actionLabel: "Lesson",
-    footRight: "Read on " + read,
-    read,
+    footRight: "Analyzed on " + analyzed,
+    analyzed,
     overall: score.overall,
     visual: {
       type: "scores",
       overall: score.overall,
       areas: AREAS.map(([key, label]) => [label, score.areas[key].score]),
-      note: report.host + " · " + report.pages.length + " pages read · " + read
+      note: report.host + " · " + report.pages.length + (report.pages.length === 1 ? " page analyzed · " : " pages analyzed · ") + analyzed
     }
   });
 });
@@ -127,7 +127,7 @@ function hashtags(run, n) { return run.tags.slice(0, n).map((t) => "#" + t).join
 
 function captions(run) {
   const head = plainTitle(run);
-  const fair = "One automated read of public pages on " + run.read + ". A starting point, not a verdict.";
+  const fair = "One automated analysis of public pages on " + run.analyzed + ". A starting point, not a verdict.";
   return {
     linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "How the review works, step by step: " + link("linkedin", run), "", hashtags(run, 3) + " #QA " + BRAND].join("\n"),
     x: xPost(head + "\n\n" + run.action, link("x", run)),

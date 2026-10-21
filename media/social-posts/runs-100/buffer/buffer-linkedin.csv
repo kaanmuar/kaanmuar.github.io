@@ -1,11 +1,11 @@
 Text,Image URL,Tags,Posting Time
 "Wikipedia leaves the snippet to search.
 
-HSTS is preloaded, security.txt is published, and articles read without JavaScript. But the Main Page and the other 18 pages read have no meta description, so search engines pick the snippet.
+HSTS is preloaded, security.txt is published, and articles read without JavaScript. But the Main Page and the other 18 pages analyzed have no meta description, so search engines pick the snippet.
 
 The lesson for every team: Write a description of about 150 characters for each key page, so you choose the pitch, not the crawler.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=wikipedia
 
 #SEO #MetaDescription #OpenKnowledge #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/01-wikipedia.jpg","","2026-11-10 09:15"
@@ -15,17 +15,17 @@ The home page lists 85 hreflang alternates, HSTS is on, and framing is denied. B
 
 The lesson for every team: Publish a sitemap.xml of the pages you want found and name it in robots.txt with one Sitemap: line.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mozilla
 
 #SEO #Sitemap #i18n #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/02-mozilla.jpg","","2026-11-11 07:50"
 "MDN Web Docs: 95. No JSON-LD at all.
 
-A content security policy built on default-src 'self', two-year HSTS, framing denied, and Core Web Vitals that pass for real visitors. The gap: no page read carries JSON-LD naming who runs the site.
+A content security policy built on default-src 'self', two-year HSTS, framing denied, and Core Web Vitals that pass for real visitors. The gap: no page analyzed carries JSON-LD naming who runs the site.
 
 The lesson for every team: Add one Organization block with name, url, logo, and sameAs links. AI answers use it to name and describe you.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mdn
 
 #GEO #StructuredData #WebDev #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg","","2026-11-11 09:30"
@@ -35,37 +35,37 @@ Preloaded HSTS, a lang on every page, and fast pages for real visitors. But the 
 
 The lesson for every team: Translate the title and description with the page. Each language version should say what it is, in its language.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=w3c
 
 #SEO #i18n #Multilingual #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg","","2026-11-12 08:40"
 "UNESCO has llms.txt, but no HSTS.
 
-UNESCO publishes an llms.txt for AI tools, sets a content security policy, and limits framing to itself. But no page read sends Strict-Transport-Security, and http:// moves to https with a temporary 302.
+UNESCO publishes an llms.txt for AI tools, sets a content security policy, and limits framing to itself. But no page analyzed sends Strict-Transport-Security, and http:// moves to https with a temporary 302.
 
 The lesson for every team: Send Strict-Transport-Security with a max-age of a year or more, and make the http-to-https hop a 301.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=unesco
 
 #WebSecurity #HSTS #HTTPS #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/05-unesco.jpg","","2026-11-12 09:20"
 "UNICEF's date filter has no label.
 
-Preloaded HSTS, Organization JSON-LD, and five language versions linked to each other. But the search date filter on every page read is named only by placeholder text, which vanishes as you type.
+Preloaded HSTS, Organization JSON-LD, and five language versions linked to each other. But the search date filter on every page analyzed is named only by placeholder text, which vanishes as you type.
 
 The lesson for every team: Give every field a <label> or an aria-label. A placeholder is a hint, not a name, and it disappears on input.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=unicef
 
 #Accessibility #A11y #Forms #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/06-unicef.jpg","","2026-11-13 08:45"
 "The World Bank: GEO 97.
 
-Organization JSON-LD with a site search action, a sitemap, robots.txt open to every crawler, and two-year HSTS. What it lacks is a content security policy: none of the pages read sends one.
+Organization JSON-LD with a site search action, a sitemap, robots.txt open to every crawler, and two-year HSTS. What it lacks is a content security policy: none of the pages analyzed sends one.
 
 The lesson for every team: Start with Content-Security-Policy-Report-Only to see what would break, then enforce. default-src 'self' is a start.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=worldbank
 
 #WebSecurity #CSP #GEO #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/07-worldbank.jpg","","2026-11-13 09:20"
@@ -75,17 +75,17 @@ A security.txt for researchers, a sitemap named in robots.txt, and HSTS. Its con
 
 The lesson for every team: Read the reports for a few weeks, fix what they flag, then switch the header to Content-Security-Policy.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icrc
 
 #WebSecurity #CSP #Humanitarian #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/08-icrc.jpg","","2026-11-14 08:25"
 "MSF serves every page without HSTS.
 
-Pages name their language, Arabic included with right-to-left set, and a sitemap answers. But none of the 20 pages read sends Strict-Transport-Security, so a first visit over http can be intercepted.
+Pages name their language, Arabic included with right-to-left set, and a sitemap answers. But none of the 20 pages analyzed sends Strict-Transport-Security, so a first visit over http can be intercepted.
 
 The lesson for every team: Add Strict-Transport-Security: max-age=31536000; includeSubDomains. Then consider the browser preload list.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=msf
 
 #WebSecurity #HSTS #Humanitarian #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/09-msf.jpg","","2026-11-14 09:30"
@@ -95,7 +95,7 @@ Preloaded HSTS, a content security policy, and pages that name their language. B
 
 The lesson for every team: Audit robots.txt line by line. Blocking a search crawler removes you from every product built on its index.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=amnesty
 
 #GEO #SEO #AISearch #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/10-amnesty.jpg","","2026-11-15 08:35"
@@ -105,7 +105,7 @@ Preloaded HSTS, a Permissions-Policy, security.txt, and Core Web Vitals that pas
 
 The lesson for every team: Give every page one h1 that names it, even a visually hidden one on a front page. Headings are how many people navigate.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=guardian
 
 #Accessibility #A11y #Headings #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg","","2026-11-15 10:30"
@@ -115,27 +115,27 @@ Its JSON-LD names a NewsMediaOrganization and marks speakable text for voice ass
 
 The lesson for every team: Decide crawler by crawler. Training bots and answer bots are separate user-agents, so each can get its own rule.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=aljazeera
 
 #GEO #AISearch #News #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/12-aljazeera.jpg","","2026-11-16 07:30"
 "DW blocks framing. It skips nosniff.
 
-frame-ancestors 'none' stops other sites from framing it, HSTS is on, and every page read has a canonical. But X-Content-Type-Options is missing on all 20 pages read, so browsers may guess file types.
+frame-ancestors 'none' stops other sites from framing it, HSTS is on, and every page analyzed has a canonical. But X-Content-Type-Options is missing on all 20 pages analyzed, so browsers may guess file types.
 
 The lesson for every team: Send X-Content-Type-Options: nosniff on every response. One header stops browsers running a file as the wrong type.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=dw
 
 #WebSecurity #HTTPHeaders #News #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg","","2026-11-16 10:00"
 "El País sends no security headers.
 
-Pages declare their regional language, like es-CO, and carry rich JSON-LD. But the pages read send no HSTS, no content security policy, no X-Frame-Options, and no nosniff, and http moves to https with a 302.
+Pages declare their regional language, like es-CO, and carry rich JSON-LD. But the pages analyzed send no HSTS, no content security policy, no X-Frame-Options, and no nosniff, and http moves to https with a 302.
 
 The lesson for every team: Start with four headers: Strict-Transport-Security, X-Content-Type-Options, frame-ancestors, and a report-only CSP.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=elpais
 
 #WebSecurity #HTTPHeaders #News #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/14-elpais.jpg","","2026-11-17 07:50"
@@ -145,7 +145,7 @@ A year of HSTS, framing limited to its own origin, and NewsMediaOrganization JSO
 
 The lesson for every team: List the script hosts you actually use, then drop 'unsafe-eval'. A policy that allows everything blocks nothing.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lemonde
 
 #WebSecurity #CSP #News #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/15-lemonde.jpg","","2026-11-17 10:05"
@@ -155,7 +155,7 @@ Pages declare their language and load fast for real visitors. But canonical link
 
 The lesson for every team: Canonical URLs must be public, live, and the page itself. Check them after every CMS or domain change.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mit
 
 #SEO #Canonical #HigherEd #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/16-mit.jpg","","2026-11-18 08:35"
@@ -165,37 +165,37 @@ Preloaded HSTS, a nonce-based content security policy, a Permissions-Policy, and
 
 The lesson for every team: Fetch every canonical URL in your test suite. It should answer 200 and name itself as canonical.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=stanford
 
 #SEO #Canonical #HigherEd #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/17-stanford.jpg","","2026-11-18 09:30"
 "Any site can frame Harvard's pages.
 
-Organization JSON-LD, a sitemap index, and Core Web Vitals that pass for real visitors. But the pages read send neither X-Frame-Options nor frame-ancestors, so another site could load them in a hidden frame.
+Organization JSON-LD, a sitemap index, and Core Web Vitals that pass for real visitors. But the pages analyzed send neither X-Frame-Options nor frame-ancestors, so another site could load them in a hidden frame.
 
 The lesson for every team: Send Content-Security-Policy: frame-ancestors 'self'. It blocks clickjacking and replaces X-Frame-Options.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=harvard
 
 #WebSecurity #Clickjacking #HigherEd #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/18-harvard.jpg","","2026-11-19 08:50"
 "Node.js has llms.txt. Its pages share a pitch.
 
-An llms.txt for AI tools, security.txt, preloaded HSTS, and two sitemaps. But 19 of the 20 pages read share one meta description, the home page's, so Learn and About pitch the same line in search.
+An llms.txt for AI tools, security.txt, preloaded HSTS, and two sitemaps. But 19 of the 20 pages analyzed share one meta description, the home page's, so Learn and About pitch the same line in search.
 
 The lesson for every team: Write a description per page that says what that page answers. A shared one tells search nothing new.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=nodejs
 
 #SEO #MetaDescription #OpenSource #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/19-nodejs.jpg","","2026-11-19 10:20"
 "Rust's pages name no canonical.
 
-Pages declare their language, a security.txt is published, and Core Web Vitals pass for real visitors. But none of the 20 pages read has a canonical link, and all of them share one meta description.
+Pages declare their language, a security.txt is published, and Core Web Vitals pass for real visitors. But none of the 20 pages analyzed has a canonical link, and all of them share one meta description.
 
 The lesson for every team: Add a self-referencing canonical to every page. It tells search which address to rank when several reach it.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rust
 
 #SEO #Canonical #OpenSource #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/20-rust.jpg","","2026-11-20 07:50"
@@ -205,67 +205,67 @@ Organization JSON-LD with a site search, a security.txt, and a sitemap named in 
 
 The lesson for every team: Add the page's purpose to its title, in its own language. Each localized home page should stand on its own in search.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=kubernetes
 
 #SEO #i18n #CloudNative #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/21-kubernetes.jpg","","2026-11-20 09:25"
 "Apache.org runs without descriptions.
 
-Preloaded HSTS, a security.txt, a content security policy, and Core Web Vitals that pass for real visitors. But none of the 20 pages read, the home page included, has a meta description.
+Preloaded HSTS, a security.txt, a content security policy, and Core Web Vitals that pass for real visitors. But none of the 20 pages analyzed, the home page included, has a meta description.
 
 The lesson for every team: Give each page a description of about 150 characters. Search and AI answers quote it when they introduce you.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=apache
 
 #SEO #MetaDescription #OpenSource #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg","","2026-11-21 08:30"
 "The Linux Foundation never states a language.
 
-A sitemap, one-year HSTS, framing limited to its own origin, and no broken links among the pages read. But the <html> tag has no lang attribute, so screen readers guess which voice to use.
+A sitemap, one-year HSTS, framing limited to its own origin, and no broken links among the pages analyzed. But the <html> tag has no lang attribute, so screen readers guess which voice to use.
 
 The lesson for every team: Add lang=""en"" to the html tag in the site template. One attribute fixes every page at once.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=linuxfoundation
 
 #Accessibility #A11y #i18n #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/23-linuxfoundation.jpg","","2026-11-21 10:20"
 "React's docs pages have no description.
 
-An llms.txt for AI tools, two-year HSTS, and Core Web Vitals that pass for real visitors. But 19 of the 20 pages read, Learn and Reference included, have no meta description, so search writes its own.
+An llms.txt for AI tools, two-year HSTS, and Core Web Vitals that pass for real visitors. But 19 of the 20 pages analyzed, Learn and Reference included, have no meta description, so search writes its own.
 
 The lesson for every team: Write a one-line description per page: what it teaches and for whom. Docs pages are where it pays most.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=react
 
 #SEO #MetaDescription #Docs #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/24-react.jpg","","2026-11-22 07:50"
 "GitHub Docs sets no canonical link.
 
-A content security policy that starts from default-src 'none', HSTS, nosniff, and framing limited to its own origin. But none of the 20 pages read has a canonical link, so URL variants compete in search.
+A content security policy that starts from default-src 'none', HSTS, nosniff, and framing limited to its own origin. But none of the 20 pages analyzed has a canonical link, so URL variants compete in search.
 
 The lesson for every team: Add a self-referencing canonical to every docs page. Versioned and translated docs need it most.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=githubdocs
 
 #SEO #Canonical #Docs #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/25-githubdocs.jpg","","2026-11-22 09:35"
 "Stripe Docs skips the main landmark.
 
-Preloaded HSTS, a content security policy, and a skip link to the content. But none of the 20 pages read marks that content with a <main> landmark, which screen-reader users jump to directly.
+Preloaded HSTS, a content security policy, and a skip link to the content. But none of the 20 pages analyzed marks that content with a <main> landmark, which screen-reader users jump to directly.
 
 The lesson for every team: Wrap the primary content in one <main> element. Screen readers list it as a landmark you can jump to.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=stripedocs
 
 #Accessibility #A11y #Docs #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/26-stripedocs.jpg","","2026-11-23 08:05"
 "Cloudflare's CSP skips 5 of 20 pages.
 
-Organization JSON-LD, security.txt, a Permissions-Policy, and robots.txt that welcomes AI crawlers by name. But the home page's content security policy is missing on 5 of the 20 pages read, like /galileo/.
+Organization JSON-LD, security.txt, a Permissions-Policy, and robots.txt that welcomes AI crawlers by name. But the home page's content security policy is missing on 5 of the 20 pages analyzed, like /galileo/.
 
 The lesson for every team: Set security headers once at the edge or server, not per page template. Attackers look for the weakest page.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cloudflare
 
 #WebSecurity #CSP #HTTPHeaders #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/27-cloudflare.jpg","","2026-11-23 10:20"
@@ -275,7 +275,7 @@ Preloaded HSTS, a nonce-based content security policy, and Organization and WebS
 
 The lesson for every team: Validate structured data in CI. An item with empty required fields is noise that search may ignore.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=webdev
 
 #StructuredData #SEO #WebDev #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/28-webdev.jpg","","2026-11-24 07:45"
@@ -285,7 +285,7 @@ security.txt, a strict content security policy, and framing denied. robots.txt e
 
 The lesson for every team: Give every page a unique title that leads with its topic. Tabs, bookmarks, and search results all show it.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=louvre
 
 #SEO #Titles #Museums #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/29-louvre.jpg","","2026-11-24 09:20"
@@ -295,57 +295,57 @@ A Permissions-Policy, a Referrer-Policy, nosniff, and a sitemap named in robots.
 
 The lesson for every team: Raise HSTS max-age to at least a year, ideally two, and make the http redirect permanent with a 301.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rijksmuseum
 
 #WebSecurity #HSTS #Museums #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/30-rijksmuseum.jpg","","2026-11-25 08:25"
 "Lonely Planet's home is 1.8 MB of HTML.
 
-robots.txt blocks GPTBot from training but lets answer crawlers in, and sitemaps are listed. But every page read ships over 500 KB of HTML, and the home page is 1.8 MB before compression, ahead of any image.
+robots.txt blocks GPTBot from training but lets answer crawlers in, and sitemaps are listed. But every page analyzed ships over 500 KB of HTML, and the home page is 1.8 MB before compression, ahead of any image.
 
 The lesson for every team: Move bulky inline data out of the HTML and load it when needed. Smaller documents parse and paint sooner.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lonelyplanet
 
 #WebPerformance #PageWeight #Travel #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/31-lonelyplanet.jpg","","2026-11-25 09:35"
 "IKEA's home page is 1.9 MB of HTML.
 
-security.txt, HSTS, nosniff, a sitemap, and robots.txt open to AI answer crawlers at the root. But all 19 pages read ship more than 500 KB of HTML, and the US home page is 1.9 MB before compression.
+security.txt, HSTS, nosniff, a sitemap, and robots.txt open to AI answer crawlers at the root. But all 19 pages analyzed ship more than 500 KB of HTML, and the US home page is 1.9 MB before compression.
 
 The lesson for every team: Measure HTML weight in CI with a budget. Inline state and repeated markup are the usual culprits.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=ikea
 
 #WebPerformance #PageWeight #Ecommerce #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/32-ikea.jpg","","2026-11-26 08:20"
 "75,000 free books, no Book markup.
 
-Every ebook page has its own title, description, and share card, and pages pass Core Web Vitals for real visitors. But no page read carries JSON-LD, so nothing tells search or AI which pages are books.
+Every ebook page has its own title, description, and share card, and pages pass Core Web Vitals for real visitors. But no page analyzed carries JSON-LD, so nothing tells search or AI which pages are books.
 
 The lesson for every team: Add Book JSON-LD to each title page: name, author, inLanguage, and url. AI answers cite what they can parse.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=gutenberg
 
 #StructuredData #GEO #OpenKnowledge #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/33-gutenberg.jpg","","2026-11-26 09:50"
 "Creative Commons moves to https with 302.
 
-A sitemap index, pages that name their language, and robots meta that allows large previews. But http:// reaches https through a temporary 302, and no page read sends Strict-Transport-Security.
+A sitemap index, pages that name their language, and robots meta that allows large previews. But http:// reaches https through a temporary 302, and no page analyzed sends Strict-Transport-Security.
 
 The lesson for every team: Use a 301 from http to https, then add Strict-Transport-Security so browsers skip http next time.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=creativecommons
 
 #WebSecurity #HTTPS #HSTS #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/34-creativecommons.jpg","","2026-11-27 07:55"
 "The EFF's pages send no HSTS.
 
-A content security policy in report-only mode, nosniff, framing limited to its origin, and a sitemap. But no page read sends Strict-Transport-Security, so browsers don't upgrade a first http visit.
+A content security policy in report-only mode, nosniff, framing limited to its origin, and a sitemap. But no page analyzed sends Strict-Transport-Security, so browsers don't upgrade a first http visit.
 
 The lesson for every team: Add Strict-Transport-Security with a long max-age. It tells browsers to use https before the request leaves.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eff
 
 #WebSecurity #HSTS #DigitalRights #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/35-eff.jpg","","2026-11-27 09:35"
@@ -355,7 +355,7 @@ Preloaded HSTS, a content security policy starting at default-src 'self', and a 
 
 The lesson for every team: One h1 per page, naming what the page is. Screen-reader users often jump to it first.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=wikimedia
 
 #Accessibility #A11y #Headings #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/36-wikimedia.jpg","","2026-11-28 08:45"
@@ -365,7 +365,7 @@ The home page HTML arrives in about 0.2 s, behind preloaded HSTS and a content s
 
 The lesson for every team: Find your Largest Contentful Paint element, load it early, give it a size, and never lazy-load it.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=fao
 
 #WebPerformance #CoreWebVitals #LCP #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/37-fao.jpg","","2026-11-28 10:25"
@@ -375,37 +375,37 @@ A content security policy starting at default-src 'self', nosniff, and a sitemap
 
 The lesson for every team: Remove user-scalable=no and maximum-scale from the viewport tag. Let readers zoom.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=wfp
 
 #Accessibility #A11y #MobileUX #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/38-wfp.jpg","","2026-11-29 08:05"
 "ESA's search box has no name.
 
-HSTS, robots.txt open to AI answer crawlers, and a description on the home page. But the site search on every page read is a text field named only by its ""Search ESA"" placeholder.
+HSTS, robots.txt open to AI answer crawlers, and a description on the home page. But the site search on every page analyzed is a text field named only by its ""Search ESA"" placeholder.
 
 The lesson for every team: Add a visible label or aria-label to the search field. Screen readers announce the name, not the hint.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=esa
 
 #Accessibility #A11y #Forms #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/39-esa.jpg","","2026-11-29 09:35"
 "CERN's pages have no description.
 
-security.txt, a sitemap in robots.txt, and pages that name their language. But none of the 20 pages read has a meta description, the home page included, so search engines pick the snippet.
+security.txt, a sitemap in robots.txt, and pages that name their language. But none of the 20 pages analyzed has a meta description, the home page included, so search engines pick the snippet.
 
 The lesson for every team: Start with the home page and your ten most visited: one sentence each on what the reader will find.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cern
 
 #SEO #MetaDescription #Science #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/40-cern.jpg","","2026-11-30 08:30"
 "NatGeo sets cookies without Secure.
 
-Sitemaps, Organization JSON-LD, and robots.txt open to AI answer crawlers. But the home page sets five cookies, the SWID visitor ID among them, without Secure, and no page read sends HSTS, so plain http can carry them.
+Sitemaps, Organization JSON-LD, and robots.txt open to AI answer crawlers. But the home page sets five cookies, the SWID visitor ID among them, without Secure, and no page analyzed sends HSTS, so plain http can carry them.
 
 The lesson for every team: Mark every cookie Secure and send Strict-Transport-Security. A visitor ID should never travel over plain http.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=natgeo
 
 #WebSecurity #Cookies #Privacy #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/41-natgeo.jpg","","2026-11-30 10:25"
@@ -415,7 +415,7 @@ Preloaded HSTS, nosniff, an llms.txt for AI tools, and a sitemap. But real Chrom
 
 The lesson for every team: Break long JavaScript tasks into smaller pieces and yield to the browser, so taps get a fast response.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=coursera
 
 #WebPerformance #INP #CoreWebVitals #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/42-coursera.jpg","","2026-12-01 08:50"
@@ -425,7 +425,7 @@ security.txt, HSTS, framing limited to its origin, and robots.txt open to AI cra
 
 The lesson for every team: Generate the sitemap from your canonical URLs: same scheme, same host. Every redirect in it wastes crawl.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=php
 
 #SEO #Sitemap #OpenSource #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/43-php.jpg","","2026-12-01 10:15"
@@ -435,17 +435,17 @@ Two-year HSTS on https, nosniff, framing limited to its origin, and a sitemap. B
 
 The lesson for every team: Redirect every http request to https with a 301. HSTS only helps after the browser has seen https once.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=gnu
 
 #WebSecurity #HTTPS #FreeSoftware #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/44-gnu.jpg","","2026-12-02 07:30"
 "Debian's search field goes unnamed.
 
-security.txt, nosniff, a no-referrer policy, and framing limited to its origin. But the site search field on the pages read has no label, aria-label, or title, so screen readers announce an unnamed field.
+security.txt, nosniff, a no-referrer policy, and framing limited to its origin. But the site search field on the pages analyzed has no label, aria-label, or title, so screen readers announce an unnamed field.
 
 The lesson for every team: Add <label for> or aria-label=""Search"" to the field. One attribute makes it usable by voice.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=debian
 
 #Accessibility #A11y #Forms #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/45-debian.jpg","","2026-12-02 09:30"
@@ -455,17 +455,17 @@ robots.txt points AI crawlers to Markdown versions of pages, port 80 is closed, 
 
 The lesson for every team: Turn off version tokens (server_tokens off in nginx). Exact versions make it easy to match known flaws.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=ubuntu
 
 #WebSecurity #GEO #OpenSource #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/46-ubuntu.jpg","","2026-12-03 08:15"
 "PAHO has no Organization JSON-LD.
 
-Preloaded HSTS, nosniff, a strict Referrer-Policy, and robots.txt that keeps AI training bots off paginated news only. But no page read carries JSON-LD saying who PAHO is.
+Preloaded HSTS, nosniff, a strict Referrer-Policy, and robots.txt that keeps AI training bots off paginated news only. But no page analyzed carries JSON-LD saying who PAHO is.
 
 The lesson for every team: Add Organization JSON-LD with name, logo, url, and sameAs. It helps AI answers name the right agency.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=paho
 
 #GEO #StructuredData #PublicHealth #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/47-paho.jpg","","2026-12-03 09:40"
@@ -475,7 +475,7 @@ One-year HSTS with includeSubDomains, and http goes to https. But the Spanish ho
 
 The lesson for every team: Set lang=""es"" on the <html> tag of every page. Screen readers, translators, and search engines all read it.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=dian
 
 #Accessibility #Lang #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/48-dian.jpg","","2026-12-04 08:20"
@@ -485,7 +485,7 @@ HSTS, a sitemap named in robots.txt, and GA4. But 2,725 sitemap URLs use http://
 
 The lesson for every team: Build the sitemap from canonical URLs: https, the www host you serve. Redirecting entries waste crawl.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mineducacion
 
 #SEO #Sitemap #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/49-mineducacion.jpg","","2026-12-04 09:35"
@@ -495,7 +495,7 @@ HSTS marked for preload, a CSP from default-src 'self', a Permissions-Policy, an
 
 The lesson for every team: Run a link check on your home page every week. It's the page most people start from.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=minsalud
 
 #SEO #BrokenLinks #PublicHealth #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/50-minsalud.jpg","","2026-12-05 08:30"
@@ -505,7 +505,7 @@ One-year HSTS, nosniff, a strict Referrer-Policy, and framing limited to its Sha
 
 The lesson for every team: Check your tags feed a live property. Move from a UA- ID to a GA4 G- ID, or remove the dead tag.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mintic
 
 #Analytics #GA4 #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/51-mintic.jpg","","2026-12-05 10:00"
@@ -515,7 +515,7 @@ nosniff, framing limited to its origin, a sitemap, and a 301 from http to https.
 
 The lesson for every team: Keep one GA4 property per site. If two teams need the data, share access instead of adding a second tag.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cancilleria
 
 #Analytics #GA4 #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/52-cancilleria.jpg","","2026-12-06 08:10"
@@ -525,7 +525,7 @@ nosniff, no-referrer, framing limited to its origin, and a content security poli
 
 The lesson for every team: Drop maximum-scale from the viewport. width=device-width, initial-scale=1 is all most sites need.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=dane
 
 #Accessibility #Zoom #OpenData #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/53-dane.jpg","","2026-12-06 09:35"
@@ -535,7 +535,7 @@ nosniff, framing limited to its origin, and a 301 from http to https. But the ho
 
 The lesson for every team: Canonicals must use your public host. Check them after migrations, when internal hostnames leak in.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=procuraduria
 
 #SEO #Canonical #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/54-procuraduria.jpg","","2026-12-07 07:45"
@@ -545,7 +545,7 @@ nosniff, framing limited to its origin, GA4 through Tag Manager, and a sitemap i
 
 The lesson for every team: Each page's canonical should be its own URL. A template that defaults to the home URL hides every inner page.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icetex
 
 #SEO #Canonical #Education #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/55-icetex.jpg","","2026-12-07 09:15"
@@ -555,7 +555,7 @@ A sitemap index in robots.txt, framing limited to its origin, and GA4. But the h
 
 The lesson for every team: Cache the home page HTML at a CDN or in the server. Time to first byte is a floor for everything else.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icfes
 
 #WebPerformance #TTFB #Education #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/56-icfes.jpg","","2026-12-08 08:15"
@@ -565,7 +565,7 @@ HSTS, nosniff, and a robots.txt that names AI answer crawlers like OAI-SearchBot
 
 The lesson for every team: Keep port 80 alive just to send a 301 to https. Old links and typed addresses still arrive there.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=colpensiones
 
 #WebSecurity #HTTPS #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/57-colpensiones.jpg","","2026-12-08 09:50"
@@ -575,17 +575,17 @@ A 301 from http to https, a canonical on the home page, and GA4. But /robots.txt
 
 The lesson for every team: Publish robots.txt with a Sitemap: line, and generate the sitemap from your CMS so it stays current.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=migracion
 
 #SEO #Sitemap #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/58-migracion.jpg","","2026-12-09 08:30"
 "SATENA's pages have no canonical.
 
-HSTS marked for preload, nosniff, framing limited to its origin, and a strict Referrer-Policy. But none of the 20 pages read declares a canonical URL, so search engines guess which version to index.
+HSTS marked for preload, nosniff, framing limited to its origin, and a strict Referrer-Policy. But none of the 20 pages analyzed declares a canonical URL, so search engines guess which version to index.
 
 The lesson for every team: Add a self-referencing canonical to every page, plus hreflang links between the language versions.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=satena
 
 #SEO #Canonical #Travel #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/59-satena.jpg","","2026-12-09 10:25"
@@ -595,7 +595,7 @@ robots.txt lets AI answer bots like OAI-SearchBot and PerplexityBot in while blo
 
 The lesson for every team: Find the Largest Contentful Paint element on your home page and serve it first: preload, size, compress.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=davivienda
 
 #WebPerformance #CoreWebVitals #Banking #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/60-davivienda.jpg","","2026-12-10 07:45"
@@ -605,7 +605,7 @@ HSTS, no-referrer, a Permissions-Policy, and framing limited by CSP frame-ancest
 
 The lesson for every team: Send X-Content-Type-Options: nosniff, and X-Frame-Options: SAMEORIGIN. Recheck headers after config changes.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=movistar
 
 #WebSecurity #Headers #Telecom #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/61-movistar.jpg","","2026-12-10 09:30"
@@ -615,7 +615,7 @@ HSTS, nosniff, and robots.txt open to OAI-SearchBot and ChatGPT-User. But https:
 
 The lesson for every team: Write redirects with the full https:// target. An http Location adds a hop and an unencrypted request.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=claro
 
 #WebSecurity #Redirects #Telecom #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/62-claro.jpg","","2026-12-11 08:45"
@@ -625,7 +625,7 @@ A 301 from http to https, a canonical, robots.txt that lists its sitemaps, and a
 
 The lesson for every team: Write a home title that says who you are and what you offer, in under 60 characters.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=exito
 
 #SEO #Titles #Ecommerce #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/63-exito.jpg","","2026-12-11 09:15"
@@ -635,17 +635,17 @@ HSTS, framing limited to its origin, and robots.txt that lists its sitemaps. But
 
 The lesson for every team: Add lang=""es-CO"" to the <html> tag in your base template. One attribute fixes every page.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=falabella
 
 #Accessibility #Lang #Ecommerce #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/64-falabella.jpg","","2026-12-12 07:50"
 "El Tiempo still loads a retired UA tag.
 
-A strict Referrer-Policy, framing limited to its origin, and robots.txt that lists its sitemaps. But every page read still loads UA-118090425-1, and Universal Analytics stopped processing data by July 2024.
+A strict Referrer-Policy, framing limited to its origin, and robots.txt that lists its sitemaps. But every page analyzed still loads UA-118090425-1, and Universal Analytics stopped processing data by July 2024.
 
 The lesson for every team: Search your templates for UA- IDs and remove them. They add a request and collect nothing.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eltiempo
 
 #Analytics #GA4 #News #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/65-eltiempo.jpg","","2026-12-12 10:05"
@@ -655,17 +655,17 @@ robots.txt names news sitemaps, http goes to https with a 301, and section pages
 
 The lesson for every team: Write the home description as a one-line pitch: what readers find here today, in 150 characters or less.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=semana
 
 #SEO #MetaDescription #News #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/66-semana.jpg","","2026-12-13 07:55"
 "El Espectador has no main landmark.
 
-nosniff, a strict Referrer-Policy, a Permissions-Policy, and a sitemap index in robots.txt. But no page read has a <main> element, so screen-reader users can't jump past the menus to the story.
+nosniff, a strict Referrer-Policy, a Permissions-Policy, and a sitemap index in robots.txt. But no page analyzed has a <main> element, so screen-reader users can't jump past the menus to the story.
 
 The lesson for every team: Wrap each page's primary content in one <main>. Skip links and screen readers use it to find the story.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=elespectador
 
 #Accessibility #Landmarks #News #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/67-elespectador.jpg","","2026-12-13 10:25"
@@ -675,17 +675,17 @@ HSTS, a CSP from default-src 'self', nosniff, and a Permissions-Policy. But the 
 
 The lesson for every team: Serve the full chain: leaf plus intermediates. Test with openssl s_client or SSL Labs after every renewal.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=uniandes
 
 #WebSecurity #TLS #Education #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/68-uniandes.jpg","","2026-12-14 08:05"
 "SURA's home page has three h1s.
 
-nosniff, framing limited to its origin, a sitemap in robots.txt, and a robots section that welcomes AI crawlers. But the home page has three h1 headings, and 11 of 20 pages read have more or fewer than one.
+nosniff, framing limited to its origin, a sitemap in robots.txt, and a robots section that welcomes AI crawlers. But the home page has three h1 headings, and 11 of 20 pages analyzed have more or fewer than one.
 
 The lesson for every team: Give each page one h1 that names its topic. Use h2 and h3 for the sections below it.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=sura
 
 #Accessibility #Headings #Insurance #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/69-sura.jpg","","2026-12-14 09:20"
@@ -695,7 +695,7 @@ HSTS, a strict Referrer-Policy, and a sitemap in robots.txt. But CSP frame-ances
 
 The lesson for every team: List only the exact origins that embed you in frame-ancestors. Cloud wildcards include strangers.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=compensar
 
 #WebSecurity #CSP #Health #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/70-compensar.jpg","","2026-12-15 08:45"
@@ -705,7 +705,7 @@ HSTS with preload, nosniff, framing limited to its origin, and GA4 running. But 
 
 The lesson for every team: Remove the UA config line and keep the GA4 one. A quarterly tag audit catches these leftovers.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=ecopetrol
 
 #Analytics #GA4 #Energy #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/71-ecopetrol.jpg","","2026-12-15 10:10"
@@ -715,7 +715,7 @@ A canonical, a 301 from http to https, and robots.txt listing sitemaps for its p
 
 The lesson for every team: Use width=device-width, initial-scale=1 and nothing more. Fix layout overflow instead of locking zoom.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rappi
 
 #Accessibility #Zoom #Delivery #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/72-rappi.jpg","","2026-12-16 08:15"
@@ -725,7 +725,7 @@ HSTS, a CSP from default-src 'self', nosniff, and a Permissions-Policy that turn
 
 The lesson for every team: Add a <label> or aria-label to every input. Placeholders vanish while typing and aren't reliably announced.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rtvc
 
 #Accessibility #Forms #PublicMedia #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/73-rtvc.jpg","","2026-12-16 09:15"
@@ -735,17 +735,17 @@ nosniff, framing limited by CSP, and a 301 from http to https. But the home page
 
 The lesson for every team: Set canonicals to the exact public URL: https, your real host, no port. Check your CMS's public URL setting.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=bibliotecanacional
 
 #SEO #Canonical #Libraries #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/74-bibliotecanacional.jpg","","2026-12-17 08:25"
 "Supersalud loads no analytics tag.
 
-HSTS with preload, nosniff, no-referrer, and a sitemap in robots.txt. But none of the 20 pages read loads a known analytics tag, so the team may not see which services citizens look for.
+HSTS with preload, nosniff, no-referrer, and a sitemap in robots.txt. But none of the 20 pages analyzed loads a known analytics tag, so the team may not see which services citizens look for.
 
 The lesson for every team: Measure something, even a privacy-first, cookie-free tool. You can't improve pages you can't see used.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=supersalud
 
 #Analytics #Measurement #PublicHealth #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/75-supersalud.jpg","","2026-12-17 10:25"
@@ -755,7 +755,7 @@ nosniff, framing limited to its origin, GA4, and a home description. But robots.
 
 The lesson for every team: List the sitemap's public https URL in robots.txt, then open it in a browser to check it answers.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=contraloria
 
 #SEO #Sitemap #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/76-contraloria.jpg","","2026-12-18 08:10"
@@ -765,7 +765,7 @@ HSTS with preload, nosniff, framing limited to its origin, and a sitemap. But th
 
 The lesson for every team: A canonical must be the final URL, answering 200. Never point it at an address that redirects.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=procolombia
 
 #SEO #Canonical #Trade #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/77-procolombia.jpg","","2026-12-18 10:15"
@@ -775,7 +775,7 @@ HSTS with preload, nosniff, a CSP from default-src 'self', and a sitemap. But /p
 
 The lesson for every team: hreflang alternates must point to the same page in each language, including the page itself.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=nequi
 
 #SEO #Hreflang #Fintech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/78-nequi.jpg","","2026-12-19 08:30"
@@ -785,7 +785,7 @@ One-year HSTS, nosniff, framing limited to its origin, a canonical, and a workin
 
 The lesson for every team: Serve a robots.txt with a Sitemap: line. Two lines of text point every crawler to your map.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=educacionbogota
 
 #SEO #RobotsTxt #Education #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/79-educacionbogota.jpg","","2026-12-19 09:50"
@@ -795,7 +795,7 @@ HSTS, nosniff, framing limited to its origin, a canonical, and GA4. But its site
 
 The lesson for every team: Set the CMS base URL to your public https address, then regenerate the sitemap.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=movilidadbogota
 
 #SEO #Sitemap #Mobility #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/80-movilidadbogota.jpg","","2026-12-20 08:05"
@@ -805,7 +805,7 @@ HSTS, nosniff, a strict Referrer-Policy, a content security policy, and a clear 
 
 The lesson for every team: Emit exactly one canonical per page. Check the template, CMS, and SEO plugins for copies.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=saludcapital
 
 #SEO #Canonical #PublicHealth #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/81-saludcapital.jpg","","2026-12-20 09:30"
@@ -815,7 +815,7 @@ nosniff, GA4, a declared language, and a working sitemap. But Strict-Transport-S
 
 The lesson for every team: Set HSTS max-age to at least one year (31536000) once https works everywhere.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrobogota
 
 #WebSecurity #HSTS #Mobility #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/82-metrobogota.jpg","","2026-12-21 08:35"
@@ -825,7 +825,7 @@ One-year HSTS, nosniff, framing limited to its origin, and a Permissions-Policy 
 
 The lesson for every team: Use strict-origin-when-cross-origin. Other sites then see only your domain, never paths or search terms.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=idrd
 
 #WebSecurity #Privacy #Sports #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/83-idrd.jpg","","2026-12-21 09:20"
@@ -835,7 +835,7 @@ nosniff, framing limited to its origin, a clear description, and a sitemap. But 
 
 The lesson for every team: Make every redirect and canonical use https. Search for http:// in your server config and templates.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=idartes
 
 #WebSecurity #HTTPS #Arts #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/84-idartes.jpg","","2026-12-22 07:35"
@@ -845,7 +845,7 @@ HSTS marked for preload, nosniff, a content security policy, a canonical, and a 
 
 The lesson for every team: Find long tasks in the Performance panel and split them. Keep INP under 200 ms.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=visitbogota
 
 #WebPerformance #INP #Tourism #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/85-visitbogota.jpg","","2026-12-22 09:25"
@@ -855,27 +855,27 @@ Two-year HSTS marked for preload, nosniff, framing limited to its origin, and a 
 
 The lesson for every team: Redirect every http request to https with a 301. HSTS only counts when it arrives over https.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=biblored
 
 #WebSecurity #HTTPS #Libraries #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/86-biblored.jpg","","2026-12-23 08:00"
 "Catastro Bogotá has no descriptions.
 
-HSTS, nosniff, framing limited to its origin, GA4 through Tag Manager, and a declared language. But none of the 20 pages read has a meta description, so Google and AI answers write their own.
+HSTS, nosniff, framing limited to its origin, GA4 through Tag Manager, and a declared language. But none of the 20 pages analyzed has a meta description, so Google and AI answers write their own.
 
 The lesson for every team: Write a one-sentence description for each key page: what it offers and who it's for, under 155 characters.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=catastro
 
 #SEO #MetaDescription #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/87-catastro.jpg","","2026-12-23 09:35"
 "The Botanic Garden loads logos over http.
 
-A declared language, a canonical, a 301 from http to https, and a sitemap named in robots.txt. But every page read loads its two logo images over http://, so browsers must upgrade or block them.
+A declared language, a canonical, a 301 from http to https, and a sitemap named in robots.txt. But every page analyzed loads its two logo images over http://, so browsers must upgrade or block them.
 
 The lesson for every team: Load every asset over https or as a relative URL. A search for src=""http:// in your theme finds them.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=jbb
 
 #WebSecurity #MixedContent #Nature #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/88-jbb.jpg","","2026-12-24 08:45"
@@ -885,7 +885,7 @@ nosniff, framing limited to its origin, a declared language, and a 301 from http
 
 The lesson for every team: Install the full chain your certificate authority provides, then test with openssl s_client or SSL Labs.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=planetario
 
 #WebSecurity #TLS #Science #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/89-planetario.jpg","","2026-12-24 10:20"
@@ -895,17 +895,17 @@ HSTS marked for preload, a CSP from default-src 'self' with base-uri set, nosnif
 
 The lesson for every team: Put the organization's name in the home title, with what people come for. ""Home"" alone wastes the slot.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=antioquia
 
 #SEO #Titles #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/90-antioquia.jpg","","2026-12-25 08:30"
 "Medellín's portal sends no HSTS.
 
-nosniff, framing limited to its origin, a canonical, a clear description, and two sitemaps named in robots.txt. But none of the 19 pages read sends Strict-Transport-Security, so a first http visit can be intercepted.
+nosniff, framing limited to its origin, a canonical, a clear description, and two sitemaps named in robots.txt. But none of the 19 pages analyzed sends Strict-Transport-Security, so a first http visit can be intercepted.
 
 The lesson for every team: Send HSTS with a one-year max-age once every subdomain serves https.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=medellin
 
 #WebSecurity #HSTS #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/91-medellin.jpg","","2026-12-25 09:45"
@@ -915,7 +915,7 @@ HSTS marked for preload, a CSP from default-src 'self', nosniff, and Consent Mod
 
 The lesson for every team: Remove analytics.js UA calls. If you need numbers, send them to a GA4 property or another live tool.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metromedellin
 
 #Analytics #GA4 #Mobility #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/92-metromedellin.jpg","","2026-12-26 08:40"
@@ -925,7 +925,7 @@ Two-year HSTS marked for preload, a CSP from default-src 'self', nosniff, and a 
 
 The lesson for every team: Map CMS paths to public URLs. Open your canonical in a browser: it must answer 200.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=epm
 
 #SEO #Canonical #Utilities #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/93-epm.jpg","","2026-12-26 09:20"
@@ -935,17 +935,17 @@ A declared language, a sitemap named in robots.txt, and robots rules that keep t
 
 The lesson for every team: Start with HSTS, X-Content-Type-Options: nosniff, and frame-ancestors 'self'. Then enforce your CSP.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=udea
 
 #WebSecurity #Headers #Education #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/94-udea.jpg","","2026-12-27 08:20"
 "EAFIT's pages have no main landmark.
 
-HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, a canonical, and a clear description. But none of the 20 pages read has a <main> element, so screen-reader users can't skip straight to the content.
+HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, a canonical, and a clear description. But none of the 20 pages analyzed has a <main> element, so screen-reader users can't skip straight to the content.
 
 The lesson for every team: Wrap the primary content of every template in one <main> for skip links.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eafit
 
 #Accessibility #Landmarks #Education #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/95-eafit.jpg","","2026-12-27 10:25"
@@ -955,7 +955,7 @@ HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, and a canonical. 
 
 The lesson for every team: Open every Sitemap: line in robots.txt after each release. A 404 there means crawlers lose your map.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cali
 
 #SEO #Sitemap #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/96-cali.jpg","","2026-12-28 08:00"
@@ -965,7 +965,7 @@ HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy
 
 The lesson for every team: Write a fixed home description about your service. Don't let the CMS fill it from the latest post.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrocali
 
 #SEO #MetaDescription #Mobility #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/97-metrocali.jpg","","2026-12-28 09:35"
@@ -975,27 +975,27 @@ nosniff, GA4, a declared language, and http that redirects to https. But the hom
 
 The lesson for every team: Test the language switcher in every release. It's often the first click for visitors from abroad.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=univalle
 
 #SEO #BrokenLinks #Education #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/98-univalle.jpg","","2026-12-29 08:15"
 "Transcaribe reorders the keyboard path.
 
-A declared language, a canonical, a sitemap index in robots.txt, a 301 to https, and GA4. But 19 pages read use a positive tabindex, which pulls one element ahead of everything else in keyboard order.
+A declared language, a canonical, a sitemap index in robots.txt, a 301 to https, and GA4. But 19 pages analyzed use a positive tabindex, which pulls one element ahead of everything else in keyboard order.
 
 The lesson for every team: Use tabindex=""0"" or ""-1"" only. Fix focus order by ordering the HTML, not with positive numbers.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=transcaribe
 
 #Accessibility #Keyboard #Mobility #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/99-transcaribe.jpg","","2026-12-29 10:20"
 "Bucaramanga's home has no title tag.
 
-HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy, and framing limited to its origin. But 12 pages read have no <title>, the home page included.
+HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy, and framing limited to its origin. But 12 pages analyzed have no <title>, the home page included.
 
 The lesson for every team: Give every page a unique <title>. It's the tab label, the search result headline, and the share card text.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=bucaramanga
 
 #SEO #Titles #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/100-bucaramanga.jpg","","2026-12-30 08:35"
@@ -1005,7 +1005,7 @@ nosniff, framing limited to its origin, a working sitemap, and a 301 from http t
 
 The lesson for every team: Remove user-scalable=no and maximum-scale. Let readers zoom, and fix any layout that breaks.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrolinea
 
 #Accessibility #Zoom #Mobility #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/101-metrolinea.jpg","","2026-12-30 10:30"
@@ -1015,7 +1015,7 @@ HSTS marked for preload, a CSP from default-src 'self', nosniff, and a strict Re
 
 The lesson for every team: Default to camera=(), microphone=(), geolocation=(). Grant features only where needed.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=pereira
 
 #WebSecurity #PermissionsPolicy #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/102-pereira.jpg","","2026-12-31 08:05"
@@ -1025,7 +1025,7 @@ A declared language, a canonical, a sitemap named in robots.txt, and a 301 to ht
 
 The lesson for every team: Start with the server: cache the HTML. Then preload the hero image and defer scripts that aren't needed.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=manizales
 
 #WebPerformance #CoreWebVitals #GovTech #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/103-manizales.jpg","","2026-12-31 09:30"
@@ -1035,7 +1035,7 @@ HSTS, nosniff, a strict Referrer-Policy, framing limited to its origin, and GA4.
 
 The lesson for every team: Delete the UA snippet and keep GA4. One live tag is easier to trust than two half-dead ones.
 
-One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=santamarta
 
 #Analytics #GA4 #Tourism #QA #QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/104-santamarta.jpg","","2027-01-01 08:15"
