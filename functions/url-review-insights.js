@@ -523,7 +523,7 @@ function analyze(input) {
   const partialRead = linked.length >= 2 && blocked.length * 2 > linked.length;
   const warnings = [];
   if (home.challenge) warnings.push("The start page answered with a " + home.challenge + " bot check instead of the site, so these scores describe that check page.");
-  if (partialRead) warnings.push("Partial read: " + blocked.length + " of " + plural(linked.length, "linked page") + " answered with a bot check or a block, so the scores rest mostly on the start page.");
+  if (partialRead) warnings.push("Partial analysis: " + blocked.length + " of " + plural(linked.length, "linked page") + " answered with a bot check or a block, so the scores rest mostly on the start page.");
   if (broken.length) {
     add("SEO", "fail", "high", "seo-broken-links", plural(broken.length, "internal link leads", "internal links lead") + " to an error",
       broken.slice(0, 5).map(({ page, index }) => (page.path || page.url) + " answered " + (page.status || page.error || "nothing") + (sources.get(index) ? ", linked from " + sample(sources.get(index), 2) : "")).join(". ") + ".",
@@ -646,8 +646,8 @@ function analyze(input) {
         "In " + pathOf(sitemapReport.source) + ": " + sample(Object.keys(offHosts).sort((a, b) => offHosts[b] - offHosts[a]).map((name) => name + " (" + offHosts[name] + ")"), 3) + ". The sitemap should list only URLs on https://" + host + ".", "Regenerate the sitemap with the production https host.", { count: sitemapReport.offHost, effort: "minutes", cases: ["SEO-03"] });
     }
     if (!sitemapReport.listedNotIndexable.length && !sitemapReport.notListed.length && !sitemapReport.offHost) {
-      if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", "A sitemap answers with valid URLs", "The first " + plural(sitemapReport.count, "URL") + " from " + pathOf(sitemapReport.source) + " were read; the sitemap is larger than one review reads.", "", { cases: ["SEO-03"] });
-      else add("SEO", "pass", "info", "seo-sitemap", "The sitemap matches the pages that were read", plural(sitemapReport.count, "URL") + " in " + pathOf(sitemapReport.source) + ".", "", { cases: ["SEO-03"] });
+      if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", "A sitemap answers with valid URLs", "The first " + plural(sitemapReport.count, "URL") + " from " + pathOf(sitemapReport.source) + " were analyzed; the sitemap is larger than one review reads.", "", { cases: ["SEO-03"] });
+      else add("SEO", "pass", "info", "seo-sitemap", "The sitemap matches the pages that were analyzed", plural(sitemapReport.count, "URL") + " in " + pathOf(sitemapReport.source) + ".", "", { cases: ["SEO-03"] });
     }
   } else {
     add("SEO", "risk", "medium", "seo-sitemap", "No sitemap was found",
@@ -674,7 +674,7 @@ function analyze(input) {
     add("SEO", "risk", "medium", "seo-hreflang", plural(hreflangIssues.length, "language alternate problem"), sample(hreflangIssues, 3) + ".",
       "Each language version must list every version, itself included, and each must link back.", { count: hreflangIssues.length, effort: "hours", cases: ["SEO-02"] });
   } else if (read.some((page) => ((page.inspect.seo && page.inspect.seo.hreflang) || []).length)) {
-    add("SEO", "pass", "info", "seo-hreflang", "Language alternates point at each other", "Every alternate that was read links back.", "", { cases: ["SEO-02"] });
+    add("SEO", "pass", "info", "seo-hreflang", "Language alternates point at each other", "Every alternate that was analyzed links back.", "", { cases: ["SEO-02"] });
   }
 
   // Structured data.
@@ -703,7 +703,7 @@ function analyze(input) {
       sample(schemaGaps, 3) + ".", "Fill the missing properties so the item qualifies for rich results.", { count: schemaGaps.length, effort: "hours", cases: ["CT-04"] });
   }
   if (!schemaTypes.size) {
-    add("SEO", "risk", "low", "seo-schema", "No structured data was found", "No JSON-LD block was found on the pages that were read.",
+    add("SEO", "risk", "low", "seo-schema", "No structured data was found", "No JSON-LD block was found on the pages that were analyzed.",
       "Add Organization or Person, WebSite, and BreadcrumbList JSON-LD. The fix kit has a draft.", { effort: "hours", cases: ["CT-04"] });
   } else if (!schemaErrors && !schemaGaps.length) {
     add("SEO", "pass", "info", "seo-schema", "Structured data parses and carries the expected properties", "Types: " + sample([...schemaTypes], 6) + ".", "", { cases: ["CT-04"] });
@@ -839,7 +839,7 @@ function analyze(input) {
       (faq ? "FAQ or HowTo structured data is present. " : "") + (questionHeads ? plural(questionHeads, "heading is", "headings are") + " phrased as a question." : ""), "", { cases: ["GEO-05"] });
   } else {
     add("GEO", "risk", "low", "geo-answers", "No content is shaped as questions and answers",
-      "No heading on the pages read is a question and no FAQ data was found. AI answers favour short, direct answers under a question.",
+      "No heading on the pages analyzed is a question and no FAQ data was found. AI answers favour short, direct answers under a question.",
       "Add an FAQ block with the questions customers ask, answered in two or three sentences each.", { cases: ["GEO-05"], effort: "hours" });
   }
   const itemsOf = (page) => (page.inspect.schema && page.inspect.schema.items) || [];
@@ -885,7 +885,7 @@ function analyze(input) {
   if (!tags.length && consentTools.length) {
     if (!browsed) add("Analytics", "person", "info", "an-none", "Tags are probably loaded by a script", consentTools.join(", ") + " manages consent, but none of 26 known analytics tools is written in the HTML. The browser run lists what loads after the page starts.", "", { cases: ["AN-01"] });
   } else if (!tags.length) {
-    add("Analytics", "risk", "low", "an-none", "No known analytics tag is in the HTML", "None of 26 known analytics tools appeared in the HTML of the pages read. A tag injected later by a script would not show here.",
+    add("Analytics", "risk", "low", "an-none", "No known analytics tag is in the HTML", "None of 26 known analytics tools appeared in the HTML of the pages analyzed. A tag injected later by a script would not show here.",
       "If visits matter, add a measurement tool. A cookieless one such as Plausible or Cloudflare Web Analytics avoids a consent banner.", { effort: "hours", cases: ["AN-01"] });
   } else {
     add("Analytics", "pass", "info", "an-inventory", plural(tags.length, "measurement tool was", "measurement tools were") + " found", tags.map((tag) => tag.name + (tag.ids.length ? " (" + tag.ids.join(", ") + ")" : "")).join(", ") + ".", "");
@@ -966,7 +966,7 @@ function analyze(input) {
   });
   const spread = (key) => {
     const missing = headerRows.filter((row) => !row[key]);
-    const text = headerRows.length < 2 ? "" : missing.length === headerRows.length ? " Missing on all " + headerRows.length + " pages read." : " Missing on " + missing.length + " of " + headerRows.length + " pages read.";
+    const text = headerRows.length < 2 ? "" : missing.length === headerRows.length ? " Missing on all " + headerRows.length + " pages analyzed." : " Missing on " + missing.length + " of " + headerRows.length + " pages analyzed.";
     return { text, pages: missing.map((row) => row.path) };
   };
   const HEADER_LABEL = { hsts: "HSTS", csp: "Content-Security-Policy", frame: "frame protection", nosniff: "X-Content-Type-Options", referrer: "Referrer-Policy", permissions: "Permissions-Policy" };
@@ -977,7 +977,7 @@ function analyze(input) {
   if (uneven.length) {
     const lacking = [...new Set([].concat.apply([], uneven.map((item) => item.missing.map((row) => row.path))))];
     add("Security", "risk", "medium", "sec-headers-uneven", "Security headers on the start page are missing on other pages",
-      uneven.map((item) => HEADER_LABEL[item.key] + " on " + plural(item.missing.length, "page")).join(", ") + ", out of " + plural(headerRows.length, "page") + " read. Attackers pick the weakest page.",
+      uneven.map((item) => HEADER_LABEL[item.key] + " on " + plural(item.missing.length, "page")).join(", ") + ", out of " + plural(headerRows.length, "page") + " analyzed. Attackers pick the weakest page.",
       "Set the headers once at the server, CDN, or host config so every response carries them.", { pages: lacking, count: lacking.length, effort: "minutes", cases: ["SEC-02", "SEC-03", "SEC-04"] });
   }
   const httpCheck = extras.httpRedirect || null;
@@ -1122,7 +1122,7 @@ function analyze(input) {
   if (thirdHosts > 8) add("Performance", "risk", "low", "pf-third", plural(thirdHosts, "other host serves", "other hosts serve") + " scripts on the start page", "Each host adds a DNS lookup and a connection.", "Remove tags nobody reads and self-host the rest.", { count: thirdHosts, effort: "hours" });
   if (input.pagespeed) speedChecks(input.pagespeed, add);
   else if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
-  if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was read", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were read. Slow responses use up the budget.", "");
+  if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was analyzed", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were analyzed. Slow responses use up the budget.", "");
 
   if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face });
 

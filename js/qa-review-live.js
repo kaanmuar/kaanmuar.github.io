@@ -21,7 +21,7 @@
       worldwide: "Worldwide", national: "National", regional: "Regional", local: "Local", global: "Global",
       status: "{i} of {n}: {name}, {score} out of 100, grade {grade}.", slide: "{i} of {n}: {name}",
       none: "No report matches these filters.", clear: "Clear filters", loading: "Loading live reports…", failed: "The live reports could not be loaded.",
-      read: "Read {date}", page: "{n} page", pages: "{n} pages", hint: "Drag, swipe, or use the arrow keys. Select a card to open it.",
+      read: "Analyzed {date}", page: "{n} page", pages: "{n} pages", hint: "Drag, swipe, or use the arrow keys. Select a card to open it.",
       close: "Close", share: "Share", copy: "Copy link", copied: "Link copied. It opens this report.", shareOn: "Share on {net}", email: "Email",
       viewOnly: "View only. This live report can be opened and shared, not downloaded, printed, or exported.",
       blocked: "View only. Share the link instead.", shot: "Screenshots cannot be blocked by a page. The watermark stays on the picture.",
@@ -187,7 +187,7 @@
   // Report tags arrive in English from the build; these give each one a native label.
   const TAG_RULES = [
     ["versions", /^(\d+) language versions$/], ["lighthouse", /^Lighthouse (\d+) mobile$/], ["gradeTag", /^Grade ([A-F]) · (\d+)$/],
-    ["onePage", /^1 page read$/], ["pagesRead", /^(\d+) pages read$/], ["tests", /^(\d+) proposed cases · (\d+) test types$/],
+    ["onePage", /^1 page analyzed$/], ["pagesRead", /^(\d+) pages analyzed$/], ["tests", /^(\d+) proposed cases · (\d+) test types$/],
     ["top", /^Top (\d+) of (\d+)$/], ["best", /^Best (\w+) in the series$/], ["inSector", /^#(\d+) in (.+)$/]
   ];
   const TAG_T = {
