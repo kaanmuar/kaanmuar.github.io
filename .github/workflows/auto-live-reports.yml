@@ -1,9 +1,9 @@
 # .github/workflows/auto-live-reports.yml
 # Once a day, every publishable user review becomes a Live Report, a feed card, a story, and a clip,
 # and goes into the Buffer queues. Filtering and privacy live in functions/url-review-publish.js.
-# Secrets: PUBLISH_KEY (same value as functions/.env), BUFFER_API_KEY (Buffer → Settings → API).
-# GitHub Actions bypasses the "main: fast checks before merge" ruleset so this job can push its data
-# commit; pushes made with GITHUB_TOKEN do not start CI.
+# Secrets: PUBLISH_KEY (same value as functions/.env), BUFFER_API_KEY (Buffer → Settings → API),
+# LIVE_REPORTS_DEPLOY_KEY (write deploy key). Deploy keys bypass the "main: fast checks before merge"
+# ruleset, so this job pushes its data commit straight to main, with [skip ci].
 
 name: Live reports from user reviews
 
@@ -36,6 +36,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -86,7 +88,7 @@ jobs:
             git add -f "media/social-posts/$BATCH/story"
           fi
           if git diff --cached --quiet; then echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0; fi
-          git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} requested reviews, ${{ steps.reports.outputs.social }} posts ($BATCH)"
+          git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} requested reviews, ${{ steps.reports.outputs.social }} posts ($BATCH) [skip ci]"
           git push origin HEAD:main
           gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
           echo "pushed=1" >> "$GITHUB_OUTPUT"
