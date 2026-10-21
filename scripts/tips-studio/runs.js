@@ -5,7 +5,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { SITE, GUIDE, xPost } = require("./tips");
+const { SITE, GUIDE, BRAND, xPost } = require("./tips");
 
 const REPORTS = path.resolve(__dirname, "../../previews/insights-test");
 const AREAS = [["SEO", "SEO"], ["GEO", "GEO"], ["Analytics", "Analytics"], ["Security", "Security"], ["Accessibility", "A11y"], ["Performance", "Speed"]];
@@ -129,11 +129,11 @@ function captions(run) {
   const head = plainTitle(run);
   const fair = "One automated read of public pages on " + run.read + ". A starting point, not a verdict.";
   return {
-    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "How the review works, step by step: " + link("linkedin", run), "", hashtags(run, 3) + " #QA"].join("\n"),
+    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "How the review works, step by step: " + link("linkedin", run), "", hashtags(run, 3) + " #QA " + BRAND].join("\n"),
     x: xPost(head + "\n\n" + run.action, link("x", run)),
-    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Guide: link in bio.", "", hashtags(run, 3) + " #QA #WebDev #QAlab"].join("\n"),
-    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run)].join("\n"),
-    tiktok: head + " " + run.action + " " + hashtags(run, 3) + " #QA #techtok",
+    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Guide: link in bio.", "", hashtags(run, 3) + " #QA #WebDev " + BRAND].join("\n"),
+    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run), "", BRAND].join("\n"),
+    tiktok: head + " " + run.action + " " + hashtags(run, 3) + " #QA #techtok " + BRAND,
     youtubeTitle: (head + " #Shorts").slice(0, 100),
     youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Guide: " + link("youtube", run), "", "Real runs · QA-lab URL Review"].join("\n")
   };

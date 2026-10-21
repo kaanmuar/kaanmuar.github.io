@@ -18,14 +18,14 @@ module.exports = [
   {
     id: "atlantico", report: "r3-atlantico", scope: "Regional",
     title: ["Atlántico: alt text", "*everywhere, no HSTS.*"],
-    body: "Every image read has alt text, unknown paths answer a real 404, and Accessibility scores {Accessibility}. But no Strict-Transport-Security header is sent, so browsers never learn to insist on https.",
+    body: "Every image analyzed has alt text, unknown paths answer a real 404, and Accessibility scores {Accessibility}. But no Strict-Transport-Security header is sent, so browsers never learn to insist on https.",
     action: "Send HSTS with max-age=31536000 on every https response, then consider preload.",
     tags: ["Security", "HSTS", "WebSecurity"]
   },
   {
     id: "santander", report: "r3-santander", scope: "Regional",
     title: ["Santander answers", "*on plain http too.*"],
-    body: "Every page read has a title and a meta description, and https sends HSTS with preload. But the plain-http home page answers 200 instead of redirecting, so a first visit can stay unencrypted.",
+    body: "Every page analyzed has a title and a meta description, and https sends HSTS with preload. But the plain-http home page answers 200 instead of redirecting, so a first visit can stay unencrypted.",
     action: "Answer plain http requests with a 301 to https, so no visit starts unencrypted.",
     tags: ["Security", "HTTPS", "GovTech"]
   },
@@ -46,14 +46,14 @@ module.exports = [
   {
     id: "risaralda", report: "r3-risaralda", scope: "Regional",
     title: ["Risaralda still loads", "*Universal Analytics.*"],
-    body: "Every page read has a title and a meta description, HSTS runs a year, and cookies are Secure. But the home page still carries a UA- property ID, and Universal Analytics stopped collecting data in 2023.",
+    body: "Every page analyzed has a title and a meta description, HSTS runs a year, and cookies are Secure. But the home page still carries a UA- property ID, and Universal Analytics stopped collecting data in 2023.",
     action: "Remove the old UA- snippet and keep one GA4 setup, so nothing double counts.",
     tags: ["Analytics", "GA4", "GovTech"]
   },
   {
     id: "caldas", report: "r3-caldas", scope: "Regional",
     title: ["Caldas points to", "*a sitemap that 404s.*"],
-    body: "Every image read has alt text, every page has a title and a description, and unknown paths answer 404. But robots.txt sends crawlers to /sitemap.xml, and that address answers 404.",
+    body: "Every image analyzed has alt text, every page has a title and a description, and unknown paths answer 404. But robots.txt sends crawlers to /sitemap.xml, and that address answers 404.",
     action: "Publish the sitemap at the address robots.txt names, or fix the Sitemap: line to point at the real file.",
     tags: ["SEO", "Sitemap", "RobotsTxt"]
   },
@@ -67,7 +67,7 @@ module.exports = [
   {
     id: "cauca", report: "r3-cauca", scope: "Regional",
     title: ["Cauca's site search", "*has no label.*"],
-    body: "Every page read has a title and a description, every internal link opened answered, and unknown paths answer 404. But the search field on pages like the cabinet list has no label for screen readers.",
+    body: "Every page analyzed has a title and a description, every internal link opened answered, and unknown paths answer 404. But the search field on pages like the cabinet list has no label for screen readers.",
     action: "Give each field a <label for> or aria-label so screen readers say what to type.",
     tags: ["Accessibility", "Forms", "A11y"]
   },
@@ -81,14 +81,14 @@ module.exports = [
   {
     id: "cornare", report: "r3-cornare", scope: "Regional",
     title: ["Cornare: {overall}.", "*Any site can frame it.*"],
-    body: "Every image read has alt text, structured data parses, the sitemap is valid, and every internal link opened answered. But no X-Frame-Options or frame-ancestors is sent, so other sites can frame its pages.",
+    body: "Every image analyzed has alt text, structured data parses, the sitemap is valid, and every internal link opened answered. But no X-Frame-Options or frame-ancestors is sent, so other sites can frame its pages.",
     action: "Send Content-Security-Policy: frame-ancestors 'self' (or X-Frame-Options: SAMEORIGIN) on every page.",
     tags: ["Security", "Clickjacking", "Environment"]
   },
   {
     id: "quindio", report: "r3-quindio", scope: "Regional",
     title: ["Quindío blocks paint", "*with 13 scripts.*"],
-    body: "security.txt is published, HSTS runs a year, cookies are Secure, and every page read has a meta description. But the home page head loads 13 scripts without async or defer, so nothing paints until they run.",
+    body: "security.txt is published, HSTS runs a year, cookies are Secure, and every page analyzed has a meta description. But the home page head loads 13 scripts without async or defer, so nothing paints until they run.",
     action: "Defer scripts that need not run first, and move the rest to the end of the body.",
     tags: ["Performance", "RenderBlocking", "WebPerf"]
   },
@@ -151,7 +151,7 @@ module.exports = [
   {
     id: "bayern", report: "r3-bayern", scope: "Regional",
     title: ["Bavaria's portal", "*has no sitemap.*"],
-    body: "DMARC rejects spoofed mail, HSTS runs a year, and every page read has a title and a description. But /sitemap.xml answers 404 and robots.txt names no sitemap, so crawlers find pages only through links.",
+    body: "DMARC rejects spoofed mail, HSTS runs a year, and every page analyzed has a title and a description. But /sitemap.xml answers 404 and robots.txt names no sitemap, so crawlers find pages only through links.",
     action: "Publish a sitemap.xml of the pages you want found and name it in robots.txt with one Sitemap: line.",
     tags: ["SEO", "Sitemap", "GovTech"]
   },

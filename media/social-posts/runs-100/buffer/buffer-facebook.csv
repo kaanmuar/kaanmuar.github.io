@@ -6,7 +6,9 @@ HSTS is preloaded, security.txt is published, and articles read without JavaScri
 Lesson: Write a description of about 150 characters for each key page, so you choose the pitch, not the crawler.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=wikipedia","https://carlosandmunoz.com/media/social-posts/runs-100/feed/01-wikipedia.jpg","real-runs","2026-11-10 18:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=wikipedia
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/01-wikipedia.jpg","","2026-11-10 18:05"
 "Mozilla: 85 languages, no sitemap.
 
 The home page lists 85 hreflang alternates, HSTS is on, and framing is denied. But robots.txt names no sitemap and /sitemap.xml answers 404, so crawlers find pages only by following links.
@@ -14,7 +16,9 @@ The home page lists 85 hreflang alternates, HSTS is on, and framing is denied. B
 Lesson: Publish a sitemap.xml of the pages you want found and name it in robots.txt with one Sitemap: line.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mozilla","https://carlosandmunoz.com/media/social-posts/runs-100/feed/02-mozilla.jpg","real-runs","2026-11-11 13:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mozilla
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/02-mozilla.jpg","","2026-11-11 13:55"
 "MDN Web Docs: 95. No JSON-LD at all.
 
 A content security policy built on default-src 'self', two-year HSTS, framing denied, and Core Web Vitals that pass for real visitors. The gap: no page read carries JSON-LD naming who runs the site.
@@ -22,7 +26,9 @@ A content security policy built on default-src 'self', two-year HSTS, framing de
 Lesson: Add one Organization block with name, url, logo, and sameAs links. AI answers use it to name and describe you.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mdn","https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg","real-runs","2026-11-11 16:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mdn
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg","","2026-11-11 16:15"
 "W3C's home pages share one title.
 
 Preloaded HSTS, a lang on every page, and fast pages for real visitors. But the English, Japanese, and Chinese home pages are all titled just ""W3C"", and the Japanese description reads ""Homepage"".
@@ -30,7 +36,9 @@ Preloaded HSTS, a lang on every page, and fast pages for real visitors. But the 
 Lesson: Translate the title and description with the page. Each language version should say what it is, in its language.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=w3c","https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg","real-runs","2026-11-12 12:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=w3c
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg","","2026-11-12 12:25"
 "UNESCO has llms.txt, but no HSTS.
 
 UNESCO publishes an llms.txt for AI tools, sets a content security policy, and limits framing to itself. But no page read sends Strict-Transport-Security, and http:// moves to https with a temporary 302.
@@ -38,7 +46,9 @@ UNESCO publishes an llms.txt for AI tools, sets a content security policy, and l
 Lesson: Send Strict-Transport-Security with a max-age of a year or more, and make the http-to-https hop a 301.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=unesco","https://carlosandmunoz.com/media/social-posts/runs-100/feed/05-unesco.jpg","real-runs","2026-11-12 16:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=unesco
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/05-unesco.jpg","","2026-11-12 16:55"
 "UNICEF's date filter has no label.
 
 Preloaded HSTS, Organization JSON-LD, and five language versions linked to each other. But the search date filter on every page read is named only by placeholder text, which vanishes as you type.
@@ -46,7 +56,9 @@ Preloaded HSTS, Organization JSON-LD, and five language versions linked to each 
 Lesson: Give every field a <label> or an aria-label. A placeholder is a hint, not a name, and it disappears on input.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=unicef","https://carlosandmunoz.com/media/social-posts/runs-100/feed/06-unicef.jpg","real-runs","2026-11-13 12:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=unicef
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/06-unicef.jpg","","2026-11-13 12:05"
 "The World Bank: GEO 97.
 
 Organization JSON-LD with a site search action, a sitemap, robots.txt open to every crawler, and two-year HSTS. What it lacks is a content security policy: none of the pages read sends one.
@@ -54,7 +66,9 @@ Organization JSON-LD with a site search action, a sitemap, robots.txt open to ev
 Lesson: Start with Content-Security-Policy-Report-Only to see what would break, then enforce. default-src 'self' is a start.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=worldbank","https://carlosandmunoz.com/media/social-posts/runs-100/feed/07-worldbank.jpg","real-runs","2026-11-13 16:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=worldbank
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/07-worldbank.jpg","","2026-11-13 16:30"
 "The ICRC tests a CSP. Now it can enforce it.
 
 A security.txt for researchers, a sitemap named in robots.txt, and HSTS. Its content security policy runs in report-only mode, so the browser logs violations but blocks nothing.
@@ -62,7 +76,9 @@ A security.txt for researchers, a sitemap named in robots.txt, and HSTS. Its con
 Lesson: Read the reports for a few weeks, fix what they flag, then switch the header to Content-Security-Policy.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icrc","https://carlosandmunoz.com/media/social-posts/runs-100/feed/08-icrc.jpg","real-runs","2026-11-14 12:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icrc
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/08-icrc.jpg","","2026-11-14 12:55"
 "MSF serves every page without HSTS.
 
 Pages name their language, Arabic included with right-to-left set, and a sitemap answers. But none of the 20 pages read sends Strict-Transport-Security, so a first visit over http can be intercepted.
@@ -70,7 +86,9 @@ Pages name their language, Arabic included with right-to-left set, and a sitemap
 Lesson: Add Strict-Transport-Security: max-age=31536000; includeSubDomains. Then consider the browser preload list.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=msf","https://carlosandmunoz.com/media/social-posts/runs-100/feed/09-msf.jpg","real-runs","2026-11-14 16:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=msf
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/09-msf.jpg","","2026-11-14 16:25"
 "Amnesty's robots.txt turns Bingbot away.
 
 Preloaded HSTS, a content security policy, and pages that name their language. But robots.txt disallows bingbot from the whole site, and Bing's index also feeds Copilot. PerplexityBot is blocked too.
@@ -78,7 +96,9 @@ Preloaded HSTS, a content security policy, and pages that name their language. B
 Lesson: Audit robots.txt line by line. Blocking a search crawler removes you from every product built on its index.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=amnesty","https://carlosandmunoz.com/media/social-posts/runs-100/feed/10-amnesty.jpg","real-runs","2026-11-15 14:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=amnesty
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/10-amnesty.jpg","","2026-11-15 14:25"
 "The Guardian front page has no h1.
 
 Preloaded HSTS, a Permissions-Policy, security.txt, and Core Web Vitals that pass for real visitors. But the international and UK front pages have no h1, so screen-reader users lose the first heading.
@@ -86,7 +106,9 @@ Preloaded HSTS, a Permissions-Policy, security.txt, and Core Web Vitals that pas
 Lesson: Give every page one h1 that names it, even a visually hidden one on a front page. Headings are how many people navigate.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=guardian","https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg","real-runs","2026-11-15 17:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=guardian
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg","","2026-11-15 17:05"
 "Al Jazeera marks text for voice, blocks AI.
 
 Its JSON-LD names a NewsMediaOrganization and marks speakable text for voice assistants. Yet robots.txt disallows ChatGPT-User and PerplexityBot, which fetch pages to cite them in AI answers. GEO: 64.
@@ -94,7 +116,9 @@ Its JSON-LD names a NewsMediaOrganization and marks speakable text for voice ass
 Lesson: Decide crawler by crawler. Training bots and answer bots are separate user-agents, so each can get its own rule.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=aljazeera","https://carlosandmunoz.com/media/social-posts/runs-100/feed/12-aljazeera.jpg","real-runs","2026-11-16 12:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=aljazeera
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/12-aljazeera.jpg","","2026-11-16 12:50"
 "DW blocks framing. It skips nosniff.
 
 frame-ancestors 'none' stops other sites from framing it, HSTS is on, and every page read has a canonical. But X-Content-Type-Options is missing on all 20 pages read, so browsers may guess file types.
@@ -102,7 +126,9 @@ frame-ancestors 'none' stops other sites from framing it, HSTS is on, and every 
 Lesson: Send X-Content-Type-Options: nosniff on every response. One header stops browsers running a file as the wrong type.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=dw","https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg","real-runs","2026-11-16 16:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=dw
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg","","2026-11-16 16:40"
 "El País sends no security headers.
 
 Pages declare their regional language, like es-CO, and carry rich JSON-LD. But the pages read send no HSTS, no content security policy, no X-Frame-Options, and no nosniff, and http moves to https with a 302.
@@ -110,7 +136,9 @@ Pages declare their regional language, like es-CO, and carry rich JSON-LD. But t
 Lesson: Start with four headers: Strict-Transport-Security, X-Content-Type-Options, frame-ancestors, and a report-only CSP.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=elpais","https://carlosandmunoz.com/media/social-posts/runs-100/feed/14-elpais.jpg","real-runs","2026-11-17 12:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=elpais
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/14-elpais.jpg","","2026-11-17 12:05"
 "Le Monde has a CSP that allows any https.
 
 A year of HSTS, framing limited to its own origin, and NewsMediaOrganization JSON-LD. Its content security policy exists, but default-src allows any https: source plus 'unsafe-inline' and 'unsafe-eval'.
@@ -118,7 +146,9 @@ A year of HSTS, framing limited to its own origin, and NewsMediaOrganization JSO
 Lesson: List the script hosts you actually use, then drop 'unsafe-eval'. A policy that allows everything blocks nothing.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lemonde","https://carlosandmunoz.com/media/social-posts/runs-100/feed/15-lemonde.jpg","real-runs","2026-11-17 17:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lemonde
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/15-lemonde.jpg","","2026-11-17 17:25"
 "MIT's canonical tags point to its CMS.
 
 Pages declare their language and load fast for real visitors. But canonical links point to tlecms.mit.edu, a host that did not answer our request, and the home page names a news story as its canonical.
@@ -126,7 +156,9 @@ Pages declare their language and load fast for real visitors. But canonical link
 Lesson: Canonical URLs must be public, live, and the page itself. Check them after every CMS or domain change.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mit","https://carlosandmunoz.com/media/social-posts/runs-100/feed/16-mit.jpg","real-runs","2026-11-18 14:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mit
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/16-mit.jpg","","2026-11-18 14:10"
 "Stanford's canonical leads to a 404.
 
 Preloaded HSTS, a nonce-based content security policy, a Permissions-Policy, and framing denied: Security 86. But the home page names stanford.edu/home as canonical, and that URL answers 404.
@@ -134,7 +166,9 @@ Preloaded HSTS, a nonce-based content security policy, a Permissions-Policy, and
 Lesson: Fetch every canonical URL in your test suite. It should answer 200 and name itself as canonical.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=stanford","https://carlosandmunoz.com/media/social-posts/runs-100/feed/17-stanford.jpg","real-runs","2026-11-18 16:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=stanford
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/17-stanford.jpg","","2026-11-18 16:05"
 "Any site can frame Harvard's pages.
 
 Organization JSON-LD, a sitemap index, and Core Web Vitals that pass for real visitors. But the pages read send neither X-Frame-Options nor frame-ancestors, so another site could load them in a hidden frame.
@@ -142,7 +176,9 @@ Organization JSON-LD, a sitemap index, and Core Web Vitals that pass for real vi
 Lesson: Send Content-Security-Policy: frame-ancestors 'self'. It blocks clickjacking and replaces X-Frame-Options.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=harvard","https://carlosandmunoz.com/media/social-posts/runs-100/feed/18-harvard.jpg","real-runs","2026-11-19 13:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=harvard
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/18-harvard.jpg","","2026-11-19 13:55"
 "Node.js has llms.txt. Its pages share a pitch.
 
 An llms.txt for AI tools, security.txt, preloaded HSTS, and two sitemaps. But 19 of the 20 pages read share one meta description, the home page's, so Learn and About pitch the same line in search.
@@ -150,7 +186,9 @@ An llms.txt for AI tools, security.txt, preloaded HSTS, and two sitemaps. But 19
 Lesson: Write a description per page that says what that page answers. A shared one tells search nothing new.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=nodejs","https://carlosandmunoz.com/media/social-posts/runs-100/feed/19-nodejs.jpg","real-runs","2026-11-19 16:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=nodejs
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/19-nodejs.jpg","","2026-11-19 16:00"
 "Rust's pages name no canonical.
 
 Pages declare their language, a security.txt is published, and Core Web Vitals pass for real visitors. But none of the 20 pages read has a canonical link, and all of them share one meta description.
@@ -158,7 +196,9 @@ Pages declare their language, a security.txt is published, and Core Web Vitals p
 Lesson: Add a self-referencing canonical to every page. It tells search which address to rank when several reach it.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rust","https://carlosandmunoz.com/media/social-posts/runs-100/feed/20-rust.jpg","real-runs","2026-11-20 13:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rust
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/20-rust.jpg","","2026-11-20 13:15"
 "13 Kubernetes pages share one title.
 
 Organization JSON-LD with a site search, a security.txt, and a sitemap named in robots.txt. But the English, Chinese, Bengali, and ten other home pages are all titled just ""Kubernetes"".
@@ -166,7 +206,9 @@ Organization JSON-LD with a site search, a security.txt, and a sitemap named in 
 Lesson: Add the page's purpose to its title, in its own language. Each localized home page should stand on its own in search.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=kubernetes","https://carlosandmunoz.com/media/social-posts/runs-100/feed/21-kubernetes.jpg","real-runs","2026-11-20 18:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=kubernetes
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/21-kubernetes.jpg","","2026-11-20 18:05"
 "Apache.org runs without descriptions.
 
 Preloaded HSTS, a security.txt, a content security policy, and Core Web Vitals that pass for real visitors. But none of the 20 pages read, the home page included, has a meta description.
@@ -174,7 +216,9 @@ Preloaded HSTS, a security.txt, a content security policy, and Core Web Vitals t
 Lesson: Give each page a description of about 150 characters. Search and AI answers quote it when they introduce you.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=apache","https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg","real-runs","2026-11-21 12:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=apache
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg","","2026-11-21 12:55"
 "The Linux Foundation never states a language.
 
 A sitemap, one-year HSTS, framing limited to its own origin, and no broken links among the pages read. But the <html> tag has no lang attribute, so screen readers guess which voice to use.
@@ -182,7 +226,9 @@ A sitemap, one-year HSTS, framing limited to its own origin, and no broken links
 Lesson: Add lang=""en"" to the html tag in the site template. One attribute fixes every page at once.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=linuxfoundation","https://carlosandmunoz.com/media/social-posts/runs-100/feed/23-linuxfoundation.jpg","real-runs","2026-11-21 17:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=linuxfoundation
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/23-linuxfoundation.jpg","","2026-11-21 17:00"
 "React's docs pages have no description.
 
 An llms.txt for AI tools, two-year HSTS, and Core Web Vitals that pass for real visitors. But 19 of the 20 pages read, Learn and Reference included, have no meta description, so search writes its own.
@@ -190,7 +236,9 @@ An llms.txt for AI tools, two-year HSTS, and Core Web Vitals that pass for real 
 Lesson: Write a one-line description per page: what it teaches and for whom. Docs pages are where it pays most.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=react","https://carlosandmunoz.com/media/social-posts/runs-100/feed/24-react.jpg","real-runs","2026-11-22 14:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=react
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/24-react.jpg","","2026-11-22 14:10"
 "GitHub Docs sets no canonical link.
 
 A content security policy that starts from default-src 'none', HSTS, nosniff, and framing limited to its own origin. But none of the 20 pages read has a canonical link, so URL variants compete in search.
@@ -198,7 +246,9 @@ A content security policy that starts from default-src 'none', HSTS, nosniff, an
 Lesson: Add a self-referencing canonical to every docs page. Versioned and translated docs need it most.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=githubdocs","https://carlosandmunoz.com/media/social-posts/runs-100/feed/25-githubdocs.jpg","real-runs","2026-11-22 16:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=githubdocs
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/25-githubdocs.jpg","","2026-11-22 16:45"
 "Stripe Docs skips the main landmark.
 
 Preloaded HSTS, a content security policy, and a skip link to the content. But none of the 20 pages read marks that content with a <main> landmark, which screen-reader users jump to directly.
@@ -206,7 +256,9 @@ Preloaded HSTS, a content security policy, and a skip link to the content. But n
 Lesson: Wrap the primary content in one <main> element. Screen readers list it as a landmark you can jump to.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=stripedocs","https://carlosandmunoz.com/media/social-posts/runs-100/feed/26-stripedocs.jpg","real-runs","2026-11-23 13:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=stripedocs
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/26-stripedocs.jpg","","2026-11-23 13:25"
 "Cloudflare's CSP skips 5 of 20 pages.
 
 Organization JSON-LD, security.txt, a Permissions-Policy, and robots.txt that welcomes AI crawlers by name. But the home page's content security policy is missing on 5 of the 20 pages read, like /galileo/.
@@ -214,7 +266,9 @@ Organization JSON-LD, security.txt, a Permissions-Policy, and robots.txt that we
 Lesson: Set security headers once at the edge or server, not per page template. Attackers look for the weakest page.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cloudflare","https://carlosandmunoz.com/media/social-posts/runs-100/feed/27-cloudflare.jpg","real-runs","2026-11-23 16:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cloudflare
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/27-cloudflare.jpg","","2026-11-23 16:40"
 "web.dev's home page has an empty headline.
 
 Preloaded HSTS, a nonce-based content security policy, and Organization and WebSite JSON-LD. But the home page also carries an Article block whose headline is an empty string, with no author or date.
@@ -222,7 +276,9 @@ Preloaded HSTS, a nonce-based content security policy, and Organization and WebS
 Lesson: Validate structured data in CI. An item with empty required fields is noise that search may ignore.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=webdev","https://carlosandmunoz.com/media/social-posts/runs-100/feed/28-webdev.jpg","real-runs","2026-11-24 13:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=webdev
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/28-webdev.jpg","","2026-11-24 13:00"
 "Three Louvre pages, one title.
 
 security.txt, a strict content security policy, and framing denied. robots.txt even keeps AI bots off images only. But the exhibitions, events, and guided-tours pages all share one title.
@@ -230,7 +286,9 @@ security.txt, a strict content security policy, and framing denied. robots.txt e
 Lesson: Give every page a unique title that leads with its topic. Tabs, bookmarks, and search results all show it.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=louvre","https://carlosandmunoz.com/media/social-posts/runs-100/feed/29-louvre.jpg","real-runs","2026-11-24 17:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=louvre
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/29-louvre.jpg","","2026-11-24 17:25"
 "The Rijksmuseum's HSTS lasts 30 days.
 
 A Permissions-Policy, a Referrer-Policy, nosniff, and a sitemap named in robots.txt. But Strict-Transport-Security sets max-age to 30 days, and http:// reaches https through a temporary 307.
@@ -238,7 +296,9 @@ A Permissions-Policy, a Referrer-Policy, nosniff, and a sitemap named in robots.
 Lesson: Raise HSTS max-age to at least a year, ideally two, and make the http redirect permanent with a 301.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rijksmuseum","https://carlosandmunoz.com/media/social-posts/runs-100/feed/30-rijksmuseum.jpg","real-runs","2026-11-25 14:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rijksmuseum
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/30-rijksmuseum.jpg","","2026-11-25 14:05"
 "Lonely Planet's home is 1.8 MB of HTML.
 
 robots.txt blocks GPTBot from training but lets answer crawlers in, and sitemaps are listed. But every page read ships over 500 KB of HTML, and the home page is 1.8 MB before compression, ahead of any image.
@@ -246,7 +306,9 @@ robots.txt blocks GPTBot from training but lets answer crawlers in, and sitemaps
 Lesson: Move bulky inline data out of the HTML and load it when needed. Smaller documents parse and paint sooner.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lonelyplanet","https://carlosandmunoz.com/media/social-posts/runs-100/feed/31-lonelyplanet.jpg","real-runs","2026-11-25 16:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=lonelyplanet
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/31-lonelyplanet.jpg","","2026-11-25 16:30"
 "IKEA's home page is 1.9 MB of HTML.
 
 security.txt, HSTS, nosniff, a sitemap, and robots.txt open to AI answer crawlers at the root. But all 19 pages read ship more than 500 KB of HTML, and the US home page is 1.9 MB before compression.
@@ -254,7 +316,9 @@ security.txt, HSTS, nosniff, a sitemap, and robots.txt open to AI answer crawler
 Lesson: Measure HTML weight in CI with a budget. Inline state and repeated markup are the usual culprits.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=ikea","https://carlosandmunoz.com/media/social-posts/runs-100/feed/32-ikea.jpg","real-runs","2026-11-26 12:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=ikea
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/32-ikea.jpg","","2026-11-26 12:45"
 "75,000 free books, no Book markup.
 
 Every ebook page has its own title, description, and share card, and pages pass Core Web Vitals for real visitors. But no page read carries JSON-LD, so nothing tells search or AI which pages are books.
@@ -262,7 +326,9 @@ Every ebook page has its own title, description, and share card, and pages pass 
 Lesson: Add Book JSON-LD to each title page: name, author, inLanguage, and url. AI answers cite what they can parse.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=gutenberg","https://carlosandmunoz.com/media/social-posts/runs-100/feed/33-gutenberg.jpg","real-runs","2026-11-26 16:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=gutenberg
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/33-gutenberg.jpg","","2026-11-26 16:55"
 "Creative Commons moves to https with 302.
 
 A sitemap index, pages that name their language, and robots meta that allows large previews. But http:// reaches https through a temporary 302, and no page read sends Strict-Transport-Security.
@@ -270,7 +336,9 @@ A sitemap index, pages that name their language, and robots meta that allows lar
 Lesson: Use a 301 from http to https, then add Strict-Transport-Security so browsers skip http next time.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=creativecommons","https://carlosandmunoz.com/media/social-posts/runs-100/feed/34-creativecommons.jpg","real-runs","2026-11-27 13:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=creativecommons
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/34-creativecommons.jpg","","2026-11-27 13:00"
 "The EFF's pages send no HSTS.
 
 A content security policy in report-only mode, nosniff, framing limited to its origin, and a sitemap. But no page read sends Strict-Transport-Security, so browsers don't upgrade a first http visit.
@@ -278,7 +346,9 @@ A content security policy in report-only mode, nosniff, framing limited to its o
 Lesson: Add Strict-Transport-Security with a long max-age. It tells browsers to use https before the request leaves.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eff","https://carlosandmunoz.com/media/social-posts/runs-100/feed/35-eff.jpg","real-runs","2026-11-27 17:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eff
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/35-eff.jpg","","2026-11-27 17:55"
 "Wikimedia's home page has no h1.
 
 Preloaded HSTS, a content security policy starting at default-src 'self', and a sitemap per language. But the home page has no h1, and several About pages have two.
@@ -286,7 +356,9 @@ Preloaded HSTS, a content security policy starting at default-src 'self', and a 
 Lesson: One h1 per page, naming what the page is. Screen-reader users often jump to it first.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=wikimedia","https://carlosandmunoz.com/media/social-posts/runs-100/feed/36-wikimedia.jpg","real-runs","2026-11-28 12:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=wikimedia
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/36-wikimedia.jpg","","2026-11-28 12:00"
 "FAO's HTML is fast. Visitors still wait.
 
 The home page HTML arrives in about 0.2 s, behind preloaded HSTS and a content security policy. But real Chrome visitors wait 4.7 s at the 75th percentile for the largest content to appear.
@@ -294,7 +366,9 @@ The home page HTML arrives in about 0.2 s, behind preloaded HSTS and a content s
 Lesson: Find your Largest Contentful Paint element, load it early, give it a size, and never lazy-load it.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=fao","https://carlosandmunoz.com/media/social-posts/runs-100/feed/37-fao.jpg","real-runs","2026-11-28 17:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=fao
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/37-fao.jpg","","2026-11-28 17:05"
 "WFP's viewport turns off zoom.
 
 A content security policy starting at default-src 'self', nosniff, and a sitemap named in robots.txt. But the viewport sets user-scalable=no, which blocks pinch-zoom for people who need larger text.
@@ -302,7 +376,9 @@ A content security policy starting at default-src 'self', nosniff, and a sitemap
 Lesson: Remove user-scalable=no and maximum-scale from the viewport tag. Let readers zoom.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=wfp","https://carlosandmunoz.com/media/social-posts/runs-100/feed/38-wfp.jpg","real-runs","2026-11-29 12:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=wfp
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/38-wfp.jpg","","2026-11-29 12:15"
 "ESA's search box has no name.
 
 HSTS, robots.txt open to AI answer crawlers, and a description on the home page. But the site search on every page read is a text field named only by its ""Search ESA"" placeholder.
@@ -310,7 +386,9 @@ HSTS, robots.txt open to AI answer crawlers, and a description on the home page.
 Lesson: Add a visible label or aria-label to the search field. Screen readers announce the name, not the hint.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=esa","https://carlosandmunoz.com/media/social-posts/runs-100/feed/39-esa.jpg","real-runs","2026-11-29 15:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=esa
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/39-esa.jpg","","2026-11-29 15:45"
 "CERN's pages have no description.
 
 security.txt, a sitemap in robots.txt, and pages that name their language. But none of the 20 pages read has a meta description, the home page included, so search engines pick the snippet.
@@ -318,7 +396,9 @@ security.txt, a sitemap in robots.txt, and pages that name their language. But n
 Lesson: Start with the home page and your ten most visited: one sentence each on what the reader will find.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cern","https://carlosandmunoz.com/media/social-posts/runs-100/feed/40-cern.jpg","real-runs","2026-11-30 13:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cern
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/40-cern.jpg","","2026-11-30 13:50"
 "NatGeo sets cookies without Secure.
 
 Sitemaps, Organization JSON-LD, and robots.txt open to AI answer crawlers. But the home page sets five cookies, the SWID visitor ID among them, without Secure, and no page read sends HSTS, so plain http can carry them.
@@ -326,7 +406,9 @@ Sitemaps, Organization JSON-LD, and robots.txt open to AI answer crawlers. But t
 Lesson: Mark every cookie Secure and send Strict-Transport-Security. A visitor ID should never travel over plain http.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=natgeo","https://carlosandmunoz.com/media/social-posts/runs-100/feed/41-natgeo.jpg","real-runs","2026-11-30 17:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=natgeo
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/41-natgeo.jpg","","2026-11-30 17:40"
 "Coursera taps take 565 ms to answer.
 
 Preloaded HSTS, nosniff, an llms.txt for AI tools, and a sitemap. But real Chrome visitors see an Interaction to Next Paint of 565 ms at the 75th percentile, more than twice the 200 ms goal.
@@ -334,7 +416,9 @@ Preloaded HSTS, nosniff, an llms.txt for AI tools, and a sitemap. But real Chrom
 Lesson: Break long JavaScript tasks into smaller pieces and yield to the browser, so taps get a fast response.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=coursera","https://carlosandmunoz.com/media/social-posts/runs-100/feed/42-coursera.jpg","real-runs","2026-12-01 12:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=coursera
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/42-coursera.jpg","","2026-12-01 12:40"
 "PHP's sitemap lists http://php.net.
 
 security.txt, HSTS, framing limited to its origin, and robots.txt open to AI crawlers. But all 39 URLs in its sitemap use http://php.net, not the https://www.php.net address the site serves.
@@ -342,7 +426,9 @@ security.txt, HSTS, framing limited to its origin, and robots.txt open to AI cra
 Lesson: Generate the sitemap from your canonical URLs: same scheme, same host. Every redirect in it wastes crawl.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=php","https://carlosandmunoz.com/media/social-posts/runs-100/feed/43-php.jpg","real-runs","2026-12-01 17:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=php
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/43-php.jpg","","2026-12-01 17:25"
 "GNU.org answers plain http with a 200.
 
 Two-year HSTS on https, nosniff, framing limited to its origin, and a sitemap. But http://www.gnu.org/ serves the page itself with a 200 instead of redirecting, so a first http visit stays unencrypted.
@@ -350,7 +436,9 @@ Two-year HSTS on https, nosniff, framing limited to its origin, and a sitemap. B
 Lesson: Redirect every http request to https with a 301. HSTS only helps after the browser has seen https once.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=gnu","https://carlosandmunoz.com/media/social-posts/runs-100/feed/44-gnu.jpg","real-runs","2026-12-02 14:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=gnu
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/44-gnu.jpg","","2026-12-02 14:30"
 "Debian's search field goes unnamed.
 
 security.txt, nosniff, a no-referrer policy, and framing limited to its origin. But the site search field on the pages read has no label, aria-label, or title, so screen readers announce an unnamed field.
@@ -358,7 +446,9 @@ security.txt, nosniff, a no-referrer policy, and framing limited to its origin. 
 Lesson: Add <label for> or aria-label=""Search"" to the field. One attribute makes it usable by voice.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=debian","https://carlosandmunoz.com/media/social-posts/runs-100/feed/45-debian.jpg","real-runs","2026-12-02 15:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=debian
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/45-debian.jpg","","2026-12-02 15:40"
 "Ubuntu speaks Markdown and names its nginx.
 
 robots.txt points AI crawlers to Markdown versions of pages, port 80 is closed, and the CSP starts at default-src 'self'. But the Server header reads nginx/1.14.0 (Ubuntu), naming an exact version.
@@ -366,7 +456,9 @@ robots.txt points AI crawlers to Markdown versions of pages, port 80 is closed, 
 Lesson: Turn off version tokens (server_tokens off in nginx). Exact versions make it easy to match known flaws.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=ubuntu","https://carlosandmunoz.com/media/social-posts/runs-100/feed/46-ubuntu.jpg","real-runs","2026-12-03 12:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=ubuntu
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/46-ubuntu.jpg","","2026-12-03 12:10"
 "PAHO has no Organization JSON-LD.
 
 Preloaded HSTS, nosniff, a strict Referrer-Policy, and robots.txt that keeps AI training bots off paginated news only. But no page read carries JSON-LD saying who PAHO is.
@@ -374,7 +466,9 @@ Preloaded HSTS, nosniff, a strict Referrer-Policy, and robots.txt that keeps AI 
 Lesson: Add Organization JSON-LD with name, logo, url, and sameAs. It helps AI answers name the right agency.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=paho","https://carlosandmunoz.com/media/social-posts/runs-100/feed/47-paho.jpg","real-runs","2026-12-03 17:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=paho
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/47-paho.jpg","","2026-12-03 17:40"
 "DIAN's home page says it's in English.
 
 One-year HSTS with includeSubDomains, and http goes to https. But the Spanish home page declares lang=""en"", and inner pages declare no language, so screen readers read Spanish with English rules.
@@ -382,7 +476,9 @@ One-year HSTS with includeSubDomains, and http goes to https. But the Spanish ho
 Lesson: Set lang=""es"" on the <html> tag of every page. Screen readers, translators, and search engines all read it.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=dian","https://carlosandmunoz.com/media/social-posts/runs-100/feed/48-dian.jpg","real-runs","2026-12-04 13:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=dian
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/48-dian.jpg","","2026-12-04 13:50"
 "MinEducación's sitemap lists the old address.
 
 HSTS, a sitemap named in robots.txt, and GA4. But 2,725 sitemap URLs use http://mineducacion.gov.co, not the https://www.mineducacion.gov.co address the site serves, so every entry redirects.
@@ -390,7 +486,9 @@ HSTS, a sitemap named in robots.txt, and GA4. But 2,725 sitemap URLs use http://
 Lesson: Build the sitemap from canonical URLs: https, the www host you serve. Redirecting entries waste crawl.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mineducacion","https://carlosandmunoz.com/media/social-posts/runs-100/feed/49-mineducacion.jpg","real-runs","2026-12-04 17:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mineducacion
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/49-mineducacion.jpg","","2026-12-04 17:05"
 "MinSalud's home page links to 404s.
 
 HSTS marked for preload, a CSP from default-src 'self', a Permissions-Policy, and no-referrer. But several links on the home page return 404, among them the giro directo page, the national contact point, and emergencies.
@@ -398,7 +496,9 @@ HSTS marked for preload, a CSP from default-src 'self', a Permissions-Policy, an
 Lesson: Run a link check on your home page every week. It's the page most people start from.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=minsalud","https://carlosandmunoz.com/media/social-posts/runs-100/feed/50-minsalud.jpg","real-runs","2026-12-05 13:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=minsalud
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/50-minsalud.jpg","","2026-12-05 13:10"
 "MinTIC's analytics stopped years ago.
 
 One-year HSTS, nosniff, a strict Referrer-Policy, and framing limited to its SharePoint. But the only analytics tag configures UA-19365357-2, and Universal Analytics stopped processing data by July 2024.
@@ -406,7 +506,9 @@ One-year HSTS, nosniff, a strict Referrer-Policy, and framing limited to its Sha
 Lesson: Check your tags feed a live property. Move from a UA- ID to a GA4 G- ID, or remove the dead tag.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mintic","https://carlosandmunoz.com/media/social-posts/runs-100/feed/51-mintic.jpg","real-runs","2026-12-05 17:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=mintic
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/51-mintic.jpg","","2026-12-05 17:10"
 "Cancillería sends to two GA4 properties.
 
 nosniff, framing limited to its origin, a sitemap, and a 301 from http to https. But 17 pages configure two GA4 properties, G-R2FPS06ZSD and G-N4639JFT8D, so numbers split unless both teams know.
@@ -414,7 +516,9 @@ nosniff, framing limited to its origin, a sitemap, and a 301 from http to https.
 Lesson: Keep one GA4 property per site. If two teams need the data, share access instead of adding a second tag.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cancilleria","https://carlosandmunoz.com/media/social-posts/runs-100/feed/52-cancilleria.jpg","real-runs","2026-12-06 12:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cancilleria
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/52-cancilleria.jpg","","2026-12-06 12:50"
 "DANE's viewport caps zoom at 1x.
 
 nosniff, no-referrer, framing limited to its origin, and a content security policy. But the viewport sets maximum-scale=1, which can stop pinch-zoom in some browsers, even next to user-scalable=yes.
@@ -422,7 +526,9 @@ nosniff, no-referrer, framing limited to its origin, and a content security poli
 Lesson: Drop maximum-scale from the viewport. width=device-width, initial-scale=1 is all most sites need.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=dane","https://carlosandmunoz.com/media/social-posts/runs-100/feed/53-dane.jpg","real-runs","2026-12-06 16:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=dane
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/53-dane.jpg","","2026-12-06 16:05"
 "Procuraduría's canonical host doesn't resolve.
 
 nosniff, framing limited to its origin, and a 301 from http to https. But the home page names https://externo.procuraduria.gov.co as its canonical, and that host does not resolve in DNS.
@@ -430,7 +536,9 @@ nosniff, framing limited to its origin, and a 301 from http to https. But the ho
 Lesson: Canonicals must use your public host. Check them after migrations, when internal hostnames leak in.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=procuraduria","https://carlosandmunoz.com/media/social-posts/runs-100/feed/54-procuraduria.jpg","real-runs","2026-12-07 12:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=procuraduria
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/54-procuraduria.jpg","","2026-12-07 12:25"
 "ICETEX's inner pages all point to the home.
 
 nosniff, framing limited to its origin, GA4 through Tag Manager, and a sitemap in robots.txt. But 19 inner pages name https://web.icetex.gov.co/ as their canonical, which asks search engines to index the home instead.
@@ -438,7 +546,9 @@ nosniff, framing limited to its origin, GA4 through Tag Manager, and a sitemap i
 Lesson: Each page's canonical should be its own URL. A template that defaults to the home URL hides every inner page.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icetex","https://carlosandmunoz.com/media/social-posts/runs-100/feed/55-icetex.jpg","real-runs","2026-12-07 17:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icetex
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/55-icetex.jpg","","2026-12-07 17:15"
 "ICFES's HTML takes 2 s to start.
 
 A sitemap index in robots.txt, framing limited to its origin, and GA4. But the home page HTML took about 2.2 s to start arriving, measured twice. Fast sites send it in under 0.8 s.
@@ -446,7 +556,9 @@ A sitemap index in robots.txt, framing limited to its origin, and GA4. But the h
 Lesson: Cache the home page HTML at a CDN or in the server. Time to first byte is a floor for everything else.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icfes","https://carlosandmunoz.com/media/social-posts/runs-100/feed/56-icfes.jpg","real-runs","2026-12-08 12:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=icfes
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/56-icfes.jpg","","2026-12-08 12:45"
 "Colpensiones answers http with 503.
 
 HSTS, nosniff, and a robots.txt that names AI answer crawlers like OAI-SearchBot and PerplexityBot and lets them in. But plain http://www.colpensiones.gov.co/ answers 503 instead of redirecting to https.
@@ -454,7 +566,9 @@ HSTS, nosniff, and a robots.txt that names AI answer crawlers like OAI-SearchBot
 Lesson: Keep port 80 alive just to send a 301 to https. Old links and typed addresses still arrive there.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=colpensiones","https://carlosandmunoz.com/media/social-posts/runs-100/feed/57-colpensiones.jpg","real-runs","2026-12-08 17:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=colpensiones
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/57-colpensiones.jpg","","2026-12-08 17:40"
 "Migración Colombia has no sitemap.
 
 A 301 from http to https, a canonical on the home page, and GA4. But /robots.txt and /sitemap.xml both return 404, so crawlers get no map of the site and no rules to follow.
@@ -462,7 +576,9 @@ A 301 from http to https, a canonical on the home page, and GA4. But /robots.txt
 Lesson: Publish robots.txt with a Sitemap: line, and generate the sitemap from your CMS so it stays current.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=migracion","https://carlosandmunoz.com/media/social-posts/runs-100/feed/58-migracion.jpg","real-runs","2026-12-09 13:35"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=migracion
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/58-migracion.jpg","","2026-12-09 13:35"
 "SATENA's pages have no canonical.
 
 HSTS marked for preload, nosniff, framing limited to its origin, and a strict Referrer-Policy. But none of the 20 pages read declares a canonical URL, so search engines guess which version to index.
@@ -470,7 +586,9 @@ HSTS marked for preload, nosniff, framing limited to its origin, and a strict Re
 Lesson: Add a self-referencing canonical to every page, plus hreflang links between the language versions.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=satena","https://carlosandmunoz.com/media/social-posts/runs-100/feed/59-satena.jpg","real-runs","2026-12-09 17:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=satena
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/59-satena.jpg","","2026-12-09 17:15"
 "Davivienda's robots.txt is a model. LCP isn't.
 
 robots.txt lets AI answer bots like OAI-SearchBot and PerplexityBot in while blocking the training bots GPTBot, CCBot, and Google-Extended. But real Chrome visitors wait 4.6 s for the largest content.
@@ -478,7 +596,9 @@ robots.txt lets AI answer bots like OAI-SearchBot and PerplexityBot in while blo
 Lesson: Find the Largest Contentful Paint element on your home page and serve it first: preload, size, compress.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=davivienda","https://carlosandmunoz.com/media/social-posts/runs-100/feed/60-davivienda.jpg","real-runs","2026-12-10 12:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=davivienda
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/60-davivienda.jpg","","2026-12-10 12:05"
 "Movistar's headers have a value mix-up.
 
 HSTS, no-referrer, a Permissions-Policy, and framing limited by CSP frame-ancestors. But X-Frame-Options is set to nosniff, a value meant for X-Content-Type-Options, which is missing.
@@ -486,7 +606,9 @@ HSTS, no-referrer, a Permissions-Policy, and framing limited by CSP frame-ancest
 Lesson: Send X-Content-Type-Options: nosniff, and X-Frame-Options: SAMEORIGIN. Recheck headers after config changes.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=movistar","https://carlosandmunoz.com/media/social-posts/runs-100/feed/61-movistar.jpg","real-runs","2026-12-10 17:20"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=movistar
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/61-movistar.jpg","","2026-12-10 17:20"
 "Claro's home redirect drops to plain http.
 
 HSTS, nosniff, and robots.txt open to OAI-SearchBot and ChatGPT-User. But https://www.claro.com.co/ redirects to http://www.claro.com.co/personas/, which then bounces back to https.
@@ -494,7 +616,9 @@ HSTS, nosniff, and robots.txt open to OAI-SearchBot and ChatGPT-User. But https:
 Lesson: Write redirects with the full https:// target. An http Location adds a hop and an unencrypted request.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=claro","https://carlosandmunoz.com/media/social-posts/runs-100/feed/62-claro.jpg","real-runs","2026-12-11 12:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=claro
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/62-claro.jpg","","2026-12-11 12:25"
 "Éxito's title says exito.com twice.
 
 A 301 from http to https, a canonical, robots.txt that lists its sitemaps, and an open door for GPTBot. But the home page title is ""exito.com | exito.com"", which says nothing about what the store sells.
@@ -502,7 +626,9 @@ A 301 from http to https, a canonical, robots.txt that lists its sitemaps, and a
 Lesson: Write a home title that says who you are and what you offer, in under 60 characters.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=exito","https://carlosandmunoz.com/media/social-posts/runs-100/feed/63-exito.jpg","real-runs","2026-12-11 16:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=exito
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/63-exito.jpg","","2026-12-11 16:50"
 "Falabella's home declares no language.
 
 HSTS, framing limited to its origin, and robots.txt that lists its sitemaps. But the home page's <html> tag has no lang attribute, so screen readers and translators must guess it's Spanish.
@@ -510,7 +636,9 @@ HSTS, framing limited to its origin, and robots.txt that lists its sitemaps. But
 Lesson: Add lang=""es-CO"" to the <html> tag in your base template. One attribute fixes every page.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=falabella","https://carlosandmunoz.com/media/social-posts/runs-100/feed/64-falabella.jpg","real-runs","2026-12-12 13:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=falabella
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/64-falabella.jpg","","2026-12-12 13:45"
 "El Tiempo still loads a retired UA tag.
 
 A strict Referrer-Policy, framing limited to its origin, and robots.txt that lists its sitemaps. But every page read still loads UA-118090425-1, and Universal Analytics stopped processing data by July 2024.
@@ -518,7 +646,9 @@ A strict Referrer-Policy, framing limited to its origin, and robots.txt that lis
 Lesson: Search your templates for UA- IDs and remove them. They add a request and collect nothing.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eltiempo","https://carlosandmunoz.com/media/social-posts/runs-100/feed/65-eltiempo.jpg","real-runs","2026-12-12 15:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eltiempo
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/65-eltiempo.jpg","","2026-12-12 15:40"
 "Semana's description repeats its title.
 
 robots.txt names news sitemaps, http goes to https with a 301, and section pages have their own descriptions. But the home description just repeats the title: ""Semana - Últimas Noticias de Colombia y el Mundo"".
@@ -526,7 +656,9 @@ robots.txt names news sitemaps, http goes to https with a 301, and section pages
 Lesson: Write the home description as a one-line pitch: what readers find here today, in 150 characters or less.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=semana","https://carlosandmunoz.com/media/social-posts/runs-100/feed/66-semana.jpg","real-runs","2026-12-13 12:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=semana
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/66-semana.jpg","","2026-12-13 12:55"
 "El Espectador has no main landmark.
 
 nosniff, a strict Referrer-Policy, a Permissions-Policy, and a sitemap index in robots.txt. But no page read has a <main> element, so screen-reader users can't jump past the menus to the story.
@@ -534,7 +666,9 @@ nosniff, a strict Referrer-Policy, a Permissions-Policy, and a sitemap index in 
 Lesson: Wrap each page's primary content in one <main>. Skip links and screen readers use it to find the story.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=elespectador","https://carlosandmunoz.com/media/social-posts/runs-100/feed/67-elespectador.jpg","real-runs","2026-12-13 16:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=elespectador
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/67-elespectador.jpg","","2026-12-13 16:00"
 "Uniandes skips a link in its TLS chain.
 
 HSTS, a CSP from default-src 'self', nosniff, and a Permissions-Policy. But the server sends its certificate twice and leaves out the DigiCert intermediate. Browsers patch it in; Node.js and API clients refuse.
@@ -542,7 +676,9 @@ HSTS, a CSP from default-src 'self', nosniff, and a Permissions-Policy. But the 
 Lesson: Serve the full chain: leaf plus intermediates. Test with openssl s_client or SSL Labs after every renewal.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=uniandes","https://carlosandmunoz.com/media/social-posts/runs-100/feed/68-uniandes.jpg","real-runs","2026-12-14 12:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=uniandes
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/68-uniandes.jpg","","2026-12-14 12:00"
 "SURA's home page has three h1s.
 
 nosniff, framing limited to its origin, a sitemap in robots.txt, and a robots section that welcomes AI crawlers. But the home page has three h1 headings, and 11 of 20 pages read have more or fewer than one.
@@ -550,7 +686,9 @@ nosniff, framing limited to its origin, a sitemap in robots.txt, and a robots se
 Lesson: Give each page one h1 that names its topic. Use h2 and h3 for the sections below it.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=sura","https://carlosandmunoz.com/media/social-posts/runs-100/feed/69-sura.jpg","real-runs","2026-12-14 17:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=sura
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/69-sura.jpg","","2026-12-14 17:30"
 "Compensar lets any Azure site frame it.
 
 HSTS, a strict Referrer-Policy, and a sitemap in robots.txt. But CSP frame-ancestors allows *.windows.net and *.core.windows.net, hosts any Azure customer can publish on, so any of them could embed its pages.
@@ -558,7 +696,9 @@ HSTS, a strict Referrer-Policy, and a sitemap in robots.txt. But CSP frame-ances
 Lesson: List only the exact origins that embed you in frame-ancestors. Cloud wildcards include strangers.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=compensar","https://carlosandmunoz.com/media/social-posts/runs-100/feed/70-compensar.jpg","real-runs","2026-12-15 14:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=compensar
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/70-compensar.jpg","","2026-12-15 14:15"
 "Ecopetrol still configures a UA ID.
 
 HSTS with preload, nosniff, framing limited to its origin, and GA4 running. But the home page still runs gtag config for UA-57542691-1, and Universal Analytics stopped processing data by July 2024.
@@ -566,7 +706,9 @@ HSTS with preload, nosniff, framing limited to its origin, and GA4 running. But 
 Lesson: Remove the UA config line and keep the GA4 one. A quarterly tag audit catches these leftovers.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=ecopetrol","https://carlosandmunoz.com/media/social-posts/runs-100/feed/71-ecopetrol.jpg","real-runs","2026-12-15 16:20"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=ecopetrol
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/71-ecopetrol.jpg","","2026-12-15 16:20"
 "Rappi's viewport sets maximum-scale=1.
 
 A canonical, a 301 from http to https, and robots.txt listing sitemaps for its partners. But the viewport sets maximum-scale=1, which can block pinch-zoom for people who need bigger text.
@@ -574,7 +716,9 @@ A canonical, a 301 from http to https, and robots.txt listing sitemaps for its p
 Lesson: Use width=device-width, initial-scale=1 and nothing more. Fix layout overflow instead of locking zoom.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rappi","https://carlosandmunoz.com/media/social-posts/runs-100/feed/72-rappi.jpg","real-runs","2026-12-16 12:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rappi
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/72-rappi.jpg","","2026-12-16 12:40"
 "RTVC's search box has no label.
 
 HSTS, a CSP from default-src 'self', nosniff, and a Permissions-Policy that turns off camera, mic, and location. But the search field relies on a placeholder, ""Buscar"", with no label to announce.
@@ -582,7 +726,9 @@ HSTS, a CSP from default-src 'self', nosniff, and a Permissions-Policy that turn
 Lesson: Add a <label> or aria-label to every input. Placeholders vanish while typing and aren't reliably announced.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rtvc","https://carlosandmunoz.com/media/social-posts/runs-100/feed/73-rtvc.jpg","real-runs","2026-12-16 16:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=rtvc
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/73-rtvc.jpg","","2026-12-16 16:45"
 "Biblioteca Nacional's canonical says http.
 
 nosniff, framing limited by CSP, and a 301 from http to https. But the home page canonical is http://bibliotecanacional.gov.co:80/es-co: plain http, a different host, and port 80.
@@ -590,7 +736,9 @@ nosniff, framing limited by CSP, and a 301 from http to https. But the home page
 Lesson: Set canonicals to the exact public URL: https, your real host, no port. Check your CMS's public URL setting.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=bibliotecanacional","https://carlosandmunoz.com/media/social-posts/runs-100/feed/74-bibliotecanacional.jpg","real-runs","2026-12-17 14:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=bibliotecanacional
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/74-bibliotecanacional.jpg","","2026-12-17 14:05"
 "Supersalud loads no analytics tag.
 
 HSTS with preload, nosniff, no-referrer, and a sitemap in robots.txt. But none of the 20 pages read loads a known analytics tag, so the team may not see which services citizens look for.
@@ -598,7 +746,9 @@ HSTS with preload, nosniff, no-referrer, and a sitemap in robots.txt. But none o
 Lesson: Measure something, even a privacy-first, cookie-free tool. You can't improve pages you can't see used.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=supersalud","https://carlosandmunoz.com/media/social-posts/runs-100/feed/75-supersalud.jpg","real-runs","2026-12-17 18:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=supersalud
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/75-supersalud.jpg","","2026-12-17 18:00"
 "Contraloría's sitemap sits on port 8080.
 
 nosniff, framing limited to its origin, GA4, and a home description. But robots.txt points crawlers to http://www.contraloria.gov.co:8080/sitemap.xml, which timed out, and plain http answers 404.
@@ -606,7 +756,9 @@ nosniff, framing limited to its origin, GA4, and a home description. But robots.
 Lesson: List the sitemap's public https URL in robots.txt, then open it in a browser to check it answers.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=contraloria","https://carlosandmunoz.com/media/social-posts/runs-100/feed/76-contraloria.jpg","real-runs","2026-12-18 12:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=contraloria
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/76-contraloria.jpg","","2026-12-18 12:45"
 "ProColombia's canonical redirects back home.
 
 HSTS with preload, nosniff, framing limited to its origin, and a sitemap. But the home page names https://procolombia.co/inicio as canonical, and /inicio sends a 301 straight back to the home page.
@@ -614,7 +766,9 @@ HSTS with preload, nosniff, framing limited to its origin, and a sitemap. But th
 Lesson: A canonical must be the final URL, answering 200. Never point it at an address that redirects.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=procolombia","https://carlosandmunoz.com/media/social-posts/runs-100/feed/77-procolombia.jpg","real-runs","2026-12-18 17:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=procolombia
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/77-procolombia.jpg","","2026-12-18 17:10"
 "Nequi's hreflang points to the home page.
 
 HSTS with preload, nosniff, a CSP from default-src 'self', and a sitemap. But /personas/creditos declares itself canonical while its es-CO, es, and x-default alternates all point to the home page.
@@ -622,7 +776,9 @@ HSTS with preload, nosniff, a CSP from default-src 'self', and a sitemap. But /p
 Lesson: hreflang alternates must point to the same page in each language, including the page itself.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=nequi","https://carlosandmunoz.com/media/social-posts/runs-100/feed/78-nequi.jpg","real-runs","2026-12-19 12:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=nequi
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/78-nequi.jpg","","2026-12-19 12:30"
 "Educación Bogotá has no robots.txt.
 
 One-year HSTS, nosniff, framing limited to its origin, a canonical, and a working /sitemap.xml. But /robots.txt returns 404, so crawlers are never told where that sitemap lives.
@@ -630,7 +786,9 @@ One-year HSTS, nosniff, framing limited to its origin, a canonical, and a workin
 Lesson: Serve a robots.txt with a Sitemap: line. Two lines of text point every crawler to your map.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=educacionbogota","https://carlosandmunoz.com/media/social-posts/runs-100/feed/79-educacionbogota.jpg","real-runs","2026-12-19 18:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=educacionbogota
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/79-educacionbogota.jpg","","2026-12-19 18:05"
 "Movilidad Bogotá's sitemap says default.
 
 HSTS, nosniff, framing limited to its origin, a canonical, and GA4. But its sitemap lists URLs like http://default/ and http://default/en-gb, because the CMS never learned its public address.
@@ -638,7 +796,9 @@ HSTS, nosniff, framing limited to its origin, a canonical, and GA4. But its site
 Lesson: Set the CMS base URL to your public https address, then regenerate the sitemap.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=movilidadbogota","https://carlosandmunoz.com/media/social-posts/runs-100/feed/80-movilidadbogota.jpg","real-runs","2026-12-20 13:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=movilidadbogota
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/80-movilidadbogota.jpg","","2026-12-20 13:05"
 "Salud Capital's home has three canonicals.
 
 HSTS, nosniff, a strict Referrer-Policy, a content security policy, and a clear description. But the home page carries three canonical tags naming two different URLs, so search engines may ignore them all.
@@ -646,7 +806,9 @@ HSTS, nosniff, a strict Referrer-Policy, a content security policy, and a clear 
 Lesson: Emit exactly one canonical per page. Check the template, CMS, and SEO plugins for copies.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=saludcapital","https://carlosandmunoz.com/media/social-posts/runs-100/feed/81-saludcapital.jpg","real-runs","2026-12-20 15:40"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=saludcapital
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/81-saludcapital.jpg","","2026-12-20 15:40"
 "Metro de Bogotá's HSTS lasts 17 minutes.
 
 nosniff, GA4, a declared language, and a working sitemap. But Strict-Transport-Security sets max-age=1000, about 17 minutes, so browsers forget the https-only rule almost as soon as they learn it.
@@ -654,7 +816,9 @@ nosniff, GA4, a declared language, and a working sitemap. But Strict-Transport-S
 Lesson: Set HSTS max-age to at least one year (31536000) once https works everywhere.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrobogota","https://carlosandmunoz.com/media/social-posts/runs-100/feed/82-metrobogota.jpg","real-runs","2026-12-21 12:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrobogota
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/82-metrobogota.jpg","","2026-12-21 12:25"
 "IDRD's Referrer-Policy is unsafe-url.
 
 One-year HSTS, nosniff, framing limited to its origin, and a Permissions-Policy that turns off location, mic, and camera. But Referrer-Policy: unsafe-url sends the full URL, query included, to every site linked.
@@ -662,7 +826,9 @@ One-year HSTS, nosniff, framing limited to its origin, and a Permissions-Policy 
 Lesson: Use strict-origin-when-cross-origin. Other sites then see only your domain, never paths or search terms.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=idrd","https://carlosandmunoz.com/media/social-posts/runs-100/feed/83-idrd.jpg","real-runs","2026-12-21 16:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=idrd
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/83-idrd.jpg","","2026-12-21 16:50"
 "Idartes' https root redirects to http.
 
 nosniff, framing limited to its origin, a clear description, and a sitemap. But https://www.idartes.gov.co/ sends a 301 to http://www.idartes.gov.co/es, and the canonical also names the http address.
@@ -670,7 +836,9 @@ nosniff, framing limited to its origin, a clear description, and a sitemap. But 
 Lesson: Make every redirect and canonical use https. Search for http:// in your server config and templates.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=idartes","https://carlosandmunoz.com/media/social-posts/runs-100/feed/84-idartes.jpg","real-runs","2026-12-22 13:35"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=idartes
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/84-idartes.jpg","","2026-12-22 13:35"
 "Visit Bogotá responds slowly to taps.
 
 HSTS marked for preload, nosniff, a content security policy, a canonical, and a clear description. But real Chrome visitors wait 436 ms at the 75th percentile for the page to respond to a tap or click.
@@ -678,7 +846,9 @@ HSTS marked for preload, nosniff, a content security policy, a canonical, and a 
 Lesson: Find long tasks in the Performance panel and split them. Keep INP under 200 ms.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=visitbogota","https://carlosandmunoz.com/media/social-posts/runs-100/feed/85-visitbogota.jpg","real-runs","2026-12-22 17:20"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=visitbogota
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/85-visitbogota.jpg","","2026-12-22 17:20"
 "BibloRed answers plain http with a 200.
 
 Two-year HSTS marked for preload, nosniff, framing limited to its origin, and a canonical. But http://www.biblored.gov.co/ serves the page with a 200 instead of redirecting, and browsers ignore HSTS sent over http.
@@ -686,7 +856,9 @@ Two-year HSTS marked for preload, nosniff, framing limited to its origin, and a 
 Lesson: Redirect every http request to https with a 301. HSTS only counts when it arrives over https.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=biblored","https://carlosandmunoz.com/media/social-posts/runs-100/feed/86-biblored.jpg","real-runs","2026-12-23 12:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=biblored
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/86-biblored.jpg","","2026-12-23 12:50"
 "Catastro Bogotá has no descriptions.
 
 HSTS, nosniff, framing limited to its origin, GA4 through Tag Manager, and a declared language. But none of the 20 pages read has a meta description, so Google and AI answers write their own.
@@ -694,7 +866,9 @@ HSTS, nosniff, framing limited to its origin, GA4 through Tag Manager, and a dec
 Lesson: Write a one-sentence description for each key page: what it offers and who it's for, under 155 characters.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=catastro","https://carlosandmunoz.com/media/social-posts/runs-100/feed/87-catastro.jpg","real-runs","2026-12-23 16:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=catastro
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/87-catastro.jpg","","2026-12-23 16:45"
 "The Botanic Garden loads logos over http.
 
 A declared language, a canonical, a 301 from http to https, and a sitemap named in robots.txt. But every page read loads its two logo images over http://, so browsers must upgrade or block them.
@@ -702,7 +876,9 @@ A declared language, a canonical, a 301 from http to https, and a sitemap named 
 Lesson: Load every asset over https or as a relative URL. A search for src=""http:// in your theme finds them.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=jbb","https://carlosandmunoz.com/media/social-posts/runs-100/feed/88-jbb.jpg","real-runs","2026-12-24 14:20"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=jbb
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/88-jbb.jpg","","2026-12-24 14:20"
 "The Planetarium skips a link in its TLS chain.
 
 nosniff, framing limited to its origin, a declared language, and a 301 from http to https. But the server leaves out the Sectigo intermediate certificate. Browsers patch it in; Node.js and API clients refuse.
@@ -710,7 +886,9 @@ nosniff, framing limited to its origin, a declared language, and a 301 from http
 Lesson: Install the full chain your certificate authority provides, then test with openssl s_client or SSL Labs.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=planetario","https://carlosandmunoz.com/media/social-posts/runs-100/feed/89-planetario.jpg","real-runs","2026-12-24 16:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=planetario
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/89-planetario.jpg","","2026-12-24 16:30"
 "Antioquia's home is titled ""Inicio"".
 
 HSTS marked for preload, a CSP from default-src 'self' with base-uri set, nosniff, and a strict Referrer-Policy. But the home page title is just ""Inicio"", which tells searchers nothing about the department.
@@ -718,7 +896,9 @@ HSTS marked for preload, a CSP from default-src 'self' with base-uri set, nosnif
 Lesson: Put the organization's name in the home title, with what people come for. ""Home"" alone wastes the slot.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=antioquia","https://carlosandmunoz.com/media/social-posts/runs-100/feed/90-antioquia.jpg","real-runs","2026-12-25 13:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=antioquia
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/90-antioquia.jpg","","2026-12-25 13:45"
 "Medellín's portal sends no HSTS.
 
 nosniff, framing limited to its origin, a canonical, a clear description, and two sitemaps named in robots.txt. But none of the 19 pages read sends Strict-Transport-Security, so a first http visit can be intercepted.
@@ -726,7 +906,9 @@ nosniff, framing limited to its origin, a canonical, a clear description, and tw
 Lesson: Send HSTS with a one-year max-age once every subdomain serves https.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=medellin","https://carlosandmunoz.com/media/social-posts/runs-100/feed/91-medellin.jpg","real-runs","2026-12-25 17:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=medellin
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/91-medellin.jpg","","2026-12-25 17:10"
 "Metro de Medellín still runs a UA tag.
 
 HSTS marked for preload, a CSP from default-src 'self', nosniff, and Consent Mode defaults. But the home page still runs ga('create', 'UA-8498906-1'), which collects nothing since July 2024.
@@ -734,7 +916,9 @@ HSTS marked for preload, a CSP from default-src 'self', nosniff, and Consent Mod
 Lesson: Remove analytics.js UA calls. If you need numbers, send them to a GA4 property or another live tool.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metromedellin","https://carlosandmunoz.com/media/social-posts/runs-100/feed/92-metromedellin.jpg","real-runs","2026-12-26 14:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metromedellin
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/92-metromedellin.jpg","","2026-12-26 14:30"
 "EPM's canonical ends at a 404.
 
 Two-year HSTS marked for preload, a CSP from default-src 'self', nosniff, and a clear description. But the canonical is /content/epm/clientesyusuarios.html, an internal CMS path that redirects to a 404.
@@ -742,7 +926,9 @@ Two-year HSTS marked for preload, a CSP from default-src 'self', nosniff, and a 
 Lesson: Map CMS paths to public URLs. Open your canonical in a browser: it must answer 200.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=epm","https://carlosandmunoz.com/media/social-posts/runs-100/feed/93-epm.jpg","real-runs","2026-12-26 16:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=epm
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/93-epm.jpg","","2026-12-26 16:00"
 "UdeA's pages skip security headers.
 
 A declared language, a sitemap named in robots.txt, and robots rules that keep the GPTBot and Google-Extended training bots out. But pages send no HSTS, no nosniff, no frame protection, and only a report-only CSP.
@@ -750,7 +936,9 @@ A declared language, a sitemap named in robots.txt, and robots rules that keep t
 Lesson: Start with HSTS, X-Content-Type-Options: nosniff, and frame-ancestors 'self'. Then enforce your CSP.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=udea","https://carlosandmunoz.com/media/social-posts/runs-100/feed/94-udea.jpg","real-runs","2026-12-27 14:35"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=udea
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/94-udea.jpg","","2026-12-27 14:35"
 "EAFIT's pages have no main landmark.
 
 HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, a canonical, and a clear description. But none of the 20 pages read has a <main> element, so screen-reader users can't skip straight to the content.
@@ -758,7 +946,9 @@ HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, a canonical, and 
 Lesson: Wrap the primary content of every template in one <main> for skip links.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eafit","https://carlosandmunoz.com/media/social-posts/runs-100/feed/95-eafit.jpg","real-runs","2026-12-27 17:35"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eafit
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/95-eafit.jpg","","2026-12-27 17:35"
 "Cali's robots.txt names a missing sitemap.
 
 HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, and a canonical. But robots.txt points crawlers to https://www.cali.gov.co/sitemap.xml, and that address returns 404.
@@ -766,7 +956,9 @@ HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, and a canonical. 
 Lesson: Open every Sitemap: line in robots.txt after each release. A 404 there means crawlers lose your map.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cali","https://carlosandmunoz.com/media/social-posts/runs-100/feed/96-cali.jpg","real-runs","2026-12-28 12:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cali
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/96-cali.jpg","","2026-12-28 12:05"
 "Metro Cali's home describes an old notice.
 
 HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy, and a CSP. But the home page description is a single notice about a vehicle scrapping resolution, not what the system offers.
@@ -774,7 +966,9 @@ HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy
 Lesson: Write a fixed home description about your service. Don't let the CMS fill it from the latest post.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrocali","https://carlosandmunoz.com/media/social-posts/runs-100/feed/97-metrocali.jpg","real-runs","2026-12-28 17:20"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrocali
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/97-metrocali.jpg","","2026-12-28 17:20"
 "Univalle's English link returns a 404.
 
 nosniff, GA4, a declared language, and http that redirects to https. But the home page's English switch, /loader.php?…idioma=EN, returns 404, so international visitors hit an error on their first click.
@@ -782,7 +976,9 @@ nosniff, GA4, a declared language, and http that redirects to https. But the hom
 Lesson: Test the language switcher in every release. It's often the first click for visitors from abroad.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=univalle","https://carlosandmunoz.com/media/social-posts/runs-100/feed/98-univalle.jpg","real-runs","2026-12-29 14:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=univalle
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/98-univalle.jpg","","2026-12-29 14:30"
 "Transcaribe reorders the keyboard path.
 
 A declared language, a canonical, a sitemap index in robots.txt, a 301 to https, and GA4. But 19 pages read use a positive tabindex, which pulls one element ahead of everything else in keyboard order.
@@ -790,7 +986,9 @@ A declared language, a canonical, a sitemap index in robots.txt, a 301 to https,
 Lesson: Use tabindex=""0"" or ""-1"" only. Fix focus order by ordering the HTML, not with positive numbers.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=transcaribe","https://carlosandmunoz.com/media/social-posts/runs-100/feed/99-transcaribe.jpg","real-runs","2026-12-29 16:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=transcaribe
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/99-transcaribe.jpg","","2026-12-29 16:45"
 "Bucaramanga's home has no title tag.
 
 HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy, and framing limited to its origin. But 12 pages read have no <title>, the home page included.
@@ -798,7 +996,9 @@ HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy
 Lesson: Give every page a unique <title>. It's the tab label, the search result headline, and the share card text.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=bucaramanga","https://carlosandmunoz.com/media/social-posts/runs-100/feed/100-bucaramanga.jpg","real-runs","2026-12-30 12:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=bucaramanga
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/100-bucaramanga.jpg","","2026-12-30 12:25"
 "Metrolínea's viewport turns off zoom.
 
 nosniff, framing limited to its origin, a working sitemap, and a 301 from http to https. But the viewport sets maximum-scale=1 and user-scalable=no, which blocks pinch-zoom for riders who need larger text.
@@ -806,7 +1006,9 @@ nosniff, framing limited to its origin, a working sitemap, and a 301 from http t
 Lesson: Remove user-scalable=no and maximum-scale. Let readers zoom, and fix any layout that breaks.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrolinea","https://carlosandmunoz.com/media/social-posts/runs-100/feed/101-metrolinea.jpg","real-runs","2026-12-30 15:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrolinea
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/101-metrolinea.jpg","","2026-12-30 15:30"
 "Pereira's feature policy allows every origin.
 
 HSTS marked for preload, a CSP from default-src 'self', nosniff, and a strict Referrer-Policy. But Permissions-Policy grants camera, microphone, geolocation, and payment to every origin with =*.
@@ -814,7 +1016,9 @@ HSTS marked for preload, a CSP from default-src 'self', nosniff, and a strict Re
 Lesson: Default to camera=(), microphone=(), geolocation=(). Grant features only where needed.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=pereira","https://carlosandmunoz.com/media/social-posts/runs-100/feed/102-pereira.jpg","real-runs","2026-12-31 13:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=pereira
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/102-pereira.jpg","","2026-12-31 13:50"
 "Manizales' visitors wait 5.7 s to see it.
 
 A declared language, a canonical, a sitemap named in robots.txt, and a 301 to https. But real Chrome visitors wait 5.7 s at the 75th percentile for the largest content, and the HTML alone took 2.5 s.
@@ -822,7 +1026,9 @@ A declared language, a canonical, a sitemap named in robots.txt, and a 301 to ht
 Lesson: Start with the server: cache the HTML. Then preload the hero image and defer scripts that aren't needed.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=manizales","https://carlosandmunoz.com/media/social-posts/runs-100/feed/103-manizales.jpg","real-runs","2026-12-31 16:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=manizales
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/103-manizales.jpg","","2026-12-31 16:45"
 "Santa Marta still runs a UA tag.
 
 HSTS, nosniff, a strict Referrer-Policy, framing limited to its origin, and GA4. But the home page still runs ga('create', 'UA-121052958-1'), and Universal Analytics stopped processing data by July 2024.
@@ -830,4 +1036,6 @@ HSTS, nosniff, a strict Referrer-Policy, framing limited to its origin, and GA4.
 Lesson: Delete the UA snippet and keep GA4. One live tag is easier to trust than two half-dead ones.
 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=santamarta","https://carlosandmunoz.com/media/social-posts/runs-100/feed/104-santamarta.jpg","real-runs","2027-01-01 14:20"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=santamarta
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/runs-100/feed/104-santamarta.jpg","","2027-01-01 14:20"

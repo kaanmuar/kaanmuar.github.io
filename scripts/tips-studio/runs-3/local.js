@@ -4,21 +4,21 @@ module.exports = [
   {
     id: "armenia", report: "r3-armenia", scope: "Local",
     title: ["Armenia's city hall:", "*no main landmark.*"],
-    body: "Two-year HSTS with preload, a content security policy, security.txt, and a permanent https redirect. But no page read wraps its content in <main>, so screen reader users can't jump past the menus.",
+    body: "Two-year HSTS with preload, a content security policy, security.txt, and a permanent https redirect. But no page analyzed wraps its content in <main>, so screen reader users can't jump past the menus.",
     action: "Wrap each page's content in one <main>, which screen readers offer as a skip link.",
     tags: ["Accessibility", "Landmarks", "GovTech"]
   },
   {
     id: "ibague", report: "r3-ibague", scope: "Local",
     title: ["Ibagué's search box", "*has no label.*"],
-    body: "One-year HSTS, a permanent https redirect, a meta description on every page read, and the page text right in the HTML. But the search field has only a placeholder, so screen readers announce an unnamed box.",
+    body: "One-year HSTS, a permanent https redirect, a meta description on every page analyzed, and the page text right in the HTML. But the search field has only a placeholder, so screen readers announce an unnamed box.",
     action: "Give every field a <label> or an aria-label. Placeholder text disappears on typing and is not a name.",
     tags: ["Accessibility", "Forms", "GovTech"]
   },
   {
     id: "neiva", report: "r3-neiva", scope: "Local",
     title: ["Neiva's sitemap lists", "*a host that won't load.*"],
-    body: "Every page read has a meta description, framing is limited to its origin, and nosniff is sent. But all 500 URLs in /sitemap.xml sit on www.neiva.gov.co, which did not answer, not on www.alcaldianeiva.gov.co.",
+    body: "Every page analyzed has a meta description, framing is limited to its origin, and nosniff is sent. But all 500 URLs in /sitemap.xml sit on www.neiva.gov.co, which did not answer, not on www.alcaldianeiva.gov.co.",
     action: "Build the sitemap from the live domain; spot-check it after a move or rebrand.",
     tags: ["SEO", "Sitemap", "GovTech"]
   },
@@ -32,14 +32,14 @@ module.exports = [
   {
     id: "pasto", report: "r3-pasto", scope: "Local",
     title: ["Pasto sends each visit", "*to two GA4 properties.*"],
-    body: "Made-up paths get a real 404, the page text is in the HTML, and the start page declares Spanish for Colombia. But every page read loads gtag.js twice, for two GA4 IDs, so one visit can land in two reports.",
+    body: "Made-up paths get a real 404, the page text is in the HTML, and the start page declares Spanish for Colombia. But every page analyzed loads gtag.js twice, for two GA4 IDs, so one visit can land in two reports.",
     action: "Keep one GA4 property per site, loaded once, ideally through Tag Manager, and retire the old ID.",
     tags: ["Analytics", "GA4", "GovTech"]
   },
   {
     id: "popayan", report: "r3-popayan", scope: "Local",
     title: ["Popayán's links share", "*with no preview card.*"],
-    body: "A meta description on every page read, a canonical, nosniff, framing limited to its origin, and port 80 closed. But the pages carry no og: tags, so a shared link shows no chosen title, text, or image.",
+    body: "A meta description on every page analyzed, a canonical, nosniff, framing limited to its origin, and port 80 closed. But the pages carry no og: tags, so a shared link shows no chosen title, text, or image.",
     action: "Add og:title, og:description, og:image, og:url, and twitter:card to each page template.",
     tags: ["SEO", "OpenGraph", "GovTech"]
   },
@@ -74,14 +74,14 @@ module.exports = [
   {
     id: "soacha", report: "r3-soacha", scope: "Local",
     title: ["Soacha's city hall", "*sends no HSTS.*"],
-    body: "A meta description on every page read, framing limited to its origin, nosniff, and port 80 closed. But no Strict-Transport-Security header is sent, so browsers are never told to insist on https.",
+    body: "A meta description on every page analyzed, framing limited to its origin, nosniff, and port 80 closed. But no Strict-Transport-Security header is sent, so browsers are never told to insist on https.",
     action: "Send Strict-Transport-Security with a max-age of a year or more: one header.",
     tags: ["WebSecurity", "HSTS", "GovTech"]
   },
   {
     id: "bello", report: "r3-bello", scope: "Local",
     title: ["Bello's JSON-LD names", "*the page, not the city.*"],
-    body: "A meta description on every page read, publication dates, framing limited to its origin, and nosniff. Its JSON-LD describes a WebPage and a WebSite, but no Organization says who runs the site.",
+    body: "A meta description on every page analyzed, publication dates, framing limited to its origin, and nosniff. Its JSON-LD describes a WebPage and a WebSite, but no Organization says who runs the site.",
     action: "Add a GovernmentOrganization block with name, url, logo, and sameAs links to your official profiles.",
     tags: ["GEO", "StructuredData", "GovTech"]
   },
@@ -95,14 +95,14 @@ module.exports = [
   {
     id: "palmira", report: "r3-palmira", scope: "Local",
     title: ["Palmira's home page", "*has no description.*"],
-    body: "A GovernmentOrganization in JSON-LD, a sitemap index, alt text on every image, and a permanent https redirect. But 16 of the pages read, the home page among them, have no meta description.",
+    body: "A GovernmentOrganization in JSON-LD, a sitemap index, alt text on every image, and a permanent https redirect. But 16 of the pages analyzed, the home page among them, have no meta description.",
     action: "Write a description of about 150 characters for each key page, so you choose the snippet, not the crawler.",
     tags: ["SEO", "MetaDescription", "GovTech"]
   },
   {
     id: "sdp", report: "r3-sdp", scope: "Local",
     title: ["Planeación Bogotá", "*still answers on http.*"],
-    body: "A meta description on every page read, framing limited to its origin, nosniff, and every link opened answered. But the plain-http home page answers 200 with no redirect, and no HSTS is sent.",
+    body: "A meta description on every page analyzed, framing limited to its origin, nosniff, and every link opened answered. But the plain-http home page answers 200 with no redirect, and no HSTS is sent.",
     action: "Redirect every http request to https with a 301, then add Strict-Transport-Security.",
     tags: ["WebSecurity", "HTTPS", "GovTech"]
   },
@@ -137,7 +137,7 @@ module.exports = [
   {
     id: "madrid", report: "r3-madrid", scope: "Local",
     title: ["Madrid has llms.txt,", "*but no JSON-LD.*"],
-    body: "llms.txt and security.txt are published, every image has alt text, nosniff is sent, and Core Web Vitals pass for real visitors. But none of the 16 pages read carries JSON-LD saying who runs the site.",
+    body: "llms.txt and security.txt are published, every image has alt text, nosniff is sent, and Core Web Vitals pass for real visitors. But none of the 16 pages analyzed carries JSON-LD saying who runs the site.",
     action: "Add one GovernmentOrganization block with name, url, logo, and sameAs. AI answers use it to name you.",
     tags: ["GEO", "StructuredData", "SmartCity"]
   },
@@ -186,35 +186,35 @@ module.exports = [
   {
     id: "tfl", report: "r3-tfl", scope: "Local",
     title: ["TfL has no", "*security.txt.*"],
-    body: "A meta description on every page read, framing denied, one-year HSTS, a canonical, and a sitemap. But /.well-known/security.txt answers 404, so a researcher who finds a flaw has no published contact.",
+    body: "A meta description on every page analyzed, framing denied, one-year HSTS, a canonical, and a sitemap. But /.well-known/security.txt answers 404, so a researcher who finds a flaw has no published contact.",
     action: "Publish /.well-known/security.txt with Contact and Expires lines. It takes minutes.",
     tags: ["WebSecurity", "SecurityTxt", "Transport"]
   },
   {
     id: "montevideo", report: "r3-montevideo", scope: "Local",
     title: ["Montevideo's canonical", "*points to plain http.*"],
-    body: "nosniff, framing limited to its origin, a main landmark, and every link opened answered. But all 20 pages read name an http:// canonical on montevideo.gub.uy, a different scheme and host than the live site.",
+    body: "nosniff, framing limited to its origin, a main landmark, and every link opened answered. But all 20 pages analyzed name an http:// canonical on montevideo.gub.uy, a different scheme and host than the live site.",
     action: "Point each canonical at the exact https URL you serve, with the www if you use it.",
     tags: ["SEO", "Canonical", "SmartCity"]
   },
   {
     id: "inder", report: "r3-inder", scope: "Local",
     title: ["Inder Medellín calls", "*every page 'Inicio'.*"],
-    body: "Every link opened answered, the page text is in the HTML, and a mobile viewport is set. But all 20 pages read share the title Inder Medellín | Inicio, so search results can't tell one page from another.",
+    body: "Every link opened answered, the page text is in the HTML, and a mobile viewport is set. But all 20 pages analyzed share the title Inder Medellín | Inicio, so search results can't tell one page from another.",
     action: "Give each page a unique title that starts with what that page is about, then the site name.",
     tags: ["SEO", "TitleTags", "Sports"]
   },
   {
     id: "bibliotecasmedellin", report: "r3-bibliotecasmedellin", scope: "Local",
     title: ["Medellín's libraries", "*have no h1 headings.*"],
-    body: "Structured data naming the network, share cards, a sitemap index, and a canonical. But none of the 20 pages read has exactly one h1, and the home page has none, so headings give no outline to follow.",
+    body: "Structured data naming the network, share cards, a sitemap index, and a canonical. But none of the 20 pages analyzed has exactly one h1, and the home page has none, so headings give no outline to follow.",
     action: "Give each page one h1 that names its topic, then h2 and h3 in order. Screen readers jump by heading.",
     tags: ["Accessibility", "Headings", "Libraries"]
   },
   {
     id: "idpc", report: "r3-idpc", scope: "Local",
     title: ["IDPC hides its", "*participation pages.*"],
-    body: "Two-year HSTS, nosniff, framing limited to its origin, structured data, and a meta description on every page read. But /transparencia/menu-participa and two pages under it tell search engines noindex.",
+    body: "Two-year HSTS, nosniff, framing limited to its origin, structured data, and a meta description on every page analyzed. But /transparencia/menu-participa and two pages under it tell search engines noindex.",
     action: "Audit which pages carry noindex. Public participation pages should be findable; keep it for search results.",
     tags: ["SEO", "Indexing", "Heritage"]
   },
@@ -235,7 +235,7 @@ module.exports = [
   {
     id: "wien", report: "r3-wien", scope: "Local",
     title: ["Vienna's city map:", "*183 unnamed boxes.*"],
-    body: "HSTS with preload, a content security policy, security.txt, a sitemap, and a meta description on every page read. But on /stadtplan/, 183 of 188 inputs, mostly layer checkboxes, have no label to announce.",
+    body: "HSTS with preload, a content security policy, security.txt, a sitemap, and a meta description on every page analyzed. But on /stadtplan/, 183 of 188 inputs, mostly layer checkboxes, have no label to announce.",
     action: "Give each checkbox a <label for>, or aria-labelledby pointing at its visible text.",
     tags: ["Accessibility", "Forms", "SmartCity"]
   }
