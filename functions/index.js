@@ -1381,17 +1381,39 @@ async function redeemCoupon(code, record) {
 
 const BROWSER_URL = process.env.BROWSER_URL || "https://europe-west1-carlosm-interactive-cv.cloudfunctions.net/reviewBrowser";
 
-async function browseForReview(job) {
+async function browseForReview(job, log) {
   const key = process.env.BROWSER_KEY;
   if (!key) return null;
   const res = await fetch(BROWSER_URL, {
     method: "POST",
     headers: { "content-type": "application/json", "x-review-key": key },
-    body: JSON.stringify(job),
+    body: JSON.stringify(Object.assign({}, job, { stream: true })),
     signal: AbortSignal.timeout(100000)
   });
   if (!res.ok) return { ok: false, error: res.status === 429 ? "the browser was busy" : "status " + res.status };
-  return res.json();
+  if (!/ndjson/i.test(res.headers.get("content-type") || "")) return res.json();
+  return readBrowserStream(res.body, log);
+}
+
+async function readBrowserStream(body, log) {
+  const decoder = new TextDecoder();
+  let buf = "";
+  let result = null;
+  const take = (part) => {
+    if (!part.trim()) return;
+    let msg;
+    try { msg = JSON.parse(part); } catch (error) { return; }
+    if (msg.type === "log" && typeof log === "function") log(String(msg.text || "").slice(0, 400));
+    if (msg.type === "done") result = msg.result;
+  };
+  for await (const chunk of body) {
+    buf += decoder.decode(chunk, { stream: true });
+    const parts = buf.split("\n");
+    buf = parts.pop();
+    parts.forEach(take);
+  }
+  take(buf + decoder.decode());
+  return result || { ok: false, error: "the browser stream ended before its result" };
 }
 
 exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
@@ -2044,15 +2066,18 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       city: req.get("x-appengine-city") || ""
     });
     if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
+    writeLine({ type: "log", text: "Looking for your earlier reviews of " + report.host + "." });
     const history = await previousRun(intake.value.email, report);
     if (history) {
       report.history = history;
       writeLine({ type: "log", text: "Compared with your review of " + report.host + " from " + String(history.previousAt).slice(0, 10) + ": " + history.fixedCount + " fixed, " + history.freshCount + " new." });
-    }
+    } else writeLine({ type: "log", text: "No earlier review of " + report.host + " under this email." });
+    writeLine({ type: "log", text: "Saving the report." });
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
     await countReviewed(report);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     await mailReviewedSites(ip, record);
+    writeLine({ type: "log", text: "Report saved. Emailing a copy to " + intake.value.email + "." });
     writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
     try {
       await mailReportToAsker(record);
@@ -2153,14 +2178,28 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
     res.status(403).json({ ok: false, error: "Not allowed." });
     return;
   }
+  const job = req.body || {};
+  const stream = job.stream === true && job.kind !== "pdf";
+  const line = (payload) => { if (!res.writableEnded) res.write(JSON.stringify(payload) + "\n"); };
+  if (stream) {
+    res.status(200);
+    res.set("Content-Type", "application/x-ndjson; charset=utf-8");
+  }
   try {
     const browserJob = require("./url-review-browser");
-    const result = req.body && req.body.kind === "pdf"
-      ? await browserJob.printPdf(req.body.html)
-      : await browserJob.browse(req.body || {});
-    res.status(200).json(result);
+    const result = job.kind === "pdf"
+      ? await browserJob.printPdf(job.html)
+      : await browserJob.browse(job, stream ? (text) => line({ type: "log", text }) : null);
+    if (stream) {
+      line({ type: "done", result });
+      res.end();
+    } else res.status(200).json(result);
   } catch (error) {
     console.error("Browser pass failed:", error);
-    res.status(200).json({ ok: false, error: String((error && error.message) || "browser error").slice(0, 120) });
+    const failed = { ok: false, error: String((error && error.message) || "browser error").slice(0, 120) };
+    if (stream) {
+      line({ type: "done", result: failed });
+      res.end();
+    } else res.status(200).json(failed);
   }
 });
