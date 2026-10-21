@@ -199,13 +199,17 @@ function hashtags(tip, n) { return tip.tags.slice(0, n).map((t) => "#" + t).join
 // Buffer's bulk upload counts the link in full, so a post over 280 that way gets the bare link,
 // which X still turns into a link.
 function xPost(text, url) {
-  const room = 280 - 23 - 2;
-  const body = text.length <= room ? text : (() => {
-    const cut = text.slice(0, room - 1);
-    return cut.slice(0, cut.lastIndexOf(" ")).replace(/[\s,.;:]+$/, "") + "…";
-  })();
+  const body = clip(text, 280 - 23 - 2);
   const post = body + "\n\n" + url;
-  return post.length <= 280 ? post : body + "\n\n" + bareLink(url);
+  if (post.length <= 280) return post;
+  const bare = bareLink(url);
+  return clip(body, 280 - bare.length - 2) + "\n\n" + bare;
+}
+
+function clip(text, room) {
+  if (text.length <= room) return text;
+  const cut = text.slice(0, room - 1);
+  return cut.slice(0, cut.lastIndexOf(" ")).replace(/[\s,.;:…]+$/, "") + "…";
 }
 
 function bareLink(url) {

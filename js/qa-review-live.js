@@ -7,7 +7,7 @@
   const BASE = "assets/live-reports/";
   const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
   const SHORT = { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Security", Accessibility: "A11y", Performance: "Speed" };
-  const HUES = { government: 186, health: 160, media: 18, banking: 42, fintech: 280, transit: 140, opensource: 205, devdocs: 225, science: 255, highered: 330, education: 300, humanitarian: 0, international: 196, culture: 32, knowledge: 172, retail: 50, telecom: 268, energy: 58, travel: 120, airline: 210, insurance: 152, infrastructure: 24, standards: 240, sports: 100, apps: 12, rights: 350 };
+  const HUES = { government: 186, health: 160, media: 18, banking: 42, fintech: 280, transit: 140, opensource: 205, devdocs: 225, science: 255, highered: 330, education: 300, humanitarian: 0, international: 196, culture: 32, knowledge: 172, retail: 50, telecom: 268, energy: 58, travel: 120, airline: 210, insurance: 152, infrastructure: 24, standards: 240, sports: 100, apps: 12, rights: 350, environment: 88 };
   const STOP = new Set(["de", "del", "la", "el", "los", "las", "of", "the", "y", "and", "du", "da"]);
 
   // A review analyzes a site; it never "reads" it. Spanish is Latin American (tú), Portuguese is Brazilian (você).
@@ -18,7 +18,7 @@
       explore: "Explore {n} live reports", gateLine: "Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.",
       back: "Back", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
       carousel: "Live reports carousel", all: "All", sector: "Sector", scope: "Scope", country: "Country", focus: "Test focus",
-      worldwide: "Worldwide", national: "National", local: "Local", global: "Global",
+      worldwide: "Worldwide", national: "National", regional: "Regional", local: "Local", global: "Global",
       status: "{i} of {n}: {name}, {score} out of 100, grade {grade}.", slide: "{i} of {n}: {name}",
       none: "No report matches these filters.", clear: "Clear filters", loading: "Loading live reports…", failed: "The live reports could not be loaded.",
       read: "Read {date}", page: "{n} page", pages: "{n} pages", hint: "Drag, swipe, or use the arrow keys. Select a card to open it.",
@@ -45,7 +45,7 @@
       explore: "Explorar {n} informes en vivo", gateLine: "Análisis reales de sitios públicos, desde GOV.UK hasta la Alcaldía de Bogotá. Solo para ver y compartir.",
       back: "Volver", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
       carousel: "Carrusel de informes en vivo", all: "Todos", sector: "Sector", scope: "Alcance", country: "País", focus: "Tipo de prueba",
-      worldwide: "Mundial", national: "Nacional", local: "Local", global: "Global",
+      worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
       none: "Ningún informe coincide con estos filtros.", clear: "Quitar filtros", loading: "Cargando informes en vivo…", failed: "No se pudieron cargar los informes en vivo.",
       read: "Analizado el {date}", page: "{n} página", pages: "{n} páginas", hint: "Arrastra, desliza o usa las flechas del teclado. Elige una tarjeta para abrirla.",
@@ -72,7 +72,7 @@
       explore: "Explorar {n} relatórios ao vivo", gateLine: "Análises reais de sites públicos, do GOV.UK à Prefeitura de Bogotá. Só para ver e compartilhar.",
       back: "Voltar", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
       carousel: "Carrossel de relatórios ao vivo", all: "Todos", sector: "Setor", scope: "Alcance", country: "País", focus: "Tipo de teste",
-      worldwide: "Mundial", national: "Nacional", local: "Local", global: "Global",
+      worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
       none: "Nenhum relatório corresponde a estes filtros.", clear: "Limpar filtros", loading: "Carregando relatórios ao vivo…", failed: "Não foi possível carregar os relatórios ao vivo.",
       read: "Analisado em {date}", page: "{n} página", pages: "{n} páginas", hint: "Arraste, deslize ou use as setas do teclado. Escolha um cartão para abri-lo.",
@@ -99,7 +99,7 @@
       explore: "{n} Live-Berichte ansehen", gateLine: "Echte Prüfungen öffentlicher Websites, von GOV.UK bis zum Rathaus von Bogotá. Nur ansehen und teilen.",
       back: "Zurück", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
       carousel: "Karussell der Live-Berichte", all: "Alle", sector: "Branche", scope: "Reichweite", country: "Land", focus: "Testart",
-      worldwide: "Weltweit", national: "National", local: "Lokal", global: "Global",
+      worldwide: "Weltweit", national: "National", regional: "Regional", local: "Lokal", global: "Global",
       status: "{i} von {n}: {name}, {score} von 100, Note {grade}.", slide: "{i} von {n}: {name}",
       none: "Kein Bericht passt zu diesen Filtern.", clear: "Filter löschen", loading: "Live-Berichte werden geladen…", failed: "Die Live-Berichte konnten nicht geladen werden.",
       read: "Geprüft am {date}", page: "{n} Seite", pages: "{n} Seiten", hint: "Ziehen, wischen oder Pfeiltasten nutzen. Eine Karte wählen, um sie zu öffnen.",
@@ -126,7 +126,7 @@
       explore: "Explorer {n} rapports en direct", gateLine: "De vraies analyses de sites publics, de GOV.UK à la mairie de Bogotá. Consultation et partage uniquement.",
       back: "Retour", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
       carousel: "Carrousel des rapports en direct", all: "Tous", sector: "Secteur", scope: "Portée", country: "Pays", focus: "Type de test",
-      worldwide: "Mondial", national: "National", local: "Local", global: "Mondial",
+      worldwide: "Mondial", national: "National", regional: "Régional", local: "Local", global: "Mondial",
       status: "{i} sur {n} : {name}, {score} sur 100, note {grade}.", slide: "{i} sur {n} : {name}",
       none: "Aucun rapport ne correspond à ces filtres.", clear: "Effacer les filtres", loading: "Chargement des rapports en direct…", failed: "Les rapports en direct n’ont pas pu être chargés.",
       read: "Analysé le {date}", page: "{n} page", pages: "{n} pages", hint: "Faites glisser, balayez ou utilisez les flèches du clavier. Choisissez une carte pour l’ouvrir.",
@@ -153,7 +153,7 @@
       explore: "Esplora {n} report dal vivo", gateLine: "Analisi reali di siti pubblici, da GOV.UK al comune di Bogotá. Solo visualizzazione e condivisione.",
       back: "Indietro", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
       carousel: "Carosello dei report dal vivo", all: "Tutti", sector: "Settore", scope: "Portata", country: "Paese", focus: "Tipo di test",
-      worldwide: "Mondiale", national: "Nazionale", local: "Locale", global: "Globale",
+      worldwide: "Mondiale", national: "Nazionale", regional: "Regionale", local: "Locale", global: "Globale",
       status: "{i} di {n}: {name}, {score} su 100, voto {grade}.", slide: "{i} di {n}: {name}",
       none: "Nessun report corrisponde a questi filtri.", clear: "Azzera i filtri", loading: "Caricamento dei report dal vivo…", failed: "Non è stato possibile caricare i report dal vivo.",
       read: "Analizzato il {date}", page: "{n} pagina", pages: "{n} pagine", hint: "Trascina, scorri o usa le frecce della tastiera. Scegli una scheda per aprirla.",
@@ -203,7 +203,7 @@
         "Company": "Empresa", "City government": "Gobierno local", "Public agency": "Entidad pública", "Nonprofit": "Sin ánimo de lucro", "Intergovernmental": "Intergubernamental",
         "Open-source project": "Proyecto de código abierto", "State-owned company": "Empresa estatal", "University": "Universidad", "National government": "Gobierno nacional",
         "Public broadcaster": "Medio público", "Regional government": "Gobierno regional",
-        "Latin America": "América Latina", "North America": "Norteamérica", "Europe": "Europa", "Middle East": "Medio Oriente", "Global": "Global"
+        "Latin America": "América Latina", "North America": "Norteamérica", "Europe": "Europa", "Middle East": "Medio Oriente", "Asia-Pacific": "Asia-Pacífico", "Africa": "África", "Caribbean": "Caribe", "Global": "Global"
       }
     },
     pt: {
@@ -218,7 +218,7 @@
         "Company": "Empresa", "City government": "Prefeitura", "Public agency": "Órgão público", "Nonprofit": "Sem fins lucrativos", "Intergovernmental": "Intergovernamental",
         "Open-source project": "Projeto de código aberto", "State-owned company": "Empresa estatal", "University": "Universidade", "National government": "Governo nacional",
         "Public broadcaster": "Emissora pública", "Regional government": "Governo regional",
-        "Latin America": "América Latina", "North America": "América do Norte", "Europe": "Europa", "Middle East": "Oriente Médio", "Global": "Global"
+        "Latin America": "América Latina", "North America": "América do Norte", "Europe": "Europa", "Middle East": "Oriente Médio", "Asia-Pacific": "Ásia-Pacífico", "Africa": "África", "Caribbean": "Caribe", "Global": "Global"
       }
     },
     de: {
@@ -233,7 +233,7 @@
         "Company": "Unternehmen", "City government": "Stadtverwaltung", "Public agency": "Behörde", "Nonprofit": "Gemeinnützig", "Intergovernmental": "Zwischenstaatlich",
         "Open-source project": "Open-Source-Projekt", "State-owned company": "Staatsunternehmen", "University": "Universität", "National government": "Nationale Regierung",
         "Public broadcaster": "Öffentlich-rechtlicher Sender", "Regional government": "Regionalregierung",
-        "Latin America": "Lateinamerika", "North America": "Nordamerika", "Europe": "Europa", "Middle East": "Naher Osten", "Global": "Global"
+        "Latin America": "Lateinamerika", "North America": "Nordamerika", "Europe": "Europa", "Middle East": "Naher Osten", "Asia-Pacific": "Asien-Pazifik", "Africa": "Afrika", "Caribbean": "Karibik", "Global": "Global"
       }
     },
     fr: {
@@ -248,7 +248,7 @@
         "Company": "Entreprise", "City government": "Municipalité", "Public agency": "Organisme public", "Nonprofit": "Association", "Intergovernmental": "Intergouvernemental",
         "Open-source project": "Projet open source", "State-owned company": "Entreprise publique", "University": "Université", "National government": "Gouvernement national",
         "Public broadcaster": "Média public", "Regional government": "Gouvernement régional",
-        "Latin America": "Amérique latine", "North America": "Amérique du Nord", "Europe": "Europe", "Middle East": "Moyen-Orient", "Global": "Mondial"
+        "Latin America": "Amérique latine", "North America": "Amérique du Nord", "Europe": "Europe", "Middle East": "Moyen-Orient", "Asia-Pacific": "Asie-Pacifique", "Africa": "Afrique", "Caribbean": "Caraïbes", "Global": "Mondial"
       }
     },
     it: {
@@ -263,7 +263,7 @@
         "Company": "Azienda", "City government": "Comune", "Public agency": "Ente pubblico", "Nonprofit": "Non profit", "Intergovernmental": "Intergovernativo",
         "Open-source project": "Progetto open source", "State-owned company": "Azienda statale", "University": "Università", "National government": "Governo nazionale",
         "Public broadcaster": "Emittente pubblica", "Regional government": "Governo regionale",
-        "Latin America": "America Latina", "North America": "Nord America", "Europe": "Europa", "Middle East": "Medio Oriente", "Global": "Globale"
+        "Latin America": "America Latina", "North America": "Nord America", "Europe": "Europa", "Middle East": "Medio Oriente", "Asia-Pacific": "Asia-Pacifico", "Africa": "Africa", "Caribbean": "Caraibi", "Global": "Globale"
       }
     }
   };
@@ -277,11 +277,11 @@
   const NAME_TAGS = new Set(["hosting", "tech", "analytics", "consent", "lang"]);
 
   const SECTOR_T = {
-    es: { government: "Gobierno", health: "Salud pública", media: "Noticias y medios", banking: "Banca y finanzas", fintech: "Fintech", transit: "Transporte y movilidad", opensource: "Código abierto", devdocs: "Documentación técnica", science: "Espacio y ciencia", highered: "Educación superior", education: "Educación", humanitarian: "Humanitario", international: "Organismos internacionales", culture: "Museos, bibliotecas y cultura", knowledge: "Conocimiento abierto", retail: "Comercio y e-commerce", telecom: "Telecomunicaciones", energy: "Energía y servicios públicos", travel: "Viajes y turismo", airline: "Aerolínea", insurance: "Seguros y salud", infrastructure: "Infraestructura de internet", standards: "Estándares web", sports: "Deporte y recreación", apps: "Apps y domicilios", rights: "Derechos humanos y digitales" },
-    pt: { government: "Governo", health: "Saúde pública", media: "Notícias e mídia", banking: "Bancos e finanças", fintech: "Fintech", transit: "Transporte e mobilidade", opensource: "Código aberto", devdocs: "Documentação técnica", science: "Espaço e ciência", highered: "Ensino superior", education: "Educação", humanitarian: "Humanitário", international: "Organismos internacionais", culture: "Museus, bibliotecas e cultura", knowledge: "Conhecimento aberto", retail: "Varejo e e-commerce", telecom: "Telecomunicações", energy: "Energia e serviços públicos", travel: "Viagens e turismo", airline: "Companhia aérea", insurance: "Seguros e planos de saúde", infrastructure: "Infraestrutura de internet", standards: "Padrões web", sports: "Esporte e lazer", apps: "Apps e delivery", rights: "Direitos humanos e digitais" },
-    de: { government: "Regierung", health: "Öffentliche Gesundheit", media: "Nachrichten und Medien", banking: "Banken und Finanzen", fintech: "Fintech", transit: "Verkehr und Mobilität", opensource: "Open Source", devdocs: "Entwicklerdokumentation", science: "Raumfahrt und Wissenschaft", highered: "Hochschulen", education: "Bildung", humanitarian: "Humanitäre Hilfe", international: "Internationale Organisationen", culture: "Museen, Bibliotheken und Kultur", knowledge: "Freies Wissen", retail: "Handel und E-Commerce", telecom: "Telekommunikation", energy: "Energie und Versorgung", travel: "Reisen und Tourismus", airline: "Fluggesellschaft", insurance: "Versicherungen und Krankenkassen", infrastructure: "Internet-Infrastruktur", standards: "Webstandards", sports: "Sport und Freizeit", apps: "Apps und Lieferdienste", rights: "Menschen- und Digitalrechte" },
-    fr: { government: "Gouvernement", health: "Santé publique", media: "Presse et médias", banking: "Banque et finance", fintech: "Fintech", transit: "Transports et mobilité", opensource: "Open source", devdocs: "Documentation développeurs", science: "Espace et science", highered: "Enseignement supérieur", education: "Éducation", humanitarian: "Humanitaire", international: "Organisations internationales", culture: "Musées, bibliothèques et culture", knowledge: "Savoir ouvert", retail: "Commerce et e-commerce", telecom: "Télécoms", energy: "Énergie et services publics", travel: "Voyage et tourisme", airline: "Compagnie aérienne", insurance: "Assurance et santé", infrastructure: "Infrastructure internet", standards: "Standards du web", sports: "Sport et loisirs", apps: "Applis et livraison", rights: "Droits humains et numériques" },
-    it: { government: "Governo", health: "Sanità pubblica", media: "Notizie e media", banking: "Banche e finanza", fintech: "Fintech", transit: "Trasporti e mobilità", opensource: "Open source", devdocs: "Documentazione tecnica", science: "Spazio e scienza", highered: "Università", education: "Istruzione", humanitarian: "Umanitario", international: "Organizzazioni internazionali", culture: "Musei, biblioteche e cultura", knowledge: "Conoscenza aperta", retail: "Retail ed e-commerce", telecom: "Telecomunicazioni", energy: "Energia e servizi pubblici", travel: "Viaggi e turismo", airline: "Compagnia aerea", insurance: "Assicurazioni e sanità", infrastructure: "Infrastruttura internet", standards: "Standard web", sports: "Sport e tempo libero", apps: "App e consegne", rights: "Diritti umani e digitali" }
+    es: { government: "Gobierno", health: "Salud pública", media: "Noticias y medios", banking: "Banca y finanzas", fintech: "Fintech", transit: "Transporte y movilidad", opensource: "Código abierto", devdocs: "Documentación técnica", science: "Espacio y ciencia", highered: "Educación superior", education: "Educación", humanitarian: "Humanitario", international: "Organismos internacionales", culture: "Museos, bibliotecas y cultura", knowledge: "Conocimiento abierto", retail: "Comercio y e-commerce", telecom: "Telecomunicaciones", energy: "Energía y servicios públicos", travel: "Viajes y turismo", airline: "Aerolínea", insurance: "Seguros y salud", infrastructure: "Infraestructura de internet", standards: "Estándares web", sports: "Deporte y recreación", apps: "Apps y domicilios", rights: "Derechos humanos y digitales", environment: "Medio ambiente y clima" },
+    pt: { government: "Governo", health: "Saúde pública", media: "Notícias e mídia", banking: "Bancos e finanças", fintech: "Fintech", transit: "Transporte e mobilidade", opensource: "Código aberto", devdocs: "Documentação técnica", science: "Espaço e ciência", highered: "Ensino superior", education: "Educação", humanitarian: "Humanitário", international: "Organismos internacionais", culture: "Museus, bibliotecas e cultura", knowledge: "Conhecimento aberto", retail: "Varejo e e-commerce", telecom: "Telecomunicações", energy: "Energia e serviços públicos", travel: "Viagens e turismo", airline: "Companhia aérea", insurance: "Seguros e planos de saúde", infrastructure: "Infraestrutura de internet", standards: "Padrões web", sports: "Esporte e lazer", apps: "Apps e delivery", rights: "Direitos humanos e digitais", environment: "Meio ambiente e clima" },
+    de: { government: "Regierung", health: "Öffentliche Gesundheit", media: "Nachrichten und Medien", banking: "Banken und Finanzen", fintech: "Fintech", transit: "Verkehr und Mobilität", opensource: "Open Source", devdocs: "Entwicklerdokumentation", science: "Raumfahrt und Wissenschaft", highered: "Hochschulen", education: "Bildung", humanitarian: "Humanitäre Hilfe", international: "Internationale Organisationen", culture: "Museen, Bibliotheken und Kultur", knowledge: "Freies Wissen", retail: "Handel und E-Commerce", telecom: "Telekommunikation", energy: "Energie und Versorgung", travel: "Reisen und Tourismus", airline: "Fluggesellschaft", insurance: "Versicherungen und Krankenkassen", infrastructure: "Internet-Infrastruktur", standards: "Webstandards", sports: "Sport und Freizeit", apps: "Apps und Lieferdienste", rights: "Menschen- und Digitalrechte", environment: "Umwelt und Klima" },
+    fr: { government: "Gouvernement", health: "Santé publique", media: "Presse et médias", banking: "Banque et finance", fintech: "Fintech", transit: "Transports et mobilité", opensource: "Open source", devdocs: "Documentation développeurs", science: "Espace et science", highered: "Enseignement supérieur", education: "Éducation", humanitarian: "Humanitaire", international: "Organisations internationales", culture: "Musées, bibliothèques et culture", knowledge: "Savoir ouvert", retail: "Commerce et e-commerce", telecom: "Télécoms", energy: "Énergie et services publics", travel: "Voyage et tourisme", airline: "Compagnie aérienne", insurance: "Assurance et santé", infrastructure: "Infrastructure internet", standards: "Standards du web", sports: "Sport et loisirs", apps: "Applis et livraison", rights: "Droits humains et numériques", environment: "Environnement et climat" },
+    it: { government: "Governo", health: "Sanità pubblica", media: "Notizie e media", banking: "Banche e finanza", fintech: "Fintech", transit: "Trasporti e mobilità", opensource: "Open source", devdocs: "Documentazione tecnica", science: "Spazio e scienza", highered: "Università", education: "Istruzione", humanitarian: "Umanitario", international: "Organizzazioni internazionali", culture: "Musei, biblioteche e cultura", knowledge: "Conoscenza aperta", retail: "Retail ed e-commerce", telecom: "Telecomunicazioni", energy: "Energia e servizi pubblici", travel: "Viaggi e turismo", airline: "Compagnia aerea", insurance: "Assicurazioni e sanità", infrastructure: "Infrastruttura internet", standards: "Standard web", sports: "Sport e tempo libero", apps: "App e consegne", rights: "Diritti umani e digitali", environment: "Ambiente e clima" }
   };
   const FOCUS_T = {
     es: { seo: "SEO", geo: "GEO · búsqueda con IA", schema: "Datos estructurados", a11y: "Accesibilidad", security: "Encabezados de seguridad", performance: "Rendimiento · Core Web Vitals", analytics: "Analítica y consentimiento", i18n: "Internacionalización" },
@@ -508,7 +508,7 @@
       const totals = new Map();
       state.all.forEach((r) => [].concat(fn(r)).filter(Boolean).forEach((v) => totals.set(v, (totals.get(v) || 0) + 1)));
       let values = [...totals.keys()];
-      if (group === "scope") values = ["worldwide", "national", "local"].filter((v) => totals.has(v));
+      if (group === "scope") values = ["worldwide", "national", "regional", "local"].filter((v) => totals.has(v));
       else values.sort((a, b) => totals.get(b) - totals.get(a) || String(valueLabel(group, a)).localeCompare(valueLabel(group, b)));
       const live = new Map();
       state.all.forEach((r) => { if (matches(r, group)) [].concat(fn(r)).filter(Boolean).forEach((v) => live.set(v, (live.get(v) || 0) + 1)); });
@@ -549,6 +549,7 @@
       const shown = state.list.includes(r);
       if (el.hidden === shown) lastD.delete(r.id);
       el.hidden = !shown;
+      if (!shown) el.classList.remove("is-active");
     });
     empty.hidden = state.list.length > 0;
     renderFilters();
