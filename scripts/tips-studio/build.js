@@ -10,7 +10,15 @@
    no alt text outside Pinterest, so buffer/alt-text.csv lists it per post to paste in the composer.
    node scripts/tips-studio/build.js --source runs --start 2026-10-28 --every 4
      renders the real-run scorecards from runs.js, in their listed order, one every 4 days.
-   --source runs-100 loads runs-100.js the same way; its batch defaults to the module name. */
+   --source runs-100 loads runs-100.js the same way; its batch defaults to the module name.
+   Every clip speaks its title and action in a neural voice (edge-tts) over the launch reels' bed
+   (media/url-review-demos/bed.wav).
+   Six languages, one per clip in turn (en, es, pt, de, fr, it; woman, then man):
+     node scripts/tips-studio/build.js --source runs-100 --export-strings
+     python3 scripts/tips-studio/translate.py media/social-posts/runs-100
+     node scripts/tips-studio/build.js --source runs-100 --rotate [--shard 0/2]
+   --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
+   and leaves the stills, calendar, and Buffer CSVs alone. */
 
 const fs = require("fs");
 const path = require("path");
@@ -18,6 +26,23 @@ const { spawnSync } = require("child_process");
 const { chromium } = require("playwright");
 const ROOT = path.resolve(__dirname, "../..");
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
+const FFPROBE = FFMPEG.replace(/ffmpeg$/, "ffprobe");
+// Microsoft neural voices through edge-tts (pip install edge-tts): warm and upbeat, never the Piper ones.
+const EDGE_TTS = process.env.EDGE_TTS || "/tmp/review-tts/bin/edge-tts";
+const VOICES = [
+  ["en-w", "en-US-AvaMultilingualNeural"], ["en-m", "en-US-AndrewMultilingualNeural"],
+  ["es-w", "es-ES-XimenaNeural"], ["es-m", "es-ES-AlvaroNeural"],
+  ["pt-w", "pt-BR-ThalitaMultilingualNeural"], ["pt-m", "pt-BR-AntonioNeural"],
+  ["de-w", "de-DE-SeraphinaMultilingualNeural"], ["de-m", "de-DE-FlorianMultilingualNeural"],
+  ["fr-w", "fr-FR-VivienneMultilingualNeural"], ["fr-m", "fr-FR-RemyMultilingualNeural"],
+  ["it-w", "it-IT-IsabellaNeural"], ["it-m", "it-IT-GiuseppeMultilingualNeural"]
+].map(([file, voice]) => ({ file, voice, lang: file.slice(0, 2) }));
+const BED = path.join(ROOT, "media/url-review-demos/bed.wav");
+const LANGS = ["en", "es", "pt", "de", "fr", "it"];
+const LOCALES = { en: "en-US", es: "es-ES", pt: "pt-BR", de: "de-DE", fr: "fr-FR", it: "it-IT" };
+const UI_EN = { tryThis: "Try this", tip: "Tip", guided: "Guided tour", never: "Never runs your tests",
+  end: "Let your page do the talking.", endNote: "How a public-page review works, step by step." };
+const VOICE_AT = 0.7;
 
 function args() {
   const out = {};
@@ -101,6 +126,59 @@ function altText(tip) {
   return head.length <= 300 ? head : head.slice(0, 299).replace(/\s+\S*$/, "") + "…";
 }
 
+// Card text worth translating: code lines, ids, tags and check marks stay as they are.
+const KEEP_KEYS = new Set(["id", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value"]);
+function strings(node, at, out) {
+  if (typeof node === "string") { if (/[a-z]{2}/i.test(node) && !MARK_WORDS[node]) out[at] = node; }
+  else if (node && typeof node === "object") Object.keys(node).forEach((key) => { if (!KEEP_KEYS.has(key)) strings(node[key], at ? at + "." + key : key, out); });
+  return out;
+}
+function setPath(obj, at, value) { const keys = at.split("."); const last = keys.pop(); keys.reduce((o, k) => o[k], obj)[last] = value; }
+
+function voiceFor(index) {
+  const lang = LANGS[index % LANGS.length];
+  return VOICES.find((v) => v.file === lang + "-" + (Math.floor(index / LANGS.length) % 2 ? "m" : "w"));
+}
+
+function localize(tip, index, total, i18n) {
+  const voice = voiceFor(index);
+  const tr = voice.lang === "en" ? {} : i18n.clips[tip.id] || {};
+  const local = JSON.parse(JSON.stringify(tip));
+  const cat = Object.assign({}, studio.CATS[tip.cat]);
+  Object.keys(tr).forEach((at) => { if (at === "cat.label") cat.label = tr[at]; else if (!at.startsWith("cap.")) setPath(local, at, tr[at]); });
+  const cap = studio.captions(local, index, total);
+  const ui = voice.lang === "en" ? {} : Object.assign({}, i18n.ui[voice.lang], { locale: LOCALES[voice.lang] });
+  return { tip: local, cat, ui, voice, lang: voice.lang,
+    speech: studio.plainTitle(local) + " " + local.action,
+    tiktok: cap.tiktok, youtubeTitle: cap.youtubeTitle, youtube: tr["cap.youtube"] || cap.youtube };
+}
+
+function exportStrings(all) {
+  const clips = {};
+  all.forEach((tip, index) => {
+    const lang = voiceFor(index).lang;
+    const out = strings(tip, "", {});
+    out["cat.label"] = studio.CATS[tip.cat].label;
+    out["cap.youtube"] = studio.captions(tip, index, all.length).youtube;
+    clips[tip.id] = { lang, strings: out };
+  });
+  fs.writeFileSync(path.join(OUT, "i18n-src.json"), JSON.stringify({ ui: UI_EN, clips }, null, 1));
+  console.log("wrote", Object.keys(clips).length, "clips to", path.relative(ROOT, path.join(OUT, "i18n-src.json")));
+}
+
+function seconds(file) {
+  return parseFloat(spawnSync(FFPROBE, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]).stdout) || 0;
+}
+
+function speak(voice, text, file) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const run = spawnSync(EDGE_TTS, ["--voice", voice.voice, "--rate=+6%", "--pitch=+2Hz", "--text", text, "--write-media", file], { encoding: "utf8" });
+    if (run.status === 0 && seconds(file) > 0.5) return seconds(file);
+    spawnSync("sleep", [String(3 + attempt * 5)]);
+  }
+  throw new Error("voice failed for " + voice.file);
+}
+
 async function renderStill(page, tip, fmt, index, total, file) {
   const size = fmt === "feed" ? { width: 1080, height: 1350 } : { width: 1080, height: 1920 };
   await page.setViewportSize(size);
@@ -109,10 +187,14 @@ async function renderStill(page, tip, fmt, index, total, file) {
   await page.locator("#c").screenshot({ path: file, type: "jpeg", quality: 92 });
 }
 
-async function renderClip(page, tip, index, total, file, cover) {
+async function renderClip(page, tip, index, total, file, cover, said) {
+  said = said || { tip, cat: studio.CATS[tip.cat], ui: {}, voice: VOICES[index % 2], speech: studio.plainTitle(tip) + " " + tip.action };
   await page.setViewportSize({ width: 1080, height: 1920 });
-  await page.evaluate(([t, c, i, n, h]) => window.paint(t, c, "clip", i, n, h), [tip, studio.CATS[tip.cat], index, total, GUIDE_HOST]);
+  await page.evaluate(([t, c, i, n, h, u]) => window.paint(t, c, "clip", i, n, h, u), [said.tip, said.cat, index, total, GUIDE_HOST, said.ui]);
   const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "tip-"));
+  const wav = path.join(tmp, "voice.mp3");
+  const length = Math.max(SECONDS, VOICE_AT + speak(said.voice, said.speech, wav) + 0.9);
+  const at = Math.round(VOICE_AT * 1000);
   const frames = FPS * SECONDS;
   for (let f = 0; f < frames; f += 1) {
     await page.evaluate((s) => window.seek(s), f / FPS);
@@ -121,9 +203,15 @@ async function renderClip(page, tip, index, total, file, cover) {
   fs.copyFileSync(path.join(tmp, String(Math.round(FPS * 7.5)).padStart(4, "0") + ".jpg"), cover);
   // Buffer previews and TikTok's default cover use the first frame, so it shows the finished card.
   fs.copyFileSync(cover, path.join(tmp, "0000.jpg"));
+  // Same bed level, fades and loudness as the launch reels in post-studio; a long line holds the end card.
   const run = spawnSync(FFMPEG, ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", path.join(tmp, "%04d.jpg"),
-    "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100", "-shortest",
-    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "96k", file]);
+    "-i", wav, "-stream_loop", "-1", "-i", BED, "-filter_complex",
+    "[0:v]tpad=stop_mode=clone:stop_duration=" + (length - SECONDS).toFixed(3) + "[v];" +
+    "[1:a]aformat=sample_rates=48000:channel_layouts=stereo,adelay=" + at + "|" + at + ",apad[va];" +
+    "[2:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=0.16,afade=t=in:d=1.2,afade=t=out:st=" + (length - 1.6).toFixed(3) + ":d=1.6[ba];" +
+    "[va][ba]amix=inputs=2:duration=first:normalize=0,atrim=0:" + length.toFixed(3) + ",loudnorm=I=-15:TP=-1.5:LRA=11,aresample=48000[a]",
+    "-map", "[v]", "-map", "[a]", "-t", length.toFixed(3),
+    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k", file]);
   fs.rmSync(tmp, { recursive: true, force: true });
   if (run.status !== 0) throw new Error("ffmpeg failed for " + tip.id + ": " + run.stderr);
 }
@@ -132,13 +220,35 @@ async function renderClip(page, tip, index, total, file, cover) {
   const rand = rng(SEED);
   const all = RUNS ? studio.TIPS.slice() : order(studio.TIPS, rand);
   const total = all.length;
-  const tips = PICK ? all.filter((t) => PICK.includes(t.id)) : all;
+  let tips = PICK ? all.filter((t) => PICK.includes(t.id)) : all;
+  if (opts.shard) { const [k, n] = String(opts.shard).split("/").map(Number); tips = tips.filter((t, i) => i % n === k); }
+  if (opts["export-strings"]) { fs.mkdirSync(OUT, { recursive: true }); exportStrings(all); return; }
   for (const dir of ["feed", "story", "clip", "cover"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 
   const browser = await chromium.launch();
   const page = await browser.newPage({ deviceScaleFactor: 1 });
   await page.goto("file://" + path.join(__dirname, "frame.html"));
   await page.evaluate(() => document.fonts.ready);
+
+  if (opts.rotate) {
+    const i18nFile = path.join(OUT, "i18n.json");
+    const i18n = fs.existsSync(i18nFile) ? JSON.parse(fs.readFileSync(i18nFile, "utf8")) : { ui: {}, clips: {} };
+    fs.mkdirSync(path.join(OUT, "voiced", "cover"), { recursive: true });
+    for (const tip of tips) {
+      const index = all.indexOf(tip);
+      const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
+      const file = path.join(OUT, "voiced", slug + ".mp4");
+      if (opts.resume && fs.existsSync(file.replace(/\.mp4$/, ".json"))) continue;
+      if (voiceFor(index).lang !== "en" && !(i18n.clips[tip.id] && i18n.ui[voiceFor(index).lang])) { console.log("untranslated", slug); continue; }
+      const said = localize(tip, index, total, i18n);
+      await renderClip(page, tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said);
+      fs.writeFileSync(file.replace(/\.mp4$/, ".json"), JSON.stringify({ slug, lang: said.lang, voice: said.voice.file,
+        speech: said.speech, tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube }, null, 1));
+      console.log("voiced", slug, said.voice.file);
+    }
+    await browser.close();
+    return;
+  }
 
   for (const tip of opts["schedule-only"] ? [] : tips) {
     const index = all.indexOf(tip);
