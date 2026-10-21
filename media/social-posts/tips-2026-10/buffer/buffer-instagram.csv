@@ -7,7 +7,7 @@ Try this: Search your templates for <img without width. Add the intrinsic size t
 
 Full guide: link in bio.
 
-#WebPerformance #CLS #CoreWebVitals #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg","tips","2026-10-26 12:20"
+#WebPerformance #CLS #CoreWebVitals #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg","tips","2026-10-26 11:30"
 "Release day: does the page still read right?
 
 Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.
@@ -16,7 +16,7 @@ Try this: Add a five-minute public-page read to your release checklist, after de
 
 Full guide: link in bio.
 
-#QA #ReleaseManagement #DevOps #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg","tips","2026-10-27 16:00"
+#QA #ReleaseManagement #DevOps #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg","tips","2026-10-26 17:20"
 "We reviewed ourselves. Security: 54.
 
 Our own site scored 86 overall, and security was the weakest area. The six fixes at the top of the list were all response headers.
@@ -25,7 +25,7 @@ Try this: Run the same headers check on your site. The first fixes are usually c
 
 Full guide: link in bio.
 
-#QA #WebSecurity #BuildInPublic #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg","tips","2026-10-28 11:20"
+#QA #WebSecurity #BuildInPublic #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg","tips","2026-10-27 11:10"
 "The slowest page is rarely the home page.
 
 Teams tune the home page and forget the pages people reach from search. Measure every page you link to, in the order a visitor would open them.
@@ -34,7 +34,7 @@ Try this: List your five most visited pages from analytics and time each one. Fi
 
 Full guide: link in bio.
 
-#WebPerformance #CoreWebVitals #QA #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg","tips","2026-10-29 14:20"
+#WebPerformance #CoreWebVitals #QA #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg","tips","2026-10-27 16:45"
 "Contrast is math, not taste.
 
 WCAG AA asks for a contrast ratio of at least 4.5 to 1 for body text and 3 to 1 for large text. Light grey on white rarely makes it.
@@ -43,7 +43,7 @@ Try this: Check your muted text colour against its background in DevTools. The c
 
 Full guide: link in bio.
 
-#Accessibility #Design #WCAG #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg","tips","2026-10-30 14:10"
+#Accessibility #Design #WCAG #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg","tips","2026-10-28 12:10"
 "Tag campaign links the same way, every time.
 
 LinkedIn, linkedin and Linked-In become three sources in your reports. Pick one spelling and keep it.
@@ -52,7 +52,7 @@ Try this: Make a shared sheet with the allowed sources and mediums. Link it from
 
 Full guide: link in bio.
 
-#Analytics #GA4 #UTM #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg","tips","2026-10-31 14:00"
+#Analytics #GA4 #UTM #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg","tips","2026-10-28 16:40"
 "Stop browsers guessing file types.
 
 Without nosniff, a browser may treat an uploaded text file as a script. One header turns that guessing off.
@@ -61,7 +61,7 @@ Try this: Add it next to HSTS in the same rule, so both ship together.
 
 Full guide: link in bio.
 
-#WebSecurity #AppSec #HTTPHeaders #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/07-nosniff.jpg","tips","2026-11-01 19:15"
+#WebSecurity #AppSec #HTTPHeaders #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/07-nosniff.jpg","tips","2026-10-29 14:05"
 "Every input needs a name.
 
 A placeholder disappears as soon as someone types, and screen readers may not announce it. A real label stays.
@@ -70,7 +70,7 @@ Try this: Tab through your contact form with a screen reader on. Each field shou
 
 Full guide: link in bio.
 
-#Accessibility #a11y #WCAG #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg","tips","2026-11-02 16:20"
+#Accessibility #a11y #WCAG #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg","tips","2026-10-29 17:30"
 "llms.txt: a short brief for answer engines.
 
 A plain text file at your root that says what the site is, which pages matter, and how to contact you. Short beats complete.
@@ -79,7 +79,7 @@ Try this: Write five lines about your site the way you would brief a new colleag
 
 Full guide: link in bio.
 
-#GEO #llmstxt #AISearch #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg","tips","2026-11-03 13:55"
+#GEO #llmstxt #AISearch #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg","tips","2026-10-30 12:05"
 "Put the mouse away. Can you reach everything?
 
 Menus, dialogs, and cookie banners are where keyboard users get stuck. Tab, Shift+Tab, Enter, and Escape should be enough.
@@ -88,7 +88,7 @@ Try this: Do your main task on your own site with the keyboard only. Write down 
 
 Full guide: link in bio.
 
-#Accessibility #a11y #UX #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg","tips","2026-11-04 14:50"
+#Accessibility #a11y #UX #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg","tips","2026-10-30 16:55"
 "One header. 180 days of HTTPS only.
 
 HSTS tells browsers to never load your site over plain HTTP again. It takes one line of configuration on most hosts.
@@ -97,7 +97,7 @@ Try this: Run curl -sI on your domain and look for strict-transport-security. If
 
 Full guide: link in bio.
 
-#WebSecurity #HTTPS #DevOps #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg","tips","2026-11-05 11:15"
+#WebSecurity #HTTPS #DevOps #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg","tips","2026-10-31 11:05"
 "One h1 per page, saying what the page is.
 
 Logos and slogans often grab the h1. Search engines and screen readers both use it to understand the page.
@@ -106,7 +106,7 @@ Try this: Read only the h1 of your top ten pages. Would a stranger know what eac
 
 Full guide: link in bio.
 
-#SEO #Accessibility #Content #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg","tips","2026-11-06 17:25"
+#SEO #Accessibility #Content #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg","tips","2026-10-31 17:55"
 "Consent means before, too.
 
 The most common analytics finding is a tag that fires before the visitor chooses. Check what loads on the first paint, not only after Accept.
@@ -115,7 +115,7 @@ Try this: Open your site in a private window with DevTools on the Network tab. F
 
 Full guide: link in bio.
 
-#Analytics #Privacy #ConsentMode #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg","tips","2026-11-07 18:30"
+#Analytics #Privacy #ConsentMode #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg","tips","2026-11-01 13:50"
 "Your share card is a first impression.
 
 Without og:image and og:title, every link to your site shows up as a grey box in chats and feeds.
@@ -124,7 +124,7 @@ Try this: Paste your link into a private chat with yourself. What people see the
 
 Full guide: link in bio.
 
-#SEO #OpenGraph #Marketing #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg","tips","2026-11-08 12:55"
+#SEO #OpenGraph #Marketing #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg","tips","2026-11-01 16:15"
 "Start your CSP in Report-Only.
 
 An enforced policy written on day one breaks things. Report-Only shows what would be blocked, so you can enforce with confidence a week later.
@@ -133,7 +133,7 @@ Try this: Ship the Report-Only header this week. Read the reports next week befo
 
 Full guide: link in bio.
 
-#WebSecurity #CSP #AppSec #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg","tips","2026-11-09 17:40"
+#WebSecurity #CSP #AppSec #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg","tips","2026-11-02 13:30"
 "Write the test list before the test code.
 
 Picking a framework is the second question. The first is what this page does and what a real person would try on it.
@@ -142,7 +142,7 @@ Try this: Before your next automation sprint, write ten cases in plain language.
 
 Full guide: link in bio.
 
-#QA #TestAutomation #SoftwareTesting #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg","tips","2026-11-10 12:45"
+#QA #TestAutomation #SoftwareTesting #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg","tips","2026-11-02 16:10"
 "robots.txt decides who may read you.
 
 AI crawlers each have their own user agent. Blocking them by accident and allowing them on purpose are both one line.
@@ -151,7 +151,7 @@ Try this: Open yoursite.com/robots.txt today. Check that it says what you mean f
 
 Full guide: link in bio.
 
-#GEO #AISearch #robotsTxt #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg","tips","2026-11-11 15:20"
+#GEO #AISearch #robotsTxt #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg","tips","2026-11-03 12:35"
 "A broken link is a test you forgot to write.
 
 Links rot quietly. A small check on every release keeps the 404s out of your visitors' way.
@@ -160,7 +160,7 @@ Try this: Collect the links from your footer and navigation. Assert each one ans
 
 Full guide: link in bio.
 
-#QA #Playwright #TestAutomation #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/18-broken-links.jpg","tips","2026-11-12 19:50"
+#QA #Playwright #TestAutomation #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/18-broken-links.jpg","tips","2026-11-03 18:50"
 "Measure the action, not just the visit.
 
 Page views tell you someone arrived. An event on the form, the download, or the signup tells you whether the page worked.
@@ -169,7 +169,7 @@ Try this: Pick the one action each key page exists for. Make sure an event fires
 
 Full guide: link in bio.
 
-#Analytics #GA4 #CRO #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg","tips","2026-11-13 14:15"
+#Analytics #GA4 #CRO #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg","tips","2026-11-04 12:15"
 "AI search reads your HTML, not your app.
 
 Many answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.
@@ -178,7 +178,7 @@ Try this: View source on your home page. Can you find what you sell and who it i
 
 Full guide: link in bio.
 
-#GEO #AISearch #SEO #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg","tips","2026-11-14 16:05"
+#GEO #AISearch #SEO #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg","tips","2026-11-04 17:25"
 "One page, one canonical.
 
 When the same content answers at several addresses, ranking signals split between them. Tell search engines which address is the real one.
@@ -187,4 +187,4 @@ Try this: Open your top page with and without a trailing slash and ?utm_ tags. B
 
 Full guide: link in bio.
 
-#SEO #TechnicalSEO #WebDev #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg","tips","2026-11-15 18:25"
+#SEO #TechnicalSEO #WebDev #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg","tips","2026-11-05 13:50"
