@@ -88,7 +88,7 @@ def live_section():
         f"As of {data['generatedAt']}, the series holds {data['count']} public sites in {len(data['sectors'])} sectors, each read once by QA-lab URL Review "
         f"(up to {max(r.get('pages', 0) for r in rows)} pages). Average overall score {avg['overall']}; area averages: {areas}. "
         "Reports are view and share only; each link opens one report with its six area scores and findings. "
-        "A score is a snapshot of one public read, not a certification.",
+        "A score is a snapshot of one public analysis, not a certification.",
         "",
         "Site | Sector | Scope | Place | Read | Overall | Report",
     ]

@@ -555,12 +555,12 @@
     if ((obs.scripts || 0) > 12) advice.push(["Budget the scripts", obs.scripts + " external scripts were referenced. Defer the ones that are not needed for the first view."]);
     if ((obs.ms || 0) > 800) advice.push(["Watch the first response", "This document took " + obs.ms + " ms. Keep that path under a budget you can re-check."]);
     if (!advice.length) advice.push(["Keep the proposal separate from a run", "These cases are a plan. Run them later in a browser you control, with accounts the owner issued."]);
-    advice.push(["This is a snapshot", "The read does not certify that the site is safe, fast, or compliant."]);
+    advice.push(["This is a snapshot", "The review does not certify that the site is safe, fast, or compliant."]);
     const adviceHtml = advice.slice(0, 4).map(([title, body]) => "<article><strong>" + title + "</strong><span>" + esc(body) + "</span></article>").join("");
     document.getElementById("report-visuals").innerHTML =
-      '<article class="card"><h2>Response time across the pages analyzed</h2><p class="muted">Milliseconds, in the order the pages were opened. One read, not a history of earlier days.</p>' + times + "</article>" +
+      '<article class="card"><h2>Response time across the pages analyzed</h2><p class="muted">Milliseconds, in the order the pages were opened. One review, not a history of earlier days.</p>' + times + "</article>" +
       '<article class="card"><h2>Public marks on the first response</h2><div class="ticks">' + ticks + "</div></article>" +
-      '<article class="card"><h2>Technology groups in this read</h2>' + groupBars + "</article>" +
+      '<article class="card"><h2>Technology groups in this review</h2>' + groupBars + "</article>" +
       '<article class="card"><h2>Practices worth implementing</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString() : "";
     document.getElementById("report-cover").innerHTML =
@@ -698,7 +698,7 @@
         '<p class="meta-line">' + fadeText(item.evidence, paid) + "</p>" +
         (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
         '<p class="meta-line">Effort: ' + esc(item.effort) + (item.count > 1 ? " · " + item.count + " places" : "") + "</p></div></li>").join("") + "</ol>"
-      : '<p class="muted">Nothing fails or is at risk in the checks this read can measure.</p>';
+      : '<p class="muted">Nothing fails or is at risk in the checks this review can measure.</p>';
   }
 
   function cut(text, max) {
@@ -1031,7 +1031,7 @@
     const missing = (kit.headers || []).filter((item) => item.missing);
     const items = [
       ["Security headers", missing.length ? missing.length + " missing headers, written for " + (kit.hosting || "Netlify, Vercel, nginx, Apache, and Firebase") + "." : "All headers are already sent. The files still carry the current set."],
-      ["Content-Security-Policy", "A Report-Only policy built from the " + ((kit.csp || "").match(/https:\/\//g) || []).length + " hosts this read saw. Deploy it, watch reports, then enforce."],
+      ["Content-Security-Policy", "A Report-Only policy built from the " + ((kit.csp || "").match(/https:\/\//g) || []).length + " hosts this review saw. Deploy it, watch reports, then enforce."],
       ["Structured data", kit.jsonLd ? "An Organization and WebSite JSON-LD draft with the profiles the page links." : "The site already publishes an entity. No draft needed."],
       ["llms.txt", kit.llmsTxt ? "A draft listing the indexable pages with their descriptions." : "The site already publishes llms.txt."],
       ["security.txt", kit.securityTxt ? "A draft with Contact, Expires, and Canonical. Replace the address with a real inbox." : "The site already publishes security.txt."],
@@ -1040,7 +1040,7 @@
     ];
     const peek = "Content-Security-Policy-Report-Only: " + (kit.csp || "");
     document.getElementById("fixkit").innerHTML =
-      '<p>The scripts ZIP now carries a <span class="notranslate" translate="no">fix-kit/</span> folder: copy-ready files made from this read.' + (kit.hosting ? " The site looks hosted on <strong>" + esc(kit.hosting) + "</strong>, so that file is listed first." : "") + "</p>" +
+      '<p>The scripts ZIP now carries a <span class="notranslate" translate="no">fix-kit/</span> folder: copy-ready files made from this review.' + (kit.hosting ? " The site looks hosted on <strong>" + esc(kit.hosting) + "</strong>, so that file is listed first." : "") + "</p>" +
       '<div class="fixkit-list">' + items.map(([title, body]) => "<article><strong>" + esc(title) + "</strong><span class=\"muted\">" + esc(body) + "</span></article>").join("") + "</div>" +
       '<div class="code-peek notranslate" translate="no">' + fadeText(peek, paid) + "</div>";
   }
@@ -1235,7 +1235,7 @@
     const shown = (report.cases || []).filter((item) => (layer === "All" || item.layer === layer) && item.fw.some((fw) => picked.has(fw)));
     document.getElementById("case-note").textContent = paid
       ? shown.length + " cases for the selected frameworks. The full wording is open because this copy is paid."
-      : shown.length + " cases were identified across the tools, languages, and technologies in this read. The first sentence of each case stays visible. The rest stays blurred until the report is paid.";
+      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The first sentence of each case stays visible. The rest stays blurred until the report is paid.";
     const extras = [];
     (report.cases || []).forEach((item) => {
       (item.also || []).forEach((name) => {
@@ -1413,8 +1413,8 @@
     document.getElementById("run-pay-title").textContent = "This read is " + formatUsd(usd) + " USD";
     document.getElementById("run-pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
     document.getElementById("run-pay-detail").textContent = billing === "scope"
-      ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider read."
-      : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. Frameworks come first. Checked tools follow on the same discount. The amount is the schedule plus the size of the read.";
+      ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider review."
+      : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. Frameworks come first. Checked tools follow on the same discount. The amount is the schedule plus the size of the review.";
     document.getElementById("go-pay").href = payQuery("new-run", body || {});
     showDeal("run-pay-deal", "run-pay-price", body);
     runPay.hidden = false;
@@ -1724,10 +1724,10 @@
       { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
       { selector: "#url-field", title: "The page", body: "Type the host and path. https:// is already in front of the box, so the review always asks for a public secure page.", demoMs: 1500 },
       { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
-      { selector: "#review-btn", title: "Start the read", body: "Review checks the fields first. Then it reads public pages on that host and writes a line for each step.", demoMs: 1500 },
-      { selector: "#run-log", title: "The log", body: "Watch the read here: the first page, robots.txt, and each linked page. The same lines are kept with the run.", demoMs: 1600 },
-      { selector: "#stop-btn", title: "Stop", body: "Stop ends the read. Pages already saved stay in the report, and the record says the review was stopped.", demoMs: 1500 },
-      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the read. When the read finishes, the report dashboard opens with the download, print, and share actions.", demoMs: 1800 },
+      { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it reads public pages on that host and writes a line for each step.", demoMs: 1500 },
+      { selector: "#run-log", title: "The log", body: "Watch the analysis here: the first page, robots.txt, and each linked page. The same lines are kept with the run.", demoMs: 1600 },
+      { selector: "#stop-btn", title: "Stop", body: "Stop ends the analysis. Pages already saved stay in the report, and the record says the review was stopped.", demoMs: 1500 },
+      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions.", demoMs: 1800 },
       { selector: "#langWrap", title: "Language", body: "A language chosen here is the language on the CV, the studio, the lab, and this review. The same choice sticks when you move between them.", demoMs: 1500 },
       { selector: "#tour-start-btn", title: "Open this tour again", body: "This walkthrough stays closed after the first visit. How this review works brings it back whenever you want it.", demoMs: 1500 }
     );
@@ -1921,7 +1921,7 @@
       if (kind === "excel") return [row.item.id, row.item.layer, row.item.title, row.parts.step, row.parts.expected, row.frameworks, sign.mark, sign.sha256].concat(scriptCols.map((fw) => (row.scripts.find((one) => one.framework === fw) || { code: "" }).code));
       if (kind === "testrail") return [row.item.title, row.item.layer, "Test Case (Text)", "Other", ["High", "Medium", "Low"][level], row.parts.step, row.parts.expected, ref, code];
       if (kind === "xray") return [row.item.id, "Test", row.item.title, row.item.layer, "Manual", row.parts.step, "", row.parts.expected, ref, code];
-      if (kind === "zephyr") return [row.item.title, "Draft", ["High", "Normal", "Low"][level], row.parts.expected, "Proposed from a public read. Not executed.", row.item.layer, ref, row.parts.step, row.parts.expected, code];
+      if (kind === "zephyr") return [row.item.title, "Draft", ["High", "Normal", "Low"][level], row.parts.expected, "Proposed from a public analysis. Not executed.", row.item.layer, ref, row.parts.step, row.parts.expected, code];
       if (kind === "jira") return ["Task", row.item.title, withCode(row.item.id + " · " + row.item.layer + "\n" + row.parts.step + "\n" + row.parts.expected + "\n" + ref), ["High", "Medium", "Low"][level], "QA-lab"];
       if (kind === "azure") return ["Test Case", row.item.title, "1", row.parts.step, row.parts.expected, String(level + 1), "Design", ref, code];
       return [row.item.title, withCode(row.item.id + " · " + row.parts.step + "\n" + row.parts.expected + "\n" + ref), "General", ["major", "minor", "trivial"][level]];

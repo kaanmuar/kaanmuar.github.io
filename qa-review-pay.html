@@ -209,10 +209,10 @@
                 const pagesLine = pageCount + " pages " + (PAGE_CENTS[pageCount] ? "add " + money(PAGE_CENTS[pageCount] / 100) + " USD. " : "are included. ");
                 const depthLine = depthCount + " links deep " + (DEPTH_CENTS[depthCount] ? "add " + money(DEPTH_CENTS[depthCount] / 100) + " USD. " : "is included. ");
                 document.getElementById("pay-copy").textContent = billing === "scope"
-                    ? "This wider read costs " + money(usd) + " USD. " + pagesLine + depthLine + "The included first review is 20 pages and 2 links deep. PayPal collects the payment."
+                    ? "This wider review costs " + money(usd) + " USD. " + pagesLine + depthLine + "The included first review is 20 pages and 2 links deep. PayPal collects the payment."
                     : "This run costs " + money(usd) + " USD. " + frameworkList.length + (frameworkList.length === 1 ? " framework" : " frameworks") + (toolList.length ? " and " + toolList.length + (toolList.length === 1 ? " tool" : " tools") : "") + " follow the 19 USD schedule. The first selection is full price. The 2nd and 3rd are 10% off, then 15%, 20%, 25%, 30%, 35%, and 40% off from the 14th. " + pagesLine + depthLine + "PayPal collects the payment.";
                 document.getElementById("pay-item").textContent = pageCount + " pages · " + depthCount + " links deep";
-                if (purpose === "new-run") document.getElementById("pay-heading").textContent = billing === "scope" ? "A wider read" : "One new review";
+                if (purpose === "new-run") document.getElementById("pay-heading").textContent = billing === "scope" ? "A wider review" : "One new review";
                 paintLines();
                 return;
             }

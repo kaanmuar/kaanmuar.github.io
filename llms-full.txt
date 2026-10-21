@@ -49,7 +49,7 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 ## Films
 
 - [A tactical read (English)](https://www.youtube.com/watch?v=jW4T-qQK01E)
-- [The included first read (English)](https://www.youtube.com/watch?v=OKvR95YHAng)
+- [The included first review (English)](https://www.youtube.com/watch?v=OKvR95YHAng)
 - [Una lectura táctica (Spanish)](https://www.youtube.com/watch?v=Cenj3l_0osA)
 - [Uma leitura tática (Portuguese)](https://www.youtube.com/watch?v=GwLZ1WuLSpU)
 - [Eine taktische Lesung (German)](https://www.youtube.com/watch?v=AMIO6n_6Ok8)
@@ -95,7 +95,7 @@ Who it is for
 ### Maybe one of these sounds like your week
 A review is most useful when somebody has to make a decision about a site they did not build, or did not build recently.
 “No docs, no tests, and the person who built it left.”
-Start with the technology list, the map of pages read, and the proposed functional cases. In one read you know what is under the hood and where to begin.
+Start with the technology list, the map of pages analyzed, and the proposed functional cases. In one review you know what is under the hood and where to begin.
 “The build is green. Does the public page still read right?”
 Run it on the staging or production address the day before. The fix-first list tells you what is worth fixing now and what can wait for the next sprint.
 “Marketing asked if ChatGPT and Perplexity can cite our site.”
@@ -119,18 +119,18 @@ Give your name, an email at the same domain as the site, and the reason for the 
 #### Paste one public address and pick your frameworks
 One https address, plus the frameworks your team uses: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, or k6. Tip: choose only the frameworks you would really run. Fewer frameworks make the export easier to read.
 
-#### Watch the read happen
+#### Watch the analysis happen
 The review reads up to twenty pages, two links deep. It opens up to three of them in a headless browser from an EU address, runs axe-core, checks phone and tablet widths, keeps three screenshots, and asks Google PageSpeed Insights to score the start page. Good to know: in that browser it presses a cookie banner's reject button once and nothing else. Google receives the start address for the PageSpeed score.
 
 #### Read your report
-Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and performance. Every check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see your Google result, your share card, a map of the pages read, and what to fix first. Remember: the report is shown once. Take your notes, or keep it, while it is open.
+Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and performance. Every check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see your Google result, your share card, a map of the pages analyzed, and what to fix first. Remember: the report is shown once. Take your notes, or keep it, while it is open.
 
 #### Take the cases home
 Export the proposed cases to a ZIP of automation scripts, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. The export also brings a GitHub Actions workflow and a fix kit with header files, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records. The scripts are yours to run. The review never runs them against your site.
 How to read the report
 
 ### We reviewed ourselves first
-These are the real scores from this site's own review on October 19, 2026: ten pages read, 72 cases proposed, overall 86 out of 100. It is the same report you can open as the sample report. To compare, the live reports show the same review on more than a hundred public sites.
+These are the real scores from this site's own review on October 19, 2026: ten pages analyzed, 72 cases proposed, overall 86 out of 100. It is the same report you can open as the sample report. To compare, the live reports show the same review on more than a hundred public sites.
 
 #### What the four marks mean
 Fails now is a problem a visitor or a crawler can hit today. At risk works, but is fragile or incomplete. Passes is done well, and worth protecting with a test. Needs a person is a judgment a machine should not make for you, such as whether a third-party script is worth its weight.
@@ -178,11 +178,11 @@ Questions people ask
 
 ### Before you start
 Q: How much of a site does the first review read?
-A: Your first review is included: up to twenty pages, two links deep. A wider or deeper read asks for payment before it starts, and you see the amount first.
+A: Your first review is included: up to twenty pages, two links deep. A wider or deeper review asks for payment before it starts, and you see the amount first.
 Q: Can I review a site I do not own?
 A: You can review any public https address with a real reason, and the email domain check records who asked. A site owner can ask this service to stop and to delete the report. Please do not republish their content from a shared report.
 Q: Is the score a certification?
-A: No. The report is a snapshot and a proposal from one public read. It is not proof that a site is safe, fast, or compliant.
+A: No. The report is a snapshot and a proposal from one public analysis. It is not proof that a site is safe, fast, or compliant.
 Q: What about signed-in pages?
 A: The public review never signs in. A verification that runs cases behind a login is a separate request to qa@carlosandmunoz.com, with a login you are allowed to use.
 Q: Which languages can I read it in?
@@ -193,7 +193,7 @@ One public address. Six scores. A list your team can start from on Monday.
 
 ## Live reports (https://carlosandmunoz.com/qa-review.html#live-reports)
 
-As of 2026-10-21, the series holds 237 public sites in 27 sectors, each read once by QA-lab URL Review (up to 20 pages). Average overall score 77; area averages: SEO 68, GEO 84, Analytics 86, Security 67, Accessibility 81, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public read, not a certification.
+As of 2026-10-21, the series holds 237 public sites in 27 sectors, each read once by QA-lab URL Review (up to 20 pages). Average overall score 77; area averages: SEO 68, GEO 84, Analytics 86, Security 67, Accessibility 81, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
 
 Site | Sector | Scope | Place | Read | Overall | Report
 MDN Web Docs | Developer docs | Worldwide | San Francisco, US | 2026-10-19 | 95 | https://carlosandmunoz.com/qa-review.html?live=mdn
