@@ -102,7 +102,7 @@ module.exports = [
   {
     id: "sdp", report: "r3-sdp", scope: "Local",
     title: ["Planeación Bogotá", "*still answers on http.*"],
-    body: "A meta description on every page read, framing limited to its origin, nosniff, and every link opened answered. But http://www.sdp.gov.co answers 200 with no redirect, and no HSTS is sent.",
+    body: "A meta description on every page read, framing limited to its origin, nosniff, and every link opened answered. But the plain-http home page answers 200 with no redirect, and no HSTS is sent.",
     action: "Redirect every http request to https with a 301, then add Strict-Transport-Security.",
     tags: ["WebSecurity", "HTTPS", "GovTech"]
   },

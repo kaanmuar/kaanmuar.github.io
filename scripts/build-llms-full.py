@@ -90,12 +90,12 @@ def live_section():
         "Reports are view and share only; each link opens one report with its six area scores and findings. "
         "A score is a snapshot of one public read, not a certification.",
         "",
-        "Site | Sector | Place | Read | Overall | Report",
+        "Site | Sector | Scope | Place | Read | Overall | Report",
     ]
     for r in rows:
         place = ", ".join(x for x in (r.get("city"), r.get("country")) if x) or r.get("scope", "")
         lines.append(" | ".join(str(x) for x in (
-            r["name"], data["sectors"].get(r["sector"], r["sector"]), place, r["read"], r["overall"],
+            r["name"], data["sectors"].get(r["sector"], r["sector"]), r.get("scope", ""), place, r["read"], r["overall"],
             f"{SITE}qa-review.html?live={r['id']}",
         )))
     return "\n".join(lines)
