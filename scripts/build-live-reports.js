@@ -12,7 +12,8 @@
    runs-3/{worldwide,national,regional,local}.js scope files. Only their `const RUNS = [` or
    `module.exports = [` array is read as text and evaluated in a sandbox, so their own report reads
    never run here. Tags come from
-   the report itself, plus the small curated map below (sector, organization type, city, country). */
+   the report itself, plus the small curated map below (sector, organization type, city, country).
+   Reports from user reviews (series "auto") are added by scripts/auto-live-reports.js and kept here. */
 
 const fs = require("fs");
 const path = require("path");
@@ -526,11 +527,10 @@ function pickWorks(ins) {
 }
 
 function build(run, series) {
-  const file = path.join(REPORTS, run.report + "-current.json");
-  const report = JSON.parse(fs.readFileSync(file, "utf8"));
+  const report = run.data || JSON.parse(fs.readFileSync(path.join(REPORTS, run.report + "-current.json"), "utf8"));
   const ins = report.insights || {};
   const score = ins.score;
-  const meta = META[run.id] || [report.host, "", "", "", ""];
+  const meta = META[run.id] || run.meta || [report.host, "", "", "", ""];
   const [name, sector, org, city, country] = meta;
   const psi = report.pagespeed || {};
   const geo = ins.geo || {};
@@ -652,10 +652,47 @@ function ranks(items) {
     c.rank = r;
     item.detail.rank = r;
     if (r.overall.rank <= 10) c.tags.splice(1, 0, { g: "rank", k: "top10", t: "Top 10 of " + items.length });
-    if (peers.length >= 3 && r.sector.rank === 1) c.tags.splice(1, 0, { g: "rank", k: "sector-1", t: "#1 in " + SECTORS[c.sector] });
+    if (c.sector && peers.length >= 3 && r.sector.rank === 1) c.tags.splice(1, 0, { g: "rank", k: "sector-1", t: "#1 in " + SECTORS[c.sector] });
     leads.forEach((a) => c.tags.splice(1, 0, { g: "rank", k: "lead-" + a, t: "Best " + a + " in the series" }));
     item.detail.tags = c.tags;
   }
+}
+
+// Published reports as build() items, rank tags dropped so ranks() can place them again.
+function existingItems(keep) {
+  let index = { reports: [] };
+  try { index = JSON.parse(fs.readFileSync(path.join(OUT, "index.json"), "utf8")); } catch (error) { return []; }
+  const items = [];
+  for (const card of index.reports || []) {
+    if (keep && !keep(card)) continue;
+    let detail;
+    try { detail = JSON.parse(fs.readFileSync(path.join(OUT, card.id + ".json"), "utf8")); } catch (error) { continue; }
+    const tags = (detail.tags || []).filter((t) => t.g !== "rank");
+    items.push({ card: Object.assign({}, card, { tags }), detail: Object.assign(detail, { tags }) });
+  }
+  return items;
+}
+
+function writeAll(items) {
+  ranks(items);
+  fs.mkdirSync(OUT, { recursive: true });
+  const keep = new Set(["index.json"].concat(items.map((x) => x.card.id + ".json")));
+  for (const name of fs.readdirSync(OUT)) {
+    if (name.endsWith(".json") && !keep.has(name)) fs.unlinkSync(path.join(OUT, name));
+  }
+  for (const item of items) fs.writeFileSync(path.join(OUT, item.card.id + ".json"), JSON.stringify(item.detail) + "\n");
+
+  const avg = (fn) => Math.round(items.reduce((s, x) => s + fn(x.card), 0) / items.length);
+  const index = {
+    version: 1,
+    generatedAt: new Date().toISOString().slice(0, 10),
+    count: items.length,
+    averages: { overall: avg((c) => c.overall), areas: Object.fromEntries(AREAS.map((a) => [a, avg((c) => c.areas[a])])) },
+    sectors: SECTORS,
+    focus: FOCUS_LABELS,
+    reports: items.map((x) => Object.assign({}, x.card, { tags: cardTags(x.card.tags) }))
+  };
+  fs.writeFileSync(path.join(OUT, "index.json"), JSON.stringify(index) + "\n");
 }
 
 // The manifest keeps what a card and the filters show; the full tag list lives in <id>.json.
@@ -690,27 +727,13 @@ function main() {
     process.exit(missing.length ? 1 : 0);
   }
   if (!items.length) throw new Error("No reports found under " + REPORTS);
-  ranks(items);
-
-  fs.mkdirSync(OUT, { recursive: true });
-  const keep = new Set(["index.json"].concat(items.map((x) => x.card.id + ".json")));
-  for (const name of fs.readdirSync(OUT)) {
-    if (name.endsWith(".json") && !keep.has(name)) fs.unlinkSync(path.join(OUT, name));
-  }
-  for (const item of items) fs.writeFileSync(path.join(OUT, item.card.id + ".json"), JSON.stringify(item.detail) + "\n");
-
-  const avg = (fn) => Math.round(items.reduce((s, x) => s + fn(x.card), 0) / items.length);
-  const index = {
-    version: 1,
-    generatedAt: new Date().toISOString().slice(0, 10),
-    count: items.length,
-    averages: { overall: avg((c) => c.overall), areas: Object.fromEntries(AREAS.map((a) => [a, avg((c) => c.areas[a])])) },
-    sectors: SECTORS,
-    focus: FOCUS_LABELS,
-    reports: items.map((x) => Object.assign({}, x.card, { tags: cardTags(x.card.tags) }))
-  };
-  fs.writeFileSync(path.join(OUT, "index.json"), JSON.stringify(index) + "\n");
+  // User reviews come from the daily job (scripts/auto-live-reports.js), never from local snapshots.
+  const built = new Set(items.map((x) => x.card.host));
+  items.push(...existingItems((card) => card.series === "auto" && !built.has(card.host)));
+  writeAll(items);
   console.log("wrote " + items.length + " live reports to " + path.relative(ROOT, OUT) + (missing.length ? " (missing: " + missing.join(", ") + ")" : ""));
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { AREAS, REGIONS, build, existingItems, writeAll, scrub };

@@ -18,7 +18,7 @@
       explore: "Explore {n} live reports", gateLine: "Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.",
       back: "Back", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
       carousel: "Live reports carousel", all: "All", sector: "Sector", scope: "Scope", country: "Country", focus: "Test focus",
-      worldwide: "Worldwide", national: "National", regional: "Regional", local: "Local", global: "Global",
+      worldwide: "Worldwide", national: "National", regional: "Regional", local: "Local", requested: "Requested", global: "Global",
       status: "{i} of {n}: {name}, {score} out of 100, grade {grade}.", slide: "{i} of {n}: {name}",
       none: "No report matches these filters.", clear: "Clear filters", loading: "Loading live reports…", failed: "The live reports could not be loaded.",
       read: "Analyzed {date}", page: "{n} page", pages: "{n} pages", hint: "Drag, swipe, or use the arrow keys. Select a card to open it.",
@@ -45,7 +45,7 @@
       explore: "Explorar {n} informes en vivo", gateLine: "Análisis reales de sitios públicos, desde GOV.UK hasta la Alcaldía de Bogotá. Solo para ver y compartir.",
       back: "Volver", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
       carousel: "Carrusel de informes en vivo", all: "Todos", sector: "Sector", scope: "Alcance", country: "País", focus: "Tipo de prueba",
-      worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", global: "Global",
+      worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
       none: "Ningún informe coincide con estos filtros.", clear: "Quitar filtros", loading: "Cargando informes en vivo…", failed: "No se pudieron cargar los informes en vivo.",
       read: "Analizado el {date}", page: "{n} página", pages: "{n} páginas", hint: "Arrastra, desliza o usa las flechas del teclado. Elige una tarjeta para abrirla.",
@@ -72,7 +72,7 @@
       explore: "Explorar {n} relatórios ao vivo", gateLine: "Análises reais de sites públicos, do GOV.UK à Prefeitura de Bogotá. Só para ver e compartilhar.",
       back: "Voltar", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
       carousel: "Carrossel de relatórios ao vivo", all: "Todos", sector: "Setor", scope: "Alcance", country: "País", focus: "Tipo de teste",
-      worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", global: "Global",
+      worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
       none: "Nenhum relatório corresponde a estes filtros.", clear: "Limpar filtros", loading: "Carregando relatórios ao vivo…", failed: "Não foi possível carregar os relatórios ao vivo.",
       read: "Analisado em {date}", page: "{n} página", pages: "{n} páginas", hint: "Arraste, deslize ou use as setas do teclado. Escolha um cartão para abri-lo.",
@@ -99,7 +99,7 @@
       explore: "{n} Live-Berichte ansehen", gateLine: "Echte Prüfungen öffentlicher Websites, von GOV.UK bis zum Rathaus von Bogotá. Nur ansehen und teilen.",
       back: "Zurück", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
       carousel: "Karussell der Live-Berichte", all: "Alle", sector: "Branche", scope: "Reichweite", country: "Land", focus: "Testart",
-      worldwide: "Weltweit", national: "National", regional: "Regional", local: "Lokal", global: "Global",
+      worldwide: "Weltweit", national: "National", regional: "Regional", local: "Lokal", requested: "Angefragt", global: "Global",
       status: "{i} von {n}: {name}, {score} von 100, Note {grade}.", slide: "{i} von {n}: {name}",
       none: "Kein Bericht passt zu diesen Filtern.", clear: "Filter löschen", loading: "Live-Berichte werden geladen…", failed: "Die Live-Berichte konnten nicht geladen werden.",
       read: "Geprüft am {date}", page: "{n} Seite", pages: "{n} Seiten", hint: "Ziehen, wischen oder Pfeiltasten nutzen. Eine Karte wählen, um sie zu öffnen.",
@@ -126,7 +126,7 @@
       explore: "Explorer {n} rapports en direct", gateLine: "De vraies analyses de sites publics, de GOV.UK à la mairie de Bogotá. Consultation et partage uniquement.",
       back: "Retour", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
       carousel: "Carrousel des rapports en direct", all: "Tous", sector: "Secteur", scope: "Portée", country: "Pays", focus: "Type de test",
-      worldwide: "Mondial", national: "National", regional: "Régional", local: "Local", global: "Mondial",
+      worldwide: "Mondial", national: "National", regional: "Régional", local: "Local", requested: "Demandé", global: "Mondial",
       status: "{i} sur {n} : {name}, {score} sur 100, note {grade}.", slide: "{i} sur {n} : {name}",
       none: "Aucun rapport ne correspond à ces filtres.", clear: "Effacer les filtres", loading: "Chargement des rapports en direct…", failed: "Les rapports en direct n’ont pas pu être chargés.",
       read: "Analysé le {date}", page: "{n} page", pages: "{n} pages", hint: "Faites glisser, balayez ou utilisez les flèches du clavier. Choisissez une carte pour l’ouvrir.",
@@ -153,7 +153,7 @@
       explore: "Esplora {n} report dal vivo", gateLine: "Analisi reali di siti pubblici, da GOV.UK al comune di Bogotá. Solo visualizzazione e condivisione.",
       back: "Indietro", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
       carousel: "Carosello dei report dal vivo", all: "Tutti", sector: "Settore", scope: "Portata", country: "Paese", focus: "Tipo di test",
-      worldwide: "Mondiale", national: "Nazionale", regional: "Regionale", local: "Locale", global: "Globale",
+      worldwide: "Mondiale", national: "Nazionale", regional: "Regionale", local: "Locale", requested: "Richiesto", global: "Globale",
       status: "{i} di {n}: {name}, {score} su 100, voto {grade}.", slide: "{i} di {n}: {name}",
       none: "Nessun report corrisponde a questi filtri.", clear: "Azzera i filtri", loading: "Caricamento dei report dal vivo…", failed: "Non è stato possibile caricare i report dal vivo.",
       read: "Analizzato il {date}", page: "{n} pagina", pages: "{n} pagine", hint: "Trascina, scorri o usa le frecce della tastiera. Scegli una scheda per aprirla.",
@@ -1042,7 +1042,7 @@
     const head = headlineHtml(d.headline);
     const place = d.flag + " " + (d.city ? esc(d.city) + ", " : "") + esc(countryName(d.country));
     const rank = d.rank ? '<p class="lv-rank"' + nt() + ">" + t("rank", { r: d.rank.overall.rank, n: d.rank.overall.of }) +
-      (d.rank.sector.of > 1 ? "<br>" + t("rankSector", { r: d.rank.sector.rank, n: d.rank.sector.of, sector: esc(sectorLabel(d.sector)) }) : "") + "</p>" : "";
+      (d.sector && d.rank.sector.of > 1 ? "<br>" + t("rankSector", { r: d.rank.sector.rank, n: d.rank.sector.of, sector: esc(sectorLabel(d.sector)) }) : "") + "</p>" : "";
 
     const areas = AREAS.map((a) => {
       const s = d.score.areas[a];
@@ -1100,7 +1100,7 @@
     }).join("");
 
     return '<div class="lv-hero"><div>' +
-      '<p class="lv-meta"><span class="lv-scope s-' + esc(d.scope.toLowerCase()) + '"' + nt() + ">" + esc(t(d.scope.toLowerCase())) + "</span><span" + nt() + ">" + place + "</span><span>·</span><span" + nt() + ">" + esc(sectorLabel(d.sector)) + "</span><span>·</span><span" + nt() + ">" + esc(t("read", { date: dateText(d.read) })) + " · " + esc(t(d.pages === 1 ? "page" : "pages", { n: d.pages })) + "</span></p>" +
+      '<p class="lv-meta"><span class="lv-scope s-' + esc(d.scope.toLowerCase()) + '"' + nt() + ">" + esc(t(d.scope.toLowerCase())) + "</span><span" + nt() + ">" + place + "</span><span>·</span>" + (d.sector ? "<span" + nt() + ">" + esc(sectorLabel(d.sector)) + "</span><span>·</span>" : "") + "<span" + nt() + ">" + esc(t("read", { date: dateText(d.read) })) + " · " + esc(t(d.pages === 1 ? "page" : "pages", { n: d.pages })) + "</span></p>" +
       '<h2 class="lv-name notranslate" id="lv-name" translate="no">' + esc(d.name) + "</h2>" +
       '<p class="lv-host"><span class="notranslate">' + esc(d.host) + '</span><a href="' + esc(d.url) + '" target="_blank" rel="noopener noreferrer nofollow"' + nt() + ">" + esc(t("visit")) + " ↗</a></p>" +
       '<p class="lv-headline">' + head + "</p>" +
