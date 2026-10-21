@@ -1033,7 +1033,17 @@ test("a new cause class opens one bug, from failures the probe still sees and fr
 
   assert.deepEqual(failures.bugPlan([a, b, newBot], [rerun], ["timeout"]).map((bug) => bug.key), ["bot-protection-319"]);
   assert.deepEqual(failures.bugPlan([], [], []), []);
-  assert.equal(failures.bugPlan([stuck("2026-10-23T10:00:00Z", { cause: { id: "unknown" } })], [], [])[0].title, "BE: URL reviews failed for a reason with no class yet");
+  assert.deepEqual(failures.bugPlan([stuck("2026-10-21T10:00:00Z", { cause: { id: "unknown" } })], [], []), []);
+  assert.equal(failures.bugPlan([stuck("2026-10-23T10:00:00Z", { cause: { id: "unknown" } })], [], [])[0].title, "BE: After #329, URL reviews still failed for a reason with no class yet");
+
+  const rerunAfterFix = { status: "failed", at: "2026-10-22T11:30:00Z", cause: "bot-protection" };
+  assert.deepEqual(failures.bugPlan([Object.assign({}, oldBot, { rerun: rerunAfterFix })], [rerun], []).map((bug) => [bug.key, bug.runs]), [["bot-protection-319", 2]]);
+});
+
+test("a re-run of a failure that kept no frameworks reviews with the form's default", () => {
+  const fromAlert = failedAt("2026-10-22T10:00:00Z", { options: { pages: 0, depth: 0, frameworks: [] } });
+  assert.deepEqual(failures.rerunPlan([fromAlert], [], 8).runs[0].options, { pages: 0, depth: 0, frameworks: ["Playwright"] });
+  assert.deepEqual(failures.rerunPlan([failedAt("2026-10-22T10:00:00Z", { options: undefined })], [], 8).runs[0].options.frameworks, ["Playwright"]);
 });
 
 test("the review desk lists re-runs with their report summary and log", () => {

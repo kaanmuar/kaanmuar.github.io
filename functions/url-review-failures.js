@@ -10,8 +10,11 @@ const RERUN_LINES = 400;
 // A PR that fixes a cause class adds a row here, with its merge time; failures of that class from before it are re-run.
 const FIXES = [
   { cause: "bot-protection", at: "2026-10-21T20:45:53Z", ref: "#319", label: "Sites behind bot protection are read in headless Chrome" },
-  { cause: "too-large", at: "2026-10-21T20:45:53Z", ref: "#319", label: "A start page past 2 MB is read up to 2 MB" }
+  { cause: "too-large", at: "2026-10-21T20:45:53Z", ref: "#319", label: "A start page past 2 MB is read up to 2 MB" },
+  { cause: "unknown", at: "2026-10-21T22:20:00Z", ref: "#329", label: "A re-run of a failure with no saved frameworks reviews with Playwright" }
 ];
+// The review form's default when a failure kept no frameworks (one taken from an alert).
+const RERUN_FRAMEWORKS = ["Playwright"];
 
 const clip = (value, max) => String(value == null ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
 
@@ -221,7 +224,7 @@ function rerunPlan(failures, reviewed, limit) {
       at: latest.at,
       failureIds: rows.map((row) => row.id),
       trigger: rerunTrigger(latest),
-      options: latest.options || {},
+      options: Object.assign({}, latest.options, { frameworks: ((latest.options || {}).frameworks || []).length ? latest.options.frameworks : RERUN_FRAMEWORKS }),
       intake: latest.intake || {}
     };
     if (own) skipped.push(Object.assign(item, { skip: "The asker reviewed " + host + " again on " + String(own.createdAt).slice(0, 10) + "." }));
@@ -321,7 +324,7 @@ function bugLead(row, source) {
   } else if (doc.status !== "failed" || FIXES.some((fix) => fix.cause === cause && msOf(fix.at) > msOf(doc.at))) {
     return null;
   }
-  const fix = fixBefore(cause, doc.at);
+  const fix = fixBefore(cause, (doc.rerun && doc.rerun.at) || doc.at);
   const intake = doc.intake || {};
   const hidden = [doc.name, doc.email, intake.clientName, intake.clientEmail].map((word) => String(word || "").trim()).filter((word) => word.length > 2);
   const scrub = (text, max) => scrubbed(text, max, hidden);
