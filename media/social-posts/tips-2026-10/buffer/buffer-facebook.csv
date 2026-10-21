@@ -8,11 +8,11 @@ Try this: Search your templates for <img without width. Add the intrinsic size t
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=img-size
 
 #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg","","2026-10-26 12:30"
-"Release day: does the page still read right?
+"Release day: is the page still right?
 
 Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.
 
-Try this: Add a five-minute public-page read to your release checklist, after deploy and before the announcement.
+Try this: Add a five-minute public-page check to your release checklist, after deploy and before the announcement.
 
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=release-day
 
