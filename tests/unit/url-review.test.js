@@ -692,3 +692,57 @@ FIXTURES.forEach(({ name, report }) => {
     });
   });
 });
+
+test.describe("publishing user reviews to Live Reports", () => {
+  const publish = require("../../functions/url-review-publish");
+  const report = (host, extra) => Object.assign({
+    id: "r-" + host, host, fetchedAt: "2026-10-21T10:00:00Z", finalUrl: "https://" + host + "/?token=abc#x",
+    limits: { pagesRead: 6 }, pages: [{ url: "https://" + host + "/", status: 200, challenge: "", error: "" }],
+    log: ["fetched"], agent: "ua", signature: "sig", cases: [{ id: "c" }],
+    observed: { lang: "en", signals: { hreflang: 2 }, cookies: ["sid=1"] },
+    insights: { score: { overall: 71, grade: "C", areas: {} }, findings: [{ key: "sec-hsts", verdict: "fail", area: "Security", title: "HSTS is not sent", evidence: "mail me at owner@site.com" }], caseVerdicts: {}, graph: {} }
+  }, extra);
+  const record = (host, extra, rep) => Object.assign({ createdAt: "2026-10-21T10:00:00Z", status: "complete", name: "Ana", email: "ana@x.com", reason: "client", ip: "1.2.3.4", deviceId: "d1", report: report(host, rep) }, extra);
+
+  test("a complete public review goes out", () => {
+    assert.equal(publish.heldReason(record("acme.de"), []), "");
+  });
+
+  test("stopped, thin, blocked, shell, own, reserved, and unlisted reviews are held", () => {
+    assert.equal(publish.heldReason(record("acme.de", { status: "stopped" }), []), "not-complete");
+    assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 1 } }), []), "too-few-pages");
+    assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 5, timedOut: true } }), []), "timed-out");
+    assert.equal(publish.heldReason(record("acme.de", {}, { pages: [{ status: 403 }] }), []), "start-page-blocked");
+    assert.equal(publish.heldReason(record("acme.de", {}, { pages: [{ status: 200, challenge: "cloudflare" }] }), []), "start-page-blocked");
+    const shell = report("acme.de");
+    shell.insights.findings.push({ key: "geo-js-only", verdict: "fail", area: "GEO", title: "Empty without JavaScript" });
+    assert.equal(publish.heldReason(record("acme.de", { report: shell }), []), "javascript-shell");
+    assert.equal(publish.heldReason(record("www.carlosandmunoz.com"), []), "own-or-test");
+    assert.equal(publish.heldReason(record("example.com"), []), "own-or-test");
+    assert.equal(publish.heldReason(record("shop.test"), []), "own-or-test");
+    assert.equal(publish.heldReason(record("10.0.0.1"), []), "not-public");
+    assert.equal(publish.heldReason(record("blog.acme.de"), ["acme.de"]), "unlisted");
+    assert.equal(publish.heldReason(record("acme.de", {}, { insights: { findings: [] } }), []), "no-score");
+  });
+
+  test("the public copy carries no requester details or engine internals", () => {
+    const { reports } = publish.selectPublishable([record("acme.de")], []);
+    const text = JSON.stringify(reports);
+    for (const word of ["Ana", "ana@x.com", "client", "1.2.3.4", "d1", "token=abc", "signature", "caseVerdicts", "graph", "\"log\"", "\"agent\"", "sid=1", "\"id\":\"c\""]) {
+      assert.ok(!text.includes(word), word + " leaked");
+    }
+    assert.equal(reports[0].report.finalUrl, "https://acme.de/");
+    assert.equal(reports[0].report.limits.pagesRead, 6);
+  });
+
+  test("one review per host, the newest, oldest host first", () => {
+    const { reports, held } = publish.selectPublishable([
+      record("b.de", { createdAt: "2026-10-21T09:00:00Z" }),
+      record("a.de", { createdAt: "2026-10-21T08:00:00Z" }),
+      record("www.a.de", { createdAt: "2026-10-21T11:00:00Z" }),
+      record("c.de", { status: "stopped" })
+    ], []);
+    assert.deepEqual(reports.map((r) => r.report.host), ["b.de", "www.a.de"]);
+    assert.deepEqual(held, { "not-complete": 1 });
+  });
+});

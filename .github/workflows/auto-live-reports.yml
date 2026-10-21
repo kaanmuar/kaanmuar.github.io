@@ -1,0 +1,120 @@
+# .github/workflows/auto-live-reports.yml
+# Once a day, every publishable user review becomes a Live Report, a feed card, a story, and a clip,
+# and goes into the Buffer queues. Filtering and privacy live in functions/url-review-publish.js.
+# Secrets: PUBLISH_KEY (same value as functions/.env), BUFFER_API_KEY (Buffer → Settings → API),
+# LIVE_REPORTS_DEPLOY_KEY (write deploy key). Deploy keys bypass the "main: fast checks before merge"
+# ruleset, so this job pushes its data commit straight to main, with [skip ci].
+
+name: Live reports from user reviews
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # 03:00 Bogotá
+  workflow_dispatch:
+    inputs:
+      since:
+        description: 'Read reviews created after this ISO time (default: where the last run stopped)'
+        required: false
+      dry_run:
+        description: 'Build and render only: no commit, no release, no Buffer posts'
+        type: boolean
+        default: false
+
+concurrency:
+  group: auto-live-reports
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+      pages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Read new reviews and update Live Reports
+        id: reports
+        env:
+          PUBLISH_KEY: ${{ secrets.PUBLISH_KEY }}
+          SINCE: ${{ inputs.since }}
+        run: node scripts/auto-live-reports.js ${SINCE:+--since "$SINCE"}
+
+      - name: Install the renderer
+        if: steps.reports.outputs.social != '0'
+        run: |
+          npm install --no-save --ignore-scripts playwright@"$(node -p "require('./package-lock.json').packages['node_modules/playwright'].version")"
+          npx playwright install --with-deps chromium
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install -q edge-tts
+          echo "EDGE_TTS=$(command -v edge-tts)" >> "$GITHUB_ENV"
+          gh release download studio-assets -p bed.wav -D media/url-review-demos
+
+      - name: Render cards, stories, and clips
+        if: steps.reports.outputs.social != '0'
+        run: node scripts/tips-studio/build.js --source runs-auto --batch "${{ steps.reports.outputs.batch }}" --start "$(date -u -d tomorrow +%F)"
+
+      - name: Rebuild llms-full.txt
+        run: python3 scripts/build-llms-full.py
+
+      - name: Keep the render for a look
+        if: inputs.dry_run && steps.reports.outputs.social != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.reports.outputs.batch }}
+          path: media/social-posts/${{ steps.reports.outputs.batch }}
+          retention-days: 7
+
+      - name: Commit and publish the site
+        id: commit
+        if: ${{ !inputs.dry_run }}
+        run: |
+          BATCH="${{ steps.reports.outputs.batch }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add assets/live-reports llms-full.txt scripts/auto-live-reports.state.json
+          if [ -d "media/social-posts/$BATCH" ]; then
+            git add "media/social-posts/$BATCH"
+            git add -f "media/social-posts/$BATCH/story"
+          fi
+          if git diff --cached --quiet; then echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} requested reviews, ${{ steps.reports.outputs.social }} posts ($BATCH) [skip ci]"
+          git push origin HEAD:main
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
+          echo "pushed=1" >> "$GITHUB_OUTPUT"
+
+      - name: Release the clips
+        if: ${{ !inputs.dry_run && steps.reports.outputs.social != '0' }}
+        run: |
+          BATCH="${{ steps.reports.outputs.batch }}"
+          gh release create "$BATCH" media/social-posts/$BATCH/clip/*.mp4 --target main --latest=false \
+            --title "Requested reviews $BATCH" --notes "TikTok and YouTube clips for the $BATCH Live Reports. Posted through Buffer."
+
+      - name: Queue the posts in Buffer
+        if: ${{ !inputs.dry_run && steps.reports.outputs.social != '0' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          CLIP_BASE: https://github.com/${{ github.repository }}/releases/download/${{ steps.reports.outputs.batch }}
+        run: |
+          if [ -z "$BUFFER_API_KEY" ]; then echo "::warning::BUFFER_API_KEY is not set; the batch is rendered and released but not queued."; exit 0; fi
+          node scripts/buffer-queue.js --batch "${{ steps.reports.outputs.batch }}"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Live reports from user reviews"
+            echo "- New or refreshed cards: ${{ steps.reports.outputs.cards || 0 }} (carousel now ${{ steps.reports.outputs.total || '?' }})"
+            echo "- Removed on request: ${{ steps.reports.outputs.removed || 0 }}"
+            echo "- Social posts: ${{ steps.reports.outputs.social || 0 }} (batch ${{ steps.reports.outputs.batch }})"
+          } >> "$GITHUB_STEP_SUMMARY"
