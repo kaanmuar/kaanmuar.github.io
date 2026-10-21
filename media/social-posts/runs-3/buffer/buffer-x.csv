@@ -1,0 +1,621 @@
+Text,Image URL,Tags,Posting Time
+"ILO: secure and fast, but no entity markup.
+
+Add Organization markup with url, logo and sameAs so AI answers name you right.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=ilo","https://carlosandmunoz.com/media/social-posts/runs-3/feed/01-ilo.jpg","real-runs","2027-03-01 08:50"
+"Policía Nacional's search has no label.
+
+Tie each field to a <label for>, or give it an aria-label. A screen reader can only announce a name that exists.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=policiaco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/02-policiaco.jpg","real-runs","2027-03-02 15:10"
+"Valle del Cauca locks the pinch-zoom.
+
+Drop user-scalable=no and maximum-scale from the viewport tag, so people can zoom to at least 200%.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=valle","https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg","real-runs","2027-03-03 12:45"
+"Armenia's city hall: no main landmark.
+
+Wrap each page's content in one <main>, which screen readers offer as a skip link.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=armenia","https://carlosandmunoz.com/media/social-posts/runs-3/feed/04-armenia.jpg","real-runs","2027-03-04 10:30"
+"WTO: no viewport tag on the start page.
+
+Add a viewport meta tag with width=device-width, initial-scale=1, then test on a phone.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=wto","https://carlosandmunoz.com/media/social-posts/runs-3/feed/05-wto.jpg","real-runs","2027-03-05 19:50"
+"Gob.mx can be framed by any other site.
+
+Send frame-ancestors 'self' in a CSP, or X-Frame-Options: SAMEORIGIN. It stops clickjacking on forms.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gobmx","https://carlosandmunoz.com/media/social-posts/runs-3/feed/06-gobmx.jpg","real-runs","2027-03-06 18:45"
+"Cundinamarca shares a blank link card.
+
+Add og:title, og:description, og:image and og:url to each key page, so a shared link shows a real preview.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=cundinamarca","https://carlosandmunoz.com/media/social-posts/runs-3/feed/07-cundinamarca.jpg","real-runs","2027-03-07 18:00"
+"Ibagué's search box has no label.
+
+Give every field a <label> or an aria-label. Placeholder text disappears on typing and is not a name.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=ibague","https://carlosandmunoz.com/media/social-posts/runs-3/feed/08-ibague.jpg","real-runs","2027-03-08 12:20"
+"WMO's sitemap points at other hosts.
+
+Keep each sitemap to its own host. Give each subdomain its own sitemap, named in that subdomain's robots.txt.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=wmo","https://carlosandmunoz.com/media/social-posts/runs-3/feed/09-wmo.jpg","real-runs","2027-03-09 16:15"
+"Fiscalía's pages share one title.
+
+Lead each title with the page topic, then the institution, so results stand apart.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=fiscaliaco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/10-fiscaliaco.jpg","real-runs","2027-03-10 16:30"
+"Atlántico: alt text everywhere, no HSTS.
+
+Send HSTS with max-age=31536000 on every https response, then consider preload.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=atlantico","https://carlosandmunoz.com/media/social-posts/runs-3/feed/11-atlantico.jpg","real-runs","2027-03-11 18:55"
+"Neiva's sitemap lists a host that won't load.
+
+Build the sitemap from the live domain; spot-check it after a move or rebrand.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=neiva","https://carlosandmunoz.com/media/social-posts/runs-3/feed/12-neiva.jpg","real-runs","2027-03-12 14:45"
+"ITU: framing locked, but no HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, and point / straight at the final page.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=itu","https://carlosandmunoz.com/media/social-posts/runs-3/feed/13-itu.jpg","real-runs","2027-03-13 18:40"
+"Argentina.gob.ar waits on 28 scripts.
+
+Add defer to scripts the first screen doesn't need. The page can paint while they load.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=argentinagob","https://carlosandmunoz.com/media/social-posts/runs-3/feed/14-argentinagob.jpg","real-runs","2027-03-14 08:05"
+"Santander answers on plain http too.
+
+Answer plain http requests with a 301 to https, so no visit starts unencrypted.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=santander","https://carlosandmunoz.com/media/social-posts/runs-3/feed/15-santander.jpg","real-runs","2027-03-15 15:45"
+"Villavicencio loads 15 scripts before paint.
+
+Add defer to scripts that don't need to run before first paint, and move inline data out of the HTML.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=villavicencio","https://carlosandmunoz.com/media/social-posts/runs-3/feed/16-villavicencio.jpg","real-runs","2027-03-16 16:05"
+"IPCC: no page language for screen readers.
+
+Add lang=""en"" to the html tag, and the matching code on each translated page.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=ipcc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/17-ipcc.jpg","real-runs","2027-03-17 13:10"
+"IGAC still loads Universal Analytics.
+
+Remove retired UA- tags and keep the GA4 one. Dead tags add weight, collect nothing, and confuse audits.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=igac","https://carlosandmunoz.com/media/social-posts/runs-3/feed/18-igac.jpg","real-runs","2027-03-18 15:55"
+"Bolívar's home page waits 4 s to start.
+
+Cache the home page HTML on the server or a CDN so the first byte lands under 1 s.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=bolivar","https://carlosandmunoz.com/media/social-posts/runs-3/feed/19-bolivar.jpg","real-runs","2027-03-19 19:05"
+"Pasto sends each visit to two GA4 properties.
+
+Keep one GA4 property per site, loaded once, ideally through Tag Manager, and retire the old ID.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=pasto","https://carlosandmunoz.com/media/social-posts/runs-3/feed/20-pasto.jpg","real-runs","2027-03-20 13:40"
+"UN Women: complete, but heavy pages.
+
+Move what inflates the HTML, like inline data or repeated menus, into cached files.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=unwomen","https://carlosandmunoz.com/media/social-posts/runs-3/feed/21-unwomen.jpg","real-runs","2027-03-21 19:25"
+"Gob.pe still answers on plain http.
+
+Redirect every http request to https with a 301. HSTS only protects people who have visited before.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gobpe","https://carlosandmunoz.com/media/social-posts/runs-3/feed/22-gobpe.jpg","real-runs","2027-03-22 12:45"
+"Nariño's home page is 900 KB of HTML.
+
+Move inline data and repeated markup out of the HTML, and page long lists.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=narino","https://carlosandmunoz.com/media/social-posts/runs-3/feed/23-narino.jpg","real-runs","2027-03-23 13:20"
+"Popayán's links share with no preview card.
+
+Add og:title, og:description, og:image, og:url, and twitter:card to each page template.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=popayan","https://carlosandmunoz.com/media/social-posts/runs-3/feed/24-popayan.jpg","real-runs","2027-03-24 18:45"
+"IETF writes the RFCs, but no security.txt.
+
+Publish /.well-known/security.txt with Contact and Expires lines, per RFC 9116.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=ietf","https://carlosandmunoz.com/media/social-posts/runs-3/feed/25-ietf.jpg","real-runs","2027-03-25 12:40"
+"Rama Judicial's site sends no HSTS.
+
+Send HSTS with a one-year max-age, and make the http redirect a 301 or 308.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=ramajudicial","https://carlosandmunoz.com/media/social-posts/runs-3/feed/26-ramajudicial.jpg","real-runs","2027-03-26 12:25"
+"Risaralda still loads Universal Analytics.
+
+Remove the old UA- snippet and keep one GA4 setup, so nothing double counts.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=risaralda","https://carlosandmunoz.com/media/social-posts/runs-3/feed/27-risaralda.jpg","real-runs","2027-03-27 14:25"
+"Tunja's home page says ""Territoriales"".
+
+Render the title, a description, and the main text on the server, so crawlers and AI answers can read them.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=tunja","https://carlosandmunoz.com/media/social-posts/runs-3/feed/28-tunja.jpg","real-runs","2027-03-28 17:00"
+"PostgreSQL's search box has no name.
+
+Give each input a <label> or an aria-label. Placeholder text vanishes on typing and is not a name.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=postgresql","https://carlosandmunoz.com/media/social-posts/runs-3/feed/29-postgresql.jpg","real-runs","2027-03-29 16:55"
+"Gob.ec's home page: no main landmark.
+
+Wrap content in one <main> and label the search box; screen readers jump to both.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gobec","https://carlosandmunoz.com/media/social-posts/runs-3/feed/30-gobec.jpg","real-runs","2027-03-30 20:00"
+"Caldas points to a sitemap that 404s.
+
+Publish the sitemap at the address robots.txt names, or fix the Sitemap: line to point at the real file.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=caldas","https://carlosandmunoz.com/media/social-posts/runs-3/feed/31-caldas.jpg","real-runs","2027-03-31 15:00"
+"Cúcuta redirects to https, but no HSTS.
+
+Send Strict-Transport-Security with max-age=31536000 on every https response once all subdomains serve https.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=cucuta","https://carlosandmunoz.com/media/social-posts/runs-3/feed/32-cucuta.jpg","real-runs","2027-04-01 15:45"
+"go.dev receives mail, but has no SPF.
+
+Publish SPF for the senders you use and a DMARC policy. Start at p=none with reports, then tighten.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=golang","https://carlosandmunoz.com/media/social-posts/runs-3/feed/33-golang.jpg","real-runs","2027-04-02 15:15"
+"Corte Constitucional is blank without JS.
+
+Server-render the main text and headings. AI crawlers and slow phones read HTML first.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=corteconst","https://carlosandmunoz.com/media/social-posts/runs-3/feed/34-corteconst.jpg","real-runs","2027-04-03 14:50"
+"Tolima's robots.txt shuts out AI answers.
+
+Allow the search and AI answer crawlers you want to cite you, and block only the ones you mean to.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=tolima","https://carlosandmunoz.com/media/social-posts/runs-3/feed/35-tolima.jpg","real-runs","2027-04-04 14:25"
+"Montería's pages can't be zoomed.
+
+Remove user-scalable=no and maximum-scale from the viewport tag. Low-vision visitors rely on zoom.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=monteria","https://carlosandmunoz.com/media/social-posts/runs-3/feed/36-monteria.jpg","real-runs","2027-04-05 18:55"
+"TypeScript: a sitemap no one is told about.
+
+Publish a robots.txt with one line: Sitemap: https://www.typescriptlang.org/sitemap-index.xml
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=typescript","https://carlosandmunoz.com/media/social-posts/runs-3/feed/37-typescript.jpg","real-runs","2027-04-06 11:30"
+"Spain's Galician home keeps a Spanish title.
+
+Translate the title and description too, so each language version names itself.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gobes","https://carlosandmunoz.com/media/social-posts/runs-3/feed/38-gobes.jpg","real-runs","2027-04-07 20:45"
+"Cauca's site search has no label.
+
+Give each field a <label for> or aria-label so screen readers say what to type.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=cauca","https://carlosandmunoz.com/media/social-posts/runs-3/feed/39-cauca.jpg","real-runs","2027-04-08 14:30"
+"Riohacha's home links to a page that 404s.
+
+Run a link checker after each content change, and redirect moved pages instead of dropping their URLs.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=riohacha","https://carlosandmunoz.com/media/social-posts/runs-3/feed/40-riohacha.jpg","real-runs","2027-04-09 11:55"
+"Vue.js lists 94 links but names no entity.
+
+Add WebSite and Organization blocks with sameAs links to GitHub and social profiles.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=vuejs","https://carlosandmunoz.com/media/social-posts/runs-3/feed/41-vuejs.jpg","real-runs","2027-04-10 11:40"
+"Superfinanciera's map lists a private IP.
+
+Build sitemap URLs from the public https host, and recheck after any server move.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=superfinanciera","https://carlosandmunoz.com/media/social-posts/runs-3/feed/42-superfinanciera.jpg","real-runs","2027-04-11 17:00"
+"CVC runs two hosts with two canonicals.
+
+Pick one host, 301 the other to it, and keep canonicals and the sitemap there.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=cvc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/43-cvc.jpg","real-runs","2027-04-12 10:05"
+"Soacha's city hall sends no HSTS.
+
+Send Strict-Transport-Security with a max-age of a year or more: one header.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=soacha","https://carlosandmunoz.com/media/social-posts/runs-3/feed/44-soacha.jpg","real-runs","2027-04-13 08:25"
+"Unicode still loads Universal Analytics.
+
+Remove the old analytics.js tags: a request and cookies for data no one receives.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=unicode","https://carlosandmunoz.com/media/social-posts/runs-3/feed/45-unicode.jpg","real-runs","2027-04-14 14:45"
+"Gov.br's Organization has no name.
+
+Add name, and sameAs links to official profiles, to the Organization block. AI answers use it to name the site.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=govbr","https://carlosandmunoz.com/media/social-posts/runs-3/feed/46-govbr.jpg","real-runs","2027-04-15 12:50"
+"Cornare: 83. Any site can frame it.
+
+Send Content-Security-Policy: frame-ancestors 'self' (or X-Frame-Options: SAMEORIGIN) on every page.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=cornare","https://carlosandmunoz.com/media/social-posts/runs-3/feed/47-cornare.jpg","real-runs","2027-04-16 18:20"
+"Bello's JSON-LD names the page, not the city.
+
+Add a GovernmentOrganization block with name, url, logo, and sameAs links to your official profiles.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=bello","https://carlosandmunoz.com/media/social-posts/runs-3/feed/48-bello.jpg","real-runs","2027-04-17 17:10"
+"Blender: security.txt, no main landmark.
+
+Wrap each template's content in one <main> element, and point a skip link at it.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=blender","https://carlosandmunoz.com/media/social-posts/runs-3/feed/49-blender.jpg","real-runs","2027-04-18 14:25"
+"Supersociedades loads its GA4 tag twice.
+
+Load each analytics tag once, from the template or a tag manager, never both.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=supersociedades","https://carlosandmunoz.com/media/social-posts/runs-3/feed/50-supersociedades.jpg","real-runs","2027-04-19 14:45"
+"Quindío blocks paint with 13 scripts.
+
+Defer scripts that need not run first, and move the rest to the end of the body.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=quindio","https://carlosandmunoz.com/media/social-posts/runs-3/feed/51-quindio.jpg","real-runs","2027-04-20 16:35"
+"Itagüí's session cookie skips the Secure flag.
+
+Mark every cookie Secure, and session cookies HttpOnly and SameSite. One server setting covers them all.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=itagui","https://carlosandmunoz.com/media/social-posts/runs-3/feed/52-itagui.jpg","real-runs","2027-04-21 17:00"
+"OpenStreetMap's search has no label.
+
+Add a visually hidden <label> or an aria-label to each map input, matching its placeholder.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=openstreetmap","https://carlosandmunoz.com/media/social-posts/runs-3/feed/53-openstreetmap.jpg","real-runs","2027-04-22 14:25"
+"Canada.ca sends no content security policy.
+
+Start with a report-only CSP, read the reports for a few weeks, then enforce it. Add a Referrer-Policy too.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=canadaca","https://carlosandmunoz.com/media/social-posts/runs-3/feed/54-canadaca.jpg","real-runs","2027-04-23 14:15"
+"Uniatlántico loads gtag.js twice.
+
+Load one Google tag and send to every destination from it, or route all tags through one Tag Manager.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=uniatlantico","https://carlosandmunoz.com/media/social-posts/runs-3/feed/55-uniatlantico.jpg","real-runs","2027-04-24 14:15"
+"Palmira's home page has no description.
+
+Write a description of about 150 characters for each key page, so you choose the snippet, not the crawler.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=palmira","https://carlosandmunoz.com/media/social-posts/runs-3/feed/56-palmira.jpg","real-runs","2027-04-25 17:00"
+"GitLab: llms.txt, an entity half done.
+
+Add logo and sameAs links to the Organization block, so AI answers can match the brand to its profiles.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gitlab","https://carlosandmunoz.com/media/social-posts/runs-3/feed/57-gitlab.jpg","real-runs","2027-04-26 16:45"
+"FNA's product pages point back home.
+
+Give each page a self-referencing canonical. Pointing it home asks search to drop the page from results.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=fnaco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/58-fnaco.jpg","real-runs","2027-04-27 16:00"
+"OAS: no viewport tag on the home page.
+
+Add <meta name=""viewport"" content=""width=device-width, initial-scale=1""> to every page template.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=oas","https://carlosandmunoz.com/media/social-posts/runs-3/feed/59-oas.jpg","real-runs","2027-04-28 19:10"
+"Planeación Bogotá still answers on http.
+
+Redirect every http request to https with a 301, then add Strict-Transport-Security.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=sdp","https://carlosandmunoz.com/media/social-posts/runs-3/feed/60-sdp.jpg","real-runs","2027-04-29 19:45"
+"Shopify: rich entity, but frameable.
+
+Send Content-Security-Policy: frame-ancestors 'self' on pages that no partner needs to embed.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=shopify","https://carlosandmunoz.com/media/social-posts/runs-3/feed/61-shopify.jpg","real-runs","2027-04-30 12:15"
+"myGov links through its CMS paths.
+
+Have the CMS write public URLs into links; keep redirects for old links only.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=mygovau","https://carlosandmunoz.com/media/social-posts/runs-3/feed/62-mygovau.jpg","real-runs","2027-05-01 09:15"
+"Andean Community: no main landmark.
+
+Wrap each page's primary content in one <main> element, so assistive tech can skip straight to it.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=comunidadandina","https://carlosandmunoz.com/media/social-posts/runs-3/feed/63-comunidadandina.jpg","real-runs","2027-05-02 20:40"
+"Ambiente Bogotá publishes no sitemap.
+
+Publish a sitemap.xml of the pages you want found and name it in robots.txt with one Sitemap: line.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=ambientebogota","https://carlosandmunoz.com/media/social-posts/runs-3/feed/64-ambientebogota.jpg","real-runs","2027-05-03 12:45"
+"Figma guards its pages, but has no llms.txt.
+
+Publish an llms.txt that lists your key pages with one-line summaries. Some AI tools read it first.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=figma","https://carlosandmunoz.com/media/social-posts/runs-3/feed/65-figma.jpg","real-runs","2027-05-04 11:10"
+"INS stops visitors from zooming in.
+
+Drop maximum-scale and user-scalable=no from the viewport tag. Let people zoom; the layout can cope.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=insco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/66-insco.jpg","real-runs","2027-05-05 09:15"
+"CARICOM's SPF record starts with a quote.
+
+Publish one TXT record that starts exactly with v=spf1 and lists every sender, then test it.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=caricom","https://carlosandmunoz.com/media/social-posts/runs-3/feed/67-caricom.jpg","real-runs","2027-05-06 08:10"
+"UAESP's home title tops 180 characters.
+
+Keep titles near 60 characters and move the mission into the description.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=uaesp","https://carlosandmunoz.com/media/social-posts/runs-3/feed/68-uaesp.jpg","real-runs","2027-05-07 12:50"
+"oneworld: fast, but zoom is locked.
+
+Drop maximum-scale and user-scalable from the viewport so people can zoom to 200%.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=oneworld","https://carlosandmunoz.com/media/social-posts/runs-3/feed/69-oneworld.jpg","real-runs","2027-05-08 13:40"
+"Govt.nz's home page is slow to arrive.
+
+Cache the home page HTML at the edge. Good sites deliver it in under 0.8 s.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=govtnz","https://carlosandmunoz.com/media/social-posts/runs-3/feed/70-govtnz.jpg","real-runs","2027-05-09 12:20"
+"African Union titles run to 126 characters.
+
+Keep titles near 60 characters: key words first, site name last, and trim long names in the CMS.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=africanunion","https://carlosandmunoz.com/media/social-posts/runs-3/feed/71-africanunion.jpg","real-runs","2027-05-10 12:10"
+"Canal Capital's home is 624 KB of HTML.
+
+Move inline scripts and styles into cached files, and trim long lists.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=canalcapital","https://carlosandmunoz.com/media/social-posts/runs-3/feed/72-canalcapital.jpg","real-runs","2027-05-11 15:30"
+"World Athletics: images without size.
+
+Set width and height, or a CSS aspect-ratio, on every image to reserve its space.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=worldathletics","https://carlosandmunoz.com/media/social-posts/runs-3/feed/73-worldathletics.jpg","real-runs","2027-05-12 15:30"
+"Invima's site sends no HSTS.
+
+Send HSTS, max-age=31536000, on every https response, then consider preload.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=invima","https://carlosandmunoz.com/media/social-posts/runs-3/feed/74-invima.jpg","real-runs","2027-05-13 17:30"
+"CABEI's missing pages answer 200, not 404.
+
+Return a real 404 status for unknown paths, with a helpful page, so search engines drop dead URLs.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=bcie","https://carlosandmunoz.com/media/social-posts/runs-3/feed/75-bcie.jpg","real-runs","2027-05-14 14:50"
+"Anyone can frame Metroplús pages.
+
+Send Content-Security-Policy: frame-ancestors 'self', or X-Frame-Options: SAMEORIGIN, on every page.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=metroplus","https://carlosandmunoz.com/media/social-posts/runs-3/feed/76-metroplus.jpg","real-runs","2027-05-15 13:10"
+"FIBA: missing pages answer 200.
+
+Return a real 404 status on the not-found page, keeping the same friendly design.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=fiba","https://carlosandmunoz.com/media/social-posts/runs-3/feed/77-fiba.jpg","real-runs","2027-05-16 17:45"
+"Eesti.ee has llms.txt but blank HTML.
+
+Pre-render pages to HTML and 404 unknown paths: AI crawlers read HTML, not apps.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=eestiee","https://carlosandmunoz.com/media/social-posts/runs-3/feed/78-eestiee.jpg","real-runs","2027-05-17 19:55"
+"CDB still tags a retired UA property.
+
+Retire the UA- tag; feed one GA4 property through Tag Manager or gtag, not both.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=caribank","https://carlosandmunoz.com/media/social-posts/runs-3/feed/79-caribank.jpg","real-runs","2027-05-18 20:15"
+"Madrid has llms.txt, but no JSON-LD.
+
+Add one GovernmentOrganization block with name, url, logo, and sameAs. AI answers use it to name you.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=madrid","https://carlosandmunoz.com/media/social-posts/runs-3/feed/80-madrid.jpg","real-runs","2027-05-19 15:05"
+"WIPO grants analytics before anyone agrees.
+
+Default both to denied where consent is required, and grant them on acceptance.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=wipo","https://carlosandmunoz.com/media/social-posts/runs-3/feed/81-wipo.jpg","real-runs","2027-05-20 19:10"
+"IDEAM's topic icons have no alt text.
+
+Give each icon alt text that names its link, or alt="""" when the link already has visible text.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=ideam","https://carlosandmunoz.com/media/social-posts/runs-3/feed/82-ideam.jpg","real-runs","2027-05-21 10:50"
+"Catalonia's robots.txt blocks AI answers.
+
+Name the search and AI answer crawlers you want in robots.txt, so citations can point back to you.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gencat","https://carlosandmunoz.com/media/social-posts/runs-3/feed/83-gencat.jpg","real-runs","2027-05-22 16:10"
+"Barcelona blocks ChatGPT search.
+
+Block training crawlers if you choose, but allow search agents like OAI-SearchBot so AI answers can cite you.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=barcelona","https://carlosandmunoz.com/media/social-posts/runs-3/feed/84-barcelona.jpg","real-runs","2027-05-23 10:25"
+"Oxfam: three scripts hold up the page.
+
+Add defer to scripts that don't need to run before first paint, or move them to the end of the body.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=oxfam","https://carlosandmunoz.com/media/social-posts/runs-3/feed/85-oxfam.jpg","real-runs","2027-05-24 14:15"
+"Gov.sg's sitemap lists a noindex page.
+
+List only pages you want indexed; a noindex entry sends crawlers mixed signals.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=govsg","https://carlosandmunoz.com/media/social-posts/runs-3/feed/86-govsg.jpg","real-runs","2027-05-25 09:05"
+"Bavaria's portal has no sitemap.
+
+Publish a sitemap.xml of the pages you want found and name it in robots.txt with one Sitemap: line.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=bayern","https://carlosandmunoz.com/media/social-posts/runs-3/feed/87-bayern.jpg","real-runs","2027-05-26 08:55"
+"Buenos Aires still loads a retired UA tag.
+
+Remove the Universal Analytics tags, which collect nothing now, and keep one GA4.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=buenosaires","https://carlosandmunoz.com/media/social-posts/runs-3/feed/88-buenosaires.jpg","real-runs","2027-05-27 13:50"
+"TED: ideas worth zooming into.
+
+Drop maximum-scale and user-scalable=no from the viewport, so people with low vision can enlarge text.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=ted","https://carlosandmunoz.com/media/social-posts/runs-3/feed/89-ted.jpg","real-runs","2027-05-28 09:55"
+"Alkosto's images arrive without a size.
+
+Set width and height on every img, or an aspect-ratio in CSS. The browser then reserves the space early.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=alkosto","https://carlosandmunoz.com/media/social-posts/runs-3/feed/90-alkosto.jpg","real-runs","2027-05-29 17:05"
+"CA.gov scores 92, DMARC only watches.
+
+After reviewing DMARC reports, move to p=quarantine and then p=reject, so forged mail is blocked.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=cagov","https://carlosandmunoz.com/media/social-posts/runs-3/feed/91-cagov.jpg","real-runs","2027-05-30 14:25"
+"Santiago's search field is a nameless box.
+
+Add a visible <label> or an aria-label to every input. A placeholder is a hint, not a name.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=munistgo","https://carlosandmunoz.com/media/social-posts/runs-3/feed/92-munistgo.jpg","real-runs","2027-05-31 18:45"
+"ICANN's WebSite block has no url.
+
+Add url, plus a search action if you have one, to each language's WebSite block.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=icann","https://carlosandmunoz.com/media/social-posts/runs-3/feed/93-icann.jpg","real-runs","2027-06-01 14:10"
+"Suomi.fi keeps HSTS for only a week.
+
+Raise HSTS max-age to at least a year, 31536000 seconds. Short values protect only frequent visitors.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=suomifi","https://carlosandmunoz.com/media/social-posts/runs-3/feed/94-suomifi.jpg","real-runs","2027-06-02 20:20"
+"Ontario's canonicals point to plain http.
+
+Point every canonical at the final https URL, the same one you list in the sitemap.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=ontario","https://carlosandmunoz.com/media/social-posts/runs-3/feed/95-ontario.jpg","real-runs","2027-06-03 13:50"
+"Quito answers 200 to any made-up path.
+
+Return a real 404 status for unknown URLs, with a helpful page and a search box.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=quito","https://carlosandmunoz.com/media/social-posts/runs-3/feed/96-quito.jpg","real-runs","2027-06-04 08:45"
+"Gavi: strong headers, no structured data.
+
+Start with one Organization block on the home page: name, url, logo, and sameAs to your official profiles.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gavi","https://carlosandmunoz.com/media/social-posts/runs-3/feed/97-gavi.jpg","real-runs","2027-06-05 20:10"
+"Caracol TV blocks ChatGPT's visits.
+
+Block training crawlers if you choose, but allow user-triggered agents. They bring readers to your pages.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=caracoltv","https://carlosandmunoz.com/media/social-posts/runs-3/feed/98-caracoltv.jpg","real-runs","2027-06-06 14:30"
+"Québec.ca: 90. The tab order jumps.
+
+Remove positive tabindex values and order the HTML the way people should move through it.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=quebec","https://carlosandmunoz.com/media/social-posts/runs-3/feed/99-quebec.jpg","real-runs","2027-06-07 08:10"
+"Paris.fr has no entity markup.
+
+Add a GovernmentOrganization block with name, url, logo, and sameAs. AI answers use it to describe you.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=paris","https://carlosandmunoz.com/media/social-posts/runs-3/feed/100-paris.jpg","real-runs","2027-06-08 09:45"
+"Scouts: a consent tool, no Consent Mode.
+
+Set consent defaults to denied before Tag Manager loads; OneTrust then updates them.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=scouts","https://carlosandmunoz.com/media/social-posts/runs-3/feed/101-scouts.jpg","real-runs","2027-06-09 12:30"
+"USA.gov's Organization has no name.
+
+Name the organization and list its official profiles in sameAs. AI answers use them to say who runs the site.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=usagov","https://carlosandmunoz.com/media/social-posts/runs-3/feed/102-usagov.jpg","real-runs","2027-06-10 14:40"
+"Buenos Aires Province: a cert down to 0 days.
+
+Automate cert renewal and alert at 30 days left, so no expiry reaches visitors.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gba","https://carlosandmunoz.com/media/social-posts/runs-3/feed/103-gba.jpg","real-runs","2027-06-11 09:50"
+"NYC.gov sends HSTS, but not on every page.
+
+Set security headers at the edge, not per app, so every path on the host gets the same HSTS policy.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nyc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/104-nyc.jpg","real-runs","2027-06-12 18:10"
+"The Global Fund sets no cache rules.
+
+Send Cache-Control on HTML, such as a short max-age, and a long max-age on fingerprinted assets.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=globalfund","https://carlosandmunoz.com/media/social-posts/runs-3/feed/105-globalfund.jpg","real-runs","2027-06-13 13:10"
+"ISA's home page has no h1 and no main.
+
+Wrap the content in one <main> and give the page one h1. They are the two shortcuts screen readers lean on most.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=isaco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/106-isaco.jpg","real-runs","2027-06-14 18:30"
+"Jalisco's home page is empty without JS.
+
+Render key text and links on the server so content arrives before scripts run.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/107-jalisco.jpg","real-runs","2027-06-15 08:35"
+"TfL has no security.txt.
+
+Publish /.well-known/security.txt with Contact and Expires lines. It takes minutes.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=tfl","https://carlosandmunoz.com/media/social-posts/runs-3/feed/108-tfl.jpg","real-runs","2027-06-16 14:05"
+"FIDE: plain http still serves the site.
+
+Redirect every http request to https with a 301, then add Strict-Transport-Security.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=fide","https://carlosandmunoz.com/media/social-posts/runs-3/feed/109-fide.jpg","real-runs","2027-06-17 16:35"
+"Defensoría's HTML weighs over 1 MB.
+
+Move inline data, styles, and menus out of the HTML. Phones parse every byte first.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=defensoriaco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/110-defensoriaco.jpg","real-runs","2027-06-18 20:55"
+"Victoria: 86, but no JSON-LD.
+
+Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria","https://carlosandmunoz.com/media/social-posts/runs-3/feed/111-victoria.jpg","real-runs","2027-06-19 18:40"
+"Montevideo's canonical points to plain http.
+
+Point each canonical at the exact https URL you serve, with the www if you use it.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=montevideo","https://carlosandmunoz.com/media/social-posts/runs-3/feed/112-montevideo.jpg","real-runs","2027-06-20 20:15"
+"Internet Society: a retired frame rule.
+
+Replace ALLOW-FROM with Content-Security-Policy: frame-ancestors 'self' plus the one partner you allow.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=isoc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/113-isoc.jpg","real-runs","2027-06-21 10:20"
+"MinCIT reports to two GA4 properties.
+
+Make one GA4 property the source of truth, and document why any second exists.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=mincit","https://carlosandmunoz.com/media/social-posts/runs-3/feed/114-mincit.jpg","real-runs","2027-06-22 08:25"
+"NSW: 81, images with no set size.
+
+Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw","https://carlosandmunoz.com/media/social-posts/runs-3/feed/115-nsw.jpg","real-runs","2027-06-23 16:45"
+"Inder Medellín calls every page 'Inicio'.
+
+Give each page a unique title that starts with what that page is about, then the site name.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=inder","https://carlosandmunoz.com/media/social-posts/runs-3/feed/116-inder.jpg","real-runs","2027-06-24 15:40"
+"LibreOffice links share without a preview.
+
+Add og:title, og:description, og:image and og:url to each template, plus twitter:card.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=libreoffice","https://carlosandmunoz.com/media/social-posts/runs-3/feed/117-libreoffice.jpg","real-runs","2027-06-25 15:25"
+"ANI loads its GA4 tag twice.
+
+Search the templates for a second gtag snippet. One tag, loaded once, keeps every report honest.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=anico","https://carlosandmunoz.com/media/social-posts/runs-3/feed/118-anico.jpg","real-runs","2027-06-26 14:05"
+"Medellín's libraries have no h1 headings.
+
+Give each page one h1 that names its topic, then h2 and h3 in order. Screen readers jump by heading.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=bibliotecasmedellin","https://carlosandmunoz.com/media/social-posts/runs-3/feed/119-bibliotecasmedellin.jpg","real-runs","2027-06-27 09:40"
+"MSC: Tag Manager with no consent tool.
+
+Add a consent tool, set Consent Mode defaults to denied, and fire tags only after a visitor agrees.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=msc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/120-msc.jpg","real-runs","2027-06-28 15:40"
+"IDPC hides its participation pages.
+
+Audit which pages carry noindex. Public participation pages should be findable; keep it for search results.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=idpc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/121-idpc.jpg","real-runs","2027-06-29 19:30"
+"Cultura Bogotá keeps Universal Analytics.
+
+Remove the old UA tag and keep one GA4 setup, so pages stop loading code that sends data nowhere.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=culturabogota","https://carlosandmunoz.com/media/social-posts/runs-3/feed/122-culturabogota.jpg","real-runs","2027-06-30 18:20"
+"Berlin.de's hreflang leaves out German.
+
+List every language version in hreflang, including the page itself, and make each version link back.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=berlin","https://carlosandmunoz.com/media/social-posts/runs-3/feed/123-berlin.jpg","real-runs","2027-07-01 16:20"
+"Vienna's city map: 183 unnamed boxes.
+
+Give each checkbox a <label for>, or aria-labelledby pointing at its visible text.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=wien","https://carlosandmunoz.com/media/social-posts/runs-3/feed/124-wien.jpg","real-runs","2027-07-02 19:50"

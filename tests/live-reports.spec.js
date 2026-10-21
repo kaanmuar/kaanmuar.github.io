@@ -54,6 +54,13 @@ test.describe('Live reports', () => {
     expect(localCount).toBeGreaterThan(0);
     expect(localCount).toBeLessThan(total);
     for (const scope of await local.locator('.lc-scope').allTextContents()) expect(scope.trim().toLowerCase()).toBe('local');
+    const scopes = await page.locator('.live-chips button[data-g="scope"]').evaluateAll((els) => els.map((el) => el.dataset.v));
+    expect(scopes).toEqual(['', 'worldwide', 'national', 'regional', 'local']);
+    await page.locator('.live-chips button[data-g="scope"][data-v="regional"]').click();
+    const regional = page.locator('.live-card:not([hidden])');
+    expect(await regional.count()).toBeGreaterThan(0);
+    for (const scope of await regional.locator('.lc-scope').allTextContents()) expect(scope.trim().toLowerCase()).toBe('regional');
+    await expect(page.locator('.live-card.is-active')).toHaveCount(1);
     await page.locator('.live-chips button[data-g="scope"][data-v=""]').click();
     await page.locator('.live-chips button[data-g="country"][data-v="GB"]').click();
     const gb = await page.locator('.live-card:not([hidden])').count();
