@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Your runs · QA-lab URL Review</title>
+  <meta name="description" content="Sign in to see the QA-lab URL Review runs stored for your email. A free sign-in shows the opening. A 30-day pass opens the rest.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://carlosandmunoz.com/qa-review.html#service-facts">
+  <style>
+    :root { color-scheme: light; --ink:#102027; --muted:#5c6e78; --line:#d5e0e4; --teal:#0d6e76; --paper:#f4f7f8; --card:#fff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.45 Georgia, "Times New Roman", serif; color: var(--ink); background: var(--paper); }
+    main { width: min(820px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
+    h1 { font-weight: normal; font-size: 32px; margin: 0 0 8px; }
+    h2 { font-weight: normal; font-size: 20px; }
+    a { color: var(--teal); }
+    section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 14px 0; }
+    label { display: block; font-family: Arial, sans-serif; font-size: 13px; color: var(--muted); margin-top: 10px; }
+    input { width: 100%; font: 16px Arial, sans-serif; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+    button { margin-top: 12px; font: 14px Arial, sans-serif; background: var(--teal); color: #fff; border: 0; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+    .muted { color: var(--muted); }
+    .veil { display: inline-block; max-width: 46%; overflow: hidden; white-space: nowrap; vertical-align: bottom; filter: blur(5px); }
+    table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; }
+    ul { margin: 8px 0 0; padding-left: 18px; }
+  </style>
+</head>
+<body>
+<main>
+  <p class="muted">QA-lab URL Review</p>
+  <h1>Your runs</h1>
+  <p>Sign in with the email you used on a review. A free sign-in shows the opening of each run. The rest stays closed until a 30-day pass is paid. On this machine the sign-in code appears on the review desk, because mail delivery of the code is not connected yet.</p>
+  <section id="plans">
+    <h2>30-day passes</h2>
+    <table>
+      <thead><tr><th>Pass</th><th>Fee</th><th>What it opens</th></tr></thead>
+      <tbody>
+        <tr><td>Glance</td><td>15 USD</td><td>Your saved runs, in full. No new run is included.</td></tr>
+        <tr><td>Return</td><td>49 USD</td><td>Glance, plus 2 runs, up to 4 frameworks, 20 pages, 2 links deep.</td></tr>
+        <tr><td>Bench</td><td>189 USD</td><td>Glance, plus 4 runs, up to 8 frameworks, 20 pages, 2 links deep.</td></tr>
+        <tr><td>Studio</td><td>399 USD</td><td>Glance, plus 8 runs, up to 8 frameworks, 40 pages, 3 links deep.</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">These are 30-day passes, not a repeating card charge. The PayPal account on this service is a personal account, so a repeating monthly charge is not set up. Tools, and a wider read than the pass includes, stay on the run schedule. A return takes 10% off the first time in 30 days, 15% the second, and 20% after that. A selection never falls under 9.50 USD.</p>
+  </section>
+  <section id="sign">
+    <h2>Sign in</h2>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="email">
+    <button id="ask" type="button">Prepare a code</button>
+    <label for="code">Code</label>
+    <input id="code" inputmode="numeric" autocomplete="one-time-code">
+    <button id="enter" type="button">Open my runs</button>
+    <p class="muted" id="sign-status"></p>
+  </section>
+  <section id="file" hidden>
+    <h2>Saved runs</h2>
+    <p class="muted" id="file-status"></p>
+    <div id="list"></div>
+    <button id="stop" type="button">Stop follow-up notes</button>
+  </section>
+</main>
+<script src="js/site-analytics.js?v=20261012a"></script>
+<script src="js/qa-review-consent.js?v=20261023a"></script>
+<script>
+  function endpoint() {
+    const host = location.hostname;
+    if (host === "127.0.0.1" || host === "localhost") return location.port === "8768" ? "" : "http://127.0.0.1:8768";
+    return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
+  }
+  const statusEl = document.getElementById("sign-status");
+  const fileEl = document.getElementById("file");
+  const listEl = document.getElementById("list");
+  function text(value) { return value == null || value === "" ? "—" : String(value); }
+  function node(tag, content) {
+    const el = document.createElement(tag);
+    el.textContent = content == null ? "" : String(content);
+    return el;
+  }
+  function valueNode(value, open) {
+    if (open) return node("span", text(value));
+    const span = node("span", text(value));
+    span.className = "veil";
+    return span;
+  }
+  document.getElementById("ask").addEventListener("click", async () => {
+    statusEl.textContent = "If this address has a run, the code is on the review desk of this machine.";
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_code", "URL Review", "ask");
+    await fetch(endpoint() + "/account/code", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: document.getElementById("email").value })
+    });
+  });
+  document.getElementById("enter").addEventListener("click", async () => {
+    const response = await fetch(endpoint() + "/account/enter", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email: document.getElementById("email").value,
+        code: document.getElementById("code").value
+      })
+    });
+    if (!response.ok) {
+      statusEl.textContent = "That code does not match a waiting sign-in.";
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_enter", "URL Review", "miss");
+      return;
+    }
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_enter", "URL Review", "open");
+    statusEl.textContent = "";
+    loadRuns();
+  });
+  document.getElementById("stop").addEventListener("click", async () => {
+    await fetch(endpoint() + "/account/stop", { method: "POST", credentials: "include" });
+    document.getElementById("file-status").textContent = "Follow-up notes for this address are stopped.";
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_stop", "URL Review", "stop");
+  });
+  async function loadRuns() {
+    const response = await fetch(endpoint() + "/account/runs", { credentials: "include", cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    fileEl.hidden = false;
+    const state = data.open
+      ? (data.charged ? "A 30-day pass is paid. The runs are open." : "A 30-day pass is open on this machine. No charge was made. The runs are open.")
+      : "The opening of each run is visible. The rest stays closed until a 30-day pass.";
+    document.getElementById("file-status").textContent = state + (data.paidUntil ? " Until " + new Date(data.paidUntil).toLocaleString() + "." : "");
+    listEl.replaceChildren();
+    (data.runs || []).forEach((run) => {
+      const block = document.createElement("article");
+      block.appendChild(node("h2", run.host || "Run"));
+      const dl = document.createElement("p");
+      dl.appendChild(document.createTextNode((run.at ? new Date(run.at).toLocaleString() : "—") + " · " + text(run.status) + " · " + text(run.caseCount) + " cases · "));
+      dl.appendChild(valueNode(run.url, data.open));
+      block.appendChild(dl);
+      if (run.statement) {
+        const line = document.createElement("p");
+        line.appendChild(valueNode(run.statement, data.open));
+        block.appendChild(line);
+      }
+      const cases = document.createElement("ul");
+      (run.cases || []).slice(0, 8).forEach((item) => {
+        const li = document.createElement("li");
+        li.appendChild(document.createTextNode((item.layer ? item.layer + " — " : "")));
+        li.appendChild(valueNode(item.title, data.open));
+        cases.appendChild(li);
+      });
+      block.appendChild(cases);
+      listEl.appendChild(block);
+    });
+    if (!(data.runs || []).length) listEl.appendChild(node("p", "No finished run is stored for this address."));
+  }
+  loadRuns();
+</script>
+</body>
+</html>

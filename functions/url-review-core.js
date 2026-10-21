@@ -1461,7 +1461,7 @@ function propose(pages, robotsBlocked, limits, dom) {
   addCase(cases, { id: "FN-05", layer: "Functional", title: "Primary controls have an accessible name", why: face.buttons + " button elements were counted." + later + " Empty buttons and icon-only controls would fail.", fw: browser });
   addCase(cases, { id: "FN-06", layer: "Functional", title: "Discovered pages keep a successful document status", why: failed.length ? failed.length + " saved pages were outside 200–399." : pages.length + " saved pages stayed in the success range." + " A regression run would fail on a new 404 or 500 inside the same path list.", fw: browser });
   addCase(cases, { id: "FN-07", layer: "Functional", title: "Each saved page keeps a title", why: (untitled.length ? untitled.length + " saved pages had no title." : "Every saved page had a title.") + " Titles would be asserted per path, including pages reached through one link.", fw: browser });
-  if (duplicateTitles) addCase(cases, { id: "FN-08", layer: "Functional", title: "Titles stay distinct across the pages that were read", why: duplicateTitles + " titles repeated inside this read. A content regression would flag two indexable URLs that share one title.", fw: browser });
+  if (duplicateTitles) addCase(cases, { id: "FN-08", layer: "Functional", title: "Titles stay distinct across the pages that were analyzed", why: duplicateTitles + " titles repeated inside this read. A content regression would flag two indexable URLs that share one title.", fw: browser });
   addCase(cases, { id: "CT-01", layer: "Content", title: "The meta description is present and short enough to read", why: (face.description ? "A description of " + face.description.length + " characters is present." : "No meta description was found.") + " The useful band for a snippet is about 50 to 160 characters.", fw: browser });
   addCase(cases, { id: "CT-02", layer: "Content", title: "A canonical link points at the preferred URL", why: (face.canonical ? "Canonical is " + face.canonical + "." : "No canonical link was found.") + " The preferred URL would be compared with the final https address of this read.", fw: browser });
   addCase(cases, { id: "CT-03", layer: "Content", title: "Open Graph and Twitter cards describe the same page", why: (sig.openGraph ? "Open Graph tags are present." : "No Open Graph tag was found.") + (sig.twitter ? " A Twitter card tag is present." : " No Twitter card tag was found.") + " A later case would assert og:title, og:image, and the card type.", fw: browser });
@@ -1478,7 +1478,7 @@ function propose(pages, robotsBlocked, limits, dom) {
       layer: "Functional",
       title: "Clicking “" + step.text + "” opens " + step.target,
       why: "The start page " + (step.where === "main" ? "content" : "navigation") + " links “" + step.text + "” to " + step.target + " (" + step.selector + ")." +
-        (step.h1 ? " The page read there has the heading “" + step.h1 + "”." : "") +
+        (step.h1 ? " The page analyzed there has the heading “" + step.h1 + "”." : "") +
         " A browser run would click the link at 1280 px, wait for " + step.target + (step.h1 ? ", and check the heading" : "") + ". Nothing is submitted." +
         (dom.banner ? " " + (dom.banner === "A cookie banner" ? "A cookie banner" : "The " + dom.banner + " banner") + " covers the first visit, so close it before the click." : ""),
       fw: browser,
@@ -2077,7 +2077,7 @@ async function reviewTarget(rawUrl, hooks) {
     log: lines,
     status: stopped ? "stopped" : "complete",
     statement: stopped
-      ? "This review was stopped. The cases below use only the pages read before the stop. None of them were executed."
+      ? "This review was stopped. The cases below use only the pages analyzed before the stop. None of them were executed."
       : "These cases are proposed from a public read. None of them were executed."
   };
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;

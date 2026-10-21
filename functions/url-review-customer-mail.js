@@ -24,7 +24,7 @@ const COPY = {
     title: "The review of {host} is in.",
     lead: "The six scores are in the clear. The findings sit under frost, with just enough showing to tell which ones matter.",
     outOf: "out of 100",
-    pages: "pages read",
+    pages: "pages analyzed",
     cases: "proposed test cases",
     findings: "What to fix first",
     more: "+{n} more findings in the full report",
@@ -48,7 +48,7 @@ const COPY = {
     title: "La revisión de {host} está lista.",
     lead: "Los seis puntajes están a la vista. Los hallazgos siguen empañados, con lo justo para saber cuáles importan.",
     outOf: "de 100",
-    pages: "páginas leídas",
+    pages: "páginas analizadas",
     cases: "casos de prueba propuestos",
     findings: "Qué arreglar primero",
     more: "+{n} hallazgos más en el informe completo",
@@ -72,7 +72,7 @@ const COPY = {
     title: "A revisão de {host} está pronta.",
     lead: "As seis notas estão à vista. Os achados seguem embaçados, com o suficiente para saber quais importam.",
     outOf: "de 100",
-    pages: "páginas lidas",
+    pages: "páginas analisadas",
     cases: "casos de teste propostos",
     findings: "O que corrigir primeiro",
     more: "+{n} achados no relatório completo",
@@ -96,7 +96,7 @@ const COPY = {
     title: "Die Prüfung von {host} ist fertig.",
     lead: "Die sechs Werte liegen offen. Die Befunde stehen unter Milchglas, gerade so sichtbar, dass man erkennt, welche zählen.",
     outOf: "von 100",
-    pages: "gelesene Seiten",
+    pages: "geprüfte Seiten",
     cases: "vorgeschlagene Testfälle",
     findings: "Was zuerst zu beheben ist",
     more: "+{n} weitere Befunde im vollständigen Bericht",
@@ -120,7 +120,7 @@ const COPY = {
     title: "La revue de {host} est prête.",
     lead: "Les six notes sont à découvert. Les constats restent sous verre dépoli, juste assez visibles pour savoir lesquels comptent.",
     outOf: "sur 100",
-    pages: "pages lues",
+    pages: "pages analysées",
     cases: "cas de test proposés",
     findings: "À corriger en premier",
     more: "+{n} autres constats dans le rapport complet",
@@ -144,7 +144,7 @@ const COPY = {
     title: "La revisione di {host} è pronta.",
     lead: "I sei punteggi sono in chiaro. I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.",
     outOf: "su 100",
-    pages: "pagine lette",
+    pages: "pagine analizzate",
     cases: "casi di test proposti",
     findings: "Cosa sistemare prima",
     more: "+{n} altri rilievi nel report completo",
@@ -164,12 +164,12 @@ const COPY = {
 };
 
 const PDF_COPY = {
-  en: { badge: "Blurred preview", note: "The opening of each line is readable. The rest stays blurred until the report is unlocked.", findings: "Findings", cases: "Proposed test cases", moreCases: "+{n} more cases in the full report", unlock: "Unlock the full report", attached: "The blurred report is attached as a PDF.", fails: "fail now", risks: "at risk", read: "Read on {date}", file: "blurred-report", sev: { critical: "critical", high: "high", medium: "medium", low: "low" } },
-  es: { badge: "Vista previa empañada", note: "El comienzo de cada línea se puede leer. El resto sigue empañado hasta desbloquear el informe.", findings: "Hallazgos", cases: "Casos de prueba propuestos", moreCases: "+{n} casos más en el informe completo", unlock: "Desbloquear el informe completo", attached: "El informe empañado va adjunto en PDF.", fails: "fallan ahora", risks: "en riesgo", read: "Leído el {date}", file: "informe-empanado", sev: { critical: "crítico", high: "alto", medium: "medio", low: "bajo" } },
-  pt: { badge: "Prévia embaçada", note: "O início de cada linha pode ser lido. O resto fica embaçado até o relatório ser desbloqueado.", findings: "Achados", cases: "Casos de teste propostos", moreCases: "+{n} casos a mais no relatório completo", unlock: "Desbloquear o relatório completo", attached: "O relatório embaçado vai anexado em PDF.", fails: "falham agora", risks: "em risco", read: "Lido em {date}", file: "relatorio-embacado", sev: { critical: "crítico", high: "alto", medium: "médio", low: "baixo" } },
-  de: { badge: "Verschwommene Vorschau", note: "Der Anfang jeder Zeile ist lesbar. Der Rest bleibt verschwommen, bis der Bericht freigeschaltet ist.", findings: "Befunde", cases: "Vorgeschlagene Testfälle", moreCases: "+{n} weitere Fälle im vollständigen Bericht", unlock: "Vollständigen Bericht freischalten", attached: "Der verschwommene Bericht liegt als PDF bei.", fails: "schlagen fehl", risks: "gefährdet", read: "Gelesen am {date}", file: "verschwommener-bericht", sev: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig" } },
-  fr: { badge: "Aperçu flouté", note: "Le début de chaque ligne est lisible. Le reste reste flou jusqu'au déverrouillage du rapport.", findings: "Constats", cases: "Cas de test proposés", moreCases: "+{n} cas de plus dans le rapport complet", unlock: "Déverrouiller le rapport complet", attached: "Le rapport flouté est joint en PDF.", fails: "échouent", risks: "à risque", read: "Lu le {date}", file: "rapport-floute", sev: { critical: "critique", high: "élevé", medium: "moyen", low: "faible" } },
-  it: { badge: "Anteprima sfocata", note: "L'inizio di ogni riga è leggibile. Il resto resta sfocato finché il rapporto non viene sbloccato.", findings: "Risultati", cases: "Casi di test proposti", moreCases: "+{n} casi in più nel rapporto completo", unlock: "Sblocca il rapporto completo", attached: "Il rapporto sfocato è allegato in PDF.", fails: "falliscono ora", risks: "a rischio", read: "Letto il {date}", file: "rapporto-sfocato", sev: { critical: "critico", high: "alto", medium: "medio", low: "basso" } }
+  en: { badge: "Blurred preview", note: "The opening of each line is readable. The rest stays blurred until the report is unlocked.", findings: "Findings", cases: "Proposed test cases", moreCases: "+{n} more cases in the full report", unlock: "Unlock the full report", attached: "The blurred report is attached as a PDF.", fails: "fail now", risks: "at risk", read: "Analyzed on {date}", file: "blurred-report", sev: { critical: "critical", high: "high", medium: "medium", low: "low" } },
+  es: { badge: "Vista previa empañada", note: "El comienzo de cada línea se puede leer. El resto sigue empañado hasta desbloquear el informe.", findings: "Hallazgos", cases: "Casos de prueba propuestos", moreCases: "+{n} casos más en el informe completo", unlock: "Desbloquear el informe completo", attached: "El informe empañado va adjunto en PDF.", fails: "fallan ahora", risks: "en riesgo", read: "Analizado el {date}", file: "informe-empanado", sev: { critical: "crítico", high: "alto", medium: "medio", low: "bajo" } },
+  pt: { badge: "Prévia embaçada", note: "O início de cada linha pode ser lido. O resto fica embaçado até o relatório ser desbloqueado.", findings: "Achados", cases: "Casos de teste propostos", moreCases: "+{n} casos a mais no relatório completo", unlock: "Desbloquear o relatório completo", attached: "O relatório embaçado vai anexado em PDF.", fails: "falham agora", risks: "em risco", read: "Analisado em {date}", file: "relatorio-embacado", sev: { critical: "crítico", high: "alto", medium: "médio", low: "baixo" } },
+  de: { badge: "Verschwommene Vorschau", note: "Der Anfang jeder Zeile ist lesbar. Der Rest bleibt verschwommen, bis der Bericht freigeschaltet ist.", findings: "Befunde", cases: "Vorgeschlagene Testfälle", moreCases: "+{n} weitere Fälle im vollständigen Bericht", unlock: "Vollständigen Bericht freischalten", attached: "Der verschwommene Bericht liegt als PDF bei.", fails: "schlagen fehl", risks: "gefährdet", read: "Geprüft am {date}", file: "verschwommener-bericht", sev: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig" } },
+  fr: { badge: "Aperçu flouté", note: "Le début de chaque ligne est lisible. Le reste reste flou jusqu'au déverrouillage du rapport.", findings: "Constats", cases: "Cas de test proposés", moreCases: "+{n} cas de plus dans le rapport complet", unlock: "Déverrouiller le rapport complet", attached: "Le rapport flouté est joint en PDF.", fails: "échouent", risks: "à risque", read: "Analysé le {date}", file: "rapport-floute", sev: { critical: "critique", high: "élevé", medium: "moyen", low: "faible" } },
+  it: { badge: "Anteprima sfocata", note: "L'inizio di ogni riga è leggibile. Il resto resta sfocato finché il rapporto non viene sbloccato.", findings: "Risultati", cases: "Casi di test proposti", moreCases: "+{n} casi in più nel rapporto completo", unlock: "Sblocca il rapporto completo", attached: "Il rapporto sfocato è allegato in PDF.", fails: "falliscono ora", risks: "a rischio", read: "Analizzato il {date}", file: "rapporto-sfocato", sev: { critical: "critico", high: "alto", medium: "medio", low: "basso" } }
 };
 const PDF_CASES = 24;
 const FILLER_WORDS = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua".split(" ");

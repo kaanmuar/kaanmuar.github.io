@@ -558,7 +558,7 @@
     advice.push(["This is a snapshot", "The read does not certify that the site is safe, fast, or compliant."]);
     const adviceHtml = advice.slice(0, 4).map(([title, body]) => "<article><strong>" + title + "</strong><span>" + esc(body) + "</span></article>").join("");
     document.getElementById("report-visuals").innerHTML =
-      '<article class="card"><h2>Response time across the pages read</h2><p class="muted">Milliseconds, in the order the pages were opened. One read, not a history of earlier days.</p>' + times + "</article>" +
+      '<article class="card"><h2>Response time across the pages analyzed</h2><p class="muted">Milliseconds, in the order the pages were opened. One read, not a history of earlier days.</p>' + times + "</article>" +
       '<article class="card"><h2>Public marks on the first response</h2><div class="ticks">' + ticks + "</div></article>" +
       '<article class="card"><h2>Technology groups in this read</h2>' + groupBars + "</article>" +
       '<article class="card"><h2>Practices worth implementing</h2><div class="advice">' + adviceHtml + "</div></article>";
@@ -853,7 +853,7 @@
       if (!list.length) return "";
       return '<p class="bot-group">' + esc(label) + "</p>" + list.map((bot) =>
         '<div class="bot' + (bot.allowed ? "" : " no") + '"><i aria-hidden="true">' + (bot.allowed ? "✓" : "✕") + '</i><div><span class="notranslate" translate="no">' + esc(bot.token) + "</span> — " + esc(bot.product) +
-        "<small>" + (bot.allowed ? (bot.blockedPages ? bot.blockedPages + " of the pages read are closed to it." : "Allowed.") : "Blocked" + (bot.rule ? " by " + esc(bot.rule) : "") + ".") + "</small></div></div>").join("");
+        "<small>" + (bot.allowed ? (bot.blockedPages ? bot.blockedPages + " of the pages analyzed are closed to it." : "Allowed.") : "Blocked" + (bot.rule ? " by " + esc(bot.rule) : "") + ".") + "</small></div></div>").join("");
     }).join("");
     const llms = geo.llms || {};
     const entity = geo.entity;
@@ -886,7 +886,7 @@
       '<div class="check-tile ' + (a.consentTools && a.consentTools.length ? "pass" : ((a.tags || []).some((tag) => !tag.cookieless) ? "risk" : "unknown")) + '"><b>Consent tool</b>' + esc(consent) + "</div>" +
       '<div class="check-tile ' + (a.consentMode ? (a.consentMode.analytics === "denied" && a.consentMode.v2 ? "pass" : "risk") : "unknown") + '"><b>Consent Mode</b>' + esc(mode) + "</div>" +
       '<div class="check-tile ' + (a.utm ? (a.utm.kept ? "pass" : "fail") : "unknown") + '"><b>UTM parameters</b>' + esc(utm) + "</div></div>" +
-      '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>Tool</th><th>IDs</th><th>Pages with it</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">No known analytics or advertising tag was in the HTML of the pages read.</p>') +
+      '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>Tool</th><th>IDs</th><th>Pages with it</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">No known analytics or advertising tag was in the HTML of the pages analyzed.</p>') +
       ((a.untagged || []).length ? '<p class="meta-line">Pages without a tag: ' + esc(a.untagged.slice(0, 8).join(", ")) + "</p>" : "") + "</article>";
   }
 
@@ -903,9 +903,9 @@
       '<div class="stat"><b>' + dup.length + '</b><span>Shared titles</span></div></div>' +
       '<article class="card">' + (blocked.length
         ? '<table class="mini-table"><thead><tr><th>Page not indexable</th><th>Why</th></tr></thead><tbody>' + blocked.slice(0, 30).map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + esc(row.reason) + "</td></tr>").join("") + "</tbody></table>"
-        : '<p class="muted">Every page that was read can be indexed: status 200, no noindex, canonical to itself, open to Googlebot.</p>') +
+        : '<p class="muted">Every page that was analyzed can be indexed: status 200, no noindex, canonical to itself, open to Googlebot.</p>') +
       ((map.listedNotIndexable || []).length ? '<p class="meta-line">In the sitemap but not indexable: ' + esc(map.listedNotIndexable.slice(0, 6).join(", ")) + "</p>" : "") +
-      ((map.notLinked || []).length ? '<p class="meta-line">In the sitemap but not linked from the pages read: ' + esc(map.notLinked.slice(0, 6).join(", ")) + (map.notLinked.length > 6 ? " …" : "") + "</p>" : "") +
+      ((map.notLinked || []).length ? '<p class="meta-line">In the sitemap but not linked from the pages analyzed: ' + esc(map.notLinked.slice(0, 6).join(", ")) + (map.notLinked.length > 6 ? " …" : "") + "</p>" : "") +
       ((seo.schemaTypes || []).length ? '<p class="meta-line">Structured data types: ' + esc(seo.schemaTypes.join(", ")) + "</p>" : "") + "</article>";
   }
 
@@ -914,7 +914,7 @@
     const graph = ins.graph || { nodes: [], edges: [] };
     const nodes = graph.nodes || [];
     if (nodes.length < 2) {
-      host.innerHTML = '<p class="muted">Only one page was read, so there is no link map to draw.</p>';
+      host.innerHTML = '<p class="muted">Only one page was analyzed, so there is no link map to draw.</p>';
       return;
     }
     const parent = nodes.map((node, index) => {
@@ -994,7 +994,7 @@
     if (rows.length < 2) return "";
     const cols = [["hsts", "HSTS"], ["csp", "CSP"], ["frame", "Framing"], ["nosniff", "nosniff"], ["referrer", "Referrer"], ["permissions", "Permissions"]];
     const mark = (on) => on ? '<td class="ok" aria-label="sent">✓</td>' : '<td class="no" aria-label="missing">✗</td>';
-    return '<h3>Headers on every page read</h3><p class="muted">A header set on the start page but missing elsewhere leaves those pages unprotected.</p>' +
+    return '<h3>Headers on every page analyzed</h3><p class="muted">A header set on the start page but missing elsewhere leaves those pages unprotected.</p>' +
       '<div class="table-scroll"><table class="mini-table sec-matrix"><thead><tr><th>Page</th>' + cols.map(([, label]) => "<th>" + esc(label) + "</th>").join("") + "<th>Cookies</th></tr></thead><tbody>" +
       rows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td>" + cols.map(([key]) => mark(row[key])).join("") +
         "<td>" + (row.cookies ? row.cookies + (row.looseCookies ? ", " + row.looseCookies + " without Secure" : "") : "—") + "</td></tr>").join("") + "</tbody></table></div>";
@@ -1189,9 +1189,9 @@
       [score.overall + "/100", "Health score"],
       [score.totals.fail, "Fail now"],
       [score.totals.risk, "At risk"],
-      [counts.pages, "Pages read"]
+      [counts.pages, "Pages analyzed"]
     ] : [
-      [counts.pages, "Pages read"],
+      [counts.pages, "Pages analyzed"],
       [counts.technologies, "Technologies"],
       [counts.cases, "Proposed cases"],
       [(report.observed && report.observed.ms) + " ms", "First response"]
@@ -1347,7 +1347,7 @@
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report && payload.report.host);
       render(payload);
       const stopped = payload.report.status === "stopped";
-      setStatus(stopped ? "Stopped. The report uses the pages read before the stop." : "Report ready. Cases are proposed, not run.", false);
+      setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Report ready. Cases are proposed, not run.", false);
       dash.scrollTop = 0;
     } catch (error) {
       if (error.fields) markFields(error.fields);
