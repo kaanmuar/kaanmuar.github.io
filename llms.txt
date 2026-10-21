@@ -33,7 +33,7 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - [How it works, a guided tour](https://carlosandmunoz.com/qa-review-guide.html): who it helps, the six steps, how to read the six scores, and what a review never does
 - [Facts](https://carlosandmunoz.com/qa-review.html#service-facts)
 - [Sample report, this site's own review](https://carlosandmunoz.com/qa-review.html?sample=1)
-- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 238 real public sites read by the review, tagged by sector, country, and test type, view and share only
+- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 237 real public sites read by the review, tagged by sector, country, and test type, view and share only
 - [Disclaimers](https://carlosandmunoz.com/qa-review-legal.html)
 - Languages: English, Spanish, Portuguese, German, French, Italian.
 

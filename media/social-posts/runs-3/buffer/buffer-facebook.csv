@@ -815,14 +815,14 @@ Lesson: Name the organization and list its official profiles in sameAs. AI answe
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=usagov","https://carlosandmunoz.com/media/social-posts/runs-3/feed/102-usagov.jpg","real-runs","2027-06-10 17:00"
-"Buenos Aires Province: a cert down to 0 days.
+"Jalisco's home page is empty without JS.
 
-HSTS runs a full year, framing is limited, and http redirects permanently to https. But the TLS certificate read on 21 October 2026 expires that same day, so browsers warn visitors unless it is renewed in time.
+Every image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.
 
-Lesson: Automate cert renewal and alert at 30 days left, so no expiry reaches visitors.
+Lesson: Render key text and links on the server so content arrives before scripts run.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gba","https://carlosandmunoz.com/media/social-posts/runs-3/feed/103-gba.jpg","real-runs","2027-06-11 15:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/103-jalisco.jpg","real-runs","2027-06-11 15:25"
 "NYC.gov sends HSTS, but not on every page.
 
 security.txt, nosniff, framing limits, and Core Web Vitals that pass for real visitors. But agency pages under /site/, like DSNY's and Health's, answer without Strict-Transport-Security, while /main sends it.
@@ -847,14 +847,14 @@ Lesson: Wrap the content in one <main> and give the page one h1. They are the tw
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=isaco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/106-isaco.jpg","real-runs","2027-06-14 12:10"
-"Jalisco's home page is empty without JS.
+"Victoria: 86, but no JSON-LD.
 
-Every image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.
+Core Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.
 
-Lesson: Render key text and links on the server so content arrives before scripts run.
+Lesson: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/107-jalisco.jpg","real-runs","2027-06-15 17:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria","https://carlosandmunoz.com/media/social-posts/runs-3/feed/107-victoria.jpg","real-runs","2027-06-15 17:10"
 "TfL has no security.txt.
 
 A meta description on every page read, framing denied, one-year HSTS, a canonical, and a sitemap. But /.well-known/security.txt answers 404, so a researcher who finds a flaw has no published contact.
@@ -879,14 +879,14 @@ Lesson: Move inline data, styles, and menus out of the HTML. Phones parse every 
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=defensoriaco","https://carlosandmunoz.com/media/social-posts/runs-3/feed/110-defensoriaco.jpg","real-runs","2027-06-18 17:35"
-"Victoria: 86, but no JSON-LD.
+"NSW: 81, images with no set size.
 
-Core Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.
+Every image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.
 
-Lesson: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.
+Lesson: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria","https://carlosandmunoz.com/media/social-posts/runs-3/feed/111-victoria.jpg","real-runs","2027-06-19 13:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw","https://carlosandmunoz.com/media/social-posts/runs-3/feed/111-nsw.jpg","real-runs","2027-06-19 13:55"
 "Montevideo's canonical points to plain http.
 
 nosniff, framing limited to its origin, a main landmark, and every link opened answered. But all 20 pages read name an http:// canonical on montevideo.gub.uy, a different scheme and host than the live site.
@@ -911,14 +911,6 @@ Lesson: Make one GA4 property the source of truth, and document why any second e
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=mincit","https://carlosandmunoz.com/media/social-posts/runs-3/feed/114-mincit.jpg","real-runs","2027-06-22 18:50"
-"NSW: 81, images with no set size.
-
-Every image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.
-
-Lesson: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.
-
-One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw","https://carlosandmunoz.com/media/social-posts/runs-3/feed/115-nsw.jpg","real-runs","2027-06-23 15:10"
 "Inder Medellín calls every page 'Inicio'.
 
 Every link opened answered, the page text is in the HTML, and a mobile viewport is set. But all 20 pages read share the title Inder Medellín | Inicio, so search results can't tell one page from another.
@@ -926,7 +918,7 @@ Every link opened answered, the page text is in the HTML, and a mobile viewport 
 Lesson: Give each page a unique title that starts with what that page is about, then the site name.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=inder","https://carlosandmunoz.com/media/social-posts/runs-3/feed/116-inder.jpg","real-runs","2027-06-24 16:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=inder","https://carlosandmunoz.com/media/social-posts/runs-3/feed/115-inder.jpg","real-runs","2027-06-23 15:10"
 "LibreOffice links share without a preview.
 
 HSTS covers subdomains, framing is denied, every page read has a meta description, and the sitemap matches the pages read. But the start page has no og: or twitter: tags, so shared links get a bare preview.
@@ -934,7 +926,7 @@ HSTS covers subdomains, framing is denied, every page read has a meta descriptio
 Lesson: Add og:title, og:description, og:image and og:url to each template, plus twitter:card.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=libreoffice","https://carlosandmunoz.com/media/social-posts/runs-3/feed/117-libreoffice.jpg","real-runs","2027-06-25 13:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=libreoffice","https://carlosandmunoz.com/media/social-posts/runs-3/feed/116-libreoffice.jpg","real-runs","2027-06-24 16:55"
 "ANI loads its GA4 tag twice.
 
 Language alternates, a sitemap, alt text on every image, and every internal link opened answered. But the home page loads and configures the same GA4 tag twice, so each visit can be counted as two page views.
@@ -942,7 +934,7 @@ Language alternates, a sitemap, alt text on every image, and every internal link
 Lesson: Search the templates for a second gtag snippet. One tag, loaded once, keeps every report honest.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=anico","https://carlosandmunoz.com/media/social-posts/runs-3/feed/118-anico.jpg","real-runs","2027-06-26 16:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=anico","https://carlosandmunoz.com/media/social-posts/runs-3/feed/117-anico.jpg","real-runs","2027-06-25 13:00"
 "Medellín's libraries have no h1 headings.
 
 Structured data naming the network, share cards, a sitemap index, and a canonical. But none of the 20 pages read has exactly one h1, and the home page has none, so headings give no outline to follow.
@@ -950,7 +942,7 @@ Structured data naming the network, share cards, a sitemap index, and a canonica
 Lesson: Give each page one h1 that names its topic, then h2 and h3 in order. Screen readers jump by heading.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=bibliotecasmedellin","https://carlosandmunoz.com/media/social-posts/runs-3/feed/119-bibliotecasmedellin.jpg","real-runs","2027-06-27 12:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=bibliotecasmedellin","https://carlosandmunoz.com/media/social-posts/runs-3/feed/118-bibliotecasmedellin.jpg","real-runs","2027-06-26 16:05"
 "MSC: Tag Manager with no consent tool.
 
 Every image read has alt text, every page a meta description, cookies are Secure, and an llms.txt is published. But Google Tag Manager loads and no consent tool or Consent Mode default appears in the HTML.
@@ -958,7 +950,7 @@ Every image read has alt text, every page a meta description, cookies are Secure
 Lesson: Add a consent tool, set Consent Mode defaults to denied, and fire tags only after a visitor agrees.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=msc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/120-msc.jpg","real-runs","2027-06-28 18:35"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=msc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/119-msc.jpg","real-runs","2027-06-27 12:55"
 "IDPC hides its participation pages.
 
 Two-year HSTS, nosniff, framing limited to its origin, structured data, and a meta description on every page read. But /transparencia/menu-participa and two pages under it tell search engines noindex.
@@ -966,7 +958,7 @@ Two-year HSTS, nosniff, framing limited to its origin, structured data, and a me
 Lesson: Audit which pages carry noindex. Public participation pages should be findable; keep it for search results.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=idpc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/121-idpc.jpg","real-runs","2027-06-29 17:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=idpc","https://carlosandmunoz.com/media/social-posts/runs-3/feed/120-idpc.jpg","real-runs","2027-06-28 18:35"
 "Cultura Bogotá keeps Universal Analytics.
 
 nosniff, a strict Referrer-Policy, framing limited to its origin, a canonical, and language alternates that link back. But beside GA4 the page still loads UA-3599876-14, which has collected nothing since July 2024.
@@ -974,7 +966,7 @@ nosniff, a strict Referrer-Policy, framing limited to its origin, a canonical, a
 Lesson: Remove the old UA tag and keep one GA4 setup, so pages stop loading code that sends data nowhere.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=culturabogota","https://carlosandmunoz.com/media/social-posts/runs-3/feed/122-culturabogota.jpg","real-runs","2027-06-30 15:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=culturabogota","https://carlosandmunoz.com/media/social-posts/runs-3/feed/121-culturabogota.jpg","real-runs","2027-06-29 17:10"
 "Berlin.de's hreflang leaves out German.
 
 security.txt, one-year HSTS, nosniff, a content security policy, and a sitemap index. But the home page lists its English, French, Polish, and other versions in hreflang and skips German, the page itself.
@@ -982,7 +974,7 @@ security.txt, one-year HSTS, nosniff, a content security policy, and a sitemap i
 Lesson: List every language version in hreflang, including the page itself, and make each version link back.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=berlin","https://carlosandmunoz.com/media/social-posts/runs-3/feed/123-berlin.jpg","real-runs","2027-07-01 12:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=berlin","https://carlosandmunoz.com/media/social-posts/runs-3/feed/122-berlin.jpg","real-runs","2027-06-30 15:00"
 "Vienna's city map: 183 unnamed boxes.
 
 HSTS with preload, a content security policy, security.txt, a sitemap, and a meta description on every page read. But on /stadtplan/, 183 of 188 inputs, mostly layer checkboxes, have no label to announce.
@@ -990,4 +982,4 @@ HSTS with preload, a content security policy, security.txt, a sitemap, and a met
 Lesson: Give each checkbox a <label for>, or aria-labelledby pointing at its visible text.
 
 One automated read of public pages on 21 Oct 2026. A starting point, not a verdict.
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=wien","https://carlosandmunoz.com/media/social-posts/runs-3/feed/124-wien.jpg","real-runs","2027-07-02 15:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=wien","https://carlosandmunoz.com/media/social-posts/runs-3/feed/123-wien.jpg","real-runs","2027-07-01 12:50"

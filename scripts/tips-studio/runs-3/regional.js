@@ -177,13 +177,6 @@ module.exports = [
     tags: ["Accessibility", "Keyboard", "A11y"]
   },
   {
-    id: "gba", report: "r3-gba", scope: "Regional",
-    title: ["Buenos Aires Province:", "*a cert down to 0 days.*"],
-    body: "HSTS runs a full year, framing is limited, and http redirects permanently to https. But the TLS certificate read on 21 October 2026 expires that same day, so browsers warn visitors unless it is renewed in time.",
-    action: "Automate cert renewal and alert at 30 days left, so no expiry reaches visitors.",
-    tags: ["Security", "TLS", "GovTech"]
-  },
-  {
     id: "jalisco", report: "r3-jalisco", scope: "Regional",
     title: ["Jalisco's home page", "*is empty without JS.*"],
     body: "Every image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.",
@@ -203,5 +196,5 @@ module.exports = [
     body: "Every image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.",
     action: "Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.",
     tags: ["Performance", "CLS", "WebPerf"]
-  },
+  }
 ];

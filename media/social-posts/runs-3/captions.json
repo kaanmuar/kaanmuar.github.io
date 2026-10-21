@@ -1223,17 +1223,17 @@
     "youtubeTitle": "USA.gov's Organization has no name. #Shorts",
     "youtube": "Language alternates, a sitemap that matches the pages read, alt text on every image, and Core Web Vitals that pass for real visitors. But its Organization JSON-LD has a logo and URL with no name or sameAs.\n\nLesson: Name the organization and list its official profiles in sameAs. AI answers use them to say who runs the site.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=usagov\n\nReal runs · QA-lab URL Review"
   },
-  "103-gba": {
+  "103-jalisco": {
     "date": "2027-06-11",
     "cat": "Regional",
-    "title": "Buenos Aires Province: a cert down to 0 days.",
-    "linkedin": "Buenos Aires Province: a cert down to 0 days.\n\nHSTS runs a full year, framing is limited, and http redirects permanently to https. But the TLS certificate read on 21 October 2026 expires that same day, so browsers warn visitors unless it is renewed in time.\n\nThe lesson for every team: Automate cert renewal and alert at 30 days left, so no expiry reaches visitors.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gba\n\n#Security #TLS #GovTech #QA",
-    "x": "Buenos Aires Province: a cert down to 0 days.\n\nAutomate cert renewal and alert at 30 days left, so no expiry reaches visitors.\n\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gba",
-    "instagram": "Buenos Aires Province: a cert down to 0 days.\n\nHSTS runs a full year, framing is limited, and http redirects permanently to https. But the TLS certificate read on 21 October 2026 expires that same day, so browsers warn visitors unless it is renewed in time.\n\nLesson: Automate cert renewal and alert at 30 days left, so no expiry reaches visitors.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nGuide: link in bio.\n\n#Security #TLS #GovTech #QA #WebDev #QAlab",
-    "facebook": "Buenos Aires Province: a cert down to 0 days.\n\nHSTS runs a full year, framing is limited, and http redirects permanently to https. But the TLS certificate read on 21 October 2026 expires that same day, so browsers warn visitors unless it is renewed in time.\n\nLesson: Automate cert renewal and alert at 30 days left, so no expiry reaches visitors.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gba",
-    "tiktok": "Buenos Aires Province: a cert down to 0 days. Automate cert renewal and alert at 30 days left, so no expiry reaches visitors. #Security #TLS #GovTech #QA #techtok",
-    "youtubeTitle": "Buenos Aires Province: a cert down to 0 days. #Shorts",
-    "youtube": "HSTS runs a full year, framing is limited, and http redirects permanently to https. But the TLS certificate read on 21 October 2026 expires that same day, so browsers warn visitors unless it is renewed in time.\n\nLesson: Automate cert renewal and alert at 30 days left, so no expiry reaches visitors.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=gba\n\nReal runs · QA-lab URL Review"
+    "title": "Jalisco's home page is empty without JS.",
+    "linkedin": "Jalisco's home page is empty without JS.\n\nEvery image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.\n\nThe lesson for every team: Render key text and links on the server so content arrives before scripts run.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco\n\n#GEO #ServerRendering #AISearch #QA",
+    "x": "Jalisco's home page is empty without JS.\n\nRender key text and links on the server so content arrives before scripts run.\n\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco",
+    "instagram": "Jalisco's home page is empty without JS.\n\nEvery image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.\n\nLesson: Render key text and links on the server so content arrives before scripts run.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nGuide: link in bio.\n\n#GEO #ServerRendering #AISearch #QA #WebDev #QAlab",
+    "facebook": "Jalisco's home page is empty without JS.\n\nEvery image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.\n\nLesson: Render key text and links on the server so content arrives before scripts run.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco",
+    "tiktok": "Jalisco's home page is empty without JS. Render key text and links on the server so content arrives before scripts run. #GEO #ServerRendering #AISearch #QA #techtok",
+    "youtubeTitle": "Jalisco's home page is empty without JS. #Shorts",
+    "youtube": "Every image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.\n\nLesson: Render key text and links on the server so content arrives before scripts run.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco\n\nReal runs · QA-lab URL Review"
   },
   "104-nyc": {
     "date": "2027-06-12",
@@ -1271,17 +1271,17 @@
     "youtubeTitle": "ISA's home page has no h1 and no main. #Shorts",
     "youtube": "Structured data that parses, full share cards, HSTS, and DMARC that guards its mail. But the home page has no h1 and no <main> landmark, so screen-reader users get no heading or region to jump to.\n\nLesson: Wrap the content in one <main> and give the page one h1. They are the two shortcuts screen readers lean on most.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=isaco\n\nReal runs · QA-lab URL Review"
   },
-  "107-jalisco": {
+  "107-victoria": {
     "date": "2027-06-15",
     "cat": "Regional",
-    "title": "Jalisco's home page is empty without JS.",
-    "linkedin": "Jalisco's home page is empty without JS.\n\nEvery image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.\n\nThe lesson for every team: Render key text and links on the server so content arrives before scripts run.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco\n\n#GEO #ServerRendering #AISearch #QA",
-    "x": "Jalisco's home page is empty without JS.\n\nRender key text and links on the server so content arrives before scripts run.\n\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco",
-    "instagram": "Jalisco's home page is empty without JS.\n\nEvery image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.\n\nLesson: Render key text and links on the server so content arrives before scripts run.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nGuide: link in bio.\n\n#GEO #ServerRendering #AISearch #QA #WebDev #QAlab",
-    "facebook": "Jalisco's home page is empty without JS.\n\nEvery image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.\n\nLesson: Render key text and links on the server so content arrives before scripts run.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco",
-    "tiktok": "Jalisco's home page is empty without JS. Render key text and links on the server so content arrives before scripts run. #GEO #ServerRendering #AISearch #QA #techtok",
-    "youtubeTitle": "Jalisco's home page is empty without JS. #Shorts",
-    "youtube": "Every image has alt text, the home page has a title and a description, and http redirects to https. But the HTML holds about 13 words before JavaScript runs, so AI crawlers that skip scripts see almost nothing.\n\nLesson: Render key text and links on the server so content arrives before scripts run.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=jalisco\n\nReal runs · QA-lab URL Review"
+    "title": "Victoria: 86, but no JSON-LD.",
+    "linkedin": "Victoria: 86, but no JSON-LD.\n\nCore Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.\n\nThe lesson for every team: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria\n\n#GEO #StructuredData #GovTech #QA",
+    "x": "Victoria: 86, but no JSON-LD.\n\nAdd a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria",
+    "instagram": "Victoria: 86, but no JSON-LD.\n\nCore Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.\n\nLesson: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nGuide: link in bio.\n\n#GEO #StructuredData #GovTech #QA #WebDev #QAlab",
+    "facebook": "Victoria: 86, but no JSON-LD.\n\nCore Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.\n\nLesson: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria",
+    "tiktok": "Victoria: 86, but no JSON-LD. Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you. #GEO #StructuredData #GovTech #QA #techtok",
+    "youtubeTitle": "Victoria: 86, but no JSON-LD. #Shorts",
+    "youtube": "Core Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.\n\nLesson: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria\n\nReal runs · QA-lab URL Review"
   },
   "108-tfl": {
     "date": "2027-06-16",
@@ -1319,17 +1319,17 @@
     "youtubeTitle": "Defensoría's HTML weighs over 1 MB. #Shorts",
     "youtube": "Language alternates, HSTS, alt text on every image, and every internal link opened answered. But the home page HTML weighs about 1.2 MB before any image or script, and all 20 pages read top 500 KB.\n\nLesson: Move inline data, styles, and menus out of the HTML. Phones parse every byte first.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=defensoriaco\n\nReal runs · QA-lab URL Review"
   },
-  "111-victoria": {
+  "111-nsw": {
     "date": "2027-06-19",
     "cat": "Regional",
-    "title": "Victoria: 86, but no JSON-LD.",
-    "linkedin": "Victoria: 86, but no JSON-LD.\n\nCore Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.\n\nThe lesson for every team: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria\n\n#GEO #StructuredData #GovTech #QA",
-    "x": "Victoria: 86, but no JSON-LD.\n\nAdd a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria",
-    "instagram": "Victoria: 86, but no JSON-LD.\n\nCore Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.\n\nLesson: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nGuide: link in bio.\n\n#GEO #StructuredData #GovTech #QA #WebDev #QAlab",
-    "facebook": "Victoria: 86, but no JSON-LD.\n\nCore Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.\n\nLesson: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria",
-    "tiktok": "Victoria: 86, but no JSON-LD. Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you. #GEO #StructuredData #GovTech #QA #techtok",
-    "youtubeTitle": "Victoria: 86, but no JSON-LD. #Shorts",
-    "youtube": "Core Web Vitals pass for real visitors, share cards are complete, the sitemap is valid, and Accessibility scores 100. But the home page carries no JSON-LD saying which government runs the site.\n\nLesson: Add a GovernmentOrganization block with name, url, logo and sameAs, so AI answers can name you.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=victoria\n\nReal runs · QA-lab URL Review"
+    "title": "NSW: 81, images with no set size.",
+    "linkedin": "NSW: 81, images with no set size.\n\nEvery image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.\n\nThe lesson for every team: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw\n\n#Performance #CLS #WebPerf #QA",
+    "x": "NSW: 81, images with no set size.\n\nSet width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw",
+    "instagram": "NSW: 81, images with no set size.\n\nEvery image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.\n\nLesson: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nGuide: link in bio.\n\n#Performance #CLS #WebPerf #QA #WebDev #QAlab",
+    "facebook": "NSW: 81, images with no set size.\n\nEvery image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.\n\nLesson: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw",
+    "tiktok": "NSW: 81, images with no set size. Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load. #Performance #CLS #WebPerf #QA #techtok",
+    "youtubeTitle": "NSW: 81, images with no set size. #Shorts",
+    "youtube": "Every image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.\n\nLesson: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw\n\nReal runs · QA-lab URL Review"
   },
   "112-montevideo": {
     "date": "2027-06-20",
@@ -1367,20 +1367,8 @@
     "youtubeTitle": "MinCIT reports to two GA4 properties. #Shorts",
     "youtube": "HSTS, a permanent https redirect, Secure cookies, and FAQ-style content. But the home page sends its visits to two GA4 properties, so two dashboards count the same people and can tell different stories.\n\nLesson: Make one GA4 property the source of truth, and document why any second exists.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=mincit\n\nReal runs · QA-lab URL Review"
   },
-  "115-nsw": {
+  "115-inder": {
     "date": "2027-06-23",
-    "cat": "Regional",
-    "title": "NSW: 81, images with no set size.",
-    "linkedin": "NSW: 81, images with no set size.\n\nEvery image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.\n\nThe lesson for every team: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw\n\n#Performance #CLS #WebPerf #QA",
-    "x": "NSW: 81, images with no set size.\n\nSet width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw",
-    "instagram": "NSW: 81, images with no set size.\n\nEvery image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.\n\nLesson: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nGuide: link in bio.\n\n#Performance #CLS #WebPerf #QA #WebDev #QAlab",
-    "facebook": "NSW: 81, images with no set size.\n\nEvery image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.\n\nLesson: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw",
-    "tiktok": "NSW: 81, images with no set size. Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load. #Performance #CLS #WebPerf #QA #techtok",
-    "youtubeTitle": "NSW: 81, images with no set size. #Shorts",
-    "youtube": "Every image has alt text, security.txt is published, and JSON-LD names the GovernmentOrganization. But 8 of 16 images on the home page carry no width or height, so the browser cannot reserve their space.\n\nLesson: Set width and height (or CSS aspect-ratio) on every image, so the layout does not jump as they load.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=nsw\n\nReal runs · QA-lab URL Review"
-  },
-  "116-inder": {
-    "date": "2027-06-24",
     "cat": "Local",
     "title": "Inder Medellín calls every page 'Inicio'.",
     "linkedin": "Inder Medellín calls every page 'Inicio'.\n\nEvery link opened answered, the page text is in the HTML, and a mobile viewport is set. But all 20 pages read share the title Inder Medellín | Inicio, so search results can't tell one page from another.\n\nThe lesson for every team: Give each page a unique title that starts with what that page is about, then the site name.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=inder\n\n#SEO #TitleTags #Sports #QA",
@@ -1391,8 +1379,8 @@
     "youtubeTitle": "Inder Medellín calls every page 'Inicio'. #Shorts",
     "youtube": "Every link opened answered, the page text is in the HTML, and a mobile viewport is set. But all 20 pages read share the title Inder Medellín | Inicio, so search results can't tell one page from another.\n\nLesson: Give each page a unique title that starts with what that page is about, then the site name.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=inder\n\nReal runs · QA-lab URL Review"
   },
-  "117-libreoffice": {
-    "date": "2027-06-25",
+  "116-libreoffice": {
+    "date": "2027-06-24",
     "cat": "Worldwide",
     "title": "LibreOffice links share without a preview.",
     "linkedin": "LibreOffice links share without a preview.\n\nHSTS covers subdomains, framing is denied, every page read has a meta description, and the sitemap matches the pages read. But the start page has no og: or twitter: tags, so shared links get a bare preview.\n\nThe lesson for every team: Add og:title, og:description, og:image and og:url to each template, plus twitter:card.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=libreoffice\n\n#SEO #OpenGraph #LibreOffice #QA",
@@ -1403,8 +1391,8 @@
     "youtubeTitle": "LibreOffice links share without a preview. #Shorts",
     "youtube": "HSTS covers subdomains, framing is denied, every page read has a meta description, and the sitemap matches the pages read. But the start page has no og: or twitter: tags, so shared links get a bare preview.\n\nLesson: Add og:title, og:description, og:image and og:url to each template, plus twitter:card.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=libreoffice\n\nReal runs · QA-lab URL Review"
   },
-  "118-anico": {
-    "date": "2027-06-26",
+  "117-anico": {
+    "date": "2027-06-25",
     "cat": "National",
     "title": "ANI loads its GA4 tag twice.",
     "linkedin": "ANI loads its GA4 tag twice.\n\nLanguage alternates, a sitemap, alt text on every image, and every internal link opened answered. But the home page loads and configures the same GA4 tag twice, so each visit can be counted as two page views.\n\nThe lesson for every team: Search the templates for a second gtag snippet. One tag, loaded once, keeps every report honest.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=anico\n\n#Analytics #GA4 #Infrastructure #QA",
@@ -1415,8 +1403,8 @@
     "youtubeTitle": "ANI loads its GA4 tag twice. #Shorts",
     "youtube": "Language alternates, a sitemap, alt text on every image, and every internal link opened answered. But the home page loads and configures the same GA4 tag twice, so each visit can be counted as two page views.\n\nLesson: Search the templates for a second gtag snippet. One tag, loaded once, keeps every report honest.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=anico\n\nReal runs · QA-lab URL Review"
   },
-  "119-bibliotecasmedellin": {
-    "date": "2027-06-27",
+  "118-bibliotecasmedellin": {
+    "date": "2027-06-26",
     "cat": "Local",
     "title": "Medellín's libraries have no h1 headings.",
     "linkedin": "Medellín's libraries have no h1 headings.\n\nStructured data naming the network, share cards, a sitemap index, and a canonical. But none of the 20 pages read has exactly one h1, and the home page has none, so headings give no outline to follow.\n\nThe lesson for every team: Give each page one h1 that names its topic, then h2 and h3 in order. Screen readers jump by heading.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=bibliotecasmedellin\n\n#Accessibility #Headings #Libraries #QA",
@@ -1427,8 +1415,8 @@
     "youtubeTitle": "Medellín's libraries have no h1 headings. #Shorts",
     "youtube": "Structured data naming the network, share cards, a sitemap index, and a canonical. But none of the 20 pages read has exactly one h1, and the home page has none, so headings give no outline to follow.\n\nLesson: Give each page one h1 that names its topic, then h2 and h3 in order. Screen readers jump by heading.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=bibliotecasmedellin\n\nReal runs · QA-lab URL Review"
   },
-  "120-msc": {
-    "date": "2027-06-28",
+  "119-msc": {
+    "date": "2027-06-27",
     "cat": "Worldwide",
     "title": "MSC: Tag Manager with no consent tool.",
     "linkedin": "MSC: Tag Manager with no consent tool.\n\nEvery image read has alt text, every page a meta description, cookies are Secure, and an llms.txt is published. But Google Tag Manager loads and no consent tool or Consent Mode default appears in the HTML.\n\nThe lesson for every team: Add a consent tool, set Consent Mode defaults to denied, and fire tags only after a visitor agrees.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=msc\n\n#Analytics #Consent #Sustainability #QA",
@@ -1439,8 +1427,8 @@
     "youtubeTitle": "MSC: Tag Manager with no consent tool. #Shorts",
     "youtube": "Every image read has alt text, every page a meta description, cookies are Secure, and an llms.txt is published. But Google Tag Manager loads and no consent tool or Consent Mode default appears in the HTML.\n\nLesson: Add a consent tool, set Consent Mode defaults to denied, and fire tags only after a visitor agrees.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=msc\n\nReal runs · QA-lab URL Review"
   },
-  "121-idpc": {
-    "date": "2027-06-29",
+  "120-idpc": {
+    "date": "2027-06-28",
     "cat": "Local",
     "title": "IDPC hides its participation pages.",
     "linkedin": "IDPC hides its participation pages.\n\nTwo-year HSTS, nosniff, framing limited to its origin, structured data, and a meta description on every page read. But /transparencia/menu-participa and two pages under it tell search engines noindex.\n\nThe lesson for every team: Audit which pages carry noindex. Public participation pages should be findable; keep it for search results.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=idpc\n\n#SEO #Indexing #Heritage #QA",
@@ -1451,8 +1439,8 @@
     "youtubeTitle": "IDPC hides its participation pages. #Shorts",
     "youtube": "Two-year HSTS, nosniff, framing limited to its origin, structured data, and a meta description on every page read. But /transparencia/menu-participa and two pages under it tell search engines noindex.\n\nLesson: Audit which pages carry noindex. Public participation pages should be findable; keep it for search results.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=idpc\n\nReal runs · QA-lab URL Review"
   },
-  "122-culturabogota": {
-    "date": "2027-06-30",
+  "121-culturabogota": {
+    "date": "2027-06-29",
     "cat": "Local",
     "title": "Cultura Bogotá keeps Universal Analytics.",
     "linkedin": "Cultura Bogotá keeps Universal Analytics.\n\nnosniff, a strict Referrer-Policy, framing limited to its origin, a canonical, and language alternates that link back. But beside GA4 the page still loads UA-3599876-14, which has collected nothing since July 2024.\n\nThe lesson for every team: Remove the old UA tag and keep one GA4 setup, so pages stop loading code that sends data nowhere.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=culturabogota\n\n#Analytics #GA4 #Culture #QA",
@@ -1463,8 +1451,8 @@
     "youtubeTitle": "Cultura Bogotá keeps Universal Analytics. #Shorts",
     "youtube": "nosniff, a strict Referrer-Policy, framing limited to its origin, a canonical, and language alternates that link back. But beside GA4 the page still loads UA-3599876-14, which has collected nothing since July 2024.\n\nLesson: Remove the old UA tag and keep one GA4 setup, so pages stop loading code that sends data nowhere.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=culturabogota\n\nReal runs · QA-lab URL Review"
   },
-  "123-berlin": {
-    "date": "2027-07-01",
+  "122-berlin": {
+    "date": "2027-06-30",
     "cat": "Local",
     "title": "Berlin.de's hreflang leaves out German.",
     "linkedin": "Berlin.de's hreflang leaves out German.\n\nsecurity.txt, one-year HSTS, nosniff, a content security policy, and a sitemap index. But the home page lists its English, French, Polish, and other versions in hreflang and skips German, the page itself.\n\nThe lesson for every team: List every language version in hreflang, including the page itself, and make each version link back.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=berlin\n\n#SEO #Hreflang #i18n #QA",
@@ -1475,8 +1463,8 @@
     "youtubeTitle": "Berlin.de's hreflang leaves out German. #Shorts",
     "youtube": "security.txt, one-year HSTS, nosniff, a content security policy, and a sitemap index. But the home page lists its English, French, Polish, and other versions in hreflang and skips German, the page itself.\n\nLesson: List every language version in hreflang, including the page itself, and make each version link back.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=berlin\n\nReal runs · QA-lab URL Review"
   },
-  "124-wien": {
-    "date": "2027-07-02",
+  "123-wien": {
+    "date": "2027-07-01",
     "cat": "Local",
     "title": "Vienna's city map: 183 unnamed boxes.",
     "linkedin": "Vienna's city map: 183 unnamed boxes.\n\nHSTS with preload, a content security policy, security.txt, a sitemap, and a meta description on every page read. But on /stadtplan/, 183 of 188 inputs, mostly layer checkboxes, have no label to announce.\n\nThe lesson for every team: Give each checkbox a <label for>, or aria-labelledby pointing at its visible text.\n\nOne automated read of public pages on 21 Oct 2026. A starting point, not a verdict.\nHow the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-3-2027-03&utm_content=wien\n\n#Accessibility #Forms #SmartCity #QA",

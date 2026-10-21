@@ -33,7 +33,7 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - [How it works, a guided tour](https://carlosandmunoz.com/qa-review-guide.html): who it helps, the six steps, how to read the six scores, and what a review never does
 - [Facts](https://carlosandmunoz.com/qa-review.html#service-facts)
 - [Sample report, this site's own review](https://carlosandmunoz.com/qa-review.html?sample=1)
-- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 238 real public sites read by the review, tagged by sector, country, and test type, view and share only
+- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 237 real public sites read by the review, tagged by sector, country, and test type, view and share only
 - [Disclaimers](https://carlosandmunoz.com/qa-review-legal.html)
 - Languages: English, Spanish, Portuguese, German, French, Italian.
 
@@ -193,7 +193,7 @@ One public address. Six scores. A list your team can start from on Monday.
 
 ## Live reports (https://carlosandmunoz.com/qa-review.html#live-reports)
 
-As of 2026-10-21, the series holds 238 public sites in 27 sectors, each read once by QA-lab URL Review (up to 20 pages). Average overall score 77; area averages: SEO 68, GEO 84, Analytics 86, Security 67, Accessibility 81, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public read, not a certification.
+As of 2026-10-21, the series holds 237 public sites in 27 sectors, each read once by QA-lab URL Review (up to 20 pages). Average overall score 77; area averages: SEO 68, GEO 84, Analytics 86, Security 67, Accessibility 81, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public read, not a certification.
 
 Site | Sector | Place | Read | Overall | Report
 MDN Web Docs | Developer docs | San Francisco, US | 2026-10-19 | 95 | https://carlosandmunoz.com/qa-review.html?live=mdn
@@ -380,7 +380,6 @@ UAESP | Energy & utilities | Bogotá, CO | 2026-10-21 | 72 | https://carlosandmu
 DIAN | Government | Bogotá, CO | 2026-10-19 | 71 | https://carlosandmunoz.com/qa-review.html?live=dian
 Ilustre Municipalidad de Santiago | Government | Santiago, CL | 2026-10-21 | 71 | https://carlosandmunoz.com/qa-review.html?live=munistgo
 Movistar Colombia | Telecom | Bogotá, CO | 2026-10-19 | 71 | https://carlosandmunoz.com/qa-review.html?live=movistar
-Provincia de Buenos Aires | Government | La Plata, AR | 2026-10-21 | 71 | https://carlosandmunoz.com/qa-review.html?live=gba
 World Trade Organization | International organizations | Geneva, CH | 2026-10-21 | 71 | https://carlosandmunoz.com/qa-review.html?live=wto
 gob.pe | Government | Lima, PE | 2026-10-21 | 71 | https://carlosandmunoz.com/qa-review.html?live=gobpe
 Ajuntament de Barcelona | Government | Barcelona, ES | 2026-10-21 | 70 | https://carlosandmunoz.com/qa-review.html?live=barcelona
