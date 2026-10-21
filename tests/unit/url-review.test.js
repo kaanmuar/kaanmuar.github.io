@@ -1128,7 +1128,8 @@ test("the failures page lists runs without their log, and opens one with its ful
   assert.equal(failures.failureDetail(doc, null).rerunDoc, null);
 
   [desk.PAGE, desk.FAILURES_PAGE].forEach((page) => {
-    const inline = page.match(/<script>([\s\S]*?)<\/script>/)[1];
+    const start = page.indexOf("<script>") + "<script>".length;
+    const inline = page.slice(start, page.indexOf("</script>", start));
     assert.doesNotThrow(() => new Function(inline));
     assert.equal(inline.match(/function deskFetch/g).length, 1);
     assert.match(page, /id="desk-gate"/);
