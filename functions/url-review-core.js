@@ -1777,7 +1777,15 @@ async function plainHttp(hostname, halt) {
   }
 }
 
-async function gatherExtras(first, robotsText, robotsGroups, halt) {
+function answered(name, res) {
+  if (!res) return name + " was not read.";
+  if (res.error) return name + " could not be read (" + res.error + ").";
+  return name + " answered " + res.status + (res.html ? " with an HTML page" : "") + ".";
+}
+
+async function gatherExtras(first, robotsText, robotsGroups, halt, note) {
+  const say = typeof note === "function" ? note : () => {};
+  const done = (promise, line) => promise.then((value) => { say(line(value)); return value; });
   const origin = new URL(first.url);
   const allowed = (path) => !robotsGroups.length || robotsAllows(path, robotsGroups);
   const utmUrl = new URL(first.url);
@@ -1789,15 +1797,29 @@ async function gatherExtras(first, robotsText, robotsGroups, halt) {
   const tls = validTo && !isNaN(Date.parse(validTo))
     ? { validTo: new Date(Date.parse(validTo)).toISOString().slice(0, 10), daysLeft: Math.floor((Date.parse(validTo) - Date.now()) / 86400000), issuer: first.cert.issuer || "" }
     : null;
+  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, and the DNS records for " + registrable(origin.hostname) + ".");
+  say(tls ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
   const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo] = await Promise.all([
-    readSitemap(origin.origin, robotsText, halt).catch(() => ({ status: 0, urls: [] })),
-    fetchExtra(origin.origin + "/llms.txt", halt),
-    fetchExtra(origin.origin + "/llms-full.txt", halt),
-    fetchExtra(origin.origin + "/.well-known/security.txt", halt),
-    allowed(pagePath(utmUrl.toString())) ? fetchPublic(utmUrl.toString(), halt).then((res) => ({ status: res.status, finalUrl: res.url, kept: new URL(res.url).searchParams.get("utm_source") === "qa-lab-review" })).catch(() => null) : Promise.resolve(null),
-    allowed(missingPath) ? fetchExtra(origin.origin + missingPath, halt).then((res) => ({ status: res.status, title: res.html ? clean(textOf(res.body, "title"), 120) : "" })) : Promise.resolve(null),
-    plainHttp(origin.hostname, halt),
-    dnsFacts(origin.hostname).catch(() => null)
+    done(readSitemap(origin.origin, robotsText, halt).catch(() => ({ status: 0, urls: [] })), (map) => map.urls && map.urls.length
+      ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
+      : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
+    done(fetchExtra(origin.origin + "/llms.txt", halt), (res) => answered("/llms.txt", res)),
+    done(fetchExtra(origin.origin + "/llms-full.txt", halt), (res) => answered("/llms-full.txt", res)),
+    done(fetchExtra(origin.origin + "/.well-known/security.txt", halt), (res) => answered("/.well-known/security.txt", res)),
+    allowed(pagePath(utmUrl.toString()))
+      ? done(fetchPublic(utmUrl.toString(), halt).then((res) => ({ status: res.status, finalUrl: res.url, kept: new URL(res.url).searchParams.get("utm_source") === "qa-lab-review" })).catch(() => null), (res) => res
+        ? "The start page with UTM tags answered " + res.status + " and " + (res.kept ? "kept" : "dropped") + " the tags."
+        : "The start page with UTM tags could not be read.")
+      : Promise.resolve(null).then(() => { say("The UTM check was skipped: robots.txt disallows that address."); return null; }),
+    allowed(missingPath)
+      ? done(fetchExtra(origin.origin + missingPath, halt).then((res) => ({ status: res.status, title: res.html ? clean(textOf(res.body, "title"), 120) : "" })), (res) => "The made-up path answered " + (res.status || "nothing") + (res.status === 404 ? ", as it should." : ". A missing page should answer 404."))
+      : Promise.resolve(null).then(() => { say("The 404 check was skipped: robots.txt disallows that address."); return null; }),
+    done(plainHttp(origin.hostname, halt), (res) => res.error
+      ? "Plain http could not be read (" + res.error + ")."
+      : "Plain http answered " + res.statuses.join(" → ") + (res.location ? ", ending at " + res.location : "") + "."),
+    done(dnsFacts(origin.hostname).catch(() => null), (facts) => facts
+      ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + ", DMARC " + (facts.dmarc ? "found" : "missing") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" + (facts.unread.length ? ". Not answered in time: " + facts.unread.join(", ") : "") + "."
+      : "The DNS records could not be read.")
   ]);
   const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
   return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo };
@@ -1840,6 +1862,7 @@ async function reviewTarget(rawUrl, hooks) {
     throw error;
   }
   const origin = new URL(first.url);
+  note("Searching for public write-ups about " + origin.hostname + " in the background.");
   const mentionsPromise = lookupMentions(origin.hostname);
   let robots = [];
   let robotsText = "";
@@ -1861,17 +1884,25 @@ async function reviewTarget(rawUrl, hooks) {
     else robotsNote = "robots.txt could not be read. Linked pages were still capped.";
   }
   const homeInspect = inspect(first.body, first.headers, first.url);
-  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt).catch(() => ({}));
+  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note).catch(() => ({}));
   const canBrowse = !stopped && typeof controls.browse === "function";
-  const browsePaths = (homeInspect.links || []).filter((url) => !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
+  const browsePaths = (homeInspect.links || []).filter((url) => pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
+  if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
   const browserPromise = canBrowse
-    ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths })).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+    ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths }, (text) => note("Browser: " + text))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
     : Promise.resolve(null);
-  if (canBrowse) note("Opening the start page in a headless browser alongside the analysis.");
   const speedUntil = Date.now() + SPEED_WAIT_MS;
-  const speedPromise = !stopped && typeof controls.pagespeed === "function"
+  const canSpeed = !stopped && typeof controls.pagespeed === "function";
+  if (canSpeed) note("Asking PageSpeed Insights for a mobile Lighthouse run in the background.");
+  const speedPromise = canSpeed
     ? Promise.resolve().then(() => controls.pagespeed(first.url)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
     : Promise.resolve(null);
+  let extrasSettled = false;
+  let browserSettled = false;
+  let speedSettled = false;
+  extrasPromise.then(() => { extrasSettled = true; });
+  browserPromise.then(() => { browserSettled = true; });
+  speedPromise.then(() => { speedSettled = true; });
   const pages = [{
     url: first.url,
     requested: first.requested,
@@ -1909,18 +1940,26 @@ async function reviewTarget(rawUrl, hooks) {
       const path = pagePath(next);
       if (robots.length && !robotsAllows(path, robots)) {
         robotsBlocked += 1;
+        note("Skipping " + path + ": robots.txt disallows it.");
         continue;
       }
       try {
         note("Opening " + path + ".");
         const child = await fetchPublic(next, halt, note);
         const childType = header(child.headers, "content-type");
-        if (!/text\/html|application\/xhtml\+xml/i.test(childType)) continue;
+        if (!/text\/html|application\/xhtml\+xml/i.test(childType)) {
+          note(path + " answered " + child.status + " with " + (childType.split(";")[0] || "no content type") + ", not an HTML page. It is not scored.");
+          continue;
+        }
         const challenge = challengeOf(child.url, child.headers, child.body);
         const childInspect = challenge ? null : inspect(child.body, child.headers, child.url);
-        if (child.url !== next && seen.has(child.url)) continue;
+        if (child.url !== next && seen.has(child.url)) {
+          note(path + " redirected to " + pagePath(child.url) + ", which was already read.");
+          continue;
+        }
         seen.add(child.url);
         if (challenge) note(path + " answered with a " + challenge + " bot check. It is not scored.");
+        else note(path + " answered " + child.status + " in " + child.ms + " ms. " + (childInspect.links || []).length + " same-host links.");
         pages.push({
           url: child.url,
           requested: next,
@@ -1939,6 +1978,7 @@ async function reviewTarget(rawUrl, hooks) {
         });
       } catch (error) {
         if (error && error.code === "STOPPED") { stopped = true; break; }
+        note(path + " could not be read (" + clean(error.message, 160) + ").");
         pages.push({
           url: next,
           requested: next,
@@ -1967,19 +2007,24 @@ async function reviewTarget(rawUrl, hooks) {
     });
   });
   const technologiesFound = [...techMap.values()];
+  note(technologiesFound.length ? "Technologies seen: " + technologiesFound.map((item) => item.name).join(", ") + "." : "No known technology was named in the pages read.");
   let browser = null;
+  if (canBrowse && !browserSettled) note("Waiting for the headless browser to finish.");
   try { browser = await browserPromise; } catch (error) { browser = null; }
   const cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "" }, browser.start.dom) : null);
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   const byLayer = {};
   cases.forEach((item) => { byLayer[item.layer] = (byLayer[item.layer] || 0) + 1; });
+  note("Proposed " + cases.length + " test cases across " + Object.keys(byLayer).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
   const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
   let extras = {};
+  if (!extrasSettled) note("Waiting for the background reads to finish.");
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
   let speed = null;
   let speedTimer = null;
   try {
     const wait = Math.max(3000, Math.max(deadline, speedUntil) - Date.now());
+    if (canSpeed && !speedSettled) note("Waiting for PageSpeed Insights, up to " + Math.round(wait / 1000) + " s.");
     speed = await Promise.race([speedPromise, new Promise((resolve) => { speedTimer = setTimeout(() => resolve({ ok: false, error: "no answer in time" }), wait); })]);
   } catch (error) { speed = null; }
   clearTimeout(speedTimer);
@@ -1988,6 +2033,7 @@ async function reviewTarget(rawUrl, hooks) {
   if (browser && browser.ok) note("The browser pass finished in " + Math.round((browser.ms || 0) / 1000) + " s: " + ((browser.axe && browser.axe.pages.length) || 1) + " page" + ((browser.axe && browser.axe.pages.length) > 1 ? "s" : "") + " checked with axe-core" + (browser.consent && browser.consent.rejected ? ", and the cookie banner's reject button was pressed once" : "") + ".");
   else if (browser) note("The browser pass did not finish (" + (browser.error || "no answer") + "). The report uses the HTML read only.");
   let analysis = null;
+  note("Scoring the checks from the pages read" + (browser && browser.ok ? ", the browser pass" : "") + (speed && speed.ok ? ", PageSpeed Insights" : "") + ", and the background reads.");
   try {
     analysis = insights.analyze({
       browser,
@@ -2012,6 +2058,7 @@ async function reviewTarget(rawUrl, hooks) {
   const reportId = crypto.randomBytes(9).toString("hex");
   const fetchedAt = new Date().toISOString();
   const signature = signReport({ id: reportId, fetchedAt, host: origin.hostname, cases });
+  note("Signed the report.");
   let mentions = [];
   try { mentions = await mentionsPromise; } catch (error) { mentions = []; }
   note(mentions.length ? mentions.length + " public write-ups were listed for this host." : "No public write-up was retrieved on this pass.");
