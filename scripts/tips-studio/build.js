@@ -130,7 +130,7 @@ function altText(tip) {
 }
 
 // Card text worth translating: code lines, ids, tags and check marks stay as they are.
-const KEEP_KEYS = new Set(["id", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value"]);
+const KEEP_KEYS = new Set(["id", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value"]);
 function strings(node, at, out) {
   if (typeof node === "string") { if (/[a-z]{2}/i.test(node) && !MARK_WORDS[node]) out[at] = node; }
   else if (node && typeof node === "object") Object.keys(node).forEach((key) => { if (!KEEP_KEYS.has(key)) strings(node[key], at ? at + "." + key : key, out); });
