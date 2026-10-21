@@ -119,6 +119,8 @@ async function renderClip(page, tip, index, total, file, cover) {
     await page.locator("#c").screenshot({ path: path.join(tmp, String(f).padStart(4, "0") + ".jpg"), type: "jpeg", quality: 90 });
   }
   fs.copyFileSync(path.join(tmp, String(Math.round(FPS * 7.5)).padStart(4, "0") + ".jpg"), cover);
+  // Buffer previews and TikTok's default cover use the first frame, so it shows the finished card.
+  fs.copyFileSync(cover, path.join(tmp, "0000.jpg"));
   const run = spawnSync(FFMPEG, ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", path.join(tmp, "%04d.jpg"),
     "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100", "-shortest",
     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "96k", file]);
