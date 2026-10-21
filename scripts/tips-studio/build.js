@@ -13,12 +13,15 @@
    --source runs-100 loads runs-100.js the same way; its batch defaults to the module name.
    Every clip speaks its title and action in a neural voice (edge-tts) over the launch reels' bed
    (media/url-review-demos/bed.wav).
-   Six languages, one per clip in turn (en, es, pt, de, fr, it; woman, then man):
+   Clips take six languages in turn (en, es, pt, de, fr, it; woman, then man), starting --lang-offset N
+   along that cycle: the card, voice, and TikTok/YouTube captions are all in the clip's language.
+   A render exports the strings and runs translate.py first (--no-translate skips it); a clip still
+   untranslated speaks English, and a clip that comes out silent stops the build.
+   To translate by hand or by agent instead, fill <batch>/i18n.json in translate.py's format:
      node scripts/tips-studio/build.js --source runs-100 --export-strings
-     python3 scripts/tips-studio/translate.py media/social-posts/runs-100
-     node scripts/tips-studio/build.js --source runs-100 --rotate [--shard 0/2]
+     node scripts/tips-studio/build.js --source runs-100 --rotate [--shard 0/2] [--resume]
    --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
-   and leaves the stills, calendar, and Buffer CSVs alone. */
+   for clips already queued, and leaves the stills, calendar, and Buffer CSVs alone. */
 
 const fs = require("fs");
 const path = require("path");
@@ -135,13 +138,22 @@ function strings(node, at, out) {
 }
 function setPath(obj, at, value) { const keys = at.split("."); const last = keys.pop(); keys.reduce((o, k) => o[k], obj)[last] = value; }
 
+const LANG_OFFSET = Number(opts["lang-offset"] || 0);
 function voiceFor(index) {
-  const lang = LANGS[index % LANGS.length];
-  return VOICES.find((v) => v.file === lang + "-" + (Math.floor(index / LANGS.length) % 2 ? "m" : "w"));
+  const turn = index + LANG_OFFSET;
+  const lang = LANGS[turn % LANGS.length];
+  return VOICES.find((v) => v.file === lang + "-" + (Math.floor(turn / LANGS.length) % 2 ? "m" : "w"));
+}
+function translated(tip, lang, i18n) { return lang === "en" || !!(i18n.clips[tip.id] && i18n.ui[lang]); }
+function loadI18n() {
+  const file = path.join(OUT, "i18n.json");
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : { ui: {}, clips: {} };
 }
 
+// A clip whose translation is missing speaks English in the same voice slot rather than go out muted.
 function localize(tip, index, total, i18n) {
-  const voice = voiceFor(index);
+  let voice = voiceFor(index);
+  if (!translated(tip, voice.lang, i18n)) voice = VOICES.find((v) => v.file === "en-" + voice.file.slice(3));
   const tr = voice.lang === "en" ? {} : i18n.clips[tip.id] || {};
   const local = JSON.parse(JSON.stringify(tip));
   const cat = Object.assign({}, studio.CATS[tip.cat]);
@@ -214,6 +226,8 @@ async function renderClip(page, tip, index, total, file, cover, said) {
     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k", file]);
   fs.rmSync(tmp, { recursive: true, force: true });
   if (run.status !== 0) throw new Error("ffmpeg failed for " + tip.id + ": " + run.stderr);
+  const peak = parseFloat((spawnSync(FFMPEG, ["-hide_banner", "-i", file, "-af", "volumedetect", "-vn", "-f", "null", "-"], { encoding: "utf8" }).stderr.match(/max_volume: (-?[\d.]+) dB/) || [])[1]);
+  if (!(peak > -30)) throw new Error("clip " + tip.id + " is silent (peak " + peak + " dB); never post a muted clip");
 }
 
 (async () => {
@@ -231,15 +245,14 @@ async function renderClip(page, tip, index, total, file, cover, said) {
   await page.evaluate(() => document.fonts.ready);
 
   if (opts.rotate) {
-    const i18nFile = path.join(OUT, "i18n.json");
-    const i18n = fs.existsSync(i18nFile) ? JSON.parse(fs.readFileSync(i18nFile, "utf8")) : { ui: {}, clips: {} };
+    const i18n = loadI18n();
     fs.mkdirSync(path.join(OUT, "voiced", "cover"), { recursive: true });
     for (const tip of tips) {
       const index = all.indexOf(tip);
       const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
       const file = path.join(OUT, "voiced", slug + ".mp4");
       if (opts.resume && fs.existsSync(file.replace(/\.mp4$/, ".json"))) continue;
-      if (voiceFor(index).lang !== "en" && !(i18n.clips[tip.id] && i18n.ui[voiceFor(index).lang])) { console.log("untranslated", slug); continue; }
+      if (!translated(tip, voiceFor(index).lang, i18n)) { console.log("untranslated", slug); continue; }
       const said = localize(tip, index, total, i18n);
       await renderClip(page, tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said);
       fs.writeFileSync(file.replace(/\.mp4$/, ".json"), JSON.stringify({ slug, lang: said.lang, voice: said.voice.file,
@@ -250,13 +263,20 @@ async function renderClip(page, tip, index, total, file, cover, said) {
     return;
   }
 
+  if (!opts["skip-video"] && !opts["schedule-only"] && !opts["no-translate"]) {
+    exportStrings(all);
+    const run = spawnSync(process.env.PYTHON || "python3", [path.join(__dirname, "translate.py"), OUT], { stdio: "inherit" });
+    if (run.status !== 0) console.warn("translation failed; untranslated clips speak English");
+  }
+  const i18n = loadI18n();
   for (const tip of opts["schedule-only"] ? [] : tips) {
     const index = all.indexOf(tip);
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"));
     await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"));
-    if (!opts["skip-video"]) await renderClip(page, tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"));
-    console.log("rendered", slug);
+    const said = localize(tip, index, total, i18n);
+    if (!opts["skip-video"]) await renderClip(page, tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said);
+    console.log("rendered", slug, said.voice.file);
   }
   await browser.close();
 
@@ -266,8 +286,9 @@ async function renderClip(page, tip, index, total, file, cover, said) {
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
     const date = day(START, Math.floor((AFTER + index) / PER_DAY) * EVERY);
     const slot = (AFTER + index) % PER_DAY;
-    const cap = studio.captions(tip, index, total);
-    captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: altText(tip) }, cap);
+    const said = localize(tip, index, total, i18n);
+    const cap = Object.assign(studio.captions(tip, index, total), { tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube });
+    captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: altText(tip), lang: said.lang, voice: said.voice.file }, cap);
     for (const channel of Object.keys(WINDOWS)) {
       const video = ["tiktok", "youtube"].includes(channel);
       rows.push({ date, time: randomTime(WINDOWS[channel], rand, slot), channel, slug,
