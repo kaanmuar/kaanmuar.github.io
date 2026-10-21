@@ -2,7 +2,10 @@
 /* Renders the daily tips series: a feed card, a story, and a 12 s clip per tip, plus captions,
    a seeded random daily schedule, and Buffer CSVs.
    node scripts/tips-studio/build.js [--tips hsts,contrast] [--skip-video] [--start 2026-10-26]
-     [--batch tips-2026-10] [--seed 7] [--every 1]
+     [--batch tips-2026-10] [--seed 7] [--every 1] [--per-day 2] [--after 0] [--schedule-only]
+   --per-day N posts N a day per channel, each in its own part of the channel window; --after N
+   counts posts already ahead of this batch in the stream; --schedule-only rewrites the calendar,
+   captions, and Buffer CSVs without rendering.
    node scripts/tips-studio/build.js --source runs --start 2026-10-28 --every 4
      renders the real-run scorecards from runs.js, in their listed order, one every 4 days.
    --source runs-100 loads runs-100.js the same way; its batch defaults to the module name. */
@@ -32,6 +35,8 @@ const RUNS = SOURCE !== "tips";
 const studio = require("./" + SOURCE);
 const BATCH = opts.batch || (SOURCE === "runs" ? "runs-2026-10" : RUNS ? SOURCE : "tips-2026-10");
 const EVERY = Number(opts.every || 1);
+const PER_DAY = Number(opts["per-day"] || 1);
+const AFTER = Number(opts.after || 0);
 const OUT = path.join(ROOT, "media/social-posts", BATCH);
 const IMAGE_BASE = studio.SITE + "/media/social-posts/" + BATCH;
 const START = opts.start || "2026-10-26";
@@ -66,7 +71,11 @@ function order(tips, rand) {
 function minutes(hhmm) { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; }
 function hhmm(min) { return String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0"); }
 function day(start, offset) { const d = new Date(start + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + offset); return d.toISOString().slice(0, 10); }
-function randomTime(window, rand) { const a = minutes(window[0]); const b = minutes(window[1]); return hhmm(Math.round((a + rand() * (b - a)) / 5) * 5); }
+function randomTime(window, rand, slot) {
+  const part = (minutes(window[1]) - minutes(window[0])) / PER_DAY;
+  const a = minutes(window[0]) + slot * part;
+  return hhmm(Math.round((a + rand() * part * 0.75) / 5) * 5);
+}
 function csvCell(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }
 
 async function renderStill(page, tip, fmt, index, total, file) {
@@ -106,7 +115,7 @@ async function renderClip(page, tip, index, total, file, cover) {
   await page.goto("file://" + path.join(__dirname, "frame.html"));
   await page.evaluate(() => document.fonts.ready);
 
-  for (const tip of tips) {
+  for (const tip of opts["schedule-only"] ? [] : tips) {
     const index = all.indexOf(tip);
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"));
@@ -120,12 +129,13 @@ async function renderClip(page, tip, index, total, file, cover) {
   const captions = {};
   all.forEach((tip, index) => {
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
-    const date = day(START, index * EVERY);
+    const date = day(START, Math.floor((AFTER + index) / PER_DAY) * EVERY);
+    const slot = (AFTER + index) % PER_DAY;
     const cap = studio.captions(tip, index, total);
     captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip) }, cap);
     for (const channel of Object.keys(WINDOWS)) {
       const video = ["tiktok", "youtube"].includes(channel);
-      rows.push({ date, time: randomTime(WINDOWS[channel], rand), channel, slug,
+      rows.push({ date, time: randomTime(WINDOWS[channel], rand, slot), channel, slug,
         asset: video ? "clip/" + slug + ".mp4" : channel === "instagram-story" ? "story/" + slug + ".jpg" : "feed/" + slug + ".jpg",
         text: channel === "youtube" ? cap.youtubeTitle : channel === "instagram-story" ? "" : cap[channel] });
     }

@@ -8,7 +8,7 @@ The lesson for every team: Give every page a canonical link, even when only one 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=govuk
 
-#SEO #WebPerformance #Accessibility #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/01-govuk.jpg","real-runs","2026-10-28 07:30"
+#SEO #WebPerformance #Accessibility #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/01-govuk.jpg","real-runs","2026-11-05 09:15"
 "Bogotá city hall: SEO 97.
 
 Every page has a title and a description, the sitemap answers, structured data parses, and share cards are complete. The catch: every page reports to two GA4 properties.
@@ -18,7 +18,7 @@ The lesson for every team: One site, one GA4 property, one gtag.js. If two teams
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bogota
 
-#Analytics #GA4 #SEO #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg","real-runs","2026-10-30 08:20"
+#Analytics #GA4 #SEO #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg","real-runs","2026-11-06 07:50"
 "WHO's fact sheets end in a stray semicolon.
 
 WHO welcomes AI answer crawlers and its pages read well without JavaScript: GEO 91. But the JSON-LD on its fact sheets ends in ""};"", and a strict parser drops the whole block.
@@ -28,7 +28,7 @@ The lesson for every team: Run every JSON-LD block through a JSON validator befo
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=who
 
-#StructuredData #SEO #GEO #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg","real-runs","2026-11-01 08:10"
+#StructuredData #SEO #GEO #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg","real-runs","2026-11-06 09:30"
 "GOV.CO is empty until JavaScript runs.
 
 The portal for more than 78,000 government procedures sends an HTML body with almost no text. Most AI crawlers do not run JavaScript, so they see a title and little else.
@@ -38,7 +38,7 @@ The lesson for every team: Render the main text on the server, or prerender the 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=govco
 
-#GEO #AISearch #JavaScriptSEO #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/04-govco.jpg","real-runs","2026-11-03 10:35"
+#GEO #AISearch #JavaScriptSEO #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/04-govco.jpg","real-runs","2026-11-07 08:40"
 "The BBC decides who may read it.
 
 DMARC reject, preloaded HSTS, and Core Web Vitals that pass for real visitors. Its robots.txt also turns away AI answer crawlers like ChatGPT search and Perplexity. GEO: 56.
@@ -48,7 +48,7 @@ The lesson for every team: Blocking AI training and blocking AI answers are sepa
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bbc
 
-#GEO #AISearch #SEO #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg","real-runs","2026-11-05 07:45"
+#GEO #AISearch #SEO #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg","real-runs","2026-11-07 09:20"
 "TransMilenio lets search write its pitch.
 
 Every linked page answers and AI crawlers are welcome. But none of the 20 pages read has a meta description, the start page included, so search engines write the snippet themselves.
@@ -58,7 +58,7 @@ The lesson for every team: Write a description of about 150 characters for your 
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=transmilenio
 
-#SEO #MetaDescription #SERP #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/06-transmilenio.jpg","real-runs","2026-11-07 10:45"
+#SEO #MetaDescription #SERP #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/06-transmilenio.jpg","real-runs","2026-11-08 08:45"
 "Python.org reads well. Its site name is missing.
 
 Every page has a title and a description, and the text reads without JavaScript. The gap: its WebSite JSON-LD has no name, the property search uses for the site name in results.
@@ -68,7 +68,7 @@ The lesson for every team: Add ""name"" to your WebSite JSON-LD, written exactly
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=python
 
-#StructuredData #SEO #OpenSource #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/07-python.jpg","real-runs","2026-11-09 07:50"
+#StructuredData #SEO #OpenSource #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/07-python.jpg","real-runs","2026-11-08 09:20"
 "Bancolombia's site won't let you zoom.
 
 Language versions link to each other, share cards are complete, and pages read without JavaScript. But the viewport sets maximum-scale=1, which blocks pinch-zoom on many phones for people who need larger text.
@@ -78,7 +78,7 @@ The lesson for every team: Drop maximum-scale and user-scalable=no from your vie
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bancolombia
 
-#Accessibility #A11y #MobileUX #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg","real-runs","2026-11-11 09:55"
+#Accessibility #A11y #MobileUX #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg","real-runs","2026-11-09 08:25"
 "The UN home page never says its language.
 
 Links answer, campaign tags survive redirects, and AI answer crawlers are welcome. But the start page's <html> tag has no lang, so screen readers guess the voice and browsers guess the translation.
@@ -88,7 +88,7 @@ The lesson for every team: Put lang on the html tag of every language version: l
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=un
 
-#Accessibility #i18n #A11y #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg","real-runs","2026-11-13 08:10"
+#Accessibility #i18n #A11y #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg","real-runs","2026-11-09 09:30"
 "NASA is wide open to AI search.
 
 GEO scores 91: answer crawlers are welcome, structured data names the organization, and pages carry authors and dates. Security headers are where it trails.
@@ -98,4 +98,4 @@ The lesson for every team: Four headers close most of that gap: Content-Security
 One automated read of public pages on 19 Oct 2026. A starting point, not a verdict.
 How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=runs-2026-10&utm_content=nasa
 
-#WebSecurity #GEO #AISearch #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/10-nasa.jpg","real-runs","2026-11-15 10:25"
+#WebSecurity #GEO #AISearch #QA","https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/10-nasa.jpg","real-runs","2026-11-10 08:35"
