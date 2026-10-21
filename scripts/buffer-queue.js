@@ -6,8 +6,8 @@
 
    Reads media/social-posts/<batch>/captions.json from scripts/tips-studio/build.js. Feed and story
    images are served by the site, so the script waits until the first one answers 200 (the Pages
-   deploy). Clips come from CLIP_BASE (the batch's GitHub release). Each post goes to the next free
-   slot of that channel's posting schedule (mode addToQueue). Paused channels are skipped.
+   deploy). Clips come from CLIP_BASE (the batch's GitHub release). Each post is scheduled at its
+   calendar.csv time (mode customScheduled). Paused channels are skipped.
    Exits 1 when any post failed, after trying all of them; the log names each one. */
 
 const fs = require("fs");
@@ -60,21 +60,39 @@ async function waitFor(url, minutes) {
   return false;
 }
 
-// One channel, one slug: the post input, or null when this network takes nothing from the batch.
-function inputsFor(channel, slug, cap, base, clipBase) {
+// calendar.csv times are Bogotá wall-clock (UTC-5, no daylight saving).
+function readCalendar(dir) {
+  const when = {};
+  const lines = fs.readFileSync(path.join(dir, "calendar.csv"), "utf8").trim().split("\n").slice(1);
+  for (const line of lines) {
+    const [date, time, channel, slug] = line.split(",");
+    when[slug + "|" + channel] = new Date(date + "T" + time + ":00-05:00").toISOString();
+  }
+  return when;
+}
+
+// One channel, one slug: the post inputs (none when this network takes nothing from the batch).
+// Each post keeps its calendar slot; the queues already hold months of imported posts, so
+// addToQueue would land it behind them. A slot already past goes out in 20 minutes.
+function inputsFor(channel, slug, cap, base, clipBase, when) {
   const image = (dir) => ({ image: { url: base + "/" + dir + "/" + slug + ".jpg", metadata: { altText: cap.alt } } });
   const video = () => ({ video: { url: clipBase + "/" + slug + ".mp4", metadata: { thumbnailOffset: 0 } } });
-  const post = (text, assets, metadata) => Object.assign({ channelId: channel.id, schedulingType: "automatic", mode: "addToQueue", text, assets }, metadata ? { metadata } : {});
+  const soon = new Date(Date.now() + 20 * 60e3).toISOString();
+  const post = (slot, text, assets, metadata) => {
+    const at = when[slug + "|" + slot];
+    return Object.assign({ channelId: channel.id, schedulingType: "automatic", text, assets },
+      at ? { mode: "customScheduled", dueAt: at > soon ? at : soon } : { mode: "addToQueue" }, metadata ? { metadata } : {});
+  };
   switch (channel.service) {
-    case "linkedin": return [post(cap.linkedin, [image("feed")])];
-    case "facebook": return [post(cap.facebook, [image("feed")], { facebook: { type: "post" } })];
+    case "linkedin": return [post("linkedin", cap.linkedin, [image("feed")])];
+    case "facebook": return [post("facebook", cap.facebook, [image("feed")], { facebook: { type: "post" } })];
     case "instagram": return [
-      post(cap.instagram, [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
-      post(cap.title, [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
+      post("instagram", cap.instagram, [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
+      post("instagram-story", cap.title, [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
     ];
-    case "twitter": case "threads": case "bluesky": case "mastodon": return [post(cap.x, [image("feed")])];
-    case "tiktok": return clipBase ? [post(cap.tiktok, [video()])] : [];
-    case "youtube": return clipBase ? [post(cap.youtube, [video()], { youtube: { title: cap.youtubeTitle, categoryId: "28" } })] : [];
+    case "twitter": case "threads": case "bluesky": case "mastodon": return [post("x", cap.x, [image("feed")])];
+    case "tiktok": return clipBase ? [post("tiktok", cap.tiktok, [video()])] : [];
+    case "youtube": return clipBase ? [post("youtube", cap.youtube, [video()], { youtube: { title: cap.youtubeTitle, categoryId: "28" } })] : [];
     default: return [];
   }
 }
@@ -86,6 +104,7 @@ async function main() {
   const dir = path.join(ROOT, "media/social-posts", batch);
   const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
   const slugs = Object.keys(captions);
+  const when = readCalendar(dir);
   if (!slugs.length) { console.log("nothing to post"); return; }
   const base = SITE + "/media/social-posts/" + batch;
   const clipBase = process.env.CLIP_BASE || "";
@@ -100,7 +119,7 @@ async function main() {
   let queued = 0;
   for (const slug of slugs) {
     for (const channel of list) {
-      for (const input of inputsFor(channel, slug, captions[slug], base, clipBase)) {
+      for (const input of inputsFor(channel, slug, captions[slug], base, clipBase, when)) {
         const label = slug + " → " + channel.service + (channel.name ? " (" + channel.name + ")" : "");
         if (opts["dry-run"]) { console.log("dry-run", label, JSON.stringify(input).slice(0, 160)); continue; }
         try {
