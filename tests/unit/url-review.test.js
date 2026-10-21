@@ -809,3 +809,87 @@ test("the intake takes the current terms and the ones just before, and records w
   assert.equal(core.validateIntake(body("2026-10-20")).value.termsVersion, "2026-10-20");
   assert.ok(core.validateIntake(body("2026-09-01")).errors.some((e) => e.field === "terms"));
 });
+
+const failures = require("../../functions/url-review-failures");
+
+test("failure causes are classed from the review's own messages", () => {
+  const cases = [
+    ["The site's bot protection refused the review (status 403, an AWS WAF bot check), in the plain read and in headless Chrome.", "bot-protection"],
+    ["The site answered with a Cloudflare bot check (status 403) instead of the page.", "bot-protection"],
+    ["The site's bot protection refused the plain read (status 403), and headless Chrome did not finish (the browser was busy).", "browser"],
+    ["The URL returned status 404, in the plain read and in headless Chrome.", "status"],
+    ["The site redirected to http://lg.com.co/, an http:// address. The review only follows https.", "http-redirect"],
+    ["The host name did not resolve.", "dns"],
+    ["The page took too long.", "timeout"],
+    ["The page redirected too many times.", "redirect-loop"],
+    ["The URL did not return an HTML page.", "not-html"],
+    ["That address is not a public website.", "input"],
+    ["certificate has expired", "tls"],
+    ["connect ECONNREFUSED 1.2.3.4:443", "connection"],
+    ["Cannot read properties of undefined (reading 'x')", "unknown"]
+  ];
+  cases.forEach(([message, id]) => assert.equal(failures.causeOf(message).id, id, message));
+  const waf = failures.causeOf(cases[0][0]);
+  assert.equal(waf.status, 403);
+  assert.equal(waf.vendor, "AWS WAF");
+});
+
+test("a failed run keeps its log, error and timings for 90 days", () => {
+  const error = new Error("The URL returned status 404.");
+  error.status = 422;
+  const lines = Array.from({ length: 1600 }, (_, i) => ({ t: i * 10, text: "line " + i + " " + "x".repeat(500) }));
+  const record = failures.failureRecord({ kind: "failed", runId: "abc123", url: "https://Shop.example.com/x", name: "Ana", email: "ana@example.com", error, lines, startedAt: 1000, endedAt: 61000, pages: 20, depth: 2, frameworks: ["playwright"] });
+  assert.equal(record.kind, "failed");
+  assert.equal(record.host, "shop.example.com");
+  assert.equal(record.error.message, "The URL returned status 404.");
+  assert.equal(record.error.status, 422);
+  assert.ok(record.error.stack.length > 0);
+  assert.deepEqual({ id: record.cause.id, status: record.cause.status }, { id: "status", status: 404 });
+  assert.equal(record.lines.length, failures.MAX_LINES);
+  assert.equal(record.linesCut, 100);
+  assert.equal(record.lineCount, 1600);
+  assert.equal(record.lines[0].text.length, 400);
+  assert.equal(record.lines[299].text.slice(0, 9), "line 299 ");
+  assert.equal(record.lines[300].text.slice(0, 9), "line 400 ");
+  assert.equal(record.timings.ms, 60000);
+  assert.equal(record.expireAt.getTime() - 61000, 90 * 86400000);
+  assert.equal(record.diagnosedAt, null);
+  assert.deepEqual(record.options, { pages: 20, depth: 2, frameworks: ["playwright"] });
+
+  const stopped = failures.failureRecord({ kind: "stopped", url: "https://shop.example.com/", lines: [] });
+  assert.equal(stopped.error, null);
+  assert.equal(stopped.cause, null);
+  assert.equal("diagnosedAt" in stopped, false);
+});
+
+test("a failed alert with no saved log becomes a failure to diagnose", () => {
+  const record = failures.failureFromAlert({ id: "a1", at: "2026-10-21T15:00:00.000Z", kind: "failed", runId: "r1", url: "https://bbva.com.co/", detail: "Who: Ana\nReason: The site's bot protection refused the review (status 403), in the plain read and in headless Chrome.\nStatus: failed" });
+  assert.equal(record.runId, "r1");
+  assert.equal(record.cause.id, "bot-protection");
+  assert.equal(record.fromAlert, "a1");
+  assert.deepEqual(record.lines, []);
+  assert.equal(record.at, "2026-10-21T15:00:00.000Z");
+});
+
+test("the diagnosis says whether a failure's cause has cleared", () => {
+  const bot = { cause: failures.causeOf("The site's bot protection refused the review (status 403), in the plain read and in headless Chrome.") };
+  const refusedPlain = { dns: { addresses: ["1.2.3.4"] }, plain: { status: 403, challenge: "", html: true, url: "https://bbva.com.co/" } };
+  const read = failures.diagnose(bot, Object.assign({}, refusedPlain, { browser: { ok: true, docStatus: 200, untagged: false } }));
+  assert.deepEqual([read.now, read.cleared, read.rerun], ["browser-read", true, true]);
+  assert.match(read.summary, /^The site's bot protection refused the review\. Cleared: /);
+  assert.equal(failures.diagnose(bot, Object.assign({}, refusedPlain, { browser: { ok: true, docStatus: 200, untagged: true } })).now, "browser-untagged");
+  const still = failures.diagnose(bot, Object.assign({}, refusedPlain, { browser: { ok: true, docStatus: 403, challenge: "AWS WAF" } }));
+  assert.deepEqual([still.now, still.cleared], ["bot-protection", false]);
+  assert.match(still.summary, /Still: .*AWS WAF/);
+  assert.equal(failures.diagnose(bot, Object.assign({}, refusedPlain, { browser: { ok: false, error: "the browser was busy" } })).now, "browser");
+  const missing = { dns: {}, plain: { status: 404, challenge: "", html: true } };
+  assert.equal(failures.diagnose(bot, missing).now, "status");
+  assert.equal(failures.diagnose(bot, Object.assign({}, missing, { browser: { ok: true, docStatus: 404 } })).now, "status");
+  assert.equal(failures.diagnose(bot, { dns: { error: "ENOTFOUND" } }).now, "dns");
+  assert.equal(failures.diagnose(bot, { dns: {}, plain: { hops: [], httpRedirect: "http://lg.com.co/" } }).now, "http-redirect");
+  assert.equal(failures.diagnose(bot, { dns: {}, plain: { error: "The page took too long." } }).now, "timeout");
+  assert.equal(failures.diagnose(bot, { dns: {}, plain: { status: 503, html: true } }).now, "status");
+  assert.equal(failures.diagnose(bot, { dns: {}, plain: { status: 200, html: false, contentType: "application/pdf" } }).now, "not-html");
+  const fine = failures.diagnose({ cause: failures.causeOf("The page took too long.") }, { dns: {}, plain: { status: 200, html: true } });
+  assert.deepEqual([fine.now, fine.cleared, fine.rerun], ["readable", true, true]);
+});
