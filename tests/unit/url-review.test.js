@@ -1139,3 +1139,106 @@ test("the failures page lists runs without their log, and opens one with its ful
   assert.match(desk.FAILURES_PAGE, /deskFetch\("\/desk\/failures\/data"\)/);
   assert.match(desk.FAILURES_PAGE, /href="\.\.\/desk"/);
 });
+
+test.describe("chat widgets", () => {
+  const browser = require("../../functions/url-review-browser");
+  const INTERCOM = {
+    found: [{ name: "Intercom", ai: false, hosts: ["widget.intercom.io", "js.intercomcdn.com"], requests: 5, bytes: 620 * 1024, ms: 40 }],
+    cookies: ["intercom-id-abc", "intercom-device-id-abc"],
+    after: { requests: 2, cookies: ["intercom-session-abc"] },
+    launcher: { found: true, name: "", known: true, banner: true, covers: [{ label: "Reject all", banner: true }] },
+    open: { opened: true, keyboard: true, moved: false, entered: true, trapped: true, exit: "", tabs: 26, privacy: false }
+  };
+  const browsed = (chat) => ({
+    ok: true,
+    start: { status: 200, finalPath: "/", requests: 40, vitals: { lcp: 1200, cls: 0, tbt: 0 } },
+    consent: { banner: "OneTrust", rejectLabel: "Reject all", rejected: true, before: { vendors: [], cookies: [] }, after: { vendors: [], cookies: [], kept: 0 } },
+    chat
+  });
+  const analyzeWith = (chat) => insights.analyze({ pages: [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(HTML, STRONG_HEADERS, URL_) }], browser: browsed(chat) });
+  const finding = (result, key) => result.findings.find((item) => item.key === key) || {};
+
+  test("chat providers and AI model APIs are named from the recorded request hosts", () => {
+    const rows = browser.chatsFrom([
+      { host: "widget.intercom.io", requests: 3, bytes: 150000 },
+      { host: "js.intercomcdn.com", requests: 2, bytes: 200000 },
+      { host: "www.google-analytics.com", requests: 4, bytes: 3000 },
+      { host: "notintercom.io", requests: 1, bytes: 10 },
+      { host: "api.openai.com", requests: 1, bytes: 900 },
+      { host: "embed.tawk.to", requests: 1, bytes: 100 }
+    ], { "js.intercomcdn.com": 120.4, "cdn.example.com": 500 });
+    assert.deepEqual(rows.map((row) => [row.name, row.ai, row.requests, row.bytes, row.ms]), [
+      ["Intercom", false, 5, 350000, 120],
+      ["OpenAI API", true, 1, 900, 0],
+      ["Tawk.to", false, 1, 100, 0]
+    ]);
+    assert.deepEqual(rows[0].hosts, ["widget.intercom.io", "js.intercomcdn.com"]);
+    assert.equal(browser.chatOf("static.zdassets.com").name, "Zendesk Messaging");
+    assert.equal(browser.chatOf("js.usemessages.com").name, "HubSpot Chat");
+    assert.equal(browser.chatOf("example.com"), null);
+    assert.deepEqual(browser.chatsFrom([{ host: "www.example.com", requests: 9 }], {}), []);
+  });
+
+  test("the launcher covers a button only when it is on top of it, or hides a fifth of it when that is unknown", () => {
+    const box = { x: 322, y: 776, w: 48, h: 48 };
+    const rect = (x, y, w, h) => ({ x, y, w, h });
+    const covered = browser.coveredBy(box, [
+      { label: "Reject all", banner: true, under: true, rect: rect(200, 780, 160, 44) },
+      { label: "Accept all", banner: true, under: false, rect: rect(200, 780, 160, 44) },
+      { label: "Buy now", banner: false, under: null, rect: rect(300, 790, 60, 40) },
+      { label: "Edge", banner: false, under: null, rect: rect(20, 790, 305, 40) },
+      { label: "Far away", banner: false, under: true, rect: rect(20, 100, 100, 40) }
+    ]);
+    assert.deepEqual(covered.map((row) => row.label), ["Reject all", "Buy now"]);
+    assert.deepEqual(browser.coveredBy(null, [{ label: "x", under: true, rect: rect(0, 0, 10, 10) }]), []);
+  });
+
+  test("a chat that loads before consent, is heavy, covers the banner, has no name and traps focus is reported in each area", () => {
+    const result = analyzeWith(INTERCOM);
+    assert.deepEqual(["an-chat-consent", "an-chat-reject", "an-chat-privacy", "pf-chat", "a11y-chat-cover", "a11y-chat-name", "a11y-chat-focus", "a11y-chat-trap"].map((key) => [key, finding(result, key).area, finding(result, key).verdict, finding(result, key).severity]), [
+      ["an-chat-consent", "Analytics", "risk", "medium"],
+      ["an-chat-reject", "Analytics", "risk", "medium"],
+      ["an-chat-privacy", "Analytics", "risk", "low"],
+      ["pf-chat", "Performance", "risk", "medium"],
+      ["a11y-chat-cover", "Accessibility", "fail", "high"],
+      ["a11y-chat-name", "Accessibility", "fail", "medium"],
+      ["a11y-chat-focus", "Accessibility", "risk", "medium"],
+      ["a11y-chat-trap", "Accessibility", "fail", "high"]
+    ]);
+    assert.match(finding(result, "an-chat-consent").evidence, /OneTrust was showing\. Before any choice, Intercom sent 5 requests and set intercom-id-abc, intercom-device-id-abc\./);
+    assert.match(finding(result, "a11y-chat-cover").evidence, /the Intercom launcher sits over "Reject all" in the cookie banner/);
+    assert.match(finding(result, "a11y-chat-trap").evidence, /, 26 presses of Tab kept focus inside it/);
+  });
+
+  test("a light, consent-aware chat with a named launcher passes, and a page without chat gets no chat finding", () => {
+    const good = analyzeWith({
+      found: [{ name: "Crisp", ai: false, hosts: ["client.crisp.chat"], requests: 2, bytes: 40 * 1024, ms: 0 }],
+      cookies: [], after: { requests: 0, cookies: [] },
+      launcher: { found: true, name: "Open chat", known: true, banner: true, covers: [] },
+      open: { opened: true, keyboard: true, moved: true, entered: true, trapped: false, exit: "escape", tabs: 25, privacy: true }
+    });
+    assert.deepEqual(["an-chat-reject", "an-chat-privacy", "pf-chat", "a11y-chat-cover", "a11y-chat-name", "a11y-chat-trap"].map((key) => verdict(good, key)), ["pass", "pass", "pass", "pass", "pass", "pass"]);
+    assert.equal(verdict(good, "an-chat-consent"), "risk");
+    assert.equal(verdict(good, "a11y-chat-focus"), "missing");
+    const unread = analyzeWith(Object.assign({}, INTERCOM, { launcher: { found: true, known: false, covers: [] }, open: { opened: true, keyboard: true, entered: true, trapped: false, exit: "", tabs: 25, privacy: null } }));
+    assert.deepEqual(["a11y-chat-name", "a11y-chat-trap", "an-chat-privacy"].map((key) => verdict(unread, key)), ["missing", "person", "missing"]);
+    const none = analyzeWith(undefined);
+    assert.equal(none.findings.filter((item) => /chat/.test(item.key)).length, 0);
+  });
+
+  test("the review names the chat in the technologies and proposes chat cases only when one loaded", async () => {
+    const run = async (chat) => {
+      const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: HTML } });
+      try {
+        return await core.reviewTarget(URL_, { browse: async (job) => job.html ? { ok: false } : Object.assign(browsed(chat), { start: { status: 200, finalPath: "/", vitals: {}, dom: { links: [], nav: [], forms: 0, buttons: 0, iframes: 0 } } }) });
+      } finally {
+        restore();
+      }
+    };
+    const withChat = await run({ found: [{ name: "Intercom", ai: false, hosts: ["widget.intercom.io"], requests: 3, bytes: 1000, ms: 0 }, { name: "Chatbase", ai: true, hosts: ["www.chatbase.co"], requests: 1, bytes: 100, ms: 0 }], cookies: [] });
+    assert.deepEqual(withChat.technologies.filter((item) => /Chat|AI/.test(item.group)).map((item) => [item.name, item.group]), [["Intercom", "Chat"], ["Chatbase", "AI chatbot"]]);
+    assert.deepEqual(withChat.cases.filter((item) => /^CHAT-/.test(item.id)).map((item) => item.id), ["CHAT-01", "CHAT-02", "CHAT-03", "CHAT-04"]);
+    const without = await run(undefined);
+    assert.equal(without.cases.filter((item) => /^CHAT-/.test(item.id)).length, 0);
+  });
+});
