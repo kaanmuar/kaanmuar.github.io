@@ -553,9 +553,73 @@ test.describe("mail to the asker", () => {
         });
       });
     });
+    const notes = (lang) => ["return", "paid", "offer"].map((kind) => copy[lang][kind].map((row) => row.join(" ")).join(" ")).join(" ");
+    assert.match(notes("en"), /The first review looked at/);
+    assert.match(notes("es"), /La primera revisión analizó/);
+    assert.match(notes("pt"), /A primeira análise examinou/);
+    assert.match(notes("de"), /Die erste Prüfung hat einen Ausschnitt von \{host\} angesehen/);
+    assert.match(notes("fr"), /La première analyse a parcouru/);
+    assert.match(notes("it"), /La prima analisi ha esaminato/);
+    ["es", "pt", "fr", "it"].forEach((lang) => assert.ok(!/lectura|leitura|lecture|lettura/i.test(notes(lang)), lang));
     const first = offers.queue([record], now)[0];
     const second = offers.queue([record, { status: "follow-note", email: record.email, createdAt: ago(3) }], now)[0];
     assert.notEqual(first.title, second.title);
+  });
+
+  test("every report mail links the account page, the legal page, the retention date and the Live Reports notice", () => {
+    customerMail.LANGS.forEach((lang) => {
+      const mail = customerMail.reportMail(Object.assign({}, record, { lang, retainUntil: "2027-10-17T15:00:00Z" }), { stopUrl: "https://fn/notes/stop?t=1" });
+      [mail.html, mail.text].forEach((body) => {
+        assert.match(body, /https:\/\/carlosandmunoz\.com\/qa-review-account\.html/, lang);
+        assert.match(body, /https:\/\/carlosandmunoz\.com\/qa-review-legal\.html/, lang);
+        assert.match(body, /Carlos A\. Muñoz, Bogotá/, lang);
+        assert.match(body, /2027-10-17/, lang);
+        assert.match(body, /Live Report/, lang);
+      });
+      assert.match(mail.html, /mailto:qa@carlosandmunoz\.com"/, lang);
+    });
+    const note = customerMail.noteMail(offers.queue([record], now)[0], { stopUrl: "https://fn/notes/stop?t=2" });
+    assert.match(note.html, /qa-review-account\.html/);
+    assert.ok(!note.text.includes("Live Report"));
+  });
+
+  test("a paid or free record is mailed open: full findings, an open PDF, and no unlock wording", () => {
+    customerMail.LANGS.forEach((lang) => {
+      const open = Object.assign({}, record, { lang, paid: true, free: true });
+      const blurred = customerMail.reportMail(Object.assign({}, record, { lang }), { attached: true });
+      const mail = customerMail.reportMail(open, { attached: true });
+      assert.ok(mail.html.includes(hidden) && mail.text.includes(hidden), lang);
+      assert.ok(!mail.text.includes(hidden + " …"), lang);
+      assert.notEqual(mail.subject, blurred.subject, lang);
+      assert.ok(!mail.text.includes(blurred.text.split("\n").find((row) => row.includes("?report=")).split(":")[0]), lang);
+      const pdf = customerMail.reportPdf(open);
+      assert.ok(pdf.html.includes(hidden), lang);
+      assert.ok(!/data:image\/png;base64,/.test(pdf.html), lang);
+      assert.ok(!/frost|blur|empan|embac|verschwommen|flout|sfocat/i.test(pdf.filename), lang + " " + pdf.filename);
+    });
+    const es = customerMail.reportMail(Object.assign({}, record, { free: true, paid: true }), { attached: true });
+    assert.match(es.html, /Abrir el informe completo/);
+    assert.match(es.html, /El informe completo va adjunto en PDF/);
+    assert.ok(!/Desbloquear|empañad/.test(es.html + es.subject));
+    assert.equal(customerMail.reportPdf(Object.assign({}, record, { paid: true })).filename, "qa-lab-example.com-informe.pdf");
+  });
+
+  test("a re-run says the earlier review failed on its date and ran again; a stopped run says it stopped", () => {
+    const rerun = Object.assign({}, record, { paid: true, free: true, rerunOf: ["f1"], failedAt: "2026-10-19T08:00:00Z" });
+    customerMail.LANGS.forEach((lang) => {
+      const mail = customerMail.reportMail(Object.assign({}, rerun, { lang }));
+      assert.match(mail.text, /2026-10-19/, lang);
+      assert.match(mail.subject, /example\.com/, lang);
+      assert.ok(!/63/.test(mail.subject), lang);
+      const undated = customerMail.reportMail(Object.assign({}, rerun, { lang, failedAt: "" }));
+      assert.ok(!undated.text.includes("{date}") && !undated.text.includes("2026-10-19"), lang);
+      const stopped = customerMail.reportMail(Object.assign({}, record, { lang, status: "stopped" }));
+      const done = customerMail.reportMail(Object.assign({}, record, { lang }));
+      assert.notEqual(stopped.text.split("\n")[0], done.text.split("\n")[0], lang);
+      assert.ok(!stopped.subject.includes("63"), lang);
+    });
+    assert.match(customerMail.reportMail(Object.assign({}, rerun, { lang: "en" })).text, /Your earlier review of example\.com failed on 2026-10-19\. It ran again after the cause cleared/);
+    assert.match(customerMail.reportMail(Object.assign({}, record, { lang: "en", status: "stopped" })).subject, /stopped before the last page/);
   });
 
   test("the stop page asks before it stops, so a link scanner cannot stop the notes", () => {
@@ -605,6 +669,21 @@ test.describe("account page file", () => {
     assert.equal(file.paidUntil, "2026-11-01T00:00:00Z");
     assert.equal(file.runs[0].cases[0].title, "Coupon total does not refresh");
     assert.equal(offers.accountFile(paid, "ana@example.com", Date.parse("2026-11-02T00:00:00Z")).open, false);
+  });
+
+  test("a paid or free report opens on its own, and a free-run account opens every report", () => {
+    const mixed = rows.concat([{ id: "e", email: "ana@example.com", status: "complete", paid: true, free: true, createdAt: "2026-10-21T12:00:00Z", requestedUrl: "https://free.example.com/", report: report("free.example.com") }]);
+    const file = offers.accountFile(mixed, "ana@example.com", now);
+    assert.equal(file.open, false);
+    assert.equal(file.pass, false);
+    assert.deepEqual(file.runs.map((run) => [run.id, run.open]), [["e", true], ["b", false], ["a", false]]);
+    assert.equal(file.runs[0].cases[0].title, "Coupon total does not refresh");
+    assert.notEqual(file.runs[1].cases[0].title, "Coupon total does not refresh");
+    const free = offers.accountFile(rows, "ana@example.com", now, { freeAccount: true });
+    assert.equal(free.open, true);
+    assert.equal(free.free, true);
+    assert.equal(free.pass, false);
+    assert.ok(free.runs.every((run) => run.open && run.cases[0].title === "Coupon total does not refresh"));
   });
 });
 

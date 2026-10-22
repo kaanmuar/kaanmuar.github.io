@@ -1558,7 +1558,7 @@ async function queueOwnerNotice(record) {
   const ranked = ownerNotice.rankContacts(((report.contacts && report.contacts.found) || []).concat(more), report.host);
   const stopped = await ownerStops(ranked.slice(0, 12).map((row) => row.email), domain);
   const usable = ownerNotice.usableContacts(record, ranked, stopped);
-  if (usable.length) await ref.set(ownerNotice.noticeRow(record, usable));
+  if (usable.length) await ref.set(Object.assign(ownerNotice.noticeRow(record, usable), { expireAt: keepUntil() }));
 }
 
 async function liveReportIndex() {
@@ -1591,7 +1591,8 @@ async function sendOwnerNotice(queued, email) {
     reviewId: notice.reviewId,
     cardId: card.id,
     claims: 0,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    expireAt: keepUntil()
   });
   const link = REVIEW_FN_URL + "/owner?t=" + token + "&do=";
   const links = {
@@ -1842,10 +1843,10 @@ exports.dropReviewAuthUser = functions.firestore
     return null;
   });
 
-async function mailSignIn(started, lang) {
+async function mailSignIn(started, lang, page) {
   const from = prepareMail();
   if (!from) return false;
-  const mail = customerMail.signInMail(lang, started);
+  const mail = customerMail.signInMail(lang, started, page);
   await sgMail.send({
     to: started.email,
     from: from,
@@ -1865,7 +1866,7 @@ async function sendSignIn(res, store, input) {
     res.status(started.status).json({ error: started.error, field: started.field || "" });
     return;
   }
-  if (!(await mailSignIn(started, input.lang))) {
+  if (!(await mailSignIn(started, input.lang, input.page))) {
     res.status(503).json({ error: "Sign-in email is not available right now. Try again later." });
     return;
   }
@@ -1899,7 +1900,7 @@ async function reviewSignIn(req, res, pathName) {
       res.status(400).json({ error: "This address cannot receive email. Check it for typos.", field: "email" });
       return;
     }
-    await sendSignIn(res, store, { email, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
+    await sendSignIn(res, store, { email, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang, page: body.page });
     return;
   }
   if (pathName.endsWith("/auth/email/finish")) {
@@ -1916,7 +1917,7 @@ async function reviewSignIn(req, res, pathName) {
     }
     const result = await reviewAuth.providerSignIn(store, decoded, { deviceKey: body.deviceKey, profile: body.profile, googleAccessToken: body.googleAccessToken, enabled });
     if (result.verifyEmail) {
-      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
+      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang, page: body.page });
       return;
     }
     answer(result);
@@ -1932,7 +1933,7 @@ async function reviewSignIn(req, res, pathName) {
   if (pathName.endsWith("/auth/oauth/finish")) {
     const result = await reviewOAuth.finishOAuth(store, { state: body.state, code: body.code, error: body.error, deviceKey: body.deviceKey, enabled, env: process.env });
     if (result.verifyEmail) {
-      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
+      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang, page: body.page });
       return;
     }
     answer(result);
@@ -1966,7 +1967,8 @@ async function reviewAccount(req, res, pathName) {
   }
   if (pathName.endsWith("/account/runs")) {
     const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
-    res.status(200).json(reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email));
+    const freeAccount = await hasFreeRuns(signedIn.email);
+    res.status(200).json(reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email, Date.now(), { freeAccount }));
     return;
   }
   if (pathName.endsWith("/account/stop")) {
@@ -2119,7 +2121,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         return;
       }
       const sentTo = result.notice;
-      await ref.update({ status: "sent", sentAt: decidedAt, decidedAt, by: operator, cardId: result.card.id, email: sentTo.email, source: sentTo.source, sourceUrl: sentTo.sourceUrl || "", lastError: "" });
+      await ref.update({ status: "sent", sentAt: decidedAt, decidedAt, by: operator, cardId: result.card.id, email: sentTo.email, source: sentTo.source, sourceUrl: sentTo.sourceUrl || "", lastError: "", expireAt: keepUntil() });
       await db.collection("url_review_owner_notice_log").add({
         domain: notice.domain,
         host: notice.host,
@@ -2129,7 +2131,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         reviewId: notice.reviewId,
         cardId: result.card.id,
         sentAt: decidedAt,
-        by: operator
+        by: operator,
+        expireAt: keepUntil()
       });
       res.status(200).json({ ok: true, status: "sent" });
       return;
@@ -2380,6 +2383,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       claimedFrom: link.reviewId,
       lang: link.lang,
       createdAt: at,
+      retainUntil: keepUntil().toISOString(),
+      expireAt: keepUntil(),
       report
     };
     await db.collection("url_reviews").doc(id).set(copy);
