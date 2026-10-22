@@ -115,7 +115,8 @@ async function startOAuth(store, input) {
     ip: String(input.ip || "").slice(0, 80),
     used: false,
     createdAt: new Date(now).toISOString(),
-    expiresAt: new Date(now + STATE_MS).toISOString()
+    expiresAt: new Date(now + STATE_MS).toISOString(),
+    expireAt: new Date(now + STATE_MS)
   });
   const params = new URLSearchParams({
     response_type: "code",

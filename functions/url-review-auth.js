@@ -136,7 +136,9 @@ async function startEmail(store, input) {
     tries: 0,
     used: false,
     createdAt: new Date(now).toISOString(),
-    expiresAt: new Date(now + CODE_MS).toISOString()
+    expiresAt: new Date(now + CODE_MS).toISOString(),
+    // Firestore TTL deletes the row; it must outlive the hourly send limit that counts it.
+    expireAt: new Date(now + Math.max(CODE_MS, SEND_WINDOW_MS))
   });
   return { ok: true, id, code, token, email };
 }
@@ -266,7 +268,8 @@ async function openSession(store, input) {
     deviceHash: input.deviceHash,
     createdAt: at,
     lastSeenAt: at,
-    expiresAt: new Date(now + SESSION_MS).toISOString()
+    expiresAt: new Date(now + SESSION_MS).toISOString(),
+    expireAt: new Date(now + SESSION_MS)
   });
   const account = await store.get("url_review_accounts", input.email);
   const providers = ((account && account.providers) || []).filter((item) => item !== input.provider).concat(input.provider);
@@ -278,6 +281,7 @@ async function openSession(store, input) {
     createdAt: (account && account.createdAt) || at,
     lastSignInAt: at,
     retainUntil: new Date(now + ACCOUNT_MS).toISOString(),
+    expireAt: new Date(now + ACCOUNT_MS),
     plan: (account && account.plan) || null
   });
   return { ok: true, session, email: input.email, provider: input.provider, name: profile.name || "", picture: profile.picture || "" };

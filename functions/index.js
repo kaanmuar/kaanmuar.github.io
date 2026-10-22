@@ -2456,6 +2456,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   if (!decision.ok) {
     const denied = {
       createdAt: new Date().toISOString(),
+      expireAt: new Date(Date.now() + urlReview.RETAIN_MS),
       status: decision.code === "payment" ? "payment-due" : "blocked",
       deviceId,
       ip,
