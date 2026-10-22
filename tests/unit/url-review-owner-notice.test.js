@@ -182,14 +182,16 @@ test("web search reads Brave Search API results, and finds nothing without a key
       calls.push({ url, token: init.headers["x-subscription-token"] });
       return { ok: true, json: async () => ({ web: { results: [
         { title: "Acme &amp; <strong>Co</strong>", url: "https://news.example/acme", description: "Write to <strong>hola@acme.co</strong>", extra_snippets: ["ventas@acme.co"] },
-        { title: "No link", url: "javascript:alert(1)", description: "" }
+        { title: "No link", url: "javascript:alert(1)", description: "" },
+        { title: "Escaped &lt;script&gt;alert(1)&lt;/script&gt;", url: "https://bad.example/", description: "&lt;img src=x onerror=alert(1)&gt;" }
       ] } }) };
     };
     const results = await core.webSearch("\"@acme.co\"", "k");
     assert.equal(calls[0].token, "k");
     assert.match(calls[0].url, /^https:\/\/api\.search\.brave\.com\/res\/v1\/web\/search\?/);
-    assert.deepEqual(results, [{ title: "Acme & Co", url: "https://news.example/acme", description: "Write to hola@acme.co ventas@acme.co" }]);
-    assert.deepEqual(core.parseMentions(results.concat({ title: "Own page", url: "https://acme.co/" }), "acme.co"), [
+    assert.deepEqual(results.slice(0, 1), [{ title: "Acme & Co", url: "https://news.example/acme", description: "Write to hola@acme.co ventas@acme.co" }]);
+    assert.ok(results.every((item) => !/[<>]/.test(item.title + item.description)));
+    assert.deepEqual(core.parseMentions(results.slice(0, 1).concat({ title: "Own page", url: "https://acme.co/" }), "acme.co"), [
       { title: "Acme & Co", href: "https://news.example/acme", tone: "Mention" }
     ]);
   } finally {
