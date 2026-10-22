@@ -75,6 +75,9 @@ test("a provider sign-in needs an open provider and a verified email", async () 
   assert.equal(closed.status, 400);
   const unverified = await auth.providerSignIn(store, { uid: "u2", email: "ana@outlook.com", email_verified: false, firebase: { sign_in_provider: "microsoft.com" } }, { deviceKey: DESKTOP, enabled: "email,microsoft.com" });
   assert.equal(unverified.verifyEmail, true);
+  const x = await auth.providerSignIn(store, { uid: "u3", email: "ana@proton.me", email_verified: false, firebase: { sign_in_provider: "twitter.com" } }, { deviceKey: DESKTOP, enabled: "email,twitter.com" });
+  assert.equal(x.verifyEmail, true);
+  assert.equal(x.provider, "twitter.com");
   assert.equal(unverified.email, "ana@outlook.com");
 });
 
@@ -104,6 +107,7 @@ test("a Google sign-in keeps the profile on the account, and trusts only what it
 test("the provider list always offers email and only the providers switched on", () => {
   assert.deepEqual(auth.enabledProviders("").map((item) => item.id), ["email", "google.com"]);
   assert.deepEqual(auth.enabledProviders("google.com,apple.com,nope").map((item) => item.id), ["email", "google.com", "apple.com"]);
+  assert.deepEqual(auth.enabledProviders("twitter.com,facebook.com,github.com").map((item) => item.id), ["email", "github.com", "facebook.com", "twitter.com"]);
 });
 
 test("the sign-in email carries the code and a same-device link in every page language", () => {
