@@ -1,8 +1,9 @@
 # .github/workflows/auto-live-reports.yml
 # Once a day, every publishable user review becomes a Live Report, a feed card, a story, and a clip,
-# and goes into the Buffer queues. Filtering and privacy live in functions/url-review-publish.js.
+# and goes into the Buffer queues and onto the Facebook Page. Filtering and privacy live in functions/url-review-publish.js.
 # Secrets: PUBLISH_KEY (same value as functions/.env), BUFFER_API_KEY (Buffer → Settings → API),
-# LIVE_REPORTS_DEPLOY_KEY (write deploy key). Deploy keys bypass the "main: fast checks before merge"
+# LIVE_REPORTS_DEPLOY_KEY (write deploy key), FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN (Page access token
+# with pages_manage_posts, see scripts/facebook-queue.js). Deploy keys bypass the "main: fast checks before merge"
 # ruleset, so this job pushes its data commit straight to main, with [skip ci].
 
 name: Live reports from user reviews
@@ -116,6 +117,18 @@ jobs:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           CLIP_BASE: https://github.com/${{ github.repository }}/releases/download/${{ steps.reports.outputs.batch }}
         run: node scripts/buffer-queue.js --batch "${{ steps.reports.outputs.batch }}"
+
+      - name: Schedule the posts on the Facebook Page
+        if: ${{ !cancelled() && !inputs.dry_run && steps.reports.outputs.social != '0' && steps.reports.outputs.batch != '' }}
+        env:
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+        run: |
+          if [ -z "$FACEBOOK_PAGE_ID" ] || [ -z "$FACEBOOK_PAGE_TOKEN" ]; then
+            echo "::warning::Add the FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN secrets. Batch ${{ steps.reports.outputs.batch }} was not posted to Facebook; run scripts/facebook-queue.js --batch ${{ steps.reports.outputs.batch }} once they are set."
+            exit 0
+          fi
+          node scripts/facebook-queue.js --batch "${{ steps.reports.outputs.batch }}"
 
       - name: Summary
         if: always()
