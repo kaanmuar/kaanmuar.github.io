@@ -107,6 +107,7 @@ function failureRecord(input) {
       ownership: clip(run.ownership, 40),
       termsVersion: clip(run.termsVersion, 20),
       followUp: run.followUp === true,
+      unlisted: run.unlisted === true,
       deviceId: clip(run.deviceId, 80)
     },
     expireAt: new Date(ended + KEEP_DAYS * 86400000)

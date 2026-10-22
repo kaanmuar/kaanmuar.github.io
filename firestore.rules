@@ -103,12 +103,13 @@ service cloud.firestore {
             'submit_message', 'submit_rating', 'sim_run_sprint', 'sim_sprint_complete',
             'site_tour_start', 'open_clip', 'company_site',
             'qa_review_stop', 'qa_review_share', 'qa_review_pay_open', 'qa_review_pay_view',
-            'qa_review_checkout', 'qa_review_pay_result', 'qa_review_legal', 'qa_review_legal_country',
+            'qa_review_checkout', 'qa_review_pay_result', 'qa_review_legal_country',
             'qa_review_blocked', 'qa_review_terms', 'qa_review_follow_up', 'qa_review_reason',
             'qa_review_frameworks', 'qa_review_scope', 'qa_review_tools', 'qa_review_print',
             'qa_review_news', 'qa_review_alerts', 'qa_review_credentials', 'qa_review_cases',
-            'qa_review_language_change', 'qa_review_account_code', 'qa_review_account_enter',
-            'qa_review_account_stop'
+            'qa_review_language_change', 'qa_review_account_enter', 'qa_review_account_stop',
+            'qa_review_sign_in', 'qa_review_sign_in_failed', 'qa_review_sign_in_needed', 'qa_review_deal_shown',
+            'qa_review_live_open', 'qa_review_live_filter', 'qa_review_live_nav', 'open_url_review'
           ])
         )
         && request.resource.data.label is string
