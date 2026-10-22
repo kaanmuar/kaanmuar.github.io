@@ -1449,6 +1449,7 @@ const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
+const ownerContactSearch = require("./url-review-owner-contacts");
 const REVIEW_FN_URL = process.env.REVIEW_FN_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
 
 async function stopLinkFor(email, lang) {
@@ -1510,9 +1511,9 @@ async function mailReportToAsker(record) {
   await sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []);
 }
 
-async function ownerStops(email, domain) {
+async function ownerStops(emails, domain) {
   const db = admin.firestore();
-  const keys = [email, "@" + domain].filter((key) => key && key !== "@");
+  const keys = [].concat(emails || [], "@" + domain).filter((key) => key && key !== "@");
   const snaps = await Promise.all(keys.map((key) => db.collection("url_review_owner_stops").doc(key).get()));
   return new Set(keys.filter((key, i) => snaps[i].exists));
 }
@@ -1522,15 +1523,34 @@ async function unlistedHosts() {
   return snap.docs.map((doc) => doc.id);
 }
 
+function searchOwnerContacts(report) {
+  return ownerContactSearch.discover(report, {
+    fetchPage: (url) => urlReview.fetchExtra(url, () => false),
+    analyze: urlReview.analyzeHtml,
+    github: async (name) => {
+      const res = await fetch("https://api.github.com/users/" + encodeURIComponent(name), { headers: { accept: "application/vnd.github+json", "user-agent": "qa-lab-url-review" }, signal: AbortSignal.timeout(6000) });
+      return res.ok ? res.json() : null;
+    },
+    search: urlReview.searchHtml,
+    emailsInText: urlReview.emailsInText,
+    visibleText: urlReview.visibleText,
+    registrable: urlReview.registrable
+  });
+}
+
 async function queueOwnerNotice(record) {
   const report = record && record.report;
-  const contact = ownerNotice.pickContact(report);
-  if (!contact) return;
+  if (!report || !report.host) return;
   const domain = ownerNotice.domainOf(report.host);
   const ref = admin.firestore().collection("url_review_owner_notices").doc(domain);
-  const [unlisted, stopped, last] = await Promise.all([unlistedHosts(), ownerStops(contact.email, domain), ref.get()]);
-  const reason = ownerNotice.skipReason(record, { unlisted, stopped, notice: last.exists ? last.data() : null });
-  if (!reason) await ref.set(ownerNotice.noticeRow(record));
+  const [unlisted, domainStop, last] = await Promise.all([unlistedHosts(), ownerStops([], domain), ref.get()]);
+  if (ownerNotice.heldBack(record, { unlisted, stopped: domainStop, notice: last.exists ? last.data() : null })) return;
+  let more = [];
+  try { more = await searchOwnerContacts(report); } catch (error) { console.error("Owner contact search failed:", error && error.message); }
+  const ranked = ownerNotice.rankContacts(((report.contacts && report.contacts.found) || []).concat(more), report.host);
+  const stopped = await ownerStops(ranked.slice(0, 12).map((row) => row.email), domain);
+  const usable = ownerNotice.usableContacts(record, ranked, stopped);
+  if (usable.length) await ref.set(ownerNotice.noticeRow(record, usable));
 }
 
 async function liveReportIndex() {
@@ -1540,12 +1560,20 @@ async function liveReportIndex() {
 }
 
 // Sends a pending notice once its card is public. Returns { error } or { card }.
-async function sendOwnerNotice(notice) {
-  const postal = String(process.env.OWNER_NOTICE_POSTAL || "").trim();
-  const [unlisted, stopped, index] = await Promise.all([unlistedHosts(), ownerStops(notice.email, notice.domain), liveReportIndex()]);
+async function sendOwnerNotice(queued, email) {
+  const notice = ownerNotice.addressed(queued, email);
+  if (!notice) return { error: "That address is not one of the contacts found for this site." };
+  const [unlisted, stopped, index, reviewSnap] = await Promise.all([
+    unlistedHosts(),
+    ownerStops([notice.email], notice.domain),
+    liveReportIndex(),
+    admin.firestore().collection("url_reviews").doc(notice.reviewId || "-").get()
+  ]);
   const card = ownerNotice.liveCard(index, notice.host);
-  const blocked = ownerNotice.sendBlock(notice, { postal, stopped, unlisted, card });
+  const blocked = ownerNotice.sendBlock(notice, { stopped, unlisted, card });
   if (blocked) return { error: blocked };
+  const review = reviewSnap.exists ? reviewSnap.data() : null;
+  const score = review && review.report && review.report.insights ? review.report.insights.score : null;
   const token = crypto.randomBytes(16).toString("hex");
   await admin.firestore().collection("url_review_owner_links").doc(token).set({
     domain: notice.domain,
@@ -1564,8 +1592,8 @@ async function sendOwnerNotice(notice) {
     stop: link + "stop",
     live: customerMail.pageUrl(notice.lang, { live: card.id, utm_campaign: "owner-notice" })
   };
-  const sent = await sendAskerMail(notice.email, ownerMail.noticeMail(notice, card, links, postal), links.stop, "url-review-owner-notice");
-  return sent ? { card } : { error: "SendGrid is not configured, so nothing was sent." };
+  const sent = await sendAskerMail(notice.email, ownerMail.noticeMail(notice, card, links, score), links.stop, "url-review-owner-notice");
+  return sent ? { card, notice } : { error: "SendGrid is not configured, so nothing was sent." };
 }
 
 async function sendReviewNotes() {
@@ -2032,8 +2060,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes), {
         freeRuns,
         reruns,
-        ownerNotices,
-        noticePostal: !!String(process.env.OWNER_NOTICE_POSTAL || "").trim()
+        ownerNotices
       }));
       return;
     }
@@ -2061,7 +2088,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       }
       let result;
       try {
-        result = await sendOwnerNotice(notice);
+        result = await sendOwnerNotice(notice, String((req.body && req.body.email) || ""));
       } catch (error) {
         console.error("Owner notice failed:", error);
         result = { error: String((error && error.message) || "The notice failed.").slice(0, 200) };
@@ -2071,13 +2098,14 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         res.status(409).json({ error: result.error });
         return;
       }
-      await ref.update({ status: "sent", sentAt: decidedAt, decidedAt, by: operator, cardId: result.card.id, lastError: "" });
+      const sentTo = result.notice;
+      await ref.update({ status: "sent", sentAt: decidedAt, decidedAt, by: operator, cardId: result.card.id, email: sentTo.email, source: sentTo.source, sourceUrl: sentTo.sourceUrl || "", lastError: "" });
       await db.collection("url_review_owner_notice_log").add({
         domain: notice.domain,
         host: notice.host,
-        email: notice.email,
-        source: notice.source,
-        sourceUrl: notice.sourceUrl || "",
+        email: sentTo.email,
+        source: sentTo.source,
+        sourceUrl: sentTo.sourceUrl || "",
         reviewId: notice.reviewId,
         cardId: result.card.id,
         sentAt: decidedAt,
@@ -2318,29 +2346,26 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       res.status(410).send(ownerMail.ownerPage(link.lang, "gone"));
       return;
     }
-    // A copy under a new id: the published id must not open the full report for everyone.
+    // A copy under a new id, so a paid unlock by the asker does not open it and the owner's own unlock is theirs.
     const id = crypto.randomBytes(9).toString("hex");
     const report = Object.assign({}, review.report, { id });
     delete report.history;
-    await db.collection("url_reviews").doc(id).set({
+    const copy = {
+      id,
       status: "owner-claim",
       email,
       reasonCode: "own",
-      free: true,
-      priceUsd: 0,
+      frameworks: review.frameworks || [],
       claimedFrom: link.reviewId,
       lang: link.lang,
       createdAt: at,
       report
-    });
+    };
+    await db.collection("url_reviews").doc(id).set(copy);
     await ref.update({ claims: admin.firestore.FieldValue.increment(1), claimedAt: at });
-    const mail = ownerMail.claimMail(link.lang, {
-      host: link.host,
-      domain: link.domain,
-      reportUrl: customerMail.pageUrl(link.lang, { report: id, utm_campaign: "owner-claim" }),
-      postal: String(process.env.OWNER_NOTICE_POSTAL || "").trim()
-    });
-    await sendAskerMail(email, mail, "", "url-review-owner-claim");
+    const pdf = await reportPdfFor(copy);
+    const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host) });
+    await sendAskerMail(email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []);
     res.status(200).send(ownerMail.ownerPage(link.lang, "claimed", Object.assign({}, link, { email })));
     return;
   }
@@ -2847,17 +2872,17 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     if (record.status === "stopped") await saveRunLog("stopped");
     await mailReviewedSites(ip, record);
-    try {
-      await queueOwnerNotice(record);
-    } catch (error) {
-      console.error("Owner notice queue failed:", error);
-    }
     writeLine({ type: "log", text: "Report saved. Emailing a copy to " + intake.value.email + "." });
     writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
     try {
       await mailReportToAsker(record);
     } catch (error) {
       console.error("Report mail to the asker failed:", error);
+    }
+    try {
+      await queueOwnerNotice(record);
+    } catch (error) {
+      console.error("Owner notice queue failed:", error);
     }
     res.end();
   } catch (error) {

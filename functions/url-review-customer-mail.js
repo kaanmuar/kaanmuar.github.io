@@ -276,14 +276,14 @@ function deeperBlock(t, host, reportId) {
     "</td></tr></table></td></tr>";
 }
 
-function footerHtml(t, host, stopUrl) {
-  return esc(fill(t.why, { host })) + "<br>" +
+function footerHtml(t, host, stopUrl, why) {
+  return esc(why || fill(t.why, { host })) + "<br>" +
     (stopUrl ? "<a href=\"" + esc(stopUrl) + "\" style=\"color:#0e7490;\">" + esc(t.stop) + "</a> &middot; " : "") +
     "<a href=\"" + SITE + "/qa-review.html\" style=\"color:#0e7490;\">QA-lab URL Review</a> &middot; Carlos Muñoz, Bogotá, Colombia";
 }
 
-function footerText(t, host, stopUrl) {
-  return [fill(t.why, { host }), stopUrl ? t.stop + ": " + stopUrl : "", "QA-lab URL Review · " + SITE + "/qa-review.html"].filter(Boolean).join("\n");
+function footerText(t, host, stopUrl, why) {
+  return [why || fill(t.why, { host }), stopUrl ? t.stop + ": " + stopUrl : "", "QA-lab URL Review · " + SITE + "/qa-review.html"].filter(Boolean).join("\n");
 }
 
 function scoreBlock(t, facts) {
@@ -372,13 +372,13 @@ function reportMail(record, options) {
     t.deeperLines.join("\n"),
     t.deeperCta,
     "",
-    footerText(t, facts.host, opts.stopUrl)
+    footerText(t, facts.host, opts.stopUrl, opts.why)
   ].filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n");
   return {
     lang,
     subject: subject.slice(0, 140),
     text: text.slice(0, 16000),
-    html: shell(lang, fill(t.preheader, { count: facts.total }), inner, footerHtml(t, facts.host, opts.stopUrl))
+    html: shell(lang, fill(t.preheader, { count: facts.total }), inner, footerHtml(t, facts.host, opts.stopUrl, opts.why))
   };
 }
 

@@ -200,6 +200,19 @@ function mailOf(value) {
   return emailSyntax(email) ? email : "";
 }
 
+// Addresses written out in text, including "name [at] site [dot] com" spellings.
+function emailsInText(text, max) {
+  const out = [];
+  const plain = String(text || "")
+    .replace(/\s*(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*/gi, "@")
+    .replace(/\s*(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*/gi, ".");
+  (plain.match(/[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/gi) || []).forEach((raw) => {
+    const email = mailOf(raw.replace(/^[._%+-]+/, ""));
+    if (email && !/\.(png|jpe?g|gif|webp|svg)$/.test(email) && out.indexOf(email) === -1 && out.length < (max || 5)) out.push(email);
+  });
+  return out;
+}
+
 function registrable(hostname) {
   const host = String(hostname || "").replace(/\.$/, "").replace(/^www\./, "").toLowerCase();
   const parts = host.split(".").filter(Boolean);
@@ -1360,6 +1373,7 @@ function inspect(html, headers, pageUrl) {
     analytics: analyticsScan(html),
     socialLinks,
     mailtos,
+    textEmails: emailsInText(text, 5),
     legal: legalLinks(anchors, pageUrl),
     libraries,
     piiLinks,
@@ -1693,25 +1707,30 @@ function parseMentions(html, hostname) {
   return mentions;
 }
 
-function lookupMentions(hostname) {
+// DuckDuckGo's HTML results page for a query, or "" when it does not answer.
+function searchHtml(query) {
   return new Promise((resolve) => {
     const req = https.request({
       hostname: "html.duckduckgo.com",
-      path: "/html/?q=" + encodeURIComponent('"' + hostname + '"'),
+      path: "/html/?q=" + encodeURIComponent(query),
       method: "GET",
       headers: { "user-agent": USER_AGENT, accept: "text/html" },
       timeout: 6000
     }, (res) => {
+      if (res.statusCode && res.statusCode !== 200) { if (res.resume) res.resume(); resolve(""); return; }
       const chunks = [];
       res.on("data", (chunk) => { if (chunks.join("").length < 300000) chunks.push(chunk); });
-      res.on("end", () => {
-        try { resolve(parseMentions(Buffer.concat(chunks).toString("utf8"), hostname)); }
-        catch (error) { resolve([]); }
-      });
+      res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     });
-    req.on("error", () => resolve([]));
-    req.on("timeout", () => { req.destroy(); resolve([]); });
+    req.on("error", () => resolve(""));
+    req.on("timeout", () => { req.destroy(); resolve(""); });
     req.end();
+  });
+}
+
+function lookupMentions(hostname) {
+  return searchHtml('"' + hostname + '"').then((html) => {
+    try { return parseMentions(html, hostname); } catch (error) { return []; }
   });
 }
 
@@ -1792,7 +1811,8 @@ async function dnsFacts(hostname) {
   // Only "no such data" means the record is absent; a timeout or server failure leaves it unread (null).
   const settle = (promise) => withTimeout(promise.catch((err) => (/^(ENODATA|ENOTFOUND)$/.test(err && err.code) ? [] : null)), 5000, null);
   const txt = (name) => settle(dns.resolveTxt(name).then((rows) => rows.map((parts) => parts.join(""))));
-  const [root, dmarc, mx, caa, mtaSts, tlsRpt, bimi] = await Promise.all([
+  const [soa, root, dmarc, mx, caa, mtaSts, tlsRpt, bimi] = await Promise.all([
+    withTimeout(dns.resolveSoa(domain).catch(() => null), 5000, null),
     txt(domain),
     txt("_dmarc." + domain),
     settle(dns.resolveMx(domain)),
@@ -1814,6 +1834,8 @@ async function dnsFacts(hostname) {
     mtaSts: clean((mtaSts || []).find((row) => /^v=STSv1/i.test(row)) || "", 200),
     tlsRpt: clean((tlsRpt || []).find((row) => /^v=TLSRPTv1/i.test(row)) || "", 300),
     bimi: clean((bimi || []).find((row) => /^v=BIMI1/i.test(row)) || "", 300),
+    // RFC 1035: the SOA RNAME is a mailbox with its first unescaped dot standing for the @.
+    soaEmail: soa && soa.hostmaster ? mailOf(String(soa.hostmaster).replace(/^((?:[^.\\]|\\.)*)\./, "$1@").replace(/\\\./g, ".")) : "",
     unread
   };
 }
@@ -1859,9 +1881,25 @@ function readRdap(data, domain) {
   const registrarEntity = (Array.isArray(data && data.entities) ? data.entities : []).find((entity) => (entity.roles || []).includes("registrar"));
   const vcard = (registrarEntity && Array.isArray(registrarEntity.vcardArray) && registrarEntity.vcardArray[1]) || [];
   const fn = vcard.find((row) => Array.isArray(row) && row[0] === "fn");
+  // Registrant, admin and tech emails, when the registry does not redact them or hide them behind a proxy.
+  const contacts = [];
+  const walk = (entities) => (Array.isArray(entities) ? entities : []).forEach((entity) => {
+    const roles = (entity && entity.roles) || [];
+    const card = (entity && Array.isArray(entity.vcardArray) && entity.vcardArray[1]) || [];
+    const role = ["registrant", "administrative", "technical"].find((name) => roles.includes(name));
+    if (role) {
+      card.filter((row) => Array.isArray(row) && row[0] === "email").forEach((row) => {
+        const email = mailOf(row[3]);
+        if (email && !/redact|privacy|private|proxy|whois|protect|anonym|withheld|disclos|gdpr/i.test(email) && contacts.length < 4 && !contacts.some((item) => item.email === email)) contacts.push({ role, email });
+      });
+    }
+    walk(entity && entity.entities);
+  });
+  walk(data && data.entities);
   return {
     domain,
     read: true,
+    contacts,
     expires: at && !isNaN(at) ? new Date(at).toISOString().slice(0, 10) : "",
     daysLeft: at && !isNaN(at) ? Math.floor((at - Date.now()) / 86400000) : null,
     registrar: clean((fn && fn[3]) || "", 120),
@@ -1966,28 +2004,55 @@ function answered(name, res) {
 const CONTACT_PATH = /(contact|contacto|contato|contatti|kontakt|about|acerca|nosotros|quienes-somos|quem-somos|sobre|ueber-uns|uber-uns|a-propos|qui-sommes|chi-siamo|impressum|imprint|mentions-legales|aviso-legal|note-legali|legal-notice)/i;
 
 // The addresses a site publishes for reaching it, for the owner notice (url-review-owner-notice.js).
-function ownerContacts(pages, securityTxt) {
-  const add = (list, email, max) => { if (email && list.indexOf(email) === -1 && list.length < max) list.push(email); };
-  const security = [];
-  if (securityTxt && securityTxt.status === 200 && !securityTxt.html) {
-    String(securityTxt.body || "").split(/\r?\n/).forEach((line) => {
+// found: [{ email, source, url }]; profiles: linked GitHub accounts and paths: the site's own contact,
+// legal and privacy links the crawl did not read, both looked at later by url-review-owner-contacts.js.
+const OWNER_LINK_PATH = /(contact|contacto|contato|contatti|kontakt|about|acerca|nosotros|quienes-somos|quem-somos|sobre|a-propos|chi-siamo|impressum|imprint|mentions-legales|aviso-legal|note-legali|legal|privac|privad|habeas|datos-personales|tratamiento-de-datos|pqr|atencion|servicio-al-cliente|politica|policy|terminos|terms|gobierno-corporativo)/i;
+function ownerContacts(pages, extras) {
+  const more = extras || {};
+  const found = [];
+  const profiles = [];
+  const paths = [];
+  const add = (email, source, url) => {
+    if (email && found.length < 40 && !found.some((row) => row.email === email && row.source === source)) found.push({ email, source, url: url || "" });
+  };
+  let origin = "";
+  try { origin = new URL(((pages || [])[0] || {}).url).origin; } catch (error) { origin = ""; }
+  const sec = more.securityTxt;
+  if (sec && sec.status === 200 && !sec.html) {
+    String(sec.body || "").split(/\r?\n/).forEach((line) => {
       const match = line.match(/^\s*Contact:\s*(mailto:\S+)/i);
-      if (match) add(security, mailOf(match[1]), 3);
+      if (match) add(mailOf(match[1]), "security.txt", origin + "/.well-known/security.txt");
     });
   }
-  const schema = [];
-  const onPages = [];
+  const read = new Set((pages || []).map((page) => { try { return new URL(page.url).pathname.replace(/\/$/, ""); } catch (error) { return ""; } }));
   (pages || []).forEach((page) => {
-    const found = page.inspect || {};
-    ((found.schema && found.schema.emails) || []).forEach((email) => add(schema, email, 5));
+    const seen = page.inspect || {};
     let path = "";
     try { path = new URL(page.url).pathname; } catch (error) { path = ""; }
-    if (!CONTACT_PATH.test(path)) return;
-    (found.mailtos || []).forEach((email) => {
-      if (onPages.length < 5 && !onPages.some((row) => row.email === email)) onPages.push({ email, url: page.url });
+    (seen.links || []).forEach((href) => {
+      let link = null;
+      try { link = new URL(href, page.url); } catch (error) { return; }
+      const linkPath = link.pathname.replace(/\/$/, "");
+      if (link.origin === origin && OWNER_LINK_PATH.test(linkPath) && !/formulario|form\b|login|signin|cart|checkout/i.test(linkPath) && !read.has(linkPath) && paths.length < 6 && paths.indexOf(linkPath) === -1) paths.push(linkPath);
+    });
+    const contactPage = CONTACT_PATH.test(path);
+    ((seen.schema && seen.schema.emails) || []).forEach((email) => add(email, "schema", page.url));
+    (seen.mailtos || []).forEach((email) => add(email, contactPage ? "contact-page" : "page", page.url));
+    (seen.textEmails || []).forEach((email) => add(email, "page-text", page.url));
+    const links = (seen.socialLinks || []).concat(...((seen.schema && seen.schema.items) || []).map((item) => item.sameAs || []));
+    links.forEach((href) => {
+      const match = String(href).match(/^https:\/\/github\.com\/([A-Za-z0-9-]{1,39})\/?$/);
+      if (match && profiles.length < 3 && profiles.indexOf(match[1].toLowerCase()) === -1) profiles.push(match[1].toLowerCase());
     });
   });
-  return { securityTxt: security, schema, pages: onPages };
+  [["llms", more.llms, "/llms.txt"], ["llms", more.llmsFull, "/llms-full.txt"]].forEach(([source, file, path]) => {
+    if (file && file.status === 200 && !file.html) emailsInText(file.body, 5).forEach((email) => add(email, source, origin + path));
+  });
+  ((more.domain && more.domain.contacts) || []).forEach((row) => add(row.email, "rdap", ""));
+  const dmarc = (more.dns && more.dns.dmarc) || "";
+  (dmarc.match(/mailto:[^,;\s!]+/gi) || []).forEach((raw) => add(mailOf(raw), "dmarc", ""));
+  if (more.dns && more.dns.soaEmail) add(more.dns.soaEmail, "soa", "");
+  return { found, profiles, paths };
 }
 
 async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups) {
@@ -2382,7 +2447,7 @@ async function reviewTarget(rawUrl, hooks) {
     alerts,
     mentions,
     insights: analysis,
-    contacts: ownerContacts(pages, extras.securityTxt),
+    contacts: ownerContacts(pages, extras),
     browser: browser && browser.ok ? browser : (browser ? { ok: false, error: String(browser.error || "") } : null),
     pagespeed: speed && speed.ok ? speed : null,
     signature,
@@ -3162,6 +3227,10 @@ module.exports = {
   emailSyntax,
   registrable,
   ownerContacts,
+  emailsInText,
+  visibleText,
+  fetchExtra,
+  searchHtml,
   humanCheck,
   createCheckout,
   readCheckout,
