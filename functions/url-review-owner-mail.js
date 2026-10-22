@@ -5,9 +5,8 @@
 
 const base = require("./url-review-customer-mail");
 
-const { SITE, AREAS, esc, fill, button, shell } = base;
+const { SITE, POSTAL, AREAS, esc, fill, button, shell } = base;
 const DEEPER = "qa@carlosandmunoz.com";
-const POSTAL = "Calle 29 # 29-31, Medellín, Colombia (050016)";
 
 const COPY = {
   en: {

@@ -7,6 +7,7 @@ const DEEPER = "qa@carlosandmunoz.com";
 const ACCOUNT_PAGE = "qa-review-account.html";
 const ACCOUNT_URL = SITE + "/" + ACCOUNT_PAGE;
 const LEGAL_URL = SITE + "/qa-review-legal.html";
+const POSTAL = "Calle 29 # 29-31, Medellín, Colombia (050016)";
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const PAGE_FOR = {
   en: "qa-review.html",
@@ -54,7 +55,7 @@ const COPY = {
     account: "Your reviews",
     kept: "Kept until {date}",
     live: "Public scores from this review may appear as a Live Report. Site owners who want it removed can write to qa@carlosandmunoz.com.",
-    controller: "Carlos A. Muñoz, Bogotá, Colombia, is responsible for your data.",
+    controller: "Carlos A. Muñoz, {postal}, is responsible for your data.",
     legal: "How it is used",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Security", Accessibility: "Accessibility", Performance: "Performance" },
     page: ["Stop the follow-up notes?", "Stop them", "Done. No more follow-up notes go to {email}.", "This link no longer works."]
@@ -93,7 +94,7 @@ const COPY = {
     account: "Tus revisiones",
     kept: "Se guarda hasta el {date}",
     live: "Los puntajes públicos de esta revisión pueden aparecer como Live Report. Si eres dueño del sitio y quieres retirarlo, escribe a qa@carlosandmunoz.com.",
-    controller: "Carlos A. Muñoz, Bogotá, Colombia, es responsable de tus datos.",
+    controller: "Carlos A. Muñoz, {postal}, es responsable de tus datos.",
     legal: "Cómo se usan",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analítica", Security: "Seguridad", Accessibility: "Accesibilidad", Performance: "Rendimiento" },
     page: ["¿Dejar de recibir las notas?", "Sí, detenerlas", "Listo. No llegarán más notas a {email}.", "Este enlace ya no sirve."]
@@ -132,7 +133,7 @@ const COPY = {
     account: "Suas revisões",
     kept: "Guardado até {date}",
     live: "As notas públicas desta revisão podem aparecer como Live Report. Se o site é seu e você quer removê-lo, escreva para qa@carlosandmunoz.com.",
-    controller: "Carlos A. Muñoz, Bogotá, Colômbia, é o responsável pelos seus dados.",
+    controller: "Carlos A. Muñoz, {postal}, é o responsável pelos seus dados.",
     legal: "Como são usados",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Segurança", Accessibility: "Acessibilidade", Performance: "Desempenho" },
     page: ["Parar as notas?", "Sim, parar", "Pronto. Nenhuma nota a mais vai para {email}.", "Este link não vale mais."]
@@ -171,7 +172,7 @@ const COPY = {
     account: "Deine Prüfungen",
     kept: "Gespeichert bis {date}",
     live: "Öffentliche Werte aus dieser Prüfung können als Live Report erscheinen. Gehört dir die Website und soll er entfernt werden, schreib an qa@carlosandmunoz.com.",
-    controller: "Carlos A. Muñoz, Bogotá, Kolumbien, ist für deine Daten verantwortlich.",
+    controller: "Carlos A. Muñoz, {postal}, ist für deine Daten verantwortlich.",
     legal: "Wie sie verwendet werden",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicherheit", Accessibility: "Barrierefreiheit", Performance: "Leistung" },
     page: ["Keine Notizen mehr?", "Ja, stoppen", "Erledigt. An {email} gehen keine Notizen mehr.", "Dieser Link gilt nicht mehr."]
@@ -210,7 +211,7 @@ const COPY = {
     account: "Vos revues",
     kept: "Conservé jusqu'au {date}",
     live: "Les notes publiques de cette revue peuvent paraître dans un Live Report. Si le site vous appartient et que vous voulez le retirer, écrivez à qa@carlosandmunoz.com.",
-    controller: "Carlos A. Muñoz, Bogotá, Colombie, est responsable de vos données.",
+    controller: "Carlos A. Muñoz, {postal}, est responsable de vos données.",
     legal: "Comment elles sont utilisées",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sécurité", Accessibility: "Accessibilité", Performance: "Performance" },
     page: ["Arrêter les notes ?", "Oui, arrêter", "C'est fait. Plus aucune note n'ira à {email}.", "Ce lien n'est plus valide."]
@@ -249,7 +250,7 @@ const COPY = {
     account: "Le tue revisioni",
     kept: "Conservato fino al {date}",
     live: "I punteggi pubblici di questa revisione possono comparire in un Live Report. Se il sito è tuo e vuoi rimuoverlo, scrivi a qa@carlosandmunoz.com.",
-    controller: "Carlos A. Muñoz, Bogotá, Colombia, è responsabile dei tuoi dati.",
+    controller: "Carlos A. Muñoz, {postal}, è responsabile dei tuoi dati.",
     legal: "Come vengono usati",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicurezza", Accessibility: "Accessibilità", Performance: "Prestazioni" },
     page: ["Fermare le note?", "Sì, fermale", "Fatto. Nessun'altra nota arriverà a {email}.", "Questo link non è più valido."]
@@ -391,7 +392,7 @@ function footerHtml(t, why, opts) {
     (o.kept ? esc(fill(t.kept, { date: o.kept })) + " &middot; " : "") +
     (o.stopUrl ? link(o.stopUrl, t.stop) + " &middot; " : "") +
     link(ACCOUNT_URL, t.account) + " &middot; " + link(SITE + "/qa-review.html", "QA-lab URL Review") + "<br>" +
-    esc(t.controller) + " " + link(LEGAL_URL, t.legal);
+    esc(fill(t.controller, { postal: POSTAL })) + " " + link(LEGAL_URL, t.legal);
 }
 
 function footerText(t, why, opts) {
@@ -403,7 +404,7 @@ function footerText(t, why, opts) {
     o.stopUrl ? t.stop + ": " + o.stopUrl : "",
     t.account + ": " + ACCOUNT_URL,
     "QA-lab URL Review · " + SITE + "/qa-review.html",
-    t.controller + " " + t.legal + ": " + LEGAL_URL
+    fill(t.controller, { postal: POSTAL }) + " " + t.legal + ": " + LEGAL_URL
   ].filter(Boolean).join("\n");
 }
 
@@ -794,4 +795,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { SITE, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, stopPage, pageUrl };
+module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, stopPage, pageUrl };

@@ -308,7 +308,7 @@ test("the sign-in email carries the code and a same-device link in every page la
     assert.match(mail.html, /123456/);
     assert.match(mail.html, /qa-review-account\.html/);
     assert.match(mail.text, /qa-review-legal\.html/);
-    assert.match(mail.html, /Carlos A\. Muñoz, Bogotá/);
+    assert.match(mail.html, /Carlos A\. Muñoz, Calle 29 # 29-31, Medellín, Colombia \(050016\)/);
   });
 });
 
