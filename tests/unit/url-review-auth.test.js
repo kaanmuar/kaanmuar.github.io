@@ -24,6 +24,25 @@ test("an email code typed on the device that asked opens a session for that devi
   assert.equal(elsewhere.signIn, true);
 });
 
+test("sign-in rows, accounts and review records carry the Date a Firestore TTL policy deletes them at", async () => {
+  const store = auth.memoryStore();
+  const now = Date.parse("2026-10-22T09:00:00Z");
+  const started = await auth.startEmail(store, { email: "ana@example.com", deviceKey: DESKTOP, ip: "1.1.1.1", now });
+  const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: DESKTOP, now });
+  const state = (await oauthStart(store, "gitlab", DESKTOP)).state;
+  const sign = await store.get("url_review_sign_ins", started.id);
+  const session = await store.get("url_review_sessions", require("crypto").createHash("sha256").update(signed.session).digest("hex"));
+  const account = await store.get("url_review_accounts", "ana@example.com");
+  const oauthRow = await store.get("url_review_oauth", state);
+  const record = require("../../functions/url-review-core").intakeRecord({ frameworks: ["Playwright"] }, { id: "r1" }, {});
+  [sign, session, account, oauthRow, record].forEach((row) => assert.ok(row.expireAt instanceof Date));
+  assert.ok(sign.expireAt.getTime() >= now + 60 * 60 * 1000);
+  assert.equal(session.expireAt.getTime(), now + auth.SESSION_MS);
+  assert.equal(account.expireAt.getTime(), now + auth.ACCOUNT_MS);
+  assert.equal(oauthRow.expireAt.getTime(), Date.parse(oauthRow.expiresAt));
+  assert.equal(record.expireAt.toISOString(), record.retainUntil);
+});
+
 test("a link asked for on the desktop and opened on a phone signs no one in", async () => {
   const store = auth.memoryStore();
   const started = await auth.startEmail(store, { email: "ana@example.com", deviceKey: DESKTOP });
