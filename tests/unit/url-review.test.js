@@ -449,7 +449,7 @@ test.describe("start page reads", () => {
       assert.deepEqual(seen.paths, []);
       assert.equal(browser.stopForRefusal(seen, 403), true);
       return { ok: true, untagged: true, timing: { load: 1800 }, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: { "content-type": "text/html" }, html: block } };
-    }), /^Error: The site's bot protection refused the review \(status 403\), in the plain read and in headless Chrome\.$/);
+    }), /^Error: The site's bot protection refused the review \(status 403\), in the plain request and in headless Chrome\.$/);
   });
 
   test("a redirect to http is named as such, not as a wrong address", async () => {
