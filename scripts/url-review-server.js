@@ -225,7 +225,7 @@ async function localSignIn(req, res, pathName, origin, deviceHint) {
   let body = {};
   try { body = await readBody(req); } catch (error) { body = {}; }
   const answer = (result) => sendJson(res, result.ok ? 200 : result.status, result.ok
-    ? { ok: true, session: result.session, email: result.email, provider: result.provider }
+    ? { ok: true, session: result.session, email: result.email, provider: result.provider, name: result.name || "", picture: result.picture || "" }
     : { error: result.error, code: result.code || "" }, origin, deviceHint);
   const mailCode = async (input) => {
     const started = await auth.startEmail(signIns, Object.assign({ ip: clientIp(req) }, input));
@@ -243,7 +243,7 @@ async function localSignIn(req, res, pathName, origin, deviceHint) {
       sendJson(res, 401, { error: "That sign-in was not accepted. Try again." }, origin, deviceHint);
       return;
     }
-    const result = await auth.providerSignIn(signIns, decoded, { deviceKey: body.deviceKey, enabled });
+    const result = await auth.providerSignIn(signIns, decoded, { deviceKey: body.deviceKey, profile: body.profile, enabled });
     if (result.verifyEmail) return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
     return answer(result);
   }
