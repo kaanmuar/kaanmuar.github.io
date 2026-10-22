@@ -1,0 +1,18 @@
+{
+  "batch": "page-2026-10",
+  "name": "QA-lab URL Review",
+  "username": "qalaburlreview",
+  "categories": ["Software", "Internet Company"],
+  "bio": "One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility and speed.",
+  "about": "QA-lab URL Review analyzes a public https page and proposes the test cases: SEO, AI search, analytics, security, accessibility and speed. Scripts for 20 frameworks. Reports in 6 languages. Free review at carlosandmunoz.com.",
+  "website": "https://carlosandmunoz.com/qa-review.html?utm_source=facebook&utm_medium=profile&utm_campaign=profile-link",
+  "email": "qa@carlosandmunoz.com",
+  "avatar": "assets/qa-review-logo.png",
+  "cover": "media/facebook/page-2026-10/cover.jpg",
+  "links": [
+    { "network": "YouTube", "url": "https://www.youtube.com/@qalaburlreview" },
+    { "network": "LinkedIn", "url": "https://www.linkedin.com/company/qalab-url-review" },
+    { "network": "X", "url": "https://x.com/qalaburlreview" },
+    { "network": "TikTok", "url": "https://www.tiktok.com/@qalaburlreview" }
+  ]
+}
