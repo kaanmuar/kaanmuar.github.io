@@ -1734,7 +1734,7 @@ async function webSearch(query, key = process.env.BRAVE_SEARCH_KEY) {
     });
     if (!res.ok) return [];
     const data = await res.json();
-    const text = (value) => decode(String(value || "").replace(/<[^>]+>/g, "")).replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
+    const text = (value) => decode(String(value || "")).replace(/<[^>]*>/g, "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
     return ((data && data.web && data.web.results) || []).slice(0, 10).map((item) => ({
       title: text(item.title).slice(0, 300),
       url: clean(item.url, 500),
