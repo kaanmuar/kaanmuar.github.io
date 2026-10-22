@@ -11,6 +11,7 @@ const CATS = {
   SEO: { label: "SEO", color: "#e2c48a" },
   GEO: { label: "GEO · AI search", color: "#b9a6ff" },
   Analytics: { label: "Analytics", color: "#f0b45a" },
+  Privacy: { label: "Privacy", color: "#f4a6c8" },
   Security: { label: "Security", color: "#ff8a80" },
   A11y: { label: "Accessibility", color: "#6fe3b1" },
   Perf: { label: "Performance", color: "#8fd0ff" },
@@ -179,9 +180,73 @@ const TIPS = [
     tags: ["Accessibility", "a11y", "UX"]
   },
   {
+    id: "chat-consent", cat: "Privacy",
+    title: ["A chat widget tracks", "*before anyone asks.*"],
+    body: "Most chat widgets set cookies and call home on the first page view, before the visitor answers the cookie banner. A plain button can wait for the click.",
+    visual: { type: "code", lines: ["<button id=\"chat\">Chat with us</button>", "chat.onclick = () => loadChat();"], note: "Load the widget on the first click" },
+    action: "Open your site in a private window, press Reject, and look for chat cookies under DevTools > Application.",
+    tags: ["Privacy", "Cookies", "Chatbots"]
+  },
+  {
+    id: "a11y-statement", cat: "A11y",
+    title: ["Selling online in the EU?", "*Link an accessibility statement.*"],
+    body: "Since 28 June 2025 the European Accessibility Act has required one from shops that sell to EU consumers, unless the business is a micro-enterprise.",
+    visual: { type: "check", items: [["Standard", "EN 301 549, WCAG 2.1 AA", "pass"], ["Known gaps", "Listed, with dates", "risk"], ["Contact", "For access problems", "risk"], ["Footer link", "On every page", "pass"]] },
+    action: "Search your footer for \"accessibility\". If nothing comes up, write the statement this week.",
+    tags: ["Accessibility", "EAA", "A11y"]
+  },
+  {
+    id: "imprint", cat: "Privacy",
+    title: ["A site in Germany or Austria?", "*Show who runs it.*"],
+    body: "Business sites there must link an Impressum from every page: the provider's name, a postal address, an email, and register and VAT numbers.",
+    visual: { type: "check", items: [["Name and legal form", "The provider", "pass"], ["Postal address", "Not a PO box", "pass"], ["Email", "Answered", "pass"], ["Register and VAT", "When you have them", "risk"]] },
+    action: "Open a product page and find the Impressum. It should take one click from the footer.",
+    tags: ["Impressum", "Legal", "WebDev"]
+  },
+  {
+    id: "old-libraries", cat: "Security",
+    title: ["That old jQuery", "*has known flaws.*"],
+    body: "Front-end libraries pinned years ago carry published flaws anyone can look up, and the version is often right in the script address.",
+    visual: { type: "versus", left: { label: "Before", lines: ["jquery-1.12.4.min.js", "Pinned in 2016"], mark: "fail" }, right: { label: "The fix", lines: ["A supported major version", "Checked on every release"], mark: "pass" } },
+    action: "Run retire.js or npm audit on your front end, and upgrade whatever it flags.",
+    tags: ["WebSecurity", "Dependencies", "JavaScript"]
+  },
+  {
+    id: "domain-lock", cat: "Security",
+    title: ["Can your domain be moved", "*without you?*"],
+    body: "A hijacked registrar account or a forged request can transfer a domain away. A transfer lock and automatic renewal take a minute to switch on.",
+    visual: { type: "code", lines: ["$ whois example.com | grep -i status", "Domain Status: clientTransferProhibited"], note: "What a locked domain shows" },
+    action: "Look up your domain's status. If clientTransferProhibited is missing, turn on the lock at your registrar.",
+    tags: ["WebSecurity", "Domains", "DNS"]
+  },
+  {
+    id: "mta-sts", cat: "Security",
+    title: ["Your mail can travel", "*unencrypted.*"],
+    body: "An attacker on the path can strip STARTTLS. MTA-STS tells sending servers to insist on TLS, and TLS-RPT tells you when delivery fails.",
+    visual: { type: "code", lines: ["_mta-sts    TXT \"v=STSv1; id=2026102201\"", "_smtp._tls  TXT \"v=TLSRPTv1; rua=mailto:tls@example.com\"", "", "# mta-sts.example.com/.well-known/mta-sts.txt", "version: STSv1", "mode: testing"], note: "Start in testing, then enforce" },
+    action: "Publish both records in testing mode, read the reports for two weeks, then switch the policy to enforce.",
+    tags: ["EmailSecurity", "MTASTS", "DNS"]
+  },
+  {
+    id: "safe-browsing", cat: "Security",
+    title: ["If Google flags your site,", "*visitors see a red page.*"],
+    body: "Chrome, Firefox, and Safari show a full-page warning instead of any site on Google's Safe Browsing lists. A hacked plugin is a common cause.",
+    visual: { type: "check", items: [["Search Console", "Security issues report", "pass"], ["Alerts", "Reach the owner", "pass"], ["Plugins", "Updated, unused ones removed", "risk"]] },
+    action: "Open the Security issues report in Search Console today, and make sure its emails reach someone.",
+    tags: ["WebSecurity", "SafeBrowsing", "Malware"]
+  },
+  {
+    id: "carbon", cat: "Perf",
+    title: ["Every visit", "*has a carbon cost.*"],
+    body: "Bytes moved through data centres, networks, and devices use energy. The Sustainable Web Design model turns page weight into grams of CO₂e.",
+    visual: { type: "bars", unit: "g CO₂e", items: [["0.5 MB", 0.07], ["2 MB", 0.3], ["5 MB", 0.74]], note: "First visit, Sustainable Web Design model v4, global average grid" },
+    action: "Check your start page's transfer size in DevTools. Each megabyte you cut saves about 0.15 g on every first visit.",
+    tags: ["WebPerformance", "Sustainability", "PageWeight"]
+  },
+  {
     id: "self-review", cat: "Field",
     title: ["We reviewed ourselves.", "*Security: 54.*"],
-    body: "Our own site scored 86 overall, and security was the weakest area. The six fixes at the top of the list were all response headers.",
+    body: "In October 2026 our own site scored 86 overall, and security was the weakest area. The six fixes at the top of the list were all response headers.",
     visual: { type: "versus", left: { label: "Before", lines: ["HSTS: missing", "nosniff: missing", "Referrer-Policy: missing"], mark: "fail" }, right: { label: "The fix", lines: ["Strict-Transport-Security", "X-Content-Type-Options", "Referrer-Policy"], mark: "pass" } },
     action: "Run the same headers check on your site. The first fixes are usually configuration, not code.",
     tags: ["QA", "WebSecurity", "BuildInPublic"]
@@ -227,7 +292,7 @@ function captions(tip, index, total) {
     facebook: [head, "", tip.body, "", "Try this: " + tip.action, "", link("facebook", tip), "", BRAND].join("\n"),
     tiktok: head + " " + tip.action + " " + hashtags(tip, 3) + " #QA #techtok " + BRAND,
     youtubeTitle: (head + " #Shorts").slice(0, 100),
-    youtube: [tip.body, "", "Try this: " + tip.action, "", "Guide: " + link("youtube", tip), "", counter + " · QA-lab URL Review"].join("\n")
+    youtube: [tip.body, "", "Try this: " + tip.action, "", "Guide: " + link("youtube", tip), "", counter + " · QA-lab URL Review", "", hashtags(tip, 3) + " #QA " + BRAND].join("\n")
   };
 }
 

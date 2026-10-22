@@ -24,7 +24,12 @@
         ['Faro(?= \\d| de Google| móvil| para)', 'Lighthouse', 'Lighthouse is a product name'],
         ['Farol(?= \\d| do Google| móvel| para)', 'Lighthouse', 'Lighthouse is a product name'],
         ['Leuchtturm(?= \\d| von Google| mobil| für)', 'Lighthouse', 'Lighthouse is a product name'],
-        ['Phare(?= \\d| de Google| mobile| pour)', 'Lighthouse', 'Lighthouse is a product name']
+        ['Phare(?= \\d| de Google| mobile| pour)', 'Lighthouse', 'Lighthouse is a product name'],
+        ['Navegación [Ss]egura(?= de Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+        ['Navegação [Ss]egura(?= do Google| da Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+        ['Sicheres Surfen(?= von Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+        ['Navigation [Ss]écurisée(?= de Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+        ['(?:retirar|retirer|aposentar|zurückziehen)\\.js', 'retire.js', 'retire.js is a product name']
     ];
 
     const FIXES = {
@@ -194,6 +199,8 @@
         ])),
         it: words([
             ['Faro(?= \\d| di Google| mobile| per)', 'Lighthouse', 'Lighthouse is a product name'],
+            ['Navigazione [Ss]icura(?= di Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+            ['(?:ritirare|ritira)\\.js', 'retire.js', 'retire.js is a product name'],
             ['recensioni', 'revisioni', 'review is an analysis, not a recensione'],
             ['Recensioni', 'Revisioni', 'review is an analysis, not a recensione'],
             ['recensione', 'revisione', 'review is an analysis, not a recensione'],
@@ -302,7 +309,7 @@
 
     // Names machine translation must leave alone when they stand on their own ("QA-lab" became a "quality control lab").
     // Inside a sentence they are fixed afterwards instead: an untranslated island there costs the sentence its spaces and word order.
-    const KEEP = new Set(['QA-lab URL Review', 'QA-lab', 'URL Review', 'PageSpeed Insights', 'Lighthouse', 'Core Web Vitals']);
+    const KEEP = new Set(['QA-lab URL Review', 'QA-lab', 'URL Review', 'PageSpeed Insights', 'Lighthouse', 'Core Web Vitals', 'Safe Browsing', 'MTA-STS', 'TLS-RPT', 'BIMI', 'Impressum', 'RDAP', 'retire.js']);
     const LEAF = 'h1, h2, h3, h4, h5, summary, button, a, label, p, li, span, b, strong, em, small, th, td, option, legend, figcaption, dt, dd';
     
     let win = null;

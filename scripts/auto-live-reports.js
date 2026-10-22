@@ -63,9 +63,49 @@ const LESSONS = {
   "an-gaps": ["measurement gaps", "Put the same measurement tag on every page, so no part of the site goes uncounted.", ["Analytics", "Measurement", "GA4"]],
   "pf-cls": ["layout shift", "Give images, ads, and embeds a width and height, so the page does not jump while it loads.", ["WebPerformance", "CoreWebVitals", "CLS"]],
   "pf-blocking": ["blocking scripts", "Add defer to every script the first paint does not need.", ["WebPerformance", "PageWeight", "LCP"]],
-  "pf-field": ["real-user speed", "Start with the largest image on the first screen: size it, compress it, and preload it.", ["WebPerformance", "CoreWebVitals", "LCP"]]
+  "pf-field": ["real-user speed", "Start with the largest image on the first screen: size it, compress it, and preload it.", ["WebPerformance", "CoreWebVitals", "LCP"]],
+  "sec-safebrowsing": ["a Safe Browsing listing", "Watch the Security issues report in Search Console, clean the cause the day it appears, then request a review.", ["WebSecurity", "SafeBrowsing", "Malware"]],
+  "sec-domain-expiry": ["domain renewal", "Turn on automatic renewal for every domain you own, and keep the card on file valid.", ["WebSecurity", "Domains", "DNS"]],
+  "sec-domain-lock": ["the domain transfer lock", "Turn on the registrar's transfer lock, and two-factor sign-in for the registrar account.", ["WebSecurity", "Domains", "DNS"]],
+  "sec-mta-sts": ["MTA-STS", "Publish an MTA-STS policy in testing mode, read the TLS-RPT reports, then switch it to enforce.", ["EmailSecurity", "MTASTS", "DNS"]],
+  "sec-tlsrpt": ["TLS-RPT", "Publish a TLS-RPT record, so you hear when other servers cannot deliver your mail over TLS.", ["EmailSecurity", "TLSRPT", "DNS"]],
+  "sec-libraries": ["outdated libraries", "Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.", ["WebSecurity", "Dependencies", "JavaScript"]],
+  "an-privacy": ["the privacy notice", "Link a privacy notice from the footer of every page: who controls the data, what is collected, why, and the visitor's rights.", ["Privacy", "GDPR", "WebDev"]],
+  "an-imprint": ["the Impressum", "Link an Impressum from every page: who runs the site, a postal address, an email, and the register numbers.", ["Impressum", "Legal", "WebDev"]],
+  "a11y-statement": ["the accessibility statement", "Publish an accessibility statement with known gaps and a contact for access problems, and link it from every page.", ["Accessibility", "EAA", "A11y"]],
+  "an-chat-consent": ["chat before consent", "Load the chat widget after consent, or on the first click of a plain chat button.", ["Privacy", "Cookies", "Chatbots"]],
+  "an-chat-reject": ["chat after Reject", "Put the chat widget in a consent category, and block it when that category is refused.", ["Privacy", "Cookies", "Chatbots"]],
+  "an-chat-privacy": ["the chat's privacy link", "Link the privacy notice from the chat's welcome screen, before anyone types personal data.", ["Privacy", "Chatbots", "GDPR"]],
+  "pf-chat": ["chat weight", "Load the chat widget on the first click of a plain button, so it costs nothing until someone needs help.", ["WebPerformance", "Chatbots", "PageWeight"]],
+  "a11y-chat-cover": ["the chat button", "Keep the chat launcher clear of the cookie banner and call-to-action buttons on a phone.", ["Accessibility", "MobileUX", "Chatbots"]],
+  "a11y-chat-name": ["the chat button's name", "Give the chat launcher an accessible name such as \"Open chat\".", ["Accessibility", "A11y", "Chatbots"]],
+  "a11y-chat-focus": ["chat focus", "Move keyboard focus into the chat when it opens, and back to the launcher when it closes.", ["Accessibility", "Keyboard", "Chatbots"]],
+  "a11y-chat-trap": ["a keyboard trap", "Let Escape close the chat and return focus to the launcher.", ["Accessibility", "Keyboard", "Chatbots"]],
+  "a11y-reflow": ["the phone layout", "Let wide elements shrink to the screen, and give tables their own scroll box.", ["Accessibility", "MobileUX", "ResponsiveDesign"]],
+  "a11y-targets": ["tap targets", "Make every link and button at least 24 by 24 px, with space between them.", ["Accessibility", "MobileUX", "A11y"]],
+  "ax-color-contrast": ["text contrast", "Keep body text at a 4.5:1 contrast ratio or more against its background.", ["Accessibility", "Contrast", "A11y"]],
+  "ax-link-name": ["link names", "Give every link text that says where it goes. An icon alone needs an aria-label.", ["Accessibility", "A11y", "WebDev"]],
+  "ax-button-name": ["button names", "Give every button text or an aria-label, so a screen reader can announce it.", ["Accessibility", "A11y", "WebDev"]],
+  "ax-image-alt": ["alt text", "Describe what each image shows in its alt attribute, and use alt=\"\" on purely decorative ones.", ["Accessibility", "A11y", "WebDev"]],
+  "ax-label": ["form labels", "Give every input a visible label tied to it with for and id.", ["Accessibility", "Forms", "A11y"]],
+  "ax-aria-required-parent": ["ARIA roles", "Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.", ["Accessibility", "ARIA", "A11y"]],
+  "ax-aria-required-children": ["ARIA roles", "Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.", ["Accessibility", "ARIA", "A11y"]],
+  "ax-aria-hidden-focus": ["hidden focus", "Never leave a focusable element inside aria-hidden content.", ["Accessibility", "Keyboard", "ARIA"]],
+  "ax-list": ["list markup", "Keep only li elements directly inside ul and ol.", ["Accessibility", "A11y", "HTML"]],
+  "ax-listitem": ["list markup", "Put each li inside a ul or ol.", ["Accessibility", "A11y", "HTML"]],
+  "ax-heading-order": ["headings", "Nest headings in order, one level at a time, under one h1.", ["Accessibility", "Headings", "A11y"]],
+  "ax-region": ["landmarks", "Put all visible content inside landmarks: header, nav, main, and footer.", ["Accessibility", "Landmarks", "A11y"]],
+  "ax-target-size": ["tap targets", "Make every link and button at least 24 by 24 px, with space between them.", ["Accessibility", "MobileUX", "A11y"]]
 };
-const AREA_GAPS = { SEO: "search", GEO: "AI search", Analytics: "measurement", Security: "security headers", Accessibility: "accessibility", Performance: "speed" };
+const AREA_GAPS = { SEO: "search", GEO: "AI search", Analytics: "measurement", Security: "security", Accessibility: "accessibility", Performance: "speed" };
+const AREA_ACTIONS = {
+  SEO: "Fix the first search item in the report, then run the review again.",
+  GEO: "Make the key pages readable without JavaScript, and let the answer engines you want in through robots.txt.",
+  Analytics: "Load every tag after the visitor's choice, and check it again after each release.",
+  Security: "Fix the first security item in the report, then run the review again.",
+  Accessibility: "Run an automated accessibility check on every release, then test the main paths with a keyboard and a screen reader.",
+  Performance: "Measure the start page on a phone after every release, and fix the largest cost first."
+};
 const AREA_TAGS = { SEO: ["SEO"], GEO: ["GEO", "AISearch"], Analytics: ["Analytics"], Security: ["WebSecurity"], Accessibility: ["Accessibility"], Performance: ["WebPerformance"] };
 const CC = { uk: "GB" };
 const SECOND_LEVEL = /^(gov|gob|com|edu|org|net|mil|ac|co)$/;
@@ -122,7 +162,7 @@ function copyFor(report, recent) {
     key: gap.key,
     title: [head, "*The gap: " + (lesson ? lesson[0] : AREA_GAPS[gap.area] || gap.area) + ".*"],
     body: (lead ? lead + " But " + lower(sentence(gap.title)) : sentence(gap.title)).trim(),
-    action: lesson ? lesson[1] : sentence(gap.fix) || "Fix the first item in the report, then run the review again.",
+    action: lesson ? lesson[1] : (gap.fix && gap.fix.length <= 160 && !/https?:\/\//.test(gap.fix) ? sentence(gap.fix) : AREA_ACTIONS[gap.area]) || "Fix the first item in the report, then run the review again.",
     tags: lesson ? lesson[2] : (AREA_TAGS[gap.area] || []).concat(["QA", "WebDev"]).slice(0, 3)
   };
 }
