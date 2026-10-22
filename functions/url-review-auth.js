@@ -19,6 +19,8 @@ const PROVIDERS = [
 const DEFAULT_PROVIDERS = "email,google.com";
 const CODE_MS = 15 * 60 * 1000;
 const SESSION_MS = 30 * 24 * 60 * 60 * 1000;
+const ACCOUNT_MS = 365 * 24 * 60 * 60 * 1000;
+const PEOPLE_FIELDS = "emailAddresses,organizations,birthdays,phoneNumbers,addresses,genders";
 const MAX_TRIES = 5;
 const SENDS_PER_EMAIL = 5;
 const SENDS_PER_IP = 15;
@@ -168,7 +170,61 @@ async function providerSignIn(store, decoded, input) {
   const device = deviceHash(input.deviceKey);
   if (!device) return fail(400, "This browser did not send its device key. Reload the page and try again.");
   if (decoded.email_verified !== true) return { ok: false, status: 200, verifyEmail: true, email, provider, uid: String(decoded.uid || "") };
-  return openSession(store, { email, provider, uid: decoded.uid, deviceHash: device, profile: profileFrom(decoded, input.profile, email), now });
+  const people = provider === "google.com" ? await googlePeople(input.googleAccessToken, googleIdOf(decoded), input.fetch) : null;
+  const profile = Object.assign(profileFrom(decoded, input.profile, email), people || {});
+  return openSession(store, { email, provider, uid: decoded.uid, deviceHash: device, profile, now });
+}
+
+function googleIdOf(decoded) {
+  const ids = decoded && decoded.firebase && decoded.firebase.identities && decoded.firebase.identities["google.com"];
+  return /^\d{5,40}$/.test(String((ids && ids[0]) || "")) ? String(ids[0]) : "";
+}
+
+// The browser hands over the access token and nothing it read with it; the
+// server asks Google itself, and only for the account the ID token belongs to.
+async function googlePeople(accessToken, googleId, fetcher) {
+  const token = String(accessToken || "");
+  if (!googleId || !/^[\w.\-~+/]{20,4096}=*$/.test(token)) return null;
+  try {
+    const res = await (fetcher || fetch)("https://people.googleapis.com/v1/people/me?personFields=" + PEOPLE_FIELDS, {
+      headers: { authorization: "Bearer " + token },
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!res.ok) return null;
+    const person = await res.json();
+    return person && person.resourceName === "people/" + googleId ? peopleProfile(person) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Every field is written, empty when Google no longer shares it, so a scope the
+// visitor unticks on a later sign-in also clears what was kept from it.
+function peopleProfile(person) {
+  const list = (key) => (Array.isArray(person[key]) ? person[key] : []);
+  const date = (list("birthdays").find((item) => item.date && item.date.month && item.date.day) || {}).date;
+  const pad = (n) => String(n).padStart(2, "0");
+  const unique = (items) => items.filter((item, i) => item && items.indexOf(item) === i).slice(0, 5);
+  const gender = list("genders")[0] || {};
+  return {
+    emails: unique(list("emailAddresses").map((item) => cleanEmail(item.value))),
+    birthday: date ? (date.year ? date.year + "-" : "--") + pad(date.month) + "-" + pad(date.day) : "",
+    gender: cleanText(gender.value === "unspecified" ? "" : gender.value, 40),
+    phones: unique(list("phoneNumbers").map((item) => cleanText(item.canonicalForm || item.value, 40))),
+    addresses: list("addresses").slice(0, 5).map((item) => ({
+      type: cleanText(item.type, 20),
+      formatted: cleanText(String(item.formattedValue || "").replace(/\s*\n\s*/g, ", "), 300),
+      city: cleanText(item.city, 80),
+      region: cleanText(item.region, 80),
+      postalCode: cleanText(item.postalCode, 20),
+      countryCode: /^[A-Z]{2}$/i.test(String(item.countryCode || "")) ? String(item.countryCode).toUpperCase() : ""
+    })).filter((item) => item.formatted || item.city || item.countryCode),
+    organizations: list("organizations").slice(0, 5).map((item) => ({
+      name: cleanText(item.name, 120),
+      title: cleanText(item.title, 120),
+      department: cleanText(item.department, 120)
+    })).filter((item) => item.name || item.title)
+  };
 }
 
 function cleanText(value, max) {
@@ -214,6 +270,7 @@ async function openSession(store, input) {
     profile,
     createdAt: (account && account.createdAt) || at,
     lastSignInAt: at,
+    retainUntil: new Date(now + ACCOUNT_MS).toISOString(),
     plan: (account && account.plan) || null
   });
   return { ok: true, session, email: input.email, provider: input.provider, name: profile.name || "", picture: profile.picture || "" };
@@ -252,7 +309,8 @@ function lookupIdToken(apiKey) {
     const user = body && body.users && body.users[0];
     if (!res.ok || !user) throw new Error("The sign-in token was not accepted.");
     const linked = (user.providerUserInfo || [])[0] || {};
-    return { uid: user.localId, email: user.email || linked.email, email_verified: user.emailVerified === true, firebase: { sign_in_provider: linked.providerId || "" } };
+    const identities = linked.providerId && linked.rawId ? { [linked.providerId]: [linked.rawId] } : {};
+    return { uid: user.localId, email: user.email || linked.email, email_verified: user.emailVerified === true, firebase: { sign_in_provider: linked.providerId || "", identities } };
   };
 }
 
@@ -260,6 +318,7 @@ module.exports = {
   PROVIDERS,
   CODE_MS,
   SESSION_MS,
+  ACCOUNT_MS,
   MAX_TRIES,
   OTHER_DEVICE,
   deviceHash,

@@ -14,9 +14,9 @@ const insights = require("./url-review-insights");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 
-const TERMS_VERSION = "2026-10-21";
+const TERMS_VERSION = "2026-10-22";
 // A page loaded before a terms change still sends the version before it.
-const PREVIOUS_TERMS_VERSION = "2026-10-20";
+const PREVIOUS_TERMS_VERSION = "2026-10-21";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 

@@ -942,7 +942,7 @@
             <label class="check"><input type="checkbox" name="t8"> The report is shown once. Seeing, downloading, printing, or sharing it again asks for payment. The amount is shown then. The opening of each proposed case stays readable. The rest of the case stays blurred until that payment is confirmed. A blurred copy of the scores and findings goes to my email when the review finishes.</label>
             <label class="check"><input type="checkbox" name="t9"> If I say I have a username and password, I am allowed to use that login on the site I submit. This page does not ask for the password. A signed-in run is paid before it starts, and the password is not stored in the review record. The public analysis still does not sign in. Signals in the report are what the public response showed. They are not proof of a break-in. The tail of each signal stays blurred until that section is paid.</label>
             <label class="check"><input type="checkbox" name="t10"> I ask for the service to start during any withdrawal period. I acknowledge that a consumer in the European Union, under Directive 2011/83/EU, Article 16, and a consumer in the United Kingdom, under the Consumer Contracts Regulations 2013, regulation 36(2), loses the right to withdraw only once the service has been fully performed. A withdrawal right those rules keep is not waived.</label>
-            <p class="records-note" id="records-note">Records keep your name, email, reason, URL, selected frameworks, the review log, whether you stopped, time, IP address, browser, and language. When the host provides it, a country code is stored too. They are kept for 12 months. The page text is not sent to a model vendor. A password is not collected and is not stored. A shared link contains the report only, and opening it again asks for payment. Follow-up notes only arrive if you ask for them on the request: no more than three a week, and a reply of "stop" ends them anytime. The scores and findings for the public pages may be published as a Live Report and on social media; your name, email, reason, IP address, and browser are never published. Version 2026-10-21.</p>
+            <p class="records-note" id="records-note">Records keep your name, email, reason, URL, selected frameworks, the review log, whether you stopped, time, IP address, browser, and language. When the host provides it, a country code is stored too. They are kept for 12 months. The page text is not sent to a model vendor. A password is not collected and is not stored. A shared link contains the report only, and opening it again asks for payment. Follow-up notes only arrive if you ask for them on the request: no more than three a week, and a reply of "stop" ends them anytime. The scores and findings for the public pages may be published as a Live Report and on social media; your name, email, reason, IP address, and browser are never published. Signing in keeps your email, how you signed in, and a hash of this browser's key. A Google sign-in also keeps the name, photo, other email addresses, birthday, phone numbers, addresses, gender, and work details Google shares, to know who holds the account, fill in billing for a paid plan, address you correctly, and confirm you are 18 or older. The account is kept for 12 months after the last sign-in. Signing in with email shares only your address. Version 2026-10-22.</p>
             <button class="btn btn-primary" id="accept" type="submit" disabled>Accept and continue</button>
         </form>
     </div>
@@ -1044,6 +1044,7 @@
                 <p class="mail-note muted">The review runs on the device where you sign in. A code or link opened on another device or browser starts nothing.</p>
                 <div id="sign-in-start">
                     <div class="sign-in-providers" id="sign-in-providers"></div>
+                    <p class="mail-note muted" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them. To share only your address, use email.</p>
                     <p class="sign-in-or muted" id="sign-in-or" hidden>or with your email</p>
                     <label for="sign-in-email">Email</label>
                     <div class="sign-in-row">
@@ -1336,8 +1337,8 @@
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
-<script src="js/qa-review-auth.js?v=20261022d"></script>
-<script src="js/qa-review.js?v=20261022a"></script>
+<script src="js/qa-review-auth.js?v=20261022e"></script>
+<script src="js/qa-review.js?v=20261022b"></script>
 <script src="js/qa-review-live.js?v=20261028b"></script>
 </body>
 </html>

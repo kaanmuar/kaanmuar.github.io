@@ -6,6 +6,7 @@
   const PENDING_KEY = "qa-review-sign-in";
   const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
   const FIREBASE = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
+  const GOOGLE_SCOPES = ["email", "profile"].concat(["emails", "organization", "birthday", "phonenumbers", "addresses", "gender"].map((name) => "https://www.googleapis.com/auth/user." + name + ".read"));
   const LABELS = { "google.com": "Google", "microsoft.com": "Microsoft", "apple.com": "Apple", "github.com": "GitHub", "yahoo.com": "Yahoo", "facebook.com": "Facebook", "twitter.com": "X" };
   const box = document.getElementById("sign-in");
   if (!box) return;
@@ -170,7 +171,7 @@
   function providerFor(auth, id) {
     if (id === "google.com") {
       const google = new auth.GoogleAuthProvider();
-      ["email", "profile"].forEach((scope) => google.addScope(scope));
+      GOOGLE_SCOPES.forEach((scope) => google.addScope(scope));
       google.setCustomParameters({ prompt: "select_account" });
       return google;
     }
@@ -220,8 +221,9 @@
       locale: shown.locale || shown.preferredLanguage || "",
       workspaceDomain: shown.hd || ""
     };
+    const google = id === "google.com" ? auth.GoogleAuthProvider.credentialFromResult(result) : null;
     await auth.signOut(instance);
-    const data = await post("/auth/provider", { idToken, profile });
+    const data = await post("/auth/provider", { idToken, profile, googleAccessToken: (google && google.accessToken) || "" });
     if (data.session) signedIn(data);
     else {
       waitForCode(data);
@@ -235,6 +237,7 @@
       '<button type="button" class="btn sign-in-provider" data-provider="' + item.id + '"><span class="sign-in-mark sign-in-' + item.id.split(".")[0] + '" aria-hidden="true"></span>Continue with ' + LABELS[item.id] + "</button>"
     ).join("");
     el("sign-in-or").hidden = !others.length;
+    el("sign-in-google-note").hidden = !others.some((item) => item.id === "google.com");
     if (others.length) loadFirebase().catch(() => { /* the button retries the load */ });
   }
 

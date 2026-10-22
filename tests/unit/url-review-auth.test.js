@@ -104,6 +104,61 @@ test("a Google sign-in keeps the profile on the account, and trusts only what it
   assert.equal(byEmail.name, "");
 });
 
+test("a Google sign-in keeps the People profile the server fetched for that same account", async () => {
+  const store = auth.memoryStore();
+  const decoded = { uid: "u1", email: "ana@gmail.com", email_verified: true, name: "Ana Ruiz", firebase: { sign_in_provider: "google.com", identities: { "google.com": ["1234567890"] } } };
+  const person = {
+    resourceName: "people/1234567890",
+    emailAddresses: [{ value: "ana@gmail.com" }, { value: "Ana@Acme.com" }, { value: "ana@gmail.com" }],
+    birthdays: [{ text: "x" }, { date: { year: 1990, month: 5, day: 7 } }],
+    genders: [{ value: "female" }],
+    phoneNumbers: [{ value: "300 123 4567", canonicalForm: "+573001234567" }],
+    addresses: [{ type: "home", formattedValue: "Cra 7 #1-2\nBogotá", city: "Bogotá", countryCode: "co" }, { type: "work" }],
+    organizations: [{ name: "Acme", title: "QA Lead<b>" }]
+  };
+  const asked = [];
+  const fetch = async (url, init) => {
+    asked.push({ url, auth: init.headers.authorization });
+    return { ok: true, json: async () => person };
+  };
+  const token = "ya29.a0AfH6SMBx-test_token-value";
+  await auth.providerSignIn(store, decoded, { deviceKey: DESKTOP, enabled: "google.com", googleAccessToken: token, fetch });
+  assert.equal(asked.length, 1);
+  assert.match(asked[0].url, /^https:\/\/people\.googleapis\.com\/v1\/people\/me\?personFields=.*birthdays/);
+  assert.equal(asked[0].auth, "Bearer " + token);
+  const account = await store.get("url_review_accounts", "ana@gmail.com");
+  assert.deepEqual(account.profile, {
+    name: "Ana Ruiz",
+    emails: ["ana@gmail.com", "ana@acme.com"],
+    birthday: "1990-05-07",
+    gender: "female",
+    phones: ["+573001234567"],
+    addresses: [{ type: "home", formatted: "Cra 7 #1-2, Bogotá", city: "Bogotá", region: "", postalCode: "", countryCode: "CO" }],
+    organizations: [{ name: "Acme", title: "QA Leadb", department: "" }]
+  });
+  assert.equal(JSON.stringify(account).includes(token), false);
+  assert.equal(Date.parse(account.retainUntil) - Date.parse(account.lastSignInAt), auth.ACCOUNT_MS);
+
+  person.birthdays = [];
+  person.genders = [];
+  await auth.providerSignIn(store, decoded, { deviceKey: DESKTOP, enabled: "google.com", googleAccessToken: token, fetch });
+  const later = (await store.get("url_review_accounts", "ana@gmail.com")).profile;
+  assert.equal(later.birthday, "");
+  assert.equal(later.gender, "");
+
+  person.resourceName = "people/999999999";
+  const elsewhere = await auth.providerSignIn(store, Object.assign({}, decoded, { email: "bo@gmail.com" }), { deviceKey: DESKTOP, enabled: "google.com", googleAccessToken: token, fetch });
+  assert.equal(elsewhere.ok, true);
+  assert.equal((await store.get("url_review_accounts", "bo@gmail.com")).profile.birthday, undefined);
+
+  const calls = asked.length;
+  await auth.providerSignIn(store, decoded, { deviceKey: DESKTOP, enabled: "google.com", googleAccessToken: "bad token", fetch });
+  await auth.providerSignIn(store, Object.assign({}, decoded, { firebase: { sign_in_provider: "google.com" } }), { deviceKey: DESKTOP, enabled: "google.com", googleAccessToken: token, fetch });
+  assert.equal(asked.length, calls);
+  const down = await auth.providerSignIn(store, decoded, { deviceKey: DESKTOP, enabled: "google.com", googleAccessToken: token, fetch: async () => { throw new Error("offline"); } });
+  assert.equal(down.ok, true);
+});
+
 test("the provider list always offers email and only the providers switched on", () => {
   assert.deepEqual(auth.enabledProviders("").map((item) => item.id), ["email", "google.com"]);
   assert.deepEqual(auth.enabledProviders("google.com,apple.com,nope").map((item) => item.id), ["email", "google.com", "apple.com"]);
