@@ -1724,7 +1724,7 @@ function parseMentions(results, hostname) {
 }
 
 // Brave Search API web results as { title, url, description }, or [] without a key or an answer.
-// Free plan: 1 request a second, 2,000 a month (https://api-dashboard.search.brave.com).
+// Free plan: $5 of credit a month, about 1,000 requests (https://api-dashboard.search.brave.com).
 async function webSearch(query, key = process.env.BRAVE_SEARCH_KEY) {
   if (!key) return [];
   try {
