@@ -1540,9 +1540,8 @@ function searchOwnerContacts(report) {
       const res = await fetch("https://api.github.com/users/" + encodeURIComponent(name), { headers: { accept: "application/vnd.github+json", "user-agent": "qa-lab-url-review" }, signal: AbortSignal.timeout(6000) });
       return res.ok ? res.json() : null;
     },
-    search: urlReview.searchHtml,
+    search: urlReview.webSearch,
     emailsInText: urlReview.emailsInText,
-    visibleText: urlReview.visibleText,
     registrable: urlReview.registrable
   });
 }
