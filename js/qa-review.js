@@ -807,9 +807,21 @@
     const tablet = b.tablet || {};
     const errors = (b.console && b.console.errors) || 0;
     const failed = (b.failed && b.failed.count) || 0;
+    const watch = b.watch || {};
+    const watchAfter = consent.rejected ? watch.after : null;
+    const printers = (row) => row ? [...new Set([].concat(...["canvas", "fonts", "webgl", "audio"].map((key) => (row.fingerprint || {})[key] || [])))] : [];
+    const recording = (row) => row ? (row.recorders || []).filter((rr) => rr.sent).map((rr) => rr.name) : [];
+    const typedTo = (row) => row && row.typed ? row.typed.sent.map((s) => s.host) : [];
+    const spied = watch.before ? printers(watch.before).filter((h) => (watch.before.guards || []).indexOf(h) === -1).length + recording(watch.before).length + typedTo(watch.before).length + typedTo(watchAfter).length : 0;
+    const watchText = watch.before ? [
+      printers(watch.before).length ? printers(watch.before).length + " fingerprinting script" + (printers(watch.before).length === 1 ? "" : "s") : "",
+      recording(watch.before).length ? recording(watch.before).length + " session recorder" + (recording(watch.before).length === 1 ? "" : "s") : "",
+      typedTo(watch.before).length || typedTo(watchAfter).length ? "typing sent" : ""
+    ].filter(Boolean).join(" · ") || "None seen" : "Not checked";
     const tiles = [
       ["Before a choice", beforeBad ? (consent.banner ? "fail" : "risk") : "pass", beforeBad ? beforeBad + " tracking signal" + (beforeBad === 1 ? "" : "s") : "Nothing tracked"],
       ["After Reject", after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? afterBad + " still tracked" : "Tracking stopped") : (consent.banner ? "Reject not found" : "No banner showed")],
+      ["Fingerprinting and recording", !watch.before ? "unknown" : spied ? (consent.banner ? "fail" : "risk") : printers(watch.before).length ? "risk" : "pass", watchText],
       ["axe-core", axePages.length ? (rules.size ? "fail" : "pass") : "unknown", axePages.length ? rules.size + " rules fail on " + axePages.length + " page" + (axePages.length === 1 ? "" : "s") : "Did not run"],
       ["Phone width", mobile.width ? (mobile.overflow > 2 ? "fail" : "pass") : "unknown", mobile.width ? (mobile.overflow > 2 ? mobile.overflow + " px too wide" : "Fits " + mobile.width + " px") : "Not checked"],
       ["First paint", vit.fcp ? (vit.fcp > 3000 ? "fail" : vit.fcp > 1800 ? "risk" : "pass") : "unknown", vit.fcp ? (vit.fcp / 1000).toFixed(1) + " s, lab" : "Not measured"],
@@ -830,7 +842,12 @@
     const find = (rows, name) => (rows || []).find((row) => row.name === name);
     const cookieList = (rows) => (rows || []).length ? rows.slice(0, 6).map((row) => row.name + (row.third ? " (" + row.domain + ")" : "")).join(", ") + (rows.length > 6 ? " …" : "") : "None";
     const consentRows = names.map((name) => "<tr><td><strong>" + esc(name) + "</strong></td><td>" + esc(cell(find(before.vendors, name))) + "</td><td>" + (after ? esc(cell(find(after.vendors, name))) : "—") + "</td></tr>").join("") +
-      '<tr><td><strong>Tracking cookies</strong></td><td class="notranslate" translate="no">' + esc(cookieList(before.cookies)) + '</td><td class="notranslate" translate="no">' + (after ? esc(cookieList(after.cookies)) + (after.kept ? " · " + after.kept + " kept from before" : "") : "—") + "</td></tr>";
+      '<tr><td><strong>Tracking cookies</strong></td><td class="notranslate" translate="no">' + esc(cookieList(before.cookies)) + '</td><td class="notranslate" translate="no">' + (after ? esc(cookieList(after.cookies)) + (after.kept ? " · " + after.kept + " kept from before" : "") : "—") + "</td></tr>" +
+      (watch.before ? [
+        ["Fingerprinting", (row) => printers(row).join(", ") || "None"],
+        ["Session recording", (row) => (row.recorders || []).map((rr) => rr.name + (rr.sent ? "" : ", loaded only")).join(" · ") || "None"],
+        ["Typed text before submit", (row) => !row.typed ? "No contact field" : row.typed.sent.length ? row.typed.sent.map((s) => s.host).join(", ") : "Sent nowhere"]
+      ].map(([label, text]) => "<tr><td><strong>" + label + '</strong></td><td class="notranslate" translate="no">' + esc(text(watch.before)) + '</td><td class="notranslate" translate="no">' + (watchAfter ? esc(text(watchAfter)) : "—") + "</td></tr>").join("") : "");
     const bannerLine = consent.banner
       ? (consent.banner === "A cookie banner" ? "A cookie banner" : esc(consent.banner)) + " was showing." + (after ? " The review pressed “" + esc(consent.rejectLabel) + "” and reloaded the page." : consent.banner === "Sourcepoint" ? " It sits in a frame, so Reject was not pressed." : " No reject button was found on its first layer.")
       : "No cookie banner appeared on the first visit.";
@@ -861,7 +878,7 @@
         ? (axeRows ? '<table class="mini-table"><thead><tr><th>Rule</th><th>Impact</th><th>Elements</th><th>Pages</th></tr></thead><tbody>' + axeRows + "</tbody></table>" : '<p class="muted">No WCAG 2.2 AA rule failed on ' + axePages.length + " page" + (axePages.length === 1 ? "" : "s") + ". Automated rules catch about a third of real issues.</p>") +
           '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
         : '<p class="muted">axe-core did not finish in the time the browser had.</p>') + "</article>" +
-      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + " Lab numbers come from one unthrottled load.</p>" + carbon;
+      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + (watch.before && watch.before.typed ? " A test address was typed into one form field, never submitted, and blocked wherever a script tried to send it." : "") + " Lab numbers come from one unthrottled load.</p>" + carbon;
   }
 
   function chatHtml(chat) {

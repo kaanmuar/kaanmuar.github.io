@@ -322,6 +322,72 @@ const SHOP_PATH = /\/(cart|checkout|basket|warenkorb|kasse|carrito|cesta|panier|
 const LIB_SEVERITY = { critical: ["fail", "high"], high: ["risk", "high"], medium: ["risk", "medium"], low: ["risk", "low"] };
 
 // Links to the accessibility statement, the privacy notice and the imprint, on any page read or the rendered start page.
+const FINGERPRINT_KINDS = [["canvas", "drew hidden text on a canvas and read it back"], ["fonts", "measured which fonts are installed"], ["webgl", "read the graphics card name"], ["audio", "rendered a silent audio tone"]];
+
+// Browser fingerprinting, session recorders, and typed text sent before submit: before a choice and after Reject.
+function watchChecks(watch, consent, add) {
+  const before = watch.before;
+  const after = consent && consent.rejected && watch.after ? watch.after : null;
+  const rejected = after ? "After pressing \"" + consent.rejectLabel + "\" and reloading, " : "";
+  const banner = consent && consent.banner ? (consent.banner === "A cookie banner" ? "A cookie banner" : consent.banner) + " was showing. " : "No cookie banner appeared. ";
+  const hosts = (row) => [...new Set([].concat(...FINGERPRINT_KINDS.map(([key]) => row.fingerprint[key] || [])))];
+  const list = (row) => hosts(row).map((host) => {
+    const hows = FINGERPRINT_KINDS.filter(([key]) => (row.fingerprint[key] || []).indexOf(host) !== -1).map(([, how]) => how);
+    return host + " " + (hows.length > 1 ? hows.slice(0, -1).join(", ") + ", and " + hows[hows.length - 1] : hows[0]);
+  }).join("; ");
+  const guarded = (row) => hosts(row).length > 0 && hosts(row).every((host) => (row.guards || []).indexOf(host) !== -1);
+  const printed = hosts(before).length > 0;
+
+  if (printed && guarded(before)) {
+    add("Analytics", "risk", "low", "an-fingerprint", "A bot check fingerprints the browser on load",
+      banner + "Before any choice, " + list(before) + ". These hosts run bot or fraud protection.",
+      "Name the bot protection and what it reads in the privacy notice. It can run without consent only while it is strictly needed for security.", { effort: "minutes", cases: ["PR-02"] });
+  } else if (printed) {
+    add("Analytics", consent && consent.banner ? "fail" : "risk", "high", "an-fingerprint", consent && consent.banner ? "Scripts fingerprint the browser before the visitor chooses" : "Scripts fingerprint the browser on load and no banner asks first",
+      banner + "Before any choice, " + list(before) + ". Read together, these give the browser an ID that survives clearing cookies.",
+      "Find the tag behind each host and hold it until consent, like a tracking cookie. If it is fraud or bot protection, name it in the privacy notice.", { effort: "hours", cases: ["PR-02", "PR-03"], count: hosts(before).length });
+  } else {
+    add("Analytics", "pass", "info", "an-fingerprint", "No browser fingerprinting was seen",
+      "Before any choice, no script read back a canvas with text on it, measured 50 or more fonts, read the graphics card name, or rendered a silent audio tone.", "", { cases: ["PR-02"] });
+  }
+  if (after && hosts(after).length && !guarded(after)) {
+    add("Analytics", "fail", "high", "an-fingerprint-reject", "Fingerprinting continues after Reject", rejected + list(after) + ".",
+      "Block the fingerprinting tag when the visitor refuses, or remove it.", { effort: "hours", cases: ["PR-02", "PR-03"] });
+  } else if (after && printed && !guarded(before)) {
+    add("Analytics", "pass", "info", "an-fingerprint-reject", "Fingerprinting stops after Reject", rejected + "no script repeated the fingerprinting calls.", "", { cases: ["PR-03"] });
+  }
+
+  const recording = (row) => (row.recorders || []).filter((rr) => rr.sent).map((rr) => rr.name);
+  if (recording(before).length) {
+    add("Analytics", consent && consent.banner ? "fail" : "risk", "medium", "an-recording", consent && consent.banner ? "A session recorder runs before the visitor chooses" : "A session recorder runs on load and no banner asks first",
+      banner + "Before any choice, " + recording(before).join(", ") + " sent recording data. Session recorders replay clicks, scrolling, and anything typed into fields they do not mask.",
+      "Load the recorder only after consent, and mask every form field in its settings.", { effort: "hours", cases: ["PR-03"] });
+  } else if ((before.recorders || []).length) {
+    add("Analytics", "pass", "info", "an-recording", "The session recorder waits for consent", before.recorders.map((rr) => rr.name).join(", ") + " loaded but sent no recording data before a choice.", "", { cases: ["PR-03"] });
+  }
+  if (after && recording(after).length) {
+    add("Analytics", "fail", "medium", "an-recording-reject", "Session recording continues after Reject", rejected + recording(after).join(", ") + " still sent recording data.",
+      "Map the recorder to a consent category and block it when that category is refused.", { effort: "hours", cases: ["PR-03"] });
+  } else if (after && (before.recorders || []).length) {
+    add("Analytics", "pass", "info", "an-recording-reject", "Session recording stops after Reject", rejected + "no session recorder sent data.", "", { cases: ["PR-03"] });
+  }
+
+  const typed = before.typed || (after && after.typed);
+  if (!typed) return;
+  const sentTo = (row) => (row && row.typed ? row.typed.sent : []).map((s) => s.host + " (" + s.how + ")").join(", ");
+  const listening = before.listeners && before.listeners.length ? " Scripts from " + before.listeners.slice(0, 4).join(", ") + " listen to typing on the page." : "";
+  if (sentTo(before) || sentTo(after)) {
+    add("Security", "fail", "high", "sec-typed", "Typed text is sent before the form is submitted",
+      "The review typed a test address into the \"" + typed.field + "\" field and did not submit. " +
+      [sentTo(before) ? "Before any choice it was sent to " + sentTo(before) + "." : "", sentTo(after) ? rejected + "it was sent to " + sentTo(after) + "." : ""].filter(Boolean).join(" ") +
+      " The review blocked those requests, so the test address did not leave the browser." + listening,
+      "Turn off form-field capture in the tags that send it, such as automatic advanced matching, form analytics, or an unmasked session recorder, or send the data only on submit and after consent.", { effort: "hours", cases: ["PR-02"] });
+  } else {
+    add("Security", "pass", "info", "sec-typed", "Typing in a form sends nothing before submit",
+      "The review typed a test address into the \"" + typed.field + "\" field without submitting, and no other site received it." + listening, "", { cases: ["PR-02"] });
+  }
+}
+
 function legalChecks(ctx, add) {
   const { read, browsed, face, origin, home } = ctx;
   const dom = browsed && browsed.start && browsed.start.dom;
@@ -435,6 +501,7 @@ function browserChecks(b, add, ctx) {
   }
 
   if (b.chat && (b.chat.found || []).length) chatChecks(b.chat, consent, add);
+  if (b.watch && b.watch.before) watchChecks(b.watch, consent, add);
 
   // Accessibility: axe-core on the rendered pages, and the phone width.
   const axe = b.axe && b.axe.ran ? b.axe : null;
