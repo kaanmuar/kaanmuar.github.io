@@ -18,7 +18,7 @@ const SOURCE_POINTS = { "contact-page": 40, schema: 38, "security.txt": 32, page
 // DMARC report and SOA hostmaster addresses on another domain belong to a vendor, not the owner.
 const OWN_DOMAIN_ONLY = ["dmarc", "soa"];
 const ROLE = /^(contact|contacto|contato|contatti|kontakt|info|informacion|hello|hola|ola|office|oficina|admin|webmaster|web|marketing|comunicaciones|press|prensa|support|soporte|servicio|atencion|customer|clientes|ventas|sales)\b/;
-const JUNK_LOCAL = /^(no-?reply|do-?not-?reply|mailer-daemon|bounces?|example|test|user|usuario|name|nombre|email|correo|you|your|tu|su)$/;
+const JUNK_LOCAL = /^(no-?reply|do-?not-?reply|mailer-daemon|bounces?|example|test|user|usuario|name|nombre|email|correo|you|your|tu|su|(j|ja|jane|john)?[._-]?(doe|smith)j?|jane|john|d-jane|first(name)?[._-]?(last(name)?|l)|f[._-]?last(name)?|first(name)?|last(name)?|nombre[._-]?apellido|apellido)$/;
 const JUNK_DOMAIN = /(^|\.)(example\.(com|org|net)|domain\.com|email\.com|yourdomain\.com|tudominio\.com|sentry\.io|wixpress\.com|sentry-next\.wixpress\.com)$/;
 
 function criticalSecurity(report) {
