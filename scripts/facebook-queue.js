@@ -3,10 +3,14 @@
    plan has no room for a Facebook channel, so the Page is posted to directly.
 
      FACEBOOK_PAGE_ID=... FACEBOOK_PAGE_TOKEN=... node scripts/facebook-queue.js --batch auto-2026-10-22 [--dry-run]
+     ... node scripts/facebook-queue.js --all     every batch; slots more than 29 days out wait for a later run
+     ... node scripts/facebook-queue.js --check   how many posts the Page has scheduled
 
    Reads the same captions.json and calendar.csv as buffer-queue.js and posts each feed image with its
-   facebook caption and alt text at its calendar time. The token is a Page access token with
-   pages_manage_posts. Exits 1 when any post failed, after trying all of them. */
+   facebook caption and alt text at its calendar time, skipping captions already scheduled or published on
+   the Page. Meta Business Suite's Planificador does not list posts scheduled through the API; --check reads
+   them. The token is a Page access token with pages_manage_posts. Exits 1 when any post failed, after
+   trying all of them. */
 
 const fs = require("fs");
 const path = require("path");
@@ -67,59 +71,99 @@ async function graphGet(edge, params) {
   return json;
 }
 
-async function check(page, ids) {
-  const show = async (label, edge, params) => {
-    try { console.log(label, JSON.stringify(await graphGet(edge, params)).slice(0, 1500)); }
-    catch (error) { console.log(label, "-", error.message); }
-  };
-  await show("scheduled_posts", page + "/scheduled_posts", { fields: "id,message,scheduled_publish_time,is_published", limit: "50" });
-  await show("posts", page + "/posts", { fields: "id,created_time,message", limit: "10" });
-  await show("photos", page + "/photos", { type: "uploaded", fields: "id,created_time,page_story_id,name", limit: "30" });
-  for (const id of ids) await show("id " + id, id, { fields: "id,created_time,page_story_id,name" });
+// Every page of a Graph edge, following paging.next.
+async function graphAll(edge, params) {
+  const out = [];
+  let json = await graphGet(edge, Object.assign({ limit: "100" }, params));
+  for (;;) {
+    out.push(...(json.data || []));
+    if (!(json.paging && json.paging.next)) return out;
+    const res = await fetch(json.paging.next);
+    json = await res.json();
+    if (json.error) throw new Error("Graph: " + json.error.message);
+  }
 }
 
-// A slot already past (or under the Graph API's 10-minute floor) goes out in 20 minutes.
-function photoParams(slug, cap, base, at) {
-  const params = { url: base + "/feed/" + slug + ".jpg", caption: cap.facebook, alt_text_custom: cap.alt || "" };
-  const due = Math.max(at || 0, Date.now() + MIN_LEAD_MS);
-  if (due - Date.now() > MAX_LEAD_MS) throw new Error("slot " + new Date(due).toISOString() + " is more than 29 days out");
-  return Object.assign(params, { published: "false", scheduled_publish_time: String(Math.floor(due / 1000)) });
+const key = (text) => String(text || "").replace(/\s+/g, " ").trim();
+
+// Captions already on the Page, scheduled or published in the last 40 days, so a rerun never posts twice.
+async function onPage(page) {
+  const since = String(Math.floor(Date.now() / 1000) - 40 * 86400);
+  const scheduled = await graphAll(page + "/scheduled_posts", { fields: "message,scheduled_publish_time" });
+  const published = await graphAll(page + "/posts", { fields: "message", since });
+  return { scheduled, keys: new Set(scheduled.concat(published).map((p) => key(p.message))) };
+}
+
+async function check(page) {
+  const { scheduled } = await onPage(page);
+  const times = scheduled.map((p) => p.scheduled_publish_time * 1000).sort((a, b) => a - b);
+  console.log(scheduled.length + " scheduled on the Page" + (times.length ? ", " + new Date(times[0]).toISOString() + " to " + new Date(times[times.length - 1]).toISOString() : ""));
+}
+
+// Batches with Facebook captions and a calendar, oldest first.
+function allBatches() {
+  const root = path.join(ROOT, "media/social-posts");
+  return fs.readdirSync(root).filter((name) => /^[\w-]+$/.test(name)
+    && fs.existsSync(path.join(root, name, "captions.json")) && fs.existsSync(path.join(root, name, "calendar.csv"))).sort();
+}
+
+function posts(batch) {
+  const dir = path.join(ROOT, "media/social-posts", batch);
+  const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
+  const when = facebookSlots(dir);
+  return Object.keys(captions).filter((slug) => captions[slug].facebook)
+    .map((slug) => ({ batch, slug, cap: captions[slug], at: when[slug] || 0 }));
 }
 
 async function main() {
   const opts = args();
-  if (opts.check) return check(process.env.FACEBOOK_PAGE_ID, String(opts.ids || "").split(",").filter(Boolean));
-  const batch = String(opts.batch || "");
-  if (!/^[\w-]+$/.test(batch)) throw new Error("--batch is required");
-  const dir = path.join(ROOT, "media/social-posts", batch);
-  const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
-  const slugs = Object.keys(captions).filter((slug) => captions[slug].facebook);
-  if (!slugs.length) { console.log("nothing to post"); return; }
-  const when = facebookSlots(dir);
-  const base = SITE + "/media/social-posts/" + batch;
   const page = process.env.FACEBOOK_PAGE_ID;
-  if (!opts["dry-run"] && !(page && process.env.FACEBOOK_PAGE_TOKEN)) throw new Error("FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN must be set.");
+  const live = !opts["dry-run"];
+  if ((live || opts.check) && !(page && process.env.FACEBOOK_PAGE_TOKEN)) throw new Error("FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN must be set.");
+  if (opts.check) return check(page);
+  const batch = String(opts.batch || "");
+  if (!opts.all && !/^[\w-]+$/.test(batch)) throw new Error("--batch <name> or --all is required");
+  const list = (opts.all ? allBatches() : [batch]).flatMap(posts);
+  if (!list.length) { console.log("nothing to post"); return; }
 
-  if (!opts["dry-run"]) {
-    const first = base + "/feed/" + slugs[0] + ".jpg";
+  // A batch the daily job just pushed may take a few minutes to reach the site.
+  if (live && !opts.all) {
+    const first = SITE + "/media/social-posts/" + batch + "/feed/" + list[0].slug + ".jpg";
+    console.log("Waiting up to 20 minutes for the site to serve " + first);
     if (!(await waitFor(first, 20))) throw new Error("The site never served " + first);
   }
+  const done = live ? (await onPage(page)).keys : new Set();
+  const horizon = Date.now() + MAX_LEAD_MS;
   let failed = 0;
   let queued = 0;
-  for (const slug of slugs) {
+  let already = 0;
+  let later = 0;
+  let late = 0;
+  for (const post of list) {
+    const name = post.batch + "/" + post.slug;
+    if (done.has(key(post.cap.facebook))) { already += 1; continue; }
+    if (post.at > horizon) { later += 1; continue; }
+    // A missed slot goes out 20 minutes from now, the next one 30 minutes after that, and so on.
+    const due = post.at < Date.now() + MIN_LEAD_MS ? Date.now() + MIN_LEAD_MS + 30 * 60e3 * late++ : post.at;
+    const params = {
+      url: SITE + "/media/social-posts/" + post.batch + "/feed/" + post.slug + ".jpg",
+      caption: post.cap.facebook,
+      alt_text_custom: post.cap.alt || "",
+      published: "false",
+      scheduled_publish_time: String(Math.floor(due / 1000)),
+    };
+    const at = new Date(due).toISOString();
+    if (!live) { console.log("dry-run", name, at, params.url); continue; }
     try {
-      const params = photoParams(slug, captions[slug], base, when[slug]);
-      const due = new Date(Number(params.scheduled_publish_time) * 1000).toISOString();
-      if (opts["dry-run"]) { console.log("dry-run", slug, due, params.url); continue; }
       const r = await graph(page + "/photos", params);
       queued += 1;
-      console.log("scheduled", slug, due, r.id);
+      console.log("scheduled", name, at, r.id);
     } catch (error) {
       failed += 1;
-      console.log("failed", slug, "-", error.message);
+      console.log("failed", name, "-", error.message);
     }
   }
-  console.log(queued + " scheduled, " + failed + " failed");
+  console.log(queued + " scheduled, " + already + " already on the Page, " + later + " more than 29 days out, " + failed + " failed");
   if (failed) process.exit(1);
 }
 
