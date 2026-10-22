@@ -176,8 +176,8 @@ function trim(text, max) {
   return value.length > max ? value.slice(0, max - 1) + "…" : value;
 }
 
-function plural(count, one) {
-  return count + " " + one + (count === 1 ? "" : "s");
+function plural(count, one, many) {
+  return count + " " + (count === 1 ? one : (many || one + "s"));
 }
 
 function shortUrl(raw) {
@@ -1019,7 +1019,7 @@ async function browse(job, log) {
           say(!open.opened ? "The chat did not open." : "The chat opened " + (open.keyboard ? "with Enter" : "with a click") + ". " +
             (open.privacy === true ? "It links a privacy notice. " : open.privacy === false ? "It shows no privacy link. " : "") +
             (open.moved ? "" : open.tabbed ? "Focus stayed on the page until Tab was pressed. " : "Focus stayed on the page and Tab did not reach it" + (open.placed ? ", so the review moved focus into it. " : ". ")) +
-            (!open.entered ? "Focus did not move into it." : open.trapped ? "Focus stayed inside after " + plural(open.tabs, "Tab press") + " and Escape." : "Focus left it by " + { tab: "Tab", close: "its close button", escape: "Escape" }[open.exit] + "."));
+            (!open.entered ? "Focus did not move into it." : open.trapped ? "Focus stayed inside after " + plural(open.tabs, "Tab press", "Tab presses") + " and Escape." : "Focus left it by " + { tab: "Tab", close: "its close button", escape: "Escape" }[open.exit] + "."));
         } catch (error) {
           result.chat.open = { opened: false, error: trim(error.message, 120) };
           say("The chat could not be opened (" + result.chat.open.error + ").");

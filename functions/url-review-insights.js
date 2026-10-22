@@ -308,7 +308,7 @@ function chatChecks(chat, consent, add) {
     "After " + (open.keyboard ? "pressing Enter on" : "clicking") + " the " + widget + "launcher, the chat opened but focus stayed outside it" + (open.tabbed ? " until Tab was pressed" : ", and the next Tab went to the page instead of the chat") + ". A screen reader user hears nothing about the open chat.",
     "Move focus to the chat's first control or heading when it opens, and back to the launcher when it closes.", { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
   if (open.opened && open.trapped) add("Accessibility", "fail", "high", "a11y-chat-trap", "Keyboard focus is trapped in the open chat",
-    "After opening " + it + (open.keyboard ? " with Enter" : "") + ", " + plural(open.tabs, "press") + " of Tab kept focus inside it, no close button was reached, and Escape did not close it.",
+    "After opening " + it + (open.keyboard ? " with Enter" : "") + ", " + plural(open.tabs, "press", "presses") + " of Tab kept focus inside it, no close button was reached, and Escape did not close it.",
     "Let Escape close the chat and return focus to the launcher, and keep the close button in the Tab order.", { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
   else if (open.opened && open.exit) add("Accessibility", "pass", "info", "a11y-chat-trap", "Keyboard focus can leave the open chat",
     "After opening " + it + (open.keyboard ? " with Enter" : "") + ", focus left it by " + { tab: "Tab", close: "reaching its close button", escape: "Escape" }[open.exit] + ".", "", { cases: ["CHAT-03", "A11Y-04"] });

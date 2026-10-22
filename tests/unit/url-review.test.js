@@ -1207,6 +1207,7 @@ test.describe("chat widgets", () => {
     ]);
     assert.match(finding(result, "an-chat-consent").evidence, /OneTrust was showing\. Before any choice, Intercom sent 5 requests and set intercom-id-abc, intercom-device-id-abc\./);
     assert.match(finding(result, "a11y-chat-cover").evidence, /the Intercom launcher sits over "Reject all" in the cookie banner/);
+    assert.match(finding(result, "a11y-chat-trap").evidence, /, 26 presses of Tab kept focus inside it/);
   });
 
   test("a light, consent-aware chat with a named launcher passes, and a page without chat gets no chat finding", () => {
