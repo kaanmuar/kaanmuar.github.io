@@ -11,6 +11,7 @@ const core = require("../functions/url-review-core");
 const newsWire = require("../functions/news-wire");
 const desk = require("../functions/url-review-desk");
 const offers = require("../functions/url-review-offers");
+const auth = require("../functions/url-review-auth");
 
 function loadEnvFile() {
   const file = path.join(__dirname, "..", "functions", ".env");
@@ -212,6 +213,53 @@ function readBody(req) {
   });
 }
 
+// Sign-ins live in memory here; the code is printed instead of emailed.
+const signIns = auth.memoryStore();
+
+async function localSignIn(req, res, pathName, origin, deviceHint) {
+  const enabled = process.env.REVIEW_SIGN_IN_PROVIDERS;
+  if (req.method === "GET" && pathName === "/auth/providers") {
+    sendJson(res, 200, { providers: auth.enabledProviders(enabled) }, origin, deviceHint);
+    return;
+  }
+  let body = {};
+  try { body = await readBody(req); } catch (error) { body = {}; }
+  const answer = (result) => sendJson(res, result.ok ? 200 : result.status, result.ok
+    ? { ok: true, session: result.session, email: result.email, provider: result.provider }
+    : { error: result.error, code: result.code || "" }, origin, deviceHint);
+  const mailCode = async (input) => {
+    const started = await auth.startEmail(signIns, Object.assign({ ip: clientIp(req) }, input));
+    if (!started.ok) return answer(started);
+    console.log("Sign-in code for " + started.email + ": " + started.code + "  link: http://127.0.0.1:8765/qa-review.html?signin=" + started.id + "&key=" + started.token);
+    sendJson(res, 200, { ok: true, id: started.id, sentTo: auth.maskEmail(started.email) }, origin, deviceHint);
+  };
+  if (pathName === "/auth/email") return mailCode({ email: body.email, deviceKey: body.deviceKey });
+  if (pathName === "/auth/email/finish") return answer(await auth.finishEmail(signIns, body));
+  if (pathName === "/auth/provider") {
+    let decoded = null;
+    try {
+      decoded = await auth.lookupIdToken(process.env.FIREBASE_WEB_KEY || "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w")(String(body.idToken || ""));
+    } catch (error) {
+      sendJson(res, 401, { error: "That sign-in was not accepted. Try again." }, origin, deviceHint);
+      return;
+    }
+    const result = await auth.providerSignIn(signIns, decoded, { deviceKey: body.deviceKey, enabled });
+    if (result.verifyEmail) return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
+    return answer(result);
+  }
+  if (pathName === "/auth/session") {
+    const result = await auth.checkSession(signIns, Object.assign({}, body, { touch: false }));
+    sendJson(res, result.ok ? 200 : result.status, result.ok ? { ok: true, email: result.email, provider: result.provider } : { error: result.error, signIn: true }, origin, deviceHint);
+    return;
+  }
+  if (pathName === "/auth/signout") {
+    await auth.closeSession(signIns, body.session);
+    sendJson(res, 200, { ok: true }, origin, deviceHint);
+    return;
+  }
+  sendJson(res, 404, { error: "Not found." }, origin, deviceHint);
+}
+
 const server = http.createServer(async (req, res) => {
   const origin = originOf(req);
   if (req.method === "OPTIONS") {
@@ -235,6 +283,10 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === "GET" && url.pathname === "/health") {
     sendJson(res, 200, { ok: true }, origin, deviceHint);
+    return;
+  }
+  if (url.pathname.startsWith("/auth/")) {
+    await localSignIn(req, res, url.pathname, origin, deviceHint);
     return;
   }
   if (req.method === "GET" && (url.pathname === "/desk" || url.pathname === "/desk/failures")) {
@@ -684,6 +736,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   const deviceId = deviceFrom(req, body);
+  const signedIn = await auth.checkSession(signIns, body);
+  if (!signedIn.ok) {
+    sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceId);
+    return;
+  }
+  body.email = signedIn.email;
   const intake = await core.screenIntake(body, req.headers);
   if (!intake.ok) {
     sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);

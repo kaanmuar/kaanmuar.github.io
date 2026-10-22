@@ -92,6 +92,16 @@
     return [...app.querySelectorAll("input, textarea, button")].filter((el) => el.id !== "stop-btn");
   }
 
+  function signedIn() {
+    return !!(window.ReviewAuth && ReviewAuth.signedIn());
+  }
+
+  if (window.ReviewAuth) {
+    ReviewAuth.onChange((on) => {
+      if (!app.inert && !activeRun) reviewBtn.disabled = !on;
+    });
+  }
+
   function unlock() {
     gate.hidden = true;
     app.inert = false;
@@ -99,6 +109,7 @@
     fields().forEach((el) => { el.disabled = false; });
     reasonBox.disabled = true;
     stopBtn.disabled = true;
+    reviewBtn.disabled = !signedIn();
     sessionStorage.setItem(TERMS_KEY, TERMS_VERSION);
     if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
   }
@@ -1296,6 +1307,11 @@
   reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (app.inert || activeRun) return;
+    if (!signedIn()) {
+      setStatus("Sign in above to run a review. The review runs on the device where you sign in.", true);
+      if (window.ReviewAuth) ReviewAuth.focus();
+      return;
+    }
     const errors = clientErrors();
     markFields(errors);
     if (errors.length) {
@@ -1315,7 +1331,7 @@
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(Object.assign(ReviewAuth.proof(), {
           termsAccepted: true,
           termsVersion: TERMS_VERSION,
           name: document.getElementById("name").value,
@@ -1337,7 +1353,7 @@
           lang: document.documentElement.lang || "en",
           coupon: window.ReviewDeal ? ReviewDeal.code() : "",
           followUp: document.getElementById("follow-up").checked === true
-        })
+        }))
       });
       stopBtn.disabled = false;
       const payload = await readStream(res);
@@ -1351,7 +1367,11 @@
       dash.scrollTop = 0;
     } catch (error) {
       if (error.fields) markFields(error.fields);
-      if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
+      if (error.body && error.body.signIn) {
+        ReviewAuth.expire(error.message);
+        ReviewAuth.focus();
+        setStatus(error.message, true);
+      } else if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
         openRunPay(error.body);
         setStatus("Another review waits on payment.", true);
       } else if (error.paymentRequired) {
@@ -1363,7 +1383,7 @@
       }
     } finally {
       activeRun = "";
-      reviewBtn.disabled = false;
+      reviewBtn.disabled = !signedIn();
       stopBtn.disabled = true;
     }
   });
