@@ -1043,6 +1043,13 @@ async function printPdf(html) {
   }
 }
 
+// A recovery read (job.html) only needs the document. Once that document is still refused,
+// axe-core, screenshots and the phone visit cannot become the review, and they can keep
+// running until the caller aborts at 100 s ("The operation was aborted due to timeout").
+function stopForRefusal(job, docStatus) {
+  return !!(job && job.html && Number(docStatus) >= 400);
+}
+
 async function browse(job, log) {
   const say = typeof log === "function" ? (text) => { try { log(text); } catch (error) { /* a closed log must not stop the pass */ } } : () => {};
   const started = Date.now();
@@ -1129,6 +1136,12 @@ async function browse(job, log) {
     }
     if (job.probe) {
       result.timing = timing;
+      return result;
+    }
+    if (stopForRefusal(job, first.docStatus)) {
+      say(pathOf(first.finalUrl) + " is still status " + first.docStatus + " in plain Chrome, so this pass stops before axe-core and the phone.");
+      result.timing = timing;
+      result.ms = Date.now() - started;
       return result;
     }
     try {
@@ -1328,4 +1341,4 @@ async function browse(job, log) {
   }
 }
 
-module.exports = { browse, printPdf, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, printPdf, stopForRefusal, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

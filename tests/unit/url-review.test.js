@@ -431,6 +431,27 @@ test.describe("start page reads", () => {
     await assert.rejects(review({ [BANK]: WAF }, async () => ({ ok: false, error: "the browser was busy" })), /refused the plain request \(status 403\), and headless Chrome did not finish \(the browser was busy\)/);
   });
 
+  test("a 403 already loaded in plain Chrome stops the recovery pass instead of running until the caller aborts", async () => {
+    const browser = require("../../functions/url-review-browser");
+    const failures = require("../../functions/url-review-failures");
+    // Re-run Y9z2FMNqPadCNDNWRiwD on americanairlines.com: the plain read was 403, tagged Chrome was 403,
+    // and plain Chrome loaded status 403 (28 words, 30 in the raw HTML). Axe-core and the phone visit
+    // then kept going until the caller aborted: "The operation was aborted due to timeout".
+    const aborted = "The site's bot protection refused the plain read (status 403), and headless Chrome did not finish (The operation was aborted due to timeout).";
+    assert.equal(failures.causeOf(aborted).id, "browser");
+    const job = { url: BANK, paths: [], html: true };
+    assert.equal(browser.stopForRefusal(job, 403), true);
+    assert.equal(browser.stopForRefusal(Object.assign({}, job, { html: false }), 403), false);
+    assert.equal(browser.stopForRefusal(job, 200), false);
+    const block = "<html><head><title>Access Denied</title></head><body><p>Access denied. Reference 18. The request was blocked.</p></body></html>";
+    await assert.rejects(review({ [BANK]: { status: 403, headers: { "content-type": "text/html" }, body: block } }, async (seen) => {
+      assert.equal(seen.html, true);
+      assert.deepEqual(seen.paths, []);
+      assert.equal(browser.stopForRefusal(seen, 403), true);
+      return { ok: true, untagged: true, timing: { load: 1800 }, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: { "content-type": "text/html" }, html: block } };
+    }), /^Error: The site's bot protection refused the review \(status 403\), in the plain request and in headless Chrome\.$/);
+  });
+
   test("a redirect to http is named as such, not as a wrong address", async () => {
     await assert.rejects(review({ [BANK]: { status: 301, headers: { location: "http://www.bank.example.com/co" } } }),
       /^Error: The site redirected to http:\/\/www\.bank\.example\.com\/co, an http:\/\/ address\. The review only follows https\.$/);
@@ -1094,6 +1115,8 @@ test("a failure re-runs when its cause clears or a fix to its cause ships after 
   const before = Object.assign({}, bot, { rerun: { status: "failed", at: "2026-10-21T18:00:00Z", cause: "bot-protection" } });
   assert.equal(failures.rerunTrigger(before).id, "fix");
   assert.equal(failures.rerunTrigger(failedAt("2026-10-22T11:00:00Z", { kind: "stopped" })), null);
+  const browserFail = failedAt("2026-10-21T22:06:00Z", { url: "https://americanairlines.com/", host: "americanairlines.com", cause: { id: "browser" }, diagnosis: { cause: "browser", cleared: false, rerun: false } });
+  assert.deepEqual([failures.rerunTrigger(browserFail).id, failures.rerunTrigger(browserFail).ref], ["fix", "#365"]);
 });
 
 test("re-runs are planned once per address and asker, newest first, and skipped when the asker reviewed again", () => {
