@@ -78,6 +78,7 @@ function firestoreStore(db) {
       return snap.exists ? snap.data() : null;
     },
     async set(col, id, data) { await db.collection(col).doc(id).set(data, { merge: true }); },
+    async replace(col, id, data) { await db.collection(col).doc(id).set(data); },
     async remove(col, id) { await db.collection(col).doc(id).delete(); },
     async where(col, field, value, limit) {
       const snap = await db.collection(col).where(field, "==", value).limit(limit || 50).get();
@@ -96,6 +97,7 @@ function memoryStore() {
     cols,
     async get(name, id) { return col(name).has(id) ? Object.assign({}, col(name).get(id)) : null; },
     async set(name, id, data) { col(name).set(id, Object.assign({}, col(name).get(id) || {}, data)); },
+    async replace(name, id, data) { col(name).set(id, Object.assign({}, data)); },
     async remove(name, id) { col(name).delete(id); },
     async where(name, field, value, limit) {
       return Array.from(col(name).entries())

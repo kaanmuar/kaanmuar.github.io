@@ -45,7 +45,9 @@
     .sign-in-row button { margin-top: 0; white-space: nowrap; }
     .sign-in-link { background: none; color: var(--teal); padding: 0; margin: 0; text-decoration: underline; font: inherit; }
     .sign-in-photo { width: 28px; height: 28px; border-radius: 50%; vertical-align: middle; margin-right: 8px; object-fit: cover; }
-    #sign-in-status.bad { color: #b91c1c; }
+    #sign-in-status.bad, #privacy-status.bad { color: #b91c1c; }
+    button.danger { background: #b91c1c; }
+    button:disabled { opacity: .6; cursor: default; }
     .cookie-note { position: fixed; z-index: 55; left: 16px; right: 16px; bottom: 16px; max-width: 720px; margin: 0 auto; padding: 16px 18px; border-radius: 18px; background: var(--card); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(8, 14, 18, .28); font-family: Arial, sans-serif; }
     .cookie-note p { margin: 0 0 12px; font-size: 15px; line-height: 1.45; }
     .cookie-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
@@ -90,6 +92,18 @@
     <div id="list"></div>
     <button id="stop" type="button">Stop follow-up notes</button>
   </section>
+  <section id="privacy" hidden>
+    <h2>Your data</h2>
+    <p>Download everything kept under this address as a JSON file: the account, its sign-ins, saved reviews, notes and alerts.</p>
+    <button id="export" type="button">Download my data</button>
+    <p>Deleting removes the account, its sign-ins on every device, saved reviews, notes, alerts, and the sign-in with Google or any other provider. A payment record stays for five years, as Colombian tax law requires, without the report. A stop on follow-up notes stays, so they do not start again. This cannot be undone.</p>
+    <label for="delete-confirm">Type your email to confirm</label>
+    <div class="sign-in-row">
+      <input id="delete-confirm" type="email" autocomplete="off" spellcheck="false">
+      <button id="delete" class="danger" type="button">Delete my account and runs</button>
+    </div>
+    <p class="muted" id="privacy-status" role="status"></p>
+  </section>
 </main>
 <script src="js/site-analytics.js?v=20261022p"></script>
 <script src="js/qa-review-consent.js?v=20261028p"></script>
@@ -116,17 +130,19 @@
     span.className = "veil";
     return span;
   }
-  function account(path) {
+  const privacyEl = document.getElementById("privacy");
+  function account(path, extra) {
     return fetch(endpoint() + path, {
       method: "POST",
       cache: "no-store",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(window.ReviewAuth.proof())
+      body: JSON.stringify(Object.assign({}, extra || {}, window.ReviewAuth.proof()))
     });
   }
   function signedOut(response) {
     if (response.status !== 401) return false;
     fileEl.hidden = true;
+    privacyEl.hidden = true;
     window.ReviewAuth.expire("Your sign-in has ended. Sign in again to see your reviews.");
     return true;
   }
@@ -138,12 +154,78 @@
       : "Follow-up notes did not stop. Try again in a moment.";
     if (response.ok && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_stop", "URL Review", "stop");
   });
+  const privacyStatus = document.getElementById("privacy-status");
+  function sayPrivacy(message, bad) {
+    privacyStatus.textContent = message;
+    privacyStatus.classList.toggle("bad", !!bad);
+  }
+  async function failure(response, fallback) {
+    try { return (await response.json()).error || fallback; } catch (error) { return fallback; }
+  }
+  document.getElementById("export").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    sayPrivacy("Gathering your data…");
+    try {
+      const response = await account("/account/export");
+      if (signedOut(response)) return;
+      if (!response.ok) {
+        sayPrivacy(await failure(response, "Your data did not download. Try again in a moment."), true);
+        return;
+      }
+      const blob = new Blob([JSON.stringify(await response.json(), null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "qa-review-data-" + new Date().toISOString().slice(0, 10) + ".json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      sayPrivacy("Your data is downloaded.");
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_export", "URL Review", "export");
+    } catch (error) {
+      sayPrivacy("Your data did not download. Try again in a moment.", true);
+    } finally {
+      button.disabled = false;
+    }
+  });
+  document.getElementById("delete").addEventListener("click", async (event) => {
+    const confirmEl = document.getElementById("delete-confirm");
+    const typed = confirmEl.value.trim();
+    if (!typed) {
+      sayPrivacy("Type the address you are signed in with to confirm.", true);
+      confirmEl.focus();
+      return;
+    }
+    const button = event.currentTarget;
+    button.disabled = true;
+    sayPrivacy("Deleting…");
+    try {
+      const response = await account("/account/delete", { confirm: typed });
+      if (signedOut(response)) return;
+      if (!response.ok) {
+        sayPrivacy(await failure(response, "The account was not fully deleted. Try again in a moment."), true);
+        return;
+      }
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_delete", "URL Review", "delete");
+      confirmEl.value = "";
+      listEl.replaceChildren();
+      fileEl.hidden = true;
+      privacyEl.hidden = true;
+      window.ReviewAuth.expire("Your account and runs are deleted, and this device is signed out.");
+    } catch (error) {
+      sayPrivacy("The account was not fully deleted. Try again in a moment.", true);
+    } finally {
+      button.disabled = false;
+    }
+  });
   async function loadRuns() {
     const response = await account("/account/runs");
     if (signedOut(response) || !response.ok) return;
     const data = await response.json();
     if (!window.ReviewAuth.signedIn()) return;
     fileEl.hidden = false;
+    privacyEl.hidden = false;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_enter", "URL Review", "open");
     const opened = (data.runs || []).filter((run) => run.open).length;
     document.getElementById("file-status").textContent = data.free ? "Your account opens every report."
@@ -181,7 +263,7 @@
   }
   window.ReviewAuth.onChange((signed) => {
     if (signed) loadRuns();
-    else fileEl.hidden = true;
+    else fileEl.hidden = privacyEl.hidden = true;
   });
   if (window.SiteI18n) SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));
 </script>
