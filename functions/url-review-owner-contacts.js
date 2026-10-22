@@ -6,6 +6,15 @@
 
 const CONTACT_PATHS = ["/contact", "/contacto", "/contact-us", "/contactenos", "/contactanos", "/about", "/about-us", "/nosotros", "/quienes-somos", "/impressum", "/aviso-legal", "/legal"];
 const LIMIT_MS = 15000;
+// Contact-data brokers list made-up addresses on the domain to show its email format (jane.doe@, jdoe@).
+const BROKER_HOSTS = /(^|\.)(rocketreach\.co|zoominfo\.com|leadiq\.com|signalhire\.com|contactout\.com|lusha\.com|apollo\.io|hunter\.io|snov\.io|adapt\.io|clearbit\.com|emailformat\.com|email-format\.com|rocketreach\.com)$/i;
+const SAMPLE_LOCALS = /^(j(ane|ohn)?[._-]?(doe|smith)|first(name)?([._-]?last(name)?)?|f(name)?[._-]?l(ast|name)?|name|email|example|your[._-]?(name|email)?|someone|user(name)?)$/i;
+
+function sampleAddress(email, pageUrl) {
+  let host = "";
+  try { host = new URL(pageUrl).hostname; } catch (error) { host = ""; }
+  return BROKER_HOSTS.test(host) || /email[-_ ]?format/i.test(pageUrl) || SAMPLE_LOCALS.test(email.split("@")[0]);
+}
 
 // The site's own contact, legal and privacy links first, then the usual paths.
 function pathsToTry(report) {
@@ -39,7 +48,7 @@ async function discover(report, deps) {
     const results = await deps.search("\"@" + domain + "\"").catch(() => []);
     (Array.isArray(results) ? results : []).forEach((result) => {
       deps.emailsInText(result.title + " " + result.description, 10)
-        .filter((email) => deps.registrable(email.split("@")[1]) === domain)
+        .filter((email) => deps.registrable(email.split("@")[1]) === domain && !sampleAddress(email, result.url))
         .forEach((email) => add(email, "search", result.url));
     });
   })();
@@ -52,4 +61,4 @@ async function discover(report, deps) {
   return found.slice();
 }
 
-module.exports = { CONTACT_PATHS, pathsToTry, discover };
+module.exports = { CONTACT_PATHS, pathsToTry, sampleAddress, discover };

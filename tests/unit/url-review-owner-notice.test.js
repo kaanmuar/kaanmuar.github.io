@@ -161,6 +161,16 @@ test("the second look reads unread contact pages, linked GitHub profiles and web
   assert.equal(found.find((row) => row.source === "search").url, "https://directorio.co/acme");
 });
 
+test("web search skips the made-up addresses that email-format pages show", () => {
+  assert.ok(search.sampleAddress("jane.doe@acme.co", "https://directorio.co/acme"));
+  assert.ok(search.sampleAddress("jdoe@acme.co", "https://directorio.co/acme"));
+  assert.ok(search.sampleAddress("first.last@acme.co", "https://directorio.co/acme"));
+  assert.ok(search.sampleAddress("ventas@acme.co", "https://rocketreach.co/acme-email-format_b5cc"));
+  assert.ok(search.sampleAddress("ventas@acme.co", "https://www.zoominfo.com/c/acme/1"));
+  assert.ok(!search.sampleAddress("ventas@acme.co", "https://directorio.co/acme"));
+  assert.ok(!search.sampleAddress("jdoerr@acme.co", "https://directorio.co/acme"));
+});
+
 test("web search reads Brave Search API results, and finds nothing without a key or a 200 answer", async () => {
   const realFetch = global.fetch;
   const calls = [];
