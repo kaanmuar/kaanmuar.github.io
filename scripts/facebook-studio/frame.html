@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Facebook studio frame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  :root { --ink: #050c0f; --cyan-hi: #7ef6fb; --gold: #e2c48a; --text: #eef6f7; --muted: #a9bcc1; --line: rgba(126, 246, 251, .22); }
+  html, body { margin: 0; background: var(--ink); }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+  #c { position: relative; overflow: hidden; background: var(--ink); width: 1640px; height: 624px; }
+  .glow { position: absolute; inset: 0; background: radial-gradient(40% 110% at 82% 0%, rgba(77, 179, 187, .34), transparent 70%), radial-gradient(35% 100% at 18% 120%, rgba(226, 196, 138, .2), transparent 70%); }
+  .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(126, 246, 251, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(126, 246, 251, .05) 1px, transparent 1px); background-size: 52px 52px; }
+  /* Phones show only the middle 1109x624 of the cover, and the profile picture covers the bottom half of the middle. */
+  .body { position: absolute; left: 290px; right: 290px; top: 44px; height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .chip { display: inline-flex; align-items: center; gap: 14px; border: 1.5px solid var(--line); background: rgba(10, 30, 36, .6); border-radius: 999px; padding: 9px 22px; font-size: 22px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--cyan-hi); }
+  .chip i { width: 11px; height: 11px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 16px var(--gold); }
+  h1 { margin: 22px 0 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -0.02em; font-size: 68px; line-height: 1; white-space: nowrap; }
+  em { font-style: italic; background: linear-gradient(92deg, var(--cyan-hi) 0%, #b8f3ea 45%, var(--gold) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
+  p { margin: 22px 0 0; font-size: 23px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+</style>
+</head>
+<body>
+<div id="c">
+  <div class="glow"></div><div class="grid"></div>
+  <div class="body">
+    <span class="chip"><i></i>QA-lab URL Review</span>
+    <h1>One public URL in. <em>A QA review out.</em></h1>
+    <p>SEO · AI search · Analytics · Security · Accessibility · Speed</p>
+  </div>
+</div>
+</body>
+</html>
