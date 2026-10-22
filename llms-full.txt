@@ -194,7 +194,7 @@ One public address. Six scores. A list your team can start from on Monday.
 
 ## Live reports (https://carlosandmunoz.com/qa-review.html#live-reports)
 
-As of 2026-10-21, the series holds 239 public sites in 27 sectors, each read once by QA-lab URL Review (up to 100 pages). Average overall score 76; area averages: SEO 68, GEO 84, Analytics 86, Security 67, Accessibility 80, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
+As of 2026-10-22, the series holds 255 public sites in 27 sectors, each read once by QA-lab URL Review (up to 100 pages). Average overall score 76; area averages: SEO 67, GEO 84, Analytics 84, Security 67, Accessibility 78, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
 
 Site | Sector | Scope | Place | Read | Overall | Report
 MDN Web Docs | Developer docs | Worldwide | San Francisco, US | 2026-10-19 | 95 | https://carlosandmunoz.com/qa-review.html?live=mdn
@@ -325,6 +325,7 @@ ProColombia | Travel & tourism | National | Bogotá, CO | 2026-10-19 | 77 | http
 Secretaría de Cultura, Recreación y Deporte | Museums, libraries & culture | Local | Bogotá, CO | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=culturabogota
 WIPO | International organizations | Worldwide | Geneva, CH | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=wipo
 World Health Organization | Public health | Worldwide | Geneva, CH | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=who
+zipdev.com |  | Requested | Requested | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com
 Buenos Aires Ciudad | Government | Local | Buenos Aires, AR | 2026-10-21 | 76 | https://carlosandmunoz.com/qa-review.html?live=buenosaires
 Compensar | Insurance & health plans | National | Bogotá, CO | 2026-10-19 | 76 | https://carlosandmunoz.com/qa-review.html?live=compensar
 Defensoría del Pueblo | Human & digital rights | National | Bogotá, CO | 2026-10-21 | 76 | https://carlosandmunoz.com/qa-review.html?live=defensoriaco
@@ -366,6 +367,7 @@ Comunidad Andina | International organizations | Regional | Lima, PE | 2026-10-2
 Corte Constitucional | Government | National | Bogotá, CO | 2026-10-21 | 73 | https://carlosandmunoz.com/qa-review.html?live=corteconst
 FAO | International organizations | Worldwide | Rome, IT | 2026-10-19 | 73 | https://carlosandmunoz.com/qa-review.html?live=fao
 SURA | Insurance & health plans | National | Medellín, CO | 2026-10-19 | 73 | https://carlosandmunoz.com/qa-review.html?live=sura
+cognizant.com |  | Requested | Requested | 2026-10-21 | 73 | https://carlosandmunoz.com/qa-review.html?live=u-cognizant-com
 Alcaldía de Pasto | Government | Local | Pasto, CO | 2026-10-21 | 72 | https://carlosandmunoz.com/qa-review.html?live=pasto
 Alcaldía de Tunja | Government | Local | Tunja, CO | 2026-10-21 | 72 | https://carlosandmunoz.com/qa-review.html?live=tunja
 DANE | Government | National | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=dane
@@ -402,7 +404,11 @@ Unicode | Web standards | Worldwide | Mountain View, US | 2026-10-21 | 69 | http
 Gobernación de Cundinamarca | Government | Regional | Bogotá, CO | 2026-10-21 | 68 | https://carlosandmunoz.com/qa-review.html?live=cundinamarca
 Gobernación del Valle del Cauca | Government | Regional | Cali, CO | 2026-10-21 | 68 | https://carlosandmunoz.com/qa-review.html?live=valle
 Gobierno de Jalisco | Government | Regional | Guadalajara, MX | 2026-10-21 | 68 | https://carlosandmunoz.com/qa-review.html?live=jalisco
+atlassian.com |  | Requested | Requested | 2026-10-21 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-atlassian-com
+co.computrabajo.com |  | Requested | Requested | 2026-10-22 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-co-computrabajo-com
 Alcaldía de Montería | Government | Local | Montería, CO | 2026-10-21 | 67 | https://carlosandmunoz.com/qa-review.html?live=monteria
+lenovo.com |  | Requested | Requested | 2026-10-21 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-lenovo-com
+whatsapp.com |  | Requested | Requested | 2026-10-21 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-whatsapp-com
 African Union | International organizations | Regional | Addis Ababa, ET | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=africanunion
 CARICOM | International organizations | Regional | Georgetown, GY | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=caricom
 CERN | Space & science | Worldwide | Geneva, CH | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=cern
@@ -413,6 +419,7 @@ Gobierno del Quindío | Government | Regional | Armenia, CO | 2026-10-21 | 66 | 
 IGAC | Government | National | Bogotá, CO | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=igac
 Superintendencia Financiera | Banking & finance | National | Bogotá, CO | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=superfinanciera
 Superintendencia de Sociedades | Government | National | Bogotá, CO | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=supersociedades
+uber.com |  | Requested | Requested | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-uber-com
 Bancolombia | Banking & finance | National | Medellín, CO | 2026-10-19 | 65 | https://carlosandmunoz.com/qa-review.html?live=bancolombia
 Gobernación de Nariño | Government | Regional | Pasto, CO | 2026-10-21 | 65 | https://carlosandmunoz.com/qa-review.html?live=narino
 Alcaldía de Bucaramanga | Government | Local | Bucaramanga, CO | 2026-10-19 | 64 | https://carlosandmunoz.com/qa-review.html?live=bucaramanga
@@ -425,14 +432,23 @@ teaminternational.com |  | Requested | Requested | 2026-10-19 | 64 | https://car
 Alcaldía de Pereira | Government | Local | Pereira, CO | 2026-10-19 | 63 | https://carlosandmunoz.com/qa-review.html?live=pereira
 Canada.ca | Government | National | Ottawa, CA | 2026-10-21 | 63 | https://carlosandmunoz.com/qa-review.html?live=canadaca
 Procuraduría General | Government | National | Bogotá, CO | 2026-10-19 | 63 | https://carlosandmunoz.com/qa-review.html?live=procuraduria
+honda.com |  | Requested | Requested | 2026-10-22 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-honda-com
+lamega.com.co |  | Requested | CO | 2026-10-21 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-lamega-com-co
+uniminuto.edu |  | Requested | Requested | 2026-10-21 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-uniminuto-edu
 Alcaldía Distrital de Riohacha | Government | Local | Riohacha, CO | 2026-10-21 | 62 | https://carlosandmunoz.com/qa-review.html?live=riohacha
 Instituto Nacional de Salud | Public health | National | Bogotá, CO | 2026-10-21 | 62 | https://carlosandmunoz.com/qa-review.html?live=insco
 Organization of American States | International organizations | Regional | Washington, D.C., US | 2026-10-21 | 62 | https://carlosandmunoz.com/qa-review.html?live=oas
+confluence.com |  | Requested | Requested | 2026-10-21 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-confluence-com
+telegram.com |  | Requested | Requested | 2026-10-21 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-telegram-com
 Falabella Colombia | Retail & e-commerce | National | Bogotá, CO | 2026-10-19 | 60 | https://carlosandmunoz.com/qa-review.html?live=falabella
 Ministerio de Salud | Public health | National | Bogotá, CO | 2026-10-19 | 60 | https://carlosandmunoz.com/qa-review.html?live=minsalud
 Universidad del Valle | Higher education | Local | Cali, CO | 2026-10-19 | 60 | https://carlosandmunoz.com/qa-review.html?live=univalle
+davibank.com |  | Requested | Requested | 2026-10-21 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-davibank-com
 Gobernación de Santander | Government | Regional | Bucaramanga, CO | 2026-10-21 | 57 | https://carlosandmunoz.com/qa-review.html?live=santander
+avvillas.com.co |  | Requested | CO | 2026-10-21 | 57 | https://carlosandmunoz.com/qa-review.html?live=u-avvillas-com-co
+nice.com |  | Requested | Requested | 2026-10-22 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-nice-com
 Gobernación de Risaralda | Government | Regional | Pereira, CO | 2026-10-21 | 55 | https://carlosandmunoz.com/qa-review.html?live=risaralda
 ITU | Telecom | Worldwide | Geneva, CH | 2026-10-21 | 53 | https://carlosandmunoz.com/qa-review.html?live=itu
 Universidad de Antioquia | Higher education | Local | Medellín, CO | 2026-10-19 | 53 | https://carlosandmunoz.com/qa-review.html?live=udea
+mercadolibre.com.co |  | Requested | CO | 2026-10-21 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-mercadolibre-com-co
 epssura.com |  | Requested | Requested | 2026-10-20 | 40 | https://carlosandmunoz.com/qa-review.html?live=u-epssura-com
