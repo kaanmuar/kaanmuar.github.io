@@ -147,7 +147,7 @@ https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=s
 
 AI crawlers each have their own user agent. Blocking them by accident and allowing them on purpose are both one line.
 
-Try this: Open yoursite.com/robots.txt today. Check that it says what you mean for search and AI crawlers.
+Try this: Open /robots.txt on your own site today. Check that it says what you mean for search and AI crawlers.
 
 https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=robots-ai
 
