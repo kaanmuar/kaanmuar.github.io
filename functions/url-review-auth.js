@@ -12,7 +12,9 @@ const PROVIDERS = [
   { id: "microsoft.com", label: "Microsoft" },
   { id: "apple.com", label: "Apple" },
   { id: "github.com", label: "GitHub" },
-  { id: "yahoo.com", label: "Yahoo" }
+  { id: "yahoo.com", label: "Yahoo" },
+  { id: "facebook.com", label: "Facebook" },
+  { id: "twitter.com", label: "X" }
 ];
 const DEFAULT_PROVIDERS = "email,google.com";
 const CODE_MS = 15 * 60 * 1000;
