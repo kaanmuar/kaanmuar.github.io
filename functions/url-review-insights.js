@@ -1,6 +1,8 @@
 "use strict";
 
 const { URL } = require("url");
+const libraries = require("./url-review-libraries");
+const { germanSpeaking } = require("./url-review-legal");
 
 const BROWSER_READ_NOTE = "The site's bot protection refused the plain read; the page was read in headless Chrome.";
 const UNTAGGED_READ_NOTE = "The site's bot protection refused the plain read and headless Chrome while it carried the review tag; the page was read in headless Chrome without the tag.";
@@ -314,6 +316,77 @@ function chatChecks(chat, consent, add) {
     "After opening " + it + (open.keyboard ? " with Enter" : "") + ", focus left it by " + { tab: "Tab", close: "reaching its close button", escape: "Escape" }[open.exit] + ".", "", { cases: ["CHAT-03", "A11Y-04"] });
   else if (open.opened) add("Accessibility", "person", "info", "a11y-chat-trap", "Keyboard focus in the open chat needs a person",
     (open.entered ? "Focus went into a frame of " + it + " that this review cannot read" : "Focus could not be moved into " + it) + (open.keyboard ? "" : ", and Enter on the launcher did not open it") + ", so the trap check could not finish.", "", { cases: ["CHAT-03"] });
+}
+
+const SHOP_PATH = /\/(cart|checkout|basket|warenkorb|kasse|carrito|cesta|panier|carrello|carrinho)(\/|$|\?)/i;
+const LIB_SEVERITY = { critical: ["fail", "high"], high: ["risk", "high"], medium: ["risk", "medium"], low: ["risk", "low"] };
+
+// Links to the accessibility statement, the privacy notice and the imprint, on any page read or the rendered start page.
+function legalChecks(ctx, add) {
+  const { read, browsed, face, origin, home } = ctx;
+  const dom = browsed && browsed.start && browsed.start.dom;
+  if (face.signals && face.signals.appShell && !dom) return;
+  const at = (kind) => {
+    for (const page of read) {
+      const hit = page.inspect.legal && page.inspect.legal[kind];
+      if (hit) return Object.assign({ path: page.path }, hit);
+    }
+    return dom && dom.legal && dom.legal[kind] ? Object.assign({ path: browsed.start.finalPath || "/" }, dom.legal[kind]) : null;
+  };
+  const linked = (hit) => (hit.text ? "\"" + hit.text + "\"" : "A link") + " on " + hit.path + " leads to " + shownAgainst(hit.href, origin) + ".";
+  const none = "None of the " + plural(read.length, "page") + " read" + (dom ? ", nor the rendered start page," : "") + " links ";
+
+  const statement = at("accessibility");
+  const techs = [].concat.apply([], read.map((page) => page.inspect.technologies || []));
+  const seller = techs.find((item) => /^(Commerce|Payments)$/.test(item.group));
+  const products = read.some((page) => ((page.inspect.schema || {}).items || []).some((item) => item.types.some((type) => /^(Product|Offer|AggregateOffer|Store|OnlineStore)$/.test(type))));
+  const cart = read.concat(dom ? [{ inspect: { links: dom.links } }] : []).some((page) => (page.inspect.links || []).some((url) => SHOP_PATH.test(url)));
+  const shop = seller ? seller.name : products ? "product markup" : cart ? "a cart or checkout link" : "";
+  if (statement) add("Accessibility", "pass", "info", "a11y-statement", "An accessibility statement is linked", linked(statement), "", { cases: ["A11Y-06"] });
+  else if (shop) add("Accessibility", "risk", "medium", "a11y-statement", "No accessibility statement is linked",
+    "The site sells online (" + shop + "). " + none + "an accessibility statement. Since 28 June 2025 the European Accessibility Act requires one from shops that sell to consumers in the EU, unless the business is a micro-enterprise.",
+    "Publish an accessibility statement that says how the shop meets EN 301 549 (WCAG 2.1 AA), lists known gaps, and gives a contact for access problems. Link it from the footer of every page.", { effort: "hours", cases: ["A11Y-06"] });
+  else add("Accessibility", "person", "info", "a11y-statement", "Whether an accessibility statement is required needs a person",
+    none + "an accessibility statement, and the review saw no shop. The European Accessibility Act requires one from shops and from services such as banking, transport and e-books sold to consumers in the EU, and EU public-sector sites need one too.", "", { cases: ["A11Y-06"] });
+
+  const privacy = at("privacy");
+  if (privacy) add("Analytics", "pass", "info", "an-privacy", "A privacy notice is linked", linked(privacy), "", { cases: ["PR-01"] });
+  else {
+    const cookies = read.some((page) => (page.inspect.cookies || []).length) || !!(browsed && browsed.consent && browsed.consent.before && browsed.consent.before.cookieCount);
+    const forms = read.reduce((sum, page) => sum + (page.inspect.forms || 0), 0);
+    const why = [cookies ? "sets cookies" : "", (ctx.tags || []).length ? "loads " + sample(ctx.tags.map((tag) => tag.name), 3) : "", forms ? "has " + plural(forms, "form") : ""].filter(Boolean);
+    add("Analytics", "risk", why.length ? "medium" : "low", "an-privacy", "No privacy notice is linked",
+      none + "a privacy notice" + (why.length ? ", yet the site " + why.join(", ") : "") + ". Visitors cannot see who handles their data or why.",
+      "Publish a privacy notice that names who controls the data, what is collected, why, and the visitor's rights, and link it from the footer of every page.", { effort: "hours", cases: ["PR-01"] });
+  }
+
+  const imprint = at("imprint");
+  const german = germanSpeaking(face.lang, face.textLang, home.url);
+  if (imprint) add("Analytics", "pass", "info", "an-imprint", "An imprint is linked", linked(imprint), "", { cases: ["PR-04"] });
+  else if (german) add("Analytics", "risk", "medium", "an-imprint", "No imprint (Impressum) is linked",
+    "The site is " + (/^de\b/i.test(face.lang || "") ? "declared German (lang=\"" + face.lang + "\")" : face.textLang === "de" ? "written in German" : "on a German-speaking domain") + ". " + none + "an Impressum, which business sites in Germany (§ 5 DDG) and Austria (§ 5 ECG) must show.",
+    "Publish an Impressum with the provider's name, postal address, email, and register and VAT numbers, and link it from the footer of every page.", { effort: "hours", cases: ["PR-04"] });
+}
+
+// Front-end libraries named by script addresses, banners or page globals, against the bundled retire.js list.
+function libraryChecks(ctx, add) {
+  const { read, browsed, origin } = ctx;
+  const rows = libraries.assess([].concat.apply([], read.map((page) => page.inspect.libraries || [])).concat((browsed && browsed.libraries) || []));
+  if (!rows.length) return;
+  const flawed = rows.filter((row) => row.flaws);
+  const list = "the retire.js list of " + libraries.LIST_DATE;
+  if (!flawed.length) {
+    add("Security", "pass", "info", "sec-libraries", "Front-end libraries have no known flaw", sample(rows.map((row) => row.name + " " + row.version), 5) + ", checked against " + list + ".", "", { cases: ["SEC-10"] });
+    return;
+  }
+  const where = (row) => row.via === "global" ? "read from the page" : (row.via === "banner" ? "banner of " : "") + shownAgainst(row.url, origin);
+  const [verdict, severity] = LIB_SEVERITY[flawed[0].worst] || LIB_SEVERITY.medium;
+  const evidence = flawed.slice(0, 4).map((row, index) => row.name + " " + row.version + " (" + where(row) + "): " + plural(row.flaws, "known flaw") + ", the worst rated " + row.worst +
+    (row.ids.length ? ", such as " + row.ids.join(", ") : "") + (index === 0 && row.summary ? ". " + row.summary.replace(/\.?$/, ".") : ".")).join(" ") + (flawed.length > 4 ? " " + plural(flawed.length - 4, "more library", "more libraries") + " also have flaws." : "") + " Checked against " + list + ".";
+  const steps = flawed.slice(0, 4).map((row) => row.ended ? "move " + row.name + " off " + row.version.split(".")[0] + ".x, which gets no more fixes" : "upgrade " + row.name + " to " + row.fixed + " or later");
+  const fix = steps.join("; ").replace(/^./, (c) => c.toUpperCase()) + "." + (flawed.some((row) => row.majorJump) ? " A major upgrade changes behavior, so retest the pages that use it." : "");
+  add("Security", verdict, severity, "sec-libraries", flawed.length === 1 ? flawed[0].name + " " + flawed[0].version + (flawed[0].flaws === 1 ? " has a known flaw" : " has known flaws") : plural(flawed.length, "front-end library has", "front-end libraries have") + " known flaws",
+    evidence, fix, { effort: flawed.some((row) => row.majorJump) ? "days" : "hours", count: flawed.length, cases: ["SEC-10"] });
 }
 
 function browserChecks(b, add, ctx) {
@@ -1029,7 +1102,10 @@ function analyze(input) {
       "Move the email out of the URL (POST it, or use an opaque token).", { pages: pii.map((page) => page.path), effort: "hours" });
   }
 
+  legalChecks({ read, browsed, face, origin, home, tags }, add);
+
   // Security
+  libraryChecks({ read, browsed, origin }, add);
   const hdr = face.headers || {};
   const rawHeaders = face.rawHeaders || {};
   const headerRows = read.map((page) => {
