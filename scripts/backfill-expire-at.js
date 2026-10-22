@@ -7,12 +7,21 @@ const auth = require("../functions/url-review-auth");
 
 const PROJECT = process.env.GCLOUD_PROJECT || "carlosm-interactive-cv";
 const BASE = "https://firestore.googleapis.com/v1/projects/" + PROJECT + "/databases/(default)/documents";
-const FIELDS = ["retainUntil", "status", "createdAt", "lastSignInAt", "expiresAt", "expireAt"];
+const FIELDS = ["retainUntil", "status", "createdAt", "lastSignInAt", "expiresAt", "at", "expireAt"];
 const HOUR = 60 * 60 * 1000;
+const PAYMENTS = ["monthly-pass", "run-credit", "run-credit-used"];
 const at = (iso, plus) => (Date.parse(iso || "") ? new Date(Date.parse(iso) + (plus || 0)) : null);
+const paid = (iso) => (Date.parse(iso || "") ? core.paymentExpireAt(iso) : null);
 const RULES = {
   url_reviews: (row) => row.retainUntil ? at(row.retainUntil)
-    : ["blocked", "payment-due"].includes(row.status) ? at(row.createdAt, core.RETAIN_MS) : null,
+    : PAYMENTS.includes(row.status) ? paid(row.createdAt)
+    : ["blocked", "payment-due", "checkout-open"].includes(row.status) ? at(row.createdAt, core.RETAIN_MS)
+    : row.status === "capture" ? at(row.at, core.RETAIN_MS) : null,
+  url_review_redemptions: (row) => paid(row.at),
+  url_review_opens: (row) => at(row.createdAt, core.RETAIN_MS),
+  url_review_free_runs: (row) => at(row.at, core.RETAIN_MS),
+  url_review_notes: (row) => row.status === "follow-stop" ? null : at(row.createdAt, core.RETAIN_MS),
+  url_review_stop_links: (row) => at(row.createdAt, core.RETAIN_MS),
   url_review_accounts: (row) => at(row.retainUntil) || at(row.lastSignInAt, auth.ACCOUNT_MS),
   url_review_sign_ins: (row) => at(row.createdAt, Math.max(auth.CODE_MS, HOUR)) || at(row.expiresAt),
   url_review_sessions: (row) => at(row.expiresAt),
