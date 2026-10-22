@@ -14,7 +14,7 @@ const BATCH = batchAt >= 0 && argv[batchAt + 1] ? argv[batchAt + 1] : "page-2026
 const OUT = path.join(ROOT, "media/facebook", BATCH);
 
 const MAX_COVER_BYTES = 100 * 1024;
-const LIMITS = { name: 75, username: 50, bio: 101 };
+const LIMITS = { name: 75, username: 50, bio: 101, about: 255 };
 
 function checkCopy(page) {
   const errors = [];

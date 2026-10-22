@@ -427,8 +427,8 @@ test.describe("start page reads", () => {
 
   test("when headless Chrome is refused too, the error names the bot protection", async () => {
     const browse = async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: {}, html: WAF.body } });
-    await assert.rejects(review({ [BANK]: WAF }, browse), /^Error: The site's bot protection refused the review \(status 403, an AWS WAF bot check\), in the plain read and in headless Chrome\.$/);
-    await assert.rejects(review({ [BANK]: WAF }, async () => ({ ok: false, error: "the browser was busy" })), /refused the plain read \(status 403\), and headless Chrome did not finish \(the browser was busy\)/);
+    await assert.rejects(review({ [BANK]: WAF }, browse), /^Error: The site's bot protection refused the review \(status 403, an AWS WAF bot check\), in the plain request and in headless Chrome\.$/);
+    await assert.rejects(review({ [BANK]: WAF }, async () => ({ ok: false, error: "the browser was busy" })), /refused the plain request \(status 403\), and headless Chrome did not finish \(the browser was busy\)/);
   });
 
   test("a redirect to http is named as such, not as a wrong address", async () => {

@@ -1,6 +1,6 @@
 # Carlos A. Muñoz: interactive CV, free QA tools, and QA-lab URL Review
 
-> carlosandmunoz.com is the site of Carlos A. Muñoz Ardila, a senior QA architect and IT project manager with over 18 years of experience, based in Medellín, Colombia. It holds his interactive CV, a free QA regression lab, a free SDLC studio, and QA-lab URL Review, which reads one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases written for 20 frameworks.
+> carlosandmunoz.com is the site of Carlos A. Muñoz Ardila, a senior QA architect and IT project manager with over 18 years of experience, based in Medellín, Colombia. It holds his interactive CV, a free QA regression lab, a free SDLC studio, and QA-lab URL Review, which analyzes one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases written for 20 frameworks.
 
 Full text for answer engines, in one file: https://carlosandmunoz.com/llms-full.txt
 
@@ -19,9 +19,12 @@ Full text for answer engines, in one file: https://carlosandmunoz.com/llms-full.
 
 ## QA-lab URL Review
 
-QA-lab URL Review reads one public https address and proposes test cases. It does not run those cases, sign in, submit a form, or generate load. It is not a certification.
+QA-lab URL Review analyzes one public https address and proposes test cases. It does not run those cases, sign in to the site, submit a form, or generate load. It is not a certification.
+A review starts after you sign in on the device that runs it, with email (a 6-digit code or a link) or an account you already have: Google, Microsoft, GitHub, Yahoo, or X. The email comes from that sign-in. Signed-in runs are listed on the account page.
+Records are deleted automatically when their time is up: review records 12 months after the run, accounts 12 months after the last sign-in, sessions after 30 days, and logs of failed or stopped reviews after 90 days.
+Every day, newly finished public reviews are published as Live Reports on this site and posted as images and voiced clips on LinkedIn, Facebook, Instagram, X, Threads, Bluesky, Mastodon, TikTok, and YouTube, without the asker's name, email, or reason. The asker can tick “Don't publish this review”; sites flagged by Safe Browsing and test runs are never published.
 
-The operator is a natural person domiciled in Colombia. Contact is the form on https://carlosandmunoz.com/ and qa@carlosandmunoz.com.
+Carlos A. Muñoz, Bogotá, Colombia, is responsible for the service and its records. Contact: qa@carlosandmunoz.com.
 ## Pages
 
 - [Review](https://carlosandmunoz.com/qa-review.html)
@@ -33,8 +36,8 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - [How it works, a guided tour](https://carlosandmunoz.com/qa-review-guide.html): who it helps, the six steps, how to read the six scores, and what a review never does
 - [Facts](https://carlosandmunoz.com/qa-review.html#service-facts)
 - [Sample report, this site's own review](https://carlosandmunoz.com/qa-review.html?sample=1)
-- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 237 real public sites read by the review, tagged by sector, scope (worldwide, national, regional, local), country, and test type, view and share only
-- [Disclaimers](https://carlosandmunoz.com/qa-review-legal.html)
+- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 255 real public sites analyzed by the review, with new requested reviews added daily, tagged by sector, scope (worldwide, national, regional, local), country, and test type, view and share only
+- [Privacy and disclaimers](https://carlosandmunoz.com/qa-review-legal.html): what is stored, for how long, who receives it, and how to ask for a copy or deletion
 - Languages: English, Spanish, Portuguese, German, French, Italian.
 
 ## Elsewhere
@@ -64,9 +67,11 @@ axe-core runs in the review's headless browser. Lighthouse runs on the start pag
 Kinds of cases (21): Functional, Content, Links, Accessibility, Security, Privacy, SEO, GEO, Performance, Load, Mobile, Internationalization, Resilience, Compatibility, Media, Analytics, Commerce, Forms, Visual, Platform, API.
 Every report scores six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with evidence, a fix, and an effort estimate. The report also shows a Google result preview, a share-card preview, an AI crawler matrix from robots.txt, a map of the pages analyzed, and a fix-first list.
 A headless Chromium visit from an EU address (Belgium) loads the start page and up to two linked pages. It records which tracking requests and cookies appear before a cookie choice and after Reject, runs axe-core against WCAG 2.2 AA, compares the HTML text with the rendered text, checks a 390 px phone width and a 768 px tablet width, measures lab paint and layout shift, and keeps desktop, tablet, and phone screenshots. Its only click is the banner's reject button.
+It also checks chat widgets and AI chatbots (consent, weight, and keyboard access), the accessibility statement, imprint, and privacy pages, outdated front-end libraries (bundled retire.js data), Google Safe Browsing through the Web Risk API, domain expiry and transfer lock through the registry's RDAP service, and MTA-STS, TLS-RPT, and BIMI for mail, and estimates the carbon of one visit. A site whose bot protection refuses the plain request is analyzed in headless Chrome.
+Google PageSpeed Insights and Google Web Risk receive the start address; the domain's registry receives the domain.
 The report can also list technologies, pages analyzed, public signals, and public write-ups. Secrets are not copied. A missing header is not proof of a break-in.
 Cases are written for each chosen framework. The case export carries a starting script per framework; the review never runs them.
-Journey cases come from the site's own visible navigation: the link text, a unique selector, the page it opens, and the heading the review read there. The scripts click; the review does not.
+Journey cases come from the site's own visible navigation: the link text, a unique selector, the page it opens, and the heading the review found there. The scripts click; the review does not.
 A later review of the same host with the same email shows what was fixed, what is new, and how each area score moved.
 The script ZIP also holds a GitHub Actions workflow for the chosen frameworks and a fix kit: security headers for common hosts, a Report-Only content security policy, structured data, llms.txt, and security.txt drafts, and DNS records.
 Case exports: automation scripts (ZIP, one suite per framework), Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, PDF.
@@ -83,7 +88,7 @@ The news strip uses the country of the connection and the language selected on t
 
 ## Not for indexing
 
-Payment, sign-in, and the operator desk are not public catalogs. The payment page and the sign-in page ask crawlers not to index them.
+Payment, the account page, and the operator desk are not public catalogs. The payment page and the account page (saved runs, behind sign-in) ask crawlers not to index them.
 
 ## How QA-lab URL Review works (https://carlosandmunoz.com/qa-review-guide.html)
 A guided tour
@@ -112,26 +117,26 @@ The five-minute tour
 ### From the first checkbox to the last export
 
 #### Read what the review will and will not do
-Every control on the review page stays off until you accept the disclaimers. They take a minute, and they explain the rules for Colombia, where the service is operated, and for the country of the site you submit. Why we ask: a review reads someone's public pages. You should know exactly what happens before a single address is opened.
+Every control on the review page stays off until you accept the disclaimers. They take a minute, and they explain the rules for Colombia, where the service is operated, and for the country of the site you submit. Why we ask: a review analyzes someone's public pages. You should know exactly what happens before a single address is opened.
 
 #### Say who is asking
-Give your name, an email at the same domain as the site, and the reason for the review. If you review a client's site, add the client's name, email, and website. Why we ask: there is a record of who asked, a site owner can ask us to stop and delete the report, and you can ask for a copy or deletion at any time.
+Sign in with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X); your email comes from that sign-in. Then give your name and the reason for the review. If the reason is your own site, sign in with an email at its domain. If you review a client's site, add the client's name, email, and website. Why we ask: there is a record of who asked, a site owner can ask us to stop and delete the report, and you can ask for a copy or deletion at any time.
 
 #### Paste one public address and pick your frameworks
 One https address, plus the frameworks your team uses: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, or k6. Tip: choose only the frameworks you would really run. Fewer frameworks make the export easier to read.
 
 #### Watch the analysis happen
-The review reads up to twenty pages, two links deep. It opens up to three of them in a headless browser from an EU address, runs axe-core, checks phone and tablet widths, keeps three screenshots, and asks Google PageSpeed Insights to score the start page. Good to know: in that browser it presses a cookie banner's reject button once and nothing else. Google receives the start address for the PageSpeed score.
+The review analyzes up to twenty pages, two links deep. It opens up to three of them in a headless browser from an EU address in Belgium, runs axe-core, checks phone and tablet widths, keeps three screenshots, and asks Google PageSpeed Insights to score the start page. Good to know: in that browser it presses a cookie banner's reject button once and nothing else. Google receives the start address for the PageSpeed score and the Safe Browsing check, and the domain's registry is asked when it expires. A site whose bot protection refuses the plain request is analyzed in headless Chrome.
 
 #### Read your report
-Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and performance. Every check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see your Google result, your share card, a map of the pages analyzed, and what to fix first. Remember: the report is shown once. Take your notes, or keep it, while it is open.
+Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and performance. Every check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see your Google result, your share card, a map of the pages analyzed, and what to fix first. It also checks chat widgets and AI chatbots, the accessibility statement, imprint, and privacy pages, outdated front-end libraries, Google Safe Browsing, domain expiry and transfer lock, and MTA-STS, TLS-RPT, and BIMI for mail, and estimates the carbon of one visit. Remember: signed-in runs are listed on your account page, and opening a report again asks for payment unless your account has an allowance. Take your notes while it is open.
 
 #### Take the cases home
 Export the proposed cases to a ZIP of automation scripts, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. The export also brings a GitHub Actions workflow and a fix kit with header files, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records. The scripts are yours to run. The review never runs them against your site.
 How to read the report
 
 ### We reviewed ourselves first
-These are the real scores from this site's own review on October 19, 2026: ten pages analyzed, 72 cases proposed, overall 86 out of 100. It is the same report you can open as the sample report. To compare, the live reports show the same review on more than a hundred public sites.
+These are the real scores from this site's own review on October 19, 2026: ten pages analyzed, 72 cases proposed, overall 86 out of 100. It is the same report you can open as the sample report. To compare, the live reports show the same review on more than two hundred public sites.
 
 #### What the four marks mean
 Fails now is a problem a visitor or a crawler can hit today. At risk works, but is fragile or incomplete. Passes is done well, and worth protecting with a test. Needs a person is a judgment a machine should not make for you, such as whether a third-party script is worth its weight.
@@ -141,10 +146,10 @@ Read the fix-first list from the top. It ranks findings by how much they hurt an
 Care for your site
 
 ### What a review will never do
-The review reads what any visitor can read. That is the whole point.
+The review analyzes what any visitor can see. That is the whole point.
 
-#### Sign in
-It never asks for or stores a password.
+#### Sign in to your site
+It never asks for or stores your site's password.
 
 #### Submit forms
 Your contact form and checkout stay untouched.
@@ -174,18 +179,18 @@ A missing og:image turns every shared link into a grey box. The report shows the
 axe-core findings come with the element and the rule. Turn the passing checks into tests so they stay passing.
 
 #### Speed is per page
-The report shows milliseconds for each page in the order it read them. The slowest page is rarely the home page.
+The report shows milliseconds for each page in the order it analyzed them. The slowest page is rarely the home page.
 Questions people ask
 
 ### Before you start
-Q: How much of a site does the first review read?
+Q: How much of a site does the first review analyze?
 A: Your first review is included: up to twenty pages, two links deep. A wider or deeper review asks for payment before it starts, and you see the amount first.
 Q: Can I review a site I do not own?
-A: You can review any public https address with a real reason, and the email domain check records who asked. Scores and findings for public pages may be published as a Live Report and on social media, never with the name, email, or reason of who asked. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. Please do not republish their content from a shared report.
+A: You can review any public https address with a real reason, and your sign-in records who asked. Scores and findings for public pages may be published as a Live Report, on GitHub, and on social media, unless you tick “Don't publish this review” on the request, never with the name, email, or reason of who asked. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. Please do not republish their content from a shared report.
 Q: Is the score a certification?
 A: No. The report is a snapshot and a proposal from one public analysis. It is not proof that a site is safe, fast, or compliant.
 Q: What about signed-in pages?
-A: The public review never signs in. A verification that runs cases behind a login is a separate request to qa@carlosandmunoz.com, with a login you are allowed to use.
+A: The public review never signs in to your site. A verification that runs cases behind a login is a separate request to qa@carlosandmunoz.com, with a login you are allowed to use.
 Q: Which languages can I read it in?
 A: The review page is written in English and can be read in Spanish, Portuguese, German, French, and Italian.
 
@@ -194,9 +199,9 @@ One public address. Six scores. A list your team can start from on Monday.
 
 ## Live reports (https://carlosandmunoz.com/qa-review.html#live-reports)
 
-As of 2026-10-22, the series holds 255 public sites in 27 sectors, each read once by QA-lab URL Review (up to 100 pages). Average overall score 76; area averages: SEO 67, GEO 84, Analytics 84, Security 67, Accessibility 78, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
+As of 2026-10-22, the series holds 255 public sites in 27 sectors, analyzed by QA-lab URL Review since 2026-10-19 (up to 100 pages each); new requested reviews are added in a daily batch. Average overall score 76; area averages: SEO 67, GEO 84, Analytics 84, Security 67, Accessibility 78, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
 
-Site | Sector | Scope | Place | Read | Overall | Report
+Site | Sector | Scope | Place | Analyzed | Overall | Report
 MDN Web Docs | Developer docs | Worldwide | San Francisco, US | 2026-10-19 | 95 | https://carlosandmunoz.com/qa-review.html?live=mdn
 CA.gov | Government | Regional | Sacramento, US | 2026-10-21 | 92 | https://carlosandmunoz.com/qa-review.html?live=cagov
 GOV.UK | Government | Worldwide | London, GB | 2026-10-19 | 92 | https://carlosandmunoz.com/qa-review.html?live=govuk
