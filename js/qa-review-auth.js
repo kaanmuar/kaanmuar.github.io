@@ -73,17 +73,22 @@
     el("sign-in-done").hidden = !signed;
     el("sign-in-code-note").hidden = !!factor;
     if (waiting) el("sign-in-code-label").textContent = factor ? "Code from your authenticator app" : "Code sent to " + pending.sentTo;
-    if (signed) el("sign-in-who").textContent = signed.email;
+    if (signed) el("sign-in-who").textContent = signed.name ? signed.name + " (" + signed.email + ")" : signed.email;
+    const photo = el("sign-in-photo");
+    photo.hidden = !(signed && signed.picture);
+    if (signed && signed.picture) photo.src = signed.picture;
     const email = el("email");
     if (email) {
       email.value = signed ? signed.email : "";
       email.readOnly = true;
     }
+    const name = el("name");
+    if (name && signed && signed.name && !name.value.trim()) name.value = signed.name;
     listeners.forEach((fn) => fn(!!signed));
   }
 
   function signedIn(data) {
-    write(SESSION_KEY, { session: data.session, email: data.email, provider: data.provider });
+    write(SESSION_KEY, { session: data.session, email: data.email, provider: data.provider, name: data.name || "", picture: data.picture || "" });
     write(PENDING_KEY, null);
     say("");
     paint();
@@ -163,7 +168,12 @@
   }
 
   function providerFor(auth, id) {
-    if (id === "google.com") return new auth.GoogleAuthProvider();
+    if (id === "google.com") {
+      const google = new auth.GoogleAuthProvider();
+      ["email", "profile"].forEach((scope) => google.addScope(scope));
+      google.setCustomParameters({ prompt: "select_account" });
+      return google;
+    }
     if (id === "github.com") return new auth.GithubAuthProvider().addScope("user:email");
     const provider = new auth.OAuthProvider(id);
     if (id === "apple.com") ["email", "name"].forEach((scope) => provider.addScope(scope));
@@ -203,8 +213,15 @@
   async function finishProvider(result, id) {
     const { auth, instance } = await loadFirebase();
     const idToken = await result.user.getIdToken();
+    const shown = (auth.getAdditionalUserInfo(result) || {}).profile || {};
+    const profile = {
+      givenName: shown.given_name || shown.givenName || "",
+      familyName: shown.family_name || shown.surname || "",
+      locale: shown.locale || shown.preferredLanguage || "",
+      workspaceDomain: shown.hd || ""
+    };
     await auth.signOut(instance);
-    const data = await post("/auth/provider", { idToken });
+    const data = await post("/auth/provider", { idToken, profile });
     if (data.session) signedIn(data);
     else {
       waitForCode(data);

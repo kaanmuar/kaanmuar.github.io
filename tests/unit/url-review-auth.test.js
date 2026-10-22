@@ -78,6 +78,29 @@ test("a provider sign-in needs an open provider and a verified email", async () 
   assert.equal(unverified.email, "ana@outlook.com");
 });
 
+test("a Google sign-in keeps the profile on the account, and trusts only what it can check", async () => {
+  const store = auth.memoryStore();
+  const decoded = { uid: "u1", email: "ana@acme.com", email_verified: true, name: "Ana Ruiz", picture: "https://lh3.googleusercontent.com/a/x", firebase: { sign_in_provider: "google.com" } };
+  const signed = await auth.providerSignIn(store, decoded, {
+    deviceKey: DESKTOP,
+    enabled: "google.com",
+    profile: { givenName: "Ana", familyName: "Ruiz<script>", locale: "es-419", workspaceDomain: "acme.com" }
+  });
+  assert.equal(signed.name, "Ana Ruiz");
+  assert.equal(signed.picture, "https://lh3.googleusercontent.com/a/x");
+  const account = await store.get("url_review_accounts", "ana@acme.com");
+  assert.deepEqual(account.profile, { name: "Ana Ruiz", givenName: "Ana", familyName: "Ruizscript", picture: "https://lh3.googleusercontent.com/a/x", locale: "es-419", workspaceDomain: "acme.com" });
+  const other = await auth.providerSignIn(store, Object.assign({}, decoded, { email: "ana@gmail.com", picture: "javascript:alert(1)" }), {
+    deviceKey: DESKTOP,
+    enabled: "google.com",
+    profile: { workspaceDomain: "acme.com", locale: "not a locale" }
+  });
+  assert.equal(other.picture, "");
+  assert.deepEqual((await store.get("url_review_accounts", "ana@gmail.com")).profile, { name: "Ana Ruiz" });
+  const byEmail = await emailSession(store, DESKTOP);
+  assert.equal(byEmail.name, "");
+});
+
 test("the provider list always offers email and only the providers switched on", () => {
   assert.deepEqual(auth.enabledProviders("").map((item) => item.id), ["email", "google.com"]);
   assert.deepEqual(auth.enabledProviders("google.com,apple.com,nope").map((item) => item.id), ["email", "google.com", "apple.com"]);

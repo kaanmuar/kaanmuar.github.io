@@ -1725,7 +1725,7 @@ async function reviewSignIn(req, res, pathName) {
     return;
   }
   const answer = (result) => {
-    if (result.ok) res.status(200).json({ ok: true, session: result.session, email: result.email, provider: result.provider });
+    if (result.ok) res.status(200).json({ ok: true, session: result.session, email: result.email, provider: result.provider, name: result.name || "", picture: result.picture || "" });
     else res.status(result.status).json({ error: result.error, code: result.code || "" });
   };
   if (pathName.endsWith("/auth/email")) {
@@ -1754,7 +1754,7 @@ async function reviewSignIn(req, res, pathName) {
       res.status(401).json({ error: "That sign-in was not accepted. Try again." });
       return;
     }
-    const result = await reviewAuth.providerSignIn(store, decoded, { deviceKey: body.deviceKey, enabled });
+    const result = await reviewAuth.providerSignIn(store, decoded, { deviceKey: body.deviceKey, profile: body.profile, enabled });
     if (result.verifyEmail) {
       await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
       return;

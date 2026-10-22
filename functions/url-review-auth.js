@@ -166,7 +166,28 @@ async function providerSignIn(store, decoded, input) {
   const device = deviceHash(input.deviceKey);
   if (!device) return fail(400, "This browser did not send its device key. Reload the page and try again.");
   if (decoded.email_verified !== true) return { ok: false, status: 200, verifyEmail: true, email, provider, uid: String(decoded.uid || "") };
-  return openSession(store, { email, provider, uid: decoded.uid, deviceHash: device, now });
+  return openSession(store, { email, provider, uid: decoded.uid, deviceHash: device, profile: profileFrom(decoded, input.profile, email), now });
+}
+
+function cleanText(value, max) {
+  return String(value || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, max);
+}
+
+// Name and photo come from the verified ID token. The rest is what the provider
+// showed the browser; a Workspace domain counts only when it is the email's own.
+function profileFrom(decoded, reported, email) {
+  const sent = reported && typeof reported === "object" ? reported : {};
+  const domain = String(sent.workspaceDomain || "").toLowerCase();
+  const locale = String(sent.locale || "");
+  const profile = {
+    name: cleanText(decoded.name, 120),
+    givenName: cleanText(sent.givenName, 80),
+    familyName: cleanText(sent.familyName, 80),
+    picture: /^https:\/\/[^\s"'<>]+$/.test(String(decoded.picture || "")) ? String(decoded.picture).slice(0, 500) : "",
+    locale: /^[a-z]{2,3}(?:[-_][a-z0-9]{2,8})?$/i.test(locale) ? locale : "",
+    workspaceDomain: domain && email.endsWith("@" + domain) ? domain : ""
+  };
+  return Object.keys(profile).reduce((kept, key) => (profile[key] ? Object.assign(kept, { [key]: profile[key] }) : kept), {});
 }
 
 async function openSession(store, input) {
@@ -184,14 +205,16 @@ async function openSession(store, input) {
   });
   const account = await store.get("url_review_accounts", input.email);
   const providers = ((account && account.providers) || []).filter((item) => item !== input.provider).concat(input.provider);
+  const profile = Object.assign({}, (account && account.profile) || {}, input.profile || {});
   await store.set("url_review_accounts", input.email, {
     email: input.email,
     providers,
+    profile,
     createdAt: (account && account.createdAt) || at,
     lastSignInAt: at,
     plan: (account && account.plan) || null
   });
-  return { ok: true, session, email: input.email, provider: input.provider };
+  return { ok: true, session, email: input.email, provider: input.provider, name: profile.name || "", picture: profile.picture || "" };
 }
 
 async function checkSession(store, input) {
