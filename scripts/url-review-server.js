@@ -12,6 +12,7 @@ const newsWire = require("../functions/news-wire");
 const desk = require("../functions/url-review-desk");
 const offers = require("../functions/url-review-offers");
 const auth = require("../functions/url-review-auth");
+const accountData = require("../functions/url-review-account-data");
 const oauth = require("../functions/url-review-oauth");
 
 function loadEnvFile() {
@@ -396,7 +397,7 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true, paidUntil: until, charged: false }, origin, deviceHint);
     return;
   }
-  if (req.method === "POST" && (url.pathname === "/account/runs" || url.pathname === "/account/stop")) {
+  if (req.method === "POST" && ["/account/runs", "/account/stop", "/account/export", "/account/delete"].indexOf(url.pathname) !== -1) {
     let accountBody = {};
     try { accountBody = await readBody(req); } catch (error) { accountBody = {}; }
     const signedIn = await auth.checkSession(signIns, Object.assign({}, accountBody, { touch: false }));
@@ -406,6 +407,24 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === "/account/runs") {
       sendJson(res, 200, offers.accountFile(readStore(), signedIn.email), origin, deviceHint);
+      return;
+    }
+    if (url.pathname === "/account/export") {
+      const data = await accountData.exportAccount(signIns, signedIn.email);
+      data.reviews = readStore().filter((row) => row.email === signedIn.email);
+      sendJson(res, 200, data, origin, deviceHint);
+      return;
+    }
+    if (url.pathname === "/account/delete") {
+      if (String(accountBody.confirm || "").trim().toLowerCase() !== signedIn.email) {
+        sendJson(res, 400, { error: "Type the address you are signed in with to confirm." }, origin, deviceHint);
+        return;
+      }
+      const at = new Date().toISOString();
+      const rows = readStore().filter((row) => row.email !== signedIn.email || accountData.isPayment(row) || row.status === "follow-stop");
+      fs.writeFileSync(FILE, rows.map((row) => JSON.stringify(row.email === signedIn.email && accountData.isPayment(row) && !row.accountDeletedAt ? Object.assign({ id: row.id }, accountData.paymentOnly(row, at)) : row) + "\n").join(""));
+      await accountData.deleteAccount(signIns, signedIn.email);
+      sendJson(res, 200, { ok: true }, origin, deviceHint);
       return;
     }
     writeRecord({
