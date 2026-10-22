@@ -810,6 +810,21 @@ test.describe("publishing user reviews to Live Reports", () => {
     assert.equal(publish.heldReason(record("acme.de", {}, { insights: { findings: [] } }), []), "no-score");
   });
 
+  test("an asker's opt-out, a test run, and a host Safe Browsing flags are held", () => {
+    assert.equal(publish.heldReason(record("acme.de", { unlisted: true }), []), "asker-opted-out");
+    assert.equal(publish.heldReason(record("acme.de", { unlisted: false }), []), "");
+    assert.equal(publish.heldReason(record("acme.de", { test: true }), []), "test-run");
+    const flagged = report("acme.de");
+    flagged.insights.findings.push({ key: "sec-safebrowsing", verdict: "fail", area: "Security", title: "Google lists the site as phishing" });
+    assert.equal(publish.heldReason(record("acme.de", { report: flagged }), []), "safe-browsing-flagged");
+    const clear = report("acme.de");
+    clear.insights.findings.push({ key: "sec-safebrowsing", verdict: "pass", area: "Security", title: "Not flagged" });
+    assert.equal(publish.heldReason(record("acme.de", { report: clear }), []), "");
+    const { reports, held } = publish.selectPublishable([record("a.de", { unlisted: true }), record("b.de")], []);
+    assert.deepEqual(reports.map((r) => r.report.host), ["b.de"]);
+    assert.deepEqual(held, { "asker-opted-out": 1 });
+  });
+
   test("the public copy carries no requester details or engine internals", () => {
     const { reports } = publish.selectPublishable([record("acme.de")], []);
     const text = JSON.stringify(reports);
@@ -839,6 +854,23 @@ test("the intake takes the current terms and the ones just before, and records w
   assert.equal(now.value.termsVersion, core.TERMS_VERSION);
   assert.equal(core.validateIntake(body("2026-10-21")).value.termsVersion, "2026-10-21");
   assert.ok(core.validateIntake(body("2026-09-01")).errors.some((e) => e.field === "terms"));
+});
+
+test("payment rows are kept until January 1 of the sixth year after the payment", () => {
+  assert.equal(core.paymentExpireAt("2026-10-22T12:00:00Z").toISOString(), "2032-01-01T00:00:00.000Z");
+  assert.equal(core.paymentExpireAt("2026-01-01T00:00:00Z").toISOString(), "2032-01-01T00:00:00.000Z");
+  assert.ok(core.paymentExpireAt().getTime() > Date.now() + 5 * 365 * 24 * 60 * 60 * 1000);
+});
+
+test("the optional don't-publish box rides from the form to the stored record and a re-run", () => {
+  const body = (extra) => Object.assign({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://example.org/" }, extra);
+  assert.equal(core.validateIntake(body()).value.unlisted, false);
+  assert.equal(core.validateIntake(body({ unlisted: "yes" })).value.unlisted, false);
+  const value = core.validateIntake(body({ unlisted: true })).value;
+  assert.equal(value.unlisted, true);
+  assert.equal(core.intakeRecord(value, { id: "r1" }, {}).unlisted, true);
+  assert.equal(core.intakeRecord(core.validateIntake(body()).value, { id: "r2" }, {}).unlisted, false);
+  assert.equal(require("../../functions/url-review-failures").failureRecord(Object.assign({ kind: "failed", runId: "a1" }, value)).intake.unlisted, true);
 });
 
 const failures = require("../../functions/url-review-failures");
