@@ -1396,6 +1396,94 @@ test.describe("chat widgets", () => {
   });
 });
 
+test.describe("fingerprinting, session recording and typed text", () => {
+  const browser = require("../../functions/url-review-browser");
+  const PRINTER = {
+    canvas: [
+      { host: "cdn.fp-vendor.com", w: 240, h: 60, chars: 24, colors: 3, type: "image/png" },
+      { host: "s.w.org", w: 16, h: 16, chars: 2, colors: 2, type: "image/png" },
+      { host: "www.shop.com", w: 300, h: 150, chars: 28, colors: 1, type: "image/png" },
+      { host: "tiny.example.net", w: 8, h: 8, chars: 30, colors: 3, type: "image/png" },
+      { host: "photos.example.net", w: 800, h: 600, chars: 40, colors: 3, type: "image/jpeg" }
+    ],
+    fonts: { "cdn.fp-vendor.com": 64, "www.shop.com": 12 },
+    webgl: { "ads.adnet.io": 2 },
+    audio: [{ host: "cdn.fp-vendor.com", oscillator: true }, { host: "player.music.io", oscillator: false }],
+    listen: { "www.shop.com": ["input"], "connect.facebook.net": ["change", "input"] }
+  };
+  const VENDORS = [
+    { name: "Hotjar", loads: 1, hits: 3, denied: 0 },
+    { name: "Microsoft Clarity", loads: 1, hits: 0, denied: 0 },
+    { name: "Google Analytics", loads: 1, hits: 4, denied: 0 }
+  ];
+  const TYPED = { field: "Email", sent: [{ host: "www.facebook.com", how: "as a SHA-256 hash", phase: "before" }, { host: "api.shop.com", how: "as typed", phase: "before" }] };
+  const browsed = (watch, consent) => ({
+    ok: true,
+    start: { status: 200, finalPath: "/", requests: 40, vitals: { lcp: 1200, cls: 0, tbt: 0 } },
+    consent: consent || { banner: "OneTrust", rejectLabel: "Reject all", rejected: true, before: { vendors: [], cookies: [] }, after: { vendors: [], cookies: [], kept: 0 } },
+    watch
+  });
+  const analyzeWith = (watch, consent) => insights.analyze({ pages: [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(HTML, STRONG_HEADERS, URL_) }], browser: browsed(watch, consent) });
+  const finding = (result, key) => result.findings.find((item) => item.key === key) || {};
+  const row = (result, key) => [finding(result, key).area, finding(result, key).verdict, finding(result, key).severity];
+
+  test("the classifier keeps only calls that read like fingerprinting, and names recorders and third-party typing capture", () => {
+    const out = browser.watchFrom(PRINTER, VENDORS, TYPED, "www.shop.com");
+    assert.deepEqual(out.fingerprint, { canvas: ["cdn.fp-vendor.com"], fonts: ["cdn.fp-vendor.com"], webgl: ["ads.adnet.io"], audio: ["cdn.fp-vendor.com"] });
+    assert.deepEqual(out.recorders, [{ name: "Hotjar", sent: true }, { name: "Microsoft Clarity", sent: false }]);
+    assert.deepEqual(out.listeners, ["connect.facebook.net"]);
+    assert.deepEqual(out.typed, { field: "Email", sent: [{ host: "www.facebook.com", how: "as a SHA-256 hash", phase: "before" }] });
+    assert.deepEqual(out.guards, []);
+    const clean = browser.watchFrom({ canvas: [], fonts: { "www.shop.com": 49 }, webgl: {}, audio: [], listen: {} }, [{ name: "Google Analytics", loads: 1, hits: 2 }], null, "www.shop.com");
+    assert.deepEqual(clean.fingerprint, { canvas: [], fonts: [], webgl: [], audio: [] });
+    assert.deepEqual([clean.recorders, clean.typed], [[], null]);
+    assert.deepEqual(browser.watchFrom({ canvas: [{ host: "challenges.cloudflare.com", w: 300, h: 150, chars: 30, colors: 2 }] }, [], null, "shop.com").guards, ["challenges.cloudflare.com"]);
+    assert.deepEqual(browser.watchFrom(null, null, null, "shop.com").fingerprint, { canvas: [], fonts: [], webgl: [], audio: [] });
+  });
+
+  test("the test address is matched as typed, hashed, and in Base64", () => {
+    const canary = browser.canaryOf();
+    const crypto = require("node:crypto");
+    assert.match(canary.email, /^qa[0-9a-f]{10}@example\.com$/);
+    const forms = Object.fromEntries(canary.forms);
+    assert.equal(forms["as typed"], canary.email.split("@")[0]);
+    assert.equal(forms["as a SHA-256 hash"], crypto.createHash("sha256").update(canary.email).digest("hex"));
+    assert.equal(Buffer.from(forms["in Base64"], "base64").toString(), canary.email);
+    assert.equal(typeof browser.watchCalls, "function");
+  });
+
+  test("fingerprinting, recording and typing before a choice and after Reject are reported in Analytics and Security", () => {
+    const before = browser.watchFrom(PRINTER, VENDORS, TYPED, "www.shop.com");
+    const after = browser.watchFrom({ webgl: { "ads.adnet.io": 1 } }, [{ name: "Hotjar", loads: 1, hits: 1 }], { field: "Email", sent: [] }, "www.shop.com");
+    const result = analyzeWith({ before, after });
+    assert.deepEqual(["an-fingerprint", "an-fingerprint-reject", "an-recording", "an-recording-reject", "sec-typed"].map((key) => row(result, key)), [
+      ["Analytics", "fail", "high"],
+      ["Analytics", "fail", "high"],
+      ["Analytics", "fail", "medium"],
+      ["Analytics", "fail", "medium"],
+      ["Security", "fail", "high"]
+    ]);
+    assert.match(finding(result, "an-fingerprint").evidence, /^OneTrust was showing\. Before any choice, cdn\.fp-vendor\.com drew hidden text on a canvas and read it back, measured which fonts are installed, and rendered a silent audio tone; ads\.adnet\.io read the graphics card name\./);
+    assert.match(finding(result, "an-fingerprint-reject").evidence, /^After pressing "Reject all" and reloading, ads\.adnet\.io read the graphics card name\.$/);
+    assert.match(finding(result, "sec-typed").evidence, /"Email" field and did not submit\. Before any choice it was sent to www\.facebook\.com \(as a SHA-256 hash\)\. The review blocked those requests.* Scripts from connect\.facebook\.net listen to typing/);
+  });
+
+  test("a clean page passes, a bot check alone is a low risk, and no banner makes fingerprinting a risk rather than a fail", () => {
+    const clean = browser.watchFrom({}, [{ name: "Hotjar", loads: 1, hits: 0 }], { field: "Email", sent: [] }, "www.shop.com");
+    const passed = analyzeWith({ before: clean, after: clean });
+    assert.deepEqual(["an-fingerprint", "an-recording", "an-recording-reject", "sec-typed"].map((key) => finding(passed, key).verdict), ["pass", "pass", "pass", "pass"]);
+    assert.equal(finding(passed, "an-fingerprint-reject").verdict, undefined);
+    const guard = browser.watchFrom({ canvas: [{ host: "www.recaptcha.net", w: 300, h: 150, chars: 30, colors: 2 }] }, [], null, "www.shop.com");
+    const guarded = analyzeWith({ before: guard, after: guard });
+    assert.deepEqual(row(guarded, "an-fingerprint"), ["Analytics", "risk", "low"]);
+    assert.deepEqual([finding(guarded, "an-fingerprint-reject").verdict, finding(guarded, "sec-typed").verdict], [undefined, undefined]);
+    const open = analyzeWith({ before: browser.watchFrom(PRINTER, [], null, "www.shop.com"), after: null }, { banner: "", rejectLabel: "", rejected: false, before: { vendors: [], cookies: [] }, after: null });
+    assert.deepEqual(row(open, "an-fingerprint"), ["Analytics", "risk", "high"]);
+    assert.equal(finding(open, "an-fingerprint").title, "Scripts fingerprint the browser on load and no banner asks first");
+    assert.equal(analyzeWith(undefined).findings.filter((item) => /fingerprint|recording|typed/.test(item.key)).length, 0);
+  });
+});
+
 test.describe("legal pages and front-end libraries", () => {
   const libs = require("../../functions/url-review-libraries");
   const { legalLinks } = require("../../functions/url-review-legal");

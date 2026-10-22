@@ -3,8 +3,11 @@
  * Records which tracking requests and cookies appear before a choice and after Reject,
  * runs axe-core, compares the HTML text with the rendered text, checks a phone width,
  * checks a tablet width, and keeps three small screenshots. The only click is a cookie banner's reject button.
+ * It watches the canvas, WebGL, audio and font calls scripts make, and types a test address into one form field
+ * without submitting; any request carrying that address is blocked, so nothing typed leaves the browser.
  */
 const fs = require("fs");
+const crypto = require("crypto");
 const dns = require("dns").promises;
 const { legalLinks, LEGAL_ANY } = require("./url-review-legal");
 const { fromUrl: libraryFromUrl, fromContent: libraryFromContent, fromGlobals: libraryFromGlobals, PROBE: LIBRARY_PROBE } = require("./url-review-libraries");
@@ -40,8 +43,16 @@ const VENDORS = [
   ["Amplitude", /(^|\.)(api2?\.amplitude\.com)$/],
   ["Heap", /(^|\.)heapanalytics\.com$/],
   ["FullStory", /(^|\.)(fullstory\.com|rs\.fullstory\.com)$/],
+  ["Mouseflow", /(^|\.)mouseflow\.com$/],
+  ["Smartlook", /(^|\.)(smartlook\.com|smartlook\.cloud)$/],
+  ["LogRocket", /(^|\.)(logrocket\.io|logrocket\.com|lr-ingest\.io|lr-in\.com|lr-in-prod\.com|lr-ingest\.com)$/],
+  ["Inspectlet", /(^|\.)inspectlet\.com$/],
+  ["Lucky Orange", /(^|\.)(luckyorange\.com|luckyorange\.net)$/],
+  ["Contentsquare", /(^|\.)(contentsquare\.net|contentsquare\.com)$/],
   ["Adobe Analytics", /(\.omtrdc\.net|\.2o7\.net|(^|\.)demdex\.net)$/]
 ];
+const RECORDERS = ["Hotjar", "FullStory", "Microsoft Clarity", "Mouseflow", "Smartlook", "LogRocket", "Inspectlet", "Lucky Orange", "Contentsquare"];
+const BOT_GUARDS = /(^|\.)(challenges\.cloudflare\.com|recaptcha\.net|hcaptcha\.com|perimeterx\.net|px-cdn\.net|px-cloud\.net|captcha-delivery\.com|datadome\.co|arkoselabs\.com|funcaptcha\.com|kasada\.io|incapsula\.com|imperva\.com|sift\.com|siftscience\.com|forter\.com|riskified\.com|signifyd\.com)$/;
 // [name, request hosts, launcher, widget roots, AI chatbot]
 const CHATS = [
   ["Intercom", /(^|\.)(intercom\.io|intercomcdn\.com|intercomassets\.com)$/, ".intercom-lightweight-app-launcher, .intercom-launcher, iframe[name=intercom-launcher-frame], iframe.intercom-launcher-frame", "#intercom-container, .intercom-lightweight-app, .intercom-app, #intercom-frame, iframe[name^=intercom]"],
@@ -223,7 +234,7 @@ function normal(text) {
 }
 
 function recorder(pageHttps, readLibraries) {
-  const state = { phase: "before", vendors: {}, chats: {}, wires: new Map(), libs: new Map(), reads: [], errors: [], errorCount: 0, failed: [], failedCount: 0, mixed: [], requests: 0, bytes: 0, hosts: new Set() };
+  const state = { phase: "before", vendors: {}, chats: {}, wires: new Map(), libs: new Map(), reads: [], errors: [], errorCount: 0, failed: [], failedCount: 0, mixed: [], requests: 0, bytes: 0, hosts: new Set(), canaries: [], typed: [] };
   const addLib = (row) => {
     const key = row.name + "@" + row.version;
     if (!state.libs.has(key) && state.libs.size < 20) state.libs.set(key, row);
@@ -252,6 +263,20 @@ function recorder(pageHttps, readLibraries) {
     },
     chats(phase, scripts) {
       return chatsFrom(Object.values(state.chats[phase] || {}), scripts);
+    },
+    // True when the request carries a typed test address, which the caller then blocks.
+    typed(req) {
+      if (!state.canaries.length) return false;
+      const body = req.url() + " " + (req.postData() || "");
+      for (const canary of state.canaries) {
+        const form = canary.forms.find((row) => body.includes(row[1]));
+        if (!form) continue;
+        let host = "";
+        try { host = new URL(req.url()).hostname; } catch (error) { host = ""; }
+        if (!state.typed.some((row) => row.host === host && row.phase === canary.phase) && state.typed.length < 12) state.typed.push({ host, how: form[0], phase: canary.phase });
+        return true;
+      }
+      return false;
     },
     // Script banners still being read are given a few seconds, then the list is closed.
     async libraries(globals, pageUrl) {
@@ -329,6 +354,182 @@ const VITALS = `(() => {
   }));
 })();`;
 
+// Runs in every frame before the page's own scripts. Logs the calls fingerprinting scripts make, by the host of the calling script.
+// Same-origin iframes a script creates (where font lists are often measured) are watched into the parent's log.
+function watchCalls(win, shared) {
+  const w = win || window;
+  let log = shared || { canvas: [], fonts: {}, webgl: {}, audio: [], listen: {} };
+  const natives = new WeakMap();
+  const marks = new WeakMap();
+  const tones = new WeakSet();
+  const fonts = new Set();
+  const who = () => {
+    const urls = String(new Error().stack || "").match(/https?:\/\/[^\s)]+/g) || [];
+    try { return new URL(urls[0] || location.href).hostname; } catch (e) { return location.hostname; }
+  };
+  const swap = (proto, name, make) => {
+    const d = proto && Object.getOwnPropertyDescriptor(proto, name);
+    if (!d) return;
+    const key = d.get ? "get" : "value";
+    if (typeof d[key] !== "function") return;
+    const fake = make(d[key]);
+    natives.set(fake, d[key]);
+    Object.defineProperty(proto, name, Object.assign({}, d, { [key]: fake }));
+  };
+  const wrap = (proto, name, seen) => swap(proto, name, (real) => ({ [name](...args) { try { seen(this, args); } catch (e) { /* never break the page */ } return real.apply(this, args); } })[name]);
+  const font = (value) => {
+    const name = String(value || "").trim();
+    if (!name || fonts.size >= 400 || fonts.has(name)) return;
+    fonts.add(name);
+    const host = who();
+    log.fonts[host] = (log.fonts[host] || 0) + 1;
+  };
+  const markOf = (canvas) => marks.get(canvas) || (marks.set(canvas, { chars: new Set(), colors: new Set() }), marks.get(canvas));
+  const text = (style) => (ctx, args) => {
+    if (!ctx.canvas) return;
+    const mark = markOf(ctx.canvas);
+    Array.from(String(args[0]).slice(0, 200)).forEach((c) => mark.chars.add(c));
+    if (mark.colors.size < 8) mark.colors.add(String(ctx[style]));
+  };
+  const paint = (ctx) => { const mark = ctx.canvas && marks.get(ctx.canvas); if (mark && mark.colors.size < 8) mark.colors.add(String(ctx.fillStyle)); };
+  const read = (canvas, type) => {
+    const mark = marks.get(canvas);
+    if (mark && log.canvas.length < 20) log.canvas.push({ host: who(), w: canvas.width, h: canvas.height, chars: mark.chars.size, colors: mark.colors.size, type: String(type || "image/png") });
+  };
+  [w.CanvasRenderingContext2D, w.OffscreenCanvasRenderingContext2D].forEach((C) => {
+    if (!C) return;
+    wrap(C.prototype, "fillText", text("fillStyle"));
+    wrap(C.prototype, "strokeText", text("strokeStyle"));
+    wrap(C.prototype, "fillRect", paint);
+    wrap(C.prototype, "getImageData", (ctx) => read(ctx.canvas, ""));
+    wrap(C.prototype, "measureText", (ctx) => font(ctx.font));
+  });
+  if (w.HTMLCanvasElement) {
+    wrap(w.HTMLCanvasElement.prototype, "toDataURL", (canvas, args) => read(canvas, args[0]));
+    wrap(w.HTMLCanvasElement.prototype, "toBlob", (canvas, args) => read(canvas, args[1]));
+  }
+  if (w.OffscreenCanvas) wrap(w.OffscreenCanvas.prototype, "convertToBlob", (canvas, args) => read(canvas, args[0] && args[0].type));
+  if (w.FontFaceSet) wrap(w.FontFaceSet.prototype, "check", (set, args) => font(args[0]));
+  ["offsetWidth", "offsetHeight"].forEach((name) => swap(w.HTMLElement.prototype, name, (real) => Object.getOwnPropertyDescriptor({
+    get [name]() { try { if (this.style && this.style.fontFamily) font(this.style.fontFamily); } catch (e) { /* never break the page */ } return real.call(this); }
+  }, name).get));
+  [w.WebGLRenderingContext, w.WebGL2RenderingContext].forEach((G) => {
+    if (G) wrap(G.prototype, "getParameter", (gl, args) => {
+      if (args[0] !== 0x9245 && args[0] !== 0x9246) return;
+      const host = who();
+      log.webgl[host] = (log.webgl[host] || 0) + 1;
+    });
+  });
+  if (w.BaseAudioContext) wrap(w.BaseAudioContext.prototype, "createOscillator", (ctx) => tones.add(ctx));
+  if (w.OfflineAudioContext) wrap(w.OfflineAudioContext.prototype, "startRendering", (ctx) => { if (log.audio.length < 10) log.audio.push({ host: who(), oscillator: tones.has(ctx) }); });
+  const typing = /^(keydown|keyup|keypress|beforeinput|input|change|paste)$/;
+  wrap(w.EventTarget.prototype, "addEventListener", (target, args) => {
+    const type = String(args[0]);
+    if (!typing.test(type)) return;
+    if (!(target instanceof w.HTMLInputElement || target instanceof w.HTMLTextAreaElement || target instanceof w.HTMLFormElement || target instanceof w.HTMLBodyElement || target instanceof w.Document || target === w)) return;
+    const host = who();
+    const row = log.listen[host] || (Object.keys(log.listen).length < 30 ? (log.listen[host] = []) : null);
+    if (row && row.indexOf(type) === -1) row.push(type);
+  });
+  swap(w.Function.prototype, "toString", (real) => ({ toString() { return real.call(natives.get(this) || this); } }).toString);
+  ["contentWindow", "contentDocument"].forEach((name) => swap(w.HTMLIFrameElement.prototype, name, (real) => Object.getOwnPropertyDescriptor({
+    get [name]() {
+      const out = real.call(this);
+      try {
+        const child = out && (out.defaultView || out);
+        if (child && child !== w) child.__qaWatch ? child.__qaWatch.adopt(log) : watchCalls(child, log);
+      } catch (e) { /* cross-origin frames get their own copy */ }
+      return out;
+    }
+  }, name).get));
+  const dump = () => JSON.parse(JSON.stringify(log));
+  dump.adopt = (other) => { log = other; };
+  Object.defineProperty(w, "__qaWatch", { value: dump });
+}
+
+// Frame logs are merged by host; a script repeated in several frames keeps its largest count.
+async function watchLog(page) {
+  const out = { canvas: [], fonts: {}, webgl: {}, audio: [], listen: {} };
+  const logs = await Promise.all(page.frames().slice(0, 20).map((frame) => Promise.race([
+    frame.evaluate(() => (window.__qaWatch ? window.__qaWatch() : null)).catch(() => null),
+    new Promise((resolve) => setTimeout(() => resolve(null), 1500))
+  ])));
+  logs.filter(Boolean).forEach((log) => {
+    out.canvas.push(...(log.canvas || []));
+    out.audio.push(...(log.audio || []));
+    ["fonts", "webgl"].forEach((key) => Object.entries(log[key] || {}).forEach(([host, count]) => { out[key][host] = Math.max(out[key][host] || 0, count); }));
+    Object.entries(log.listen || {}).forEach(([host, types]) => { out.listen[host] = [...new Set((out.listen[host] || []).concat(types))]; });
+  });
+  return out;
+}
+
+/**
+ * Classifies one phase's call log, vendor rows and typing probe.
+ * Canvas: text with 10 or more distinct characters drawn in two or more colours on a 16×16 or larger canvas and read back
+ * losslessly; one colour is a watermark or an emoji check.
+ * Fonts: 50 or more font families measured by one script. WebGL: the unmasked graphics card name read.
+ * Audio: an offline audio context rendered after an oscillator was made on it.
+ */
+function watchFrom(log, vendors, typed, pageHost) {
+  const raw = log || {};
+  const site = siteOf(pageHost);
+  const hosts = (list) => [...new Set(list.filter(Boolean))].slice(0, 6);
+  const fingerprint = {
+    canvas: hosts((raw.canvas || []).filter((row) => row.w >= 16 && row.h >= 16 && row.chars >= 10 && row.colors >= 2 && !/jpe?g|webp/i.test(row.type || "")).map((row) => row.host)),
+    fonts: hosts(Object.keys(raw.fonts || {}).filter((host) => raw.fonts[host] >= 50)),
+    webgl: hosts(Object.keys(raw.webgl || {}).filter((host) => raw.webgl[host] > 0)),
+    audio: hosts((raw.audio || []).filter((row) => row.oscillator).map((row) => row.host))
+  };
+  const all = hosts([].concat(fingerprint.canvas, fingerprint.fonts, fingerprint.webgl, fingerprint.audio));
+  return {
+    fingerprint,
+    guards: all.filter((host) => BOT_GUARDS.test(host)),
+    recorders: (vendors || []).filter((row) => RECORDERS.indexOf(row.name) !== -1 && (row.hits || row.loads)).map((row) => ({ name: row.name, sent: row.hits > 0 })),
+    listeners: hosts(Object.keys(raw.listen || {}).filter((host) => siteOf(host) !== site)),
+    typed: typed && typed.field ? { field: typed.field, sent: (typed.sent || []).filter((row) => siteOf(row.host) !== site).slice(0, 6) } : null
+  };
+}
+
+function canaryOf() {
+  const token = "qa" + crypto.randomBytes(5).toString("hex");
+  const email = token + "@example.com";
+  const hash = (kind) => crypto.createHash(kind).update(email).digest("hex");
+  return { email, forms: [["as typed", token], ["as a SHA-256 hash", hash("sha256")], ["as an MD5 hash", hash("md5")], ["as a SHA-1 hash", hash("sha1")], ["in Base64", Buffer.from(email).toString("base64").replace(/=+$/, "")]] };
+}
+
+// Types a test address into one contact field without submitting, then blurs it. Requests carrying it are blocked in prepare().
+async function typeProbe(page, rec, phase) {
+  const handle = await page.evaluateHandle(() => {
+    const hint = /mail|name|nombre|nome|phone|tel|first|last|vorname|prenom|cognome|apellido/i;
+    const search = /search|query|^q$|buscar|busca|suche|recherche|cerca|pesquis/i;
+    const usable = (el) => {
+      const r = el.getBoundingClientRect();
+      const s = getComputedStyle(el);
+      if (r.width < 20 || r.height < 8 || s.visibility === "hidden" || s.display === "none" || el.disabled || el.readOnly) return false;
+      if (el.closest("[role=search], [role=dialog][aria-modal=true]") || el.getAttribute("role") === "combobox") return false;
+      return !search.test([el.name, el.id, el.placeholder, el.getAttribute("aria-label")].join(" "));
+    };
+    const fields = Array.from(document.querySelectorAll("input")).filter(usable);
+    const named = (el) => hint.test([el.name, el.id, el.placeholder, el.autocomplete, el.getAttribute("aria-label")].join(" "));
+    return fields.find((el) => el.type === "email") || fields.find((el) => /^(text|tel|)$/.test(el.type) && named(el)) || null;
+  });
+  const field = handle.asElement();
+  if (!field) return null;
+  const label = await field.evaluate((el) => ((el.labels && el.labels[0] && el.labels[0].innerText) || el.placeholder || el.getAttribute("aria-label") || el.name || el.type).replace(/\s+/g, " ").trim().slice(0, 40));
+  const canary = canaryOf();
+  rec.state.canaries.push({ forms: canary.forms, phase });
+  try {
+    await field.type(canary.email, { delay: 25 });
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await field.evaluate((el) => el.blur());
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await field.evaluate((el) => { el.value = ""; });
+  } finally {
+    await field.dispose().catch(() => {});
+  }
+  return { field: label, sent: rec.state.typed.filter((row) => row.phase === phase) };
+}
+
 async function settle(page) {
   try { await page.waitForNetworkIdle({ idleTime: 700, timeout: IDLE_MS }); } catch (error) { /* busy pages keep polling */ }
 }
@@ -352,6 +553,10 @@ async function prepare(context, ua, rec, viewport) {
       return;
     }
     if (rec) rec.request(req);
+    if (rec && rec.typed(req)) {
+      req.abort("blockedbyclient").catch(() => {});
+      return;
+    }
     req.continue().catch(() => {});
   });
   if (rec) {
@@ -874,6 +1079,7 @@ async function browse(job, log) {
         await cdp.send("Network.enable");
       } catch (error) { /* chat and page bytes stay at zero */ }
       await page.evaluateOnNewDocument(VITALS);
+      await page.evaluateOnNewDocument(watchCalls);
       first = await open(page, start);
     };
     await visit();
@@ -961,6 +1167,22 @@ async function browse(job, log) {
     const chats = rec.chats("before", scripts);
     const chatRows = CHATS.filter((row) => chats.some((chat) => chat.name === row[0]));
     let chatAfter = null;
+    const watchPhase = async (phase, need) => {
+      let typed = null;
+      if (left() > need) {
+        try { typed = await typeProbe(page, rec, phase); } catch (error) { typed = null; }
+      }
+      const row = watchFrom(await watchLog(page), rec.vendors(phase), typed, host);
+      const f = row.fingerprint;
+      const kinds = [["canvas", f.canvas], ["font list", f.fonts], ["WebGL", f.webgl], ["audio", f.audio]].filter((kind) => kind[1].length);
+      say((phase === "before" ? "Before a choice: " : "After the reject: ") +
+        (kinds.length ? kinds.map((kind) => kind[0] + " fingerprinting by " + kind[1].join(", ")).join("; ") : "no fingerprinting call") + ". " +
+        (row.recorders.length ? "Session recorders: " + row.recorders.map((rr) => rr.name + (rr.sent ? " sent data" : " loaded")).join(", ") + ". " : "") +
+        (row.typed ? "Typing a test address into \"" + row.typed.field + "\" " + (row.typed.sent.length ? "sent it to " + row.typed.sent.map((s) => s.host).join(", ") + " before submit; the requests were blocked." : "sent nothing before submit.") : "No contact field was typed into."));
+      return row;
+    };
+    const watched = { before: await watchPhase("before", 28000), after: null };
+    lap("watchBefore");
     if (banner.rejectLabel && left() <= 20000) skip("Pressing the reject button", 20000);
     if (banner.rejectLabel && left() > 20000) {
       say("Pressing \"" + banner.rejectLabel + "\" and reloading to see which trackers stay.");
@@ -981,6 +1203,8 @@ async function browse(job, log) {
         };
         if (chats.length) chatAfter = { requests: rec.chats("after").reduce((sum, row) => sum + row.requests, 0), cookies: afterCookies.filter((cookie) => cookie.chat && !before.has(cookie.name + "@" + cookie.domain)).map((cookie) => cookie.name).slice(0, 8) };
         say("After the reject: " + consent.after.cookies.length + " new tracking cookies, " + consent.after.kept + " kept from before.");
+        watched.after = await watchPhase("after", 18000);
+        lap("watchAfter");
       } catch (error) {
         consent.rejectError = trim(error.message, 120);
         say("The reject button could not be pressed (" + consent.rejectError + ").");
@@ -988,6 +1212,7 @@ async function browse(job, log) {
     }
     say(rec.state.errorCount + " console errors, " + rec.state.failedCount + " failed requests, and " + rec.state.mixed.length + " mixed-content requests on the desktop visit.");
     result.consent = consent;
+    result.watch = watched;
     if (chats.length) {
       result.chat = { found: chats, cookies: beforeCookies.filter((cookie) => cookie.chat).map((cookie) => cookie.name).slice(0, 8), after: chatAfter };
       say("Chat on the start page: " + chats.map((row) => row.name + " (" + plural(row.requests, "request") + ", " + Math.round(row.bytes / 1024) + " KB)").join(", ") + ", with " + plural(result.chat.cookies.length, "chat cookie") + " before any choice.");
@@ -1103,4 +1328,4 @@ async function browse(job, log) {
   }
 }
 
-module.exports = { browse, printPdf, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf };
+module.exports = { browse, printPdf, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
