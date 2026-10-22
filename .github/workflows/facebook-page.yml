@@ -1,0 +1,37 @@
+# Schedules every rendered social batch on the QA-lab Facebook Page as its calendar slots come within the
+# Graph API's 29-day window. Captions already scheduled or published on the Page are skipped, so a rerun is
+# safe. Needs the FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN secrets (see scripts/facebook-queue.js).
+name: Facebook Page queue
+
+on:
+  schedule:
+    - cron: '7 16 * * *' # 11:07 Bogotá, clear of the Live Reports slots
+  workflow_dispatch:
+    inputs:
+      check_only:
+        description: 'Only report what the Page has scheduled'
+        type: boolean
+        default: false
+
+concurrency:
+  group: facebook-page
+  cancel-in-progress: false
+
+jobs:
+  queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+      FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Schedule the slots now within reach
+        if: ${{ !inputs.check_only }}
+        run: node scripts/facebook-queue.js --all
+      - name: Report the Page's queue
+        if: always()
+        run: node scripts/facebook-queue.js --check | tee -a "$GITHUB_STEP_SUMMARY"
