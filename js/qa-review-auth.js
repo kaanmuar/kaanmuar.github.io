@@ -12,6 +12,7 @@
   const el = (id) => document.getElementById(id);
   const listeners = [];
   let firebase = null;
+  let factor = null;
   let busy = false;
 
   function endpoint() {
@@ -65,11 +66,13 @@
   function paint() {
     const signed = current();
     const pending = read(PENDING_KEY);
+    const waiting = !signed && (!!factor || !!pending);
     box.classList.toggle("done", !!signed);
-    el("sign-in-start").hidden = !!signed || !!pending;
-    el("sign-in-code-step").hidden = !!signed || !pending;
+    el("sign-in-start").hidden = !!signed || waiting;
+    el("sign-in-code-step").hidden = !waiting;
     el("sign-in-done").hidden = !signed;
-    if (pending && !signed) el("sign-in-sent").textContent = pending.sentTo;
+    el("sign-in-code-note").hidden = !!factor;
+    if (waiting) el("sign-in-code-label").textContent = factor ? "Code from your authenticator app" : "Code sent to " + pending.sentTo;
     if (signed) el("sign-in-who").textContent = signed.email;
     const email = el("email");
     if (email) {
@@ -122,7 +125,20 @@
       const pending = read(PENDING_KEY);
       const code = el("sign-in-code").value.replace(/\D/g, "");
       if (code.length !== 6) {
-        say("Type the 6 digits from the email.", true);
+        say(factor ? "Type the 6 digits from your authenticator app." : "Type the 6 digits from the email.", true);
+        return;
+      }
+      if (factor) {
+        const { auth } = await loadFirebase();
+        let result;
+        try {
+          result = await factor.resolver.resolveSignIn(auth.TotpMultiFactorGenerator.assertionForSignIn(factor.hint.uid, code));
+        } catch (error) {
+          throw new Error("That authenticator code did not match. Try the current one.");
+        }
+        const id = factor.id;
+        factor = null;
+        await finishProvider(result, id);
         return;
       }
       try {
@@ -164,21 +180,36 @@
         result = await auth.signInWithPopup(instance, providerFor(auth, id));
       } catch (error) {
         const code = String((error && error.code) || "unknown").replace(/^auth\//, "");
+        if (code === "multi-factor-auth-required") {
+          const resolver = auth.getMultiFactorResolver(instance, error);
+          const hint = resolver.hints.find((item) => item.factorId === auth.TotpMultiFactorGenerator.FACTOR_ID);
+          if (!hint) throw new Error("This account asks for a second step this page cannot take. Use email instead.");
+          factor = { resolver, hint, id };
+          paint();
+          say("This account has two-step sign-in. Type the code from your authenticator app.");
+          el("sign-in-code").focus();
+          return;
+        }
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_failed", "URL Review", id + " " + code);
         if (/popup-closed|cancelled-popup/.test(code)) throw new Error("The " + LABELS[id] + " window closed before sign-in finished.");
         if (code === "popup-blocked") throw new Error("This browser blocked the " + LABELS[id] + " window. Allow pop-ups for this site, or use email.");
         if (code === "account-exists-with-different-credential") throw new Error("This email already signs in another way. Use that option, or email.");
         throw new Error(LABELS[id] + " sign-in failed (" + code + "). Try again, or use email.");
       }
-      const idToken = await result.user.getIdToken();
-      await auth.signOut(instance);
-      const data = await post("/auth/provider", { idToken });
-      if (data.session) signedIn(data);
-      else {
-        waitForCode(data);
-        say(LABELS[id] + " did not confirm this address, so we emailed it a code.");
-      }
+      await finishProvider(result, id);
     });
+  }
+
+  async function finishProvider(result, id) {
+    const { auth, instance } = await loadFirebase();
+    const idToken = await result.user.getIdToken();
+    await auth.signOut(instance);
+    const data = await post("/auth/provider", { idToken });
+    if (data.session) signedIn(data);
+    else {
+      waitForCode(data);
+      say(LABELS[id] + " did not confirm this address, so we emailed it a code.");
+    }
   }
 
   function paintProviders(list) {
@@ -228,7 +259,7 @@
   el("sign-in-check").addEventListener("click", checkCode);
   el("sign-in-email").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); sendCode(); } });
   el("sign-in-code").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); checkCode(); } });
-  el("sign-in-restart").addEventListener("click", () => { write(PENDING_KEY, null); say(""); paint(); });
+  el("sign-in-restart").addEventListener("click", () => { factor = null; write(PENDING_KEY, null); say(""); paint(); });
   el("sign-in-providers").addEventListener("click", (event) => {
     const button = event.target.closest("[data-provider]");
     if (button) withProvider(button.getAttribute("data-provider"));
