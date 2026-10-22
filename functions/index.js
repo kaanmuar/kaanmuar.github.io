@@ -1681,6 +1681,9 @@ async function readBrowserStream(body, log) {
 }
 
 const reviewAuth = require("./url-review-auth");
+const reviewOAuth = require("./url-review-oauth");
+// Each OAuth provider registers exactly this address as its redirect URI.
+const REVIEW_OAUTH_PAGE = "https://carlosandmunoz.com/qa-review.html";
 
 async function mailSignIn(started, lang) {
   const from = prepareMail();
@@ -1717,7 +1720,7 @@ async function reviewSignIn(req, res, pathName) {
   const body = req.body || {};
   const enabled = process.env.REVIEW_SIGN_IN_PROVIDERS;
   if (req.method === "GET" && pathName.endsWith("/auth/providers")) {
-    res.status(200).json({ providers: reviewAuth.enabledProviders(enabled) });
+    res.status(200).json({ providers: reviewAuth.enabledProviders(enabled, reviewOAuth.ready(process.env)) });
     return;
   }
   if (req.method !== "POST") {
@@ -1755,6 +1758,22 @@ async function reviewSignIn(req, res, pathName) {
       return;
     }
     const result = await reviewAuth.providerSignIn(store, decoded, { deviceKey: body.deviceKey, profile: body.profile, googleAccessToken: body.googleAccessToken, enabled });
+    if (result.verifyEmail) {
+      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
+      return;
+    }
+    answer(result);
+    return;
+  }
+  const oauthStart = pathName.match(/\/auth\/oauth\/([a-z]+)\/start$/);
+  if (oauthStart) {
+    const result = await reviewOAuth.startOAuth(store, { provider: oauthStart[1], deviceKey: body.deviceKey, ip: req.ip, enabled, env: process.env, redirectUri: REVIEW_OAUTH_PAGE });
+    if (result.ok) res.status(200).json({ ok: true, url: result.url });
+    else res.status(result.status).json({ error: result.error });
+    return;
+  }
+  if (pathName.endsWith("/auth/oauth/finish")) {
+    const result = await reviewOAuth.finishOAuth(store, { state: body.state, code: body.code, error: body.error, deviceKey: body.deviceKey, enabled, env: process.env });
     if (result.verifyEmail) {
       await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
       return;

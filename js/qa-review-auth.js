@@ -4,10 +4,11 @@
   const DEVICE_KEY = "qa-review-device-key";
   const SESSION_KEY = "qa-review-session";
   const PENDING_KEY = "qa-review-sign-in";
+  const RETURN_KEY = "qa-review-oauth-page";
   const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
   const FIREBASE = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
   const GOOGLE_SCOPES = ["email", "profile"].concat(["emails", "organization", "birthday", "phonenumbers", "addresses", "gender"].map((name) => "https://www.googleapis.com/auth/user." + name + ".read"));
-  const LABELS = { "google.com": "Google", "microsoft.com": "Microsoft", "apple.com": "Apple", "github.com": "GitHub", "yahoo.com": "Yahoo", "facebook.com": "Facebook", "twitter.com": "X" };
+  const LABELS = { "google.com": "Google", "microsoft.com": "Microsoft", "apple.com": "Apple", "github.com": "GitHub", "yahoo.com": "Yahoo", "facebook.com": "Facebook", "twitter.com": "X", linkedin: "LinkedIn", gitlab: "GitLab", discord: "Discord", twitch: "Twitch", slack: "Slack" };
   const box = document.getElementById("sign-in");
   if (!box) return;
   const el = (id) => document.getElementById(id);
@@ -231,14 +232,48 @@
     }
   }
 
+  function withOAuth(id) {
+    return run(async () => {
+      say("Opening " + LABELS[id] + "…");
+      const data = await post("/auth/oauth/" + id + "/start", {});
+      write(RETURN_KEY, location.pathname);
+      location.assign(data.url);
+    });
+  }
+
   function paintProviders(list) {
     const others = list.filter((item) => item.id !== "email" && LABELS[item.id]);
     el("sign-in-providers").innerHTML = others.map((item) =>
-      '<button type="button" class="btn sign-in-provider" data-provider="' + item.id + '"><span class="sign-in-mark sign-in-' + item.id.split(".")[0] + '" aria-hidden="true"></span>Continue with ' + LABELS[item.id] + "</button>"
+      '<button type="button" class="btn sign-in-provider" data-provider="' + item.id + '"' + (item.oauth ? " data-oauth" : "") + '><span class="sign-in-mark sign-in-' + item.id.split(".")[0] + '" aria-hidden="true"></span>Continue with ' + LABELS[item.id] + "</button>"
     ).join("");
     el("sign-in-or").hidden = !others.length;
     el("sign-in-google-note").hidden = !others.some((item) => item.id === "google.com");
-    if (others.length) loadFirebase().catch(() => { /* the button retries the load */ });
+    if (others.some((item) => !item.oauth)) loadFirebase().catch(() => { /* the button retries the load */ });
+  }
+
+  async function finishOAuth(params) {
+    const sent = { state: params.get("state"), code: params.get("code") || "", error: params.get("error") || "" };
+    ["state", "code", "scope", "error", "error_description", "error_uri", "iss"].forEach((name) => params.delete(name));
+    history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash);
+    const page = read(RETURN_KEY);
+    write(RETURN_KEY, null);
+    await run(async () => {
+      say("Checking the sign-in…");
+      let data;
+      try {
+        data = await post("/auth/oauth/finish", sent);
+      } catch (error) {
+        if (error.code === "other-device") box.classList.add("elsewhere");
+        throw error;
+      }
+      if (!data.session) {
+        waitForCode(data);
+        say("That account did not confirm this address, so we emailed it a code.");
+        return;
+      }
+      signedIn(data);
+      if (/^\/qa-review(-[a-z]{2})?\.html$/.test(String(page)) && page !== location.pathname) location.replace(page);
+    });
   }
 
   async function finishLink(params) {
@@ -282,7 +317,7 @@
   el("sign-in-restart").addEventListener("click", () => { factor = null; write(PENDING_KEY, null); say(""); paint(); });
   el("sign-in-providers").addEventListener("click", (event) => {
     const button = event.target.closest("[data-provider]");
-    if (button) withProvider(button.getAttribute("data-provider"));
+    if (button) (button.hasAttribute("data-oauth") ? withOAuth : withProvider)(button.getAttribute("data-provider"));
   });
   el("sign-out").addEventListener("click", () => {
     const saved = current();
@@ -302,5 +337,6 @@
   fetch(endpoint() + "/auth/providers").then((res) => res.json()).then((data) => paintProviders(data.providers || [])).catch(() => paintProviders([]));
   const params = new URLSearchParams(location.search);
   if (params.get("signin") && params.get("key")) finishLink(params);
+  else if (params.get("state") && (params.get("code") || params.get("error"))) finishOAuth(params);
   else confirmSaved();
 })();
