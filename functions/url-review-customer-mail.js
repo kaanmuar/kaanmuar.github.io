@@ -1,9 +1,12 @@
 /**
- * Mail to the asker: the blurred report after a run, and the return notes.
- * Findings are cut here, so the hidden part of a line never leaves in mail.
+ * Mail to the asker: the report after a run, the return notes, and sign-in.
+ * An unpaid report is cut here, so the hidden part of a line never leaves in mail.
  */
 const SITE = "https://carlosandmunoz.com";
 const DEEPER = "qa@carlosandmunoz.com";
+const ACCOUNT_PAGE = "qa-review-account.html";
+const ACCOUNT_URL = SITE + "/" + ACCOUNT_PAGE;
+const LEGAL_URL = SITE + "/qa-review-legal.html";
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const PAGE_FOR = {
   en: "qa-review.html",
@@ -38,6 +41,21 @@ const COPY = {
     deeperSubject: "Going deeper on {host}",
     why: "You get this because a review of {host} was run with this address at carlosandmunoz.com.",
     stop: "Stop follow-up notes",
+    subjectOpen: "{host} scored {score}/100. The full report is open.",
+    subjectRerun: "Your review of {host} ran again and is in.",
+    subjectStopped: "Your review of {host} stopped before the last page.",
+    titleStopped: "The review of {host} stopped before the last page.",
+    preheaderOpen: "Six scores and {count} findings, all open.",
+    leadOpen: "The six scores and the findings are open, each line in full.",
+    leadStopped: "It stopped before the last page, so it covers the pages analyzed until then.",
+    rerun: "Your earlier review of {host} failed on {date}. It ran again after the cause cleared, and this is the result, open at no charge.",
+    rerunUndated: "Your earlier review of {host} failed. It ran again after the cause cleared, and this is the result, open at no charge.",
+    openFull: "Open the full report",
+    account: "Your reviews",
+    kept: "Kept until {date}",
+    live: "Public scores from this review may appear as a Live Report. Site owners who want it removed can write to qa@carlosandmunoz.com.",
+    controller: "Carlos A. Muñoz, Bogotá, Colombia, is responsible for your data.",
+    legal: "How it is used",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Security", Accessibility: "Accessibility", Performance: "Performance" },
     page: ["Stop the follow-up notes?", "Stop them", "Done. No more follow-up notes go to {email}.", "This link no longer works."]
   },
@@ -62,6 +80,21 @@ const COPY = {
     deeperSubject: "Ir más a fondo con {host}",
     why: "Recibes esto porque se hizo una revisión de {host} con este correo en carlosandmunoz.com.",
     stop: "Dejar de recibir notas",
+    subjectOpen: "{host} sacó {score}/100. El informe completo está abierto.",
+    subjectRerun: "Tu revisión de {host} se hizo de nuevo y está lista.",
+    subjectStopped: "Tu revisión de {host} se detuvo antes de la última página.",
+    titleStopped: "La revisión de {host} se detuvo antes de la última página.",
+    preheaderOpen: "Seis puntajes y {count} hallazgos, todo abierto.",
+    leadOpen: "Los seis puntajes y los hallazgos están abiertos, cada línea completa.",
+    leadStopped: "Se detuvo antes de la última página, así que cubre las páginas analizadas hasta ese momento.",
+    rerun: "Tu revisión anterior de {host} falló el {date}. Se hizo de nuevo cuando la causa se resolvió, y este es el resultado, abierto sin costo.",
+    rerunUndated: "Tu revisión anterior de {host} falló. Se hizo de nuevo cuando la causa se resolvió, y este es el resultado, abierto sin costo.",
+    openFull: "Abrir el informe completo",
+    account: "Tus revisiones",
+    kept: "Se guarda hasta el {date}",
+    live: "Los puntajes públicos de esta revisión pueden aparecer como Live Report. Si eres dueño del sitio y quieres retirarlo, escribe a qa@carlosandmunoz.com.",
+    controller: "Carlos A. Muñoz, Bogotá, Colombia, es responsable de tus datos.",
+    legal: "Cómo se usan",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analítica", Security: "Seguridad", Accessibility: "Accesibilidad", Performance: "Rendimiento" },
     page: ["¿Dejar de recibir las notas?", "Sí, detenerlas", "Listo. No llegarán más notas a {email}.", "Este enlace ya no sirve."]
   },
@@ -86,6 +119,21 @@ const COPY = {
     deeperSubject: "Ir mais fundo com {host}",
     why: "Você recebe isto porque uma revisão de {host} foi feita com este e-mail em carlosandmunoz.com.",
     stop: "Parar de receber notas",
+    subjectOpen: "{host} tirou {score}/100. O relatório completo está aberto.",
+    subjectRerun: "Sua revisão de {host} rodou de novo e está pronta.",
+    subjectStopped: "Sua revisão de {host} parou antes da última página.",
+    titleStopped: "A revisão de {host} parou antes da última página.",
+    preheaderOpen: "Seis notas e {count} achados, tudo aberto.",
+    leadOpen: "As seis notas e os achados estão abertos, cada linha completa.",
+    leadStopped: "Ela parou antes da última página, então cobre as páginas analisadas até ali.",
+    rerun: "Sua revisão anterior de {host} falhou em {date}. Ela rodou de novo quando a causa foi resolvida, e este é o resultado, aberto sem custo.",
+    rerunUndated: "Sua revisão anterior de {host} falhou. Ela rodou de novo quando a causa foi resolvida, e este é o resultado, aberto sem custo.",
+    openFull: "Abrir o relatório completo",
+    account: "Suas revisões",
+    kept: "Guardado até {date}",
+    live: "As notas públicas desta revisão podem aparecer como Live Report. Se o site é seu e você quer removê-lo, escreva para qa@carlosandmunoz.com.",
+    controller: "Carlos A. Muñoz, Bogotá, Colômbia, é o responsável pelos seus dados.",
+    legal: "Como são usados",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Segurança", Accessibility: "Acessibilidade", Performance: "Desempenho" },
     page: ["Parar as notas?", "Sim, parar", "Pronto. Nenhuma nota a mais vai para {email}.", "Este link não vale mais."]
   },
@@ -110,6 +158,21 @@ const COPY = {
     deeperSubject: "Tiefer gehen mit {host}",
     why: "Du bekommst diese Nachricht, weil mit dieser Adresse eine Prüfung von {host} auf carlosandmunoz.com gestartet wurde.",
     stop: "Keine Notizen mehr",
+    subjectOpen: "{host} hat {score}/100. Der vollständige Bericht ist offen.",
+    subjectRerun: "Deine Prüfung von {host} lief erneut und ist fertig.",
+    subjectStopped: "Deine Prüfung von {host} hat vor der letzten Seite angehalten.",
+    titleStopped: "Die Prüfung von {host} hat vor der letzten Seite angehalten.",
+    preheaderOpen: "Sechs Werte und {count} Befunde, alles offen.",
+    leadOpen: "Die sechs Werte und die Befunde liegen offen, jede Zeile vollständig.",
+    leadStopped: "Sie hat vor der letzten Seite angehalten und umfasst die bis dahin geprüften Seiten.",
+    rerun: "Deine frühere Prüfung von {host} ist am {date} fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
+    rerunUndated: "Deine frühere Prüfung von {host} ist fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
+    openFull: "Vollständigen Bericht öffnen",
+    account: "Deine Prüfungen",
+    kept: "Gespeichert bis {date}",
+    live: "Öffentliche Werte aus dieser Prüfung können als Live Report erscheinen. Gehört dir die Website und soll er entfernt werden, schreib an qa@carlosandmunoz.com.",
+    controller: "Carlos A. Muñoz, Bogotá, Kolumbien, ist für deine Daten verantwortlich.",
+    legal: "Wie sie verwendet werden",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicherheit", Accessibility: "Barrierefreiheit", Performance: "Leistung" },
     page: ["Keine Notizen mehr?", "Ja, stoppen", "Erledigt. An {email} gehen keine Notizen mehr.", "Dieser Link gilt nicht mehr."]
   },
@@ -134,6 +197,21 @@ const COPY = {
     deeperSubject: "Aller plus loin avec {host}",
     why: "Vous recevez ce message parce qu'une revue de {host} a été lancée avec cette adresse sur carlosandmunoz.com.",
     stop: "Ne plus recevoir de notes",
+    subjectOpen: "{host} obtient {score}/100. Le rapport complet est ouvert.",
+    subjectRerun: "Votre revue de {host} a été relancée et elle est prête.",
+    subjectStopped: "Votre revue de {host} s'est arrêtée avant la dernière page.",
+    titleStopped: "La revue de {host} s'est arrêtée avant la dernière page.",
+    preheaderOpen: "Six notes et {count} constats, tout est ouvert.",
+    leadOpen: "Les six notes et les constats sont ouverts, chaque ligne en entier.",
+    leadStopped: "Elle s'est arrêtée avant la dernière page et couvre les pages analysées jusque-là.",
+    rerun: "Votre revue précédente de {host} a échoué le {date}. Elle a été relancée une fois la cause levée, et voici le résultat, ouvert sans frais.",
+    rerunUndated: "Votre revue précédente de {host} a échoué. Elle a été relancée une fois la cause levée, et voici le résultat, ouvert sans frais.",
+    openFull: "Ouvrir le rapport complet",
+    account: "Vos revues",
+    kept: "Conservé jusqu'au {date}",
+    live: "Les notes publiques de cette revue peuvent paraître dans un Live Report. Si le site vous appartient et que vous voulez le retirer, écrivez à qa@carlosandmunoz.com.",
+    controller: "Carlos A. Muñoz, Bogotá, Colombie, est responsable de vos données.",
+    legal: "Comment elles sont utilisées",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sécurité", Accessibility: "Accessibilité", Performance: "Performance" },
     page: ["Arrêter les notes ?", "Oui, arrêter", "C'est fait. Plus aucune note n'ira à {email}.", "Ce lien n'est plus valide."]
   },
@@ -158,18 +236,33 @@ const COPY = {
     deeperSubject: "Andare più a fondo con {host}",
     why: "Ricevi questo messaggio perché con questo indirizzo è stata avviata una revisione di {host} su carlosandmunoz.com.",
     stop: "Non ricevere più note",
+    subjectOpen: "{host} ha preso {score}/100. Il report completo è aperto.",
+    subjectRerun: "La tua revisione di {host} è stata rifatta ed è pronta.",
+    subjectStopped: "La tua revisione di {host} si è fermata prima dell'ultima pagina.",
+    titleStopped: "La revisione di {host} si è fermata prima dell'ultima pagina.",
+    preheaderOpen: "Sei punteggi e {count} rilievi, tutto aperto.",
+    leadOpen: "I sei punteggi e i rilievi sono aperti, ogni riga per intero.",
+    leadStopped: "Si è fermata prima dell'ultima pagina, quindi copre le pagine analizzate fin lì.",
+    rerun: "La tua revisione precedente di {host} non è riuscita il {date}. È stata rifatta quando la causa è stata risolta, ed ecco il risultato, aperto senza costi.",
+    rerunUndated: "La tua revisione precedente di {host} non è riuscita. È stata rifatta quando la causa è stata risolta, ed ecco il risultato, aperto senza costi.",
+    openFull: "Apri il report completo",
+    account: "Le tue revisioni",
+    kept: "Conservato fino al {date}",
+    live: "I punteggi pubblici di questa revisione possono comparire in un Live Report. Se il sito è tuo e vuoi rimuoverlo, scrivi a qa@carlosandmunoz.com.",
+    controller: "Carlos A. Muñoz, Bogotá, Colombia, è responsabile dei tuoi dati.",
+    legal: "Come vengono usati",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicurezza", Accessibility: "Accessibilità", Performance: "Prestazioni" },
     page: ["Fermare le note?", "Sì, fermale", "Fatto. Nessun'altra nota arriverà a {email}.", "Questo link non è più valido."]
   }
 };
 
 const PDF_COPY = {
-  en: { badge: "Blurred preview", note: "The opening of each line is readable. The rest stays blurred until the report is unlocked.", findings: "Findings", cases: "Proposed test cases", moreCases: "+{n} more cases in the full report", unlock: "Unlock the full report", attached: "The blurred report is attached as a PDF.", fails: "fail now", risks: "at risk", read: "Analyzed on {date}", file: "blurred-report", sev: { critical: "critical", high: "high", medium: "medium", low: "low" } },
-  es: { badge: "Vista previa empañada", note: "El comienzo de cada línea se puede leer. El resto sigue empañado hasta desbloquear el informe.", findings: "Hallazgos", cases: "Casos de prueba propuestos", moreCases: "+{n} casos más en el informe completo", unlock: "Desbloquear el informe completo", attached: "El informe empañado va adjunto en PDF.", fails: "fallan ahora", risks: "en riesgo", read: "Analizado el {date}", file: "informe-empanado", sev: { critical: "crítico", high: "alto", medium: "medio", low: "bajo" } },
-  pt: { badge: "Prévia embaçada", note: "O início de cada linha pode ser lido. O resto fica embaçado até o relatório ser desbloqueado.", findings: "Achados", cases: "Casos de teste propostos", moreCases: "+{n} casos a mais no relatório completo", unlock: "Desbloquear o relatório completo", attached: "O relatório embaçado vai anexado em PDF.", fails: "falham agora", risks: "em risco", read: "Analisado em {date}", file: "relatorio-embacado", sev: { critical: "crítico", high: "alto", medium: "médio", low: "baixo" } },
-  de: { badge: "Verschwommene Vorschau", note: "Der Anfang jeder Zeile ist lesbar. Der Rest bleibt verschwommen, bis der Bericht freigeschaltet ist.", findings: "Befunde", cases: "Vorgeschlagene Testfälle", moreCases: "+{n} weitere Fälle im vollständigen Bericht", unlock: "Vollständigen Bericht freischalten", attached: "Der verschwommene Bericht liegt als PDF bei.", fails: "schlagen fehl", risks: "gefährdet", read: "Geprüft am {date}", file: "verschwommener-bericht", sev: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig" } },
-  fr: { badge: "Aperçu flouté", note: "Le début de chaque ligne est lisible. Le reste reste flou jusqu'au déverrouillage du rapport.", findings: "Constats", cases: "Cas de test proposés", moreCases: "+{n} cas de plus dans le rapport complet", unlock: "Déverrouiller le rapport complet", attached: "Le rapport flouté est joint en PDF.", fails: "échouent", risks: "à risque", read: "Analysé le {date}", file: "rapport-floute", sev: { critical: "critique", high: "élevé", medium: "moyen", low: "faible" } },
-  it: { badge: "Anteprima sfocata", note: "L'inizio di ogni riga è leggibile. Il resto resta sfocato finché il rapporto non viene sbloccato.", findings: "Risultati", cases: "Casi di test proposti", moreCases: "+{n} casi in più nel rapporto completo", unlock: "Sblocca il rapporto completo", attached: "Il rapporto sfocato è allegato in PDF.", fails: "falliscono ora", risks: "a rischio", read: "Analizzato il {date}", file: "rapporto-sfocato", sev: { critical: "critico", high: "alto", medium: "medio", low: "basso" } }
+  en: { badgeOpen: "Full report", attachedOpen: "The full report is attached as a PDF.", fileOpen: "report", badge: "Blurred preview", note: "The opening of each line is readable. The rest stays blurred until the report is unlocked.", findings: "Findings", cases: "Proposed test cases", moreCases: "+{n} more cases in the full report", unlock: "Unlock the full report", attached: "The blurred report is attached as a PDF.", fails: "fail now", risks: "at risk", read: "Analyzed on {date}", file: "blurred-report", sev: { critical: "critical", high: "high", medium: "medium", low: "low" } },
+  es: { badgeOpen: "Informe completo", attachedOpen: "El informe completo va adjunto en PDF.", fileOpen: "informe", badge: "Vista previa empañada", note: "El comienzo de cada línea se puede leer. El resto sigue empañado hasta desbloquear el informe.", findings: "Hallazgos", cases: "Casos de prueba propuestos", moreCases: "+{n} casos más en el informe completo", unlock: "Desbloquear el informe completo", attached: "El informe empañado va adjunto en PDF.", fails: "fallan ahora", risks: "en riesgo", read: "Analizado el {date}", file: "informe-empanado", sev: { critical: "crítico", high: "alto", medium: "medio", low: "bajo" } },
+  pt: { badgeOpen: "Relatório completo", attachedOpen: "O relatório completo vai anexado em PDF.", fileOpen: "relatorio", badge: "Prévia embaçada", note: "O início de cada linha pode ser lido. O resto fica embaçado até o relatório ser desbloqueado.", findings: "Achados", cases: "Casos de teste propostos", moreCases: "+{n} casos a mais no relatório completo", unlock: "Desbloquear o relatório completo", attached: "O relatório embaçado vai anexado em PDF.", fails: "falham agora", risks: "em risco", read: "Analisado em {date}", file: "relatorio-embacado", sev: { critical: "crítico", high: "alto", medium: "médio", low: "baixo" } },
+  de: { badgeOpen: "Vollständiger Bericht", attachedOpen: "Der vollständige Bericht liegt als PDF bei.", fileOpen: "bericht", badge: "Verschwommene Vorschau", note: "Der Anfang jeder Zeile ist lesbar. Der Rest bleibt verschwommen, bis der Bericht freigeschaltet ist.", findings: "Befunde", cases: "Vorgeschlagene Testfälle", moreCases: "+{n} weitere Fälle im vollständigen Bericht", unlock: "Vollständigen Bericht freischalten", attached: "Der verschwommene Bericht liegt als PDF bei.", fails: "schlagen fehl", risks: "gefährdet", read: "Geprüft am {date}", file: "verschwommener-bericht", sev: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig" } },
+  fr: { badgeOpen: "Rapport complet", attachedOpen: "Le rapport complet est joint en PDF.", fileOpen: "rapport", badge: "Aperçu flouté", note: "Le début de chaque ligne est lisible. Le reste reste flou jusqu'au déverrouillage du rapport.", findings: "Constats", cases: "Cas de test proposés", moreCases: "+{n} cas de plus dans le rapport complet", unlock: "Déverrouiller le rapport complet", attached: "Le rapport flouté est joint en PDF.", fails: "échouent", risks: "à risque", read: "Analysé le {date}", file: "rapport-floute", sev: { critical: "critique", high: "élevé", medium: "moyen", low: "faible" } },
+  it: { badgeOpen: "Rapporto completo", attachedOpen: "Il rapporto completo è allegato in PDF.", fileOpen: "rapporto", badge: "Anteprima sfocata", note: "L'inizio di ogni riga è leggibile. Il resto resta sfocato finché il rapporto non viene sbloccato.", findings: "Risultati", cases: "Casi di test proposti", moreCases: "+{n} casi in più nel rapporto completo", unlock: "Sblocca il rapporto completo", attached: "Il rapporto sfocato è allegato in PDF.", fails: "falliscono ora", risks: "a rischio", read: "Analizzato il {date}", file: "rapporto-sfocato", sev: { critical: "critico", high: "alto", medium: "medio", low: "basso" } }
 };
 const PDF_CASES = 24;
 const FILLER_WORDS = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua".split(" ");
@@ -192,8 +285,18 @@ function fill(text, vars) {
   return String(text || "").replace(/\{(\w+)\}/g, (all, key) => (vars[key] == null ? all : String(vars[key])));
 }
 
-function pageUrl(lang, params) {
-  const url = new URL(SITE + "/" + PAGE_FOR[langOf(lang)]);
+function dateOf(value) {
+  const when = new Date(value || "");
+  return isNaN(when) ? "" : when.toISOString().slice(0, 10);
+}
+
+// Paid, free-account and re-run records open in full; the page and the account page open them too.
+function isOpen(record) {
+  return !!record && (record.paid === true || record.free === true);
+}
+
+function pageUrl(lang, params, file) {
+  const url = new URL(SITE + "/" + (file || PAGE_FOR[langOf(lang)]));
   Object.keys(params || {}).forEach((key) => { if (params[key]) url.searchParams.set(key, params[key]); });
   url.searchParams.set("utm_source", "email");
   url.searchParams.set("utm_medium", "url-review");
@@ -228,7 +331,7 @@ function scoreColor(score) {
 
 const SEVERITY_COLOR = { critical: "#7f1d1d", high: "#b91c1c", medium: "#b45309", low: "#64748b" };
 
-function reportFacts(record) {
+function reportFacts(record, open) {
   const report = (record && record.report) || {};
   const insights = report.insights || {};
   const score = insights.score || null;
@@ -242,7 +345,7 @@ function reportFacts(record) {
     score,
     pages: Number(counts.pages) || (Array.isArray(report.pages) ? report.pages.length : 0),
     cases: Number(counts.cases) || (Array.isArray(report.cases) ? report.cases.length : 0),
-    findings: actionable.slice(0, SHOWN_FINDINGS).map((item) => Object.assign({ area: item.area || "", severity: item.severity || "low" }, frost(item.title))),
+    findings: actionable.slice(0, SHOWN_FINDINGS).map((item) => Object.assign({ area: item.area || "", severity: item.severity || "low" }, open ? { shown: String(item.title || "").replace(/\s+/g, " ").trim(), hidden: 0 } : frost(item.title))),
     moreCount: Math.max(0, actionable.length - SHOWN_FINDINGS),
     total: actionable.length
   };
@@ -276,17 +379,35 @@ function deeperBlock(t, host, reportId) {
     "</td></tr></table></td></tr>";
 }
 
-function footerHtml(t, host, stopUrl) {
-  return esc(fill(t.why, { host })) + "<br>" +
-    (stopUrl ? "<a href=\"" + esc(stopUrl) + "\" style=\"color:#0e7490;\">" + esc(t.stop) + "</a> &middot; " : "") +
-    "<a href=\"" + SITE + "/qa-review.html\" style=\"color:#0e7490;\">QA-lab URL Review</a> &middot; Carlos Muñoz, Bogotá, Colombia";
+function link(href, label) {
+  return "<a href=\"" + esc(href) + "\" style=\"color:#0e7490;\">" + esc(label) + "</a>";
 }
 
-function footerText(t, host, stopUrl) {
-  return [fill(t.why, { host }), stopUrl ? t.stop + ": " + stopUrl : "", "QA-lab URL Review · " + SITE + "/qa-review.html"].filter(Boolean).join("\n");
+// `kept` is the retention date and `live` adds the Live Reports line; both belong to the report mail only.
+function footerHtml(t, why, opts) {
+  const o = opts || {};
+  return esc(why) + "<br>" +
+    (o.live ? esc(t.live).replace(DEEPER, link("mailto:" + DEEPER, DEEPER)) + "<br>" : "") +
+    (o.kept ? esc(fill(t.kept, { date: o.kept })) + " &middot; " : "") +
+    (o.stopUrl ? link(o.stopUrl, t.stop) + " &middot; " : "") +
+    link(ACCOUNT_URL, t.account) + " &middot; " + link(SITE + "/qa-review.html", "QA-lab URL Review") + "<br>" +
+    esc(t.controller) + " " + link(LEGAL_URL, t.legal);
 }
 
-function scoreBlock(t, facts) {
+function footerText(t, why, opts) {
+  const o = opts || {};
+  return [
+    why,
+    o.live ? t.live : "",
+    o.kept ? fill(t.kept, { date: o.kept }) : "",
+    o.stopUrl ? t.stop + ": " + o.stopUrl : "",
+    t.account + ": " + ACCOUNT_URL,
+    "QA-lab URL Review · " + SITE + "/qa-review.html",
+    t.controller + " " + t.legal + ": " + LEGAL_URL
+  ].filter(Boolean).join("\n");
+}
+
+function scoreBlock(t, facts, title) {
   if (!facts.score) return "";
   const overall = Number(facts.score.overall) || 0;
   const bars = AREAS.map((area) => {
@@ -304,7 +425,7 @@ function scoreBlock(t, facts) {
   }).join("");
   return "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 26px;font-family:Arial,Helvetica,sans-serif;\">" +
     "<p style=\"margin:0 0 6px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
-    "<p style=\"margin:0 0 18px;font-size:22px;line-height:28px;color:#ffffff;\">" + esc(fill(t.title, { host: facts.host })) + "</p>" +
+    "<p style=\"margin:0 0 18px;font-size:22px;line-height:28px;color:#ffffff;\">" + esc(title) + "</p>" +
     "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\"><tr>" +
     "<td style=\"font-size:64px;line-height:64px;font-weight:bold;color:#ffffff;padding-right:14px;\">" + overall + "</td>" +
     "<td style=\"vertical-align:bottom;padding-bottom:8px;\"><span style=\"display:inline-block;background:" + scoreColor(overall) + ";color:#ffffff;font-size:14px;font-weight:bold;padding:4px 10px;border-radius:999px;\">" + esc(facts.score.grade || "") + "</span><br><span style=\"font-size:13px;color:#cbd5e1;\">" + esc(t.outOf) + "</span></td>" +
@@ -320,8 +441,8 @@ function findingsBlock(t, facts) {
     "<tr><td style=\"padding:10px 0;border-top:1px solid #eef2f6;font-family:Arial,Helvetica,sans-serif;\">" +
     "<span style=\"display:inline-block;width:8px;height:8px;border-radius:8px;background:" + (SEVERITY_COLOR[item.severity] || SEVERITY_COLOR.low) + ";\"></span>&nbsp; " +
     "<span style=\"font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;\">" + esc(t.areas[item.area] || item.area) + "</span><br>" +
-    "<span style=\"font-size:15px;line-height:24px;color:#0f172a;\">" + esc(item.shown) + "</span> " +
-    "<span aria-hidden=\"true\" style=\"display:inline-block;background:#d6dee8;color:#d6dee8;border-radius:5px;font-size:15px;line-height:18px;\">" + "&nbsp;".repeat(Math.min(34, item.hidden)) + "</span>" +
+    "<span style=\"font-size:15px;line-height:24px;color:#0f172a;\">" + esc(item.shown) + "</span>" +
+    (item.hidden ? " <span aria-hidden=\"true\" style=\"display:inline-block;background:#d6dee8;color:#d6dee8;border-radius:5px;font-size:15px;line-height:18px;\">" + "&nbsp;".repeat(Math.min(34, item.hidden)) + "</span>" : "") +
     "</td></tr>"
   ).join("");
   const more = facts.moreCount ? "<p style=\"margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#64748b;\">" + esc(fill(t.more, { n: facts.moreCount })) + "</p>" : "";
@@ -331,54 +452,83 @@ function findingsBlock(t, facts) {
     "</td></tr>";
 }
 
+// What the report mail says depends on whether the record is open, a re-run, or stopped early.
+function reportStory(record, t, facts) {
+  const open = isOpen(record);
+  const stopped = !!record && record.status === "stopped";
+  const rerun = !!record && Array.isArray(record.rerunOf) && record.rerunOf.length > 0;
+  const failedOn = rerun ? dateOf(record.failedAt) : "";
+  const score = facts.score ? Number(facts.score.overall) || 0 : 0;
+  const pick = Array.from(facts.id).reduce((sum, char) => sum + char.charCodeAt(0), 0) % t.subjects.length;
+  const vars = { host: facts.host, score };
+  const subject = stopped ? fill(t.subjectStopped, vars)
+    : rerun ? fill(t.subjectRerun, vars)
+      : !facts.score ? fill(t.subjectPlain, vars)
+        : open ? fill(t.subjectOpen, vars)
+          : fill(t.subjects[pick], vars);
+  return {
+    open,
+    subject,
+    title: fill(stopped ? t.titleStopped : t.title, vars),
+    lead: [
+      rerun ? fill(failedOn ? t.rerun : t.rerunUndated, { host: facts.host, date: failedOn }) : "",
+      stopped ? t.leadStopped : "",
+      open ? t.leadOpen : t.lead
+    ].filter(Boolean).join(" "),
+    preheader: fill(open ? t.preheaderOpen : t.preheader, { count: facts.total }),
+    cta: open ? t.openFull : t.open
+  };
+}
+
 function reportMail(record, options) {
   const opts = options || {};
   const lang = langOf(opts.lang || (record && record.lang));
   const t = COPY[lang];
-  const facts = reportFacts(record);
+  const p = PDF_COPY[lang];
+  const facts = reportFacts(record, isOpen(record));
+  const story = reportStory(record, t, facts);
+  const attached = story.open ? p.attachedOpen : p.attached;
   const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report" });
   const anotherUrl = pageUrl(lang, { utm_campaign: "report-another" });
-  const scoreHtml = scoreBlock(t, facts);
-  const head = scoreHtml || "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;border-radius:16px 16px 0 0;padding:28px;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:28px;color:#ffffff;\">" + esc(fill(t.title, { host: facts.host })) + "</td></tr>";
+  const scoreHtml = scoreBlock(t, facts, story.title);
+  const head = scoreHtml || "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;border-radius:16px 16px 0 0;padding:28px;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:28px;color:#ffffff;\">" + esc(story.title) + "</td></tr>";
   const inner = head +
-    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:16px 28px 4px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#334155;\">" + esc(t.lead) + "</td></tr>" +
+    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:16px 28px 4px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#334155;\">" + esc(story.lead) + "</td></tr>" +
     findingsBlock(t, facts) +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:18px 28px 22px;\">" +
-    button(openUrl, t.open, true) + button(anotherUrl, t.another, false) +
+    button(openUrl, story.cta, true) + button(anotherUrl, t.another, false) +
     "<p style=\"margin:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.openNote) + "</p>" +
-    (opts.attached ? "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#0e7490;font-weight:bold;\">&#128206; " + esc(PDF_COPY[lang].attached) + "</p>" : "") +
+    (opts.attached ? "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#0e7490;font-weight:bold;\">&#128206; " + esc(attached) + "</p>" : "") +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
     deeperBlock(t, facts.host, facts.id);
-  const pick = Array.from(facts.id).reduce((sum, char) => sum + char.charCodeAt(0), 0) % t.subjects.length;
-  const subject = facts.score
-    ? fill(t.subjects[pick], { host: facts.host, score: Number(facts.score.overall) || 0 })
-    : fill(t.subjectPlain, { host: facts.host });
-  const findingLines = facts.findings.map((item) => "- " + item.shown + " …");
+  const findingLines = facts.findings.map((item) => "- " + item.shown + (item.hidden ? " …" : ""));
+  const why = fill(t.why, { host: facts.host });
+  const foot = { stopUrl: opts.stopUrl, kept: dateOf(record && record.retainUntil), live: true };
   const text = [
-    fill(t.title, { host: facts.host }),
+    story.title,
     facts.score ? (Number(facts.score.overall) || 0) + " " + t.outOf + " (" + (facts.score.grade || "") + ")" : "",
     facts.score ? AREAS.filter((area) => facts.score.areas && facts.score.areas[area]).map((area) => (t.areas[area] || area) + " " + facts.score.areas[area].score).join(" · ") : "",
     "",
-    t.lead,
+    story.lead,
     findingLines.length ? "\n" + t.findings + "\n" + findingLines.join("\n") : "",
     facts.moreCount ? fill(t.more, { n: facts.moreCount }) : "",
     "",
-    t.open + ": " + openUrl,
-    opts.attached ? PDF_COPY[lang].attached : "",
+    story.cta + ": " + openUrl,
+    opts.attached ? attached : "",
     t.another + ": " + anotherUrl,
     "",
     t.deeper,
     t.deeperLines.join("\n"),
     t.deeperCta,
     "",
-    footerText(t, facts.host, opts.stopUrl)
+    footerText(t, why, foot)
   ].filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n");
   return {
     lang,
-    subject: subject.slice(0, 140),
+    subject: story.subject.slice(0, 140),
     text: text.slice(0, 16000),
-    html: shell(lang, fill(t.preheader, { count: facts.total }), inner, footerHtml(t, facts.host, opts.stopUrl))
+    html: shell(lang, story.preheader, inner, footerHtml(t, why, foot))
   };
 }
 
@@ -451,7 +601,7 @@ const PDF_STYLE = "@page{size:A4;margin:12mm 0 0}@page:first{margin:0}*{box-sizi
   ".btn{display:inline-block;padding:2.8mm 5mm;border-radius:2.6mm;font-weight:700;text-decoration:none;font-size:10pt}" +
   ".btn.p{background:#5eead4;color:#0f172a}.btn.s{border:1px solid #5eead4;color:#99f6e4}";
 
-// A print page for the mail attachment. Hidden words are filler, so the PDF never carries them.
+// A print page for the mail attachment. On an unpaid report hidden words are filler, so the PDF never carries them.
 function reportPdf(record, options) {
   const opts = options || {};
   const lang = langOf(opts.lang || (record && record.lang));
@@ -459,7 +609,9 @@ function reportPdf(record, options) {
   const p = PDF_COPY[lang];
   const report = (record && record.report) || {};
   const ins = report.insights || {};
-  const facts = reportFacts(record);
+  const open = isOpen(record);
+  const lineOf = (text, seed) => open ? esc(text) : frostedLine(text, seed);
+  const facts = reportFacts(record, open);
   const all = (Array.isArray(ins.findings) ? ins.findings : [])
     .filter((item) => item && (item.verdict === "fail" || item.verdict === "risk"))
     .sort((a, b) => (a.rank || 999) - (b.rank || 999));
@@ -478,19 +630,19 @@ function reportPdf(record, options) {
   const findings = all.map((item, index) =>
     "<div class=\"finding\" style=\"border-left-color:" + (SEVERITY_COLOR[item.severity] || SEVERITY_COLOR.low) + "\">" +
     "<p class=\"k\">" + esc(t.areas[item.area] || item.area || "") + " · " + esc(p.sev[item.severity] || item.severity || p.sev.low) + "</p>" +
-    "<p class=\"t\">" + frostedLine(item.title, index) + "</p>" +
-    (item.evidence ? "<p class=\"e\">" + frostedLine(item.evidence, index + 3) + "</p>" : "") +
+    "<p class=\"t\">" + lineOf(item.title, index) + "</p>" +
+    (item.evidence ? "<p class=\"e\">" + lineOf(item.evidence, index + 3) + "</p>" : "") +
     "</div>"
   ).join("");
   const caseRows = (Array.isArray(report.cases) ? report.cases : []).slice(0, PDF_CASES).map((item, index) =>
-    "<div class=\"case\"><code>" + esc(item.id || "") + "</code><small>" + esc(item.layer || "") + "</small><br>" + frostedLine(item.title, index + 7) + "</div>"
+    "<div class=\"case\"><code>" + esc(item.id || "") + "</code><small>" + esc(item.layer || "") + "</small><br>" + lineOf(item.title, index + 7) + "</div>"
   ).join("");
   const moreCases = Math.max(0, facts.cases - PDF_CASES);
-  const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + ".fz{background-image:url(" + stripUrl() + ")}</style></head><body>" +
+  const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + (open ? "" : ".fz{background-image:url(" + stripUrl() + ")}") + "</style></head><body>" +
     "<div class=\"foot\"><span>QA-lab URL Review · carlosandmunoz.com/qa-review.html</span><span>" + esc(facts.id) + "</span></div>" +
     "<div class=\"page\">" +
     "<div class=\"hero\"><div class=\"who\"><p class=\"eyebrow\">QA-lab URL Review</p><p class=\"host\">" + esc(facts.host) + "</p>" +
-    "<p class=\"meta\">" + esc(fill(p.read, { date })) + " · <code>" + esc(facts.id) + "</code></p><span class=\"badge\">" + esc(p.badge) + "</span></div>" +
+    "<p class=\"meta\">" + esc(fill(p.read, { date })) + " · <code>" + esc(facts.id) + "</code></p><span class=\"badge\">" + esc(open ? p.badgeOpen : p.badge) + "</span></div>" +
     (facts.score ? "<div class=\"ring\" style=\"background:conic-gradient(" + ringColor + " " + overall * 3.6 + "deg,rgba(255,255,255,.14) 0)\"><div><b>" + overall + "</b><i>" + esc(t.outOf) + "</i><em style=\"background:" + ringColor + "\">" + esc(facts.score.grade || "") + "</em></div></div>" : "") +
     "</div>" +
     "<div class=\"stats\">" +
@@ -500,13 +652,13 @@ function reportPdf(record, options) {
     "<div class=\"stat\"><b style=\"color:#b45309\">" + (all.length - fails) + "</b><span>" + esc(p.risks) + "</span></div>" +
     "</div>" +
     (areas ? "<div class=\"sec\"><div class=\"areas\">" + areas + "</div></div>" : "") +
-    (findings ? "<div class=\"sec\"><h2>" + esc(p.findings) + "</h2><p class=\"note\">" + esc(p.note) + "</p>" + findings + "</div>" : "") +
+    (findings ? "<div class=\"sec\"><h2>" + esc(p.findings) + "</h2>" + (open ? "" : "<p class=\"note\">" + esc(p.note) + "</p>") + findings + "</div>" : "") +
     (caseRows ? "<div class=\"sec\"><h2>" + esc(p.cases) + "</h2><div class=\"cases\">" + caseRows + "</div>" + (moreCases ? "<p class=\"more\">" + esc(fill(p.moreCases, { n: moreCases })) + "</p>" : "") + "</div>" : "") +
     "<div class=\"cta\"><h3>" + esc(t.deeper) + "</h3>" + t.deeperLines.map((line) => "<p>→ " + esc(line) + "</p>").join("") +
-    "<div class=\"btns\"><a class=\"btn p\" href=\"" + esc(openUrl) + "\">" + esc(p.unlock) + "</a><a class=\"btn s\" href=\"" + esc(deeperUrl(t, facts.host, facts.id)) + "\">" + esc(t.deeperCta) + "</a></div></div>" +
+    "<div class=\"btns\"><a class=\"btn p\" href=\"" + esc(openUrl) + "\">" + esc(open ? t.openFull : p.unlock) + "</a><a class=\"btn s\" href=\"" + esc(deeperUrl(t, facts.host, facts.id)) + "\">" + esc(t.deeperCta) + "</a></div></div>" +
     "</div></body></html>";
   const slug = facts.host.replace(/[^a-z0-9.-]/gi, "-").replace(/-+/g, "-").slice(0, 60);
-  return { html, filename: "qa-lab-" + slug + "-" + p.file + ".pdf" };
+  return { html, filename: "qa-lab-" + slug + "-" + (open ? p.fileOpen : p.file) + ".pdf" };
 }
 
 function noteMail(note, options) {
@@ -539,13 +691,13 @@ function noteMail(note, options) {
     t.deeperLines.join("\n"),
     t.deeperCta,
     "",
-    footerText(t, host, opts.stopUrl)
+    footerText(t, fill(t.why, { host }), { stopUrl: opts.stopUrl })
   ].filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n");
   return {
     lang,
     subject: String((note && note.subject) || "QA-lab URL Review").slice(0, 140),
     text: text.slice(0, 16000),
-    html: shell(lang, (note && note.title) || "", inner, footerHtml(t, host, opts.stopUrl))
+    html: shell(lang, (note && note.title) || "", inner, footerHtml(t, fill(t.why, { host }), { stopUrl: opts.stopUrl }))
   };
 }
 
@@ -606,10 +758,12 @@ const SIGN_IN = {
   }
 };
 
-function signInMail(lang, sign) {
+// `page` is the path that asked for the code, so the link returns there as the OAuth return does.
+function signInMail(lang, sign, page) {
   const code = langOf(lang);
   const t = SIGN_IN[code];
-  const link = pageUrl(code, { signin: sign.id, key: sign.token, utm_campaign: "sign-in" });
+  const back = String(page || "").replace(/^\//, "") === ACCOUNT_PAGE ? ACCOUNT_PAGE : "";
+  const link = pageUrl(code, { signin: sign.id, key: sign.token, utm_campaign: "sign-in" }, back);
   const inner = "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
     "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
     "<p style=\"margin:0;font-size:26px;line-height:32px;color:#ffffff;font-weight:bold;\">" + esc(t.title) + "</p>" +
@@ -621,12 +775,11 @@ function signInMail(lang, sign) {
     button(link, t.button, true) +
     "<p style=\"margin:6px 0 0;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.device) + "</p>" +
     "</td></tr>";
-  const footer = esc(t.why) + "<br><a href=\"" + SITE + "/qa-review.html\" style=\"color:#0e7490;\">QA-lab URL Review</a> &middot; Carlos Muñoz, Bogotá, Colombia";
   return {
     lang: code,
     subject: fill(t.subject, { code: sign.code }),
-    text: [t.title, "", t.lead, "", sign.code, "", t.link, link, "", t.device, "", t.why].join("\n"),
-    html: shell(code, t.lead, inner, footer)
+    text: [t.title, "", t.lead, "", sign.code, "", t.link, link, "", t.device, "", footerText(COPY[code], t.why)].join("\n"),
+    html: shell(code, t.lead, inner, footerHtml(COPY[code], t.why))
   };
 }
 

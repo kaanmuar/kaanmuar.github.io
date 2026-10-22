@@ -152,6 +152,7 @@ function summary(row, index) {
     test: row.test === true,
     free: row.free === true,
     provider: clip(row.provider || "", 20),
+    signInProvider: clip(row.signInProvider || "", 40),
     purpose: clip(row.purpose || "", 20),
     capture: clip(row.kind || "", 20),
     country: clip(row.country || "", 8),
@@ -452,7 +453,7 @@ const PAGE = `<!DOCTYPE html>
     </section>
     <section>
       <h2>Re-runs</h2>
-      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it, and a sent report opens without payment.</p>
+      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it. The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
       <div id="reruns"></div>
     </section>
     <section>
@@ -626,6 +627,7 @@ const PAGE = `<!DOCTYPE html>
       line(dl, "Status", picked.status);
       line(dl, "Who", picked.name);
       line(dl, "Email", picked.email);
+      line(dl, "Signed in with", picked.signInProvider);
       line(dl, "Language", picked.language);
       line(dl, "Follow-up", picked.followUp ? "Asked" : "Not asked");
       line(dl, "Reason", picked.reason);

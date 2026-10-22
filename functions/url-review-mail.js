@@ -11,6 +11,7 @@ const PAGES = new Set([
   "qa-review-it.html",
   "qa-review-pay.html",
   "qa-review-account.html",
+  "qa-review-guide.html",
   "qa-review-legal.html"
 ]);
 
