@@ -1,0 +1,332 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step."
+ },
+ "clips": {
+  "u-uber-com": {
+   "lang": "en",
+   "strings": {
+    "title.0": "uber.com: 66.",
+    "title.1": "*The gap: page titles.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 56 pages have no title.",
+    "action": "Give every page a unique title of about 60 characters: the page first, the site second.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "uber.com · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 56 pages have no title.\n\nLesson: Give every page a unique title of about 60 characters: the page first, the site second.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uber-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-mercadolibre-com-co": {
+   "lang": "es",
+   "strings": {
+    "title.0": "mercadolibre.com.co: 50.",
+    "title.1": "*The gap: AI crawler access.*",
+    "body": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 5 AI answer or search crawlers are blocked.",
+    "action": "Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "mercadolibre.com.co · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 5 AI answer or search crawlers are blocked.\n\nLesson: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-mercadolibre-com-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-mercadolibre-com-co\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-whatsapp-com": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "whatsapp.com: 67.",
+    "title.1": "*The gap: hreflang.*",
+    "body": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 1002 language alternate problems.",
+    "action": "Make every language version list all the others, itself included, with matching hreflang links.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "whatsapp.com · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 1002 language alternate problems.\n\nLesson: Make every language version list all the others, itself included, with matching hreflang links.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-whatsapp-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-whatsapp-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-telegram-com": {
+   "lang": "de",
+   "strings": {
+    "title.0": "telegram.com: 61.",
+    "title.1": "*The gap: AI crawler access.*",
+    "body": "Every page has a title, and model-training crawlers are blocked by choice. But 10 AI answer or search crawlers are blocked.",
+    "action": "Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "telegram.com · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and model-training crawlers are blocked by choice. But 10 AI answer or search crawlers are blocked.\n\nLesson: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-telegram-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-lamega-com-co": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "lamega.com.co: 63.",
+    "title.1": "*The gap: page titles.*",
+    "body": "Share cards have a title, description, image, and URL, and AI answer and search crawlers may read the start page. But 1 page has no title.",
+    "action": "Give every page a unique title of about 60 characters: the page first, the site second.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "lamega.com.co · 20 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Share cards have a title, description, image, and URL, and AI answer and search crawlers may read the start page. But 1 page has no title.\n\nLesson: Give every page a unique title of about 60 characters: the page first, the site second.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-lamega-com-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-lamega-com-co\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-cognizant-com": {
+   "lang": "it",
+   "strings": {
+    "title.0": "cognizant.com: 73.",
+    "title.1": "*The gap: alt text.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But 759 images have no alt attribute.",
+    "action": "Describe what each image shows in its alt attribute, and use alt=\"\" on purely decorative ones.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "cognizant.com · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But 759 images have no alt attribute.\n\nLesson: Describe what each image shows in its alt attribute, and use alt=\"\" on purely decorative ones.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-cognizant-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-cognizant-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-zipdev-com": {
+   "lang": "en",
+   "strings": {
+    "title.0": "zipdev.com: 77.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 41 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "zipdev.com · 75 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 41 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-zipdev-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-avvillas-com-co": {
+   "lang": "es",
+   "strings": {
+    "title.0": "avvillas.com.co: 57.",
+    "title.1": "*The gap: broken links.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But 1 internal link leads to an error.",
+    "action": "Check your own links after each release, and fix or redirect every one that answers 404.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "avvillas.com.co · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But 1 internal link leads to an error.\n\nLesson: Check your own links after each release, and fix or redirect every one that answers 404.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-avvillas-com-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-avvillas-com-co\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-lenovo-com": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "lenovo.com: 67.",
+    "title.1": "*The gap: the https redirect.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.",
+    "action": "Redirect every http request to https with one permanent 301, then add HSTS.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "lenovo.com · 68 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.\n\nLesson: Redirect every http request to https with one permanent 301, then add HSTS.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-lenovo-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-lenovo-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-uniminuto-edu": {
+   "lang": "de",
+   "strings": {
+    "title.0": "uniminuto.edu: 63.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 213 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "uniminuto.edu · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 213 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-uniminuto-edu&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uniminuto-edu\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-davibank-com": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "davibank.com: 58.",
+    "title.1": "*The gap: TLS.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But the TLS certificate expires in 8 days.",
+    "action": "Renew the TLS certificate automatically, and alert well before it expires.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "davibank.com · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But the TLS certificate expires in 8 days.\n\nLesson: Renew the TLS certificate automatically, and alert well before it expires.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-davibank-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-davibank-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-confluence-com": {
+   "lang": "it",
+   "strings": {
+    "title.0": "confluence.com: 61.",
+    "title.1": "*The gap: accessibility.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But certain ARIA roles must be contained by particular parents.",
+    "action": "Follow the rule guide at https://dequeuniversity.com/rules/axe/4.14/aria-required-parent?application=axeAPI.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "confluence.com · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But certain ARIA roles must be contained by particular parents.\n\nLesson: Follow the rule guide at https://dequeuniversity.com/rules/axe/4.14/aria-required-parent?application=axeAPI.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-confluence-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-confluence-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-atlassian-com": {
+   "lang": "en",
+   "strings": {
+    "title.0": "atlassian.com: 68.",
+    "title.1": "*The gap: schema fields.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But 162 structured data items miss a property Google expects.",
+    "action": "Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 21 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "atlassian.com · 100 pages analyzed · 21 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But 162 structured data items miss a property Google expects.\n\nLesson: Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.\n\nOne automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-atlassian-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-atlassian-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-co-computrabajo-com": {
+   "lang": "es",
+   "strings": {
+    "title.0": "co.computrabajo.com: 68.",
+    "title.1": "*The gap: HSTS.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+    "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 22 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "co.computrabajo.com · 91 pages analyzed · 22 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But HSTS is not sent.\n\nLesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.\n\nOne automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-co-computrabajo-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-co-computrabajo-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-nice-com": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "nice.com: 56.",
+    "title.1": "*The gap: HSTS.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+    "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 22 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "nice.com · 100 pages analyzed · 22 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But HSTS is not sent.\n\nLesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.\n\nOne automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-nice-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-nice-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  },
+  "u-honda-com": {
+   "lang": "de",
+   "strings": {
+    "title.0": "honda.com: 63.",
+    "title.1": "*The gap: the https redirect.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.",
+    "action": "Redirect every http request to https with one permanent 301, then add HSTS.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 22 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "honda.com · 25 pages analyzed · 22 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.\n\nLesson: Redirect every http request to https with one permanent 301, then add HSTS.\n\nOne automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-honda-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-honda-com\n\nRequested reviews · QA-lab URL Review"
+   }
+  }
+ }
+}

@@ -1,0 +1,81 @@
+Text,Image URL,Tags,Posting Time
+"uber.com: 66. The gap: page titles.
+
+Give every page a unique title of about 60 characters: the page first, the site second.
+
+https://carlosandmunoz.com/qa-review.html?live=u-uber-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uber-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg","","2026-10-23 08:35"
+"mercadolibre.com.co: 50. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be…
+
+carlosandmunoz.com/qa-review?live=u-mercadolibre-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-mercadolibre-com-co","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg","","2026-10-24 13:25"
+"whatsapp.com: 67. The gap: hreflang.
+
+Make every language version list all the others, itself included, with matching hreflang links.
+
+carlosandmunoz.com/qa-review?live=u-whatsapp-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-whatsapp-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/03-u-whatsapp-com.jpg","","2026-10-25 11:35"
+"telegram.com: 61. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block…
+
+carlosandmunoz.com/qa-review?live=u-telegram-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-telegram-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg","","2026-10-26 09:50"
+"lamega.com.co: 63. The gap: page titles.
+
+Give every page a unique title of about 60 characters: the page first, the site second.
+
+carlosandmunoz.com/qa-review?live=u-lamega-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-lamega-com-co","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/05-u-lamega-com-co.jpg","","2026-10-27 16:55"
+"cognizant.com: 73. The gap: alt text.
+
+Describe what each image shows in its alt attribute, and use alt="""" on purely decorative ones.
+
+carlosandmunoz.com/qa-review?live=u-cognizant-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-cognizant-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/06-u-cognizant-com.jpg","","2026-10-28 16:05"
+"zipdev.com: 77. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap…
+
+carlosandmunoz.com/qa-review?live=u-zipdev-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-zipdev-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/07-u-zipdev-com.jpg","","2026-10-29 15:30"
+"avvillas.com.co: 57. The gap: broken links.
+
+Check your own links after each release, and fix or redirect every one that answers 404.
+
+carlosandmunoz.com/qa-review?live=u-avvillas-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-avvillas-com-co","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/08-u-avvillas-com-co.jpg","","2026-10-30 11:15"
+"lenovo.com: 67. The gap: the https redirect.
+
+Redirect every http request to https with one permanent 301, then add HSTS.
+
+https://carlosandmunoz.com/qa-review.html?live=u-lenovo-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-lenovo-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/09-u-lenovo-com.jpg","","2026-10-31 14:10"
+"uniminuto.edu: 63. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and…
+
+carlosandmunoz.com/qa-review?live=u-uniminuto-edu&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uniminuto-edu","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/10-u-uniminuto-edu.jpg","","2026-11-01 14:25"
+"davibank.com: 58. The gap: TLS.
+
+Renew the TLS certificate automatically, and alert well before it expires.
+
+https://carlosandmunoz.com/qa-review.html?live=u-davibank-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-davibank-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/11-u-davibank-com.jpg","","2026-11-02 16:10"
+"confluence.com: 61. The gap: accessibility.
+
+Follow the rule guide at…
+
+carlosandmunoz.com/qa-review?live=u-confluence-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-confluence-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/12-u-confluence-com.jpg","","2026-11-03 13:00"
+"atlassian.com: 68. The gap: schema fields.
+
+Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.
+
+carlosandmunoz.com/qa-review?live=u-atlassian-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-atlassian-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/13-u-atlassian-com.jpg","","2026-11-04 16:00"
+"co.computrabajo.com: 68. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never…
+
+carlosandmunoz.com/qa-review?live=u-co-computrabajo-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-co-computrabajo-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/14-u-co-computrabajo-com.jpg","","2026-11-05 08:05"
+"nice.com: 56. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+https://carlosandmunoz.com/qa-review.html?live=u-nice-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-nice-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/15-u-nice-com.jpg","","2026-11-06 13:50"
+"honda.com: 63. The gap: the https redirect.
+
+Redirect every http request to https with one permanent 301, then add HSTS.
+
+https://carlosandmunoz.com/qa-review.html?live=u-honda-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-honda-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/16-u-honda-com.jpg","","2026-11-07 14:05"
