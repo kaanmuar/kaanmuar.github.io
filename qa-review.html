@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <title>QA-lab URL Review: SEO, GEO, and QA test cases from a URL</title>
     <meta name="description" content="One public https page, read and scored for SEO, AI search (GEO), analytics, security, accessibility, and speed, with proposed test cases for 20 frameworks.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
@@ -390,6 +390,25 @@
         .gate-head .logo { margin-bottom: 12px; }
         .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
         .own-note, .mail-note { font-size: 14px; line-height: 1.45; }
+        .sign-in { margin: 0 0 16px; padding: 14px 16px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 8%, var(--card)); }
+        .sign-in.done { border-color: var(--line); background: var(--card); }
+        .sign-in.elsewhere { border-color: #dc2626; }
+        .sign-in[aria-busy="true"] { opacity: .7; }
+        .sign-in-title { margin: 0 0 4px; }
+        .sign-in-providers { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+        .sign-in-provider { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+        .sign-in-mark { width: 18px; height: 18px; border-radius: 4px; background: currentColor; opacity: .85; }
+        .sign-in-mark.sign-in-google { background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); border-radius: 50%; opacity: 1; }
+        .sign-in-mark.sign-in-microsoft { background: linear-gradient(90deg, #f25022 50%, #7fba00 0) top / 100% 50% no-repeat, linear-gradient(90deg, #00a4ef 50%, #ffb900 0) bottom / 100% 50% no-repeat; border-radius: 0; opacity: 1; }
+        .sign-in-mark.sign-in-yahoo { background: #6001d2; opacity: 1; }
+        .sign-in-or { margin: 12px 0 0; font-size: 14px; }
+        .sign-in-row { display: flex; gap: 8px; align-items: stretch; }
+        .sign-in-row input { flex: 1; min-width: 0; }
+        .sign-in-row .btn { white-space: nowrap; }
+        .sign-in-link { background: none; border: 0; padding: 0; color: var(--cyan); text-decoration: underline; cursor: pointer; font: inherit; }
+        .sign-in-done { margin: 8px 0 0; }
+        #sign-in-code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
+        #email[readonly] { opacity: .8; }
         .verify-note { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, var(--card)); }
         .verify-note p { margin: 0 0 8px; font-size: 14px; line-height: 1.45; }
         .verify-note p:last-child { margin: 0; }
@@ -1017,6 +1036,29 @@
         <h2 class="request-title">The request</h2>
         <p class="lede">Who is asking, and which address should we open?</p>
         <form id="review-form">
+            <div class="sign-in" id="sign-in">
+                <p class="sign-in-title"><strong>Sign in to run a review</strong></p>
+                <p class="mail-note muted">The review runs on the device where you sign in. A code or link opened on another device or browser starts nothing.</p>
+                <div id="sign-in-start">
+                    <div class="sign-in-providers" id="sign-in-providers"></div>
+                    <p class="sign-in-or muted" id="sign-in-or" hidden>or with your email</p>
+                    <label for="sign-in-email">Email</label>
+                    <div class="sign-in-row">
+                        <input id="sign-in-email" type="email" autocomplete="email" disabled>
+                        <button class="btn" id="sign-in-send" type="button" disabled>Email me a code</button>
+                    </div>
+                </div>
+                <div id="sign-in-code-step" hidden>
+                    <label for="sign-in-code">Code sent to <span id="sign-in-sent"></span></label>
+                    <div class="sign-in-row">
+                        <input id="sign-in-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false" disabled>
+                        <button class="btn btn-primary" id="sign-in-check" type="button" disabled>Sign in</button>
+                    </div>
+                    <p class="mail-note muted">Type it here, or open the link in the email in this browser. <button class="sign-in-link" id="sign-in-restart" type="button" disabled>Use another address</button></p>
+                </div>
+                <p class="sign-in-done" id="sign-in-done" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
+                <p class="status" id="sign-in-status" role="status"></p>
+            </div>
             <div class="grid-2">
                 <div>
                     <label for="name">Name</label>
@@ -1025,7 +1067,7 @@
                 </div>
                 <div>
                     <label for="email">Email</label>
-                    <input id="email" name="email" type="email" autocomplete="email" required disabled>
+                    <input id="email" name="email" type="email" autocomplete="email" placeholder="Filled in when you sign in" readonly required disabled>
                     <p class="field-error" id="email-error"></p>
                     <p class="mail-note muted" id="own-note" hidden>Use an email at the same domain as the site. This page checks that the mailbox domain matches the host. It does not prove you are the legal owner.</p>
                 </div>
@@ -1290,7 +1332,8 @@
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
-<script src="js/qa-review.js?v=20261030c"></script>
+<script src="js/qa-review-auth.js?v=20261022a"></script>
+<script src="js/qa-review.js?v=20261022a"></script>
 <script src="js/qa-review-live.js?v=20261028b"></script>
 </body>
 </html>

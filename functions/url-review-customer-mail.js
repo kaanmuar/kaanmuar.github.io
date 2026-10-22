@@ -549,6 +549,87 @@ function noteMail(note, options) {
   };
 }
 
+const SIGN_IN = {
+  en: {
+    subject: "{code} is your QA-lab sign-in code",
+    title: "Sign in to QA-lab URL Review",
+    lead: "Type this code on the page where you asked for it. It works for 15 minutes.",
+    link: "Or open this link in the same browser, on the same device:",
+    button: "Sign in on this device",
+    device: "A code or link opened on another device or browser signs no one in and starts no review.",
+    why: "You get this because a sign-in with this address was asked for at carlosandmunoz.com. If it was not you, ignore this email."
+  },
+  es: {
+    subject: "{code} es tu código para entrar a QA-lab",
+    title: "Entra a QA-lab URL Review",
+    lead: "Escribe este código en la página donde lo pediste. Sirve durante 15 minutos.",
+    link: "O abre este enlace en el mismo navegador, en el mismo dispositivo:",
+    button: "Entrar en este dispositivo",
+    device: "Un código o enlace abierto en otro dispositivo o navegador no inicia sesión ni empieza ninguna revisión.",
+    why: "Recibes esto porque alguien pidió entrar con esta dirección en carlosandmunoz.com. Si no fuiste tú, ignora este correo."
+  },
+  pt: {
+    subject: "{code} é o seu código de acesso ao QA-lab",
+    title: "Entre no QA-lab URL Review",
+    lead: "Digite este código na página onde você o pediu. Ele vale por 15 minutos.",
+    link: "Ou abra este link no mesmo navegador, no mesmo dispositivo:",
+    button: "Entrar neste dispositivo",
+    device: "Um código ou link aberto em outro dispositivo ou navegador não faz login nem inicia nenhuma revisão.",
+    why: "Você recebeu isto porque alguém pediu para entrar com este endereço em carlosandmunoz.com. Se não foi você, ignore este e-mail."
+  },
+  de: {
+    subject: "{code} ist dein Anmeldecode für QA-lab",
+    title: "Bei QA-lab URL Review anmelden",
+    lead: "Gib diesen Code auf der Seite ein, auf der du ihn angefordert hast. Er gilt 15 Minuten.",
+    link: "Oder öffne diesen Link im selben Browser auf demselben Gerät:",
+    button: "Auf diesem Gerät anmelden",
+    device: "Ein Code oder Link, der auf einem anderen Gerät oder Browser geöffnet wird, meldet niemanden an und startet keine Prüfung.",
+    why: "Du bekommst diese E-Mail, weil auf carlosandmunoz.com eine Anmeldung mit dieser Adresse angefordert wurde. Warst du es nicht, ignoriere sie."
+  },
+  fr: {
+    subject: "{code} est votre code de connexion QA-lab",
+    title: "Connexion à QA-lab URL Review",
+    lead: "Saisissez ce code sur la page où vous l'avez demandé. Il est valable 15 minutes.",
+    link: "Ou ouvrez ce lien dans le même navigateur, sur le même appareil :",
+    button: "Me connecter sur cet appareil",
+    device: "Un code ou un lien ouvert sur un autre appareil ou navigateur ne connecte personne et ne lance aucune revue.",
+    why: "Vous recevez ce message parce qu'une connexion avec cette adresse a été demandée sur carlosandmunoz.com. Si ce n'était pas vous, ignorez-le."
+  },
+  it: {
+    subject: "{code} è il tuo codice di accesso a QA-lab",
+    title: "Accedi a QA-lab URL Review",
+    lead: "Scrivi questo codice nella pagina in cui l'hai chiesto. Vale 15 minuti.",
+    link: "Oppure apri questo link nello stesso browser, sullo stesso dispositivo:",
+    button: "Accedi su questo dispositivo",
+    device: "Un codice o un link aperto su un altro dispositivo o browser non fa accedere nessuno e non avvia alcuna revisione.",
+    why: "Ricevi questa email perché su carlosandmunoz.com è stato chiesto un accesso con questo indirizzo. Se non sei stato tu, ignorala."
+  }
+};
+
+function signInMail(lang, sign) {
+  const code = langOf(lang);
+  const t = SIGN_IN[code];
+  const link = pageUrl(code, { signin: sign.id, key: sign.token, utm_campaign: "sign-in" });
+  const inner = "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
+    "<p style=\"margin:0;font-size:26px;line-height:32px;color:#ffffff;font-weight:bold;\">" + esc(t.title) + "</p>" +
+    "</td></tr>" +
+    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 28px 22px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 0 14px;font-size:16px;line-height:25px;color:#334155;\">" + esc(t.lead) + "</p>" +
+    "<p style=\"margin:0 0 20px;font-family:'Courier New',monospace;font-size:34px;line-height:40px;letter-spacing:0.3em;font-weight:bold;color:#0f172a;\">" + esc(sign.code) + "</p>" +
+    "<p style=\"margin:0 0 12px;font-size:14px;line-height:21px;color:#334155;\">" + esc(t.link) + "</p>" +
+    button(link, t.button, true) +
+    "<p style=\"margin:6px 0 0;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.device) + "</p>" +
+    "</td></tr>";
+  const footer = esc(t.why) + "<br><a href=\"" + SITE + "/qa-review.html\" style=\"color:#0e7490;\">QA-lab URL Review</a> &middot; Carlos Muñoz, Bogotá, Colombia";
+  return {
+    lang: code,
+    subject: fill(t.subject, { code: sign.code }),
+    text: [t.title, "", t.lead, "", sign.code, "", t.link, link, "", t.device, "", t.why].join("\n"),
+    html: shell(code, t.lead, inner, footer)
+  };
+}
+
 function stopPage(lang, state, email) {
   const code = langOf(lang);
   const t = COPY[code].page;
@@ -560,4 +641,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { LANGS, langOf, frost, reportFacts, reportMail, reportPdf, noteMail, stopPage, pageUrl };
+module.exports = { LANGS, langOf, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, stopPage, pageUrl };
