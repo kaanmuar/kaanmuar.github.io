@@ -1242,3 +1242,136 @@ test.describe("chat widgets", () => {
     assert.equal(without.cases.filter((item) => /^CHAT-/.test(item.id)).length, 0);
   });
 });
+
+test.describe("legal pages and front-end libraries", () => {
+  const libs = require("../../functions/url-review-libraries");
+  const { legalLinks } = require("../../functions/url-review-legal");
+  const page = (html, url) => ({ url: url || URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(html, STRONG_HEADERS, url || URL_) });
+  const body = (inner, lang) => "<!doctype html><html lang=\"" + (lang || "en") + "\"><head><title>Example</title></head><body><main><h1>Example</h1></main>" + inner + "</body></html>";
+  const finding = (result, key) => result.findings.find((item) => item.key === key) || {};
+
+  test("library versions are read from CDN paths, file names, WordPress ?ver=, banners and page globals", () => {
+    const named = (url) => libs.fromUrl(url).map((row) => row.name + " " + row.version);
+    assert.deepEqual(named("https://code.jquery.com/jquery-1.12.4.min.js"), ["jQuery 1.12.4"]);
+    assert.deepEqual(named("https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"), ["Lodash 4.17.15"]);
+    assert.deepEqual(named("https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"), ["Moment.js 2.18.1"]);
+    assert.deepEqual(named("https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"), ["jQuery UI 1.12.1"]);
+    assert.deepEqual(named("https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.min.js"), ["Vue 2.5.16"]);
+    assert.deepEqual(named("https://example.com/wp-includes/js/jquery/jquery.min.js?ver=3.7.1"), ["jQuery 3.7.1"]);
+    assert.deepEqual(named("https://example.com/js/app.4f9c2.js"), []);
+    assert.equal(libs.cleanVersion("3.5.1.min"), "3.5.1");
+    assert.equal(libs.cleanVersion("not-a-version"), "");
+    const banner = (text) => libs.fromContent(text, "https://example.com/vendor.js").map((row) => row.name + " " + row.version);
+    assert.deepEqual(banner("/*! jQuery v3.4.1 | (c) JS Foundation and other contributors | jquery.org/license */\n!function(e,t){}"), ["jQuery 3.4.1"]);
+    assert.deepEqual(banner("/*!\n * Bootstrap v4.1.0 (https://getbootstrap.com/)\n */"), ["Bootstrap 4.1.0"]);
+    assert.deepEqual(banner("var x = 1;"), []);
+    assert.deepEqual(libs.fromGlobals({ jQuery: "1.11.0", Unknown: "1.0", Vue: "<b>" }, "https://example.com/").map((row) => [row.name, row.version, row.via]), [["jQuery", "1.11.0", "global"]]);
+    assert.ok(libs.PROBE.includes("fn.jquery") && !/\bnew\s/.test(libs.PROBE));
+    assert.equal(libs.atOrAbove("1.10.0", "1.9.2"), true);
+    assert.equal(libs.atOrAbove("1.9.0b1", "1.9.0"), false);
+    assert.equal(libs.atOrAbove("3.5.0", "3.5.0"), true);
+  });
+
+  test("versions are matched against the bundled list with the version that fixes them", () => {
+    const rows = libs.assess([
+      { name: "jQuery", version: "1.12.4", via: "url", url: "https://code.jquery.com/jquery-1.12.4.min.js" },
+      { name: "jQuery", version: "1.12.4.min", via: "banner", url: "https://example.com/other.js" },
+      { name: "Bootstrap", version: "3.3.7", via: "banner", url: "https://example.com/bootstrap.js" },
+      { name: "jQuery", version: "3.7.1", via: "global", url: "" },
+      { name: "Nothing", version: "1.0.0" }
+    ]);
+    const by = (name, version) => rows.find((row) => row.name === name && row.version === version);
+    assert.equal(rows.length, 3);
+    assert.ok(by("jQuery", "1.12.4").flaws > 0);
+    assert.equal(by("jQuery", "1.12.4").fixed, "3.5.0");
+    assert.equal(by("jQuery", "1.12.4").majorJump, true);
+    assert.equal(by("jQuery", "1.12.4").url, "https://code.jquery.com/jquery-1.12.4.min.js");
+    assert.equal(by("Bootstrap", "3.3.7").ended, true);
+    assert.equal(by("Bootstrap", "3.3.7").fixed, "");
+    assert.equal(by("jQuery", "3.7.1").flaws, 0);
+  });
+
+  test("footer links to the accessibility statement, imprint and privacy notice are found in six languages", () => {
+    const cases = [
+      ["en", [["/accessibility", "Accessibility statement"], ["/legal-notice", "Legal notice"], ["/privacy", "Privacy policy"]]],
+      ["es", [["/accesibilidad", "Declaración de accesibilidad"], ["/aviso-legal", "Aviso legal"], ["/privacidad", "Política de privacidad"]]],
+      ["pt", [["/acessibilidade", "Declaração de acessibilidade"], ["/informacao-legal", "Informação legal"], ["/privacidade", "Política de privacidade"]]],
+      ["de", [["/barrierefreiheit", "Erklärung zur Barrierefreiheit"], ["/impressum", "Impressum"], ["/datenschutz", "Datenschutzerklärung"]]],
+      ["fr", [["/accessibilite", "Accessibilité : partiellement conforme"], ["/mentions-legales", "Mentions légales"], ["/confidentialite", "Politique de confidentialité"]]],
+      ["it", [["/accessibilita", "Dichiarazione di accessibilità"], ["/note-legali", "Note legali"], ["/privacy", "Informativa sulla riservatezza"]]]
+    ];
+    cases.forEach(([lang, links]) => {
+      const html = body("<footer>" + links.map(([href, text]) => "<a href=\"" + href + "\">" + text + "</a>").join(" | ") + "</footer>", lang);
+      const legal = core.analyzeHtml(html, STRONG_HEADERS, URL_).legal;
+      assert.deepEqual(["accessibility", "imprint", "privacy"].map((kind) => legal[kind] && legal[kind].href), links.map(([href]) => "https://shop.example.com" + href), lang);
+    });
+    const odd = legalLinks([
+      { href: "#privacy", text: "Privacy settings" },
+      { href: "javascript:void(0)", text: "Datenschutz" },
+      { href: "https://accessibe.com/", text: "Accessibility" },
+      { href: "/legal/impressum.html", text: "" },
+      { href: "/p/datenschutz", text: "" }
+    ], URL_);
+    assert.equal(odd.accessibility, null);
+    assert.equal(odd.imprint.href, "https://shop.example.com/legal/impressum.html");
+    assert.equal(odd.privacy.href, "https://shop.example.com/p/datenschutz");
+    const about = legalLinks([
+      { href: "/support/forum/accessibility/", text: "Accessibility Inquiries concerning accessibility and assistive technology" },
+      { href: "/blog/accessibility-tips", text: "Accessibility tips for shops" },
+      { href: "/barrierefreiheit?view=", text: "Erklärung zur Barrierefreiheit", label: "Gehen Sie zu Erklärung zur Barrierefreiheit" }
+    ], URL_);
+    assert.deepEqual(about.accessibility, { href: "https://shop.example.com/barrierefreiheit?view=", text: "Erklärung zur Barrierefreiheit" });
+    assert.equal(legalLinks([{ href: "/support/forum/accessibility/", text: "Accessibility Inquiries concerning assistive technology", label: "Accessibility" }], URL_).accessibility, null);
+    assert.equal(legalLinks([{ href: "/forum/accessibility/", text: "Accessibility" }], URL_).accessibility, null);
+    assert.equal(legalLinks([{ href: "/a11y", text: "", label: "Accessibility" }], URL_).accessibility.text, "Accessibility");
+  });
+
+  test("a shop without the statement, a German site without an imprint, and old libraries are reported with evidence and a fix", () => {
+    const html = body("<a href=\"/cart\">Warenkorb</a><form action=\"/search\"></form><script src=\"https://code.jquery.com/jquery-1.12.4.min.js\"></script>", "de");
+    const result = insights.analyze({ pages: [page(html)] });
+    assert.deepEqual(["a11y-statement", "an-imprint", "an-privacy", "sec-libraries"].map((key) => [key, finding(result, key).area, finding(result, key).verdict, finding(result, key).severity]), [
+      ["a11y-statement", "Accessibility", "risk", "medium"],
+      ["an-imprint", "Analytics", "risk", "medium"],
+      ["an-privacy", "Analytics", "risk", "medium"],
+      ["sec-libraries", "Security", "risk", "medium"]
+    ]);
+    assert.match(finding(result, "a11y-statement").evidence, /sells online \(a cart or checkout link\)/);
+    assert.match(finding(result, "an-imprint").evidence, /declared German \(lang="de"\)/);
+    assert.match(finding(result, "an-privacy").evidence, /has 1 form/);
+    const lib = finding(result, "sec-libraries");
+    assert.match(lib.title, /^jQuery 1\.12\.4 has known flaws$/);
+    assert.match(lib.evidence, /^jQuery 1\.12\.4 \(https:\/\/code\.jquery\.com\/jquery-1\.12\.4\.min\.js\): \d+ known flaws, the worst rated medium, such as CVE-/);
+    assert.match(lib.evidence, /Checked against the retire\.js list of \d{4}-\d{2}-\d{2}\.$/);
+    assert.match(lib.fix, /^Upgrade jQuery to 3\.5\.0 or later\. A major upgrade changes behavior/);
+    assert.equal(lib.effort, "days");
+    assert.deepEqual(lib.cases, ["SEC-10"]);
+  });
+
+  test("linked legal pages and current libraries pass, a page without a shop leaves the statement to a person", () => {
+    const html = body("<footer><a href=\"/accessibility\">Accessibility</a> <a href=\"/privacy\">Privacy</a></footer><script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>");
+    const good = insights.analyze({ pages: [page(html)] });
+    assert.deepEqual(["a11y-statement", "an-privacy", "sec-libraries"].map((key) => verdict(good, key)), ["pass", "pass", "pass"]);
+    assert.equal(verdict(good, "an-imprint"), "missing");
+    assert.match(finding(good, "a11y-statement").evidence, /^"Accessibility" on \/ leads to \/accessibility\.$/);
+    const plain = insights.analyze({ pages: [page(body("<p>Hello</p>"))] });
+    assert.equal(verdict(plain, "a11y-statement"), "person");
+    assert.equal(finding(plain, "an-privacy").severity, "low");
+    assert.equal(verdict(plain, "sec-libraries"), "missing");
+    const rendered = insights.analyze({ pages: [page(body("<p>Hello</p>"))], browser: { ok: true, start: { status: 200, finalPath: "/", dom: { links: [], legal: { privacy: { href: "https://shop.example.com/privacy", text: "Privacy" } } } }, libraries: [{ name: "Bootstrap", version: "3.3.7", via: "banner", url: "https://shop.example.com/js/vendor.js" }] } });
+    assert.equal(verdict(rendered, "an-privacy"), "pass");
+    assert.match(finding(rendered, "sec-libraries").evidence, /^Bootstrap 3\.3\.7 \(banner of \/js\/vendor\.js\)/);
+    assert.match(finding(rendered, "sec-libraries").fix, /^Move Bootstrap off 3\.x, which gets no more fixes\./);
+  });
+
+  test("the review proposes the statement, imprint and library cases", async () => {
+    const restore = fakeNetwork({ "https://shop.example.de/": { status: 200, headers: STRONG_HEADERS, body: body("<script src=\"https://code.jquery.com/jquery-1.12.4.min.js\"></script>", "de") } });
+    try {
+      const result = await core.reviewTarget("https://shop.example.de/", { browse: async () => ({ ok: false }) });
+      const ids = result.cases.map((item) => item.id);
+      assert.ok(["A11Y-06", "PR-04", "SEC-10"].every((id) => ids.includes(id)), ids.join(","));
+      assert.match(result.cases.find((item) => item.id === "SEC-10").why, /jQuery 1\.12\.4/);
+    } finally {
+      restore();
+    }
+  });
+});

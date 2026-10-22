@@ -6,6 +6,8 @@
  */
 const fs = require("fs");
 const dns = require("dns").promises;
+const { legalLinks, LEGAL_ANY } = require("./url-review-legal");
+const { fromUrl: libraryFromUrl, fromContent: libraryFromContent, fromGlobals: libraryFromGlobals, PROBE: LIBRARY_PROBE } = require("./url-review-libraries");
 
 const AGENT_TAG = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
 const NAV_MS = 20000;
@@ -220,8 +222,12 @@ function normal(text) {
   return String(text || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
-function recorder(pageHttps) {
-  const state = { phase: "before", vendors: {}, chats: {}, wires: new Map(), errors: [], errorCount: 0, failed: [], failedCount: 0, mixed: [], requests: 0, hosts: new Set() };
+function recorder(pageHttps, readLibraries) {
+  const state = { phase: "before", vendors: {}, chats: {}, wires: new Map(), libs: new Map(), reads: [], errors: [], errorCount: 0, failed: [], failedCount: 0, mixed: [], requests: 0, hosts: new Set() };
+  const addLib = (row) => {
+    const key = row.name + "@" + row.version;
+    if (!state.libs.has(key) && state.libs.size < 20) state.libs.set(key, row);
+  };
   const vendorRow = (phase, name) => {
     const bucket = state.vendors[phase] || (state.vendors[phase] = {});
     return bucket[name] || (bucket[name] = { name, loads: 0, hits: 0, denied: 0, signals: [] });
@@ -246,6 +252,12 @@ function recorder(pageHttps) {
     chats(phase, scripts) {
       return chatsFrom(Object.values(state.chats[phase] || {}), scripts);
     },
+    // Script banners still being read are given a few seconds, then the list is closed.
+    async libraries(globals, pageUrl) {
+      await Promise.race([Promise.all(state.reads), new Promise((resolve) => setTimeout(resolve, 3000))]);
+      libraryFromGlobals(globals, pageUrl).forEach(addLib);
+      return [...state.libs.values()];
+    },
     request(req) {
       const raw = req.url();
       if (/^(data|blob):/.test(raw)) return;
@@ -255,6 +267,7 @@ function recorder(pageHttps) {
       state.hosts.add(url.hostname);
       if (pageHttps && url.protocol === "http:" && state.mixed.length < 6) state.mixed.push(shortUrl(raw));
       if (chatOf(url.hostname)) chatRow(state.phase, url.hostname).requests += 1;
+      if (readLibraries && state.phase === "before" && req.resourceType() === "script") libraryFromUrl(raw).forEach(addLib);
       const name = vendorOf(url.hostname);
       if (!name) return;
       const row = vendorRow(state.phase, name);
@@ -270,6 +283,9 @@ function recorder(pageHttps) {
     },
     response(res) {
       const status = res.status();
+      if (readLibraries && status === 200 && state.phase === "before" && state.reads.length < 40 && res.request().resourceType() === "script") {
+        state.reads.push(res.text().then((text) => libraryFromContent(text, res.url()).forEach(addLib)).catch(() => {}));
+      }
       if (status < 400) return;
       state.failedCount += 1;
       if (state.failed.length < 6) state.failed.push({ url: shortUrl(res.url()), status, type: res.request().resourceType() });
@@ -569,6 +585,18 @@ async function mobileCheck(page) {
   });
 }
 
+// Rendered links whose words or address may name a legal page; legalLinks() picks the real ones.
+async function legalAnchors(page) {
+  return page.evaluate((source) => {
+    const re = new RegExp(source, "i");
+    return Array.from(document.querySelectorAll("a[href]")).map((node) => ({
+      href: node.getAttribute("href") || "",
+      text: (node.innerText || node.textContent || "").replace(/\s+/g, " ").trim().slice(0, 120),
+      label: [node.getAttribute("aria-label") || "", node.getAttribute("title") || ""].join(" ").trim().slice(0, 120)
+    })).filter((anchor) => re.test(anchor.text) || re.test(anchor.label) || re.test(anchor.href)).slice(0, 60);
+  }, LEGAL_ANY);
+}
+
 // The chat launcher on the phone: its name, its box, and the banner or call-to-action buttons it overlaps.
 async function launcherFacts(page, launchers, generic) {
   return page.evaluate((launchers, generic, boxes) => {
@@ -836,7 +864,7 @@ async function browse(job, log) {
     let coldContext, rec, page, first;
     const visit = async () => {
       coldContext = await browser.createBrowserContext();
-      rec = recorder(true);
+      rec = recorder(true, true);
       page = await prepare(coldContext, ua, rec, { width: 1280, height: 800 });
       try {
         const cdp = await page.createCDPSession();
@@ -861,6 +889,9 @@ async function browse(job, log) {
     const view = await rendered(page);
     let dom = null;
     try { dom = await domFacts(page); } catch (error) { dom = null; }
+    if (dom) {
+      try { dom.legal = legalLinks(await legalAnchors(page), first.finalUrl); } catch (error) { /* the HTML read still has its links */ }
+    }
     lap("read");
     say("Read the rendered page: " + words(view.text) + " words, compared with " + words(htmlText(first.raw)) + " in the raw HTML.");
     const rawText = htmlText(first.raw);
@@ -920,6 +951,11 @@ async function browse(job, log) {
     } else skip("axe-core", 25000);
     let scripts = vitals.scripts;
     try { scripts = await page.evaluate(() => (window.__qaVitals || {}).scripts || {}); } catch (error) { /* keep the first read */ }
+    let globals = {};
+    try { globals = await page.evaluate(LIBRARY_PROBE); } catch (error) { globals = {}; }
+    result.libraries = await rec.libraries(globals, first.finalUrl);
+    lap("libraries");
+    if (result.libraries.length) say("Front-end libraries on the start page: " + result.libraries.map((row) => row.name + " " + row.version).join(", ") + ".");
     const chats = rec.chats("before", scripts);
     const chatRows = CHATS.filter((row) => chats.some((chat) => chat.name === row[0]));
     let chatAfter = null;

@@ -11,6 +11,8 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const { URL } = require("url");
 const insights = require("./url-review-insights");
+const { legalLinks, germanSpeaking } = require("./url-review-legal");
+const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 
 const TERMS_VERSION = "2026-10-21";
 // A page loaded before a terms change still sends the version before it.
@@ -1226,6 +1228,16 @@ function inspect(html, headers, pageUrl) {
       if (parsed.protocol === "https:" && SOCIAL_HOSTS.test(parsed.hostname) && parsed.pathname.length > 1 && !/\/(share|sharer|intent|shareArticle)/i.test(parsed.pathname) && socialLinks.indexOf(href) === -1 && socialLinks.length < 12) socialLinks.push(href);
     } catch (error) { /* not a profile link */ }
   });
+  const anchors = (markup.match(/<a\b[^>]*>[\s\S]*?<\/a>/gi) || []).slice(0, 800).map((block) => {
+    const open = block.match(/^<a\b[^>]*>/i)[0];
+    return { href: attr(open, "href"), text: decode(block.replace(/<[^>]+>/g, " ")), label: [attr(open, "aria-label"), attr(open, "title")].join(" ") };
+  });
+  const libraries = [];
+  scripts.slice(0, 60).forEach((src) => {
+    let href = "";
+    try { href = new URL(src, pageUrl).href; } catch (error) { return; }
+    libraryFromUrl(href).forEach((row) => { if (libraries.length < 12) libraries.push(row); });
+  });
   // Only links into the site's own domain: those URLs land in its analytics. An address inside a link
   // to another domain (a calendar id, a profile on another site) is not recorded as a page of this site.
   const piiLinks = collect(markup, "a").filter((tag) => {
@@ -1322,6 +1334,8 @@ function inspect(html, headers, pageUrl) {
     schema: schemaScan(html),
     analytics: analyticsScan(html),
     socialLinks,
+    legal: legalLinks(anchors, pageUrl),
+    libraries,
     piiLinks,
     sri: { cross: crossScripts.length, missing: sriMissing },
     resources: {
@@ -1399,8 +1413,11 @@ function withRendered(raw, dom) {
   if (!dom) return raw;
   const links = [...new Set((raw.links || []).concat(dom.links || []))];
   const sig = Object.assign({}, raw.signals || {}, { iframes: Math.max((raw.signals && raw.signals.iframes) || 0, dom.iframes || 0) });
+  const legal = Object.assign({}, raw.legal || {});
+  Object.keys(dom.legal || {}).forEach((kind) => { if (!legal[kind] && dom.legal[kind]) legal[kind] = dom.legal[kind]; });
   return Object.assign({}, raw, {
     links,
+    legal,
     renderedLinks: links.length - (raw.links || []).length,
     forms: Math.max(raw.forms || 0, dom.forms || 0),
     unlabeled: (dom.forms || 0) > (raw.forms || 0) ? dom.unlabeled : raw.unlabeled,
@@ -1503,6 +1520,8 @@ function propose(pages, robotsBlocked, limits, dom) {
   addCase(cases, { id: "A11Y-03", layer: "Accessibility", title: "Heading order follows h1 then h2", why: face.h1.length + " h1 and " + (sig.h2 || 0) + " h2 elements were counted. The order would be checked in the rendered accessibility tree.", fw: browser });
   addCase(cases, { id: "A11Y-04", layer: "Accessibility", title: "Text contrast and keyboard focus are checked on the rendered page", why: "Contrast is measured by axe-core in the review's headless browser. Focus order still needs a person: the case would tab from the top of the page and record the focus ring.", fw: browser });
   if (sig.iframes) addCase(cases, { id: "A11Y-05", layer: "Accessibility", title: "Frames expose a title", why: (sig.iframes || 0) + " iframe(s), " + (sig.untitledFrames || 0) + " without a title attribute. Each embedded document needs a name a screen reader can announce.", fw: browser });
+  const legal = face.legal || {};
+  addCase(cases, { id: "A11Y-06", layer: "Accessibility", title: "An accessibility statement is linked from every page", why: (legal.accessibility ? "The start page links \"" + (legal.accessibility.text || legal.accessibility.href) + "\"." : "The start page links no accessibility statement.") + " The European Accessibility Act has required one from shops and services sold to EU consumers since June 2025. The case would follow the footer link on each template and check the page names a contact for access problems.", fw: browser });
   addCase(cases, { id: "SEC-01", layer: "Security", title: "HTTPS is the only way in", why: "The review refused any URL that was not https on port 443. A browser case would also request the http address and expect a redirect to https.", fw: browser });
   addCase(cases, { id: "SEC-02", layer: "Security", title: "HSTS is set", why: (face.headers.hsts ? "strict-transport-security is present." : "strict-transport-security was absent.") + " The later assertion is max-age, includeSubDomains, and a fresh profile that stays on https.", fw: browser });
   addCase(cases, { id: "SEC-03", layer: "Security", title: "A content security policy is set", why: (face.headers.csp ? "content-security-policy is present." : "content-security-policy was absent.") + " The policy would be checked for script-src and frame-ancestors, not only for the header name.", fw: browser });
@@ -1516,7 +1535,10 @@ function propose(pages, robotsBlocked, limits, dom) {
   addCase(cases, { id: "SEC-07", layer: "Security", title: "Response headers do not need to reveal the server build", why: (face.headers.server ? "Server header: " + face.headers.server + "." : "No Server header was sent.") + " The case records the header and does not treat a product name as a vulnerability by itself.", fw: browser });
   addCase(cases, { id: "SEC-08", layer: "Security", title: "A permissions policy limits powerful features", why: (sig.permissions ? "A permissions policy is present." : "No permissions-policy header was found.") + " Camera, microphone, and geolocation would be expected to stay disabled unless the page needs them.", fw: browser });
   addCase(cases, { id: "SEC-09", layer: "Security", title: "The HTML does not reference plain http resources", why: (sig.mixed || 0) + " scripts, images, frames, or stylesheets load over plain http. Mixed content would be confirmed in a browser console, not by downloading those URLs here.", fw: browser });
-  addCase(cases, { id: "PR-01", layer: "Privacy", title: "A privacy notice is linked from the page", why: (sig.privacyLink ? "The HTML mentions a privacy or legal destination." : "No privacy or legal wording was found in the markup.") + " Confirm the link in a browser before treating it as found.", fw: browser });
+  const libs = [...new Set(pages.reduce((all, page) => all.concat((page.inspect && page.inspect.libraries) || []), (dom && dom.libraries) || []).map((row) => row.name + " " + row.version))];
+  if (libs.length) addCase(cases, { id: "SEC-10", layer: "Security", title: "Front-end libraries have no known flaw", why: "The review read " + libs.slice(0, 5).join(", ") + " from script addresses, banners or page globals. The case would compare each version with the retire.js list on every release.", fw: browser });
+  addCase(cases, { id: "PR-01", layer: "Privacy", title: "A privacy notice is linked from the page", why: (legal.privacy ? "The start page links \"" + (legal.privacy.text || legal.privacy.href) + "\"." : sig.privacyLink ? "The HTML mentions a privacy or legal destination, but no link to a privacy notice was found." : "No privacy or legal wording was found in the markup.") + " Confirm the link in a browser before treating it as found.", fw: browser });
+  if (legal.imprint || germanSpeaking(face.lang, face.textLang, home.url)) addCase(cases, { id: "PR-04", layer: "Privacy", title: "An imprint names who runs the site", why: (legal.imprint ? "The start page links \"" + (legal.imprint.text || legal.imprint.href) + "\"." : "The start page links no imprint.") + " German-speaking sites must name the provider, an address and a contact (§ 5 DDG in Germany, § 5 ECG in Austria). The case would open the imprint from every template.", fw: browser });
   addCase(cases, { id: "PR-02", layer: "Privacy", title: "Third-party scripts are named before they run", why: (sig.thirdParty || []).length + " other hosts were referenced by script src" + ((sig.thirdParty || []).length ? " (" + sig.thirdParty.slice(0, 4).join(", ") + ")." : ".") + " A privacy case would load the page with tags blocked and then with consent.", fw: browser });
   if (tracked) addCase(cases, { id: "PR-03", layer: "Privacy", title: "A consent notice is present when tags or cookies appear before a choice", why: (sig.consent ? "Cookie or consent wording was found in the HTML." : "No cookie or consent wording was found.") + " The case would assert the notice before analytics storage is written.", fw: browser });
   addCase(cases, { id: "SEO-01", layer: "SEO", title: "Title, description, canonical, and social tags agree", why: "Title and description were read from the HTML. Open Graph tags would be asserted in a later browser case against the same final URL.", fw: browser });
@@ -2122,7 +2144,7 @@ async function reviewTarget(rawUrl, hooks) {
     });
     note("Chat seen in the browser: " + chat.found.map((row) => row.name).join(", ") + ".");
   }
-  const cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "", chat }, browser.start.dom) : null);
+  const cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "", chat, libraries: browser.libraries || [] }, browser.start.dom) : null);
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   const byLayer = {};
   cases.forEach((item) => { byLayer[item.layer] = (byLayer[item.layer] || 0) + 1; });
