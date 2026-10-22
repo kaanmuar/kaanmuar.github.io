@@ -146,9 +146,8 @@ test("the second look reads unread contact pages, linked GitHub profiles and web
     fetchPage: async (url) => { asked.push(url); return url.endsWith("/contacto") ? { status: 200, html: true, url, body: "<a href=\"mailto:hola@acme.co\">x</a>" } : { status: 404 }; },
     analyze: core.analyzeHtml,
     github: async (name) => (name === "acmeco" ? { email: "Dev@Acme.co" } : null),
-    search: async () => "<div class=\"result\">Escríbenos a ventas@acme.co o a otro@ajeno.com</div>",
+    search: async () => [{ title: "Acme | Contacto", url: "https://directorio.co/acme", description: "Escríbenos a ventas@acme.co o a otro@ajeno.com" }],
     emailsInText: core.emailsInText,
-    visibleText: core.visibleText,
     registrable: core.registrable
   });
   const askedPaths = asked.map((url) => new URL(url).pathname);
@@ -159,6 +158,45 @@ test("the second look reads unread contact pages, linked GitHub profiles and web
   assert.deepEqual(by("contact-page"), ["hola@acme.co"]);
   assert.deepEqual(by("github"), ["dev@acme.co"]);
   assert.deepEqual(by("search"), ["ventas@acme.co"]);
+  assert.equal(found.find((row) => row.source === "search").url, "https://directorio.co/acme");
+});
+
+test("web search skips the made-up addresses that email-format pages show", () => {
+  assert.ok(search.sampleAddress("jane.doe@acme.co", "https://directorio.co/acme"));
+  assert.ok(search.sampleAddress("jdoe@acme.co", "https://directorio.co/acme"));
+  assert.ok(search.sampleAddress("first.last@acme.co", "https://directorio.co/acme"));
+  assert.ok(search.sampleAddress("ventas@acme.co", "https://rocketreach.co/acme-email-format_b5cc"));
+  assert.ok(search.sampleAddress("ventas@acme.co", "https://www.zoominfo.com/c/acme/1"));
+  assert.ok(!search.sampleAddress("ventas@acme.co", "https://directorio.co/acme"));
+  assert.ok(!search.sampleAddress("jdoerr@acme.co", "https://directorio.co/acme"));
+});
+
+test("web search reads Brave Search API results, and finds nothing without a key or a 200 answer", async () => {
+  const realFetch = global.fetch;
+  const calls = [];
+  try {
+    assert.deepEqual(await core.webSearch("\"@acme.co\"", ""), []);
+    global.fetch = async () => ({ ok: false, status: 429 });
+    assert.deepEqual(await core.webSearch("\"@acme.co\"", "k"), []);
+    global.fetch = async (url, init) => {
+      calls.push({ url, token: init.headers["x-subscription-token"] });
+      return { ok: true, json: async () => ({ web: { results: [
+        { title: "Acme &amp; <strong>Co</strong>", url: "https://news.example/acme", description: "Write to <strong>hola@acme.co</strong>", extra_snippets: ["ventas@acme.co"] },
+        { title: "No link", url: "javascript:alert(1)", description: "" },
+        { title: "Escaped &lt;script&gt;alert(1)&lt;/script&gt;", url: "https://bad.example/", description: "&lt;img src=x onerror=alert(1)&gt;" }
+      ] } }) };
+    };
+    const results = await core.webSearch("\"@acme.co\"", "k");
+    assert.equal(calls[0].token, "k");
+    assert.match(calls[0].url, /^https:\/\/api\.search\.brave\.com\/res\/v1\/web\/search\?/);
+    assert.deepEqual(results.slice(0, 1), [{ title: "Acme & Co", url: "https://news.example/acme", description: "Write to hola@acme.co ventas@acme.co" }]);
+    assert.ok(results.every((item) => !/[<>]/.test(item.title + item.description)));
+    assert.deepEqual(core.parseMentions(results.slice(0, 1).concat({ title: "Own page", url: "https://acme.co/" }), "acme.co"), [
+      { title: "Acme & Co", href: "https://news.example/acme", tone: "Mention" }
+    ]);
+  } finally {
+    global.fetch = realFetch;
+  }
 });
 
 test("the notice email carries the health score, both buttons, the source and the postal address, and no asker", () => {
