@@ -151,8 +151,10 @@ test("the second look reads unread contact pages, linked GitHub profiles and web
     visibleText: core.visibleText,
     registrable: core.registrable
   });
-  assert.ok(asked.includes("https://acme.co/contacto"));
-  assert.ok(!asked.includes("https://acme.co/contact"));
+  const askedPaths = asked.map((url) => new URL(url).pathname);
+  assert.ok(asked.every((url) => new URL(url).origin === "https://acme.co"));
+  assert.ok(askedPaths.includes("/contacto"));
+  assert.ok(!askedPaths.includes("/contact"));
   const by = (source) => found.filter((row) => row.source === source).map((row) => row.email);
   assert.deepEqual(by("contact-page"), ["hola@acme.co"]);
   assert.deepEqual(by("github"), ["dev@acme.co"]);
