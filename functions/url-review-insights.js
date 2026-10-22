@@ -4,9 +4,9 @@ const { URL } = require("url");
 const libraries = require("./url-review-libraries");
 const { germanSpeaking } = require("./url-review-legal");
 
-const BROWSER_READ_NOTE = "The site's bot protection refused the plain read; the page was read in headless Chrome.";
-const UNTAGGED_READ_NOTE = "The site's bot protection refused the plain read and headless Chrome while it carried the review tag; the page was read in headless Chrome without the tag.";
-const CUT_NOTE = "The start page is larger than 2 MB, so the review read its first 2 MB.";
+const BROWSER_READ_NOTE = "The site's bot protection refused the plain request; the page was analyzed in headless Chrome.";
+const UNTAGGED_READ_NOTE = "The site's bot protection refused the plain request and headless Chrome while it carried the review tag; the page was analyzed in headless Chrome without the tag.";
+const CUT_NOTE = "The start page is larger than 2 MB, so the review analyzed its first 2 MB.";
 
 function botCheck(vendor) {
   return (/^[aeiou]/i.test(vendor) ? "an " : "a ") + vendor + " bot check";
@@ -334,7 +334,7 @@ function legalChecks(ctx, add) {
     return dom && dom.legal && dom.legal[kind] ? Object.assign({ path: browsed.start.finalPath || "/" }, dom.legal[kind]) : null;
   };
   const linked = (hit) => (hit.text ? "\"" + hit.text + "\"" : "A link") + " on " + hit.path + " leads to " + shownAgainst(hit.href, origin) + ".";
-  const none = "None of the " + plural(read.length, "page") + " read" + (dom ? ", nor the rendered start page," : "") + " links ";
+  const none = "None of the " + plural(read.length, "page") + " analyzed" + (dom ? ", nor the rendered start page," : "") + " links ";
 
   const statement = at("accessibility");
   const techs = [].concat.apply([], read.map((page) => page.inspect.technologies || []));
@@ -863,7 +863,7 @@ function analyze(input) {
         "In " + pathOf(sitemapReport.source) + ": " + sample(Object.keys(offHosts).sort((a, b) => offHosts[b] - offHosts[a]).map((name) => name + " (" + offHosts[name] + ")"), 3) + ". The sitemap should list only URLs on https://" + host + ".", "Regenerate the sitemap with the production https host.", { count: sitemapReport.offHost, effort: "minutes", cases: ["SEO-03"] });
     }
     if (!sitemapReport.listedNotIndexable.length && !sitemapReport.notListed.length && !sitemapReport.offHost) {
-      if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", "A sitemap answers with valid URLs", "The first " + plural(sitemapReport.count, "URL") + " from " + pathOf(sitemapReport.source) + " were analyzed; the sitemap is larger than one review reads.", "", { cases: ["SEO-03"] });
+      if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", "A sitemap answers with valid URLs", "The first " + plural(sitemapReport.count, "URL") + " from " + pathOf(sitemapReport.source) + " were analyzed; the sitemap is larger than one review analyzes.", "", { cases: ["SEO-03"] });
       else add("SEO", "pass", "info", "seo-sitemap", "The sitemap matches the pages that were analyzed", plural(sitemapReport.count, "URL") + " in " + pathOf(sitemapReport.source) + ".", "", { cases: ["SEO-03"] });
     }
   } else {
@@ -1146,7 +1146,7 @@ function analyze(input) {
   }
   if (tracking.length && !browsed) {
     add("Analytics", "person", "info", "an-firing", "Whether tags fire before a choice needs a browser run",
-      "A raw HTML read can see the tags but not the requests they send. The browser run records every hit before and after consent.", "", { cases: ["AN-01"] });
+      "A raw HTML analysis can see the tags but not the requests they send. The browser run records every hit before and after consent.", "", { cases: ["AN-01"] });
   }
   const utm = extras.utm || null;
   if (utm && utm.status) {

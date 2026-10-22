@@ -1,7 +1,7 @@
 {
   "name": "Carlos A. Muñoz — Interactive CV",
   "short_name": "Carlos Muñoz CV",
-  "description": "Interactive CV of Carlos A. Muñoz, with six languages, competency filters, print and downloads, a free QA lab, and a free SDLC studio.",
+  "description": "Interactive CV of Carlos A. Muñoz, with six languages, competency filters, print and downloads, a free QA lab, a free SDLC studio, and QA-lab URL Review, which scores any public site.",
   "start_url": "/",
   "scope": "/",
   "display": "browser",

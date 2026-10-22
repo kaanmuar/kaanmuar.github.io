@@ -694,7 +694,7 @@
       historyBlock(report.history) +
       '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(ins.summary || value + " out of 100.") + "</p></div>" +
       '<p class="meta-line">' + (sev.critical || 0) + " critical · " + (sev.high || 0) + " high · " + (sev.medium || 0) + " medium · " + (sev.low || 0) + " low · " +
-      read + " page" + (read === 1 ? "" : "s") + " read" + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
+      read + " page" + (read === 1 ? "" : "s") + " analyzed" + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
       '<div class="exec-cols"><div><h3>Biggest risks</h3>' + list(risks) + "</div><div><h3>Quick wins</h3>" + list(quick) + "</div><div><h3>Already solid</h3>" +
       (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(name) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">No area scores B or better yet.</p>') + "</div></div>" +
       '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">Print this summary</button></p>';
@@ -783,8 +783,8 @@
     const carbon = carbonLine(report.insights && report.insights.carbon);
     if (!b || !b.ok) {
       host.innerHTML = speed + carbon + '<p class="muted">' + (b && b.error
-        ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML read only."
-        : "This review ran without the headless browser, so the checks come from the HTML read only.") + "</p>";
+        ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML alone."
+        : "This review ran without the headless browser, so the checks come from the HTML alone.") + "</p>";
       return;
     }
     const start = b.start || {};
@@ -1238,7 +1238,7 @@
     sampleNote.hidden = !sample;
     if (sample) {
       const when = new Date(report.fetchedAt);
-      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way a free report is: the opening of each case is readable and the rest stays blurred. Close it to read the disclaimers and review your own address.";
+      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the opening of each case is readable and the rest stays blurred. Close it to read the disclaimers and review your own address.";
     }
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
@@ -1378,7 +1378,7 @@
     stopBtn.disabled = true;
     document.getElementById("run-log").innerHTML = "";
     if (window.ReviewProgress) ReviewProgress.start({ host: urlInput.value, pages: selectedPages() });
-    setStatus("Checking the email domain, then reading the public page…", false);
+    setStatus("Checking the email domain, then analyzing the public page…", false);
     appendLog("Checking the fields, the email domain, and that this is a browser.");
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", reasonCode());
     try {
@@ -1493,7 +1493,7 @@
     const billing = body && body.billing === "scope" ? "scope" : "run";
     const tools = billing === "scope" ? [] : ((body && body.tools) || selectedTools());
     const usd = (body && body.priceUsd) || reviewUsd(list, tools);
-    document.getElementById("run-pay-title").textContent = "This read is " + formatUsd(usd) + " USD";
+    document.getElementById("run-pay-title").textContent = "This review is " + formatUsd(usd) + " USD";
     document.getElementById("run-pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
     document.getElementById("run-pay-detail").textContent = billing === "scope"
       ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider review."
@@ -1803,11 +1803,12 @@
       steps.push({ selector: "#terms-form", title: "The disclaimers", body: "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text.", demoMs: 1800 });
     }
     steps.push(
-      { selector: "#name", title: "Who is asking", body: "Name and email are required, and they are stored with the review. Changing them does not open a second completed review.", demoMs: 1500 },
+      { selector: "#sign-in", title: "Sign in", body: "Sign in with email or an account you already have. The review runs only on the device where you sign in.", demoMs: 1500 },
+      { selector: "#name", title: "Who is asking", body: "Your name is stored with the review. Your email comes from the sign-in. Changing the name does not open a second completed review.", demoMs: 1500 },
       { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
       { selector: "#url-field", title: "The page", body: "Type the host and path. https:// is already in front of the box, so the review always asks for a public secure page.", demoMs: 1500 },
       { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
-      { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it reads public pages on that host and writes a line for each step.", demoMs: 1500 },
+      { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it analyzes public pages on that host and writes a line for each step.", demoMs: 1500 },
       { selector: "#run-log", title: "The log", body: "Watch the analysis here: the first page, robots.txt, and each linked page. The same lines are kept with the run.", demoMs: 1600 },
       { selector: "#stop-btn", title: "Stop", body: "Stop ends the analysis. Pages already saved stay in the report, and the record says the review was stopped.", demoMs: 1500 },
       { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions.", demoMs: 1800 },

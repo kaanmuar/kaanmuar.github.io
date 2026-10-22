@@ -22,7 +22,7 @@
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="QA-lab URL Review guided tour: here is how we listen. Six steps, six scores.">
     <meta property="article:published_time" content="2026-10-19">
-    <meta property="article:modified_time" content="2026-10-19">
+    <meta property="article:modified_time" content="2026-10-22">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@qalaburlreview">
     <meta name="twitter:title" content="How QA-lab URL Review works, a guided tour">
@@ -44,7 +44,7 @@
                 "publisher": { "@type": "Organization", "@id": "https://carlosandmunoz.com/qa-review.html#organization", "name": "QA-lab URL Review", "url": "https://carlosandmunoz.com/qa-review.html" },
                 "author": { "@type": "Person", "@id": "https://carlosandmunoz.com/#person", "name": "Carlos A. Muñoz Ardila", "url": "https://carlosandmunoz.com/" },
                 "datePublished": "2026-10-19",
-                "dateModified": "2026-10-19",
+                "dateModified": "2026-10-22",
                 "image": "https://carlosandmunoz.com/assets/share/qa-review-guide.jpg",
                 "description": "Who QA-lab URL Review helps, what happens step by step, how to read the six scores, and what the review will never do to a site."
             },
@@ -59,13 +59,13 @@
             {
                 "@type": "HowTo",
                 "name": "Review a public website with QA-lab URL Review",
-                "description": "Read one public https address, score it across SEO, GEO, analytics, security, accessibility, and performance, and take home proposed test cases for your frameworks.",
+                "description": "Analyze one public https address, score it across SEO, GEO, analytics, security, accessibility, and performance, and take home proposed test cases for your frameworks.",
                 "step": [
                     { "@type": "HowToStep", "position": 1, "name": "Read the disclaimers", "text": "Every control stays off until you accept what the review will and will not do." },
-                    { "@type": "HowToStep", "position": 2, "name": "Say who is asking", "text": "Give a name, an email at the same domain as the site, and the reason for the review." },
+                    { "@type": "HowToStep", "position": 2, "name": "Say who is asking", "text": "Sign in with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X); your email comes from that sign-in. Then give your name and the reason for the review. If the reason is your own site, sign in with an email at its domain." },
                     { "@type": "HowToStep", "position": 3, "name": "Paste the public address and pick frameworks", "text": "Enter one public https address and choose the frameworks your team uses." },
-                    { "@type": "HowToStep", "position": 4, "name": "Watch the analysis", "text": "The review reads up to twenty pages, two links deep, opens up to three in a headless browser, and asks PageSpeed Insights to score the start page." },
-                    { "@type": "HowToStep", "position": 5, "name": "Read the report", "text": "Six scores from 0 to 100, every check marked fails now, at risk, passes, or needs a person, and a fix-first list." },
+                    { "@type": "HowToStep", "position": 4, "name": "Watch the analysis", "text": "The review analyzes up to twenty pages, two links deep, opens up to three in a headless browser from an EU address in Belgium, asks PageSpeed Insights to score the start page, and asks Google Web Risk to check it against Safe Browsing." },
+                    { "@type": "HowToStep", "position": 5, "name": "Read the report", "text": "Six scores from 0 to 100, every check marked fails now, at risk, passes, or needs a person, and a fix-first list. It also checks chat widgets and AI chatbots, the accessibility statement, imprint, and privacy pages, outdated front-end libraries, Google Safe Browsing, domain expiry and transfer lock, and MTA-STS, TLS-RPT, and BIMI for mail, and estimates the carbon of one visit." },
                     { "@type": "HowToStep", "position": 6, "name": "Take the cases home", "text": "Export proposed cases and starting scripts to a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, text, or PDF." }
                 ]
             },
@@ -73,10 +73,10 @@
                 "@type": "FAQPage",
                 "@id": "https://carlosandmunoz.com/qa-review-guide.html#faq",
                 "mainEntity": [
-                    { "@type": "Question", "name": "How much of a site does the first review read?", "acceptedAnswer": { "@type": "Answer", "text": "Your first review is included: up to twenty pages, two links deep. A wider or deeper review asks for payment before it starts, and you see the amount first." } },
-                    { "@type": "Question", "name": "Can I review a site I do not own?", "acceptedAnswer": { "@type": "Answer", "text": "You can review any public https address with a real reason, and the email domain check records who asked. Scores and findings for public pages may be published as a Live Report and on social media, never with the name, email, or reason of who asked. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. Please do not republish their content from a shared report." } },
+                    { "@type": "Question", "name": "How much of a site does the first review analyze?", "acceptedAnswer": { "@type": "Answer", "text": "Your first review is included: up to twenty pages, two links deep. A wider or deeper review asks for payment before it starts, and you see the amount first." } },
+                    { "@type": "Question", "name": "Can I review a site I do not own?", "acceptedAnswer": { "@type": "Answer", "text": "You can review any public https address with a real reason, and your sign-in records who asked. Scores and findings for public pages may be published as a Live Report, on GitHub, and on social media, unless you tick “Don't publish this review” on the request, never with the name, email, or reason of who asked. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. Please do not republish their content from a shared report." } },
                     { "@type": "Question", "name": "Is the score a certification?", "acceptedAnswer": { "@type": "Answer", "text": "No. The report is a snapshot and a proposal from one public analysis. It is not proof that a site is safe, fast, or compliant." } },
-                    { "@type": "Question", "name": "What about signed-in pages?", "acceptedAnswer": { "@type": "Answer", "text": "The public review never signs in. A verification that runs cases behind a login is a separate request to qa@carlosandmunoz.com, with a login you are allowed to use." } },
+                    { "@type": "Question", "name": "What about signed-in pages?", "acceptedAnswer": { "@type": "Answer", "text": "The public review never signs in to your site. A verification that runs cases behind a login is a separate request to qa@carlosandmunoz.com, with a login you are allowed to use." } },
                     { "@type": "Question", "name": "Which languages can I read it in?", "acceptedAnswer": { "@type": "Answer", "text": "The review page is written in English and can be read in Spanish, Portuguese, German, French, and Italian." } }
                 ]
             }
@@ -298,11 +298,11 @@
             <li>
                 <h3>Read what the review will and will not do</h3>
                 Every control on the review page stays off until you accept the disclaimers. They take a minute, and they explain the rules for Colombia, where the service is operated, and for the country of the site you submit.
-                <span class="why">Why we ask: a review reads someone's public pages. You should know exactly what happens before a single address is opened.</span>
+                <span class="why">Why we ask: a review analyzes someone's public pages. You should know exactly what happens before a single address is opened.</span>
             </li>
             <li>
                 <h3>Say who is asking</h3>
-                Give your name, an email at the same domain as the site, and the reason for the review. If you review a client's site, add the client's name, email, and website.
+                Sign in with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X); your email comes from that sign-in. Then give your name and the reason for the review. If the reason is your own site, sign in with an email at its domain. If you review a client's site, add the client's name, email, and website.
                 <span class="why">Why we ask: there is a record of who asked, a site owner can ask us to stop and delete the report, and you can ask for a copy or deletion at any time.</span>
             </li>
             <li>
@@ -312,13 +312,13 @@
             </li>
             <li>
                 <h3>Watch the analysis happen</h3>
-                The review reads up to twenty pages, two links deep. It opens up to three of them in a headless browser from an EU address, runs axe-core, checks phone and tablet widths, keeps three screenshots, and asks Google PageSpeed Insights to score the start page.
-                <span class="why">Good to know: in that browser it presses a cookie banner's reject button once and nothing else. Google receives the start address for the PageSpeed score.</span>
+                The review analyzes up to twenty pages, two links deep. It opens up to three of them in a headless browser from an EU address in Belgium, runs axe-core, checks phone and tablet widths, keeps three screenshots, and asks Google PageSpeed Insights to score the start page.
+                <span class="why">Good to know: in that browser it presses a cookie banner's reject button once and nothing else. Google receives the start address for the PageSpeed score and the Safe Browsing check, and the domain's registry is asked when it expires. A site whose bot protection refuses the plain request is analyzed in headless Chrome.</span>
             </li>
             <li>
                 <h3>Read your report</h3>
-                Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and performance. Every check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see your Google result, your share card, a map of the pages analyzed, and what to fix first.
-                <span class="why">Remember: the report is shown once. Take your notes, or keep it, while it is open.</span>
+                Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and performance. Every check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see your Google result, your share card, a map of the pages analyzed, and what to fix first. It also checks chat widgets and AI chatbots, the accessibility statement, imprint, and privacy pages, outdated front-end libraries, Google Safe Browsing, domain expiry and transfer lock, and MTA-STS, TLS-RPT, and BIMI for mail, and estimates the carbon of one visit.
+                <span class="why">Remember: signed-in runs are listed on <a href="qa-review-account.html">your account page</a>, and opening a report again asks for payment unless your account has an allowance. Take your notes while it is open.</span>
             </li>
             <li>
                 <h3>Take the cases home</h3>
@@ -331,7 +331,7 @@
     <section class="reveal" aria-labelledby="read-title">
         <p class="eyebrow">How to read the report</p>
         <h2 id="read-title">We reviewed ourselves first</h2>
-        <p class="muted">These are the real scores from this site's own review on October 19, 2026: ten pages analyzed, 72 cases proposed, overall 86 out of 100. It is the same report you can open as the <a href="qa-review.html?sample=1">sample report</a>. To compare, the <a href="qa-review.html#live-reports">live reports</a> show the same review on more than a hundred public sites.</p>
+        <p class="muted">These are the real scores from this site's own review on October 19, 2026: ten pages analyzed, 72 cases proposed, overall 86 out of 100. It is the same report you can open as the <a href="qa-review.html?sample=1">sample report</a>. To compare, the <a href="qa-review.html#live-reports">live reports</a> show the same review on more than two hundred public sites.</p>
         <div class="card" style="margin-top:14px">
             <div class="scores" id="scores"></div>
             <div class="stack" id="stack" aria-hidden="true"></div>
@@ -353,9 +353,9 @@
     <section class="reveal" aria-labelledby="never-title">
         <p class="eyebrow">Care for your site</p>
         <h2 id="never-title">What a review will never do</h2>
-        <p class="muted">The review reads what any visitor can read. That is the whole point.</p>
+        <p class="muted">The review analyzes what any visitor can see. That is the whole point.</p>
         <div class="never" style="margin-top:14px">
-            <div class="card"><span class="x" aria-hidden="true">✕</span><h3>Sign in</h3><p class="muted">It never asks for or stores a password.</p></div>
+            <div class="card"><span class="x" aria-hidden="true">✕</span><h3>Sign in to your site</h3><p class="muted">It never asks for or stores your site's password.</p></div>
             <div class="card"><span class="x" aria-hidden="true">✕</span><h3>Submit forms</h3><p class="muted">Your contact form and checkout stay untouched.</p></div>
             <div class="card"><span class="x" aria-hidden="true">✕</span><h3>Generate load</h3><p class="muted">No load tests and no bots hammering your pages.</p></div>
             <div class="card"><span class="x" aria-hidden="true">✕</span><h3>Run the cases</h3><p class="muted">It proposes them. Running them is your call.</p></div>
@@ -371,17 +371,17 @@
             <div class="card tip"><h3>Consent means before, too</h3><p class="muted">Check what loads before the visitor chooses. A tag that fires before Reject is the most common analytics finding.</p></div>
             <div class="card tip"><h3>Your share card is a first impression</h3><p class="muted">A missing og:image turns every shared link into a grey box. The report shows the card people actually see.</p></div>
             <div class="card tip"><h3>Accessibility is a test, not a feeling</h3><p class="muted">axe-core findings come with the element and the rule. Turn the passing checks into tests so they stay passing.</p></div>
-            <div class="card tip"><h3>Speed is per page</h3><p class="muted">The report shows milliseconds for each page in the order it read them. The slowest page is rarely the home page.</p></div>
+            <div class="card tip"><h3>Speed is per page</h3><p class="muted">The report shows milliseconds for each page in the order it analyzed them. The slowest page is rarely the home page.</p></div>
         </div>
     </section>
 
     <section class="reveal" aria-labelledby="faq-title">
         <p class="eyebrow">Questions people ask</p>
         <h2 id="faq-title">Before you start</h2>
-        <details><summary>How much of a site does the first review read?</summary><p>Your first review is included: up to twenty pages, two links deep. A wider or deeper review asks for payment before it starts, and you see the amount first.</p></details>
-        <details><summary>Can I review a site I do not own?</summary><p>You can review any public https address with a real reason, and the email domain check records who asked. Scores and findings for public pages may be published as a Live Report and on social media, never with the name, email, or reason of who asked. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. Please do not republish their content from a shared report.</p></details>
+        <details><summary>How much of a site does the first review analyze?</summary><p>Your first review is included: up to twenty pages, two links deep. A wider or deeper review asks for payment before it starts, and you see the amount first.</p></details>
+        <details><summary>Can I review a site I do not own?</summary><p>You can review any public https address with a real reason, and your sign-in records who asked. Scores and findings for public pages may be published as a Live Report, on GitHub, and on social media, unless you tick “Don't publish this review” on the request, never with the name, email, or reason of who asked. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. Please do not republish their content from a shared report.</p></details>
         <details><summary>Is the score a certification?</summary><p>No. The report is a snapshot and a proposal from one public analysis. It is not proof that a site is safe, fast, or compliant.</p></details>
-        <details><summary>What about signed-in pages?</summary><p>The public review never signs in. A verification that runs cases behind a login is a separate request to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a>, with a login you are allowed to use.</p></details>
+        <details><summary>What about signed-in pages?</summary><p>The public review never signs in to your site. A verification that runs cases behind a login is a separate request to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a>, with a login you are allowed to use.</p></details>
         <details><summary>Which languages can I read it in?</summary><p>The review page is written in English and can be read in Spanish, Portuguese, German, French, and Italian.</p></details>
     </section>
 

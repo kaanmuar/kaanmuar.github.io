@@ -1,6 +1,6 @@
 /* Copy for the QA-lab URL Review post studio. Every claim here matches the live review:
-   it reads a public https page and proposes cases. It does not run them, sign in, submit forms,
-   or generate load, and the page text is not sent to a model vendor, so nothing here says AI. */
+   the asker signs in, it analyzes a public https site and proposes cases. It does not run them, sign in to
+   the site, submit forms, or generate load, and the page text is not sent to a model vendor, so nothing here says AI. */
 
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 
@@ -20,7 +20,7 @@ const UI = {
     ctaShort: "Run your first review",
     included: "First review included · 20 pages · 2 links deep",
     price: "The report shows once at no charge. Keeping, downloading, or sharing it starts at 19 USD, and the amount is shown before you confirm.",
-    honest: "It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.",
+    honest: "It proposes test cases from a public analysis. It does not run them, sign in to your site, submit forms, or generate load.",
     footnote: "Proposes cases · Does not run them · Not a certification",
     bio: "Link in bio.",
     swipe: "Swipe",
@@ -39,7 +39,7 @@ const UI = {
     ctaShort: "Haz tu primera revisión",
     included: "Primera revisión incluida · 20 páginas · 2 enlaces de profundidad",
     price: "El informe se muestra una vez sin costo. Guardarlo, descargarlo o compartirlo cuesta desde 19 USD, y el monto aparece antes de confirmar.",
-    honest: "Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.",
+    honest: "Propone casos de prueba a partir de un análisis público. No los ejecuta, no inicia sesión en tu sitio, no envía formularios ni genera carga.",
     footnote: "Propone casos · No los ejecuta · No es una certificación",
     bio: "Enlace en la bio.",
     swipe: "Desliza",
@@ -58,7 +58,7 @@ const UI = {
     ctaShort: "Faça sua primeira revisão",
     included: "Primeira revisão incluída · 20 páginas · 2 links de profundidade",
     price: "O relatório aparece uma vez sem custo. Guardar, baixar ou compartilhar custa a partir de 19 USD, e o valor aparece antes de confirmar.",
-    honest: "Propõe casos de teste a partir de uma leitura pública. Não os executa, não faz login, não envia formulários nem gera carga.",
+    honest: "Propõe casos de teste a partir de uma análise pública. Não os executa, não faz login no seu site, não envia formulários nem gera carga.",
     footnote: "Propõe casos · Não os executa · Não é uma certificação",
     bio: "Link na bio.",
     swipe: "Deslize",
@@ -77,7 +77,7 @@ const UI = {
     ctaShort: "Erste Prüfung starten",
     included: "Erste Prüfung inklusive · 20 Seiten · 2 Links tief",
     price: "Der Bericht erscheint einmal kostenlos. Behalten, Herunterladen oder Teilen ab 19 USD, und der Betrag wird vor der Bestätigung angezeigt.",
-    honest: "Sie schlägt Testfälle aus einer öffentlichen Lesung vor. Sie führt sie nicht aus, meldet sich nicht an, sendet keine Formulare und erzeugt keine Last.",
+    honest: "Sie schlägt Testfälle aus einer öffentlichen Analyse vor. Sie führt sie nicht aus, meldet sich nicht auf Ihrer Website an, sendet keine Formulare und erzeugt keine Last.",
     footnote: "Schlägt Fälle vor · Führt sie nicht aus · Keine Zertifizierung",
     bio: "Link in der Bio.",
     swipe: "Wischen",
@@ -96,7 +96,7 @@ const UI = {
     ctaShort: "Lancez votre première revue",
     included: "Première revue incluse · 20 pages · 2 liens de profondeur",
     price: "Le rapport s’affiche une fois sans frais. Le garder, le télécharger ou le partager coûte à partir de 19 USD, montant affiché avant de confirmer.",
-    honest: "Elle propose des cas de test à partir d’une lecture publique. Elle ne les exécute pas, ne se connecte pas, n’envoie pas de formulaires et ne génère pas de charge.",
+    honest: "Elle propose des cas de test à partir d’une analyse publique. Elle ne les exécute pas, ne se connecte pas à votre site, n’envoie pas de formulaires et ne génère pas de charge.",
     footnote: "Propose des cas · Ne les exécute pas · Pas une certification",
     bio: "Lien en bio.",
     swipe: "Glissez",
@@ -115,7 +115,7 @@ const UI = {
     ctaShort: "Fai la prima revisione",
     included: "Prima revisione inclusa · 20 pagine · 2 link di profondità",
     price: "Il rapporto si vede una volta senza costi. Tenerlo, scaricarlo o condividerlo parte da 19 USD, e l’importo appare prima di confermare.",
-    honest: "Propone casi di test da una lettura pubblica. Non li esegue, non fa login, non invia moduli e non genera carico.",
+    honest: "Propone casi di test da un’analisi pubblica. Non li esegue, non fa login sul tuo sito, non invia moduli e non genera carico.",
     footnote: "Propone casi · Non li esegue · Non è una certificazione",
     bio: "Link in bio.",
     swipe: "Scorri",
@@ -198,12 +198,12 @@ const POSTS = [
     cards: ["FN-01", "SEC-01", "A11Y-01"],
     tags: ["#TestCases", "#Playwright"],
     copy: {
-      en: { kicker: "From one public URL", title: ["The page is", "*already talking.*"], sub: "We write the test list. Bring an address the world can open, and leave with the cases a release would want written down.", bullets: ["21 kinds of cases", "Scripts for 20 frameworks", "1 public address to begin"], hook: "Every public page already tells you what to test. Most teams never write it down.", body: "QA-lab URL Review reads a public https page, describes the response, and proposes the test cases, named for the framework your team already uses." },
-      es: { kicker: "Desde una URL pública", title: ["La página", "*ya está hablando.*"], sub: "Nosotros escribimos la lista de pruebas. Trae una dirección pública y llévate los casos que una entrega querría por escrito.", bullets: ["21 tipos de casos", "Scripts para 20 frameworks", "1 dirección pública para empezar"], hook: "Cada página pública ya te dice qué probar. La mayoría de los equipos nunca lo escribe.", body: "QA-lab URL Review lee una página https pública, describe la respuesta y propone los casos de prueba, con el nombre del framework que tu equipo ya usa." },
-      pt: { kicker: "De uma URL pública", title: ["A página", "*já está falando.*"], sub: "Nós escrevemos a lista de testes. Traga um endereço público e saia com os casos que uma entrega gostaria de ter por escrito.", bullets: ["21 tipos de casos", "Scripts para 20 frameworks", "1 endereço público para começar"], hook: "Toda página pública já diz o que testar. A maioria das equipes nunca escreve isso.", body: "O QA-lab URL Review lê uma página https pública, descreve a resposta e propõe os casos de teste, com o nome do framework que sua equipe já usa." },
-      de: { kicker: "Aus einer öffentlichen URL", title: ["Die Seite", "*redet schon.*"], sub: "Wir schreiben die Testliste. Bringen Sie eine öffentliche Adresse mit und gehen Sie mit den Fällen, die ein Release schriftlich haben will.", bullets: ["21 Arten von Fällen", "Skripte für 20 Frameworks", "1 öffentliche Adresse genügt"], hook: "Jede öffentliche Seite sagt schon, was zu testen ist. Die meisten Teams schreiben es nie auf.", body: "QA-lab URL Review liest eine öffentliche https-Seite, beschreibt die Antwort und schlägt die Testfälle vor, benannt nach dem Framework, das Ihr Team schon nutzt." },
-      fr: { kicker: "D’une URL publique", title: ["La page", "*parle déjà.*"], sub: "Nous écrivons la liste de tests. Apportez une adresse publique, repartez avec les cas qu’une livraison voudrait voir écrits.", bullets: ["21 sortes de cas", "Scripts pour 20 frameworks", "1 adresse publique pour commencer"], hook: "Chaque page publique dit déjà quoi tester. La plupart des équipes ne l’écrivent jamais.", body: "QA-lab URL Review lit une page https publique, décrit la réponse et propose les cas de test, nommés pour le framework que votre équipe utilise déjà." },
-      it: { kicker: "Da un URL pubblico", title: ["La pagina", "*sta già parlando.*"], sub: "Noi scriviamo la lista dei test. Porta un indirizzo pubblico ed esci con i casi che un rilascio vorrebbe per iscritto.", bullets: ["21 tipi di casi", "Script per 20 framework", "1 indirizzo pubblico per iniziare"], hook: "Ogni pagina pubblica dice già cosa testare. La maggior parte dei team non lo scrive mai.", body: "QA-lab URL Review legge una pagina https pubblica, descrive la risposta e propone i casi di test, con il nome del framework che il team usa già." }
+      en: { kicker: "From one public URL", title: ["The page is", "*already talking.*"], sub: "We write the test list. Bring an address the world can open, and leave with the cases a release would want written down.", bullets: ["21 kinds of cases", "Scripts for 20 frameworks", "1 public address to begin"], hook: "Every public page already tells you what to test. Most teams never write it down.", body: "QA-lab URL Review analyzes a public https page, describes the response, and proposes the test cases, named for the framework your team already uses." },
+      es: { kicker: "Desde una URL pública", title: ["La página", "*ya está hablando.*"], sub: "Nosotros escribimos la lista de pruebas. Trae una dirección pública y llévate los casos que una entrega querría por escrito.", bullets: ["21 tipos de casos", "Scripts para 20 frameworks", "1 dirección pública para empezar"], hook: "Cada página pública ya te dice qué probar. La mayoría de los equipos nunca lo escribe.", body: "QA-lab URL Review analiza una página https pública, describe la respuesta y propone los casos de prueba, con el nombre del framework que tu equipo ya usa." },
+      pt: { kicker: "De uma URL pública", title: ["A página", "*já está falando.*"], sub: "Nós escrevemos a lista de testes. Traga um endereço público e saia com os casos que uma entrega gostaria de ter por escrito.", bullets: ["21 tipos de casos", "Scripts para 20 frameworks", "1 endereço público para começar"], hook: "Toda página pública já diz o que testar. A maioria das equipes nunca escreve isso.", body: "O QA-lab URL Review analisa uma página https pública, descreve a resposta e propõe os casos de teste, com o nome do framework que sua equipe já usa." },
+      de: { kicker: "Aus einer öffentlichen URL", title: ["Die Seite", "*redet schon.*"], sub: "Wir schreiben die Testliste. Bringen Sie eine öffentliche Adresse mit und gehen Sie mit den Fällen, die ein Release schriftlich haben will.", bullets: ["21 Arten von Fällen", "Skripte für 20 Frameworks", "1 öffentliche Adresse genügt"], hook: "Jede öffentliche Seite sagt schon, was zu testen ist. Die meisten Teams schreiben es nie auf.", body: "QA-lab URL Review analysiert eine öffentliche https-Seite, beschreibt die Antwort und schlägt die Testfälle vor, benannt nach dem Framework, das Ihr Team schon nutzt." },
+      fr: { kicker: "D’une URL publique", title: ["La page", "*parle déjà.*"], sub: "Nous écrivons la liste de tests. Apportez une adresse publique, repartez avec les cas qu’une livraison voudrait voir écrits.", bullets: ["21 sortes de cas", "Scripts pour 20 frameworks", "1 adresse publique pour commencer"], hook: "Chaque page publique dit déjà quoi tester. La plupart des équipes ne l’écrivent jamais.", body: "QA-lab URL Review analyse une page https publique, décrit la réponse et propose les cas de test, nommés pour le framework que votre équipe utilise déjà." },
+      it: { kicker: "Da un URL pubblico", title: ["La pagina", "*sta già parlando.*"], sub: "Noi scriviamo la lista dei test. Porta un indirizzo pubblico ed esci con i casi che un rilascio vorrebbe per iscritto.", bullets: ["21 tipi di casi", "Script per 20 framework", "1 indirizzo pubblico per iniziare"], hook: "Ogni pagina pubblica dice già cosa testare. La maggior parte dei team non lo scrive mai.", body: "QA-lab URL Review analizza una pagina https pubblica, descrive la risposta e propone i casi di test, con il nome del framework che il team usa già." }
     }
   },
   {
@@ -213,12 +213,12 @@ const POSTS = [
     clip: { picture: "scope-20x2", line: ["SCOPES", "20x2"] },
     tags: ["#TestCases", "#QAtools"],
     copy: {
-      en: { kicker: "Included first review", title: ["Your first review", "*is included.*"], sub: "Paste a public URL and watch the report get written in front of you.", stats: [["20", "pages read"], ["2", "links deep"], ["19 USD", "to keep it"]], bullets: ["Report shown once at no charge", "Keep, download, or share from 19 USD", "Amount shown before you confirm"], hook: "Your first review is included: 20 pages, 2 links deep.", body: "Paste a public URL, accept what the review will and will not do, and watch the report get written. Keep it only if it earns its place." },
-      es: { kicker: "Primera revisión incluida", title: ["Tu primera revisión", "*está incluida.*"], sub: "Pega una URL pública y mira cómo el informe se escribe delante de ti.", stats: [["20", "páginas leídas"], ["2", "enlaces de profundidad"], ["19 USD", "para guardarlo"]], bullets: ["El informe se muestra una vez sin costo", "Guardar, descargar o compartir desde 19 USD", "El monto aparece antes de confirmar"], hook: "Tu primera revisión está incluida: 20 páginas, 2 enlaces de profundidad.", body: "Pega una URL pública, acepta lo que la revisión hará y no hará, y mira cómo se escribe el informe. Guárdalo solo si vale la pena." },
-      pt: { kicker: "Primeira revisão incluída", title: ["Sua primeira revisão", "*está incluída.*"], sub: "Cole uma URL pública e veja o relatório ser escrito na sua frente.", stats: [["20", "páginas lidas"], ["2", "links de profundidade"], ["19 USD", "para guardar"]], bullets: ["O relatório aparece uma vez sem custo", "Guardar, baixar ou compartilhar a partir de 19 USD", "O valor aparece antes de confirmar"], hook: "Sua primeira revisão está incluída: 20 páginas, 2 links de profundidade.", body: "Cole uma URL pública, aceite o que a revisão faz e não faz, e veja o relatório ser escrito. Guarde só se valer a pena." },
-      de: { kicker: "Erste Prüfung inklusive", title: ["Ihre erste Prüfung", "*ist inklusive.*"], sub: "Öffentliche URL einfügen und zusehen, wie der Bericht vor Ihnen entsteht.", stats: [["20", "Seiten gelesen"], ["2", "Links tief"], ["19 USD", "zum Behalten"]], bullets: ["Bericht einmal kostenlos sichtbar", "Behalten, Laden oder Teilen ab 19 USD", "Betrag vor der Bestätigung sichtbar"], hook: "Ihre erste Prüfung ist inklusive: 20 Seiten, 2 Links tief.", body: "Öffentliche URL einfügen, annehmen, was die Prüfung tut und was nicht, und zusehen, wie der Bericht entsteht. Behalten Sie ihn nur, wenn er sich lohnt." },
-      fr: { kicker: "Première revue incluse", title: ["Votre première revue", "*est incluse.*"], sub: "Collez une URL publique et regardez le rapport s’écrire sous vos yeux.", stats: [["20", "pages lues"], ["2", "liens de profondeur"], ["19 USD", "pour le garder"]], bullets: ["Rapport affiché une fois sans frais", "Garder, télécharger ou partager dès 19 USD", "Montant affiché avant de confirmer"], hook: "Votre première revue est incluse : 20 pages, 2 liens de profondeur.", body: "Collez une URL publique, acceptez ce que la revue fera et ne fera pas, et regardez le rapport s’écrire. Gardez-le seulement s’il le mérite." },
-      it: { kicker: "Prima revisione inclusa", title: ["La tua prima revisione", "*è inclusa.*"], sub: "Incolla un URL pubblico e guarda il rapporto scriversi davanti a te.", stats: [["20", "pagine lette"], ["2", "link di profondità"], ["19 USD", "per tenerlo"]], bullets: ["Rapporto visibile una volta senza costi", "Tenere, scaricare o condividere da 19 USD", "Importo visibile prima di confermare"], hook: "La tua prima revisione è inclusa: 20 pagine, 2 link di profondità.", body: "Incolla un URL pubblico, accetta cosa farà e non farà la revisione, e guarda il rapporto scriversi. Tienilo solo se ne vale la pena." }
+      en: { kicker: "Included first review", title: ["Your first review", "*is included.*"], sub: "Paste a public URL and watch the report get written in front of you.", stats: [["20", "pages analyzed"], ["2", "links deep"], ["19 USD", "to keep it"]], bullets: ["Report shown once at no charge", "Keep, download, or share from 19 USD", "Amount shown before you confirm"], hook: "Your first review is included: 20 pages, 2 links deep.", body: "Sign in with email or an account you already have, paste a public URL, accept what the review will and will not do, and watch the report get written. Keep it only if it earns its place." },
+      es: { kicker: "Primera revisión incluida", title: ["Tu primera revisión", "*está incluida.*"], sub: "Pega una URL pública y mira cómo el informe se escribe delante de ti.", stats: [["20", "páginas analizadas"], ["2", "enlaces de profundidad"], ["19 USD", "para guardarlo"]], bullets: ["El informe se muestra una vez sin costo", "Guardar, descargar o compartir desde 19 USD", "El monto aparece antes de confirmar"], hook: "Tu primera revisión está incluida: 20 páginas, 2 enlaces de profundidad.", body: "Inicia sesión con tu correo o una cuenta que ya tienes, pega una URL pública, acepta lo que la revisión hará y no hará, y mira cómo se escribe el informe. Guárdalo solo si vale la pena." },
+      pt: { kicker: "Primeira revisão incluída", title: ["Sua primeira revisão", "*está incluída.*"], sub: "Cole uma URL pública e veja o relatório ser escrito na sua frente.", stats: [["20", "páginas analisadas"], ["2", "links de profundidade"], ["19 USD", "para guardar"]], bullets: ["O relatório aparece uma vez sem custo", "Guardar, baixar ou compartilhar a partir de 19 USD", "O valor aparece antes de confirmar"], hook: "Sua primeira revisão está incluída: 20 páginas, 2 links de profundidade.", body: "Entre com seu e-mail ou uma conta que você já tem, cole uma URL pública, aceite o que a revisão faz e não faz, e veja o relatório ser escrito. Guarde só se valer a pena." },
+      de: { kicker: "Erste Prüfung inklusive", title: ["Ihre erste Prüfung", "*ist inklusive.*"], sub: "Öffentliche URL einfügen und zusehen, wie der Bericht vor Ihnen entsteht.", stats: [["20", "Seiten analysiert"], ["2", "Links tief"], ["19 USD", "zum Behalten"]], bullets: ["Bericht einmal kostenlos sichtbar", "Behalten, Laden oder Teilen ab 19 USD", "Betrag vor der Bestätigung sichtbar"], hook: "Ihre erste Prüfung ist inklusive: 20 Seiten, 2 Links tief.", body: "Mit E-Mail oder einem vorhandenen Konto anmelden, öffentliche URL einfügen, annehmen, was die Prüfung tut und was nicht, und zusehen, wie der Bericht entsteht. Behalten Sie ihn nur, wenn er sich lohnt." },
+      fr: { kicker: "Première revue incluse", title: ["Votre première revue", "*est incluse.*"], sub: "Collez une URL publique et regardez le rapport s’écrire sous vos yeux.", stats: [["20", "pages analysées"], ["2", "liens de profondeur"], ["19 USD", "pour le garder"]], bullets: ["Rapport affiché une fois sans frais", "Garder, télécharger ou partager dès 19 USD", "Montant affiché avant de confirmer"], hook: "Votre première revue est incluse : 20 pages, 2 liens de profondeur.", body: "Connectez-vous avec votre e-mail ou un compte que vous avez déjà, collez une URL publique, acceptez ce que la revue fera et ne fera pas, et regardez le rapport s’écrire. Gardez-le seulement s’il le mérite." },
+      it: { kicker: "Prima revisione inclusa", title: ["La tua prima revisione", "*è inclusa.*"], sub: "Incolla un URL pubblico e guarda il rapporto scriversi davanti a te.", stats: [["20", "pagine analizzate"], ["2", "link di profondità"], ["19 USD", "per tenerlo"]], bullets: ["Rapporto visibile una volta senza costi", "Tenere, scaricare o condividere da 19 USD", "Importo visibile prima di confermare"], hook: "La tua prima revisione è inclusa: 20 pagine, 2 link di profondità.", body: "Accedi con la tua email o un account che hai già, incolla un URL pubblico, accetta cosa farà e non farà la revisione, e guarda il rapporto scriversi. Tienilo solo se ne vale la pena." }
     }
   },
   {
