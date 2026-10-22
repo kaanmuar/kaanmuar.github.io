@@ -1192,7 +1192,8 @@ async function rerunFailure(group) {
       maxPages: options.pages || undefined,
       maxDepth: options.depth || undefined,
       browse: browseForReview,
-      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
     });
     record = urlReview.intakeRecord(Object.assign({}, group.intake, {
       url: group.url,
@@ -2579,7 +2580,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
       browse: browseForReview,
-      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
     });
     const record = urlReview.intakeRecord(intake.value, report, {
       ip,

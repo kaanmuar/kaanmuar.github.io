@@ -223,7 +223,7 @@ function normal(text) {
 }
 
 function recorder(pageHttps, readLibraries) {
-  const state = { phase: "before", vendors: {}, chats: {}, wires: new Map(), libs: new Map(), reads: [], errors: [], errorCount: 0, failed: [], failedCount: 0, mixed: [], requests: 0, hosts: new Set() };
+  const state = { phase: "before", vendors: {}, chats: {}, wires: new Map(), libs: new Map(), reads: [], errors: [], errorCount: 0, failed: [], failedCount: 0, mixed: [], requests: 0, bytes: 0, hosts: new Set() };
   const addLib = (row) => {
     const key = row.name + "@" + row.version;
     if (!state.libs.has(key) && state.libs.size < 20) state.libs.set(key, row);
@@ -244,6 +244,7 @@ function recorder(pageHttps, readLibraries) {
       if (chatOf(host)) state.wires.set(id, chatRow(state.phase, host));
     },
     done(id, bytes) {
+      if (state.phase === "before") state.bytes += Math.max(0, Math.round(bytes) || 0);
       const row = state.wires.get(id);
       if (!row) return;
       row.bytes += Math.max(0, Math.round(bytes) || 0);
@@ -871,7 +872,7 @@ async function browse(job, log) {
         cdp.on("Network.requestWillBeSent", (event) => rec.wire(event.requestId, event.request.url));
         cdp.on("Network.loadingFinished", (event) => rec.done(event.requestId, event.encodedDataLength));
         await cdp.send("Network.enable");
-      } catch (error) { /* chat bytes stay at zero */ }
+      } catch (error) { /* chat and page bytes stay at zero */ }
       await page.evaluateOnNewDocument(VITALS);
       first = await open(page, start);
     };
@@ -912,6 +913,7 @@ async function browse(job, log) {
       vitals: { lcp: vitals.lcp || 0, cls: Math.round((vitals.cls || 0) * 1000) / 1000, tbt: vitals.tbt || 0, fcp: vitals.fcp || 0 },
       requests: rec.state.requests,
       hosts: rec.state.hosts.size,
+      bytes: rec.state.bytes,
       dom
     };
     if (job.html) {

@@ -48,7 +48,8 @@ async function main() {
     }
     const report = await core.reviewTarget(args[1], {
       browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
-      pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined
     });
     fs.writeFileSync(SAMPLE, JSON.stringify({ frameworks: core.FRAMEWORKS, report }) + "\n");
     console.log(summary("sample", report) + " -> " + path.relative(ROOT, SAMPLE));
@@ -68,7 +69,8 @@ async function main() {
     try {
       const report = await core.reviewTarget(target.url, {
         browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
-        pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined
+        pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+        webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined
       });
       fs.writeFileSync(path.join(OUT, target.name + "-current.json"), JSON.stringify(report, null, 1));
       console.log(summary(target.name, report) + " in " + Math.round((Date.now() - started) / 1000) + " s");

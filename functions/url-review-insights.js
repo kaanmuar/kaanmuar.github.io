@@ -531,6 +531,62 @@ const FIELD_FIX = {
 const FIELD_CASES = { lcp: "PF-01", inp: "PF-02", cls: "VIS-01" };
 const FIELD_WORD = { FAST: "good", AVERAGE: "needs improvement", SLOW: "poor" };
 
+const THREAT_WORDS = { MALWARE: "malware", SOCIAL_ENGINEERING: "phishing", UNWANTED_SOFTWARE: "unwanted software" };
+
+// Safe Browsing status, the domain's registration, and how mail to the domain is protected in transit.
+function domainChecks(extras, dnsInfo, dnsRead, add) {
+  const end = (text) => String(text).replace(/\.*$/, ".");
+  const sb = extras.safeBrowsing;
+  if (sb && sb.ok) {
+    const words = sb.threats.map((item) => THREAT_WORDS[item] || item.toLowerCase().replace(/_/g, " "));
+    if (words.length) add("Security", "fail", "critical", "sec-safebrowsing", "Google lists the site as " + words.join(" and "),
+      "Google's Safe Browsing lists, read through the Web Risk API, match " + sb.url + " as " + words.join(" and ") + ". Chrome, Firefox and Safari show a red warning page instead of the site, and Google Search can label it.",
+      "Find and remove the cause using the Security issues report in Google Search Console, then request a review there.", { effort: "days" });
+    else add("Security", "pass", "info", "sec-safebrowsing", "Google's Safe Browsing lists do not flag the site", "The Web Risk API found " + sb.url + " on no malware, phishing or unwanted-software list.", "");
+  }
+  const dom = extras.domain;
+  if (dom && dom.read) {
+    const at = dom.registrar ? " at " + dom.registrar : "";
+    const held = dom.domain + (dom.registrar ? ", held with " + dom.registrar + "," : "");
+    if (dom.expires && dom.daysLeft < 0) add("Security", "fail", "high", "sec-domain-expiry", "The domain registration has expired",
+      held + " expired on " + dom.expires + ", according to the registry's RDAP record. The site and its mail stop working when the grace period ends, and anyone can then register the name.", "Renew the domain now and turn on automatic renewal.", { effort: "minutes" });
+    else if (dom.expires && dom.daysLeft < 30) add("Security", "risk", dom.daysLeft < 7 ? "high" : "medium", "sec-domain-expiry", "The domain expires in " + plural(dom.daysLeft, "day"),
+      held + " is registered until " + dom.expires + ", according to the registry's RDAP record.", "Confirm that automatic renewal is on and the payment method on file is valid.", { effort: "minutes" });
+    else if (dom.expires) add("Security", "pass", "info", "sec-domain-expiry", "The domain is registered for " + plural(dom.daysLeft, "more day"), held + " is registered until " + dom.expires + ".", "");
+    if (dom.locked === false) add("Security", "risk", "low", "sec-domain-lock", "The domain has no transfer lock",
+      "The RDAP status of " + dom.domain + " is " + (dom.status.join(", ") || "empty") + ", with no clientTransferProhibited. A hijacked registrar account or a forged request can move the domain away.", end("Turn on the transfer lock" + at), { effort: "minutes" });
+    else if (dom.locked) add("Security", "pass", "info", "sec-domain-lock", "The domain is locked against transfer", "The RDAP status of " + dom.domain + " includes " + dom.status.filter((item) => /transfer/i.test(item)).join(", ") + ".", "");
+  }
+  if (!dnsInfo || !dnsInfo.domain || !dnsRead("mx") || !(dnsInfo.mx || []).length) return;
+  const domain = dnsInfo.domain;
+  if (dnsRead("mta-sts")) {
+    const policy = dnsInfo.mtaStsPolicy || {};
+    if (!dnsInfo.mtaSts) add("Security", "risk", "low", "sec-mta-sts", "No MTA-STS policy protects mail sent to the domain",
+      domain + " receives mail but publishes no _mta-sts TXT record. Sending servers fall back to unencrypted delivery if an attacker on the path strips STARTTLS.", "Publish an MTA-STS policy in mode: testing with a TLS-RPT address, then move to enforce once reports are clean.", { effort: "hours" });
+    else if (!policy.mode) add("Security", "risk", "low", "sec-mta-sts", "MTA-STS is announced but its policy could not be read",
+      "_mta-sts." + domain + " publishes " + dnsInfo.mtaSts + ", but " + (policy.url || "the policy file") + " could not be used: " + end(policy.error || "no answer") + " Senders ignore a policy they cannot fetch.", "Serve the policy as text over https at mta-sts." + domain + "/.well-known/mta-sts.txt, without a redirect.", { effort: "hours" });
+    else if (policy.mode === "enforce") add("Security", "pass", "info", "sec-mta-sts", "MTA-STS makes senders use TLS for mail to the domain", "The policy at " + policy.url + " is in enforce mode.", "");
+    else add("Security", "risk", "low", "sec-mta-sts", policy.mode === "testing" ? "MTA-STS only reports and does not enforce" : "MTA-STS is switched off",
+      "The policy at " + policy.url + " is in " + policy.mode + " mode, so senders still deliver without TLS when STARTTLS is stripped.", "Move the policy to mode: enforce once TLS-RPT reports show no failures.", { effort: "minutes" });
+  }
+  if (dnsRead("tlsrpt")) {
+    if (dnsInfo.tlsRpt) add("Security", "pass", "info", "sec-tlsrpt", "TLS-RPT sends reports of failed secure deliveries", dnsInfo.tlsRpt.slice(0, 120) + ".", "");
+    else add("Security", "risk", "low", "sec-tlsrpt", "No TLS-RPT address receives reports of failed secure deliveries",
+      "_smtp._tls." + domain + " has no v=TLSRPTv1 record, so nobody hears when senders cannot deliver mail over TLS.", "Publish TXT \"v=TLSRPTv1; rua=mailto:tlsrpt@" + domain + "\" at _smtp._tls." + domain + ".", { effort: "minutes" });
+  }
+}
+
+// Sustainable Web Design model v4: 0.3 kWh per GB across data centres, networks and devices, at the 494 g/kWh global grid average.
+const CARBON_KWH_PER_GB = 0.3;
+const CARBON_GRID_G_PER_KWH = 494;
+const CARBON_RATINGS = [["A+", 0.04], ["A", 0.079], ["B", 0.145], ["C", 0.209], ["D", 0.278], ["E", 0.359]];
+
+function carbonEstimate(bytes, source) {
+  if (!(bytes > 0)) return null;
+  const grams = (bytes / 1e9) * CARBON_KWH_PER_GB * CARBON_GRID_G_PER_KWH;
+  return { bytes: Math.round(bytes), grams: Math.round(grams * 1000) / 1000, rating: (CARBON_RATINGS.find(([, max]) => grams <= max) || ["F"])[0], source };
+}
+
 function speedChecks(psi, add) {
   const field = psi.field;
   const show = (key, metric) => key === "cls" ? String(metric.p75) : key === "inp" ? metric.p75 + " ms" : (metric.p75 / 1000).toFixed(1) + " s";
@@ -1234,7 +1290,9 @@ function analyze(input) {
     else if (dnsInfo.dmarc) add("Security", "pass", "info", "sec-dmarc", "DMARC rejects or quarantines spoofed mail", dnsInfo.dmarc.slice(0, 120) + ".", "");
     if (dnsInfo.spf && sendsMail) add("Security", "pass", "info", "sec-spf", "SPF is published", dnsInfo.spf.slice(0, 120) + ".", "");
     if (!(dnsInfo.caa || []).length && !unread.includes("caa")) add("Security", "risk", "low", "sec-caa", "No CAA record limits who may issue certificates", dnsInfo.domain + " has no CAA record, so any certificate authority may issue for it.", "Add a CAA record for the authority you use, for example 0 issue \"letsencrypt.org\".", { effort: "minutes" });
+    if (dnsInfo.bimi) add("Security", "pass", "info", "sec-bimi", "BIMI publishes the brand logo for inboxes", dnsInfo.bimi.slice(0, 160) + ".", "");
   }
+  domainChecks(extras, dnsInfo, dnsRead, add);
   (input.alerts || []).filter((alert) => alert.level === "Leak").forEach((alert, index) => {
     add("Security", "fail", "critical", "sec-leak-" + index, alert.title, alert.detail, "Remove it from the page and rotate the secret.", { effort: "hours" });
   });
@@ -1382,6 +1440,9 @@ function analyze(input) {
     duplicates: { titles: dupTitles.slice(0, 10), descriptions: dupDescriptions.slice(0, 10) },
     schemaTypes: [...schemaTypes].slice(0, 20)
   };
+  const findingState = (key) => (findings.find((item) => item.key === key) || {}).verdict || "unknown";
+  const pageBytes = browsed && browsed.start && browsed.start.bytes;
+  const carbon = pageBytes ? carbonEstimate(pageBytes, "browser") : carbonEstimate(input.pagespeed && input.pagespeed.bytes, "lighthouse");
   const security = {
     headers: [
       { label: "HTTPS redirect", state: httpCheck ? ({ pass: "pass", risk: "risk" }[(findings.find((item) => item.key === "sec-http") || {}).verdict] || "fail") : "unknown" },
@@ -1395,9 +1456,16 @@ function analyze(input) {
       { label: "security.txt", state: sec ? (findings.some((item) => item.key === "sec-securitytxt" && item.verdict === "pass") ? "pass" : "risk") : "unknown" },
       { label: "SPF", state: dnsRead("spf") ? (dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
       { label: "DMARC", state: dnsRead("dmarc") ? (dnsInfo.dmarc && !/p\s*=\s*none/i.test(dnsInfo.dmarc) ? "pass" : "risk") : "unknown" },
-      { label: "CAA", state: dnsRead("caa") ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" }
-    ],
+      { label: "CAA", state: dnsRead("caa") ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" },
+      { label: "Safe Browsing", state: findingState("sec-safebrowsing") },
+      { label: "Domain expiry", state: findingState("sec-domain-expiry") }
+    ].concat(dnsRead("mx") && (dnsInfo.mx || []).length ? [
+      { label: "MTA-STS", state: findingState("sec-mta-sts") },
+      { label: "TLS-RPT", state: findingState("sec-tlsrpt") }
+    ] : []),
     tls: tls && tls.validTo ? { validTo: tls.validTo, daysLeft: tls.daysLeft, issuer: tls.issuer || "" } : null,
+    domain: extras.domain && extras.domain.read ? { domain: extras.domain.domain, expires: extras.domain.expires, daysLeft: extras.domain.daysLeft, registrar: extras.domain.registrar, locked: extras.domain.locked } : null,
+    bimi: dnsRead("bimi") ? { record: dnsInfo.bimi || "", eligible: /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "") } : null,
     pages: headerRows.slice(0, 40)
   };
 
@@ -1413,6 +1481,7 @@ function analyze(input) {
     geo,
     analytics,
     security,
+    carbon,
     graph: { nodes: nodes.slice(0, 120), edges: edges.filter((edge) => edge.s < 120 && edge.t < 120) },
     fixkit: fixKit({ home, face, read, indexable, origin, host, input, extras, tags, dnsInfo, entity, socialLinks })
   };
@@ -1499,6 +1568,7 @@ function fixKit(ctx) {
     if (!ctx.dnsInfo.spf && !unread.includes("spf") && !unread.includes("mx")) dnsRecords.push({ name: domain, type: "TXT", value: mail ? "v=spf1 include:<your mail provider> ~all" : "v=spf1 -all" });
     if (!ctx.dnsInfo.dmarc && !unread.includes("dmarc")) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: "v=DMARC1; p=none; rua=mailto:dmarc@" + domain });
     if (!(ctx.dnsInfo.caa || []).length && !unread.includes("caa")) dnsRecords.push({ name: domain, type: "CAA", value: "0 issue \"letsencrypt.org\"" });
+    if (mail && !ctx.dnsInfo.tlsRpt && !unread.includes("tlsrpt") && !unread.includes("mx")) dnsRecords.push({ name: "_smtp._tls." + domain, type: "TXT", value: "v=TLSRPTv1; rua=mailto:tlsrpt@" + domain });
   }
   return {
     hosting: hostingHint(ctx.input && ctx.input.technologies, hdr),
