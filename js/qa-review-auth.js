@@ -6,7 +6,7 @@
   const PENDING_KEY = "qa-review-sign-in";
   const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
   const FIREBASE = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
-  const LABELS = { "google.com": "Google", "microsoft.com": "Microsoft", "apple.com": "Apple", "github.com": "GitHub", "yahoo.com": "Yahoo" };
+  const LABELS = { "google.com": "Google", "microsoft.com": "Microsoft", "apple.com": "Apple", "github.com": "GitHub", "yahoo.com": "Yahoo", "facebook.com": "Facebook", "twitter.com": "X" };
   const box = document.getElementById("sign-in");
   if (!box) return;
   const el = (id) => document.getElementById(id);
