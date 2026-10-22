@@ -1375,3 +1375,10 @@ test.describe("legal pages and front-end libraries", () => {
     }
   });
 });
+
+test("payment records are kept until January 1 of the sixth year after the payment", () => {
+  assert.equal(core.paymentExpireAt("2026-01-01T00:00:00Z").toISOString(), "2032-01-01T00:00:00.000Z");
+  assert.equal(core.paymentExpireAt("2026-12-31T23:59:59Z").toISOString(), "2032-01-01T00:00:00.000Z");
+  assert.equal(core.paymentExpireAt("2027-06-15T12:00:00Z").getUTCFullYear(), 2033);
+  assert.ok(core.paymentExpireAt().getTime() > Date.now() + 5 * core.RETAIN_MS);
+});

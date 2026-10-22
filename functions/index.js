@@ -1354,7 +1354,8 @@ async function noteReviewOpen(req) {
   });
   if (!record) return;
   await admin.firestore().collection("url_review_opens").add(Object.assign({}, record, {
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expireAt: new Date(Date.now() + urlReview.RETAIN_MS)
   }));
 }
 
@@ -1406,7 +1407,8 @@ async function stopLinkFor(email, lang) {
   await admin.firestore().collection("url_review_stop_links").doc(token).set({
     email: String(email || "").trim().toLowerCase(),
     lang: customerMail.langOf(lang),
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    expireAt: new Date(Date.now() + urlReview.RETAIN_MS)
   });
   return REVIEW_FN_URL + "/notes/stop?t=" + token;
 }
@@ -1486,7 +1488,8 @@ async function sendReviewNotes() {
           kind: note.kind,
           scene: note.scene,
           reportId: note.reportId || "",
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          expireAt: new Date(Date.now() + urlReview.RETAIN_MS)
         });
       }
     } catch (error) {
@@ -1636,7 +1639,7 @@ async function redeemCoupon(code, record) {
       const snap = await tx.get(ref);
       if (!snap.exists) return;
       tx.update(ref, { uses: Number((snap.data() || {}).uses || 0) + 1, lastUsedAt: new Date().toISOString() });
-      tx.set(db.collection("url_review_redemptions").doc(), Object.assign({ code: key, at: new Date().toISOString() }, record));
+      tx.set(db.collection("url_review_redemptions").doc(), Object.assign({ code: key, at: new Date().toISOString(), expireAt: urlReview.paymentExpireAt() }, record));
     });
   } catch (error) {
     console.error("Coupon redemption failed:", error);
@@ -1956,7 +1959,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         await ref.set({
           note: String((req.body && req.body.note) || "").trim().slice(0, 120),
           at: admin.firestore.FieldValue.serverTimestamp(),
-          by: operator
+          by: operator,
+          expireAt: new Date(Date.now() + urlReview.RETAIN_MS)
         });
       }
       res.status(200).json({ ok: true, email: key, on: !(req.body && req.body.on === false) });
@@ -1979,7 +1983,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         paid: false,
         localPass: true,
         paidUntil: until,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        expireAt: urlReview.paymentExpireAt()
       };
       await admin.firestore().collection("url_reviews").add(record);
       await rememberReview("monthly", record);
@@ -2261,6 +2266,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
             depth: result.depth || urlReview.INCLUDED_DEPTH,
             billing: result.billing || "run",
             createdAt: new Date().toISOString(),
+            expireAt: urlReview.paymentExpireAt(),
             priceUsd: paidPrice,
             amount: result.amount,
             currency: result.currency
@@ -2352,7 +2358,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         currency: session.currency,
         paid: false,
         test: testRun,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        expireAt: new Date(Date.now() + urlReview.RETAIN_MS)
       }, dealFields(deal)));
       await rememberReview("checkout", {
         id: reference,
@@ -2449,7 +2456,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       status: "run-credit-used",
       creditId: decision.consumeId,
       deviceId,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      expireAt: urlReview.paymentExpireAt()
     });
     await rememberReview("credit", { status: "run-credit-used", deviceId, creditId: decision.consumeId });
   }
