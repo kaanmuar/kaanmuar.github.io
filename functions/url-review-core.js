@@ -1766,13 +1766,16 @@ async function dnsFacts(hostname) {
   // Only "no such data" means the record is absent; a timeout or server failure leaves it unread (null).
   const settle = (promise) => withTimeout(promise.catch((err) => (/^(ENODATA|ENOTFOUND)$/.test(err && err.code) ? [] : null)), 5000, null);
   const txt = (name) => settle(dns.resolveTxt(name).then((rows) => rows.map((parts) => parts.join(""))));
-  const [root, dmarc, mx, caa] = await Promise.all([
+  const [root, dmarc, mx, caa, mtaSts, tlsRpt, bimi] = await Promise.all([
     txt(domain),
     txt("_dmarc." + domain),
     settle(dns.resolveMx(domain)),
-    settle(dns.resolveCaa(domain))
+    settle(dns.resolveCaa(domain)),
+    txt("_mta-sts." + domain),
+    txt("_smtp._tls." + domain),
+    txt("default._bimi." + domain)
   ]);
-  const unread = [["spf", root], ["dmarc", dmarc], ["mx", mx], ["caa", caa]].filter(([, rows]) => !rows).map(([name]) => name);
+  const unread = [["spf", root], ["dmarc", dmarc], ["mx", mx], ["caa", caa], ["mta-sts", mtaSts], ["tlsrpt", tlsRpt], ["bimi", bimi]].filter(([, rows]) => !rows).map(([name]) => name);
   // RFC 7505: a single MX of "." (Node reports an empty exchange) means the domain accepts no mail.
   const nullMx = !!mx && mx.length === 1 && /^\.?$/.test(String(mx[0].exchange || ""));
   return {
@@ -1782,8 +1785,88 @@ async function dnsFacts(hostname) {
     mx: nullMx ? [] : (mx || []).slice(0, 5).map((row) => clean(row.exchange, 120)),
     nullMx,
     caa: (caa || []).slice(0, 5).map((row) => clean(row.issue || row.issuewild || row.iodef || "", 120)),
+    mtaSts: clean((mtaSts || []).find((row) => /^v=STSv1/i.test(row)) || "", 200),
+    tlsRpt: clean((tlsRpt || []).find((row) => /^v=TLSRPTv1/i.test(row)) || "", 300),
+    bimi: clean((bimi || []).find((row) => /^v=BIMI1/i.test(row)) || "", 300),
     unread
   };
+}
+
+// RFC 8461: the policy lives at a fixed https address and must not be reached through a redirect.
+async function mtaStsPolicy(domain, halt) {
+  const url = "https://mta-sts." + domain + "/.well-known/mta-sts.txt";
+  const res = await fetchExtra(url, halt);
+  if (res.error || res.status !== 200) return { url, status: res.status || 0, error: res.error || "status " + (res.status || "none") };
+  if (res.url && res.url !== url) return { url, status: res.status, error: "it redirected to " + clean(res.url, 160) };
+  const field = (name) => ((res.body.match(new RegExp("^\\s*" + name + "\\s*:\\s*(\\S+)", "im")) || [])[1] || "").toLowerCase();
+  const mode = field("mode");
+  if (field("version") !== "stsv1" || !/^(enforce|testing|none)$/.test(mode)) return { url, status: res.status, error: "it has no valid version and mode lines" };
+  return { url, status: res.status, mode, maxAge: Number(field("max_age")) || 0 };
+}
+
+const RDAP_BOOTSTRAP = "https://data.iana.org/rdap/dns.json";
+const RDAP_TTL_MS = 24 * 3600 * 1000;
+let rdapServers = null;
+
+// IANA's bootstrap file names the RDAP server for each TLD. Null means it could not be read; "" means the TLD has none.
+async function rdapBase(tld, halt) {
+  if (!rdapServers || Date.now() - rdapServers.at > RDAP_TTL_MS) {
+    const res = await fetchExtra(RDAP_BOOTSTRAP, halt);
+    const map = {};
+    try {
+      (JSON.parse(res.body).services || []).forEach(([tlds, urls]) => {
+        const base = (urls || []).find((url) => /^https:\/\//.test(url));
+        if (base) (tlds || []).forEach((name) => { map[String(name).toLowerCase()] = base.replace(/\/?$/, "/"); });
+      });
+    } catch (error) { /* an unreadable file is not cached */ }
+    if (!Object.keys(map).length) return null;
+    rdapServers = { at: Date.now(), map };
+  }
+  return rdapServers.map[tld] || "";
+}
+
+function readRdap(data, domain) {
+  const events = Array.isArray(data && data.events) ? data.events : [];
+  const expiry = events.find((event) => /^expiration$/i.test(event.eventAction || ""));
+  const at = expiry && Date.parse(expiry.eventDate);
+  const status = (Array.isArray(data && data.status) ? data.status : []).map((item) => clean(item, 60)).slice(0, 12);
+  const registrarEntity = (Array.isArray(data && data.entities) ? data.entities : []).find((entity) => (entity.roles || []).includes("registrar"));
+  const vcard = (registrarEntity && Array.isArray(registrarEntity.vcardArray) && registrarEntity.vcardArray[1]) || [];
+  const fn = vcard.find((row) => Array.isArray(row) && row[0] === "fn");
+  return {
+    domain,
+    read: true,
+    expires: at && !isNaN(at) ? new Date(at).toISOString().slice(0, 10) : "",
+    daysLeft: at && !isNaN(at) ? Math.floor((at - Date.now()) / 86400000) : null,
+    registrar: clean((fn && fn[3]) || "", 120),
+    status,
+    locked: status.length ? status.some((item) => /transfer ?prohibited/i.test(item.replace(/([a-z])([A-Z])/g, "$1 $2"))) : null
+  };
+}
+
+async function domainFacts(hostname, halt) {
+  const domain = registrable(hostname);
+  const tld = domain.split(".").pop();
+  const base = await rdapBase(tld, halt);
+  if (base === null) return { domain, read: false, reason: "the IANA list of RDAP servers could not be read" };
+  if (!base) return { domain, read: false, reason: "." + tld + " has no RDAP service" };
+  const res = await fetchExtra(base + "domain/" + encodeURIComponent(domain), halt);
+  if (res.status !== 200) return { domain, read: false, reason: "the registry's RDAP server answered " + (res.status || res.error || "nothing") };
+  try {
+    return readRdap(JSON.parse(res.body), domain);
+  } catch (error) {
+    return { domain, read: false, reason: "the registry's RDAP answer was not JSON" };
+  }
+}
+
+// Web Risk is Google's commercial API over the Safe Browsing lists; the Safe Browsing API itself is licensed for non-commercial use only.
+async function webRisk(url, key) {
+  if (!key) return null;
+  const api = "https://webrisk.googleapis.com/v1/uris:search?threatTypes=MALWARE&threatTypes=SOCIAL_ENGINEERING&threatTypes=UNWANTED_SOFTWARE&uri=" + encodeURIComponent(url) + "&key=" + encodeURIComponent(key);
+  const res = await fetch(api, { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) return { ok: false, error: "status " + res.status };
+  const data = await res.json();
+  return { ok: true, url: clean(url, 300), threats: ((data && data.threat && data.threat.threatTypes) || []).map((item) => clean(item, 40)) };
 }
 
 // Follows plain-http hops (http://a → http://www.a → https://www.a) until one leaves for https.
@@ -1854,8 +1937,9 @@ function answered(name, res) {
   return name + " answered " + res.status + (res.html ? " with an HTML page" : "") + ".";
 }
 
-async function gatherExtras(first, robotsText, robotsGroups, halt, note) {
+async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups) {
   const say = typeof note === "function" ? note : () => {};
+  const checkRisk = lookups && typeof lookups.webrisk === "function" ? lookups.webrisk : null;
   const done = (promise, line) => promise.then((value) => { say(line(value)); return value; });
   const origin = new URL(first.url);
   const allowed = (path) => !robotsGroups.length || robotsAllows(path, robotsGroups);
@@ -1868,9 +1952,9 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note) {
   const tls = validTo && !isNaN(Date.parse(validTo))
     ? { validTo: new Date(Date.parse(validTo)).toISOString().slice(0, 10), daysLeft: Math.floor((Date.parse(validTo) - Date.now()) / 86400000), issuer: first.cert.issuer || "" }
     : null;
-  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, and the DNS records for " + registrable(origin.hostname) + ".");
+  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registrable(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
   say(tls ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
-  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo] = await Promise.all([
+  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing] = await Promise.all([
     done(readSitemap(origin.origin, robotsText, halt).catch(() => ({ status: 0, urls: [] })), (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
@@ -1888,12 +1972,27 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note) {
     done(plainHttp(origin.hostname, halt), (res) => res.error
       ? "Plain http could not be read (" + res.error + ")."
       : "Plain http answered " + res.statuses.join(" → ") + (res.location ? ", ending at " + res.location : "") + "."),
-    done(dnsFacts(origin.hostname).catch(() => null), (facts) => facts
-      ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + ", DMARC " + (facts.dmarc ? "found" : "missing") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" + (facts.unread.length ? ". Not answered in time: " + facts.unread.join(", ") : "") + "."
-      : "The DNS records could not be read.")
+    done(dnsFacts(origin.hostname).then(async (facts) => {
+      if (facts.mtaSts) facts.mtaStsPolicy = await withTimeout(mtaStsPolicy(facts.domain, halt), 8000, { error: "no answer in time" });
+      return facts;
+    }).catch(() => null), (facts) => facts
+      ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + ", DMARC " + (facts.dmarc ? "found" : "missing") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" +
+        ", MTA-STS " + (facts.mtaSts ? (facts.mtaStsPolicy && facts.mtaStsPolicy.mode ? "in " + facts.mtaStsPolicy.mode + " mode" : "announced, policy unread") : "missing") + ", TLS-RPT " + (facts.tlsRpt ? "found" : "missing") + ", BIMI " + (facts.bimi ? "found" : "missing") +
+        (facts.unread.length ? ". Not answered in time: " + facts.unread.join(", ") : "") + "."
+      : "The DNS records could not be read."),
+    done(withTimeout(domainFacts(origin.hostname, halt), 10000, null).catch(() => null), (facts) => !facts
+      ? "The RDAP registration did not answer in time."
+      : !facts.read
+        ? "The RDAP registration for " + facts.domain + " was not read: " + facts.reason + "."
+        : "RDAP for " + facts.domain + ": " + (facts.registrar ? "registrar " + facts.registrar + ", " : "") + (facts.expires ? "expires " + facts.expires + " (" + facts.daysLeft + " days)" : "no expiry date published") + (facts.locked == null ? "" : ", transfer lock " + (facts.locked ? "on" : "off")) + "."),
+    checkRisk
+      ? done(Promise.resolve().then(() => checkRisk(first.url)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) })), (res) => !res || !res.ok
+        ? "Google's Safe Browsing lists could not be read" + (res && res.error ? " (" + res.error + ")" : "") + "."
+        : res.threats.length ? "Google's Safe Browsing lists flag the site: " + res.threats.join(", ") + "." : "Google's Safe Browsing lists do not flag the site.")
+      : Promise.resolve(null)
   ]);
   const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
-  return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo };
+  return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null };
 }
 
 async function reviewTarget(rawUrl, hooks) {
@@ -2008,7 +2107,7 @@ async function reviewTarget(rawUrl, hooks) {
     else robotsNote = "robots.txt could not be read. Linked pages were still capped.";
   }
   const homeInspect = inspect(first.body, first.headers, first.url);
-  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note).catch(() => ({}));
+  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
   const browsePaths = (homeInspect.links || []).filter((url) => pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
@@ -2902,6 +3001,7 @@ function summarizePageSpeed(data) {
     score: Math.round(perf.score * 100),
     lab: { lcp: num("largest-contentful-paint"), fcp: num("first-contentful-paint"), tbt: num("total-blocking-time"), cls: num("cumulative-layout-shift"), si: num("speed-index") },
     field: page || field(data.originLoadingExperience, "origin"),
+    bytes: num("total-byte-weight"),
     version: String(lh.lighthouseVersion || ""),
     fetchedAt: String(lh.fetchTime || "")
   };
@@ -2967,6 +3067,10 @@ module.exports = {
   testKeyMatches,
   pageSpeed,
   summarizePageSpeed,
+  webRisk,
+  domainFacts,
+  readRdap,
+  mtaStsPolicy,
   TERMS_VERSION,
   PRICE_USD,
   PRICE_PER_FRAMEWORK,

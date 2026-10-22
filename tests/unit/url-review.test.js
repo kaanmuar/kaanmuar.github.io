@@ -347,7 +347,7 @@ test.describe("false positives from the real-run series", () => {
       }
     };
     const timedOut = await facts(async (name) => { if (name.startsWith("_dmarc.")) throw Object.assign(new Error("ENODATA"), { code: "ENODATA" }); throw Object.assign(new Error("ETIMEOUT"), { code: "ETIMEOUT" }); }, failing("ESERVFAIL"));
-    assert.deepEqual(timedOut.unread, ["spf", "caa"]);
+    assert.deepEqual(timedOut.unread, ["spf", "caa", "mta-sts", "tlsrpt", "bimi"]);
     const unsure = analyzeHtmlPages([{ url: URL_, html: HTML }], { dns: timedOut });
     assert.equal(verdict(unsure, "sec-spf"), "missing");
     assert.equal(verdict(unsure, "sec-caa"), "missing");
@@ -1401,6 +1401,161 @@ test.describe("legal pages and front-end libraries", () => {
       const ids = result.cases.map((item) => item.id);
       assert.ok(["A11Y-06", "PR-04", "SEC-10"].every((id) => ids.includes(id)), ids.join(","));
       assert.match(result.cases.find((item) => item.id === "SEC-10").why, /jQuery 1\.12\.4/);
+    } finally {
+      restore();
+    }
+  });
+});
+
+test.describe("domain health", () => {
+  const get = (result, key) => result.findings.find((item) => item.key === key);
+  const row = (result, label) => (result.security.headers.find((item) => item.label === label) || {}).state;
+  const MAIL = { domain: "example.com", spf: "v=spf1 -all", dmarc: "v=DMARC1; p=reject", mx: ["mx.example.com"], nullMx: false, caa: ["letsencrypt.org"], mtaSts: "", tlsRpt: "", bimi: "", unread: [] };
+  const days = (n) => new Date(Date.now() + n * 86400000 + 3600000).toISOString();
+
+  test("the MTA-STS, TLS-RPT and BIMI records are read from DNS", async () => {
+    const dnsPromises = require("node:dns").promises;
+    const saved = { mx: dnsPromises.resolveMx, txt: dnsPromises.resolveTxt, caa: dnsPromises.resolveCaa };
+    const records = {
+      "_mta-sts.example.com": [["v=STSv1; id=2026"]],
+      "_smtp._tls.example.com": [["v=TLSRPTv1; ", "rua=mailto:tls@example.com"]],
+      "default._bimi.example.com": [["v=BIMI1; l=https://example.com/logo.svg"]]
+    };
+    dnsPromises.resolveMx = async () => [{ exchange: "mx.example.com", priority: 10 }];
+    dnsPromises.resolveTxt = async (name) => records[name] || [["v=spf1 -all"]];
+    dnsPromises.resolveCaa = async () => [];
+    let facts;
+    try {
+      facts = await core.dnsFacts("www.example.com");
+    } finally {
+      Object.assign(dnsPromises, { resolveMx: saved.mx, resolveTxt: saved.txt, resolveCaa: saved.caa });
+    }
+    assert.equal(facts.mtaSts, "v=STSv1; id=2026");
+    assert.equal(facts.tlsRpt, "v=TLSRPTv1; rua=mailto:tls@example.com");
+    assert.equal(facts.bimi, "v=BIMI1; l=https://example.com/logo.svg");
+  });
+
+  test("RDAP gives the expiry, the registrar and the transfer lock", () => {
+    const data = {
+      status: ["client delete prohibited", "client transfer prohibited"],
+      events: [{ eventAction: "registration", eventDate: "2025-07-23T18:20:06Z" }, { eventAction: "expiration", eventDate: days(12) }],
+      entities: [{ roles: ["registrar"], vcardArray: ["vcard", [["version", {}, "text", "4.0"], ["fn", {}, "text", "Squarespace Domains II LLC"]]] }]
+    };
+    const read = core.readRdap(data, "example.com");
+    assert.deepEqual([read.read, read.daysLeft, read.registrar, read.locked], [true, 12, "Squarespace Domains II LLC", true]);
+    assert.equal(core.readRdap(Object.assign({}, data, { status: ["active", "clientTransferProhibited"] }), "example.com").locked, true);
+    assert.equal(core.readRdap(Object.assign({}, data, { status: ["active"] }), "example.com").locked, false);
+    const bare = core.readRdap({ events: [] }, "example.de");
+    assert.deepEqual([bare.expires, bare.daysLeft, bare.locked], ["", null, null]);
+  });
+
+  test("domain facts follow the IANA bootstrap to the registry, and the MTA-STS policy is read without redirects", async () => {
+    const restore = fakeNetwork({
+      "https://data.iana.org/rdap/dns.json": { status: 200, headers: { "content-type": "application/json" }, body: JSON.stringify({ services: [[["com", "net"], ["https://rdap.verisign.com/com/v1/"]]] }) },
+      "https://rdap.verisign.com/com/v1/domain/example.com": { status: 200, headers: { "content-type": "application/rdap+json" }, body: JSON.stringify({ status: ["active"], events: [{ eventAction: "expiration", eventDate: days(400) }] }) },
+      "https://mta-sts.example.com/.well-known/mta-sts.txt": { status: 200, headers: { "content-type": "text/plain" }, body: "version: STSv1\nmode: testing\nmx: mx.example.com\nmax_age: 86400\n" },
+      "https://mta-sts.example.net/.well-known/mta-sts.txt": { status: 301, headers: { location: "https://www.example.net/mta-sts.txt" } },
+      "https://www.example.net/mta-sts.txt": { status: 200, headers: { "content-type": "text/plain" }, body: "version: STSv1\nmode: enforce\n" }
+    });
+    try {
+      const facts = await core.domainFacts("www.example.com");
+      assert.deepEqual([facts.read, facts.daysLeft, facts.locked], [true, 400, false]);
+      assert.deepEqual(await core.domainFacts("shop.example.org"), { domain: "example.org", read: false, reason: ".org has no RDAP service" });
+      assert.deepEqual(await core.mtaStsPolicy("example.com"), { url: "https://mta-sts.example.com/.well-known/mta-sts.txt", status: 200, mode: "testing", maxAge: 86400 });
+      assert.match((await core.mtaStsPolicy("example.net")).error, /redirected/);
+    } finally {
+      restore();
+    }
+  });
+
+  test("a site on Google's Safe Browsing lists is a critical failure", async () => {
+    const savedFetch = global.fetch;
+    const asked = [];
+    global.fetch = async (url) => {
+      asked.push(String(url));
+      return { ok: true, json: async () => (/malware/.test(url) ? { threat: { threatTypes: ["MALWARE", "SOCIAL_ENGINEERING"] } } : {}) };
+    };
+    let listed, clean;
+    try {
+      listed = await core.webRisk("https://malware.example/", "k");
+      clean = await core.webRisk(URL_, "k");
+    } finally {
+      global.fetch = savedFetch;
+    }
+    assert.match(asked[0], /^https:\/\/webrisk\.googleapis\.com\/v1\/uris:search\?threatTypes=MALWARE&threatTypes=SOCIAL_ENGINEERING&threatTypes=UNWANTED_SOFTWARE&uri=https%3A%2F%2Fmalware\.example%2F&key=k$/);
+    assert.equal(await core.webRisk(URL_, ""), null);
+    const bad = analyzeHtmlPages([{ url: URL_, html: HTML }], { safeBrowsing: listed });
+    assert.deepEqual([get(bad, "sec-safebrowsing").verdict, get(bad, "sec-safebrowsing").severity], ["fail", "critical"]);
+    assert.equal(get(bad, "sec-safebrowsing").title, "Google lists the site as malware and phishing");
+    assert.equal(row(bad, "Safe Browsing"), "fail");
+    const good = analyzeHtmlPages([{ url: URL_, html: HTML }], { safeBrowsing: clean });
+    assert.equal(verdict(good, "sec-safebrowsing"), "pass");
+    assert.equal(row(analyzeHtmlPages([{ url: URL_, html: HTML }]), "Safe Browsing"), "unknown");
+  });
+
+  test("domain expiry is flagged under 30 days, and a missing transfer lock is a low risk", () => {
+    const at = (daysLeft, locked) => analyzeHtmlPages([{ url: URL_, html: HTML }], { domain: { domain: "example.com", read: true, expires: "2026-11-01", daysLeft, registrar: "Example Registrar", status: locked ? ["client transfer prohibited"] : ["active"], locked } });
+    const soon = at(20, false);
+    assert.deepEqual([get(soon, "sec-domain-expiry").verdict, get(soon, "sec-domain-expiry").severity], ["risk", "medium"]);
+    assert.match(get(soon, "sec-domain-expiry").evidence, /^example\.com, held with Example Registrar, is registered until 2026-11-01, according/);
+    assert.deepEqual([get(soon, "sec-domain-lock").verdict, get(soon, "sec-domain-lock").severity], ["risk", "low"]);
+    assert.equal(get(at(3, true), "sec-domain-expiry").severity, "high");
+    assert.deepEqual([get(at(-2, true), "sec-domain-expiry").verdict, get(at(-2, true), "sec-domain-expiry").severity], ["fail", "high"]);
+    const fine = at(300, true);
+    assert.deepEqual([verdict(fine, "sec-domain-expiry"), verdict(fine, "sec-domain-lock")], ["pass", "pass"]);
+    assert.equal(row(fine, "Domain expiry"), "pass");
+    assert.deepEqual(fine.security.domain, { domain: "example.com", expires: "2026-11-01", daysLeft: 300, registrar: "Example Registrar", locked: true });
+    const unread = analyzeHtmlPages([{ url: URL_, html: HTML }], { domain: { domain: "example.de", read: false, reason: ".de has no RDAP service" } });
+    assert.deepEqual([verdict(unread, "sec-domain-expiry"), row(unread, "Domain expiry"), unread.security.domain], ["missing", "unknown", null]);
+  });
+
+  test("MTA-STS and TLS-RPT are checked only on domains that receive mail", () => {
+    const run = (dns) => analyzeHtmlPages([{ url: URL_, html: HTML }], { dns: Object.assign({}, MAIL, dns) });
+    const none = run({});
+    assert.deepEqual([verdict(none, "sec-mta-sts"), verdict(none, "sec-tlsrpt")], ["risk", "risk"]);
+    assert.deepEqual(none.fixkit.dns.find((item) => item.name === "_smtp._tls.example.com"), { name: "_smtp._tls.example.com", type: "TXT", value: "v=TLSRPTv1; rua=mailto:tlsrpt@example.com" });
+    assert.deepEqual([row(none, "MTA-STS"), row(none, "TLS-RPT")], ["risk", "risk"]);
+    const testing = run({ mtaSts: "v=STSv1; id=1", tlsRpt: "v=TLSRPTv1; rua=mailto:t@example.com", mtaStsPolicy: { url: "https://mta-sts.example.com/.well-known/mta-sts.txt", status: 200, mode: "testing", maxAge: 86400 } });
+    assert.equal(get(testing, "sec-mta-sts").title, "MTA-STS only reports and does not enforce");
+    assert.equal(verdict(testing, "sec-tlsrpt"), "pass");
+    assert.equal(verdict(run({ mtaSts: "v=STSv1; id=1", mtaStsPolicy: { url: "u", mode: "enforce" } }), "sec-mta-sts"), "pass");
+    assert.match(get(run({ mtaSts: "v=STSv1; id=1", mtaStsPolicy: { url: "u", status: 404, error: "status 404" } }), "sec-mta-sts").title, /could not be read/);
+    assert.equal(verdict(run({ unread: ["mta-sts"] }), "sec-mta-sts"), "missing");
+    const noMail = run({ mx: [], nullMx: true });
+    assert.deepEqual([verdict(noMail, "sec-mta-sts"), verdict(noMail, "sec-tlsrpt"), row(noMail, "MTA-STS")], ["missing", "missing", undefined]);
+  });
+
+  test("BIMI is a note, not a scored finding, unless it is published", () => {
+    const run = (dns) => analyzeHtmlPages([{ url: URL_, html: HTML }], { dns: Object.assign({}, MAIL, dns) });
+    const absent = run({});
+    assert.equal(verdict(absent, "sec-bimi"), "missing");
+    assert.deepEqual(absent.security.bimi, { record: "", eligible: true });
+    const published = run({ bimi: "v=BIMI1; l=https://example.com/logo.svg" });
+    assert.deepEqual([get(published, "sec-bimi").verdict, get(published, "sec-bimi").severity], ["pass", "info"]);
+    assert.equal(run({ unread: ["bimi"] }).security.bimi, null);
+  });
+
+  test("the carbon estimate uses the browser's cold load, then Lighthouse, and is not scored", () => {
+    const page = [{ url: URL_, html: HTML }];
+    const pages = page.map((row) => Object.assign({ path: "/", status: 200, ms: 120, depth: 0 }, row, { inspect: core.analyzeHtml(row.html, STRONG_HEADERS, row.url) }));
+    const browser = (bytes) => ({ ok: true, start: { status: 200, finalPath: "/", bytes, dom: { links: [] } } });
+    const heavy = insights.analyze({ pages, browser: browser(2000000) });
+    assert.deepEqual(heavy.carbon, { bytes: 2000000, grams: 0.296, rating: "E", source: "browser" });
+    assert.equal(heavy.carbon.rating, "E");
+    const light = insights.analyze({ pages, browser: browser(0), pagespeed: { ok: true, score: 90, lab: {}, bytes: 250000 } });
+    assert.deepEqual(light.carbon, { bytes: 250000, grams: 0.037, rating: "A+", source: "lighthouse" });
+    assert.equal(insights.analyze({ pages }).carbon, null);
+    assert.equal(heavy.score.overall, insights.analyze({ pages, browser: browser(100) }).score.overall);
+    assert.equal(core.summarizePageSpeed({ lighthouseResult: { categories: { performance: { score: 0.5 } }, audits: { "total-byte-weight": { numericValue: 1234567 } } } }).bytes, 1234567);
+  });
+
+  test("a review with a Web Risk lookup carries Safe Browsing into the report", async () => {
+    const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: HTML } });
+    const asked = [];
+    try {
+      const report = await core.reviewTarget(URL_, { browse: async () => ({ ok: false }), webrisk: async (url) => { asked.push(url); return { ok: true, url, threats: [] }; } });
+      assert.deepEqual(asked, [URL_]);
+      assert.equal(verdict(report.insights, "sec-safebrowsing"), "pass");
     } finally {
       restore();
     }
