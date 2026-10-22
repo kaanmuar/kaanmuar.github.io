@@ -136,7 +136,17 @@ jobs:
           fi
           if git diff --cached --quiet; then echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0; fi
           git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} requested reviews, ${{ steps.reports.outputs.social }} posts ($BATCH) [skip ci]"
-          git push origin HEAD:main
+          # Main can move during the render. Replay the batch on top; llms-full.txt is rebuilt rather than merged.
+          for try in 1 2 3 4 5; do
+            git push -q origin HEAD:main && break
+            if [ "$try" = 5 ]; then echo "::error::Could not push batch $BATCH to main after 5 tries."; exit 1; fi
+            git fetch -q origin main
+            if ! git rebase -q origin/main; then
+              git checkout -q origin/main -- llms-full.txt && python3 scripts/build-llms-full.py && git add llms-full.txt
+              GIT_EDITOR=true git rebase --continue || { git rebase --abort; echo "::error::Batch $BATCH conflicts with main."; exit 1; }
+            fi
+            sleep $((try * 5))
+          done
           gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
           echo "pushed=1" >> "$GITHUB_OUTPUT"
 
@@ -155,7 +165,7 @@ jobs:
         run: node scripts/buffer-queue.js --batch "${{ steps.reports.outputs.batch }}"
 
       - name: Schedule the posts on the Facebook Page
-        if: ${{ !cancelled() && !inputs.dry_run && steps.reports.outputs.social != '0' && steps.reports.outputs.batch != '' }}
+        if: ${{ !cancelled() && !inputs.dry_run && steps.commit.outputs.pushed == '1' && steps.reports.outputs.social != '0' && steps.reports.outputs.batch != '' }}
         env:
           FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}

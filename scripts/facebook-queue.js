@@ -82,6 +82,7 @@ async function main() {
 
   if (!opts["dry-run"]) {
     const first = base + "/feed/" + slugs[0] + ".jpg";
+    console.log("Waiting up to 20 minutes for the site to serve " + first);
     if (!(await waitFor(first, 20))) throw new Error("The site never served " + first);
   }
   let failed = 0;
