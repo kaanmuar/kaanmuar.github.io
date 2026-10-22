@@ -1548,6 +1548,14 @@ function propose(pages, robotsBlocked, limits, dom) {
   if (sig.manifest) addCase(cases, { id: "CMP-03", layer: "Compatibility", title: "An advertised manifest still leaves the page readable in a normal tab", why: "A manifest link is present. The case would open the page in a browser tab and confirm the title and the main heading. It would not install the app.", fw: browser });
   if (sig.video) addCase(cases, { id: "MED-01", layer: "Media", title: "Video exposes captions or a transcript path", why: sig.video + " video element(s) were counted. A later case would check tracks and would not download the media file.", fw: browser });
   if (hasTech(names, /Google Tag Manager|Google Analytics|HubSpot/i)) addCase(cases, { id: "AN-01", layer: "Analytics", title: "Analytics tags wait for a recorded choice when the page asks for consent", why: "An analytics marker was seen (" + stack + "). The case would compare a cold load with a load after consent, and it would not invent a consent click.", fw: browser });
+  const chat = dom && dom.chat && (dom.chat.found || []).length ? dom.chat : null;
+  if (chat) {
+    const chats = chat.found.map((row) => row.name).join(", ");
+    addCase(cases, { id: "CHAT-01", layer: "Accessibility", title: "The chat button has a name and leaves the cookie banner and main buttons clear on a phone", why: chats + " loaded in the browser. The case would read the launcher's accessible name at 390 px and check that it sits over no banner or call-to-action button.", fw: browser });
+    addCase(cases, { id: "CHAT-02", layer: "Privacy", title: "The chat waits for consent and stops after Reject", why: "The case would compare chat requests and cookies on a cold load, before a choice, and after Reject. It would not open a conversation.", fw: browser });
+    addCase(cases, { id: "CHAT-03", layer: "Accessibility", title: "The open chat links the privacy notice and can be left with the keyboard", why: "The case would open the chat with Enter, look for a privacy link, and press Tab and Escape until focus leaves it. No message is sent.", fw: browser });
+    if (chat.found.some((row) => row.ai)) addCase(cases, { id: "CHAT-04", layer: "Privacy", title: "The AI chatbot says it is an AI and offers a person", why: chat.found.filter((row) => row.ai).map((row) => row.name).join(", ") + " answers with a language model. A later run would open the chat and read the first message for an AI disclosure and a way to reach a person. It would not send a message in this review.", fw: browser });
+  }
   if (hasTech(names, /Shopify|Magento|WooCommerce|Stripe/i)) {
     const commerceTools = [];
     if (hasTech(names, /Shopify/i)) commerceTools.push("Theme Check");
@@ -2105,7 +2113,16 @@ async function reviewTarget(rawUrl, hooks) {
   let browser = null;
   if (canBrowse && !browserSettled) note("Waiting for the headless browser to finish.");
   try { browser = await browserPromise; } catch (error) { browser = null; }
-  const cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "" }, browser.start.dom) : null);
+  const chat = browser && browser.ok && browser.chat ? browser.chat : null;
+  if (chat) {
+    chat.found.forEach((row) => {
+      const known = technologiesFound.find((item) => item.name.toLowerCase() === row.name.toLowerCase());
+      if (known) known.group = row.ai ? "AI chatbot" : "Chat";
+      else technologiesFound.push({ name: row.name, group: row.ai ? "AI chatbot" : "Chat", evidence: "Requests to " + row.hosts.join(", ") + " in the browser." });
+    });
+    note("Chat seen in the browser: " + chat.found.map((row) => row.name).join(", ") + ".");
+  }
+  const cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "", chat }, browser.start.dom) : null);
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   const byLayer = {};
   cases.forEach((item) => { byLayer[item.layer] = (byLayer[item.layer] || 0) + 1; });

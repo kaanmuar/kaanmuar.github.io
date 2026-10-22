@@ -244,6 +244,78 @@ const AXE_FIX = {
 };
 const AXE_SEVERITY = { critical: ["fail", "medium"], serious: ["fail", "low"], moderate: ["risk", "low"], minor: ["risk", "low"] };
 
+// Chat widgets and AI chatbots: consent, weight on the start page, and the launcher and open widget on a phone.
+function chatChecks(chat, consent, add) {
+  const rows = chat.found;
+  const names = rows.map((row) => row.name + (row.ai ? " (AI chatbot)" : ""));
+  const named = sample(names, 3);
+  const it = rows.length === 1 ? rows[0].name : "the chat";
+  const widget = rows.length === 1 ? rows[0].name + " " : "chat ";
+  const requests = rows.reduce((sum, row) => sum + row.requests, 0);
+  const cookies = chat.cookies || [];
+  const banner = consent && consent.banner ? (consent.banner === "A cookie banner" ? "A cookie banner" : consent.banner) + " was showing" : "";
+
+  if (cookies.length && banner) add("Analytics", "risk", "medium", "an-chat-consent", "The chat sets cookies before the visitor chooses",
+    banner + ". Before any choice, " + named + " sent " + plural(requests, "request") + " and set " + sample(cookies, 4) + ".",
+    "Put the chat in a consent category and load it only once that category is accepted, or show a plain chat button that loads the widget on the first click.", { effort: "hours", cases: ["CHAT-02", "PR-03"], count: cookies.length });
+  else if (cookies.length) add("Analytics", "risk", "low", "an-chat-consent", "The chat sets cookies on load and no banner asks first",
+    named + " sent " + plural(requests, "request") + " and set " + sample(cookies, 4) + " on the first visit.",
+    "Show a plain chat button that loads the widget on the first click, so nothing is stored until a visitor asks for help.", { effort: "hours", cases: ["CHAT-02", "PR-03"], count: cookies.length });
+  else if (banner) add("Analytics", "risk", "low", "an-chat-consent", "The chat loads before the visitor chooses",
+    banner + ". Before any choice, " + named + " sent " + plural(requests, "request") + ", but set no cookie the browser could see.",
+    "Load the chat after consent, or on the first click of a plain chat button.", { effort: "hours", cases: ["CHAT-02", "PR-03"] });
+  else add("Analytics", "pass", "info", "an-chat-consent", "The chat sets no cookie on load", named + " sent " + plural(requests, "request") + " and set no cookie the browser could see.", "", { cases: ["CHAT-02"] });
+
+  if (consent && consent.rejected && chat.after) {
+    const after = chat.after;
+    if (after.cookies.length) add("Analytics", "risk", "medium", "an-chat-reject", "The chat keeps setting cookies after Reject",
+      "After pressing \"" + consent.rejectLabel + "\" and reloading, " + it + " set " + sample(after.cookies, 4) + ".",
+      "Map the chat to a consent category and block it when that category is refused.", { effort: "hours", cases: ["CHAT-02", "PR-03"] });
+    else if (after.requests) add("Analytics", "risk", "low", "an-chat-reject", "The chat still loads after Reject",
+      "After pressing \"" + consent.rejectLabel + "\" and reloading, " + it + " sent " + plural(after.requests, "request") + " but set no new cookie.",
+      "If the chat is not strictly needed, block it when its consent category is refused.", { effort: "hours", cases: ["CHAT-02"] });
+    else add("Analytics", "pass", "info", "an-chat-reject", "The chat stops after Reject", "After pressing \"" + consent.rejectLabel + "\" and reloading, " + it + " sent no request.", "", { cases: ["CHAT-02"] });
+  }
+
+  const open = chat.open || {};
+  if (open.privacy === false) add("Analytics", "risk", "low", "an-chat-privacy", "The open chat shows no privacy link",
+    "The opened " + widget + "widget links no privacy notice, so a visitor typing personal data cannot see how it is used.",
+    "Link the privacy notice from the chat's welcome screen or pre-chat form.", { effort: "minutes", cases: ["CHAT-03", "PR-01"] });
+  else if (open.privacy === true) add("Analytics", "pass", "info", "an-chat-privacy", "The open chat links the privacy notice", "The opened " + widget + "widget links a privacy notice.", "", { cases: ["CHAT-03", "PR-01"] });
+
+  const kb = Math.round(rows.reduce((sum, row) => sum + row.bytes, 0) / 1024);
+  const ms = rows.reduce((sum, row) => sum + row.ms, 0);
+  const cost = named + " added " + plural(requests, "request") + ", " + kb + " KB over the network" + (ms ? " and " + ms + " ms of script time in long frames" : "") + " to the start page before anyone opened it. Measured once in Chromium with no network throttling.";
+  const lighter = "Show a plain chat button and load the widget on its first click, or after the page is idle.";
+  if (kb > 500 || ms > 250) add("Performance", "risk", "medium", "pf-chat", "The chat adds " + kb + " KB to the start page", cost, lighter, { effort: "hours", cases: ["PF-02"] });
+  else if (kb > 200 || ms > 100) add("Performance", "risk", "low", "pf-chat", "The chat adds " + kb + " KB to the start page", cost, lighter, { effort: "hours", cases: ["PF-02"] });
+  else add("Performance", "pass", "info", "pf-chat", "The chat is light on the start page", cost, "", { cases: ["PF-02"] });
+
+  const launcher = chat.launcher || {};
+  if (launcher.found) {
+    const covers = launcher.covers || [];
+    const onBanner = covers.filter((row) => row.banner);
+    if (covers.length) add("Accessibility", "fail", onBanner.length ? "high" : "medium", "a11y-chat-cover", onBanner.length ? "The chat button covers the cookie banner on a phone" : "The chat button covers a button on a phone",
+      "At 390 px the " + widget + "launcher sits over " + sample(covers.map((row) => "\"" + row.label + "\"" + (row.banner ? " in the cookie banner" : "")), 3) + ".",
+      onBanner.length ? "Hide the launcher until the visitor answers the banner, or raise the banner above it." : "Keep the launcher clear of sticky and call-to-action buttons: offset it, or reserve space for it at the bottom of the page.", { effort: "hours", cases: ["CHAT-01", "MB-01"] });
+    else add("Accessibility", "pass", "info", "a11y-chat-cover", "The chat button covers no button on a phone", "At 390 px the " + widget + "launcher overlaps no " + (launcher.banner ? "cookie banner or " : "") + "call-to-action button.", "", { cases: ["CHAT-01"] });
+    if (launcher.known && !launcher.name) add("Accessibility", "fail", "medium", "a11y-chat-name", "The chat button has no accessible name",
+      "A screen reader announces the " + widget + "launcher only as a button, with no words.",
+      "Give the launcher an aria-label such as \"Open chat\".", { effort: "minutes", cases: ["CHAT-01", "FN-05"] });
+    else if (launcher.known) add("Accessibility", "pass", "info", "a11y-chat-name", "The chat button has a name", "The " + widget + "launcher is announced as \"" + launcher.name + "\".", "", { cases: ["CHAT-01", "FN-05"] });
+  }
+  if (open.opened && open.moved === false) add("Accessibility", "risk", open.tabbed ? "low" : "medium", "a11y-chat-focus", "Opening the chat leaves keyboard focus on the page",
+    "After " + (open.keyboard ? "pressing Enter on" : "clicking") + " the " + widget + "launcher, the chat opened but focus stayed outside it" + (open.tabbed ? " until Tab was pressed" : ", and the next Tab went to the page instead of the chat") + ". A screen reader user hears nothing about the open chat.",
+    "Move focus to the chat's first control or heading when it opens, and back to the launcher when it closes.", { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
+  if (open.opened && open.trapped) add("Accessibility", "fail", "high", "a11y-chat-trap", "Keyboard focus is trapped in the open chat",
+    "After opening " + it + (open.keyboard ? " with Enter" : "") + ", " + plural(open.tabs, "press", "presses") + " of Tab kept focus inside it, no close button was reached, and Escape did not close it.",
+    "Let Escape close the chat and return focus to the launcher, and keep the close button in the Tab order.", { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
+  else if (open.opened && open.exit) add("Accessibility", "pass", "info", "a11y-chat-trap", "Keyboard focus can leave the open chat",
+    "After opening " + it + (open.keyboard ? " with Enter" : "") + ", focus left it by " + { tab: "Tab", close: "reaching its close button", escape: "Escape" }[open.exit] + ".", "", { cases: ["CHAT-03", "A11Y-04"] });
+  else if (open.opened) add("Accessibility", "person", "info", "a11y-chat-trap", "Keyboard focus in the open chat needs a person",
+    (open.entered ? "Focus went into a frame of " + it + " that this review cannot read" : "Focus could not be moved into " + it) + (open.keyboard ? "" : ", and Enter on the launcher did not open it") + ", so the trap check could not finish.", "", { cases: ["CHAT-03"] });
+}
+
 function browserChecks(b, add, ctx) {
   const where = "Chromium from an EU address (Belgium)";
   const start = b.start || {};
@@ -284,6 +356,8 @@ function browserChecks(b, add, ctx) {
         "Put Reject all next to Accept all, at the same size and weight.", { effort: "minutes", cases: ["PR-03"] });
     }
   }
+
+  if (b.chat && (b.chat.found || []).length) chatChecks(b.chat, consent, add);
 
   // Accessibility: axe-core on the rendered pages, and the phone width.
   const axe = b.axe && b.axe.ran ? b.axe : null;
