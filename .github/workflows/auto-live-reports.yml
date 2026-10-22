@@ -11,7 +11,8 @@ name: Live reports from user reviews
 
 on:
   # GitHub drops scheduled runs under load, mostly at the top of the hour. The later slots are backups:
-  # the gate job lets them run only when today's batch commit is not on main yet.
+  # the gate job lets them run only when today's batch commit is not on main yet. Outside GitHub, the Firebase
+  # ensureLiveReportsBatch function (04:45 Bogotá) dispatches with backup=true when no batch is on main or underway.
   schedule:
     - cron: '23 8 * * *' # 03:23 Bogotá
     - cron: '41 10 * * *' # backup, 05:41 Bogotá
@@ -23,6 +24,10 @@ on:
         required: false
       dry_run:
         description: 'Build and render only: no commit, no release, no Buffer posts'
+        type: boolean
+        default: false
+      backup:
+        description: 'Run only if today''s batch is not on main yet (set by the Firebase ensureLiveReportsBatch watchdog)'
         type: boolean
         default: false
 
@@ -41,7 +46,7 @@ jobs:
       - name: Run unless today's batch is already on main
         id: today
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "${{ github.event_name }}" != "schedule" ] && [ "${{ inputs.backup }}" != "true" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
           TODAY=$(date -u +%F)
           DONE=$(gh api "repos/${{ github.repository }}/commits?sha=main&since=${TODAY}T00:00:00Z&per_page=100" \
             --jq "[.[] | select(.commit.message | contains(\"(auto-$TODAY)\"))] | length")
@@ -51,7 +56,7 @@ jobs:
             exit 0
           fi
           if [ "${{ github.event.schedule }}" != "23 8 * * *" ]; then
-            echo "::warning::No auto-$TODAY batch on main yet, so the ${{ github.event.schedule }} backup slot is running it."
+            echo "::warning::No auto-$TODAY batch on main yet, so the ${{ github.event.schedule || 'Firebase watchdog' }} backup is running it."
           fi
           echo "go=true" >> "$GITHUB_OUTPUT"
 
