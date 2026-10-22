@@ -14,7 +14,12 @@ const PROVIDERS = [
   { id: "github.com", label: "GitHub" },
   { id: "yahoo.com", label: "Yahoo" },
   { id: "facebook.com", label: "Facebook" },
-  { id: "twitter.com", label: "X" }
+  { id: "twitter.com", label: "X" },
+  { id: "linkedin", label: "LinkedIn", oauth: true },
+  { id: "gitlab", label: "GitLab", oauth: true },
+  { id: "discord", label: "Discord", oauth: true },
+  { id: "twitch", label: "Twitch", oauth: true },
+  { id: "slack", label: "Slack", oauth: true }
 ];
 const DEFAULT_PROVIDERS = "email,google.com";
 const CODE_MS = 15 * 60 * 1000;
@@ -55,9 +60,11 @@ function maskEmail(email) {
   return user.slice(0, 2) + "•••@" + host;
 }
 
-function enabledProviders(setting) {
+// A server-side OAuth provider is offered only once its client id and secret are set.
+function enabledProviders(setting, ready) {
   const wanted = String(setting || DEFAULT_PROVIDERS).split(",").map((part) => part.trim()).filter(Boolean);
-  return PROVIDERS.filter((item) => item.id === "email" || wanted.indexOf(item.id) !== -1);
+  const keyed = ready || [];
+  return PROVIDERS.filter((item) => item.id === "email" || (wanted.indexOf(item.id) !== -1 && (!item.oauth || keyed.indexOf(item.id) !== -1)));
 }
 
 function fail(status, error, extra) {
@@ -321,10 +328,12 @@ module.exports = {
   ACCOUNT_MS,
   MAX_TRIES,
   OTHER_DEVICE,
+  sameHash,
   deviceHash,
   cleanEmail,
   maskEmail,
   enabledProviders,
+  profileFrom,
   firestoreStore,
   memoryStore,
   startEmail,

@@ -12,6 +12,7 @@ const newsWire = require("../functions/news-wire");
 const desk = require("../functions/url-review-desk");
 const offers = require("../functions/url-review-offers");
 const auth = require("../functions/url-review-auth");
+const oauth = require("../functions/url-review-oauth");
 
 function loadEnvFile() {
   const file = path.join(__dirname, "..", "functions", ".env");
@@ -219,7 +220,7 @@ const signIns = auth.memoryStore();
 async function localSignIn(req, res, pathName, origin, deviceHint) {
   const enabled = process.env.REVIEW_SIGN_IN_PROVIDERS;
   if (req.method === "GET" && pathName === "/auth/providers") {
-    sendJson(res, 200, { providers: auth.enabledProviders(enabled) }, origin, deviceHint);
+    sendJson(res, 200, { providers: auth.enabledProviders(enabled, oauth.ready(process.env)) }, origin, deviceHint);
     return;
   }
   let body = {};
@@ -244,6 +245,19 @@ async function localSignIn(req, res, pathName, origin, deviceHint) {
       return;
     }
     const result = await auth.providerSignIn(signIns, decoded, { deviceKey: body.deviceKey, profile: body.profile, googleAccessToken: body.googleAccessToken, enabled });
+    if (result.verifyEmail) return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
+    return answer(result);
+  }
+  const oauthStart = pathName.match(/^\/auth\/oauth\/([a-z]+)\/start$/);
+  if (oauthStart) {
+    // The page's own origin, so the device key the browser keeps there is the one that finishes.
+    const page = (/:8765$/.test(origin) ? origin : "http://127.0.0.1:8765") + "/qa-review.html";
+    const result = await oauth.startOAuth(signIns, { provider: oauthStart[1], deviceKey: body.deviceKey, ip: clientIp(req), enabled, env: process.env, redirectUri: page });
+    sendJson(res, result.ok ? 200 : result.status, result.ok ? { ok: true, url: result.url } : { error: result.error }, origin, deviceHint);
+    return;
+  }
+  if (pathName === "/auth/oauth/finish") {
+    const result = await oauth.finishOAuth(signIns, { state: body.state, code: body.code, error: body.error, deviceKey: body.deviceKey, enabled, env: process.env });
     if (result.verifyEmail) return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
     return answer(result);
   }
