@@ -1456,6 +1456,7 @@ const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
+const accountData = require("./url-review-account-data");
 const ownerContactSearch = require("./url-review-owner-contacts");
 const REVIEW_FN_URL = process.env.REVIEW_FN_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
 
@@ -1982,6 +1983,22 @@ async function reviewAccount(req, res, pathName) {
     res.status(200).json({ ok: true });
     return;
   }
+  if (pathName.endsWith("/account/export")) {
+    const data = await accountData.exportAccount(reviewAuth.firestoreStore(db), signedIn.email);
+    res.status(200).json(data);
+    return;
+  }
+  if (pathName.endsWith("/account/delete")) {
+    const confirm = String((req.body && req.body.confirm) || "").trim().toLowerCase();
+    if (confirm !== String(signedIn.email).toLowerCase()) {
+      res.status(400).json({ error: "Type the address you are signed in with to confirm." });
+      return;
+    }
+    const counts = await accountData.deleteAccount(reviewAuth.firestoreStore(db), signedIn.email, { authApi: admin.auth() });
+    console.log("Review account deleted on request:", JSON.stringify(counts));
+    res.status(200).json({ ok: true, paymentsKept: counts.paymentsKept || 0 });
+    return;
+  }
   res.status(404).json({ error: "Not found." });
 }
 
@@ -2011,7 +2028,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       await reviewAccount(req, res, pathName);
     } catch (error) {
       console.error("Review account failed:", error);
-      if (!res.headersSent) res.status(500).json({ error: "Your runs did not load. Try again in a moment." });
+      const failed = pathName.endsWith("/account/delete") ? "The account was not fully deleted. Try again in a moment."
+        : pathName.endsWith("/account/export") ? "Your data did not download. Try again in a moment."
+          : "Your runs did not load. Try again in a moment.";
+      if (!res.headersSent) res.status(500).json({ error: failed });
     }
     return;
   }
