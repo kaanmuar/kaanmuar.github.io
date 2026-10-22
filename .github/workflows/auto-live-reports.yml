@@ -2,8 +2,9 @@
 # Once a day, every publishable user review becomes a Live Report, a feed card, a story, and a clip,
 # and goes into the Buffer queues and onto the Facebook Page. Filtering and privacy live in functions/url-review-publish.js.
 # Secrets: PUBLISH_KEY (same value as functions/.env), BUFFER_API_KEY (Buffer → Settings → API),
-# LIVE_REPORTS_DEPLOY_KEY (write deploy key), FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN (Page access token
-# with pages_manage_posts, see scripts/facebook-queue.js). Deploy keys bypass the "main: fast checks before merge"
+# LIVE_REPORTS_DEPLOY_KEY (write deploy key), FACEBOOK_PAGE_ID (the Graph ID, not the profile ID in Page URLs) and
+# FACEBOOK_PAGE_TOKEN (never-expiring Page token from the "QA-lab Page Publisher" Meta app, with pages_manage_posts;
+# changing the Facebook password revokes it, see scripts/facebook-queue.js). Deploy keys bypass the "main: fast checks before merge"
 # ruleset, so this job pushes its data commit straight to main, with [skip ci].
 
 name: Live reports from user reviews
