@@ -272,7 +272,7 @@
         return;
       }
       signedIn(data);
-      if (/^\/qa-review(-[a-z]{2})?\.html$/.test(String(page)) && page !== location.pathname) location.replace(page);
+      if (/^\/qa-review(-[a-z]{2}|-account)?\.html$/.test(String(page)) && page !== location.pathname) location.replace(page);
     });
   }
 

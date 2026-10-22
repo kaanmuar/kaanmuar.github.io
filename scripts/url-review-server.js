@@ -59,8 +59,6 @@ function payReturn(purpose, choice, reference) {
 const PORT = 8768;
 const runs = new Map();
 const activeRuns = new Map();
-const signInCodes = new Map();
-const accountSessions = new Map();
 const deskSessions = new Map();
 const FILE = path.join(__dirname, "..", "runner-results", "url-reviews.jsonl");
 const ALERT_FILE = path.join(__dirname, "..", "runner-results", "url-review-alerts.jsonl");
@@ -358,13 +356,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 401, { error: "Sign in with the operator Google account." }, origin, deviceHint);
       return;
     }
-    const body = desk.snapshot(readStore(), readAlerts(), Array.from(activeRuns.values()));
-    body.codes = Array.from(signInCodes.entries()).map(([email, item]) => ({
-      email,
-      code: item.code,
-      expires: item.expires
-    }));
-    sendJson(res, 200, body, origin, deviceHint);
+    sendJson(res, 200, desk.snapshot(readStore(), readAlerts(), Array.from(activeRuns.values())), origin, deviceHint);
     return;
   }
   if (req.method === "GET" && (url.pathname === "/account" || url.pathname === "/qa-review-account.html")) {
@@ -404,77 +396,23 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true, paidUntil: until, charged: false }, origin, deviceHint);
     return;
   }
-  if (req.method === "POST" && url.pathname === "/account/code") {
-    let codeBody = {};
-    try { codeBody = await readBody(req); } catch (error) { codeBody = {}; }
-    const email = String(codeBody.email || "").trim().toLowerCase();
-    const known = readStore().some((row) => String(row.email || "").toLowerCase() === email);
-    if (known) {
-      const code = String(crypto.randomInt(100000, 1000000));
-      signInCodes.set(email, { code, expires: new Date(Date.now() + 15 * 60 * 1000).toISOString() });
-    }
-    sendJson(res, 200, { ok: true }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/account/enter") {
-    let enterBody = {};
-    try { enterBody = await readBody(req); } catch (error) { enterBody = {}; }
-    const email = String(enterBody.email || "").trim().toLowerCase();
-    const code = String(enterBody.code || "").replace(/\D/g, "");
-    const pending = signInCodes.get(email);
-    const fresh = pending && pending.code === code && Date.parse(pending.expires) > Date.now();
-    if (!fresh) {
-      sendJson(res, 401, { error: "That code does not match a waiting sign-in." }, origin, deviceHint);
+  if (req.method === "POST" && (url.pathname === "/account/runs" || url.pathname === "/account/stop")) {
+    let accountBody = {};
+    try { accountBody = await readBody(req); } catch (error) { accountBody = {}; }
+    const signedIn = await auth.checkSession(signIns, Object.assign({}, accountBody, { touch: false }));
+    if (!signedIn.ok) {
+      sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceHint);
       return;
     }
-    signInCodes.delete(email);
-    const token = crypto.randomBytes(18).toString("hex");
-    accountSessions.set(token, { email, until: Date.now() + 12 * 60 * 60 * 1000 });
-    res.writeHead(200, {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-      "access-control-allow-origin": origin,
-      "access-control-allow-credentials": "true",
-      "set-cookie": [
-        "qr_device=" + deviceHint + "; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax",
-        "qa_session=" + token + "; Path=/; Max-Age=43200; HttpOnly; SameSite=Lax"
-      ]
-    });
-    res.end(JSON.stringify({ ok: true }));
-    return;
-  }
-  if (req.method === "GET" && url.pathname === "/account/runs") {
-    const token = (String(req.headers.cookie || "").match(/(?:^|; )qa_session=([a-f0-9]+)/) || [])[1] || "";
-    const session = accountSessions.get(token);
-    if (!session || session.until < Date.now()) {
-      sendJson(res, 401, { error: "Sign in again." }, origin, deviceHint);
-      return;
-    }
-    const rows = readStore().filter((row) => String(row.email || "").toLowerCase() === session.email);
-    const open = rows.some((row) => row.status === "monthly-pass" && Date.parse(row.paidUntil || "") > Date.now());
-    const pass = rows.filter((row) => row.status === "monthly-pass").sort((a, b) => String(b.paidUntil).localeCompare(String(a.paidUntil)))[0] || null;
-    sendJson(res, 200, {
-      email: session.email,
-      open,
-      charged: pass ? pass.paid === true : false,
-      localPass: pass ? pass.localPass === true : false,
-      paidUntil: pass ? pass.paidUntil : "",
-      plans: offers.catalog().plans,
-      runs: rows.filter((row) => row.report).map((row) => offers.customerRun(row, open))
-    }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/account/stop") {
-    const token = (String(req.headers.cookie || "").match(/(?:^|; )qa_session=([a-f0-9]+)/) || [])[1] || "";
-    const session = accountSessions.get(token);
-    if (!session || session.until < Date.now()) {
-      sendJson(res, 401, { error: "Sign in again." }, origin, deviceHint);
+    if (url.pathname === "/account/runs") {
+      sendJson(res, 200, offers.accountFile(readStore(), signedIn.email), origin, deviceHint);
       return;
     }
     writeRecord({
       id: crypto.randomBytes(9).toString("hex"),
       status: "follow-stop",
-      email: session.email,
+      email: signedIn.email,
+      via: "account",
       createdAt: new Date().toISOString()
     });
     sendJson(res, 200, { ok: true }, origin, deviceHint);
