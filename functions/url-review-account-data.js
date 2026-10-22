@@ -26,7 +26,7 @@ const SECRET_FIELDS = ["deviceHash", "codeHash", "tokenHash"];
 
 // Colombian tax support (Ley 962 de 2005, art. 46) keeps a payment for five years; the report itself goes.
 const PAYMENT_STATUSES = new Set(["paid-report", "run-credit", "run-credit-used", "monthly-pass", "checkout-open"]);
-const PAYMENT_FIELDS = ["email", "status", "paid", "test", "provider", "method", "sessionId", "reference", "externalId", "purpose",
+const PAYMENT_FIELDS = ["email", "status", "paid", "test", "provider", "method", "sessionId", "reference", "externalId", "purpose", "reportId",
   "billing", "plan", "paidUntil", "priceUsd", "listUsd", "percent", "coupon", "amount", "currency", "createdAt", "expireAt"];
 
 function isPayment(row) {
@@ -101,7 +101,9 @@ async function dropByEmail(store, col, email, at, counts) {
     const rows = await store.where(col, "email", email, LIMIT);
     const gone = rows.filter((row) => !keeps(col, row));
     for (const row of gone) {
-      if (col === "url_reviews" && isPayment(row)) {
+      const paidElsewhere = col === "url_reviews" && isPayment(row) && !PAYMENT_STATUSES.has(row.status)
+        && !!await store.get(col, "paid-report-" + row.id);
+      if (col === "url_reviews" && isPayment(row) && !paidElsewhere) {
         await store.replace(col, row.id, paymentOnly(row, at));
         counts.paymentsKept = (counts.paymentsKept || 0) + 1;
       } else {

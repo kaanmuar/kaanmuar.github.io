@@ -294,6 +294,19 @@ function customerRun(row, open) {
   };
 }
 
+// The payment row for a report paid after its run: who paid, for which run, and how much; never the report.
+function reportPayment(run, payment) {
+  const row = Object.assign({
+    status: "paid-report",
+    paid: true,
+    purpose: "report",
+    email: String((run && run.email) || "").trim().toLowerCase(),
+    frameworks: (run && run.frameworks) || []
+  }, payment || {});
+  Object.keys(row).forEach((key) => { if (row[key] === undefined) delete row[key]; });
+  return row;
+}
+
 // `freeAccount` is true for a free-run address (FREE_RUN_EMAILS or url_review_free_runs); every run it owns opens.
 function accountFile(records, email, now, options) {
   const address = String(email || "").trim().toLowerCase();
@@ -320,6 +333,7 @@ function accountFile(records, email, now, options) {
 }
 
 module.exports = {
+  reportPayment,
   RETURN_TABLE,
   MONTHLY_PLANS,
   returnPercent,
