@@ -163,9 +163,12 @@
       try {
         result = await auth.signInWithPopup(instance, providerFor(auth, id));
       } catch (error) {
-        if (error && /popup-closed|cancelled-popup/.test(error.code || "")) throw new Error("The " + LABELS[id] + " window closed before sign-in finished.");
-        if (error && /account-exists-with-different-credential/.test(error.code || "")) throw new Error("This email already signs in another way. Use that option, or email.");
-        throw new Error(LABELS[id] + " sign-in failed. Try again, or use email.");
+        const code = String((error && error.code) || "unknown").replace(/^auth\//, "");
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_failed", "URL Review", id + " " + code);
+        if (/popup-closed|cancelled-popup/.test(code)) throw new Error("The " + LABELS[id] + " window closed before sign-in finished.");
+        if (code === "popup-blocked") throw new Error("This browser blocked the " + LABELS[id] + " window. Allow pop-ups for this site, or use email.");
+        if (code === "account-exists-with-different-credential") throw new Error("This email already signs in another way. Use that option, or email.");
+        throw new Error(LABELS[id] + " sign-in failed (" + code + "). Try again, or use email.");
       }
       const idToken = await result.user.getIdToken();
       await auth.signOut(instance);
