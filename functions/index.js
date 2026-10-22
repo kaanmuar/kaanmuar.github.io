@@ -1753,10 +1753,10 @@ exports.dropReviewAuthUser = functions.firestore
     return null;
   });
 
-async function mailSignIn(started, lang) {
+async function mailSignIn(started, lang, page) {
   const from = prepareMail();
   if (!from) return false;
-  const mail = customerMail.signInMail(lang, started);
+  const mail = customerMail.signInMail(lang, started, page);
   await sgMail.send({
     to: started.email,
     from: from,
@@ -1776,7 +1776,7 @@ async function sendSignIn(res, store, input) {
     res.status(started.status).json({ error: started.error, field: started.field || "" });
     return;
   }
-  if (!(await mailSignIn(started, input.lang))) {
+  if (!(await mailSignIn(started, input.lang, input.page))) {
     res.status(503).json({ error: "Sign-in email is not available right now. Try again later." });
     return;
   }
@@ -1810,7 +1810,7 @@ async function reviewSignIn(req, res, pathName) {
       res.status(400).json({ error: "This address cannot receive email. Check it for typos.", field: "email" });
       return;
     }
-    await sendSignIn(res, store, { email, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
+    await sendSignIn(res, store, { email, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang, page: body.page });
     return;
   }
   if (pathName.endsWith("/auth/email/finish")) {
@@ -1827,7 +1827,7 @@ async function reviewSignIn(req, res, pathName) {
     }
     const result = await reviewAuth.providerSignIn(store, decoded, { deviceKey: body.deviceKey, profile: body.profile, googleAccessToken: body.googleAccessToken, enabled });
     if (result.verifyEmail) {
-      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
+      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang, page: body.page });
       return;
     }
     answer(result);
@@ -1843,7 +1843,7 @@ async function reviewSignIn(req, res, pathName) {
   if (pathName.endsWith("/auth/oauth/finish")) {
     const result = await reviewOAuth.finishOAuth(store, { state: body.state, code: body.code, error: body.error, deviceKey: body.deviceKey, enabled, env: process.env });
     if (result.verifyEmail) {
-      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
+      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang, page: body.page });
       return;
     }
     answer(result);
@@ -1877,7 +1877,8 @@ async function reviewAccount(req, res, pathName) {
   }
   if (pathName.endsWith("/account/runs")) {
     const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
-    res.status(200).json(reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email));
+    const freeAccount = await hasFreeRuns(signedIn.email);
+    res.status(200).json(reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email, Date.now(), { freeAccount }));
     return;
   }
   if (pathName.endsWith("/account/stop")) {

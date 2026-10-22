@@ -294,23 +294,28 @@ function customerRun(row, open) {
   };
 }
 
-function accountFile(records, email, now) {
+// `freeAccount` is true for a free-run address (FREE_RUN_EMAILS or url_review_free_runs); every run it owns opens.
+function accountFile(records, email, now, options) {
   const address = String(email || "").trim().toLowerCase();
   const at = now == null ? Date.now() : Number(now);
+  const freeAccount = !!(options && options.freeAccount);
   const rows = (records || []).filter((row) => row && String(row.email || "").trim().toLowerCase() === address);
   const passes = rows.filter((row) => row.status === "monthly-pass").sort((a, b) => String(b.paidUntil || "").localeCompare(String(a.paidUntil || "")));
   const pass = passes[0] || null;
-  const open = !!pass && Date.parse(pass.paidUntil || "") > at;
+  const passOpen = !!pass && Date.parse(pass.paidUntil || "") > at;
+  const open = freeAccount || passOpen;
   return {
     email: address,
     open,
+    free: freeAccount,
+    pass: passOpen,
     charged: pass ? pass.paid === true : false,
     localPass: pass ? pass.localPass === true : false,
     paidUntil: pass ? pass.paidUntil || "" : "",
     plans: catalog().plans,
     runs: rows.filter((row) => row.report)
       .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
-      .map((row) => customerRun(row, open))
+      .map((row) => customerRun(row, open || row.paid === true || row.free === true))
   };
 }
 
