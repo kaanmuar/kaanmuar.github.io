@@ -1655,6 +1655,20 @@ function propose(pages, robotsBlocked, limits, dom) {
   return cases.map((item, index) => Object.assign({ n: index + 1 }, item));
 }
 
+function domainCases(cases, extras) {
+  const dns = (extras && extras.dns) || {};
+  const dom = extras && extras.domain;
+  const sb = extras && extras.safeBrowsing;
+  const more = [];
+  if (sb) more.push({ id: "SEC-11", layer: "Security", title: "Google's Safe Browsing lists do not flag the site", why: "The Web Risk API was asked about " + sb.url + (sb.threats.length ? " and matched it as " + sb.threats.join(", ").toLowerCase().replace(/_/g, " ") + "." : " and matched no list.") + " A listed site is replaced by a red warning in Chrome, Firefox and Safari. The case would repeat the lookup after every release and after any report of a hacked page." });
+  if (dom && dom.read) more.push({ id: "SEC-12", layer: "Security", title: "The domain renews in time and is locked against transfer", why: "The registry's RDAP record for " + dom.domain + (dom.expires ? " says it is registered until " + dom.expires : " publishes no expiry date") + (dom.locked == null ? "" : ", with the transfer lock " + (dom.locked ? "on" : "off")) + ". The case would read RDAP each month and fail under 30 days left or without clientTransferProhibited." });
+  if (dns.domain && (dns.mx || []).length && !(dns.unread || []).includes("mx")) more.push({ id: "SEC-13", layer: "Security", title: "Mail to the domain is protected by MTA-STS and TLS-RPT", why: dns.domain + " receives mail. MTA-STS " + (dns.mtaSts ? "is announced" + (dns.mtaStsPolicy && dns.mtaStsPolicy.mode ? " in " + dns.mtaStsPolicy.mode + " mode" : ", but its policy could not be read") : "is not published") + ", and TLS-RPT " + (dns.tlsRpt ? "is published" : "is not") + ". The case would read _mta-sts and _smtp._tls, fetch https://mta-sts." + dns.domain + "/.well-known/mta-sts.txt, and expect mode: enforce." });
+  if (!more.length) return cases;
+  const at = cases.reduce((last, item, index) => /^SEC-/.test(item.id) ? index + 1 : last, cases.length);
+  return cases.slice(0, at).concat(more.map((item) => Object.assign({ status: "proposed", fw: BROWSER_FW }, item)), cases.slice(at))
+    .map((item, index) => Object.assign(item, { n: index + 1 }));
+}
+
 function pagePath(pageUrl) {
   try {
     const parsed = new URL(pageUrl);
@@ -2370,7 +2384,7 @@ async function reviewTarget(rawUrl, hooks) {
     });
     note("Chat seen in the browser: " + chat.found.map((row) => row.name).join(", ") + ".");
   }
-  const cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "", chat, libraries: browser.libraries || [] }, browser.start.dom) : null);
+  let cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "", chat, libraries: browser.libraries || [] }, browser.start.dom) : null);
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   const byLayer = {};
   cases.forEach((item) => { byLayer[item.layer] = (byLayer[item.layer] || 0) + 1; });
@@ -2379,6 +2393,7 @@ async function reviewTarget(rawUrl, hooks) {
   let extras = {};
   if (!extrasSettled) note("Waiting for the background reads to finish.");
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
+  cases = domainCases(cases, extras);
   let speed = null;
   let speedTimer = null;
   try {
@@ -3192,6 +3207,7 @@ function previewReport(report) {
 
 module.exports = {
   decodeBody,
+  domainCases,
   compareRuns,
   testKeyMatches,
   pageSpeed,

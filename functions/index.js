@@ -2021,6 +2021,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     ["/desk/pass", "pass"],
     ["/desk/free", "free"],
     ["/desk/rerun", "rerun"],
+    ["/desk/unlist", "unlist"],
     ["/desk/notice", "notice"]
   ];
   const routed = deskRoutes.find(([part]) => pathName.indexOf(part) !== -1);
@@ -2054,12 +2055,13 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     if (deskName === "data" && req.method === "GET") {
-      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, noticeSnap] = await Promise.all([
+      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap] = await Promise.all([
         admin.firestore().collection("url_reviews").limit(400).get(),
         admin.firestore().collection("url_review_alerts").limit(80).get(),
         admin.firestore().collection("url_review_free_runs").limit(200).get(),
         admin.firestore().collection("url_review_notes").limit(1000).get(),
         admin.firestore().collection("url_review_reruns").orderBy("at", "desc").limit(30).get(),
+        admin.firestore().collection("url_review_unlisted").get(),
         admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get()
       ]);
       const ownerNotices = noticeSnap.docs.map((doc) => Object.assign({ domain: doc.id }, doc.data()))
@@ -2079,7 +2081,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       });
       const notes = noteSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
       const reruns = reviewDesk.rerunRows(rerunSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
-      res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes), {
+      res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes, unlistedSnap.docs.map((doc) => doc.id)), {
         freeRuns,
         reruns,
         ownerNotices
@@ -2204,6 +2206,16 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         await ref.update({ mailError: String((error && error.message) || "mail failed").slice(0, 200) });
       }
       res.status(200).json({ ok: true, status: "sent", reportId: record.id, mailed });
+      return;
+    }
+    if (deskName === "unlist" && req.method === "POST") {
+      const host = reviewPublish.bare(req.body && req.body.host);
+      if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host) || host.length > 200) {
+        res.status(400).json({ error: "That is not a host name." });
+        return;
+      }
+      await admin.firestore().collection("url_review_unlisted").doc(host).set({ at: new Date().toISOString(), by: operator, from: "desk" });
+      res.status(200).json({ ok: true, host });
       return;
     }
     if (deskName === "free" && req.method === "POST") {

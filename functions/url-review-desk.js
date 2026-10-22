@@ -2,6 +2,28 @@
  * Owner view of URL-review runs. Summaries only: no page HTML.
  */
 const offers = require("./url-review-offers");
+const publish = require("./url-review-publish");
+
+const HELD_WORDS = {
+  "not-complete": "the review did not complete",
+  "not-public": "the address is not a public host",
+  "own-or-test": "our own or a reserved host",
+  "test-run": "a sandbox test run",
+  "asker-opted-out": "the asker ticked don't publish",
+  unlisted: "the owner asked to be left out",
+  "safe-browsing-flagged": "Google's Safe Browsing lists flag the site",
+  "no-score": "the review has no score",
+  "timed-out": "the review ran out of time",
+  "too-few-pages": "fewer than " + publish.MIN_PAGES + " pages were analyzed",
+  "start-page-blocked": "the start page was blocked or failed",
+  "javascript-shell": "the site is an empty JavaScript shell"
+};
+
+function liveState(row, unlisted) {
+  if (!row.report || (row.status !== "complete" && row.status !== "stopped")) return null;
+  const reason = publish.heldReason(row, unlisted);
+  return { listed: !reason, reason, why: HELD_WORDS[reason] || reason };
+}
 
 function clip(value, max) {
   const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
@@ -115,7 +137,7 @@ function alertsFromHistory(records) {
   }).filter(Boolean);
 }
 
-function summary(row, index) {
+function summary(row, index, unlisted) {
   const report = row.report || {};
   const counts = report.counts || {};
   const alerts = Array.isArray(report.alerts) ? report.alerts : [];
@@ -180,6 +202,7 @@ function summary(row, index) {
     deviceId: clip(row.deviceId || "", 32),
     ip: clip(row.ip || "", 80),
     retainUntil: clip(row.retainUntil || "", 40),
+    live: liveState(row, unlisted),
     paidUntil: clip(row.paidUntil || "", 40),
     localPass: row.localPass === true,
     paths: pages.slice(0, 20).map((page) => ({
@@ -196,13 +219,13 @@ function summary(row, index) {
   };
 }
 
-function snapshot(records, alerts, active, noteRows) {
+function snapshot(records, alerts, active, noteRows, unlisted) {
   const list = Array.isArray(records) ? records : [];
   const index = new Map();
   list.forEach((row) => {
     if (row && row.id && row.report) index.set(row.id, row);
   });
-  const runs = list.map((row) => summary(row || {}, index)).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const runs = list.map((row) => summary(row || {}, index, unlisted || [])).sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const notes = (Array.isArray(alerts) ? alerts : []).slice().sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 80);
   const tally = {
     runs: runs.length,
@@ -659,7 +682,15 @@ const PAGE = `<!DOCTYPE html>
       line(dl, "Device", picked.deviceId);
       line(dl, "Terms", picked.termsVersion);
       line(dl, "Kept until", picked.retainUntil);
+      line(dl, "Live Reports", picked.live ? (picked.live.listed ? "Public: added in the next daily batch, or already listed" : "Held: " + picked.live.why) : "—");
       detailEl.appendChild(dl);
+      if (picked.live && picked.host && picked.live.reason !== "unlisted") {
+        const unlist = document.createElement("button");
+        unlist.type = "button";
+        unlist.textContent = "Unlist " + picked.host + " from Live Reports";
+        unlist.addEventListener("click", () => unlistHost(picked.host, unlist));
+        detailEl.appendChild(unlist);
+      }
       if (picked.email && (picked.status === "complete" || picked.status === "stopped")) {
         const pass = document.createElement("button");
         pass.type = "button";
@@ -873,6 +904,18 @@ const PAGE = `<!DOCTYPE html>
         credentials: "include",
         headers: await deskHeaders(),
         body: JSON.stringify({ email: email, on: on, note: note || "" })
+      });
+      load();
+    }
+
+    async function unlistHost(host, button) {
+      if (!confirm("Keep " + host + " out of Live Reports? The next daily batch removes its card and posts nothing more about it.")) return;
+      button.disabled = true;
+      await fetch(deskBase() + "/desk/unlist", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ host: host })
       });
       load();
     }
@@ -1158,6 +1201,7 @@ async function verifyOperator(idToken) {
 
 module.exports = {
   kindFor,
+  liveState,
   alertFrom,
   alertsFromHistory,
   snapshot,
