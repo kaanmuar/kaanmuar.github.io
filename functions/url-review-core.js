@@ -2295,6 +2295,7 @@ function intakeRecord(value, report, meta) {
     id: report.id,
     createdAt: new Date(now).toISOString(),
     retainUntil: new Date(now + RETAIN_MS).toISOString(),
+    expireAt: new Date(now + RETAIN_MS),
     termsVersion: value.termsVersion || TERMS_VERSION,
     name: value.name,
     email: value.email,
