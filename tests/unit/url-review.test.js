@@ -1115,6 +1115,8 @@ test("a failure re-runs when its cause clears or a fix to its cause ships after 
   const before = Object.assign({}, bot, { rerun: { status: "failed", at: "2026-10-21T18:00:00Z", cause: "bot-protection" } });
   assert.equal(failures.rerunTrigger(before).id, "fix");
   assert.equal(failures.rerunTrigger(failedAt("2026-10-22T11:00:00Z", { kind: "stopped" })), null);
+  const browserFail = failedAt("2026-10-21T22:06:00Z", { url: "https://americanairlines.com/", host: "americanairlines.com", cause: { id: "browser" }, diagnosis: { cause: "browser", cleared: false, rerun: false } });
+  assert.deepEqual([failures.rerunTrigger(browserFail).id, failures.rerunTrigger(browserFail).ref], ["fix", "#365"]);
 });
 
 test("re-runs are planned once per address and asker, newest first, and skipped when the asker reviewed again", () => {
