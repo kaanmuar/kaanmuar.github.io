@@ -456,6 +456,11 @@ const PAGE = `<!DOCTYPE html>
       <div id="reruns"></div>
     </section>
     <section>
+      <h2>Owner notices</h2>
+      <p class="empty">One email per domain every six months, telling the owner a Live Report of the site exists, with links to claim the full report or remove it. It goes only to an address the site publishes, never names the asker, and sends only once the card is live.</p>
+      <div id="owner-notices"></div>
+    </section>
+    <section>
       <h2>Free runs</h2>
       <p class="empty">An address on this list runs as many reviews as it likes, at any size, with the full report open. Nothing is charged.</p>
       <div class="tools">
@@ -515,6 +520,7 @@ const PAGE = `<!DOCTYPE html>
     const notesEl = document.getElementById("notes");
     const freeListEl = document.getElementById("free-list");
     const rerunsEl = document.getElementById("reruns");
+    const noticesEl = document.getElementById("owner-notices");
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
     const qEl = document.getElementById("q");
@@ -565,6 +571,7 @@ const PAGE = `<!DOCTYPE html>
       renderNotes();
       renderFree();
       renderReruns();
+      renderNotices();
 
       alertsEl.replaceChildren();
       (data.alerts || []).slice(0, 12).forEach((alert) => {
@@ -791,6 +798,56 @@ const PAGE = `<!DOCTYPE html>
         rerunsEl.appendChild(block);
       });
       if (!(data.reruns || []).length) rerunsEl.appendChild(Object.assign(node("p", "No failed review has run again yet."), { className: "empty" }));
+    }
+    function renderNotices() {
+      noticesEl.replaceChildren();
+      const sources = { "security.txt": "security.txt Contact, because the review found a critical security issue", schema: "schema.org Organization or ContactPoint email", page: "mailto link on " };
+      if (!data.noticePostal) noticesEl.appendChild(Object.assign(node("p", "Set OWNER_NOTICE_POSTAL in functions/.env before sending. Every notice carries a postal address."), { className: "empty" }));
+      (data.ownerNotices || []).forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        block.appendChild(node("b", item.host + " · " + item.email));
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = [
+          when(item.createdAt),
+          "reviewed " + String(item.reviewedAt || "").slice(0, 10),
+          item.lang,
+          item.critical ? "critical security finding" : "",
+          item.lastError ? "last try: " + item.lastError : ""
+        ].filter(Boolean).join(" · ");
+        block.appendChild(meta);
+        block.appendChild(node("p", "Contact from the " + (sources[item.source] || item.source) + (item.source === "page" ? item.sourceUrl : "") + "."));
+        const send = document.createElement("button");
+        send.type = "button";
+        send.textContent = "Send to " + item.email;
+        send.disabled = !data.noticePostal;
+        send.addEventListener("click", () => decideNotice(item.domain, true, send, block));
+        const drop = document.createElement("button");
+        drop.type = "button";
+        drop.textContent = "Drop";
+        drop.addEventListener("click", () => decideNotice(item.domain, false, drop, block));
+        block.appendChild(send);
+        block.appendChild(drop);
+        noticesEl.appendChild(block);
+      });
+      if (!(data.ownerNotices || []).length) noticesEl.appendChild(Object.assign(node("p", "No notice is waiting."), { className: "empty" }));
+    }
+    async function decideNotice(domain, send, button, block) {
+      button.disabled = true;
+      const response = await fetch(deskBase() + "/desk/notice", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ domain: domain, send: send })
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        block.appendChild(node("p", body.error || "The notice did not go out."));
+        button.disabled = false;
+        return;
+      }
+      load();
     }
     async function decideRerun(id, send, button) {
       button.disabled = true;

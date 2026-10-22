@@ -14,9 +14,9 @@ const insights = require("./url-review-insights");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 
-const TERMS_VERSION = "2026-10-22";
+const TERMS_VERSION = "2026-10-22.2";
 // A page loaded before a terms change still sends the version before it.
-const PREVIOUS_TERMS_VERSION = "2026-10-21";
+const PREVIOUS_TERMS_VERSION = "2026-10-22";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 
@@ -190,6 +190,14 @@ function emailSyntax(email) {
   const value = String(email || "");
   if (!EMAIL_RE.test(value) || value.includes("..")) return false;
   return value.split("@")[1].split(".").every(Boolean);
+}
+
+function mailOf(value) {
+  const address = String(value || "").replace(/^\s*mailto:/i, "").split("?")[0].split(",")[0];
+  let decoded = address;
+  try { decoded = decodeURIComponent(address); } catch (error) { decoded = address; }
+  const email = decoded.trim().toLowerCase();
+  return emailSyntax(email) ? email : "";
 }
 
 function registrable(hostname) {
@@ -1118,8 +1126,17 @@ function analyticsScan(html) {
 }
 
 function schemaScan(html) {
-  const result = { errors: 0, items: [] };
+  const result = { errors: 0, items: [], emails: [] };
   const blocks = String(html || "").match(/<script\b[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi) || [];
+  // A Person's email is a private address, so only organizations and contact points count.
+  const keepEmails = (node, types) => {
+    if (types.some((type) => /^Person$/i.test(type))) return;
+    const points = Array.isArray(node.contactPoint) ? node.contactPoint : [node.contactPoint];
+    [node.email].concat(points.map((point) => point && typeof point === "object" ? point.email : "")).forEach((value) => {
+      const email = mailOf(Array.isArray(value) ? value[0] : value);
+      if (email && result.emails.indexOf(email) === -1 && result.emails.length < 5) result.emails.push(email);
+    });
+  };
   const take = (node) => {
     if (!node || typeof node !== "object" || result.items.length >= 20) return;
     if (Array.isArray(node)) { node.forEach(take); return; }
@@ -1127,6 +1144,7 @@ function schemaScan(html) {
     const raw = node["@type"];
     const types = (Array.isArray(raw) ? raw : raw ? [raw] : []).map((type) => clean(String(type).replace(/^https?:\/\/schema\.org\//, ""), 60)).filter(Boolean);
     if (!types.length) return;
+    keepEmails(node, types);
     const sameAs = node.sameAs ? (Array.isArray(node.sameAs) ? node.sameAs : [node.sameAs]).filter((item) => typeof item === "string").slice(0, 12).map((item) => clean(item, 200)) : [];
     result.items.push({ types: types.slice(0, 4), props: Object.keys(node).filter((key) => key.charAt(0) !== "@").slice(0, 40), sameAs });
   };
@@ -1169,6 +1187,13 @@ function inspect(html, headers, pageUrl) {
     if (/\$\{|\{\{|%7B/i.test(raw)) return;
     const href = sameHost(pageUrl, raw);
     if (href && links.length < 100) links.push(href);
+  });
+  const mailtos = [];
+  collect(markup, "a").forEach((tag) => {
+    const href = attr(tag, "href");
+    if (!/^\s*mailto:/i.test(href)) return;
+    const email = mailOf(href);
+    if (email && mailtos.indexOf(email) === -1 && mailtos.length < 5) mailtos.push(email);
   });
   const scripts = collect(html, "script").map((tag) => attr(tag, "src")).filter(Boolean);
   const styles = collect(html, "link").filter((tag) => attr(tag, "rel").toLowerCase().includes("stylesheet")).length;
@@ -1334,6 +1359,7 @@ function inspect(html, headers, pageUrl) {
     schema: schemaScan(html),
     analytics: analyticsScan(html),
     socialLinks,
+    mailtos,
     legal: legalLinks(anchors, pageUrl),
     libraries,
     piiLinks,
@@ -1937,6 +1963,33 @@ function answered(name, res) {
   return name + " answered " + res.status + (res.html ? " with an HTML page" : "") + ".";
 }
 
+const CONTACT_PATH = /(contact|contacto|contato|contatti|kontakt|about|acerca|nosotros|quienes-somos|quem-somos|sobre|ueber-uns|uber-uns|a-propos|qui-sommes|chi-siamo|impressum|imprint|mentions-legales|aviso-legal|note-legali|legal-notice)/i;
+
+// The addresses a site publishes for reaching it, for the owner notice (url-review-owner-notice.js).
+function ownerContacts(pages, securityTxt) {
+  const add = (list, email, max) => { if (email && list.indexOf(email) === -1 && list.length < max) list.push(email); };
+  const security = [];
+  if (securityTxt && securityTxt.status === 200 && !securityTxt.html) {
+    String(securityTxt.body || "").split(/\r?\n/).forEach((line) => {
+      const match = line.match(/^\s*Contact:\s*(mailto:\S+)/i);
+      if (match) add(security, mailOf(match[1]), 3);
+    });
+  }
+  const schema = [];
+  const onPages = [];
+  (pages || []).forEach((page) => {
+    const found = page.inspect || {};
+    ((found.schema && found.schema.emails) || []).forEach((email) => add(schema, email, 5));
+    let path = "";
+    try { path = new URL(page.url).pathname; } catch (error) { path = ""; }
+    if (!CONTACT_PATH.test(path)) return;
+    (found.mailtos || []).forEach((email) => {
+      if (onPages.length < 5 && !onPages.some((row) => row.email === email)) onPages.push({ email, url: page.url });
+    });
+  });
+  return { securityTxt: security, schema, pages: onPages };
+}
+
 async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups) {
   const say = typeof note === "function" ? note : () => {};
   const checkRisk = lookups && typeof lookups.webrisk === "function" ? lookups.webrisk : null;
@@ -2329,6 +2382,7 @@ async function reviewTarget(rawUrl, hooks) {
     alerts,
     mentions,
     insights: analysis,
+    contacts: ownerContacts(pages, extras.securityTxt),
     browser: browser && browser.ok ? browser : (browser ? { ok: false, error: String(browser.error || "") } : null),
     pagespeed: speed && speed.ok ? speed : null,
     signature,
@@ -3105,6 +3159,9 @@ module.exports = {
   screenIntake,
   emailCanReceive,
   mailboxMatchesHost,
+  emailSyntax,
+  registrable,
+  ownerContacts,
   humanCheck,
   createCheckout,
   readCheckout,

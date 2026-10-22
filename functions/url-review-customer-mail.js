@@ -641,4 +641,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { LANGS, langOf, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, stopPage, pageUrl };
+module.exports = { SITE, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, stopPage, pageUrl };
