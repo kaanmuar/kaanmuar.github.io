@@ -72,6 +72,11 @@
     return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
   }
 
+  // Set from ?qatest= on the pay page; a matching key keeps the run out of Live Reports.
+  function testKey() {
+    try { return localStorage.getItem("qa-review-test-key") || ""; } catch (error) { return ""; }
+  }
+
   function deviceId() {
     let id = "";
     try { id = localStorage.getItem(DEVICE_KEY) || ""; } catch (error) { id = ""; }
@@ -1321,6 +1326,7 @@
     event.preventDefault();
     if (app.inert || activeRun) return;
     if (!signedIn()) {
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "client");
       setStatus("Sign in above to run a review. The review runs on the device where you sign in.", true);
       if (window.ReviewAuth) ReviewAuth.focus();
       return;
@@ -1366,7 +1372,9 @@
           company: (document.getElementById("hp-note") || { value: "" }).value,
           lang: document.documentElement.lang || "en",
           coupon: window.ReviewDeal ? ReviewDeal.code() : "",
-          followUp: document.getElementById("follow-up").checked === true
+          followUp: document.getElementById("follow-up").checked === true,
+          unlisted: document.getElementById("no-publish").checked === true,
+          testKey: testKey()
         }))
       });
       stopBtn.disabled = false;
@@ -1387,6 +1395,7 @@
         else ReviewProgress.fail();
       }
       if (error.body && error.body.signIn) {
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "server");
         ReviewAuth.expire(error.message);
         ReviewAuth.focus();
         setStatus(error.message, true);

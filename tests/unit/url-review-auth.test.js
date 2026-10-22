@@ -306,5 +306,61 @@ test("the sign-in email carries the code and a same-device link in every page la
     assert.match(mail.subject, /123456/);
     assert.match(mail.text, /signin=abc&key=def/);
     assert.match(mail.html, /123456/);
+    assert.match(mail.html, /qa-review-account\.html/);
+    assert.match(mail.text, /qa-review-legal\.html/);
+    assert.match(mail.html, /Carlos A\. Muñoz, Bogotá/);
   });
+});
+
+test("the sign-in email link returns to the page that asked for it", () => {
+  const sign = { id: "abc", token: "def", code: "123456" };
+  assert.match(customerMail.signInMail("en", sign, "/qa-review-account.html").text, /\/qa-review-account\.html\?signin=abc&key=def/);
+  assert.match(customerMail.signInMail("es", sign, "/qa-review-es.html").text, /\/qa-review-es\.html\?signin=abc&key=def/);
+  assert.match(customerMail.signInMail("es", sign).text, /\/qa-review-es\.html\?signin=abc/);
+  assert.match(customerMail.signInMail("en", sign, "https://evil.example/qa-review-account.html").text, /carlosandmunoz\.com\/qa-review\.html\?signin=abc/);
+});
+
+test("deleting an account also deletes the Firebase Auth users under its email", async () => {
+  const users = [{ uid: "u1", email: "ana@example.com" }, { uid: "u2", email: "ana@example.com" }, { uid: "u3", email: "bo@example.com" }];
+  const authApi = {
+    async getUserByEmail(email) {
+      const user = users.find((item) => item.email === email);
+      if (!user) throw Object.assign(new Error("no user"), { code: "auth/user-not-found" });
+      return user;
+    },
+    async deleteUser(uid) { users.splice(users.findIndex((item) => item.uid === uid), 1); }
+  };
+  assert.equal(await auth.dropAuthUsers(authApi, "Ana@Example.com"), 2);
+  assert.deepEqual(users.map((item) => item.uid), ["u3"]);
+  assert.equal(await auth.dropAuthUsers(authApi, "nobody@example.com"), 0);
+  assert.equal(await auth.dropAuthUsers(authApi, "not an email"), 0);
+  await assert.rejects(auth.dropAuthUsers({ async getUserByEmail() { throw Object.assign(new Error("quota"), { code: "auth/internal-error" }); } }, "bo@example.com"), /quota/);
+});
+
+test("analytics never receives the sign-in link, OAuth return, or saved report id in the page address", () => {
+  const vm = require("node:vm");
+  const calls = [];
+  const href = "https://carlosandmunoz.com/qa-review.html?signin=abc&key=secret&state=s1&code=c1&scope=email&iss=x&error=e&error_description=d&error_uri=u&report=r1&utm_source=x";
+  const win = {
+    location: new URL(href),
+    localStorage: { getItem: () => "allow", setItem() {} },
+    navigator: {},
+    addEventListener() {},
+    dispatchEvent() {},
+    dataLayer: { push: (args) => calls.push(Array.from(args)) }
+  };
+  win.top = {};
+  win.self = win;
+  const doc = {
+    readyState: "loading",
+    title: "QA-lab URL Review",
+    documentElement: { lang: "en" },
+    head: { appendChild() {} },
+    addEventListener() {},
+    createElement: () => ({})
+  };
+  vm.runInNewContext(require("node:fs").readFileSync(require("node:path").join(__dirname, "../../js/qa-review-consent.js"), "utf8"),
+    { window: win, document: doc, location: win.location, localStorage: win.localStorage, navigator: win.navigator, URL, Date, CustomEvent: class {} });
+  const config = calls.find((args) => args[0] === "config");
+  assert.equal(config[2].page_location, "https://carlosandmunoz.com/qa-review.html?utm_source=x");
 });
