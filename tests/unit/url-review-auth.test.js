@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const auth = require("../../functions/url-review-auth");
+const oauth = require("../../functions/url-review-oauth");
 const customerMail = require("../../functions/url-review-customer-mail");
 
 const DESKTOP = "a".repeat(64);
@@ -163,6 +164,121 @@ test("the provider list always offers email and only the providers switched on",
   assert.deepEqual(auth.enabledProviders("").map((item) => item.id), ["email", "google.com"]);
   assert.deepEqual(auth.enabledProviders("google.com,apple.com,nope").map((item) => item.id), ["email", "google.com", "apple.com"]);
   assert.deepEqual(auth.enabledProviders("twitter.com,facebook.com,github.com").map((item) => item.id), ["email", "github.com", "facebook.com", "twitter.com"]);
+});
+
+const OAUTH_ENV = {
+  REVIEW_OAUTH_DISCORD_ID: "d-id", REVIEW_OAUTH_DISCORD_SECRET: "d-secret",
+  REVIEW_OAUTH_GITLAB_ID: "g-id", REVIEW_OAUTH_GITLAB_SECRET: "g-secret",
+  REVIEW_OAUTH_LINKEDIN_ID: "l-id", REVIEW_OAUTH_LINKEDIN_SECRET: "l-secret",
+  REVIEW_OAUTH_TWITCH_ID: "t-id", REVIEW_OAUTH_TWITCH_SECRET: "t-secret"
+};
+const OAUTH_OPEN = "email,linkedin,gitlab,discord,twitch,slack";
+const PAGE = "https://carlosandmunoz.com/qa-review.html";
+
+function providerFetch(user, calls) {
+  return async (url, options) => {
+    calls.push({ url, options });
+    const body = /token$|accessToken$/.test(url) ? { access_token: "at-1", token_type: "Bearer" } : user;
+    return { ok: true, status: 200, json: async () => body };
+  };
+}
+
+async function oauthStart(store, provider, deviceKey) {
+  const started = await oauth.startOAuth(store, { provider, deviceKey, enabled: OAUTH_OPEN, env: OAUTH_ENV, redirectUri: PAGE });
+  assert.equal(started.ok, true);
+  return started;
+}
+
+test("a provider without a client id and secret is not offered, even when listed", () => {
+  assert.deepEqual(oauth.ready(OAUTH_ENV), ["linkedin", "gitlab", "discord", "twitch"]);
+  const offered = auth.enabledProviders(OAUTH_OPEN + ",google.com", oauth.ready(OAUTH_ENV));
+  assert.deepEqual(offered.map((item) => item.id), ["email", "google.com", "linkedin", "gitlab", "discord", "twitch"]);
+  assert.equal(offered.find((item) => item.id === "gitlab").oauth, true);
+  assert.deepEqual(auth.enabledProviders(OAUTH_OPEN).map((item) => item.id), ["email"]);
+  assert.deepEqual(auth.enabledProviders("google.com", oauth.ready(OAUTH_ENV)).map((item) => item.id), ["email", "google.com"]);
+});
+
+test("an OAuth start stores the device under a state and sends the provider a PKCE challenge where it takes one", async () => {
+  const store = auth.memoryStore();
+  const gitlab = await oauthStart(store, "gitlab", DESKTOP);
+  const url = new URL(gitlab.url);
+  assert.equal(url.origin + url.pathname, "https://gitlab.com/oauth/authorize");
+  assert.equal(url.searchParams.get("state"), gitlab.state);
+  assert.equal(url.searchParams.get("client_id"), "g-id");
+  assert.equal(url.searchParams.get("redirect_uri"), PAGE);
+  assert.equal(url.searchParams.get("code_challenge_method"), "S256");
+  const row = await store.get("url_review_oauth", gitlab.state);
+  assert.equal(row.deviceHash, auth.deviceHash(DESKTOP));
+  const expected = require("crypto").createHash("sha256").update(row.verifier).digest("base64url");
+  assert.equal(url.searchParams.get("code_challenge"), expected);
+  assert.equal(oauth.challengeOf("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+  const linkedin = new URL((await oauthStart(store, "linkedin", DESKTOP)).url);
+  assert.equal(linkedin.searchParams.get("code_challenge"), null);
+  const twitch = new URL((await oauthStart(store, "twitch", DESKTOP)).url);
+  assert.deepEqual(Object.keys(JSON.parse(twitch.searchParams.get("claims")).userinfo).slice(0, 2), ["email", "email_verified"]);
+  assert.equal((await oauth.startOAuth(store, { provider: "slack", deviceKey: DESKTOP, enabled: OAUTH_OPEN, env: OAUTH_ENV, redirectUri: PAGE })).status, 400);
+  assert.equal((await oauth.startOAuth(store, { provider: "gitlab", deviceKey: "", enabled: OAUTH_OPEN, env: OAUTH_ENV, redirectUri: PAGE })).status, 400);
+});
+
+test("an OAuth code finishes only on the device that started it, and only once", async () => {
+  const store = auth.memoryStore();
+  const calls = [];
+  const user = { sub: "g-7", email: "Ana@GitLab.example", email_verified: true, name: "Ana Ruiz", picture: "https://gitlab.com/a.png" };
+  const finish = (state, deviceKey) => oauth.finishOAuth(store, { state, code: "c-1", deviceKey, enabled: OAUTH_OPEN, env: OAUTH_ENV, fetch: providerFetch(user, calls) });
+  const started = await oauthStart(store, "gitlab", DESKTOP);
+  const phone = await finish(started.state, PHONE);
+  assert.equal(phone.status, 403);
+  assert.equal(phone.code, "other-device");
+  assert.equal(phone.error, auth.OTHER_DEVICE);
+  assert.equal(calls.length, 0);
+  assert.equal((await finish(started.state, DESKTOP)).code, "expired");
+  const again = await oauthStart(store, "gitlab", DESKTOP);
+  const signed = await finish(again.state, DESKTOP);
+  assert.equal(signed.ok, true);
+  assert.equal(signed.email, "ana@gitlab.example");
+  assert.equal(signed.provider, "gitlab");
+  assert.equal(signed.name, "Ana Ruiz");
+  const sent = new URLSearchParams(calls[0].options.body);
+  assert.equal(sent.get("code_verifier"), (await store.get("url_review_oauth", again.state)).verifier);
+  assert.equal(sent.get("redirect_uri"), PAGE);
+  assert.equal(sent.get("client_secret"), "g-secret");
+  assert.equal(calls[1].options.headers.authorization, "Bearer at-1");
+  assert.equal((await auth.checkSession(store, { session: signed.session, deviceKey: DESKTOP })).ok, true);
+  assert.equal((await finish(again.state, DESKTOP)).code, "expired");
+  const late = await oauthStart(store, "gitlab", DESKTOP);
+  const expired = await oauth.finishOAuth(store, { state: late.state, code: "c-1", deviceKey: DESKTOP, enabled: OAUTH_OPEN, env: OAUTH_ENV, fetch: providerFetch(user, calls), now: Date.now() + oauth.STATE_MS + 1000 });
+  assert.equal(expired.code, "expired");
+  assert.equal((await finish("f".repeat(48), DESKTOP)).code, "expired");
+});
+
+test("a Discord account without a verified email gets a code by email instead of a session", async () => {
+  const store = auth.memoryStore();
+  const finish = async (user) => {
+    const started = await oauthStart(store, "discord", DESKTOP);
+    return oauth.finishOAuth(store, { state: started.state, code: "c-1", deviceKey: DESKTOP, enabled: OAUTH_OPEN, env: OAUTH_ENV, fetch: providerFetch(user, []) });
+  };
+  const unverified = await finish({ id: "80351110224678912", username: "ana", email: "ana@proton.me", verified: false });
+  assert.equal(unverified.verifyEmail, true);
+  assert.equal(unverified.email, "ana@proton.me");
+  assert.equal(unverified.provider, "discord");
+  assert.equal(store.cols.get("url_review_sessions"), undefined);
+  assert.equal((await finish({ id: "80351110224678912", username: "ana" })).status, 400);
+  const signed = await finish({ id: "80351110224678912", username: "ana", global_name: "Ana", avatar: "8342729096ea3675442027381ff50dfe", email: "ana@proton.me", verified: true });
+  assert.equal(signed.ok, true);
+  assert.equal(signed.name, "Ana");
+  assert.equal(signed.picture, "https://cdn.discordapp.com/avatars/80351110224678912/8342729096ea3675442027381ff50dfe.png");
+  assert.deepEqual((await store.get("url_review_accounts", "ana@proton.me")).providers, ["discord"]);
+});
+
+test("a cancelled or refused provider sign-in opens nothing", async () => {
+  const store = auth.memoryStore();
+  const cancelled = await oauthStart(store, "linkedin", DESKTOP);
+  const result = await oauth.finishOAuth(store, { state: cancelled.state, error: "user_cancelled_login", deviceKey: DESKTOP, enabled: OAUTH_OPEN, env: OAUTH_ENV, fetch: providerFetch({}, []) });
+  assert.equal(result.code, "cancelled");
+  const refused = await oauthStart(store, "linkedin", DESKTOP);
+  const failing = async () => ({ ok: false, status: 400, json: async () => ({ error: "invalid_grant" }) });
+  assert.equal((await oauth.finishOAuth(store, { state: refused.state, code: "c-1", deviceKey: DESKTOP, enabled: OAUTH_OPEN, env: OAUTH_ENV, fetch: failing })).status, 502);
+  assert.equal(store.cols.get("url_review_sessions"), undefined);
 });
 
 test("the sign-in email carries the code and a same-device link in every page language", () => {
