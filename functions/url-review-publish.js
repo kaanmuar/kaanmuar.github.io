@@ -3,7 +3,8 @@
    The daily Live Reports job (scripts/auto-live-reports.js) reads GET /publishable on reviewUrl.
    It gets the newest complete review per host since a date, already filtered and trimmed: no
    requester name, email, reason, IP, device, page list, log, or engine internals ever leave here.
-   A host whose owner asked to be left out goes in Firestore url_review_unlisted/<host>. */
+   A host whose owner asked to be left out goes in Firestore url_review_unlisted/<host>; an asker who
+   ticked "Don't publish" leaves `unlisted: true` on that one record. */
 
 const MIN_PAGES = 2;
 const OWN_HOSTS = ["carlosandmunoz.com", "kaanmuar.github.io", "carlosm-interactive-cv.web.app", "carlosm-interactive-cv.firebaseapp.com"];
@@ -25,9 +26,12 @@ function heldReason(record, unlisted) {
   if ((record.status || report.status || "complete") !== "complete" || report.status === "stopped") return "not-complete";
   if (!host || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host) || /^\d+(\.\d+){3}$/.test(host)) return "not-public";
   if (RESERVED.test(host) || under(host, OWN_HOSTS)) return "own-or-test";
+  if (record.test === true) return "test-run";
+  if (record.unlisted === true) return "asker-opted-out";
   if (under(host, unlisted || [])) return "unlisted";
   const score = report.insights && report.insights.score;
   if (!score || typeof score.overall !== "number" || !score.areas) return "no-score";
+  if ((report.insights.findings || []).some((f) => f.key === "sec-safebrowsing" && f.verdict === "fail")) return "safe-browsing-flagged";
   const limits = report.limits || {};
   if (limits.timedOut) return "timed-out";
   if ((limits.pagesRead || (report.pages || []).length) < MIN_PAGES) return "too-few-pages";

@@ -308,7 +308,8 @@ function validateIntake(body) {
       clientUrl,
       ownership: known && known.id === "own" ? "mailbox-domain" : "",
       lang: ["en", "es", "pt", "de", "fr", "it"].indexOf(String(src.lang || "").slice(0, 2).toLowerCase()) === -1 ? "" : String(src.lang).slice(0, 2).toLowerCase(),
-      followUp: src.followUp === true
+      followUp: src.followUp === true,
+      unlisted: src.unlisted === true
     } : null
   };
 }
@@ -2420,6 +2421,7 @@ function intakeRecord(value, report, meta) {
     city: clean(meta.city, 80),
     lang: value.lang || "",
     followUp: value.followUp === true,
+    unlisted: value.unlisted === true,
     report
   };
 }

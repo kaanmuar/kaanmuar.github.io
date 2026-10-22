@@ -306,6 +306,25 @@ async function closeSession(store, session) {
   if (clean.length === 64) await store.remove("url_review_sessions", hashOf(clean));
 }
 
+// A provider sign-in also leaves a Firebase Auth user under the same email; it
+// goes with the account. Bounded, in case the project allows several per email.
+async function dropAuthUsers(authApi, email) {
+  const key = cleanEmail(email);
+  let dropped = 0;
+  while (key && dropped < 10) {
+    let user = null;
+    try {
+      user = await authApi.getUserByEmail(key);
+    } catch (error) {
+      if (error && error.code === "auth/user-not-found") break;
+      throw error;
+    }
+    await authApi.deleteUser(user.uid);
+    dropped += 1;
+  }
+  return dropped;
+}
+
 // For the local server, which has no Admin SDK credentials: Identity Toolkit
 // answers with the user the ID token belongs to, or an error if it is not valid.
 function lookupIdToken(apiKey) {
@@ -346,5 +365,6 @@ module.exports = {
   openSession,
   checkSession,
   closeSession,
+  dropAuthUsers,
   lookupIdToken
 };
