@@ -400,6 +400,7 @@
     item.appendChild(document.createTextNode(text));
     list.appendChild(item);
     list.scrollTop = list.scrollHeight;
+    if (window.ReviewProgress) ReviewProgress.line(text);
   }
 
   function seenBefore(id) {
@@ -1335,6 +1336,7 @@
     reviewBtn.disabled = true;
     stopBtn.disabled = true;
     document.getElementById("run-log").innerHTML = "";
+    if (window.ReviewProgress) ReviewProgress.start({ host: urlInput.value, pages: selectedPages() });
     setStatus("Checking the email domain, then reading the public page…", false);
     appendLog("Checking the fields, the email domain, and that this is a browser.");
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", reasonCode());
@@ -1375,10 +1377,15 @@
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report && payload.report.host);
       render(payload);
       const stopped = payload.report.status === "stopped";
+      if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
       setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Report ready. Cases are proposed, not run.", false);
       dash.scrollTop = 0;
     } catch (error) {
       if (error.fields) markFields(error.fields);
+      if (window.ReviewProgress) {
+        if (error.paymentRequired || (error.body && error.body.signIn) || error.fields) ReviewProgress.reset();
+        else ReviewProgress.fail();
+      }
       if (error.body && error.body.signIn) {
         ReviewAuth.expire(error.message);
         ReviewAuth.focus();
