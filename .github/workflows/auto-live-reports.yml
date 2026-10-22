@@ -10,8 +10,12 @@
 name: Live reports from user reviews
 
 on:
+  # GitHub drops scheduled runs under load, mostly at the top of the hour. The later slots are backups:
+  # the gate job lets them run only when today's batch commit is not on main yet.
   schedule:
-    - cron: '0 8 * * *' # 03:00 Bogotá
+    - cron: '23 8 * * *' # 03:23 Bogotá
+    - cron: '41 10 * * *' # backup, 05:41 Bogotá
+    - cron: '17 13 * * *' # backup, 08:17 Bogotá
   workflow_dispatch:
     inputs:
       since:
@@ -27,7 +31,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.today.outputs.go }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Run unless today's batch is already on main
+        id: today
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          TODAY=$(date -u +%F)
+          DONE=$(gh api "repos/${{ github.repository }}/commits?sha=main&since=${TODAY}T00:00:00Z&per_page=100" \
+            --jq "[.[] | select(.commit.message | contains(\"(auto-$TODAY)\"))] | length")
+          if [ "$DONE" != "0" ]; then
+            echo "Batch auto-$TODAY is already on main; this slot ($(date -u +%H:%M) UTC) has nothing to do."
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${{ github.event.schedule }}" != "23 8 * * *" ]; then
+            echo "::warning::No auto-$TODAY batch on main yet, so the ${{ github.event.schedule }} backup slot is running it."
+          fi
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
   publish:
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
