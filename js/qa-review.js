@@ -773,8 +773,9 @@
     if (!host) return;
     const b = report.browser;
     const speed = speedBlock(report.pagespeed);
+    const carbon = carbonLine(report.insights && report.insights.carbon);
     if (!b || !b.ok) {
-      host.innerHTML = speed + '<p class="muted">' + (b && b.error
+      host.innerHTML = speed + carbon + '<p class="muted">' + (b && b.error
         ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML read only."
         : "This review ran without the headless browser, so the checks come from the HTML read only.") + "</p>";
       return;
@@ -852,7 +853,14 @@
         ? (axeRows ? '<table class="mini-table"><thead><tr><th>Rule</th><th>Impact</th><th>Elements</th><th>Pages</th></tr></thead><tbody>' + axeRows + "</tbody></table>" : '<p class="muted">No WCAG 2.2 AA rule failed on ' + axePages.length + " page" + (axePages.length === 1 ? "" : "s") + ". Automated rules catch about a third of real issues.</p>") +
           '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
         : '<p class="muted">axe-core did not finish in the time the browser had.</p>') + "</article>" +
-      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + " Lab numbers come from one unthrottled load.</p>";
+      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + " Lab numbers come from one unthrottled load.</p>" + carbon;
+  }
+
+  function carbonLine(c) {
+    if (!c || !c.grams) return "";
+    const size = c.bytes >= 1e6 ? (c.bytes / 1e6).toFixed(1) + " MB" : Math.round(c.bytes / 1e3) + " KB";
+    return '<p class="meta-line">Carbon: about ' + c.grams.toFixed(2) + " g CO₂e for a first visit to the start page (rating " + esc(c.rating) + "), from the " + size + " transferred " +
+      (c.source === "lighthouse" ? "in the Lighthouse run" : "on the browser's cold load") + ". Sustainable Web Design model v4 at the global average grid. An estimate for information, not scored.</p>";
   }
 
   function paintGeo(ins) {
@@ -998,6 +1006,10 @@
     document.getElementById("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
       '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(word[item.state] || item.state) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
       (sec.tls ? '<p class="meta-line">TLS certificate valid until ' + esc(sec.tls.validTo) + " (" + sec.tls.daysLeft + " days)" + (sec.tls.issuer ? ", issued by " + esc(sec.tls.issuer) : "") + ".</p>" : "") +
+      (sec.domain ? '<p class="meta-line"><span class="notranslate" translate="no">' + esc(sec.domain.domain) + "</span> is registered" + (sec.domain.registrar ? " with " + esc(sec.domain.registrar) : "") + (sec.domain.expires ? " until " + esc(sec.domain.expires) + " (" + sec.domain.daysLeft + " days)" : "") +
+        (sec.domain.locked == null ? "" : sec.domain.locked ? ", locked against transfer" : ", with no transfer lock") + ", according to the registry's RDAP record.</p>" : "") +
+      (sec.bimi ? '<p class="meta-line">' + (sec.bimi.record ? "BIMI is published, so Gmail, Yahoo and Apple Mail can show the brand logo next to its mail."
+        : "No BIMI record. " + (sec.bimi.eligible ? "DMARC already rejects or quarantines spoofed mail, so a BIMI record with a logo would let Gmail, Yahoo and Apple Mail show it next to the brand's mail." : "BIMI shows a brand logo in inboxes once DMARC is at quarantine or reject.")) + " This note is not scored.</p>" : "") +
       securityMatrix(sec.pages || []);
   }
 
