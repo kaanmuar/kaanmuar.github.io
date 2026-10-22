@@ -49,7 +49,7 @@
     const res = await fetch(endpoint() + path, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(Object.assign({ deviceKey: deviceKey(), lang: document.documentElement.lang || "en" }, body))
+      body: JSON.stringify(Object.assign({ deviceKey: deviceKey(), lang: document.documentElement.lang || "en", page: location.pathname }, body))
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
