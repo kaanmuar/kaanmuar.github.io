@@ -186,7 +186,7 @@ Questions people ask
 Q: How much of a site does the first review analyze?
 A: Your first review is included: up to twenty pages, two links deep. A wider or deeper review asks for payment before it starts, and you see the amount first.
 Q: Can I review a site I do not own?
-A: You can review any public https address with a real reason, and your sign-in records who asked. Scores and findings for public pages may be published as a Live Report, on GitHub, and on social media, unless you tick “Don't publish this review” on the request, never with the name, email, or reason of who asked. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. Please do not republish their content from a shared report.
+A: You can review any public https address with a real reason, and your sign-in records who asked. Scores and findings for public pages may be published as a Live Report, on GitHub, and on social media, unless you tick “Don't publish this review” on the request, never with the name, email, or reason of who asked. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. The site's owner may get one email, at an address the site or its public records publish, saying a Live Report exists; it never says who asked. Please do not republish their content from a shared report.
 Q: Is the score a certification?
 A: No. The report is a snapshot and a proposal from one public analysis. It is not proof that a site is safe, fast, or compliant.
 Q: What about signed-in pages?

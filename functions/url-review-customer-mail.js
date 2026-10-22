@@ -503,7 +503,7 @@ function reportMail(record, options) {
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
     deeperBlock(t, facts.host, facts.id);
   const findingLines = facts.findings.map((item) => "- " + item.shown + (item.hidden ? " …" : ""));
-  const why = fill(t.why, { host: facts.host });
+  const why = opts.why || fill(t.why, { host: facts.host });
   const foot = { stopUrl: opts.stopUrl, kept: dateOf(record && record.retainUntil), live: true };
   const text = [
     story.title,
@@ -794,4 +794,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { LANGS, langOf, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, stopPage, pageUrl };
+module.exports = { SITE, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, stopPage, pageUrl };
