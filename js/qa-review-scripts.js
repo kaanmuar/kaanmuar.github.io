@@ -2181,6 +2181,12 @@ namespace QaLab
     if (kit.llmsTxt) files.push({ path: "fix-kit/llms.txt", content: kit.llmsTxt });
     if (kit.securityTxt) files.push({ path: "fix-kit/.well-known/security.txt", content: kit.securityTxt });
     if ((kit.dns || []).length) files.push({ path: "fix-kit/dns-records.txt", content: "# Add these at your DNS provider. Replace the placeholders first.\n" + kit.dns.map((row) => row.name + "\t" + row.type + "\t" + row.value).join("\n") + "\n" });
+    if (kit.mtaSts) files.push({ path: "fix-kit/mta-sts/.well-known/mta-sts.txt", content: "# Serve as text/plain at https://mta-sts.<your domain>/.well-known/mta-sts.txt, with no redirect.\n# Keep mode: testing until TLS-RPT reports are clean, then change it to enforce and bump the id in the _mta-sts TXT record.\n" + kit.mtaSts });
+    if ((kit.libraries || []).length) files.push({ path: "fix-kit/library-upgrades.md", content: "# Front-end library upgrades\n\nChecked against the retire.js list. Retest the pages that use a library after a major upgrade.\n\n" + kit.libraries.map((row) => "- **" + row.name + " " + row.version + "**: " + row.flaws + " known flaw" + (row.flaws === 1 ? "" : "s") + ", the worst rated " + row.worst + ". " + (row.ended ? "This release line gets no more fixes; move to a supported major version." : "Upgrade to " + row.fixed + " or later.")).join("\n") + "\n" });
+    if (kit.privacyNotice) files.push({ path: "fix-kit/legal/privacy-notice.md", content: kit.privacyNotice });
+    if (kit.imprint) files.push({ path: "fix-kit/legal/impressum.md", content: kit.imprint });
+    if (kit.accessibilityStatement) files.push({ path: "fix-kit/legal/accessibility-statement.md", content: kit.accessibilityStatement });
+    if (kit.chatSnippet) files.push({ path: "fix-kit/chat-click-to-load.html", content: kit.chatSnippet });
     const top = (ins.findings || []).filter((item) => item.rank).slice(0, 15);
     const score = ins.score || {};
     const lines = [
