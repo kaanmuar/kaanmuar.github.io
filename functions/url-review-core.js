@@ -94,6 +94,14 @@ const TOTAL_MS = 170000;
 // Lighthouse mobile runs often outlast a short crawl's budget; reviewUrl's 180 s timeout leaves room.
 const SPEED_WAIT_MS = 80000;
 const RETAIN_MS = 365 * 24 * 60 * 60 * 1000;
+// Colombian tax support (Ley 962 de 2005, art. 46): five years from January 1 after the payment.
+const PAYMENT_YEARS = 5;
+
+function paymentExpireAt(at) {
+  const paid = new Date(at || Date.now());
+  const year = isNaN(paid.getTime()) ? new Date().getUTCFullYear() : paid.getUTCFullYear();
+  return new Date(Date.UTC(year + 1 + PAYMENT_YEARS, 0, 1));
+}
 
 const TECH = [
   ["WordPress", "CMS", /wp-content|wp-includes|generator" content="wordpress/i],
@@ -3102,6 +3110,8 @@ module.exports = {
   normalizeTools,
   toolsForCharge,
   RETAIN_MS,
+  PAYMENT_YEARS,
+  paymentExpireAt,
   preformatUrl,
   validateIntake,
   screenIntake,

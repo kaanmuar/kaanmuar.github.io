@@ -856,6 +856,12 @@ test("the intake takes the current terms and the ones just before, and records w
   assert.ok(core.validateIntake(body("2026-09-01")).errors.some((e) => e.field === "terms"));
 });
 
+test("payment rows are kept until January 1 of the sixth year after the payment", () => {
+  assert.equal(core.paymentExpireAt("2026-10-22T12:00:00Z").toISOString(), "2032-01-01T00:00:00.000Z");
+  assert.equal(core.paymentExpireAt("2026-01-01T00:00:00Z").toISOString(), "2032-01-01T00:00:00.000Z");
+  assert.ok(core.paymentExpireAt().getTime() > Date.now() + 5 * 365 * 24 * 60 * 60 * 1000);
+});
+
 test("the optional don't-publish box rides from the form to the stored record and a re-run", () => {
   const body = (extra) => Object.assign({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://example.org/" }, extra);
   assert.equal(core.validateIntake(body()).value.unlisted, false);

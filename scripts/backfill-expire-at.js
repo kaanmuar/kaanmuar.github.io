@@ -13,16 +13,18 @@ const HOUR = 60 * 60 * 1000;
 const at = (iso, plus) => (Date.parse(iso || "") ? new Date(Date.parse(iso) + (plus || 0)) : null);
 // A row with no date of its own is kept 12 months from this run.
 const year = (iso) => at(iso, core.RETAIN_MS) || new Date(Date.now() + core.RETAIN_MS);
+const PAYMENTS = ["monthly-pass", "run-credit", "run-credit-used"];
+const paid = (iso) => core.paymentExpireAt(Date.parse(iso || "") ? iso : undefined);
 const RULES = {
-  url_reviews: (row) => at(row.retainUntil) || year(row.createdAt),
+  url_reviews: (row) => PAYMENTS.includes(row.status) ? paid(row.createdAt) : at(row.retainUntil) || year(row.createdAt),
   url_review_accounts: (row) => at(row.retainUntil) || at(row.lastSignInAt, auth.ACCOUNT_MS),
   url_review_sign_ins: (row) => at(row.createdAt, Math.max(auth.CODE_MS, HOUR)) || at(row.expiresAt),
   url_review_sessions: (row) => at(row.expiresAt),
   url_review_oauth: (row) => at(row.expiresAt),
   url_review_opens: (row) => year(row.createdAt),
-  url_review_notes: (row) => year(row.createdAt),
+  url_review_notes: (row) => row.status === "follow-stop" ? null : year(row.createdAt),
   url_review_stop_links: (row) => year(row.createdAt),
-  url_review_redemptions: (row) => year(row.at),
+  url_review_redemptions: (row) => paid(row.at),
   url_review_alerts: (row) => year(row.at),
   url_review_captures: (row) => year(row.at),
   url_review_stops: (row) => year(row.at),
