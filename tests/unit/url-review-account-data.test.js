@@ -2,6 +2,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const auth = require("../../functions/url-review-auth");
 const accountData = require("../../functions/url-review-account-data");
+const offers = require("../../functions/url-review-offers");
+const desk = require("../../functions/url-review-desk");
 
 const EMAIL = "ana@example.com";
 
@@ -78,6 +80,33 @@ test("deleting the account removes its rows, keeps payments without the report, 
     assert.deepEqual(await store.where(col, "email", EMAIL), [], col);
   }
   assert.deepEqual((await store.where("url_review_notes", "email", EMAIL)).map((row) => row.status), ["follow-stop"]);
+});
+
+test("a report paid after its run gets its own payment row, without the report", () => {
+  const row = offers.reportPayment({ email: " Ana@Example.com", frameworks: ["iso"], report: { cases: [1] }, ip: "1.1.1.1" }, { reportId: "run9", provider: "wompi", amount: 950, reference: undefined });
+  assert.deepEqual(row, { status: "paid-report", paid: true, purpose: "report", email: EMAIL, frameworks: ["iso"], reportId: "run9", provider: "wompi", amount: 950 });
+});
+
+test("the desk counts a paid report once, through its payment row", () => {
+  const rows = [
+    { id: "run9", email: EMAIL, status: "complete", paid: true, report: { cases: [] } },
+    { id: "paid-report-run9", email: EMAIL, status: "paid-report", paid: true, reportId: "run9" },
+    { id: "run8", email: EMAIL, status: "complete", paid: true, report: { cases: [] } }
+  ];
+  assert.equal(desk.snapshot(rows, [], [], [], []).tally.paid, 2);
+});
+
+test("deleting the account drops a paid run whose payment has its own row, and keeps that row", async () => {
+  const store = auth.memoryStore();
+  await store.set("url_reviews", "run9", { email: EMAIL, status: "complete", paid: true, provider: "wompi", report: { cases: [1] } });
+  await store.set("url_reviews", "paid-report-run9", offers.reportPayment({ email: EMAIL }, { reportId: "run9", provider: "wompi", amount: 950, deviceId: "abc" }));
+  const counts = await accountData.deleteAccount(store, EMAIL, { now: Date.parse("2026-10-22T00:00:00Z") });
+  assert.equal(await store.get("url_reviews", "run9"), null);
+  const kept = await store.get("url_reviews", "paid-report-run9");
+  assert.equal(kept.reportId, "run9");
+  assert.equal(kept.amount, 950);
+  assert.equal(kept.deviceId, undefined);
+  assert.equal(counts.paymentsKept, 1);
 });
 
 test("deleting twice leaves the kept rows as they are", async () => {

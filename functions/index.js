@@ -2595,12 +2595,28 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           result.billing = open.billing;
         }
         if (paidPurpose === "report" && paidReport) {
-          await admin.firestore().collection("url_reviews").doc(paidReport).set({
+          const runRef = admin.firestore().collection("url_reviews").doc(paidReport);
+          await runRef.set({
             paid: true,
             sessionId: result.sessionId,
             provider: result.provider,
             test: testRun
           }, { merge: true });
+          // The run and its report go after 12 months; the payment is tax support for five years.
+          const run = (await runRef.get()).data() || {};
+          await admin.firestore().collection("url_reviews").doc("paid-report-" + paidReport).set(reviewOffers.reportPayment(run, {
+            reportId: paidReport,
+            provider: result.provider,
+            method: choice,
+            sessionId: result.sessionId,
+            reference: result.reference,
+            test: testRun,
+            priceUsd: paidPrice,
+            amount: result.amount,
+            currency: result.currency,
+            createdAt: new Date().toISOString(),
+            expireAt: urlReview.paymentExpireAt()
+          }));
           await rememberReview("paid", {
             id: paidReport,
             status: "paid-report",

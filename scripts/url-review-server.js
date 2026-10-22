@@ -671,7 +671,7 @@ const server = http.createServer(async (req, res) => {
         result.billing = open.billing;
       }
       writeRecord({
-        id: crypto.randomBytes(9).toString("hex"),
+        id: purpose === "report" && reportId ? "paid-report-" + reportId : crypto.randomBytes(9).toString("hex"),
         status: purpose === "report" && reportId ? "paid-report" : "run-credit",
         reportId: purpose === "report" ? reportId : "",
         paid: true,
