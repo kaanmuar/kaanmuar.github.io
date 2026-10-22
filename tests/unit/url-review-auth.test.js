@@ -306,5 +306,16 @@ test("the sign-in email carries the code and a same-device link in every page la
     assert.match(mail.subject, /123456/);
     assert.match(mail.text, /signin=abc&key=def/);
     assert.match(mail.html, /123456/);
+    assert.match(mail.html, /qa-review-account\.html/);
+    assert.match(mail.text, /qa-review-legal\.html/);
+    assert.match(mail.html, /Carlos A\. Muñoz, Bogotá/);
   });
+});
+
+test("the sign-in email link returns to the page that asked for it", () => {
+  const sign = { id: "abc", token: "def", code: "123456" };
+  assert.match(customerMail.signInMail("en", sign, "/qa-review-account.html").text, /\/qa-review-account\.html\?signin=abc&key=def/);
+  assert.match(customerMail.signInMail("es", sign, "/qa-review-es.html").text, /\/qa-review-es\.html\?signin=abc&key=def/);
+  assert.match(customerMail.signInMail("es", sign).text, /\/qa-review-es\.html\?signin=abc/);
+  assert.match(customerMail.signInMail("en", sign, "https://evil.example/qa-review-account.html").text, /carlosandmunoz\.com\/qa-review\.html\?signin=abc/);
 });

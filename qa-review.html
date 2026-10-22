@@ -810,6 +810,7 @@
         .gate-card { width: min(720px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
         .gate-waiting { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--cyan); background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--text); font-weight: 600; }
         .check { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 14px; line-height: 1.45; }
+        .check[hidden] { display: none; }
         .check input { margin-top: 3px; }
         h2 { font-family: "Source Serif 4", Georgia, serif; font-size: 1.25rem; margin: 22px 0 8px; }
         .mark { display: none; position: fixed; inset: 0; z-index: 6; pointer-events: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='440' height='180'><text x='16' y='90' fill='%230d6e76' font-size='13' font-family='sans-serif' transform='rotate(-18 220 90)'>QA-lab URL Review · Carlos Muñoz · https://carlosandmunoz.com · Preview copy · Not a certification</text></svg>"); background-repeat: repeat; opacity: .22; }
@@ -905,6 +906,7 @@
     <div class="actions">
         <a class="btn btn-ghost" href="index.html">CV</a>
         <a class="btn btn-ghost" href="qa-lab.html">Regression lab</a>
+        <a class="btn btn-ghost" href="qa-review-account.html">Your reviews</a>
         <button class="btn btn-ghost" id="tour-start-btn" type="button">How this review works</button>
         <div class="lang-wrap notranslate" id="langWrap">
             <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
@@ -1067,7 +1069,7 @@
                     </div>
                     <p class="mail-note muted"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="sign-in-link" id="sign-in-restart" type="button" disabled>Start over</button></p>
                 </div>
-                <p class="sign-in-done" id="sign-in-done" hidden><img class="sign-in-photo" id="sign-in-photo" alt="" width="28" height="28" referrerpolicy="no-referrer" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
+                <p class="sign-in-done" id="sign-in-done" hidden><img class="sign-in-photo" id="sign-in-photo" alt="" width="28" height="28" referrerpolicy="no-referrer" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <a href="qa-review-account.html">Your reviews</a> · <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
                 <p class="status" id="sign-in-status" role="status"></p>
             </div>
             <div class="grid-2">
@@ -1084,7 +1086,7 @@
                 </div>
             </div>
                     <p class="mail-note muted">We quickly check that this address can receive email, so anything we send about your review actually reaches you.</p>
-            <label class="check"><input id="follow-up" name="followUp" type="checkbox" disabled> Remind me when it is worth reviewing this page again. No more than three short notes a week, in my language, until 30 days after my last review. The stop link in each note, or a reply of "stop", ends them anytime.</label>
+            <label class="check" hidden><input id="follow-up" name="followUp" type="checkbox" disabled> Remind me when it is worth reviewing this page again. No more than three short notes a week, in my language, until 30 days after my last review. The stop link in each note, or a reply of "stop", ends them anytime.</label>
             <fieldset class="reasons" id="reasons">
                 <legend>Reasons for this review</legend>
             </fieldset>
@@ -1343,7 +1345,7 @@
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
-<script src="js/qa-review-auth.js?v=20261022g"></script>
+<script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-progress.js?v=20261022a"></script>
 <script src="js/qa-review.js?v=20261022e"></script>
 <script src="js/qa-review-live.js?v=20261028b"></script>

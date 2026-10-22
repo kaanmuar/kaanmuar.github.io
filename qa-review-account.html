@@ -3,11 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <title>Your runs · QA-lab URL Review</title>
-  <meta name="description" content="Sign in to see the QA-lab URL Review runs stored for your email. A free sign-in shows the opening. A 30-day pass opens the rest.">
   <meta name="robots" content="noindex, nofollow">
-  <link rel="canonical" href="https://carlosandmunoz.com/qa-review.html#service-facts">
+  <title>Your reviews · QA-lab URL Review</title>
+  <meta name="description" content="Sign in to see the QA-lab URL Review reviews saved under your email. A paid report or a free account opens in full; otherwise the opening of each shows.">
   <style>
     :root { color-scheme: light; --ink:#102027; --muted:#5c6e78; --line:#d5e0e4; --teal:#0d6e76; --paper:#f4f7f8; --card:#fff; }
     * { box-sizing: border-box; }
@@ -38,6 +36,9 @@
     .sign-in-mark.sign-in-gitlab { background: #fc6d26; clip-path: polygon(0 40%, 18% 0, 32% 40%, 68% 40%, 82% 0, 100% 40%, 50% 100%); border-radius: 0; opacity: 1; }
     .sign-in-mark.sign-in-discord { background: #5865f2; border-radius: 6px; opacity: 1; }
     .sign-in-mark.sign-in-twitch { background: #9146ff; border-radius: 0 0 0 5px; opacity: 1; }
+    .sign-in-mark.sign-in-yahoo { background: #6001d2; opacity: 1; }
+    .sign-in-mark.sign-in-facebook { background: #1877f2; border-radius: 50%; opacity: 1; }
+    .sign-in-mark.sign-in-twitter { border-radius: 3px; opacity: 1; }
     .sign-in-mark.sign-in-slack { background: conic-gradient(#36c5f0 0 25%, #2eb67d 0 50%, #ecb22e 0 75%, #e01e5a 0); border-radius: 5px; opacity: 1; }
     .sign-in-row { display: flex; gap: 8px; align-items: stretch; }
     .sign-in-row input { flex: 1; min-width: 0; }
@@ -55,25 +56,14 @@
 <body>
 <main>
   <p class="muted">QA-lab URL Review</p>
-  <h1>Your runs</h1>
-  <p>Sign in with the email you used on a review. A free sign-in shows the opening of each run. The rest stays closed until a 30-day pass is paid.</p>
-  <section id="plans">
-    <h2>30-day passes</h2>
-    <table>
-      <thead><tr><th>Pass</th><th>Fee</th><th>What it opens</th></tr></thead>
-      <tbody>
-        <tr><td>Glance</td><td>15 USD</td><td>Your saved runs, in full. No new run is included.</td></tr>
-        <tr><td>Return</td><td>49 USD</td><td>Glance, plus 2 runs, up to 4 frameworks, 20 pages, 2 links deep.</td></tr>
-        <tr><td>Bench</td><td>189 USD</td><td>Glance, plus 4 runs, up to 8 frameworks, 20 pages, 2 links deep.</td></tr>
-        <tr><td>Studio</td><td>399 USD</td><td>Glance, plus 8 runs, up to 8 frameworks, 40 pages, 3 links deep.</td></tr>
-      </tbody>
-    </table>
-    <p class="muted">These are 30-day passes, not a repeating card charge. The PayPal account on this service is a personal account, so a repeating monthly charge is not set up. Tools, and a wider review than the pass includes, stay on the run schedule. A return takes 10% off the first time in 30 days, 15% the second, and 20% after that. A selection never falls under 9.50 USD.</p>
-  </section>
+  <h1>Your reviews</h1>
+  <p>Sign in to see the reviews saved under your email. A paid report or a free account opens in full; otherwise the opening of each one shows, and the rest opens when that report is paid.</p>
+  <p class="muted">A return takes 10% off the first time in 30 days, 15% the second, and 20% after that. A selection never falls under 9.50 USD.</p>
   <section class="sign-in" id="sign-in">
     <h2>Sign in</h2>
     <p class="muted">Use the same sign-in as the review page. A code or link opened on another device or browser signs in nowhere.</p>
     <div id="sign-in-start">
+      <p class="muted">Signing in stores your email and what the provider you pick shares with it. See <a href="qa-review-legal.html">Disclaimers</a>.</p>
       <div class="sign-in-providers" id="sign-in-providers"></div>
       <p class="muted" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them. To share only your address, use email.</p>
       <p class="muted" id="sign-in-or" hidden>or with your email</p>
@@ -95,15 +85,17 @@
     <p class="muted" id="sign-in-status" role="status"></p>
   </section>
   <section id="file" hidden>
-    <h2>Saved runs</h2>
+    <h2>Saved reviews</h2>
     <p class="muted" id="file-status"></p>
     <div id="list"></div>
     <button id="stop" type="button">Stop follow-up notes</button>
   </section>
 </main>
-<script src="js/site-analytics.js?v=20261012a"></script>
-<script src="js/qa-review-consent.js?v=20261023a"></script>
-<script src="js/qa-review-auth.js?v=20261022g"></script>
+<script src="js/site-analytics.js?v=20261019a"></script>
+<script src="js/qa-review-consent.js?v=20261027b"></script>
+<script src="js/site-i18n.js?v=20261028a"></script>
+<script src="js/site-glossary.js?v=20261028a"></script>
+<script src="js/qa-review-auth.js?v=20261022h"></script>
 <script>
   function endpoint() {
     const host = location.hostname;
@@ -135,7 +127,7 @@
   function signedOut(response) {
     if (response.status !== 401) return false;
     fileEl.hidden = true;
-    window.ReviewAuth.expire("Your sign-in has ended. Sign in again to see your runs.");
+    window.ReviewAuth.expire("Your sign-in has ended. Sign in again to see your reviews.");
     return true;
   }
   document.getElementById("stop").addEventListener("click", async () => {
@@ -153,39 +145,45 @@
     if (!window.ReviewAuth.signedIn()) return;
     fileEl.hidden = false;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_enter", "URL Review", "open");
-    const state = data.open
-      ? (data.charged ? "A 30-day pass is paid. The runs are open." : "A 30-day pass is open on this machine. No charge was made. The runs are open.")
-      : "The opening of each run is visible. The rest stays closed until a 30-day pass.";
-    document.getElementById("file-status").textContent = state + (data.paidUntil ? " Until " + new Date(data.paidUntil).toLocaleString() + "." : "");
+    const opened = (data.runs || []).filter((run) => run.open).length;
+    document.getElementById("file-status").textContent = data.free ? "Your account opens every report."
+      : data.pass ? "A 30-day pass is open on this account until " + new Date(data.paidUntil).toLocaleString() + ". Every report is open."
+        : opened ? "Paid reports are open. For the others, the opening of each shows, and the rest opens when that report is paid."
+          : "The opening of each review shows. The rest opens when that report is paid.";
     listEl.replaceChildren();
     (data.runs || []).forEach((run) => {
       const block = document.createElement("article");
-      block.appendChild(node("h2", run.host || "Run"));
+      block.appendChild(node("h2", run.host || "Review"));
       const dl = document.createElement("p");
       dl.appendChild(document.createTextNode((run.at ? new Date(run.at).toLocaleString() : "—") + " · " + text(run.status) + " · " + text(run.caseCount) + " cases · "));
-      dl.appendChild(valueNode(run.url, data.open));
+      dl.appendChild(valueNode(run.url, run.open));
       block.appendChild(dl);
       if (run.statement) {
         const line = document.createElement("p");
-        line.appendChild(valueNode(run.statement, data.open));
+        line.appendChild(valueNode(run.statement, run.open));
         block.appendChild(line);
       }
       const cases = document.createElement("ul");
       (run.cases || []).slice(0, 8).forEach((item) => {
         const li = document.createElement("li");
         li.appendChild(document.createTextNode((item.layer ? item.layer + " — " : "")));
-        li.appendChild(valueNode(item.title, data.open));
+        li.appendChild(valueNode(item.title, run.open));
         cases.appendChild(li);
       });
       block.appendChild(cases);
+      const report = document.createElement("a");
+      report.href = "qa-review.html?report=" + encodeURIComponent(run.id);
+      report.textContent = run.open ? "Open the full report" : "Open this report on the review page";
+      block.appendChild(report);
       listEl.appendChild(block);
     });
-    if (!(data.runs || []).length) listEl.appendChild(node("p", "No finished run is stored for this address."));
+    if (!(data.runs || []).length) listEl.appendChild(node("p", "No finished review is saved for this address."));
   }
   window.ReviewAuth.onChange((signed) => {
     if (signed) loadRuns();
     else fileEl.hidden = true;
   });
+  if (window.SiteI18n) SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));
 </script>
 </body>
 </html>

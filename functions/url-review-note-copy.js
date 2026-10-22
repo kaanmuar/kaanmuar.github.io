@@ -44,7 +44,7 @@ module.exports = {
       ["La segunda mirada encuentra lo que el primer arreglo rompió.", "Los cambios se propagan. Un encabezado nuevo, un menú que se movió o una imagen más liviana pueden romper algo al lado. Una revisión nueva de {host} lo encuentra antes que un visitante.", "Una segunda mirada a {host}"],
       ["Hay un sitio al lado.", "Un cliente, un competidor, la landing que lanzaste la semana pasada. Apunta la revisión hacia allá y compárala con {host}, lado a lado.", "¿Qué sitio sigue?"],
       ["Pásaselo al equipo.", "Los casos de prueba de {host} se exportan a Jira, TestRail, Xray, Zephyr, Azure DevOps, Excel o PDF, para que nadie tenga que volver a escribir nada.", "Tus casos de prueba de {host}, en la herramienta de tu equipo"],
-      ["Baja un nivel más.", "La primera lectura miró una parte de {host}. Más páginas y enlaces más profundos llegan a los formularios, al pago y a los rincones que nadie toca en una demo.", "Los rincones de {host} que nadie toca"]
+      ["Baja un nivel más.", "La primera revisión analizó una parte de {host}. Más páginas y enlaces más profundos llegan a los formularios, al pago y a los rincones que nadie toca en una demo.", "Los rincones de {host} que nadie toca"]
     ],
     offer: [
       ["Mientras está fresco.", "Revisaste {host} esta semana. Todavía tienes los detalles en la cabeza, y es el mejor momento para leer los hallazgos completos y arreglar el primero.", "Mientras {host} sigue fresco"],
@@ -68,7 +68,7 @@ module.exports = {
       ["O segundo olhar acha o que a primeira correção quebrou.", "Mudanças se espalham. Um cabeçalho novo, um menu que mudou de lugar, uma imagem mais leve podem quebrar algo ao lado. Uma revisão nova de {host} acha antes de um visitante.", "Um segundo olhar em {host}"],
       ["Tem um site ao lado.", "Um cliente, um concorrente, a landing page que você lançou semana passada. Aponte a revisão para ele e compare com {host}, lado a lado.", "Qual site vem agora?"],
       ["Passe para o time.", "Os casos de teste de {host} exportam para Jira, TestRail, Xray, Zephyr, Azure DevOps, Excel ou PDF, e ninguém precisa digitar nada de novo.", "Seus casos de teste de {host}, na ferramenta do seu time"],
-      ["Desça mais um nível.", "A primeira leitura olhou uma parte de {host}. Mais páginas e links mais fundos chegam aos formulários, ao checkout e aos cantos que ninguém clica numa demo.", "Os cantos de {host} que ninguém clica"]
+      ["Desça mais um nível.", "A primeira análise examinou uma parte de {host}. Mais páginas e links mais fundos chegam aos formulários, ao checkout e aos cantos que ninguém clica numa demo.", "Os cantos de {host} que ninguém clica"]
     ],
     offer: [
       ["Enquanto está fresco.", "Você revisou {host} esta semana. Os detalhes ainda estão na cabeça, e é o melhor momento para ler os achados completos e corrigir o primeiro.", "Enquanto {host} está fresco"],
@@ -92,7 +92,7 @@ module.exports = {
       ["Der zweite Blick findet, was die erste Korrektur kaputt gemacht hat.", "Änderungen ziehen Kreise. Ein neuer Header, ein verschobenes Menü, ein leichteres Bild können nebenan etwas brechen. Eine neue Prüfung von {host} findet es vor einem Besucher.", "Ein zweiter Blick auf {host}"],
       ["Nebenan gibt es noch eine Website.", "Ein Kunde, ein Wettbewerber, die Landingpage von letzter Woche. Richte die Prüfung darauf und vergleiche sie mit {host}, Seite an Seite.", "Welche Website ist als Nächstes dran?"],
       ["Gib es ans Team weiter.", "Die Testfälle für {host} lassen sich nach Jira, TestRail, Xray, Zephyr, Azure DevOps, Excel oder PDF exportieren, damit niemand etwas abtippen muss.", "Deine Testfälle für {host}, im Tool deines Teams"],
-      ["Geh eine Ebene tiefer.", "Die erste Prüfung hat einen Ausschnitt von {host} gelesen. Mehr Seiten und tiefere Links erreichen die Formulare, den Checkout und die Ecken, die in keiner Demo jemand anklickt.", "Die Ecken von {host}, die niemand anklickt"]
+      ["Geh eine Ebene tiefer.", "Die erste Prüfung hat einen Ausschnitt von {host} angesehen. Mehr Seiten und tiefere Links erreichen die Formulare, den Checkout und die Ecken, die in keiner Demo jemand anklickt.", "Die Ecken von {host}, die niemand anklickt"]
     ],
     offer: [
       ["Solange es frisch ist.", "Du hast {host} diese Woche geprüft. Die Details sind noch im Kopf: der beste Moment, die vollständigen Befunde zu lesen und den ersten zu beheben.", "Solange {host} noch frisch ist"],
@@ -116,7 +116,7 @@ module.exports = {
       ["Le second regard trouve ce que la première correction a cassé.", "Les changements font des vagues. Un nouvel en-tête, un menu déplacé, une image plus légère peuvent casser quelque chose à côté. Une nouvelle revue de {host} le trouve avant un visiteur.", "Un second regard sur {host}"],
       ["Il y a un site d'à côté.", "Un client, un concurrent, la page d'atterrissage lancée la semaine dernière. Pointez la revue dessus et comparez-la à {host}, côte à côte.", "Quel site après celui-ci ?"],
       ["Passez-le à l'équipe.", "Les cas de test de {host} s'exportent vers Jira, TestRail, Xray, Zephyr, Azure DevOps, Excel ou PDF, pour que personne n'ait à tout ressaisir.", "Vos cas de test de {host}, dans l'outil de votre équipe"],
-      ["Descendez d'un niveau.", "La première lecture a parcouru une partie de {host}. Plus de pages et des liens plus profonds atteignent les formulaires, le paiement et les recoins que personne ne clique pendant une démo.", "Les recoins de {host} que personne ne clique"]
+      ["Descendez d'un niveau.", "La première analyse a parcouru une partie de {host}. Plus de pages et des liens plus profonds atteignent les formulaires, le paiement et les recoins que personne ne clique pendant une démo.", "Les recoins de {host} que personne ne clique"]
     ],
     offer: [
       ["Pendant que c'est frais.", "Vous avez analysé {host} cette semaine. Les détails sont encore en tête : c'est le meilleur moment pour lire les constats complets et corriger le premier.", "Pendant que {host} est encore frais"],
@@ -140,7 +140,7 @@ module.exports = {
       ["Il secondo sguardo trova quello che la prima correzione ha rotto.", "I cambiamenti si propagano. Un header nuovo, un menu spostato, un'immagine più leggera possono rompere qualcosa accanto. Una nuova revisione di {host} lo trova prima di un visitatore.", "Un secondo sguardo a {host}"],
       ["C'è un sito accanto.", "Un cliente, un concorrente, la landing page lanciata la settimana scorsa. Punta la revisione lì e confrontala con {host}, fianco a fianco.", "Quale sito tocca adesso?"],
       ["Passalo al team.", "I casi di test di {host} si esportano in Jira, TestRail, Xray, Zephyr, Azure DevOps, Excel o PDF, così nessuno deve ricopiare niente.", "I tuoi casi di test di {host}, nello strumento del tuo team"],
-      ["Scendi di un livello.", "La prima lettura ha guardato una parte di {host}. Più pagine e link più profondi arrivano ai moduli, al checkout e agli angoli che nessuno clicca durante una demo.", "Gli angoli di {host} che nessuno clicca"]
+      ["Scendi di un livello.", "La prima analisi ha esaminato una parte di {host}. Più pagine e link più profondi arrivano ai moduli, al checkout e agli angoli che nessuno clicca durante una demo.", "Gli angoli di {host} che nessuno clicca"]
     ],
     offer: [
       ["Finché è fresco.", "Hai rivisto {host} questa settimana. I dettagli sono ancora in testa: è il momento migliore per leggere i rilievi completi e sistemare il primo.", "Finché {host} è ancora fresco"],

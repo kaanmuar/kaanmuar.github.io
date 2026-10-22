@@ -244,6 +244,7 @@ function rerunDoc(group, outcome) {
   return {
     status: record ? "held" : "failed",
     at: new Date(ended).toISOString(),
+    failedAt: clip(group.at, 40),
     url: clip(group.url, 300),
     host: clip(group.host || hostOf(group.url), 120),
     name: clip(group.name, 120),
@@ -274,6 +275,7 @@ function sentRecord(doc, now) {
     free: true,
     priceUsd: 0,
     rerunOf: (doc.failureIds || []).slice(0, 40),
+    failedAt: doc.failedAt || "",
     rerunAt: doc.at
   });
 }
