@@ -572,7 +572,7 @@ test.describe("mail to the asker", () => {
       [mail.html, mail.text].forEach((body) => {
         assert.match(body, /https:\/\/carlosandmunoz\.com\/qa-review-account\.html/, lang);
         assert.match(body, /https:\/\/carlosandmunoz\.com\/qa-review-legal\.html/, lang);
-        assert.match(body, /Carlos A\. Muñoz, Bogotá/, lang);
+        assert.match(body, /Carlos A\. Muñoz, Calle 29 # 29-31, Medellín, Colombia \(050016\)/, lang);
         assert.match(body, /2027-10-17/, lang);
         assert.match(body, /Live Report/, lang);
       });
