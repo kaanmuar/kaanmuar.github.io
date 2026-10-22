@@ -1680,6 +1680,102 @@ async function readBrowserStream(body, log) {
   return result || { ok: false, error: "the browser stream ended before its result" };
 }
 
+const reviewAuth = require("./url-review-auth");
+
+async function mailSignIn(started, lang) {
+  const from = prepareMail();
+  if (!from) return false;
+  const mail = customerMail.signInMail(lang, started);
+  await sgMail.send({
+    to: started.email,
+    from: from,
+    replyTo: REVIEW_ALERT_TO,
+    subject: mail.subject,
+    text: mail.text,
+    html: mail.html,
+    categories: ["url-review-sign-in"],
+    trackingSettings: { clickTracking: { enable: false, enableText: false } }
+  });
+  return true;
+}
+
+async function sendSignIn(res, store, input) {
+  const started = await reviewAuth.startEmail(store, input);
+  if (!started.ok) {
+    res.status(started.status).json({ error: started.error, field: started.field || "" });
+    return;
+  }
+  if (!(await mailSignIn(started, input.lang))) {
+    res.status(503).json({ error: "Sign-in email is not available right now. Try again later." });
+    return;
+  }
+  res.status(200).json({ ok: true, id: started.id, sentTo: reviewAuth.maskEmail(started.email) });
+}
+
+async function reviewSignIn(req, res, pathName) {
+  const store = reviewAuth.firestoreStore(admin.firestore());
+  const body = req.body || {};
+  const enabled = process.env.REVIEW_SIGN_IN_PROVIDERS;
+  if (req.method === "GET" && pathName.endsWith("/auth/providers")) {
+    res.status(200).json({ providers: reviewAuth.enabledProviders(enabled) });
+    return;
+  }
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Use POST." });
+    return;
+  }
+  const answer = (result) => {
+    if (result.ok) res.status(200).json({ ok: true, session: result.session, email: result.email, provider: result.provider });
+    else res.status(result.status).json({ error: result.error, code: result.code || "" });
+  };
+  if (pathName.endsWith("/auth/email")) {
+    const human = urlReview.humanCheck(body, req.headers);
+    if (!human.ok) {
+      res.status(400).json({ error: human.message });
+      return;
+    }
+    const email = reviewAuth.cleanEmail(body.email);
+    if (email && !(await urlReview.emailCanReceive(email))) {
+      res.status(400).json({ error: "This address cannot receive email. Check it for typos.", field: "email" });
+      return;
+    }
+    await sendSignIn(res, store, { email, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
+    return;
+  }
+  if (pathName.endsWith("/auth/email/finish")) {
+    answer(await reviewAuth.finishEmail(store, body));
+    return;
+  }
+  if (pathName.endsWith("/auth/provider")) {
+    let decoded = null;
+    try {
+      decoded = await admin.auth().verifyIdToken(String(body.idToken || ""));
+    } catch (error) {
+      res.status(401).json({ error: "That sign-in was not accepted. Try again." });
+      return;
+    }
+    const result = await reviewAuth.providerSignIn(store, decoded, { deviceKey: body.deviceKey, enabled });
+    if (result.verifyEmail) {
+      await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
+      return;
+    }
+    answer(result);
+    return;
+  }
+  if (pathName.endsWith("/auth/session")) {
+    const result = await reviewAuth.checkSession(store, Object.assign({}, body, { touch: false }));
+    if (result.ok) res.status(200).json({ ok: true, email: result.email, provider: result.provider });
+    else res.status(result.status).json({ error: result.error, signIn: true });
+    return;
+  }
+  if (pathName.endsWith("/auth/signout")) {
+    await reviewAuth.closeSession(store, body.session);
+    res.status(200).json({ ok: true });
+    return;
+  }
+  res.status(404).json({ error: "Not found." });
+}
+
 exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
   const origin = reviewOrigin(req);
   res.set("Access-Control-Allow-Origin", origin);
@@ -1692,6 +1788,15 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     return;
   }
   const pathName = String(req.path || "/");
+  if (pathName.indexOf("/auth/") !== -1) {
+    try {
+      await reviewSignIn(req, res, pathName);
+    } catch (error) {
+      console.error("Review sign-in failed:", error);
+      if (!res.headersSent) res.status(500).json({ error: "Sign-in failed. Try again in a moment." });
+    }
+    return;
+  }
   const deskRoutes = [
     ["/desk/failures/data", "failures-data"],
     ["/desk/data", "data"],
@@ -2293,6 +2398,12 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(405).json({ error: "Use POST." });
     return;
   }
+  const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
+  if (!signedIn.ok) {
+    res.status(signedIn.status).json({ error: signedIn.error, signIn: true });
+    return;
+  }
+  req.body.email = signedIn.email;
   const hintedDevice = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
   const free = await hasFreeRuns(req.body && req.body.email);
   const intake = await urlReview.screenIntake(req.body || {}, req.headers, { trusted: free });
@@ -2329,6 +2440,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       status: decision.code === "payment" ? "payment-due" : "blocked",
       deviceId,
       ip,
+      signInProvider: signedIn.provider,
       name: intake.value.name,
       email: intake.value.email,
       reason: intake.value.reason,
@@ -2418,6 +2530,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       region: req.get("x-appengine-region") || "",
       city: req.get("x-appengine-city") || ""
     });
+    record.signInProvider = signedIn.provider;
     if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
     writeLine({ type: "log", text: "Looking for your earlier reviews of " + report.host + "." });
     const history = await previousRun(intake.value.email, report);
