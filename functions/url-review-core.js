@@ -1706,21 +1706,14 @@ function mentionTone(text) {
   return "Mention";
 }
 
-function parseMentions(html, hostname) {
+function parseMentions(results, hostname) {
   const mentions = [];
   const seen = new Set();
-  const block = String(html || "").slice(0, 250000);
-  const links = block.match(/<a\b[^>]*class="result__a"[^>]*>[\s\S]*?<\/a>/gi) || [];
-  links.forEach((anchor) => {
+  (Array.isArray(results) ? results : []).forEach((result) => {
     if (mentions.length >= 4) return;
-    const hrefMatch = anchor.match(/href="([^"]+)"/i);
-    const title = anchor.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    if (!hrefMatch || !title) return;
-    let href = hrefMatch[1];
-    const wrapped = href.match(/[?&]uddg=([^&]+)/);
-    if (wrapped) {
-      try { href = decodeURIComponent(wrapped[1]); } catch (error) { href = ""; }
-    }
+    const href = String((result && result.url) || "");
+    const title = String((result && result.title) || "").replace(/\s+/g, " ").trim();
+    if (!href || !title) return;
     let host = "";
     try { host = new URL(href).hostname.replace(/^www\./, ""); } catch (error) { host = ""; }
     if (!host || host === hostname || seen.has(href)) return;
@@ -1730,30 +1723,31 @@ function parseMentions(html, hostname) {
   return mentions;
 }
 
-// DuckDuckGo's HTML results page for a query, or "" when it does not answer.
-function searchHtml(query) {
-  return new Promise((resolve) => {
-    const req = https.request({
-      hostname: "html.duckduckgo.com",
-      path: "/html/?q=" + encodeURIComponent(query),
-      method: "GET",
-      headers: { "user-agent": USER_AGENT, accept: "text/html" },
-      timeout: 6000
-    }, (res) => {
-      if (res.statusCode && res.statusCode !== 200) { if (res.resume) res.resume(); resolve(""); return; }
-      const chunks = [];
-      res.on("data", (chunk) => { if (chunks.join("").length < 300000) chunks.push(chunk); });
-      res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+// Brave Search API web results as { title, url, description }, or [] without a key or an answer.
+// Free plan: 1 request a second, 2,000 a month (https://api-dashboard.search.brave.com).
+async function webSearch(query, key = process.env.BRAVE_SEARCH_KEY) {
+  if (!key) return [];
+  try {
+    const res = await fetch("https://api.search.brave.com/res/v1/web/search?count=10&q=" + encodeURIComponent(query), {
+      headers: { accept: "application/json", "x-subscription-token": key },
+      signal: AbortSignal.timeout(6000)
     });
-    req.on("error", () => resolve(""));
-    req.on("timeout", () => { req.destroy(); resolve(""); });
-    req.end();
-  });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const text = (value) => decode(String(value || "").replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
+    return ((data && data.web && data.web.results) || []).slice(0, 10).map((item) => ({
+      title: text(item.title).slice(0, 300),
+      url: clean(item.url, 500),
+      description: text([item.description].concat(item.extra_snippets || []).join(" ")).slice(0, 2000)
+    })).filter((item) => /^https?:\/\//i.test(item.url));
+  } catch (error) {
+    return [];
+  }
 }
 
 function lookupMentions(hostname) {
-  return searchHtml('"' + hostname + '"').then((html) => {
-    try { return parseMentions(html, hostname); } catch (error) { return []; }
+  return webSearch('"' + hostname + '"').then((results) => {
+    try { return parseMentions(results, hostname); } catch (error) { return []; }
   });
 }
 
@@ -3258,7 +3252,8 @@ module.exports = {
   emailsInText,
   visibleText,
   fetchExtra,
-  searchHtml,
+  webSearch,
+  parseMentions,
   humanCheck,
   createCheckout,
   readCheckout,

@@ -15,7 +15,7 @@ function pathsToTry(report) {
 }
 
 // deps: { fetchPage(url) -> { status, html, body, url }, analyze(html, headers, url), github(name) -> user json,
-//         search(query) -> results html, emailsInText(text), visibleText(html), registrable(host) }
+//         search(query) -> [{ title, url, description }], emailsInText(text), registrable(host) }
 async function discover(report, deps) {
   const found = [];
   const add = (email, source, url) => { if (email && !found.some((row) => row.email === email && row.source === source)) found.push({ email, source, url: url || "" }); };
@@ -36,10 +36,12 @@ async function discover(report, deps) {
     if (user && user.email) add(String(user.email).trim().toLowerCase(), "github", "https://github.com/" + name);
   });
   const search = (async () => {
-    const html = await deps.search("\"@" + domain + "\"").catch(() => "");
-    deps.emailsInText(deps.visibleText(html), 10)
-      .filter((email) => deps.registrable(email.split("@")[1]) === domain)
-      .forEach((email) => add(email, "search", "https://duckduckgo.com/?q=" + encodeURIComponent("\"@" + domain + "\"")));
+    const results = await deps.search("\"@" + domain + "\"").catch(() => []);
+    (Array.isArray(results) ? results : []).forEach((result) => {
+      deps.emailsInText(result.title + " " + result.description, 10)
+        .filter((email) => deps.registrable(email.split("@")[1]) === domain)
+        .forEach((email) => add(email, "search", result.url));
+    });
   })();
   let timer = null;
   await Promise.race([
