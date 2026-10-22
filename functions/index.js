@@ -24,6 +24,12 @@ const TOPIC_LABELS = {
 
 
 const withMail = functions.runWith({ secrets: ["SENDGRID_API_KEY"] });
+const KEEP_MS = 365 * 24 * 60 * 60 * 1000;
+
+// Rows that carry expireAt are deleted by a Firestore TTL policy once it passes.
+function keepUntil() {
+  return new Date(Date.now() + KEEP_MS);
+}
 const siteReport = require("./site-report-mail");
 
 function prepareMail() {
@@ -101,7 +107,7 @@ exports.queueEmailOnMessageResponse = functions.firestore
       };
 
       try {
-        await admin.firestore().collection("mail").add(newMail);
+        await admin.firestore().collection("mail").add(Object.assign({}, newMail, { expireAt: keepUntil() }));
         console.log(`Message reply to ${newData.email} has been successfully queued.`);
       } catch (error) {
         console.error("Error queueing message reply:", error);
@@ -141,7 +147,7 @@ exports.queueEmailOnRatingResponse = functions.firestore
       };
 
       try {
-        await admin.firestore().collection("mail").add(newMail);
+        await admin.firestore().collection("mail").add(Object.assign({}, newMail, { expireAt: keepUntil() }));
         console.log(`Rating reply to ${newData.email} has been successfully queued.`);
       } catch (error) {
         console.error("Error queueing rating reply:", error);
@@ -1402,7 +1408,8 @@ async function noteReviewOpen(req) {
   });
   if (!record) return;
   await admin.firestore().collection("url_review_opens").add(Object.assign({}, record, {
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expireAt: keepUntil()
   }));
 }
 
@@ -1454,7 +1461,8 @@ async function stopLinkFor(email, lang) {
   await admin.firestore().collection("url_review_stop_links").doc(token).set({
     email: String(email || "").trim().toLowerCase(),
     lang: customerMail.langOf(lang),
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    expireAt: keepUntil()
   });
   return REVIEW_FN_URL + "/notes/stop?t=" + token;
 }
@@ -1470,7 +1478,7 @@ async function sendAskerMail(email, mail, stopUrl, category, attachments) {
     text: mail.text,
     html: mail.html,
     categories: [category],
-    trackingSettings: { clickTracking: { enable: false, enableText: false } },
+    trackingSettings: { clickTracking: { enable: false, enableText: false }, openTracking: { enable: false } },
     headers: {
       "List-Unsubscribe": "<" + stopUrl + ">",
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"
@@ -1534,7 +1542,8 @@ async function sendReviewNotes() {
           kind: note.kind,
           scene: note.scene,
           reportId: note.reportId || "",
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          expireAt: keepUntil()
         });
       }
     } catch (error) {
@@ -1561,7 +1570,8 @@ async function rememberReview(kind, source) {
       email: note.email,
       status: note.status,
       priceUsd: note.priceUsd,
-      paid: note.paid
+      paid: note.paid,
+      expireAt: keepUntil()
     });
   } catch (error) {
     console.error("Review alert record failed:", error);
@@ -1684,7 +1694,7 @@ async function redeemCoupon(code, record) {
       const snap = await tx.get(ref);
       if (!snap.exists) return;
       tx.update(ref, { uses: Number((snap.data() || {}).uses || 0) + 1, lastUsedAt: new Date().toISOString() });
-      tx.set(db.collection("url_review_redemptions").doc(), Object.assign({ code: key, at: new Date().toISOString() }, record));
+      tx.set(db.collection("url_review_redemptions").doc(), Object.assign({ code: key, at: new Date().toISOString(), expireAt: urlReview.paymentExpireAt() }, record));
     });
   } catch (error) {
     console.error("Coupon redemption failed:", error);
@@ -1733,6 +1743,16 @@ const reviewOAuth = require("./url-review-oauth");
 // Each OAuth provider registers exactly this address as its redirect URI.
 const REVIEW_OAUTH_PAGE = "https://carlosandmunoz.com/qa-review.html";
 
+// TTL deletes an account 12 months after its last sign-in; a manual delete counts too.
+exports.dropReviewAuthUser = functions.firestore
+  .document("url_review_accounts/{email}")
+  .onDelete(async (snap, context) => {
+    const email = (snap.data() || {}).email || context.params.email;
+    const dropped = await reviewAuth.dropAuthUsers(admin.auth(), email);
+    if (dropped) console.log("Dropped " + dropped + " Firebase Auth user(s) for a deleted review account.");
+    return null;
+  });
+
 async function mailSignIn(started, lang, page) {
   const from = prepareMail();
   if (!from) return false;
@@ -1745,7 +1765,7 @@ async function mailSignIn(started, lang, page) {
     text: mail.text,
     html: mail.html,
     categories: ["url-review-sign-in"],
-    trackingSettings: { clickTracking: { enable: false, enableText: false } }
+    trackingSettings: { clickTracking: { enable: false, enableText: false }, openTracking: { enable: false } }
   });
   return true;
 }
@@ -2068,7 +2088,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         paid: false,
         localPass: true,
         paidUntil: until,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        expireAt: urlReview.paymentExpireAt()
       };
       await admin.firestore().collection("url_reviews").add(record);
       await rememberReview("monthly", record);
@@ -2168,7 +2189,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   if (req.method === "POST" && pathName.indexOf("/stop") !== -1) {
     const runId = String((req.body && req.body.runId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     if (runId) {
-      await admin.firestore().collection("url_review_stops").doc(runId).set({ at: new Date().toISOString() });
+      await admin.firestore().collection("url_review_stops").doc(runId).set({ at: new Date().toISOString(), expireAt: keepUntil() });
     }
     res.status(200).json({ ok: true });
     return;
@@ -2185,7 +2206,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       reportId,
       kind,
       deviceId,
-      at: new Date().toISOString()
+      at: new Date().toISOString(),
+      expireAt: keepUntil()
     });
     await rememberReview("capture", { id: reportId, reportId, kind, status: "capture", deviceId });
     res.status(200).json({ ok: true });
@@ -2352,7 +2374,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
             createdAt: new Date().toISOString(),
             priceUsd: paidPrice,
             amount: result.amount,
-            currency: result.currency
+            currency: result.currency,
+            expireAt: urlReview.paymentExpireAt()
           };
           await admin.firestore().collection("url_reviews").add(credit);
           await rememberReview("run-paid", credit);
@@ -2538,7 +2561,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       status: "run-credit-used",
       creditId: decision.consumeId,
       deviceId,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      expireAt: urlReview.paymentExpireAt()
     });
     await rememberReview("credit", { status: "run-credit-used", deviceId, creditId: decision.consumeId });
   }
@@ -2641,6 +2665,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       city: req.get("x-appengine-city") || ""
     });
     record.signInProvider = signedIn.provider;
+    if (urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY)) record.test = true;
     if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
     writeLine({ type: "log", text: "Looking for your earlier reviews of " + report.host + "." });
     const history = await previousRun(intake.value.email, report);
