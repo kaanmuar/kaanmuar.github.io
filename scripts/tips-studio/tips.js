@@ -87,7 +87,7 @@ const TIPS = [
     title: ["robots.txt decides", "*who may read you.*"],
     body: "AI crawlers each have their own user agent. Blocking them by accident and allowing them on purpose are both one line.",
     visual: { type: "code", lines: ["User-agent: GPTBot", "Allow: /", "", "User-agent: PerplexityBot", "Allow: /", "", "Sitemap: https://example.com/sitemap.xml"], note: "Decide on purpose, then write it down" },
-    action: "Open yoursite.com/robots.txt today. Check that it says what you mean for search and AI crawlers.",
+    action: "Open /robots.txt on your own site today. Check that it says what you mean for search and AI crawlers.",
     tags: ["GEO", "AISearch", "robotsTxt"]
   },
   {
