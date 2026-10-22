@@ -1454,6 +1454,9 @@ const reviewPublish = require("./url-review-publish");
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
+const ownerNotice = require("./url-review-owner-notice");
+const ownerMail = require("./url-review-owner-mail");
+const ownerContactSearch = require("./url-review-owner-contacts");
 const REVIEW_FN_URL = process.env.REVIEW_FN_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
 
 async function stopLinkFor(email, lang) {
@@ -1478,12 +1481,13 @@ async function sendAskerMail(email, mail, stopUrl, category, attachments) {
     text: mail.text,
     html: mail.html,
     categories: [category],
-    trackingSettings: { clickTracking: { enable: false, enableText: false }, openTracking: { enable: false } },
+    trackingSettings: { clickTracking: { enable: false, enableText: false }, openTracking: { enable: false } }
+  }, stopUrl ? {
     headers: {
       "List-Unsubscribe": "<" + stopUrl + ">",
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"
     }
-  }, attachments && attachments.length ? { attachments } : {}));
+  } : {}, attachments && attachments.length ? { attachments } : {}));
   return true;
 }
 
@@ -1513,6 +1517,92 @@ async function mailReportToAsker(record) {
   const [stopUrl, pdf] = await Promise.all([stopLinkFor(record.email, record.lang), reportPdfFor(record)]);
   const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf });
   await sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []);
+}
+
+async function ownerStops(emails, domain) {
+  const db = admin.firestore();
+  const keys = [].concat(emails || [], "@" + domain).filter((key) => key && key !== "@");
+  const snaps = await Promise.all(keys.map((key) => db.collection("url_review_owner_stops").doc(key).get()));
+  return new Set(keys.filter((key, i) => snaps[i].exists));
+}
+
+async function unlistedHosts() {
+  const snap = await admin.firestore().collection("url_review_unlisted").get();
+  return snap.docs.map((doc) => doc.id);
+}
+
+function searchOwnerContacts(report) {
+  return ownerContactSearch.discover(report, {
+    fetchPage: (url) => urlReview.fetchExtra(url, () => false),
+    analyze: urlReview.analyzeHtml,
+    github: async (name) => {
+      const res = await fetch("https://api.github.com/users/" + encodeURIComponent(name), { headers: { accept: "application/vnd.github+json", "user-agent": "qa-lab-url-review" }, signal: AbortSignal.timeout(6000) });
+      return res.ok ? res.json() : null;
+    },
+    search: urlReview.searchHtml,
+    emailsInText: urlReview.emailsInText,
+    visibleText: urlReview.visibleText,
+    registrable: urlReview.registrable
+  });
+}
+
+async function queueOwnerNotice(record) {
+  const report = record && record.report;
+  if (!report || !report.host) return;
+  const domain = ownerNotice.domainOf(report.host);
+  const ref = admin.firestore().collection("url_review_owner_notices").doc(domain);
+  const [unlisted, domainStop, last] = await Promise.all([unlistedHosts(), ownerStops([], domain), ref.get()]);
+  if (ownerNotice.heldBack(record, { unlisted, stopped: domainStop, notice: last.exists ? last.data() : null })) return;
+  let more = [];
+  try { more = await searchOwnerContacts(report); } catch (error) { console.error("Owner contact search failed:", error && error.message); }
+  const ranked = ownerNotice.rankContacts(((report.contacts && report.contacts.found) || []).concat(more), report.host);
+  const stopped = await ownerStops(ranked.slice(0, 12).map((row) => row.email), domain);
+  const usable = ownerNotice.usableContacts(record, ranked, stopped);
+  if (usable.length) await ref.set(Object.assign(ownerNotice.noticeRow(record, usable), { expireAt: keepUntil() }));
+}
+
+async function liveReportIndex() {
+  const res = await fetch(customerMail.SITE + "/assets/live-reports/index.json", { cache: "no-store", signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error("Live Reports index answered " + res.status);
+  return res.json();
+}
+
+// Sends a pending notice once its card is public. Returns { error } or { card }.
+async function sendOwnerNotice(queued, email) {
+  const notice = ownerNotice.addressed(queued, email);
+  if (!notice) return { error: "That address is not one of the contacts found for this site." };
+  const [unlisted, stopped, index, reviewSnap] = await Promise.all([
+    unlistedHosts(),
+    ownerStops([notice.email], notice.domain),
+    liveReportIndex(),
+    admin.firestore().collection("url_reviews").doc(notice.reviewId || "-").get()
+  ]);
+  const card = ownerNotice.liveCard(index, notice.host);
+  const blocked = ownerNotice.sendBlock(notice, { stopped, unlisted, card });
+  if (blocked) return { error: blocked };
+  const review = reviewSnap.exists ? reviewSnap.data() : null;
+  const score = review && review.report && review.report.insights ? review.report.insights.score : null;
+  const token = crypto.randomBytes(16).toString("hex");
+  await admin.firestore().collection("url_review_owner_links").doc(token).set({
+    domain: notice.domain,
+    host: notice.host,
+    email: notice.email,
+    lang: notice.lang,
+    reviewId: notice.reviewId,
+    cardId: card.id,
+    claims: 0,
+    createdAt: new Date().toISOString(),
+    expireAt: keepUntil()
+  });
+  const link = REVIEW_FN_URL + "/owner?t=" + token + "&do=";
+  const links = {
+    claim: link + "claim",
+    unlist: link + "unlist",
+    stop: link + "stop",
+    live: customerMail.pageUrl(notice.lang, { live: card.id, utm_campaign: "owner-notice" })
+  };
+  const sent = await sendAskerMail(notice.email, ownerMail.noticeMail(notice, card, links, score), links.stop, "url-review-owner-notice");
+  return sent ? { card, notice } : { error: "SendGrid is not configured, so nothing was sent." };
 }
 
 async function sendReviewNotes() {
@@ -1931,7 +2021,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     ["/desk/pass", "pass"],
     ["/desk/free", "free"],
     ["/desk/rerun", "rerun"],
-    ["/desk/unlist", "unlist"]
+    ["/desk/unlist", "unlist"],
+    ["/desk/notice", "notice"]
   ];
   const routed = deskRoutes.find(([part]) => pathName.indexOf(part) !== -1);
   const deskName = routed
@@ -1964,14 +2055,17 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     if (deskName === "data" && req.method === "GET") {
-      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap] = await Promise.all([
+      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap] = await Promise.all([
         admin.firestore().collection("url_reviews").limit(400).get(),
         admin.firestore().collection("url_review_alerts").limit(80).get(),
         admin.firestore().collection("url_review_free_runs").limit(200).get(),
         admin.firestore().collection("url_review_notes").limit(1000).get(),
         admin.firestore().collection("url_review_reruns").orderBy("at", "desc").limit(30).get(),
-        admin.firestore().collection("url_review_unlisted").get()
+        admin.firestore().collection("url_review_unlisted").get(),
+        admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get()
       ]);
+      const ownerNotices = noticeSnap.docs.map((doc) => Object.assign({ domain: doc.id }, doc.data()))
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
       const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
       const records = reviewSnap.docs.map((doc) => {
         const data = doc.data() || {};
@@ -1987,7 +2081,62 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       });
       const notes = noteSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
       const reruns = reviewDesk.rerunRows(rerunSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
-      res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes, unlistedSnap.docs.map((doc) => doc.id)), { freeRuns, reruns }));
+      res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes, unlistedSnap.docs.map((doc) => doc.id)), {
+        freeRuns,
+        reruns,
+        ownerNotices
+      }));
+      return;
+    }
+    if (deskName === "notice" && req.method === "POST") {
+      const domain = String((req.body && req.body.domain) || "").toLowerCase().replace(/[^a-z0-9.-]/g, "").slice(0, 120);
+      const send = req.body && req.body.send === true;
+      const db = admin.firestore();
+      const ref = db.collection("url_review_owner_notices").doc(domain || "-");
+      const decidedAt = new Date().toISOString();
+      let notice = null;
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const data = snap.exists ? snap.data() : null;
+        if (!data || data.status !== "pending") return;
+        notice = data;
+        tx.update(ref, send ? { status: "sending" } : { status: "dropped", decidedAt, by: operator });
+      });
+      if (!notice) {
+        res.status(409).json({ error: "That notice is not waiting for a decision." });
+        return;
+      }
+      if (!send) {
+        res.status(200).json({ ok: true, status: "dropped" });
+        return;
+      }
+      let result;
+      try {
+        result = await sendOwnerNotice(notice, String((req.body && req.body.email) || ""));
+      } catch (error) {
+        console.error("Owner notice failed:", error);
+        result = { error: String((error && error.message) || "The notice failed.").slice(0, 200) };
+      }
+      if (result.error) {
+        await ref.update({ status: "pending", lastError: result.error });
+        res.status(409).json({ error: result.error });
+        return;
+      }
+      const sentTo = result.notice;
+      await ref.update({ status: "sent", sentAt: decidedAt, decidedAt, by: operator, cardId: result.card.id, email: sentTo.email, source: sentTo.source, sourceUrl: sentTo.sourceUrl || "", lastError: "", expireAt: keepUntil() });
+      await db.collection("url_review_owner_notice_log").add({
+        domain: notice.domain,
+        host: notice.host,
+        email: sentTo.email,
+        source: sentTo.source,
+        sourceUrl: sentTo.sourceUrl || "",
+        reviewId: notice.reviewId,
+        cardId: result.card.id,
+        sentAt: decidedAt,
+        by: operator,
+        expireAt: keepUntil()
+      });
+      res.status(200).json({ ok: true, status: "sent" });
       return;
     }
     if (deskName === "failures-data" && req.method === "GET") {
@@ -2043,6 +2192,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       const record = reviewFailures.sentRecord(doc, decidedAt);
       await db.collection("url_reviews").doc(record.id).set(record);
       await countReviewed(record.report);
+      try {
+        await queueOwnerNotice(record);
+      } catch (error) {
+        console.error("Owner notice queue failed:", error);
+      }
       let mailed = true;
       try {
         await mailReportToAsker(record);
@@ -2182,6 +2336,75 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     });
     await rememberReview("follow-stop", { status: "follow-stop", email: link.email });
     res.status(200).send(customerMail.stopPage(link.lang, "done", link.email));
+    return;
+  }
+  if (pathName.indexOf("/owner") !== -1) {
+    res.set("X-Robots-Tag", "noindex");
+    res.set("Content-Type", "text/html; charset=utf-8");
+    const db = admin.firestore();
+    const token = String(req.query.t || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const action = ["claim", "unlist", "stop"].indexOf(String(req.query.do || "")) === -1 ? "" : String(req.query.do);
+    const ref = token.length === 32 ? db.collection("url_review_owner_links").doc(token) : null;
+    const linkSnap = ref ? await ref.get() : null;
+    const link = linkSnap && linkSnap.exists ? linkSnap.data() : null;
+    if (!link || !action) {
+      res.status(404).send(ownerMail.ownerPage("en", "gone"));
+      return;
+    }
+    if (req.method !== "POST") {
+      res.status(200).send(ownerMail.ownerPage(link.lang, action, link));
+      return;
+    }
+    const at = new Date().toISOString();
+    if (action === "unlist") {
+      await db.collection("url_review_unlisted").doc(link.host).set({ at, via: "owner-notice", domain: link.domain });
+      await db.collection("url_review_owner_notices").doc(link.domain).set({ unlistedAt: at }, { merge: true });
+      res.status(200).send(ownerMail.ownerPage(link.lang, "unlisted", link));
+      return;
+    }
+    if (action === "stop") {
+      await Promise.all([link.email, "@" + link.domain].map((key) => db.collection("url_review_owner_stops").doc(key).set({ at, via: "link", domain: link.domain })));
+      res.status(200).send(ownerMail.ownerPage(link.lang, "stopped", link));
+      return;
+    }
+    const email = String((req.body && req.body.email) || "").trim().toLowerCase().slice(0, 200);
+    if (!urlReview.emailSyntax(email) || !urlReview.mailboxMatchesHost(email, link.host)) {
+      res.status(400).send(ownerMail.ownerPage(link.lang, "claim", Object.assign({}, link, { wrong: true })));
+      return;
+    }
+    if ((Number(link.claims) || 0) >= 3) {
+      res.status(429).send(ownerMail.ownerPage(link.lang, "claim-limit", link));
+      return;
+    }
+    const reviewSnap = await db.collection("url_reviews").doc(String(link.reviewId || "-")).get();
+    const review = reviewSnap.exists ? reviewSnap.data() : null;
+    if (!review || !review.report) {
+      res.status(410).send(ownerMail.ownerPage(link.lang, "gone"));
+      return;
+    }
+    // A copy under a new id, so a paid unlock by the asker does not open it and the owner's own unlock is theirs.
+    const id = crypto.randomBytes(9).toString("hex");
+    const report = Object.assign({}, review.report, { id });
+    delete report.history;
+    const copy = {
+      id,
+      status: "owner-claim",
+      email,
+      reasonCode: "own",
+      frameworks: review.frameworks || [],
+      claimedFrom: link.reviewId,
+      lang: link.lang,
+      createdAt: at,
+      retainUntil: keepUntil().toISOString(),
+      expireAt: keepUntil(),
+      report
+    };
+    await db.collection("url_reviews").doc(id).set(copy);
+    await ref.update({ claims: admin.firestore.FieldValue.increment(1), claimedAt: at });
+    const pdf = await reportPdfFor(copy);
+    const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host) });
+    await sendAskerMail(email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []);
+    res.status(200).send(ownerMail.ownerPage(link.lang, "claimed", Object.assign({}, link, { email })));
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/opened") !== -1) {
@@ -2697,6 +2920,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       await mailReportToAsker(record);
     } catch (error) {
       console.error("Report mail to the asker failed:", error);
+    }
+    try {
+      await queueOwnerNotice(record);
+    } catch (error) {
+      console.error("Owner notice queue failed:", error);
     }
     res.end();
   } catch (error) {

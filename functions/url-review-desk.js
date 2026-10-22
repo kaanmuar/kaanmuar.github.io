@@ -480,6 +480,11 @@ const PAGE = `<!DOCTYPE html>
       <div id="reruns"></div>
     </section>
     <section>
+      <h2>Owner notices</h2>
+      <p class="empty">One email per domain every six months, telling the owner a Live Report of the site exists, with its health score and links to claim the blurred report or remove the card. Pick the address: every one found on the site, its schema.org and llms.txt, security.txt, RDAP, DNS, a linked GitHub profile, or web search, best first. It never names the asker, and sends only once the card is live. .de and .at sites are skipped.</p>
+      <div id="owner-notices"></div>
+    </section>
+    <section>
       <h2>Free runs</h2>
       <p class="empty">An address on this list runs as many reviews as it likes, at any size, with the full report open. Nothing is charged.</p>
       <div class="tools">
@@ -539,6 +544,7 @@ const PAGE = `<!DOCTYPE html>
     const notesEl = document.getElementById("notes");
     const freeListEl = document.getElementById("free-list");
     const rerunsEl = document.getElementById("reruns");
+    const noticesEl = document.getElementById("owner-notices");
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
     const qEl = document.getElementById("q");
@@ -589,6 +595,7 @@ const PAGE = `<!DOCTYPE html>
       renderNotes();
       renderFree();
       renderReruns();
+      renderNotices();
 
       alertsEl.replaceChildren();
       (data.alerts || []).slice(0, 12).forEach((alert) => {
@@ -824,6 +831,62 @@ const PAGE = `<!DOCTYPE html>
         rerunsEl.appendChild(block);
       });
       if (!(data.reruns || []).length) rerunsEl.appendChild(Object.assign(node("p", "No failed review has run again yet."), { className: "empty" }));
+    }
+    function renderNotices() {
+      noticesEl.replaceChildren();
+      const sources = { "contact-page": "contact page link", schema: "schema.org", "security.txt": "security.txt", page: "page link", "page-text": "page text", llms: "llms.txt", rdap: "RDAP registration", github: "GitHub profile", search: "web search", dmarc: "DMARC record", soa: "DNS SOA" };
+      (data.ownerNotices || []).forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        block.appendChild(node("b", item.host));
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = [
+          when(item.createdAt),
+          "reviewed " + String(item.reviewedAt || "").slice(0, 10),
+          item.lang,
+          item.critical ? "critical security finding" : "",
+          item.lastError ? "last try: " + item.lastError : ""
+        ].filter(Boolean).join(" · ");
+        block.appendChild(meta);
+        const pick = document.createElement("select");
+        pick.setAttribute("aria-label", "Address for " + item.host);
+        (item.candidates && item.candidates.length ? item.candidates : [{ email: item.email, sources: [item.source], url: item.sourceUrl }]).forEach((row) => {
+          const option = document.createElement("option");
+          option.value = row.email;
+          option.textContent = row.email + " · " + (row.sources || []).map((source) => sources[source] || source).join(", ") + (row.onDomain === false ? " · other domain" : "");
+          pick.appendChild(option);
+        });
+        block.appendChild(pick);
+        const send = document.createElement("button");
+        send.type = "button";
+        send.textContent = "Send";
+        send.addEventListener("click", () => decideNotice(item.domain, true, send, block, pick.value));
+        const drop = document.createElement("button");
+        drop.type = "button";
+        drop.textContent = "Drop";
+        drop.addEventListener("click", () => decideNotice(item.domain, false, drop, block, ""));
+        block.appendChild(send);
+        block.appendChild(drop);
+        noticesEl.appendChild(block);
+      });
+      if (!(data.ownerNotices || []).length) noticesEl.appendChild(Object.assign(node("p", "No notice is waiting."), { className: "empty" }));
+    }
+    async function decideNotice(domain, send, button, block, email) {
+      button.disabled = true;
+      const response = await fetch(deskBase() + "/desk/notice", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ domain: domain, send: send, email: email })
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        block.appendChild(node("p", body.error || "The notice did not go out."));
+        button.disabled = false;
+        return;
+      }
+      load();
     }
     async function decideRerun(id, send, button) {
       button.disabled = true;
