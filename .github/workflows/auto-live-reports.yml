@@ -136,7 +136,20 @@ jobs:
           fi
           if git diff --cached --quiet; then echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0; fi
           git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} requested reviews, ${{ steps.reports.outputs.social }} posts ($BATCH) [skip ci]"
-          git push origin HEAD:main
+          # PRs merged during the render move main. The checkout is shallow, so the data commit is
+          # cherry-picked onto the new main (its files win) and llms-full.txt is rebuilt from the merged site.
+          for attempt in 1 2 3 4 5; do
+            git push origin HEAD:main && break
+            if [ "$attempt" = 5 ]; then echo "::error::main kept moving; batch $BATCH was not pushed."; exit 1; fi
+            sleep $((attempt * 5))
+            DATA=$(git rev-parse HEAD)
+            git fetch -q --depth=1 origin main
+            git reset -q --hard FETCH_HEAD
+            git cherry-pick -X theirs "$DATA"
+            python3 scripts/build-llms-full.py
+            git add llms-full.txt
+            git diff --cached --quiet || git commit -q --amend --no-edit
+          done
           gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
           echo "pushed=1" >> "$GITHUB_OUTPUT"
 
@@ -155,7 +168,7 @@ jobs:
         run: node scripts/buffer-queue.js --batch "${{ steps.reports.outputs.batch }}"
 
       - name: Schedule the posts on the Facebook Page
-        if: ${{ !cancelled() && !inputs.dry_run && steps.reports.outputs.social != '0' && steps.reports.outputs.batch != '' }}
+        if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.reports.outputs.social != '0' && steps.reports.outputs.batch != '' }}
         env:
           FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
