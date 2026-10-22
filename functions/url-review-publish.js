@@ -25,6 +25,7 @@ function heldReason(record, unlisted) {
   if ((record.status || report.status || "complete") !== "complete" || report.status === "stopped") return "not-complete";
   if (!host || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host) || /^\d+(\.\d+){3}$/.test(host)) return "not-public";
   if (RESERVED.test(host) || under(host, OWN_HOSTS)) return "own-or-test";
+  if (record.test === true) return "test";
   if (under(host, unlisted || [])) return "unlisted";
   const score = report.insights && report.insights.score;
   if (!score || typeof score.overall !== "number" || !score.areas) return "no-score";
@@ -33,6 +34,7 @@ function heldReason(record, unlisted) {
   if ((limits.pagesRead || (report.pages || []).length) < MIN_PAGES) return "too-few-pages";
   const start = (report.pages || [])[0] || {};
   if (start.challenge || start.error || !(start.status >= 200 && start.status < 300)) return "start-page-blocked";
+  if ((report.insights.findings || []).some((f) => f.key === "sec-safebrowsing" && f.verdict === "fail")) return "flagged";
   const shell = (report.insights.findings || []).find((f) => f.key === "geo-js-only" && f.verdict === "fail");
   if (shell) return "javascript-shell";
   return "";

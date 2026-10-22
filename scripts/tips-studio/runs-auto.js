@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const { SITE, GUIDE, BRAND, xPost } = require("./tips");
 
+const OWN = SITE + "/qa-review.html";
 const FILE = process.env.AUTO_BATCH || path.resolve(__dirname, "../../previews/auto-live-reports/batch.json");
 const AREAS = [["SEO", "SEO"], ["GEO", "GEO"], ["Analytics", "Analytics"], ["Security", "Security"], ["Accessibility", "A11y"], ["Performance", "Speed"]];
 
@@ -51,14 +52,15 @@ function hashtags(run, n) { return run.tags.slice(0, n).map((t) => "#" + t).join
 function captions(run) {
   const head = plainTitle(run);
   const fair = "One automated analysis of public pages on " + run.analyzed + ", requested through QA-lab URL Review. A starting point, not a verdict.";
+  const own = "Review your own site: " + OWN;
   return {
-    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + link("linkedin", run), "", hashtags(run, 3) + " #QA " + BRAND].join("\n"),
+    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + link("linkedin", run), "", own, "", hashtags(run, 3) + " #QA " + BRAND].join("\n"),
     x: xPost(head + "\n\n" + run.action, link("x", run)),
-    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Full report: link in bio.", "", hashtags(run, 3) + " #QA #WebDev " + BRAND].join("\n"),
-    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run), "", BRAND].join("\n"),
-    tiktok: head + " " + run.action + " " + hashtags(run, 3) + " #QA #techtok " + BRAND,
+    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Full report: link in bio.", "", own, "", hashtags(run, 3) + " #QA #WebDev " + BRAND].join("\n"),
+    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run), "", own, "", BRAND].join("\n"),
+    tiktok: head + " " + run.action + " " + own + " " + hashtags(run, 3) + " #QA #techtok " + BRAND,
     youtubeTitle: (head + " #Shorts").slice(0, 100),
-    youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Full report: " + link("youtube", run), "", "Requested reviews · QA-lab URL Review"].join("\n")
+    youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Full report: " + link("youtube", run), "", own, "", "Requested reviews · QA-lab URL Review", "", hashtags(run, 3) + " #QA " + BRAND].join("\n")
   };
 }
 

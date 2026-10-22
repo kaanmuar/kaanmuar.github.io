@@ -808,6 +808,19 @@ test.describe("publishing user reviews to Live Reports", () => {
     assert.equal(publish.heldReason(record("10.0.0.1"), []), "not-public");
     assert.equal(publish.heldReason(record("blog.acme.de"), ["acme.de"]), "unlisted");
     assert.equal(publish.heldReason(record("acme.de", {}, { insights: { findings: [] } }), []), "no-score");
+    assert.equal(publish.heldReason(record("acme.de", { test: true }), []), "test");
+    const flagged = report("acme.de");
+    flagged.insights.findings.push({ key: "sec-safebrowsing", verdict: "fail", area: "Security", title: "Google lists the site as malware" });
+    assert.equal(publish.heldReason(record("acme.de", { report: flagged }), []), "flagged");
+  });
+
+  test("the desk shows whether each run goes to Live Reports, and why it is held", () => {
+    const desk = require("../../functions/url-review-desk");
+    assert.deepEqual(desk.liveState(record("acme.de"), []), { listed: true, reason: "", why: "" });
+    assert.deepEqual(desk.liveState(record("acme.de"), ["acme.de"]), { listed: false, reason: "unlisted", why: "the owner asked to be left out" });
+    assert.equal(desk.liveState({ status: "payment-due" }, []), null);
+    const run = desk.snapshot([Object.assign({ id: "a1" }, record("acme.de"))], [], [], [], ["acme.de"]).runs[0];
+    assert.equal(run.live.reason, "unlisted");
   });
 
   test("the public copy carries no requester details or engine internals", () => {
@@ -1237,6 +1250,8 @@ test.describe("chat widgets", () => {
       ["a11y-chat-trap", "Accessibility", "fail", "high"]
     ]);
     assert.match(finding(result, "an-chat-consent").evidence, /OneTrust was showing\. Before any choice, Intercom sent 5 requests and set intercom-id-abc, intercom-device-id-abc\./);
+    assert.deepEqual([result.chat.vendors, result.chat.banner, result.chat.cookies, result.chat.states.consent, result.chat.states.trap], [[{ name: "Intercom", ai: false }], true, ["intercom-id-abc", "intercom-device-id-abc"], "risk", "fail"]);
+    assert.match(result.fixkit.chatSnippet, /window\.Intercom\("show"\);/);
     assert.match(finding(result, "a11y-chat-cover").evidence, /the Intercom launcher sits over "Reject all" in the cookie banner/);
     assert.match(finding(result, "a11y-chat-trap").evidence, /, 26 presses of Tab kept focus inside it/);
   });
@@ -1405,6 +1420,50 @@ test.describe("legal pages and front-end libraries", () => {
       restore();
     }
   });
+
+  test("the fix kit lists library upgrades and outlines the legal pages the site does not link", () => {
+    const html = body("<a href=\"/cart\">Warenkorb</a><form action=\"/search\"></form><script src=\"https://code.jquery.com/jquery-1.12.4.min.js\"></script>", "de");
+    const kit = insights.analyze({ pages: [page(html)] }).fixkit;
+    assert.deepEqual(kit.libraries.map((row) => [row.name, row.version, row.fixed]), [["jQuery", "1.12.4", "3.5.0"]]);
+    assert.match(kit.privacyNotice, /^# Privacy notice\n/);
+    assert.match(kit.imprint, /^# Impressum\n/);
+    assert.match(kit.accessibilityStatement, /EN 301 549/);
+    const good = insights.analyze({ pages: [page(body("<footer><a href=\"/accessibility\">Accessibility</a> <a href=\"/privacy\">Privacy</a></footer><script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>"))] }).fixkit;
+    assert.deepEqual([good.libraries, good.privacyNotice, good.imprint, good.accessibilityStatement], [[], "", "", ""]);
+  });
+
+  test("the security tiles carry the library and legal checks", () => {
+    const html = body("<a href=\"/cart\">Warenkorb</a><script src=\"https://code.jquery.com/jquery-1.12.4.min.js\"></script>", "de");
+    const tiles = insights.analyze({ pages: [page(html)] }).security.headers;
+    const tile = (label) => tiles.find((item) => item.label === label);
+    assert.deepEqual(["Front-end libraries", "Privacy notice", "Imprint", "Accessibility statement"].map((label) => tile(label).state), ["risk", "risk", "risk", "risk"]);
+    const plain = insights.analyze({ pages: [page(body("<p>Hello</p>"))] }).security.headers;
+    assert.deepEqual(plain.find((item) => item.label === "Accessibility statement"), { label: "Accessibility statement", state: "unknown", person: true });
+    assert.equal(plain.find((item) => item.label === "Imprint"), undefined);
+    assert.equal(plain.find((item) => item.label === "Front-end libraries"), undefined);
+  });
+});
+
+test.describe("domain and mail test cases", () => {
+  const cases = [{ id: "SEC-09", layer: "Security" }, { id: "SEC-10", layer: "Security" }, { id: "PR-01", layer: "Privacy" }].map((item, index) => Object.assign({ n: index + 1 }, item));
+  const extras = {
+    safeBrowsing: { ok: true, url: "https://example.com/", threats: [] },
+    domain: { domain: "example.com", read: true, expires: "2027-05-01", daysLeft: 190, locked: false },
+    dns: { domain: "example.com", mx: ["mx.example.com"], mtaSts: "", tlsRpt: "v=TLSRPTv1; rua=mailto:t@example.com", unread: [] }
+  };
+
+  test("Safe Browsing, renewal and transfer lock, and MTA-STS with TLS-RPT become cases after SEC-10", () => {
+    const out = core.domainCases(cases.map((item) => Object.assign({}, item)), extras);
+    assert.deepEqual(out.map((item) => [item.n, item.id]), [[1, "SEC-09"], [2, "SEC-10"], [3, "SEC-11"], [4, "SEC-12"], [5, "SEC-13"], [6, "PR-01"]]);
+    assert.match(out[3].why, /registered until 2027-05-01, with the transfer lock off/);
+    assert.match(out[4].why, /MTA-STS is not published, and TLS-RPT is published/);
+    assert.equal(out[2].status, "proposed");
+  });
+
+  test("a check that did not answer adds no case", () => {
+    const out = core.domainCases(cases.slice(), { dns: { domain: "example.com", mx: [], unread: [] }, domain: { read: false } });
+    assert.deepEqual(out.map((item) => item.id), ["SEC-09", "SEC-10", "PR-01"]);
+  });
 });
 
 test.describe("domain health", () => {
@@ -1503,6 +1562,7 @@ test.describe("domain health", () => {
     assert.deepEqual([get(at(-2, true), "sec-domain-expiry").verdict, get(at(-2, true), "sec-domain-expiry").severity], ["fail", "high"]);
     const fine = at(300, true);
     assert.deepEqual([verdict(fine, "sec-domain-expiry"), verdict(fine, "sec-domain-lock")], ["pass", "pass"]);
+    assert.deepEqual([get(fine, "sec-domain-expiry").cases, get(soon, "sec-domain-lock").cases], [["SEC-12"], ["SEC-12"]]);
     assert.equal(row(fine, "Domain expiry"), "pass");
     assert.deepEqual(fine.security.domain, { domain: "example.com", expires: "2026-11-01", daysLeft: 300, registrar: "Example Registrar", locked: true });
     const unread = analyzeHtmlPages([{ url: URL_, html: HTML }], { domain: { domain: "example.de", read: false, reason: ".de has no RDAP service" } });
@@ -1513,6 +1573,9 @@ test.describe("domain health", () => {
     const run = (dns) => analyzeHtmlPages([{ url: URL_, html: HTML }], { dns: Object.assign({}, MAIL, dns) });
     const none = run({});
     assert.deepEqual([verdict(none, "sec-mta-sts"), verdict(none, "sec-tlsrpt")], ["risk", "risk"]);
+    assert.deepEqual([get(none, "sec-mta-sts").cases, get(none, "sec-tlsrpt").cases], [["SEC-13"], ["SEC-13"]]);
+    assert.match(none.fixkit.dns.find((item) => item.name === "_mta-sts.example.com").value, /^v=STSv1; id=\d{10}$/);
+    assert.equal(none.fixkit.mtaSts, "version: STSv1\nmode: testing\nmx: mx.example.com\nmax_age: 86400\n");
     assert.deepEqual(none.fixkit.dns.find((item) => item.name === "_smtp._tls.example.com"), { name: "_smtp._tls.example.com", type: "TXT", value: "v=TLSRPTv1; rua=mailto:tlsrpt@example.com" });
     assert.deepEqual([row(none, "MTA-STS"), row(none, "TLS-RPT")], ["risk", "risk"]);
     const testing = run({ mtaSts: "v=STSv1; id=1", tlsRpt: "v=TLSRPTv1; rua=mailto:t@example.com", mtaStsPolicy: { url: "https://mta-sts.example.com/.well-known/mta-sts.txt", status: 200, mode: "testing", maxAge: 86400 } });

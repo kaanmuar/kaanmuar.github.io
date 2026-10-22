@@ -559,16 +559,17 @@
     const groupBars = groupEntries.length ? groupEntries.map(([name, count]) =>
       '<div class="meter"><span>' + esc(name) + '</span><div class="track"><i style="width:' + Math.round(count / groupMax * 100) + '%"></i></div><span>' + count + "</span></div>"
     ).join("") : '<p class="muted">No technology group was named.</p>';
-    const advice = [];
-    if (!headers.hsts) advice.push(["Send HSTS", "Put Strict-Transport-Security on the host with a max-age of at least six months so the next visit stays on https."]);
-    if (!headers.csp) advice.push(["Add a content security policy", "Name the script sources and frame-ancestors, then tighten the policy from what a real browser reports."]);
-    if ((obs.missingAlt || 0) > 0) advice.push(["Name the images", obs.missingAlt + " images had no alt. Informative images need a description. Decorative images need an empty alt."]);
-    if (!obs.lang) advice.push(["Declare the language", "Set lang on the html element to the language a person reads on the page."]);
-    if ((obs.scripts || 0) > 12) advice.push(["Budget the scripts", obs.scripts + " external scripts were referenced. Defer the ones that are not needed for the first view."]);
-    if ((obs.ms || 0) > 800) advice.push(["Watch the first response", "This document took " + obs.ms + " ms. Keep that path under a budget you can re-check."]);
+    const ranked = ((report.insights && report.insights.findings) || []).filter((item) => item.rank && item.fix).slice(0, 3).map((item) => [item.title, item.fix, true]);
+    const advice = ranked.slice();
+    if (!ranked.length && !headers.hsts) advice.push(["Send HSTS", "Put Strict-Transport-Security on the host with a max-age of at least six months so the next visit stays on https."]);
+    if (!ranked.length && !headers.csp) advice.push(["Add a content security policy", "Name the script sources and frame-ancestors, then tighten the policy from what a real browser reports."]);
+    if (!ranked.length && (obs.missingAlt || 0) > 0) advice.push(["Name the images", obs.missingAlt + " images had no alt. Informative images need a description. Decorative images need an empty alt."]);
+    if (!ranked.length && !obs.lang) advice.push(["Declare the language", "Set lang on the html element to the language a person reads on the page."]);
+    if (!ranked.length && (obs.scripts || 0) > 12) advice.push(["Budget the scripts", obs.scripts + " external scripts were referenced. Defer the ones that are not needed for the first view."]);
+    if (!ranked.length && (obs.ms || 0) > 800) advice.push(["Watch the first response", "This document took " + obs.ms + " ms. Keep that path under a budget you can re-check."]);
     if (!advice.length) advice.push(["Keep the proposal separate from a run", "These cases are a plan. Run them later in a browser you control, with accounts the owner issued."]);
     advice.push(["This is a snapshot", "The review does not certify that the site is safe, fast, or compliant."]);
-    const adviceHtml = advice.slice(0, 4).map(([title, body]) => "<article><strong>" + title + "</strong><span>" + esc(body) + "</span></article>").join("");
+    const adviceHtml = advice.slice(0, 4).map(([title, body, finding]) => "<article><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
     document.getElementById("report-visuals").innerHTML =
       '<article class="card"><h2>Response time across the pages analyzed</h2><p class="muted">Milliseconds, in the order the pages were opened. One review, not a history of earlier days.</p>' + times + "</article>" +
       '<article class="card"><h2>Public marks on the first response</h2><div class="ticks">' + ticks + "</div></article>" +
@@ -586,10 +587,10 @@
   const AREA_NOTE = {
     SEO: "Indexing, sitemap, titles, structured data",
     GEO: "How AI answers can read and cite the site",
-    Analytics: "Tags, consent, campaign tracking",
-    Security: "Headers, TLS, DNS, exposure",
-    Accessibility: "Markup, axe-core, and the phone layout",
-    Performance: "Speed, weight, paint, and layout shift"
+    Analytics: "Tags, consent, chat widgets, privacy notice, imprint",
+    Security: "Headers, TLS, DNS, mail transport, domain, Safe Browsing, libraries",
+    Accessibility: "Markup, axe-core, phone layout, chat launcher, accessibility statement",
+    Performance: "Speed, weight, paint, layout shift, chat weight"
   };
   let findingFilter = { area: "All", verdict: "open" };
 
@@ -839,6 +840,7 @@
       '</div><p class="meta-line">Lab numbers from one cold load on the review server, not field data from real visitors. Green, amber, and red follow the Core Web Vitals thresholds.</p>' : "";
     const shots = b.shots || {};
     const shotCount = ["desktop", "tablet", "mobile"].filter((key) => shots[key]).length;
+    const chatCard = chatHtml(report.insights && report.insights.chat);
     const textRows = [{ path: start.finalPath || "/", share: start.share, words: start.renderedWords, raw: start.rawWords }].concat((b.pages || []).filter((page) => !page.error).map((page) => ({ path: page.path, share: page.share, words: page.renderedWords, raw: page.rawWords })));
     host.innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + speed + (gauges && report.pagespeed && report.pagespeed.field ? '<h3 class="speed-title">One lab load</h3>' : "") + gauges +
@@ -849,12 +851,32 @@
       '<div class="split"><article class="card"><h3>Tracking before and after a choice</h3><p class="muted">' + bannerLine + " Cookieless pings are Google tags with Consent Mode denied.</p>" +
       '<table class="mini-table"><thead><tr><th>Tool</th><th>Before a choice</th><th>After Reject</th></tr></thead><tbody>' + consentRows + "</tbody></table></article>" +
       '<article class="card"><h3>Text in the HTML compared with the page people see</h3><p class="muted">Most AI crawlers do not run JavaScript, so they only get the words in the HTML.</p>' +
-      '<table class="mini-table"><thead><tr><th>Page</th><th>In the HTML</th><th>Words seen</th></tr></thead><tbody>' + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" +
+      '<table class="mini-table"><thead><tr><th>Page</th><th>In the HTML</th><th>Words seen</th></tr></thead><tbody>' + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" + chatCard +
       '<article class="card" style="margin-top:12px"><h3>axe-core on the rendered pages</h3>' + (axePages.length
         ? (axeRows ? '<table class="mini-table"><thead><tr><th>Rule</th><th>Impact</th><th>Elements</th><th>Pages</th></tr></thead><tbody>' + axeRows + "</tbody></table>" : '<p class="muted">No WCAG 2.2 AA rule failed on ' + axePages.length + " page" + (axePages.length === 1 ? "" : "s") + ". Automated rules catch about a third of real issues.</p>") +
           '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
         : '<p class="muted">axe-core did not finish in the time the browser had.</p>') + "</article>" +
       '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + " Lab numbers come from one unthrottled load.</p>" + carbon;
+  }
+
+  function chatHtml(chat) {
+    if (!chat) return "";
+    const st = chat.states || {};
+    const badge = (state) => VERDICT_LABEL[state] ? verdictBadge(state) : '<span class="badge">Not checked</span>';
+    const names = (rows) => rows.length ? rows.join(", ") : "None";
+    const launcher = chat.launcher;
+    const rows = [
+      ["Before a choice", st.consent, '<span class="notranslate" translate="no">' + esc(names(chat.cookies)) + "</span>" + (chat.banner ? "" : " · no banner asked first")],
+      ["After Reject", chat.rejected ? st.reject : "", chat.rejected ? '<span class="notranslate" translate="no">' + esc(names(chat.rejected.cookies)) + "</span> · " + chat.rejected.requests + " request" + (chat.rejected.requests === 1 ? "" : "s") : (chat.banner ? "Reject was not pressed" : "No banner showed")],
+      ["Weight on the start page", st.weight, chat.kb + " KB · " + chat.ms + " ms of script time · " + chat.requests + " request" + (chat.requests === 1 ? "" : "s")],
+      ["Launcher on a phone", launcher ? st.cover : "", launcher ? (launcher.covers ? "Covers " + launcher.covers + " button" + (launcher.covers === 1 ? "" : "s") : "Covers no button") : "Not found"],
+      ["Launcher name", launcher && launcher.known ? st.name : "", launcher && launcher.known ? (launcher.name ? "Announced as “" + esc(launcher.name) + "”" : "No accessible name") : "Not checked"],
+      ["Keyboard in the open chat", chat.opened ? (st.trap === "fail" || st.focus === "risk" ? (st.trap === "fail" ? "fail" : "risk") : st.trap) : "", chat.opened ? (st.trap === "fail" ? "Focus is trapped" : st.focus === "risk" ? "Focus stays on the page" : st.trap === "pass" ? "Focus moves in and out" : "Needs a person") : "The chat did not open"]
+    ];
+    return '<article class="card" style="margin-top:12px"><h3>Chat widget</h3><p class="muted"><span class="notranslate" translate="no">' + esc(chat.vendors.map((row) => row.name).join(", ")) + "</span>" +
+      (chat.vendors.some((row) => row.ai) ? " · AI chatbot" : "") + ". Weight and cookies were measured before anyone opened it. The launcher was checked at 390 px, then opened once.</p>" +
+      '<table class="mini-table"><thead><tr><th>Check</th><th>Result</th><th>What the browser saw</th></tr></thead><tbody>' +
+      rows.map(([label, state, text]) => "<tr><td><strong>" + esc(label) + "</strong></td><td>" + badge(state) + "</td><td>" + text + "</td></tr>").join("") + "</tbody></table></article>";
   }
 
   function carbonLine(c) {
@@ -1005,7 +1027,7 @@
     const sec = ins.security || {};
     const word = { pass: "In place", risk: "Missing or weak", fail: "Failing", unknown: "Not checked" };
     document.getElementById("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
-      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(word[item.state] || item.state) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
+      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(item.person ? "Needs a person" : word[item.state] || item.state) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
       (sec.tls ? '<p class="meta-line">TLS certificate valid until ' + esc(sec.tls.validTo) + " (" + sec.tls.daysLeft + " days)" + (sec.tls.issuer ? ", issued by " + esc(sec.tls.issuer) : "") + ".</p>" : "") +
       (sec.domain ? '<p class="meta-line"><span class="notranslate" translate="no">' + esc(sec.domain.domain) + "</span> is registered" + (sec.domain.registrar ? " with " + esc(sec.domain.registrar) : "") + (sec.domain.expires ? " until " + esc(sec.domain.expires) + " (" + sec.domain.daysLeft + " days)" : "") +
         (sec.domain.locked == null ? "" : sec.domain.locked ? ", locked against transfer" : ", with no transfer lock") + ", according to the registry's RDAP record.</p>" : "") +
@@ -1050,6 +1072,14 @@
       : '<p class="muted">No check matches this filter.</p>';
   }
 
+  function dnsLabel(row) {
+    if (row.type === "CAA") return "CAA";
+    if (/^_dmarc\./.test(row.name)) return "DMARC";
+    if (/^_smtp\._tls\./.test(row.name)) return "TLS-RPT";
+    if (/^_mta-sts\./.test(row.name)) return "MTA-STS";
+    return "SPF";
+  }
+
   function paintFixKit(ins, paid) {
     const kit = ins.fixkit || {};
     const missing = (kit.headers || []).filter((item) => item.missing);
@@ -1059,9 +1089,14 @@
       ["Structured data", kit.jsonLd ? "An Organization and WebSite JSON-LD draft with the profiles the page links." : "The site already publishes an entity. No draft needed."],
       ["llms.txt", kit.llmsTxt ? "A draft listing the indexable pages with their descriptions." : "The site already publishes llms.txt."],
       ["security.txt", kit.securityTxt ? "A draft with Contact, Expires, and Canonical. Replace the address with a real inbox." : "The site already publishes security.txt."],
-      ["DNS records", (kit.dns || []).length ? (kit.dns || []).length + " records to add (" + kit.dns.map((row) => row.type).join(", ") + ")." : "SPF, DMARC, and CAA need no change."],
+      ["DNS records", (kit.dns || []).length ? (kit.dns || []).length + " records to add (" + kit.dns.map(dnsLabel).join(", ") + ")." : "No SPF, DMARC, CAA, MTA-STS, or TLS-RPT record is missing."],
       ["GitHub Actions", "A workflow that runs the chosen framework scripts on every push and once a day."]
     ];
+    if (kit.mtaSts) items.splice(-1, 0, ["MTA-STS policy", "An mta-sts.txt in testing mode listing the mail servers this review saw, with the _mta-sts record to announce it."]);
+    if ((kit.libraries || []).length) items.splice(-1, 0, ["Library upgrades", kit.libraries.map((row) => row.name + " " + row.version + (row.ended ? " (no more fixes)" : " → " + row.fixed)).join(", ") + "."]);
+    const outlines = [kit.privacyNotice ? "privacy notice" : "", kit.imprint ? "Impressum" : "", kit.accessibilityStatement ? "accessibility statement" : ""].filter(Boolean);
+    if (outlines.length) items.splice(-1, 0, ["Legal pages", "Outlines for the " + outlines.join(", ").replace(/, ([^,]*)$/, " and $1") + " the review found no link to. Fill the placeholders and have them checked."]);
+    if (kit.chatSnippet) items.splice(-1, 0, ["Click-to-load chat", "A plain chat button that loads the widget on the first click, so nothing is stored before a visitor asks for help."]);
     const peek = "Content-Security-Policy-Report-Only: " + (kit.csp || "");
     document.getElementById("fixkit").innerHTML =
       '<p>The scripts ZIP now carries a <span class="notranslate" translate="no">fix-kit/</span> folder: copy-ready files made from this review.' + (kit.hosting ? " The site looks hosted on <strong>" + esc(kit.hosting) + "</strong>, so that file is listed first." : "") + "</p>" +
