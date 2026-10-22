@@ -34,6 +34,9 @@ jobs:
       - name: Schedule the slots now within reach
         if: ${{ github.event_name != 'push' && !inputs.check_only }}
         run: node scripts/facebook-queue.js --all
+      - name: Show what would be scheduled
+        if: ${{ github.event_name == 'push' }}
+        run: node scripts/facebook-queue.js --all --dry-run | tail -1
       - name: Report the Page's queue
         if: always()
         run: node scripts/facebook-queue.js --check | tee -a "$GITHUB_STEP_SUMMARY"

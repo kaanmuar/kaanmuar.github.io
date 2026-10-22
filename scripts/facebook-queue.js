@@ -132,7 +132,7 @@ async function main() {
     console.log("Waiting up to 20 minutes for the site to serve " + first);
     if (!(await waitFor(first, 20))) throw new Error("The site never served " + first);
   }
-  const done = live ? (await onPage(page)).keys : new Set();
+  const done = live || process.env.FACEBOOK_PAGE_TOKEN ? (await onPage(page)).keys : new Set();
   const horizon = Date.now() + MAX_LEAD_MS;
   let failed = 0;
   let queued = 0;
