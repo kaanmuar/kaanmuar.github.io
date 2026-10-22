@@ -577,6 +577,37 @@ test.describe("pricing", () => {
   });
 });
 
+test.describe("account page file", () => {
+  const offers = require("../../functions/url-review-offers");
+  const now = Date.parse("2026-10-22T10:00:00Z");
+  const report = (host) => ({ host, statement: "The checkout keeps a stale price after a coupon", cases: [{ id: "c1", layer: "UI", title: "Coupon total does not refresh" }], pages: [] });
+  const rows = [
+    { id: "a", email: "Ana@Example.com", status: "complete", createdAt: "2026-10-01T00:00:00Z", requestedUrl: "https://old.example.com/", report: report("old.example.com") },
+    { id: "b", email: "ana@example.com", status: "complete", createdAt: "2026-10-20T00:00:00Z", requestedUrl: "https://new.example.com/", report: report("new.example.com") },
+    { id: "c", email: "ana@example.com", status: "payment-due", createdAt: "2026-10-21T00:00:00Z" },
+    { id: "d", email: "bo@example.com", status: "complete", createdAt: "2026-10-21T00:00:00Z", report: report("bo.example.com") }
+  ];
+
+  test("lists only the signed-in address's finished runs, newest first, with the rest veiled", () => {
+    const file = offers.accountFile(rows, " ANA@example.com ", now);
+    assert.equal(file.email, "ana@example.com");
+    assert.equal(file.open, false);
+    assert.deepEqual(file.runs.map((run) => run.id), ["b", "a"]);
+    assert.equal(file.runs[0].url, "https://new.");
+    assert.notEqual(file.runs[0].cases[0].title, "Coupon total does not refresh");
+  });
+
+  test("a 30-day pass opens the runs until it lapses", () => {
+    const paid = rows.concat([{ id: "p", email: "ana@example.com", status: "monthly-pass", paid: true, paidUntil: "2026-11-01T00:00:00Z" }]);
+    const file = offers.accountFile(paid, "ana@example.com", now);
+    assert.equal(file.open, true);
+    assert.equal(file.charged, true);
+    assert.equal(file.paidUntil, "2026-11-01T00:00:00Z");
+    assert.equal(file.runs[0].cases[0].title, "Coupon total does not refresh");
+    assert.equal(offers.accountFile(paid, "ana@example.com", Date.parse("2026-11-02T00:00:00Z")).open, false);
+  });
+});
+
 test.describe("return price", () => {
   const offers = require("../../functions/url-review-offers");
   const now = Date.parse("2026-10-20T15:00:00Z");
