@@ -13,14 +13,14 @@
       slow: "Still working. This step waits on the site.",
       slower: "Slow site, still running. Stop keeps the pages already saved.",
       ready: "Report ready", stopped: "Stopped", stopping: "Stopping…", failed: "The review ended early",
-      phases: ["Connecting", "Reading pages", "Browser pass", "Writing cases", "Speed checks", "Scoring and signing"],
+      phases: ["Connecting", "Analyzing pages", "Browser pass", "Writing cases", "Speed checks", "Scoring and signing"],
       lines: [
         ["Checking the front door: https, DNS, certificate.", "First impressions count. Opening {host}."],
-        ["Following the links your visitors follow.", "Reading {host} page by page."],
+        ["Following the links your visitors follow.", "Analyzing {host} page by page."],
         ["Real Chrome, real pixels, phone and tablet sizes.", "Checking what loads before anyone says yes to cookies."],
         ["Turning what was found into test cases.", "Matching cases to the frameworks you chose."],
         ["Lighthouse is timing the page on a phone.", "Speed is a feature. It is being measured now."],
-        ["Scoring each check from the pages read.", "Signing the report."]
+        ["Scoring each check from the pages analyzed.", "Signing the report."]
       ],
       general: [
         "Quality is never an accident.",
@@ -28,7 +28,7 @@
         "Good tests turn guesses into facts.",
         "Slow sites take longer. Thorough beats fast.",
         "Shipping with confidence starts with a look like this.",
-        "Each page read is a test case taking shape.",
+        "Each page analyzed is a test case taking shape.",
         "The best bug report is the one written before launch.",
         "Accessibility is quality for everyone."
       ]
@@ -39,14 +39,14 @@
       slow: "Sigue trabajando. Este paso espera al sitio.",
       slower: "Sitio lento, sigue en marcha. Detener conserva las páginas ya guardadas.",
       ready: "Informe listo", stopped: "Detenido", stopping: "Deteniendo…", failed: "La revisión terminó antes de tiempo",
-      phases: ["Conectando", "Leyendo páginas", "Pasada del navegador", "Escribiendo casos", "Pruebas de velocidad", "Puntuando y firmando"],
+      phases: ["Conectando", "Analizando páginas", "Pasada del navegador", "Escribiendo casos", "Pruebas de velocidad", "Puntuando y firmando"],
       lines: [
         ["Revisando la puerta de entrada: https, DNS, certificado.", "La primera impresión cuenta. Abriendo {host}."],
-        ["Siguiendo los enlaces que siguen tus visitantes.", "Leyendo {host} página a página."],
+        ["Siguiendo los enlaces que siguen tus visitantes.", "Analizando {host} página a página."],
         ["Chrome real, píxeles reales, en tamaño móvil y tableta.", "Comprobando qué se carga antes de que nadie acepte las cookies."],
         ["Convirtiendo lo encontrado en casos de prueba.", "Ajustando los casos a los frameworks elegidos."],
         ["Lighthouse está midiendo la página en un móvil.", "La velocidad es una función. Se está midiendo ahora."],
-        ["Puntuando cada comprobación con las páginas leídas.", "Firmando el informe."]
+        ["Puntuando cada comprobación con las páginas analizadas.", "Firmando el informe."]
       ],
       general: [
         "La calidad nunca es un accidente.",
@@ -54,7 +54,7 @@
         "Las buenas pruebas convierten suposiciones en hechos.",
         "Los sitios lentos tardan más. Mejor a fondo que rápido.",
         "Publicar con confianza empieza con una mirada como esta.",
-        "Cada página leída es un caso de prueba que toma forma.",
+        "Cada página analizada es un caso de prueba que toma forma.",
         "El mejor informe de fallo es el que se escribe antes del lanzamiento.",
         "La accesibilidad es calidad para todos."
       ]
@@ -65,14 +65,14 @@
       slow: "Ainda trabalhando. Esta etapa espera pelo site.",
       slower: "Site lento, ainda em andamento. Parar mantém as páginas já salvas.",
       ready: "Relatório pronto", stopped: "Parado", stopping: "Parando…", failed: "A revisão terminou antes do tempo",
-      phases: ["Conectando", "Lendo páginas", "Passada do navegador", "Escrevendo casos", "Testes de velocidade", "Pontuando e assinando"],
+      phases: ["Conectando", "Analisando páginas", "Passada do navegador", "Escrevendo casos", "Testes de velocidade", "Pontuando e assinando"],
       lines: [
         ["Verificando a porta de entrada: https, DNS, certificado.", "A primeira impressão conta. Abrindo {host}."],
-        ["Seguindo os links que seus visitantes seguem.", "Lendo {host} página por página."],
+        ["Seguindo os links que seus visitantes seguem.", "Analisando {host} página por página."],
         ["Chrome real, pixels reais, em tamanho de celular e tablet.", "Verificando o que carrega antes de alguém aceitar os cookies."],
         ["Transformando o que foi encontrado em casos de teste.", "Ajustando os casos aos frameworks escolhidos."],
         ["O Lighthouse está cronometrando a página num celular.", "Velocidade é um recurso. Está sendo medida agora."],
-        ["Pontuando cada verificação com as páginas lidas.", "Assinando o relatório."]
+        ["Pontuando cada verificação com as páginas analisadas.", "Assinando o relatório."]
       ],
       general: [
         "Qualidade nunca é por acaso.",
@@ -80,7 +80,7 @@
         "Bons testes transformam palpites em fatos.",
         "Sites lentos levam mais tempo. Minucioso vence rápido.",
         "Lançar com confiança começa com um olhar como este.",
-        "Cada página lida é um caso de teste tomando forma.",
+        "Cada página analisada é um caso de teste tomando forma.",
         "O melhor relatório de bug é o escrito antes do lançamento.",
         "Acessibilidade é qualidade para todos."
       ]
@@ -91,14 +91,14 @@
       slow: "Läuft noch. Dieser Schritt wartet auf die Website.",
       slower: "Langsame Website, läuft weiter. Stopp behält die bereits gespeicherten Seiten.",
       ready: "Bericht fertig", stopped: "Gestoppt", stopping: "Wird gestoppt…", failed: "Die Prüfung endete vorzeitig",
-      phases: ["Verbinden", "Seiten lesen", "Browser-Durchlauf", "Fälle schreiben", "Tempo-Messung", "Bewerten und signieren"],
+      phases: ["Verbinden", "Seiten prüfen", "Browser-Durchlauf", "Fälle schreiben", "Tempo-Messung", "Bewerten und signieren"],
       lines: [
         ["Prüfung der Eingangstür: https, DNS, Zertifikat.", "Der erste Eindruck zählt. {host} wird geöffnet."],
-        ["Den Links folgen, denen Ihre Besucher folgen.", "{host} wird Seite für Seite gelesen."],
+        ["Den Links folgen, denen Ihre Besucher folgen.", "{host} wird Seite für Seite geprüft."],
         ["Echtes Chrome, echte Pixel, in Handy- und Tablet-Größe.", "Was lädt, bevor jemand Cookies zustimmt?"],
         ["Aus den Funden werden Testfälle.", "Die Fälle richten sich nach den gewählten Frameworks."],
         ["Lighthouse misst die Seite auf einem Handy.", "Tempo ist ein Feature. Es wird gerade gemessen."],
-        ["Jede Prüfung wird anhand der gelesenen Seiten bewertet.", "Der Bericht wird signiert."]
+        ["Jede Prüfung wird anhand der geprüften Seiten bewertet.", "Der Bericht wird signiert."]
       ],
       general: [
         "Qualität ist nie ein Zufall.",
@@ -106,7 +106,7 @@
         "Gute Tests machen aus Vermutungen Fakten.",
         "Langsame Websites brauchen länger. Gründlich schlägt schnell.",
         "Sicher veröffentlichen beginnt mit einem Blick wie diesem.",
-        "Jede gelesene Seite wird zu einem Testfall.",
+        "Jede geprüfte Seite wird zu einem Testfall.",
         "Der beste Fehlerbericht entsteht vor dem Launch.",
         "Barrierefreiheit ist Qualität für alle."
       ]
@@ -117,14 +117,14 @@
       slow: "Toujours en cours. Cette étape attend le site.",
       slower: "Site lent, toujours en cours. Arrêter garde les pages déjà enregistrées.",
       ready: "Rapport prêt", stopped: "Arrêté", stopping: "Arrêt en cours…", failed: "L’analyse s’est terminée plus tôt",
-      phases: ["Connexion", "Lecture des pages", "Passage du navigateur", "Rédaction des cas", "Mesure de vitesse", "Notation et signature"],
+      phases: ["Connexion", "Analyse des pages", "Passage du navigateur", "Rédaction des cas", "Mesure de vitesse", "Notation et signature"],
       lines: [
         ["Vérification de la porte d’entrée : https, DNS, certificat.", "La première impression compte. Ouverture de {host}."],
-        ["On suit les liens que suivent vos visiteurs.", "Lecture de {host}, page après page."],
+        ["On suit les liens que suivent vos visiteurs.", "Analyse de {host}, page après page."],
         ["Vrai Chrome, vrais pixels, en format mobile et tablette.", "Ce qui se charge avant que quiconque accepte les cookies."],
         ["Ce qui a été trouvé devient des cas de test.", "Les cas s’alignent sur les frameworks choisis."],
         ["Lighthouse chronomètre la page sur mobile.", "La vitesse est une fonctionnalité. Elle est mesurée maintenant."],
-        ["Chaque contrôle est noté à partir des pages lues.", "Signature du rapport."]
+        ["Chaque contrôle est noté à partir des pages analysées.", "Signature du rapport."]
       ],
       general: [
         "La qualité n’est jamais un accident.",
@@ -132,7 +132,7 @@
         "De bons tests transforment les suppositions en faits.",
         "Les sites lents prennent plus de temps. Mieux vaut minutieux que rapide.",
         "Publier en confiance commence par un regard comme celui-ci.",
-        "Chaque page lue est un cas de test qui prend forme.",
+        "Chaque page analysée est un cas de test qui prend forme.",
         "Le meilleur rapport de bug est celui écrit avant le lancement.",
         "L’accessibilité, c’est la qualité pour tous."
       ]
@@ -143,14 +143,14 @@
       slow: "Ancora al lavoro. Questo passaggio attende il sito.",
       slower: "Sito lento, ancora in corso. Interrompi conserva le pagine già salvate.",
       ready: "Report pronto", stopped: "Interrotto", stopping: "Interruzione…", failed: "La revisione è finita in anticipo",
-      phases: ["Connessione", "Lettura delle pagine", "Passaggio del browser", "Stesura dei casi", "Misura della velocità", "Punteggio e firma"],
+      phases: ["Connessione", "Analisi delle pagine", "Passaggio del browser", "Stesura dei casi", "Misura della velocità", "Punteggio e firma"],
       lines: [
         ["Controllo della porta d’ingresso: https, DNS, certificato.", "La prima impressione conta. Apertura di {host}."],
-        ["Seguendo i link che seguono i tuoi visitatori.", "Lettura di {host} pagina per pagina."],
+        ["Seguendo i link che seguono i tuoi visitatori.", "Analisi di {host} pagina per pagina."],
         ["Chrome vero, pixel veri, in formato telefono e tablet.", "Cosa si carica prima che qualcuno accetti i cookie."],
         ["Ciò che è stato trovato diventa casi di test.", "I casi si adattano ai framework scelti."],
         ["Lighthouse cronometra la pagina su un telefono.", "La velocità è una funzionalità. Si sta misurando ora."],
-        ["Ogni controllo riceve un punteggio dalle pagine lette.", "Firma del report."]
+        ["Ogni controllo riceve un punteggio dalle pagine analizzate.", "Firma del report."]
       ],
       general: [
         "La qualità non è mai un caso.",
@@ -158,7 +158,7 @@
         "I buoni test trasformano le ipotesi in fatti.",
         "I siti lenti richiedono più tempo. Meglio accurati che veloci.",
         "Pubblicare con fiducia inizia da uno sguardo come questo.",
-        "Ogni pagina letta è un caso di test che prende forma.",
+        "Ogni pagina analizzata è un caso di test che prende forma.",
         "Il miglior bug report è quello scritto prima del lancio.",
         "L’accessibilità è qualità per tutti."
       ]
@@ -179,10 +179,10 @@
     [/^Opening the start page in a headless browser/, 14, 1],
     [/^First page answered/, 17, 1],
     [/same-host links were listed/, PAGES_FROM, 1],
-    [/^(Read \d+ pages?\.|The time budget ended|Stopped\. The report keeps|No further pages)/, 60, 2],
+    [/^((?:Read|Analyzed) \d+ pages?\.|The time budget ended|Stopped\. The report keeps|No further pages)/, 60, 2],
     [/^Waiting for the headless browser/, 64, 2],
     [/^Proposed \d+/, 78, 3],
-    [/^Waiting for the background reads/, 84, 4],
+    [/^Waiting for the background (?:reads|checks)/, 84, 4],
     [/^Waiting for PageSpeed Insights/, 86, 4],
     [/^PageSpeed Insights (answered|did not answer)/, 89, 4],
     [/^The browser pass (finished|did not finish)/, 91, 4],

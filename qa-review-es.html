@@ -28,7 +28,7 @@
     <meta property="og:locale:alternate" content="it_IT">
     <meta property="og:url" content="https://carlosandmunoz.com/qa-review-es.html">
     <meta property="og:title" content="La página ya está hablando. · QA-lab URL Review">
-    <meta property="og:description" content="Un análisis público por https, calificado en SEO, GEO, analítica, seguridad, accesibilidad y rendimiento, con una lista de qué corregir primero y casos de QA propuestos con scripts iniciales para veinte frameworks. Un navegador sin interfaz ejecuta axe-core, registra el rastreo antes y después de una elección de cookies y toma capturas de pantalla. Las demás herramientas especializadas se nombran cuando corresponden y no se ejecutan. Seis idiomas.">
+    <meta property="og:description" content="Un análisis público por https, calificado en SEO, GEO, analítica, seguridad, accesibilidad y rendimiento, con una lista de qué corregir primero y casos de QA propuestos con scripts iniciales para veinte frameworks. Un navegador sin interfaz ejecuta axe-core, registra el rastreo antes y después de una elección de cookies y toma capturas de pantalla. También revisa widgets de chat, páginas legales, librerías desactualizadas, Safe Browsing, el vencimiento del dominio y la seguridad del correo. Inicia sesión con tu correo o con una cuenta que ya tienes. Las demás herramientas especializadas se nombran cuando corresponden y no se ejecutan. Seis idiomas.">
     <meta property="og:image" content="https://carlosandmunoz.com/assets/qa-review-share.png?v=20261012">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
@@ -37,7 +37,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@qalaburlreview">
     <meta name="twitter:title" content="Analiza la página pública. Propón los casos. · QA-lab URL Review">
-    <meta name="twitter:description" content="Un análisis público de un sitio https, una lista de tecnologías y casos de QA propuestos. Una revisión completada por navegador y red. El informe se muestra una sola vez.">
+    <meta name="twitter:description" content="Un análisis público de un sitio https, una lista de tecnologías y casos de QA propuestos. Inicia sesión; una revisión incluida por navegador y red. Las ejecuciones con sesión iniciada aparecen en la página de tu cuenta.">
     <meta name="twitter:image" content="https://carlosandmunoz.com/assets/qa-review-share.png?v=20261012">
     <meta name="twitter:image:alt" content="QA-lab URL Review. The page is already talking.">
     <link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review.html">
@@ -58,28 +58,38 @@
                 "url": "https://carlosandmunoz.com/qa-review-es.html",
                 "applicationCategory": "DeveloperApplication",
                 "operatingSystem": "Web",
-                "description": "Submit a public https URL. The review reads the page, names technologies and linked pages, and proposes test cases, with starting scripts, for Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6. It does not run them.",
+                "description": "Inicia sesión y envía una URL https pública. La revisión analiza la página, nombra tecnologías y páginas enlazadas, y propone casos de prueba, con scripts iniciales, para Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling y k6. No los ejecuta.",
                 "featureList": [
-                    "Public https read of a site",
-                    "Technology and linked-page summary",
-                    "Health score from 0 to 100 across SEO, GEO, analytics, security, accessibility, and performance",
-                    "Every check marked fails now, at risk, passes, or needs a person, with evidence, a fix, and a fix-first rank",
-                    "A headless browser pass: tracking before and after Reject, axe-core, phone and tablet layout, lab paint, and screenshots",
-                    "Google result and share-card previews",
-                    "AI crawler access matrix and the text AI search sees without JavaScript",
-                    "Analytics tag, consent, and campaign-link checks",
-                    "Interactive map of the pages analyzed",
-                    "Proposed cases in 21 kinds, including GEO",
-                    "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6",
-                    "Starting automation scripts for every chosen framework",
-                    "GitHub Actions workflow and a fix kit with header files, a Report-Only CSP, and structured data, llms.txt, security.txt, and DNS drafts",
-                    "Lighthouse and real-user Core Web Vitals through PageSpeed Insights",
-                    "BrowserStack, Applitools, Percy, Provar, and Copado named when they apply",
-                    "Public signals and public write-ups",
-                    "Live review log and a stop control",
-                    "News from the country of the connection, in the page language",
-                    "Rules for a public analysis and a list of proposed cases",
-                    "English, Spanish, Portuguese, German, French, and Italian"
+                    "Análisis público por https de un sitio",
+                    "Resumen de tecnologías y páginas enlazadas",
+                    "Puntuación de salud de 0 a 100 en SEO, GEO, analítica, seguridad, accesibilidad y rendimiento",
+                    "Cada comprobación marcada como falla ahora, en riesgo, aprueba o necesita a una persona, con evidencia, una corrección y un orden de qué corregir primero",
+                    "Una pasada en navegador sin interfaz: rastreo antes y después de Rechazar, axe-core, diseño en teléfono y tableta, pintado de laboratorio y capturas de pantalla",
+                    "Vistas previas del resultado de Google y de la tarjeta para compartir",
+                    "Matriz de acceso de rastreadores de IA y el texto que ve la búsqueda con IA sin JavaScript",
+                    "Comprobaciones de etiquetas de analítica, consentimiento y enlaces de campaña",
+                    "Comprobaciones de widgets de chat y chatbots de IA: consentimiento, peso y acceso con teclado",
+                    "Comprobación de la declaración de accesibilidad, el aviso legal y la página de privacidad",
+                    "Librerías de front-end desactualizadas",
+                    "Estado en Google Safe Browsing mediante Web Risk",
+                    "Vencimiento del dominio y bloqueo de transferencia mediante RDAP",
+                    "Comprobaciones de correo MTA-STS, TLS-RPT y BIMI",
+                    "Carbono estimado por visita",
+                    "Sitios protegidos contra bots analizados en Chrome sin interfaz",
+                    "Inicio de sesión con correo o con una cuenta que ya tienes: Google, Microsoft, GitHub, Yahoo o X",
+                    "Puntuaciones públicas publicadas a diario como Live Reports",
+                    "Mapa interactivo de las páginas analizadas",
+                    "Casos propuestos en 21 tipos, incluido GEO",
+                    "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling y k6",
+                    "Scripts de automatización iniciales para cada framework elegido",
+                    "Flujo de GitHub Actions y un kit de correcciones con archivos de cabeceras, una CSP en modo Report-Only y borradores de datos estructurados, llms.txt, security.txt y DNS",
+                    "Lighthouse y Core Web Vitals de usuarios reales mediante PageSpeed Insights",
+                    "BrowserStack, Applitools, Percy, Provar y Copado, nombrados cuando corresponden",
+                    "Señales públicas y publicaciones públicas sobre el sitio",
+                    "Registro en vivo de la revisión y un control para detenerla",
+                    "Noticias del país de la conexión, en el idioma de la página",
+                    "Reglas para un análisis público y una lista de casos propuestos",
+                    "Inglés, español, portugués, alemán, francés e italiano"
                 ],
                 "inLanguage": ["en", "es", "pt", "de", "fr", "it"],
                 "areaServed": { "@type": "Place", "name": "Worldwide" },
@@ -95,7 +105,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. A tactical read",
-                        "description": "QA-lab URL Review reads a public page and describes it back to you. This film shows a tactical read of one public URL.",
+                        "description": "QA-lab URL Review analyzes a public page and describes it back to you. This film shows a tactical analysis of one public URL.",
                         "inLanguage": "en",
                         "uploadDate": "2026-10-15T09:15:03+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/jW4T-qQK01E/hqdefault.jpg",
@@ -105,7 +115,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. The included first review",
-                        "description": "QA-lab URL Review reads a public page and describes it back to you. This film shows the included first review: twenty pages, two links deep.",
+                        "description": "QA-lab URL Review analyzes a public page and describes it back to you. This film shows the included first review: twenty pages, two links deep.",
                         "inLanguage": "en",
                         "uploadDate": "2026-10-14T05:41:51+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/OKvR95YHAng/hqdefault.jpg",
@@ -115,7 +125,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Una lectura táctica",
-                        "description": "QA-lab URL Review lee una página pública y la describe de vuelta. Esta película muestra una lectura táctica de una URL pública.",
+                        "description": "QA-lab URL Review analiza una página pública y la describe de vuelta. Esta película muestra un análisis táctico de una URL pública.",
                         "inLanguage": "es",
                         "uploadDate": "2026-10-15T09:23:09+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/Cenj3l_0osA/hqdefault.jpg",
@@ -125,7 +135,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Recorrido",
-                        "description": "QA-lab URL Review lee una página pública y la describe de vuelta. Esta película recorre la página del producto.",
+                        "description": "QA-lab URL Review analiza una página pública y la describe de vuelta. Esta película recorre la página del producto.",
                         "inLanguage": "es",
                         "uploadDate": "2026-10-14T06:02:32+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/esqzA-0-jAY/hqdefault.jpg",
@@ -135,7 +145,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Uma leitura tática",
-                        "description": "QA-lab URL Review lê uma página pública e a descreve de volta. Este filme mostra uma leitura tática de um URL público.",
+                        "description": "QA-lab URL Review analisa uma página pública e a descreve de volta. Este filme mostra uma análise tática de um URL público.",
                         "inLanguage": "pt",
                         "uploadDate": "2026-10-15T09:28:11+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/GwLZ1WuLSpU/hqdefault.jpg",
@@ -145,7 +155,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. A primeira leitura incluída",
-                        "description": "QA-lab URL Review lê uma página pública e a descreve de volta. Este filme mostra a primeira leitura incluída: vinte páginas, dois links.",
+                        "description": "QA-lab URL Review analisa uma página pública e a descreve de volta. Este filme mostra a primeira revisão incluída: vinte páginas, dois links.",
                         "inLanguage": "pt",
                         "uploadDate": "2026-10-14T05:27:52+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/8VfjOBFUPwA/hqdefault.jpg",
@@ -155,7 +165,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Eine taktische Lesung",
-                        "description": "QA-lab URL Review liest eine öffentliche Seite und beschreibt sie zurück. Dieser Film zeigt eine taktische Lesung einer öffentlichen URL.",
+                        "description": "QA-lab URL Review prüft eine öffentliche Seite und beschreibt sie zurück. Dieser Film zeigt eine taktische Prüfung einer öffentlichen URL.",
                         "inLanguage": "de",
                         "uploadDate": "2026-10-15T09:34:37+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/AMIO6n_6Ok8/hqdefault.jpg",
@@ -165,7 +175,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Die erste Lesung",
-                        "description": "QA-lab URL Review liest eine öffentliche Seite und beschreibt sie zurück. Dieser Film zeigt die enthaltene erste Lesung: zwanzig Seiten, zwei Links.",
+                        "description": "QA-lab URL Review prüft eine öffentliche Seite und beschreibt sie zurück. Dieser Film zeigt die enthaltene erste Prüfung: zwanzig Seiten, zwei Links.",
                         "inLanguage": "de",
                         "uploadDate": "2026-10-14T10:28:15+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/5Fv4tFAfQLU/hqdefault.jpg",
@@ -175,7 +185,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. La première lecture",
-                        "description": "QA-lab URL Review lit une page publique et la décrit. Ce film montre la première lecture incluse : vingt pages, deux liens.",
+                        "description": "QA-lab URL Review analyse une page publique et la décrit. Ce film montre la première analyse incluse : vingt pages, deux liens.",
                         "inLanguage": "fr",
                         "uploadDate": "2026-10-14T10:36:27+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/JpyBMIeXTL0/hqdefault.jpg",
@@ -185,7 +195,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. La prima lettura",
-                        "description": "QA-lab URL Review legge una pagina pubblica e la descrive. Questo film mostra la prima lettura inclusa: venti pagine, due link.",
+                        "description": "QA-lab URL Review analizza una pagina pubblica e la descrive. Questo film mostra la prima revisione inclusa: venti pagine, due link.",
                         "inLanguage": "it",
                         "uploadDate": "2026-10-14T10:44:01+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/MiXooYDM-Uo/hqdefault.jpg",
@@ -218,7 +228,7 @@
                     "height": 512
                 },
                 "image": "https://carlosandmunoz.com/assets/qa-review-share.png",
-                "description": "QA-lab URL Review reads one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases for 20 frameworks.",
+                "description": "QA-lab URL Review analiza una dirección https pública, califica su SEO, su visibilidad en búsquedas con IA, analítica, seguridad, accesibilidad y rendimiento, y propone casos de prueba para 20 frameworks.",
                 "email": "qa@carlosandmunoz.com",
                 "founder": {
                     "@type": "Person",
@@ -259,58 +269,74 @@
                 "mainEntity": [
                     {
                         "@type": "Question",
-                        "name": "What does QA-lab URL Review do?",
+                        "name": "¿Qué hace QA-lab URL Review?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "It fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load."
+                            "text": "Inicias sesión en el dispositivo desde el que la ejecutas, con tu correo o con una cuenta que ya tienes (Google, Microsoft, GitHub, Yahoo o X). Luego QA-lab URL Review obtiene una dirección https pública, describe la respuesta y propone casos de prueba. No ejecuta esos casos, no inicia sesión en tu sitio, no envía formularios ni genera carga."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Which tools can a review name?",
+                        "name": "¿Necesito iniciar sesión?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages, and Lighthouse runs on the start page through Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site."
+                            "text": "Sí. Inicias sesión en el dispositivo que ejecuta la revisión, con tu correo (un código de 6 dígitos o un enlace, válido 15 minutos en el mismo dispositivo) o con una cuenta que ya tienes: Google, Microsoft, GitHub, Yahoo o X. Tu correo sale de ese inicio de sesión. Las ejecuciones con sesión iniciada aparecen en la página de tu cuenta."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Which languages can the page be read in?",
+                        "name": "¿Qué califica el informe?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "The page is written in English and can be read in Spanish, Portuguese, German, French, and Italian. The news strip follows the country of the connection and the language of the page. A review reads a public page, tells you what it found, and suggests test cases your team can use. The disclaimers explain how that works, including what applies in the country of the site you are reviewing."
+                            "text": "Seis áreas de 0 a 100: SEO, GEO (si la búsqueda con IA y los motores de respuesta pueden leer y citar el sitio), analítica, seguridad, accesibilidad y rendimiento. Cada comprobación se marca como falla ahora, en riesgo, aprueba o necesita a una persona, con la evidencia, una corrección y una estimación de esfuerzo. También ves cómo se ve el sitio en un resultado de Google y en un enlace compartido, qué rastreadores de IA deja entrar su robots.txt, un mapa de las páginas analizadas y qué corregir primero. Un navegador sin interfaz carga hasta tres páginas desde una dirección de la UE en Bélgica: registra el rastreo antes y después de una elección de cookies, ejecuta axe-core, compara el texto HTML con la página renderizada, revisa anchos de teléfono y tableta y guarda tres capturas. También revisa widgets de chat y chatbots de IA (consentimiento, peso y acceso con teclado), la declaración de accesibilidad, el aviso legal y la página de privacidad, librerías de front-end desactualizadas, Google Safe Browsing mediante Web Risk, el vencimiento del dominio y el bloqueo de transferencia mediante RDAP, y MTA-STS, TLS-RPT y BIMI para el correo, y estima el carbono de una visita. Un sitio cuya protección contra bots rechaza la solicitud simple se analiza en Chrome sin interfaz."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Can it write Playwright or Cypress tests from a URL?",
+                        "name": "¿Qué herramientas puede nombrar una revisión?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Yes. It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each. The scripts are yours to run; the review never runs them."
+                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling y k6 son los frameworks. axe-core se ejecuta en el navegador sin interfaz de la revisión en hasta tres páginas, y Lighthouse se ejecuta en la página de inicio mediante Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar y Copado se nombran cuando corresponden y no se lanzan contra tu sitio."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Does a review touch my site?",
+                        "name": "¿En qué idiomas está la página?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "It only reads public pages. It does not sign in, submit forms, or generate load, and it does not run the cases it proposes."
+                            "text": "La página está en español y también en inglés, portugués, alemán, francés e italiano. La franja de noticias sigue el país de la conexión y el idioma de la página. Una revisión analiza una página pública, te dice lo que encontró y sugiere casos de prueba que tu equipo puede usar. Los avisos legales explican cómo funciona, incluido lo que aplica en el país del sitio que revisas."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "How much of a site does a review read?",
+                        "name": "¿Puede escribir pruebas de Playwright o Cypress a partir de una URL?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Your first review is included: up to twenty pages, two links deep. Want a wider or deeper look? You see the price before anything starts."
+                            "text": "Sí. Propone casos de prueba a partir de una dirección https pública y escribe cada uno para los frameworks que usa tu equipo, de Playwright y Cypress a Selenide, Cucumber, Jest, Appium y k6. La exportación de casos incluye un script inicial por framework y un ZIP con una suite para cada uno. Los scripts los ejecutas tú; la revisión nunca los ejecuta."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Where can the cases go?",
+                        "name": "¿Una revisión toca mi sitio?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Automation scripts as a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Every format carries the scripts for your frameworks. Case export is priced on the page."
+                            "text": "Solo analiza páginas públicas. No inicia sesión en tu sitio, no envía formularios ni genera carga, y no ejecuta los casos que propone."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "¿Cuánto de un sitio analiza una revisión?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Tu primera revisión está incluida: hasta veinte páginas, dos enlaces de profundidad. ¿Quieres una mirada más amplia o más profunda? Ves el precio antes de que empiece nada."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "¿A dónde pueden ir los casos?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Scripts de automatización en un ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, texto plano o PDF. Cada formato lleva los scripts de tus frameworks. La exportación de casos tiene su precio en la página."
                         }
                     }
                 ]
@@ -933,24 +959,24 @@
                 <div class="lang-menu" id="langMenuGate"></div>
             </div>
         </div>
-        <p class="lede">Every control on this page stays off until you accept. The review fetches public pages, opens up to three of them in a headless browser, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. It also asks Google PageSpeed Insights to score the start page, so Google receives that address. It does not run the cases, sign in, submit forms, or generate load. The language control is on this screen.</p>
-        <p class="sample-line"><button class="btn btn-ghost" id="sample-open" type="button">See a sample report</button> It is this site's own review, blurred the way a free report is. Nothing is sent to open it. New here? <a id="guide-open" href="qa-review-guide.html">Take the five-minute tour</a>.</p>
+        <p class="lede" lang="es" translate="no">Todos los controles de esta página siguen desactivados hasta que aceptes. Para ejecutar una revisión, inicias sesión en este dispositivo con tu correo o con una cuenta que ya tienes (Google, Microsoft, GitHub, Yahoo o X). La revisión obtiene páginas públicas, abre hasta tres de ellas en un navegador sin interfaz desde una dirección de la UE en Bélgica y propone casos de prueba. En ese navegador pulsa una vez el botón de rechazo del banner de cookies y nada más. Google PageSpeed Insights califica la página de inicio y Google Web Risk la compara con las listas de Navegación segura, así que Google recibe esa dirección, y se consulta al registro del dominio por RDAP. No ejecuta los casos, no inicia sesión en tu sitio, no envía formularios ni genera carga. El selector de idioma está en esta pantalla.</p>
+        <p class="sample-line" lang="es" translate="no"><button class="btn btn-ghost" id="sample-open" type="button">Ver un informe de ejemplo</button> Es la revisión de este mismo sitio, difuminada como un informe sin pagar. Abrirlo no envía nada. ¿Eres nuevo? <a id="guide-open" href="qa-review-guide.html">Haz el recorrido de cinco minutos</a>.</p>
         <p class="sample-line live-gate-line"><button class="btn btn-ghost" id="live-open-gate" type="button">Explore live reports</button> <span id="live-gate-copy">Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.</span></p>
         <form id="terms-form">
-            <p class="records-note"><b>Disclaimers.</b> Read these before you check a box. <a id="legal-origin" href="qa-review-legal.html">Local and national disclaimers, for Colombia, where this service is operated</a>. <a id="legal-site" href="qa-review-legal.html">International disclaimers, for the country of the site you submit</a>.</p>
-            <label class="check"><input type="checkbox" id="terms-all"> Select all</label>
-            <label class="check"><input type="checkbox" name="t1"> I am at least 18. If I do not accept these disclaimers, I cannot enter a URL.</label>
-            <label class="check"><input type="checkbox" name="t2"> This service will fetch public pages, describe what it finds, and propose test cases. It will not run those cases.</label>
-            <label class="check"><input type="checkbox" name="t3"> I will submit a public https address. I will not submit a private, link-local, or metadata address.</label>
-            <label class="check"><input type="checkbox" name="t4"> The report is a snapshot and a proposal. It is not a certification that the site is safe, fast, or compliant.</label>
-            <label class="check"><input type="checkbox" name="t5"> I give my name, email, and reason so there is a record of who asked. I can ask for a copy or deletion through the contact form on the CV.</label>
-            <label class="check"><input type="checkbox" name="t6"> The scores and findings for the public pages may be published as a Live Report on this site and on its social media, without my name, email, or reason. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. I will not use a shared report to republish their content.</label>
-            <label class="check"><input type="checkbox" name="t7"> The included first review is 20 pages and 2 links deep. A wider or deeper review, and each later run, asks for payment before it starts. The amount is shown at that moment, on the payment page. A different name or email does not skip that charge. Stopped reviews are kept. Three stops in a day pause further reviews.</label>
-            <label class="check"><input type="checkbox" name="t8"> The report is shown once. Seeing, downloading, printing, or sharing it again asks for payment. The amount is shown then. The opening of each proposed case stays readable. The rest of the case stays blurred until that payment is confirmed. A blurred copy of the scores and findings goes to my email when the review finishes.</label>
-            <label class="check"><input type="checkbox" name="t9"> If I say I have a username and password, I am allowed to use that login on the site I submit. This page does not ask for the password. A signed-in run is paid before it starts, and the password is not stored in the review record. The public analysis still does not sign in. Signals in the report are what the public response showed. They are not proof of a break-in. The tail of each signal stays blurred until that section is paid.</label>
-            <label class="check"><input type="checkbox" name="t10"> I ask for the service to start during any withdrawal period. I acknowledge that a consumer in the European Union, under Directive 2011/83/EU, Article 16, and a consumer in the United Kingdom, under the Consumer Contracts Regulations 2013, regulation 36(2), loses the right to withdraw only once the service has been fully performed. A withdrawal right those rules keep is not waived.</label>
-            <p class="records-note" id="records-note">Records keep your name, email, reason, URL, selected frameworks, the review log, whether you stopped, time, IP address, browser, and language. When the host provides it, a country code is stored too. They are kept for 12 months. The page text is not sent to a model vendor. A password is not collected and is not stored. A shared link contains the report only, and opening it again asks for payment. Follow-up notes only arrive if you ask for them on the request: no more than three a week, and a reply of "stop" ends them anytime. The scores and findings for the public pages may be published as a Live Report and on social media; your name, email, reason, IP address, and browser are never published. Signing in keeps your email, how you signed in, and a hash of this browser's key. A Google sign-in also keeps the name, photo, other email addresses, birthday, phone numbers, addresses, gender, and work details Google shares, to know who holds the account, fill in billing for a paid plan, address you correctly, and confirm you are 18 or older. The account is kept for 12 months after the last sign-in. Signing in with email shares only your address. Version 2026-10-22.</p>
-            <button class="btn btn-primary" id="accept" type="submit" disabled>Accept and continue</button>
+            <p class="records-note" lang="es" translate="no"><b>Avisos legales.</b> Léelos antes de marcar una casilla. <a id="legal-origin" href="qa-review-legal.html">Avisos locales y nacionales, para Colombia, donde opera este servicio</a>. <a id="legal-site" href="qa-review-legal.html">Avisos internacionales, para el país del sitio que envías</a>.</p>
+            <label class="check" lang="es" translate="no"><input type="checkbox" id="terms-all"> Seleccionar todo</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t1"> Tengo al menos 18 años. Si no acepto estos avisos, no puedo ingresar una URL.</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t2"> Este servicio obtendrá páginas públicas, describirá lo que encuentre y propondrá casos de prueba. No ejecutará esos casos.</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t3"> Enviaré una dirección https pública. No enviaré una dirección privada, de enlace local ni de metadatos.</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t4"> El informe es una instantánea y una propuesta. No certifica que el sitio sea seguro, rápido ni que cumpla la normativa.</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t5"> Doy mi nombre, correo y motivo para que quede registro de quién lo pidió. Puedo pedir una copia o su eliminación en qa@carlosandmunoz.com.</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t6"> Las puntuaciones y los hallazgos de las páginas públicas pueden publicarse como un Live Report en este sitio, en su repositorio público de GitHub y en llms-full.txt, y en LinkedIn, Facebook, Instagram, X, Threads, Bluesky, Mastodon, TikTok y YouTube como imágenes y clips con voz, sin mi nombre, correo ni motivo, salvo que marque “No publicar esta revisión” en la solicitud. Los sitios marcados por Navegación segura y las ejecuciones de prueba nunca se publican. El dueño de un sitio puede pedir a este servicio que se detenga, que borre el informe y que retire su Live Report. Retirarlo detiene las publicaciones futuras y quita el Live Report; las publicaciones ya hechas se borran a pedido donde la red lo permite. No usaré un informe compartido para volver a publicar su contenido.</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t7"> La primera revisión incluida es de 20 páginas y 2 enlaces de profundidad. Una revisión más amplia o más profunda, y cada ejecución posterior, pide un pago antes de empezar, salvo que la cuenta tenga una asignación gratuita o de prueba, un cupón o un pase otorgado por el operador. El monto se muestra en ese momento, en la página de pago. Usar otro nombre u otro correo no evita ese cobro. Las revisiones detenidas se guardan. Tres detenciones en un día pausan nuevas revisiones.</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t8"> El informe se muestra una vez, y las ejecuciones con sesión iniciada aparecen en la página de mi cuenta. Verlo, descargarlo, imprimirlo o compartirlo otra vez pide un pago, salvo que la cuenta tenga una asignación gratuita o de prueba, un cupón o un pase otorgado por el operador. El monto se muestra entonces. El inicio de cada caso propuesto sigue legible. El resto del caso sigue difuminado hasta que se confirme ese pago. Una copia difuminada de las puntuaciones y los hallazgos llega a mi correo cuando termina la revisión.</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t9"> Si digo que tengo usuario y contraseña, estoy autorizado a usar ese acceso en el sitio que envío. Esta página no pide la contraseña. Una ejecución con sesión iniciada se paga antes de empezar, y la contraseña no se guarda en el registro de la revisión. El análisis público sigue sin iniciar sesión en el sitio. Las señales del informe son lo que mostró la respuesta pública. No son prueba de una intrusión. El final de cada señal sigue difuminado hasta que se pague esa sección.</label>
+            <label class="check" lang="es" translate="no"><input type="checkbox" name="t10"> Pido que el servicio empiece durante cualquier plazo de desistimiento. Reconozco que un consumidor en la Unión Europea, según la Directiva 2011/83/UE, artículo 16, y un consumidor en el Reino Unido, según las Consumer Contracts Regulations 2013, regulación 36(2), pierde el derecho de desistimiento solo cuando el servicio se ha prestado por completo. No renuncio a un derecho de desistimiento que esas normas mantengan.</label>
+            <p class="records-note" id="records-note" lang="es" translate="no">Los registros guardan tu nombre, correo, motivo, URL, frameworks elegidos, el registro de la revisión, si la detuviste, la hora, la dirección IP, el navegador, el id del dispositivo y el idioma, y el país, la región y la ciudad cuando el servidor los da. Los registros de revisión se guardan 12 meses desde la ejecución; los registros de revisiones fallidas o detenidas, y sus nuevas ejecuciones, 90 días. Abrir una página de revisión registra la dirección IP, el navegador, la ciudad aproximada, la zona horaria, los idiomas y el sitio de procedencia, para contar visitas; esas filas, las notas, los enlaces para detener y el correo se guardan 12 meses. El texto de la página no se envía a un proveedor de modelos. No se pide ni se guarda ninguna contraseña. Un enlace compartido contiene solo el informe, y abrirlo otra vez pide un pago. Las notas de seguimiento solo llegan si las pides en la solicitud: no más de tres por semana, y responder «stop» las detiene en cualquier momento. Las puntuaciones y los hallazgos de las páginas públicas pueden publicarse como un Live Report, en GitHub y en redes sociales, salvo que marques “No publicar esta revisión”; tu nombre, correo, motivo, dirección IP y navegador nunca se publican. Si una revisión falla por una causa de este servicio, el nombre del host, la hora, el error y las últimas líneas del registro, sin tu nombre, correo ni la consulta de la URL, se publican en un issue público de GitHub. Iniciar sesión guarda tu correo, cómo iniciaste sesión, el id de usuario del proveedor y la hora del primer y del último inicio de sesión; una sesión en este dispositivo dura 30 días. Un inicio de sesión con un proveedor también guarda el nombre, nombre y apellido, foto, idioma y dominio de Workspace que este comparte. Un inicio de sesión con Google también guarda los otros correos, la fecha de nacimiento, los teléfonos, las direcciones, el género y los datos laborales que Google comparte; se guardan para un futuro plan de pago y todavía no se usan. La cuenta se guarda 12 meses después del último inicio de sesión. Iniciar sesión con correo comparte solo tu dirección. Copias, correcciones y eliminación: qa@carlosandmunoz.com. La lista completa está en los avisos legales. Versión 2026-10-22.</p>
+            <button class="btn btn-primary" id="accept" type="submit" disabled lang="es" translate="no">Aceptar y continuar</button>
         </form>
     </div>
 </div>
@@ -1005,7 +1031,7 @@
             </header>
             <div class="live-filters-slot" data-live-filters></div>
         </div>
-        <div class="live-main" data-live-app><noscript><p class="live-lede">Live reports need JavaScript to open. As of October 21, 2026, the series holds 237 public sites in 27 sectors, each analyzed once, on October 19 or 21, by the same review anyone can run. The average overall score is 77 out of 100: SEO 68, GEO 84, analytics 86, security 67, accessibility 81, and performance 77. The highest overall scores are MDN Web Docs 95, GOV.UK 92, CA.gov 92, and GitHub Docs 91. The series covers government portals such as GOV.UK, GOV.CO, and Alcaldía de Bogotá; regional governments such as CA.gov, Generalitat de Catalunya, and Gobernación del Valle del Cauca; newsrooms such as BBC, The Guardian, and El País; banks such as Bancolombia and Davivienda; universities such as MIT, Stanford, and Universidad de los Andes; open-source projects such as Python.org, Node.js, and Kubernetes; and transit systems such as TransMilenio and Metro de Medellín. Each report is one automated analysis of public pages, a starting point and not a verdict.</p></noscript></div>
+        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="es" translate="no">Los Live Reports necesitan JavaScript para abrirse. Al 22 de octubre de 2026, la serie reúne 255 sitios públicos en 27 sectores, analizados desde el 19 de octubre de 2026 con la misma revisión que cualquiera puede ejecutar; las nuevas revisiones se suman en un lote diario. La puntuación general promedio es 76 sobre 100: SEO 67, GEO 84, analítica 84, seguridad 67, accesibilidad 78 y rendimiento 77. Las puntuaciones generales más altas son MDN Web Docs 95, CA.gov 92, GOV.UK 92 y GitHub Docs 91. La serie incluye portales de gobierno como GOV.UK, GOV.CO y la Alcaldía de Bogotá; gobiernos regionales como CA.gov, la Generalitat de Catalunya y la Gobernación del Valle del Cauca; medios como BBC, The Guardian y El País; bancos como Bancolombia y Davivienda; universidades como MIT, Stanford y la Universidad de los Andes; proyectos de código abierto como Python.org, Node.js y Kubernetes; y sistemas de transporte como TransMilenio y el Metro de Medellín. Cada informe es un análisis automatizado de páginas públicas, un punto de partida y no un veredicto.</p></noscript></div>
     </div>
 </section>
 <main id="review-app" inert>
@@ -1021,23 +1047,25 @@
         <summary><h2>What a review is</h2></summary>
         <dl>
             <dt>A public analysis, and a list of cases</dt>
-            <dd>QA-lab URL Review fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load.</dd>
+            <dd>You sign in on the device you run it from, with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X). QA-lab URL Review then fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in to your site, submit forms, or generate load.</dd>
+            <dt>Sign in</dt>
+            <dd>You sign in on the device that runs the review, with email (a 6-digit code or a link, valid for 15 minutes on the same device) or an account you already have: Google, Microsoft, GitHub, Yahoo, or X. Your email comes from that sign-in. Signed-in runs are listed on <a href="qa-review-account.html">your account page</a>.</dd>
             <dt>What the report scores</dt>
-            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages analyzed, and what to fix first. A headless browser loads up to three pages from an EU address: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots.</dd>
+            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages analyzed, and what to fix first. A headless browser loads up to three pages from an EU address in Belgium: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots. It also checks chat widgets and AI chatbots (consent, weight, and keyboard access), the accessibility statement, imprint, and privacy pages, outdated front-end libraries, Google Safe Browsing through Web Risk, domain expiry and transfer lock through RDAP, and MTA-STS, TLS-RPT, and BIMI for mail, and estimates the carbon of one visit. A site whose bot protection refuses the plain request is analyzed in headless Chrome.</dd>
             <dt>Frameworks and tools</dt>
             <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages, and Lighthouse runs on the start page through Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site.</dd>
             <dt>Automation scripts</dt>
             <dd>It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each, a GitHub Actions workflow that runs them, and a fix kit with header files for common hosts, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records. The scripts are yours to run; the review never runs them.</dd>
             <dt>Your site</dt>
-            <dd>It only reads public pages. It does not sign in, submit forms, or generate load, and it does not run the cases it proposes.</dd>
-            <dt>How far it reads</dt>
+            <dd>It only analyzes public pages. It does not sign in to your site, submit forms, or generate load, and it does not run the cases it proposes.</dd>
+            <dt>How far it goes</dt>
             <dd>Your first review is included: up to twenty pages, two links deep. Want a wider or deeper look? You see the price before anything starts.</dd>
             <dt>Where cases go</dt>
             <dd>Automation scripts as a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Every format carries the scripts for your frameworks. Case export is priced on the page.</dd>
             <dt>Language</dt>
             <dd>The page is written in English and can be read in Spanish, Portuguese, German, French, and Italian. The news strip follows the country of the connection and the language of the page.</dd>
             <dt>Rules</dt>
-            <dd>A review reads a public page, tells you what it found, and suggests test cases your team can use. The disclaimers explain how that works, including what applies in the country of the site you are reviewing.</dd>
+            <dd>A review analyzes a public page, tells you what it found, and suggests test cases your team can use. The disclaimers explain how that works, including what applies in the country of the site you are reviewing.</dd>
             <dt>Elsewhere</dt>
             <dd>Films and notes on <a href="https://www.youtube.com/@qalaburlreview" rel="me noopener" target="_blank">YouTube</a>, <a href="https://www.tiktok.com/@qalaburlreview" rel="me noopener" target="_blank">TikTok</a>, <a href="https://www.facebook.com/qalaburlreview" rel="me noopener" target="_blank">Facebook</a>, <a href="https://x.com/qalaburlreview" rel="me noopener" target="_blank">X</a>, <a href="https://www.linkedin.com/company/qalab-url-review" rel="me noopener" target="_blank">LinkedIn</a>, <a href="https://dev.to/qalaburlreview" rel="me noopener" target="_blank">DEV</a>, and <a href="https://www.reddit.com/user/qalaburlreview/" rel="me noopener" target="_blank">Reddit</a>.</dd>
         </dl>
@@ -1051,7 +1079,7 @@
                 <p class="mail-note muted">The review runs on the device where you sign in. A code or link opened on another device or browser starts nothing.</p>
                 <div id="sign-in-start">
                     <div class="sign-in-providers" id="sign-in-providers"></div>
-                    <p class="mail-note muted" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them. To share only your address, use email.</p>
+                    <p class="mail-note muted" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them for a future paid plan; they are not used yet. To share only your address, use email.</p>
                     <p class="sign-in-or muted" id="sign-in-or" hidden>or with your email</p>
                     <label for="sign-in-email">Email</label>
                     <div class="sign-in-row">
@@ -1133,7 +1161,7 @@
             <div class="fws" id="fw-picker"></div>
             <p class="field-error" id="frameworks-error"></p>
             <fieldset class="scope" id="page-scope">
-                <legend>Pages to read</legend>
+                <legend>Pages to analyze</legend>
                 <div class="fws" id="page-picker"></div>
             </fieldset>
             <fieldset class="scope" id="depth-scope">
@@ -1345,8 +1373,8 @@
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022g"></script>
-<script src="js/qa-review-progress.js?v=20261022a"></script>
-<script src="js/qa-review.js?v=20261022e"></script>
+<script src="js/qa-review-progress.js?v=20261022b"></script>
+<script src="js/qa-review.js?v=20261022f"></script>
 <script src="js/qa-review-live.js?v=20261028b"></script>
 </body>
 </html>

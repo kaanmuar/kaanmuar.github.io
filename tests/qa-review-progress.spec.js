@@ -30,10 +30,10 @@ test.describe('Review progress', () => {
     await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com/path', pages: 5 }));
     await expect(page.locator('.rp')).toBeVisible();
     await expect(page.locator('.rp-phase')).toHaveText('Connecting');
-    await feed(page, ['Checking that the address is public https.', 'Reading robots.txt.', '9 same-host links were listed. This read opens at most 5 HTML pages and 2 links deep.', 'Opening /a.', 'Opening /b.']);
-    await expect(page.locator('.rp-phase')).toHaveText('Reading pages · 3 of 5');
+    await feed(page, ['Checking that the address is public https.', 'Reading robots.txt.', '9 same-host links were listed. This review opens at most 5 HTML pages and 2 links deep.', 'Opening /a.', 'Opening /b.']);
+    await expect(page.locator('.rp-phase')).toHaveText('Analyzing pages · 3 of 5');
     await expect.poll(() => percent(page)).toBeGreaterThanOrEqual(38);
-    await feed(page, ['Read 3 pages. Writing the proposed cases now.', 'Proposed 12 cases.']);
+    await feed(page, ['Analyzed 3 pages. Writing the proposed cases now.', 'Proposed 12 cases.']);
     await expect(page.locator('.rp-phase')).toHaveText('Writing cases');
     await expect(page.locator('.rp-sky .rp-msg').first()).toBeAttached();
     await page.evaluate(() => window.ReviewProgress.finish('ready'));
@@ -46,7 +46,7 @@ test.describe('Review progress', () => {
     await prime(page);
     await page.goto('/qa-review.html');
     await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 20 }));
-    await feed(page, ['Scoring the checks from the pages read.']);
+    await feed(page, ['Scoring the checks from the pages analyzed.']);
     await expect.poll(() => percent(page)).toBeGreaterThanOrEqual(92);
     await feed(page, ['Opening the first page.']);
     expect(await percent(page)).toBeGreaterThanOrEqual(92);

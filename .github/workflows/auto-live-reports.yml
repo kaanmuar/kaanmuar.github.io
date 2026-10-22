@@ -111,7 +111,7 @@ jobs:
         # The day number moves the language cycle on, so small daily batches still reach all six.
         run: node scripts/tips-studio/build.js --source runs-auto --batch "${{ steps.reports.outputs.batch }}" --start "$(date -u -d tomorrow +%F)" --lang-offset "$(( $(date -u +%s) / 86400 ))"
 
-      - name: Rebuild llms-full.txt
+      - name: Rebuild llms-full.txt and the Live Reports counts
         run: python3 scripts/build-llms-full.py
 
       - name: Keep the render for a look
@@ -129,7 +129,7 @@ jobs:
           BATCH="${{ steps.reports.outputs.batch }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add assets/live-reports llms-full.txt scripts/auto-live-reports.state.json
+          git add assets/live-reports llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json
           if [ -d "media/social-posts/$BATCH" ]; then
             git add "media/social-posts/$BATCH"
             git add -f "media/social-posts/$BATCH/story"
@@ -137,7 +137,7 @@ jobs:
           if git diff --cached --quiet; then echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0; fi
           git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} requested reviews, ${{ steps.reports.outputs.social }} posts ($BATCH) [skip ci]"
           # PRs merged during the render move main. The checkout is shallow, so the data commit is
-          # cherry-picked onto the new main (its files win) and llms-full.txt is rebuilt from the merged site.
+          # cherry-picked onto the new main (its files win) and the generated files are rebuilt from the merged site.
           for attempt in 1 2 3 4 5; do
             git push origin HEAD:main && break
             if [ "$attempt" = 5 ]; then echo "::error::main kept moving; batch $BATCH was not pushed."; exit 1; fi
@@ -147,7 +147,7 @@ jobs:
             git reset -q --hard FETCH_HEAD
             git cherry-pick -X theirs "$DATA"
             python3 scripts/build-llms-full.py
-            git add llms-full.txt
+            git add llms.txt llms-full.txt qa-review*.html
             git diff --cached --quiet || git commit -q --amend --no-edit
           done
           gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
