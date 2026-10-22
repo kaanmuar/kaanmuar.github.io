@@ -367,13 +367,13 @@ const FOCUS = {
   seo: ["SEO", "MetaDescription", "SERP", "Sitemap", "Canonical", "Titles", "RobotsTxt", "BrokenLinks", "Hreflang"],
   geo: ["GEO", "AISearch", "JavaScriptSEO"],
   schema: ["StructuredData"],
-  a11y: ["Accessibility", "A11y", "MobileUX", "Forms", "Headings", "Lang", "Zoom", "Landmarks", "Keyboard"],
-  security: ["WebSecurity", "HSTS", "HTTPS", "CSP", "HTTPHeaders", "Clickjacking", "Headers", "TLS", "Redirects", "MixedContent", "PermissionsPolicy"],
+  a11y: ["Accessibility", "A11y", "MobileUX", "Forms", "Headings", "Lang", "Zoom", "Landmarks", "Keyboard", "EAA", "Contrast", "ARIA"],
+  security: ["WebSecurity", "HSTS", "HTTPS", "CSP", "HTTPHeaders", "Clickjacking", "Headers", "TLS", "Redirects", "MixedContent", "PermissionsPolicy", "SafeBrowsing", "Domains", "EmailSecurity", "MTASTS", "TLSRPT", "Dependencies"],
   performance: ["WebPerformance", "PageWeight", "CoreWebVitals", "LCP", "INP", "TTFB"],
   analytics: ["Analytics", "GA4", "Measurement", "Privacy"],
   i18n: ["i18n", "Multilingual"]
 };
-const FOCUS_LABELS = { seo: "SEO", geo: "GEO · AI search", schema: "Structured data", a11y: "Accessibility", security: "Security headers", performance: "Performance · Core Web Vitals", analytics: "Analytics & consent", i18n: "Internationalization" };
+const FOCUS_LABELS = { seo: "SEO", geo: "GEO · AI search", schema: "Structured data", a11y: "Accessibility", security: "Security checks", performance: "Performance · Core Web Vitals", analytics: "Analytics & consent", i18n: "Internationalization" };
 
 const SERVER_NAMES = [
   [/^nginx/i, "nginx"], [/^openresty/i, "OpenResty"], [/^apache\b/i, "Apache"], [/^ats\//i, "Apache Traffic Server"],

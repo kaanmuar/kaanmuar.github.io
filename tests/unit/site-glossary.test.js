@@ -39,6 +39,12 @@ test("product names survive machine translation", () => {
   assert.equal(fix("El faro de la costa", "es"), "El faro de la costa");
   assert.equal(line("QA-lab", "es"), "QA-lab");
   assert.equal(line("URL Review", "de"), "URL Review");
+  for (const name of ["Safe Browsing", "MTA-STS", "TLS-RPT", "BIMI", "Impressum", "RDAP", "retire.js"]) assert.equal(line(name, "fr"), name);
+  assert.equal(fix("Las listas de Navegación Segura de Google no marcan el sitio.", "es"), "Las listas de Safe Browsing de Google no marcan el sitio.");
+  assert.equal(fix("As listas de Navegação Segura do Google", "pt"), "As listas de Safe Browsing do Google");
+  assert.equal(fix("Les listes de Navigation sécurisée de Google", "fr"), "Les listes de Safe Browsing de Google");
+  assert.equal(fix("Le liste di Navigazione sicura di Google", "it"), "Le liste di Safe Browsing di Google");
+  assert.equal(fix("comparado con la lista de retirar.js", "es"), "comparado con la lista de retire.js");
 });
 
 test("Portuguese is Brazilian and keeps read-only", () => {
