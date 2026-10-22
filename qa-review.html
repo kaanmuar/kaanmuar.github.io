@@ -1049,12 +1049,12 @@
                     </div>
                 </div>
                 <div id="sign-in-code-step" hidden>
-                    <label for="sign-in-code">Code sent to <span id="sign-in-sent"></span></label>
+                    <label for="sign-in-code" id="sign-in-code-label">Code</label>
                     <div class="sign-in-row">
                         <input id="sign-in-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false" disabled>
                         <button class="btn btn-primary" id="sign-in-check" type="button" disabled>Sign in</button>
                     </div>
-                    <p class="mail-note muted">Type it here, or open the link in the email in this browser. <button class="sign-in-link" id="sign-in-restart" type="button" disabled>Use another address</button></p>
+                    <p class="mail-note muted"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="sign-in-link" id="sign-in-restart" type="button" disabled>Start over</button></p>
                 </div>
                 <p class="sign-in-done" id="sign-in-done" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
                 <p class="status" id="sign-in-status" role="status"></p>
@@ -1332,7 +1332,7 @@
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
-<script src="js/qa-review-auth.js?v=20261022b"></script>
+<script src="js/qa-review-auth.js?v=20261022c"></script>
 <script src="js/qa-review.js?v=20261022a"></script>
 <script src="js/qa-review-live.js?v=20261028b"></script>
 </body>
