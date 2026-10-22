@@ -59,6 +59,25 @@ async function graph(edge, params) {
   return json;
 }
 
+async function graphGet(edge, params) {
+  const qs = new URLSearchParams(Object.assign({}, params, { access_token: process.env.FACEBOOK_PAGE_TOKEN }));
+  const res = await fetch(GRAPH + "/" + edge + "?" + qs);
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.error) throw new Error("Graph " + res.status + ": " + ((json.error && json.error.message) || JSON.stringify(json)).slice(0, 300));
+  return json;
+}
+
+async function check(page, ids) {
+  const show = async (label, edge, params) => {
+    try { console.log(label, JSON.stringify(await graphGet(edge, params)).slice(0, 1500)); }
+    catch (error) { console.log(label, "-", error.message); }
+  };
+  await show("scheduled_posts", page + "/scheduled_posts", { fields: "id,message,scheduled_publish_time,is_published", limit: "50" });
+  await show("posts", page + "/posts", { fields: "id,created_time,message", limit: "10" });
+  await show("photos", page + "/photos", { type: "uploaded", fields: "id,created_time,page_story_id,name", limit: "30" });
+  for (const id of ids) await show("id " + id, id, { fields: "id,created_time,page_story_id,name" });
+}
+
 // A slot already past (or under the Graph API's 10-minute floor) goes out in 20 minutes.
 function photoParams(slug, cap, base, at) {
   const params = { url: base + "/feed/" + slug + ".jpg", caption: cap.facebook, alt_text_custom: cap.alt || "" };
@@ -69,6 +88,7 @@ function photoParams(slug, cap, base, at) {
 
 async function main() {
   const opts = args();
+  if (opts.check) return check(process.env.FACEBOOK_PAGE_ID, String(opts.ids || "").split(",").filter(Boolean));
   const batch = String(opts.batch || "");
   if (!/^[\w-]+$/.test(batch)) throw new Error("--batch is required");
   const dir = path.join(ROOT, "media/social-posts", batch);
