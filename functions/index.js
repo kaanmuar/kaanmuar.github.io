@@ -1317,6 +1317,53 @@ async function fileReviewFailureBugs() {
 exports.fileReviewFailureBugs = functions.runWith({ timeoutSeconds: 120, memory: "512MB" })
   .pubsub.schedule("5 7 * * *").timeZone("America/Bogota").onRun(() => fileReviewFailureBugs());
 
+// GitHub can skip scheduled runs, so this checks from outside GitHub that today's Live Reports batch
+// (auto-YYYY-MM-DD, dated in UTC) is on main or underway, and dispatches the workflow when it is neither.
+const LIVE_REPORTS_WORKFLOW = "auto-live-reports.yml";
+
+async function githubGet(path, token) {
+  const res = await fetch("https://api.github.com" + path, {
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-url-review", "X-GitHub-Api-Version": "2022-11-28" }
+  });
+  if (!res.ok) throw new Error("GitHub " + path + " answered " + res.status);
+  return res.json();
+}
+
+async function ensureLiveReportsBatch() {
+  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  if (!token) {
+    console.log("Live Reports watchdog: GITHUB_BUGS_TOKEN is not set, so the batch was not checked.");
+    return null;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const repo = "/repos/" + BUG_REPO;
+  const commits = await githubGet(repo + "/commits?sha=main&per_page=100&since=" + today + "T00:00:00Z", token);
+  if (commits.some((c) => c.commit.message.includes("(auto-" + today + ")"))) {
+    console.log("Live Reports watchdog: batch auto-" + today + " is on main.");
+    return null;
+  }
+  const runs = await githubGet(repo + "/actions/workflows/" + LIVE_REPORTS_WORKFLOW + "/runs?per_page=20&created=%3E%3D" + today, token);
+  const underway = runs.workflow_runs.filter((run) => run.status !== "completed");
+  if (underway.length) {
+    console.log("Live Reports watchdog: batch auto-" + today + " is not on main yet, but run " + underway[0].html_url + " is " + underway[0].status + ".");
+    return null;
+  }
+  await github(repo + "/actions/workflows/" + LIVE_REPORTS_WORKFLOW + "/dispatches", { ref: "main", inputs: { backup: "true" } }, token);
+  const finished = runs.workflow_runs.map((run) => run.event + " " + run.conclusion).join(", ") || "none";
+  console.log("Live Reports watchdog: no batch auto-" + today + " on main and no run underway (today's runs: " + finished + "), so the workflow was dispatched.");
+  await sendOwnerEmail({
+    to: REVIEW_ALERT_TO,
+    subject: "Live Reports: today's batch was missing, the backup started it",
+    intro: "GitHub did not publish the auto-" + today + " Live Reports batch on schedule, so the Firebase watchdog dispatched the workflow.",
+    rows: [{ label: "Today's runs before the backup", value: finished }],
+    respondUrl: "https://github.com/" + BUG_REPO + "/actions/workflows/" + LIVE_REPORTS_WORKFLOW,
+    buttonLabel: "Open the workflow runs"
+  });
+  return null;
+}
+
+exports.ensureLiveReportsBatch = withMail.pubsub.schedule("45 4 * * *").timeZone("America/Bogota").onRun(() => ensureLiveReportsBatch());
+
 exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("America/Bogota").onRun(async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
   const stamp = dateStamp(bogotaParts(new Date()));
