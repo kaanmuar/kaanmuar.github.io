@@ -1754,7 +1754,7 @@ async function reviewSignIn(req, res, pathName) {
       res.status(401).json({ error: "That sign-in was not accepted. Try again." });
       return;
     }
-    const result = await reviewAuth.providerSignIn(store, decoded, { deviceKey: body.deviceKey, profile: body.profile, enabled });
+    const result = await reviewAuth.providerSignIn(store, decoded, { deviceKey: body.deviceKey, profile: body.profile, googleAccessToken: body.googleAccessToken, enabled });
     if (result.verifyEmail) {
       await sendSignIn(res, store, { email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey, ip: req.ip, lang: body.lang });
       return;

@@ -243,7 +243,7 @@ async function localSignIn(req, res, pathName, origin, deviceHint) {
       sendJson(res, 401, { error: "That sign-in was not accepted. Try again." }, origin, deviceHint);
       return;
     }
-    const result = await auth.providerSignIn(signIns, decoded, { deviceKey: body.deviceKey, profile: body.profile, enabled });
+    const result = await auth.providerSignIn(signIns, decoded, { deviceKey: body.deviceKey, profile: body.profile, googleAccessToken: body.googleAccessToken, enabled });
     if (result.verifyEmail) return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
     return answer(result);
   }

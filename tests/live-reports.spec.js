@@ -1,14 +1,16 @@
 const { test, expect } = require('@playwright/test');
 
+const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+
 async function prime(page, { terms = true } = {}) {
-  await page.addInitScript((accepted) => {
+  await page.addInitScript(({ accepted, version }) => {
     try {
-      if (accepted) sessionStorage.setItem('qa-review-terms', '2026-10-21');
+      if (accepted) sessionStorage.setItem('qa-review-terms', version);
       localStorage.setItem('hasSeenReviewTour', 'true');
       localStorage.setItem('qa-review-analytics', 'necessary');
       localStorage.setItem('cv-preferred-lang', 'en');
     } catch (e) { /* storage is optional */ }
-  }, terms);
+  }, { accepted: terms, version: TERMS });
 }
 
 function watchCsp(page) {
@@ -205,14 +207,14 @@ test.describe('Live reports on a phone', () => {
 test.describe('Live reports in Spanish', () => {
   async function primeEs(page) {
     await page.route(/translate\.(google|googleapis)\.com/, (route) => route.abort());
-    await page.addInitScript(() => {
+    await page.addInitScript((version) => {
       try {
-        sessionStorage.setItem('qa-review-terms', '2026-10-21');
+        sessionStorage.setItem('qa-review-terms', version);
         localStorage.setItem('hasSeenReviewTour', 'true');
         localStorage.setItem('qa-review-analytics', 'necessary');
         localStorage.setItem('site-translate', 'picked');
       } catch (e) { /* storage is optional */ }
-    });
+    }, TERMS);
   }
 
   test('the copy says what to open and analyzes instead of reading', async ({ page }) => {
