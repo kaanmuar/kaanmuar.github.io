@@ -725,16 +725,6 @@ const PAGE = `<!DOCTYPE html>
         notesEl.appendChild(block);
       });
       if (!(data.followUps || []).length) notesEl.appendChild(node("p", "No address is stored yet."));
-      (data.codes || []).forEach((item) => {
-        const block = document.createElement("div");
-        block.className = "alert";
-        block.appendChild(node("b", "Sign-in code on this machine"));
-        const meta = document.createElement("div");
-        meta.className = "meta";
-        meta.textContent = item.email + " · " + item.code + " · until " + when(item.expires);
-        block.appendChild(meta);
-        notesEl.appendChild(block);
-      });
     }
 
     function renderFree() {

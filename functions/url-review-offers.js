@@ -294,6 +294,26 @@ function customerRun(row, open) {
   };
 }
 
+function accountFile(records, email, now) {
+  const address = String(email || "").trim().toLowerCase();
+  const at = now == null ? Date.now() : Number(now);
+  const rows = (records || []).filter((row) => row && String(row.email || "").trim().toLowerCase() === address);
+  const passes = rows.filter((row) => row.status === "monthly-pass").sort((a, b) => String(b.paidUntil || "").localeCompare(String(a.paidUntil || "")));
+  const pass = passes[0] || null;
+  const open = !!pass && Date.parse(pass.paidUntil || "") > at;
+  return {
+    email: address,
+    open,
+    charged: pass ? pass.paid === true : false,
+    localPass: pass ? pass.localPass === true : false,
+    paidUntil: pass ? pass.paidUntil || "" : "",
+    plans: catalog().plans,
+    runs: rows.filter((row) => row.report)
+      .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
+      .map((row) => customerRun(row, open))
+  };
+}
+
 module.exports = {
   RETURN_TABLE,
   MONTHLY_PLANS,
@@ -308,5 +328,6 @@ module.exports = {
   planById,
   messageFor,
   queue,
-  customerRun
+  customerRun,
+  accountFile
 };

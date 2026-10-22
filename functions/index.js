@@ -1795,6 +1795,37 @@ async function reviewSignIn(req, res, pathName) {
   res.status(404).json({ error: "Not found." });
 }
 
+// The account page signs in through /auth/*; the session and device key come in the body.
+async function reviewAccount(req, res, pathName) {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Use POST." });
+    return;
+  }
+  const db = admin.firestore();
+  const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(db), Object.assign({}, req.body || {}, { touch: false }));
+  if (!signedIn.ok) {
+    res.status(signedIn.status).json({ error: signedIn.error, signIn: true });
+    return;
+  }
+  if (pathName.endsWith("/account/runs")) {
+    const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
+    res.status(200).json(reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email));
+    return;
+  }
+  if (pathName.endsWith("/account/stop")) {
+    await db.collection("url_review_notes").add({
+      status: "follow-stop",
+      email: signedIn.email,
+      via: "account",
+      createdAt: new Date().toISOString()
+    });
+    await rememberReview("follow-stop", { status: "follow-stop", email: signedIn.email });
+    res.status(200).json({ ok: true });
+    return;
+  }
+  res.status(404).json({ error: "Not found." });
+}
+
 exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
   const origin = reviewOrigin(req);
   res.set("Access-Control-Allow-Origin", origin);
@@ -1813,6 +1844,15 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     } catch (error) {
       console.error("Review sign-in failed:", error);
       if (!res.headersSent) res.status(500).json({ error: "Sign-in failed. Try again in a moment." });
+    }
+    return;
+  }
+  if (pathName.indexOf("/account/") !== -1) {
+    try {
+      await reviewAccount(req, res, pathName);
+    } catch (error) {
+      console.error("Review account failed:", error);
+      if (!res.headersSent) res.status(500).json({ error: "Your runs did not load. Try again in a moment." });
     }
     return;
   }
