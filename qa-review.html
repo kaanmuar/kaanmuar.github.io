@@ -407,6 +407,7 @@
         .sign-in-row .btn { white-space: nowrap; }
         .sign-in-link { background: none; border: 0; padding: 0; color: var(--cyan); text-decoration: underline; cursor: pointer; font: inherit; }
         .sign-in-done { margin: 8px 0 0; }
+        .sign-in-photo { width: 28px; height: 28px; border-radius: 50%; vertical-align: middle; margin-right: 8px; object-fit: cover; }
         #sign-in-code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
         #email[readonly] { opacity: .8; }
         .verify-note { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, var(--card)); }
@@ -1056,7 +1057,7 @@
                     </div>
                     <p class="mail-note muted"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="sign-in-link" id="sign-in-restart" type="button" disabled>Start over</button></p>
                 </div>
-                <p class="sign-in-done" id="sign-in-done" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
+                <p class="sign-in-done" id="sign-in-done" hidden><img class="sign-in-photo" id="sign-in-photo" alt="" width="28" height="28" referrerpolicy="no-referrer" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
                 <p class="status" id="sign-in-status" role="status"></p>
             </div>
             <div class="grid-2">
@@ -1332,7 +1333,7 @@
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261026a"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
-<script src="js/qa-review-auth.js?v=20261022c"></script>
+<script src="js/qa-review-auth.js?v=20261022d"></script>
 <script src="js/qa-review.js?v=20261022a"></script>
 <script src="js/qa-review-live.js?v=20261028b"></script>
 </body>
