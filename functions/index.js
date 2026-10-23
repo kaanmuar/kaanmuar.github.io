@@ -367,6 +367,7 @@ exports.noteCvVisit = functions.https.onRequest(async (req, res) => {
     label: record.label,
     lang: record.lang,
     referrerHost: record.referrerHost,
+    query: query,
     screen: record.screen,
     page: record.page,
     title: record.title,
@@ -758,7 +759,7 @@ function summarizeEvents(rows) {
       const code = linkCode(row.label);
       if (code) bump(linkOpens, code);
       bump(langs, row.lang || "en");
-      bump(referrers, row.referrerHost ? row.referrerHost : "Direct");
+      bump(referrers, siteReport.visitSource(row));
       const screen = row.screen === "phone" || row.screen === "desktop" ? row.screen : "unrecorded";
       screens[screen] += 1;
       const when = eventDate(row);

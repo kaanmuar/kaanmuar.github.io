@@ -1465,7 +1465,7 @@
                 const code = linkCode(row.label);
                 if (code) siteBump(linkOpens, code);
                 siteBump(langs, row.lang || 'en');
-                siteBump(referrers, row.referrerHost ? row.referrerHost : 'Direct');
+                siteBump(referrers, reviewOpenSource(row));
                 const screen = row.screen === 'phone' || row.screen === 'desktop' ? row.screen : 'unrecorded';
                 screens[screen] += 1;
                 const when = siteEventDate(row);
@@ -1586,7 +1586,7 @@
         }
     }
 
-    // Same rule as openSource in functions/url-review-mail.js, so admin and the period mail agree.
+    // Same rule as openSource in functions/url-review-mail.js, so admin, the site report, and the period mail agree.
     function reviewOpenSource(row) {
         let tagged = '';
         try { tagged = new URLSearchParams(String(row.query || '')).get('utm_source') || ''; } catch (error) { tagged = ''; }

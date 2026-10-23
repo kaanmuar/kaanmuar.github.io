@@ -1,6 +1,8 @@
 /**
  * Owner mail for CV visits and the daily, weekly, and monthly site reports.
  */
+const { openSource } = require("./url-review-mail");
+
 function clip(value, max) {
   const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
   if (!text) return "";
@@ -19,6 +21,11 @@ function linkFromQuery(query) {
   return match ? linkCode(match[1]) : "";
 }
 
+// Same rule as a URL Review open: a tagged link names the source, then the referrer, then Direct.
+function visitSource(row) {
+  return openSource(row);
+}
+
 function visitRows(visit, grouped) {
   const row = visit || {};
   const place = [row.city, row.region, row.country].filter(Boolean).join(", ");
@@ -29,7 +36,7 @@ function visitRows(visit, grouped) {
     { label: "Title", value: clip(row.title, 120) },
     { label: "Language", value: clip(row.lang || "en", 12) },
     { label: "Languages", value: clip(row.languages, 80) },
-    { label: "Referrer", value: row.referrerHost ? clip(row.referrerHost, 80) : "Direct" },
+    { label: "Referrer", value: clip(visitSource(row), 80) },
     { label: "Screen", value: row.screen === "phone" || row.screen === "desktop" ? row.screen : "" },
     { label: "Time zone", value: clip(row.timezone, 60) },
     { label: "Place", value: clip(place, 120) },
@@ -78,7 +85,7 @@ function eventLine(row, titleOf) {
     clip(row.title, 80),
     clip(row.lang, 12),
     place,
-    row.referrerHost ? clip(row.referrerHost, 80) : (row.kind === "visit" ? "Direct" : ""),
+    row.kind === "visit" ? clip(visitSource(row), 80) : (row.referrerHost ? clip(row.referrerHost, 80) : ""),
     row.screen === "phone" || row.screen === "desktop" ? row.screen : "",
     clip(row.timezone, 60),
     link,
@@ -132,6 +139,7 @@ function inboxBody(messages, ratings) {
 
 module.exports = {
   visitRows,
+  visitSource,
   reportBody,
   inboxBody,
   linkFromQuery
