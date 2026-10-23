@@ -1403,7 +1403,7 @@
             </div>
             <div class="actions">
                 <button class="btn btn-ghost" id="copy-link" type="button">Copy link</button>
-                <button class="btn btn-ghost" id="ask-open" type="button" aria-expanded="false" aria-controls="ask-panel" hidden>Ask the report</button>
+                <button class="btn btn-ghost" id="ask-open" type="button" aria-expanded="false" aria-controls="ask-panel" lang="de" translate="no" hidden>Den Bericht fragen</button>
                 <button class="btn btn-ghost" id="case-export-open" type="button">Export and print test cases</button>
                 <div class="menu-wrap">
                     <button class="btn btn-ghost" id="export-toggle" type="button" aria-expanded="false" aria-controls="export-menu">Export</button>
@@ -1513,23 +1513,23 @@
         <article class="card" id="cases"></article>
         </section>
     </div>
-    <aside class="ask-panel no-print" id="ask-panel" aria-labelledby="ask-title" hidden>
+    <aside class="ask-panel no-print" id="ask-panel" aria-labelledby="ask-title" lang="de" translate="no" hidden>
         <div class="ask-head">
             <div>
-                <p class="eyebrow">Ask the report</p>
-                <h2 id="ask-title">Answers from this report only</h2>
+                <p class="eyebrow" data-ask-text="open">Den Bericht fragen</p>
+                <h2 id="ask-title" data-ask-text="title">Antworten nur aus diesem Bericht</h2>
             </div>
-            <button class="btn btn-ghost" id="ask-close" type="button">Close</button>
+            <button class="btn btn-ghost" id="ask-close" type="button" data-ask-text="close">Schließen</button>
         </div>
-        <p class="ask-note">It explains a finding from its evidence, writes the fix for the stack this review saw, writes the Playwright case for a case id, and drafts a GitHub or Jira issue. It answers nothing the report does not hold.</p>
+        <p class="ask-note" data-ask-text="note">Erklärt einen Befund aus seinen Belegen, schreibt die Korrektur für die Technik, die diese Prüfung gesehen hat, schreibt den Playwright-Fall zu einer Fall-ID und entwirft ein GitHub- oder Jira-Issue. Was nicht im Bericht steht, beantwortet es nicht.</p>
         <div class="ask-log" id="ask-log" role="log" aria-live="polite"></div>
         <div class="ask-chips" id="ask-chips" hidden></div>
         <form class="ask-form" id="ask-form" hidden>
-            <label class="ask-hidden" for="ask-input">Question about this report</label>
-            <input id="ask-input" type="text" maxlength="300" autocomplete="off" placeholder="Why is F-01 rated this way?">
-            <button class="btn btn-primary" type="submit">Ask</button>
+            <label class="ask-hidden" for="ask-input" data-ask-text="inputLabel">Frage zu diesem Bericht</label>
+            <input id="ask-input" type="text" maxlength="300" autocomplete="off" placeholder="Warum ist F-01 so eingestuft?">
+            <button class="btn btn-primary" type="submit" data-ask-text="send">Fragen</button>
         </form>
-        <label class="ask-repo" id="ask-repo-row" for="ask-repo" hidden>GitHub repository for issues <input class="notranslate" translate="no" id="ask-repo" type="text" placeholder="owner/repo" autocomplete="off" spellcheck="false"></label>
+        <label class="ask-repo" id="ask-repo-row" for="ask-repo" hidden><span data-ask-text="repo">GitHub-Repository für Issues</span> <input class="notranslate" translate="no" id="ask-repo" type="text" placeholder="owner/repo" autocomplete="off" spellcheck="false"></label>
     </aside>
 </div>
 <div id="case-export" class="gate no-print" hidden>
@@ -1597,7 +1597,7 @@
 <script src="js/qa-review-scripts.js?v=20261031b"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
-<script src="js/qa-review-ask.js?v=20261023a"></script>
+<script src="js/qa-review-ask.js?v=20261023b"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
 <script src="js/qa-review.js?v=20261031b"></script>
 <script src="js/url-suggest.js?v=20261023b"></script>

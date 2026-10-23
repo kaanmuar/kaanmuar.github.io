@@ -152,6 +152,95 @@ test("a blurred preview is never answered", () => {
   assert.equal(result.intent, "closed");
 });
 
+const LANGS = ["en", "es", "pt", "de", "fr", "it"];
+const PAGES = { en: "qa-review.html", es: "qa-review-es.html", pt: "qa-review-pt.html", de: "qa-review-de.html", fr: "qa-review-fr.html", it: "qa-review-it.html" };
+
+function slots(value) {
+  return (String(value).match(/\{\w+\}/g) || []).sort().join(" ");
+}
+
+test("every panel key exists in all six languages, with the same placeholders, and none is left in English", () => {
+  const keys = Object.keys(ask.T.en);
+  LANGS.forEach((lang) => {
+    const book = ask.T[lang];
+    assert.ok(book, lang);
+    assert.deepEqual(Object.keys(book).sort(), keys.slice().sort(), lang);
+    keys.forEach((key) => {
+      if (typeof ask.T.en[key] === "object") {
+        assert.deepEqual(Object.keys(book[key]).sort(), Object.keys(ask.T.en[key]).sort(), lang + "." + key);
+        Object.keys(ask.T.en[key]).forEach((sub) => assert.ok(String(book[key][sub]).trim(), lang + "." + key + "." + sub));
+        return;
+      }
+      assert.ok(String(book[key]).trim(), lang + "." + key);
+      assert.equal(slots(book[key]), slots(ask.T.en[key]), lang + "." + key);
+      const cognate = lang === "fr" && (key === "pageOne" || key === "pageMany");
+      if (lang !== "en" && !cognate) assert.notEqual(book[key], ask.T.en[key], lang + "." + key + " is still English");
+    });
+  });
+});
+
+test("each review page carries the panel copy in its own language, marked so the page translator leaves it alone", () => {
+  const fs = require("fs");
+  const path = require("path");
+  LANGS.forEach((lang) => {
+    const html = fs.readFileSync(path.join(__dirname, "../..", PAGES[lang]), "utf8");
+    const book = ask.T[lang];
+    const panel = html.match(/<aside class="ask-panel[^>]*>[\s\S]*?<\/aside>/)[0];
+    const opener = html.match(/<button[^>]*id="ask-open"[^>]*>([^<]*)<\/button>/);
+    const mark = lang === "en" ? null : 'lang="' + lang + '" translate="no"';
+    assert.equal(opener[1], book.open, lang);
+    if (mark) {
+      assert.ok(opener[0].includes(mark), lang + " button");
+      assert.ok(panel.split(">")[0].includes(mark), lang + " panel");
+    } else {
+      assert.ok(!/translate="no"/.test(opener[0]) && !/translate="no"/.test(panel.split(">")[0]), "English stays translatable");
+    }
+    const shown = [...panel.matchAll(/data-ask-text="(\w+)">([^<]*)</g)].map((match) => [match[1], match[2].replace(/&amp;/g, "&").replace(/&quot;/g, "\"")]);
+    assert.deepEqual(shown.map(([key]) => key).sort(), ["close", "inputLabel", "note", "open", "repo", "send", "title"], lang);
+    shown.forEach(([key, value]) => assert.equal(value, book[key], lang + "." + key));
+    assert.ok(panel.includes('placeholder="' + book.placeholder.replace(/"/g, "&quot;") + '"'), lang + " placeholder");
+  });
+});
+
+test("every suggestion in every language is understood as the question it offers", () => {
+  const expected = ["why", "fix", "playwright", "export"];
+  const refs = ["F-01", "F-01", "SEC-02", "F-01"];
+  LANGS.forEach((lang) => {
+    const asks = ask.suggestions(report(), lang);
+    assert.equal(asks.length, 4, lang);
+    asks.forEach((question, index) => {
+      const result = ask.answer(report(), question, { lang });
+      assert.equal(result.intent, expected[index], lang + ": " + question);
+      assert.equal(result.ref, refs[index], lang + ": " + question);
+    });
+    ["why", "fix", "playwright", "export"].forEach((intent) => {
+      const picked = ask.answer(report(), { why: "why is this high?", fix: "show me the fix", playwright: "write a playwright test", export: "export to jira" }[intent], { lang });
+      picked.suggest.forEach((question) => assert.equal(ask.answer(report(), question, { lang }).intent, intent, lang + ": " + question));
+    });
+  });
+});
+
+test("answers keep code, ids and report data as they are, and write the fixed sentences in the page language", () => {
+  const es = ask.answer(report(), "Muéstrame la corrección de F-01 en GitHub Pages", { lang: "es" });
+  const en = ask.answer(report(), "Show me the fix for F-01 on GitHub Pages", { lang: "en" });
+  assert.equal(es.title, "Corrección de F-01 · HSTS is not sent");
+  assert.match(words(es), /Esta revisión vio el sitio servido desde GitHub Pages\./);
+  assert.match(words(es), /Corrección: Send Strict-Transport-Security/);
+  assert.deepEqual(es.parts.filter((part) => part.kind === "code"), en.parts.filter((part) => part.kind === "code"));
+  const de = ask.answer(report(), "Warum ist F-01 hoch?", { lang: "de" });
+  assert.match(words(de), /^Schlägt jetzt fehl, Schweregrad mittel im Bereich Security\./);
+  assert.match(words(de), /Der Schweregrad ist mittel, nicht hoch\./);
+  assert.match(words(de), /Er steht auf Platz 1 von \d+ Fehlern und Risiken, mit Priorität 61\.1\..*\(10 Seiten\).*\(Minuten\)/);
+  const fr = ask.answer(report(), "Écrivez le cas Playwright pour SEC-02", { lang: "fr" });
+  assert.equal(fr.title, "Cas Playwright pour SEC-02");
+  assert.deepEqual(fr.parts.find((part) => part.kind === "code"), ask.answer(report(), "Write the Playwright case for SEC-02").parts.find((part) => part.kind === "code"));
+  const it = ask.answer(report(), "Esporta F-01 come issue GitHub o Jira", { lang: "it" });
+  assert.equal(it.issue.body, ask.answer(report(), "Export F-01 as a GitHub issue").issue.body);
+  assert.match(words(ask.answer(report(), "Qual é o tempo hoje?", { lang: "pt" })), /^Respondo só a partir deste relatório/);
+  assert.match(words(ask.answer(report(), "Pourquoi F-99 ?", { lang: "fr" })), /^Ce rapport n’a pas de F-99\. Ses constats vont de F-01 à F-\d+\./);
+  assert.equal(ask.answer(report(), "why F-01", { lang: "ja" }).parts[0].text, ask.answer(report(), "why F-01").parts[0].text);
+});
+
 test("ask access needs the signed-in account that ran the report, on its device, and a paid or free report", async () => {
   const store = auth.memoryStore();
   const ana = await signedIn(store, "ana@example.com", DESKTOP);
