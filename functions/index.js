@@ -1883,9 +1883,16 @@ function ownerReplyTo(token) {
   return domain && token ? "reply+" + token + "@" + domain : REVIEW_ALERT_TO;
 }
 
+// Plain text of an HTML-only reply, for reading: no tag survives, and no angle bracket is decoded back.
 function htmlText(html) {
-  return String(html || "").replace(/<(br|\/p|\/div|\/tr)[^>]*>/gi, "\n").replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, "\"");
+  let text = String(html || "").replace(/<(br|\/p|\/div|\/tr)[^>]*>/gi, "\n");
+  let before;
+  do {
+    before = text;
+    text = text.replace(/<[^<>]*>/g, "");
+  } while (text !== before);
+  return text.replace(/[<>]/g, "").replace(/&nbsp;/g, " ").replace(/&(lt|gt);/g, "")
+    .replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, "\"").replace(/&amp;/g, "&");
 }
 
 async function applyReplyAction(action, row) {
