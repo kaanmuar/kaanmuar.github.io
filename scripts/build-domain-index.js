@@ -10,6 +10,11 @@
  * ordered by the Tranco rank of their domain, so google.com comes before
  * google.co.ao. Each shard holds the hosts whose key (host without a leading
  * www. or m.) starts with the same two characters, most popular first.
+ *
+ * Both lists change every month. .github/workflows/domain-index.yml reruns this
+ * on the 17th (cron 0 10 17 * *, after the CrUX release around the 10th) and
+ * pushes the shards to main. It refuses to write an index under 90% of the
+ * current one, so a truncated download never replaces a good list.
  */
 const fs = require("fs");
 const os = require("os");
@@ -22,6 +27,7 @@ const TRANCO_URL = "https://tranco-list.eu/top-1m.csv.zip";
 const OUT = path.join(__dirname, "..", "assets", "domains");
 const LIMIT = Number(process.argv[2]) || 100000;
 const TOP = 5000;
+const MIN_RATIO = 0.9;
 
 async function download(url) {
   const res = await fetch(url);
@@ -35,6 +41,12 @@ function keyOf(host) {
 
 function shardOf(key) {
   return key.slice(0, 2).replace(/\./g, "_");
+}
+
+function currentCount() {
+  if (!fs.existsSync(OUT)) return 0;
+  return fs.readdirSync(OUT).filter((name) => name !== "top.txt" && name.endsWith(".txt"))
+    .reduce((sum, name) => sum + fs.readFileSync(path.join(OUT, name), "utf8").split("\n").filter(Boolean).length, 0);
 }
 
 async function main() {
@@ -73,6 +85,11 @@ async function main() {
     return true;
   });
 
+  const before = currentCount();
+  if (hosts.length < before * MIN_RATIO) {
+    throw new Error("New index has " + hosts.length + " hosts, under " + MIN_RATIO * 100 + "% of the current " + before + "; kept the current one");
+  }
+
   const shards = new Map();
   hosts.forEach((host) => {
     const name = shardOf(keyOf(host));
@@ -84,7 +101,8 @@ async function main() {
   fs.mkdirSync(OUT, { recursive: true });
   shards.forEach((list, name) => fs.writeFileSync(path.join(OUT, name + ".txt"), list.join("\n") + "\n"));
   fs.writeFileSync(path.join(OUT, "top.txt"), hosts.slice(0, TOP).join("\n") + "\n");
-  console.log(hosts.length + " hosts in " + shards.size + " shards, top " + TOP + " in top.txt");
+  console.log(hosts.length + " hosts in " + shards.size + " shards, top " + TOP + " in top.txt (was " + before + ")");
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, "hosts=" + hosts.length + "\nbefore=" + before + "\n");
 }
 
 main().catch((error) => {

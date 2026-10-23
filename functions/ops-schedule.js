@@ -28,10 +28,11 @@ const JOBS = [
   { job: "remindOwnerReplies", cron: "0 9 * * 1-6", gap: 50, what: "List owner replies still waiting for a decision (replies themselves arrive live on ownerReplies)" },
   { job: "sendReviewNotes", cron: "0 10 * * 1-6", gap: 50, what: "Follow-up notes to askers (REVIEW_NOTES_LIVE=1)" },
   { job: "sendOwnerNotices", cron: "0 11 * * 1-6", gap: 50, what: "Owner notices for sites now on Live Reports (OWNER_NOTICES_LIVE=1)" },
-  // GitHub Actions crons are UTC, as written in .github/workflows (03:23, 11:07 and 04:00 Bogotá).
+  // GitHub Actions crons are UTC, as written in .github/workflows (03:23, 11:07, 04:00 and 05:00 Bogotá).
   { job: "auto-live-reports.yml", host: "github", cron: "23 8 * * *", gap: 26, what: "Publish yesterday's reviews as Live Reports and social posts" },
   { job: "facebook-page.yml", host: "github", cron: "7 16 * * *", gap: 26, what: "Schedule the Facebook queue" },
-  { job: "sweep-seeds.yml", host: "github", cron: "0 9 16 * *", gap: 32 * 24, what: "Rebuild the country-sweep seeds from the CrUX top lists" }
+  { job: "sweep-seeds.yml", host: "github", cron: "0 9 16 * *", gap: 32 * 24, what: "Rebuild the country-sweep seeds from the CrUX top lists" },
+  { job: "domain-index.yml", host: "github", cron: "0 10 17 * *", gap: 32 * 24, what: "Rebuild the URL Review host suggestions from the CrUX and Tranco lists" }
 ];
 
 // The quotas the schedule is sized to. Change a number here and in the env, not in the job.
