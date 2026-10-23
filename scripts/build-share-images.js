@@ -11,6 +11,7 @@
 
 const fs = require("fs");
 const path = require("path");
+require("./playwright-sandbox");
 const { chromium } = require("playwright");
 
 const ROOT = path.resolve(__dirname, "..");
