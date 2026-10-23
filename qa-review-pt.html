@@ -834,6 +834,69 @@
         .dash-overlay.is-sample #share-link, .dash-overlay.is-sample #tool-block, .dash-overlay.is-sample #alarm-open,
         .dash-overlay.is-sample #credential-run { display: none !important; }
         .gate-card { width: min(720px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+        #gate { --glass-edge: color-mix(in srgb, var(--text) 14%, transparent); align-items: center; perspective: 1400px; interpolate-size: allow-keywords;
+            background: radial-gradient(55% 45% at 12% 8%, color-mix(in srgb, var(--cyan) 26%, transparent), transparent 70%),
+                radial-gradient(45% 40% at 92% 96%, color-mix(in srgb, var(--amber) 16%, transparent), transparent 70%),
+                color-mix(in srgb, var(--bg) 52%, transparent);
+            backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); }
+        #gate .gate-card { width: min(640px, 100%); max-height: min(900px, calc(100dvh - 48px)); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 22px 22px 0; border-radius: 22px; border: 1px solid var(--glass-edge);
+            background: linear-gradient(160deg, color-mix(in srgb, var(--card) 80%, transparent), color-mix(in srgb, var(--card) 60%, transparent));
+            box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .12);
+            backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);
+            transform-origin: 50% 0; animation: gate-in .7s cubic-bezier(.2, .8, .2, 1) both; }
+        #gate.is-leaving .gate-card { animation: gate-out .34s cubic-bezier(.4, 0, 1, 1) both; }
+        #gate.is-leaving { transition: opacity .34s; opacity: 0; }
+        @keyframes gate-in { from { opacity: 0; transform: rotateX(14deg) translateY(40px) scale(.96); } }
+        @keyframes gate-out { to { opacity: 0; transform: rotateX(-10deg) translateY(-24px) scale(.97); } }
+        #gate .gate-tagline { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.45; }
+        #gate .sample-line { font-size: 12.5px; margin-bottom: 8px; }
+        #gate .sample-line .btn { padding: 6px 12px; border-radius: 999px; font-size: 12.5px; }
+        #gate .check input { accent-color: var(--cyan); }
+        #gate .check-all { margin: 14px 0 0; padding: 12px 14px; align-items: center; border-radius: 14px; font-weight: 650; cursor: pointer;
+            border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--cyan) 22%, transparent), color-mix(in srgb, var(--cyan) 6%, transparent)); }
+        #gate .check-all input { margin-top: 0; width: 18px; height: 18px; }
+        .term-groups { display: grid; gap: 10px; margin: 10px 0 0; perspective: 1000px; }
+        .term-group { border-radius: 16px; border: 1px solid var(--glass-edge); background: color-mix(in srgb, var(--panel) 55%, transparent);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); transform-origin: 50% 0;
+            transition: transform .35s cubic-bezier(.2, .8, .2, 1), border-color .25s, background .25s, box-shadow .35s;
+            animation: tg-in .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 70ms + 220ms); }
+        .term-group:hover { transform: translateY(-2px) rotateX(2deg); box-shadow: 0 14px 30px -18px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .08); }
+        .term-group[open] { transform: none; background: color-mix(in srgb, var(--panel) 78%, transparent); border-color: color-mix(in srgb, var(--cyan) 45%, transparent); }
+        .term-group.done { border-color: color-mix(in srgb, var(--green) 55%, transparent); }
+        .term-group::details-content { block-size: 0; overflow: hidden; transition: block-size .42s cubic-bezier(.2, .8, .2, 1), content-visibility .42s allow-discrete; }
+        .term-group[open]::details-content { block-size: auto; }
+        @keyframes tg-in { from { opacity: 0; transform: rotateX(-24deg) translateY(16px); } }
+        .term-group summary { list-style: none; display: grid; grid-template-columns: 36px 1fr auto 14px; gap: 12px; align-items: center; padding: 12px 14px; cursor: pointer; border-radius: 16px; }
+        .term-group summary::-webkit-details-marker { display: none; }
+        .term-group summary::after { content: ""; width: 7px; height: 7px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-2px, -2px); transition: transform .3s; }
+        .term-group[open] summary::after { transform: rotate(-135deg); }
+        .term-group summary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tg-icon { width: 36px; height: 36px; padding: 8px; border-radius: 11px; fill: none; stroke: var(--cyan); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+            background: linear-gradient(145deg, color-mix(in srgb, var(--cyan) 24%, transparent), color-mix(in srgb, var(--cyan) 6%, transparent)); }
+        .term-group.done .tg-icon { stroke: var(--green); background: color-mix(in srgb, var(--green) 16%, transparent); }
+        .tg-text { display: grid; gap: 2px; min-width: 0; }
+        .tg-title { font-size: 14.5px; font-weight: 650; }
+        .tg-gist { font-size: 13px; line-height: 1.4; color: var(--muted); }
+        .tg-count { font: 600 11.5px "Fira Code", ui-monospace, monospace; padding: 3px 8px; border-radius: 999px; color: var(--muted); border: 1px solid var(--glass-edge); }
+        .term-group.done .tg-count { color: var(--green); border-color: color-mix(in srgb, var(--green) 50%, transparent); }
+        .tg-body { padding: 2px 16px 14px 62px; transform-origin: 50% 0; }
+        .term-group[open] .tg-body { animation: tg-open .45s cubic-bezier(.2, .8, .2, 1) both; }
+        @keyframes tg-open { from { opacity: 0; transform: rotateX(-10deg) translateY(-6px); } }
+        .tg-body .lede { font-size: 13.5px; margin: 0 0 8px; }
+        .tg-body .check { font-size: 13.5px; margin: 8px 0; }
+        #gate #records-note { font-size: 11.5px; color: var(--muted); margin: 10px 0 0; }
+        .gate-foot { position: sticky; bottom: 0; display: grid; gap: 10px; margin: 14px -22px 0; padding: 12px 22px 18px; border-top: 1px solid var(--glass-edge);
+            background: color-mix(in srgb, var(--card) 86%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+        .gate-progress { height: 4px; border-radius: 999px; background: var(--glass-edge); overflow: hidden; }
+        .gate-progress span { display: block; height: 100%; width: calc(var(--progress, 0) * 100%); border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--green)); transition: width .4s cubic-bezier(.2, .8, .2, 1); }
+        #gate .gate-foot .records-note { font-size: 12px; line-height: 1.45; color: var(--muted); margin: 0; }
+        #gate #accept { width: 100%; min-height: 46px; font-size: 15px; border-radius: 12px; }
+        @media (prefers-reduced-motion: reduce) {
+            #gate .gate-card, .term-group, .term-group[open] .tg-body, #gate.is-leaving .gate-card { animation: none; }
+            .term-group, .term-group::details-content, .gate-progress span { transition: none; }
+            .term-group:hover { transform: none; }
+        }
         .gate-waiting { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--cyan); background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--text); font-weight: 600; }
         .check { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 14px; line-height: 1.45; }
         .check[hidden] { display: none; }
@@ -880,6 +943,12 @@
             .lang-menu { width: min(220px, calc(100vw - 24px)); }
             .gate { padding: 12px 12px 176px; }
             .gate-card { padding: 16px; }
+            #gate { align-items: flex-start; }
+            #gate .gate-card { max-height: none; overflow: visible; padding: 18px 16px 0; border-radius: 18px; }
+            .gate-foot { position: static; margin: 14px -16px 0; padding: 12px 16px 16px; border-radius: 0 0 18px 18px; }
+            .term-group summary { grid-template-columns: 32px 1fr auto 12px; gap: 10px; padding: 12px; }
+            .tg-icon { width: 32px; height: 32px; padding: 7px; }
+            .tg-body { padding: 2px 12px 12px; }
             .gate .btn { min-height: 44px; }
             .check { font-size: 15px; }
             .check input { width: 18px; height: 18px; flex: none; }
@@ -961,24 +1030,50 @@
                 <div class="lang-menu" id="langMenuGate"></div>
             </div>
         </div>
-        <p class="lede" lang="pt" translate="no">Todos os controles desta página ficam desativados até você aceitar. Para fazer uma revisão, você entra neste dispositivo com seu e-mail ou com uma conta que já tem (Google, Microsoft, GitHub, Yahoo ou X). A revisão busca páginas públicas, abre até três delas em um navegador headless a partir de um endereço da UE na Bélgica e propõe casos de teste. Nesse navegador, ela clica uma vez no botão de recusar do banner de cookies e em nada mais. O Google PageSpeed Insights pontua a página inicial e o Google Web Risk a confere nas listas do Navegação segura, então o Google recebe esse endereço, e o registro do domínio é consultado via RDAP. Ela não executa os casos, não faz login no seu site, não envia formulários nem gera carga. O seletor de idioma está nesta tela.</p>
+        <p class="gate-tagline" lang="pt" translate="no">Dez termos em quatro cartões, cada um resumido em uma linha. Abra um cartão para ver o texto completo ou selecione tudo para começar.</p>
         <p class="sample-line" lang="pt" translate="no"><button class="btn btn-ghost" id="sample-open" type="button">Ver um relatório de exemplo</button> É a revisão deste próprio site, desfocada como um relatório não pago. Abrir não envia nada. Primeira vez aqui? <a id="guide-open" href="qa-review-guide.html">Faça o tour de cinco minutos</a>.</p>
         <p class="sample-line live-gate-line"><button class="btn btn-ghost" id="live-open-gate" type="button">Explore live reports</button> <span id="live-gate-copy">Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.</span></p>
         <form id="terms-form">
-            <p class="records-note" lang="pt" translate="no"><b>Avisos legais.</b> Leia antes de marcar uma caixa. <a id="legal-origin" href="qa-review-legal.html">Avisos locais e nacionais, para a Colômbia, onde este serviço é operado</a>. <a id="legal-site" href="qa-review-legal.html">Avisos internacionais, para o país do site que você enviar</a>.</p>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" id="terms-all"> Selecionar tudo</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t1"> Tenho pelo menos 18 anos. Se eu não aceitar estes avisos, não posso inserir uma URL.</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t2"> Este serviço vai buscar páginas públicas, descrever o que encontrar e propor casos de teste. Ele não vai executar esses casos.</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t3"> Vou enviar um endereço https público. Não vou enviar um endereço privado, link-local ou de metadados.</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t4"> O relatório é um retrato e uma proposta. Não é uma certificação de que o site é seguro, rápido ou está em conformidade.</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t5"> Informo meu nome, e-mail e motivo para que haja registro de quem pediu. Posso pedir uma cópia ou a exclusão em qa@carlosandmunoz.com.</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t6"> As pontuações e os achados das páginas públicas podem ser publicados como um Live Report neste site, no seu repositório público no GitHub e no llms-full.txt, e no LinkedIn, Facebook, Instagram, X, Threads, Bluesky, Mastodon, TikTok e YouTube como imagens e clipes narrados, sem meu nome, e-mail ou motivo, a menos que eu marque “Não publicar esta revisão” no pedido. Sites sinalizados pelo Navegação segura e execuções de teste nunca são publicados. O dono de um site pode pedir a este serviço que pare, que exclua o relatório e que retire o Live Report. A retirada interrompe publicações futuras e remove o Live Report; publicações já feitas são excluídas a pedido, onde a rede permitir. Não vou usar um relatório compartilhado para republicar o conteúdo do site.</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t7"> A primeira revisão incluída tem 20 páginas e 2 links de profundidade. Uma revisão mais ampla ou mais profunda, e cada execução posterior, pede pagamento antes de começar, a menos que a conta tenha uma cota gratuita ou de teste, um cupom ou um passe concedido pelo operador. O valor aparece nesse momento, na página de pagamento. Outro nome ou outro e-mail não evita essa cobrança. Revisões interrompidas ficam guardadas. Três interrupções em um dia pausam novas revisões.</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t8"> O relatório é mostrado uma vez, e as execuções com login aparecem na página da minha conta. Ver, baixar, imprimir ou compartilhar de novo pede pagamento, a menos que a conta tenha uma cota gratuita ou de teste, um cupom ou um passe concedido pelo operador. O valor aparece então. O início de cada caso proposto continua legível. O resto do caso continua desfocado até esse pagamento ser confirmado. Uma cópia desfocada das pontuações e dos achados vai para o meu e-mail quando a revisão termina.</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t9"> Se eu disser que tenho usuário e senha, estou autorizado a usar esse login no site que envio. Esta página não pede a senha. Uma execução com login é paga antes de começar, e a senha não é guardada no registro da revisão. A análise pública continua sem fazer login no site. Os sinais do relatório são o que a resposta pública mostrou. Não são prova de uma invasão. O final de cada sinal continua desfocado até essa seção ser paga.</label>
-            <label class="check" lang="pt" translate="no"><input type="checkbox" name="t10"> Peço que o serviço comece durante qualquer prazo de arrependimento. Reconheço que um consumidor na União Europeia, pela Diretiva 2011/83/UE, artigo 16, e um consumidor no Reino Unido, pelas Consumer Contracts Regulations 2013, regulamento 36(2), perde o direito de arrependimento só quando o serviço tiver sido totalmente prestado. Não renuncio a um direito de arrependimento que essas regras mantenham.</label>
-            <p class="records-note" id="records-note" lang="pt" translate="no">Os registros guardam seu nome, e-mail, motivo, URL, frameworks escolhidos, o log da revisão, se você interrompeu, horário, endereço IP, navegador, id do dispositivo e idioma, e o país, a região e a cidade quando o servidor os informa. Os registros de revisão ficam guardados por 12 meses a partir da execução; os logs de revisões com falha ou interrompidas, e suas novas execuções, por 90 dias. Abrir uma página de revisão registra o endereço IP, o navegador, a cidade aproximada, o fuso horário, os idiomas e o site de origem, para contar visitas; essas linhas, as notas, os links de parada e os e-mails ficam guardados por 12 meses. O texto da página não é enviado a um fornecedor de modelos. Nenhuma senha é pedida nem guardada. Um link compartilhado contém só o relatório, e abri-lo de novo pede pagamento. As notas de acompanhamento só chegam se você pedir na solicitação: no máximo três por semana, e responder “stop” as encerra a qualquer momento. As pontuações e os achados das páginas públicas podem ser publicados como um Live Report, no GitHub e nas redes sociais, a menos que você marque “Não publicar esta revisão”; seu nome, e-mail, motivo, endereço IP e navegador nunca são publicados. Se uma revisão falhar por causa deste serviço, o nome do host, o horário, o erro e as últimas linhas do log, sem seu nome, e-mail ou a query da URL, são publicados em uma issue pública no GitHub. Entrar guarda seu e-mail, como você entrou, o id de usuário do provedor e o horário do primeiro e do último login; um login neste dispositivo dura 30 dias. Um login com provedor também guarda o nome, nome e sobrenome, foto, idioma e domínio do Workspace que ele compartilha. Um login com o Google também guarda os outros e-mails, a data de nascimento, os telefones, os endereços, o gênero e os dados profissionais que o Google compartilha; eles ficam guardados para um futuro plano pago e ainda não são usados. A conta fica guardada por 12 meses após o último login. Entrar com e-mail compartilha só o seu endereço. Cópias, correções e exclusão: qa@carlosandmunoz.com. A lista completa está nos avisos legais. Versão 2026-10-22.</p>
-            <button class="btn btn-primary" id="accept" type="submit" disabled lang="pt" translate="no">Aceitar e continuar</button>
+            <label class="check check-all" lang="pt" translate="no"><input type="checkbox" id="terms-all"> Selecionar tudo</label>
+            <div class="term-groups">
+                <details class="term-group" style="--i: 0">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span class="tg-text"><b class="tg-title" data-tg="review" lang="pt" translate="no">O que a revisão faz</b><span class="tg-gist" data-tg="review" lang="pt" translate="no">Só páginas públicas. Ela propõe casos de teste e nunca os executa.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <p class="lede" lang="pt" translate="no">Todos os controles desta página ficam desativados até você aceitar. Para fazer uma revisão, você entra neste dispositivo com seu e-mail ou com uma conta que já tem (Google, Microsoft, GitHub, Yahoo ou X). A revisão busca páginas públicas, abre até três delas em um navegador headless a partir de um endereço da UE na Bélgica e propõe casos de teste. Nesse navegador, ela clica uma vez no botão de recusar do banner de cookies e em nada mais. O Google PageSpeed Insights pontua a página inicial e o Google Web Risk a confere nas listas do Navegação segura, então o Google recebe esse endereço, e o registro do domínio é consultado via RDAP. Ela não executa os casos, não faz login no seu site, não envia formulários nem gera carga. O seletor de idioma está nesta tela.</p>
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t2"> Este serviço vai buscar páginas públicas, descrever o que encontrar e propor casos de teste. Ele não vai executar esses casos.</label>
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t3"> Vou enviar um endereço https público. Não vou enviar um endereço privado, link-local ou de metadados.</label>
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t4"> O relatório é um retrato e uma proposta. Não é uma certificação de que o site é seguro, rápido ou está em conformidade.</label>
+                    </div>
+                </details>
+                <details class="term-group" style="--i: 1">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span class="tg-text"><b class="tg-title" data-tg="you" lang="pt" translate="no">Você e seus dados</b><span class="tg-gist" data-tg="you" lang="pt" translate="no">Você tem 18 anos ou mais. Fica um registro de quem pediu, e você pode pedir que seja apagado.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t1"> Tenho pelo menos 18 anos. Se eu não aceitar estes avisos, não posso inserir uma URL.</label>
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t5"> Informo meu nome, e-mail e motivo para que haja registro de quem pediu. Posso pedir uma cópia ou a exclusão em qa@carlosandmunoz.com.</label>
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t9"> Se eu disser que tenho usuário e senha, estou autorizado a usar esse login no site que envio. Esta página não pede a senha. Uma execução com login é paga antes de começar, e a senha não é guardada no registro da revisão. A análise pública continua sem fazer login no site. Os sinais do relatório são o que a resposta pública mostrou. Não são prova de uma invasão. O final de cada sinal continua desfocado até essa seção ser paga.</label>
+                        <p class="records-note" id="records-note" lang="pt" translate="no">Os registros guardam seu nome, e-mail, motivo, URL, frameworks escolhidos, o log da revisão, se você interrompeu, horário, endereço IP, navegador, id do dispositivo e idioma, e o país, a região e a cidade quando o servidor os informa. Os registros de revisão ficam guardados por 12 meses a partir da execução; os logs de revisões com falha ou interrompidas, e suas novas execuções, por 90 dias. Abrir uma página de revisão registra o endereço IP, o navegador, a cidade aproximada, o fuso horário, os idiomas e o site de origem, para contar visitas; essas linhas, as notas, os links de parada e os e-mails ficam guardados por 12 meses. O texto da página não é enviado a um fornecedor de modelos. Nenhuma senha é pedida nem guardada. Um link compartilhado contém só o relatório, e abri-lo de novo pede pagamento. As notas de acompanhamento só chegam se você pedir na solicitação: no máximo três por semana, e responder “stop” as encerra a qualquer momento. As pontuações e os achados das páginas públicas podem ser publicados como um Live Report, no GitHub e nas redes sociais, a menos que você marque “Não publicar esta revisão”; seu nome, e-mail, motivo, endereço IP e navegador nunca são publicados. Se uma revisão falhar por causa deste serviço, o nome do host, o horário, o erro e as últimas linhas do log, sem seu nome, e-mail ou a query da URL, são publicados em uma issue pública no GitHub. Entrar guarda seu e-mail, como você entrou, o id de usuário do provedor e o horário do primeiro e do último login; um login neste dispositivo dura 30 dias. Um login com provedor também guarda o nome, nome e sobrenome, foto, idioma e domínio do Workspace que ele compartilha. Um login com o Google também guarda os outros e-mails, a data de nascimento, os telefones, os endereços, o gênero e os dados profissionais que o Google compartilha; eles ficam guardados para um futuro plano pago e ainda não são usados. A conta fica guardada por 12 meses após o último login. Entrar com e-mail compartilha só o seu endereço. Cópias, correções e exclusão: qa@carlosandmunoz.com. A lista completa está nos avisos legais. Versão 2026-10-22.</p>
+                    </div>
+                </details>
+                <details class="term-group" style="--i: 2">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16"/></svg><span class="tg-text"><b class="tg-title" data-tg="publish" lang="pt" translate="no">Live Reports</b><span class="tg-gist" data-tg="publish" lang="pt" translate="no">Pontuações e achados podem ser publicados, nunca com seu nome. Você pode recusar na solicitação.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t6"> As pontuações e os achados das páginas públicas podem ser publicados como um Live Report neste site, no seu repositório público no GitHub e no llms-full.txt, e no LinkedIn, Facebook, Instagram, X, Threads, Bluesky, Mastodon, TikTok e YouTube como imagens e clipes narrados, sem meu nome, e-mail ou motivo, a menos que eu marque “Não publicar esta revisão” no pedido. Sites sinalizados pelo Navegação segura e execuções de teste nunca são publicados. O dono de um site pode pedir a este serviço que pare, que exclua o relatório e que retire o Live Report. A retirada interrompe publicações futuras e remove o Live Report; publicações já feitas são excluídas a pedido, onde a rede permitir. Não vou usar um relatório compartilhado para republicar o conteúdo do site.</label>
+                    </div>
+                </details>
+                <details class="term-group" style="--i: 3">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg><span class="tg-text"><b class="tg-title" data-tg="pay" lang="pt" translate="no">Pagamento e seus direitos</b><span class="tg-gist" data-tg="pay" lang="pt" translate="no">A primeira revisão está incluída; o resto é pago antes de começar. Você não renuncia aos direitos de arrependimento que a lei mantém.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t7"> A primeira revisão incluída tem 20 páginas e 2 links de profundidade. Uma revisão mais ampla ou mais profunda, e cada execução posterior, pede pagamento antes de começar, a menos que a conta tenha uma cota gratuita ou de teste, um cupom ou um passe concedido pelo operador. O valor aparece nesse momento, na página de pagamento. Outro nome ou outro e-mail não evita essa cobrança. Revisões interrompidas ficam guardadas. Três interrupções em um dia pausam novas revisões.</label>
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t8"> O relatório é mostrado uma vez, e as execuções com login aparecem na página da minha conta. Ver, baixar, imprimir ou compartilhar de novo pede pagamento, a menos que a conta tenha uma cota gratuita ou de teste, um cupom ou um passe concedido pelo operador. O valor aparece então. O início de cada caso proposto continua legível. O resto do caso continua desfocado até esse pagamento ser confirmado. Uma cópia desfocada das pontuações e dos achados vai para o meu e-mail quando a revisão termina.</label>
+                        <label class="check" lang="pt" translate="no"><input type="checkbox" name="t10"> Peço que o serviço comece durante qualquer prazo de arrependimento. Reconheço que um consumidor na União Europeia, pela Diretiva 2011/83/UE, artigo 16, e um consumidor no Reino Unido, pelas Consumer Contracts Regulations 2013, regulamento 36(2), perde o direito de arrependimento só quando o serviço tiver sido totalmente prestado. Não renuncio a um direito de arrependimento que essas regras mantenham.</label>
+                    </div>
+                </details>
+            </div>
+            <div class="gate-foot">
+                <div class="gate-progress" aria-hidden="true"><span></span></div>
+                <p class="records-note" lang="pt" translate="no"><b>Avisos legais.</b> Leia antes de marcar uma caixa. <a id="legal-origin" href="qa-review-legal.html">Avisos locais e nacionais, para a Colômbia, onde este serviço é operado</a>. <a id="legal-site" href="qa-review-legal.html">Avisos internacionais, para o país do site que você enviar</a>.</p>
+                <button class="btn btn-primary" id="accept" type="submit" disabled lang="pt" translate="no">Aceitar e continuar</button>
+            </div>
         </form>
     </div>
 </div>
@@ -1377,7 +1472,7 @@
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261029d"></script>
+<script src="js/qa-review.js?v=20261029e"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
 </html>

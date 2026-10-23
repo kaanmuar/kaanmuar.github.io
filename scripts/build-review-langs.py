@@ -134,10 +134,14 @@ def gate(s, code):
     a = s.index('<div id="gate" class="gate">')
     b = s.index("</form>", a)
     part = s[a:b]
+    part = retag(part, '<p class="gate-tagline">', "</p>", g["tagline"], code)
+    for key, (title, gist) in g["cards"].items():
+        part = retag(part, f'<b class="tg-title" data-tg="{key}">', "</b>", title, code)
+        part = retag(part, f'<span class="tg-gist" data-tg="{key}">', "</span>", gist, code)
     part = retag(part, '<p class="lede">', "</p>", g["lede"], code)
     part = retag(part, '<p class="sample-line">', "</p>", SAMPLE.format(**g["sample"]), code)
     part = retag(part, '<p class="records-note">', "</p>", g["legal"]["lead"] + " " + GATE_LINKS.format(**g["legal"]), code)
-    part = retag(part, '<label class="check"><input type="checkbox" id="terms-all">', "</label>", " " + g["all"], code)
+    part = retag(part, '<label class="check check-all"><input type="checkbox" id="terms-all">', "</label>", " " + g["all"], code)
     for n in range(1, 11):
         part = retag(part, f'<label class="check"><input type="checkbox" name="t{n}">', "</label>", " " + g[f"t{n}"], code)
     part = retag(part, '<p class="records-note" id="records-note">', "</p>", g["records"], code)

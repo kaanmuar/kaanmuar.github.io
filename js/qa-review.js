@@ -109,6 +109,7 @@
 
   function unlock() {
     gate.hidden = true;
+    gate.classList.remove("is-leaving");
     app.inert = false;
     document.querySelectorAll("[data-gated]").forEach((el) => { el.inert = false; });
     fields().forEach((el) => { el.disabled = false; });
@@ -166,17 +167,31 @@
   protectNames(document.body);
   const termsAll = document.getElementById("terms-all");
   const termBoxes = () => [...termsForm.querySelectorAll('input[type="checkbox"][name^="t"]')];
+  function paintTermGroups() {
+    termsForm.querySelectorAll(".term-group").forEach((group) => {
+      const boxes = [...group.querySelectorAll('input[type="checkbox"][name^="t"]')];
+      const done = boxes.filter((box) => box.checked).length;
+      group.classList.toggle("done", done === boxes.length);
+      group.querySelector(".tg-count").textContent = done + "/" + boxes.length;
+    });
+    const boxes = termBoxes();
+    termsForm.style.setProperty("--progress", boxes.length ? boxes.filter((box) => box.checked).length / boxes.length : 0);
+  }
   termsForm.addEventListener("change", (event) => {
     const boxes = termBoxes();
     if (termsAll && event.target === termsAll) boxes.forEach((box) => { box.checked = termsAll.checked; });
     else if (termsAll) termsAll.checked = boxes.length > 0 && boxes.every((box) => box.checked);
     accept.disabled = boxes.some((box) => !box.checked);
+    paintTermGroups();
   });
+  paintTermGroups();
   termsForm.addEventListener("submit", (event) => {
     event.preventDefault();
     if (accept.disabled) return;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_terms", "URL Review", "accepted");
-    unlock();
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { unlock(); return; }
+    gate.classList.add("is-leaving");
+    setTimeout(unlock, 340);
   });
   if (sessionStorage.getItem(TERMS_KEY) === TERMS_VERSION) unlock();
 
