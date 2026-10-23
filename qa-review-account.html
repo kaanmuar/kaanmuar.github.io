@@ -177,6 +177,7 @@
       transform: rotateX(var(--rx)) rotateY(var(--ry)); transform-style: preserve-3d;
       transition: transform .45s var(--ease), box-shadow .45s var(--ease), border-color .3s;
       animation: run-in .7s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms + 120ms); }
+    .settled .run { animation: none; }
     .run::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s;
       background: radial-gradient(260px circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, .16), transparent 60%); }
     .run:hover { border-color: color-mix(in srgb, var(--cyan) 45%, transparent); box-shadow: 0 30px 50px -28px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .14); }
@@ -196,6 +197,29 @@
     .layer { color: var(--muted); font-weight: 600; }
     .run .btn { margin-top: auto; align-self: flex-start; }
     .veil { display: inline-block; max-width: 46%; overflow: hidden; white-space: nowrap; vertical-align: bottom; filter: blur(5px); user-select: none; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
+    .check-all, .pick { display: inline-flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; text-transform: none; letter-spacing: 0; }
+    .check-all { min-height: 46px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 60%, transparent); font-size: 14px; font-weight: 600; color: var(--text); }
+    .check-all input, .pick input { width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: var(--cyan); cursor: pointer; box-shadow: none; }
+    .search { position: relative; flex: 1 1 260px; }
+    .search svg { position: absolute; left: 14px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+    .search input { padding-left: 42px; }
+    .result-count { font: 500 12px "Fira Code", ui-monospace, monospace; color: var(--muted); }
+    .run.picked { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 24px 44px -28px var(--cyan); }
+    .run-head { flex-wrap: wrap; }
+    .run-title { flex: 1 1 auto; display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+    .run-title h3 { overflow-wrap: break-word; }
+    .pick { margin-top: 5px; flex: none; }
+    .bulk { position: sticky; bottom: 16px; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; margin-top: 18px; padding: 12px 14px 12px 18px; border-radius: 20px;
+      border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--edge)); background: color-mix(in srgb, var(--card) 82%, transparent);
+      box-shadow: 0 28px 60px -26px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .14);
+      backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); animation: bulk-in .45s var(--ease) both; }
+    .bulk-count { font-weight: 700; }
+    .bulk-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .bulk-actions .btn { min-height: 38px; padding: 8px 14px; font-size: 13px; }
+    #bulk-status { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
+    #bulk-status:empty { display: none; }
+    #bulk-status.bad { color: var(--red); }
     .empty { grid-column: 1 / -1; margin: 0; padding: 28px; border-radius: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--edge); }
 
     .data-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; }
@@ -223,6 +247,7 @@
     @keyframes panel-in { from { opacity: 0; transform: perspective(1200px) rotateX(14deg) translateY(40px) scale(.97); } }
     @keyframes run-in { from { opacity: 0; transform: rotateX(-22deg) translateY(18px); } }
     @keyframes rig-yaw { 0%, 100% { transform: rotateX(12deg) rotateY(-20deg); } 50% { transform: rotateX(8deg) rotateY(-6deg); } }
+    @keyframes bulk-in { from { opacity: 0; transform: perspective(900px) rotateX(-18deg) translateY(16px); } }
     @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
 
     @media (max-width: 860px) {
@@ -239,6 +264,8 @@
       h2 { font-size: 1.7rem; }
       .sign-in-row { flex-direction: column; }
       .sign-in-provider { flex: 1 1 100%; }
+      .bulk { bottom: 10px; padding: 12px; }
+      .bulk-actions .btn { flex: 1 1 calc(50% - 8px); }
       .cookie-note { left: 10px; right: 10px; bottom: 10px; padding: 12px; }
       .cookie-actions button { flex: 1; min-height: 40px; }
     }
@@ -328,7 +355,26 @@
       <h2>Saved reviews</h2>
     </div>
     <p id="file-status"></p>
+    <div class="toolbar">
+      <label class="check-all"><input type="checkbox" id="select-all"><span>Select all</span></label>
+      <div class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="Search by site, URL, status or case" aria-label="Search saved reviews" autocomplete="off" spellcheck="false">
+      </div>
+      <span class="result-count" id="result-count" aria-live="polite"></span>
+    </div>
     <div id="list"></div>
+    <div class="bulk" id="bulk" role="region" aria-label="Actions on the selected reviews" hidden>
+      <span class="bulk-count" id="bulk-count"></span>
+      <div class="bulk-actions">
+        <button class="btn btn-ghost" id="bulk-open" type="button">Open in new tabs</button>
+        <button class="btn btn-ghost" id="bulk-download" type="button">Download JSON</button>
+        <button class="btn" id="bulk-unlock" type="button">Unlock</button>
+        <button class="btn btn-danger" id="bulk-delete" type="button">Delete</button>
+        <button class="text-link" id="bulk-clear" type="button">Clear</button>
+      </div>
+    </div>
+    <p id="bulk-status" role="status"></p>
     <div class="panel-foot">
       <button class="btn btn-ghost" id="stop" type="button">Stop follow-up notes</button>
     </div>
@@ -395,6 +441,12 @@
   tilt(document.getElementById("stage"), 18);
   const fileEl = document.getElementById("file");
   const listEl = document.getElementById("list");
+  const searchEl = document.getElementById("search");
+  const selectAllEl = document.getElementById("select-all");
+  const bulkEl = document.getElementById("bulk");
+  const bulkStatus = document.getElementById("bulk-status");
+  const picked = new Set();
+  let runs = [];
   function text(value) { return value == null || value === "" ? "—" : String(value); }
   function node(tag, content, className) {
     const el = document.createElement(tag);
@@ -437,6 +489,16 @@
     privacyStatus.textContent = message;
     privacyStatus.classList.toggle("bad", !!bad);
   }
+  function save(data, prefix) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = prefix + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
   async function failure(response, fallback) {
     try { return (await response.json()).error || fallback; } catch (error) { return fallback; }
   }
@@ -451,14 +513,7 @@
         sayPrivacy(await failure(response, "Your data did not download. Try again in a moment."), true);
         return;
       }
-      const blob = new Blob([JSON.stringify(await response.json(), null, 2)], { type: "application/json" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "qa-review-data-" + new Date().toISOString().slice(0, 10) + ".json";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      save(await response.json(), "qa-review-data-");
       sayPrivacy("Your data is downloaded.");
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_export", "URL Review", "export");
     } catch (error) {
@@ -505,58 +560,232 @@
     fileEl.hidden = false;
     privacyEl.hidden = false;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_enter", "URL Review", "open");
-    const opened = (data.runs || []).filter((run) => run.open).length;
+    runs = data.runs || [];
+    picked.clear();
+    const opened = runs.filter((run) => run.open).length;
     document.getElementById("file-status").textContent = data.free ? "Your account opens every report."
       : data.pass ? "A 30-day pass is open on this account until " + new Date(data.paidUntil).toLocaleString() + ". Every report is open."
         : opened ? "Paid reports are open. For the others, the opening of each shows, and the rest opens when that report is paid."
           : "The opening of each review shows. The rest opens when that report is paid.";
-    listEl.replaceChildren();
-    (data.runs || []).forEach((run, index) => {
-      const block = document.createElement("article");
-      block.className = "run";
-      block.style.setProperty("--i", Math.min(index, 8));
-      const head = document.createElement("div");
-      head.className = "run-head";
-      head.appendChild(node("h3", run.host || "Review"));
-      head.appendChild(node("span", run.open ? "Open" : "Opening shown", "pill " + (run.open ? "open" : "shut")));
-      block.appendChild(head);
-      const meta = document.createElement("p");
-      meta.className = "run-meta";
-      meta.appendChild(node("span", run.at ? new Date(run.at).toLocaleString() : "—"));
-      meta.appendChild(node("span", text(run.status)));
-      meta.appendChild(node("span", text(run.caseCount) + " cases"));
-      block.appendChild(meta);
-      const url = document.createElement("p");
-      url.className = "run-url";
-      url.appendChild(valueNode(run.url, run.open));
-      block.appendChild(url);
-      if (run.statement) {
-        const line = document.createElement("p");
-        line.className = "run-statement";
-        line.appendChild(valueNode(run.statement, run.open));
-        block.appendChild(line);
-      }
-      const cases = document.createElement("ul");
-      (run.cases || []).slice(0, 8).forEach((item) => {
-        const li = document.createElement("li");
-        if (item.layer) li.appendChild(node("span", item.layer + " — ", "layer"));
-        li.appendChild(valueNode(item.title, run.open));
-        cases.appendChild(li);
-      });
-      block.appendChild(cases);
-      const report = document.createElement("a");
-      report.className = run.open ? "btn" : "btn btn-ghost";
-      report.href = "qa-review.html?report=" + encodeURIComponent(run.id);
-      report.textContent = run.open ? "Open the full report" : "Open this report on the review page";
-      block.appendChild(report);
-      tilt(block, 7);
-      listEl.appendChild(block);
-    });
-    if (!(data.runs || []).length) listEl.appendChild(node("p", "No finished review is saved for this address.", "empty"));
+    listEl.classList.remove("settled");
+    render();
+    listEl.classList.add("settled");
   }
+  function reportHref(run) {
+    return "qa-review.html?report=" + encodeURIComponent(run.id);
+  }
+  function haystack(run) {
+    return [run.host, run.url, run.status, run.statement, run.at ? new Date(run.at).toLocaleString() : ""]
+      .concat((run.cases || []).map((item) => (item.layer || "") + " " + (item.title || ""))).join(" ").toLowerCase();
+  }
+  function shownRuns() {
+    const terms = searchEl.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return runs.filter((run) => {
+      const hay = haystack(run);
+      return terms.every((term) => hay.indexOf(term) !== -1);
+    });
+  }
+  function render() {
+    const list = shownRuns();
+    listEl.replaceChildren(...list.map(card));
+    if (!runs.length) listEl.appendChild(node("p", "No finished review is saved for this address.", "empty"));
+    else if (!list.length) listEl.appendChild(node("p", "No saved review matches “" + searchEl.value.trim() + "”.", "empty"));
+    document.querySelector(".toolbar").hidden = !runs.length;
+    document.getElementById("result-count").textContent = list.length !== runs.length ? list.length + " of " + runs.length
+      : runs.length + (runs.length === 1 ? " review" : " reviews");
+    paintBulk();
+  }
+  function syncPicks() {
+    listEl.querySelectorAll(".run").forEach((block) => {
+      const on = picked.has(block.dataset.id);
+      block.classList.toggle("picked", on);
+      block.querySelector(".pick input").checked = on;
+    });
+    paintBulk();
+  }
+  function paintBulk() {
+    const list = shownRuns();
+    const on = list.filter((run) => picked.has(run.id)).length;
+    selectAllEl.checked = !!list.length && on === list.length;
+    selectAllEl.indeterminate = on > 0 && on < list.length;
+    const chosen = runs.filter((run) => picked.has(run.id));
+    bulkEl.hidden = !chosen.length;
+    document.getElementById("bulk-count").textContent = chosen.length + " selected";
+    const locked = chosen.filter((run) => !run.open).length;
+    const unlock = document.getElementById("bulk-unlock");
+    unlock.hidden = !locked;
+    unlock.disabled = locked > 1;
+    unlock.title = locked > 1 ? "Unlock one report at a time for now." : "";
+    disarmDelete();
+  }
+  function sayBulk(message, bad) {
+    bulkStatus.textContent = message;
+    bulkStatus.classList.toggle("bad", !!bad);
+  }
+  function card(run, index) {
+    const block = document.createElement("article");
+    block.className = "run" + (picked.has(run.id) ? " picked" : "");
+    block.dataset.id = run.id;
+    block.style.setProperty("--i", Math.min(index, 8));
+    const head = document.createElement("div");
+    head.className = "run-head";
+    const title = document.createElement("div");
+    title.className = "run-title";
+    const pick = document.createElement("label");
+    pick.className = "pick";
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = picked.has(run.id);
+    box.setAttribute("aria-label", "Select " + (run.host || "review"));
+    box.addEventListener("change", () => {
+      if (box.checked) picked.add(run.id);
+      else picked.delete(run.id);
+      block.classList.toggle("picked", box.checked);
+      paintBulk();
+    });
+    pick.appendChild(box);
+    title.appendChild(pick);
+    title.appendChild(node("h3", run.host || "Review"));
+    head.appendChild(title);
+    head.appendChild(node("span", run.open ? "Open" : "Opening shown", "pill " + (run.open ? "open" : "shut")));
+    block.appendChild(head);
+    const meta = document.createElement("p");
+    meta.className = "run-meta";
+    meta.appendChild(node("span", run.at ? new Date(run.at).toLocaleString() : "—"));
+    meta.appendChild(node("span", text(run.status)));
+    meta.appendChild(node("span", text(run.caseCount) + " cases"));
+    block.appendChild(meta);
+    const url = document.createElement("p");
+    url.className = "run-url";
+    url.appendChild(valueNode(run.url, run.open));
+    block.appendChild(url);
+    if (run.statement) {
+      const line = document.createElement("p");
+      line.className = "run-statement";
+      line.appendChild(valueNode(run.statement, run.open));
+      block.appendChild(line);
+    }
+    const cases = document.createElement("ul");
+    (run.cases || []).slice(0, 8).forEach((item) => {
+      const li = document.createElement("li");
+      if (item.layer) li.appendChild(node("span", item.layer + " — ", "layer"));
+      li.appendChild(valueNode(item.title, run.open));
+      cases.appendChild(li);
+    });
+    block.appendChild(cases);
+    const report = document.createElement("a");
+    report.className = run.open ? "btn" : "btn btn-ghost";
+    report.href = reportHref(run);
+    report.textContent = run.open ? "Open the full report" : "Open this report on the review page";
+    block.appendChild(report);
+    tilt(block, 7);
+    return block;
+  }
+  searchEl.addEventListener("input", render);
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "/" || fileEl.hidden || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+    event.preventDefault();
+    searchEl.focus();
+  });
+  selectAllEl.addEventListener("change", () => {
+    shownRuns().forEach((run) => (selectAllEl.checked ? picked.add(run.id) : picked.delete(run.id)));
+    syncPicks();
+  });
+  document.getElementById("bulk-clear").addEventListener("click", () => {
+    picked.clear();
+    syncPicks();
+  });
+  function chosenRuns() {
+    return runs.filter((run) => picked.has(run.id));
+  }
+  function tally(count, done) {
+    return count + (count === 1 ? " review " : " reviews ") + done + ".";
+  }
+  document.getElementById("bulk-open").addEventListener("click", () => {
+    let blocked = 0;
+    chosenRuns().forEach((run) => {
+      const tab = window.open(reportHref(run), "_blank");
+      if (tab) tab.opener = null;
+      else blocked += 1;
+    });
+    sayBulk(blocked ? "The browser blocked " + blocked + " of the tabs. Allow pop-ups for this site and try again." : "", !!blocked);
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "open");
+  });
+  document.getElementById("bulk-download").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const ids = new Set(picked);
+    button.disabled = true;
+    sayBulk("Gathering the selected reviews…");
+    try {
+      const response = await account("/account/export");
+      if (signedOut(response)) return;
+      if (!response.ok) {
+        sayBulk(await failure(response, "The reviews did not download. Try again in a moment."), true);
+        return;
+      }
+      const data = await response.json();
+      save({
+        exportedAt: data.exportedAt,
+        email: data.email,
+        reviews: (data.reviews || []).filter((row) => ids.has(row.id)),
+        captures: (data.captures || []).filter((row) => ids.has(row.reportId)),
+        stops: (data.stops || []).filter((row) => ids.has(row.id))
+      }, "qa-review-selected-");
+      sayBulk(tally(ids.size, "downloaded"));
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "download");
+    } catch (error) {
+      sayBulk("The reviews did not download. Try again in a moment.", true);
+    } finally {
+      button.disabled = false;
+    }
+  });
+  document.getElementById("bulk-unlock").addEventListener("click", () => {
+    const run = chosenRuns().find((item) => !item.open);
+    if (!run) return;
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "unlock");
+    location.href = "qa-review-pay.html?purpose=report&reportId=" + encodeURIComponent(run.id) + "&frameworks=" + encodeURIComponent((run.frameworks || []).join(","));
+  });
+  const deleteEl = document.getElementById("bulk-delete");
+  let armed = 0;
+  function disarmDelete() {
+    clearTimeout(armed);
+    armed = 0;
+    deleteEl.textContent = "Delete";
+  }
+  deleteEl.addEventListener("click", async () => {
+    const ids = [...picked];
+    if (!armed) {
+      deleteEl.textContent = "Delete " + ids.length + "? Click again";
+      armed = setTimeout(disarmDelete, 5000);
+      return;
+    }
+    disarmDelete();
+    deleteEl.disabled = true;
+    sayBulk("Deleting…");
+    try {
+      const response = await account("/account/delete-runs", { ids });
+      if (signedOut(response)) return;
+      if (!response.ok) {
+        sayBulk(await failure(response, "The reviews were not all deleted. Try again in a moment."), true);
+        return;
+      }
+      const counts = await response.json();
+      await loadRuns();
+      sayBulk(tally(counts.deleted, "deleted") + (counts.paymentsKept ? " A payment record stays for five years, as Colombian tax law requires, without the report." : ""));
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "delete");
+    } catch (error) {
+      sayBulk("The reviews were not all deleted. Try again in a moment.", true);
+    } finally {
+      deleteEl.disabled = false;
+    }
+  });
   window.ReviewAuth.onChange((signed) => {
     if (signed) loadRuns();
-    else fileEl.hidden = privacyEl.hidden = true;
+    else {
+      fileEl.hidden = privacyEl.hidden = true;
+      runs = [];
+      picked.clear();
+    }
   });
   if (window.SiteI18n) SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));
 </script>
