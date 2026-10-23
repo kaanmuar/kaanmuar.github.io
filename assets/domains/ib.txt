@@ -28,8 +28,8 @@ ibank.nbg.gr
 ib.aeonbank.co.jp
 ib.resonabank.co.jp
 ibank.ubagroup.com
-www.ib.kiwibank.co.nz
 www.ibood.com
+www.ib.kiwibank.co.nz
 iboard.ssi.com.vn
 ib.bki.ir
 www.ib.boq.com.au
@@ -46,12 +46,12 @@ ibblportal.islamibankbd.com
 ibank.bpdbali.id
 ib.luminor.lt
 ibank.rqb.ir
-www.ibet789.com
 ib.saitamaresona.co.jp
+www.ibet789.com
 www.ibamsp-concursos.org.br
 ibolak.com
-m.iboys.cz
 ibiz.shuanghor.com.my
+m.iboys.cz
 www.ib888v3.com
 www.ibet789.net
 ibommaaa.com
@@ -79,10 +79,10 @@ www.ibancalculator.com
 www.ibric.org
 ib.africanbank.co.za
 ibank.firstbanknigeria.com
-ibank.banksumselbabel.com
 www.ibahia.com
-ibis.net.ua
+ibank.banksumselbabel.com
 www.ibc24.in
+ibis.net.ua
 ib.bhd.com.do
 ibank.fcmb.com
 ibanka.seb.lv
@@ -94,8 +94,8 @@ ib.sdccu.com
 ib.luminor.lv
 iboproapp.com
 ib.keiyobank.co.jp
-www.ib2.aozorabank.co.jp
 www.ibreviary.com
+www.ib2.aozorabank.co.jp
 ibank.thecitybank.com
 www.ibrain.com.tw
 ib.kagin.co.jp
@@ -105,8 +105,8 @@ ibc.bsp.com.pg
 www.ibbs.pro
 ib.kansaimiraibank.co.jp
 ib.primabanka.sk
-www.ibnsinatrust.com
 ib.fio.sk
+www.ibnsinatrust.com
 www.ibam-concursos.org.br
 ibanking.standardbank.com.na
 www.ibet288.com

@@ -24,8 +24,8 @@ www.sbishinseibank.co.jp
 sb-auth.skillsbuild.org
 www.sbazar.cz
 www.sber-bank.by
-www.sbigeneral.in
 www.sbpdcl.co.in
+www.sbigeneral.in
 www.sbilife.co.in
 www.sbfoods.co.jp
 sbs.e-paycapita.com
@@ -52,8 +52,8 @@ sb2wsdk-cdn-altenar2.biahosted.net
 www.sbt.com.br
 sbst.korlantas.polri.go.id
 www.sbsolver.com
-sbilposservices.sbilife.co.in
 sbi.co.in
+sbilposservices.sbilife.co.in
 www.sbstransit.com.sg
 www.sbbit.jp
 www.sbimf.com

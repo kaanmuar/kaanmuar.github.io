@@ -20,10 +20,10 @@ www.etax.nat.gov.tw
 etf.tournamentsoftware.com
 www.etnet.com.hk
 www.etvbharat.com
-www.ethnos.gr
 etims.kra.go.ke
-www.etuovi.com
+www.ethnos.gr
 www.etrailer.com
+www.etuovi.com
 www.ethiopianairlines.com
 etail.mysynchrony.com
 etp.armtek.ru
@@ -80,8 +80,8 @@ et.raja.ir
 etax2.mef.gob.pa
 eticket.railway.uz
 www.ethiotelecom.et
-etravel.gov.ph
 etpp.jakarta.go.id
+etravel.gov.ph
 ethol.pens.ac.id
 m.etmall.com.tw
 etatcivil.interieur.gov.dz
@@ -92,8 +92,8 @@ ethenika.com
 www.etemadonline.com
 www.etutor.pl
 www.ethias.be
-etn.com.mx
 et-static.elementagames.com
+etn.com.mx
 etoll.idfcbank.com
 eta.az
 etour.vietravel.com
@@ -113,8 +113,8 @@ etendering.tenderboard.gov.om
 eticaret.sancakecza.com.tr
 etc-shinsei.jp
 etoper.fans
-www.etaa-egypt.org
 etazo.tangosoftware.com
+www.etaa-egypt.org
 etalib.fdc.ma
 etickets.jammukashmircablecar.com
 eticket.uzrailpass.uz
