@@ -834,6 +834,69 @@
         .dash-overlay.is-sample #share-link, .dash-overlay.is-sample #tool-block, .dash-overlay.is-sample #alarm-open,
         .dash-overlay.is-sample #credential-run { display: none !important; }
         .gate-card { width: min(720px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+        #gate { --glass-edge: color-mix(in srgb, var(--text) 14%, transparent); align-items: center; perspective: 1400px; interpolate-size: allow-keywords;
+            background: radial-gradient(55% 45% at 12% 8%, color-mix(in srgb, var(--cyan) 26%, transparent), transparent 70%),
+                radial-gradient(45% 40% at 92% 96%, color-mix(in srgb, var(--amber) 16%, transparent), transparent 70%),
+                color-mix(in srgb, var(--bg) 52%, transparent);
+            backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); }
+        #gate .gate-card { width: min(640px, 100%); max-height: min(900px, calc(100dvh - 48px)); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 22px 22px 0; border-radius: 22px; border: 1px solid var(--glass-edge);
+            background: linear-gradient(160deg, color-mix(in srgb, var(--card) 80%, transparent), color-mix(in srgb, var(--card) 60%, transparent));
+            box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .12);
+            backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);
+            transform-origin: 50% 0; animation: gate-in .7s cubic-bezier(.2, .8, .2, 1) both; }
+        #gate.is-leaving .gate-card { animation: gate-out .34s cubic-bezier(.4, 0, 1, 1) both; }
+        #gate.is-leaving { transition: opacity .34s; opacity: 0; }
+        @keyframes gate-in { from { opacity: 0; transform: rotateX(14deg) translateY(40px) scale(.96); } }
+        @keyframes gate-out { to { opacity: 0; transform: rotateX(-10deg) translateY(-24px) scale(.97); } }
+        #gate .gate-tagline { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.45; }
+        #gate .sample-line { font-size: 12.5px; margin-bottom: 8px; }
+        #gate .sample-line .btn { padding: 6px 12px; border-radius: 999px; font-size: 12.5px; }
+        #gate .check input { accent-color: var(--cyan); }
+        #gate .check-all { margin: 14px 0 0; padding: 12px 14px; align-items: center; border-radius: 14px; font-weight: 650; cursor: pointer;
+            border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--cyan) 22%, transparent), color-mix(in srgb, var(--cyan) 6%, transparent)); }
+        #gate .check-all input { margin-top: 0; width: 18px; height: 18px; }
+        .term-groups { display: grid; gap: 10px; margin: 10px 0 0; perspective: 1000px; }
+        .term-group { border-radius: 16px; border: 1px solid var(--glass-edge); background: color-mix(in srgb, var(--panel) 55%, transparent);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); transform-origin: 50% 0;
+            transition: transform .35s cubic-bezier(.2, .8, .2, 1), border-color .25s, background .25s, box-shadow .35s;
+            animation: tg-in .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 70ms + 220ms); }
+        .term-group:hover { transform: translateY(-2px) rotateX(2deg); box-shadow: 0 14px 30px -18px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .08); }
+        .term-group[open] { transform: none; background: color-mix(in srgb, var(--panel) 78%, transparent); border-color: color-mix(in srgb, var(--cyan) 45%, transparent); }
+        .term-group.done { border-color: color-mix(in srgb, var(--green) 55%, transparent); }
+        .term-group::details-content { block-size: 0; overflow: hidden; transition: block-size .42s cubic-bezier(.2, .8, .2, 1), content-visibility .42s allow-discrete; }
+        .term-group[open]::details-content { block-size: auto; }
+        @keyframes tg-in { from { opacity: 0; transform: rotateX(-24deg) translateY(16px); } }
+        .term-group summary { list-style: none; display: grid; grid-template-columns: 36px 1fr auto 14px; gap: 12px; align-items: center; padding: 12px 14px; cursor: pointer; border-radius: 16px; }
+        .term-group summary::-webkit-details-marker { display: none; }
+        .term-group summary::after { content: ""; width: 7px; height: 7px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-2px, -2px); transition: transform .3s; }
+        .term-group[open] summary::after { transform: rotate(-135deg); }
+        .term-group summary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tg-icon { width: 36px; height: 36px; padding: 8px; border-radius: 11px; fill: none; stroke: var(--cyan); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+            background: linear-gradient(145deg, color-mix(in srgb, var(--cyan) 24%, transparent), color-mix(in srgb, var(--cyan) 6%, transparent)); }
+        .term-group.done .tg-icon { stroke: var(--green); background: color-mix(in srgb, var(--green) 16%, transparent); }
+        .tg-text { display: grid; gap: 2px; min-width: 0; }
+        .tg-title { font-size: 14.5px; font-weight: 650; }
+        .tg-gist { font-size: 13px; line-height: 1.4; color: var(--muted); }
+        .tg-count { font: 600 11.5px "Fira Code", ui-monospace, monospace; padding: 3px 8px; border-radius: 999px; color: var(--muted); border: 1px solid var(--glass-edge); }
+        .term-group.done .tg-count { color: var(--green); border-color: color-mix(in srgb, var(--green) 50%, transparent); }
+        .tg-body { padding: 2px 16px 14px 62px; transform-origin: 50% 0; }
+        .term-group[open] .tg-body { animation: tg-open .45s cubic-bezier(.2, .8, .2, 1) both; }
+        @keyframes tg-open { from { opacity: 0; transform: rotateX(-10deg) translateY(-6px); } }
+        .tg-body .lede { font-size: 13.5px; margin: 0 0 8px; }
+        .tg-body .check { font-size: 13.5px; margin: 8px 0; }
+        #gate #records-note { font-size: 11.5px; color: var(--muted); margin: 10px 0 0; }
+        .gate-foot { position: sticky; bottom: 0; display: grid; gap: 10px; margin: 14px -22px 0; padding: 12px 22px 18px; border-top: 1px solid var(--glass-edge);
+            background: color-mix(in srgb, var(--card) 86%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+        .gate-progress { height: 4px; border-radius: 999px; background: var(--glass-edge); overflow: hidden; }
+        .gate-progress span { display: block; height: 100%; width: calc(var(--progress, 0) * 100%); border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--green)); transition: width .4s cubic-bezier(.2, .8, .2, 1); }
+        #gate .gate-foot .records-note { font-size: 12px; line-height: 1.45; color: var(--muted); margin: 0; }
+        #gate #accept { width: 100%; min-height: 46px; font-size: 15px; border-radius: 12px; }
+        @media (prefers-reduced-motion: reduce) {
+            #gate .gate-card, .term-group, .term-group[open] .tg-body, #gate.is-leaving .gate-card { animation: none; }
+            .term-group, .term-group::details-content, .gate-progress span { transition: none; }
+            .term-group:hover { transform: none; }
+        }
         .gate-waiting { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--cyan); background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--text); font-weight: 600; }
         .check { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 14px; line-height: 1.45; }
         .check[hidden] { display: none; }
@@ -880,6 +943,12 @@
             .lang-menu { width: min(220px, calc(100vw - 24px)); }
             .gate { padding: 12px 12px 176px; }
             .gate-card { padding: 16px; }
+            #gate { align-items: flex-start; }
+            #gate .gate-card { max-height: none; overflow: visible; padding: 18px 16px 0; border-radius: 18px; }
+            .gate-foot { position: static; margin: 14px -16px 0; padding: 12px 16px 16px; border-radius: 0 0 18px 18px; }
+            .term-group summary { grid-template-columns: 32px 1fr auto 12px; gap: 10px; padding: 12px; }
+            .tg-icon { width: 32px; height: 32px; padding: 7px; }
+            .tg-body { padding: 2px 12px 12px; }
             .gate .btn { min-height: 44px; }
             .check { font-size: 15px; }
             .check input { width: 18px; height: 18px; flex: none; }
@@ -961,24 +1030,50 @@
                 <div class="lang-menu" id="langMenuGate"></div>
             </div>
         </div>
-        <p class="lede">Every control on this page stays off until you accept. To run a review, you sign in on this device with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X). The review fetches public pages, opens up to three of them in a headless browser from an EU address in Belgium, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. Google PageSpeed Insights scores the start page and Google Web Risk checks it against the Safe Browsing lists, so Google receives that address, and the domain's registry is asked for its registration over RDAP. It does not run the cases, sign in to your site, submit forms, or generate load. The language control is on this screen.</p>
+        <p class="gate-tagline">Ten terms in four cards, each summed up in one line. Open a card for the full text, or select all to start.</p>
         <p class="sample-line"><button class="btn btn-ghost" id="sample-open" type="button">See a sample report</button> It is this site's own review, blurred the way an unpaid report is. Nothing is sent to open it. New here? <a id="guide-open" href="qa-review-guide.html">Take the five-minute tour</a>.</p>
         <p class="sample-line live-gate-line"><button class="btn btn-ghost" id="live-open-gate" type="button">Explore live reports</button> <span id="live-gate-copy">Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.</span></p>
         <form id="terms-form">
-            <p class="records-note"><b>Disclaimers.</b> Read these before you check a box. <a id="legal-origin" href="qa-review-legal.html">Local and national disclaimers, for Colombia, where this service is operated</a>. <a id="legal-site" href="qa-review-legal.html">International disclaimers, for the country of the site you submit</a>.</p>
-            <label class="check"><input type="checkbox" id="terms-all"> Select all</label>
-            <label class="check"><input type="checkbox" name="t1"> I am at least 18. If I do not accept these disclaimers, I cannot enter a URL.</label>
-            <label class="check"><input type="checkbox" name="t2"> This service will fetch public pages, describe what it finds, and propose test cases. It will not run those cases.</label>
-            <label class="check"><input type="checkbox" name="t3"> I will submit a public https address. I will not submit a private, link-local, or metadata address.</label>
-            <label class="check"><input type="checkbox" name="t4"> The report is a snapshot and a proposal. It is not a certification that the site is safe, fast, or compliant.</label>
-            <label class="check"><input type="checkbox" name="t5"> I give my name, email, and reason so there is a record of who asked. I can ask for a copy or deletion at qa@carlosandmunoz.com.</label>
-            <label class="check"><input type="checkbox" name="t6"> The scores and findings for the public pages may be published as a Live Report on this site, its public GitHub repository, and llms-full.txt, and on LinkedIn, Facebook, Instagram, X, Threads, Bluesky, Mastodon, TikTok, and YouTube as images and voiced clips, without my name, email, or reason, unless I tick “Don't publish this review” on the request. Sites flagged by Safe Browsing and test runs are never published. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. The site's owner may get one email, at an address the site or its public records publish, saying a Live Report exists; it never says who asked. A take-down stops future posts and removes the Live Report; posts already made are deleted on request where the network allows. I will not use a shared report to republish their content.</label>
-            <label class="check"><input type="checkbox" name="t7"> The included first review is 20 pages and 2 links deep. A wider or deeper review, and each later run, asks for payment before it starts, unless the account has a free or test allowance, a coupon, or a pass granted by the operator. The amount is shown at that moment, on the payment page. A different name or email does not skip that charge. Stopped reviews are kept. Three stops in a day pause further reviews.</label>
-            <label class="check"><input type="checkbox" name="t8"> The report is shown once, and signed-in runs are listed on my account page. Seeing, downloading, printing, or sharing it again asks for payment, unless the account has a free or test allowance, a coupon, or a pass granted by the operator. The amount is shown then. The opening of each proposed case stays readable. The rest of the case stays blurred until that payment is confirmed. A copy of the scores and findings goes to my email when the review finishes, blurred unless the report is paid or my account is free.</label>
-            <label class="check"><input type="checkbox" name="t9"> If I say I have a username and password, I am allowed to use that login on the site I submit. This page does not ask for the password. A signed-in run is paid before it starts, and the password is not stored in the review record. The public analysis still does not sign in to the site. Signals in the report are what the public response showed. They are not proof of a break-in. The tail of each signal stays blurred until that section is paid.</label>
-            <label class="check"><input type="checkbox" name="t10"> I ask for the service to start during any withdrawal period. I acknowledge that a consumer in the European Union, under Directive 2011/83/EU, Article 16, and a consumer in the United Kingdom, under the Consumer Contracts Regulations 2013, regulation 36(2), loses the right to withdraw only once the service has been fully performed. A withdrawal right those rules keep is not waived.</label>
-            <p class="records-note" id="records-note">Records keep your name, email, reason, URL, selected frameworks, the review log, whether you stopped, time, IP address, browser, device id, and language, and the country, region, and city when the host provides them. Review records are kept for 12 months from the run; logs of failed or stopped reviews, and their re-runs, for 90 days. Opening a review page logs the IP address, browser, approximate city, time zone, languages, and referring site, to count visits; those rows, notes, stop links, and mail are kept for 12 months. A request to stop follow-up notes is kept until it is withdrawn. Payment records are kept until January 1 of the sixth year after the payment, as Colombian tax law requires. The page text is not sent to a model vendor. A password is not collected and is not stored. A shared link contains the report only, and opening it again asks for payment. Follow-up notes only arrive if you ask for them on the request: no more than three a week, and a reply of "stop" ends them anytime. The scores and findings for the public pages may be published as a Live Report, on GitHub, and on social media, unless you tick “Don't publish this review”; your name, email, reason, IP address, and browser are never published. If a review fails on this service's side, the host name, time, error, and last log lines, without your name, email, or URL query, are posted in a public GitHub issue. Signing in keeps your email, how you signed in, the provider's user id, and the first and last sign-in time; a sign-in on this device lasts 30 days. A provider sign-in also keeps the name, first and last name, photo, language, and Workspace domain it shares. A Google sign-in also keeps the other email addresses, birthday, phone numbers, addresses, gender, and work details Google shares; they are kept for a future paid plan and not used yet. The account is kept for 12 months after the last sign-in. Signing in with email shares only your address. Copies, corrections, and deletion: qa@carlosandmunoz.com. The full list is in the disclaimers. Version 2026-10-22.</p>
-            <button class="btn btn-primary" id="accept" type="submit" disabled>Accept and continue</button>
+            <label class="check check-all"><input type="checkbox" id="terms-all"> Select all</label>
+            <div class="term-groups">
+                <details class="term-group" style="--i: 0">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span class="tg-text"><b class="tg-title" data-tg="review">What the review does</b><span class="tg-gist" data-tg="review">Public pages only. It proposes test cases and never runs them.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <p class="lede">Every control on this page stays off until you accept. To run a review, you sign in on this device with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X). The review fetches public pages, opens up to three of them in a headless browser from an EU address in Belgium, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. Google PageSpeed Insights scores the start page and Google Web Risk checks it against the Safe Browsing lists, so Google receives that address, and the domain's registry is asked for its registration over RDAP. It does not run the cases, sign in to your site, submit forms, or generate load. The language control is on this screen.</p>
+                        <label class="check"><input type="checkbox" name="t2"> This service will fetch public pages, describe what it finds, and propose test cases. It will not run those cases.</label>
+                        <label class="check"><input type="checkbox" name="t3"> I will submit a public https address. I will not submit a private, link-local, or metadata address.</label>
+                        <label class="check"><input type="checkbox" name="t4"> The report is a snapshot and a proposal. It is not a certification that the site is safe, fast, or compliant.</label>
+                    </div>
+                </details>
+                <details class="term-group" style="--i: 1">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span class="tg-text"><b class="tg-title" data-tg="you">You and your data</b><span class="tg-gist" data-tg="you">You are 18 or older. A record shows who asked, and you can have it deleted.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <label class="check"><input type="checkbox" name="t1"> I am at least 18. If I do not accept these disclaimers, I cannot enter a URL.</label>
+                        <label class="check"><input type="checkbox" name="t5"> I give my name, email, and reason so there is a record of who asked. I can ask for a copy or deletion at qa@carlosandmunoz.com.</label>
+                        <label class="check"><input type="checkbox" name="t9"> If I say I have a username and password, I am allowed to use that login on the site I submit. This page does not ask for the password. A signed-in run is paid before it starts, and the password is not stored in the review record. The public analysis still does not sign in to the site. Signals in the report are what the public response showed. They are not proof of a break-in. The tail of each signal stays blurred until that section is paid.</label>
+                        <p class="records-note" id="records-note">Records keep your name, email, reason, URL, selected frameworks, the review log, whether you stopped, time, IP address, browser, device id, and language, and the country, region, and city when the host provides them. Review records are kept for 12 months from the run; logs of failed or stopped reviews, and their re-runs, for 90 days. Opening a review page logs the IP address, browser, approximate city, time zone, languages, and referring site, to count visits; those rows, notes, stop links, and mail are kept for 12 months. A request to stop follow-up notes is kept until it is withdrawn. Payment records are kept until January 1 of the sixth year after the payment, as Colombian tax law requires. The page text is not sent to a model vendor. A password is not collected and is not stored. A shared link contains the report only, and opening it again asks for payment. Follow-up notes only arrive if you ask for them on the request: no more than three a week, and a reply of "stop" ends them anytime. The scores and findings for the public pages may be published as a Live Report, on GitHub, and on social media, unless you tick “Don't publish this review”; your name, email, reason, IP address, and browser are never published. If a review fails on this service's side, the host name, time, error, and last log lines, without your name, email, or URL query, are posted in a public GitHub issue. Signing in keeps your email, how you signed in, the provider's user id, and the first and last sign-in time; a sign-in on this device lasts 30 days. A provider sign-in also keeps the name, first and last name, photo, language, and Workspace domain it shares. A Google sign-in also keeps the other email addresses, birthday, phone numbers, addresses, gender, and work details Google shares; they are kept for a future paid plan and not used yet. The account is kept for 12 months after the last sign-in. Signing in with email shares only your address. Copies, corrections, and deletion: qa@carlosandmunoz.com. The full list is in the disclaimers. Version 2026-10-22.</p>
+                    </div>
+                </details>
+                <details class="term-group" style="--i: 2">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16"/></svg><span class="tg-text"><b class="tg-title" data-tg="publish">Live Reports</b><span class="tg-gist" data-tg="publish">Scores and findings may be published, never with your name. You can opt out on the request.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <label class="check"><input type="checkbox" name="t6"> The scores and findings for the public pages may be published as a Live Report on this site, its public GitHub repository, and llms-full.txt, and on LinkedIn, Facebook, Instagram, X, Threads, Bluesky, Mastodon, TikTok, and YouTube as images and voiced clips, without my name, email, or reason, unless I tick “Don't publish this review” on the request. Sites flagged by Safe Browsing and test runs are never published. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. The site's owner may get one email, at an address the site or its public records publish, saying a Live Report exists; it never says who asked. A take-down stops future posts and removes the Live Report; posts already made are deleted on request where the network allows. I will not use a shared report to republish their content.</label>
+                    </div>
+                </details>
+                <details class="term-group" style="--i: 3">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg><span class="tg-text"><b class="tg-title" data-tg="pay">Payment and your rights</b><span class="tg-gist" data-tg="pay">The first review is included; anything more is paid before it starts. Withdrawal rights the law keeps are not waived.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <label class="check"><input type="checkbox" name="t7"> The included first review is 20 pages and 2 links deep. A wider or deeper review, and each later run, asks for payment before it starts, unless the account has a free or test allowance, a coupon, or a pass granted by the operator. The amount is shown at that moment, on the payment page. A different name or email does not skip that charge. Stopped reviews are kept. Three stops in a day pause further reviews.</label>
+                        <label class="check"><input type="checkbox" name="t8"> The report is shown once, and signed-in runs are listed on my account page. Seeing, downloading, printing, or sharing it again asks for payment, unless the account has a free or test allowance, a coupon, or a pass granted by the operator. The amount is shown then. The opening of each proposed case stays readable. The rest of the case stays blurred until that payment is confirmed. A copy of the scores and findings goes to my email when the review finishes, blurred unless the report is paid or my account is free.</label>
+                        <label class="check"><input type="checkbox" name="t10"> I ask for the service to start during any withdrawal period. I acknowledge that a consumer in the European Union, under Directive 2011/83/EU, Article 16, and a consumer in the United Kingdom, under the Consumer Contracts Regulations 2013, regulation 36(2), loses the right to withdraw only once the service has been fully performed. A withdrawal right those rules keep is not waived.</label>
+                    </div>
+                </details>
+            </div>
+            <div class="gate-foot">
+                <div class="gate-progress" aria-hidden="true"><span></span></div>
+                <p class="records-note"><b>Disclaimers.</b> Read these before you check a box. <a id="legal-origin" href="qa-review-legal.html">Local and national disclaimers, for Colombia, where this service is operated</a>. <a id="legal-site" href="qa-review-legal.html">International disclaimers, for the country of the site you submit</a>.</p>
+                <button class="btn btn-primary" id="accept" type="submit" disabled>Accept and continue</button>
+            </div>
         </form>
     </div>
 </div>
@@ -1376,7 +1471,7 @@
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261029d"></script>
+<script src="js/qa-review.js?v=20261029e"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
 </html>
