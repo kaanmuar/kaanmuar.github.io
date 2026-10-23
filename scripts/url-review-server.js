@@ -398,7 +398,7 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true, paidUntil: until, charged: false }, origin, deviceHint);
     return;
   }
-  if (req.method === "POST" && ["/account/runs", "/account/stop", "/account/export", "/account/delete"].indexOf(url.pathname) !== -1) {
+  if (req.method === "POST" && ["/account/runs", "/account/stop", "/account/export", "/account/delete", "/account/delete-runs"].indexOf(url.pathname) !== -1) {
     let accountBody = {};
     try { accountBody = await readBody(req); } catch (error) { accountBody = {}; }
     const signedIn = await auth.checkSession(signIns, Object.assign({}, accountBody, { touch: false }));
@@ -414,6 +414,25 @@ const server = http.createServer(async (req, res) => {
       const data = await accountData.exportAccount(signIns, signedIn.email);
       data.reviews = readStore().filter((row) => row.email === signedIn.email);
       sendJson(res, 200, data, origin, deviceHint);
+      return;
+    }
+    if (url.pathname === "/account/delete-runs") {
+      const ids = Array.isArray(accountBody.ids) ? accountBody.ids.slice(0, 200).map(String) : [];
+      if (!ids.length) {
+        sendJson(res, 400, { error: "Pick at least one review to delete." }, origin, deviceHint);
+        return;
+      }
+      const rows = readStore();
+      const local = auth.memoryStore();
+      for (const row of rows) await local.set("url_reviews", row.id, row);
+      const counts = await accountData.deleteRuns(local, signedIn.email, ids);
+      const kept = [];
+      for (const row of rows) {
+        const now = await local.get("url_reviews", row.id);
+        if (now) kept.push(Object.assign({ id: row.id }, now));
+      }
+      fs.writeFileSync(FILE, kept.map((row) => JSON.stringify(row) + "\n").join(""));
+      sendJson(res, 200, Object.assign({ ok: true }, counts), origin, deviceHint);
       return;
     }
     if (url.pathname === "/account/delete") {
