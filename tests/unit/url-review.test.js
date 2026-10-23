@@ -1770,6 +1770,25 @@ test.describe("legal pages and front-end libraries", () => {
     }
   });
 
+  test("a competitor run hands the passive flag to every browser job and records it", async () => {
+    const restore = fakeNetwork({ "https://shop.example.de/": { status: 200, headers: STRONG_HEADERS, body: body("<p>Hallo</p>", "de") } });
+    try {
+      const jobs = [];
+      const lines = [];
+      const passive = await core.reviewTarget("https://shop.example.de/", { passive: true, log: (text) => lines.push(text), browse: async (job) => { jobs.push(job); return { ok: false }; } });
+      assert.ok(jobs.length >= 1);
+      jobs.forEach((job) => assert.equal(job.passive, true));
+      assert.equal(passive.limits.passive, true);
+      assert.ok(lines.some((text) => /competitor run: the browser types into no field and does not open the chat/.test(text)));
+      jobs.length = 0;
+      const plain = await core.reviewTarget("https://shop.example.de/", { browse: async (job) => { jobs.push(job); return { ok: false }; } });
+      jobs.forEach((job) => assert.equal(job.passive, false));
+      assert.equal(plain.limits.passive, false);
+    } finally {
+      restore();
+    }
+  });
+
   test("the fix kit lists library upgrades and outlines the legal pages the site does not link", () => {
     const html = body("<a href=\"/cart\">Warenkorb</a><form action=\"/search\"></form><script src=\"https://code.jquery.com/jquery-1.12.4.min.js\"></script>", "de");
     const kit = insights.analyze({ pages: [page(html)] }).fixkit;

@@ -659,9 +659,11 @@ function judgeAttempts(rows, identity, request) {
     return { ok: false, code: "invalid", message: error.message || "Choose the size of the review." };
   }
   const used = new Set(mine.filter((row) => row.status === "run-credit-used").map((row) => row.creditId));
-  const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope));
+  const compareWith = !Array.isArray(request) && request ? String(request.compareWith || "") : "";
+  // A credit bought for a comparison pays for that comparison only, and a plain credit never pays for one.
+  const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope) && String(row.compareWith || "") === compareWith);
   // A comparison is priced as a second review, whichever device ran the first.
-  const compare = !Array.isArray(request) && !!(request && request.compareWith);
+  const compare = !!compareWith;
   const completed = compare || mine.some((row) => row.status === "complete");
   if (!completed && scope.cents === 0) return { ok: true };
   if (credit) return { ok: true, consumeId: credit.id };
@@ -2380,6 +2382,9 @@ async function reviewTarget(rawUrl, hooks) {
   let deadline = begun + budgetMs(chosen.pages);
   note("Checking that the address is public https.");
   note(acceptLanguage ? "Pages are requested in " + PAGE_LANG_LABEL[acceptLanguage] + "." : "Pages are requested in the site's own language.");
+  // A competitor's site gets passive checks only; the browser refuses typing and opening the chat as well.
+  const passive = controls.passive === true;
+  if (passive) note("This is a competitor run: the browser types into no field and does not open the chat.");
   let first;
   let slowFirst = false;
   try {
@@ -2414,7 +2419,7 @@ async function reviewTarget(rawUrl, hooks) {
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
     startSpeed(first.url);
-    const browsed = await Promise.resolve().then(() => controls.browse({ url: first.url, paths: [], html: true, acceptLanguage }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
+    const browsed = await Promise.resolve().then(() => controls.browse({ url: first.url, paths: [], html: true, acceptLanguage, passive }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
     if (halt()) {
       note("Stopped before the first page finished.");
       return stoppedReport(rawUrl, lines, null, chosen);
@@ -2503,7 +2508,7 @@ async function reviewTarget(rawUrl, hooks) {
   const browserPromise = readInBrowser
     ? Promise.resolve(readInBrowser)
     : canBrowse
-      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths, acceptLanguage }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths, acceptLanguage, passive }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
       : Promise.resolve(null);
   browserPromise.then((done) => showStart(done && done.ok ? done.start : null), () => showStart(null));
   if (!stopped) startSpeed(first.url);
@@ -2746,7 +2751,8 @@ async function reviewTarget(rawUrl, hooks) {
       robotsNote,
       timedOut: Date.now() >= deadline,
       pageLang: acceptLanguage,
-      section: prefix
+      section: prefix,
+      passive
     },
     pages: publishedPages,
     technologies: technologiesFound,

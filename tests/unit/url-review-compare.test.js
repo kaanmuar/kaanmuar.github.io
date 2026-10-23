@@ -96,8 +96,45 @@ test("a comparison is priced as a second review even on a device with no finishe
   assert.equal(due.billing, "run");
   assert.equal(due.priceUsd, 19);
   assert.match(due.message, /second review/);
-  const credit = { id: "c1", status: "run-credit", deviceId: "d1", frameworks: ["Playwright"], tools: [], pages: 20, depth: 2 };
+  const credit = { id: "c1", status: "run-credit", deviceId: "d1", frameworks: ["Playwright"], tools: [], pages: 20, depth: 2, compareWith: "abc" };
   assert.deepEqual(core.judgeAttempts([credit], { deviceId: "d1", ip: "" }, Object.assign({ compareWith: "abc" }, request)), { ok: true, consumeId: "c1" });
+});
+
+test("a credit bought for a comparison pays for that comparison only", () => {
+  const request = { frameworks: ["Playwright"], tools: [], pages: 20, depth: 2 };
+  const who = { deviceId: "d1", ip: "" };
+  const plain = { id: "p1", status: "run-credit", deviceId: "d1", frameworks: ["Playwright"], tools: [], pages: 20, depth: 2 };
+  const tied = Object.assign({}, plain, { id: "t1", compareWith: "abc" });
+  assert.equal(core.judgeAttempts([plain], who, Object.assign({ compareWith: "abc" }, request)).code, "payment");
+  assert.equal(core.judgeAttempts([tied], who, Object.assign({ compareWith: "def" }, request)).code, "payment");
+  const done = { id: "r0", status: "complete", deviceId: "d1" };
+  assert.equal(core.judgeAttempts([done, tied], who, request).code, "payment");
+  assert.deepEqual(core.judgeAttempts([done, plain, tied], who, request), { ok: true, consumeId: "p1" });
+  assert.deepEqual(core.judgeAttempts([plain, tied], who, Object.assign({ compareWith: "abc" }, request)), { ok: true, consumeId: "t1" });
+});
+
+test("a competitor run's skipped typing and chat checks are not listed as the asker's alone", () => {
+  const finding = (key) => ({ key, verdict: "risk", severity: "medium", title: key, area: "Accessibility" });
+  const mine = { host: "a.com", insights: { score: { overall: 70, areas: {} }, findings: compare.ACTIVE_KEYS.map(finding).concat(finding("seo-title")) } };
+  const theirs = { host: "b.com", insights: { score: { overall: 80, areas: {} }, findings: [] } };
+  const active = compare.compareSites(mine, theirs);
+  assert.equal(active.passive, false);
+  assert.equal(active.ownOnlyCount, compare.ACTIVE_KEYS.length + 1);
+  const passive = compare.compareSites(mine, Object.assign({ limits: { passive: true } }, theirs));
+  assert.equal(passive.passive, true);
+  assert.deepEqual(passive.ownOnly.map((row) => row.key), ["seo-title"]);
+});
+
+test("the browser refuses to type into a field or open the chat on a competitor run", async () => {
+  const browser = require("../../functions/url-review-browser");
+  assert.equal(browser.passiveJob({ passive: true }), true);
+  assert.equal(browser.passiveJob({ passive: "yes" }), false);
+  assert.equal(browser.passiveJob(null), false);
+  const touched = [];
+  const page = new Proxy({}, { get: (target, name) => { touched.push(name); return () => Promise.resolve(null); } });
+  await assert.rejects(browser.typeProbe(page, {}, "first", { passive: true }), /Typing into a field was refused: a competitor run is strictly passive/);
+  await assert.rejects(browser.openChat(page, [], { passive: true }), /Opening the chat was refused: a competitor run is strictly passive/);
+  assert.deepEqual(touched, []);
 });
 
 test("a comparison stands at least on the first return step and climbs the ladder from there", () => {

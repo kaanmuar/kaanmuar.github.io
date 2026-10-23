@@ -1219,6 +1219,7 @@ async function rerunFailure(group) {
       maxDepth: options.depth || undefined,
       pageLang: options.pageLang || "",
       section: options.section === true,
+      passive: !!(group.intake && group.intake.reasonCode === "compare"),
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
@@ -3062,6 +3063,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         let paidFrameworks = result.frameworks || [];
         let paidTools = result.tools || [];
         let paidPrice = result.amount || 0;
+        let paidCompare = "";
         if (choice !== "stripe") {
           if (!result.reference) {
             res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
@@ -3080,6 +3082,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           paidFrameworks = open.frameworks || [];
           paidTools = open.tools || [];
           paidPrice = open.priceUsd || result.amount;
+          paidCompare = reviewCompare.cleanId(open.compareWith);
           if (open.coupon) await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
           result.pages = open.pages;
           result.depth = open.depth;
@@ -3133,6 +3136,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
             pages: result.pages || urlReview.INCLUDED_PAGES,
             depth: result.depth || urlReview.INCLUDED_DEPTH,
             billing: result.billing || "run",
+            compareWith: paidCompare,
             createdAt: new Date().toISOString(),
             priceUsd: paidPrice,
             amount: result.amount,
@@ -3168,6 +3172,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         });
       }
       let deal = null;
+      const compareWith = purpose === "new-run" && req.body ? reviewCompare.cleanId(req.body.compareWith) : "";
       if (purpose === "report" || purpose === "new-run") {
         deal = await returnPrice(priced, {
           purpose,
@@ -3177,7 +3182,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           coupon: req.body && req.body.coupon,
           deviceId,
           ip: req.ip || "",
-          compare: purpose === "new-run" && req.body && req.body.compareWith ? await comparesFrom(req.body.compareWith, deviceId) : false
+          compare: compareWith ? await comparesFrom(compareWith, deviceId) : false
         });
       }
       const listUsd = priced.usd;
@@ -3222,6 +3227,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         pages: priced.pages || null,
         depth: priced.depth || null,
         billing: priced.billing || "",
+        compareWith,
         priceUsd: priced.usd,
         amount: session.amount,
         currency: session.currency,
@@ -3460,6 +3466,7 @@ async function runReview(req, res, placeOf) {
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
       section: intake.value.section,
+      passive: !!intake.value.compareWith,
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined

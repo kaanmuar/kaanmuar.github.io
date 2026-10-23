@@ -806,7 +806,8 @@
       cmp.shared + " open problem" + (cmp.shared === 1 ? " is" : "s are") + " on both sites.</p>" +
       '<div class="compare-scroll"><table class="compare-table"><thead><tr><th scope="col">Area</th><th scope="col">' + esc(cmp.ownHost) + '</th><th scope="col">' + esc(cmp.rivalHost) + '</th><th scope="col">Your lead</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
       '<div class="exec-cols history-cols"><div><h3>Only ' + esc(cmp.ownHost) + " has</h3>" + list(cmp.ownOnly || [], cmp.ownOnlyCount) + "</div><div><h3>Only " + esc(cmp.rivalHost) + " has</h3>" + list(cmp.rivalOnly || [], cmp.rivalOnlyCount) + "</div></div>" +
-      '<p class="meta-line">' + esc(cmp.rivalHost) + " got the public, passive checks only: no chat conversation and no form sent. Both scores come from automated reviews, a starting point and not a verdict.</p>";
+      '<p class="meta-line">' + esc(cmp.rivalHost) + " got the public, passive checks only: no chat conversation and no form sent." +
+      (cmp.passive ? " Because this is a competitor run, nothing was typed into its fields and its chat was not opened, so the typed-field and open-chat checks were skipped and are left out of the lists above." : "") + " Both scores come from automated reviews, a starting point and not a verdict.</p>";
   }
 
   function savedCompare() {

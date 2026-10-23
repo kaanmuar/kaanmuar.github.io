@@ -6,6 +6,8 @@
 const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
 const LIST_MAX = 12;
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+// Checks that need typing into a field or opening the chat, which a competitor run never does.
+const ACTIVE_KEYS = ["sec-typed", "a11y-chat-focus", "a11y-chat-trap", "an-chat-privacy"];
 
 function bare(host) {
   return String(host || "").trim().toLowerCase().replace(/\.$/, "").replace(/^www\./, "");
@@ -59,13 +61,15 @@ function compareSites(own, rival) {
   if (!mine || !theirs || !mine.score || !theirs.score) return null;
   const a = openProblems(mine);
   const b = openProblems(theirs);
-  const ownOnly = onlyIn(a, b);
+  const passive = !!(rival.limits && rival.limits.passive);
+  const ownOnly = onlyIn(a, b).filter((item) => !passive || !ACTIVE_KEYS.includes(item.key));
   const rivalOnly = onlyIn(b, a);
   return {
     ownId: own.id || "",
     ownHost: own.host || "",
     ownAt: own.fetchedAt || "",
     rivalHost: rival.host || "",
+    passive,
     overall: { own: mine.score.overall || 0, rival: theirs.score.overall || 0 },
     areas: AREAS.map((name) => ({ area: name, own: areaScore(mine.score, name), rival: areaScore(theirs.score, name) })),
     ownOnly: ownOnly.slice(0, LIST_MAX),
@@ -76,4 +80,4 @@ function compareSites(own, rival) {
   };
 }
 
-module.exports = { AREAS, LIST_MAX, sameSite, cleanId, baseProblem, compareSites };
+module.exports = { AREAS, LIST_MAX, ACTIVE_KEYS, sameSite, cleanId, baseProblem, compareSites };
