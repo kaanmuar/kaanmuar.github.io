@@ -1842,3 +1842,49 @@ test.describe("domain health", () => {
     }
   });
 });
+
+test("the web search asks Brave first, falls back to Tavily, and is off without a key", async (t) => {
+  const asked = [];
+  let brave = { status: 200, body: { web: { results: [{ title: "Postob&#xF3;n <strong>S.A.</strong>", url: "https://directorio.example/p", description: "Escribe a <strong>servicio@postobon.com</strong> &#x27;hoy&#x27;" }] } } };
+  t.mock.method(global, "fetch", async (url, init) => {
+    asked.push({ host: new URL(url).hostname, init });
+    const reply = new URL(url).hostname === "api.search.brave.com" ? brave
+      : { status: 200, body: { results: [{ title: "Tavily row", url: "https://otro.example/", content: "ventas@postobon.com" }] } };
+    return { ok: reply.status === 200, status: reply.status, json: async () => reply.body };
+  });
+  assert.deepEqual(await core.webSearch("\"@postobon.com\"", {}), []);
+  assert.equal(asked.length, 0);
+
+  const keys = { BRAVE_SEARCH_KEY: "b", TAVILY_API_KEY: "t" };
+  const first = await core.webSearch("\"@postobon.com\"", keys);
+  assert.deepEqual(asked.map((row) => row.host), ["api.search.brave.com"]);
+  assert.equal(asked[0].init.headers["x-subscription-token"], "b");
+  assert.equal(first[0].url, "https://directorio.example/p");
+  assert.equal(first[0].description, "Escribe a servicio@postobon.com 'hoy'");
+  assert.doesNotMatch(first[0].title, /<|&/);
+
+  brave = { status: 429, body: {} };
+  const second = await core.webSearch("\"@postobon.com\"", keys);
+  assert.deepEqual(asked.slice(1).map((row) => row.host), ["api.search.brave.com", "api.tavily.com"]);
+  assert.equal(asked[2].init.headers.authorization, "Bearer t");
+  assert.deepEqual(second.map((row) => row.url), ["https://otro.example/"]);
+});
+
+test("the registrable domain keeps government, education and organization suffixes apart", () => {
+  assert.equal(core.registrable("unal.edu.co"), "unal.edu.co");
+  assert.equal(core.registrable("medellin.unal.edu.co"), "unal.edu.co");
+  assert.equal(core.registrable("www.mintic.gov.co"), "mintic.gov.co");
+  assert.equal(core.registrable("www.gov.uk"), "gov.uk");
+  assert.equal(core.registrable("tax.service.gov.uk"), "service.gov.uk");
+  assert.equal(core.registrable("shop.acme.com.co"), "acme.com.co");
+  assert.equal(core.registrable("docs.python.org"), "python.org");
+});
+
+test("mentions come from search results on other sites only", () => {
+  const rows = [
+    { title: "Acme opens a new office", url: "https://news.example/acme" },
+    { title: "Acme home", url: "https://www.acme.co/" },
+    { title: "No link", url: "javascript:void(0)" }
+  ];
+  assert.deepEqual(core.parseMentions(rows, "acme.co").map((row) => [row.href, row.tone]), [["https://news.example/acme", "Favorable"]]);
+});

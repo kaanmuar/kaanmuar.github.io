@@ -79,6 +79,12 @@ test("addresses are ranked: own domain, contact pages and role boxes first; vend
     { email: "rua@dmarc-vendor.com", source: "dmarc" },
     { email: "noreply@acme.co", source: "page" },
     { email: "user@example.com", source: "page-text" },
+    { email: "jane.doe@acme.co", source: "search" },
+    { email: "jdoe@acme.co", source: "search" },
+    { email: "firstname.lastname@acme.co", source: "search" },
+    { email: "doej@acme.co", source: "search" },
+    { email: "jane@acme.co", source: "search" },
+    { email: "flast@acme.co", source: "search" },
     { email: "acme.shop@gmail.com", source: "page" },
     { email: "security@acme.co", source: "security.txt" },
     { email: "hola@acme.co", source: "contact-page" },
@@ -146,7 +152,10 @@ test("the second look reads unread contact pages, linked GitHub profiles and web
     fetchPage: async (url) => { asked.push(url); return url.endsWith("/contacto") ? { status: 200, html: true, url, body: "<a href=\"mailto:hola@acme.co\">x</a>" } : { status: 404 }; },
     analyze: core.analyzeHtml,
     github: async (name) => (name === "acmeco" ? { email: "Dev@Acme.co" } : null),
-    search: async () => [{ title: "Acme | Contacto", url: "https://directorio.co/acme", description: "Escríbenos a ventas@acme.co o a otro@ajeno.com" }],
+    search: async () => [
+      { title: "Acme email format", url: "https://rocketreach.co/acme-email-format", description: "Acme uses first.last, like pedro.perez@acme.co" },
+      { title: "Acme | Contacto", url: "https://directorio.co/acme", description: "Escríbenos a ventas@acme.co o a otro@ajeno.com" }
+    ],
     emailsInText: core.emailsInText,
     registrable: core.registrable
   });
@@ -175,9 +184,9 @@ test("web search reads Brave Search API results, and finds nothing without a key
   const realFetch = global.fetch;
   const calls = [];
   try {
-    assert.deepEqual(await core.webSearch("\"@acme.co\"", ""), []);
+    assert.deepEqual(await core.webSearch("\"@acme.co\"", {}), []);
     global.fetch = async () => ({ ok: false, status: 429 });
-    assert.deepEqual(await core.webSearch("\"@acme.co\"", "k"), []);
+    assert.deepEqual(await core.webSearch("\"@acme.co\"", { BRAVE_SEARCH_KEY: "k" }), []);
     global.fetch = async (url, init) => {
       calls.push({ url, token: init.headers["x-subscription-token"] });
       return { ok: true, json: async () => ({ web: { results: [
@@ -186,7 +195,7 @@ test("web search reads Brave Search API results, and finds nothing without a key
         { title: "Escaped &lt;script&gt;alert(1)&lt;/script&gt;", url: "https://bad.example/", description: "&lt;img src=x onerror=alert(1)&gt;" }
       ] } }) };
     };
-    const results = await core.webSearch("\"@acme.co\"", "k");
+    const results = await core.webSearch("\"@acme.co\"", { BRAVE_SEARCH_KEY: "k" });
     assert.equal(calls[0].token, "k");
     assert.match(calls[0].url, /^https:\/\/api\.search\.brave\.com\/res\/v1\/web\/search\?/);
     assert.deepEqual(results.slice(0, 1), [{ title: "Acme & Co", url: "https://news.example/acme", description: "Write to hola@acme.co ventas@acme.co" }]);

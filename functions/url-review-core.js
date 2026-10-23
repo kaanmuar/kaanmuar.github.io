@@ -192,7 +192,11 @@ function clean(value, max) {
 }
 
 const EMAIL_RE = /^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/;
-const MULTI_TLDS = ["co.uk", "org.uk", "ac.uk", "com.co", "net.co", "com.mx", "com.br", "com.au", "co.jp", "co.za", "com.ar", "com.pe", "com.ec", "com.uy", "co.nz", "com.tr"];
+const MULTI_TLDS = ["co.uk", "org.uk", "ac.uk", "gov.uk", "nhs.uk", "com.co", "net.co", "org.co", "edu.co", "gov.co", "mil.co",
+  "com.mx", "org.mx", "edu.mx", "gob.mx", "com.br", "org.br", "edu.br", "gov.br", "com.au", "org.au", "edu.au", "gov.au",
+  "co.jp", "ac.jp", "or.jp", "go.jp", "co.za", "org.za", "ac.za", "gov.za", "com.ar", "org.ar", "edu.ar", "gob.ar",
+  "com.pe", "org.pe", "edu.pe", "gob.pe", "com.ec", "org.ec", "edu.ec", "gob.ec", "com.uy", "org.uy", "edu.uy", "gub.uy",
+  "co.nz", "org.nz", "ac.nz", "govt.nz", "com.tr", "org.tr", "edu.tr", "gov.tr"];
 
 function emailSyntax(email) {
   const value = String(email || "");
@@ -1713,7 +1717,7 @@ function parseMentions(results, hostname) {
     if (mentions.length >= 4) return;
     const href = String((result && result.url) || "");
     const title = String((result && result.title) || "").replace(/\s+/g, " ").trim();
-    if (!href || !title) return;
+    if (!/^https?:\/\//i.test(href) || !title) return;
     let host = "";
     try { host = new URL(href).hostname.replace(/^www\./, ""); } catch (error) { host = ""; }
     if (!host || host === hostname || seen.has(href)) return;
@@ -1723,31 +1727,56 @@ function parseMentions(results, hostname) {
   return mentions;
 }
 
-// Brave Search API web results as { title, url, description }, or [] without a key or an answer.
-// Free plan: $5 of credit a month, about 1,000 requests (https://api-dashboard.search.brave.com).
-async function webSearch(query, key = process.env.BRAVE_SEARCH_KEY) {
-  if (!key) return [];
+function searchText(value) {
+  let out = decode(String(value || ""));
+  let before;
+  do { before = out; out = out.replace(/<[^<>]*>/g, ""); } while (out !== before);
+  return out.replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function searchResults(rows, pick) {
+  return (Array.isArray(rows) ? rows : []).slice(0, 10).map((row) => {
+    const [title, url, description] = pick(row || {});
+    return { title: searchText(title).slice(0, 300), url: clean(url, 500), description: searchText(description).slice(0, 2000) };
+  }).filter((item) => /^https?:\/\//i.test(item.url));
+}
+
+async function searchJson(url, init) {
   try {
-    const res = await fetch("https://api.search.brave.com/res/v1/web/search?count=10&q=" + encodeURIComponent(query), {
-      headers: { accept: "application/json", "x-subscription-token": key },
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    const text = (value) => {
-      let out = decode(String(value || ""));
-      let before;
-      do { before = out; out = out.replace(/<[^<>]*>/g, ""); } while (out !== before);
-      return out.replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
-    };
-    return ((data && data.web && data.web.results) || []).slice(0, 10).map((item) => ({
-      title: text(item.title).slice(0, 300),
-      url: clean(item.url, 500),
-      description: text([item.description].concat(item.extra_snippets || []).join(" ")).slice(0, 2000)
-    })).filter((item) => /^https?:\/\//i.test(item.url));
+    const res = await fetch(url, Object.assign({ signal: AbortSignal.timeout(6000) }, init));
+    return res.ok ? await res.json() : null;
   } catch (error) {
-    return [];
+    return null;
   }
+}
+
+// Free plan: $5 of credit a month, about 1,000 requests (https://api-dashboard.search.brave.com).
+async function braveSearch(query, key) {
+  const data = await searchJson("https://api.search.brave.com/res/v1/web/search?count=10&q=" + encodeURIComponent(query), {
+    headers: { accept: "application/json", "x-subscription-token": key }
+  });
+  return searchResults(data && data.web && data.web.results,
+    (row) => [row.title, row.url, [row.description].concat(row.extra_snippets || []).join(" ")]);
+}
+
+// Free plan: 1,000 credits a month, one per basic search (https://app.tavily.com).
+async function tavilySearch(query, key) {
+  const data = await searchJson("https://api.tavily.com/search", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: "Bearer " + key },
+    body: JSON.stringify({ query, max_results: 10, search_depth: "basic" })
+  });
+  return searchResults(data && data.results, (row) => [row.title, row.url, row.content]);
+}
+
+// Web results as [{ title, url, description }]: Brave Search, then Tavily when Brave has no key, fails or
+// finds nothing. Without either key the web search is off and answers [].
+async function webSearch(query, keys = process.env) {
+  if (keys.BRAVE_SEARCH_KEY) {
+    const rows = await braveSearch(query, keys.BRAVE_SEARCH_KEY);
+    if (rows.length) return rows;
+  }
+  return keys.TAVILY_API_KEY ? tavilySearch(query, keys.TAVILY_API_KEY) : [];
 }
 
 function lookupMentions(hostname) {

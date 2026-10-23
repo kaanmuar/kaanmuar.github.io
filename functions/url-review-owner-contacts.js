@@ -7,7 +7,7 @@
 const CONTACT_PATHS = ["/contact", "/contacto", "/contact-us", "/contactenos", "/contactanos", "/about", "/about-us", "/nosotros", "/quienes-somos", "/impressum", "/aviso-legal", "/legal"];
 const LIMIT_MS = 15000;
 // Contact-data brokers list made-up addresses on the domain to show its email format (jane.doe@, jdoe@).
-const BROKER_HOSTS = /(^|\.)(rocketreach\.co|zoominfo\.com|leadiq\.com|signalhire\.com|contactout\.com|lusha\.com|apollo\.io|hunter\.io|snov\.io|adapt\.io|clearbit\.com|emailformat\.com|email-format\.com|rocketreach\.com)$/i;
+const BROKER_HOSTS = /(^|\.)(rocketreach\.co|zoominfo\.com|leadiq\.com|signalhire\.com|contactout\.com|lusha\.com|apollo\.io|hunter\.io|snov\.io|adapt\.io|clearbit\.com|emailformat\.com|email-format\.com|rocketreach\.com|getprospect\.com|uplead\.com|seamless\.ai|kaspr\.io|datanyze\.com|emailformat\.net)$/i;
 const SAMPLE_LOCALS = /^(j(ane|ohn)?[._-]?(doe|smith)|first(name)?([._-]?last(name)?)?|f(name)?[._-]?l(ast|name)?|name|email|example|your[._-]?(name|email)?|someone|user(name)?)$/i;
 
 function sampleAddress(email, pageUrl) {
