@@ -1774,27 +1774,19 @@ async function sweepReviews() {
     await ref.set(state);
     return "nothing to review this tick";
   }
-  const url = "https://" + target.host + "/";
+  const value = sweep.intake(target);
   const startedAt = Date.now();
   let outcome = "done";
   let note = "";
   try {
-    const report = await urlReview.reviewTarget(url, {
+    const report = await urlReview.reviewTarget(value.url, {
       stopped: () => Date.now() - startedAt > 240000,
       mentions: false,
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
     });
-    const record = Object.assign(urlReview.intakeRecord({
-      url,
-      name: "Country sweep",
-      email: "",
-      reason: "Country sweep: one of the most visited sites in " + target.cc.toUpperCase() + " (CrUX " + target.month + ")",
-      reasonCode: "sweep",
-      frameworks: [],
-      lang: sweep.langOf(target.cc)
-    }, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
+    const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
     await db.collection("url_reviews").doc(record.id).set(record);
     await countReviewed(record.report);
     try {
