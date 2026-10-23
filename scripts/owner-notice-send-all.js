@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Queues and sends the owner notice (#351) for every site on Live Reports, through the same
 // queueOwnerNotice and sendOwnerNotice the desk uses, so every hold-back rule applies.
+// A batch-run card with no review record gets one from its saved report first (#515).
 // Dry run by default; pass --send to queue and send. Uses the signed-in gcloud account.
 // Writes a CSV of every site and its outcome to --out (default: ./owner-notices-<date>.csv)
 // and mails a summary with that CSV to the review alert address.
@@ -26,7 +27,7 @@ if (SEND && !process.env.SENDGRID_API_KEY) {
 }
 
 const fnRequire = Module.createRequire(path.join(FN, "index.js"));
-const { Firestore } = fnRequire("@google-cloud/firestore");
+const { Firestore, Timestamp } = fnRequire("@google-cloud/firestore");
 const { OAuth2Client } = fnRequire("google-auth-library");
 const fresh = () => ({ access_token: gcloud("auth print-access-token"), expiry_date: Date.now() + 45 * 60000 });
 const authClient = new OAuth2Client({ quotaProjectId: PROJECT });
@@ -47,6 +48,41 @@ indexModule._compile(fs.readFileSync(file, "utf8") +
 const fn = indexModule.exports.__notices;
 const ownerNotice = fnRequire("./url-review-owner-notice");
 const publish = fnRequire("./url-review-publish");
+const liveReports = require("./build-live-reports");
+
+// Batch-run cards (runs-3, runs-100, ...) were built from saved reports, not from a review, so they have
+// no url_reviews record for the claim link to open (#515). Their report file, by card id.
+function savedReports() {
+  const byId = new Map();
+  liveReports.RUN_FILES.forEach(({ file }) => {
+    let runs = [];
+    try { runs = liveReports.loadRuns(file); } catch (error) { runs = []; }
+    runs.forEach((run) => {
+      if (run && run.id && run.report && !byId.has(run.id)) byId.set(run.id, path.join(liveReports.REPORTS, run.report + "-current.json"));
+    });
+  });
+  return byId;
+}
+
+// A complete review record for a batch-run card, dated on its read day so the daily Live Reports job,
+// which reads records created since its last run, does not publish it again.
+function batchRecord(card, file) {
+  const id = "batch-" + card.id;
+  const read = new Date((card.read || "") + "T12:00:00Z");
+  return {
+    id,
+    status: "complete",
+    email: "",
+    reasonCode: "batch-run",
+    series: card.series || "",
+    frameworks: [],
+    lang: (card.langs && card.langs.lang) || "en",
+    createdAt: Timestamp.fromDate(isNaN(read) ? new Date() : read),
+    retainUntil: fn.keepUntil().toISOString(),
+    expireAt: fn.keepUntil(),
+    report: Object.assign(JSON.parse(fs.readFileSync(file, "utf8")), { id })
+  };
+}
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const csv = (value) => /[",\n]/.test(String(value == null ? "" : value)) ? "\"" + String(value).replace(/"/g, "\"\"") + "\"" : String(value == null ? "" : value);
@@ -100,6 +136,7 @@ async function sendQueued(domain) {
 
 async function main() {
   const [index, records, unlisted] = await Promise.all([fn.liveReportIndex(), latestRecords(), fn.unlistedHosts()]);
+  const saved = savedReports();
   const cards = index.reports || [];
   console.log((SEND ? "SEND" : "DRY RUN") + ": " + cards.length + " Live Reports, " + records.size + " reviewed hosts");
   const rows = [];
@@ -109,11 +146,19 @@ async function main() {
     const row = { host, domain, cardId: card.id, outcome: "", reason: "", email: "", source: "", sourceUrl: "", sentAt: "" };
     rows.push(row);
     try {
-      const hit = records.get(host);
-      // A batch-run card has no review record, so its claim link would have no report to open.
-      if (!hit) { Object.assign(row, { outcome: "skipped", reason: "no-review-record" }); continue; }
-      const snap = await db.collection("url_reviews").doc(hit.id).get();
-      const record = snap.data();
+      let hit = records.get(host);
+      let record = null;
+      if (!hit) {
+        const file = saved.get(card.id);
+        if (!file || !fs.existsSync(file)) { Object.assign(row, { outcome: "skipped", reason: "no-review-record" }); continue; }
+        if (!SEND) { Object.assign(row, { outcome: "would-backfill" }); continue; }
+        record = batchRecord(card, file);
+        await db.collection("url_reviews").doc(record.id).set(record);
+        hit = { id: record.id };
+        row.reason = "backfilled";
+      } else {
+        record = (await db.collection("url_reviews").doc(hit.id).get()).data();
+      }
       const [stopped, last] = await Promise.all([fn.ownerStops([], domain), db.collection("url_review_owner_notices").doc(domain).get()]);
       const lastNotice = last.exists ? last.data() : null;
       const held = ownerNotice.heldBack(record, { unlisted, stopped, notice: lastNotice });
