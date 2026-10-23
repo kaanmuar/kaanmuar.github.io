@@ -79,7 +79,7 @@ function openRows(record, grouped) {
     { label: "Email", value: record.email },
     { label: "Language", value: record.lang },
     { label: "Languages", value: record.languages },
-    { label: "Referrer", value: record.referrerHost || "Direct" },
+    { label: "Source", value: openSource(record) },
     { label: "Screen", value: record.screen },
     { label: "Time zone", value: record.timezone },
     { label: "Place", value: place },
