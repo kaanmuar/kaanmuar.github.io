@@ -496,8 +496,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "POST" && (url.pathname === "/review/stop" || url.pathname === "/stop")) {
     let stopBody = {};
     try { stopBody = await readBody(req); } catch (error) { stopBody = {}; }
-    const runId = String(stopBody.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const run = runs.get(runId);
+    const stop = await auth.stopRun(signIns, stopBody);
+    if (!stop.ok) {
+      sendJson(res, stop.status, { error: stop.error, signIn: !!stop.signIn }, origin, deviceHint);
+      return;
+    }
+    const run = runs.get(String(stopBody.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32));
     if (run) run.stopped = true;
     sendJson(res, 200, { ok: true, stopped: !!run }, origin, deviceHint);
     return;
@@ -759,6 +763,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   const runId = String(body.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32) || crypto.randomBytes(8).toString("hex");
+  const claim = await auth.claimRun(signIns, { runId, email: signedIn.email, deviceKey: body.deviceKey });
+  if (!claim.ok) {
+    sendJson(res, claim.status, { error: claim.error }, origin, deviceId);
+    return;
+  }
   const run = { stopped: false };
   runs.set(runId, run);
   activeRuns.set(runId, {
@@ -822,6 +831,7 @@ const server = http.createServer(async (req, res) => {
     res.end();
   } finally {
     runs.delete(runId);
+    await signIns.remove("url_review_stops", runId);
     activeRuns.delete(runId);
   }
 });

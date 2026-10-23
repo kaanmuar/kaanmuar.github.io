@@ -25,6 +25,7 @@ const DEFAULT_PROVIDERS = "email,google.com";
 const CODE_MS = 15 * 60 * 1000;
 const SESSION_MS = 30 * 24 * 60 * 60 * 1000;
 const ACCOUNT_MS = 365 * 24 * 60 * 60 * 1000;
+const RUN_MS = 24 * 60 * 60 * 1000;
 const PEOPLE_FIELDS = "emailAddresses,organizations,birthdays,phoneNumbers,addresses,genders";
 const MAX_TRIES = 5;
 const SENDS_PER_EMAIL = 5;
@@ -303,6 +304,42 @@ async function checkSession(store, input) {
   return { ok: true, email: row.email, provider: row.provider, uid: row.uid || "" };
 }
 
+function cleanRunId(runId) {
+  return String(runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+}
+
+function ownsRun(row, email, device) {
+  return !!row && row.email === email && sameHash(row.deviceHash, device);
+}
+
+// A run's stop row names the email and device that started it; only that pair can stop it.
+async function claimRun(store, input) {
+  const now = input.now || Date.now();
+  const runId = cleanRunId(input.runId);
+  if (!runId) return { ok: true, runId: "" };
+  const device = deviceHash(input.deviceKey);
+  const row = await store.get("url_review_stops", runId);
+  if (row && !ownsRun(row, input.email, device)) return fail(409, "That run id is already in use. Start the review again.");
+  await store.replace("url_review_stops", runId, {
+    email: input.email,
+    deviceHash: device,
+    stopped: false,
+    at: new Date(now).toISOString(),
+    expireAt: new Date(now + RUN_MS)
+  });
+  return { ok: true, runId };
+}
+
+async function stopRun(store, input) {
+  const signedIn = await checkSession(store, Object.assign({}, input, { touch: false }));
+  if (!signedIn.ok) return signedIn;
+  const runId = cleanRunId(input.runId);
+  const row = runId ? await store.get("url_review_stops", runId) : null;
+  if (!ownsRun(row, signedIn.email, deviceHash(input.deviceKey))) return fail(404, "No review started on this device is running under that id.");
+  await store.set("url_review_stops", runId, { stopped: true, stoppedAt: new Date(input.now || Date.now()).toISOString() });
+  return { ok: true };
+}
+
 async function closeSession(store, session) {
   const clean = String(session || "").replace(/[^a-f0-9]/g, "");
   if (clean.length === 64) await store.remove("url_review_sessions", hashOf(clean));
@@ -366,6 +403,8 @@ module.exports = {
   providerSignIn,
   openSession,
   checkSession,
+  claimRun,
+  stopRun,
   closeSession,
   dropAuthUsers,
   lookupIdToken

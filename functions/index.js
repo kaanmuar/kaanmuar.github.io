@@ -2870,9 +2870,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/stop") !== -1) {
-    const runId = String((req.body && req.body.runId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    if (runId) {
-      await admin.firestore().collection("url_review_stops").doc(runId).set({ at: new Date().toISOString(), expireAt: keepUntil() });
+    const stop = await reviewAuth.stopRun(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
+    if (!stop.ok) {
+      res.status(stop.status).json({ error: stop.error, signIn: !!stop.signIn });
+      return;
     }
     res.status(200).json({ ok: true });
     return;
@@ -3303,12 +3304,21 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     });
     return;
   }
-  const runId = String((req.body && req.body.runId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const claim = await reviewAuth.claimRun(reviewAuth.firestoreStore(admin.firestore()), {
+    runId: req.body && req.body.runId,
+    email: signedIn.email,
+    deviceKey: req.body && req.body.deviceKey
+  });
+  if (!claim.ok) {
+    res.status(claim.status).json({ error: claim.error });
+    return;
+  }
+  const runId = claim.runId;
   let stopped = false;
   const stopTimer = runId ? setInterval(async () => {
     try {
       const snap = await admin.firestore().collection("url_review_stops").doc(runId).get();
-      if (snap.exists) stopped = true;
+      if (snap.exists && snap.get("stopped") === true) stopped = true;
     } catch (error) {
       console.error("URL review stop check failed:", error);
     }
