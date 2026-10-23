@@ -14,7 +14,7 @@ const FIXES = [
   { cause: "unknown", at: "2026-10-21T22:20:00Z", ref: "#329", label: "A re-run of a failure with no saved frameworks reviews with Playwright" },
   { cause: "browser", at: "2026-10-22T19:15:54Z", ref: "#365", label: "A refused page finishes as a refusal instead of a browser timeout" },
   { cause: "timeout", at: "2026-10-23T19:50:00Z", ref: "#582", label: "A start page past 8 s keeps the part that arrived, or is read in headless Chrome" },
-  { cause: "save", at: "2026-10-23T23:30:00Z", ref: "#638", label: "A finished report with an empty optional field is saved" }
+  { cause: "save", at: "2026-10-23T23:30:00Z", ref: "#640", label: "A finished report with an empty optional field is saved" }
 ];
 // The review form's default when a failure kept no frameworks (one taken from an alert).
 const RERUN_FRAMEWORKS = ["Playwright"];
