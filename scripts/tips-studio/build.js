@@ -20,6 +20,8 @@
    To translate by hand or by agent instead, fill <batch>/i18n.json in translate.py's format:
      node scripts/tips-studio/build.js --source runs-100 --export-strings
      node scripts/tips-studio/build.js --source runs-100 --rotate [--shard 0/2] [--resume]
+   Captions take their hashtags from scripts/social-tags.js; every run first refreshes the day's trending
+   tags (scripts/trending-tags.js) unless they were already fetched today.
    --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
    for clips already queued, and leaves the stills, calendar, and Buffer CSVs alone. */
 
@@ -155,14 +157,24 @@ function localize(tip, index, total, i18n) {
   let voice = voiceFor(index);
   if (!translated(tip, voice.lang, i18n)) voice = VOICES.find((v) => v.file === "en-" + voice.file.slice(3));
   const tr = voice.lang === "en" ? {} : i18n.clips[tip.id] || {};
-  const local = JSON.parse(JSON.stringify(tip));
+  const local = Object.assign(JSON.parse(JSON.stringify(tip)), { lang: voice.lang });
   const cat = Object.assign({}, studio.CATS[tip.cat]);
   Object.keys(tr).forEach((at) => { if (at === "cat.label") cat.label = tr[at]; else if (!at.startsWith("cap.")) setPath(local, at, tr[at]); });
   const cap = studio.captions(local, index, total);
   const ui = voice.lang === "en" ? {} : Object.assign({}, i18n.ui[voice.lang], { locale: LOCALES[voice.lang] });
   return { tip: local, cat, ui, voice, lang: voice.lang,
     speech: studio.plainTitle(local) + " " + local.action,
-    tiktok: cap.tiktok, youtubeTitle: cap.youtubeTitle, youtube: tr["cap.youtube"] || cap.youtube };
+    tiktok: cap.tiktok, youtubeTitle: cap.youtubeTitle, youtube: withTags(tr["cap.youtube"], cap.youtube) };
+}
+
+// The translated description ends with the English tag line; the clip's language gets its own tags.
+function withTags(translated, own) {
+  if (!translated) return own;
+  const tags = own.split("\n").pop();
+  if (!tags.startsWith("#")) return translated;
+  const lines = translated.replace(/\s+$/, "").split("\n");
+  if (lines[lines.length - 1].startsWith("#")) lines.pop(); else lines.push("");
+  return lines.concat(tags).join("\n");
 }
 
 function exportStrings(all) {
@@ -231,6 +243,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
 }
 
 (async () => {
+  if (!opts["export-strings"]) spawnSync(process.execPath, [path.join(ROOT, "scripts/trending-tags.js"), "--if-stale"], { stdio: "inherit" });
   const rand = rng(SEED);
   const all = RUNS ? studio.TIPS.slice() : order(studio.TIPS, rand);
   const total = all.length;
