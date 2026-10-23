@@ -21,8 +21,8 @@ s3-pl.wildguns.gameforge.com
 s35-bg.bitefight.gameforge.com
 s38-mx.bitefight.gameforge.com
 s3.ariba.com
-s3.subisu.net.np
 s31.quizdays.com
 s32.quizdays.com
+s3.subisu.net.np
 s3jarahjitu.skin
 s3xcn2.com

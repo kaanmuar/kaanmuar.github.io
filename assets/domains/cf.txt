@@ -16,8 +16,8 @@ cforcover.com
 cfi.ens-abidjan.ci
 cf.instructure.com
 cfl.ca
-cfc.kp.gov.pk
 cf-apply.jobappnetwork.com
+cfc.kp.gov.pk
 cf-vanguard.com
 www.cflbbus.com
 cfcity.esasacloud.com

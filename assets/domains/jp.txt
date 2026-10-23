@@ -15,8 +15,8 @@ www.jps.go.cr
 jp.reuters.com
 jp.ext.hp.com
 jp.tradingview.com
-jp.quora.com
 jp.shein.com
+jp.quora.com
 jp.surveymonkey.com
 jp.jable.tv
 jp.investing.com
@@ -38,9 +38,9 @@ www.jpcycles.com
 jp.xmorex.com
 www.jprime.jp
 www.jp-weathernews.com
-jpjebid.jpj.gov.my
 www.jpay.com
 jpdb.io
+jpjebid.jpj.gov.my
 jp.marugame.com
 jp.bandainamcoentwebstore.com
 jpeg-optimizer.com

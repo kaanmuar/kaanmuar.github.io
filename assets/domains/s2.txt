@@ -37,8 +37,8 @@ s279-de.ogame.gameforge.com
 s282-de.ogame.gameforge.com
 s20atd.dourados.sgusuite.com.br
 s22.quizdays.com
-s2.kingtime.jp
 s2.yapla.com
+s2.kingtime.jp
 www.s24su.com
 s2.gladiators.ru
 s2s.vfun.tv
