@@ -14,9 +14,9 @@ PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 mkdir -p "$STATE/logs"
 
 if [ "${1:-}" = install ]; then
-  cp "$0" "$STATE/run.sh"
-  chmod +x "$STATE/run.sh"
-  cat >"$PLIST" <<EOF
+	cp "$0" "$STATE/run.sh"
+	chmod +x "$STATE/run.sh"
+	cat >"$PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -29,15 +29,18 @@ if [ "${1:-}" = install ]; then
 </dict>
 </plist>
 EOF
-  launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
-  launchctl bootstrap "gui/$(id -u)" "$PLIST"
-  echo "Installed $LABEL: daily at 07:00, logs in $STATE/logs"
-  exit 0
+	launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+	launchctl bootstrap "gui/$(id -u)" "$PLIST"
+	echo "Installed $LABEL: daily at 07:00, logs in $STATE/logs"
+	exit 0
 fi
 
 # A run killed hard leaves its lock behind; no run takes 3 hours.
 find "$STATE" -maxdepth 1 -name lock -mmin +180 -exec rmdir {} \; 2>/dev/null || true
-mkdir "$STATE/lock" 2>/dev/null || { echo "$(date -u +%FT%TZ) a run is already going"; exit 0; }
+mkdir "$STATE/lock" 2>/dev/null || {
+	echo "$(date -u +%FT%TZ) a run is already going"
+	exit 0
+}
 trap 'rmdir "$STATE/lock"' EXIT
 
 [ -d "$CLONE/.git" ] || gh repo clone "$REPO" "$CLONE" -- -q
