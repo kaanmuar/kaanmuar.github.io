@@ -84,7 +84,7 @@
     ================================================================== -->
     <!-- Compiled Tailwind CSS (see `npm run build:css`) -->
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="css/cv.css?v=20261019a">
+    <link rel="stylesheet" href="css/cv.css?v=20261023a">
     <link rel="stylesheet" href="css/site-look.css?v=20261006d">
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
@@ -211,7 +211,7 @@
                     "@id": "https://carlosandmunoz.com/#website",
                     "url": "https://carlosandmunoz.com/",
                     "name": "Carlos A. Muñoz — Interactive CV",
-                    "description": "Interactive CV with six languages, competency filters, a skills toolkit, a career timeline, print, and PDF, JPG, Word, JSON, and text downloads, plus a free QA lab and SDLC studio.",
+                    "description": "Interactive CV with six languages, competency filters, a skills toolkit, a career timeline, print, and PDF, JPG, Word, JSON, and text downloads, plus a free QA lab, an SDLC studio, and URL Review.",
                     "inLanguage": ["en", "es", "pt", "de", "fr", "it"],
                     "publisher": { "@id": "https://carlosandmunoz.com/#person" }
                 },
@@ -225,7 +225,7 @@
                     "about": { "@id": "https://carlosandmunoz.com/#person" },
                     "mainEntity": { "@id": "https://carlosandmunoz.com/#person" },
                     "primaryImageOfPage": "https://carlosandmunoz.com/assets/profile.jpg?v=20260925",
-                    "dateModified": "2026-10-19",
+                    "dateModified": "2026-10-23",
                     "inLanguage": "en"
                 },
                 {
@@ -304,6 +304,19 @@
                     "isAccessibleForFree": true,
                     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                     "author": { "@id": "https://carlosandmunoz.com/#person" }
+                },
+                {
+                    "@type": "WebApplication",
+                    "@id": "https://carlosandmunoz.com/qa-review.html#app",
+                    "name": "QA-lab URL Review",
+                    "url": "https://carlosandmunoz.com/qa-review.html",
+                    "applicationCategory": "DeveloperApplication",
+                    "operatingSystem": "Web",
+                    "description": "Submit a public https URL and get a health score from 0 to 100 across SEO, AI search, analytics, security, accessibility, and performance, with evidence and a fix for every check, plus proposed test cases and starting scripts for 20 frameworks.",
+                    "inLanguage": ["en", "es", "pt", "de", "fr", "it"],
+                    "isAccessibleForFree": true,
+                    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "The first completed review is included: 20 pages, 2 links deep." },
+                    "author": { "@id": "https://carlosandmunoz.com/#person" }
                 }
             ]
         }
@@ -332,6 +345,7 @@
                         <h2 id="main-title" class="text-base mt-2" data-translate-key="job_title" data-topics="pm qa lead">Senior IT Project Manager, QA Architect & QA Leader</h2>
                         <p id="main-certifications" class="text-xs text-cyan-400 mt-1" data-topics="pm qa strategy">CSPM | ISTQB | CISA | CISSP</p>
                         <p id="engagement-offer" class="text-xs mt-3 leading-snug" data-translate-key="engagement_offer">Available for contract, freelance, advisory, and mentoring. I build a full QA path: strategy, automation, CI, and the team.</p>
+                        <a id="review-cta" class="review-cta no-print" href="qa-review.html" data-review-link data-translate-key="review_cta" data-analytics-event="open_url_review" data-analytics-category="Navigation" data-analytics-label="CV sidebar">Score your site with URL Review</a>
                     </div>
                 </div>
                 <hr class="my-6">
@@ -636,7 +650,7 @@
                     <nav class="cv-footer-tools" aria-label="Live tools">
                         <a href="qa-lab.html" data-translate-key="footer_lab">QA regression lab — 20 frameworks, from Playwright and Cypress to Reqnroll, Maestro, and k6</a>
                         <a href="simulador.html" data-translate-key="footer_studio">SDLC studio — Jira, Linear, Backlog, Xray, and the automation sprint</a>
-                        <a href="qa-review.html" data-translate-key="footer_review" data-analytics-event="open_url_review" data-analytics-category="Navigation" data-analytics-label="CV footer">URL Review — scores a public site for SEO, AI search, analytics, security, accessibility, and speed</a>
+                        <a href="qa-review.html" data-review-link data-translate-key="footer_review" data-analytics-event="open_url_review" data-analytics-category="Navigation" data-analytics-label="CV footer">URL Review — scores a public site for SEO, AI search, analytics, security, accessibility, and speed</a>
                     </nav>
                     <p class="cv-capabilities" data-translate-key="footer_capabilities">Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, eight competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.</p>
                     <div class="flex justify-center items-center gap-2">
@@ -811,6 +825,6 @@
 |                         APPLICATION JAVASCRIPT                      |
 ================================================================== -->
 <script src="js/cv-data.js?v=20261028s"></script>
-<script type="module" src="js/cv-app.js?v=20261028b"></script>
+<script type="module" src="js/cv-app.js?v=20261028c"></script>
 </body>
 </html>

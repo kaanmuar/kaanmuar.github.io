@@ -447,6 +447,9 @@
         .cv-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.75rem; color: var(--text-secondary); }
         .cv-footer-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem; margin-bottom: 0.75rem; }
         .cv-footer-tools a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; }
+        .sidebar a.review-cta { display: inline-block; margin-top: 0.75rem; font-size: 0.8rem; font-weight: 600; color: var(--sidebar-accent, var(--accent-on-dark)); text-decoration: underline; text-underline-offset: 3px; }
+        .sidebar a.review-cta::after { content: " \2192"; }
+        .sidebar a.review-cta:hover { color: var(--text-sidebar-primary); }
         .cv-capabilities { max-width: 42rem; margin: 0 auto 0.75rem; line-height: 1.45; }
         .phone-container .phone-text { display: inline; }
         .phone-container .phone-number { display: none; }
