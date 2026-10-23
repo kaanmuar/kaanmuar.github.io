@@ -37,3 +37,4 @@ media/buffer-upload/
 
 # Owner notice run outcomes carry owners' email addresses
 owner-notices-*.csv
+scripts/trending-tags.json
