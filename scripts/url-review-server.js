@@ -314,7 +314,7 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === "GET" && url.pathname === "/desk/failures/data") {
     if (!deskOperator(req)) {
-      sendJson(res, 401, { error: "Sign in with the operator Google account." }, origin, deviceHint);
+      sendJson(res, 401, { error: "Sign in with the operator account." }, origin, deviceHint);
       return;
     }
     sendJson(res, 200, { failures: [], bugs: [], fixes: [] }, origin, deviceHint);
@@ -326,7 +326,7 @@ const server = http.createServer(async (req, res) => {
     let email = null;
     try { email = await verifyDeskGoogle(sessionBody.idToken); } catch (error) { email = null; }
     if (!email) {
-      sendJson(res, 403, { error: "This Google account cannot open the desk." }, origin, deviceHint);
+      sendJson(res, 403, { error: "This account cannot open the desk." }, origin, deviceHint);
       return;
     }
     const token = crypto.randomBytes(16).toString("hex");
@@ -354,7 +354,7 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === "GET" && url.pathname === "/desk/data") {
     if (!deskOperator(req)) {
-      sendJson(res, 401, { error: "Sign in with the operator Google account." }, origin, deviceHint);
+      sendJson(res, 401, { error: "Sign in with the operator account." }, origin, deviceHint);
       return;
     }
     sendJson(res, 200, desk.snapshot(readStore(), readAlerts(), Array.from(activeRuns.values())), origin, deviceHint);
@@ -371,7 +371,7 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === "POST" && url.pathname === "/desk/pass") {
     if (!deskOperator(req)) {
-      sendJson(res, 401, { error: "Sign in with the operator Google account." }, origin, deviceHint);
+      sendJson(res, 401, { error: "Sign in with the operator account." }, origin, deviceHint);
       return;
     }
     let passBody = {};
