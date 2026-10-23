@@ -195,7 +195,7 @@ test("each review page carries the panel copy in its own language, marked so the
     } else {
       assert.ok(!/translate="no"/.test(opener[0]) && !/translate="no"/.test(panel.split(">")[0]), "English stays translatable");
     }
-    const shown = [...panel.matchAll(/data-ask-text="(\w+)">([^<]*)</g)].map((match) => [match[1], match[2].replace(/&amp;/g, "&").replace(/&quot;/g, "\"")]);
+    const shown = [...panel.matchAll(/data-ask-text="(\w+)">([^<]*)</g)].map((match) => [match[1], match[2].replace(/&quot;/g, "\"").replace(/&lt;/g, "<").replace(/&amp;/g, "&")]);
     assert.deepEqual(shown.map(([key]) => key).sort(), ["close", "inputLabel", "note", "open", "repo", "send", "title"], lang);
     shown.forEach(([key, value]) => assert.equal(value, book[key], lang + "." + key));
     assert.ok(panel.includes('placeholder="' + book.placeholder.replace(/"/g, "&quot;") + '"'), lang + " placeholder");
