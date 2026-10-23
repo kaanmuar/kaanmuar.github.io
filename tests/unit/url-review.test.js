@@ -1067,6 +1067,7 @@ test("failure causes are classed from the review's own messages", () => {
     ["That address is not a public website.", "input"],
     ["certificate has expired", "tls"],
     ["connect ECONNREFUSED 1.2.3.4:443", "connection"],
+    ["Value for argument \"data\" is not a valid Firestore document. Cannot use \"undefined\" as a Firestore value (found in field \"report.cases.`28`.path\").", "save"],
     ["Cannot read properties of undefined (reading 'x')", "unknown"]
   ];
   cases.forEach(([message, id]) => assert.equal(failures.causeOf(message).id, id, message));
@@ -2087,6 +2088,14 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(byId("SEC-03").why, /Seen on shop\.example\.com: content-security-policy was absent\./);
     assert.deepEqual(byId("SEC-03").pages, ["/", "/a"]);
     assert.equal(byId("SEC-03").path, "/");
+  });
+
+  test("refined cases carry no undefined field, so the report can be saved to Firestore", () => {
+    const cases = [{ id: "A11Y-01", layer: "Accessibility", title: "x", why: "y", fw: ["Playwright"], path: undefined, pages: [] }];
+    const findings = [{ id: "F-01", key: "x-none", area: "Performance", verdict: "risk", severity: "low", title: "Slow", evidence: "Slow.", rank: 1 }];
+    const out = caseRank.refine(cases, { findings, origin: "https://shop.example.com" });
+    const holes = out.flatMap((item) => Object.keys(item).filter((key) => item[key] === undefined).map((key) => item.id + "." + key));
+    assert.deepEqual(holes, []);
   });
 
   test("a case's own check and path drive its script", () => {

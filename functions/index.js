@@ -11,6 +11,8 @@ const sgMail = require("@sendgrid/mail");
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
+// An optional field left undefined is dropped instead of failing the whole write, such as a finished review's report.
+admin.firestore().settings({ ignoreUndefinedProperties: true });
 
 // SENDGRID_API_KEY is a Secret Manager secret (firebase functions:secrets:set).
 // SENDGRID_FROM is a plain env var in functions/.env.
