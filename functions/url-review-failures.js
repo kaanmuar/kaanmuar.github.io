@@ -97,10 +97,14 @@ function failureRecord(input) {
     options: {
       pages: Number(run.pages) || 0,
       depth: Number(run.depth) || 0,
+      pageLang: clip(run.pageLang, 2),
+      section: run.section === true,
       frameworks: Array.isArray(run.frameworks) ? run.frameworks.slice(0, 12).map((name) => clip(name, 40)) : []
     },
     intake: {
       lang: clip(run.lang, 8),
+      pageLang: clip(run.pageLang, 2),
+      section: run.section === true,
       reason: clip(run.reason, 600),
       reasonCode: clip(run.reasonCode, 40),
       clientName: clip(run.clientName, 120),

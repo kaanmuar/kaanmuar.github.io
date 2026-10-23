@@ -1215,6 +1215,8 @@ async function rerunFailure(group) {
       stopped: () => Date.now() - startedAt > 240000,
       maxPages: options.pages || undefined,
       maxDepth: options.depth || undefined,
+      pageLang: options.pageLang || "",
+      section: options.section === true,
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
@@ -1225,7 +1227,9 @@ async function rerunFailure(group) {
       email: group.email,
       frameworks: options.frameworks || [],
       pages: options.pages,
-      depth: options.depth
+      depth: options.depth,
+      pageLang: options.pageLang || "",
+      section: options.section === true
     }), report, { deviceId: (group.intake || {}).deviceId });
   } catch (caught) {
     error = caught;
@@ -3361,6 +3365,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       stopped: () => stopped,
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
+      pageLang: intake.value.pageLang,
+      section: intake.value.section,
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
