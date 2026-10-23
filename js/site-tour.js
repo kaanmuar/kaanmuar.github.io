@@ -258,6 +258,7 @@
     clearHit();
     if (typeof step.prepare === 'function') step.prepare();
     const el = step.selector ? document.querySelector(step.selector) : null;
+    for (let fold = el && el.closest('details:not([open])'); fold; fold = fold.parentElement && fold.parentElement.closest('details:not([open])')) fold.open = true;
     blurFields();
     pinTip();
     if (el) {
