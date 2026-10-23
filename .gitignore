@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 functions/.env
 .DS_Store
 cypress/screenshots/
@@ -29,3 +29,12 @@ watir/.bundle/
 watir/Gemfile.lock
 reqnroll/Features/*.feature.cs
 previews/
+media/url-review-demos/
+media/social-posts/*/story/
+media/social-posts/*/clip/
+media/social-posts/*/cover/
+media/buffer-upload/
+
+# Owner notice run outcomes carry owners' email addresses
+owner-notices-*.csv
+scripts/trending-tags.json

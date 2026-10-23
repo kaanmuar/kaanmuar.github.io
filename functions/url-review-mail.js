@@ -11,6 +11,7 @@ const PAGES = new Set([
   "qa-review-it.html",
   "qa-review-pay.html",
   "qa-review-account.html",
+  "qa-review-guide.html",
   "qa-review-legal.html"
 ]);
 
@@ -78,7 +79,7 @@ function openRows(record, grouped) {
     { label: "Email", value: record.email },
     { label: "Language", value: record.lang },
     { label: "Languages", value: record.languages },
-    { label: "Referrer", value: record.referrerHost || "Direct" },
+    { label: "Source", value: openSource(record) },
     { label: "Screen", value: record.screen },
     { label: "Time zone", value: record.timezone },
     { label: "Place", value: place },
@@ -151,6 +152,14 @@ function money(rows) {
   return { usd: Math.round(usd * 100) / 100, paidCount };
 }
 
+// The LinkedIn app and many mail clients send no referrer, so a tagged link names the source better.
+function openSource(row) {
+  let tagged = "";
+  try { tagged = new URLSearchParams(String((row && row.query) || "")).get("utm_source") || ""; } catch (error) { tagged = ""; }
+  if (tagged) return tagged.toLowerCase().slice(0, 40) + " (tagged link)";
+  return (row && row.referrerHost) || "Direct";
+}
+
 function line(parts) {
   return parts.filter(Boolean).join(" · ");
 }
@@ -174,7 +183,7 @@ function summarizePeriod(opens, reviews, captures, alerts) {
     bump(countries, row.country || "unknown");
     bump(cities, row.city || "unknown");
     bump(langs, row.lang || "en");
-    bump(referrers, row.referrerHost || "Direct");
+    bump(referrers, openSource(row));
     bump(screens, row.screen || "unrecorded");
     bump(zones, row.timezone || "unknown");
     const when = whenOf(row);
@@ -193,7 +202,7 @@ function summarizePeriod(opens, reviews, captures, alerts) {
     row.page,
     row.lang,
     [row.city, row.country].filter(Boolean).join(", ") || "place unrecorded",
-    row.referrerHost || "Direct",
+    openSource(row),
     row.screen,
     row.ip,
     (Array.isArray(row.urls) ? row.urls : reviewUrls(row)).join(" | "),
@@ -284,7 +293,7 @@ function reportRows(summary, previous, phrase) {
     { label: "Countries", value: tally(summary.countries) },
     { label: "Cities", value: tally(summary.cities) },
     { label: "Languages", value: tally(summary.langs) },
-    { label: "Referrers", value: tally(summary.referrers) },
+    { label: "Sources", value: tally(summary.referrers) },
     { label: "Screens", value: tally(summary.screens) },
     { label: "Time zones", value: tally(summary.zones) },
     { label: "Hours", value: tally(summary.hours) + " America/Bogota" }
@@ -294,6 +303,7 @@ function reportRows(summary, previous, phrase) {
 module.exports = {
   openRecord,
   openRows,
+  openSource,
   reviewUrls,
   summarizePeriod,
   reportRows

@@ -1,0 +1,52 @@
+# .github/workflows/sweep-seeds.yml
+# Monthly: rebuilds assets/sweep/ (the sites the Firebase sweepReviews job reviews, country by country)
+# from the Chrome UX Report top lists, which come out around the 10th. Free on this public repo.
+# Pushes straight to main with LIVE_REPORTS_DEPLOY_KEY, like the Live Reports job. Schedule: functions/ops-schedule.js.
+
+name: Country sweep seeds
+
+on:
+  schedule:
+    - cron: '0 9 16 * *'
+  workflow_dispatch:
+
+concurrency:
+  group: sweep-seeds
+  cancel-in-progress: false
+
+jobs:
+  seeds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build the seeds
+        id: seeds
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/build-sweep-seeds.js
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add assets/sweep
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -q -m "Sweep seeds: ${{ steps.seeds.outputs.sites }} sites, CrUX ${{ steps.seeds.outputs.month }} [skip ci]"
+          for attempt in 1 2 3 4 5; do
+            git push origin HEAD:main && break
+            if [ "$attempt" = 5 ]; then echo "::error::main kept moving; the seeds were not pushed."; exit 1; fi
+            sleep $((attempt * 5))
+            DATA=$(git rev-parse HEAD)
+            git fetch -q --depth=1 origin main
+            git reset -q --hard FETCH_HEAD
+            git cherry-pick -X theirs "$DATA"
+          done

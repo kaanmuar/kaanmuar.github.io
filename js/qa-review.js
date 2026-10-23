@@ -3,7 +3,7 @@
   const DEVICE_KEY = "qa-review-device";
   const SHOWN_KEY = "qa-review-shown";
   const SAMPLE_URL = "assets/qa-review-sample.json";
-  const TERMS_VERSION = "2026-10-20";
+  const TERMS_VERSION = "2026-10-22.2";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PRICE = 19;
@@ -72,6 +72,18 @@
     return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
   }
 
+  // reviewUrl delivers a stream only when the run ends; reviewRun sends each log line as it is written.
+  function runEndpoint() {
+    const host = location.hostname;
+    if (host === "127.0.0.1" || host === "localhost") return "http://127.0.0.1:8768";
+    return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewRun";
+  }
+
+  // Set from ?qatest= on the pay page; a matching key keeps the run out of Live Reports.
+  function testKey() {
+    try { return localStorage.getItem("qa-review-test-key") || ""; } catch (error) { return ""; }
+  }
+
   function deviceId() {
     let id = "";
     try { id = localStorage.getItem(DEVICE_KEY) || ""; } catch (error) { id = ""; }
@@ -92,15 +104,28 @@
     return [...app.querySelectorAll("input, textarea, button")].filter((el) => el.id !== "stop-btn");
   }
 
+  function signedIn() {
+    return !!(window.ReviewAuth && ReviewAuth.signedIn());
+  }
+
+  if (window.ReviewAuth) {
+    ReviewAuth.onChange((on) => {
+      if (!app.inert && !activeRun) reviewBtn.disabled = !on;
+    });
+  }
+
   function unlock() {
     gate.hidden = true;
+    gate.classList.remove("is-leaving");
     app.inert = false;
     document.querySelectorAll("[data-gated]").forEach((el) => { el.inert = false; });
     fields().forEach((el) => { el.disabled = false; });
     reasonBox.disabled = true;
+    syncSection();
     stopBtn.disabled = true;
+    reviewBtn.disabled = !signedIn();
     sessionStorage.setItem(TERMS_KEY, TERMS_VERSION);
-    if (window.SiteTour) SiteTour.autoStart(reviewTour());
+    if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
   }
 
   function paintFrameworks() {
@@ -132,6 +157,44 @@
     return picked ? Number(picked.value) : 2;
   }
 
+  function selectedPageLang() {
+    const picked = reviewForm.querySelector('input[name="pageLang"]:checked');
+    return picked ? picked.value : "";
+  }
+
+  const PAGE_LANG_LABEL = { en: "English", es: "Spanish", pt: "Portuguese", de: "German", fr: "French", it: "Italian" };
+  let sectionTouched = false;
+
+  function urlPath() {
+    const raw = urlInput.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    const slash = raw.indexOf("/");
+    if (slash === -1) return "";
+    return raw.slice(slash).replace(/[?#].*$/, "").replace(/\/+$/, "");
+  }
+
+  function syncSection() {
+    const box = document.getElementById("stay-section");
+    const note = document.getElementById("section-note");
+    if (!box) return;
+    const path = urlPath();
+    if (!path) sectionTouched = false;
+    else if (!sectionTouched) box.checked = true;
+    box.disabled = app.inert || !path;
+    if (!path) box.checked = false;
+    if (note) note.textContent = !path
+      ? "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site."
+      : box.checked
+        ? "Later pages stay under " + path + "."
+        : "Later pages can follow links outside " + path + ".";
+  }
+
+  function scopeSummary() {
+    const lang = selectedPageLang();
+    const parts = [selectedPages() + " pages", selectedDepth() + " deep", lang ? PAGE_LANG_LABEL[lang] || lang : "site language"];
+    if (document.getElementById("stay-section").checked) parts.push("this section");
+    return parts.join(", ");
+  }
+
   function paintReasons() {
     const box = document.getElementById("reasons");
     const legend = box.querySelector("legend");
@@ -150,17 +213,31 @@
   protectNames(document.body);
   const termsAll = document.getElementById("terms-all");
   const termBoxes = () => [...termsForm.querySelectorAll('input[type="checkbox"][name^="t"]')];
+  function paintTermGroups() {
+    termsForm.querySelectorAll(".term-group").forEach((group) => {
+      const boxes = [...group.querySelectorAll('input[type="checkbox"][name^="t"]')];
+      const done = boxes.filter((box) => box.checked).length;
+      group.classList.toggle("done", done === boxes.length);
+      group.querySelector(".tg-count").textContent = done + "/" + boxes.length;
+    });
+    const boxes = termBoxes();
+    termsForm.style.setProperty("--progress", boxes.length ? boxes.filter((box) => box.checked).length / boxes.length : 0);
+  }
   termsForm.addEventListener("change", (event) => {
     const boxes = termBoxes();
     if (termsAll && event.target === termsAll) boxes.forEach((box) => { box.checked = termsAll.checked; });
     else if (termsAll) termsAll.checked = boxes.length > 0 && boxes.every((box) => box.checked);
     accept.disabled = boxes.some((box) => !box.checked);
+    paintTermGroups();
   });
+  paintTermGroups();
   termsForm.addEventListener("submit", (event) => {
     event.preventDefault();
     if (accept.disabled) return;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_terms", "URL Review", "accepted");
-    unlock();
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { unlock(); return; }
+    gate.classList.add("is-leaving");
+    setTimeout(unlock, 340);
   });
   if (sessionStorage.getItem(TERMS_KEY) === TERMS_VERSION) unlock();
 
@@ -177,16 +254,45 @@
     if (code && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_reason", "URL Review", code);
   }
   document.getElementById("reasons").addEventListener("change", syncReasonExtras);
+  function paintSteps() {
+    const code = reasonCode();
+    const names = selectedFrameworks();
+    const done = {
+      you: signedIn() && !!document.getElementById("name").value.trim(),
+      why: !!code && (code !== "other" || !!reasonBox.value.trim()),
+      page: !!urlInput.value.trim(),
+      cases: names.length > 0,
+      scope: !!reviewForm.querySelector('input[name="pages"]:checked') && !!reviewForm.querySelector('input[name="depth"]:checked')
+    };
+    reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
+      const ok = !!done[group.dataset.step];
+      group.classList.toggle("done", ok);
+      group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
+    });
+    const meta = reviewForm.querySelector("#req-cases .rg-meta");
+    if (meta) meta.textContent = names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) : "");
+    const scopeMeta = reviewForm.querySelector("#req-scope .rg-meta");
+    if (scopeMeta) scopeMeta.textContent = scopeSummary();
+  }
+  reviewForm.addEventListener("input", paintSteps);
+  reviewForm.addEventListener("change", paintSteps);
+  reviewForm.addEventListener("invalid", (event) => openStepOf(event.target), true);
+  if (window.ReviewAuth) ReviewAuth.onChange(paintSteps);
+  paintSteps();
   const followUpBox = document.getElementById("follow-up");
   if (followUpBox) followUpBox.addEventListener("change", () => {
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_follow_up", "URL Review", followUpBox.checked ? "on" : "off");
   });
   reviewForm.addEventListener("change", (event) => {
     const target = event.target;
+    if (target && target.id === "stay-section") {
+      sectionTouched = true;
+      syncSection();
+    }
     if (!target || !window.SiteAnalytics) return;
     if (target.name === "fw") SiteAnalytics.trackEvent("qa_review_frameworks", "URL Review", String(selectedFrameworks().length));
     if (target.name === "tool") SiteAnalytics.trackEvent("qa_review_tools", "URL Review", target.value);
-    if (target.name === "pages" || target.name === "depth") SiteAnalytics.trackEvent("qa_review_scope", "URL Review", selectedPages() + "x" + selectedDepth());
+    if (target.name === "pages" || target.name === "depth" || target.name === "pageLang" || target.name === "section") SiteAnalytics.trackEvent("qa_review_scope", "URL Review", scopeSummary());
   });
   function countryForHost(value) {
     const host = String(value || "").replace(/^\s*https?:\/\//i, "").split("/")[0].split(":")[0].replace(/^www\./, "").toLowerCase();
@@ -202,6 +308,7 @@
     const next = urlInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
     if (next !== urlInput.value) urlInput.value = next;
     syncLegal();
+    syncSection();
   });
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
@@ -252,7 +359,15 @@
       params.set("depth", String(extra.depth || selectedDepth()));
       if (extra.billing) params.set("billing", extra.billing);
     }
+    const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
+    if (coupon && (purpose === "report" || purpose === "new-run")) params.set("coupon", coupon);
     return "qa-review-pay.html?" + params.toString();
+  }
+
+  function showDeal(hostId, priceId, body) {
+    const shown = !!(window.ReviewDeal && ReviewDeal.render(document.getElementById(hostId), body || {}));
+    document.getElementById(priceId).hidden = shown;
+    if (shown && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_deal_shown", "URL Review", (body && body.discountSource) || "return");
   }
 
   function reasonCode() {
@@ -291,7 +406,13 @@
       if (item.field === "clientUrl") document.getElementById("client-url-field").classList.add("invalid");
       if (item.field === "reason") document.getElementById("reasons").classList.add("invalid");
       if (item.field === "frameworks") document.getElementById("fw-picker").classList.add("invalid");
+      openStepOf(error);
     });
+  }
+
+  function openStepOf(el) {
+    const group = el && el.closest(".req-group");
+    if (group && !group.open) group.open = true;
   }
 
   function clientErrors() {
@@ -374,13 +495,16 @@
 
   function appendLog(text) {
     const list = document.getElementById("run-log");
+    // Like a terminal: keep following new lines unless the reader has scrolled up.
+    const following = list.scrollHeight - list.scrollTop - list.clientHeight < 32;
     const item = document.createElement("li");
     const time = document.createElement("time");
     time.textContent = new Date().toLocaleTimeString();
     item.appendChild(time);
     item.appendChild(document.createTextNode(text));
     list.appendChild(item);
-    list.scrollTop = list.scrollHeight;
+    if (following) list.scrollTop = list.scrollHeight;
+    if (window.ReviewProgress) ReviewProgress.line(text);
   }
 
   function seenBefore(id) {
@@ -539,20 +663,21 @@
     const groupBars = groupEntries.length ? groupEntries.map(([name, count]) =>
       '<div class="meter"><span>' + esc(name) + '</span><div class="track"><i style="width:' + Math.round(count / groupMax * 100) + '%"></i></div><span>' + count + "</span></div>"
     ).join("") : '<p class="muted">No technology group was named.</p>';
-    const advice = [];
-    if (!headers.hsts) advice.push(["Send HSTS", "Put Strict-Transport-Security on the host with a max-age of at least six months so the next visit stays on https."]);
-    if (!headers.csp) advice.push(["Add a content security policy", "Name the script sources and frame-ancestors, then tighten the policy from what a real browser reports."]);
-    if ((obs.missingAlt || 0) > 0) advice.push(["Name the images", obs.missingAlt + " images had no alt. Informative images need a description. Decorative images need an empty alt."]);
-    if (!obs.lang) advice.push(["Declare the language", "Set lang on the html element to the language a person reads on the page."]);
-    if ((obs.scripts || 0) > 12) advice.push(["Budget the scripts", obs.scripts + " external scripts were referenced. Defer the ones that are not needed for the first view."]);
-    if ((obs.ms || 0) > 800) advice.push(["Watch the first response", "This document took " + obs.ms + " ms. Keep that path under a budget you can re-check."]);
+    const ranked = ((report.insights && report.insights.findings) || []).filter((item) => item.rank && item.fix).slice(0, 3).map((item) => [item.title, item.fix, true]);
+    const advice = ranked.slice();
+    if (!ranked.length && !headers.hsts) advice.push(["Send HSTS", "Put Strict-Transport-Security on the host with a max-age of at least six months so the next visit stays on https."]);
+    if (!ranked.length && !headers.csp) advice.push(["Add a content security policy", "Name the script sources and frame-ancestors, then tighten the policy from what a real browser reports."]);
+    if (!ranked.length && (obs.missingAlt || 0) > 0) advice.push(["Name the images", obs.missingAlt + " images had no alt. Informative images need a description. Decorative images need an empty alt."]);
+    if (!ranked.length && !obs.lang) advice.push(["Declare the language", "Set lang on the html element to the language a person reads on the page."]);
+    if (!ranked.length && (obs.scripts || 0) > 12) advice.push(["Budget the scripts", obs.scripts + " external scripts were referenced. Defer the ones that are not needed for the first view."]);
+    if (!ranked.length && (obs.ms || 0) > 800) advice.push(["Watch the first response", "This document took " + obs.ms + " ms. Keep that path under a budget you can re-check."]);
     if (!advice.length) advice.push(["Keep the proposal separate from a run", "These cases are a plan. Run them later in a browser you control, with accounts the owner issued."]);
-    advice.push(["This is a snapshot", "The read does not certify that the site is safe, fast, or compliant."]);
-    const adviceHtml = advice.slice(0, 4).map(([title, body]) => "<article><strong>" + title + "</strong><span>" + esc(body) + "</span></article>").join("");
+    advice.push(["This is a snapshot", "The review does not certify that the site is safe, fast, or compliant."]);
+    const adviceHtml = advice.slice(0, 4).map(([title, body, finding]) => "<article><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
     document.getElementById("report-visuals").innerHTML =
-      '<article class="card"><h2>Response time across the pages read</h2><p class="muted">Milliseconds, in the order the pages were opened. One read, not a history of earlier days.</p>' + times + "</article>" +
+      '<article class="card"><h2>Response time across the pages analyzed</h2><p class="muted">Milliseconds, in the order the pages were opened. One review, not a history of earlier days.</p>' + times + "</article>" +
       '<article class="card"><h2>Public marks on the first response</h2><div class="ticks">' + ticks + "</div></article>" +
-      '<article class="card"><h2>Technology groups in this read</h2>' + groupBars + "</article>" +
+      '<article class="card"><h2>Technology groups in this review</h2>' + groupBars + "</article>" +
       '<article class="card"><h2>Practices worth implementing</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString() : "";
     document.getElementById("report-cover").innerHTML =
@@ -566,10 +691,10 @@
   const AREA_NOTE = {
     SEO: "Indexing, sitemap, titles, structured data",
     GEO: "How AI answers can read and cite the site",
-    Analytics: "Tags, consent, campaign tracking",
-    Security: "Headers, TLS, DNS, exposure",
-    Accessibility: "Markup, axe-core, and the phone layout",
-    Performance: "Speed, weight, paint, and layout shift"
+    Analytics: "Tags, consent, chat widgets, privacy notice, imprint",
+    Security: "Headers, TLS, DNS, mail transport, domain, Safe Browsing, libraries",
+    Accessibility: "Markup, axe-core, phone layout, chat launcher, accessibility statement",
+    Performance: "Speed, weight, paint, layout shift, chat weight"
   };
   let findingFilter = { area: "All", verdict: "open" };
 
@@ -668,7 +793,7 @@
       historyBlock(report.history) +
       '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(ins.summary || value + " out of 100.") + "</p></div>" +
       '<p class="meta-line">' + (sev.critical || 0) + " critical · " + (sev.high || 0) + " high · " + (sev.medium || 0) + " medium · " + (sev.low || 0) + " low · " +
-      read + " page" + (read === 1 ? "" : "s") + " read" + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
+      read + " page" + (read === 1 ? "" : "s") + " analyzed" + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
       '<div class="exec-cols"><div><h3>Biggest risks</h3>' + list(risks) + "</div><div><h3>Quick wins</h3>" + list(quick) + "</div><div><h3>Already solid</h3>" +
       (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(name) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">No area scores B or better yet.</p>') + "</div></div>" +
       '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">Print this summary</button></p>';
@@ -690,7 +815,7 @@
         '<p class="meta-line">' + fadeText(item.evidence, paid) + "</p>" +
         (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
         '<p class="meta-line">Effort: ' + esc(item.effort) + (item.count > 1 ? " · " + item.count + " places" : "") + "</p></div></li>").join("") + "</ol>"
-      : '<p class="muted">Nothing fails or is at risk in the checks this read can measure.</p>';
+      : '<p class="muted">Nothing fails or is at risk in the checks this review can measure.</p>';
   }
 
   function cut(text, max) {
@@ -754,10 +879,11 @@
     if (!host) return;
     const b = report.browser;
     const speed = speedBlock(report.pagespeed);
+    const carbon = carbonLine(report.insights && report.insights.carbon);
     if (!b || !b.ok) {
-      host.innerHTML = speed + '<p class="muted">' + (b && b.error
-        ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML read only."
-        : "This review ran without the headless browser, so the checks come from the HTML read only.") + "</p>";
+      host.innerHTML = speed + carbon + '<p class="muted">' + (b && b.error
+        ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML alone."
+        : "This review ran without the headless browser, so the checks come from the HTML alone.") + "</p>";
       return;
     }
     const start = b.start || {};
@@ -780,9 +906,21 @@
     const tablet = b.tablet || {};
     const errors = (b.console && b.console.errors) || 0;
     const failed = (b.failed && b.failed.count) || 0;
+    const watch = b.watch || {};
+    const watchAfter = consent.rejected ? watch.after : null;
+    const printers = (row) => row ? [...new Set([].concat(...["canvas", "fonts", "webgl", "audio"].map((key) => (row.fingerprint || {})[key] || [])))] : [];
+    const recording = (row) => row ? (row.recorders || []).filter((rr) => rr.sent).map((rr) => rr.name) : [];
+    const typedTo = (row) => row && row.typed ? row.typed.sent.map((s) => s.host) : [];
+    const spied = watch.before ? printers(watch.before).filter((h) => (watch.before.guards || []).indexOf(h) === -1).length + recording(watch.before).length + typedTo(watch.before).length + typedTo(watchAfter).length : 0;
+    const watchText = watch.before ? [
+      printers(watch.before).length ? printers(watch.before).length + " fingerprinting script" + (printers(watch.before).length === 1 ? "" : "s") : "",
+      recording(watch.before).length ? recording(watch.before).length + " session recorder" + (recording(watch.before).length === 1 ? "" : "s") : "",
+      typedTo(watch.before).length || typedTo(watchAfter).length ? "typing sent" : ""
+    ].filter(Boolean).join(" · ") || "None seen" : "Not checked";
     const tiles = [
       ["Before a choice", beforeBad ? (consent.banner ? "fail" : "risk") : "pass", beforeBad ? beforeBad + " tracking signal" + (beforeBad === 1 ? "" : "s") : "Nothing tracked"],
       ["After Reject", after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? afterBad + " still tracked" : "Tracking stopped") : (consent.banner ? "Reject not found" : "No banner showed")],
+      ["Fingerprinting and recording", !watch.before ? "unknown" : spied ? (consent.banner ? "fail" : "risk") : printers(watch.before).length ? "risk" : "pass", watchText],
       ["axe-core", axePages.length ? (rules.size ? "fail" : "pass") : "unknown", axePages.length ? rules.size + " rules fail on " + axePages.length + " page" + (axePages.length === 1 ? "" : "s") : "Did not run"],
       ["Phone width", mobile.width ? (mobile.overflow > 2 ? "fail" : "pass") : "unknown", mobile.width ? (mobile.overflow > 2 ? mobile.overflow + " px too wide" : "Fits " + mobile.width + " px") : "Not checked"],
       ["First paint", vit.fcp ? (vit.fcp > 3000 ? "fail" : vit.fcp > 1800 ? "risk" : "pass") : "unknown", vit.fcp ? (vit.fcp / 1000).toFixed(1) + " s, lab" : "Not measured"],
@@ -803,7 +941,12 @@
     const find = (rows, name) => (rows || []).find((row) => row.name === name);
     const cookieList = (rows) => (rows || []).length ? rows.slice(0, 6).map((row) => row.name + (row.third ? " (" + row.domain + ")" : "")).join(", ") + (rows.length > 6 ? " …" : "") : "None";
     const consentRows = names.map((name) => "<tr><td><strong>" + esc(name) + "</strong></td><td>" + esc(cell(find(before.vendors, name))) + "</td><td>" + (after ? esc(cell(find(after.vendors, name))) : "—") + "</td></tr>").join("") +
-      '<tr><td><strong>Tracking cookies</strong></td><td class="notranslate" translate="no">' + esc(cookieList(before.cookies)) + '</td><td class="notranslate" translate="no">' + (after ? esc(cookieList(after.cookies)) + (after.kept ? " · " + after.kept + " kept from before" : "") : "—") + "</td></tr>";
+      '<tr><td><strong>Tracking cookies</strong></td><td class="notranslate" translate="no">' + esc(cookieList(before.cookies)) + '</td><td class="notranslate" translate="no">' + (after ? esc(cookieList(after.cookies)) + (after.kept ? " · " + after.kept + " kept from before" : "") : "—") + "</td></tr>" +
+      (watch.before ? [
+        ["Fingerprinting", (row) => printers(row).join(", ") || "None"],
+        ["Session recording", (row) => (row.recorders || []).map((rr) => rr.name + (rr.sent ? "" : ", loaded only")).join(" · ") || "None"],
+        ["Typed text before submit", (row) => !row.typed ? "No contact field" : row.typed.sent.length ? row.typed.sent.map((s) => s.host).join(", ") : "Sent nowhere"]
+      ].map(([label, text]) => "<tr><td><strong>" + label + '</strong></td><td class="notranslate" translate="no">' + esc(text(watch.before)) + '</td><td class="notranslate" translate="no">' + (watchAfter ? esc(text(watchAfter)) : "—") + "</td></tr>").join("") : "");
     const bannerLine = consent.banner
       ? (consent.banner === "A cookie banner" ? "A cookie banner" : esc(consent.banner)) + " was showing." + (after ? " The review pressed “" + esc(consent.rejectLabel) + "” and reloaded the page." : consent.banner === "Sourcepoint" ? " It sits in a frame, so Reject was not pressed." : " No reject button was found on its first layer.")
       : "No cookie banner appeared on the first visit.";
@@ -818,6 +961,7 @@
       '</div><p class="meta-line">Lab numbers from one cold load on the review server, not field data from real visitors. Green, amber, and red follow the Core Web Vitals thresholds.</p>' : "";
     const shots = b.shots || {};
     const shotCount = ["desktop", "tablet", "mobile"].filter((key) => shots[key]).length;
+    const chatCard = chatHtml(report.insights && report.insights.chat);
     const textRows = [{ path: start.finalPath || "/", share: start.share, words: start.renderedWords, raw: start.rawWords }].concat((b.pages || []).filter((page) => !page.error).map((page) => ({ path: page.path, share: page.share, words: page.renderedWords, raw: page.rawWords })));
     host.innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + speed + (gauges && report.pagespeed && report.pagespeed.field ? '<h3 class="speed-title">One lab load</h3>' : "") + gauges +
@@ -828,12 +972,39 @@
       '<div class="split"><article class="card"><h3>Tracking before and after a choice</h3><p class="muted">' + bannerLine + " Cookieless pings are Google tags with Consent Mode denied.</p>" +
       '<table class="mini-table"><thead><tr><th>Tool</th><th>Before a choice</th><th>After Reject</th></tr></thead><tbody>' + consentRows + "</tbody></table></article>" +
       '<article class="card"><h3>Text in the HTML compared with the page people see</h3><p class="muted">Most AI crawlers do not run JavaScript, so they only get the words in the HTML.</p>' +
-      '<table class="mini-table"><thead><tr><th>Page</th><th>In the HTML</th><th>Words seen</th></tr></thead><tbody>' + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" +
+      '<table class="mini-table"><thead><tr><th>Page</th><th>In the HTML</th><th>Words seen</th></tr></thead><tbody>' + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" + chatCard +
       '<article class="card" style="margin-top:12px"><h3>axe-core on the rendered pages</h3>' + (axePages.length
         ? (axeRows ? '<table class="mini-table"><thead><tr><th>Rule</th><th>Impact</th><th>Elements</th><th>Pages</th></tr></thead><tbody>' + axeRows + "</tbody></table>" : '<p class="muted">No WCAG 2.2 AA rule failed on ' + axePages.length + " page" + (axePages.length === 1 ? "" : "s") + ". Automated rules catch about a third of real issues.</p>") +
           '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
         : '<p class="muted">axe-core did not finish in the time the browser had.</p>') + "</article>" +
-      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + " Lab numbers come from one unthrottled load.</p>";
+      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + (watch.before && watch.before.typed ? " A test address was typed into one form field, never submitted, and blocked wherever a script tried to send it." : "") + " Lab numbers come from one unthrottled load.</p>" + carbon;
+  }
+
+  function chatHtml(chat) {
+    if (!chat) return "";
+    const st = chat.states || {};
+    const badge = (state) => VERDICT_LABEL[state] ? verdictBadge(state) : '<span class="badge">Not checked</span>';
+    const names = (rows) => rows.length ? rows.join(", ") : "None";
+    const launcher = chat.launcher;
+    const rows = [
+      ["Before a choice", st.consent, '<span class="notranslate" translate="no">' + esc(names(chat.cookies)) + "</span>" + (chat.banner ? "" : " · no banner asked first")],
+      ["After Reject", chat.rejected ? st.reject : "", chat.rejected ? '<span class="notranslate" translate="no">' + esc(names(chat.rejected.cookies)) + "</span> · " + chat.rejected.requests + " request" + (chat.rejected.requests === 1 ? "" : "s") : (chat.banner ? "Reject was not pressed" : "No banner showed")],
+      ["Weight on the start page", st.weight, chat.kb + " KB · " + chat.ms + " ms of script time · " + chat.requests + " request" + (chat.requests === 1 ? "" : "s")],
+      ["Launcher on a phone", launcher ? st.cover : "", launcher ? (launcher.covers ? "Covers " + launcher.covers + " button" + (launcher.covers === 1 ? "" : "s") : "Covers no button") : "Not found"],
+      ["Launcher name", launcher && launcher.known ? st.name : "", launcher && launcher.known ? (launcher.name ? "Announced as “" + esc(launcher.name) + "”" : "No accessible name") : "Not checked"],
+      ["Keyboard in the open chat", chat.opened ? (st.trap === "fail" || st.focus === "risk" ? (st.trap === "fail" ? "fail" : "risk") : st.trap) : "", chat.opened ? (st.trap === "fail" ? "Focus is trapped" : st.focus === "risk" ? "Focus stays on the page" : st.trap === "pass" ? "Focus moves in and out" : "Needs a person") : "The chat did not open"]
+    ];
+    return '<article class="card" style="margin-top:12px"><h3>Chat widget</h3><p class="muted"><span class="notranslate" translate="no">' + esc(chat.vendors.map((row) => row.name).join(", ")) + "</span>" +
+      (chat.vendors.some((row) => row.ai) ? " · AI chatbot" : "") + ". Weight and cookies were measured before anyone opened it. The launcher was checked at 390 px, then opened once.</p>" +
+      '<table class="mini-table"><thead><tr><th>Check</th><th>Result</th><th>What the browser saw</th></tr></thead><tbody>' +
+      rows.map(([label, state, text]) => "<tr><td><strong>" + esc(label) + "</strong></td><td>" + badge(state) + "</td><td>" + text + "</td></tr>").join("") + "</tbody></table></article>";
+  }
+
+  function carbonLine(c) {
+    if (!c || !c.grams) return "";
+    const size = c.bytes >= 1e6 ? (c.bytes / 1e6).toFixed(1) + " MB" : Math.round(c.bytes / 1e3) + " KB";
+    return '<p class="meta-line">Carbon: about ' + c.grams.toFixed(2) + " g CO₂e for a first visit to the start page (rating " + esc(c.rating) + "), from the " + size + " transferred " +
+      (c.source === "lighthouse" ? "in the Lighthouse run" : "on the browser's cold load") + ". Sustainable Web Design model v4 at the global average grid. An estimate for information, not scored.</p>";
   }
 
   function paintGeo(ins) {
@@ -845,7 +1016,7 @@
       if (!list.length) return "";
       return '<p class="bot-group">' + esc(label) + "</p>" + list.map((bot) =>
         '<div class="bot' + (bot.allowed ? "" : " no") + '"><i aria-hidden="true">' + (bot.allowed ? "✓" : "✕") + '</i><div><span class="notranslate" translate="no">' + esc(bot.token) + "</span> — " + esc(bot.product) +
-        "<small>" + (bot.allowed ? (bot.blockedPages ? bot.blockedPages + " of the pages read are closed to it." : "Allowed.") : "Blocked" + (bot.rule ? " by " + esc(bot.rule) : "") + ".") + "</small></div></div>").join("");
+        "<small>" + (bot.allowed ? (bot.blockedPages ? bot.blockedPages + " of the pages analyzed are closed to it." : "Allowed.") : "Blocked" + (bot.rule ? " by " + esc(bot.rule) : "") + ".") + "</small></div></div>").join("");
     }).join("");
     const llms = geo.llms || {};
     const entity = geo.entity;
@@ -878,7 +1049,7 @@
       '<div class="check-tile ' + (a.consentTools && a.consentTools.length ? "pass" : ((a.tags || []).some((tag) => !tag.cookieless) ? "risk" : "unknown")) + '"><b>Consent tool</b>' + esc(consent) + "</div>" +
       '<div class="check-tile ' + (a.consentMode ? (a.consentMode.analytics === "denied" && a.consentMode.v2 ? "pass" : "risk") : "unknown") + '"><b>Consent Mode</b>' + esc(mode) + "</div>" +
       '<div class="check-tile ' + (a.utm ? (a.utm.kept ? "pass" : "fail") : "unknown") + '"><b>UTM parameters</b>' + esc(utm) + "</div></div>" +
-      '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>Tool</th><th>IDs</th><th>Pages with it</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">No known analytics or advertising tag was in the HTML of the pages read.</p>') +
+      '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>Tool</th><th>IDs</th><th>Pages with it</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">No known analytics or advertising tag was in the HTML of the pages analyzed.</p>') +
       ((a.untagged || []).length ? '<p class="meta-line">Pages without a tag: ' + esc(a.untagged.slice(0, 8).join(", ")) + "</p>" : "") + "</article>";
   }
 
@@ -895,9 +1066,9 @@
       '<div class="stat"><b>' + dup.length + '</b><span>Shared titles</span></div></div>' +
       '<article class="card">' + (blocked.length
         ? '<table class="mini-table"><thead><tr><th>Page not indexable</th><th>Why</th></tr></thead><tbody>' + blocked.slice(0, 30).map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + esc(row.reason) + "</td></tr>").join("") + "</tbody></table>"
-        : '<p class="muted">Every page that was read can be indexed: status 200, no noindex, canonical to itself, open to Googlebot.</p>') +
+        : '<p class="muted">Every page that was analyzed can be indexed: status 200, no noindex, canonical to itself, open to Googlebot.</p>') +
       ((map.listedNotIndexable || []).length ? '<p class="meta-line">In the sitemap but not indexable: ' + esc(map.listedNotIndexable.slice(0, 6).join(", ")) + "</p>" : "") +
-      ((map.notLinked || []).length ? '<p class="meta-line">In the sitemap but not linked from the pages read: ' + esc(map.notLinked.slice(0, 6).join(", ")) + (map.notLinked.length > 6 ? " …" : "") + "</p>" : "") +
+      ((map.notLinked || []).length ? '<p class="meta-line">In the sitemap but not linked from the pages analyzed: ' + esc(map.notLinked.slice(0, 6).join(", ")) + (map.notLinked.length > 6 ? " …" : "") + "</p>" : "") +
       ((seo.schemaTypes || []).length ? '<p class="meta-line">Structured data types: ' + esc(seo.schemaTypes.join(", ")) + "</p>" : "") + "</article>";
   }
 
@@ -906,7 +1077,7 @@
     const graph = ins.graph || { nodes: [], edges: [] };
     const nodes = graph.nodes || [];
     if (nodes.length < 2) {
-      host.innerHTML = '<p class="muted">Only one page was read, so there is no link map to draw.</p>';
+      host.innerHTML = '<p class="muted">Only one page was analyzed, so there is no link map to draw.</p>';
       return;
     }
     const parent = nodes.map((node, index) => {
@@ -977,8 +1148,12 @@
     const sec = ins.security || {};
     const word = { pass: "In place", risk: "Missing or weak", fail: "Failing", unknown: "Not checked" };
     document.getElementById("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
-      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(word[item.state] || item.state) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
+      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(item.person ? "Needs a person" : word[item.state] || item.state) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
       (sec.tls ? '<p class="meta-line">TLS certificate valid until ' + esc(sec.tls.validTo) + " (" + sec.tls.daysLeft + " days)" + (sec.tls.issuer ? ", issued by " + esc(sec.tls.issuer) : "") + ".</p>" : "") +
+      (sec.domain ? '<p class="meta-line"><span class="notranslate" translate="no">' + esc(sec.domain.domain) + "</span> is registered" + (sec.domain.registrar ? " with " + esc(sec.domain.registrar) : "") + (sec.domain.expires ? " until " + esc(sec.domain.expires) + " (" + sec.domain.daysLeft + " days)" : "") +
+        (sec.domain.locked == null ? "" : sec.domain.locked ? ", locked against transfer" : ", with no transfer lock") + ", according to the registry's RDAP record.</p>" : "") +
+      (sec.bimi ? '<p class="meta-line">' + (sec.bimi.record ? "BIMI is published, so Gmail, Yahoo and Apple Mail can show the brand logo next to its mail."
+        : "No BIMI record. " + (sec.bimi.eligible ? "DMARC already rejects or quarantines spoofed mail, so a BIMI record with a logo would let Gmail, Yahoo and Apple Mail show it next to the brand's mail." : "BIMI shows a brand logo in inboxes once DMARC is at quarantine or reject.")) + " This note is not scored.</p>" : "") +
       securityMatrix(sec.pages || []);
   }
 
@@ -986,7 +1161,7 @@
     if (rows.length < 2) return "";
     const cols = [["hsts", "HSTS"], ["csp", "CSP"], ["frame", "Framing"], ["nosniff", "nosniff"], ["referrer", "Referrer"], ["permissions", "Permissions"]];
     const mark = (on) => on ? '<td class="ok" aria-label="sent">✓</td>' : '<td class="no" aria-label="missing">✗</td>';
-    return '<h3>Headers on every page read</h3><p class="muted">A header set on the start page but missing elsewhere leaves those pages unprotected.</p>' +
+    return '<h3>Headers on every page analyzed</h3><p class="muted">A header set on the start page but missing elsewhere leaves those pages unprotected.</p>' +
       '<div class="table-scroll"><table class="mini-table sec-matrix"><thead><tr><th>Page</th>' + cols.map(([, label]) => "<th>" + esc(label) + "</th>").join("") + "<th>Cookies</th></tr></thead><tbody>" +
       rows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td>" + cols.map(([key]) => mark(row[key])).join("") +
         "<td>" + (row.cookies ? row.cookies + (row.looseCookies ? ", " + row.looseCookies + " without Secure" : "") : "—") + "</td></tr>").join("") + "</tbody></table></div>";
@@ -1018,21 +1193,34 @@
       : '<p class="muted">No check matches this filter.</p>';
   }
 
+  function dnsLabel(row) {
+    if (row.type === "CAA") return "CAA";
+    if (/^_dmarc\./.test(row.name)) return "DMARC";
+    if (/^_smtp\._tls\./.test(row.name)) return "TLS-RPT";
+    if (/^_mta-sts\./.test(row.name)) return "MTA-STS";
+    return "SPF";
+  }
+
   function paintFixKit(ins, paid) {
     const kit = ins.fixkit || {};
     const missing = (kit.headers || []).filter((item) => item.missing);
     const items = [
       ["Security headers", missing.length ? missing.length + " missing headers, written for " + (kit.hosting || "Netlify, Vercel, nginx, Apache, and Firebase") + "." : "All headers are already sent. The files still carry the current set."],
-      ["Content-Security-Policy", "A Report-Only policy built from the " + ((kit.csp || "").match(/https:\/\//g) || []).length + " hosts this read saw. Deploy it, watch reports, then enforce."],
+      ["Content-Security-Policy", "A Report-Only policy built from the " + ((kit.csp || "").match(/https:\/\//g) || []).length + " hosts this review saw. Deploy it, watch reports, then enforce."],
       ["Structured data", kit.jsonLd ? "An Organization and WebSite JSON-LD draft with the profiles the page links." : "The site already publishes an entity. No draft needed."],
       ["llms.txt", kit.llmsTxt ? "A draft listing the indexable pages with their descriptions." : "The site already publishes llms.txt."],
       ["security.txt", kit.securityTxt ? "A draft with Contact, Expires, and Canonical. Replace the address with a real inbox." : "The site already publishes security.txt."],
-      ["DNS records", (kit.dns || []).length ? (kit.dns || []).length + " records to add (" + kit.dns.map((row) => row.type).join(", ") + ")." : "SPF, DMARC, and CAA need no change."],
+      ["DNS records", (kit.dns || []).length ? (kit.dns || []).length + " records to add (" + kit.dns.map(dnsLabel).join(", ") + ")." : "No SPF, DMARC, CAA, MTA-STS, or TLS-RPT record is missing."],
       ["GitHub Actions", "A workflow that runs the chosen framework scripts on every push and once a day."]
     ];
+    if (kit.mtaSts) items.splice(-1, 0, ["MTA-STS policy", "An mta-sts.txt in testing mode listing the mail servers this review saw, with the _mta-sts record to announce it."]);
+    if ((kit.libraries || []).length) items.splice(-1, 0, ["Library upgrades", kit.libraries.map((row) => row.name + " " + row.version + (row.ended ? " (no more fixes)" : " → " + row.fixed)).join(", ") + "."]);
+    const outlines = [kit.privacyNotice ? "privacy notice" : "", kit.imprint ? "Impressum" : "", kit.accessibilityStatement ? "accessibility statement" : ""].filter(Boolean);
+    if (outlines.length) items.splice(-1, 0, ["Legal pages", "Outlines for the " + outlines.join(", ").replace(/, ([^,]*)$/, " and $1") + " the review found no link to. Fill the placeholders and have them checked."]);
+    if (kit.chatSnippet) items.splice(-1, 0, ["Click-to-load chat", "A plain chat button that loads the widget on the first click, so nothing is stored before a visitor asks for help."]);
     const peek = "Content-Security-Policy-Report-Only: " + (kit.csp || "");
     document.getElementById("fixkit").innerHTML =
-      '<p>The scripts ZIP now carries a <span class="notranslate" translate="no">fix-kit/</span> folder: copy-ready files made from this read.' + (kit.hosting ? " The site looks hosted on <strong>" + esc(kit.hosting) + "</strong>, so that file is listed first." : "") + "</p>" +
+      '<p>The scripts ZIP now carries a <span class="notranslate" translate="no">fix-kit/</span> folder: copy-ready files made from this review.' + (kit.hosting ? " The site looks hosted on <strong>" + esc(kit.hosting) + "</strong>, so that file is listed first." : "") + "</p>" +
       '<div class="fixkit-list">' + items.map(([title, body]) => "<article><strong>" + esc(title) + "</strong><span class=\"muted\">" + esc(body) + "</span></article>").join("") + "</div>" +
       '<div class="code-peek notranslate" translate="no">' + fadeText(peek, paid) + "</div>";
   }
@@ -1152,7 +1340,7 @@
     const report = payload.report;
     if (!report) return;
     const sample = !!payload.sample;
-    if (!sample && !payload.paid && seenBefore(report.id) && liveId !== report.id) {
+    if (!sample && !payload.paid && !report.preview && seenBefore(report.id) && liveId !== report.id) {
       openPay({ priceUsd: reviewUsd(payload.frameworks || []), frameworks: payload.frameworks || [] });
       return;
     }
@@ -1166,7 +1354,7 @@
     sampleNote.hidden = !sample;
     if (sample) {
       const when = new Date(report.fetchedAt);
-      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way a free report is: the opening of each case is readable and the rest stays blurred. Close it to read the disclaimers and review your own address.";
+      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the opening of each case is readable and the rest stays blurred. Close it to read the disclaimers and review your own address.";
     }
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
@@ -1181,9 +1369,9 @@
       [score.overall + "/100", "Health score"],
       [score.totals.fail, "Fail now"],
       [score.totals.risk, "At risk"],
-      [counts.pages, "Pages read"]
+      [counts.pages, "Pages analyzed"]
     ] : [
-      [counts.pages, "Pages read"],
+      [counts.pages, "Pages analyzed"],
       [counts.technologies, "Technologies"],
       [counts.cases, "Proposed cases"],
       [(report.observed && report.observed.ms) + " ms", "First response"]
@@ -1200,7 +1388,10 @@
       : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
     const obs = report.observed || {};
     const limits = report.limits || {};
-    document.getElementById("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(limits.robotsNote || "") + "</p>" +
+    const asked = "pageLang" in limits
+      ? (limits.pageLang ? "Requested in " + (PAGE_LANG_LABEL[limits.pageLang] || limits.pageLang) + ". " : "Requested in the site's own language. ") + (limits.section ? "Stayed under " + limits.section + ". " : "")
+      : "";
+    document.getElementById("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(asked) + esc(limits.robotsNote || "") + "</p>" +
       (limits.timedOut ? '<p class="muted">The time budget ended after ' + (limits.pagesRead || (report.pages || []).length) + " of up to " + (limits.maxPages || "?") + ' pages, usually because the site answered slowly. If pages that matter were left out, write to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a> with the report link and Carlos will look at a rerun.</p>' : "");
     paintAlarm(report, paid || alertsOpen(report.id));
     paintMentions(report);
@@ -1225,9 +1416,13 @@
     };
     const picked = new Set(payload.frameworks || selectedFrameworks());
     const shown = (report.cases || []).filter((item) => (layer === "All" || item.layer === layer) && item.fw.some((fw) => picked.has(fw)));
-    document.getElementById("case-note").textContent = paid
+    const urgent = ["P1", "P2"].map((level) => shown.filter((item) => item.priority === level).length);
+    const ranked = shown.some((item) => item.priority)
+      ? " Ranked by risk: " + urgent[0] + " P1 and " + urgent[1] + " P2 come first, backed by what the review saw on " + (report.host || "the site") + "."
+      : "";
+    document.getElementById("case-note").textContent = (paid
       ? shown.length + " cases for the selected frameworks. The full wording is open because this copy is paid."
-      : shown.length + " cases were identified across the tools, languages, and technologies in this read. The first sentence of each case stays visible. The rest stays blurred until the report is paid.";
+      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The first sentence of each case stays visible. The rest stays blurred until the report is paid.") + ranked;
     const extras = [];
     (report.cases || []).forEach((item) => {
       (item.also || []).forEach((name) => {
@@ -1247,7 +1442,9 @@
     document.getElementById("cases").innerHTML = shown.map((item) => {
       const extra = (item.also || []).filter(Boolean);
       const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
-      return '<article class="case"><div><span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + '</p><p class="muted fw-line">' + tools + "</p></article>";
+      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="Risk ' + esc(item.risk) + ' of 100">' + esc(item.priority) + "</span>" : "";
+      const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">Pages: ' + esc(item.pages.slice(0, 6).join(", ") + (item.pages.length > 6 ? " and " + (item.pages.length - 6) + " more" : "")) + "</p>" : "";
+      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
@@ -1288,6 +1485,12 @@
   reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (app.inert || activeRun) return;
+    if (!signedIn()) {
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "client");
+      setStatus("Sign in above to run a review. The review runs on the device where you sign in.", true);
+      if (window.ReviewAuth) ReviewAuth.focus();
+      return;
+    }
     const errors = clientErrors();
     markFields(errors);
     if (errors.length) {
@@ -1298,16 +1501,25 @@
     activeRun = runId;
     reviewBtn.disabled = true;
     stopBtn.disabled = true;
-    document.getElementById("run-log").innerHTML = "";
-    setStatus("Checking the email domain, then reading the public page…", false);
+    const runLog = document.getElementById("run-log");
+    runLog.innerHTML = "";
+    runLog.classList.add("is-live");
+    if (window.ReviewProgress) ReviewProgress.start({ host: urlInput.value, pages: selectedPages() });
+    setStatus("Checking the email domain, then analyzing the public page…", false);
     appendLog("Checking the fields, the email domain, and that this is a browser.");
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", reasonCode());
+    // The run record reads country, region, and city from here; only reviewUrl gets those headers.
+    fetch(endpoint() + "/place", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ runId: runId })
+    }).catch(() => {});
     try {
-      const res = await fetch(endpoint() + "/review", {
+      const res = await fetch(runEndpoint() + "/review", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(Object.assign(ReviewAuth.proof(), {
           termsAccepted: true,
           termsVersion: TERMS_VERSION,
           name: document.getElementById("name").value,
@@ -1322,12 +1534,18 @@
           tools: selectedTools(),
           pages: selectedPages(),
           depth: selectedDepth(),
+          pageLang: selectedPageLang(),
+          section: document.getElementById("stay-section").checked === true,
           deviceId: deviceId(),
           runId: runId,
           openedAt: openedAt,
           company: (document.getElementById("hp-note") || { value: "" }).value,
-          followUp: document.getElementById("follow-up").checked === true
-        })
+          lang: document.documentElement.lang || "en",
+          coupon: window.ReviewDeal ? ReviewDeal.code() : "",
+          followUp: document.getElementById("follow-up").checked === true,
+          unlisted: document.getElementById("no-publish").checked === true,
+          testKey: testKey()
+        }))
       });
       stopBtn.disabled = false;
       const payload = await readStream(res);
@@ -1337,11 +1555,21 @@
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report && payload.report.host);
       render(payload);
       const stopped = payload.report.status === "stopped";
-      setStatus(stopped ? "Stopped. The report uses the pages read before the stop." : "Report ready. Cases are proposed, not run.", false);
+      if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
+      setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Report ready. Cases are proposed, not run.", false);
       dash.scrollTop = 0;
     } catch (error) {
       if (error.fields) markFields(error.fields);
-      if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
+      if (window.ReviewProgress) {
+        if (error.paymentRequired || (error.body && error.body.signIn) || error.fields) ReviewProgress.reset();
+        else ReviewProgress.fail();
+      }
+      if (error.body && error.body.signIn) {
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "server");
+        ReviewAuth.expire(error.message);
+        ReviewAuth.focus();
+        setStatus(error.message, true);
+      } else if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
         openRunPay(error.body);
         setStatus("Another review waits on payment.", true);
       } else if (error.paymentRequired) {
@@ -1352,8 +1580,9 @@
         setStatus(error.message || "The review failed.", true);
       }
     } finally {
+      runLog.classList.remove("is-live");
       activeRun = "";
-      reviewBtn.disabled = false;
+      reviewBtn.disabled = !signedIn();
       stopBtn.disabled = true;
     }
   });
@@ -1365,12 +1594,17 @@
     appendLog("Stop requested.");
     setStatus("Stopping the review…", false);
     try {
-      await fetch(endpoint() + "/stop", {
+      const res = await fetch(endpoint() + "/stop", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ runId: activeRun })
+        body: JSON.stringify(Object.assign(ReviewAuth.proof(), { runId: activeRun }))
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setStatus(body.error || "The stop was refused.", true);
+        stopBtn.disabled = false;
+      }
     } catch (error) {
       setStatus("Stop was requested. Waiting for the pages already open.", true);
     }
@@ -1379,12 +1613,13 @@
   function openPay(body) {
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_open", "URL Review", "report");
     const list = (body && body.frameworks) || (current && current.frameworks) || selectedFrameworks();
-    const tools = selectedTools();
+    const tools = body && body.frameworks && body.frameworks.length ? (body.tools || []) : selectedTools();
     const usd = (body && body.priceUsd) || reviewUsd(list, tools);
     const selections = list.length + tools.length;
     document.getElementById("pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
     document.getElementById("pay-detail").textContent = "Seeing it again, or downloading, printing, or sharing it again, costs " + formatUsd(usd) + " USD for " + selections + (selections === 1 ? " selection." : " selections.") + " Frameworks come first. Checked tools follow on the same discount. The first selection is 19 USD. A paid copy keeps one line: this report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
     document.getElementById("pay-btn").href = payQuery("report");
+    showDeal("pay-deal", "pay-price", body);
     payBox.hidden = false;
     const note = document.getElementById("pay-note");
     note.textContent = (body && body.error) || ("Reopening this report costs " + formatUsd(usd) + " USD.");
@@ -1399,12 +1634,13 @@
     const billing = body && body.billing === "scope" ? "scope" : "run";
     const tools = billing === "scope" ? [] : ((body && body.tools) || selectedTools());
     const usd = (body && body.priceUsd) || reviewUsd(list, tools);
-    document.getElementById("run-pay-title").textContent = "This read is " + formatUsd(usd) + " USD";
+    document.getElementById("run-pay-title").textContent = "This review is " + formatUsd(usd) + " USD";
     document.getElementById("run-pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
     document.getElementById("run-pay-detail").textContent = billing === "scope"
-      ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider read."
-      : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. Frameworks come first. Checked tools follow on the same discount. The amount is the schedule plus the size of the read.";
+      ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider review."
+      : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. Frameworks come first. Checked tools follow on the same discount. The amount is the schedule plus the size of the review.";
     document.getElementById("go-pay").href = payQuery("new-run", body || {});
+    showDeal("run-pay-deal", "run-pay-price", body);
     runPay.hidden = false;
   }
 
@@ -1708,14 +1944,16 @@
       steps.push({ selector: "#terms-form", title: "The disclaimers", body: "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text.", demoMs: 1800 });
     }
     steps.push(
-      { selector: "#name", title: "Who is asking", body: "Name and email are required, and they are stored with the review. Changing them does not open a second completed review.", demoMs: 1500 },
+      { selector: "#sign-in", title: "Sign in", body: "Sign in with email or an account you already have. The review runs only on the device where you sign in.", demoMs: 1500 },
+      { selector: "#name", title: "Who is asking", body: "Your name is stored with the review. Your email comes from the sign-in. Changing the name does not open a second completed review.", demoMs: 1500 },
       { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
       { selector: "#url-field", title: "The page", body: "Type the host and path. https:// is already in front of the box, so the review always asks for a public secure page.", demoMs: 1500 },
       { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
-      { selector: "#review-btn", title: "Start the read", body: "Review checks the fields first. Then it reads public pages on that host and writes a line for each step.", demoMs: 1500 },
-      { selector: "#run-log", title: "The log", body: "Watch the read here: the first page, robots.txt, and each linked page. The same lines are kept with the run.", demoMs: 1600 },
-      { selector: "#stop-btn", title: "Stop", body: "Stop ends the read. Pages already saved stay in the report, and the record says the review was stopped.", demoMs: 1500 },
-      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the read. When the read finishes, the report dashboard opens with the download, print, and share actions.", demoMs: 1800 },
+      { selector: "#req-scope", title: "Pages to review", body: "Choose how many pages to open, how many links deep, and the language to request. Stay in this section keeps later pages under the path in the address. The included first review is 20 pages and 2 links deep. A wider or deeper review shows its price before it starts.", demoMs: 1600 },
+      { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it analyzes public pages on that host and writes a line for each step.", demoMs: 1500 },
+      { selector: "#run-log", title: "The log", body: "Watch the analysis here: the first page, robots.txt, and each linked page. The same lines are kept with the run.", demoMs: 1600 },
+      { selector: "#stop-btn", title: "Stop", body: "Stop ends the analysis. Pages already saved stay in the report, and the record says the review was stopped.", demoMs: 1500 },
+      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions.", demoMs: 1800 },
       { selector: "#langWrap", title: "Language", body: "A language chosen here is the language on the CV, the studio, the lab, and this review. The same choice sticks when you move between them.", demoMs: 1500 },
       { selector: "#tour-start-btn", title: "Open this tour again", body: "This walkthrough stays closed after the first visit. How this review works brings it back whenever you want it.", demoMs: 1500 }
     );
@@ -1728,7 +1966,7 @@
     if (tourButton) tourButton.addEventListener("click", () => {
       if (window.SiteTour) SiteTour.start(reviewTour());
     });
-    if (window.SiteTour && gate.hidden) SiteTour.autoStart(reviewTour());
+    if (window.SiteTour && gate.hidden && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
   }
 
   bootLanguageAndTour();
@@ -1739,11 +1977,15 @@
       if (app.inert) return;
       setStatus("Opening the saved report…", false);
       try {
-        const res = await fetch(endpoint() + "/review?id=" + encodeURIComponent(shared), { credentials: "include" });
+        const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
+        const res = await fetch(endpoint() + "/review?id=" + encodeURIComponent(shared) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : ""), { credentials: "include" });
         const body = await res.json();
         if (res.status === 402 || body.paymentRequired) {
+          if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
           openPay(body);
-          setStatus("This report was already shown. Opening it again asks for payment.", true);
+          setStatus(body.preview
+            ? "Your last report of " + (body.host || "this site") + " is below, under the frost. Unlock it to read it in full."
+            : "This report was already shown. Opening it again asks for payment.", true);
           return;
         }
         if (!res.ok) throw new Error(body.error || "That report was not found.");
@@ -1753,7 +1995,18 @@
       }
     };
     if (!app.inert) openShared();
-    else termsForm.addEventListener("submit", () => setTimeout(openShared, 0), { once: true });
+    else {
+      const waiting = document.createElement("p");
+      waiting.className = "gate-waiting";
+      waiting.setAttribute("role", "status");
+      waiting.textContent = "Your report is waiting. Accept below and it opens right here.";
+      const title = document.getElementById("gate-title");
+      if (title) title.parentNode.insertBefore(waiting, title);
+      termsForm.addEventListener("submit", () => {
+        waiting.remove();
+        setTimeout(openShared, 0);
+      }, { once: true });
+    }
   }
 
   const CASE_LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
@@ -1885,7 +2138,7 @@
       azure: ["Work Item Type", "Title", "Test Step", "Step Action", "Step Expected", "Priority", "State", "Tags", "Automation scripts"],
       mantis: ["Summary", "Description", "Category", "Severity"]
     }[kind];
-    const rank = (item) => item.verdict === "fail" ? (item.severity === "critical" || item.severity === "high" ? 0 : 1) : item.verdict === "risk" ? (item.severity === "high" ? 1 : 2) : 2;
+    const rank = (item) => item.priority ? ({ P1: 0, P2: 1 }[item.priority] == null ? 2 : { P1: 0, P2: 1 }[item.priority]) : item.verdict === "fail" ? (item.severity === "critical" || item.severity === "high" ? 0 : 1) : item.verdict === "risk" ? (item.severity === "high" ? 1 : 2) : 2;
     const data = rows.map((row) => {
       const ref = sign.mark + " " + sign.sha256;
       const level = rank(row.item);
@@ -1894,7 +2147,7 @@
       if (kind === "excel") return [row.item.id, row.item.layer, row.item.title, row.parts.step, row.parts.expected, row.frameworks, sign.mark, sign.sha256].concat(scriptCols.map((fw) => (row.scripts.find((one) => one.framework === fw) || { code: "" }).code));
       if (kind === "testrail") return [row.item.title, row.item.layer, "Test Case (Text)", "Other", ["High", "Medium", "Low"][level], row.parts.step, row.parts.expected, ref, code];
       if (kind === "xray") return [row.item.id, "Test", row.item.title, row.item.layer, "Manual", row.parts.step, "", row.parts.expected, ref, code];
-      if (kind === "zephyr") return [row.item.title, "Draft", ["High", "Normal", "Low"][level], row.parts.expected, "Proposed from a public read. Not executed.", row.item.layer, ref, row.parts.step, row.parts.expected, code];
+      if (kind === "zephyr") return [row.item.title, "Draft", ["High", "Normal", "Low"][level], row.parts.expected, "Proposed from a public analysis. Not executed.", row.item.layer, ref, row.parts.step, row.parts.expected, code];
       if (kind === "jira") return ["Task", row.item.title, withCode(row.item.id + " · " + row.item.layer + "\n" + row.parts.step + "\n" + row.parts.expected + "\n" + ref), ["High", "Medium", "Low"][level], "QA-lab"];
       if (kind === "azure") return ["Test Case", row.item.title, "1", row.parts.step, row.parts.expected, String(level + 1), "Design", ref, code];
       return [row.item.title, withCode(row.item.id + " · " + row.parts.step + "\n" + row.parts.expected + "\n" + ref), "General", ["major", "minor", "trivial"][level]];
@@ -1947,6 +2200,10 @@
     if (!current || !current.report) return;
     const alerts = current.report.alerts || [];
     if (!alerts.length) return;
+    if (current.paid === true || current.free === true || alertsOpen(current.report.id)) {
+      paintAlarm(current.report, true);
+      return;
+    }
     try {
       sessionStorage.setItem("qa-review-alerts", JSON.stringify({
         reportId: current.report.id,
@@ -1965,6 +2222,10 @@
   });
   document.getElementById("credential-open").addEventListener("click", () => {
     if (!current || !current.report) return;
+    if (current.free === true || credentialOpen(current.report.id)) {
+      paintCredential(current);
+      return;
+    }
     try {
       sessionStorage.setItem("qa-review-credential", JSON.stringify({
         reportId: current.report.id,

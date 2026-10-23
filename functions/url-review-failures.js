@@ -1,0 +1,573 @@
+// Saved logs of failed and stopped URL reviews, and the daily diagnosis of each failure.
+
+const KEEP_DAYS = 90;
+const MAX_LINES = 1500;
+const LINE_CHARS = 400;
+const RECHECK_DAYS = 7;
+const RERUN_DAYS = 14;
+const RERUN_LINES = 400;
+
+// A PR that fixes a cause class adds a row here, with its merge time; failures of that class from before it are re-run.
+const FIXES = [
+  { cause: "bot-protection", at: "2026-10-21T20:45:53Z", ref: "#319", label: "Sites behind bot protection are read in headless Chrome" },
+  { cause: "too-large", at: "2026-10-21T20:45:53Z", ref: "#319", label: "A start page past 2 MB is read up to 2 MB" },
+  { cause: "unknown", at: "2026-10-21T22:20:00Z", ref: "#329", label: "A re-run of a failure with no saved frameworks reviews with Playwright" },
+  { cause: "browser", at: "2026-10-22T19:15:54Z", ref: "#365", label: "A refused page finishes as a refusal instead of a browser timeout" },
+  { cause: "timeout", at: "2026-10-23T19:50:00Z", ref: "#582", label: "A start page past 8 s keeps the part that arrived, or is read in headless Chrome" }
+];
+// The review form's default when a failure kept no frameworks (one taken from an alert).
+const RERUN_FRAMEWORKS = ["Playwright"];
+
+const clip = (value, max) => String(value == null ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
+
+// Order matters: a message that names both a refused plain read and a browser that did not finish is a browser cause.
+const CAUSES = [
+  ["input", "The address could not be reviewed", /^Enter a|Only https URLs|Remove the username|standard https port|not a public website|private address/i],
+  ["dns", "The host name did not resolve", /did not resolve|ENOTFOUND|EAI_AGAIN/i],
+  ["http-redirect", "The site redirected to http://", /an http:\/\/ address/i],
+  ["redirect-loop", "The site redirected too many times", /redirected too many times/i],
+  ["browser", "Headless Chrome did not finish", /headless Chrome did not finish/i],
+  ["bot-protection", "The site's bot protection refused the review", /bot protection|bot check|returned status (?:401|403|429)\b/i],
+  ["status", "The site answered with an error status", /returned status \d+/i],
+  ["not-html", "The address is not an HTML page", /did not return an HTML page/i],
+  ["too-large", "The page is larger than the review limit", /larger than the review limit/i],
+  ["timeout", "The site took too long", /took too long|timed? ?out|ETIMEDOUT|aborted/i],
+  ["tls", "The site's certificate or TLS failed", /certificate|CERT_|SSL|TLS|self[- ]signed|EPROTO/i],
+  ["connection", "The connection to the site failed", /ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|socket hang up/i]
+];
+
+const READABLE = {
+  readable: "The plain read gets the page now",
+  "browser-read": "The plain read is refused, and headless Chrome reads the page",
+  "browser-untagged": "The plain read and tagged Chrome are refused, and plain Chrome reads the page"
+};
+
+function causeOf(message) {
+  const text = String(message || "");
+  const found = CAUSES.find(([, , pattern]) => pattern.test(text));
+  if (!found) return { id: "unknown", label: "The review failed for a reason with no class yet" };
+  const status = (text.match(/status (\d{3})/) || [])[1];
+  const vendor = (text.match(/\b(?:a|an) (.+?) bot check/) || [])[1];
+  return Object.assign({ id: found[0], label: found[1] }, status ? { status: Number(status) } : {}, vendor ? { vendor } : {});
+}
+
+function hostOf(url) {
+  try { return new URL(url).hostname.toLowerCase(); } catch (error) { return ""; }
+}
+
+function keptLines(lines) {
+  const rows = (Array.isArray(lines) ? lines : []).map((row) => ({ t: Math.max(0, Math.round(Number(row && row.t) || 0)), text: clip(row && row.text, LINE_CHARS) }));
+  if (rows.length <= MAX_LINES) return { lines: rows, cut: 0 };
+  const head = rows.slice(0, 300);
+  const tail = rows.slice(rows.length - (MAX_LINES - 300));
+  return { lines: head.concat(tail), cut: rows.length - MAX_LINES };
+}
+
+function failureRecord(input) {
+  const run = input || {};
+  const error = run.error || {};
+  const message = clip(typeof error === "string" ? error : error.message || "The review failed.", 600);
+  const started = Number(run.startedAt) || Date.now();
+  const ended = Number(run.endedAt) || Date.now();
+  const kept = keptLines(run.lines);
+  const record = {
+    kind: run.kind === "stopped" ? "stopped" : "failed",
+    runId: clip(run.runId, 40),
+    at: new Date(ended).toISOString(),
+    url: clip(run.url, 300),
+    host: hostOf(run.url),
+    name: clip(run.name, 120),
+    email: clip(run.email, 120),
+    error: run.kind === "stopped" ? null : {
+      message,
+      status: Number(error.status) || 0,
+      code: clip(error.code, 40),
+      stack: String(error.stack || "").split("\n").slice(1, 7).map((line) => clip(line, 200)).filter(Boolean)
+    },
+    cause: run.kind === "stopped" ? null : causeOf(message),
+    lines: kept.lines,
+    lineCount: (Array.isArray(run.lines) ? run.lines.length : 0),
+    linesCut: kept.cut,
+    timings: {
+      startedAt: new Date(started).toISOString(),
+      endedAt: new Date(ended).toISOString(),
+      ms: Math.max(0, ended - started),
+      lastLineMs: kept.lines.length ? kept.lines[kept.lines.length - 1].t : 0
+    },
+    options: {
+      pages: Number(run.pages) || 0,
+      depth: Number(run.depth) || 0,
+      pageLang: clip(run.pageLang, 2),
+      section: run.section === true,
+      frameworks: Array.isArray(run.frameworks) ? run.frameworks.slice(0, 12).map((name) => clip(name, 40)) : []
+    },
+    intake: {
+      lang: clip(run.lang, 8),
+      pageLang: clip(run.pageLang, 2),
+      section: run.section === true,
+      reason: clip(run.reason, 600),
+      reasonCode: clip(run.reasonCode, 40),
+      clientName: clip(run.clientName, 120),
+      clientEmail: clip(run.clientEmail, 160),
+      clientUrl: clip(run.clientUrl, 300),
+      ownership: clip(run.ownership, 40),
+      termsVersion: clip(run.termsVersion, 20),
+      followUp: run.followUp === true,
+      unlisted: run.unlisted === true,
+      deviceId: clip(run.deviceId, 80)
+    },
+    expireAt: new Date(ended + KEEP_DAYS * 86400000)
+  };
+  if (record.kind === "failed") record.diagnosedAt = null;
+  return record;
+}
+
+// A failed alert written before logs were saved (or whose log write failed) still gets a diagnosis, with no lines.
+function failureFromAlert(alert) {
+  const row = alert || {};
+  const reason = (String(row.detail || "").match(/^Reason: (.*)$/m) || [])[1] || "";
+  const ended = Date.parse(row.at) || Date.now();
+  const record = failureRecord({ kind: "failed", runId: row.runId || row.id, url: row.url, name: row.name, email: row.email, error: reason || "The review failed.", startedAt: ended, endedAt: ended });
+  record.fromAlert = clip(row.id, 40);
+  return record;
+}
+
+function stateOf(probe) {
+  const run = probe || {};
+  if (run.dns && run.dns.error) return { id: "dns", label: "The host name does not resolve (" + run.dns.error + ")" };
+  const plain = run.plain || {};
+  if (plain.httpRedirect) return { id: "http-redirect", label: "The site redirects to " + plain.httpRedirect };
+  if (plain.error) {
+    const cause = causeOf(plain.error + " " + (plain.code || ""));
+    return { id: cause.id, label: "The plain read fails: " + plain.error };
+  }
+  const refused = (plain.status >= 400 && plain.status < 500) || !!plain.challenge;
+  if (!refused) {
+    if (plain.status >= 500) return { id: "status", status: plain.status, label: "The site answers status " + plain.status };
+    if (!plain.html) return { id: "not-html", label: "The address answers " + (plain.contentType || "something other than HTML") };
+    return { id: "readable", label: READABLE.readable + " (status " + plain.status + ")" };
+  }
+  const browser = run.browser;
+  const guarded = (status) => [401, 403, 429].includes(status);
+  const refusal = "The plain read is refused (status " + plain.status + (plain.challenge ? ", " + plain.challenge : "") + ")";
+  if (!browser) return { id: plain.challenge || guarded(plain.status) ? "bot-protection" : "status", status: plain.status, label: refusal + "; headless Chrome was not tried" };
+  if (!browser.ok) return { id: "browser", label: refusal + ", and headless Chrome did not finish (" + (browser.error || "no answer") + ")" };
+  if (browser.docStatus >= 400 || browser.challenge) {
+    const bot = !!(plain.challenge || browser.challenge) || guarded(browser.docStatus);
+    return { id: bot ? "bot-protection" : "status", status: browser.docStatus, label: refusal + ", and headless Chrome is refused too (status " + browser.docStatus + (browser.challenge ? ", " + browser.challenge : "") + ")" };
+  }
+  const id = browser.untagged ? "browser-untagged" : "browser-read";
+  return { id, label: READABLE[id] + " (status " + (browser.docStatus || browser.status) + ")" };
+}
+
+function diagnose(failure, probe) {
+  const cause = (failure && failure.cause) || causeOf(failure && failure.error && failure.error.message);
+  const now = stateOf(probe);
+  const cleared = Object.prototype.hasOwnProperty.call(READABLE, now.id);
+  const unchanged = now.id === cause.id;
+  return {
+    cause: cause.id,
+    causeLabel: cause.label,
+    now: now.id,
+    nowLabel: now.label,
+    cleared,
+    rerun: cleared && cause.id !== "input",
+    summary: cause.label + ". " + (cleared ? "Cleared: " : unchanged ? "Still: " : "Now: ") + now.label + "."
+  };
+}
+
+const msOf = (value) => Date.parse(value) || 0;
+const bare = (host) => String(host || "").toLowerCase().replace(/^www\./, "");
+
+function recheckDue(failure, now) {
+  const row = failure || {};
+  const diagnosis = row.diagnosis;
+  if (row.kind !== "failed" || !row.diagnosedAt || !diagnosis || diagnosis.cleared || diagnosis.cause === "input" || row.rerun) return false;
+  const at = Number(now) || Date.now();
+  return msOf(row.at) >= at - RECHECK_DAYS * 86400000 && msOf(row.diagnosedAt) <= at - 20 * 3600000;
+}
+
+function fixAfter(failure) {
+  const row = failure || {};
+  const cause = (row.rerun && row.rerun.cause) || (row.cause && row.cause.id) || "";
+  const since = msOf((row.rerun && row.rerun.at) || row.at);
+  return FIXES.find((fix) => fix.cause === cause && msOf(fix.at) > since) || null;
+}
+
+// Once a re-run is held, sent, dropped or skipped, the failure is settled; a failed re-run waits for the next fix to its cause.
+function rerunTrigger(failure) {
+  const row = failure || {};
+  if (row.kind !== "failed" || !row.diagnosedAt) return null;
+  if (row.rerun && row.rerun.status !== "failed") return null;
+  const fix = fixAfter(row);
+  if (fix) return { id: "fix", ref: fix.ref, label: fix.label + " (" + fix.ref + ", shipped after the failure)" };
+  if (!row.rerun && row.diagnosis && row.diagnosis.rerun) return { id: "cleared", ref: "", label: row.diagnosis.summary || "The cause has cleared." };
+  return null;
+}
+
+// One re-run per address and asker. `reviewed` is the askers' own url_reviews rows (email, createdAt, status, report.host).
+function rerunPlan(failures, reviewed, limit) {
+  const groups = new Map();
+  (Array.isArray(failures) ? failures : []).forEach((row) => {
+    if (!row || !row.url || !rerunTrigger(row)) return;
+    const key = String(row.url).toLowerCase() + "|" + String(row.email || "").toLowerCase();
+    groups.set(key, (groups.get(key) || []).concat(row));
+  });
+  const reports = (Array.isArray(reviewed) ? reviewed : []).filter((row) => row && (row.status === "complete" || row.status === "stopped"));
+  const runs = [];
+  const skipped = [];
+  groups.forEach((rows, key) => {
+    rows.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    const latest = rows[0];
+    const email = String(latest.email || "").toLowerCase();
+    const host = latest.host || hostOf(latest.url);
+    const own = email ? reports.find((row) => String(row.email || "").toLowerCase() === email && bare(row.report && row.report.host) === bare(host) && String(row.createdAt) > String(latest.at)) : null;
+    const item = {
+      key,
+      url: latest.url,
+      host,
+      name: latest.name || "",
+      email: latest.email || "",
+      at: latest.at,
+      failureIds: rows.map((row) => row.id),
+      trigger: rerunTrigger(latest),
+      options: Object.assign({}, latest.options, { frameworks: ((latest.options || {}).frameworks || []).length ? latest.options.frameworks : RERUN_FRAMEWORKS }),
+      intake: latest.intake || {}
+    };
+    if (own) skipped.push(Object.assign(item, { skip: "The asker reviewed " + host + " again on " + String(own.createdAt).slice(0, 10) + "." }));
+    else runs.push(item);
+  });
+  runs.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  return { runs: runs.slice(0, Number(limit) || 8), skipped };
+}
+
+function rerunDoc(group, outcome) {
+  const run = outcome || {};
+  const record = run.record || null;
+  const started = Number(run.startedAt) || Date.now();
+  const ended = Number(run.endedAt) || Date.now();
+  const error = run.error || {};
+  const message = record ? "" : clip(typeof error === "string" ? error : error.message || "The re-run failed.", 600);
+  return {
+    status: record ? "held" : "failed",
+    at: new Date(ended).toISOString(),
+    failedAt: clip(group.at, 40),
+    url: clip(group.url, 300),
+    host: clip(group.host || hostOf(group.url), 120),
+    name: clip(group.name, 120),
+    email: clip(group.email, 120),
+    failureIds: (group.failureIds || []).slice(0, 40),
+    trigger: group.trigger || null,
+    options: group.options || {},
+    reportId: record ? clip(record.id, 40) : "",
+    reportStatus: record ? clip(record.status, 20) : "",
+    record,
+    error: record ? null : { message },
+    cause: record ? null : causeOf(message),
+    lines: keptLines((Array.isArray(run.lines) ? run.lines : []).slice(-RERUN_LINES)).lines,
+    timings: { startedAt: new Date(started).toISOString(), endedAt: new Date(ended).toISOString(), ms: Math.max(0, ended - started) },
+    expireAt: new Date(ended + KEEP_DAYS * 86400000)
+  };
+}
+
+function rerunMark(id, doc) {
+  return { at: doc.at, id, status: doc.status, trigger: doc.trigger ? doc.trigger.id : "", cause: doc.cause ? doc.cause.id : "" };
+}
+
+// The asker's run failed through no choice of theirs, so a re-run the owner sends opens without payment.
+function sentRecord(doc, now) {
+  return Object.assign({}, doc.record, {
+    createdAt: now,
+    paid: true,
+    free: true,
+    priceUsd: 0,
+    rerunOf: (doc.failureIds || []).slice(0, 40),
+    failedAt: doc.failedAt || "",
+    rerunAt: doc.at
+  });
+}
+
+function rerunMail(done) {
+  const held = done.filter((row) => row.status === "held");
+  const failed = done.filter((row) => row.status === "failed");
+  const blocks = done.map((row) => [
+    (row.status === "held" ? "Held for you: " : "Failed again: ") + row.host + " for " + (row.name || "an asker") + (row.email ? " <" + row.email + ">" : ""),
+    "Why it ran: " + (row.trigger ? row.trigger.label : "—"),
+    row.status === "held"
+      ? "Report " + row.reportId + (row.reportStatus === "stopped" ? ", stopped before the last page" : "")
+      : "Error: " + row.error.message
+  ].join("\n"));
+  return {
+    subject: "URL review re-runs: " + held.length + " held for you, " + failed.length + " failed again",
+    intro: "Failed URL reviews were run again",
+    rows: [{ label: "Held for you", value: String(held.length) }, { label: "Failed again", value: String(failed.length) }],
+    body: blocks.join("\n\n") + "\n\nNo asker was emailed. Send or drop each held report from the review desk."
+  };
+}
+
+// The address itself is refused, or its host does not resolve: the asker fixes these, not the review.
+const SITE_SIDE = ["input", "dns"];
+const BUG_ROWS = 12;
+const BUG_LOG_LINES = 15;
+
+const labelOf = (cause) => (CAUSES.find(([id]) => id === cause) || [])[1] || "The review failed for a reason with no class yet";
+
+function fixBefore(cause, at) {
+  return FIXES.filter((fix) => fix.cause === cause && msOf(fix.at) <= msOf(at)).sort((a, b) => msOf(b.at) - msOf(a.at))[0] || null;
+}
+
+// The issue is public: no asker names or emails, and no query strings, which can carry tokens.
+const wordOf = (word) => new RegExp("(^|[^\\w@.])" + word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![\\w@])", "gi");
+const scrubbed = (text, max, hidden) => clip((hidden || []).reduce((out, word) => out.replace(wordOf(word), "$1[asker]"), String(text == null ? "" : text))
+  .replace(/[^\s@<>"'(),;]+@[^\s@<>"'(),;]+\.[a-z]{2,}/gi, "[email]")
+  .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>)]*/gi, "$1?…"), max);
+
+// A failure is a lead while the probe still sees its cause and no re-run or later fix has settled it; a re-run is one when it failed.
+function bugLead(row, source) {
+  const doc = row || {};
+  const cause = (doc.cause && doc.cause.id) || "";
+  if (!cause || SITE_SIDE.includes(cause)) return null;
+  if (source === "failure") {
+    if (doc.kind !== "failed" || !doc.diagnosedAt || !doc.diagnosis || doc.diagnosis.cleared) return null;
+    if ((doc.rerun && doc.rerun.status !== "failed") || fixAfter(doc)) return null;
+  } else if (doc.status !== "failed" || FIXES.some((fix) => fix.cause === cause && msOf(fix.at) > msOf(doc.at))) {
+    return null;
+  }
+  const fix = fixBefore(cause, (doc.rerun && doc.rerun.at) || doc.at);
+  const intake = doc.intake || {};
+  const hidden = [doc.name, doc.email, intake.clientName, intake.clientEmail].map((word) => String(word || "").trim()).filter((word) => word.length > 2);
+  const scrub = (text, max) => scrubbed(text, max, hidden);
+  return {
+    key: fix ? cause + "-" + fix.ref.replace(/\D/g, "") : cause,
+    cause,
+    fix,
+    source,
+    id: clip(doc.id, 40),
+    at: String(doc.at || ""),
+    host: doc.host || hostOf(doc.url),
+    message: scrub(doc.error && doc.error.message, 300),
+    now: source === "failure" ? scrub(doc.diagnosis.nowLabel, 300) : "",
+    why: source === "rerun" && doc.trigger ? scrub(doc.trigger.label, 300) : "",
+    failures: source === "rerun" ? (doc.failureIds || []).length : 0,
+    probe: source === "failure" ? doc.probe || null : null,
+    lines: (Array.isArray(doc.lines) ? doc.lines : []).slice(-BUG_LOG_LINES).map((line) => scrub(line && line.text, 200).replace(/```/g, "'''"))
+  };
+}
+
+function probeLines(probe) {
+  const run = probe || {};
+  const out = [];
+  if (run.dns) out.push("DNS: " + (run.dns.error ? "does not resolve (" + run.dns.error + ")" : (run.dns.addresses || []).length + " addresses"));
+  const plain = run.plain;
+  if (!plain) return out;
+  const redirects = (plain.hops || []).filter((hop) => hop && hop.location).length;
+  out.push("Plain read with the review UA: " + (plain.httpRedirect
+    ? "redirects to " + scrubbed(plain.httpRedirect, 200)
+    : plain.error
+      ? "fails (" + scrubbed(plain.error, 160) + (plain.code ? ", " + plain.code : "") + ")"
+      : "status " + plain.status + ", " + (plain.contentType || "no content type") + (plain.server ? ", server " + plain.server : "") + (plain.challenge ? ", " + plain.challenge + " bot check" : ""))
+    + (redirects ? ", after " + redirects + " redirect" + (redirects === 1 ? "" : "s") : ""));
+  const browser = run.browser;
+  if (!browser) out.push("Headless Chrome: not tried");
+  else if (!browser.ok) out.push("Headless Chrome: did not finish (" + scrubbed(browser.error || "no answer", 160) + ")");
+  else out.push("Headless Chrome (" + (browser.untagged ? "untagged" : "tagged") + "): status " + (browser.docStatus || browser.status) + (browser.challenge ? ", " + browser.challenge + " bot check" : "") + ", " + (browser.words || 0) + " words");
+  return out;
+}
+
+function bugTitle(cause, fix) {
+  const label = labelOf(cause);
+  const still = fix ? "still " : "";
+  const reason = /^The review failed /.test(label)
+    ? "URL reviews " + still + label.replace(/^The review /, "")
+    : "URL reviews " + still + "failed because " + label.charAt(0).toLowerCase() + label.slice(1);
+  return "BE: " + (fix ? "After " + fix.ref + ", " + reason : reason);
+}
+
+function bugIssue(key, leads) {
+  const rows = leads.slice().sort((a, b) => b.at.localeCompare(a.at));
+  const { cause, fix } = rows[0];
+  const hosts = Array.from(new Set(rows.map((row) => row.host).filter(Boolean)));
+  const day = (at) => at.slice(0, 16).replace("T", " ");
+  const first = rows[rows.length - 1].at.slice(0, 10);
+  const last = rows[0].at.slice(0, 10);
+  const listed = rows.slice(0, BUG_ROWS).map((row) => "- " + day(row.at) + " UTC, " + (row.source === "rerun"
+    ? "failed re-run `" + row.id + "` of " + row.failures + " failure" + (row.failures === 1 ? "" : "s")
+    : "failed run `" + row.id + "`") + " on " + (row.host || "an unknown host") + ": " + (row.message || "no error text") + (row.now ? " Now: " + row.now : "") + (row.why ? " Why it ran: " + row.why : ""));
+  const probed = rows.find((row) => row.probe);
+  const logged = rows.find((row) => row.lines.length);
+  const tail = logged ? logged.lines : [];
+  const body = [
+    "**Kind:** Bug",
+    "**Area:** BE",
+    "**Found while:** #320, by the daily check of failed URL reviews",
+    "**Where it stands:** Backlog",
+    "",
+    "## What happened",
+    rows.length + " URL review run" + (rows.length === 1 ? "" : "s") + " failed with the cause class `" + cause + "` (" + labelOf(cause) + ") " + (first === last ? "on " + first : "from " + first + " to " + last) + ", on " + hosts.length + " site" + (hosts.length === 1 ? "" : "s") + ": " + hosts.slice(0, 8).join(", ") + (hosts.length > 8 ? " and " + (hosts.length - 8) + " more" : "") + "."
+      + (fix ? " " + fix.ref + " (" + fix.label + ") shipped before these runs, so it does not cover them." : "")
+      + " The daily probe still sees the cause, or a re-run failed again.",
+    "",
+    listed.join("\n") + (rows.length > BUG_ROWS ? "\n- and " + (rows.length - BUG_ROWS) + " more" : ""),
+    probed ? "\n### Probe of the latest failure (" + probed.host + ")\n" + probeLines(probed.probe).map((line) => "- " + line).join("\n") : null,
+    tail.length ? "\n### Last log lines of `" + logged.id + "`\n```\n" + tail.join("\n") + "\n```" : null,
+    "",
+    "## Fix",
+    "Not written yet. The full logs and probes are in Firestore (`url_review_failures`, `url_review_reruns`) and on the review desk. The PR that fixes this class adds a row to `FIXES` in `functions/url-review-failures.js` with cause `" + cause + "`, so these runs are re-run."
+  ].filter((part) => part !== null).join("\n");
+  return { key, cause, fix: fix ? fix.ref : "", title: bugTitle(cause, fix), body: body.slice(0, 60000), runs: rows.length, hosts, firstAt: rows[rows.length - 1].at, lastAt: rows[0].at };
+}
+
+// One bug per cause class, and per fix to that class: a class that fails again after its fix shipped is a new bug.
+function bugPlan(failures, reruns, filed) {
+  const known = new Set(Array.isArray(filed) ? filed : []);
+  const classes = new Map();
+  [[failures, "failure"], [reruns, "rerun"]].forEach(([rows, source]) => (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const lead = bugLead(row, source);
+    if (!lead || known.has(lead.key)) return;
+    classes.set(lead.key, (classes.get(lead.key) || []).concat(lead));
+  }));
+  return Array.from(classes.entries()).map(([key, leads]) => bugIssue(key, leads));
+}
+
+// The fields of a failure the reports and the desk list read; the log stays behind.
+const SUMMARY_FIELDS = ["kind", "at", "url", "host", "name", "email", "cause", "error.message", "diagnosis", "diagnosedAt", "checks", "rerun", "lineCount", "timings.ms", "fromAlert"];
+const RERUN_FIELDS = ["status", "at", "host", "name", "trigger", "cause", "error.message", "decidedAt"];
+const RERUN_STATES = [["held", "held for you"], ["sent", "sent"], ["dropped", "dropped"], ["failed", "failed again"]];
+const REPORT_ROWS = 60;
+
+function countBy(rows, keyOf) {
+  const counts = {};
+  rows.forEach((row) => {
+    const key = keyOf(row);
+    if (key) counts[key] = (counts[key] || 0) + 1;
+  });
+  return counts;
+}
+
+const ranked = (counts) => Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+const causeId = (row) => (row.cause && row.cause.id) || "unknown";
+const minute = (at) => String(at || "").slice(0, 16).replace("T", " ") + " UTC";
+
+function rerunState(row) {
+  const rerun = row.rerun;
+  if (!rerun) return row.diagnosis && row.diagnosis.rerun ? "re-run due" : "";
+  if (rerun.status === "skipped") return "re-run skipped: " + (rerun.reason || "no reason");
+  const label = (RERUN_STATES.find(([id]) => id === rerun.status) || [])[1] || rerun.status;
+  return "re-run " + label + " " + String(rerun.at || "").slice(0, 10);
+}
+
+// `bugs` are url_review_failure_bugs rows, with `closedAt` once GitHub shows the issue closed.
+function periodFailures(input) {
+  const source = input || {};
+  const rows = Array.isArray(source.failures) ? source.failures : [];
+  const failed = rows.filter((row) => row.kind === "failed").sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const stopped = rows.length - failed.length;
+  const before = (Array.isArray(source.previous) ? source.previous : []).filter((row) => row.kind === "failed");
+  const reruns = Array.isArray(source.reruns) ? source.reruns : [];
+  const bugs = (Array.isArray(source.bugs) ? source.bugs : []).filter((bug) => bug.issue).sort((a, b) => b.issue - a.issue);
+  const open = bugs.filter((bug) => !bug.closedAt);
+  const causes = countBy(failed, causeId);
+  const priorCauses = countBy(before, causeId);
+  const hosts = countBy(failed, (row) => row.host || hostOf(row.url));
+  const rerunCounts = countBy(reruns, (row) => row.status);
+  const cleared = failed.filter((row) => row.diagnosis && row.diagnosis.cleared).length;
+  const waiting = failed.filter((row) => !row.diagnosedAt).length;
+  const phrase = source.phrase || "previous period";
+  const causeList = Array.from(new Set(ranked(causes).concat(ranked(priorCauses))))
+    .map((id) => id + " " + (causes[id] || 0) + " (" + (priorCauses[id] || 0) + " before)");
+  const lines = failed.slice(0, REPORT_ROWS).map((row) => [
+    minute(row.at),
+    row.host || hostOf(row.url),
+    row.name,
+    causeId(row),
+    row.diagnosis ? (row.diagnosis.cleared ? "cleared: " : "now: ") + row.diagnosis.nowLabel : "not diagnosed yet",
+    rerunState(row)
+  ].filter(Boolean).join(" · "));
+  const bugLines = open.map((bug) => "#" + bug.issue + " " + bug.title + " (" + bug.runs + " run" + (bug.runs === 1 ? "" : "s") + ", " + (bug.hosts || []).slice(0, 4).join(", ") + ")");
+  const body = [
+    "Failed reviews",
+    lines.length ? lines.join("\n") : "None",
+    failed.length > lines.length ? "… and " + (failed.length - lines.length) + " more failed runs" : "",
+    "\nOpen failure bugs",
+    bugLines.length ? bugLines.join("\n") : "None",
+    source.deskUrl ? "\nEach run's full log and probe: " + source.deskUrl : ""
+  ].filter(Boolean).join("\n");
+  return {
+    failed: failed.length,
+    stopped,
+    previous: before.length,
+    cleared,
+    causes,
+    hosts,
+    reruns: rerunCounts,
+    openBugs: open.map((bug) => bug.issue),
+    rows: [
+      { label: "Failed runs", value: failed.length + " vs " + before.length + " (" + phrase + "); " + stopped + " stopped by the asker" },
+      { label: "Failure causes", value: causeList.join(", ") || "None" },
+      { label: "Diagnosis", value: cleared + " cleared since, " + (failed.length - cleared - waiting) + " still failing, " + waiting + " not probed yet" },
+      { label: "Failed sites", value: ranked(hosts).slice(0, 20).map((host) => host + " " + hosts[host]).join(", ") || "None" },
+      { label: "Re-runs", value: RERUN_STATES.map(([id, label]) => (rerunCounts[id] || 0) + " " + label).join(", ") },
+      { label: "Failure bugs", value: open.length ? open.map((bug) => "#" + bug.issue + " " + bug.cause).join(", ") + " open" + (bugs.length > open.length ? ", " + (bugs.length - open.length) + " closed" : "") : bugs.length ? "None open, " + bugs.length + " closed" : "None filed" }
+    ],
+    body: body.slice(0, 8000)
+  };
+}
+
+function failureRow(row) {
+  const doc = row || {};
+  return {
+    id: clip(doc.id, 60),
+    at: doc.at || "",
+    kind: doc.kind === "stopped" ? "stopped" : "failed",
+    url: clip(doc.url, 300),
+    host: doc.host || hostOf(doc.url),
+    name: clip(doc.name, 120),
+    email: clip(doc.email, 160),
+    cause: doc.kind === "stopped" ? "" : causeId(doc),
+    causeLabel: doc.cause ? clip(doc.cause.label, 200) : "",
+    message: clip(doc.error && doc.error.message, 600),
+    now: doc.diagnosis ? clip(doc.diagnosis.summary, 600) : "",
+    cleared: !!(doc.diagnosis && doc.diagnosis.cleared),
+    diagnosedAt: doc.diagnosedAt || "",
+    checks: Number(doc.checks) || 0,
+    rerun: rerunState(doc),
+    rerunId: doc.rerun && doc.rerun.id ? clip(doc.rerun.id, 40) : "",
+    lineCount: Number(doc.lineCount) || 0,
+    ms: Number(doc.timings && doc.timings.ms) || 0,
+    fromAlert: !!doc.fromAlert
+  };
+}
+
+const logLines = (lines) => (Array.isArray(lines) ? lines : []).map((line) => ({ t: Number(line && line.t) || 0, text: String((line && line.text) || "") }));
+
+function failureDetail(doc, rerun) {
+  const row = doc || {};
+  const again = rerun || null;
+  return Object.assign(failureRow(row), {
+    error: row.error || null,
+    diagnosis: row.diagnosis || null,
+    probe: row.probe || null,
+    probeLines: row.probe ? probeLines(row.probe) : [],
+    lines: logLines(row.lines),
+    linesCut: Number(row.linesCut) || 0,
+    timings: row.timings || null,
+    options: row.options || null,
+    intake: row.intake || null,
+    rerunDoc: again ? {
+      id: clip(again.id, 40),
+      at: again.at || "",
+      status: clip(again.status, 20),
+      why: clip(again.trigger && again.trigger.label, 300),
+      reportId: clip(again.reportId, 40),
+      error: clip(again.error && again.error.message, 600),
+      lines: logLines(again.lines)
+    } : null
+  });
+}
+
+module.exports = {
+  KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
+  causeOf, failureRecord, failureFromAlert, stateOf, diagnose,
+  recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
+  bugPlan, periodFailures, failureRow, failureDetail
+};

@@ -1,6 +1,6 @@
 /**
  * Turns the proposed cases of a URL review into automation scripts, one suite per framework.
- * Every script is a proposal built from a public read: review selectors and budgets before a run.
+ * Every script is a proposal built from a public analysis: review selectors and budgets before a run.
  */
 (function (root) {
   "use strict";
@@ -66,8 +66,9 @@
   const AI_BLOCK = "^user-agent:\\s*(?:OAI-SearchBot|ChatGPT-User|PerplexityBot|Perplexity-User|Claude-SearchBot|Claude-User|\\*)\\s*$(?:\\s*^user-agent:[^\\n]*$)*\\s*^disallow:\\s*/\\s*$";
 
   function checkFor(item, ctx) {
-    const at = ctx.startPath;
+    const at = item.path || ctx.startPath;
     if (item.journey && item.journey.selector && item.journey.target) return Object.assign({ kind: "journey" }, item.journey);
+    if (item.check && BROWSER_KINDS.indexOf(item.check.kind) !== -1) return Object.assign({}, item.check);
     switch (item.id) {
       case "FN-01": return { kind: "status", path: at };
       case "FN-02": return { kind: "title", path: at };
@@ -1594,7 +1595,7 @@ namespace QaLab
       "<jmeterTestPlan version=\"1.2\" properties=\"5.0\" jmeter=\"5.6.3\">",
       "  <hashTree>",
       "    <TestPlan guiclass=\"TestPlanGui\" testclass=\"TestPlan\" testname=\"" + xml(ctx.label) + "\" enabled=\"true\">",
-      "      <stringProp name=\"TestPlan.comments\">Proposed from a public read by QA-lab URL Review. Load groups stay disabled until the site owner gives written permission.</stringProp>",
+      "      <stringProp name=\"TestPlan.comments\">Proposed from a public analysis by QA-lab URL Review. Load groups stay disabled until the site owner gives written permission.</stringProp>",
       "      <boolProp name=\"TestPlan.functional_mode\">false</boolProp>",
       "      <boolProp name=\"TestPlan.serialize_threadgroups\">true</boolProp>",
       "      <elementProp name=\"TestPlan.user_defined_variables\" elementType=\"Arguments\" guiclass=\"ArgumentsPanel\" testclass=\"Arguments\" testname=\"User Defined Variables\" enabled=\"true\">",
@@ -1724,7 +1725,7 @@ namespace QaLab
     const loads = entries.filter((entry) => entry.isLoad);
     const lines = [
       "// " + line,
-      "// Proposed from a public read. Runs with k6: k6 run qa-lab.js. Budget checks run once.",
+      "// Proposed from a public analysis. Runs with k6: k6 run qa-lab.js. Budget checks run once.",
       "// Load scenarios start only with the site owner's written permission and an agreed window: k6 run -e OWNER_APPROVED=yes qa-lab.js",
       "import http from \"k6/http\";",
       "import { check } from \"k6\";",
@@ -1793,13 +1794,13 @@ namespace QaLab
     const mark = oneLine(sign && sign.mark);
     const line = ctx.label + (mark ? " · " + mark : "");
     if (framework === "Playwright") {
-      return ["// " + line, "// Proposed from a public read. Review selectors and budgets before a run.", "import { test, expect } from \"@playwright/test\";", "", "const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", "", "test.describe(" + q(ctx.label) + ", () => {"].join("\n");
+      return ["// " + line, "// Proposed from a public analysis. Review selectors and budgets before a run.", "import { test, expect } from \"@playwright/test\";", "", "const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", "", "test.describe(" + q(ctx.label) + ", () => {"].join("\n");
     }
     if (framework === "Cypress") {
-      return ["// " + line, "// Proposed from a public read. Review selectors and budgets before a run.", "const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", "", "describe(" + q(ctx.label) + ", () => {"].join("\n");
+      return ["// " + line, "// Proposed from a public analysis. Review selectors and budgets before a run.", "const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", "", "describe(" + q(ctx.label) + ", () => {"].join("\n");
     }
     if (framework === "WebdriverIO") {
-      return ["// " + line, "// Proposed from a public read. Runs with the WebdriverIO Mocha runner on Node 18 or later.", "const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", "", "describe(" + q(ctx.label) + ", () => {"].join("\n");
+      return ["// " + line, "// Proposed from a public analysis. Runs with the WebdriverIO Mocha runner on Node 18 or later.", "const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", "", "describe(" + q(ctx.label) + ", () => {"].join("\n");
     }
     if (framework === "Appium") {
       return [
@@ -1814,7 +1815,7 @@ namespace QaLab
     if (framework === "Selenium") {
       return [
         "# " + line,
-        "# Proposed from a public read. Review selectors and budgets before a run.",
+        "# Proposed from a public analysis. Review selectors and budgets before a run.",
         "import re",
         "import time",
         "",
@@ -1841,7 +1842,7 @@ namespace QaLab
     if (framework === "Robot") {
       return [
         "*** Settings ***",
-        "Documentation     " + robotText(line) + ". Proposed from a public read. Review selectors and budgets before a run.",
+        "Documentation     " + robotText(line) + ". Proposed from a public analysis. Review selectors and budgets before a run.",
         "Library           SeleniumLibrary",
         "Library           RequestsLibrary",
         "Library           Collections",
@@ -1866,19 +1867,19 @@ namespace QaLab
       ""
     ];
     if (framework === "Jest") {
-      return ["// " + line, "// Proposed from a public read. Runs with Jest and the Playwright library on Node 18 or later.", "const { chromium } = require(\"playwright\");", ""]
+      return ["// " + line, "// Proposed from a public analysis. Runs with Jest and the Playwright library on Node 18 or later.", "const { chromium } = require(\"playwright\");", ""]
         .concat(consts, ["jest.setTimeout(60000);"], pageHooks, ["describe(" + q(ctx.label) + ", () => {"]).join("\n");
     }
     if (framework === "Vitest") {
-      return ["// " + line, "// Proposed from a public read. Runs with Vitest and the Playwright library on Node 18 or later.", "import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from \"vitest\";", "import { chromium } from \"playwright\";", ""]
+      return ["// " + line, "// Proposed from a public analysis. Runs with Vitest and the Playwright library on Node 18 or later.", "import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from \"vitest\";", "import { chromium } from \"playwright\";", ""]
         .concat(consts, ["vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });"], pageHooks, ["describe(" + q(ctx.label) + ", () => {"]).join("\n");
     }
     if (framework === "Mocha") {
-      return ["// " + line, "// Proposed from a public read. Runs with Mocha, node:assert, and the Playwright library on Node 18 or later.", "const assert = require(\"node:assert/strict\");", "const { chromium } = require(\"playwright\");", ""]
+      return ["// " + line, "// Proposed from a public analysis. Runs with Mocha, node:assert, and the Playwright library on Node 18 or later.", "const assert = require(\"node:assert/strict\");", "const { chromium } = require(\"playwright\");", ""]
         .concat(consts, pageHooks.map((hook) => hook.replace(/^beforeAll\(/, "before(").replace(/^afterAll\(/, "after(")), ["describe(" + q(ctx.label) + ", () => {"]).join("\n");
     }
     if (framework === "CodeceptJS") {
-      return ["// " + line, "// Proposed from a public read. Runs with CodeceptJS 3 and its Playwright helper on Node 18 or later.", "const assert = require(\"node:assert/strict\");", ""]
+      return ["// " + line, "// Proposed from a public analysis. Runs with CodeceptJS 3 and its Playwright helper on Node 18 or later.", "const assert = require(\"node:assert/strict\");", ""]
         .concat(consts, ["Feature(" + q(ctx.label) + ");", ""]).join("\n");
     }
     const javaHttp = [
@@ -1908,11 +1909,11 @@ namespace QaLab
       "import java.util.regex.Pattern;"
     ];
     if (framework === "Selenide") {
-      return ["// " + javaDoc(line), "// Proposed from a public read. Runs with Selenide 7 and JUnit 5 on Java 17 or later.", "import static com.codeborne.selenide.Selenide.*;", "import static org.junit.jupiter.api.Assertions.assertTrue;", "", "import com.codeborne.selenide.Configuration;", "import com.codeborne.selenide.WebDriverRunner;"]
+      return ["// " + javaDoc(line), "// Proposed from a public analysis. Runs with Selenide 7 and JUnit 5 on Java 17 or later.", "import static com.codeborne.selenide.Selenide.*;", "import static org.junit.jupiter.api.Assertions.assertTrue;", "", "import com.codeborne.selenide.Configuration;", "import com.codeborne.selenide.WebDriverRunner;"]
         .concat(javaImports, ["import org.junit.jupiter.api.BeforeAll;", "import org.junit.jupiter.api.Disabled;", "import org.junit.jupiter.api.DisplayName;", "import org.junit.jupiter.api.Test;", "import org.openqa.selenium.Dimension;", "", "class QaLabSelenideTest {", ""], javaHttp, ["  @BeforeAll", "  static void setUp() {", "    Configuration.headless = true;", "  }", ""]).join("\n");
     }
     if (framework === "TestNG") {
-      return ["// " + javaDoc(line), "// Proposed from a public read. Runs with TestNG 7 and Selenium WebDriver 4 on Java 17 or later.", "import static org.testng.Assert.assertTrue;", ""]
+      return ["// " + javaDoc(line), "// Proposed from a public analysis. Runs with TestNG 7 and Selenium WebDriver 4 on Java 17 or later.", "import static org.testng.Assert.assertTrue;", ""]
         .concat(javaImports, ["import org.openqa.selenium.By;", "import org.openqa.selenium.Dimension;", "import org.openqa.selenium.JavascriptExecutor;", "import org.openqa.selenium.WebDriver;", "import org.openqa.selenium.chrome.ChromeDriver;", "import org.openqa.selenium.chrome.ChromeOptions;", "import org.testng.annotations.AfterClass;", "import org.testng.annotations.BeforeClass;", "import org.testng.annotations.Test;", "", "public class QaLabTestNgTest {", ""], javaHttp, [
           "  WebDriver driver;",
           "",
@@ -1933,7 +1934,7 @@ namespace QaLab
     if (framework === "Watir") {
       return [
         "# " + line,
-        "# Proposed from a public read. Runs with Watir 7 and RSpec on Ruby 3 or later.",
+        "# Proposed from a public analysis. Runs with Watir 7 and RSpec on Ruby 3 or later.",
         "require \"net/http\"",
         "require \"uri\"",
         "require \"watir\"",
@@ -1961,7 +1962,7 @@ namespace QaLab
       ].join("\n");
     }
     if (GHERKIN_FW.indexOf(framework) !== -1) {
-      return ["# " + line, "# Proposed from a public read. Review selectors and budgets before a run.", "Feature: " + ctx.label, ""].join("\n");
+      return ["# " + line, "# Proposed from a public analysis. Review selectors and budgets before a run.", "Feature: " + ctx.label, ""].join("\n");
     }
     return "";
   }
@@ -2013,7 +2014,7 @@ namespace QaLab
     const lines = [
       "# " + ctx.label,
       "",
-      "Automation scripts proposed from a public read of " + ctx.base + ".",
+      "Automation scripts proposed from a public analysis of " + ctx.base + ".",
       sign && sign.mark ? "Signature: " + sign.mark + (sign.sha256 ? " · SHA-256 " + sign.sha256 : "") : "",
       "",
       "These scripts were written from what the public page showed. They were not run by QA-lab. Review each selector, budget, and path before you trust a result. Skipped tests are cases that need a person, or an account the owner issues.",
@@ -2176,11 +2177,17 @@ namespace QaLab
     const kit = ins && ins.fixkit;
     if (!kit) return [];
     const files = headerFiles(kit.headers, kit.hosting);
-    files.push({ path: "fix-kit/csp-report-only.txt", content: "Content-Security-Policy-Report-Only: " + kit.csp + "\n\n# Built from the hosts this read saw. Deploy it as Report-Only, add a report-to endpoint, watch for a week, then rename the header to Content-Security-Policy.\n# 'unsafe-inline' appears only when the page has inline scripts or styles. Replace it with nonces or hashes when you can.\n" });
+    files.push({ path: "fix-kit/csp-report-only.txt", content: "Content-Security-Policy-Report-Only: " + kit.csp + "\n\n# Built from the hosts this review saw. Deploy it as Report-Only, add a report-to endpoint, watch for a week, then rename the header to Content-Security-Policy.\n# 'unsafe-inline' appears only when the page has inline scripts or styles. Replace it with nonces or hashes when you can.\n" });
     if (kit.jsonLd) files.push({ path: "fix-kit/structured-data.html", content: "<!-- Paste inside <head>. Check the values, add a logo URL if it is missing, then validate at https://validator.schema.org -->\n<script type=\"application/ld+json\">\n" + JSON.stringify(kit.jsonLd, null, 2) + "\n</script>\n" });
     if (kit.llmsTxt) files.push({ path: "fix-kit/llms.txt", content: kit.llmsTxt });
     if (kit.securityTxt) files.push({ path: "fix-kit/.well-known/security.txt", content: kit.securityTxt });
     if ((kit.dns || []).length) files.push({ path: "fix-kit/dns-records.txt", content: "# Add these at your DNS provider. Replace the placeholders first.\n" + kit.dns.map((row) => row.name + "\t" + row.type + "\t" + row.value).join("\n") + "\n" });
+    if (kit.mtaSts) files.push({ path: "fix-kit/mta-sts/.well-known/mta-sts.txt", content: "# Serve as text/plain at https://mta-sts.<your domain>/.well-known/mta-sts.txt, with no redirect.\n# Keep mode: testing until TLS-RPT reports are clean, then change it to enforce and bump the id in the _mta-sts TXT record.\n" + kit.mtaSts });
+    if ((kit.libraries || []).length) files.push({ path: "fix-kit/library-upgrades.md", content: "# Front-end library upgrades\n\nChecked against the retire.js list. Retest the pages that use a library after a major upgrade.\n\n" + kit.libraries.map((row) => "- **" + row.name + " " + row.version + "**: " + row.flaws + " known flaw" + (row.flaws === 1 ? "" : "s") + ", the worst rated " + row.worst + ". " + (row.ended ? "This release line gets no more fixes; move to a supported major version." : "Upgrade to " + row.fixed + " or later.")).join("\n") + "\n" });
+    if (kit.privacyNotice) files.push({ path: "fix-kit/legal/privacy-notice.md", content: kit.privacyNotice });
+    if (kit.imprint) files.push({ path: "fix-kit/legal/impressum.md", content: kit.imprint });
+    if (kit.accessibilityStatement) files.push({ path: "fix-kit/legal/accessibility-statement.md", content: kit.accessibilityStatement });
+    if (kit.chatSnippet) files.push({ path: "fix-kit/chat-click-to-load.html", content: kit.chatSnippet });
     const top = (ins.findings || []).filter((item) => item.rank).slice(0, 15);
     const score = ins.score || {};
     const lines = [
@@ -2188,7 +2195,7 @@ namespace QaLab
       "",
       "Health " + (score.overall != null ? score.overall + "/100 (" + score.grade + ")" : "not scored") + ". " + (ins.summary || ""),
       "",
-      "These files were written from a public read. Review each value before you deploy it. Nothing here was applied to the site.",
+      "These files were written from a public analysis. Review each value before you deploy it. Nothing here was applied to the site.",
       "",
       "## Fix first",
       ""

@@ -1,11 +1,12 @@
 /* Real runs, series two: one public site per post, scored by the same review anyone can run.
    Scores come from the saved report in previews/insights-test/<report>-current.json. Each claim in
-   the copy was checked against the live site with curl on the read date. Lead with what the site
+   the copy was checked against the live site with curl on the analysis date. Lead with what the site
    does well, then one lesson any team can use. Posts carry no prices and no personal name. */
 
 const fs = require("fs");
 const path = require("path");
 const { SITE, GUIDE, xPost } = require("./tips");
+const { tagLine } = require("../social-tags");
 
 const REPORTS = path.resolve(__dirname, "../../previews/insights-test");
 const AREAS = [["SEO", "SEO"], ["GEO", "GEO"], ["Analytics", "Analytics"], ["Security", "Security"], ["Accessibility", "A11y"], ["Performance", "Speed"]];
@@ -21,7 +22,7 @@ const RUNS = [
   {
     id: "wikipedia", report: "r100-wikipedia", scope: "Worldwide",
     title: ["Wikipedia leaves", "*the snippet to search.*"],
-    body: "HSTS is preloaded, security.txt is published, and articles read without JavaScript. But the Main Page and the other 18 pages read have no meta description, so search engines pick the snippet.",
+    body: "HSTS is preloaded, security.txt is published, and articles read without JavaScript. But the Main Page and the other 18 pages analyzed have no meta description, so search engines pick the snippet.",
     action: "Write a description of about 150 characters for each key page, so you choose the pitch, not the crawler.",
     tags: ["SEO", "MetaDescription", "OpenKnowledge"]
   },
@@ -35,7 +36,7 @@ const RUNS = [
   {
     id: "mdn", report: "r100-mdn", scope: "Worldwide",
     title: ["MDN Web Docs: {overall}.", "*No JSON-LD at all.*"],
-    body: "A content security policy built on default-src 'self', two-year HSTS, framing denied, and Core Web Vitals that pass for real visitors. The gap: no page read carries JSON-LD naming who runs the site.",
+    body: "A content security policy built on default-src 'self', two-year HSTS, framing denied, and Core Web Vitals that pass for real visitors. The gap: no page analyzed carries JSON-LD naming who runs the site.",
     action: "Add one Organization block with name, url, logo, and sameAs links. AI answers use it to name and describe you.",
     tags: ["GEO", "StructuredData", "WebDev"]
   },
@@ -49,21 +50,21 @@ const RUNS = [
   {
     id: "unesco", report: "r100-unesco", scope: "Worldwide",
     title: ["UNESCO has llms.txt,", "*but no HSTS.*"],
-    body: "UNESCO publishes an llms.txt for AI tools, sets a content security policy, and limits framing to itself. But no page read sends Strict-Transport-Security, and http:// moves to https with a temporary 302.",
+    body: "UNESCO publishes an llms.txt for AI tools, sets a content security policy, and limits framing to itself. But no page analyzed sends Strict-Transport-Security, and http:// moves to https with a temporary 302.",
     action: "Send Strict-Transport-Security with a max-age of a year or more, and make the http-to-https hop a 301.",
     tags: ["WebSecurity", "HSTS", "HTTPS"]
   },
   {
     id: "unicef", report: "r100-unicef", scope: "Worldwide",
     title: ["UNICEF's date filter", "*has no label.*"],
-    body: "Preloaded HSTS, Organization JSON-LD, and five language versions linked to each other. But the search date filter on every page read is named only by placeholder text, which vanishes as you type.",
+    body: "Preloaded HSTS, Organization JSON-LD, and five language versions linked to each other. But the search date filter on every page analyzed is named only by placeholder text, which vanishes as you type.",
     action: "Give every field a <label> or an aria-label. A placeholder is a hint, not a name, and it disappears on input.",
     tags: ["Accessibility", "A11y", "Forms"]
   },
   {
     id: "worldbank", report: "r100-worldbank", scope: "Worldwide",
     title: ["The World Bank:", "*GEO {GEO}.*"],
-    body: "Organization JSON-LD with a site search action, a sitemap, robots.txt open to every crawler, and two-year HSTS. What it lacks is a content security policy: none of the pages read sends one.",
+    body: "Organization JSON-LD with a site search action, a sitemap, robots.txt open to every crawler, and two-year HSTS. What it lacks is a content security policy: none of the pages analyzed sends one.",
     action: "Start with Content-Security-Policy-Report-Only to see what would break, then enforce. default-src 'self' is a start.",
     tags: ["WebSecurity", "CSP", "GEO"]
   },
@@ -77,7 +78,7 @@ const RUNS = [
   {
     id: "msf", report: "r100-msf", scope: "Worldwide",
     title: ["MSF serves every page", "*without HSTS.*"],
-    body: "Pages name their language, Arabic included with right-to-left set, and a sitemap answers. But none of the 20 pages read sends Strict-Transport-Security, so a first visit over http can be intercepted.",
+    body: "Pages name their language, Arabic included with right-to-left set, and a sitemap answers. But none of the 20 pages analyzed sends Strict-Transport-Security, so a first visit over http can be intercepted.",
     action: "Add Strict-Transport-Security: max-age=31536000; includeSubDomains. Then consider the browser preload list.",
     tags: ["WebSecurity", "HSTS", "Humanitarian"]
   },
@@ -105,14 +106,14 @@ const RUNS = [
   {
     id: "dw", report: "r100-dw", scope: "Worldwide",
     title: ["DW blocks framing.", "*It skips nosniff.*"],
-    body: "frame-ancestors 'none' stops other sites from framing it, HSTS is on, and every page read has a canonical. But X-Content-Type-Options is missing on all 20 pages read, so browsers may guess file types.",
+    body: "frame-ancestors 'none' stops other sites from framing it, HSTS is on, and every page analyzed has a canonical. But X-Content-Type-Options is missing on all 20 pages analyzed, so browsers may guess file types.",
     action: "Send X-Content-Type-Options: nosniff on every response. One header stops browsers running a file as the wrong type.",
     tags: ["WebSecurity", "HTTPHeaders", "News"]
   },
   {
     id: "elpais", report: "r100-elpais", scope: "Worldwide",
     title: ["El País sends", "*no security headers.*"],
-    body: "Pages declare their regional language, like es-CO, and carry rich JSON-LD. But the pages read send no HSTS, no content security policy, no X-Frame-Options, and no nosniff, and http moves to https with a 302.",
+    body: "Pages declare their regional language, like es-CO, and carry rich JSON-LD. But the pages analyzed send no HSTS, no content security policy, no X-Frame-Options, and no nosniff, and http moves to https with a 302.",
     action: "Start with four headers: Strict-Transport-Security, X-Content-Type-Options, frame-ancestors, and a report-only CSP.",
     tags: ["WebSecurity", "HTTPHeaders", "News"]
   },
@@ -140,21 +141,21 @@ const RUNS = [
   {
     id: "harvard", report: "r100-harvard", scope: "Worldwide",
     title: ["Any site can frame", "*Harvard's pages.*"],
-    body: "Organization JSON-LD, a sitemap index, and Core Web Vitals that pass for real visitors. But the pages read send neither X-Frame-Options nor frame-ancestors, so another site could load them in a hidden frame.",
+    body: "Organization JSON-LD, a sitemap index, and Core Web Vitals that pass for real visitors. But the pages analyzed send neither X-Frame-Options nor frame-ancestors, so another site could load them in a hidden frame.",
     action: "Send Content-Security-Policy: frame-ancestors 'self'. It blocks clickjacking and replaces X-Frame-Options.",
     tags: ["WebSecurity", "Clickjacking", "HigherEd"]
   },
   {
     id: "nodejs", report: "r100-nodejs", scope: "Worldwide",
     title: ["Node.js has llms.txt.", "*Its pages share a pitch.*"],
-    body: "An llms.txt for AI tools, security.txt, preloaded HSTS, and two sitemaps. But 19 of the 20 pages read share one meta description, the home page's, so Learn and About pitch the same line in search.",
+    body: "An llms.txt for AI tools, security.txt, preloaded HSTS, and two sitemaps. But 19 of the 20 pages analyzed share one meta description, the home page's, so Learn and About pitch the same line in search.",
     action: "Write a description per page that says what that page answers. A shared one tells search nothing new.",
     tags: ["SEO", "MetaDescription", "OpenSource"]
   },
   {
     id: "rust", report: "r100-rust", scope: "Worldwide",
     title: ["Rust's pages", "*name no canonical.*"],
-    body: "Pages declare their language, a security.txt is published, and Core Web Vitals pass for real visitors. But none of the 20 pages read has a canonical link, and all of them share one meta description.",
+    body: "Pages declare their language, a security.txt is published, and Core Web Vitals pass for real visitors. But none of the 20 pages analyzed has a canonical link, and all of them share one meta description.",
     action: "Add a self-referencing canonical to every page. It tells search which address to rank when several reach it.",
     tags: ["SEO", "Canonical", "OpenSource"]
   },
@@ -168,42 +169,42 @@ const RUNS = [
   {
     id: "apache", report: "r100-apache", scope: "Worldwide",
     title: ["Apache.org runs", "*without descriptions.*"],
-    body: "Preloaded HSTS, a security.txt, a content security policy, and Core Web Vitals that pass for real visitors. But none of the 20 pages read, the home page included, has a meta description.",
+    body: "Preloaded HSTS, a security.txt, a content security policy, and Core Web Vitals that pass for real visitors. But none of the 20 pages analyzed, the home page included, has a meta description.",
     action: "Give each page a description of about 150 characters. Search and AI answers quote it when they introduce you.",
     tags: ["SEO", "MetaDescription", "OpenSource"]
   },
   {
     id: "linuxfoundation", report: "r100-linuxfoundation", scope: "Worldwide",
     title: ["The Linux Foundation", "*never states a language.*"],
-    body: "A sitemap, one-year HSTS, framing limited to its own origin, and no broken links among the pages read. But the <html> tag has no lang attribute, so screen readers guess which voice to use.",
+    body: "A sitemap, one-year HSTS, framing limited to its own origin, and no broken links among the pages analyzed. But the <html> tag has no lang attribute, so screen readers guess which voice to use.",
     action: "Add lang=\"en\" to the html tag in the site template. One attribute fixes every page at once.",
     tags: ["Accessibility", "A11y", "i18n"]
   },
   {
     id: "react", report: "r100-react", scope: "Worldwide",
     title: ["React's docs pages", "*have no description.*"],
-    body: "An llms.txt for AI tools, two-year HSTS, and Core Web Vitals that pass for real visitors. But 19 of the 20 pages read, Learn and Reference included, have no meta description, so search writes its own.",
+    body: "An llms.txt for AI tools, two-year HSTS, and Core Web Vitals that pass for real visitors. But 19 of the 20 pages analyzed, Learn and Reference included, have no meta description, so search writes its own.",
     action: "Write a one-line description per page: what it teaches and for whom. Docs pages are where it pays most.",
     tags: ["SEO", "MetaDescription", "Docs"]
   },
   {
     id: "githubdocs", report: "r100-githubdocs", scope: "Worldwide",
     title: ["GitHub Docs sets", "*no canonical link.*"],
-    body: "A content security policy that starts from default-src 'none', HSTS, nosniff, and framing limited to its own origin. But none of the 20 pages read has a canonical link, so URL variants compete in search.",
+    body: "A content security policy that starts from default-src 'none', HSTS, nosniff, and framing limited to its own origin. But none of the 20 pages analyzed has a canonical link, so URL variants compete in search.",
     action: "Add a self-referencing canonical to every docs page. Versioned and translated docs need it most.",
     tags: ["SEO", "Canonical", "Docs"]
   },
   {
     id: "stripedocs", report: "r100-stripedocs", scope: "Worldwide",
     title: ["Stripe Docs skips", "*the main landmark.*"],
-    body: "Preloaded HSTS, a content security policy, and a skip link to the content. But none of the 20 pages read marks that content with a <main> landmark, which screen-reader users jump to directly.",
+    body: "Preloaded HSTS, a content security policy, and a skip link to the content. But none of the 20 pages analyzed marks that content with a <main> landmark, which screen-reader users jump to directly.",
     action: "Wrap the primary content in one <main> element. Screen readers list it as a landmark you can jump to.",
     tags: ["Accessibility", "A11y", "Docs"]
   },
   {
     id: "cloudflare", report: "r100-cloudflare", scope: "Worldwide",
     title: ["Cloudflare's CSP", "*skips 5 of 20 pages.*"],
-    body: "Organization JSON-LD, security.txt, a Permissions-Policy, and robots.txt that welcomes AI crawlers by name. But the home page's content security policy is missing on 5 of the 20 pages read, like /galileo/.",
+    body: "Organization JSON-LD, security.txt, a Permissions-Policy, and robots.txt that welcomes AI crawlers by name. But the home page's content security policy is missing on 5 of the 20 pages analyzed, like /galileo/.",
     action: "Set security headers once at the edge or server, not per page template. Attackers look for the weakest page.",
     tags: ["WebSecurity", "CSP", "HTTPHeaders"]
   },
@@ -231,35 +232,35 @@ const RUNS = [
   {
     id: "lonelyplanet", report: "r100-lonelyplanet", scope: "Worldwide",
     title: ["Lonely Planet's home", "*is 1.8 MB of HTML.*"],
-    body: "robots.txt blocks GPTBot from training but lets answer crawlers in, and sitemaps are listed. But every page read ships over 500 KB of HTML, and the home page is 1.8 MB before compression, ahead of any image.",
+    body: "robots.txt blocks GPTBot from training but lets answer crawlers in, and sitemaps are listed. But every page analyzed ships over 500 KB of HTML, and the home page is 1.8 MB before compression, ahead of any image.",
     action: "Move bulky inline data out of the HTML and load it when needed. Smaller documents parse and paint sooner.",
     tags: ["WebPerformance", "PageWeight", "Travel"]
   },
   {
     id: "ikea", report: "r100-ikea", scope: "Worldwide",
     title: ["IKEA's home page", "*is 1.9 MB of HTML.*"],
-    body: "security.txt, HSTS, nosniff, a sitemap, and robots.txt open to AI answer crawlers at the root. But all 19 pages read ship more than 500 KB of HTML, and the US home page is 1.9 MB before compression.",
+    body: "security.txt, HSTS, nosniff, a sitemap, and robots.txt open to AI answer crawlers at the root. But all 19 pages analyzed ship more than 500 KB of HTML, and the US home page is 1.9 MB before compression.",
     action: "Measure HTML weight in CI with a budget. Inline state and repeated markup are the usual culprits.",
     tags: ["WebPerformance", "PageWeight", "Ecommerce"]
   },
   {
     id: "gutenberg", report: "r100-gutenberg", scope: "Worldwide",
     title: ["75,000 free books,", "*no Book markup.*"],
-    body: "Every ebook page has its own title, description, and share card, and pages pass Core Web Vitals for real visitors. But no page read carries JSON-LD, so nothing tells search or AI which pages are books.",
+    body: "Every ebook page has its own title, description, and share card, and pages pass Core Web Vitals for real visitors. But no page analyzed carries JSON-LD, so nothing tells search or AI which pages are books.",
     action: "Add Book JSON-LD to each title page: name, author, inLanguage, and url. AI answers cite what they can parse.",
     tags: ["StructuredData", "GEO", "OpenKnowledge"]
   },
   {
     id: "creativecommons", report: "r100-creativecommons", scope: "Worldwide",
     title: ["Creative Commons", "*moves to https with 302.*"],
-    body: "A sitemap index, pages that name their language, and robots meta that allows large previews. But http:// reaches https through a temporary 302, and no page read sends Strict-Transport-Security.",
+    body: "A sitemap index, pages that name their language, and robots meta that allows large previews. But http:// reaches https through a temporary 302, and no page analyzed sends Strict-Transport-Security.",
     action: "Use a 301 from http to https, then add Strict-Transport-Security so browsers skip http next time.",
     tags: ["WebSecurity", "HTTPS", "HSTS"]
   },
   {
     id: "eff", report: "r100-eff", scope: "Worldwide",
     title: ["The EFF's pages", "*send no HSTS.*"],
-    body: "A content security policy in report-only mode, nosniff, framing limited to its origin, and a sitemap. But no page read sends Strict-Transport-Security, so browsers don't upgrade a first http visit.",
+    body: "A content security policy in report-only mode, nosniff, framing limited to its origin, and a sitemap. But no page analyzed sends Strict-Transport-Security, so browsers don't upgrade a first http visit.",
     action: "Add Strict-Transport-Security with a long max-age. It tells browsers to use https before the request leaves.",
     tags: ["WebSecurity", "HSTS", "DigitalRights"]
   },
@@ -287,21 +288,21 @@ const RUNS = [
   {
     id: "esa", report: "r100-esa", scope: "Worldwide",
     title: ["ESA's search box", "*has no name.*"],
-    body: "HSTS, robots.txt open to AI answer crawlers, and a description on the home page. But the site search on every page read is a text field named only by its \"Search ESA\" placeholder.",
+    body: "HSTS, robots.txt open to AI answer crawlers, and a description on the home page. But the site search on every page analyzed is a text field named only by its \"Search ESA\" placeholder.",
     action: "Add a visible label or aria-label to the search field. Screen readers announce the name, not the hint.",
     tags: ["Accessibility", "A11y", "Forms"]
   },
   {
     id: "cern", report: "r100-cern", scope: "Worldwide",
     title: ["CERN's pages", "*have no description.*"],
-    body: "security.txt, a sitemap in robots.txt, and pages that name their language. But none of the 20 pages read has a meta description, the home page included, so search engines pick the snippet.",
+    body: "security.txt, a sitemap in robots.txt, and pages that name their language. But none of the 20 pages analyzed has a meta description, the home page included, so search engines pick the snippet.",
     action: "Start with the home page and your ten most visited: one sentence each on what the reader will find.",
     tags: ["SEO", "MetaDescription", "Science"]
   },
   {
     id: "natgeo", report: "r100-natgeo", scope: "Worldwide",
     title: ["NatGeo sets cookies", "*without Secure.*"],
-    body: "Sitemaps, Organization JSON-LD, and robots.txt open to AI answer crawlers. But the home page sets five cookies, the SWID visitor ID among them, without Secure, and no page read sends HSTS, so plain http can carry them.",
+    body: "Sitemaps, Organization JSON-LD, and robots.txt open to AI answer crawlers. But the home page sets five cookies, the SWID visitor ID among them, without Secure, and no page analyzed sends HSTS, so plain http can carry them.",
     action: "Mark every cookie Secure and send Strict-Transport-Security. A visitor ID should never travel over plain http.",
     tags: ["WebSecurity", "Cookies", "Privacy"]
   },
@@ -329,7 +330,7 @@ const RUNS = [
   {
     id: "debian", report: "r100-debian", scope: "Worldwide",
     title: ["Debian's search field", "*goes unnamed.*"],
-    body: "security.txt, nosniff, a no-referrer policy, and framing limited to its origin. But the site search field on the pages read has no label, aria-label, or title, so screen readers announce an unnamed field.",
+    body: "security.txt, nosniff, a no-referrer policy, and framing limited to its origin. But the site search field on the pages analyzed has no label, aria-label, or title, so screen readers announce an unnamed field.",
     action: "Add <label for> or aria-label=\"Search\" to the field. One attribute makes it usable by voice.",
     tags: ["Accessibility", "A11y", "Forms"]
   },
@@ -343,7 +344,7 @@ const RUNS = [
   {
     id: "paho", report: "r100-paho", scope: "Worldwide",
     title: ["PAHO has no", "*Organization JSON-LD.*"],
-    body: "Preloaded HSTS, nosniff, a strict Referrer-Policy, and robots.txt that keeps AI training bots off paginated news only. But no page read carries JSON-LD saying who PAHO is.",
+    body: "Preloaded HSTS, nosniff, a strict Referrer-Policy, and robots.txt that keeps AI training bots off paginated news only. But no page analyzed carries JSON-LD saying who PAHO is.",
     action: "Add Organization JSON-LD with name, logo, url, and sameAs. It helps AI answers name the right agency.",
     tags: ["GEO", "StructuredData", "PublicHealth"]
   },
@@ -427,7 +428,7 @@ const RUNS = [
   {
     id: "satena", report: "r100-satena", scope: "National",
     title: ["SATENA's pages", "*have no canonical.*"],
-    body: "HSTS marked for preload, nosniff, framing limited to its origin, and a strict Referrer-Policy. But none of the 20 pages read declares a canonical URL, so search engines guess which version to index.",
+    body: "HSTS marked for preload, nosniff, framing limited to its origin, and a strict Referrer-Policy. But none of the 20 pages analyzed declares a canonical URL, so search engines guess which version to index.",
     action: "Add a self-referencing canonical to every page, plus hreflang links between the language versions.",
     tags: ["SEO", "Canonical", "Travel"]
   },
@@ -469,7 +470,7 @@ const RUNS = [
   {
     id: "eltiempo", report: "r100-eltiempo", scope: "National",
     title: ["El Tiempo still", "*loads a retired UA tag.*"],
-    body: "A strict Referrer-Policy, framing limited to its origin, and robots.txt that lists its sitemaps. But every page read still loads UA-118090425-1, and Universal Analytics stopped processing data by July 2024.",
+    body: "A strict Referrer-Policy, framing limited to its origin, and robots.txt that lists its sitemaps. But every page analyzed still loads UA-118090425-1, and Universal Analytics stopped processing data by July 2024.",
     action: "Search your templates for UA- IDs and remove them. They add a request and collect nothing.",
     tags: ["Analytics", "GA4", "News"]
   },
@@ -483,7 +484,7 @@ const RUNS = [
   {
     id: "elespectador", report: "r100-elespectador", scope: "National",
     title: ["El Espectador has", "*no main landmark.*"],
-    body: "nosniff, a strict Referrer-Policy, a Permissions-Policy, and a sitemap index in robots.txt. But no page read has a <main> element, so screen-reader users can't jump past the menus to the story.",
+    body: "nosniff, a strict Referrer-Policy, a Permissions-Policy, and a sitemap index in robots.txt. But no page analyzed has a <main> element, so screen-reader users can't jump past the menus to the story.",
     action: "Wrap each page's primary content in one <main>. Skip links and screen readers use it to find the story.",
     tags: ["Accessibility", "Landmarks", "News"]
   },
@@ -497,7 +498,7 @@ const RUNS = [
   {
     id: "sura", report: "r100-sura", scope: "National",
     title: ["SURA's home page", "*has three h1s.*"],
-    body: "nosniff, framing limited to its origin, a sitemap in robots.txt, and a robots section that welcomes AI crawlers. But the home page has three h1 headings, and 11 of 20 pages read have more or fewer than one.",
+    body: "nosniff, framing limited to its origin, a sitemap in robots.txt, and a robots section that welcomes AI crawlers. But the home page has three h1 headings, and 11 of 20 pages analyzed have more or fewer than one.",
     action: "Give each page one h1 that names its topic. Use h2 and h3 for the sections below it.",
     tags: ["Accessibility", "Headings", "Insurance"]
   },
@@ -539,7 +540,7 @@ const RUNS = [
   {
     id: "supersalud", report: "r100-supersalud", scope: "National",
     title: ["Supersalud loads", "*no analytics tag.*"],
-    body: "HSTS with preload, nosniff, no-referrer, and a sitemap in robots.txt. But none of the 20 pages read loads a known analytics tag, so the team may not see which services citizens look for.",
+    body: "HSTS with preload, nosniff, no-referrer, and a sitemap in robots.txt. But none of the 20 pages analyzed loads a known analytics tag, so the team may not see which services citizens look for.",
     action: "Measure something, even a privacy-first, cookie-free tool. You can't improve pages you can't see used.",
     tags: ["Analytics", "Measurement", "PublicHealth"]
   },
@@ -623,14 +624,14 @@ const RUNS = [
   {
     id: "catastro", report: "r100-catastro", scope: "Local",
     title: ["Catastro Bogotá has", "*no descriptions.*"],
-    body: "HSTS, nosniff, framing limited to its origin, GA4 through Tag Manager, and a declared language. But none of the 20 pages read has a meta description, so Google and AI answers write their own.",
+    body: "HSTS, nosniff, framing limited to its origin, GA4 through Tag Manager, and a declared language. But none of the 20 pages analyzed has a meta description, so Google and AI answers write their own.",
     action: "Write a one-sentence description for each key page: what it offers and who it's for, under 155 characters.",
     tags: ["SEO", "MetaDescription", "GovTech"]
   },
   {
     id: "jbb", report: "r100-jbb", scope: "Local",
     title: ["The Botanic Garden", "*loads logos over http.*"],
-    body: "A declared language, a canonical, a 301 from http to https, and a sitemap named in robots.txt. But every page read loads its two logo images over http://, so browsers must upgrade or block them.",
+    body: "A declared language, a canonical, a 301 from http to https, and a sitemap named in robots.txt. But every page analyzed loads its two logo images over http://, so browsers must upgrade or block them.",
     action: "Load every asset over https or as a relative URL. A search for src=\"http:// in your theme finds them.",
     tags: ["WebSecurity", "MixedContent", "Nature"]
   },
@@ -651,7 +652,7 @@ const RUNS = [
   {
     id: "medellin", report: "r100-medellin", scope: "Local",
     title: ["Medellín's portal", "*sends no HSTS.*"],
-    body: "nosniff, framing limited to its origin, a canonical, a clear description, and two sitemaps named in robots.txt. But none of the 19 pages read sends Strict-Transport-Security, so a first http visit can be intercepted.",
+    body: "nosniff, framing limited to its origin, a canonical, a clear description, and two sitemaps named in robots.txt. But none of the 19 pages analyzed sends Strict-Transport-Security, so a first http visit can be intercepted.",
     action: "Send HSTS with a one-year max-age once every subdomain serves https.",
     tags: ["WebSecurity", "HSTS", "GovTech"]
   },
@@ -679,7 +680,7 @@ const RUNS = [
   {
     id: "eafit", report: "r100-eafit", scope: "Local",
     title: ["EAFIT's pages", "*have no main landmark.*"],
-    body: "HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, a canonical, and a clear description. But none of the 20 pages read has a <main> element, so screen-reader users can't skip straight to the content.",
+    body: "HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, a canonical, and a clear description. But none of the 20 pages analyzed has a <main> element, so screen-reader users can't skip straight to the content.",
     action: "Wrap the primary content of every template in one <main> for skip links.",
     tags: ["Accessibility", "Landmarks", "Education"]
   },
@@ -707,14 +708,14 @@ const RUNS = [
   {
     id: "transcaribe", report: "r100-transcaribe", scope: "Local",
     title: ["Transcaribe reorders", "*the keyboard path.*"],
-    body: "A declared language, a canonical, a sitemap index in robots.txt, a 301 to https, and GA4. But 19 pages read use a positive tabindex, which pulls one element ahead of everything else in keyboard order.",
+    body: "A declared language, a canonical, a sitemap index in robots.txt, a 301 to https, and GA4. But 19 pages analyzed use a positive tabindex, which pulls one element ahead of everything else in keyboard order.",
     action: "Use tabindex=\"0\" or \"-1\" only. Fix focus order by ordering the HTML, not with positive numbers.",
     tags: ["Accessibility", "Keyboard", "Mobility"]
   },
   {
     id: "bucaramanga", report: "r100-bucaramanga", scope: "Local",
     title: ["Bucaramanga's home", "*has no title tag.*"],
-    body: "HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy, and framing limited to its origin. But 12 pages read have no <title>, the home page included.",
+    body: "HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy, and framing limited to its origin. But 12 pages analyzed have no <title>, the home page included.",
     action: "Give every page a unique <title>. It's the tab label, the search result headline, and the share card text.",
     tags: ["SEO", "Titles", "GovTech"]
   },
@@ -749,14 +750,14 @@ const RUNS = [
   // END RUNS
 ];
 
-function readDate(iso) {
+function shortDate(iso) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 }
 
 const TIPS = RUNS.map((run, index) => {
   const report = JSON.parse(fs.readFileSync(path.join(REPORTS, run.report + "-current.json"), "utf8"));
   const score = report.insights.score;
-  const read = readDate(report.fetchedAt);
+  const analyzed = shortDate(report.fetchedAt);
   const fill = (text) => text.replace(/\{(\w+)\}/g, (all, key) => key === "overall" ? score.overall : score.areas[key] ? score.areas[key].score : all);
   return Object.assign({}, run, {
     title: run.title.map(fill),
@@ -765,14 +766,14 @@ const TIPS = RUNS.map((run, index) => {
     cat: run.scope,
     counter: "Real run " + String(index + 1).padStart(2, "0") + " / " + String(RUNS.length).padStart(2, "0"),
     actionLabel: "Lesson",
-    footRight: "Read on " + read,
-    read,
+    footRight: "Analyzed on " + analyzed,
+    analyzed,
     overall: score.overall,
     visual: {
       type: "scores",
       overall: score.overall,
       areas: AREAS.map(([key, label]) => [label, score.areas[key].score]),
-      note: report.host + " · " + report.pages.length + " pages read · " + read
+      note: report.host + " · " + report.pages.length + (report.pages.length === 1 ? " page analyzed · " : " pages analyzed · ") + analyzed
     }
   });
 });
@@ -782,19 +783,18 @@ function link(platform, run) {
 }
 
 function plainTitle(run) { return run.title.join(" ").replace(/\*/g, "").replace(/\s+/g, " ").trim(); }
-function hashtags(run, n) { return run.tags.slice(0, n).map((t) => "#" + t).join(" "); }
 
 function captions(run) {
   const head = plainTitle(run);
-  const fair = "One automated read of public pages on " + run.read + ". A starting point, not a verdict.";
+  const fair = "One automated analysis of public pages on " + run.analyzed + ". A starting point, not a verdict.";
   return {
-    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "How the review works, step by step: " + link("linkedin", run), "", hashtags(run, 3) + " #QA"].join("\n"),
-    x: xPost(head + "\n\n" + run.action, link("x", run)),
-    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Guide: link in bio.", "", hashtags(run, 3) + " #QA #WebDev #QAlab"].join("\n"),
-    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run)].join("\n"),
-    tiktok: head + " " + run.action + " " + hashtags(run, 3) + " #QA #techtok",
+    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "How the review works, step by step: " + link("linkedin", run), "", tagLine(run, "linkedin")].join("\n"),
+    x: xPost(head + "\n\n" + run.action, link("x", run), tagLine(run, "x")),
+    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Guide: link in bio.", "", tagLine(run, "instagram")].join("\n"),
+    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run), "", tagLine(run, "facebook")].join("\n"),
+    tiktok: head + " " + run.action + " " + tagLine(run, "tiktok"),
     youtubeTitle: (head + " #Shorts").slice(0, 100),
-    youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Guide: " + link("youtube", run), "", "Real runs · QA-lab URL Review"].join("\n")
+    youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Guide: " + link("youtube", run), "", "Real runs · QA-lab URL Review", "", tagLine(run, "youtube")].join("\n")
   };
 }
 

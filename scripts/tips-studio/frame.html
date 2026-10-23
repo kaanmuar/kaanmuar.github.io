@@ -64,6 +64,11 @@
   .row .m.pass { background: var(--pass); } .row .m.fail { background: var(--fail); } .row .m.risk { background: var(--risk); }
   .row b { font-size: calc(var(--body) * .86); }
   .row small { font-size: calc(var(--body) * .66); color: var(--muted); }
+  .tight .glass { padding: calc(var(--u) * .8) calc(var(--u) * 1); }
+  .tight .rows { gap: calc(var(--u) * .35); }
+  .tight .row { grid-template-columns: 44px auto 1fr; padding: calc(var(--u) * .4) calc(var(--u) * .6); }
+  .tight .row .m { grid-row: auto; width: 44px; height: 44px; font-size: 24px; }
+  .tight .row small { text-align: right; }
   .bars { display: flex; flex-direction: column; gap: calc(var(--u) * .6); }
   .bar { display: grid; grid-template-columns: 180px 1fr 170px; gap: 16px; align-items: center; font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .85); }
   .bar .t { height: 30px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
@@ -145,7 +150,7 @@ function visual(v, t0) {
   }
   if (v.type === "bars") {
     const max = Math.max(...v.items.map((i) => i[1]));
-    return '<div class="glass"><div class="bars">' + v.items.map((i) => '<div class="bar' + (i[1] === max ? " max" : "") + '"><span>' + esc(i[0]) + '</span><span class="t"><span class="a" style="width:' + (i[1] / max * 100).toFixed(1) + "%;animation-delay:" + step(.35).toFixed(2) + 's"></span></span><span class="v">' + i[1].toLocaleString("en-US") + " " + esc(v.unit) + "</span></div>").join("") + "</div>" + (v.note ? '<div class="note">' + esc(v.note) + "</div>" : "") + "</div>";
+    return '<div class="glass"><div class="bars">' + v.items.map((i) => '<div class="bar' + (i[1] === max ? " max" : "") + '"><span>' + esc(i[0]) + '</span><span class="t"><span class="a" style="width:' + (i[1] / max * 100).toFixed(1) + "%;animation-delay:" + step(.35).toFixed(2) + 's"></span></span><span class="v">' + i[1].toLocaleString(ui.locale) + " " + esc(v.unit) + "</span></div>").join("") + "</div>" + (v.note ? '<div class="note">' + esc(v.note) + "</div>" : "") + "</div>";
   }
   if (v.type === "scores") {
     const ring = (score, r, cls, delay) => {
@@ -166,7 +171,12 @@ function visual(v, t0) {
   return "";
 }
 
-window.paint = function (tip, cat, fmt, index, total, guideHost) {
+const UI_EN = { tryThis: "Try this", tip: "Tip", guided: "Guided tour", never: "Never runs your tests", end: "", endNote: "How a public-page review works, step by step.", locale: "en-US" };
+let ui = UI_EN;
+
+window.paint = function (tip, cat, fmt, index, total, guideHost, lang) {
+  ui = Object.assign({}, UI_EN, lang || {});
+  document.documentElement.lang = ui.locale.slice(0, 2);
   const c = document.getElementById("c");
   c.className = fmt;
   c.style.setProperty("--accent", cat.color);
@@ -177,17 +187,24 @@ window.paint = function (tip, cat, fmt, index, total, guideHost) {
   c.innerHTML =
     '<div class="floor a"></div>' + cubes + '<div class="grain"></div>' +
     '<div class="stack">' +
-      '<div class="top a in-up" style="animation-delay:.1s"><div class="brand">' + MARK + '<div><b>QA-lab</b><small>URL Review</small></div></div><span class="count">' + esc(tip.counter || "Tip " + String(index + 1).padStart(2, "0") + " / " + total) + "</span></div>" +
+      '<div class="top a in-up" style="animation-delay:.1s"><div class="brand">' + MARK + '<div><b>QA-lab</b><small>URL Review</small></div></div><span class="count">' + esc(tip.counter || ui.tip + " " + String(index + 1).padStart(2, "0") + " / " + total) + "</span></div>" +
       '<span class="chip a in-up" style="animation-delay:.4s"><i></i>' + esc(cat.label) + "</span>" +
       '<h1 class="title a in-up" style="animation-delay:.7s">' + title(tip.title) + "</h1>" +
       '<p class="body a in-up" style="animation-delay:1.2s">' + esc(tip.body) + "</p>" +
       '<div class="scene"><div class="card3d a" style="animation-delay:1.5s">' + visual(tip.visual, 2.6) + "</div></div>" +
-      '<div class="action a in-up" style="animation-delay:5s"><b>' + esc(tip.actionLabel || "Try this") + "</b><span>" + esc(tip.action) + "</span></div>" +
-      '<div class="foot a in-up" style="animation-delay:5.4s"><span>Guided tour · <strong>' + esc(guideHost) + "</strong></span><span>" + esc(tip.footRight || "Never runs your tests") + "</span></div>" +
+      '<div class="action a in-up" style="animation-delay:5s"><b>' + esc(tip.actionLabel || ui.tryThis) + "</b><span>" + esc(tip.action) + "</span></div>" +
+      '<div class="foot a in-up" style="animation-delay:5.4s"><span>' + esc(ui.guided) + ' · <strong>' + esc(guideHost) + "</strong></span><span>" + esc(tip.footRight || ui.never) + "</span></div>" +
     "</div>" +
-    (fmt === "clip" ? '<div class="end a" style="animation-delay:10s">' + MARK.replace('viewBox', 'width="180" height="180" viewBox') + '<h2>Let your page<br><em style="font-style:italic">do the talking.</em></h2><p>How a public-page review works, step by step.</p><span class="url">' + esc(guideHost) + "</span></div>" : "");
+    (fmt === "clip" ? '<div class="end a" style="animation-delay:10s">' + MARK.replace('viewBox', 'width="180" height="180" viewBox') + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span></div>" : "");
   if (fmt !== "clip") c.querySelectorAll(".a").forEach((el) => { el.style.animation = "none"; });
-  return document.fonts.ready.then(() => true);
+  return document.fonts.ready.then(() => {
+    const scene = c.querySelector(".scene");
+    const card = c.querySelector(".card3d");
+    const room = scene.clientHeight * 0.94;
+    if (card.offsetHeight > room) c.classList.add("tight");
+    if (card.offsetHeight > room) card.style.zoom = (room / card.offsetHeight).toFixed(3);
+    return true;
+  });
 };
 
 window.seek = function (seconds) {

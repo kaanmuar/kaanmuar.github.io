@@ -11,6 +11,9 @@ const core = require("../functions/url-review-core");
 const newsWire = require("../functions/news-wire");
 const desk = require("../functions/url-review-desk");
 const offers = require("../functions/url-review-offers");
+const auth = require("../functions/url-review-auth");
+const accountData = require("../functions/url-review-account-data");
+const oauth = require("../functions/url-review-oauth");
 
 function loadEnvFile() {
   const file = path.join(__dirname, "..", "functions", ".env");
@@ -57,8 +60,6 @@ function payReturn(purpose, choice, reference) {
 const PORT = 8768;
 const runs = new Map();
 const activeRuns = new Map();
-const signInCodes = new Map();
-const accountSessions = new Map();
 const deskSessions = new Map();
 const FILE = path.join(__dirname, "..", "runner-results", "url-reviews.jsonl");
 const ALERT_FILE = path.join(__dirname, "..", "runner-results", "url-review-alerts.jsonl");
@@ -212,6 +213,66 @@ function readBody(req) {
   });
 }
 
+// Sign-ins live in memory here; the code is printed instead of emailed.
+const signIns = auth.memoryStore();
+
+async function localSignIn(req, res, pathName, origin, deviceHint) {
+  const enabled = process.env.REVIEW_SIGN_IN_PROVIDERS;
+  if (req.method === "GET" && pathName === "/auth/providers") {
+    sendJson(res, 200, { providers: auth.enabledProviders(enabled, oauth.ready(process.env)) }, origin, deviceHint);
+    return;
+  }
+  let body = {};
+  try { body = await readBody(req); } catch (error) { body = {}; }
+  const answer = (result) => sendJson(res, result.ok ? 200 : result.status, result.ok
+    ? { ok: true, session: result.session, email: result.email, provider: result.provider, name: result.name || "", picture: result.picture || "" }
+    : { error: result.error, code: result.code || "" }, origin, deviceHint);
+  const mailCode = async (input) => {
+    const started = await auth.startEmail(signIns, Object.assign({ ip: clientIp(req) }, input));
+    if (!started.ok) return answer(started);
+    console.log("Sign-in code for " + started.email + ": " + started.code + "  link: http://127.0.0.1:8765/qa-review.html?signin=" + started.id + "&key=" + started.token);
+    sendJson(res, 200, { ok: true, id: started.id, sentTo: auth.maskEmail(started.email) }, origin, deviceHint);
+  };
+  if (pathName === "/auth/email") return mailCode({ email: body.email, deviceKey: body.deviceKey });
+  if (pathName === "/auth/email/finish") return answer(await auth.finishEmail(signIns, body));
+  if (pathName === "/auth/provider") {
+    let decoded = null;
+    try {
+      decoded = await auth.lookupIdToken(process.env.FIREBASE_WEB_KEY || "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w")(String(body.idToken || ""));
+    } catch (error) {
+      sendJson(res, 401, { error: "That sign-in was not accepted. Try again." }, origin, deviceHint);
+      return;
+    }
+    const result = await auth.providerSignIn(signIns, decoded, { deviceKey: body.deviceKey, profile: body.profile, googleAccessToken: body.googleAccessToken, enabled });
+    if (result.verifyEmail) return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
+    return answer(result);
+  }
+  const oauthStart = pathName.match(/^\/auth\/oauth\/([a-z]+)\/start$/);
+  if (oauthStart) {
+    // The page's own origin, so the device key the browser keeps there is the one that finishes.
+    const page = (/:8765$/.test(origin) ? origin : "http://127.0.0.1:8765") + "/qa-review.html";
+    const result = await oauth.startOAuth(signIns, { provider: oauthStart[1], deviceKey: body.deviceKey, ip: clientIp(req), enabled, env: process.env, redirectUri: page });
+    sendJson(res, result.ok ? 200 : result.status, result.ok ? { ok: true, url: result.url } : { error: result.error }, origin, deviceHint);
+    return;
+  }
+  if (pathName === "/auth/oauth/finish") {
+    const result = await oauth.finishOAuth(signIns, { state: body.state, code: body.code, error: body.error, deviceKey: body.deviceKey, enabled, env: process.env });
+    if (result.verifyEmail) return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
+    return answer(result);
+  }
+  if (pathName === "/auth/session") {
+    const result = await auth.checkSession(signIns, Object.assign({}, body, { touch: false }));
+    sendJson(res, result.ok ? 200 : result.status, result.ok ? { ok: true, email: result.email, provider: result.provider } : { error: result.error, signIn: true }, origin, deviceHint);
+    return;
+  }
+  if (pathName === "/auth/signout") {
+    await auth.closeSession(signIns, body.session);
+    sendJson(res, 200, { ok: true }, origin, deviceHint);
+    return;
+  }
+  sendJson(res, 404, { error: "Not found." }, origin, deviceHint);
+}
+
 const server = http.createServer(async (req, res) => {
   const origin = originOf(req);
   if (req.method === "OPTIONS") {
@@ -237,14 +298,26 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true }, origin, deviceHint);
     return;
   }
-  if (req.method === "GET" && url.pathname === "/desk") {
+  if (url.pathname.startsWith("/auth/")) {
+    await localSignIn(req, res, url.pathname, origin, deviceHint);
+    return;
+  }
+  if (req.method === "GET" && (url.pathname === "/desk" || url.pathname === "/desk/failures")) {
     res.writeHead(200, {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
       "x-robots-tag": "noindex",
       "x-content-type-options": "nosniff"
     });
-    res.end(desk.PAGE);
+    res.end(url.pathname === "/desk" ? desk.PAGE : desk.FAILURES_PAGE);
+    return;
+  }
+  if (req.method === "GET" && url.pathname === "/desk/failures/data") {
+    if (!deskOperator(req)) {
+      sendJson(res, 401, { error: "Sign in with the operator account." }, origin, deviceHint);
+      return;
+    }
+    sendJson(res, 200, { failures: [], bugs: [], fixes: [] }, origin, deviceHint);
     return;
   }
   if (req.method === "POST" && url.pathname === "/desk/session") {
@@ -253,7 +326,7 @@ const server = http.createServer(async (req, res) => {
     let email = null;
     try { email = await verifyDeskGoogle(sessionBody.idToken); } catch (error) { email = null; }
     if (!email) {
-      sendJson(res, 403, { error: "This Google account cannot open the desk." }, origin, deviceHint);
+      sendJson(res, 403, { error: "This account cannot open the desk." }, origin, deviceHint);
       return;
     }
     const token = crypto.randomBytes(16).toString("hex");
@@ -281,16 +354,10 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === "GET" && url.pathname === "/desk/data") {
     if (!deskOperator(req)) {
-      sendJson(res, 401, { error: "Sign in with the operator Google account." }, origin, deviceHint);
+      sendJson(res, 401, { error: "Sign in with the operator account." }, origin, deviceHint);
       return;
     }
-    const body = desk.snapshot(readStore(), readAlerts(), Array.from(activeRuns.values()));
-    body.codes = Array.from(signInCodes.entries()).map(([email, item]) => ({
-      email,
-      code: item.code,
-      expires: item.expires
-    }));
-    sendJson(res, 200, body, origin, deviceHint);
+    sendJson(res, 200, desk.snapshot(readStore(), readAlerts(), Array.from(activeRuns.values())), origin, deviceHint);
     return;
   }
   if (req.method === "GET" && (url.pathname === "/account" || url.pathname === "/qa-review-account.html")) {
@@ -304,7 +371,7 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === "POST" && url.pathname === "/desk/pass") {
     if (!deskOperator(req)) {
-      sendJson(res, 401, { error: "Sign in with the operator Google account." }, origin, deviceHint);
+      sendJson(res, 401, { error: "Sign in with the operator account." }, origin, deviceHint);
       return;
     }
     let passBody = {};
@@ -330,77 +397,41 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true, paidUntil: until, charged: false }, origin, deviceHint);
     return;
   }
-  if (req.method === "POST" && url.pathname === "/account/code") {
-    let codeBody = {};
-    try { codeBody = await readBody(req); } catch (error) { codeBody = {}; }
-    const email = String(codeBody.email || "").trim().toLowerCase();
-    const known = readStore().some((row) => String(row.email || "").toLowerCase() === email);
-    if (known) {
-      const code = String(crypto.randomInt(100000, 1000000));
-      signInCodes.set(email, { code, expires: new Date(Date.now() + 15 * 60 * 1000).toISOString() });
-    }
-    sendJson(res, 200, { ok: true }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/account/enter") {
-    let enterBody = {};
-    try { enterBody = await readBody(req); } catch (error) { enterBody = {}; }
-    const email = String(enterBody.email || "").trim().toLowerCase();
-    const code = String(enterBody.code || "").replace(/\D/g, "");
-    const pending = signInCodes.get(email);
-    const fresh = pending && pending.code === code && Date.parse(pending.expires) > Date.now();
-    if (!fresh) {
-      sendJson(res, 401, { error: "That code does not match a waiting sign-in." }, origin, deviceHint);
+  if (req.method === "POST" && ["/account/runs", "/account/stop", "/account/export", "/account/delete"].indexOf(url.pathname) !== -1) {
+    let accountBody = {};
+    try { accountBody = await readBody(req); } catch (error) { accountBody = {}; }
+    const signedIn = await auth.checkSession(signIns, Object.assign({}, accountBody, { touch: false }));
+    if (!signedIn.ok) {
+      sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceHint);
       return;
     }
-    signInCodes.delete(email);
-    const token = crypto.randomBytes(18).toString("hex");
-    accountSessions.set(token, { email, until: Date.now() + 12 * 60 * 60 * 1000 });
-    res.writeHead(200, {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-      "access-control-allow-origin": origin,
-      "access-control-allow-credentials": "true",
-      "set-cookie": [
-        "qr_device=" + deviceHint + "; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax",
-        "qa_session=" + token + "; Path=/; Max-Age=43200; HttpOnly; SameSite=Lax"
-      ]
-    });
-    res.end(JSON.stringify({ ok: true }));
-    return;
-  }
-  if (req.method === "GET" && url.pathname === "/account/runs") {
-    const token = (String(req.headers.cookie || "").match(/(?:^|; )qa_session=([a-f0-9]+)/) || [])[1] || "";
-    const session = accountSessions.get(token);
-    if (!session || session.until < Date.now()) {
-      sendJson(res, 401, { error: "Sign in again." }, origin, deviceHint);
+    if (url.pathname === "/account/runs") {
+      sendJson(res, 200, offers.accountFile(readStore(), signedIn.email), origin, deviceHint);
       return;
     }
-    const rows = readStore().filter((row) => String(row.email || "").toLowerCase() === session.email);
-    const open = rows.some((row) => row.status === "monthly-pass" && Date.parse(row.paidUntil || "") > Date.now());
-    const pass = rows.filter((row) => row.status === "monthly-pass").sort((a, b) => String(b.paidUntil).localeCompare(String(a.paidUntil)))[0] || null;
-    sendJson(res, 200, {
-      email: session.email,
-      open,
-      charged: pass ? pass.paid === true : false,
-      localPass: pass ? pass.localPass === true : false,
-      paidUntil: pass ? pass.paidUntil : "",
-      plans: offers.catalog().plans,
-      runs: rows.filter((row) => row.report).map((row) => offers.customerRun(row, open))
-    }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/account/stop") {
-    const token = (String(req.headers.cookie || "").match(/(?:^|; )qa_session=([a-f0-9]+)/) || [])[1] || "";
-    const session = accountSessions.get(token);
-    if (!session || session.until < Date.now()) {
-      sendJson(res, 401, { error: "Sign in again." }, origin, deviceHint);
+    if (url.pathname === "/account/export") {
+      const data = await accountData.exportAccount(signIns, signedIn.email);
+      data.reviews = readStore().filter((row) => row.email === signedIn.email);
+      sendJson(res, 200, data, origin, deviceHint);
+      return;
+    }
+    if (url.pathname === "/account/delete") {
+      if (String(accountBody.confirm || "").trim().toLowerCase() !== signedIn.email) {
+        sendJson(res, 400, { error: "Type the address you are signed in with to confirm." }, origin, deviceHint);
+        return;
+      }
+      const at = new Date().toISOString();
+      const rows = readStore().filter((row) => row.email !== signedIn.email || accountData.isPayment(row) || row.status === "follow-stop");
+      fs.writeFileSync(FILE, rows.map((row) => JSON.stringify(row.email === signedIn.email && accountData.isPayment(row) && !row.accountDeletedAt ? Object.assign({ id: row.id }, accountData.paymentOnly(row, at)) : row) + "\n").join(""));
+      await accountData.deleteAccount(signIns, signedIn.email);
+      sendJson(res, 200, { ok: true }, origin, deviceHint);
       return;
     }
     writeRecord({
       id: crypto.randomBytes(9).toString("hex"),
       status: "follow-stop",
-      email: session.email,
+      email: signedIn.email,
+      via: "account",
       createdAt: new Date().toISOString()
     });
     sendJson(res, 200, { ok: true }, origin, deviceHint);
@@ -465,10 +496,18 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "POST" && (url.pathname === "/review/stop" || url.pathname === "/stop")) {
     let stopBody = {};
     try { stopBody = await readBody(req); } catch (error) { stopBody = {}; }
-    const runId = String(stopBody.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const run = runs.get(runId);
+    const stop = await auth.stopRun(signIns, stopBody);
+    if (!stop.ok) {
+      sendJson(res, stop.status, { error: stop.error, signIn: !!stop.signIn }, origin, deviceHint);
+      return;
+    }
+    const run = runs.get(String(stopBody.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32));
     if (run) run.stopped = true;
     sendJson(res, 200, { ok: true, stopped: !!run }, origin, deviceHint);
+    return;
+  }
+  if (req.method === "POST" && url.pathname === "/place") {
+    sendJson(res, 200, { ok: true }, origin, deviceHint);
     return;
   }
   if (req.method === "GET" && url.pathname === "/checkout/quote") {
@@ -640,7 +679,7 @@ const server = http.createServer(async (req, res) => {
         result.billing = open.billing;
       }
       writeRecord({
-        id: crypto.randomBytes(9).toString("hex"),
+        id: purpose === "report" && reportId ? "paid-report-" + reportId : crypto.randomBytes(9).toString("hex"),
         status: purpose === "report" && reportId ? "paid-report" : "run-credit",
         reportId: purpose === "report" ? reportId : "",
         paid: true,
@@ -676,6 +715,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   const deviceId = deviceFrom(req, body);
+  const signedIn = await auth.checkSession(signIns, body);
+  if (!signedIn.ok) {
+    sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceId);
+    return;
+  }
+  body.email = signedIn.email;
   const intake = await core.screenIntake(body, req.headers);
   if (!intake.ok) {
     sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);
@@ -722,6 +767,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   const runId = String(body.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32) || crypto.randomBytes(8).toString("hex");
+  const claim = await auth.claimRun(signIns, { runId, email: signedIn.email, deviceKey: body.deviceKey });
+  if (!claim.ok) {
+    sendJson(res, claim.status, { error: claim.error }, origin, deviceId);
+    return;
+  }
   const run = { stopped: false };
   runs.set(runId, run);
   activeRuns.set(runId, {
@@ -752,8 +802,11 @@ const server = http.createServer(async (req, res) => {
       stopped: () => run.stopped,
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
+      pageLang: intake.value.pageLang,
+      section: intake.value.section,
       browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
-      pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined
     });
     const record = core.intakeRecord(intake.value, report, {
       ip: identity.ip,
@@ -784,6 +837,7 @@ const server = http.createServer(async (req, res) => {
     res.end();
   } finally {
     runs.delete(runId);
+    await signIns.remove("url_review_stops", runId);
     activeRuns.delete(runId);
   }
 });

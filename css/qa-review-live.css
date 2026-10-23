@@ -1,7 +1,7 @@
 /* Live reports: a 3D ring of real reviews and a view-and-share-only viewer. */
 .live {
     --lv-bg: #071116; --lv-text: #e8f3f4; --lv-muted: #9fb3b8; --lv-line: rgba(159, 214, 220, .16);
-    --lv-cyan: #7ef6fb; --lv-teal: #4db3bb; --lv-gold: #e2c48a; --lv-green: #6fe3b1; --lv-coral: #f39a8b;
+    --lv-cyan: #7ef6fb; --lv-teal: #4db3bb; --lv-gold: #e2c48a; --lv-green: #6fe3b1; --lv-coral: #f39a8b; --lv-violet: #b9a8ff;
     --cw: 300px; --ch: 440px;
     position: relative; color: var(--lv-text); overflow-x: clip; scroll-margin-top: 56px;
     padding: 64px 0 56px; border-top: 1px solid var(--lv-line);
@@ -64,7 +64,7 @@
 .lc-name { display: block; font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: 17px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f4fafb; }
 .lc-host { display: block; font: 500 11.5px/1.3 "Fira Code", ui-monospace, monospace; color: var(--lv-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lc-scope, .lv-scope { font-size: 9.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
-.s-worldwide { color: var(--lv-cyan); } .s-national { color: var(--lv-gold); } .s-local { color: var(--lv-green); }
+.s-worldwide { color: var(--lv-cyan); } .s-national { color: var(--lv-gold); } .s-regional { color: var(--lv-violet); } .s-local { color: var(--lv-green); } .s-requested { color: var(--lv-amber); }
 .lc-headline { position: relative; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: 22px; line-height: 1.08; letter-spacing: -0.02em; color: #eef7f8; min-height: 48px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .lc-headline em { color: var(--lv-cyan); }
 .lc-score { position: relative; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; align-items: center; }
@@ -119,7 +119,7 @@
 /* Viewer */
 .live-viewer {
     --lv-text: #e8f3f4; --lv-muted: #9fb3b8; --lv-line: rgba(159, 214, 220, .16);
-    --lv-cyan: #7ef6fb; --lv-gold: #e2c48a; --lv-green: #6fe3b1; --lv-coral: #f39a8b; --lv-amber: #f2b37a;
+    --lv-cyan: #7ef6fb; --lv-gold: #e2c48a; --lv-green: #6fe3b1; --lv-coral: #f39a8b; --lv-amber: #f2b37a; --lv-violet: #b9a8ff;
     position: fixed; inset: 0; z-index: 100; overflow-y: auto; overscroll-behavior: contain; padding: 3vh 16px 32px;
     background: rgba(3, 8, 11, .8); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     color: var(--lv-text); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;

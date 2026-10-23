@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Write llms-full.txt from llms.txt, the guide page, and the live reports index.
 
-Run again after llms.txt, qa-review-guide.html, or assets/live-reports/index.json changes:
+It also writes the Live Reports count in llms.txt and the noscript Live Reports text on the six
+review pages (scripts/build-review-langs.py), so the daily job keeps every count current.
+Run again after llms.txt, qa-review-guide.html, qa-review.html, or assets/live-reports/index.json changes:
     python3 scripts/build-llms-full.py          # write
-    python3 scripts/build-llms-full.py --check  # exit 1 when llms-full.txt is stale
+    python3 scripts/build-llms-full.py --check  # exit 1 when a generated file is stale
 """
+import importlib.util
 import json
 import pathlib
 import re
@@ -85,36 +88,60 @@ def live_section():
     lines = [
         f"## Live reports ({SITE}qa-review.html#live-reports)",
         "",
-        f"As of {data['generatedAt']}, the series holds {data['count']} public sites in {len(data['sectors'])} sectors, each read once by QA-lab URL Review "
-        f"(up to {max(r.get('pages', 0) for r in rows)} pages). Average overall score {avg['overall']}; area averages: {areas}. "
+        f"As of {data['generatedAt']}, the series holds {data['count']} public sites in {len(data['sectors'])} sectors, analyzed by QA-lab URL Review "
+        f"since {min(r['read'] for r in rows)} (up to {max(r.get('pages', 0) for r in rows)} pages each); new requested reviews are added in a daily batch. "
+        f"Average overall score {avg['overall']}; area averages: {areas}. "
         "Reports are view and share only; each link opens one report with its six area scores and findings. "
-        "A score is a snapshot of one public read, not a certification.",
+        "A score is a snapshot of one public analysis, not a certification.",
         "",
-        "Site | Sector | Place | Read | Overall | Report",
+        "Site | Sector | Scope | Place | Analyzed | Overall | Report",
     ]
     for r in rows:
         place = ", ".join(x for x in (r.get("city"), r.get("country")) if x) or r.get("scope", "")
         lines.append(" | ".join(str(x) for x in (
-            r["name"], data["sectors"].get(r["sector"], r["sector"]), place, r["read"], r["overall"],
+            r["name"], data["sectors"].get(r["sector"], r["sector"]), r.get("scope", ""), place, r["read"], r["overall"],
             f"{SITE}qa-review.html?live={r['id']}",
         )))
     return "\n".join(lines)
 
 
-def build():
-    llms = (ROOT / "llms.txt").read_text(encoding="utf-8").strip()
-    return "\n\n".join([llms, guide_section(), live_section()]) + "\n"
+def llms_count(text):
+    data = json.loads((ROOT / "assets/live-reports/index.json").read_text(encoding="utf-8"))
+    pattern = r"(\[Live reports\]\([^)]*\)): \d+ real public sites"
+    if not re.search(pattern, text):
+        raise SystemExit("llms.txt has no Live reports count line")
+    return re.sub(pattern, lambda m: f"{m.group(1)}: {data['count']} real public sites", text)
+
+
+def build(llms):
+    return "\n\n".join([llms.strip(), guide_section(), live_section()]) + "\n"
+
+
+def review_pages(check):
+    spec = importlib.util.spec_from_file_location("build_review_langs", ROOT / "scripts/build-review-langs.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.main(check)
 
 
 def main():
-    text = build()
+    check = "--check" in sys.argv
+    source = ROOT / "llms.txt"
+    current_llms = source.read_text(encoding="utf-8")
+    llms = llms_count(current_llms)
+    text = build(llms)
     target = ROOT / "llms-full.txt"
-    if "--check" in sys.argv:
+    if check:
         current = target.read_text(encoding="utf-8") if target.exists() else ""
-        if current != text:
-            print("llms-full.txt is stale; run python3 scripts/build-llms-full.py")
+        if current != text or llms != current_llms:
+            print("llms.txt or llms-full.txt is stale; run python3 scripts/build-llms-full.py")
             sys.exit(1)
+        review_pages(True)
         return
+    if llms != current_llms:
+        source.write_text(llms, encoding="utf-8")
+        print("wrote", source.name)
+    review_pages(False)
     target.write_text(text, encoding="utf-8")
     print("wrote", target.name, len(text), "bytes")
 

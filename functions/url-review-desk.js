@@ -2,6 +2,28 @@
  * Owner view of URL-review runs. Summaries only: no page HTML.
  */
 const offers = require("./url-review-offers");
+const publish = require("./url-review-publish");
+
+const HELD_WORDS = {
+  "not-complete": "the review did not complete",
+  "not-public": "the address is not a public host",
+  "own-or-test": "our own or a reserved host",
+  "test-run": "a sandbox test run",
+  "asker-opted-out": "the asker ticked don't publish",
+  unlisted: "the owner asked to be left out",
+  "safe-browsing-flagged": "Google's Safe Browsing lists flag the site",
+  "no-score": "the review has no score",
+  "timed-out": "the review ran out of time",
+  "too-few-pages": "fewer than " + publish.MIN_PAGES + " pages were analyzed",
+  "start-page-blocked": "the start page was blocked or failed",
+  "javascript-shell": "the site is an empty JavaScript shell"
+};
+
+function liveState(row, unlisted) {
+  if (!row.report || (row.status !== "complete" && row.status !== "stopped")) return null;
+  const reason = publish.heldReason(row, unlisted);
+  return { listed: !reason, reason, why: HELD_WORDS[reason] || reason };
+}
 
 function clip(value, max) {
   const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
@@ -115,7 +137,7 @@ function alertsFromHistory(records) {
   }).filter(Boolean);
 }
 
-function summary(row, index) {
+function summary(row, index, unlisted) {
   const report = row.report || {};
   const counts = report.counts || {};
   const alerts = Array.isArray(report.alerts) ? report.alerts : [];
@@ -152,6 +174,7 @@ function summary(row, index) {
     test: row.test === true,
     free: row.free === true,
     provider: clip(row.provider || "", 20),
+    signInProvider: clip(row.signInProvider || "", 40),
     purpose: clip(row.purpose || "", 20),
     capture: clip(row.kind || "", 20),
     country: clip(row.country || "", 8),
@@ -179,6 +202,7 @@ function summary(row, index) {
     deviceId: clip(row.deviceId || "", 32),
     ip: clip(row.ip || "", 80),
     retainUntil: clip(row.retainUntil || "", 40),
+    live: liveState(row, unlisted),
     paidUntil: clip(row.paidUntil || "", 40),
     localPass: row.localPass === true,
     paths: pages.slice(0, 20).map((page) => ({
@@ -195,20 +219,23 @@ function summary(row, index) {
   };
 }
 
-function snapshot(records, alerts, active) {
+function snapshot(records, alerts, active, noteRows, unlisted) {
   const list = Array.isArray(records) ? records : [];
   const index = new Map();
   list.forEach((row) => {
     if (row && row.id && row.report) index.set(row.id, row);
   });
-  const runs = list.map((row) => summary(row || {}, index)).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const runs = list.map((row) => summary(row || {}, index, unlisted || [])).sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const notes = (Array.isArray(alerts) ? alerts : []).slice().sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 80);
+  // A report paid after its run has its own payment row; the run then counts once, through that row.
+  const reportPaid = new Set(list.filter((row) => row && row.status === "paid-report" && row.reportId).map((row) => row.reportId));
+  const settled = (row) => !row.free && (row.status === "paid-report" || row.status === "run-credit" || (row.paid && !reportPaid.has(row.id)));
   const tally = {
     runs: runs.length,
     running: (active || []).length,
     reports: runs.filter((row) => row.status === "complete" || row.status === "stopped").length,
-    paid: runs.filter((row) => !row.free && !row.test && (row.paid || row.status === "paid-report" || row.status === "run-credit")).length,
-    test: runs.filter((row) => row.test).length,
+    paid: runs.filter((row) => !row.test && settled(row)).length,
+    test: runs.filter((row) => row.test && settled(row)).length,
     free: runs.filter((row) => row.free).length,
     waiting: runs.filter((row) => row.status === "payment-due").length,
     refused: runs.filter((row) => row.status === "blocked").length,
@@ -236,19 +263,33 @@ function snapshot(records, alerts, active) {
       status: clip(note.status, 40)
     })),
     offers: offers.catalog(),
-    followUps: offers.queue(list).slice(0, 40),
+    followUps: offers.queue(list.concat(Array.isArray(noteRows) ? noteRows : [])).slice(0, 40),
     runs
   };
 }
 
-const PAGE = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <title>Review desk</title>
-  <style>
+function rerunRows(docs) {
+  return (Array.isArray(docs) ? docs : []).map((row) => ({
+    id: clip(row.id, 40),
+    at: row.at || "",
+    status: clip(row.status, 20),
+    url: clip(row.url, 300),
+    host: clip(row.host, 120),
+    name: clip(row.name, 120),
+    email: clip(row.email, 160),
+    why: clip(row.trigger && row.trigger.label, 300),
+    failures: Array.isArray(row.failureIds) ? row.failureIds.length : 0,
+    reportStatus: clip(row.reportStatus, 20),
+    error: clip(row.error && row.error.message, 600),
+    decidedAt: row.decidedAt || "",
+    by: clip(row.by, 160),
+    mailError: clip(row.mailError, 200),
+    run: row.record ? summary(row.record, new Map()) : null,
+    log: (Array.isArray(row.lines) ? row.lines : []).slice(-30).map((line) => clip(line && line.text, 220))
+  }));
+}
+
+const STYLE = `
     :root { color-scheme: light; --ink:#102027; --muted:#5c6e78; --line:#d5e0e4; --teal:#0d6e76; --paper:#f4f7f8; --card:#fff; }
     * { box-sizing: border-box; }
     body { margin: 0; font: 16px/1.45 Georgia, "Times New Roman", serif; color: var(--ink); background: var(--paper); }
@@ -287,23 +328,226 @@ const PAGE = `<!DOCTYPE html>
     body.desk-locked main > section:not(#desk-gate) { display: none; }
     body.desk-locked .stats, body.desk-locked #desk-out { display: none; }
     body.desk-locked #desk-gate { display: block; }
-    #desk-out { margin-top: 12px; background: transparent; color: var(--teal); border: 1px solid var(--line); }
-  </style>
+    #desk-out, button.quiet { margin-top: 12px; background: transparent; color: var(--teal); border: 1px solid var(--line); }
+    .gate-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .gate-form[hidden] { display: none; }
+    .gate-form button.quiet { margin-top: 0; }
+    .lede a, .alert a { color: var(--teal); }
+    .detail h2 { margin-top: 18px; }
+    .log { font: 12px/1.5 Menlo, Consolas, monospace; max-height: 520px; overflow: auto; background: var(--paper); border-radius: 8px; padding: 10px; }
+`;
+
+const GATE = `
+    <section id="desk-gate">
+      <h2>Operator sign-in</h2>
+      <p>Sign in with the operator email and password. Any other account stays outside.</p>
+      <form id="desk-password" class="gate-form">
+        <input id="desk-email" type="email" autocomplete="username" placeholder="Email" aria-label="Email" required>
+        <input id="desk-pass" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" required>
+        <button type="submit">Sign in</button>
+      </form>
+      <form id="desk-code-form" class="gate-form" hidden>
+        <input id="desk-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code from the authenticator app" aria-label="Authenticator code" required>
+        <button type="submit">Confirm</button>
+        <button id="desk-code-back" type="button" class="quiet">Back</button>
+      </form>
+      <button id="desk-google" type="button" class="quiet">Continue with Google</button>
+      <p id="desk-gate-note" class="empty"></p>
+    </section>`;
+
+// Each page that includes this defines load(), which reads its data through deskFetch().
+const SIGN_IN = `
+    function deskBase() {
+      const path = location.pathname;
+      const at = path.indexOf("/desk");
+      return at > 0 ? path.slice(0, at) : "";
+    }
+    async function deskHeaders() {
+      const headers = { "content-type": "application/json" };
+      const auth = deskApp();
+      if (auth && auth.currentUser) headers.authorization = "Bearer " + await auth.currentUser.getIdToken();
+      return headers;
+    }
+    function lockDesk() {
+      document.body.classList.add("desk-locked");
+    }
+    function unlockDesk() {
+      document.body.classList.remove("desk-locked");
+    }
+    async function deskFetch(path) {
+      const response = await fetch(deskBase() + path, { cache: "no-store", credentials: "include", headers: await deskHeaders() });
+      if (response.status === 401 || response.status === 403) {
+        lockDesk();
+        if (response.status === 403) {
+          const note = document.getElementById("desk-gate-note");
+          if (note) note.textContent = "This account cannot open the desk.";
+        }
+        return null;
+      }
+      if (!response.ok) return null;
+      unlockDesk();
+      return response.json();
+    }
+    function deskApp() {
+      if (!window.firebase || !firebase.auth) return null;
+      if (!firebase.apps.length) {
+        firebase.initializeApp({
+          apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
+          authDomain: "carlosm-interactive-cv.firebaseapp.com",
+          projectId: "carlosm-interactive-cv"
+        });
+      }
+      return firebase.auth();
+    }
+    async function finishDesk(user) {
+      const note = document.getElementById("desk-gate-note");
+      const local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+      if (local) {
+        const idToken = await user.getIdToken();
+        const res = await fetch(deskBase() + "/desk/session", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ idToken: idToken })
+        });
+        if (!res.ok) {
+          note.textContent = "This account cannot open the desk.";
+          return;
+        }
+      }
+      note.textContent = "";
+      load();
+    }
+    let deskResolver = null;
+    function showCodeStep(show) {
+      document.getElementById("desk-password").hidden = show;
+      document.getElementById("desk-code-form").hidden = !show;
+      document.getElementById("desk-google").hidden = show;
+      if (show) document.getElementById("desk-code").focus();
+    }
+    function askForCode(error) {
+      if (!error || error.code !== "auth/multi-factor-auth-required" || !error.resolver) return false;
+      deskResolver = error.resolver;
+      document.getElementById("desk-gate-note").textContent = "";
+      showCodeStep(true);
+      return true;
+    }
+    document.getElementById("desk-password").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const note = document.getElementById("desk-gate-note");
+      const auth = deskApp();
+      if (!auth) {
+        note.textContent = "Sign-in did not load.";
+        return;
+      }
+      note.textContent = "Signing in…";
+      try {
+        const cred = await auth.signInWithEmailAndPassword(document.getElementById("desk-email").value.trim(), document.getElementById("desk-pass").value);
+        await finishDesk(cred.user);
+      } catch (error) {
+        if (askForCode(error)) return;
+        console.error("Desk sign-in failed:", error);
+        const code = error && error.code;
+        note.textContent = code === "auth/too-many-requests"
+          ? "Too many attempts. Wait a few minutes and try again."
+          : "Sign-in failed. Check the email and password.";
+      }
+    });
+    document.getElementById("desk-code-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const note = document.getElementById("desk-gate-note");
+      const code = String(document.getElementById("desk-code").value || "").replace(/\\D/g, "").slice(0, 6);
+      const totp = firebase.auth.TotpMultiFactorGenerator;
+      const hint = deskResolver && deskResolver.hints.find((item) => totp && item.factorId === totp.FACTOR_ID);
+      if (!hint) {
+        note.textContent = "This account's second step is not an authenticator app.";
+        return;
+      }
+      if (code.length !== 6) {
+        note.textContent = "Enter the 6-digit code.";
+        return;
+      }
+      try {
+        const cred = await deskResolver.resolveSignIn(totp.assertionForSignIn(hint.uid, code));
+        deskResolver = null;
+        showCodeStep(false);
+        await finishDesk(cred.user);
+      } catch (error) {
+        console.error("Desk code failed:", error);
+        note.textContent = "That code did not match. Use the newest code from the app.";
+      }
+    });
+    document.getElementById("desk-code-back").addEventListener("click", () => {
+      deskResolver = null;
+      document.getElementById("desk-gate-note").textContent = "";
+      showCodeStep(false);
+    });
+    document.getElementById("desk-google").addEventListener("click", async () => {
+      const note = document.getElementById("desk-gate-note");
+      note.textContent = "Opening Google…";
+      const auth = deskApp();
+      if (!auth) {
+        note.textContent = "Google sign-in did not load.";
+        return;
+      }
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const cred = await auth.signInWithPopup(provider);
+        await finishDesk(cred.user);
+      } catch (error) {
+        if (askForCode(error)) return;
+        const code = error && error.code;
+        if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
+          note.textContent = "Continuing in this window…";
+          auth.signInWithRedirect(provider);
+          return;
+        }
+        if (code === "auth/unauthorized-domain") {
+          note.textContent = "Google did not accept this desk address.";
+          return;
+        }
+        console.error("Desk sign-in failed:", error);
+        note.textContent = "Google did not complete the sign-in (" + (code || (error && error.message) || "no code") + ").";
+      }
+    });
+    const startingAuth = deskApp();
+    if (startingAuth) {
+      startingAuth.onAuthStateChanged((user) => {
+        if (user) load();
+      });
+      startingAuth.getRedirectResult().then((result) => {
+        if (result && result.user) finishDesk(result.user);
+      }).catch((error) => {
+        if (askForCode(error)) return;
+        console.error("Desk redirect sign-in failed:", error);
+        const note = document.getElementById("desk-gate-note");
+        if (note) note.textContent = "Google did not complete the sign-in (" + ((error && (error.code || error.message)) || "no code") + ").";
+      });
+    }
+    document.getElementById("desk-out").addEventListener("click", async () => {
+      const auth = deskApp();
+      if (auth && auth.currentUser) await auth.signOut();
+      await fetch(deskBase() + "/desk/logout", { method: "POST", credentials: "include" });
+      lockDesk();
+    });`;
+
+const PAGE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Review desk</title>
+  <style>${STYLE}  </style>
 </head>
 <body class="desk-locked">
   <header>
     <h1>Review desk</h1>
-    <p class="lede">Runs for this review. This page asks again every few seconds. Customer sign-in is separate from this desk.</p>
+    <p class="lede">Runs for this review. This page asks again every few seconds. Customer sign-in is separate from this desk. <a href="desk/failures">Failed reviews</a></p>
     <button id="desk-out" type="button">Sign out</button>
     <div class="stats" id="stats"></div>
   </header>
-  <main>
-    <section id="desk-gate">
-      <h2>Operator sign-in</h2>
-      <p>Continue with the operator Google account. Any other Google account stays outside.</p>
-      <button id="desk-google" type="button">Continue with Google</button>
-      <p id="desk-gate-note" class="empty"></p>
-    </section>
+  <main>${GATE}
     <section>
       <h2>Alerts</h2>
       <div id="alerts"></div>
@@ -311,6 +555,16 @@ const PAGE = `<!DOCTYPE html>
     <section id="running-block">
       <h2>Running now</h2>
       <div id="running"></div>
+    </section>
+    <section>
+      <h2>Re-runs</h2>
+      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it. The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
+      <div id="reruns"></div>
+    </section>
+    <section>
+      <h2>Owner notices</h2>
+      <p class="empty">One email per domain every six months, telling the owner a Live Report of the site exists, with its health score and links to claim the blurred report or remove the card. Pick the address: every one found on the site, its schema.org and llms.txt, security.txt, RDAP, DNS, a linked GitHub profile, or web search, best first. It never names the asker, and sends only once the card is live. .de and .at sites are skipped.</p>
+      <div id="owner-notices"></div>
     </section>
     <section>
       <h2>Free runs</h2>
@@ -371,6 +625,8 @@ const PAGE = `<!DOCTYPE html>
     const offersEl = document.getElementById("offers");
     const notesEl = document.getElementById("notes");
     const freeListEl = document.getElementById("free-list");
+    const rerunsEl = document.getElementById("reruns");
+    const noticesEl = document.getElementById("owner-notices");
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
     const qEl = document.getElementById("q");
@@ -420,6 +676,8 @@ const PAGE = `<!DOCTYPE html>
       renderOffers();
       renderNotes();
       renderFree();
+      renderReruns();
+      renderNotices();
 
       alertsEl.replaceChildren();
       (data.alerts || []).slice(0, 12).forEach((alert) => {
@@ -481,6 +739,7 @@ const PAGE = `<!DOCTYPE html>
       line(dl, "Status", picked.status);
       line(dl, "Who", picked.name);
       line(dl, "Email", picked.email);
+      line(dl, "Signed in with", picked.signInProvider);
       line(dl, "Language", picked.language);
       line(dl, "Follow-up", picked.followUp ? "Asked" : "Not asked");
       line(dl, "Reason", picked.reason);
@@ -492,7 +751,7 @@ const PAGE = `<!DOCTYPE html>
       line(dl, "Frameworks", (picked.frameworks || []).join(", "));
       line(dl, "Tools", (picked.tools || []).join(", "));
       line(dl, "Technologies", (picked.technologies || []).join(", "));
-      line(dl, "Pages read", picked.pageCount + " of " + text(picked.pages) + ", depth " + text(picked.depth));
+      line(dl, "Pages analyzed", picked.pageCount + " of " + text(picked.pages) + ", depth " + text(picked.depth));
       line(dl, "Forms", picked.forms);
       line(dl, "Images", text(picked.images) + ", missing alt " + text(picked.missingAlt));
       line(dl, "Cases", picked.caseCount);
@@ -505,7 +764,15 @@ const PAGE = `<!DOCTYPE html>
       line(dl, "Device", picked.deviceId);
       line(dl, "Terms", picked.termsVersion);
       line(dl, "Kept until", picked.retainUntil);
+      line(dl, "Live Reports", picked.live ? (picked.live.listed ? "Public: added in the next daily batch, or already listed" : "Held: " + picked.live.why) : "—");
       detailEl.appendChild(dl);
+      if (picked.live && picked.host && picked.live.reason !== "unlisted") {
+        const unlist = document.createElement("button");
+        unlist.type = "button";
+        unlist.textContent = "Unlist " + picked.host + " from Live Reports";
+        unlist.addEventListener("click", () => unlistHost(picked.host, unlist));
+        detailEl.appendChild(unlist);
+      }
       if (picked.email && (picked.status === "complete" || picked.status === "stopped")) {
         const pass = document.createElement("button");
         pass.type = "button";
@@ -580,16 +847,6 @@ const PAGE = `<!DOCTYPE html>
         notesEl.appendChild(block);
       });
       if (!(data.followUps || []).length) notesEl.appendChild(node("p", "No address is stored yet."));
-      (data.codes || []).forEach((item) => {
-        const block = document.createElement("div");
-        block.className = "alert";
-        block.appendChild(node("b", "Sign-in code on this machine"));
-        const meta = document.createElement("div");
-        meta.className = "meta";
-        meta.textContent = item.email + " · " + item.code + " · until " + when(item.expires);
-        block.appendChild(meta);
-        notesEl.appendChild(block);
-      });
     }
 
     function renderFree() {
@@ -611,6 +868,118 @@ const PAGE = `<!DOCTYPE html>
       });
       if (!(data.freeRuns || []).length) freeListEl.appendChild(Object.assign(node("p", "No address has free runs."), { className: "empty" }));
     }
+    function renderReruns() {
+      rerunsEl.replaceChildren();
+      const labels = { held: "Held for you", sent: "Sent", dropped: "Dropped", failed: "Failed again" };
+      (data.reruns || []).forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        block.appendChild(node("b", (labels[item.status] || item.status) + " · " + (item.host || item.url)));
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        const run = item.run;
+        meta.textContent = [
+          when(item.at),
+          item.name || item.email,
+          item.email,
+          item.failures > 1 ? item.failures + " failures" : "",
+          run ? run.pageCount + " pages, " + run.caseCount + " cases, " + run.signalCount + " signals" : "",
+          item.reportStatus === "stopped" ? "stopped before the last page" : "",
+          item.decidedAt ? item.status + " " + when(item.decidedAt) + (item.by ? " by " + item.by : "") : "",
+          item.mailError ? "mail failed: " + item.mailError : ""
+        ].filter(Boolean).join(" · ");
+        block.appendChild(meta);
+        block.appendChild(node("p", item.why));
+        if (item.error) block.appendChild(node("p", "Error: " + item.error));
+        if (item.log && item.log.length) {
+          const more = document.createElement("details");
+          more.appendChild(node("summary", "Log"));
+          more.appendChild(node("pre", item.log.join("\\n")));
+          block.appendChild(more);
+        }
+        if (item.status === "held") {
+          const send = document.createElement("button");
+          send.type = "button";
+          send.textContent = "Send to " + (item.email || "the asker");
+          send.disabled = !item.email;
+          send.addEventListener("click", () => decideRerun(item.id, true, send));
+          const drop = document.createElement("button");
+          drop.type = "button";
+          drop.textContent = "Drop";
+          drop.addEventListener("click", () => decideRerun(item.id, false, drop));
+          block.appendChild(send);
+          block.appendChild(drop);
+        }
+        rerunsEl.appendChild(block);
+      });
+      if (!(data.reruns || []).length) rerunsEl.appendChild(Object.assign(node("p", "No failed review has run again yet."), { className: "empty" }));
+    }
+    function renderNotices() {
+      noticesEl.replaceChildren();
+      const sources = { "contact-page": "contact page link", schema: "schema.org", "security.txt": "security.txt", page: "page link", "page-text": "page text", llms: "llms.txt", rdap: "RDAP registration", github: "GitHub profile", search: "web search", dmarc: "DMARC record", soa: "DNS SOA" };
+      (data.ownerNotices || []).forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        block.appendChild(node("b", item.host));
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = [
+          when(item.createdAt),
+          "reviewed " + String(item.reviewedAt || "").slice(0, 10),
+          item.lang,
+          item.critical ? "critical security finding" : "",
+          item.lastError ? "last try: " + item.lastError : ""
+        ].filter(Boolean).join(" · ");
+        block.appendChild(meta);
+        const pick = document.createElement("select");
+        pick.setAttribute("aria-label", "Address for " + item.host);
+        (item.candidates && item.candidates.length ? item.candidates : [{ email: item.email, sources: [item.source], url: item.sourceUrl }]).forEach((row) => {
+          const option = document.createElement("option");
+          option.value = row.email;
+          option.textContent = row.email + " · " + (row.sources || []).map((source) => sources[source] || source).join(", ") + (row.onDomain === false ? " · other domain" : "");
+          pick.appendChild(option);
+        });
+        block.appendChild(pick);
+        const send = document.createElement("button");
+        send.type = "button";
+        send.textContent = "Send";
+        send.addEventListener("click", () => decideNotice(item.domain, true, send, block, pick.value));
+        const drop = document.createElement("button");
+        drop.type = "button";
+        drop.textContent = "Drop";
+        drop.addEventListener("click", () => decideNotice(item.domain, false, drop, block, ""));
+        block.appendChild(send);
+        block.appendChild(drop);
+        noticesEl.appendChild(block);
+      });
+      if (!(data.ownerNotices || []).length) noticesEl.appendChild(Object.assign(node("p", "No notice is waiting."), { className: "empty" }));
+    }
+    async function decideNotice(domain, send, button, block, email) {
+      button.disabled = true;
+      const response = await fetch(deskBase() + "/desk/notice", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ domain: domain, send: send, email: email })
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        block.appendChild(node("p", body.error || "The notice did not go out."));
+        button.disabled = false;
+        return;
+      }
+      load();
+    }
+    async function decideRerun(id, send, button) {
+      button.disabled = true;
+      await fetch(deskBase() + "/desk/rerun", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ id: id, send: send })
+      });
+      load();
+    }
     async function setFree(email, on, note) {
       await fetch(deskBase() + "/desk/free", {
         method: "POST",
@@ -621,17 +990,18 @@ const PAGE = `<!DOCTYPE html>
       load();
     }
 
-    function deskBase() {
-      const path = location.pathname;
-      const at = path.indexOf("/desk");
-      return at > 0 ? path.slice(0, at) : "";
+    async function unlistHost(host, button) {
+      if (!confirm("Keep " + host + " out of Live Reports? The next daily batch removes its card and posts nothing more about it.")) return;
+      button.disabled = true;
+      await fetch(deskBase() + "/desk/unlist", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ host: host })
+      });
+      load();
     }
-    async function deskHeaders() {
-      const headers = { "content-type": "application/json" };
-      const auth = deskApp();
-      if (auth && auth.currentUser) headers.authorization = "Bearer " + await auth.currentUser.getIdToken();
-      return headers;
-    }
+
     async function openPass(email) {
       await fetch(deskBase() + "/desk/pass", {
         method: "POST",
@@ -642,104 +1012,13 @@ const PAGE = `<!DOCTYPE html>
       load();
     }
 
-    function lockDesk() {
-      document.body.classList.add("desk-locked");
-    }
-    function unlockDesk() {
-      document.body.classList.remove("desk-locked");
-    }
     async function load() {
-      const headers = await deskHeaders();
-      const response = await fetch(deskBase() + "/desk/data", { cache: "no-store", credentials: "include", headers: headers });
-      if (response.status === 401 || response.status === 403) {
-        lockDesk();
-        if (response.status === 403) {
-          const note = document.getElementById("desk-gate-note");
-          if (note) note.textContent = "This Google account cannot open the desk.";
-        }
-        return;
-      }
-      if (!response.ok) return;
-      unlockDesk();
-      data = await response.json();
+      const body = await deskFetch("/desk/data");
+      if (!body) return;
+      data = body;
       render();
     }
-    function deskApp() {
-      if (!window.firebase || !firebase.auth) return null;
-      if (!firebase.apps.length) {
-        firebase.initializeApp({
-          apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
-          authDomain: "carlosm-interactive-cv.firebaseapp.com",
-          projectId: "carlosm-interactive-cv"
-        });
-      }
-      return firebase.auth();
-    }
-    async function finishDesk(user) {
-      const note = document.getElementById("desk-gate-note");
-      const local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-      if (local) {
-        const idToken = await user.getIdToken();
-        const res = await fetch(deskBase() + "/desk/session", {
-          method: "POST",
-          credentials: "include",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ idToken: idToken })
-        });
-        if (!res.ok) {
-          note.textContent = "This Google account cannot open the desk.";
-          return;
-        }
-      }
-      note.textContent = "";
-      load();
-    }
-    document.getElementById("desk-google").addEventListener("click", async () => {
-      const note = document.getElementById("desk-gate-note");
-      note.textContent = "Opening Google…";
-      const auth = deskApp();
-      if (!auth) {
-        note.textContent = "Google sign-in did not load.";
-        return;
-      }
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try {
-        const cred = await auth.signInWithPopup(provider);
-        await finishDesk(cred.user);
-      } catch (error) {
-        const code = error && error.code;
-        if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
-          note.textContent = "Continuing in this window…";
-          auth.signInWithRedirect(provider);
-          return;
-        }
-        if (code === "auth/unauthorized-domain") {
-          note.textContent = "Google did not accept this desk address.";
-          return;
-        }
-        console.error("Desk sign-in failed:", error);
-        note.textContent = "Google did not complete the sign-in (" + (code || (error && error.message) || "no code") + ").";
-      }
-    });
-    const startingAuth = deskApp();
-    if (startingAuth) {
-      startingAuth.onAuthStateChanged((user) => {
-        if (user) load();
-      });
-      startingAuth.getRedirectResult().then((result) => {
-        if (result && result.user) finishDesk(result.user);
-      }).catch((error) => {
-        console.error("Desk redirect sign-in failed:", error);
-        const note = document.getElementById("desk-gate-note");
-        if (note) note.textContent = "Google did not complete the sign-in (" + ((error && (error.code || error.message)) || "no code") + ").";
-      });
-    }
-    document.getElementById("desk-out").addEventListener("click", async () => {
-      const auth = deskApp();
-      if (auth && auth.currentUser) await auth.signOut();
-      await fetch(deskBase() + "/desk/logout", { method: "POST", credentials: "include" });
-      lockDesk();
-    });
+${SIGN_IN}
     document.getElementById("free-add").addEventListener("click", async () => {
       const email = freeEmailEl.value.trim().toLowerCase();
       if (!email || email.indexOf("@") === -1) return;
@@ -751,6 +1030,230 @@ const PAGE = `<!DOCTYPE html>
     statusEl.addEventListener("change", render);
     load();
     setInterval(load, 4000);
+  </script>
+</body>
+</html>`;
+
+const FAILURES_PAGE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Failed reviews · Review desk</title>
+  <style>${STYLE}  </style>
+</head>
+<body class="desk-locked">
+  <header>
+    <h1>Failed reviews</h1>
+    <p class="lede">Every failed or stopped review of the last 90 days, with its saved log, the daily probe of the site, and its re-run. <a href="../desk">Back to the desk</a></p>
+    <button id="desk-out" type="button">Sign out</button>
+    <div class="stats" id="stats"></div>
+  </header>
+  <main>${GATE}
+    <section>
+      <h2>Cause classes</h2>
+      <p class="empty">Each new cause class opens one GitHub bug. A PR that fixes a class adds a row to the fixes, and the failures it covers run again.</p>
+      <div id="bugs"></div>
+      <details>
+        <summary>Fixes shipped</summary>
+        <div id="fixes"></div>
+      </details>
+    </section>
+    <section>
+      <h2>Runs</h2>
+      <div class="tools">
+        <input id="q" type="search" placeholder="Site, name, or email" aria-label="Filter failures">
+        <select id="cause" aria-label="Cause"><option value="">Every cause</option></select>
+        <select id="kind" aria-label="Kind">
+          <option value="">Failed and stopped</option>
+          <option value="failed">Failed</option>
+          <option value="stopped">Stopped by the asker</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>When</th><th>Kind</th><th>Site</th><th>Who</th><th>Cause</th><th>Now</th><th>Re-run</th><th>Log</th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="detail" id="detail" hidden></div>
+    </section>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script>
+    const statsEl = document.getElementById("stats");
+    const bugsEl = document.getElementById("bugs");
+    const fixesEl = document.getElementById("fixes");
+    const rowsEl = document.getElementById("rows");
+    const detailEl = document.getElementById("detail");
+    const qEl = document.getElementById("q");
+    const causeEl = document.getElementById("cause");
+    const kindEl = document.getElementById("kind");
+    let data = { failures: [], bugs: [], fixes: [] };
+    let selected = "";
+
+    function text(value) { return value == null || value === "" ? "—" : String(value); }
+    function when(value) {
+      if (!value) return "—";
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+    }
+    function node(tag, content) {
+      const el = document.createElement(tag);
+      el.textContent = content == null ? "" : String(content);
+      return el;
+    }
+    function line(parent, label, value) {
+      parent.appendChild(node("dt", label));
+      parent.appendChild(node("dd", text(value)));
+    }
+    function count(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+    function seconds(ms) { return (Math.round((Number(ms) || 0) / 100) / 10).toFixed(1) + " s"; }
+    function logText(lines) {
+      return lines.map((row) => ("+" + seconds(row.t)).padStart(10) + "  " + row.text).join("\\n");
+    }
+
+    function render() {
+      const rows = data.failures || [];
+      const failed = rows.filter((row) => row.kind === "failed");
+      const open = (data.bugs || []).filter((bug) => !bug.closedAt);
+      const chips = [
+        ["Failed", failed.length],
+        ["Stopped", rows.length - failed.length],
+        ["Cleared since", failed.filter((row) => row.cleared).length],
+        ["Still failing", failed.filter((row) => row.diagnosedAt && !row.cleared).length],
+        ["Not probed yet", failed.filter((row) => !row.diagnosedAt).length],
+        ["Open bugs", open.length]
+      ];
+      statsEl.replaceChildren();
+      chips.forEach((chip) => {
+        const el = document.createElement("span");
+        el.className = "stat";
+        el.appendChild(node("b", chip[1] + " "));
+        el.appendChild(document.createTextNode(chip[0]));
+        statsEl.appendChild(el);
+      });
+
+      bugsEl.replaceChildren();
+      (data.bugs || []).forEach((bug) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        const title = document.createElement("b");
+        const link = node("a", "#" + bug.issue);
+        link.href = bug.url;
+        link.target = "_blank";
+        link.rel = "noopener";
+        title.appendChild(link);
+        title.appendChild(document.createTextNode(" " + bug.title));
+        block.appendChild(title);
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = [bug.closedAt ? "closed " + when(bug.closedAt) : "open", bug.cause, count(bug.runs, "run"), (bug.hosts || []).join(", "), "last " + when(bug.lastAt)].join(" · ");
+        block.appendChild(meta);
+        bugsEl.appendChild(block);
+      });
+      if (!(data.bugs || []).length) bugsEl.appendChild(Object.assign(node("p", "No cause class has a bug yet."), { className: "empty" }));
+      fixesEl.replaceChildren();
+      (data.fixes || []).forEach((fix) => fixesEl.appendChild(Object.assign(node("p", fix.ref + " · " + fix.cause + " · " + when(fix.at) + " · " + fix.label), { className: "meta" })));
+
+      const causes = Array.from(new Set(rows.map((row) => row.cause).filter(Boolean))).sort();
+      const chosen = causeEl.value;
+      causeEl.replaceChildren(Object.assign(node("option", "Every cause"), { value: "" }));
+      causes.forEach((cause) => causeEl.appendChild(Object.assign(node("option", cause), { value: cause })));
+      causeEl.value = causes.includes(chosen) ? chosen : "";
+
+      const q = qEl.value.trim().toLowerCase();
+      rowsEl.replaceChildren();
+      rows.filter((row) => (!causeEl.value || row.cause === causeEl.value)
+        && (!kindEl.value || row.kind === kindEl.value)
+        && (!q || [row.host, row.url, row.name, row.email].join(" ").toLowerCase().includes(q)))
+        .forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.setAttribute("aria-selected", String(row.id === selected));
+          [when(row.at), row.kind, row.host, row.name || row.email, row.cause, row.kind === "stopped" ? "" : row.diagnosedAt ? (row.cleared ? "Cleared" : "Still failing") : "Not probed yet", row.rerun, count(row.lineCount, "line")]
+            .forEach((value) => tr.appendChild(node("td", text(value))));
+          tr.addEventListener("click", () => openDetail(row.id));
+          rowsEl.appendChild(tr);
+        });
+      if (!rowsEl.children.length) {
+        const tr = document.createElement("tr");
+        const td = Object.assign(node("td", rows.length ? "No failure matches." : "No review has failed in the last 90 days."), { colSpan: 8, className: "empty" });
+        tr.appendChild(td);
+        rowsEl.appendChild(tr);
+      }
+    }
+
+    async function openDetail(id) {
+      selected = id;
+      render();
+      const item = await deskFetch("/desk/failures/data?id=" + encodeURIComponent(id));
+      if (!item || selected !== id) return;
+      detailEl.hidden = false;
+      detailEl.replaceChildren();
+      detailEl.appendChild(node("h2", (item.kind === "stopped" ? "Stopped: " : "Failed: ") + item.host));
+      const facts = document.createElement("dl");
+      line(facts, "When", when(item.at));
+      line(facts, "Address", item.url);
+      line(facts, "Who", [item.name, item.email].filter(Boolean).join(" · "));
+      line(facts, "Error", item.message);
+      line(facts, "Cause", item.cause ? item.cause + " · " + item.causeLabel : "");
+      line(facts, "Now", item.now ? item.now + " (probed " + count(item.checks, "time") + ", last " + when(item.diagnosedAt) + ")" : "");
+      line(facts, "Re-run", item.rerun);
+      const timings = item.timings || {};
+      line(facts, "Took", seconds(timings.ms) + ", last log line at " + seconds(timings.lastLineMs));
+      const options = item.options || {};
+      line(facts, "Asked for", [options.pages ? options.pages + " pages" : "", options.depth ? "depth " + options.depth : "", (options.frameworks || []).join(", ")].filter(Boolean).join(" · "));
+      line(facts, "Reason", (item.intake || {}).reason);
+      if (item.fromAlert) line(facts, "Log", "Taken from the alert; this run saved no log.");
+      detailEl.appendChild(facts);
+      if (item.error && (item.error.stack || []).length) {
+        const stack = document.createElement("details");
+        stack.appendChild(node("summary", "Stack"));
+        stack.appendChild(Object.assign(node("pre", item.error.stack.join("\\n")), { className: "log" }));
+        detailEl.appendChild(stack);
+      }
+      if (item.probe) {
+        detailEl.appendChild(node("h2", "Probe"));
+        const list = document.createElement("ul");
+        (item.probeLines || []).forEach((row) => list.appendChild(node("li", row)));
+        detailEl.appendChild(list);
+        const raw = document.createElement("details");
+        raw.appendChild(node("summary", "Everything the probe saw"));
+        raw.appendChild(Object.assign(node("pre", JSON.stringify(item.probe, null, 2)), { className: "log" }));
+        detailEl.appendChild(raw);
+      }
+      if ((item.lines || []).length) {
+        detailEl.appendChild(node("h2", "Log, " + count(item.lineCount, "line") + (item.linesCut ? " (" + item.linesCut + " from the middle were not kept)" : "")));
+        detailEl.appendChild(Object.assign(node("pre", logText(item.lines)), { className: "log" }));
+      }
+      const again = item.rerunDoc;
+      if (again) {
+        detailEl.appendChild(node("h2", "Re-run " + again.status + ", " + when(again.at)));
+        const rerunFacts = document.createElement("dl");
+        line(rerunFacts, "Why it ran", again.why);
+        line(rerunFacts, again.reportId ? "Report" : "Error", again.reportId || again.error);
+        detailEl.appendChild(rerunFacts);
+        if ((again.lines || []).length) detailEl.appendChild(Object.assign(node("pre", logText(again.lines)), { className: "log" }));
+      }
+      detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function load() {
+      const body = await deskFetch("/desk/failures/data");
+      if (!body) return;
+      data = body;
+      render();
+    }
+${SIGN_IN}
+    qEl.addEventListener("input", render);
+    causeEl.addEventListener("change", render);
+    kindEl.addEventListener("change", render);
+    load();
+    setInterval(load, 60000);
   </script>
 </body>
 </html>`;
@@ -772,17 +1275,20 @@ async function verifyOperator(idToken) {
   const body = await response.json().catch(() => ({}));
   const user = body && Array.isArray(body.users) ? body.users[0] : null;
   if (!user || user.emailVerified !== true) return null;
-  const google = (user.providerUserInfo || []).some((item) => item && item.providerId === "google.com");
+  const known = (user.providerUserInfo || []).some((item) => item && (item.providerId === "google.com" || item.providerId === "password"));
   const email = String(user.email || "").trim().toLowerCase();
-  if (!google || email !== operatorEmail()) return null;
+  if (!known || email !== operatorEmail()) return null;
   return email;
 }
 
 module.exports = {
   kindFor,
+  liveState,
   alertFrom,
   alertsFromHistory,
   snapshot,
+  rerunRows,
   verifyOperator,
-  PAGE
+  PAGE,
+  FAILURES_PAGE
 };

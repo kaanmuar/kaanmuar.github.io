@@ -1,0 +1,21 @@
+Text,Image URL,Tags,Posting Time
+"teaminternational.com: 64. The gap: broken links.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 16 internal links lead to an error.
+
+Lesson: Check your own links after each release, and fix or redirect every one that answers 404.
+
+One automated analysis of public pages on 19 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-teaminternational-com
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg","","2026-10-22 17:10"
+"epssura.com: 40. The gap: form labels.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 161 form controls have no label.
+
+Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 20 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-epssura-com
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg","","2026-10-23 15:50"

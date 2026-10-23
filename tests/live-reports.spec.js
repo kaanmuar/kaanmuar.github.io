@@ -1,14 +1,16 @@
 const { test, expect } = require('@playwright/test');
 
+const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+
 async function prime(page, { terms = true } = {}) {
-  await page.addInitScript((accepted) => {
+  await page.addInitScript(({ accepted, version }) => {
     try {
-      if (accepted) sessionStorage.setItem('qa-review-terms', '2026-10-20');
+      if (accepted) sessionStorage.setItem('qa-review-terms', version);
       localStorage.setItem('hasSeenReviewTour', 'true');
       localStorage.setItem('qa-review-analytics', 'necessary');
       localStorage.setItem('cv-preferred-lang', 'en');
     } catch (e) { /* storage is optional */ }
-  }, terms);
+  }, { accepted: terms, version: TERMS });
 }
 
 function watchCsp(page) {
@@ -54,6 +56,13 @@ test.describe('Live reports', () => {
     expect(localCount).toBeGreaterThan(0);
     expect(localCount).toBeLessThan(total);
     for (const scope of await local.locator('.lc-scope').allTextContents()) expect(scope.trim().toLowerCase()).toBe('local');
+    const scopes = await page.locator('.live-chips button[data-g="scope"]').evaluateAll((els) => els.map((el) => el.dataset.v));
+    expect(scopes).toEqual(['', 'worldwide', 'national', 'regional', 'local']);
+    await page.locator('.live-chips button[data-g="scope"][data-v="regional"]').click();
+    const regional = page.locator('.live-card:not([hidden])');
+    expect(await regional.count()).toBeGreaterThan(0);
+    for (const scope of await regional.locator('.lc-scope').allTextContents()) expect(scope.trim().toLowerCase()).toBe('regional');
+    await expect(page.locator('.live-card.is-active')).toHaveCount(1);
     await page.locator('.live-chips button[data-g="scope"][data-v=""]').click();
     await page.locator('.live-chips button[data-g="country"][data-v="GB"]').click();
     const gb = await page.locator('.live-card:not([hidden])').count();
@@ -198,14 +207,14 @@ test.describe('Live reports on a phone', () => {
 test.describe('Live reports in Spanish', () => {
   async function primeEs(page) {
     await page.route(/translate\.(google|googleapis)\.com/, (route) => route.abort());
-    await page.addInitScript(() => {
+    await page.addInitScript((version) => {
       try {
-        sessionStorage.setItem('qa-review-terms', '2026-10-20');
+        sessionStorage.setItem('qa-review-terms', version);
         localStorage.setItem('hasSeenReviewTour', 'true');
         localStorage.setItem('qa-review-analytics', 'necessary');
         localStorage.setItem('site-translate', 'picked');
       } catch (e) { /* storage is optional */ }
-    });
+    }, TERMS);
   }
 
   test('the copy says what to open and analyzes instead of reading', async ({ page }) => {

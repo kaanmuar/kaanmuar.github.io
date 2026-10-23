@@ -1,0 +1,161 @@
+Text,Image URL,Tags,Posting Time
+"uber.com: 66. The gap: page titles.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 56 pages have no title.
+
+The lesson for every team: Give every page a unique title of about 60 characters: the page first, the site second.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uber-com
+
+#SEO #Titles #SERP #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg","","2026-10-23 07:30"
+"mercadolibre.com.co: 50. The gap: AI crawler access.
+
+Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 5 AI answer or search crawlers are blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-mercadolibre-com-co&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-mercadolibre-com-co
+
+#GEO #AISearch #RobotsTxt #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg","","2026-10-24 08:10"
+"whatsapp.com: 67. The gap: hreflang.
+
+Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 1002 language alternate problems.
+
+The lesson for every team: Make every language version list all the others, itself included, with matching hreflang links.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-whatsapp-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-whatsapp-com
+
+#SEO #Hreflang #i18n #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/03-u-whatsapp-com.jpg","","2026-10-25 08:00"
+"telegram.com: 61. The gap: AI crawler access.
+
+Every page has a title, and model-training crawlers are blocked by choice. But 10 AI answer or search crawlers are blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-telegram-com
+
+#GEO #AISearch #RobotsTxt #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg","","2026-10-26 09:50"
+"lamega.com.co: 63. The gap: page titles.
+
+Share cards have a title, description, image, and URL, and AI answer and search crawlers may read the start page. But 1 page has no title.
+
+The lesson for every team: Give every page a unique title of about 60 characters: the page first, the site second.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-lamega-com-co&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-lamega-com-co
+
+#SEO #Titles #SERP #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/05-u-lamega-com-co.jpg","","2026-10-27 07:40"
+"cognizant.com: 73. The gap: alt text.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 759 images have no alt attribute.
+
+The lesson for every team: Describe what each image shows in its alt attribute, and use alt="""" on purely decorative ones.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-cognizant-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-cognizant-com
+
+#Accessibility #A11y #WebDev #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/06-u-cognizant-com.jpg","","2026-10-28 09:55"
+"zipdev.com: 77. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 41 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-zipdev-com
+
+#Accessibility #Forms #A11y #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/07-u-zipdev-com.jpg","","2026-10-29 07:45"
+"avvillas.com.co: 57. The gap: broken links.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 1 internal link leads to an error.
+
+The lesson for every team: Check your own links after each release, and fix or redirect every one that answers 404.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-avvillas-com-co&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-avvillas-com-co
+
+#SEO #BrokenLinks #QA #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/08-u-avvillas-com-co.jpg","","2026-10-30 09:20"
+"lenovo.com: 67. The gap: the https redirect.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.
+
+The lesson for every team: Redirect every http request to https with one permanent 301, then add HSTS.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-lenovo-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-lenovo-com
+
+#WebSecurity #HTTPS #Redirects #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/09-u-lenovo-com.jpg","","2026-10-31 08:00"
+"uniminuto.edu: 63. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 213 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-uniminuto-edu&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uniminuto-edu
+
+#Accessibility #Forms #A11y #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/10-u-uniminuto-edu.jpg","","2026-11-01 09:40"
+"davibank.com: 58. The gap: TLS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But the TLS certificate expires in 8 days.
+
+The lesson for every team: Renew the TLS certificate automatically, and alert well before it expires.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-davibank-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-davibank-com
+
+#WebSecurity #TLS #HTTPS #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/11-u-davibank-com.jpg","","2026-11-02 10:00"
+"confluence.com: 61. The gap: accessibility.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But certain ARIA roles must be contained by particular parents.
+
+The lesson for every team: Follow the rule guide at https://dequeuniversity.com/rules/axe/4.14/aria-required-parent?application=axeAPI.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-confluence-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-confluence-com
+
+#Accessibility #QA #WebDev #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/12-u-confluence-com.jpg","","2026-11-03 07:30"
+"atlassian.com: 68. The gap: schema fields.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 162 structured data items miss a property Google expects.
+
+The lesson for every team: Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-atlassian-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-atlassian-com
+
+#StructuredData #SEO #GEO #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/13-u-atlassian-com.jpg","","2026-11-04 09:00"
+"co.computrabajo.com: 68. The gap: HSTS.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-co-computrabajo-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-co-computrabajo-com
+
+#WebSecurity #HSTS #HTTPS #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/14-u-co-computrabajo-com.jpg","","2026-11-05 08:05"
+"nice.com: 56. The gap: HSTS.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-nice-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-nice-com
+
+#WebSecurity #HSTS #HTTPS #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/15-u-nice-com.jpg","","2026-11-06 09:05"
+"honda.com: 63. The gap: the https redirect.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.
+
+The lesson for every team: Redirect every http request to https with one permanent 301, then add HSTS.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-honda-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-honda-com
+
+#WebSecurity #HTTPS #Redirects #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/16-u-honda-com.jpg","","2026-11-07 09:35"

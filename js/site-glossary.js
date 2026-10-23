@@ -24,7 +24,12 @@
         ['Faro(?= \\d| de Google| móvil| para)', 'Lighthouse', 'Lighthouse is a product name'],
         ['Farol(?= \\d| do Google| móvel| para)', 'Lighthouse', 'Lighthouse is a product name'],
         ['Leuchtturm(?= \\d| von Google| mobil| für)', 'Lighthouse', 'Lighthouse is a product name'],
-        ['Phare(?= \\d| de Google| mobile| pour)', 'Lighthouse', 'Lighthouse is a product name']
+        ['Phare(?= \\d| de Google| mobile| pour)', 'Lighthouse', 'Lighthouse is a product name'],
+        ['Navegación [Ss]egura(?= de Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+        ['Navegação [Ss]egura(?= do Google| da Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+        ['Sicheres Surfen(?= von Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+        ['Navigation [Ss]écurisée(?= de Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+        ['(?:retirar|retirer|aposentar|zurückziehen)\\.js', 'retire.js', 'retire.js is a product name']
     ];
 
     const FIXES = {
@@ -194,6 +199,8 @@
         ])),
         it: words([
             ['Faro(?= \\d| di Google| mobile| per)', 'Lighthouse', 'Lighthouse is a product name'],
+            ['Navigazione [Ss]icura(?= di Google)', 'Safe Browsing', 'Safe Browsing is a product name'],
+            ['(?:ritirare|ritira)\\.js', 'retire.js', 'retire.js is a product name'],
             ['recensioni', 'revisioni', 'review is an analysis, not a recensione'],
             ['Recensioni', 'Revisioni', 'review is an analysis, not a recensione'],
             ['recensione', 'revisione', 'review is an analysis, not a recensione'],
@@ -224,8 +231,8 @@
             'What a review is': '¿Qué es una revisión?',
             'Public read and case list': 'Análisis público y lista de casos',
             'Pages to read': 'Páginas por analizar',
-            'Pages read': 'Páginas analizadas',
-            'Map of the pages read': 'Mapa de las páginas analizadas',
+            'Pages analyzed': 'Páginas analizadas',
+            'Map of the pages analyzed': 'Mapa de las páginas analizadas',
             'See live reports of real sites ↓': 'Ver informes en vivo de sitios reales ↓',
             'See a sample report': 'Ver un informe de ejemplo',
             'Take the five-minute tour': 'Haz el recorrido de cinco minutos',
@@ -237,8 +244,8 @@
             'What a review is': 'O que é uma revisão',
             'Public read and case list': 'Análise pública e lista de casos',
             'Pages to read': 'Páginas a analisar',
-            'Pages read': 'Páginas analisadas',
-            'Map of the pages read': 'Mapa das páginas analisadas',
+            'Pages analyzed': 'Páginas analisadas',
+            'Map of the pages analyzed': 'Mapa das páginas analisadas',
             'Speed, weight, paint, and layout shift': 'Velocidade, peso, renderização e mudanças de layout'
         },
         de: {
@@ -247,8 +254,8 @@
             'What a review is': 'Was eine Prüfung ist',
             'Public read and case list': 'Öffentliche Analyse und Fallliste',
             'Pages to read': 'Zu prüfende Seiten',
-            'Pages read': 'Geprüfte Seiten',
-            'Map of the pages read': 'Karte der geprüften Seiten',
+            'Pages analyzed': 'Geprüfte Seiten',
+            'Map of the pages analyzed': 'Karte der geprüften Seiten',
             'Speed, weight, paint, and layout shift': 'Tempo, Gewicht, Rendering und Layoutverschiebungen'
         },
         fr: {
@@ -257,8 +264,8 @@
             'What a review is': 'Ce qu’est une analyse',
             'Public read and case list': 'Analyse publique et liste de cas',
             'Pages to read': 'Pages à analyser',
-            'Pages read': 'Pages analysées',
-            'Map of the pages read': 'Carte des pages analysées',
+            'Pages analyzed': 'Pages analysées',
+            'Map of the pages analyzed': 'Carte des pages analysées',
             'Speed, weight, paint, and layout shift': 'Vitesse, poids, rendu et décalages de mise en page'
         },
         it: {
@@ -267,8 +274,8 @@
             'What a review is': 'Cos’è una revisione',
             'Public read and case list': 'Analisi pubblica ed elenco dei casi',
             'Pages to read': 'Pagine da analizzare',
-            'Pages read': 'Pagine analizzate',
-            'Map of the pages read': 'Mappa delle pagine analizzate',
+            'Pages analyzed': 'Pagine analizzate',
+            'Map of the pages analyzed': 'Mappa delle pagine analizzate',
             'Speed, weight, paint, and layout shift': 'Velocità, peso, rendering e spostamenti del layout'
         }
     };
@@ -302,7 +309,7 @@
 
     // Names machine translation must leave alone when they stand on their own ("QA-lab" became a "quality control lab").
     // Inside a sentence they are fixed afterwards instead: an untranslated island there costs the sentence its spaces and word order.
-    const KEEP = new Set(['QA-lab URL Review', 'QA-lab', 'URL Review', 'PageSpeed Insights', 'Lighthouse', 'Core Web Vitals']);
+    const KEEP = new Set(['QA-lab URL Review', 'QA-lab', 'URL Review', 'PageSpeed Insights', 'Lighthouse', 'Core Web Vitals', 'Safe Browsing', 'MTA-STS', 'TLS-RPT', 'BIMI', 'Impressum', 'RDAP', 'retire.js']);
     const LEAF = 'h1, h2, h3, h4, h5, summary, button, a, label, p, li, span, b, strong, em, small, th, td, option, legend, figcaption, dt, dd';
     
     let win = null;

@@ -1,6 +1,6 @@
 # Carlos A. Muñoz: interactive CV, free QA tools, and QA-lab URL Review
 
-> carlosandmunoz.com is the site of Carlos A. Muñoz Ardila, a senior QA architect and IT project manager with over 18 years of experience, based in Medellín, Colombia. It holds his interactive CV, a free QA regression lab, a free SDLC studio, and QA-lab URL Review, which reads one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases written for 20 frameworks.
+> carlosandmunoz.com is the site of Carlos A. Muñoz Ardila, a senior QA architect and IT project manager with over 18 years of experience, based in Medellín, Colombia. It holds his interactive CV, a free QA regression lab, a free SDLC studio, and QA-lab URL Review, which analyzes one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases written for 20 frameworks.
 
 Full text for answer engines, in one file: https://carlosandmunoz.com/llms-full.txt
 
@@ -19,9 +19,12 @@ Full text for answer engines, in one file: https://carlosandmunoz.com/llms-full.
 
 ## QA-lab URL Review
 
-QA-lab URL Review reads one public https address and proposes test cases. It does not run those cases, sign in, submit a form, or generate load. It is not a certification.
+QA-lab URL Review analyzes one public https address and proposes test cases. It does not run those cases, sign in to the site, submit a form, or generate load. It is not a certification.
+A review starts after you sign in on the device that runs it, with email (a 6-digit code or a link) or an account you already have: Google, Microsoft, GitHub, Yahoo, or X. The email comes from that sign-in. Signed-in runs are listed on the account page.
+Records are deleted automatically when their time is up: review records 12 months after the run, accounts 12 months after the last sign-in, sessions after 30 days, and logs of failed or stopped reviews after 90 days.
+Every day, newly finished public reviews are published as Live Reports on this site and posted as images and voiced clips on LinkedIn, Facebook, Instagram, X, Threads, Bluesky, Mastodon, TikTok, and YouTube, without the asker's name, email, or reason. The asker can tick “Don't publish this review”; sites flagged by Safe Browsing and test runs are never published.
 
-The operator is a natural person domiciled in Colombia. Contact is the form on https://carlosandmunoz.com/ and qa@carlosandmunoz.com.
+Carlos A. Muñoz, Bogotá, Colombia, is responsible for the service and its records. Contact: qa@carlosandmunoz.com.
 ## Pages
 
 - [Review](https://carlosandmunoz.com/qa-review.html)
@@ -33,8 +36,8 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - [How it works, a guided tour](https://carlosandmunoz.com/qa-review-guide.html): who it helps, the six steps, how to read the six scores, and what a review never does
 - [Facts](https://carlosandmunoz.com/qa-review.html#service-facts)
 - [Sample report, this site's own review](https://carlosandmunoz.com/qa-review.html?sample=1)
-- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 114 real public sites read by the review, tagged by sector, country, and test type, view and share only
-- [Disclaimers](https://carlosandmunoz.com/qa-review-legal.html)
+- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 258 real public sites analyzed by the review, with new requested reviews added daily, tagged by sector, scope (worldwide, national, regional, local), country, and test type, view and share only
+- [Privacy and disclaimers](https://carlosandmunoz.com/qa-review-legal.html): what is stored, for how long, who receives it, and how to ask for a copy or deletion
 - Languages: English, Spanish, Portuguese, German, French, Italian.
 
 ## Elsewhere
@@ -43,13 +46,14 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 - [X](https://x.com/qalaburlreview)
 - [LinkedIn](https://www.linkedin.com/company/qalab-url-review)
 - [TikTok](https://www.tiktok.com/@qalaburlreview)
+- [Facebook](https://www.facebook.com/qalaburlreview)
 - [DEV](https://dev.to/qalaburlreview)
 - [Reddit](https://www.reddit.com/user/qalaburlreview/)
 
 ## Films
 
 - [A tactical read (English)](https://www.youtube.com/watch?v=jW4T-qQK01E)
-- [The included first read (English)](https://www.youtube.com/watch?v=OKvR95YHAng)
+- [The included first review (English)](https://www.youtube.com/watch?v=OKvR95YHAng)
 - [Una lectura táctica (Spanish)](https://www.youtube.com/watch?v=Cenj3l_0osA)
 - [Uma leitura tática (Portuguese)](https://www.youtube.com/watch?v=GwLZ1WuLSpU)
 - [Eine taktische Lesung (German)](https://www.youtube.com/watch?v=AMIO6n_6Ok8)
@@ -61,11 +65,13 @@ The operator is a natural person domiciled in Colombia. Contact is the form on h
 Frameworks (20): browser: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir. Behavior-driven: Cucumber, Behave, Reqnroll. JavaScript runners: Jest, Vitest, Mocha. Mobile: Appium, Maestro. Load and performance: JMeter, Gatling, k6.
 axe-core runs in the review's headless browser. Lighthouse runs on the start page through Google PageSpeed Insights (mobile score, plus real-user Core Web Vitals from the Chrome UX Report when the site has enough traffic). Named only when they apply, and never launched: BrowserStack, Applitools, Percy, Provar, Copado.
 Kinds of cases (21): Functional, Content, Links, Accessibility, Security, Privacy, SEO, GEO, Performance, Load, Mobile, Internationalization, Resilience, Compatibility, Media, Analytics, Commerce, Forms, Visual, Platform, API.
-Every report scores six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with evidence, a fix, and an effort estimate. The report also shows a Google result preview, a share-card preview, an AI crawler matrix from robots.txt, a map of the pages read, and a fix-first list.
+Every report scores six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with evidence, a fix, and an effort estimate. The report also shows a Google result preview, a share-card preview, an AI crawler matrix from robots.txt, a map of the pages analyzed, and a fix-first list.
 A headless Chromium visit from an EU address (Belgium) loads the start page and up to two linked pages. It records which tracking requests and cookies appear before a cookie choice and after Reject, runs axe-core against WCAG 2.2 AA, compares the HTML text with the rendered text, checks a 390 px phone width and a 768 px tablet width, measures lab paint and layout shift, and keeps desktop, tablet, and phone screenshots. Its only click is the banner's reject button.
-The report can also list technologies, pages read, public signals, and public write-ups. Secrets are not copied. A missing header is not proof of a break-in.
+It also checks chat widgets and AI chatbots (consent, weight, and keyboard access), the accessibility statement, imprint, and privacy pages, outdated front-end libraries (bundled retire.js data), Google Safe Browsing through the Web Risk API, domain expiry and transfer lock through the registry's RDAP service, and MTA-STS, TLS-RPT, and BIMI for mail, and estimates the carbon of one visit. A site whose bot protection refuses the plain request is analyzed in headless Chrome.
+Google PageSpeed Insights and Google Web Risk receive the start address; the domain's registry receives the domain.
+The report can also list technologies, pages analyzed, public signals, and public write-ups. Secrets are not copied. A missing header is not proof of a break-in.
 Cases are written for each chosen framework. The case export carries a starting script per framework; the review never runs them.
-Journey cases come from the site's own visible navigation: the link text, a unique selector, the page it opens, and the heading the review read there. The scripts click; the review does not.
+Journey cases come from the site's own visible navigation: the link text, a unique selector, the page it opens, and the heading the review found there. The scripts click; the review does not.
 A later review of the same host with the same email shows what was fixed, what is new, and how each area score moved.
 The script ZIP also holds a GitHub Actions workflow for the chosen frameworks and a fix kit: security headers for common hosts, a Report-Only content security policy, structured data, llms.txt, and security.txt drafts, and DNS records.
 Case exports: automation scripts (ZIP, one suite per framework), Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, PDF.
@@ -82,7 +88,7 @@ The news strip uses the country of the connection and the language selected on t
 
 ## Not for indexing
 
-Payment, sign-in, and the operator desk are not public catalogs. The payment page and the sign-in page ask crawlers not to index them.
+Payment, the account page, and the operator desk are not public catalogs. The payment page and the account page (saved runs, behind sign-in) ask crawlers not to index them.
 
 ## How QA-lab URL Review works (https://carlosandmunoz.com/qa-review-guide.html)
 A guided tour
@@ -95,7 +101,7 @@ Who it is for
 ### Maybe one of these sounds like your week
 A review is most useful when somebody has to make a decision about a site they did not build, or did not build recently.
 “No docs, no tests, and the person who built it left.”
-Start with the technology list, the map of pages read, and the proposed functional cases. In one read you know what is under the hood and where to begin.
+Start with the technology list, the map of pages analyzed, and the proposed functional cases. In one review you know what is under the hood and where to begin.
 “The build is green. Does the public page still read right?”
 Run it on the staging or production address the day before. The fix-first list tells you what is worth fixing now and what can wait for the next sprint.
 “Marketing asked if ChatGPT and Perplexity can cite our site.”
@@ -111,26 +117,26 @@ The five-minute tour
 ### From the first checkbox to the last export
 
 #### Read what the review will and will not do
-Every control on the review page stays off until you accept the disclaimers. They take a minute, and they explain the rules for Colombia, where the service is operated, and for the country of the site you submit. Why we ask: a review reads someone's public pages. You should know exactly what happens before a single address is opened.
+Every control on the review page stays off until you accept the disclaimers. They take a minute, and they explain the rules for Colombia, where the service is operated, and for the country of the site you submit. Why we ask: a review analyzes someone's public pages. You should know exactly what happens before a single address is opened.
 
 #### Say who is asking
-Give your name, an email at the same domain as the site, and the reason for the review. If you review a client's site, add the client's name, email, and website. Why we ask: there is a record of who asked, a site owner can ask us to stop and delete the report, and you can ask for a copy or deletion at any time.
+Sign in with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X); your email comes from that sign-in. Then give your name and the reason for the review. If the reason is your own site, sign in with an email at its domain. If you review a client's site, add the client's name, email, and website. Why we ask: there is a record of who asked, a site owner can ask us to stop and delete the report, and you can ask for a copy or deletion at any time.
 
 #### Paste one public address and pick your frameworks
 One https address, plus the frameworks your team uses: Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, or k6. Tip: choose only the frameworks you would really run. Fewer frameworks make the export easier to read.
 
-#### Watch the read happen
-The review reads up to twenty pages, two links deep. It opens up to three of them in a headless browser from an EU address, runs axe-core, checks phone and tablet widths, keeps three screenshots, and asks Google PageSpeed Insights to score the start page. Good to know: in that browser it presses a cookie banner's reject button once and nothing else. Google receives the start address for the PageSpeed score.
+#### Watch the analysis happen
+The review analyzes up to twenty pages, two links deep. It opens up to three of them in a headless browser from an EU address in Belgium, runs axe-core, checks phone and tablet widths, keeps three screenshots, and asks Google PageSpeed Insights to score the start page. Good to know: in that browser it presses a cookie banner's reject button once and nothing else. Google receives the start address for the PageSpeed score and the Safe Browsing check, and the domain's registry is asked when it expires. A site whose bot protection refuses the plain request is analyzed in headless Chrome.
 
 #### Read your report
-Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and performance. Every check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see your Google result, your share card, a map of the pages read, and what to fix first. Remember: the report is shown once. Take your notes, or keep it, while it is open.
+Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and performance. Every check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see your Google result, your share card, a map of the pages analyzed, and what to fix first. It also checks chat widgets and AI chatbots, the accessibility statement, imprint, and privacy pages, outdated front-end libraries, Google Safe Browsing, domain expiry and transfer lock, and MTA-STS, TLS-RPT, and BIMI for mail, and estimates the carbon of one visit. Remember: signed-in runs are listed on your account page, and opening a report again asks for payment unless your account has an allowance. Take your notes while it is open.
 
 #### Take the cases home
 Export the proposed cases to a ZIP of automation scripts, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. The export also brings a GitHub Actions workflow and a fix kit with header files, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records. The scripts are yours to run. The review never runs them against your site.
 How to read the report
 
 ### We reviewed ourselves first
-These are the real scores from this site's own review on October 19, 2026: ten pages read, 72 cases proposed, overall 86 out of 100. It is the same report you can open as the sample report. To compare, the live reports show the same review on more than a hundred public sites.
+These are the real scores from this site's own review on October 19, 2026: ten pages analyzed, 72 cases proposed, overall 86 out of 100. It is the same report you can open as the sample report. To compare, the live reports show the same review on more than two hundred public sites.
 
 #### What the four marks mean
 Fails now is a problem a visitor or a crawler can hit today. At risk works, but is fragile or incomplete. Passes is done well, and worth protecting with a test. Needs a person is a judgment a machine should not make for you, such as whether a third-party script is worth its weight.
@@ -140,10 +146,10 @@ Read the fix-first list from the top. It ranks findings by how much they hurt an
 Care for your site
 
 ### What a review will never do
-The review reads what any visitor can read. That is the whole point.
+The review analyzes what any visitor can see. That is the whole point.
 
-#### Sign in
-It never asks for or stores a password.
+#### Sign in to your site
+It never asks for or stores your site's password.
 
 #### Submit forms
 Your contact form and checkout stay untouched.
@@ -173,18 +179,18 @@ A missing og:image turns every shared link into a grey box. The report shows the
 axe-core findings come with the element and the rule. Turn the passing checks into tests so they stay passing.
 
 #### Speed is per page
-The report shows milliseconds for each page in the order it read them. The slowest page is rarely the home page.
+The report shows milliseconds for each page in the order it analyzed them. The slowest page is rarely the home page.
 Questions people ask
 
 ### Before you start
-Q: How much of a site does the first review read?
-A: Your first review is included: up to twenty pages, two links deep. A wider or deeper read asks for payment before it starts, and you see the amount first.
+Q: How much of a site does the first review analyze?
+A: Your first review is included: up to twenty pages, two links deep. A wider or deeper review asks for payment before it starts, and you see the amount first.
 Q: Can I review a site I do not own?
-A: You can review any public https address with a real reason, and the email domain check records who asked. A site owner can ask this service to stop and to delete the report. Please do not republish their content from a shared report.
+A: You can review any public https address with a real reason, and your sign-in records who asked. Scores and findings for public pages may be published as a Live Report, on GitHub, and on social media, unless you tick “Don't publish this review” on the request, never with the name, email, or reason of who asked. A site owner can ask this service to stop, to delete the report, and to take down its Live Report. The site's owner may get one email, at an address the site or its public records publish, saying a Live Report exists; it never says who asked. Please do not republish their content from a shared report.
 Q: Is the score a certification?
-A: No. The report is a snapshot and a proposal from one public read. It is not proof that a site is safe, fast, or compliant.
+A: No. The report is a snapshot and a proposal from one public analysis. It is not proof that a site is safe, fast, or compliant.
 Q: What about signed-in pages?
-A: The public review never signs in. A verification that runs cases behind a login is a separate request to qa@carlosandmunoz.com, with a login you are allowed to use.
+A: The public review never signs in to your site. A verification that runs cases behind a login is a separate request to qa@carlosandmunoz.com, with a login you are allowed to use.
 Q: Which languages can I read it in?
 A: The review page is written in English and can be read in Spanish, Portuguese, German, French, and Italian.
 
@@ -193,120 +199,264 @@ One public address. Six scores. A list your team can start from on Monday.
 
 ## Live reports (https://carlosandmunoz.com/qa-review.html#live-reports)
 
-As of 2026-10-19, the series holds 114 public sites in 26 sectors, each read once by QA-lab URL Review (up to 20 pages). Average overall score 77; area averages: SEO 68, GEO 85, Analytics 86, Security 68, Accessibility 80, Performance 79. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public read, not a certification.
+As of 2026-10-23, the series holds 258 public sites in 27 sectors, analyzed by QA-lab URL Review since 2026-10-19 (up to 100 pages each); new requested reviews are added in a daily batch. Average overall score 75; area averages: SEO 66, GEO 84, Analytics 84, Security 66, Accessibility 78, Performance 77. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
 
-Site | Sector | Place | Read | Overall | Report
-MDN Web Docs | Developer docs | San Francisco, US | 2026-10-19 | 95 | https://carlosandmunoz.com/qa-review.html?live=mdn
-GOV.UK | Government | London, GB | 2026-10-19 | 92 | https://carlosandmunoz.com/qa-review.html?live=govuk
-GitHub Docs | Developer docs | San Francisco, US | 2026-10-19 | 91 | https://carlosandmunoz.com/qa-review.html?live=githubdocs
-Node.js | Open source | Worldwide | 2026-10-19 | 89 | https://carlosandmunoz.com/qa-review.html?live=nodejs
-Cloudflare | Internet infrastructure | San Francisco, US | 2026-10-19 | 88 | https://carlosandmunoz.com/qa-review.html?live=cloudflare
-World Bank | Banking & finance | Washington, D.C., US | 2026-10-19 | 87 | https://carlosandmunoz.com/qa-review.html?live=worldbank
-El Espectador | News & media | Bogotá, CO | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=elespectador
-Metrocali | Transit & mobility | Cali, CO | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=metrocali
-Mozilla | Open source | San Francisco, US | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=mozilla
-Musée du Louvre | Museums, libraries & culture | Paris, FR | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=louvre
-Python.org | Open source | Worldwide | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=python
-Stanford University | Higher education | Stanford, US | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=stanford
-Stripe Docs | Developer docs | South San Francisco, US | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=stripedocs
-Ubuntu | Open source | London, GB | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=ubuntu
-W3C | Web standards | Worldwide | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=w3c
-Metro de Medellín | Transit & mobility | Medellín, CO | 2026-10-19 | 85 | https://carlosandmunoz.com/qa-review.html?live=metromedellin
-Wikimedia Foundation | Open knowledge | San Francisco, US | 2026-10-19 | 85 | https://carlosandmunoz.com/qa-review.html?live=wikimedia
-Al Jazeera | News & media | Doha, QA | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=aljazeera
-Lonely Planet | Travel & tourism | Worldwide | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=lonelyplanet
-National Geographic | News & media | Washington, D.C., US | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=natgeo
-UNICEF | Humanitarian | New York, US | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=unicef
-Wikipedia | Open knowledge | San Francisco, US | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=wikipedia
-Debian | Open source | Worldwide | 2026-10-19 | 83 | https://carlosandmunoz.com/qa-review.html?live=debian
-Electronic Frontier Foundation | Human & digital rights | San Francisco, US | 2026-10-19 | 83 | https://carlosandmunoz.com/qa-review.html?live=eff
-MIT | Higher education | Cambridge, MA, US | 2026-10-19 | 83 | https://carlosandmunoz.com/qa-review.html?live=mit
-React | Developer docs | Worldwide | 2026-10-19 | 83 | https://carlosandmunoz.com/qa-review.html?live=react
-Coursera | Education | Mountain View, US | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=coursera
-Deutsche Welle | News & media | Bonn, DE | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=dw
-Harvard University | Higher education | Cambridge, MA, US | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=harvard
-IKEA | Retail & e-commerce | Worldwide | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=ikea
-NASA | Space & science | Washington, D.C., US | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=nasa
-Pan American Health Organization | Public health | Washington, D.C., US | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=paho
-RTVC | News & media | Bogotá, CO | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=rtvc
-Universidad de los Andes | Higher education | Bogotá, CO | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=uniandes
-World Food Programme | Humanitarian | Rome, IT | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=wfp
-Amnesty International | Human & digital rights | London, GB | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=amnesty
-ICFES | Education | Bogotá, CO | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=icfes
-ICRC | Humanitarian | Geneva, CH | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=icrc
-IDRD | Sports & recreation | Bogotá, CO | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=idrd
-Idartes | Museums, libraries & culture | Bogotá, CO | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=idartes
-Nequi | Fintech | Medellín, CO | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=nequi
-Rust | Open source | Worldwide | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=rust
-Alcaldía de Bogotá | Government | Bogotá, CO | 2026-10-19 | 80 | https://carlosandmunoz.com/qa-review.html?live=bogota
-Kubernetes | Open source | Worldwide | 2026-10-19 | 80 | https://carlosandmunoz.com/qa-review.html?live=kubernetes
-Semana | News & media | Bogotá, CO | 2026-10-19 | 80 | https://carlosandmunoz.com/qa-review.html?live=semana
-web.dev | Developer docs | Mountain View, US | 2026-10-19 | 80 | https://carlosandmunoz.com/qa-review.html?live=webdev
-BBC | News & media | London, GB | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=bbc
-Linux Foundation | Open source | San Francisco, US | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=linuxfoundation
-Metro de Bogotá | Transit & mobility | Bogotá, CO | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=metrobogota
-Rijksmuseum | Museums, libraries & culture | Amsterdam, NL | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=rijksmuseum
-Visit Bogotá | Travel & tourism | Bogotá, CO | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=visitbogota
-Ecopetrol | Energy & utilities | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=ecopetrol
-GOV.CO | Government | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=govco
-ICETEX | Education | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=icetex
-Médecins Sans Frontières | Humanitarian | Geneva, CH | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=msf
-Planetario de Bogotá | Space & science | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=planetario
-Project Gutenberg | Open knowledge | Worldwide | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=gutenberg
-SATENA | Airline | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=satena
-The Guardian | News & media | London, GB | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=guardian
-Alcaldía de Santa Marta | Government | Santa Marta, CO | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=santamarta
-Claro Colombia | Telecom | Bogotá, CO | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=claro
-EPM | Energy & utilities | Medellín, CO | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=epm
-PHP | Open source | Worldwide | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=php
-ProColombia | Travel & tourism | Bogotá, CO | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=procolombia
-World Health Organization | Public health | Geneva, CH | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=who
-Compensar | Insurance & health plans | Bogotá, CO | 2026-10-19 | 76 | https://carlosandmunoz.com/qa-review.html?live=compensar
-El Tiempo | News & media | Bogotá, CO | 2026-10-19 | 76 | https://carlosandmunoz.com/qa-review.html?live=eltiempo
-Ministerio de Educación | Education | Bogotá, CO | 2026-10-19 | 76 | https://carlosandmunoz.com/qa-review.html?live=mineducacion
-Creative Commons | Open knowledge | Worldwide | 2026-10-19 | 75 | https://carlosandmunoz.com/qa-review.html?live=creativecommons
-Secretaría de Movilidad de Bogotá | Transit & mobility | Bogotá, CO | 2026-10-19 | 75 | https://carlosandmunoz.com/qa-review.html?live=movilidadbogota
-Universidad EAFIT | Higher education | Medellín, CO | 2026-10-19 | 75 | https://carlosandmunoz.com/qa-review.html?live=eafit
-Alcaldía de Medellín | Government | Medellín, CO | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=medellin
-Apache Software Foundation | Open source | Worldwide | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=apache
-Catastro Bogotá | Government | Bogotá, CO | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=catastro
-El País | News & media | Madrid, ES | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=elpais
-European Space Agency | Space & science | Paris, FR | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=esa
-GNU Project | Open source | Worldwide | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=gnu
-Gobernación de Antioquia | Government | Medellín, CO | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=antioquia
-Transcaribe | Transit & mobility | Cartagena, CO | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=transcaribe
-United Nations | International organizations | New York, US | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=un
-BibloRed | Museums, libraries & culture | Bogotá, CO | 2026-10-19 | 73 | https://carlosandmunoz.com/qa-review.html?live=biblored
-FAO | International organizations | Rome, IT | 2026-10-19 | 73 | https://carlosandmunoz.com/qa-review.html?live=fao
-SURA | Insurance & health plans | Medellín, CO | 2026-10-19 | 73 | https://carlosandmunoz.com/qa-review.html?live=sura
-DANE | Government | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=dane
-Davivienda | Banking & finance | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=davivienda
-Jardín Botánico de Bogotá | Space & science | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=jbb
-Le Monde | News & media | Paris, FR | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=lemonde
-Migración Colombia | Government | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=migracion
-MinTIC | Government | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=mintic
-Secretaría de Salud de Bogotá | Public health | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=saludcapital
-TransMilenio | Transit & mobility | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=transmilenio
-DIAN | Government | Bogotá, CO | 2026-10-19 | 71 | https://carlosandmunoz.com/qa-review.html?live=dian
-Movistar Colombia | Telecom | Bogotá, CO | 2026-10-19 | 71 | https://carlosandmunoz.com/qa-review.html?live=movistar
-Alcaldía de Cali | Government | Cali, CO | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=cali
-Alcaldía de Manizales | Government | Manizales, CO | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=manizales
-Supersalud | Public health | Bogotá, CO | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=supersalud
-UNESCO | International organizations | Paris, FR | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=unesco
-Éxito | Retail & e-commerce | Envigado, CO | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=exito
-Biblioteca Nacional de Colombia | Museums, libraries & culture | Bogotá, CO | 2026-10-19 | 69 | https://carlosandmunoz.com/qa-review.html?live=bibliotecanacional
-Metrolínea | Transit & mobility | Bucaramanga, CO | 2026-10-19 | 69 | https://carlosandmunoz.com/qa-review.html?live=metrolinea
-Rappi | Apps & delivery | Bogotá, CO | 2026-10-19 | 69 | https://carlosandmunoz.com/qa-review.html?live=rappi
-CERN | Space & science | Geneva, CH | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=cern
-Cancillería de Colombia | Government | Bogotá, CO | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=cancilleria
-Colpensiones | Government | Bogotá, CO | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=colpensiones
-Contraloría General | Government | Bogotá, CO | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=contraloria
-Bancolombia | Banking & finance | Medellín, CO | 2026-10-19 | 65 | https://carlosandmunoz.com/qa-review.html?live=bancolombia
-Alcaldía de Bucaramanga | Government | Bucaramanga, CO | 2026-10-19 | 64 | https://carlosandmunoz.com/qa-review.html?live=bucaramanga
-Secretaría de Educación de Bogotá | Education | Bogotá, CO | 2026-10-19 | 64 | https://carlosandmunoz.com/qa-review.html?live=educacionbogota
-Alcaldía de Pereira | Government | Pereira, CO | 2026-10-19 | 63 | https://carlosandmunoz.com/qa-review.html?live=pereira
-Procuraduría General | Government | Bogotá, CO | 2026-10-19 | 63 | https://carlosandmunoz.com/qa-review.html?live=procuraduria
-Falabella Colombia | Retail & e-commerce | Bogotá, CO | 2026-10-19 | 60 | https://carlosandmunoz.com/qa-review.html?live=falabella
-Ministerio de Salud | Public health | Bogotá, CO | 2026-10-19 | 60 | https://carlosandmunoz.com/qa-review.html?live=minsalud
-Universidad del Valle | Higher education | Cali, CO | 2026-10-19 | 60 | https://carlosandmunoz.com/qa-review.html?live=univalle
-Universidad de Antioquia | Higher education | Medellín, CO | 2026-10-19 | 53 | https://carlosandmunoz.com/qa-review.html?live=udea
+Site | Sector | Scope | Place | Analyzed | Overall | Report
+MDN Web Docs | Developer docs | Worldwide | San Francisco, US | 2026-10-19 | 95 | https://carlosandmunoz.com/qa-review.html?live=mdn
+CA.gov | Government | Regional | Sacramento, US | 2026-10-21 | 92 | https://carlosandmunoz.com/qa-review.html?live=cagov
+GOV.UK | Government | Worldwide | London, GB | 2026-10-19 | 92 | https://carlosandmunoz.com/qa-review.html?live=govuk
+GitHub Docs | Developer docs | Worldwide | San Francisco, US | 2026-10-19 | 91 | https://carlosandmunoz.com/qa-review.html?live=githubdocs
+Figma | Apps & delivery | Worldwide | San Francisco, US | 2026-10-21 | 90 | https://carlosandmunoz.com/qa-review.html?live=figma
+Québec.ca | Government | Regional | Québec City, CA | 2026-10-21 | 90 | https://carlosandmunoz.com/qa-review.html?live=quebec
+Shopify | Retail & e-commerce | Worldwide | Ottawa, CA | 2026-10-21 | 90 | https://carlosandmunoz.com/qa-review.html?live=shopify
+Node.js | Open source | Worldwide | Worldwide | 2026-10-19 | 89 | https://carlosandmunoz.com/qa-review.html?live=nodejs
+Blender | Open source | Worldwide | Amsterdam, NL | 2026-10-21 | 88 | https://carlosandmunoz.com/qa-review.html?live=blender
+Cloudflare | Internet infrastructure | Worldwide | San Francisco, US | 2026-10-19 | 88 | https://carlosandmunoz.com/qa-review.html?live=cloudflare
+Gavi, the Vaccine Alliance | Public health | Worldwide | Geneva, CH | 2026-10-21 | 88 | https://carlosandmunoz.com/qa-review.html?live=gavi
+USAGov | Government | National | Washington, D.C., US | 2026-10-21 | 88 | https://carlosandmunoz.com/qa-review.html?live=usagov
+Argentina.gob.ar | Government | National | Buenos Aires, AR | 2026-10-21 | 87 | https://carlosandmunoz.com/qa-review.html?live=argentinagob
+GitLab | Open source | Worldwide | San Francisco, US | 2026-10-21 | 87 | https://carlosandmunoz.com/qa-review.html?live=gitlab
+Vue.js | Developer docs | Worldwide | Worldwide | 2026-10-21 | 87 | https://carlosandmunoz.com/qa-review.html?live=vuejs
+World Bank | Banking & finance | Worldwide | Washington, D.C., US | 2026-10-19 | 87 | https://carlosandmunoz.com/qa-review.html?live=worldbank
+Berlin.de | Government | Local | Berlin, DE | 2026-10-21 | 86 | https://carlosandmunoz.com/qa-review.html?live=berlin
+El Espectador | News & media | National | Bogotá, CO | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=elespectador
+Fondo Nacional del Ahorro | Banking & finance | National | Bogotá, CO | 2026-10-21 | 86 | https://carlosandmunoz.com/qa-review.html?live=fnaco
+International Labour Organization | International organizations | Worldwide | Geneva, CH | 2026-10-21 | 86 | https://carlosandmunoz.com/qa-review.html?live=ilo
+Marine Stewardship Council | Environment & climate | Worldwide | London, GB | 2026-10-21 | 86 | https://carlosandmunoz.com/qa-review.html?live=msc
+Metrocali | Transit & mobility | Local | Cali, CO | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=metrocali
+Mozilla | Open source | Worldwide | San Francisco, US | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=mozilla
+Musée du Louvre | Museums, libraries & culture | Worldwide | Paris, FR | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=louvre
+Python.org | Open source | Worldwide | Worldwide | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=python
+Stanford University | Higher education | Worldwide | Stanford, US | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=stanford
+Stripe Docs | Developer docs | Worldwide | South San Francisco, US | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=stripedocs
+Transport for London | Transit & mobility | Local | London, GB | 2026-10-21 | 86 | https://carlosandmunoz.com/qa-review.html?live=tfl
+Ubuntu | Open source | Worldwide | London, GB | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=ubuntu
+Victorian Government | Government | Regional | Melbourne, AU | 2026-10-21 | 86 | https://carlosandmunoz.com/qa-review.html?live=victoria
+W3C | Web standards | Worldwide | Worldwide | 2026-10-19 | 86 | https://carlosandmunoz.com/qa-review.html?live=w3c
+gov.sg | Government | National | Singapore, SG | 2026-10-21 | 86 | https://carlosandmunoz.com/qa-review.html?live=govsg
+Ayuntamiento de Madrid | Government | Local | Madrid, ES | 2026-10-21 | 85 | https://carlosandmunoz.com/qa-review.html?live=madrid
+Canal Capital | News & media | Local | Bogotá, CO | 2026-10-21 | 85 | https://carlosandmunoz.com/qa-review.html?live=canalcapital
+Internet Society | Internet infrastructure | Worldwide | Reston, US | 2026-10-21 | 85 | https://carlosandmunoz.com/qa-review.html?live=isoc
+Metro de Medellín | Transit & mobility | Local | Medellín, CO | 2026-10-19 | 85 | https://carlosandmunoz.com/qa-review.html?live=metromedellin
+Ontario.ca | Government | Regional | Toronto, CA | 2026-10-21 | 85 | https://carlosandmunoz.com/qa-review.html?live=ontario
+Stadt Wien | Government | Local | Vienna, AT | 2026-10-21 | 85 | https://carlosandmunoz.com/qa-review.html?live=wien
+Wikimedia Foundation | Open knowledge | Worldwide | San Francisco, US | 2026-10-19 | 85 | https://carlosandmunoz.com/qa-review.html?live=wikimedia
+Al Jazeera | News & media | Worldwide | Doha, QA | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=aljazeera
+Generalitat de Catalunya | Government | Regional | Barcelona, ES | 2026-10-21 | 84 | https://carlosandmunoz.com/qa-review.html?live=gencat
+IETF | Web standards | Worldwide | Worldwide | 2026-10-21 | 84 | https://carlosandmunoz.com/qa-review.html?live=ietf
+Lonely Planet | Travel & tourism | Worldwide | Worldwide | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=lonelyplanet
+National Geographic | News & media | Worldwide | Washington, D.C., US | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=natgeo
+PostgreSQL | Open source | Worldwide | Worldwide | 2026-10-21 | 84 | https://carlosandmunoz.com/qa-review.html?live=postgresql
+UNICEF | Humanitarian | Worldwide | New York, US | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=unicef
+Ville de Paris | Government | Local | Paris, FR | 2026-10-21 | 84 | https://carlosandmunoz.com/qa-review.html?live=paris
+Wikipedia | Open knowledge | Worldwide | San Francisco, US | 2026-10-19 | 84 | https://carlosandmunoz.com/qa-review.html?live=wikipedia
+myGov | Government | National | Canberra, AU | 2026-10-21 | 84 | https://carlosandmunoz.com/qa-review.html?live=mygovau
+Alcaldía de Armenia | Government | Local | Armenia, CO | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=armenia
+Caracol Televisión | News & media | National | Bogotá, CO | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=caracoltv
+Cornare | Environment & climate | Regional | El Santuario, CO | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=cornare
+Debian | Open source | Worldwide | Worldwide | 2026-10-19 | 83 | https://carlosandmunoz.com/qa-review.html?live=debian
+Eesti.ee | Government | National | Tallinn, EE | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=eestiee
+Electronic Frontier Foundation | Human & digital rights | Worldwide | San Francisco, US | 2026-10-19 | 83 | https://carlosandmunoz.com/qa-review.html?live=eff
+Govt.nz | Government | National | Wellington, NZ | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=govtnz
+LibreOffice | Open source | Worldwide | Worldwide | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=libreoffice
+MIT | Higher education | Worldwide | Cambridge, MA, US | 2026-10-19 | 83 | https://carlosandmunoz.com/qa-review.html?live=mit
+React | Developer docs | Worldwide | Worldwide | 2026-10-19 | 83 | https://carlosandmunoz.com/qa-review.html?live=react
+Suomi.fi | Government | National | Helsinki, FI | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=suomifi
+TypeScript | Developer docs | Worldwide | Worldwide | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=typescript
+World Meteorological Organization | Environment & climate | Worldwide | Geneva, CH | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=wmo
+Coursera | Education | Worldwide | Mountain View, US | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=coursera
+Deutsche Welle | News & media | Worldwide | Bonn, DE | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=dw
+FIBA | Sports & recreation | Worldwide | Mies, CH | 2026-10-21 | 82 | https://carlosandmunoz.com/qa-review.html?live=fiba
+Harvard University | Higher education | Worldwide | Cambridge, MA, US | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=harvard
+IKEA | Retail & e-commerce | Worldwide | Worldwide | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=ikea
+NASA | Space & science | Worldwide | Washington, D.C., US | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=nasa
+Pan American Health Organization | Public health | Worldwide | Washington, D.C., US | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=paho
+RTVC | News & media | National | Bogotá, CO | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=rtvc
+Universidad de los Andes | Higher education | National | Bogotá, CO | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=uniandes
+World Food Programme | Humanitarian | Worldwide | Rome, IT | 2026-10-19 | 82 | https://carlosandmunoz.com/qa-review.html?live=wfp
+Amnesty International | Human & digital rights | Worldwide | London, GB | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=amnesty
+Go | Open source | Worldwide | Worldwide | 2026-10-21 | 81 | https://carlosandmunoz.com/qa-review.html?live=golang
+ICFES | Education | National | Bogotá, CO | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=icfes
+ICRC | Humanitarian | Worldwide | Geneva, CH | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=icrc
+IDRD | Sports & recreation | Local | Bogotá, CO | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=idrd
+Idartes | Museums, libraries & culture | Local | Bogotá, CO | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=idartes
+NSW Government | Government | Regional | Sydney, AU | 2026-10-21 | 81 | https://carlosandmunoz.com/qa-review.html?live=nsw
+Nequi | Fintech | National | Medellín, CO | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=nequi
+Rust | Open source | Worldwide | Worldwide | 2026-10-19 | 81 | https://carlosandmunoz.com/qa-review.html?live=rust
+The Global Fund | Public health | Worldwide | Geneva, CH | 2026-10-21 | 81 | https://carlosandmunoz.com/qa-review.html?live=globalfund
+World Organization of the Scout Movement | Education | Worldwide | Kuala Lumpur, MY | 2026-10-21 | 81 | https://carlosandmunoz.com/qa-review.html?live=scouts
+Alcaldía de Bogotá | Government | Local | Bogotá, CO | 2026-10-19 | 80 | https://carlosandmunoz.com/qa-review.html?live=bogota
+Alcaldía de Popayán | Government | Local | Popayán, CO | 2026-10-21 | 80 | https://carlosandmunoz.com/qa-review.html?live=popayan
+Kubernetes | Open source | Worldwide | Worldwide | 2026-10-19 | 80 | https://carlosandmunoz.com/qa-review.html?live=kubernetes
+Semana | News & media | National | Bogotá, CO | 2026-10-19 | 80 | https://carlosandmunoz.com/qa-review.html?live=semana
+oneworld | Airline | Worldwide | New York, US | 2026-10-21 | 80 | https://carlosandmunoz.com/qa-review.html?live=oneworld
+web.dev | Developer docs | Worldwide | Mountain View, US | 2026-10-19 | 80 | https://carlosandmunoz.com/qa-review.html?live=webdev
+Alcaldía de Bello | Government | Local | Bello, CO | 2026-10-21 | 79 | https://carlosandmunoz.com/qa-review.html?live=bello
+BBC | News & media | Worldwide | London, GB | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=bbc
+ICANN | Internet infrastructure | Worldwide | Los Angeles, US | 2026-10-21 | 79 | https://carlosandmunoz.com/qa-review.html?live=icann
+Linux Foundation | Open source | Worldwide | San Francisco, US | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=linuxfoundation
+Metro de Bogotá | Transit & mobility | Local | Bogotá, CO | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=metrobogota
+Rijksmuseum | Museums, libraries & culture | Worldwide | Amsterdam, NL | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=rijksmuseum
+Secretaría Distrital de Ambiente | Environment & climate | Local | Bogotá, CO | 2026-10-21 | 79 | https://carlosandmunoz.com/qa-review.html?live=ambientebogota
+Visit Bogotá | Travel & tourism | Local | Bogotá, CO | 2026-10-19 | 79 | https://carlosandmunoz.com/qa-review.html?live=visitbogota
+Alcaldía de Ibagué | Government | Local | Ibagué, CO | 2026-10-21 | 78 | https://carlosandmunoz.com/qa-review.html?live=ibague
+Alcaldía de Soacha | Government | Local | Soacha, CO | 2026-10-21 | 78 | https://carlosandmunoz.com/qa-review.html?live=soacha
+Alkosto | Retail & e-commerce | National | Bogotá, CO | 2026-10-21 | 78 | https://carlosandmunoz.com/qa-review.html?live=alkosto
+Ecopetrol | Energy & utilities | National | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=ecopetrol
+Fiscalía General de la Nación | Government | National | Bogotá, CO | 2026-10-21 | 78 | https://carlosandmunoz.com/qa-review.html?live=fiscaliaco
+GOV.CO | Government | National | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=govco
+ICETEX | Education | National | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=icetex
+Médecins Sans Frontières | Humanitarian | Worldwide | Geneva, CH | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=msf
+Planetario de Bogotá | Space & science | Local | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=planetario
+Policía Nacional de Colombia | Government | National | Bogotá, CO | 2026-10-21 | 78 | https://carlosandmunoz.com/qa-review.html?live=policiaco
+Project Gutenberg | Open knowledge | Worldwide | Worldwide | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=gutenberg
+Punto de Acceso General | Government | National | Madrid, ES | 2026-10-21 | 78 | https://carlosandmunoz.com/qa-review.html?live=gobes
+SATENA | Airline | National | Bogotá, CO | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=satena
+The Guardian | News & media | Worldwide | London, GB | 2026-10-19 | 78 | https://carlosandmunoz.com/qa-review.html?live=guardian
+UN Women | Human & digital rights | Worldwide | New York, US | 2026-10-21 | 78 | https://carlosandmunoz.com/qa-review.html?live=unwomen
+Alcaldía de Cúcuta | Government | Local | Cúcuta, CO | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=cucuta
+Alcaldía de Santa Marta | Government | Local | Santa Marta, CO | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=santamarta
+Claro Colombia | Telecom | National | Bogotá, CO | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=claro
+EPM | Energy & utilities | Local | Medellín, CO | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=epm
+Freistaat Bayern | Government | Regional | Munich, DE | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=bayern
+GOV.BR | Government | National | Brasília, BR | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=govbr
+Instituto Distrital de Patrimonio Cultural | Museums, libraries & culture | Local | Bogotá, CO | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=idpc
+Intendencia de Montevideo | Government | Local | Montevideo, UY | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=montevideo
+Municipio de Quito | Government | Local | Quito, EC | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=quito
+NYC.gov | Government | Local | New York, US | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=nyc
+Oxfam International | Humanitarian | Worldwide | Nairobi, KE | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=oxfam
+PHP | Open source | Worldwide | Worldwide | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=php
+ProColombia | Travel & tourism | National | Bogotá, CO | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=procolombia
+Secretaría de Cultura, Recreación y Deporte | Museums, libraries & culture | Local | Bogotá, CO | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=culturabogota
+WIPO | International organizations | Worldwide | Geneva, CH | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=wipo
+World Health Organization | Public health | Worldwide | Geneva, CH | 2026-10-19 | 77 | https://carlosandmunoz.com/qa-review.html?live=who
+zipdev.com |  | Requested | Requested | 2026-10-21 | 77 | https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com
+Buenos Aires Ciudad | Government | Local | Buenos Aires, AR | 2026-10-21 | 76 | https://carlosandmunoz.com/qa-review.html?live=buenosaires
+Compensar | Insurance & health plans | National | Bogotá, CO | 2026-10-19 | 76 | https://carlosandmunoz.com/qa-review.html?live=compensar
+Defensoría del Pueblo | Human & digital rights | National | Bogotá, CO | 2026-10-21 | 76 | https://carlosandmunoz.com/qa-review.html?live=defensoriaco
+El Tiempo | News & media | National | Bogotá, CO | 2026-10-19 | 76 | https://carlosandmunoz.com/qa-review.html?live=eltiempo
+Gobernación del Tolima | Government | Regional | Ibagué, CO | 2026-10-21 | 76 | https://carlosandmunoz.com/qa-review.html?live=tolima
+Invima | Public health | National | Bogotá, CO | 2026-10-21 | 76 | https://carlosandmunoz.com/qa-review.html?live=invima
+Ministerio de Educación | Education | National | Bogotá, CO | 2026-10-19 | 76 | https://carlosandmunoz.com/qa-review.html?live=mineducacion
+gob.ec | Government | National | Quito, EC | 2026-10-21 | 76 | https://carlosandmunoz.com/qa-review.html?live=gobec
+Agencia Nacional de Infraestructura | Transit & mobility | National | Bogotá, CO | 2026-10-21 | 75 | https://carlosandmunoz.com/qa-review.html?live=anico
+Creative Commons | Open knowledge | Worldwide | Worldwide | 2026-10-19 | 75 | https://carlosandmunoz.com/qa-review.html?live=creativecommons
+ISA | Energy & utilities | National | Medellín, CO | 2026-10-21 | 75 | https://carlosandmunoz.com/qa-review.html?live=isaco
+Metroplús | Transit & mobility | Local | Medellín, CO | 2026-10-21 | 75 | https://carlosandmunoz.com/qa-review.html?live=metroplus
+Secretaría de Movilidad de Bogotá | Transit & mobility | Local | Bogotá, CO | 2026-10-19 | 75 | https://carlosandmunoz.com/qa-review.html?live=movilidadbogota
+TED | News & media | Worldwide | New York, US | 2026-10-21 | 75 | https://carlosandmunoz.com/qa-review.html?live=ted
+Universidad EAFIT | Higher education | Local | Medellín, CO | 2026-10-19 | 75 | https://carlosandmunoz.com/qa-review.html?live=eafit
+Alcaldía de Medellín | Government | Local | Medellín, CO | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=medellin
+Alcaldía de Palmira | Government | Local | Palmira, CO | 2026-10-21 | 74 | https://carlosandmunoz.com/qa-review.html?live=palmira
+Apache Software Foundation | Open source | Worldwide | Worldwide | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=apache
+Bibliotecas Públicas de Medellín | Museums, libraries & culture | Local | Medellín, CO | 2026-10-21 | 74 | https://carlosandmunoz.com/qa-review.html?live=bibliotecasmedellin
+Caribbean Development Bank | Banking & finance | Regional | St. Michael, BB | 2026-10-21 | 74 | https://carlosandmunoz.com/qa-review.html?live=caribank
+Catastro Bogotá | Government | Local | Bogotá, CO | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=catastro
+El País | News & media | Worldwide | Madrid, ES | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=elpais
+European Space Agency | Space & science | Worldwide | Paris, FR | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=esa
+GNU Project | Open source | Worldwide | Worldwide | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=gnu
+Gobernación de Antioquia | Government | Local | Medellín, CO | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=antioquia
+Gobernación del Cauca | Government | Regional | Popayán, CO | 2026-10-21 | 74 | https://carlosandmunoz.com/qa-review.html?live=cauca
+IDEAM | Environment & climate | National | Bogotá, CO | 2026-10-21 | 74 | https://carlosandmunoz.com/qa-review.html?live=ideam
+MinCIT | Government | National | Bogotá, CO | 2026-10-21 | 74 | https://carlosandmunoz.com/qa-review.html?live=mincit
+OpenStreetMap | Open knowledge | Worldwide | Worldwide | 2026-10-21 | 74 | https://carlosandmunoz.com/qa-review.html?live=openstreetmap
+Rama Judicial | Government | National | Bogotá, CO | 2026-10-21 | 74 | https://carlosandmunoz.com/qa-review.html?live=ramajudicial
+Transcaribe | Transit & mobility | Local | Cartagena, CO | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=transcaribe
+United Nations | International organizations | Worldwide | New York, US | 2026-10-19 | 74 | https://carlosandmunoz.com/qa-review.html?live=un
+Universidad del Atlántico | Higher education | Regional | Puerto Colombia, CO | 2026-10-21 | 74 | https://carlosandmunoz.com/qa-review.html?live=uniatlantico
+pirouline.com |  | Requested | Requested | 2026-10-22 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-pirouline-com
+Alcaldía de Villavicencio | Government | Local | Villavicencio, CO | 2026-10-21 | 73 | https://carlosandmunoz.com/qa-review.html?live=villavicencio
+BCIE | Banking & finance | Regional | Tegucigalpa, HN | 2026-10-21 | 73 | https://carlosandmunoz.com/qa-review.html?live=bcie
+BibloRed | Museums, libraries & culture | Local | Bogotá, CO | 2026-10-19 | 73 | https://carlosandmunoz.com/qa-review.html?live=biblored
+CVC | Environment & climate | Regional | Cali, CO | 2026-10-21 | 73 | https://carlosandmunoz.com/qa-review.html?live=cvc
+Comunidad Andina | International organizations | Regional | Lima, PE | 2026-10-21 | 73 | https://carlosandmunoz.com/qa-review.html?live=comunidadandina
+Corte Constitucional | Government | National | Bogotá, CO | 2026-10-21 | 73 | https://carlosandmunoz.com/qa-review.html?live=corteconst
+FAO | International organizations | Worldwide | Rome, IT | 2026-10-19 | 73 | https://carlosandmunoz.com/qa-review.html?live=fao
+SURA | Insurance & health plans | National | Medellín, CO | 2026-10-19 | 73 | https://carlosandmunoz.com/qa-review.html?live=sura
+cognizant.com |  | Requested | Requested | 2026-10-21 | 73 | https://carlosandmunoz.com/qa-review.html?live=u-cognizant-com
+Alcaldía de Pasto | Government | Local | Pasto, CO | 2026-10-21 | 72 | https://carlosandmunoz.com/qa-review.html?live=pasto
+Alcaldía de Tunja | Government | Local | Tunja, CO | 2026-10-21 | 72 | https://carlosandmunoz.com/qa-review.html?live=tunja
+DANE | Government | National | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=dane
+Davivienda | Banking & finance | National | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=davivienda
+Gobernación de Caldas | Government | Regional | Manizales, CO | 2026-10-21 | 72 | https://carlosandmunoz.com/qa-review.html?live=caldas
+Jardín Botánico de Bogotá | Space & science | Local | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=jbb
+Le Monde | News & media | Worldwide | Paris, FR | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=lemonde
+Migración Colombia | Government | National | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=migracion
+MinTIC | Government | National | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=mintic
+Secretaría de Salud de Bogotá | Public health | Local | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=saludcapital
+TransMilenio | Transit & mobility | Local | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=transmilenio
+UAESP | Energy & utilities | Local | Bogotá, CO | 2026-10-21 | 72 | https://carlosandmunoz.com/qa-review.html?live=uaesp
+DIAN | Government | National | Bogotá, CO | 2026-10-19 | 71 | https://carlosandmunoz.com/qa-review.html?live=dian
+Ilustre Municipalidad de Santiago | Government | Local | Santiago, CL | 2026-10-21 | 71 | https://carlosandmunoz.com/qa-review.html?live=munistgo
+Movistar Colombia | Telecom | National | Bogotá, CO | 2026-10-19 | 71 | https://carlosandmunoz.com/qa-review.html?live=movistar
+World Trade Organization | International organizations | Worldwide | Geneva, CH | 2026-10-21 | 71 | https://carlosandmunoz.com/qa-review.html?live=wto
+gob.pe | Government | National | Lima, PE | 2026-10-21 | 71 | https://carlosandmunoz.com/qa-review.html?live=gobpe
+monsterenergy.com |  | Requested | Requested | 2026-10-22 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com
+Ajuntament de Barcelona | Government | Local | Barcelona, ES | 2026-10-21 | 70 | https://carlosandmunoz.com/qa-review.html?live=barcelona
+Alcaldía de Cali | Government | Local | Cali, CO | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=cali
+Alcaldía de Manizales | Government | Local | Manizales, CO | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=manizales
+Gobernación de Bolívar | Government | Regional | Cartagena, CO | 2026-10-21 | 70 | https://carlosandmunoz.com/qa-review.html?live=bolivar
+Inder Medellín | Sports & recreation | Local | Medellín, CO | 2026-10-21 | 70 | https://carlosandmunoz.com/qa-review.html?live=inder
+Supersalud | Public health | National | Bogotá, CO | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=supersalud
+UNESCO | International organizations | Worldwide | Paris, FR | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=unesco
+World Athletics | Sports & recreation | Worldwide | Monaco, MC | 2026-10-21 | 70 | https://carlosandmunoz.com/qa-review.html?live=worldathletics
+Éxito | Retail & e-commerce | National | Envigado, CO | 2026-10-19 | 70 | https://carlosandmunoz.com/qa-review.html?live=exito
+Alcaldía de Itagüí | Government | Local | Itagüí, CO | 2026-10-21 | 69 | https://carlosandmunoz.com/qa-review.html?live=itagui
+Biblioteca Nacional de Colombia | Museums, libraries & culture | National | Bogotá, CO | 2026-10-19 | 69 | https://carlosandmunoz.com/qa-review.html?live=bibliotecanacional
+Gobernación del Atlántico | Government | Regional | Barranquilla, CO | 2026-10-21 | 69 | https://carlosandmunoz.com/qa-review.html?live=atlantico
+IPCC | Environment & climate | Worldwide | Geneva, CH | 2026-10-21 | 69 | https://carlosandmunoz.com/qa-review.html?live=ipcc
+Metrolínea | Transit & mobility | Local | Bucaramanga, CO | 2026-10-19 | 69 | https://carlosandmunoz.com/qa-review.html?live=metrolinea
+Rappi | Apps & delivery | National | Bogotá, CO | 2026-10-19 | 69 | https://carlosandmunoz.com/qa-review.html?live=rappi
+Unicode | Web standards | Worldwide | Mountain View, US | 2026-10-21 | 69 | https://carlosandmunoz.com/qa-review.html?live=unicode
+Gobernación de Cundinamarca | Government | Regional | Bogotá, CO | 2026-10-21 | 68 | https://carlosandmunoz.com/qa-review.html?live=cundinamarca
+Gobernación del Valle del Cauca | Government | Regional | Cali, CO | 2026-10-21 | 68 | https://carlosandmunoz.com/qa-review.html?live=valle
+Gobierno de Jalisco | Government | Regional | Guadalajara, MX | 2026-10-21 | 68 | https://carlosandmunoz.com/qa-review.html?live=jalisco
+atlassian.com |  | Requested | Requested | 2026-10-21 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-atlassian-com
+co.computrabajo.com |  | Requested | Requested | 2026-10-22 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-co-computrabajo-com
+Alcaldía de Montería | Government | Local | Montería, CO | 2026-10-21 | 67 | https://carlosandmunoz.com/qa-review.html?live=monteria
+lenovo.com |  | Requested | Requested | 2026-10-21 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-lenovo-com
+whatsapp.com |  | Requested | Requested | 2026-10-21 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-whatsapp-com
+African Union | International organizations | Regional | Addis Ababa, ET | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=africanunion
+CARICOM | International organizations | Regional | Georgetown, GY | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=caricom
+CERN | Space & science | Worldwide | Geneva, CH | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=cern
+Cancillería de Colombia | Government | National | Bogotá, CO | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=cancilleria
+Colpensiones | Government | National | Bogotá, CO | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=colpensiones
+Contraloría General | Government | National | Bogotá, CO | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=contraloria
+Gobierno del Quindío | Government | Regional | Armenia, CO | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=quindio
+IGAC | Government | National | Bogotá, CO | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=igac
+Superintendencia Financiera | Banking & finance | National | Bogotá, CO | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=superfinanciera
+Superintendencia de Sociedades | Government | National | Bogotá, CO | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=supersociedades
+uber.com |  | Requested | Requested | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-uber-com
+Bancolombia | Banking & finance | National | Medellín, CO | 2026-10-19 | 65 | https://carlosandmunoz.com/qa-review.html?live=bancolombia
+Gobernación de Nariño | Government | Regional | Pasto, CO | 2026-10-21 | 65 | https://carlosandmunoz.com/qa-review.html?live=narino
+Alcaldía de Bucaramanga | Government | Local | Bucaramanga, CO | 2026-10-19 | 64 | https://carlosandmunoz.com/qa-review.html?live=bucaramanga
+Alcaldía de Neiva | Government | Local | Neiva, CO | 2026-10-21 | 64 | https://carlosandmunoz.com/qa-review.html?live=neiva
+FIDE | Sports & recreation | Worldwide | Lausanne, CH | 2026-10-21 | 64 | https://carlosandmunoz.com/qa-review.html?live=fide
+Secretaría Distrital de Planeación | Government | Local | Bogotá, CO | 2026-10-21 | 64 | https://carlosandmunoz.com/qa-review.html?live=sdp
+Secretaría de Educación de Bogotá | Education | Local | Bogotá, CO | 2026-10-19 | 64 | https://carlosandmunoz.com/qa-review.html?live=educacionbogota
+gob.mx | Government | National | Mexico City, MX | 2026-10-21 | 64 | https://carlosandmunoz.com/qa-review.html?live=gobmx
+teaminternational.com |  | Requested | Requested | 2026-10-19 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com
+Alcaldía de Pereira | Government | Local | Pereira, CO | 2026-10-19 | 63 | https://carlosandmunoz.com/qa-review.html?live=pereira
+Canada.ca | Government | National | Ottawa, CA | 2026-10-21 | 63 | https://carlosandmunoz.com/qa-review.html?live=canadaca
+Procuraduría General | Government | National | Bogotá, CO | 2026-10-19 | 63 | https://carlosandmunoz.com/qa-review.html?live=procuraduria
+honda.com |  | Requested | Requested | 2026-10-22 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-honda-com
+lamega.com.co |  | Requested | CO | 2026-10-21 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-lamega-com-co
+uniminuto.edu |  | Requested | Requested | 2026-10-21 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-uniminuto-edu
+Alcaldía Distrital de Riohacha | Government | Local | Riohacha, CO | 2026-10-21 | 62 | https://carlosandmunoz.com/qa-review.html?live=riohacha
+Instituto Nacional de Salud | Public health | National | Bogotá, CO | 2026-10-21 | 62 | https://carlosandmunoz.com/qa-review.html?live=insco
+Organization of American States | International organizations | Regional | Washington, D.C., US | 2026-10-21 | 62 | https://carlosandmunoz.com/qa-review.html?live=oas
+confluence.com |  | Requested | Requested | 2026-10-21 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-confluence-com
+telegram.com |  | Requested | Requested | 2026-10-21 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-telegram-com
+Falabella Colombia | Retail & e-commerce | National | Bogotá, CO | 2026-10-19 | 60 | https://carlosandmunoz.com/qa-review.html?live=falabella
+Ministerio de Salud | Public health | National | Bogotá, CO | 2026-10-19 | 60 | https://carlosandmunoz.com/qa-review.html?live=minsalud
+Universidad del Valle | Higher education | Local | Cali, CO | 2026-10-19 | 60 | https://carlosandmunoz.com/qa-review.html?live=univalle
+davibank.com |  | Requested | Requested | 2026-10-21 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-davibank-com
+Gobernación de Santander | Government | Regional | Bucaramanga, CO | 2026-10-21 | 57 | https://carlosandmunoz.com/qa-review.html?live=santander
+avvillas.com.co |  | Requested | CO | 2026-10-21 | 57 | https://carlosandmunoz.com/qa-review.html?live=u-avvillas-com-co
+nice.com |  | Requested | Requested | 2026-10-22 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-nice-com
+Gobernación de Risaralda | Government | Regional | Pereira, CO | 2026-10-21 | 55 | https://carlosandmunoz.com/qa-review.html?live=risaralda
+ITU | Telecom | Worldwide | Geneva, CH | 2026-10-21 | 53 | https://carlosandmunoz.com/qa-review.html?live=itu
+Universidad de Antioquia | Higher education | Local | Medellín, CO | 2026-10-19 | 53 | https://carlosandmunoz.com/qa-review.html?live=udea
+mercadolibre.com.co |  | Requested | CO | 2026-10-21 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-mercadolibre-com-co
+postobon.com |  | Requested | Requested | 2026-10-22 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-postobon-com
+epssura.com |  | Requested | Requested | 2026-10-20 | 40 | https://carlosandmunoz.com/qa-review.html?live=u-epssura-com

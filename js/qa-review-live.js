@@ -7,29 +7,30 @@
   const BASE = "assets/live-reports/";
   const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
   const SHORT = { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Security", Accessibility: "A11y", Performance: "Speed" };
-  const HUES = { government: 186, health: 160, media: 18, banking: 42, fintech: 280, transit: 140, opensource: 205, devdocs: 225, science: 255, highered: 330, education: 300, humanitarian: 0, international: 196, culture: 32, knowledge: 172, retail: 50, telecom: 268, energy: 58, travel: 120, airline: 210, insurance: 152, infrastructure: 24, standards: 240, sports: 100, apps: 12, rights: 350 };
+  const HUES = { government: 186, health: 160, media: 18, banking: 42, fintech: 280, transit: 140, opensource: 205, devdocs: 225, science: 255, highered: 330, education: 300, humanitarian: 0, international: 196, culture: 32, knowledge: 172, retail: 50, telecom: 268, energy: 58, travel: 120, airline: 210, insurance: 152, infrastructure: 24, standards: 240, sports: 100, apps: 12, rights: 350, environment: 88 };
   const STOP = new Set(["de", "del", "la", "el", "los", "las", "of", "the", "y", "and", "du", "da"]);
 
   // A review analyzes a site; it never "reads" it. Spanish is Latin American (tú), Portuguese is Brazilian (você).
   const T = {
     en: {
-      eyebrow: "Live reports", title: "Real sites. Real reads.", titleEm: "Open any of them.",
-      lede: "<b>{n} public sites</b>, read by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Turn the ring, filter by sector or country, and open a report. View and share only.",
+      eyebrow: "Live reports", title: "Real sites. Real reviews.", titleEm: "Open any of them.",
+      lede: "<b>{n} public sites</b>, analyzed by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Turn the ring, filter by sector or country, and open a report. Reviews people request are added in a daily batch. View and share only.",
       explore: "Explore {n} live reports", gateLine: "Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.",
       back: "Back", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
       carousel: "Live reports carousel", all: "All", sector: "Sector", scope: "Scope", country: "Country", focus: "Test focus",
-      worldwide: "Worldwide", national: "National", local: "Local", global: "Global",
+      worldwide: "Worldwide", national: "National", regional: "Regional", local: "Local", requested: "Requested", global: "Global",
       status: "{i} of {n}: {name}, {score} out of 100, grade {grade}.", slide: "{i} of {n}: {name}",
       none: "No report matches these filters.", clear: "Clear filters", loading: "Loading live reports…", failed: "The live reports could not be loaded.",
-      read: "Read {date}", page: "{n} page", pages: "{n} pages", hint: "Drag, swipe, or use the arrow keys. Select a card to open it.",
+      read: "Analyzed {date}", page: "{n} page", pages: "{n} pages", hint: "Drag, swipe, or use the arrow keys. Select a card to open it.",
       close: "Close", share: "Share", copy: "Copy link", copied: "Link copied. It opens this report.", shareOn: "Share on {net}", email: "Email",
       viewOnly: "View only. This live report can be opened and shared, not downloaded, printed, or exported.",
       blocked: "View only. Share the link instead.", shot: "Screenshots cannot be blocked by a page. The watermark stays on the picture.",
       printNote: "Live reports are view-only and are not printed.", printLink: "Open or share it here:",
-      fair: "One automated read of public pages on {date}. A starting point, not a verdict.", own: "Review your own site",
+      fair: "One automated analysis of public pages on {date}. A starting point, not a verdict.", own: "Review your own site",
+      remove: "Own this site? Ask to remove it",
       rank: "<b>#{r}</b> of {n} in this series", rankSector: "<b>#{r}</b> of {n} in {sector}",
-      hHeadline: "What the read found", hLesson: "The lesson", hAreas: "Six areas · gold tick is the series average", hFix: "Fix first", hWorks: "Already working",
-      hAi: "AI crawlers", hSpeed: "Real-visitor speed", hSec: "Security headers", hCoverage: "Proposed coverage", hTags: "Tags",
+      hHeadline: "What the review found", hLesson: "The lesson", hAreas: "Six areas · gold tick is the series average", hFix: "Fix first", hWorks: "Already working",
+      hAi: "AI crawlers", hSpeed: "Real-visitor speed", hSec: "Security checks", hCoverage: "Proposed coverage", hTags: "Tags",
       gWho: "Who", gScore: "How it scored", gStand: "Standouts", gTested: "Tested for", gBuilt: "Built with",
       openFail: "This report could not be opened.", visit: "Visit site",
       brand: "QA-lab · Live report", gradeWord: "Grade", average: "Series average {n}", areaLine: "{fail} fail · {risk} at risk · {pass} pass",
@@ -41,11 +42,11 @@
     },
     es: {
       eyebrow: "Informes en vivo", title: "Sitios reales. Análisis reales.", titleEm: "Abre el informe que quieras.",
-      lede: "<b>{n} sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Solo para ver y compartir.",
+      lede: "<b>{n} sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Solo para ver y compartir.",
       explore: "Explorar {n} informes en vivo", gateLine: "Análisis reales de sitios públicos, desde GOV.UK hasta la Alcaldía de Bogotá. Solo para ver y compartir.",
       back: "Volver", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
       carousel: "Carrusel de informes en vivo", all: "Todos", sector: "Sector", scope: "Alcance", country: "País", focus: "Tipo de prueba",
-      worldwide: "Mundial", national: "Nacional", local: "Local", global: "Global",
+      worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
       none: "Ningún informe coincide con estos filtros.", clear: "Quitar filtros", loading: "Cargando informes en vivo…", failed: "No se pudieron cargar los informes en vivo.",
       read: "Analizado el {date}", page: "{n} página", pages: "{n} páginas", hint: "Arrastra, desliza o usa las flechas del teclado. Elige una tarjeta para abrirla.",
@@ -54,9 +55,10 @@
       blocked: "Solo para ver. Comparte el enlace.", shot: "Una página no puede bloquear las capturas de pantalla. La marca de agua queda en la imagen.",
       printNote: "Los informes en vivo son solo para ver y no se imprimen.", printLink: "Ábrelo o compártelo aquí:",
       fair: "Un análisis automático de páginas públicas del {date}. Un punto de partida, no un veredicto.", own: "Analiza tu propio sitio",
+      remove: "¿Es tu sitio? Pide que lo retiremos",
       rank: "<b>#{r}</b> de {n} en esta serie", rankSector: "<b>#{r}</b> de {n} en {sector}",
       hHeadline: "Lo que encontró el análisis", hLesson: "La lección", hAreas: "Seis áreas · la marca dorada es el promedio de la serie", hFix: "Corregir primero", hWorks: "Ya funciona",
-      hAi: "Rastreadores de IA", hSpeed: "Velocidad para visitantes reales", hSec: "Encabezados de seguridad", hCoverage: "Cobertura propuesta", hTags: "Etiquetas",
+      hAi: "Rastreadores de IA", hSpeed: "Velocidad para visitantes reales", hSec: "Controles de seguridad", hCoverage: "Cobertura propuesta", hTags: "Etiquetas",
       gWho: "Quién", gScore: "Puntaje", gStand: "Destacados", gTested: "Qué se probó", gBuilt: "Hecho con",
       openFail: "No se pudo abrir este informe.", visit: "Visitar el sitio",
       brand: "QA-lab · Informe en vivo", gradeWord: "Nota", average: "Promedio de la serie: {n}", areaLine: "{fail} fallan · {risk} en riesgo · {pass} pasan",
@@ -68,11 +70,11 @@
     },
     pt: {
       eyebrow: "Relatórios ao vivo", title: "Sites reais. Análises reais.", titleEm: "Abra o relatório que quiser.",
-      lede: "<b>{n} sites públicos</b>, analisados pela mesma revisão que qualquer pessoa pode executar: portais de governo, veículos de imprensa, bancos, universidades, projetos de código aberto e sistemas de transporte. Percorra o carrossel, filtre por setor ou país e abra um relatório. Só para ver e compartilhar.",
+      lede: "<b>{n} sites públicos</b>, analisados pela mesma revisão que qualquer pessoa pode executar: portais de governo, veículos de imprensa, bancos, universidades, projetos de código aberto e sistemas de transporte. Percorra o carrossel, filtre por setor ou país e abra um relatório. As revisões que as pessoas solicitam entram em um lote diário. Só para ver e compartilhar.",
       explore: "Explorar {n} relatórios ao vivo", gateLine: "Análises reais de sites públicos, do GOV.UK à Prefeitura de Bogotá. Só para ver e compartilhar.",
       back: "Voltar", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
       carousel: "Carrossel de relatórios ao vivo", all: "Todos", sector: "Setor", scope: "Alcance", country: "País", focus: "Tipo de teste",
-      worldwide: "Mundial", national: "Nacional", local: "Local", global: "Global",
+      worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
       none: "Nenhum relatório corresponde a estes filtros.", clear: "Limpar filtros", loading: "Carregando relatórios ao vivo…", failed: "Não foi possível carregar os relatórios ao vivo.",
       read: "Analisado em {date}", page: "{n} página", pages: "{n} páginas", hint: "Arraste, deslize ou use as setas do teclado. Escolha um cartão para abri-lo.",
@@ -81,9 +83,10 @@
       blocked: "Só para ver. Compartilhe o link.", shot: "Uma página não consegue bloquear capturas de tela. A marca d’água fica na imagem.",
       printNote: "Relatórios ao vivo são só para ver e não são impressos.", printLink: "Abra ou compartilhe aqui:",
       fair: "Uma análise automática de páginas públicas em {date}. Um ponto de partida, não um veredito.", own: "Analise o seu site",
+      remove: "Este site é seu? Peça a remoção",
       rank: "<b>#{r}</b> de {n} nesta série", rankSector: "<b>#{r}</b> de {n} em {sector}",
       hHeadline: "O que a análise encontrou", hLesson: "A lição", hAreas: "Seis áreas · a marca dourada é a média da série", hFix: "Corrigir primeiro", hWorks: "Já funciona",
-      hAi: "Rastreadores de IA", hSpeed: "Velocidade para visitantes reais", hSec: "Cabeçalhos de segurança", hCoverage: "Cobertura proposta", hTags: "Etiquetas",
+      hAi: "Rastreadores de IA", hSpeed: "Velocidade para visitantes reais", hSec: "Verificações de segurança", hCoverage: "Cobertura proposta", hTags: "Etiquetas",
       gWho: "Quem", gScore: "Pontuação", gStand: "Destaques", gTested: "O que foi testado", gBuilt: "Feito com",
       openFail: "Não foi possível abrir este relatório.", visit: "Visitar o site",
       brand: "QA-lab · Relatório ao vivo", gradeWord: "Nota", average: "Média da série: {n}", areaLine: "{fail} falham · {risk} em risco · {pass} passam",
@@ -95,11 +98,11 @@
     },
     de: {
       eyebrow: "Live-Berichte", title: "Echte Websites. Echte Prüfungen.", titleEm: "Öffnen Sie jeden Bericht.",
-      lede: "<b>{n} öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Nur ansehen und teilen.",
+      lede: "<b>{n} öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Von Nutzern angefragte Prüfungen kommen täglich gesammelt hinzu. Nur ansehen und teilen.",
       explore: "{n} Live-Berichte ansehen", gateLine: "Echte Prüfungen öffentlicher Websites, von GOV.UK bis zum Rathaus von Bogotá. Nur ansehen und teilen.",
       back: "Zurück", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
       carousel: "Karussell der Live-Berichte", all: "Alle", sector: "Branche", scope: "Reichweite", country: "Land", focus: "Testart",
-      worldwide: "Weltweit", national: "National", local: "Lokal", global: "Global",
+      worldwide: "Weltweit", national: "National", regional: "Regional", local: "Lokal", requested: "Angefragt", global: "Global",
       status: "{i} von {n}: {name}, {score} von 100, Note {grade}.", slide: "{i} von {n}: {name}",
       none: "Kein Bericht passt zu diesen Filtern.", clear: "Filter löschen", loading: "Live-Berichte werden geladen…", failed: "Die Live-Berichte konnten nicht geladen werden.",
       read: "Geprüft am {date}", page: "{n} Seite", pages: "{n} Seiten", hint: "Ziehen, wischen oder Pfeiltasten nutzen. Eine Karte wählen, um sie zu öffnen.",
@@ -108,9 +111,10 @@
       blocked: "Nur ansehen. Teilen Sie stattdessen den Link.", shot: "Eine Seite kann Screenshots nicht verhindern. Das Wasserzeichen bleibt im Bild.",
       printNote: "Live-Berichte sind nur zum Ansehen und werden nicht gedruckt.", printLink: "Hier öffnen oder teilen:",
       fair: "Eine automatische Prüfung öffentlicher Seiten am {date}. Ein Ausgangspunkt, kein Urteil.", own: "Eigene Website prüfen",
+      remove: "Ihre Website? Bitten Sie um Entfernung",
       rank: "<b>#{r}</b> von {n} in dieser Serie", rankSector: "<b>#{r}</b> von {n} in {sector}",
       hHeadline: "Was die Prüfung fand", hLesson: "Die Lehre", hAreas: "Sechs Bereiche · die goldene Marke ist der Serienschnitt", hFix: "Zuerst beheben", hWorks: "Funktioniert bereits",
-      hAi: "KI-Crawler", hSpeed: "Tempo für echte Besucher", hSec: "Sicherheits-Header", hCoverage: "Vorgeschlagene Abdeckung", hTags: "Tags",
+      hAi: "KI-Crawler", hSpeed: "Tempo für echte Besucher", hSec: "Sicherheitsprüfungen", hCoverage: "Vorgeschlagene Abdeckung", hTags: "Tags",
       gWho: "Wer", gScore: "Bewertung", gStand: "Highlights", gTested: "Geprüft auf", gBuilt: "Gebaut mit",
       openFail: "Dieser Bericht konnte nicht geöffnet werden.", visit: "Website besuchen",
       brand: "QA-lab · Live-Bericht", gradeWord: "Note", average: "Serienschnitt {n}", areaLine: "{fail} durchgefallen · {risk} gefährdet · {pass} bestanden",
@@ -122,11 +126,11 @@
     },
     fr: {
       eyebrow: "Rapports en direct", title: "De vrais sites. De vraies analyses.", titleEm: "Ouvrez le rapport de votre choix.",
-      lede: "<b>{n} sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Consultation et partage uniquement.",
+      lede: "<b>{n} sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Consultation et partage uniquement.",
       explore: "Explorer {n} rapports en direct", gateLine: "De vraies analyses de sites publics, de GOV.UK à la mairie de Bogotá. Consultation et partage uniquement.",
       back: "Retour", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
       carousel: "Carrousel des rapports en direct", all: "Tous", sector: "Secteur", scope: "Portée", country: "Pays", focus: "Type de test",
-      worldwide: "Mondial", national: "National", local: "Local", global: "Mondial",
+      worldwide: "Mondial", national: "National", regional: "Régional", local: "Local", requested: "Demandé", global: "Mondial",
       status: "{i} sur {n} : {name}, {score} sur 100, note {grade}.", slide: "{i} sur {n} : {name}",
       none: "Aucun rapport ne correspond à ces filtres.", clear: "Effacer les filtres", loading: "Chargement des rapports en direct…", failed: "Les rapports en direct n’ont pas pu être chargés.",
       read: "Analysé le {date}", page: "{n} page", pages: "{n} pages", hint: "Faites glisser, balayez ou utilisez les flèches du clavier. Choisissez une carte pour l’ouvrir.",
@@ -135,9 +139,10 @@
       blocked: "Consultation seule. Partagez plutôt le lien.", shot: "Une page ne peut pas bloquer les captures d’écran. Le filigrane reste sur l’image.",
       printNote: "Les rapports en direct sont en consultation seule et ne s’impriment pas.", printLink: "Ouvrez-le ou partagez-le ici :",
       fair: "Une analyse automatique de pages publiques le {date}. Un point de départ, pas un verdict.", own: "Analyser votre site",
+      remove: "C’est votre site ? Demandez son retrait",
       rank: "<b>#{r}</b> sur {n} dans cette série", rankSector: "<b>#{r}</b> sur {n} en {sector}",
       hHeadline: "Ce que l’analyse a trouvé", hLesson: "La leçon", hAreas: "Six domaines · le repère doré est la moyenne de la série", hFix: "À corriger d’abord", hWorks: "Ce qui fonctionne déjà",
-      hAi: "Robots d’IA", hSpeed: "Vitesse pour de vrais visiteurs", hSec: "En-têtes de sécurité", hCoverage: "Couverture proposée", hTags: "Étiquettes",
+      hAi: "Robots d’IA", hSpeed: "Vitesse pour de vrais visiteurs", hSec: "Contrôles de sécurité", hCoverage: "Couverture proposée", hTags: "Étiquettes",
       gWho: "Qui", gScore: "Score", gStand: "Points forts", gTested: "Testé pour", gBuilt: "Construit avec",
       openFail: "Ce rapport n’a pas pu être ouvert.", visit: "Visiter le site",
       brand: "QA-lab · Rapport en direct", gradeWord: "Note", average: "Moyenne de la série : {n}", areaLine: "{fail} en échec · {risk} à risque · {pass} réussis",
@@ -149,11 +154,11 @@
     },
     it: {
       eyebrow: "Report dal vivo", title: "Siti veri. Analisi vere.", titleEm: "Apri il report che vuoi.",
-      lede: "<b>{n} siti pubblici</b>, analizzati con la stessa revisione che chiunque può avviare: portali pubblici, redazioni, banche, università, progetti open source e trasporti. Scorri il carosello, filtra per settore o paese e apri un report. Solo visualizzazione e condivisione.",
+      lede: "<b>{n} siti pubblici</b>, analizzati con la stessa revisione che chiunque può avviare: portali pubblici, redazioni, banche, università, progetti open source e trasporti. Scorri il carosello, filtra per settore o paese e apri un report. Le revisioni richieste dagli utenti si aggiungono ogni giorno, in un unico lotto. Solo visualizzazione e condivisione.",
       explore: "Esplora {n} report dal vivo", gateLine: "Analisi reali di siti pubblici, da GOV.UK al comune di Bogotá. Solo visualizzazione e condivisione.",
       back: "Indietro", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
       carousel: "Carosello dei report dal vivo", all: "Tutti", sector: "Settore", scope: "Portata", country: "Paese", focus: "Tipo di test",
-      worldwide: "Mondiale", national: "Nazionale", local: "Locale", global: "Globale",
+      worldwide: "Mondiale", national: "Nazionale", regional: "Regionale", local: "Locale", requested: "Richiesto", global: "Globale",
       status: "{i} di {n}: {name}, {score} su 100, voto {grade}.", slide: "{i} di {n}: {name}",
       none: "Nessun report corrisponde a questi filtri.", clear: "Azzera i filtri", loading: "Caricamento dei report dal vivo…", failed: "Non è stato possibile caricare i report dal vivo.",
       read: "Analizzato il {date}", page: "{n} pagina", pages: "{n} pagine", hint: "Trascina, scorri o usa le frecce della tastiera. Scegli una scheda per aprirla.",
@@ -162,9 +167,10 @@
       blocked: "Solo visualizzazione. Condividi il link.", shot: "Una pagina non può bloccare gli screenshot. La filigrana resta nell’immagine.",
       printNote: "I report dal vivo sono solo da visualizzare e non si stampano.", printLink: "Aprilo o condividilo qui:",
       fair: "Un’analisi automatica di pagine pubbliche il {date}. Un punto di partenza, non un verdetto.", own: "Analizza il tuo sito",
+      remove: "È il tuo sito? Chiedi di rimuoverlo",
       rank: "<b>#{r}</b> su {n} in questa serie", rankSector: "<b>#{r}</b> su {n} in {sector}",
       hHeadline: "Cosa ha trovato l’analisi", hLesson: "La lezione", hAreas: "Sei aree · la tacca dorata è la media della serie", hFix: "Da sistemare prima", hWorks: "Funziona già",
-      hAi: "Crawler IA", hSpeed: "Velocità per visitatori reali", hSec: "Header di sicurezza", hCoverage: "Copertura proposta", hTags: "Tag",
+      hAi: "Crawler IA", hSpeed: "Velocità per visitatori reali", hSec: "Controlli di sicurezza", hCoverage: "Copertura proposta", hTags: "Tag",
       gWho: "Chi", gScore: "Punteggio", gStand: "In evidenza", gTested: "Testato per", gBuilt: "Fatto con",
       openFail: "Non è stato possibile aprire questo report.", visit: "Visita il sito",
       brand: "QA-lab · Report dal vivo", gradeWord: "Voto", average: "Media della serie: {n}", areaLine: "{fail} falliti · {risk} a rischio · {pass} superati",
@@ -187,7 +193,7 @@
   // Report tags arrive in English from the build; these give each one a native label.
   const TAG_RULES = [
     ["versions", /^(\d+) language versions$/], ["lighthouse", /^Lighthouse (\d+) mobile$/], ["gradeTag", /^Grade ([A-F]) · (\d+)$/],
-    ["onePage", /^1 page read$/], ["pagesRead", /^(\d+) pages read$/], ["tests", /^(\d+) proposed cases · (\d+) test types$/],
+    ["onePage", /^1 page analyzed$/], ["pagesRead", /^(\d+) pages analyzed$/], ["tests", /^(\d+) proposed cases · (\d+) test types$/],
     ["top", /^Top (\d+) of (\d+)$/], ["best", /^Best (\w+) in the series$/], ["inSector", /^#(\d+) in (.+)$/]
   ];
   const TAG_T = {
@@ -203,7 +209,7 @@
         "Company": "Empresa", "City government": "Gobierno local", "Public agency": "Entidad pública", "Nonprofit": "Sin ánimo de lucro", "Intergovernmental": "Intergubernamental",
         "Open-source project": "Proyecto de código abierto", "State-owned company": "Empresa estatal", "University": "Universidad", "National government": "Gobierno nacional",
         "Public broadcaster": "Medio público", "Regional government": "Gobierno regional",
-        "Latin America": "América Latina", "North America": "Norteamérica", "Europe": "Europa", "Middle East": "Medio Oriente", "Global": "Global"
+        "Latin America": "América Latina", "North America": "Norteamérica", "Europe": "Europa", "Middle East": "Medio Oriente", "Asia-Pacific": "Asia-Pacífico", "Africa": "África", "Caribbean": "Caribe", "Global": "Global"
       }
     },
     pt: {
@@ -218,7 +224,7 @@
         "Company": "Empresa", "City government": "Prefeitura", "Public agency": "Órgão público", "Nonprofit": "Sem fins lucrativos", "Intergovernmental": "Intergovernamental",
         "Open-source project": "Projeto de código aberto", "State-owned company": "Empresa estatal", "University": "Universidade", "National government": "Governo nacional",
         "Public broadcaster": "Emissora pública", "Regional government": "Governo regional",
-        "Latin America": "América Latina", "North America": "América do Norte", "Europe": "Europa", "Middle East": "Oriente Médio", "Global": "Global"
+        "Latin America": "América Latina", "North America": "América do Norte", "Europe": "Europa", "Middle East": "Oriente Médio", "Asia-Pacific": "Ásia-Pacífico", "Africa": "África", "Caribbean": "Caribe", "Global": "Global"
       }
     },
     de: {
@@ -233,7 +239,7 @@
         "Company": "Unternehmen", "City government": "Stadtverwaltung", "Public agency": "Behörde", "Nonprofit": "Gemeinnützig", "Intergovernmental": "Zwischenstaatlich",
         "Open-source project": "Open-Source-Projekt", "State-owned company": "Staatsunternehmen", "University": "Universität", "National government": "Nationale Regierung",
         "Public broadcaster": "Öffentlich-rechtlicher Sender", "Regional government": "Regionalregierung",
-        "Latin America": "Lateinamerika", "North America": "Nordamerika", "Europe": "Europa", "Middle East": "Naher Osten", "Global": "Global"
+        "Latin America": "Lateinamerika", "North America": "Nordamerika", "Europe": "Europa", "Middle East": "Naher Osten", "Asia-Pacific": "Asien-Pazifik", "Africa": "Afrika", "Caribbean": "Karibik", "Global": "Global"
       }
     },
     fr: {
@@ -248,7 +254,7 @@
         "Company": "Entreprise", "City government": "Municipalité", "Public agency": "Organisme public", "Nonprofit": "Association", "Intergovernmental": "Intergouvernemental",
         "Open-source project": "Projet open source", "State-owned company": "Entreprise publique", "University": "Université", "National government": "Gouvernement national",
         "Public broadcaster": "Média public", "Regional government": "Gouvernement régional",
-        "Latin America": "Amérique latine", "North America": "Amérique du Nord", "Europe": "Europe", "Middle East": "Moyen-Orient", "Global": "Mondial"
+        "Latin America": "Amérique latine", "North America": "Amérique du Nord", "Europe": "Europe", "Middle East": "Moyen-Orient", "Asia-Pacific": "Asie-Pacifique", "Africa": "Afrique", "Caribbean": "Caraïbes", "Global": "Mondial"
       }
     },
     it: {
@@ -263,7 +269,7 @@
         "Company": "Azienda", "City government": "Comune", "Public agency": "Ente pubblico", "Nonprofit": "Non profit", "Intergovernmental": "Intergovernativo",
         "Open-source project": "Progetto open source", "State-owned company": "Azienda statale", "University": "Università", "National government": "Governo nazionale",
         "Public broadcaster": "Emittente pubblica", "Regional government": "Governo regionale",
-        "Latin America": "America Latina", "North America": "Nord America", "Europe": "Europa", "Middle East": "Medio Oriente", "Global": "Globale"
+        "Latin America": "America Latina", "North America": "Nord America", "Europe": "Europa", "Middle East": "Medio Oriente", "Asia-Pacific": "Asia-Pacifico", "Africa": "Africa", "Caribbean": "Caraibi", "Global": "Globale"
       }
     }
   };
@@ -277,18 +283,18 @@
   const NAME_TAGS = new Set(["hosting", "tech", "analytics", "consent", "lang"]);
 
   const SECTOR_T = {
-    es: { government: "Gobierno", health: "Salud pública", media: "Noticias y medios", banking: "Banca y finanzas", fintech: "Fintech", transit: "Transporte y movilidad", opensource: "Código abierto", devdocs: "Documentación técnica", science: "Espacio y ciencia", highered: "Educación superior", education: "Educación", humanitarian: "Humanitario", international: "Organismos internacionales", culture: "Museos, bibliotecas y cultura", knowledge: "Conocimiento abierto", retail: "Comercio y e-commerce", telecom: "Telecomunicaciones", energy: "Energía y servicios públicos", travel: "Viajes y turismo", airline: "Aerolínea", insurance: "Seguros y salud", infrastructure: "Infraestructura de internet", standards: "Estándares web", sports: "Deporte y recreación", apps: "Apps y domicilios", rights: "Derechos humanos y digitales" },
-    pt: { government: "Governo", health: "Saúde pública", media: "Notícias e mídia", banking: "Bancos e finanças", fintech: "Fintech", transit: "Transporte e mobilidade", opensource: "Código aberto", devdocs: "Documentação técnica", science: "Espaço e ciência", highered: "Ensino superior", education: "Educação", humanitarian: "Humanitário", international: "Organismos internacionais", culture: "Museus, bibliotecas e cultura", knowledge: "Conhecimento aberto", retail: "Varejo e e-commerce", telecom: "Telecomunicações", energy: "Energia e serviços públicos", travel: "Viagens e turismo", airline: "Companhia aérea", insurance: "Seguros e planos de saúde", infrastructure: "Infraestrutura de internet", standards: "Padrões web", sports: "Esporte e lazer", apps: "Apps e delivery", rights: "Direitos humanos e digitais" },
-    de: { government: "Regierung", health: "Öffentliche Gesundheit", media: "Nachrichten und Medien", banking: "Banken und Finanzen", fintech: "Fintech", transit: "Verkehr und Mobilität", opensource: "Open Source", devdocs: "Entwicklerdokumentation", science: "Raumfahrt und Wissenschaft", highered: "Hochschulen", education: "Bildung", humanitarian: "Humanitäre Hilfe", international: "Internationale Organisationen", culture: "Museen, Bibliotheken und Kultur", knowledge: "Freies Wissen", retail: "Handel und E-Commerce", telecom: "Telekommunikation", energy: "Energie und Versorgung", travel: "Reisen und Tourismus", airline: "Fluggesellschaft", insurance: "Versicherungen und Krankenkassen", infrastructure: "Internet-Infrastruktur", standards: "Webstandards", sports: "Sport und Freizeit", apps: "Apps und Lieferdienste", rights: "Menschen- und Digitalrechte" },
-    fr: { government: "Gouvernement", health: "Santé publique", media: "Presse et médias", banking: "Banque et finance", fintech: "Fintech", transit: "Transports et mobilité", opensource: "Open source", devdocs: "Documentation développeurs", science: "Espace et science", highered: "Enseignement supérieur", education: "Éducation", humanitarian: "Humanitaire", international: "Organisations internationales", culture: "Musées, bibliothèques et culture", knowledge: "Savoir ouvert", retail: "Commerce et e-commerce", telecom: "Télécoms", energy: "Énergie et services publics", travel: "Voyage et tourisme", airline: "Compagnie aérienne", insurance: "Assurance et santé", infrastructure: "Infrastructure internet", standards: "Standards du web", sports: "Sport et loisirs", apps: "Applis et livraison", rights: "Droits humains et numériques" },
-    it: { government: "Governo", health: "Sanità pubblica", media: "Notizie e media", banking: "Banche e finanza", fintech: "Fintech", transit: "Trasporti e mobilità", opensource: "Open source", devdocs: "Documentazione tecnica", science: "Spazio e scienza", highered: "Università", education: "Istruzione", humanitarian: "Umanitario", international: "Organizzazioni internazionali", culture: "Musei, biblioteche e cultura", knowledge: "Conoscenza aperta", retail: "Retail ed e-commerce", telecom: "Telecomunicazioni", energy: "Energia e servizi pubblici", travel: "Viaggi e turismo", airline: "Compagnia aerea", insurance: "Assicurazioni e sanità", infrastructure: "Infrastruttura internet", standards: "Standard web", sports: "Sport e tempo libero", apps: "App e consegne", rights: "Diritti umani e digitali" }
+    es: { government: "Gobierno", health: "Salud pública", media: "Noticias y medios", banking: "Banca y finanzas", fintech: "Fintech", transit: "Transporte y movilidad", opensource: "Código abierto", devdocs: "Documentación técnica", science: "Espacio y ciencia", highered: "Educación superior", education: "Educación", humanitarian: "Humanitario", international: "Organismos internacionales", culture: "Museos, bibliotecas y cultura", knowledge: "Conocimiento abierto", retail: "Comercio y e-commerce", telecom: "Telecomunicaciones", energy: "Energía y servicios públicos", travel: "Viajes y turismo", airline: "Aerolínea", insurance: "Seguros y salud", infrastructure: "Infraestructura de internet", standards: "Estándares web", sports: "Deporte y recreación", apps: "Apps y domicilios", rights: "Derechos humanos y digitales", environment: "Medio ambiente y clima" },
+    pt: { government: "Governo", health: "Saúde pública", media: "Notícias e mídia", banking: "Bancos e finanças", fintech: "Fintech", transit: "Transporte e mobilidade", opensource: "Código aberto", devdocs: "Documentação técnica", science: "Espaço e ciência", highered: "Ensino superior", education: "Educação", humanitarian: "Humanitário", international: "Organismos internacionais", culture: "Museus, bibliotecas e cultura", knowledge: "Conhecimento aberto", retail: "Varejo e e-commerce", telecom: "Telecomunicações", energy: "Energia e serviços públicos", travel: "Viagens e turismo", airline: "Companhia aérea", insurance: "Seguros e planos de saúde", infrastructure: "Infraestrutura de internet", standards: "Padrões web", sports: "Esporte e lazer", apps: "Apps e delivery", rights: "Direitos humanos e digitais", environment: "Meio ambiente e clima" },
+    de: { government: "Regierung", health: "Öffentliche Gesundheit", media: "Nachrichten und Medien", banking: "Banken und Finanzen", fintech: "Fintech", transit: "Verkehr und Mobilität", opensource: "Open Source", devdocs: "Entwicklerdokumentation", science: "Raumfahrt und Wissenschaft", highered: "Hochschulen", education: "Bildung", humanitarian: "Humanitäre Hilfe", international: "Internationale Organisationen", culture: "Museen, Bibliotheken und Kultur", knowledge: "Freies Wissen", retail: "Handel und E-Commerce", telecom: "Telekommunikation", energy: "Energie und Versorgung", travel: "Reisen und Tourismus", airline: "Fluggesellschaft", insurance: "Versicherungen und Krankenkassen", infrastructure: "Internet-Infrastruktur", standards: "Webstandards", sports: "Sport und Freizeit", apps: "Apps und Lieferdienste", rights: "Menschen- und Digitalrechte", environment: "Umwelt und Klima" },
+    fr: { government: "Gouvernement", health: "Santé publique", media: "Presse et médias", banking: "Banque et finance", fintech: "Fintech", transit: "Transports et mobilité", opensource: "Open source", devdocs: "Documentation développeurs", science: "Espace et science", highered: "Enseignement supérieur", education: "Éducation", humanitarian: "Humanitaire", international: "Organisations internationales", culture: "Musées, bibliothèques et culture", knowledge: "Savoir ouvert", retail: "Commerce et e-commerce", telecom: "Télécoms", energy: "Énergie et services publics", travel: "Voyage et tourisme", airline: "Compagnie aérienne", insurance: "Assurance et santé", infrastructure: "Infrastructure internet", standards: "Standards du web", sports: "Sport et loisirs", apps: "Applis et livraison", rights: "Droits humains et numériques", environment: "Environnement et climat" },
+    it: { government: "Governo", health: "Sanità pubblica", media: "Notizie e media", banking: "Banche e finanza", fintech: "Fintech", transit: "Trasporti e mobilità", opensource: "Open source", devdocs: "Documentazione tecnica", science: "Spazio e scienza", highered: "Università", education: "Istruzione", humanitarian: "Umanitario", international: "Organizzazioni internazionali", culture: "Musei, biblioteche e cultura", knowledge: "Conoscenza aperta", retail: "Retail ed e-commerce", telecom: "Telecomunicazioni", energy: "Energia e servizi pubblici", travel: "Viaggi e turismo", airline: "Compagnia aerea", insurance: "Assicurazioni e sanità", infrastructure: "Infrastruttura internet", standards: "Standard web", sports: "Sport e tempo libero", apps: "App e consegne", rights: "Diritti umani e digitali", environment: "Ambiente e clima" }
   };
   const FOCUS_T = {
-    es: { seo: "SEO", geo: "GEO · búsqueda con IA", schema: "Datos estructurados", a11y: "Accesibilidad", security: "Encabezados de seguridad", performance: "Rendimiento · Core Web Vitals", analytics: "Analítica y consentimiento", i18n: "Internacionalización" },
-    pt: { seo: "SEO", geo: "GEO · busca com IA", schema: "Dados estruturados", a11y: "Acessibilidade", security: "Cabeçalhos de segurança", performance: "Desempenho · Core Web Vitals", analytics: "Analytics e consentimento", i18n: "Internacionalização" },
-    de: { seo: "SEO", geo: "GEO · KI-Suche", schema: "Strukturierte Daten", a11y: "Barrierefreiheit", security: "Sicherheits-Header", performance: "Performance · Core Web Vitals", analytics: "Analytics und Einwilligung", i18n: "Internationalisierung" },
-    fr: { seo: "SEO", geo: "GEO · recherche IA", schema: "Données structurées", a11y: "Accessibilité", security: "En-têtes de sécurité", performance: "Performance · Core Web Vitals", analytics: "Analytics et consentement", i18n: "Internationalisation" },
-    it: { seo: "SEO", geo: "GEO · ricerca IA", schema: "Dati strutturati", a11y: "Accessibilità", security: "Header di sicurezza", performance: "Prestazioni · Core Web Vitals", analytics: "Analytics e consenso", i18n: "Internazionalizzazione" }
+    es: { seo: "SEO", geo: "GEO · búsqueda con IA", schema: "Datos estructurados", a11y: "Accesibilidad", security: "Controles de seguridad", performance: "Rendimiento · Core Web Vitals", analytics: "Analítica y consentimiento", i18n: "Internacionalización" },
+    pt: { seo: "SEO", geo: "GEO · busca com IA", schema: "Dados estruturados", a11y: "Acessibilidade", security: "Verificações de segurança", performance: "Desempenho · Core Web Vitals", analytics: "Analytics e consentimento", i18n: "Internacionalização" },
+    de: { seo: "SEO", geo: "GEO · KI-Suche", schema: "Strukturierte Daten", a11y: "Barrierefreiheit", security: "Sicherheitsprüfungen", performance: "Performance · Core Web Vitals", analytics: "Analytics und Einwilligung", i18n: "Internationalisierung" },
+    fr: { seo: "SEO", geo: "GEO · recherche IA", schema: "Données structurées", a11y: "Accessibilité", security: "Contrôles de sécurité", performance: "Performance · Core Web Vitals", analytics: "Analytics et consentement", i18n: "Internationalisation" },
+    it: { seo: "SEO", geo: "GEO · ricerca IA", schema: "Dati strutturati", a11y: "Accessibilità", security: "Controlli di sicurezza", performance: "Prestazioni · Core Web Vitals", analytics: "Analytics e consenso", i18n: "Internazionalizzazione" }
   };
 
   const ICONS = {
@@ -508,7 +514,7 @@
       const totals = new Map();
       state.all.forEach((r) => [].concat(fn(r)).filter(Boolean).forEach((v) => totals.set(v, (totals.get(v) || 0) + 1)));
       let values = [...totals.keys()];
-      if (group === "scope") values = ["worldwide", "national", "local"].filter((v) => totals.has(v));
+      if (group === "scope") values = ["worldwide", "national", "regional", "local"].filter((v) => totals.has(v));
       else values.sort((a, b) => totals.get(b) - totals.get(a) || String(valueLabel(group, a)).localeCompare(valueLabel(group, b)));
       const live = new Map();
       state.all.forEach((r) => { if (matches(r, group)) [].concat(fn(r)).filter(Boolean).forEach((v) => live.set(v, (live.get(v) || 0) + 1)); });
@@ -549,6 +555,7 @@
       const shown = state.list.includes(r);
       if (el.hidden === shown) lastD.delete(r.id);
       el.hidden = !shown;
+      if (!shown) el.classList.remove("is-active");
     });
     empty.hidden = state.list.length > 0;
     renderFilters();
@@ -1041,7 +1048,7 @@
     const head = headlineHtml(d.headline);
     const place = d.flag + " " + (d.city ? esc(d.city) + ", " : "") + esc(countryName(d.country));
     const rank = d.rank ? '<p class="lv-rank"' + nt() + ">" + t("rank", { r: d.rank.overall.rank, n: d.rank.overall.of }) +
-      (d.rank.sector.of > 1 ? "<br>" + t("rankSector", { r: d.rank.sector.rank, n: d.rank.sector.of, sector: esc(sectorLabel(d.sector)) }) : "") + "</p>" : "";
+      (d.sector && d.rank.sector.of > 1 ? "<br>" + t("rankSector", { r: d.rank.sector.rank, n: d.rank.sector.of, sector: esc(sectorLabel(d.sector)) }) : "") + "</p>" : "";
 
     const areas = AREAS.map((a) => {
       const s = d.score.areas[a];
@@ -1099,7 +1106,7 @@
     }).join("");
 
     return '<div class="lv-hero"><div>' +
-      '<p class="lv-meta"><span class="lv-scope s-' + esc(d.scope.toLowerCase()) + '"' + nt() + ">" + esc(t(d.scope.toLowerCase())) + "</span><span" + nt() + ">" + place + "</span><span>·</span><span" + nt() + ">" + esc(sectorLabel(d.sector)) + "</span><span>·</span><span" + nt() + ">" + esc(t("read", { date: dateText(d.read) })) + " · " + esc(t(d.pages === 1 ? "page" : "pages", { n: d.pages })) + "</span></p>" +
+      '<p class="lv-meta"><span class="lv-scope s-' + esc(d.scope.toLowerCase()) + '"' + nt() + ">" + esc(t(d.scope.toLowerCase())) + "</span><span" + nt() + ">" + place + "</span><span>·</span>" + (d.sector ? "<span" + nt() + ">" + esc(sectorLabel(d.sector)) + "</span><span>·</span>" : "") + "<span" + nt() + ">" + esc(t("read", { date: dateText(d.read) })) + " · " + esc(t(d.pages === 1 ? "page" : "pages", { n: d.pages })) + "</span></p>" +
       '<h2 class="lv-name notranslate" id="lv-name" translate="no">' + esc(d.name) + "</h2>" +
       '<p class="lv-host"><span class="notranslate">' + esc(d.host) + '</span><a href="' + esc(d.url) + '" target="_blank" rel="noopener noreferrer nofollow"' + nt() + ">" + esc(t("visit")) + " ↗</a></p>" +
       '<p class="lv-headline">' + head + "</p>" +
@@ -1114,7 +1121,7 @@
       '<section class="lv-card"><h3 class="lv-h"' + nt() + ">" + esc(t("hSec")) + "</h3>" + sec + "</section></div>" +
       '<p class="lv-h"' + nt() + ">" + esc(t("hCoverage")) + " · " + ((d.coverage && d.coverage.cases) || 0) + '</p><div class="lv-chips">' + layers + "</div>" +
       '<p class="lv-h"' + nt() + ">" + esc(t("hTags")) + '</p><div class="lv-taggroups">' + tags + "</div>" +
-      '<div class="lv-foot"><div><p class="lv-fair"' + nt() + ">" + esc(t("fair", { date: dateText(d.read) })) + '</p><p class="lv-note"' + nt() + ">" + esc(t("viewOnly")) + '</p><div class="lv-copybox"><input type="text" readonly aria-label="' + esc(t("copy")) + '"></div></div>' +
+      '<div class="lv-foot"><div><p class="lv-fair"' + nt() + ">" + esc(t("fair", { date: dateText(d.read) })) + '</p><p class="lv-note"' + nt() + ">" + esc(t("viewOnly")) + '</p><p class="lv-note"' + nt() + '><a href="mailto:qa@carlosandmunoz.com?subject=' + encodeURIComponent("Remove the live report for " + (d.host || d.name || "")) + '">' + esc(t("remove")) + '</a></p><div class="lv-copybox"><input type="text" readonly aria-label="' + esc(t("copy")) + '"></div></div>' +
       '<button class="live-cta" type="button" data-act="own"' + nt() + ">" + esc(t("own")) + "</button></div>";
   }
 

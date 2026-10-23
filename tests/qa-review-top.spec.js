@@ -2,15 +2,17 @@ const { test, expect } = require('@playwright/test');
 
 const items = Array.from({ length: 6 }, (_, i) => ({ href: 'https://example.com/' + i, title: 'Headline ' + (i + 1), meta: 'Desk · ' + (i + 1) + 'h ago' }));
 
+const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+
 async function prime(page, { terms = true } = {}) {
-  await page.addInitScript((accepted) => {
+  await page.addInitScript(({ accepted, version }) => {
     try {
-      if (accepted) sessionStorage.setItem('qa-review-terms', '2026-10-20');
+      if (accepted) sessionStorage.setItem('qa-review-terms', version);
       localStorage.setItem('hasSeenReviewTour', 'true');
       localStorage.setItem('qa-review-analytics', 'necessary');
       localStorage.setItem('cv-preferred-lang', 'en');
     } catch (e) { /* storage is optional */ }
-  }, terms);
+  }, { accepted: terms, version: TERMS });
   await page.route(/\/news\?/, (route) => route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ items }) }));
   await page.route(/ipwho\.is/, (route) => route.fulfill({ contentType: 'application/json', body: '{"success":false}' }));
 }

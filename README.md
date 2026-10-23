@@ -46,6 +46,16 @@ The same cases the public suites cover, runnable in the browser against an ifram
 * **Observer** sits under the live page. It watches for a frozen page, explains a failed check, and checks that the report is on screen. It does not mark a case passed or failed. A connected model can write that note. Without one, the note stays structural.
 * A lab tour (`hasSeenLabTour`) walks the catalog, filters, scripts, language, suite repo, sprint studio, indicators, pace, watch or background, which runners, run, the live page, the native runner logs, the observer, the report file, the dashboard, and how to open the tour again. A pulse marks each step. **Live system under test** plays a 4-second clip of checks turning green.
 
+### QA-lab URL Review (`qa-review.html`)
+
+Sign in, give a public https address, and the review analyzes up to 20 pages of that site: SEO, AI search, analytics, security, accessibility, speed, mail setup (MX, SPF, DMARC), the certificate, the domain's registration (RDAP), and Google Safe Browsing. Bot-protected pages are opened in a headless Chrome in Belgium (`europe-west1`). The report proposes test cases and scripts for 20 frameworks, in six languages.
+
+* **Pages:** `qa-review.html` and its generated language pages (`qa-review-es|pt|de|fr|it.html`, built by `scripts/build-review-langs.py`), the guide `qa-review-guide.html`, privacy and disclaimers `qa-review-legal.html`, and the signed-in account page `qa-review-account.html` (not indexed).
+* **Sign-in:** email (a 6-digit code or a link, 15 minutes, same device), Google, Microsoft, GitHub, Yahoo, and X. `REVIEW_SIGN_IN_PROVIDERS` in the functions environment lists the providers that are switched on; a provider also needs its OAuth keys.
+* **Account page:** the signed-in holder's reviews, reports, and sign-in details.
+* **Live Reports:** `.github/workflows/auto-live-reports.yml` publishes new requested reviews daily to `assets/live-reports/`, unless the asker ticked "Don't publish this review", then regenerates the site count in `llms.txt`, the review pages, and `llms-full.txt` with `scripts/build-llms-full.py` (`--check` fails when they are stale).
+* **Facebook:** `.github/workflows/facebook-page.yml` posts the Facebook Page queue daily.
+
 ### Admin panel (`admin.html`)
 
 * **Firebase Authentication** (email/password). Login sits on the CV, studio, and lab toolbars and opens this page. The page is `noindex` and omitted from `sitemap.xml`. `robots.txt` disallows `/admin.html`, `/cypress/`, and `/tests/`.

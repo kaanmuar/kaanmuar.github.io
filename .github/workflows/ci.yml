@@ -1,6 +1,7 @@
 # .github/workflows/ci.yml
 # Merges are gated by Lint Code, url-review-unit, and playwright (branch ruleset on main).
 # Cypress, Robot, load, and the native catalogs report but do not block a merge.
+# The Cypress catalog runs on pushes to main and manual runs, not on pull requests.
 
 name: E2E and Visual Tests
 
@@ -78,15 +79,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - group: catalog
-            spec: cypress/e2e/catalog_spec.cy.js
-          - group: cv
-            spec: cypress/e2e/cv_spec.cy.js,cypress/e2e/admin_spec.cy.js
-          - group: competency
-            spec: cypress/e2e/competency_spec.cy.js,cypress/e2e/mobile_spec.cy.js,cypress/e2e/a11y_spec.cy.js
-          - group: lab
-            spec: cypress/e2e/qa_lab_spec.cy.js,cypress/e2e/security_spec.cy.js,cypress/e2e/simulator_spec.cy.js
+        # The catalog repeats the 86 checks the playwright job runs and takes about 20 minutes, so pull requests skip it.
+        group: ${{ fromJSON(github.event_name == 'pull_request' && '["cv","competency","lab"]' || '["catalog","cv","competency","lab"]') }}
+    env:
+      CYPRESS_SPECS: >-
+        {"catalog": "cypress/e2e/catalog_spec.cy.js",
+         "cv": "cypress/e2e/cv_spec.cy.js,cypress/e2e/admin_spec.cy.js",
+         "competency": "cypress/e2e/competency_spec.cy.js,cypress/e2e/mobile_spec.cy.js,cypress/e2e/a11y_spec.cy.js",
+         "lab": "cypress/e2e/qa_lab_spec.cy.js,cypress/e2e/security_spec.cy.js,cypress/e2e/simulator_spec.cy.js"}
     name: cypress (${{ matrix.group }})
     steps:
       - name: Check out repository
@@ -109,7 +109,7 @@ jobs:
           for _ in $(seq 1 30); do curl -sf http://127.0.0.1:8765/index.html > /dev/null && exit 0; sleep 1; done
           cat /tmp/static-server.log; exit 1
       - name: Run Cypress tests
-        run: npx cypress run --spec "${{ matrix.spec }}"
+        run: npx cypress run --spec "${{ fromJSON(env.CYPRESS_SPECS)[matrix.group] }}"
         continue-on-error: true
       - name: Upload Cypress report
         if: always()

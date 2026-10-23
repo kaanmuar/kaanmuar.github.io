@@ -4,13 +4,16 @@
    Reads previews/insights-test/<report>-current.json (never served, never committed) and writes
    trimmed, public-safe copies to assets/live-reports/<id>.json plus an index.json manifest with tags.
 
-     node scripts/build-live-reports.js                 # runs.js + every runs-100.js id whose report exists
+     node scripts/build-live-reports.js                 # every id in RUN_FILES whose report exists
      node scripts/build-live-reports.js govuk bbc nasa  # only these ids
      node scripts/build-live-reports.js --check         # exit 1 if a listed report is missing
 
-   Ids and the verified headline copy come from scripts/tips-studio/runs.js and runs-100.js. Those files
-   are read as text and evaluated in a sandbox, so their own report reads never run here. Tags come from
-   the report itself, plus the small curated map below (sector, organization type, city, country). */
+   Ids and the verified headline copy come from scripts/tips-studio/runs.js, runs-100.js and the
+   runs-3/{worldwide,national,regional,local}.js scope files. Only their `const RUNS = [` or
+   `module.exports = [` array is read as text and evaluated in a sandbox, so their own report reads
+   never run here. Tags come from
+   the report itself, plus the small curated map below (sector, organization type, city, country).
+   Reports from user reviews (series "auto") are added by scripts/auto-live-reports.js and kept here. */
 
 const fs = require("fs");
 const path = require("path");
@@ -21,7 +24,11 @@ const REPORTS = path.join(ROOT, "previews/insights-test");
 const OUT = path.join(ROOT, "assets/live-reports");
 const RUN_FILES = [
   { file: "scripts/tips-studio/runs.js", series: "runs-2026-10" },
-  { file: "scripts/tips-studio/runs-100.js", series: "runs-100" }
+  { file: "scripts/tips-studio/runs-100.js", series: "runs-100" },
+  { file: "scripts/tips-studio/runs-3/worldwide.js", series: "runs-3" },
+  { file: "scripts/tips-studio/runs-3/national.js", series: "runs-3" },
+  { file: "scripts/tips-studio/runs-3/regional.js", series: "runs-3" },
+  { file: "scripts/tips-studio/runs-3/local.js", series: "runs-3" }
 ];
 const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
 
@@ -51,7 +58,8 @@ const SECTORS = {
   standards: "Web standards",
   sports: "Sports & recreation",
   apps: "Apps & delivery",
-  rights: "Human & digital rights"
+  rights: "Human & digital rights",
+  environment: "Environment & climate"
 };
 
 const ORGS = {
@@ -213,23 +221,159 @@ const META = {
   transmetro: ["Transmetro", "transit", "stateco", "Barranquilla", "CO"],
   uis: ["Universidad Industrial de Santander", "highered", "university", "Bucaramanga", "CO"],
   uninorte: ["Universidad del Norte", "highered", "university", "Barranquilla", "CO"],
-  unhcr: ["UNHCR", "humanitarian", "igo", "Geneva", "CH"]
+  unhcr: ["UNHCR", "humanitarian", "igo", "Geneva", "CH"],
+  // Series three (runs-3): worldwide
+  ilo: ["International Labour Organization", "international", "igo", "Geneva", "CH"],
+  wto: ["World Trade Organization", "international", "igo", "Geneva", "CH"],
+  wmo: ["World Meteorological Organization", "environment", "igo", "Geneva", "CH"],
+  itu: ["ITU", "telecom", "igo", "Geneva", "CH"],
+  ipcc: ["IPCC", "environment", "igo", "Geneva", "CH"],
+  unwomen: ["UN Women", "rights", "igo", "New York", "US"],
+  ietf: ["IETF", "standards", "nonprofit", "", ""],
+  postgresql: ["PostgreSQL", "opensource", "project", "", ""],
+  golang: ["Go", "opensource", "project", "", ""],
+  typescript: ["TypeScript", "devdocs", "project", "", ""],
+  vuejs: ["Vue.js", "devdocs", "project", "", ""],
+  unicode: ["Unicode", "standards", "nonprofit", "Mountain View", "US"],
+  blender: ["Blender", "opensource", "nonprofit", "Amsterdam", "NL"],
+  openstreetmap: ["OpenStreetMap", "knowledge", "project", "", ""],
+  gitlab: ["GitLab", "opensource", "company", "San Francisco", "US"],
+  shopify: ["Shopify", "retail", "company", "Ottawa", "CA"],
+  figma: ["Figma", "apps", "company", "San Francisco", "US"],
+  oneworld: ["oneworld", "airline", "company", "New York", "US"],
+  worldathletics: ["World Athletics", "sports", "nonprofit", "Monaco", "MC"],
+  fiba: ["FIBA", "sports", "nonprofit", "Mies", "CH"],
+  wipo: ["WIPO", "international", "igo", "Geneva", "CH"],
+  oxfam: ["Oxfam International", "humanitarian", "nonprofit", "Nairobi", "KE"],
+  ted: ["TED", "media", "nonprofit", "New York", "US"],
+  icann: ["ICANN", "infrastructure", "nonprofit", "Los Angeles", "US"],
+  gavi: ["Gavi, the Vaccine Alliance", "health", "nonprofit", "Geneva", "CH"],
+  scouts: ["World Organization of the Scout Movement", "education", "nonprofit", "Kuala Lumpur", "MY"],
+  globalfund: ["The Global Fund", "health", "nonprofit", "Geneva", "CH"],
+  fide: ["FIDE", "sports", "nonprofit", "Lausanne", "CH"],
+  isoc: ["Internet Society", "infrastructure", "nonprofit", "Reston", "US"],
+  libreoffice: ["LibreOffice", "opensource", "project", "", ""],
+  msc: ["Marine Stewardship Council", "environment", "nonprofit", "London", "GB"],
+  // Series three: national
+  policiaco: ["Policía Nacional de Colombia", "government", "agency", "Bogotá", "CO"],
+  gobmx: ["gob.mx", "government", "national", "Mexico City", "MX"],
+  fiscaliaco: ["Fiscalía General de la Nación", "government", "agency", "Bogotá", "CO"],
+  argentinagob: ["Argentina.gob.ar", "government", "national", "Buenos Aires", "AR"],
+  igac: ["IGAC", "government", "agency", "Bogotá", "CO"],
+  gobpe: ["gob.pe", "government", "national", "Lima", "PE"],
+  ramajudicial: ["Rama Judicial", "government", "agency", "Bogotá", "CO"],
+  gobec: ["gob.ec", "government", "national", "Quito", "EC"],
+  corteconst: ["Corte Constitucional", "government", "agency", "Bogotá", "CO"],
+  gobes: ["Punto de Acceso General", "government", "national", "Madrid", "ES"],
+  superfinanciera: ["Superintendencia Financiera", "banking", "agency", "Bogotá", "CO"],
+  govbr: ["GOV.BR", "government", "national", "Brasília", "BR"],
+  supersociedades: ["Superintendencia de Sociedades", "government", "agency", "Bogotá", "CO"],
+  canadaca: ["Canada.ca", "government", "national", "Ottawa", "CA"],
+  fnaco: ["Fondo Nacional del Ahorro", "banking", "stateco", "Bogotá", "CO"],
+  mygovau: ["myGov", "government", "national", "Canberra", "AU"],
+  insco: ["Instituto Nacional de Salud", "health", "agency", "Bogotá", "CO"],
+  govtnz: ["Govt.nz", "government", "national", "Wellington", "NZ"],
+  invima: ["Invima", "health", "agency", "Bogotá", "CO"],
+  eestiee: ["Eesti.ee", "government", "national", "Tallinn", "EE"],
+  ideam: ["IDEAM", "environment", "agency", "Bogotá", "CO"],
+  govsg: ["gov.sg", "government", "national", "Singapore", "SG"],
+  alkosto: ["Alkosto", "retail", "company", "Bogotá", "CO"],
+  suomifi: ["Suomi.fi", "government", "national", "Helsinki", "FI"],
+  caracoltv: ["Caracol Televisión", "media", "company", "Bogotá", "CO"],
+  usagov: ["USAGov", "government", "national", "Washington, D.C.", "US"],
+  isaco: ["ISA", "energy", "company", "Medellín", "CO"],
+  defensoriaco: ["Defensoría del Pueblo", "rights", "agency", "Bogotá", "CO"],
+  mincit: ["MinCIT", "government", "national", "Bogotá", "CO"],
+  anico: ["Agencia Nacional de Infraestructura", "transit", "agency", "Bogotá", "CO"],
+  // Series three: regional
+  valle: ["Gobernación del Valle del Cauca", "government", "regional", "Cali", "CO"],
+  cundinamarca: ["Gobernación de Cundinamarca", "government", "regional", "Bogotá", "CO"],
+  atlantico: ["Gobernación del Atlántico", "government", "regional", "Barranquilla", "CO"],
+  santander: ["Gobernación de Santander", "government", "regional", "Bucaramanga", "CO"],
+  bolivar: ["Gobernación de Bolívar", "government", "regional", "Cartagena", "CO"],
+  narino: ["Gobernación de Nariño", "government", "regional", "Pasto", "CO"],
+  risaralda: ["Gobernación de Risaralda", "government", "regional", "Pereira", "CO"],
+  caldas: ["Gobernación de Caldas", "government", "regional", "Manizales", "CO"],
+  tolima: ["Gobernación del Tolima", "government", "regional", "Ibagué", "CO"],
+  cauca: ["Gobernación del Cauca", "government", "regional", "Popayán", "CO"],
+  cvc: ["CVC", "environment", "agency", "Cali", "CO"],
+  cornare: ["Cornare", "environment", "agency", "El Santuario", "CO"],
+  quindio: ["Gobierno del Quindío", "government", "regional", "Armenia", "CO"],
+  uniatlantico: ["Universidad del Atlántico", "highered", "university", "Puerto Colombia", "CO"],
+  oas: ["Organization of American States", "international", "igo", "Washington, D.C.", "US"],
+  comunidadandina: ["Comunidad Andina", "international", "igo", "Lima", "PE"],
+  caricom: ["CARICOM", "international", "igo", "Georgetown", "GY"],
+  africanunion: ["African Union", "international", "igo", "Addis Ababa", "ET"],
+  bcie: ["BCIE", "banking", "igo", "Tegucigalpa", "HN"],
+  caribank: ["Caribbean Development Bank", "banking", "igo", "St. Michael", "BB"],
+  gencat: ["Generalitat de Catalunya", "government", "regional", "Barcelona", "ES"],
+  bayern: ["Freistaat Bayern", "government", "regional", "Munich", "DE"],
+  cagov: ["CA.gov", "government", "regional", "Sacramento", "US"],
+  ontario: ["Ontario.ca", "government", "regional", "Toronto", "CA"],
+  quebec: ["Québec.ca", "government", "regional", "Québec City", "CA"],
+  gba: ["Provincia de Buenos Aires", "government", "regional", "La Plata", "AR"],
+  jalisco: ["Gobierno de Jalisco", "government", "regional", "Guadalajara", "MX"],
+  victoria: ["Victorian Government", "government", "regional", "Melbourne", "AU"],
+  nsw: ["NSW Government", "government", "regional", "Sydney", "AU"],
+  // Series three: local
+  armenia: ["Alcaldía de Armenia", "government", "city", "Armenia", "CO"],
+  ibague: ["Alcaldía de Ibagué", "government", "city", "Ibagué", "CO"],
+  neiva: ["Alcaldía de Neiva", "government", "city", "Neiva", "CO"],
+  villavicencio: ["Alcaldía de Villavicencio", "government", "city", "Villavicencio", "CO"],
+  pasto: ["Alcaldía de Pasto", "government", "city", "Pasto", "CO"],
+  popayan: ["Alcaldía de Popayán", "government", "city", "Popayán", "CO"],
+  tunja: ["Alcaldía de Tunja", "government", "city", "Tunja", "CO"],
+  cucuta: ["Alcaldía de Cúcuta", "government", "city", "Cúcuta", "CO"],
+  monteria: ["Alcaldía de Montería", "government", "city", "Montería", "CO"],
+  riohacha: ["Alcaldía Distrital de Riohacha", "government", "city", "Riohacha", "CO"],
+  soacha: ["Alcaldía de Soacha", "government", "city", "Soacha", "CO"],
+  bello: ["Alcaldía de Bello", "government", "city", "Bello", "CO"],
+  itagui: ["Alcaldía de Itagüí", "government", "city", "Itagüí", "CO"],
+  palmira: ["Alcaldía de Palmira", "government", "city", "Palmira", "CO"],
+  sdp: ["Secretaría Distrital de Planeación", "government", "city", "Bogotá", "CO"],
+  ambientebogota: ["Secretaría Distrital de Ambiente", "environment", "city", "Bogotá", "CO"],
+  uaesp: ["UAESP", "energy", "city", "Bogotá", "CO"],
+  canalcapital: ["Canal Capital", "media", "broadcaster", "Bogotá", "CO"],
+  metroplus: ["Metroplús", "transit", "stateco", "Medellín", "CO"],
+  madrid: ["Ayuntamiento de Madrid", "government", "city", "Madrid", "ES"],
+  barcelona: ["Ajuntament de Barcelona", "government", "city", "Barcelona", "ES"],
+  buenosaires: ["Buenos Aires Ciudad", "government", "city", "Buenos Aires", "AR"],
+  munistgo: ["Ilustre Municipalidad de Santiago", "government", "city", "Santiago", "CL"],
+  quito: ["Municipio de Quito", "government", "city", "Quito", "EC"],
+  paris: ["Ville de Paris", "government", "city", "Paris", "FR"],
+  nyc: ["NYC.gov", "government", "city", "New York", "US"],
+  tfl: ["Transport for London", "transit", "agency", "London", "GB"],
+  montevideo: ["Intendencia de Montevideo", "government", "city", "Montevideo", "UY"],
+  inder: ["Inder Medellín", "sports", "agency", "Medellín", "CO"],
+  bibliotecasmedellin: ["Bibliotecas Públicas de Medellín", "culture", "city", "Medellín", "CO"],
+  idpc: ["Instituto Distrital de Patrimonio Cultural", "culture", "agency", "Bogotá", "CO"],
+  culturabogota: ["Secretaría de Cultura, Recreación y Deporte", "culture", "city", "Bogotá", "CO"],
+  berlin: ["Berlin.de", "government", "city", "Berlin", "DE"],
+  wien: ["Stadt Wien", "government", "city", "Vienna", "AT"]
 };
 
-const REGIONS = { CO: "Latin America", CL: "Latin America", US: "North America", GB: "Europe", FR: "Europe", DE: "Europe", NL: "Europe", ES: "Europe", IT: "Europe", CH: "Europe", QA: "Middle East" };
+const REGIONS = {
+  CO: "Latin America", CL: "Latin America", MX: "Latin America", AR: "Latin America", PE: "Latin America", EC: "Latin America", BR: "Latin America", UY: "Latin America", HN: "Latin America",
+  US: "North America", CA: "North America",
+  GB: "Europe", FR: "Europe", DE: "Europe", NL: "Europe", ES: "Europe", IT: "Europe", CH: "Europe", EE: "Europe", FI: "Europe", AT: "Europe", MC: "Europe",
+  AU: "Asia-Pacific", NZ: "Asia-Pacific", SG: "Asia-Pacific", MY: "Asia-Pacific",
+  KE: "Africa", ET: "Africa",
+  GY: "Caribbean", BB: "Caribbean",
+  QA: "Middle East"
+};
 
 // Headline tags from the run copy, folded into the test types a reader can filter on.
 const FOCUS = {
   seo: ["SEO", "MetaDescription", "SERP", "Sitemap", "Canonical", "Titles", "RobotsTxt", "BrokenLinks", "Hreflang"],
   geo: ["GEO", "AISearch", "JavaScriptSEO"],
   schema: ["StructuredData"],
-  a11y: ["Accessibility", "A11y", "MobileUX", "Forms", "Headings", "Lang", "Zoom", "Landmarks", "Keyboard"],
-  security: ["WebSecurity", "HSTS", "HTTPS", "CSP", "HTTPHeaders", "Clickjacking", "Headers", "TLS", "Redirects", "MixedContent", "PermissionsPolicy"],
+  a11y: ["Accessibility", "A11y", "MobileUX", "Forms", "Headings", "Lang", "Zoom", "Landmarks", "Keyboard", "EAA", "Contrast", "ARIA"],
+  security: ["WebSecurity", "HSTS", "HTTPS", "CSP", "HTTPHeaders", "Clickjacking", "Headers", "TLS", "Redirects", "MixedContent", "PermissionsPolicy", "SafeBrowsing", "Domains", "EmailSecurity", "MTASTS", "TLSRPT", "Dependencies"],
   performance: ["WebPerformance", "PageWeight", "CoreWebVitals", "LCP", "INP", "TTFB"],
   analytics: ["Analytics", "GA4", "Measurement", "Privacy"],
   i18n: ["i18n", "Multilingual"]
 };
-const FOCUS_LABELS = { seo: "SEO", geo: "GEO · AI search", schema: "Structured data", a11y: "Accessibility", security: "Security headers", performance: "Performance · Core Web Vitals", analytics: "Analytics & consent", i18n: "Internationalization" };
+const FOCUS_LABELS = { seo: "SEO", geo: "GEO · AI search", schema: "Structured data", a11y: "Accessibility", security: "Security checks", performance: "Performance · Core Web Vitals", analytics: "Analytics & consent", i18n: "Internationalization" };
 
 const SERVER_NAMES = [
   [/^nginx/i, "nginx"], [/^openresty/i, "OpenResty"], [/^apache\b/i, "Apache"], [/^ats\//i, "Apache Traffic Server"],
@@ -241,7 +385,8 @@ const TECH_GROUPS = new Set(["Analytics", "Fonts", "Edge", "Library", "CDN", "CS
 
 function loadRuns(file) {
   const src = fs.readFileSync(path.join(ROOT, file), "utf8");
-  const start = src.indexOf("const RUNS = [");
+  let start = src.indexOf("const RUNS = [");
+  if (start < 0) start = src.indexOf("module.exports = [");
   if (start < 0) return [];
   const open = src.indexOf("[", start);
   let depth = 0;
@@ -262,8 +407,19 @@ function loadRuns(file) {
   return vm.runInNewContext("(" + src.slice(open, end + 1) + ")", Object.create(null), { timeout: 1000 });
 }
 
+// Saved snapshots keep the engine copy of the day they ran; pages are analyzed, not read.
+function analyzedWording(text) {
+  return text
+    .replace(/\bPartial read:/g, "Partial analysis:")
+    .replace(/\b(pages?|alternate)( that)? (was|were) read\b/g, "$1$2 $3 analyzed")
+    .replace(/\bwere read([.;])/g, "were analyzed$1")
+    .replace(/\b(pages?) read\b(?! well| without)/g, "$1 analyzed")
+    .replace(/\bthis read\b/g, "this review")
+    .replace(/\b([aA]|[oO]ne|The) public read\b/g, "$1 public analysis");
+}
+
 function scrub(text, max) {
-  let value = String(text || "")
+  let value = analyzedWording(String(text || ""))
     .replace(/mailto:/gi, "")
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[address hidden]")
     .replace(/\s+/g, " ")
@@ -371,11 +527,10 @@ function pickWorks(ins) {
 }
 
 function build(run, series) {
-  const file = path.join(REPORTS, run.report + "-current.json");
-  const report = JSON.parse(fs.readFileSync(file, "utf8"));
+  const report = run.data || JSON.parse(fs.readFileSync(path.join(REPORTS, run.report + "-current.json"), "utf8"));
   const ins = report.insights || {};
   const score = ins.score;
-  const meta = META[run.id] || [report.host, "", "", "", ""];
+  const meta = META[run.id] || run.meta || [report.host, "", "", "", ""];
   const [name, sector, org, city, country] = meta;
   const psi = report.pagespeed || {};
   const geo = ins.geo || {};
@@ -411,7 +566,7 @@ function build(run, series) {
   analyticsTools.forEach((t) => tags.push({ g: "analytics", k: t, t }));
   consentTools.forEach((t) => tags.push({ g: "consent", k: t, t }));
   if (obs.lang) tags.push({ g: "lang", k: obs.lang, t: "lang=" + obs.lang });
-  tags.push({ g: "pages", k: String(pages), t: pages + (pages === 1 ? " page read" : " pages read") });
+  tags.push({ g: "pages", k: String(pages), t: pages + (pages === 1 ? " page analyzed" : " pages analyzed") });
   tags.push({ g: "tests", k: "cases", t: ((report.counts && report.counts.cases) || 0) + " proposed cases · " + Object.keys(layers).length + " test types" });
 
   const fix = (ins.findings || [])
@@ -497,10 +652,47 @@ function ranks(items) {
     c.rank = r;
     item.detail.rank = r;
     if (r.overall.rank <= 10) c.tags.splice(1, 0, { g: "rank", k: "top10", t: "Top 10 of " + items.length });
-    if (peers.length >= 3 && r.sector.rank === 1) c.tags.splice(1, 0, { g: "rank", k: "sector-1", t: "#1 in " + SECTORS[c.sector] });
+    if (c.sector && peers.length >= 3 && r.sector.rank === 1) c.tags.splice(1, 0, { g: "rank", k: "sector-1", t: "#1 in " + SECTORS[c.sector] });
     leads.forEach((a) => c.tags.splice(1, 0, { g: "rank", k: "lead-" + a, t: "Best " + a + " in the series" }));
     item.detail.tags = c.tags;
   }
+}
+
+// Published reports as build() items, rank tags dropped so ranks() can place them again.
+function existingItems(keep) {
+  let index = { reports: [] };
+  try { index = JSON.parse(fs.readFileSync(path.join(OUT, "index.json"), "utf8")); } catch (error) { return []; }
+  const items = [];
+  for (const card of index.reports || []) {
+    if (keep && !keep(card)) continue;
+    let detail;
+    try { detail = JSON.parse(fs.readFileSync(path.join(OUT, card.id + ".json"), "utf8")); } catch (error) { continue; }
+    const tags = (detail.tags || []).filter((t) => t.g !== "rank");
+    items.push({ card: Object.assign({}, card, { tags }), detail: Object.assign(detail, { tags }) });
+  }
+  return items;
+}
+
+function writeAll(items) {
+  ranks(items);
+  fs.mkdirSync(OUT, { recursive: true });
+  const keep = new Set(["index.json"].concat(items.map((x) => x.card.id + ".json")));
+  for (const name of fs.readdirSync(OUT)) {
+    if (name.endsWith(".json") && !keep.has(name)) fs.unlinkSync(path.join(OUT, name));
+  }
+  for (const item of items) fs.writeFileSync(path.join(OUT, item.card.id + ".json"), JSON.stringify(item.detail) + "\n");
+
+  const avg = (fn) => Math.round(items.reduce((s, x) => s + fn(x.card), 0) / items.length);
+  const index = {
+    version: 1,
+    generatedAt: new Date().toISOString().slice(0, 10),
+    count: items.length,
+    averages: { overall: avg((c) => c.overall), areas: Object.fromEntries(AREAS.map((a) => [a, avg((c) => c.areas[a])])) },
+    sectors: SECTORS,
+    focus: FOCUS_LABELS,
+    reports: items.map((x) => Object.assign({}, x.card, { tags: cardTags(x.card.tags) }))
+  };
+  fs.writeFileSync(path.join(OUT, "index.json"), JSON.stringify(index) + "\n");
 }
 
 // The manifest keeps what a card and the filters show; the full tag list lives in <id>.json.
@@ -535,27 +727,13 @@ function main() {
     process.exit(missing.length ? 1 : 0);
   }
   if (!items.length) throw new Error("No reports found under " + REPORTS);
-  ranks(items);
-
-  fs.mkdirSync(OUT, { recursive: true });
-  const keep = new Set(["index.json"].concat(items.map((x) => x.card.id + ".json")));
-  for (const name of fs.readdirSync(OUT)) {
-    if (name.endsWith(".json") && !keep.has(name)) fs.unlinkSync(path.join(OUT, name));
-  }
-  for (const item of items) fs.writeFileSync(path.join(OUT, item.card.id + ".json"), JSON.stringify(item.detail) + "\n");
-
-  const avg = (fn) => Math.round(items.reduce((s, x) => s + fn(x.card), 0) / items.length);
-  const index = {
-    version: 1,
-    generatedAt: new Date().toISOString().slice(0, 10),
-    count: items.length,
-    averages: { overall: avg((c) => c.overall), areas: Object.fromEntries(AREAS.map((a) => [a, avg((c) => c.areas[a])])) },
-    sectors: SECTORS,
-    focus: FOCUS_LABELS,
-    reports: items.map((x) => Object.assign({}, x.card, { tags: cardTags(x.card.tags) }))
-  };
-  fs.writeFileSync(path.join(OUT, "index.json"), JSON.stringify(index) + "\n");
+  // User reviews come from the daily job (scripts/auto-live-reports.js), never from local snapshots.
+  const built = new Set(items.map((x) => x.card.host));
+  items.push(...existingItems((card) => card.series === "auto" && !built.has(card.host)));
+  writeAll(items);
   console.log("wrote " + items.length + " live reports to " + path.relative(ROOT, OUT) + (missing.length ? " (missing: " + missing.join(", ") + ")" : ""));
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { AREAS, REGIONS, REPORTS, RUN_FILES, loadRuns, build, existingItems, writeAll, scrub };

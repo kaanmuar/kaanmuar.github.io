@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <title>QA-lab URL Review: SEO, GEO und Testfälle aus einer URL</title>
     <meta name="description" content="Eine öffentliche https-Seite, geprüft und bewertet nach SEO, KI-Suche (GEO), Analytics, Sicherheit, Barrierefreiheit und Tempo, mit Testfällen für 20 Frameworks.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
@@ -28,7 +28,7 @@
     <meta property="og:locale:alternate" content="it_IT">
     <meta property="og:url" content="https://carlosandmunoz.com/qa-review-de.html">
     <meta property="og:title" content="Die Seite spricht bereits. · QA-lab URL Review">
-    <meta property="og:description" content="Eine öffentliche https-Prüfung, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance, mit einer Liste der dringendsten Korrekturen und vorgeschlagenen QA-Fällen mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Andere Spezialwerkzeuge werden genannt, wenn sie zutreffen, und nicht gestartet. Sechs Sprachen.">
+    <meta property="og:description" content="Eine öffentliche https-Prüfung, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance, mit einer Liste der dringendsten Korrekturen und vorgeschlagenen QA-Fällen mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Außerdem prüft sie Chat-Widgets, Rechtsseiten, veraltete Bibliotheken, Safe Browsing, den Domain-Ablauf und die E-Mail-Sicherheit. Anmeldung per E-Mail oder mit einem bestehenden Konto. Andere Spezialwerkzeuge werden genannt, wenn sie zutreffen, und nicht gestartet. Sechs Sprachen.">
     <meta property="og:image" content="https://carlosandmunoz.com/assets/qa-review-share.png?v=20261012">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
@@ -37,7 +37,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@qalaburlreview">
     <meta name="twitter:title" content="Die öffentliche Seite prüfen. Die Fälle vorschlagen. · QA-lab URL Review">
-    <meta name="twitter:description" content="Eine öffentliche Prüfung einer https-Website, eine Technologieliste und vorgeschlagene QA-Fälle. Eine abgeschlossene Prüfung pro Browser und Netzwerk. Der Bericht wird einmal angezeigt.">
+    <meta name="twitter:description" content="Eine öffentliche Prüfung einer https-Website, eine Technologieliste und vorgeschlagene QA-Fälle. Anmelden, dann eine enthaltene Prüfung pro Browser und Netzwerk. Läufe mit Anmeldung stehen auf Ihrer Kontoseite.">
     <meta name="twitter:image" content="https://carlosandmunoz.com/assets/qa-review-share.png?v=20261012">
     <meta name="twitter:image:alt" content="QA-lab URL Review. The page is already talking.">
     <link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review.html">
@@ -58,28 +58,38 @@
                 "url": "https://carlosandmunoz.com/qa-review-de.html",
                 "applicationCategory": "DeveloperApplication",
                 "operatingSystem": "Web",
-                "description": "Submit a public https URL. The review reads the page, names technologies and linked pages, and proposes test cases, with starting scripts, for Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6. It does not run them.",
+                "description": "Melden Sie sich an und reichen Sie eine öffentliche https-URL ein. Die Prüfung analysiert die Seite, nennt Technologien und verlinkte Seiten und schlägt Testfälle mit Startskripten vor, für Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling und k6. Sie führt sie nicht aus.",
                 "featureList": [
-                    "Public https read of a site",
-                    "Technology and linked-page summary",
-                    "Health score from 0 to 100 across SEO, GEO, analytics, security, accessibility, and performance",
-                    "Every check marked fails now, at risk, passes, or needs a person, with evidence, a fix, and a fix-first rank",
-                    "A headless browser pass: tracking before and after Reject, axe-core, phone and tablet layout, lab paint, and screenshots",
-                    "Google result and share-card previews",
-                    "AI crawler access matrix and the text AI search sees without JavaScript",
-                    "Analytics tag, consent, and campaign-link checks",
-                    "Interactive map of the pages read",
-                    "Proposed cases in 21 kinds, including GEO",
-                    "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6",
-                    "Starting automation scripts for every chosen framework",
-                    "GitHub Actions workflow and a fix kit with header files, a Report-Only CSP, and structured data, llms.txt, security.txt, and DNS drafts",
-                    "Lighthouse and real-user Core Web Vitals through PageSpeed Insights",
-                    "BrowserStack, Applitools, Percy, Provar, and Copado named when they apply",
-                    "Public signals and public write-ups",
-                    "Live review log and a stop control",
-                    "News from the country of the connection, in the page language",
-                    "Rules for a public read and a list of proposed cases",
-                    "English, Spanish, Portuguese, German, French, and Italian"
+                    "Öffentliche https-Analyse einer Website",
+                    "Übersicht über Technologien und verlinkte Seiten",
+                    "Gesundheitswert von 0 bis 100 für SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance",
+                    "Jede Prüfung markiert als scheitert jetzt, gefährdet, besteht oder braucht einen Menschen, mit Beleg, Korrektur und Rang in der Korrekturliste",
+                    "Ein Headless-Browser-Durchlauf: Tracking vor und nach Ablehnen, axe-core, Telefon- und Tablet-Layout, Lab-Paint und Screenshots",
+                    "Vorschau des Google-Ergebnisses und der Teilen-Karte",
+                    "Zugriffsmatrix für KI-Crawler und der Text, den KI-Suchen ohne JavaScript sehen",
+                    "Prüfung von Analytics-Tags, Einwilligung und Kampagnenlinks",
+                    "Prüfung von Chat-Widgets und KI-Chatbots: Einwilligung, Gewicht und Tastaturzugang",
+                    "Prüfung von Barrierefreiheitserklärung, Impressum und Datenschutzseite",
+                    "Veraltete Front-End-Bibliotheken",
+                    "Google-Safe-Browsing-Status über Web Risk",
+                    "Ablauf der Domain und Transfersperre über RDAP",
+                    "E-Mail-Prüfungen für MTA-STS, TLS-RPT und BIMI",
+                    "Geschätzter CO₂-Ausstoß pro Besuch",
+                    "Bot-geschützte Websites werden in Headless Chrome analysiert",
+                    "Anmeldung per E-Mail oder mit einem bestehenden Konto: Google, Microsoft, GitHub, Yahoo oder X",
+                    "Öffentliche Bewertungen täglich als Live Reports veröffentlicht",
+                    "Interaktive Karte der analysierten Seiten",
+                    "Vorgeschlagene Fälle in 21 Arten, einschließlich GEO",
+                    "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling und k6",
+                    "Start-Automatisierungsskripte für jedes gewählte Framework",
+                    "GitHub-Actions-Workflow und ein Korrektur-Kit mit Header-Dateien, einer Report-Only-CSP und Entwürfen für strukturierte Daten, llms.txt, security.txt und DNS",
+                    "Lighthouse und Core Web Vitals echter Nutzer über PageSpeed Insights",
+                    "BrowserStack, Applitools, Percy, Provar und Copado werden genannt, wenn sie zutreffen",
+                    "Öffentliche Signale und öffentliche Beiträge",
+                    "Live-Prüfprotokoll und eine Stopp-Schaltfläche",
+                    "Nachrichten aus dem Land der Verbindung, in der Sprache der Seite",
+                    "Regeln für eine öffentliche Analyse und eine Liste vorgeschlagener Fälle",
+                    "Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch"
                 ],
                 "inLanguage": ["en", "es", "pt", "de", "fr", "it"],
                 "areaServed": { "@type": "Place", "name": "Worldwide" },
@@ -95,7 +105,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. A tactical read",
-                        "description": "QA-lab URL Review reads a public page and describes it back to you. This film shows a tactical read of one public URL.",
+                        "description": "QA-lab URL Review analyzes a public page and describes it back to you. This film shows a tactical analysis of one public URL.",
                         "inLanguage": "en",
                         "uploadDate": "2026-10-15T09:15:03+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/jW4T-qQK01E/hqdefault.jpg",
@@ -104,8 +114,8 @@
                     },
                     {
                         "@type": "VideoObject",
-                        "name": "QA-lab URL Review. The included first read",
-                        "description": "QA-lab URL Review reads a public page and describes it back to you. This film shows the included first read: twenty pages, two links deep.",
+                        "name": "QA-lab URL Review. The included first review",
+                        "description": "QA-lab URL Review analyzes a public page and describes it back to you. This film shows the included first review: twenty pages, two links deep.",
                         "inLanguage": "en",
                         "uploadDate": "2026-10-14T05:41:51+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/OKvR95YHAng/hqdefault.jpg",
@@ -115,7 +125,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Una lectura táctica",
-                        "description": "QA-lab URL Review lee una página pública y la describe de vuelta. Esta película muestra una lectura táctica de una URL pública.",
+                        "description": "QA-lab URL Review analiza una página pública y la describe de vuelta. Esta película muestra un análisis táctico de una URL pública.",
                         "inLanguage": "es",
                         "uploadDate": "2026-10-15T09:23:09+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/Cenj3l_0osA/hqdefault.jpg",
@@ -125,7 +135,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Recorrido",
-                        "description": "QA-lab URL Review lee una página pública y la describe de vuelta. Esta película recorre la página del producto.",
+                        "description": "QA-lab URL Review analiza una página pública y la describe de vuelta. Esta película recorre la página del producto.",
                         "inLanguage": "es",
                         "uploadDate": "2026-10-14T06:02:32+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/esqzA-0-jAY/hqdefault.jpg",
@@ -135,7 +145,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Uma leitura tática",
-                        "description": "QA-lab URL Review lê uma página pública e a descreve de volta. Este filme mostra uma leitura tática de um URL público.",
+                        "description": "QA-lab URL Review analisa uma página pública e a descreve de volta. Este filme mostra uma análise tática de um URL público.",
                         "inLanguage": "pt",
                         "uploadDate": "2026-10-15T09:28:11+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/GwLZ1WuLSpU/hqdefault.jpg",
@@ -145,7 +155,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. A primeira leitura incluída",
-                        "description": "QA-lab URL Review lê uma página pública e a descreve de volta. Este filme mostra a primeira leitura incluída: vinte páginas, dois links.",
+                        "description": "QA-lab URL Review analisa uma página pública e a descreve de volta. Este filme mostra a primeira revisão incluída: vinte páginas, dois links.",
                         "inLanguage": "pt",
                         "uploadDate": "2026-10-14T05:27:52+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/8VfjOBFUPwA/hqdefault.jpg",
@@ -155,7 +165,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Eine taktische Lesung",
-                        "description": "QA-lab URL Review liest eine öffentliche Seite und beschreibt sie zurück. Dieser Film zeigt eine taktische Lesung einer öffentlichen URL.",
+                        "description": "QA-lab URL Review prüft eine öffentliche Seite und beschreibt sie zurück. Dieser Film zeigt eine taktische Prüfung einer öffentlichen URL.",
                         "inLanguage": "de",
                         "uploadDate": "2026-10-15T09:34:37+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/AMIO6n_6Ok8/hqdefault.jpg",
@@ -165,7 +175,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. Die erste Lesung",
-                        "description": "QA-lab URL Review liest eine öffentliche Seite und beschreibt sie zurück. Dieser Film zeigt die enthaltene erste Lesung: zwanzig Seiten, zwei Links.",
+                        "description": "QA-lab URL Review prüft eine öffentliche Seite und beschreibt sie zurück. Dieser Film zeigt die enthaltene erste Prüfung: zwanzig Seiten, zwei Links.",
                         "inLanguage": "de",
                         "uploadDate": "2026-10-14T10:28:15+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/5Fv4tFAfQLU/hqdefault.jpg",
@@ -175,7 +185,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. La première lecture",
-                        "description": "QA-lab URL Review lit une page publique et la décrit. Ce film montre la première lecture incluse : vingt pages, deux liens.",
+                        "description": "QA-lab URL Review analyse une page publique et la décrit. Ce film montre la première analyse incluse : vingt pages, deux liens.",
                         "inLanguage": "fr",
                         "uploadDate": "2026-10-14T10:36:27+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/JpyBMIeXTL0/hqdefault.jpg",
@@ -185,7 +195,7 @@
                     {
                         "@type": "VideoObject",
                         "name": "QA-lab URL Review. La prima lettura",
-                        "description": "QA-lab URL Review legge una pagina pubblica e la descrive. Questo film mostra la prima lettura inclusa: venti pagine, due link.",
+                        "description": "QA-lab URL Review analizza una pagina pubblica e la descrive. Questo film mostra la prima revisione inclusa: venti pagine, due link.",
                         "inLanguage": "it",
                         "uploadDate": "2026-10-14T10:44:01+00:00",
                         "thumbnailUrl": "https://i.ytimg.com/vi/MiXooYDM-Uo/hqdefault.jpg",
@@ -218,7 +228,7 @@
                     "height": 512
                 },
                 "image": "https://carlosandmunoz.com/assets/qa-review-share.png",
-                "description": "QA-lab URL Review reads one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases for 20 frameworks.",
+                "description": "QA-lab URL Review prüft eine öffentliche https-Adresse, bewertet SEO, Sichtbarkeit in KI-Suchen, Analytics, Sicherheit, Barrierefreiheit und Performance und schlägt Testfälle für 20 Frameworks vor.",
                 "email": "qa@carlosandmunoz.com",
                 "founder": {
                     "@type": "Person",
@@ -232,7 +242,8 @@
                     "https://www.youtube.com/@qalaburlreview",
                     "https://dev.to/qalaburlreview",
                     "https://www.reddit.com/user/qalaburlreview/",
-                    "https://www.tiktok.com/@qalaburlreview"
+                    "https://www.tiktok.com/@qalaburlreview",
+                    "https://www.facebook.com/qalaburlreview"
                 ]
             },
             {
@@ -258,58 +269,74 @@
                 "mainEntity": [
                     {
                         "@type": "Question",
-                        "name": "What does QA-lab URL Review do?",
+                        "name": "Was macht QA-lab URL Review?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "It fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load."
+                            "text": "Sie melden sich auf dem Gerät an, von dem aus Sie die Prüfung starten, mit Ihrer E-Mail-Adresse oder einem bestehenden Konto (Google, Microsoft, GitHub, Yahoo oder X). Dann ruft QA-lab URL Review eine öffentliche https-Adresse ab, beschreibt die Antwort und schlägt Testfälle vor. Es führt diese Fälle nicht aus, meldet sich nicht auf Ihrer Website an, sendet keine Formulare und erzeugt keine Last."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Which tools can a review name?",
+                        "name": "Muss ich mich anmelden?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages, and Lighthouse runs on the start page through Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site."
+                            "text": "Ja. Sie melden sich auf dem Gerät an, das die Prüfung startet, per E-Mail (ein 6-stelliger Code oder ein Link, 15 Minuten gültig auf demselben Gerät) oder mit einem bestehenden Konto: Google, Microsoft, GitHub, Yahoo oder X. Ihre E-Mail-Adresse stammt aus dieser Anmeldung. Läufe mit Anmeldung stehen auf Ihrer Kontoseite."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Which languages can the page be read in?",
+                        "name": "Was bewertet der Bericht?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "The page is written in English and can be read in Spanish, Portuguese, German, French, and Italian. The news strip follows the country of the connection and the language of the page. A review reads a public page, tells you what it found, and suggests test cases your team can use. The disclaimers explain how that works, including what applies in the country of the site you are reviewing."
+                            "text": "Sechs Bereiche von 0 bis 100: SEO, GEO (ob KI-Suchen und Antwortmaschinen die Website lesen und zitieren können), Analytics, Sicherheit, Barrierefreiheit und Performance. Jede Prüfung wird als scheitert jetzt, gefährdet, besteht oder braucht einen Menschen markiert, mit Beleg, Korrektur und Aufwandsschätzung. Sie sehen außerdem, wie die Website in einem Google-Ergebnis und einem geteilten Link aussieht, welche KI-Crawler ihre robots.txt zulässt, eine Karte der analysierten Seiten und was zuerst zu beheben ist. Ein Headless-Browser lädt bis zu drei Seiten von einer EU-Adresse in Belgien: Er zeichnet Tracking vor und nach einer Cookie-Wahl auf, führt axe-core aus, vergleicht den HTML-Text mit der gerenderten Seite, prüft Telefon- und Tablet-Breiten und behält drei Screenshots. Außerdem prüft er Chat-Widgets und KI-Chatbots (Einwilligung, Gewicht und Tastaturzugang), Barrierefreiheitserklärung, Impressum und Datenschutzseite, veraltete Front-End-Bibliotheken, Google Safe Browsing über Web Risk, Ablauf und Transfersperre der Domain über RDAP sowie MTA-STS, TLS-RPT und BIMI für E-Mail, und er schätzt den CO₂-Ausstoß eines Besuchs. Eine Website, deren Bot-Schutz die einfache Anfrage ablehnt, wird in Headless Chrome analysiert."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Can it write Playwright or Cypress tests from a URL?",
+                        "name": "Welche Werkzeuge kann eine Prüfung nennen?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Yes. It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each. The scripts are yours to run; the review never runs them."
+                            "text": "Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling und k6 sind die Frameworks. axe-core läuft im Headless-Browser der Prüfung auf bis zu drei Seiten, und Lighthouse läuft auf der Startseite über Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar und Copado werden genannt, wenn sie zutreffen, und nicht gegen Ihre Website gestartet."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Does a review touch my site?",
+                        "name": "In welchen Sprachen gibt es die Seite?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "It only reads public pages. It does not sign in, submit forms, or generate load, and it does not run the cases it proposes."
+                            "text": "Die Seite gibt es auf Deutsch sowie auf Englisch, Spanisch, Portugiesisch, Französisch und Italienisch. Der Nachrichtenstreifen folgt dem Land der Verbindung und der Sprache der Seite. Eine Prüfung analysiert eine öffentliche Seite, sagt Ihnen, was sie gefunden hat, und schlägt Testfälle vor, die Ihr Team nutzen kann. Die Hinweise erklären, wie das funktioniert, auch was im Land der geprüften Website gilt."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "How much of a site does a review read?",
+                        "name": "Kann es aus einer URL Playwright- oder Cypress-Tests schreiben?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Your first review is included: up to twenty pages, two links deep. Want a wider or deeper look? You see the price before anything starts."
+                            "text": "Ja. Es schlägt Testfälle aus einer öffentlichen https-Adresse vor und schreibt jeden für die Frameworks Ihres Teams, von Playwright und Cypress bis Selenide, Cucumber, Jest, Appium und k6. Der Fall-Export enthält ein Startskript pro Framework und ein ZIP mit je einer Suite. Die Skripte führen Sie aus; die Prüfung führt sie nie aus."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Where can the cases go?",
+                        "name": "Greift eine Prüfung in meine Website ein?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Automation scripts as a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Every format carries the scripts for your frameworks. Case export is priced on the page."
+                            "text": "Sie analysiert nur öffentliche Seiten. Sie meldet sich nicht auf Ihrer Website an, sendet keine Formulare und erzeugt keine Last, und sie führt die vorgeschlagenen Fälle nicht aus."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Wie viel einer Website analysiert eine Prüfung?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Ihre erste Prüfung ist enthalten: bis zu zwanzig Seiten, zwei Links tief. Sie möchten breiter oder tiefer schauen? Sie sehen den Preis, bevor etwas beginnt."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Wohin können die Fälle gehen?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Automatisierungsskripte als ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, reiner Text oder PDF. Jedes Format enthält die Skripte für Ihre Frameworks. Der Preis für den Fall-Export steht auf der Seite."
                         }
                     }
                 ]
@@ -317,8 +344,8 @@
         ]
     }
     </script>
-    <script src="js/site-analytics.js?v=20261019a"></script>
-    <script src="js/qa-review-consent.js?v=20261027b"></script>
+    <script src="js/site-analytics.js?v=20261022p"></script>
+    <script src="js/qa-review-consent.js?v=20261028p"></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
@@ -327,7 +354,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/site-look.css?v=20261006d">
     <link rel="stylesheet" href="css/qa-review-folds.css?v=20261020a">
-    <link rel="stylesheet" href="css/qa-review-live.css?v=20261028a">
+    <link rel="stylesheet" href="css/qa-review-live.css?v=20261028b">
+    <link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a">
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
@@ -353,6 +381,7 @@
         .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .btn { border: 0; border-radius: 999px; padding: 9px 14px; font-weight: 600; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-block; background: transparent; color: var(--text); }
         .btn-primary { background: var(--cyan); color: #fff; }
+        .btn[hidden] { display: none; }
         .btn-ghost { border: 1px solid var(--line); }
         .btn-stop { background: var(--red); color: #fff; }
         .btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -389,6 +418,44 @@
         .gate-head .logo { margin-bottom: 12px; }
         .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
         .own-note, .mail-note { font-size: 14px; line-height: 1.45; }
+        .sign-in { margin: 0 0 16px; padding: 14px 16px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 8%, var(--card)); }
+        .sign-in.done { border-color: var(--line); background: var(--card); }
+        .sign-in.elsewhere { border-color: #dc2626; }
+        .sign-in[aria-busy="true"] { opacity: .7; }
+        .sign-in-title { margin: 0 0 4px; }
+        .sign-in-providers { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+        .sign-in-provider { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+        .sign-in-mark { width: 18px; height: 18px; border-radius: 4px; background: currentColor; opacity: .85; }
+        .sign-in-mark.sign-in-google { background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); border-radius: 50%; opacity: 1; }
+        .sign-in-mark.sign-in-microsoft { background: linear-gradient(90deg, #f25022 50%, #7fba00 0) top / 100% 50% no-repeat, linear-gradient(90deg, #00a4ef 50%, #ffb900 0) bottom / 100% 50% no-repeat; border-radius: 0; opacity: 1; }
+        .sign-in-mark.sign-in-yahoo { background: #6001d2; opacity: 1; }
+        .sign-in-mark.sign-in-facebook { background: #1877f2; border-radius: 50%; opacity: 1; }
+        .sign-in-mark.sign-in-twitter { border-radius: 3px; opacity: 1; }
+        .sign-in-mark.sign-in-linkedin { background: #0a66c2; border-radius: 3px; opacity: 1; }
+        .sign-in-mark.sign-in-gitlab { background: #fc6d26; clip-path: polygon(0 40%, 18% 0, 32% 40%, 68% 40%, 82% 0, 100% 40%, 50% 100%); border-radius: 0; opacity: 1; }
+        .sign-in-mark.sign-in-discord { background: #5865f2; border-radius: 6px; opacity: 1; }
+        .sign-in-mark.sign-in-twitch { background: #9146ff; border-radius: 0 0 0 5px; opacity: 1; }
+        .sign-in-mark.sign-in-slack { background: conic-gradient(#36c5f0 0 25%, #2eb67d 0 50%, #ecb22e 0 75%, #e01e5a 0); border-radius: 5px; opacity: 1; }
+        .sign-in-or { margin: 12px 0 0; font-size: 14px; }
+        .sign-in-row { display: flex; gap: 8px; align-items: stretch; }
+        .sign-in-row input { flex: 1; min-width: 0; }
+        .sign-in-row .btn { white-space: nowrap; }
+        .sign-in-link { background: none; border: 0; padding: 0; color: var(--cyan); text-decoration: underline; cursor: pointer; font: inherit; }
+        .sign-in.done .sign-in-title, .sign-in.done > .mail-note { display: none; }
+        .sign-in-done { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 14px; margin: 0; }
+        .sign-in-done[hidden] { display: none; }
+        .sign-in-avatar { position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: var(--cyan); color: var(--on-cyan); font-weight: 700; font-size: 16px; }
+        .sign-in-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .sign-in-id { flex: 1 1 160px; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; line-height: 1.35; }
+        .sign-in-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+        #sign-in-who { font-weight: 600; overflow-wrap: anywhere; }
+        #sign-in-mail { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+        .sign-in.done #sign-in-status:empty { display: none; }
+        .sign-in-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sign-in-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; }
+        @media (max-width: 560px) { .sign-in-actions { flex: 1 1 100%; } .sign-in-actions .btn { flex: 1; } }
+        #sign-in-code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
+        #email[readonly] { opacity: .8; }
         .verify-note { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, var(--card)); }
         .verify-note p { margin: 0 0 8px; font-size: 14px; line-height: 1.45; }
         .verify-note p:last-child { margin: 0; }
@@ -687,6 +754,15 @@
         .url-row { display: flex; align-items: center; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; overflow: hidden; }
         .url-row span { padding: 10px 0 10px 12px; color: var(--muted); font-family: "Fira Code", ui-monospace, monospace; font-size: 13px; }
         .url-row input { border: 0; background: transparent; border-radius: 0; min-width: 0; flex: 1; width: 100%; }
+        .url-suggest { list-style: none; margin: 4px 0 0; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); font-family: "Fira Code", ui-monospace, monospace; font-size: 13px; }
+        .url-suggest li { padding: 7px 10px; border-radius: 6px; cursor: pointer; color: var(--text); overflow-wrap: anywhere; }
+        .url-suggest li:hover, .url-suggest li[aria-selected="true"] { background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--cyan); }
+        .url-hint { font-size: 12px; margin: 4px 0 0; color: var(--muted); }
+        .url-hint:empty { display: none; }
+        .url-hint.ok b { color: var(--green); }
+        .url-hint.warn b { color: var(--amber); }
+        .url-hint.bad b { color: var(--red); }
+        .url-hint .url-fix { font: inherit; font-weight: 600; color: var(--cyan); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
         .fws { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; border: 1px solid transparent; border-radius: 12px; padding: 4px; }
         .fws label { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 500; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
         .fw-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
@@ -696,6 +772,7 @@
         .script-name .fw-logo { margin-right: 6px; vertical-align: -3px; }
         .fw-group-name { flex-basis: 100%; margin: 6px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
         .scope { border: 0; margin: 16px 0 0; padding: 0; }
+        #req-scope .scope:first-child { margin-top: 0; }
         .scope legend { font-weight: 650; padding: 0; }
         .scope-note { margin: 8px 0 0; }
         .alarm { margin: 16px 0; padding: 14px 16px 6px; border-radius: 18px; background: #14110c; color: #f7f3ea; border: 1px solid #c4a574; }
@@ -768,6 +845,10 @@
         .filters button.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
         .case { padding: 10px 0; border-bottom: 1px solid var(--line); }
         .case .id { font-family: "Fira Code", ui-monospace, monospace; font-size: 12px; color: var(--cyan); }
+        .prio { display: inline-block; margin-right: 8px; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; font-family: "Fira Code", ui-monospace, monospace; font-size: 11px; font-weight: 700; color: var(--muted); }
+        .prio-P1 { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
+        .prio-P2 { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
+        .case-pages { font-size: 12px; overflow-wrap: anywhere; }
         .tag { display: inline-block; margin-left: 6px; font-size: 11px; color: var(--amber); }
         .muted { color: var(--muted); }
         .gate { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 88%, #000); z-index: 40; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px; overflow: auto; }
@@ -778,7 +859,107 @@
         .dash-overlay.is-sample #share-link, .dash-overlay.is-sample #tool-block, .dash-overlay.is-sample #alarm-open,
         .dash-overlay.is-sample #credential-run { display: none !important; }
         .gate-card { width: min(720px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+        #gate { --glass-edge: color-mix(in srgb, var(--text) 14%, transparent); align-items: center; perspective: 1400px; interpolate-size: allow-keywords;
+            background: radial-gradient(55% 45% at 12% 8%, color-mix(in srgb, var(--cyan) 26%, transparent), transparent 70%),
+                radial-gradient(45% 40% at 92% 96%, color-mix(in srgb, var(--amber) 16%, transparent), transparent 70%),
+                color-mix(in srgb, var(--bg) 52%, transparent);
+            backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); }
+        #gate .gate-card { width: min(640px, 100%); max-height: min(900px, calc(100dvh - 48px)); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 22px 22px 0; border-radius: 22px; border: 1px solid var(--glass-edge);
+            background: linear-gradient(160deg, color-mix(in srgb, var(--card) 80%, transparent), color-mix(in srgb, var(--card) 60%, transparent));
+            box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .12);
+            backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);
+            transform-origin: 50% 0; animation: gate-in .7s cubic-bezier(.2, .8, .2, 1) both; }
+        #gate.is-leaving .gate-card { animation: gate-out .34s cubic-bezier(.4, 0, 1, 1) both; }
+        #gate.is-leaving { transition: opacity .34s; opacity: 0; }
+        @keyframes gate-in { from { opacity: 0; transform: rotateX(14deg) translateY(40px) scale(.96); } }
+        @keyframes gate-out { to { opacity: 0; transform: rotateX(-10deg) translateY(-24px) scale(.97); } }
+        #gate .gate-tagline { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.45; }
+        #gate .sample-line { font-size: 12.5px; margin-bottom: 8px; }
+        #gate .sample-line .btn { padding: 6px 12px; border-radius: 999px; font-size: 12.5px; }
+        #gate .check input { accent-color: var(--cyan); }
+        #gate .check-all { margin: 14px 0 0; padding: 12px 14px; align-items: center; border-radius: 14px; font-weight: 650; cursor: pointer;
+            border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--cyan) 22%, transparent), color-mix(in srgb, var(--cyan) 6%, transparent)); }
+        #gate .check-all input { margin-top: 0; width: 18px; height: 18px; }
+        .term-groups { display: grid; gap: 10px; margin: 10px 0 0; perspective: 1000px; }
+        .term-group { border-radius: 16px; border: 1px solid var(--glass-edge); background: color-mix(in srgb, var(--panel) 55%, transparent);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); transform-origin: 50% 0;
+            transition: transform .35s cubic-bezier(.2, .8, .2, 1), border-color .25s, background .25s, box-shadow .35s;
+            animation: tg-in .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 70ms + 220ms); }
+        .term-group:hover { transform: translateY(-2px) rotateX(2deg); box-shadow: 0 14px 30px -18px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .08); }
+        .term-group[open] { transform: none; background: color-mix(in srgb, var(--panel) 78%, transparent); border-color: color-mix(in srgb, var(--cyan) 45%, transparent); }
+        .term-group.done { border-color: color-mix(in srgb, var(--green) 55%, transparent); }
+        .term-group::details-content { block-size: 0; overflow: hidden; transition: block-size .42s cubic-bezier(.2, .8, .2, 1), content-visibility .42s allow-discrete; }
+        .term-group[open]::details-content { block-size: auto; }
+        @keyframes tg-in { from { opacity: 0; transform: rotateX(-24deg) translateY(16px); } }
+        .term-group summary { list-style: none; display: grid; grid-template-columns: 36px 1fr auto 14px; gap: 12px; align-items: center; padding: 12px 14px; cursor: pointer; border-radius: 16px; }
+        .term-group summary::-webkit-details-marker { display: none; }
+        .term-group summary::after { content: ""; width: 7px; height: 7px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-2px, -2px); transition: transform .3s; }
+        .term-group[open] summary::after { transform: rotate(-135deg); }
+        .term-group summary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tg-icon { width: 36px; height: 36px; padding: 8px; border-radius: 11px; fill: none; stroke: var(--cyan); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+            background: linear-gradient(145deg, color-mix(in srgb, var(--cyan) 24%, transparent), color-mix(in srgb, var(--cyan) 6%, transparent)); }
+        .term-group.done .tg-icon { stroke: var(--green); background: color-mix(in srgb, var(--green) 16%, transparent); }
+        .tg-text { display: grid; gap: 2px; min-width: 0; }
+        .tg-title { font-size: 14.5px; font-weight: 650; }
+        .tg-gist { font-size: 13px; line-height: 1.4; color: var(--muted); }
+        .tg-count { font: 600 11.5px "Fira Code", ui-monospace, monospace; padding: 3px 8px; border-radius: 999px; color: var(--muted); border: 1px solid var(--glass-edge); }
+        .term-group.done .tg-count { color: var(--green); border-color: color-mix(in srgb, var(--green) 50%, transparent); }
+        .tg-body { padding: 2px 16px 14px 62px; transform-origin: 50% 0; }
+        .term-group[open] .tg-body { animation: tg-open .45s cubic-bezier(.2, .8, .2, 1) both; }
+        @keyframes tg-open { from { opacity: 0; transform: rotateX(-10deg) translateY(-6px); } }
+        .tg-body .lede { font-size: 13.5px; margin: 0 0 8px; }
+        .tg-body .check { font-size: 13.5px; margin: 8px 0; }
+        #gate #records-note { font-size: 11.5px; color: var(--muted); margin: 10px 0 0; }
+        .gate-foot { position: sticky; bottom: 0; display: grid; gap: 10px; margin: 14px -22px 0; padding: 12px 22px 18px; border-top: 1px solid var(--glass-edge);
+            background: color-mix(in srgb, var(--card) 86%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+        .gate-progress { height: 4px; border-radius: 999px; background: var(--glass-edge); overflow: hidden; }
+        .gate-progress span { display: block; height: 100%; width: calc(var(--progress, 0) * 100%); border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--green)); transition: width .4s cubic-bezier(.2, .8, .2, 1); }
+        #gate .gate-foot .records-note { font-size: 12px; line-height: 1.45; color: var(--muted); margin: 0; }
+        #gate #accept { width: 100%; min-height: 46px; font-size: 15px; border-radius: 12px; }
+        @media (prefers-reduced-motion: reduce) {
+            #gate .gate-card, .term-group, .term-group[open] .tg-body, #gate.is-leaving .gate-card { animation: none; }
+            .term-group, .term-group::details-content, .gate-progress span { transition: none; }
+            .term-group:hover { transform: none; }
+        }
+        #intake { --glass-edge: color-mix(in srgb, var(--text) 14%, transparent); interpolate-size: allow-keywords; border-radius: 22px; border-color: var(--glass-edge);
+            background: radial-gradient(70% 35% at 0% 0%, color-mix(in srgb, var(--cyan) 16%, transparent), transparent 70%),
+                radial-gradient(50% 30% at 100% 100%, color-mix(in srgb, var(--amber) 10%, transparent), transparent 70%),
+                linear-gradient(160deg, color-mix(in srgb, var(--card) 80%, transparent), color-mix(in srgb, var(--card) 58%, transparent));
+            box-shadow: 0 40px 90px -40px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .1);
+            backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%); }
+        #review-form { display: grid; gap: 10px; margin-top: 14px; perspective: 1000px; }
+        #review-form .row-actions { margin-top: 2px; }
+        .req-group:hover { transform: translateY(-1px); }
+        .req-group[open]:hover { transform: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
+        .req-group.done .tg-count { font-size: 12px; }
+        .rg-meta { font: 500 12px "Fira Code", ui-monospace, monospace; color: var(--cyan); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rg-meta:empty { display: none; }
+        .rg-body { padding: 2px 16px 16px; transform-origin: 50% 0; }
+        .req-group[open] .rg-body { animation: tg-open .45s cubic-bezier(.2, .8, .2, 1) both; }
+        #intake .sign-in { margin: 0 0 14px; border-radius: 14px; background: color-mix(in srgb, var(--cyan) 9%, transparent); }
+        #intake .sign-in.done { background: color-mix(in srgb, var(--panel) 40%, transparent); border-color: var(--glass-edge); }
+        #intake input[type="text"], #intake input[type="email"], #intake textarea, #intake .url-row { background: color-mix(in srgb, var(--panel) 70%, transparent); border-color: var(--glass-edge); border-radius: 10px; }
+        #intake input.invalid, #intake textarea.invalid, #intake .url-row.invalid { border-color: var(--red); }
+        #intake .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
+        #intake .check input, #intake .reasons input, #intake .fws input { accent-color: var(--cyan); }
+        #intake .reasons { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; margin: 0; padding: 0; border: 0; background: none; }
+        #intake .reasons legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+        #intake .reasons label { margin: 0; padding: 9px 10px; font-size: 13.5px; border-radius: 12px; border: 1px solid var(--glass-edge); background: color-mix(in srgb, var(--panel) 45%, transparent); cursor: pointer; transition: border-color .2s, background .2s, transform .2s; }
+        #intake .reasons label:hover { border-color: color-mix(in srgb, var(--cyan) 45%, transparent); transform: translateY(-1px); }
+        #intake .reasons label:has(input:checked) { background: color-mix(in srgb, var(--cyan) 18%, transparent); border-color: color-mix(in srgb, var(--cyan) 60%, transparent); }
+        #intake .reasons.invalid label { border-color: color-mix(in srgb, var(--red) 60%, transparent); }
+        #intake .fws label { border-color: var(--glass-edge); background: color-mix(in srgb, var(--panel) 45%, transparent); cursor: pointer; transition: border-color .2s, background .2s; }
+        #intake .fws label:has(input:checked) { background: color-mix(in srgb, var(--cyan) 16%, transparent); border-color: color-mix(in srgb, var(--cyan) 55%, transparent); }
+        #intake .verify-note { border-radius: 12px; }
+        #intake #review-btn { min-width: 160px; min-height: 44px; border-radius: 12px; font-size: 15px; }
+        @media (prefers-reduced-motion: reduce) {
+            .req-group[open] .rg-body { animation: none; }
+            .req-group:hover, #intake .reasons label:hover { transform: none; }
+        }
+        .gate-waiting { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--cyan); background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--text); font-weight: 600; }
         .check { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 14px; line-height: 1.45; }
+        .check[hidden] { display: none; }
         .check input { margin-top: 3px; }
         h2 { font-family: "Source Serif 4", Georgia, serif; font-size: 1.25rem; margin: 22px 0 8px; }
         .mark { display: none; position: fixed; inset: 0; z-index: 6; pointer-events: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='440' height='180'><text x='16' y='90' fill='%230d6e76' font-size='13' font-family='sans-serif' transform='rotate(-18 220 90)'>QA-lab URL Review · Carlos Muñoz · https://carlosandmunoz.com · Preview copy · Not a certification</text></svg>"); background-repeat: repeat; opacity: .22; }
@@ -822,6 +1003,15 @@
             .lang-menu { width: min(220px, calc(100vw - 24px)); }
             .gate { padding: 12px 12px 176px; }
             .gate-card { padding: 16px; }
+            #gate { align-items: flex-start; }
+            #gate .gate-card { max-height: none; overflow: visible; padding: 18px 16px 0; border-radius: 18px; }
+            .gate-foot { position: static; margin: 14px -16px 0; padding: 12px 16px 16px; border-radius: 0 0 18px 18px; }
+            .term-group summary { grid-template-columns: 32px 1fr auto 12px; gap: 10px; padding: 12px; }
+            .tg-icon { width: 32px; height: 32px; padding: 7px; }
+            .tg-body { padding: 2px 12px 12px; }
+            #intake { border-radius: 18px; }
+            #intake .reasons { grid-template-columns: 1fr; }
+            .rg-body { padding: 2px 12px 14px; }
             .gate .btn { min-height: 44px; }
             .check { font-size: 15px; }
             .check input { width: 18px; height: 18px; flex: none; }
@@ -874,6 +1064,7 @@
     <div class="actions">
         <a class="btn btn-ghost" href="index.html">CV</a>
         <a class="btn btn-ghost" href="qa-lab.html">Regression lab</a>
+        <a class="btn btn-ghost" href="qa-review-account.html">Your reviews</a>
         <button class="btn btn-ghost" id="tour-start-btn" type="button">How this review works</button>
         <div class="lang-wrap notranslate" id="langWrap">
             <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
@@ -902,24 +1093,50 @@
                 <div class="lang-menu" id="langMenuGate"></div>
             </div>
         </div>
-        <p class="lede">Every control on this page stays off until you accept. The review fetches public pages, opens up to three of them in a headless browser, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. It also asks Google PageSpeed Insights to score the start page, so Google receives that address. It does not run the cases, sign in, submit forms, or generate load. The language control is on this screen.</p>
-        <p class="sample-line"><button class="btn btn-ghost" id="sample-open" type="button">See a sample report</button> It is this site's own review, blurred the way a free report is. Nothing is sent to open it. New here? <a id="guide-open" href="qa-review-guide.html">Take the five-minute tour</a>.</p>
+        <p class="gate-tagline" lang="de" translate="no">Zehn Bedingungen auf vier Karten, jede in einer Zeile zusammengefasst. Öffnen Sie eine Karte für den vollständigen Text, oder wählen Sie alle aus, um zu beginnen.</p>
+        <p class="sample-line" lang="de" translate="no"><button class="btn btn-ghost" id="sample-open" type="button">Beispielbericht ansehen</button> Es ist die Prüfung dieser Website selbst, unscharf wie ein unbezahlter Bericht. Zum Öffnen wird nichts gesendet. Neu hier? <a id="guide-open" href="qa-review-guide.html">Machen Sie die Fünf-Minuten-Tour</a>.</p>
         <p class="sample-line live-gate-line"><button class="btn btn-ghost" id="live-open-gate" type="button">Explore live reports</button> <span id="live-gate-copy">Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.</span></p>
         <form id="terms-form">
-            <p class="records-note"><b>Disclaimers.</b> Read these before you check a box. <a id="legal-origin" href="qa-review-legal.html">Local and national disclaimers, for Colombia, where this service is operated</a>. <a id="legal-site" href="qa-review-legal.html">International disclaimers, for the country of the site you submit</a>.</p>
-            <label class="check"><input type="checkbox" id="terms-all"> Select all</label>
-            <label class="check"><input type="checkbox" name="t1"> I am at least 18. If I do not accept these disclaimers, I cannot enter a URL.</label>
-            <label class="check"><input type="checkbox" name="t2"> This service will fetch public pages, describe what it finds, and propose test cases. It will not run those cases.</label>
-            <label class="check"><input type="checkbox" name="t3"> I will submit a public https address. I will not submit a private, link-local, or metadata address.</label>
-            <label class="check"><input type="checkbox" name="t4"> The report is a snapshot and a proposal. It is not a certification that the site is safe, fast, or compliant.</label>
-            <label class="check"><input type="checkbox" name="t5"> I give my name, email, and reason so there is a record of who asked. I can ask for a copy or deletion through the contact form on the CV.</label>
-            <label class="check"><input type="checkbox" name="t6"> A site owner can ask this service to stop and to delete the report. I will not use a shared report to republish their content.</label>
-            <label class="check"><input type="checkbox" name="t7"> The included first review is 20 pages and 2 links deep. A wider or deeper read, and each later run, asks for payment before it starts. The amount is shown at that moment, on the payment page. A different name or email does not skip that charge. Stopped reviews are kept. Three stops in a day pause further reviews.</label>
-            <label class="check"><input type="checkbox" name="t8"> The report is shown once. Seeing, downloading, printing, or sharing it again asks for payment. The amount is shown then. The opening of each proposed case stays readable. The rest of the case stays blurred until that payment is confirmed.</label>
-            <label class="check"><input type="checkbox" name="t9"> If I say I have a username and password, I am allowed to use that login on the site I submit. This page does not ask for the password. A signed-in run is paid before it starts, and the password is not stored in the review record. The public read still does not sign in. Signals in the report are what the public response showed. They are not proof of a break-in. The tail of each signal stays blurred until that section is paid.</label>
-            <label class="check"><input type="checkbox" name="t10"> I ask for the service to start during any withdrawal period. I acknowledge that a consumer in the European Union, under Directive 2011/83/EU, Article 16, and a consumer in the United Kingdom, under the Consumer Contracts Regulations 2013, regulation 36(2), loses the right to withdraw only once the service has been fully performed. A withdrawal right those rules keep is not waived.</label>
-            <p class="records-note" id="records-note">Records keep your name, email, reason, URL, selected frameworks, the review log, whether you stopped, time, IP address, browser, and language. When the host provides it, a country code is stored too. They are kept for 12 months. The page text is not sent to a model vendor. A password is not collected and is not stored. A shared link contains the report only, and opening it again asks for payment. Follow-up notes only arrive if you ask for them on the request: no more than three a week, and a reply of "stop" ends them anytime. Version 2026-10-20.</p>
-            <button class="btn btn-primary" id="accept" type="submit" disabled>Accept and continue</button>
+            <label class="check check-all" lang="de" translate="no"><input type="checkbox" id="terms-all"> Alle auswählen</label>
+            <div class="term-groups">
+                <details class="term-group" style="--i: 0">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span class="tg-text"><b class="tg-title" data-tg="review" lang="de" translate="no">Was die Prüfung tut</b><span class="tg-gist" data-tg="review" lang="de" translate="no">Nur öffentliche Seiten. Sie schlägt Testfälle vor und führt sie nie aus.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <p class="lede" lang="de" translate="no">Alle Bedienelemente dieser Seite bleiben aus, bis Sie zustimmen. Für eine Prüfung melden Sie sich auf diesem Gerät mit Ihrer E-Mail-Adresse oder einem bestehenden Konto an (Google, Microsoft, GitHub, Yahoo oder X). Die Prüfung ruft öffentliche Seiten ab, öffnet bis zu drei davon in einem Headless-Browser von einer EU-Adresse in Belgien und schlägt Testfälle vor. In diesem Browser klickt sie einmal auf die Ablehnen-Schaltfläche eines Cookie-Banners und sonst nichts. Google PageSpeed Insights bewertet die Startseite, und Google Web Risk gleicht sie mit den Safe-Browsing-Listen ab, daher erhält Google diese Adresse; außerdem wird die Registrierungsstelle der Domain per RDAP abgefragt. Sie führt die Fälle nicht aus, meldet sich nicht auf Ihrer Website an, sendet keine Formulare und erzeugt keine Last. Die Sprachauswahl ist auf diesem Bildschirm.</p>
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t2"> Dieser Dienst ruft öffentliche Seiten ab, beschreibt, was er findet, und schlägt Testfälle vor. Er führt diese Fälle nicht aus.</label>
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t3"> Ich reiche eine öffentliche https-Adresse ein. Ich reiche keine private, Link-Local- oder Metadaten-Adresse ein.</label>
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t4"> Der Bericht ist eine Momentaufnahme und ein Vorschlag. Er bescheinigt nicht, dass die Website sicher, schnell oder rechtskonform ist.</label>
+                    </div>
+                </details>
+                <details class="term-group" style="--i: 1">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span class="tg-text"><b class="tg-title" data-tg="you" lang="de" translate="no">Sie und Ihre Daten</b><span class="tg-gist" data-tg="you" lang="de" translate="no">Sie sind mindestens 18 Jahre alt. Ein Datensatz zeigt, wer angefragt hat, und Sie können ihn löschen lassen.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t1"> Ich bin mindestens 18 Jahre alt. Wenn ich diese Hinweise nicht akzeptiere, kann ich keine URL eingeben.</label>
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t5"> Ich gebe meinen Namen, meine E-Mail-Adresse und den Grund an, damit festgehalten ist, wer angefragt hat. Eine Kopie oder Löschung kann ich unter qa@carlosandmunoz.com verlangen.</label>
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t9"> Wenn ich angebe, einen Benutzernamen und ein Passwort zu haben, darf ich dieses Login auf der eingereichten Website verwenden. Diese Seite fragt nicht nach dem Passwort. Ein Lauf mit Login wird vor dem Start bezahlt, und das Passwort wird nicht im Prüfdatensatz gespeichert. Die öffentliche Analyse meldet sich weiterhin nicht auf der Website an. Signale im Bericht sind das, was die öffentliche Antwort gezeigt hat. Sie sind kein Beweis für einen Einbruch. Das Ende jedes Signals bleibt unscharf, bis dieser Abschnitt bezahlt ist.</label>
+                        <p class="records-note" id="records-note" lang="de" translate="no">Die Datensätze enthalten Ihren Namen, Ihre E-Mail-Adresse, den Grund, die URL, die gewählten Frameworks, das Prüfprotokoll, ob Sie gestoppt haben, die Uhrzeit, die IP-Adresse, den Browser, die Geräte-ID und die Sprache sowie Land, Region und Stadt, wenn der Server sie liefert. Prüfdatensätze werden 12 Monate ab dem Lauf aufbewahrt; Protokolle fehlgeschlagener oder gestoppter Prüfungen und ihrer Wiederholungen 90 Tage. Das Öffnen einer Prüfseite protokolliert IP-Adresse, Browser, ungefähre Stadt, Zeitzone, Sprachen und verweisende Website, um Besuche zu zählen; diese Zeilen, Notizen, Stopp-Links und E-Mails werden 12 Monate aufbewahrt. Der Seitentext wird an keinen Modellanbieter gesendet. Ein Passwort wird weder erhoben noch gespeichert. Ein geteilter Link enthält nur den Bericht, und ihn erneut zu öffnen verlangt eine Zahlung. Folgehinweise kommen nur, wenn Sie sie in der Anfrage wünschen: höchstens drei pro Woche, und eine Antwort mit „stop“ beendet sie jederzeit. Die Bewertungen und Befunde zu den öffentlichen Seiten können als Live Report, auf GitHub und in sozialen Medien veröffentlicht werden, es sei denn, Sie kreuzen „Diese Prüfung nicht veröffentlichen“ an; Ihr Name, Ihre E-Mail-Adresse, Ihr Grund, Ihre IP-Adresse und Ihr Browser werden nie veröffentlicht. Scheitert eine Prüfung aus einem Grund auf Seiten dieses Dienstes, werden Hostname, Uhrzeit, Fehler und die letzten Protokollzeilen, ohne Ihren Namen, Ihre E-Mail-Adresse oder die URL-Abfrage, in einem öffentlichen GitHub-Issue veröffentlicht. Die Anmeldung speichert Ihre E-Mail-Adresse, die Anmeldeart, die Benutzer-ID beim Anbieter sowie den Zeitpunkt der ersten und der letzten Anmeldung; eine Anmeldung auf diesem Gerät gilt 30 Tage. Eine Anmeldung über einen Anbieter speichert zusätzlich Namen, Vor- und Nachnamen, Foto, Sprache und Workspace-Domain, die dieser teilt. Eine Google-Anmeldung speichert zusätzlich die weiteren E-Mail-Adressen, das Geburtsdatum, Telefonnummern, Adressen, das Geschlecht und berufliche Angaben, die Google teilt; sie werden für einen künftigen kostenpflichtigen Tarif aufbewahrt und noch nicht verwendet. Das Konto wird 12 Monate nach der letzten Anmeldung aufbewahrt. Eine Anmeldung per E-Mail teilt nur Ihre Adresse. Kopien, Berichtigungen und Löschung: qa@carlosandmunoz.com. Die vollständige Liste steht in den Hinweisen. Version 2026-10-22.</p>
+                    </div>
+                </details>
+                <details class="term-group" style="--i: 2">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16"/></svg><span class="tg-text"><b class="tg-title" data-tg="publish" lang="de" translate="no">Live Reports</b><span class="tg-gist" data-tg="publish" lang="de" translate="no">Bewertungen und Befunde können veröffentlicht werden, nie mit Ihrem Namen. Sie können im Antrag widersprechen.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t6"> Die Bewertungen und Befunde zu den öffentlichen Seiten können als Live Report auf dieser Website, in ihrem öffentlichen GitHub-Repository und in llms-full.txt sowie auf LinkedIn, Facebook, Instagram, X, Threads, Bluesky, Mastodon, TikTok und YouTube als Bilder und vertonte Clips veröffentlicht werden, ohne meinen Namen, meine E-Mail-Adresse oder meinen Grund, es sei denn, ich kreuze in der Anfrage „Diese Prüfung nicht veröffentlichen“ an. Von Safe Browsing markierte Websites und Testläufe werden nie veröffentlicht. Ein Website-Inhaber kann diesen Dienst bitten, aufzuhören, den Bericht zu löschen und seinen Live Report zu entfernen. Eine Entfernung stoppt künftige Beiträge und nimmt den Live Report herunter; bereits erschienene Beiträge werden auf Anfrage gelöscht, soweit das Netzwerk es erlaubt. Ich nutze einen geteilten Bericht nicht, um deren Inhalte erneut zu veröffentlichen.</label>
+                    </div>
+                </details>
+                <details class="term-group" style="--i: 3">
+                    <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg><span class="tg-text"><b class="tg-title" data-tg="pay" lang="de" translate="no">Zahlung und Ihre Rechte</b><span class="tg-gist" data-tg="pay" lang="de" translate="no">Die erste Prüfung ist inbegriffen; alles Weitere wird vor dem Start bezahlt. Auf Widerrufsrechte, die das Gesetz erhält, verzichten Sie nicht.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
+                    <div class="tg-body">
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t7"> Die enthaltene erste Prüfung umfasst 20 Seiten und 2 Links Tiefe. Eine breitere oder tiefere Prüfung und jeder spätere Lauf verlangen vor dem Start eine Zahlung, es sei denn, das Konto hat ein kostenloses oder Test-Kontingent, einen Gutschein oder einen vom Betreiber gewährten Pass. Der Betrag wird in diesem Moment auf der Zahlungsseite angezeigt. Ein anderer Name oder eine andere E-Mail-Adresse umgeht diese Gebühr nicht. Gestoppte Prüfungen bleiben gespeichert. Drei Stopps an einem Tag pausieren weitere Prüfungen.</label>
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t8"> Der Bericht wird einmal angezeigt, und Läufe mit Anmeldung stehen auf meiner Kontoseite. Ihn erneut anzusehen, herunterzuladen, zu drucken oder zu teilen verlangt eine Zahlung, es sei denn, das Konto hat ein kostenloses oder Test-Kontingent, einen Gutschein oder einen vom Betreiber gewährten Pass. Der Betrag wird dann angezeigt. Der Anfang jedes vorgeschlagenen Falls bleibt lesbar. Der Rest des Falls bleibt unscharf, bis diese Zahlung bestätigt ist. Eine unscharfe Kopie der Bewertungen und Befunde geht an meine E-Mail-Adresse, wenn die Prüfung fertig ist.</label>
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t10"> Ich verlange, dass der Dienst während einer Widerrufsfrist beginnt. Ich nehme zur Kenntnis, dass ein Verbraucher in der Europäischen Union nach der Richtlinie 2011/83/EU, Artikel 16, und ein Verbraucher im Vereinigten Königreich nach den Consumer Contracts Regulations 2013, Regulation 36(2), das Widerrufsrecht erst verliert, wenn die Dienstleistung vollständig erbracht ist. Auf ein Widerrufsrecht, das diese Regeln erhalten, wird nicht verzichtet.</label>
+                    </div>
+                </details>
+            </div>
+            <div class="gate-foot">
+                <div class="gate-progress" aria-hidden="true"><span></span></div>
+                <p class="records-note" lang="de" translate="no"><b>Hinweise.</b> Lesen Sie sie, bevor Sie ein Kästchen ankreuzen. <a id="legal-origin" href="qa-review-legal.html">Lokale und nationale Hinweise für Kolumbien, wo dieser Dienst betrieben wird</a>. <a id="legal-site" href="qa-review-legal.html">Internationale Hinweise für das Land der eingereichten Website</a>.</p>
+                <button class="btn btn-primary" id="accept" type="submit" disabled lang="de" translate="no">Akzeptieren und weiter</button>
+            </div>
         </form>
     </div>
 </div>
@@ -967,14 +1184,14 @@
             <header class="live-head">
                 <div>
                     <p class="eyebrow" data-live-eyebrow>Live reports</p>
-                    <h2 id="live-title" class="live-title" data-live-title>Real sites. Real reads. <em>Open any of them.</em></h2>
-                    <p class="live-lede" data-live-lede>Public sites read by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Open a report to see the scores, what to fix first, and what already works. View and share only.</p>
+                    <h2 id="live-title" class="live-title" data-live-title>Real sites. Real reviews. <em>Open any of them.</em></h2>
+                    <p class="live-lede" data-live-lede>Public sites analyzed by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Open a report to see the scores, what to fix first, and what already works. Reviews people request are added in a daily batch. View and share only.</p>
                 </div>
                 <button class="btn live-back" id="live-back" type="button">Back</button>
             </header>
             <div class="live-filters-slot" data-live-filters></div>
         </div>
-        <div class="live-main" data-live-app><noscript><p class="live-lede">Live reports need JavaScript to open. As of October 19, 2026, the series holds 114 public sites in 26 sectors, each read that day by the same review anyone can run. The average overall score is 77 out of 100: SEO 68, GEO 85, analytics 86, security 68, accessibility 80, and performance 79. The highest overall scores are MDN Web Docs 95, GOV.UK 92, GitHub Docs 91, and Node.js 89. The series covers government portals such as GOV.UK, GOV.CO, and Alcaldía de Bogotá; newsrooms such as BBC, The Guardian, and El País; banks such as Bancolombia and Davivienda; universities such as MIT, Stanford, and Universidad de los Andes; open-source projects such as Python.org, Node.js, and Kubernetes; and transit systems such as TransMilenio and Metro de Medellín. Each report is one automated read of public pages, a starting point and not a verdict.</p></noscript></div>
+        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="de" translate="no">Live Reports brauchen JavaScript zum Öffnen. Stand 23. Oktober 2026 umfasst die Reihe 258 öffentliche Websites in 27 Branchen, seit dem 19. Oktober 2026 mit derselben Prüfung analysiert, die jeder starten kann; neue Prüfungen kommen in einem täglichen Stapel hinzu. Der durchschnittliche Gesamtwert liegt bei 75 von 100: SEO 66, GEO 84, Analytics 84, Sicherheit 66, Barrierefreiheit 78 und Performance 77. Die höchsten Gesamtwerte haben MDN Web Docs 95, CA.gov 92, GOV.UK 92 und GitHub Docs 91. Die Reihe umfasst Regierungsportale wie GOV.UK, GOV.CO und die Alcaldía de Bogotá; Regionalregierungen wie CA.gov, die Generalitat de Catalunya und die Gobernación del Valle del Cauca; Redaktionen wie BBC, The Guardian und El País; Banken wie Bancolombia und Davivienda; Universitäten wie MIT, Stanford und die Universidad de los Andes; Open-Source-Projekte wie Python.org, Node.js und Kubernetes; und Verkehrssysteme wie TransMilenio und die Metro de Medellín. Jeder Bericht ist eine automatisierte Analyse öffentlicher Seiten, ein Ausgangspunkt und kein Urteil.</p></noscript></div>
     </div>
 </section>
 <main id="review-app" inert>
@@ -989,103 +1206,173 @@
     <details class="card service-facts" id="service-facts">
         <summary><h2>What a review is</h2></summary>
         <dl>
-            <dt>A public read, and a list of cases</dt>
-            <dd>QA-lab URL Review fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in, submit forms, or generate load.</dd>
+            <dt>A public analysis, and a list of cases</dt>
+            <dd>You sign in on the device you run it from, with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X). QA-lab URL Review then fetches a public https address, describes the response, and proposes test cases. It does not run those cases, sign in to your site, submit forms, or generate load.</dd>
+            <dt>Sign in</dt>
+            <dd>You sign in on the device that runs the review, with email (a 6-digit code or a link, valid for 15 minutes on the same device) or an account you already have: Google, Microsoft, GitHub, Yahoo, or X. Your email comes from that sign-in. Signed-in runs are listed on <a href="qa-review-account.html">your account page</a>.</dd>
             <dt>What the report scores</dt>
-            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages read, and what to fix first. A headless browser loads up to three pages from an EU address: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots.</dd>
+            <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages analyzed, and what to fix first. A headless browser loads up to three pages from an EU address in Belgium: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots. It also checks chat widgets and AI chatbots (consent, weight, and keyboard access), the accessibility statement, imprint, and privacy pages, outdated front-end libraries, Google Safe Browsing through Web Risk, domain expiry and transfer lock through RDAP, and MTA-STS, TLS-RPT, and BIMI for mail, and estimates the carbon of one visit. A site whose bot protection refuses the plain request is analyzed in headless Chrome.</dd>
             <dt>Frameworks and tools</dt>
             <dd>Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling, and k6 are the frameworks. axe-core runs in the review's headless browser on up to three pages, and Lighthouse runs on the start page through Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar, and Copado are named when they apply and are not launched against your site.</dd>
             <dt>Automation scripts</dt>
             <dd>It proposes test cases from one public https address and writes each one for the frameworks your team uses, from Playwright and Cypress to Selenide, Cucumber, Jest, Appium, and k6. The case export includes a starting script per framework and a ZIP with one suite each, a GitHub Actions workflow that runs them, and a fix kit with header files for common hosts, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records. The scripts are yours to run; the review never runs them.</dd>
             <dt>Your site</dt>
-            <dd>It only reads public pages. It does not sign in, submit forms, or generate load, and it does not run the cases it proposes.</dd>
-            <dt>How far it reads</dt>
+            <dd>It only analyzes public pages. It does not sign in to your site, submit forms, or generate load, and it does not run the cases it proposes.</dd>
+            <dt>How far it goes</dt>
             <dd>Your first review is included: up to twenty pages, two links deep. Want a wider or deeper look? You see the price before anything starts.</dd>
             <dt>Where cases go</dt>
             <dd>Automation scripts as a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Every format carries the scripts for your frameworks. Case export is priced on the page.</dd>
             <dt>Language</dt>
             <dd>The page is written in English and can be read in Spanish, Portuguese, German, French, and Italian. The news strip follows the country of the connection and the language of the page.</dd>
             <dt>Rules</dt>
-            <dd>A review reads a public page, tells you what it found, and suggests test cases your team can use. The disclaimers explain how that works, including what applies in the country of the site you are reviewing.</dd>
+            <dd>A review analyzes a public page, tells you what it found, and suggests test cases your team can use. The disclaimers explain how that works, including what applies in the country of the site you are reviewing.</dd>
             <dt>Elsewhere</dt>
-            <dd>Films and notes on <a href="https://www.youtube.com/@qalaburlreview" rel="me noopener" target="_blank">YouTube</a>, <a href="https://www.tiktok.com/@qalaburlreview" rel="me noopener" target="_blank">TikTok</a>, <a href="https://x.com/qalaburlreview" rel="me noopener" target="_blank">X</a>, <a href="https://www.linkedin.com/company/qalab-url-review" rel="me noopener" target="_blank">LinkedIn</a>, <a href="https://dev.to/qalaburlreview" rel="me noopener" target="_blank">DEV</a>, and <a href="https://www.reddit.com/user/qalaburlreview/" rel="me noopener" target="_blank">Reddit</a>.</dd>
+            <dd>Films and notes on <a href="https://www.youtube.com/@qalaburlreview" rel="me noopener" target="_blank">YouTube</a>, <a href="https://www.tiktok.com/@qalaburlreview" rel="me noopener" target="_blank">TikTok</a>, <a href="https://www.facebook.com/qalaburlreview" rel="me noopener" target="_blank">Facebook</a>, <a href="https://x.com/qalaburlreview" rel="me noopener" target="_blank">X</a>, <a href="https://www.linkedin.com/company/qalab-url-review" rel="me noopener" target="_blank">LinkedIn</a>, <a href="https://dev.to/qalaburlreview" rel="me noopener" target="_blank">DEV</a>, and <a href="https://www.reddit.com/user/qalaburlreview/" rel="me noopener" target="_blank">Reddit</a>.</dd>
         </dl>
     </details>
     <section id="intake" class="card">
         <h2 class="request-title">The request</h2>
         <p class="lede">Who is asking, and which address should we open?</p>
         <form id="review-form">
-            <div class="grid-2">
-                <div>
-                    <label for="name">Name</label>
-                    <input id="name" name="name" type="text" autocomplete="name" required disabled>
-                    <p class="field-error" id="name-error"></p>
-                </div>
-                <div>
-                    <label for="email">Email</label>
-                    <input id="email" name="email" type="email" autocomplete="email" required disabled>
-                    <p class="field-error" id="email-error"></p>
-                    <p class="mail-note muted" id="own-note" hidden>Use an email at the same domain as the site. This page checks that the mailbox domain matches the host. It does not prove you are the legal owner.</p>
-                </div>
-            </div>
-                    <p class="mail-note muted">We quickly check that this address can receive email, so anything we send about your review actually reaches you.</p>
-            <label class="check"><input id="follow-up" name="followUp" type="checkbox" disabled> Remind me when it is worth reviewing this page again. No more than three short notes a week, in my language. A reply of "stop" ends them anytime.</label>
-            <fieldset class="reasons" id="reasons">
-                <legend>Reasons for this review</legend>
-            </fieldset>
-            <p class="field-error" id="reason-error"></p>
-            <div id="verify-note" class="verify-note" hidden>
-                <p><strong>QA-lab verification</strong> runs the cases. This review proposes them.</p>
-                <p>Request a verification at <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a>.</p>
-            </div>
-            <div id="credential-note" class="verify-note" hidden>
-                <p><strong>A signed-in run</strong> needs a login you are allowed to use. This page does not take the password, and it does not store one.</p>
-                <p>Payment comes before that run. The amount is shown then. The public read still does not sign in.</p>
-            </div>
-            <div id="client-box" hidden>
-                <div class="grid-2">
-                    <div>
-                        <label for="client-name">Client name</label>
-                        <input id="client-name" name="clientName" type="text" autocomplete="organization" disabled>
-                        <p class="field-error" id="clientName-error"></p>
+            <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 0">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="tg-text"><b class="tg-title">You</b><span class="tg-gist">Sign in, add your name, and choose whether this review is published.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
+                <div class="rg-body">
+                    <div class="sign-in" id="sign-in">
+                        <p class="sign-in-title"><strong>Sign in to run a review</strong></p>
+                        <p class="mail-note muted">The review runs on the device where you sign in. A code or link opened on another device or browser starts nothing.</p>
+                        <div id="sign-in-start">
+                            <div class="sign-in-providers" id="sign-in-providers"></div>
+                            <p class="mail-note muted" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them for a future paid plan; they are not used yet. To share only your address, use email.</p>
+                            <p class="sign-in-or muted" id="sign-in-or" hidden>or with your email</p>
+                            <label for="sign-in-email">Email</label>
+                            <div class="sign-in-row">
+                                <input id="sign-in-email" type="email" autocomplete="email" disabled>
+                                <button class="btn" id="sign-in-send" type="button" disabled>Email me a code</button>
+                            </div>
+                        </div>
+                        <div id="sign-in-code-step" hidden>
+                            <label for="sign-in-code" id="sign-in-code-label">Code</label>
+                            <div class="sign-in-row">
+                                <input id="sign-in-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false" disabled>
+                                <button class="btn btn-primary" id="sign-in-check" type="button" disabled>Sign in</button>
+                            </div>
+                            <p class="mail-note muted"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="sign-in-link" id="sign-in-restart" type="button" disabled>Start over</button></p>
+                        </div>
+                        <div class="sign-in-done" id="sign-in-done" hidden>
+                            <span class="sign-in-avatar" aria-hidden="true"><span id="sign-in-initial" translate="no"></span><img class="sign-in-photo" id="sign-in-photo" alt="" width="40" height="40" referrerpolicy="no-referrer" hidden></span>
+                            <p class="sign-in-id"><span class="sign-in-label">You're signed in on this device</span><strong id="sign-in-who" translate="no"></strong><span id="sign-in-mail" translate="no" hidden></span></p>
+                            <div class="sign-in-actions"><a class="btn btn-ghost" href="qa-review-account.html">Your reviews</a><button class="btn btn-ghost" id="sign-out" type="button" disabled>Sign out</button></div>
+                        </div>
+                        <p class="status" id="sign-in-status" role="status"></p>
                     </div>
-                    <div>
-                        <label for="client-email">Client email</label>
-                        <input id="client-email" name="clientEmail" type="email" autocomplete="email" disabled>
-                        <p class="field-error" id="clientEmail-error"></p>
+                    <div class="grid-2">
+                        <div>
+                            <label for="name">Name</label>
+                            <input id="name" name="name" type="text" autocomplete="name" required disabled>
+                            <p class="field-error" id="name-error"></p>
+                        </div>
+                        <div>
+                            <label for="email">Email</label>
+                            <input id="email" name="email" type="email" autocomplete="email" placeholder="Filled in when you sign in" readonly required disabled>
+                            <p class="field-error" id="email-error"></p>
+                            <p class="mail-note muted" id="own-note" hidden>Use an email at the same domain as the site. This page checks that the mailbox domain matches the host. It does not prove you are the legal owner.</p>
+                        </div>
                     </div>
+                            <p class="mail-note muted">We quickly check that this address can receive email, so anything we send about your review actually reaches you.</p>
+                    <label class="check" hidden><input id="follow-up" name="followUp" type="checkbox" disabled> Remind me when it is worth reviewing this page again. No more than three short notes a week, in my language, until 30 days after my last review. The stop link in each note, or a reply of "stop", ends them anytime.</label>
+                    <label class="check"><input id="no-publish" name="unlisted" type="checkbox" disabled> Don't publish this review as a Live Report or on social media.</label>
                 </div>
-                <label for="client-url">Client website</label>
-                <div class="url-row notranslate" id="client-url-field">
-                    <span>https://</span>
-                    <input id="client-url" name="clientUrl" type="text" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="client.com" disabled>
+            </details>
+            <details class="term-group req-group" id="req-why" data-step="why" open style="--i: 1">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="tg-text"><b class="tg-title">Why this review</b><span class="tg-gist">Pick the reason that fits. Some ask for one more detail.</span></span><span class="tg-count" aria-hidden="true">2</span></summary>
+                <div class="rg-body">
+                    <fieldset class="reasons" id="reasons">
+                        <legend>Reasons for this review</legend>
+                    </fieldset>
+                    <p class="field-error" id="reason-error"></p>
+                    <div id="verify-note" class="verify-note" hidden>
+                        <p><strong>QA-lab verification</strong> runs the cases. This review proposes them.</p>
+                        <p>Request a verification at <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a>.</p>
+                    </div>
+                    <div id="credential-note" class="verify-note" hidden>
+                        <p><strong>A signed-in run</strong> needs a login you are allowed to use. This page does not take the password, and it does not store one.</p>
+                        <p>Payment comes before that run. The amount is shown then. The public analysis still does not sign in.</p>
+                    </div>
+                    <div id="client-box" hidden>
+                        <div class="grid-2">
+                            <div>
+                                <label for="client-name">Client name</label>
+                                <input id="client-name" name="clientName" type="text" autocomplete="organization" disabled>
+                                <p class="field-error" id="clientName-error"></p>
+                            </div>
+                            <div>
+                                <label for="client-email">Client email</label>
+                                <input id="client-email" name="clientEmail" type="email" autocomplete="email" disabled>
+                                <p class="field-error" id="clientEmail-error"></p>
+                            </div>
+                        </div>
+                        <label for="client-url">Client website</label>
+                        <div class="url-row notranslate" id="client-url-field">
+                            <span>https://</span>
+                            <input id="client-url" name="clientUrl" type="text" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="client.com" disabled>
+                        </div>
+                        <p class="field-error" id="clientUrl-error"></p>
+                    </div>
+                    <label for="reason">Other reason</label>
+                    <textarea id="reason" name="reason" disabled placeholder="Choose Other to write a reason."></textarea>
                 </div>
-                <p class="field-error" id="clientUrl-error"></p>
-            </div>
+            </details>
+            <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 2">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title">The page</b><span class="tg-gist">The public https address to analyze.</span></span><span class="tg-count" aria-hidden="true">3</span></summary>
+                <div class="rg-body">
+                    <label for="url">Public page</label>
+                    <div class="url-row notranslate" id="url-field">
+                        <span>https://</span>
+                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                    </div>
+                    <p class="field-error" id="url-error"></p>
+                </div>
+            </details>
+            <details class="term-group req-group" id="req-cases" data-step="cases" style="--i: 3">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span class="tg-text"><b class="tg-title">Cases</b><span class="tg-gist">Frameworks the proposed cases are written for.</span><span class="rg-meta" translate="no"></span></span><span class="tg-count" aria-hidden="true">4</span></summary>
+                <div class="rg-body">
+                    <label>Proposed cases for</label>
+                    <div class="fws" id="fw-picker"></div>
+                    <p class="field-error" id="frameworks-error"></p>
+                </div>
+            </details>
+            <details class="term-group req-group" id="req-scope" data-step="scope" open style="--i: 4">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l4 4v12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v4h4"/><path d="M4 7v13a1 1 0 0 0 1 1h11"/></svg><span class="tg-text"><b class="tg-title">Pages to review</b><span class="tg-gist">How many pages to open, how deep, in which language, and whether to stay on this path.</span><span class="rg-meta" translate="no"></span></span><span class="tg-count" aria-hidden="true">5</span></summary>
+                <div class="rg-body">
+                    <fieldset class="scope" id="page-scope">
+                        <legend>Pages</legend>
+                        <div class="fws" id="page-picker"></div>
+                    </fieldset>
+                    <fieldset class="scope" id="depth-scope">
+                        <legend>Links deep</legend>
+                        <div class="fws" id="depth-picker"></div>
+                    </fieldset>
+                    <fieldset class="scope" id="lang-scope">
+                        <legend>Language</legend>
+                        <div class="fws" id="lang-picker">
+                            <label><input type="radio" name="pageLang" value="" checked disabled> Site default</label>
+                            <label><input type="radio" name="pageLang" value="en" disabled> English</label>
+                            <label><input type="radio" name="pageLang" value="es" disabled> Spanish</label>
+                            <label><input type="radio" name="pageLang" value="pt" disabled> Portuguese</label>
+                            <label><input type="radio" name="pageLang" value="de" disabled> German</label>
+                            <label><input type="radio" name="pageLang" value="fr" disabled> French</label>
+                            <label><input type="radio" name="pageLang" value="it" disabled> Italian</label>
+                        </div>
+                    </fieldset>
+                    <label class="check" id="section-row"><input id="stay-section" name="section" type="checkbox" disabled> Stay in this section</label>
+                    <p class="scope-note muted" id="section-note">Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site.</p>
+                    <p class="field-error" id="scope-error"></p>
+                </div>
+            </details>
             <div class="hp" aria-hidden="true">
                 <label for="hp-note">Leave this empty</label>
                 <input id="hp-note" name="hp_note" type="text" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
-            <label for="reason">Other reason</label>
-            <textarea id="reason" name="reason" disabled placeholder="Choose Other to write a reason."></textarea>
-            <label for="url">Public page</label>
-            <div class="url-row notranslate" id="url-field">
-                <span>https://</span>
-                <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="url" placeholder="example.com/path" required disabled>
-            </div>
-            <p class="field-error" id="url-error"></p>
-            <label>Proposed cases for</label>
-            <div class="fws" id="fw-picker"></div>
-            <p class="field-error" id="frameworks-error"></p>
-            <fieldset class="scope" id="page-scope">
-                <legend>Pages to read</legend>
-                <div class="fws" id="page-picker"></div>
-            </fieldset>
-            <fieldset class="scope" id="depth-scope">
-                <legend>Links deep</legend>
-                <div class="fws" id="depth-picker"></div>
-            </fieldset>
-            <p class="field-error" id="scope-error"></p>
             <p class="status" id="form-status" role="status"></p>
             <div class="row-actions">
                 <button class="btn btn-primary" id="review-btn" type="submit" disabled>Review</button>
@@ -1096,7 +1383,7 @@
     </div>
     <section id="run-panel" class="card log-card">
         <h2 style="margin-top:0">Review log</h2>
-        <p class="muted" id="report-once">Lines appear here while the pages are being read. Stop keeps the pages already saved and writes that stop into the report.</p>
+        <p class="muted" id="report-once">Lines appear here while the pages are being analyzed. Stop keeps the pages already saved and writes that stop into the report.</p>
         <ol class="log" id="run-log"></ol>
     </section>
     </div>
@@ -1162,7 +1449,7 @@
         <div data-insight id="analytics"></div>
         <h2 data-insight>Search visibility</h2>
         <div data-insight id="seo"></div>
-        <h2 data-insight>Map of the pages read</h2>
+        <h2 data-insight>Map of the pages analyzed</h2>
         <article class="card" data-insight id="site-graph"></article>
         <h2 data-insight>Security and email</h2>
         <article class="card" data-insight id="security"></article>
@@ -1213,7 +1500,7 @@
         </section>
         <h2>What the response showed</h2>
         <article class="card" id="observed"></article>
-        <h2>Pages read</h2>
+        <h2>Pages analyzed</h2>
         <article class="card"><table class="page-table"><thead><tr><th>Path</th><th>Status</th><th>ms</th><th>Title</th></tr></thead><tbody id="pages"></tbody></table></article>
         <h2>Review log kept with this run</h2>
         <article class="card"><ol class="log" id="report-log"></ol></article>
@@ -1259,6 +1546,7 @@
     <div class="pay-card" role="dialog" aria-modal="true" aria-labelledby="pay-title">
         <p class="eyebrow">Report file</p>
         <h2 id="pay-title">This report was already shown</h2>
+        <div id="pay-deal" hidden></div>
         <p class="pay-price" id="pay-price">—</p>
         <p class="muted" id="pay-detail">The amount for seeing, downloading, printing, or sharing this report again is shown here.</p>
         <p class="status" id="pay-note" role="status"></p>
@@ -1272,6 +1560,7 @@
     <div class="pay-card" role="dialog" aria-modal="true" aria-labelledby="run-pay-title">
         <p class="eyebrow">Another review</p>
         <h2 id="run-pay-title">Another review</h2>
+        <div id="run-pay-deal" hidden></div>
         <p class="pay-price" id="run-pay-price">—</p>
         <p class="muted" id="run-pay-detail">The amount for this run is shown here.</p>
         <div class="actions">
@@ -1282,11 +1571,15 @@
 </div>
 <script>try{localStorage.setItem("cv-preferred-lang","de")}catch(e){}</script>
 <script src="js/site-i18n.js?v=20261028a"></script>
-<script src="js/site-glossary.js?v=20261028a"></script>
-<script src="js/site-tour.js?v=20261012a"></script>
+<script src="js/site-glossary.js?v=20261029a"></script>
+<script src="js/site-tour.js?v=20261023a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
-<script src="js/qa-review-scripts.js?v=20261026a"></script>
-<script src="js/qa-review.js?v=20261027d"></script>
-<script src="js/qa-review-live.js?v=20261028a"></script>
+<script src="js/qa-review-scripts.js?v=20261031a"></script>
+<script src="js/qa-review-deal.js?v=20261029a"></script>
+<script src="js/qa-review-auth.js?v=20261022h"></script>
+<script src="js/qa-review-progress.js?v=20261022c"></script>
+<script src="js/qa-review.js?v=20261031a"></script>
+<script src="js/url-suggest.js?v=20261023a"></script>
+<script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
 </html>

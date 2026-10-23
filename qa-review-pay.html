@@ -56,6 +56,7 @@
         button:disabled { opacity: .55; cursor: wait; }
         .btn { border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 700; cursor: pointer; font-size: 14px; text-decoration: none; display: inline-block; }
         .btn-primary { background: var(--cyan); color: #fff; }
+        .btn[hidden] { display: none; }
         .btn-ghost { border: 1px solid var(--line); color: var(--text); background: transparent; }
         a { color: var(--cyan); }
         .cookie-note { position: fixed; z-index: 5; left: 16px; right: 16px; bottom: 16px; max-width: 720px; margin: 0 auto; padding: 16px 18px; border-radius: 18px; background: #fff; color: #12181f; border: 1px solid #d5dce3; box-shadow: 0 18px 50px rgba(8, 14, 18, .28); }
@@ -84,6 +85,7 @@
         <p class="test-mode" id="test-mode" role="status" hidden>Test mode · PayPal sandbox. Pay with a sandbox buyer account. No real money moves.</p>
         <p class="eyebrow">Payment</p>
         <h1 id="pay-heading">One new review</h1>
+        <div id="pay-deal" hidden></div>
         <p class="price">—</p>
         <p class="yield" id="pay-yield" hidden></p>
         <p id="pay-fx"></p>
@@ -102,10 +104,17 @@
             <button class="btn btn-primary" id="charge" type="button">Continue to PayPal</button>
         </div>
     </main>
-    <script src="js/site-analytics.js?v=20261019a"></script>
-    <script src="js/qa-review-consent.js?v=20261027b"></script>
+    <script src="js/site-analytics.js?v=20261022p"></script>
+    <script src="js/qa-review-consent.js?v=20261028p"></script>
+    <script src="js/qa-review-deal.js?v=20261029a"></script>
+    <script src="js/site-i18n.js?v=20261028a"></script>
+    <script src="js/site-glossary.js?v=20261028a"></script>
+    <script>if (window.SiteI18n) SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));</script>
     <script>
         const params = new URLSearchParams(location.search);
+        const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
+        let dealShown = false;
+        let listUsd = 0;
         const purposeName = params.get("purpose");
         const purpose = ["report", "cases", "credentials", "alerts"].indexOf(purposeName) === -1 ? "new-run" : purposeName;
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_view", "URL Review", purpose);
@@ -204,10 +213,10 @@
                 const pagesLine = pageCount + " pages " + (PAGE_CENTS[pageCount] ? "add " + money(PAGE_CENTS[pageCount] / 100) + " USD. " : "are included. ");
                 const depthLine = depthCount + " links deep " + (DEPTH_CENTS[depthCount] ? "add " + money(DEPTH_CENTS[depthCount] / 100) + " USD. " : "is included. ");
                 document.getElementById("pay-copy").textContent = billing === "scope"
-                    ? "This wider read costs " + money(usd) + " USD. " + pagesLine + depthLine + "The included first review is 20 pages and 2 links deep. PayPal collects the payment."
+                    ? "This wider review costs " + money(usd) + " USD. " + pagesLine + depthLine + "The included first review is 20 pages and 2 links deep. PayPal collects the payment."
                     : "This run costs " + money(usd) + " USD. " + frameworkList.length + (frameworkList.length === 1 ? " framework" : " frameworks") + (toolList.length ? " and " + toolList.length + (toolList.length === 1 ? " tool" : " tools") : "") + " follow the 19 USD schedule. The first selection is full price. The 2nd and 3rd are 10% off, then 15%, 20%, 25%, 30%, 35%, and 40% off from the 14th. " + pagesLine + depthLine + "PayPal collects the payment.";
                 document.getElementById("pay-item").textContent = pageCount + " pages · " + depthCount + " links deep";
-                if (purpose === "new-run") document.getElementById("pay-heading").textContent = billing === "scope" ? "A wider read" : "One new review";
+                if (purpose === "new-run") document.getElementById("pay-heading").textContent = billing === "scope" ? "A wider review" : "One new review";
                 paintLines();
                 return;
             }
@@ -309,7 +318,13 @@
             }
             if (!pesos) {
                 priceEl.innerHTML = money(usd) + "<span>USD</span>";
+                priceEl.hidden = dealShown;
                 amountEl.textContent = money(usd) + " USD";
+                if (dealShown) {
+                    const was = document.createElement("s");
+                    was.textContent = money(listUsd) + " USD";
+                    amountEl.prepend(was, " ");
+                }
                 fx.textContent = "";
                 charge.disabled = false;
                 return;
@@ -343,12 +358,18 @@
                             ? "purpose=alerts&count=" + alertCount
                             : purpose === "new-run"
                                 ? "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&pages=" + pageCount + "&depth=" + depthCount + "&billing=" + billing
-                                : "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(","));
-                const res = await fetch(endpoint() + "/checkout/quote?" + query);
+                                : "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&purpose=report&reportId=" + encodeURIComponent(params.get("reportId") || "");
+                const deal = purpose === "report" || purpose === "new-run"
+                    ? "&deviceId=" + encodeURIComponent(deviceId()) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : "")
+                    : "";
+                const res = await fetch(endpoint() + "/checkout/quote?" + query + deal);
                 const body = await res.json();
                 if (!res.ok || !body.cop) throw new Error(body.error || "The peso price could not be loaded.");
                 quote = body;
                 if (body.usd) usd = body.usd;
+                listUsd = Number(body.listUsd) || 0;
+                dealShown = !!(window.ReviewDeal && ReviewDeal.render(document.getElementById("pay-deal"), body));
+                if (dealShown && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_deal_shown", "URL Review", body.discountSource || "return");
                 if (body.frameworks && body.frameworks.length) frameworkList = body.frameworks;
                 if (Array.isArray(body.tools)) toolList = body.tools.filter((name) => TOOLS.indexOf(name) !== -1);
                 if (body.pages) pageCount = body.pages;
@@ -408,7 +429,7 @@
                     method: "POST",
                     credentials: "include",
                     headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, testKey: testKey() })
+                    body: JSON.stringify({ purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, coupon: coupon, testKey: testKey() })
                 });
                 const body = await res.json();
                 if (res.ok && body.url) {

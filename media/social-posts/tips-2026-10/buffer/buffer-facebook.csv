@@ -5,144 +5,186 @@ When an image has no width and height, the page jumps as it loads. That shift is
 
 Try this: Search your templates for <img without width. Add the intrinsic size to each one.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=img-size","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg","tips","2026-10-26 13:20"
-"Release day: does the page still read right?
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=img-size
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg","","2026-10-26 12:30"
+"Release day: is the page still right?
 
 Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.
 
-Try this: Add a five-minute public-page read to your release checklist, after deploy and before the announcement.
+Try this: Add a five-minute public-page check to your release checklist, after deploy and before the announcement.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=release-day","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg","tips","2026-10-27 18:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=release-day
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg","","2026-10-26 17:55"
 "We reviewed ourselves. Security: 54.
 
 Our own site scored 86 overall, and security was the weakest area. The six fixes at the top of the list were all response headers.
 
 Try this: Run the same headers check on your site. The first fixes are usually configuration, not code.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=self-review","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg","tips","2026-10-28 17:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=self-review
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg","","2026-10-27 14:10"
 "The slowest page is rarely the home page.
 
 Teams tune the home page and forget the pages people reach from search. Measure every page you link to, in the order a visitor would open them.
 
 Try this: List your five most visited pages from analytics and time each one. Fix the slowest first.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=slowest-page","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg","tips","2026-10-29 17:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=slowest-page
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg","","2026-10-27 17:30"
 "Contrast is math, not taste.
 
 WCAG AA asks for a contrast ratio of at least 4.5 to 1 for body text and 3 to 1 for large text. Light grey on white rarely makes it.
 
 Try this: Check your muted text colour against its background in DevTools. The colour picker shows the ratio.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=contrast","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg","tips","2026-10-30 14:20"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=contrast
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg","","2026-10-28 12:50"
 "Tag campaign links the same way, every time.
 
 LinkedIn, linkedin and Linked-In become three sources in your reports. Pick one spelling and keep it.
 
 Try this: Make a shared sheet with the allowed sources and mediums. Link it from every campaign brief.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=utm","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg","tips","2026-10-31 16:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=utm
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg","","2026-10-28 17:10"
 "Stop browsers guessing file types.
 
 Without nosniff, a browser may treat an uploaded text file as a script. One header turns that guessing off.
 
 Try this: Add it next to HSTS in the same rule, so both ship together.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=nosniff","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/07-nosniff.jpg","tips","2026-11-01 16:35"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=nosniff
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/07-nosniff.jpg","","2026-10-29 13:45"
 "Every input needs a name.
 
 A placeholder disappears as soon as someone types, and screen readers may not announce it. A real label stays.
 
 Try this: Tab through your contact form with a screen reader on. Each field should say what it is.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=input-names","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg","tips","2026-11-02 17:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=input-names
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg","","2026-10-29 17:40"
 "llms.txt: a short brief for answer engines.
 
 A plain text file at your root that says what the site is, which pages matter, and how to contact you. Short beats complete.
 
 Try this: Write five lines about your site the way you would brief a new colleague. Publish them as /llms.txt.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=llms-txt","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg","tips","2026-11-03 15:35"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=llms-txt
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg","","2026-10-30 13:20"
 "Put the mouse away. Can you reach everything?
 
 Menus, dialogs, and cookie banners are where keyboard users get stuck. Tab, Shift+Tab, Enter, and Escape should be enough.
 
 Try this: Do your main task on your own site with the keyboard only. Write down every place you got stuck.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=keyboard","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg","tips","2026-11-04 17:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=keyboard
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg","","2026-10-30 17:40"
 "One header. 180 days of HTTPS only.
 
 HSTS tells browsers to never load your site over plain HTTP again. It takes one line of configuration on most hosts.
 
 Try this: Run curl -sI on your domain and look for strict-transport-security. If it is missing, add it at your host or CDN.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=hsts","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg","tips","2026-11-05 12:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=hsts
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg","","2026-10-31 12:00"
 "One h1 per page, saying what the page is.
 
 Logos and slogans often grab the h1. Search engines and screen readers both use it to understand the page.
 
 Try this: Read only the h1 of your top ten pages. Would a stranger know what each page is?
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=one-h1","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg","tips","2026-11-06 16:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=one-h1
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg","","2026-10-31 17:05"
 "Consent means before, too.
 
 The most common analytics finding is a tag that fires before the visitor chooses. Check what loads on the first paint, not only after Accept.
 
 Try this: Open your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg","tips","2026-11-07 16:20"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg","","2026-11-01 13:40"
 "Your share card is a first impression.
 
 Without og:image and og:title, every link to your site shows up as a grey box in chats and feeds.
 
 Try this: Paste your link into a private chat with yourself. What people see there is your real first impression.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=share-card","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg","tips","2026-11-08 14:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=share-card
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg","","2026-11-01 16:30"
 "Start your CSP in Report-Only.
 
 An enforced policy written on day one breaks things. Report-Only shows what would be blocked, so you can enforce with confidence a week later.
 
 Try this: Ship the Report-Only header this week. Read the reports next week before you switch it on.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=csp-report-only","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg","tips","2026-11-09 16:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=csp-report-only
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg","","2026-11-02 13:35"
 "Write the test list before the test code.
 
 Picking a framework is the second question. The first is what this page does and what a real person would try on it.
 
 Try this: Before your next automation sprint, write ten cases in plain language. Then choose the tool.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=list-first","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg","tips","2026-11-10 18:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=list-first
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg","","2026-11-02 17:45"
 "robots.txt decides who may read you.
 
 AI crawlers each have their own user agent. Blocking them by accident and allowing them on purpose are both one line.
 
-Try this: Open yoursite.com/robots.txt today. Check that it says what you mean for search and AI crawlers.
+Try this: Open /robots.txt on your own site today. Check that it says what you mean for search and AI crawlers.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=robots-ai","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg","tips","2026-11-11 15:05"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=robots-ai
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg","","2026-11-03 13:10"
 "A broken link is a test you forgot to write.
 
 Links rot quietly. A small check on every release keeps the 404s out of your visitors' way.
 
 Try this: Collect the links from your footer and navigation. Assert each one answers below 400.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=broken-links","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/18-broken-links.jpg","tips","2026-11-12 18:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=broken-links
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/18-broken-links.jpg","","2026-11-03 17:50"
 "Measure the action, not just the visit.
 
 Page views tell you someone arrived. An event on the form, the download, or the signup tells you whether the page worked.
 
 Try this: Pick the one action each key page exists for. Make sure an event fires only when it succeeds.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=measure-action","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg","tips","2026-11-13 14:35"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=measure-action
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg","","2026-11-04 13:00"
 "AI search reads your HTML, not your app.
 
 Many answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.
 
 Try this: View source on your home page. Can you find what you sell and who it is for, without running scripts?
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=html-first","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg","tips","2026-11-14 14:55"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=html-first
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg","","2026-11-04 16:35"
 "One page, one canonical.
 
 When the same content answers at several addresses, ranking signals split between them. Tell search engines which address is the real one.
 
 Try this: Open your top page with and without a trailing slash and ?utm_ tags. Both should point to one canonical.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=canonical","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg","tips","2026-11-15 17:45"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=tips-2026-10&utm_content=canonical
+
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg","","2026-11-05 14:10"

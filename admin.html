@@ -488,7 +488,7 @@
         </section>
         <section class="site-activity" id="review-activity" aria-live="polite">
             <div class="stats-head">
-                <div><h2>QA-lab URL Review</h2><p>GA4 content group “QA-lab URL Review”, event parameter board=url-review. Opens, reviews, payment, places, languages, hosts, and frameworks for the same range. The 15-minute, daily, weekly, and monthly emails use these counts.</p></div>
+                <div><h2>QA-lab URL Review</h2><p>GA4 content group “QA-lab URL Review”, event parameter board=url-review; sign-ins are the qa_review_sign_in event. Opens, reviews, payment, places, languages, hosts, and frameworks for the same range. The 15-minute, daily, weekly, and monthly emails use these counts and list failed runs. The <a href="https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk" target="_blank" rel="noopener">review desk</a> shows each run, whether it goes to Live Reports or why it is held, and unlists a host; <a href="https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk/failures" target="_blank" rel="noopener">failures</a> lists failed runs and their re-runs.</p></div>
             </div>
             <div id="review-kpis" class="site-kpis"></div>
             <p id="review-compare" class="stats-empty"></p>
@@ -1586,6 +1586,7 @@
         }
     }
 
+    // Same rule as openSource in functions/url-review-mail.js, so admin and the period mail agree.
     function reviewOpenSource(row) {
         let tagged = '';
         try { tagged = new URLSearchParams(String(row.query || '')).get('utm_source') || ''; } catch (error) { tagged = ''; }

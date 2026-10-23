@@ -4,12 +4,14 @@
 
 const SITE = "https://carlosandmunoz.com";
 const GUIDE = SITE + "/qa-review-guide.html";
+const { BRAND, tagLine } = require("../social-tags");
 
 const CATS = {
   QA: { label: "QA", color: "#7ef6fb" },
   SEO: { label: "SEO", color: "#e2c48a" },
   GEO: { label: "GEO · AI search", color: "#b9a6ff" },
   Analytics: { label: "Analytics", color: "#f0b45a" },
+  Privacy: { label: "Privacy", color: "#f4a6c8" },
   Security: { label: "Security", color: "#ff8a80" },
   A11y: { label: "Accessibility", color: "#6fe3b1" },
   Perf: { label: "Performance", color: "#8fd0ff" },
@@ -61,7 +63,7 @@ const TIPS = [
     id: "slowest-page", cat: "Perf",
     title: ["The slowest page", "is rarely *the home page.*"],
     body: "Teams tune the home page and forget the pages people reach from search. Measure every page you link to, in the order a visitor would open them.",
-    visual: { type: "bars", unit: "ms", items: [["/", 320], ["/pricing", 410], ["/blog", 1240], ["/contact", 380]], note: "Example read, response time per page" },
+    visual: { type: "bars", unit: "ms", items: [["/", 320], ["/pricing", 410], ["/blog", 1240], ["/contact", 380]], note: "Example analysis, response time per page" },
     action: "List your five most visited pages from analytics and time each one. Fix the slowest first.",
     tags: ["WebPerformance", "CoreWebVitals", "QA"]
   },
@@ -86,7 +88,7 @@ const TIPS = [
     title: ["robots.txt decides", "*who may read you.*"],
     body: "AI crawlers each have their own user agent. Blocking them by accident and allowing them on purpose are both one line.",
     visual: { type: "code", lines: ["User-agent: GPTBot", "Allow: /", "", "User-agent: PerplexityBot", "Allow: /", "", "Sitemap: https://example.com/sitemap.xml"], note: "Decide on purpose, then write it down" },
-    action: "Open yoursite.com/robots.txt today. Check that it says what you mean for search and AI crawlers.",
+    action: "Open /robots.txt on your own site today. Check that it says what you mean for search and AI crawlers.",
     tags: ["GEO", "AISearch", "robotsTxt"]
   },
   {
@@ -155,10 +157,10 @@ const TIPS = [
   },
   {
     id: "release-day", cat: "QA",
-    title: ["Release day:", "*does the page still read right?*"],
+    title: ["Release day:", "*is the page still right?*"],
     body: "Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.",
     visual: { type: "check", items: [["Build", "Green", "pass"], ["Smoke tests", "Passed", "pass"], ["Title and description", "Still there", "pass"], ["Share card", "Image changed?", "risk"], ["Consent banner", "Nothing fires before a choice?", "risk"]] },
-    action: "Add a five-minute public-page read to your release checklist, after deploy and before the announcement.",
+    action: "Add a five-minute public-page check to your release checklist, after deploy and before the announcement.",
     tags: ["QA", "ReleaseManagement", "DevOps"]
   },
   {
@@ -178,9 +180,73 @@ const TIPS = [
     tags: ["Accessibility", "a11y", "UX"]
   },
   {
+    id: "chat-consent", cat: "Privacy",
+    title: ["A chat widget tracks", "*before anyone asks.*"],
+    body: "Most chat widgets set cookies and call home on the first page view, before the visitor answers the cookie banner. A plain button can wait for the click.",
+    visual: { type: "code", lines: ["<button id=\"chat\">Chat with us</button>", "chat.onclick = () => loadChat();"], note: "Load the widget on the first click" },
+    action: "Open your site in a private window, press Reject, and look for chat cookies under DevTools > Application.",
+    tags: ["Privacy", "Cookies", "Chatbots"]
+  },
+  {
+    id: "a11y-statement", cat: "A11y",
+    title: ["Selling online in the EU?", "*Link an accessibility statement.*"],
+    body: "Since 28 June 2025 the European Accessibility Act has required one from shops that sell to EU consumers, unless the business is a micro-enterprise.",
+    visual: { type: "check", items: [["Standard", "EN 301 549, WCAG 2.1 AA", "pass"], ["Known gaps", "Listed, with dates", "risk"], ["Contact", "For access problems", "risk"], ["Footer link", "On every page", "pass"]] },
+    action: "Search your footer for \"accessibility\". If nothing comes up, write the statement this week.",
+    tags: ["Accessibility", "EAA", "A11y"]
+  },
+  {
+    id: "imprint", cat: "Privacy",
+    title: ["A site in Germany or Austria?", "*Show who runs it.*"],
+    body: "Business sites there must link an Impressum from every page: the provider's name, a postal address, an email, and register and VAT numbers.",
+    visual: { type: "check", items: [["Name and legal form", "The provider", "pass"], ["Postal address", "Not a PO box", "pass"], ["Email", "Answered", "pass"], ["Register and VAT", "When you have them", "risk"]] },
+    action: "Open a product page and find the Impressum. It should take one click from the footer.",
+    tags: ["Impressum", "Legal", "WebDev"]
+  },
+  {
+    id: "old-libraries", cat: "Security",
+    title: ["That old jQuery", "*has known flaws.*"],
+    body: "Front-end libraries pinned years ago carry published flaws anyone can look up, and the version is often right in the script address.",
+    visual: { type: "versus", left: { label: "Before", lines: ["jquery-1.12.4.min.js", "Pinned in 2016"], mark: "fail" }, right: { label: "The fix", lines: ["A supported major version", "Checked on every release"], mark: "pass" } },
+    action: "Run retire.js or npm audit on your front end, and upgrade whatever it flags.",
+    tags: ["WebSecurity", "Dependencies", "JavaScript"]
+  },
+  {
+    id: "domain-lock", cat: "Security",
+    title: ["Can your domain be moved", "*without you?*"],
+    body: "A hijacked registrar account or a forged request can transfer a domain away. A transfer lock and automatic renewal take a minute to switch on.",
+    visual: { type: "code", lines: ["$ whois example.com | grep -i status", "Domain Status: clientTransferProhibited"], note: "What a locked domain shows" },
+    action: "Look up your domain's status. If clientTransferProhibited is missing, turn on the lock at your registrar.",
+    tags: ["WebSecurity", "Domains", "DNS"]
+  },
+  {
+    id: "mta-sts", cat: "Security",
+    title: ["Your mail can travel", "*unencrypted.*"],
+    body: "An attacker on the path can strip STARTTLS. MTA-STS tells sending servers to insist on TLS, and TLS-RPT tells you when delivery fails.",
+    visual: { type: "code", lines: ["_mta-sts    TXT \"v=STSv1; id=2026102201\"", "_smtp._tls  TXT \"v=TLSRPTv1; rua=mailto:tls@example.com\"", "", "# mta-sts.example.com/.well-known/mta-sts.txt", "version: STSv1", "mode: testing"], note: "Start in testing, then enforce" },
+    action: "Publish both records in testing mode, read the reports for two weeks, then switch the policy to enforce.",
+    tags: ["EmailSecurity", "MTASTS", "DNS"]
+  },
+  {
+    id: "safe-browsing", cat: "Security",
+    title: ["If Google flags your site,", "*visitors see a red page.*"],
+    body: "Chrome, Firefox, and Safari show a full-page warning instead of any site on Google's Safe Browsing lists. A hacked plugin is a common cause.",
+    visual: { type: "check", items: [["Search Console", "Security issues report", "pass"], ["Alerts", "Reach the owner", "pass"], ["Plugins", "Updated, unused ones removed", "risk"]] },
+    action: "Open the Security issues report in Search Console today, and make sure its emails reach someone.",
+    tags: ["WebSecurity", "SafeBrowsing", "Malware"]
+  },
+  {
+    id: "carbon", cat: "Perf",
+    title: ["Every visit", "*has a carbon cost.*"],
+    body: "Bytes moved through data centres, networks, and devices use energy. The Sustainable Web Design model turns page weight into grams of CO₂e.",
+    visual: { type: "bars", unit: "g CO₂e", items: [["0.5 MB", 0.07], ["2 MB", 0.3], ["5 MB", 0.74]], note: "First visit, Sustainable Web Design model v4, global average grid" },
+    action: "Check your start page's transfer size in DevTools. Each megabyte you cut saves about 0.15 g on every first visit.",
+    tags: ["WebPerformance", "Sustainability", "PageWeight"]
+  },
+  {
     id: "self-review", cat: "Field",
     title: ["We reviewed ourselves.", "*Security: 54.*"],
-    body: "Our own site scored 86 overall, and security was the weakest area. The six fixes at the top of the list were all response headers.",
+    body: "In October 2026 our own site scored 86 overall, and security was the weakest area. The six fixes at the top of the list were all response headers.",
     visual: { type: "versus", left: { label: "Before", lines: ["HSTS: missing", "nosniff: missing", "Referrer-Policy: missing"], mark: "fail" }, right: { label: "The fix", lines: ["Strict-Transport-Security", "X-Content-Type-Options", "Referrer-Policy"], mark: "pass" } },
     action: "Run the same headers check on your site. The first fixes are usually configuration, not code.",
     tags: ["QA", "WebSecurity", "BuildInPublic"]
@@ -193,28 +259,47 @@ function link(platform, tip) {
 }
 
 function plainTitle(tip) { return tip.title.join(" ").replace(/\*/g, "").replace(/\s+/g, " ").trim(); }
-function hashtags(tip, n) { return tip.tags.slice(0, n).map((t) => "#" + t).join(" "); }
 
 // X counts every link as 23 characters; the text gets the rest of the 280 and the link always survives.
-function xPost(text, url) {
-  const room = 280 - 23 - 2;
-  if (text.length <= room) return text + "\n\n" + url;
+// Buffer's bulk upload counts the link in full, so a post over 280 that way gets the bare link,
+// which X still turns into a link. Tags go in only when the text fits whole with them.
+function xPost(text, url, tags) {
+  const words = (tags || "").split(" ").filter(Boolean);
+  for (let n = words.length; n > 0; n -= 1) {
+    for (const u of [url, bareLink(url)]) {
+      const post = text + "\n\n" + u + "\n" + words.slice(-n).join(" ");
+      if (post.length <= 280) return post;
+    }
+  }
+  const body = clip(text, 280 - 23 - 2);
+  const post = body + "\n\n" + url;
+  if (post.length <= 280) return post;
+  const bare = bareLink(url);
+  return clip(body, 280 - bare.length - 2) + "\n\n" + bare;
+}
+
+function clip(text, room) {
+  if (text.length <= room) return text;
   const cut = text.slice(0, room - 1);
-  return cut.slice(0, cut.lastIndexOf(" ")).replace(/[\s,.;:]+$/, "") + "…\n\n" + url;
+  return cut.slice(0, cut.lastIndexOf(" ")).replace(/[\s,.;:…]+$/, "") + "…";
+}
+
+function bareLink(url) {
+  return url.replace(/^https:\/\//, "").replace(/\.html(?=\?|$)/, "");
 }
 
 function captions(tip, index, total) {
   const head = plainTitle(tip);
   const counter = "Tip " + (index + 1) + "/" + total;
   return {
-    linkedin: [head, "", tip.body, "", "Try this today: " + tip.action, "", "How a public-page review works, step by step: " + link("linkedin", tip), "", hashtags(tip, 3) + " #QA"].join("\n"),
-    x: xPost(head + "\n\n" + tip.action, link("x", tip)),
-    instagram: [head, "", tip.body, "", "Try this: " + tip.action, "", "Full guide: link in bio.", "", hashtags(tip, 3) + " #QA #WebDev #QAlab"].join("\n"),
-    facebook: [head, "", tip.body, "", "Try this: " + tip.action, "", link("facebook", tip)].join("\n"),
-    tiktok: head + " " + tip.action + " " + hashtags(tip, 3) + " #QA #techtok",
+    linkedin: [head, "", tip.body, "", "Try this today: " + tip.action, "", "How a public-page review works, step by step: " + link("linkedin", tip), "", tagLine(tip, "linkedin")].join("\n"),
+    x: xPost(head + "\n\n" + tip.action, link("x", tip), tagLine(tip, "x")),
+    instagram: [head, "", tip.body, "", "Try this: " + tip.action, "", "Full guide: link in bio.", "", tagLine(tip, "instagram")].join("\n"),
+    facebook: [head, "", tip.body, "", "Try this: " + tip.action, "", link("facebook", tip), "", tagLine(tip, "facebook")].join("\n"),
+    tiktok: head + " " + tip.action + " " + tagLine(tip, "tiktok"),
     youtubeTitle: (head + " #Shorts").slice(0, 100),
-    youtube: [tip.body, "", "Try this: " + tip.action, "", "Guide: " + link("youtube", tip), "", counter + " · QA-lab URL Review"].join("\n")
+    youtube: [tip.body, "", "Try this: " + tip.action, "", "Guide: " + link("youtube", tip), "", counter + " · QA-lab URL Review", "", tagLine(tip, "youtube")].join("\n")
   };
 }
 
-module.exports = { SITE, GUIDE, CATS, TIPS, captions, link, plainTitle, xPost };
+module.exports = { SITE, GUIDE, BRAND, CATS, TIPS, captions, link, plainTitle, xPost };

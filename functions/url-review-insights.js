@@ -1,6 +1,19 @@
 "use strict";
 
 const { URL } = require("url");
+const libraries = require("./url-review-libraries");
+const { germanSpeaking } = require("./url-review-legal");
+
+const BROWSER_READ_NOTE = "The site's bot protection refused the plain request; the page was analyzed in headless Chrome.";
+const UNTAGGED_READ_NOTE = "The site's bot protection refused the plain request and headless Chrome while it carried the review tag; the page was analyzed in headless Chrome without the tag.";
+const CUT_NOTE = "The start page is larger than 2 MB, so the review analyzed its first 2 MB.";
+const SLOW_READ_NOTE = "The plain request for the start page took longer than 8 s; the page was analyzed in headless Chrome.";
+const SLOW_CUT_NOTE = "The start page was still arriving after 8 s, so the review analyzed the part that had arrived.";
+const SHELL_NOTE = "The start page's HTML lists almost no same-host links, so the review followed the links on the page rendered in headless Chrome.";
+
+function botCheck(vendor) {
+  return (/^[aeiou]/i.test(vendor) ? "an " : "a ") + vendor + " bot check";
+}
 
 const AI_BOTS = [
   { token: "OAI-SearchBot", owner: "OpenAI", product: "ChatGPT search", role: "answers" },
@@ -108,7 +121,7 @@ function blockedAnswer(page) {
 }
 
 function blockedReason(page) {
-  if (page.challenge) return "a " + page.challenge + " bot check";
+  if (page.challenge) return botCheck(page.challenge);
   if (page.status === 429) return "429, rate limited";
   if (page.status === 503) return "503 with Retry-After";
   return page.status + ", refused";
@@ -236,6 +249,219 @@ const AXE_FIX = {
 };
 const AXE_SEVERITY = { critical: ["fail", "medium"], serious: ["fail", "low"], moderate: ["risk", "low"], minor: ["risk", "low"] };
 
+// Chat widgets and AI chatbots: consent, weight on the start page, and the launcher and open widget on a phone.
+function chatChecks(chat, consent, add) {
+  const rows = chat.found;
+  const names = rows.map((row) => row.name + (row.ai ? " (AI chatbot)" : ""));
+  const named = sample(names, 3);
+  const it = rows.length === 1 ? rows[0].name : "the chat";
+  const widget = rows.length === 1 ? rows[0].name + " " : "chat ";
+  const requests = rows.reduce((sum, row) => sum + row.requests, 0);
+  const cookies = chat.cookies || [];
+  const banner = consent && consent.banner ? (consent.banner === "A cookie banner" ? "A cookie banner" : consent.banner) + " was showing" : "";
+
+  if (cookies.length && banner) add("Analytics", "risk", "medium", "an-chat-consent", "The chat sets cookies before the visitor chooses",
+    banner + ". Before any choice, " + named + " sent " + plural(requests, "request") + " and set " + sample(cookies, 4) + ".",
+    "Put the chat in a consent category and load it only once that category is accepted, or show a plain chat button that loads the widget on the first click.", { effort: "hours", cases: ["CHAT-02", "PR-03"], count: cookies.length });
+  else if (cookies.length) add("Analytics", "risk", "low", "an-chat-consent", "The chat sets cookies on load and no banner asks first",
+    named + " sent " + plural(requests, "request") + " and set " + sample(cookies, 4) + " on the first visit.",
+    "Show a plain chat button that loads the widget on the first click, so nothing is stored until a visitor asks for help.", { effort: "hours", cases: ["CHAT-02", "PR-03"], count: cookies.length });
+  else if (banner) add("Analytics", "risk", "low", "an-chat-consent", "The chat loads before the visitor chooses",
+    banner + ". Before any choice, " + named + " sent " + plural(requests, "request") + ", but set no cookie the browser could see.",
+    "Load the chat after consent, or on the first click of a plain chat button.", { effort: "hours", cases: ["CHAT-02", "PR-03"] });
+  else add("Analytics", "pass", "info", "an-chat-consent", "The chat sets no cookie on load", named + " sent " + plural(requests, "request") + " and set no cookie the browser could see.", "", { cases: ["CHAT-02"] });
+
+  if (consent && consent.rejected && chat.after) {
+    const after = chat.after;
+    if (after.cookies.length) add("Analytics", "risk", "medium", "an-chat-reject", "The chat keeps setting cookies after Reject",
+      "After pressing \"" + consent.rejectLabel + "\" and reloading, " + it + " set " + sample(after.cookies, 4) + ".",
+      "Map the chat to a consent category and block it when that category is refused.", { effort: "hours", cases: ["CHAT-02", "PR-03"] });
+    else if (after.requests) add("Analytics", "risk", "low", "an-chat-reject", "The chat still loads after Reject",
+      "After pressing \"" + consent.rejectLabel + "\" and reloading, " + it + " sent " + plural(after.requests, "request") + " but set no new cookie.",
+      "If the chat is not strictly needed, block it when its consent category is refused.", { effort: "hours", cases: ["CHAT-02"] });
+    else add("Analytics", "pass", "info", "an-chat-reject", "The chat stops after Reject", "After pressing \"" + consent.rejectLabel + "\" and reloading, " + it + " sent no request.", "", { cases: ["CHAT-02"] });
+  }
+
+  const open = chat.open || {};
+  if (open.privacy === false) add("Analytics", "risk", "low", "an-chat-privacy", "The open chat shows no privacy link",
+    "The opened " + widget + "widget links no privacy notice, so a visitor typing personal data cannot see how it is used.",
+    "Link the privacy notice from the chat's welcome screen or pre-chat form.", { effort: "minutes", cases: ["CHAT-03", "PR-01"] });
+  else if (open.privacy === true) add("Analytics", "pass", "info", "an-chat-privacy", "The open chat links the privacy notice", "The opened " + widget + "widget links a privacy notice.", "", { cases: ["CHAT-03", "PR-01"] });
+
+  const kb = Math.round(rows.reduce((sum, row) => sum + row.bytes, 0) / 1024);
+  const ms = rows.reduce((sum, row) => sum + row.ms, 0);
+  const cost = named + " added " + plural(requests, "request") + ", " + kb + " KB over the network" + (ms ? " and " + ms + " ms of script time in long frames" : "") + " to the start page before anyone opened it. Measured once in Chromium with no network throttling.";
+  const lighter = "Show a plain chat button and load the widget on its first click, or after the page is idle.";
+  if (kb > 500 || ms > 250) add("Performance", "risk", "medium", "pf-chat", "The chat adds " + kb + " KB to the start page", cost, lighter, { effort: "hours", cases: ["PF-02"] });
+  else if (kb > 200 || ms > 100) add("Performance", "risk", "low", "pf-chat", "The chat adds " + kb + " KB to the start page", cost, lighter, { effort: "hours", cases: ["PF-02"] });
+  else add("Performance", "pass", "info", "pf-chat", "The chat is light on the start page", cost, "", { cases: ["PF-02"] });
+
+  const launcher = chat.launcher || {};
+  if (launcher.found) {
+    const covers = launcher.covers || [];
+    const onBanner = covers.filter((row) => row.banner);
+    if (covers.length) add("Accessibility", "fail", onBanner.length ? "high" : "medium", "a11y-chat-cover", onBanner.length ? "The chat button covers the cookie banner on a phone" : "The chat button covers a button on a phone",
+      "At 390 px the " + widget + "launcher sits over " + sample(covers.map((row) => "\"" + row.label + "\"" + (row.banner ? " in the cookie banner" : "")), 3) + ".",
+      onBanner.length ? "Hide the launcher until the visitor answers the banner, or raise the banner above it." : "Keep the launcher clear of sticky and call-to-action buttons: offset it, or reserve space for it at the bottom of the page.", { effort: "hours", cases: ["CHAT-01", "MB-01"] });
+    else add("Accessibility", "pass", "info", "a11y-chat-cover", "The chat button covers no button on a phone", "At 390 px the " + widget + "launcher overlaps no " + (launcher.banner ? "cookie banner or " : "") + "call-to-action button.", "", { cases: ["CHAT-01"] });
+    if (launcher.known && !launcher.name) add("Accessibility", "fail", "medium", "a11y-chat-name", "The chat button has no accessible name",
+      "A screen reader announces the " + widget + "launcher only as a button, with no words.",
+      "Give the launcher an aria-label such as \"Open chat\".", { effort: "minutes", cases: ["CHAT-01", "FN-05"] });
+    else if (launcher.known) add("Accessibility", "pass", "info", "a11y-chat-name", "The chat button has a name", "The " + widget + "launcher is announced as \"" + launcher.name + "\".", "", { cases: ["CHAT-01", "FN-05"] });
+  }
+  if (open.opened && open.moved === false) add("Accessibility", "risk", open.tabbed ? "low" : "medium", "a11y-chat-focus", "Opening the chat leaves keyboard focus on the page",
+    "After " + (open.keyboard ? "pressing Enter on" : "clicking") + " the " + widget + "launcher, the chat opened but focus stayed outside it" + (open.tabbed ? " until Tab was pressed" : ", and the next Tab went to the page instead of the chat") + ". A screen reader user hears nothing about the open chat.",
+    "Move focus to the chat's first control or heading when it opens, and back to the launcher when it closes.", { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
+  if (open.opened && open.trapped) add("Accessibility", "fail", "high", "a11y-chat-trap", "Keyboard focus is trapped in the open chat",
+    "After opening " + it + (open.keyboard ? " with Enter" : "") + ", " + plural(open.tabs, "press", "presses") + " of Tab kept focus inside it, no close button was reached, and Escape did not close it.",
+    "Let Escape close the chat and return focus to the launcher, and keep the close button in the Tab order.", { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
+  else if (open.opened && open.exit) add("Accessibility", "pass", "info", "a11y-chat-trap", "Keyboard focus can leave the open chat",
+    "After opening " + it + (open.keyboard ? " with Enter" : "") + ", focus left it by " + { tab: "Tab", close: "reaching its close button", escape: "Escape" }[open.exit] + ".", "", { cases: ["CHAT-03", "A11Y-04"] });
+  else if (open.opened) add("Accessibility", "person", "info", "a11y-chat-trap", "Keyboard focus in the open chat needs a person",
+    (open.entered ? "Focus went into a frame of " + it + " that this review cannot read" : "Focus could not be moved into " + it) + (open.keyboard ? "" : ", and Enter on the launcher did not open it") + ", so the trap check could not finish.", "", { cases: ["CHAT-03"] });
+}
+
+const SHOP_PATH = /\/(cart|checkout|basket|warenkorb|kasse|carrito|cesta|panier|carrello|carrinho)(\/|$|\?)/i;
+const LIB_SEVERITY = { critical: ["fail", "high"], high: ["risk", "high"], medium: ["risk", "medium"], low: ["risk", "low"] };
+
+// Links to the accessibility statement, the privacy notice and the imprint, on any page read or the rendered start page.
+const FINGERPRINT_KINDS = [["canvas", "drew hidden text on a canvas and read it back"], ["fonts", "measured which fonts are installed"], ["webgl", "read the graphics card name"], ["audio", "rendered a silent audio tone"]];
+
+// Browser fingerprinting, session recorders, and typed text sent before submit: before a choice and after Reject.
+function watchChecks(watch, consent, add) {
+  const before = watch.before;
+  const after = consent && consent.rejected && watch.after ? watch.after : null;
+  const rejected = after ? "After pressing \"" + consent.rejectLabel + "\" and reloading, " : "";
+  const banner = consent && consent.banner ? (consent.banner === "A cookie banner" ? "A cookie banner" : consent.banner) + " was showing. " : "No cookie banner appeared. ";
+  const hosts = (row) => [...new Set([].concat(...FINGERPRINT_KINDS.map(([key]) => row.fingerprint[key] || [])))];
+  const list = (row) => hosts(row).map((host) => {
+    const hows = FINGERPRINT_KINDS.filter(([key]) => (row.fingerprint[key] || []).indexOf(host) !== -1).map(([, how]) => how);
+    return host + " " + (hows.length > 1 ? hows.slice(0, -1).join(", ") + ", and " + hows[hows.length - 1] : hows[0]);
+  }).join("; ");
+  const guarded = (row) => hosts(row).length > 0 && hosts(row).every((host) => (row.guards || []).indexOf(host) !== -1);
+  const printed = hosts(before).length > 0;
+
+  if (printed && guarded(before)) {
+    add("Analytics", "risk", "low", "an-fingerprint", "A bot check fingerprints the browser on load",
+      banner + "Before any choice, " + list(before) + ". These hosts run bot or fraud protection.",
+      "Name the bot protection and what it reads in the privacy notice. It can run without consent only while it is strictly needed for security.", { effort: "minutes", cases: ["PR-02"] });
+  } else if (printed) {
+    add("Analytics", consent && consent.banner ? "fail" : "risk", "high", "an-fingerprint", consent && consent.banner ? "Scripts fingerprint the browser before the visitor chooses" : "Scripts fingerprint the browser on load and no banner asks first",
+      banner + "Before any choice, " + list(before) + ". Read together, these give the browser an ID that survives clearing cookies.",
+      "Find the tag behind each host and hold it until consent, like a tracking cookie. If it is fraud or bot protection, name it in the privacy notice.", { effort: "hours", cases: ["PR-02", "PR-03"], count: hosts(before).length });
+  } else {
+    add("Analytics", "pass", "info", "an-fingerprint", "No browser fingerprinting was seen",
+      "Before any choice, no script read back a canvas with text on it, measured 50 or more fonts, read the graphics card name, or rendered a silent audio tone.", "", { cases: ["PR-02"] });
+  }
+  if (after && hosts(after).length && !guarded(after)) {
+    add("Analytics", "fail", "high", "an-fingerprint-reject", "Fingerprinting continues after Reject", rejected + list(after) + ".",
+      "Block the fingerprinting tag when the visitor refuses, or remove it.", { effort: "hours", cases: ["PR-02", "PR-03"] });
+  } else if (after && printed && !guarded(before)) {
+    add("Analytics", "pass", "info", "an-fingerprint-reject", "Fingerprinting stops after Reject", rejected + "no script repeated the fingerprinting calls.", "", { cases: ["PR-03"] });
+  }
+
+  const recording = (row) => (row.recorders || []).filter((rr) => rr.sent).map((rr) => rr.name);
+  if (recording(before).length) {
+    add("Analytics", consent && consent.banner ? "fail" : "risk", "medium", "an-recording", consent && consent.banner ? "A session recorder runs before the visitor chooses" : "A session recorder runs on load and no banner asks first",
+      banner + "Before any choice, " + recording(before).join(", ") + " sent recording data. Session recorders replay clicks, scrolling, and anything typed into fields they do not mask.",
+      "Load the recorder only after consent, and mask every form field in its settings.", { effort: "hours", cases: ["PR-03"] });
+  } else if ((before.recorders || []).length) {
+    add("Analytics", "pass", "info", "an-recording", "The session recorder waits for consent", before.recorders.map((rr) => rr.name).join(", ") + " loaded but sent no recording data before a choice.", "", { cases: ["PR-03"] });
+  }
+  if (after && recording(after).length) {
+    add("Analytics", "fail", "medium", "an-recording-reject", "Session recording continues after Reject", rejected + recording(after).join(", ") + " still sent recording data.",
+      "Map the recorder to a consent category and block it when that category is refused.", { effort: "hours", cases: ["PR-03"] });
+  } else if (after && (before.recorders || []).length) {
+    add("Analytics", "pass", "info", "an-recording-reject", "Session recording stops after Reject", rejected + "no session recorder sent data.", "", { cases: ["PR-03"] });
+  }
+
+  const typed = before.typed || (after && after.typed);
+  if (!typed) return;
+  const sentTo = (row) => (row && row.typed ? row.typed.sent : []).map((s) => s.host + " (" + s.how + ")").join(", ");
+  const listening = before.listeners && before.listeners.length ? " Scripts from " + before.listeners.slice(0, 4).join(", ") + " listen to typing on the page." : "";
+  if (sentTo(before) || sentTo(after)) {
+    add("Security", "fail", "high", "sec-typed", "Typed text is sent before the form is submitted",
+      "The review typed a test address into the \"" + typed.field + "\" field and did not submit. " +
+      [sentTo(before) ? "Before any choice it was sent to " + sentTo(before) + "." : "", sentTo(after) ? rejected + "it was sent to " + sentTo(after) + "." : ""].filter(Boolean).join(" ") +
+      " The review blocked those requests, so the test address did not leave the browser." + listening,
+      "Turn off form-field capture in the tags that send it, such as automatic advanced matching, form analytics, or an unmasked session recorder, or send the data only on submit and after consent.", { effort: "hours", cases: ["PR-02"] });
+  } else {
+    add("Security", "pass", "info", "sec-typed", "Typing in a form sends nothing before submit",
+      "The review typed a test address into the \"" + typed.field + "\" field without submitting, and no other site received it." + listening, "", { cases: ["PR-02"] });
+  }
+}
+
+function legalChecks(ctx, add) {
+  const { read, browsed, face, origin, home } = ctx;
+  const dom = browsed && browsed.start && browsed.start.dom;
+  if (face.signals && face.signals.appShell && !dom) return;
+  const at = (kind) => {
+    for (const page of read) {
+      const hit = page.inspect.legal && page.inspect.legal[kind];
+      if (hit) return Object.assign({ path: page.path }, hit);
+    }
+    return dom && dom.legal && dom.legal[kind] ? Object.assign({ path: browsed.start.finalPath || "/" }, dom.legal[kind]) : null;
+  };
+  const linked = (hit) => (hit.text ? "\"" + hit.text + "\"" : "A link") + " on " + hit.path + " leads to " + shownAgainst(hit.href, origin) + ".";
+  const none = "None of the " + plural(read.length, "page") + " analyzed" + (dom ? ", nor the rendered start page," : "") + " links ";
+
+  const statement = at("accessibility");
+  const techs = [].concat.apply([], read.map((page) => page.inspect.technologies || []));
+  const seller = techs.find((item) => /^(Commerce|Payments)$/.test(item.group));
+  const products = read.some((page) => ((page.inspect.schema || {}).items || []).some((item) => item.types.some((type) => /^(Product|Offer|AggregateOffer|Store|OnlineStore)$/.test(type))));
+  const cart = read.concat(dom ? [{ inspect: { links: dom.links } }] : []).some((page) => (page.inspect.links || []).some((url) => SHOP_PATH.test(url)));
+  const shop = seller ? seller.name : products ? "product markup" : cart ? "a cart or checkout link" : "";
+  if (statement) add("Accessibility", "pass", "info", "a11y-statement", "An accessibility statement is linked", linked(statement), "", { cases: ["A11Y-06"] });
+  else if (shop) add("Accessibility", "risk", "medium", "a11y-statement", "No accessibility statement is linked",
+    "The site sells online (" + shop + "). " + none + "an accessibility statement. Since 28 June 2025 the European Accessibility Act requires one from shops that sell to consumers in the EU, unless the business is a micro-enterprise.",
+    "Publish an accessibility statement that says how the shop meets EN 301 549 (WCAG 2.1 AA), lists known gaps, and gives a contact for access problems. Link it from the footer of every page.", { effort: "hours", cases: ["A11Y-06"] });
+  else add("Accessibility", "person", "info", "a11y-statement", "Whether an accessibility statement is required needs a person",
+    none + "an accessibility statement, and the review saw no shop. The European Accessibility Act requires one from shops and from services such as banking, transport and e-books sold to consumers in the EU, and EU public-sector sites need one too.", "", { cases: ["A11Y-06"] });
+
+  const privacy = at("privacy");
+  if (privacy) add("Analytics", "pass", "info", "an-privacy", "A privacy notice is linked", linked(privacy), "", { cases: ["PR-01"] });
+  else {
+    const cookies = read.some((page) => (page.inspect.cookies || []).length) || !!(browsed && browsed.consent && browsed.consent.before && browsed.consent.before.cookieCount);
+    const forms = read.reduce((sum, page) => sum + (page.inspect.forms || 0), 0);
+    const why = [cookies ? "sets cookies" : "", (ctx.tags || []).length ? "loads " + sample(ctx.tags.map((tag) => tag.name), 3) : "", forms ? "has " + plural(forms, "form") : ""].filter(Boolean);
+    add("Analytics", "risk", why.length ? "medium" : "low", "an-privacy", "No privacy notice is linked",
+      none + "a privacy notice" + (why.length ? ", yet the site " + why.join(", ") : "") + ". Visitors cannot see who handles their data or why.",
+      "Publish a privacy notice that names who controls the data, what is collected, why, and the visitor's rights, and link it from the footer of every page.", { effort: "hours", cases: ["PR-01"] });
+  }
+
+  const imprint = at("imprint");
+  const german = germanSpeaking(face.lang, face.textLang, home.url);
+  if (imprint) add("Analytics", "pass", "info", "an-imprint", "An imprint is linked", linked(imprint), "", { cases: ["PR-04"] });
+  else if (german) add("Analytics", "risk", "medium", "an-imprint", "No imprint (Impressum) is linked",
+    "The site is " + (/^de\b/i.test(face.lang || "") ? "declared German (lang=\"" + face.lang + "\")" : face.textLang === "de" ? "written in German" : "on a German-speaking domain") + ". " + none + "an Impressum, which business sites in Germany (§ 5 DDG) and Austria (§ 5 ECG) must show.",
+    "Publish an Impressum with the provider's name, postal address, email, and register and VAT numbers, and link it from the footer of every page.", { effort: "hours", cases: ["PR-04"] });
+}
+
+// Front-end libraries named by script addresses, banners or page globals, against the bundled retire.js list.
+function libraryRows(read, browsed) {
+  return libraries.assess([].concat.apply([], read.map((page) => page.inspect.libraries || [])).concat((browsed && browsed.libraries) || []));
+}
+
+function libraryChecks(ctx, add) {
+  const { read, browsed, origin } = ctx;
+  const rows = libraryRows(read, browsed);
+  if (!rows.length) return;
+  const flawed = rows.filter((row) => row.flaws);
+  const list = "the retire.js list of " + libraries.LIST_DATE;
+  if (!flawed.length) {
+    add("Security", "pass", "info", "sec-libraries", "Front-end libraries have no known flaw", sample(rows.map((row) => row.name + " " + row.version), 5) + ", checked against " + list + ".", "", { cases: ["SEC-10"] });
+    return;
+  }
+  const where = (row) => row.via === "global" ? "read from the page" : (row.via === "banner" ? "banner of " : "") + shownAgainst(row.url, origin);
+  const [verdict, severity] = LIB_SEVERITY[flawed[0].worst] || LIB_SEVERITY.medium;
+  const evidence = flawed.slice(0, 4).map((row, index) => row.name + " " + row.version + " (" + where(row) + "): " + plural(row.flaws, "known flaw") + ", the worst rated " + row.worst +
+    (row.ids.length ? ", such as " + row.ids.join(", ") : "") + (index === 0 && row.summary ? ". " + row.summary.replace(/\.?$/, ".") : ".")).join(" ") + (flawed.length > 4 ? " " + plural(flawed.length - 4, "more library", "more libraries") + " also have flaws." : "") + " Checked against " + list + ".";
+  const steps = flawed.slice(0, 4).map((row) => row.ended ? "move " + row.name + " off " + row.version.split(".")[0] + ".x, which gets no more fixes" : "upgrade " + row.name + " to " + row.fixed + " or later");
+  const fix = steps.join("; ").replace(/^./, (c) => c.toUpperCase()) + "." + (flawed.some((row) => row.majorJump) ? " A major upgrade changes behavior, so retest the pages that use it." : "");
+  add("Security", verdict, severity, "sec-libraries", flawed.length === 1 ? flawed[0].name + " " + flawed[0].version + (flawed[0].flaws === 1 ? " has a known flaw" : " has known flaws") : plural(flawed.length, "front-end library has", "front-end libraries have") + " known flaws",
+    evidence, fix, { effort: flawed.some((row) => row.majorJump) ? "days" : "hours", count: flawed.length, cases: ["SEC-10"] });
+}
+
 function browserChecks(b, add, ctx) {
   const where = "Chromium from an EU address (Belgium)";
   const start = b.start || {};
@@ -276,6 +502,9 @@ function browserChecks(b, add, ctx) {
         "Put Reject all next to Accept all, at the same size and weight.", { effort: "minutes", cases: ["PR-03"] });
     }
   }
+
+  if (b.chat && (b.chat.found || []).length) chatChecks(b.chat, consent, add);
+  if (b.watch && b.watch.before) watchChecks(b.watch, consent, add);
 
   // Accessibility: axe-core on the rendered pages, and the phone width.
   const axe = b.axe && b.axe.ran ? b.axe : null;
@@ -331,7 +560,7 @@ function browserChecks(b, add, ctx) {
     const dom = start.dom;
     const rawLinks = ((ctx.face && ctx.face.links) || []).length;
     if (dom && dom.links.length >= 5 && rawLinks < Math.max(3, dom.links.length / 4)) add("SEO", "risk", "medium", "seo-links-js", "Most links appear only after JavaScript runs",
-      "The HTML lists " + plural(rawLinks, "same-host link") + "; the rendered page lists " + dom.links.length + ". Crawlers that skip JavaScript cannot find the other pages, and this review's crawl could not follow them either.",
+      "The HTML lists " + plural(rawLinks, "same-host link") + "; the rendered page lists " + dom.links.length + ". Crawlers that skip JavaScript cannot find the other pages" + (ctx.renderedCrawl ? "; this review followed the rendered links instead." : ", and this review's crawl could not follow them either."),
       "Render navigation as plain <a href> links in the server HTML, and keep the sitemap complete.", { effort: "days", cases: ["LK-01", "SEO-03"] });
     if (start.h1 && start.h1InHtml === false) add("GEO", "risk", "low", "geo-h1-rendered", "The main heading appears only after JavaScript", "\"" + start.h1 + "\" is on the rendered page but not in the HTML.", "Put the h1 in the server HTML.", { effort: "hours", cases: ["GEO-03"] });
   }
@@ -375,6 +604,62 @@ const FIELD_FIX = {
 };
 const FIELD_CASES = { lcp: "PF-01", inp: "PF-02", cls: "VIS-01" };
 const FIELD_WORD = { FAST: "good", AVERAGE: "needs improvement", SLOW: "poor" };
+
+const THREAT_WORDS = { MALWARE: "malware", SOCIAL_ENGINEERING: "phishing", UNWANTED_SOFTWARE: "unwanted software" };
+
+// Safe Browsing status, the domain's registration, and how mail to the domain is protected in transit.
+function domainChecks(extras, dnsInfo, dnsRead, add) {
+  const end = (text) => String(text).replace(/\.*$/, ".");
+  const sb = extras.safeBrowsing;
+  if (sb && sb.ok) {
+    const words = sb.threats.map((item) => THREAT_WORDS[item] || item.toLowerCase().replace(/_/g, " "));
+    if (words.length) add("Security", "fail", "critical", "sec-safebrowsing", "Google lists the site as " + words.join(" and "),
+      "Google's Safe Browsing lists, read through the Web Risk API, match " + sb.url + " as " + words.join(" and ") + ". Chrome, Firefox and Safari show a red warning page instead of the site, and Google Search can label it.",
+      "Find and remove the cause using the Security issues report in Google Search Console, then request a review there.", { effort: "days", cases: ["SEC-11"] });
+    else add("Security", "pass", "info", "sec-safebrowsing", "Google's Safe Browsing lists do not flag the site", "The Web Risk API found " + sb.url + " on no malware, phishing or unwanted-software list.", "", { cases: ["SEC-11"] });
+  }
+  const dom = extras.domain;
+  if (dom && dom.read) {
+    const at = dom.registrar ? " at " + dom.registrar : "";
+    const held = dom.domain + (dom.registrar ? ", held with " + dom.registrar + "," : "");
+    if (dom.expires && dom.daysLeft < 0) add("Security", "fail", "high", "sec-domain-expiry", "The domain registration has expired",
+      held + " expired on " + dom.expires + ", according to the registry's RDAP record. The site and its mail stop working when the grace period ends, and anyone can then register the name.", "Renew the domain now and turn on automatic renewal.", { effort: "minutes", cases: ["SEC-12"] });
+    else if (dom.expires && dom.daysLeft < 30) add("Security", "risk", dom.daysLeft < 7 ? "high" : "medium", "sec-domain-expiry", "The domain expires in " + plural(dom.daysLeft, "day"),
+      held + " is registered until " + dom.expires + ", according to the registry's RDAP record.", "Confirm that automatic renewal is on and the payment method on file is valid.", { effort: "minutes", cases: ["SEC-12"] });
+    else if (dom.expires) add("Security", "pass", "info", "sec-domain-expiry", "The domain is registered for " + plural(dom.daysLeft, "more day"), held + " is registered until " + dom.expires + ".", "", { cases: ["SEC-12"] });
+    if (dom.locked === false) add("Security", "risk", "low", "sec-domain-lock", "The domain has no transfer lock",
+      "The RDAP status of " + dom.domain + " is " + (dom.status.join(", ") || "empty") + ", with no clientTransferProhibited. A hijacked registrar account or a forged request can move the domain away.", end("Turn on the transfer lock" + at), { effort: "minutes", cases: ["SEC-12"] });
+    else if (dom.locked) add("Security", "pass", "info", "sec-domain-lock", "The domain is locked against transfer", "The RDAP status of " + dom.domain + " includes " + dom.status.filter((item) => /transfer/i.test(item)).join(", ") + ".", "", { cases: ["SEC-12"] });
+  }
+  if (!dnsInfo || !dnsInfo.domain || !dnsRead("mx") || !(dnsInfo.mx || []).length) return;
+  const domain = dnsInfo.domain;
+  if (dnsRead("mta-sts")) {
+    const policy = dnsInfo.mtaStsPolicy || {};
+    if (!dnsInfo.mtaSts) add("Security", "risk", "low", "sec-mta-sts", "No MTA-STS policy protects mail sent to the domain",
+      domain + " receives mail but publishes no _mta-sts TXT record. Sending servers fall back to unencrypted delivery if an attacker on the path strips STARTTLS.", "Publish an MTA-STS policy in mode: testing with a TLS-RPT address, then move to enforce once reports are clean.", { effort: "hours", cases: ["SEC-13"] });
+    else if (!policy.mode) add("Security", "risk", "low", "sec-mta-sts", "MTA-STS is announced but its policy could not be read",
+      "_mta-sts." + domain + " publishes " + dnsInfo.mtaSts + ", but " + (policy.url || "the policy file") + " could not be used: " + end(policy.error || "no answer") + " Senders ignore a policy they cannot fetch.", "Serve the policy as text over https at mta-sts." + domain + "/.well-known/mta-sts.txt, without a redirect.", { effort: "hours", cases: ["SEC-13"] });
+    else if (policy.mode === "enforce") add("Security", "pass", "info", "sec-mta-sts", "MTA-STS makes senders use TLS for mail to the domain", "The policy at " + policy.url + " is in enforce mode.", "", { cases: ["SEC-13"] });
+    else add("Security", "risk", "low", "sec-mta-sts", policy.mode === "testing" ? "MTA-STS only reports and does not enforce" : "MTA-STS is switched off",
+      "The policy at " + policy.url + " is in " + policy.mode + " mode, so senders still deliver without TLS when STARTTLS is stripped.", "Move the policy to mode: enforce once TLS-RPT reports show no failures.", { effort: "minutes", cases: ["SEC-13"] });
+  }
+  if (dnsRead("tlsrpt")) {
+    if (dnsInfo.tlsRpt) add("Security", "pass", "info", "sec-tlsrpt", "TLS-RPT sends reports of failed secure deliveries", dnsInfo.tlsRpt.slice(0, 120) + ".", "", { cases: ["SEC-13"] });
+    else add("Security", "risk", "low", "sec-tlsrpt", "No TLS-RPT address receives reports of failed secure deliveries",
+      "_smtp._tls." + domain + " has no v=TLSRPTv1 record, so nobody hears when senders cannot deliver mail over TLS.", "Publish TXT \"v=TLSRPTv1; rua=mailto:tlsrpt@" + domain + "\" at _smtp._tls." + domain + ".", { effort: "minutes", cases: ["SEC-13"] });
+  }
+}
+
+// Sustainable Web Design model v4: 0.3 kWh per GB across data centres, networks and devices, at the 494 g/kWh global grid average.
+const CARBON_KWH_PER_GB = 0.3;
+const CARBON_GRID_G_PER_KWH = 494;
+const CARBON_RATINGS = [["A+", 0.04], ["A", 0.079], ["B", 0.145], ["C", 0.209], ["D", 0.278], ["E", 0.359]];
+
+function carbonEstimate(bytes, source) {
+  if (!(bytes > 0)) return null;
+  const grams = (bytes / 1e9) * CARBON_KWH_PER_GB * CARBON_GRID_G_PER_KWH;
+  return { bytes: Math.round(bytes), grams: Math.round(grams * 1000) / 1000, rating: (CARBON_RATINGS.find(([, max]) => grams <= max) || ["F"])[0], source };
+}
 
 function speedChecks(psi, add) {
   const field = psi.field;
@@ -510,7 +795,7 @@ function analyze(input) {
   const unanswered = pages.filter((page) => page.depth > 0 && !page.status && !page.challenge);
   if (unanswered.length) {
     add("SEO", "person", "info", "seo-unanswered-links", plural(unanswered.length, "internal link", "internal links") + " did not answer in time",
-      unanswered.slice(0, 5).map((page) => (page.path || page.url) + ": " + (page.error || "no answer")).join(". ") + ". A slow answer on one read is not proof the page is broken.",
+      unanswered.slice(0, 5).map((page) => (page.path || page.url) + ": " + (page.error || "no answer")).join(". ") + ". A slow answer in one analysis is not proof the page is broken.",
       "Open each address again. If it stays slow, look at the server or cache for that path.",
       { pages: unanswered.map((page) => page.path || page.url), cases: ["FN-06", "LK-01"] });
   }
@@ -522,8 +807,12 @@ function analyze(input) {
   }
   const partialRead = linked.length >= 2 && blocked.length * 2 > linked.length;
   const warnings = [];
-  if (home.challenge) warnings.push("The start page answered with a " + home.challenge + " bot check instead of the site, so these scores describe that check page.");
-  if (partialRead) warnings.push("Partial read: " + blocked.length + " of " + plural(linked.length, "linked page") + " answered with a bot check or a block, so the scores rest mostly on the start page.");
+  if (home.readInBrowser) warnings.push(home.readInBrowser === "untagged" ? UNTAGGED_READ_NOTE : home.readInBrowser === "slow" ? SLOW_READ_NOTE : BROWSER_READ_NOTE);
+  if (home.slow) warnings.push(SLOW_CUT_NOTE);
+  else if (home.cut) warnings.push(CUT_NOTE);
+  if (home.renderedLinks) warnings.push(SHELL_NOTE);
+  if (home.challenge) warnings.push("The start page answered with " + botCheck(home.challenge) + " instead of the site, so these scores describe that check page.");
+  if (partialRead) warnings.push("Partial analysis: " + blocked.length + " of " + plural(linked.length, "linked page") + " answered with a bot check or a block, so the scores rest mostly on the start page.");
   if (broken.length) {
     add("SEO", "fail", "high", "seo-broken-links", plural(broken.length, "internal link leads", "internal links lead") + " to an error",
       broken.slice(0, 5).map(({ page, index }) => (page.path || page.url) + " answered " + (page.status || page.error || "nothing") + (sources.get(index) ? ", linked from " + sample(sources.get(index), 2) : "")).join(". ") + ".",
@@ -646,8 +935,8 @@ function analyze(input) {
         "In " + pathOf(sitemapReport.source) + ": " + sample(Object.keys(offHosts).sort((a, b) => offHosts[b] - offHosts[a]).map((name) => name + " (" + offHosts[name] + ")"), 3) + ". The sitemap should list only URLs on https://" + host + ".", "Regenerate the sitemap with the production https host.", { count: sitemapReport.offHost, effort: "minutes", cases: ["SEO-03"] });
     }
     if (!sitemapReport.listedNotIndexable.length && !sitemapReport.notListed.length && !sitemapReport.offHost) {
-      if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", "A sitemap answers with valid URLs", "The first " + plural(sitemapReport.count, "URL") + " from " + pathOf(sitemapReport.source) + " were read; the sitemap is larger than one review reads.", "", { cases: ["SEO-03"] });
-      else add("SEO", "pass", "info", "seo-sitemap", "The sitemap matches the pages that were read", plural(sitemapReport.count, "URL") + " in " + pathOf(sitemapReport.source) + ".", "", { cases: ["SEO-03"] });
+      if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", "A sitemap answers with valid URLs", "The first " + plural(sitemapReport.count, "URL") + " from " + pathOf(sitemapReport.source) + " were analyzed; the sitemap is larger than one review analyzes.", "", { cases: ["SEO-03"] });
+      else add("SEO", "pass", "info", "seo-sitemap", "The sitemap matches the pages that were analyzed", plural(sitemapReport.count, "URL") + " in " + pathOf(sitemapReport.source) + ".", "", { cases: ["SEO-03"] });
     }
   } else {
     add("SEO", "risk", "medium", "seo-sitemap", "No sitemap was found",
@@ -674,7 +963,7 @@ function analyze(input) {
     add("SEO", "risk", "medium", "seo-hreflang", plural(hreflangIssues.length, "language alternate problem"), sample(hreflangIssues, 3) + ".",
       "Each language version must list every version, itself included, and each must link back.", { count: hreflangIssues.length, effort: "hours", cases: ["SEO-02"] });
   } else if (read.some((page) => ((page.inspect.seo && page.inspect.seo.hreflang) || []).length)) {
-    add("SEO", "pass", "info", "seo-hreflang", "Language alternates point at each other", "Every alternate that was read links back.", "", { cases: ["SEO-02"] });
+    add("SEO", "pass", "info", "seo-hreflang", "Language alternates point at each other", "Every alternate that was analyzed links back.", "", { cases: ["SEO-02"] });
   }
 
   // Structured data.
@@ -703,7 +992,7 @@ function analyze(input) {
       sample(schemaGaps, 3) + ".", "Fill the missing properties so the item qualifies for rich results.", { count: schemaGaps.length, effort: "hours", cases: ["CT-04"] });
   }
   if (!schemaTypes.size) {
-    add("SEO", "risk", "low", "seo-schema", "No structured data was found", "No JSON-LD block was found on the pages that were read.",
+    add("SEO", "risk", "low", "seo-schema", "No structured data was found", "No JSON-LD block was found on the pages that were analyzed.",
       "Add Organization or Person, WebSite, and BreadcrumbList JSON-LD. The fix kit has a draft.", { effort: "hours", cases: ["CT-04"] });
   } else if (!schemaErrors && !schemaGaps.length) {
     add("SEO", "pass", "info", "seo-schema", "Structured data parses and carries the expected properties", "Types: " + sample([...schemaTypes], 6) + ".", "", { cases: ["CT-04"] });
@@ -802,10 +1091,10 @@ function analyze(input) {
       gaps.length ? "Follow the llmstxt.org layout: # name, > summary, then ## sections of [title](url): note." : "", { cases: ["GEO-02"], effort: "minutes" });
   } else if (llms.status === 200 && llms.html) {
     add("GEO", "risk", "low", "geo-llms", "/llms.txt answers with an HTML page", "The address returns a web page, which usually means a catch-all route.",
-      "Serve a plain-text /llms.txt. The fix kit has a draft built from this read.", { cases: ["GEO-02"], effort: "minutes" });
+      "Serve a plain-text /llms.txt. The fix kit has a draft built from this review.", { cases: ["GEO-02"], effort: "minutes" });
   } else {
     add("GEO", "risk", "low", "geo-llms", "No llms.txt was found", "/llms.txt returned " + (llms.status || "nothing") + ". It is a proposed convention that some AI tools read to find the pages that matter.",
-      "Publish /llms.txt. The fix kit has a draft built from this read.", { cases: ["GEO-02"], effort: "minutes" });
+      "Publish /llms.txt. The fix kit has a draft built from this review.", { cases: ["GEO-02"], effort: "minutes" });
   }
   const homeSchema = (face.schema && face.schema.items) || [];
   const allItems = [].concat.apply([], read.map((page) => (page.inspect.schema && page.inspect.schema.items) || []));
@@ -839,7 +1128,7 @@ function analyze(input) {
       (faq ? "FAQ or HowTo structured data is present. " : "") + (questionHeads ? plural(questionHeads, "heading is", "headings are") + " phrased as a question." : ""), "", { cases: ["GEO-05"] });
   } else {
     add("GEO", "risk", "low", "geo-answers", "No content is shaped as questions and answers",
-      "No heading on the pages read is a question and no FAQ data was found. AI answers favour short, direct answers under a question.",
+      "No heading on the pages analyzed is a question and no FAQ data was found. AI answers favour short, direct answers under a question.",
       "Add an FAQ block with the questions customers ask, answered in two or three sentences each.", { cases: ["GEO-05"], effort: "hours" });
   }
   const itemsOf = (page) => (page.inspect.schema && page.inspect.schema.items) || [];
@@ -885,7 +1174,7 @@ function analyze(input) {
   if (!tags.length && consentTools.length) {
     if (!browsed) add("Analytics", "person", "info", "an-none", "Tags are probably loaded by a script", consentTools.join(", ") + " manages consent, but none of 26 known analytics tools is written in the HTML. The browser run lists what loads after the page starts.", "", { cases: ["AN-01"] });
   } else if (!tags.length) {
-    add("Analytics", "risk", "low", "an-none", "No known analytics tag is in the HTML", "None of 26 known analytics tools appeared in the HTML of the pages read. A tag injected later by a script would not show here.",
+    add("Analytics", "risk", "low", "an-none", "No known analytics tag is in the HTML", "None of 26 known analytics tools appeared in the HTML of the pages analyzed. A tag injected later by a script would not show here.",
       "If visits matter, add a measurement tool. A cookieless one such as Plausible or Cloudflare Web Analytics avoids a consent banner.", { effort: "hours", cases: ["AN-01"] });
   } else {
     add("Analytics", "pass", "info", "an-inventory", plural(tags.length, "measurement tool was", "measurement tools were") + " found", tags.map((tag) => tag.name + (tag.ids.length ? " (" + tag.ids.join(", ") + ")" : "")).join(", ") + ".", "");
@@ -929,7 +1218,7 @@ function analyze(input) {
   }
   if (tracking.length && !browsed) {
     add("Analytics", "person", "info", "an-firing", "Whether tags fire before a choice needs a browser run",
-      "A raw HTML read can see the tags but not the requests they send. The browser run records every hit before and after consent.", "", { cases: ["AN-01"] });
+      "A raw HTML analysis can see the tags but not the requests they send. The browser run records every hit before and after consent.", "", { cases: ["AN-01"] });
   }
   const utm = extras.utm || null;
   if (utm && utm.status) {
@@ -945,7 +1234,10 @@ function analyze(input) {
       "Move the email out of the URL (POST it, or use an opaque token).", { pages: pii.map((page) => page.path), effort: "hours" });
   }
 
+  legalChecks({ read, browsed, face, origin, home, tags }, add);
+
   // Security
+  libraryChecks({ read, browsed, origin }, add);
   const hdr = face.headers || {};
   const rawHeaders = face.rawHeaders || {};
   const headerRows = read.map((page) => {
@@ -966,7 +1258,7 @@ function analyze(input) {
   });
   const spread = (key) => {
     const missing = headerRows.filter((row) => !row[key]);
-    const text = headerRows.length < 2 ? "" : missing.length === headerRows.length ? " Missing on all " + headerRows.length + " pages read." : " Missing on " + missing.length + " of " + headerRows.length + " pages read.";
+    const text = headerRows.length < 2 ? "" : missing.length === headerRows.length ? " Missing on all " + headerRows.length + " pages analyzed." : " Missing on " + missing.length + " of " + headerRows.length + " pages analyzed.";
     return { text, pages: missing.map((row) => row.path) };
   };
   const HEADER_LABEL = { hsts: "HSTS", csp: "Content-Security-Policy", frame: "frame protection", nosniff: "X-Content-Type-Options", referrer: "Referrer-Policy", permissions: "Permissions-Policy" };
@@ -977,7 +1269,7 @@ function analyze(input) {
   if (uneven.length) {
     const lacking = [...new Set([].concat.apply([], uneven.map((item) => item.missing.map((row) => row.path))))];
     add("Security", "risk", "medium", "sec-headers-uneven", "Security headers on the start page are missing on other pages",
-      uneven.map((item) => HEADER_LABEL[item.key] + " on " + plural(item.missing.length, "page")).join(", ") + ", out of " + plural(headerRows.length, "page") + " read. Attackers pick the weakest page.",
+      uneven.map((item) => HEADER_LABEL[item.key] + " on " + plural(item.missing.length, "page")).join(", ") + ", out of " + plural(headerRows.length, "page") + " analyzed. Attackers pick the weakest page.",
       "Set the headers once at the server, CDN, or host config so every response carries them.", { pages: lacking, count: lacking.length, effort: "minutes", cases: ["SEC-02", "SEC-03", "SEC-04"] });
   }
   const httpCheck = extras.httpRedirect || null;
@@ -1074,7 +1366,9 @@ function analyze(input) {
     else if (dnsInfo.dmarc) add("Security", "pass", "info", "sec-dmarc", "DMARC rejects or quarantines spoofed mail", dnsInfo.dmarc.slice(0, 120) + ".", "");
     if (dnsInfo.spf && sendsMail) add("Security", "pass", "info", "sec-spf", "SPF is published", dnsInfo.spf.slice(0, 120) + ".", "");
     if (!(dnsInfo.caa || []).length && !unread.includes("caa")) add("Security", "risk", "low", "sec-caa", "No CAA record limits who may issue certificates", dnsInfo.domain + " has no CAA record, so any certificate authority may issue for it.", "Add a CAA record for the authority you use, for example 0 issue \"letsencrypt.org\".", { effort: "minutes" });
+    if (dnsInfo.bimi) add("Security", "pass", "info", "sec-bimi", "BIMI publishes the brand logo for inboxes", dnsInfo.bimi.slice(0, 160) + ".", "");
   }
+  domainChecks(extras, dnsInfo, dnsRead, add);
   (input.alerts || []).filter((alert) => alert.level === "Leak").forEach((alert, index) => {
     add("Security", "fail", "critical", "sec-leak-" + index, alert.title, alert.detail, "Remove it from the page and rotate the secret.", { effort: "hours" });
   });
@@ -1122,9 +1416,9 @@ function analyze(input) {
   if (thirdHosts > 8) add("Performance", "risk", "low", "pf-third", plural(thirdHosts, "other host serves", "other hosts serve") + " scripts on the start page", "Each host adds a DNS lookup and a connection.", "Remove tags nobody reads and self-host the rest.", { count: thirdHosts, effort: "hours" });
   if (input.pagespeed) speedChecks(input.pagespeed, add);
   else if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
-  if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was read", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were read. Slow responses use up the budget.", "");
+  if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was analyzed", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were analyzed. Slow responses use up the budget.", "");
 
-  if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face });
+  if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face, renderedCrawl: !!home.renderedLinks });
 
   // Rank and score.
   const actionable = findings.filter((item) => item.verdict === "fail" || item.verdict === "risk");
@@ -1222,6 +1516,9 @@ function analyze(input) {
     duplicates: { titles: dupTitles.slice(0, 10), descriptions: dupDescriptions.slice(0, 10) },
     schemaTypes: [...schemaTypes].slice(0, 20)
   };
+  const findingState = (key) => (findings.find((item) => item.key === key) || {}).verdict || "unknown";
+  const pageBytes = browsed && browsed.start && browsed.start.bytes;
+  const carbon = pageBytes ? carbonEstimate(pageBytes, "browser") : carbonEstimate(input.pagespeed && input.pagespeed.bytes, "lighthouse");
   const security = {
     headers: [
       { label: "HTTPS redirect", state: httpCheck ? ({ pass: "pass", risk: "risk" }[(findings.find((item) => item.key === "sec-http") || {}).verdict] || "fail") : "unknown" },
@@ -1235,11 +1532,36 @@ function analyze(input) {
       { label: "security.txt", state: sec ? (findings.some((item) => item.key === "sec-securitytxt" && item.verdict === "pass") ? "pass" : "risk") : "unknown" },
       { label: "SPF", state: dnsRead("spf") ? (dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
       { label: "DMARC", state: dnsRead("dmarc") ? (dnsInfo.dmarc && !/p\s*=\s*none/i.test(dnsInfo.dmarc) ? "pass" : "risk") : "unknown" },
-      { label: "CAA", state: dnsRead("caa") ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" }
-    ],
+      { label: "CAA", state: dnsRead("caa") ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" },
+      { label: "Safe Browsing", state: findingState("sec-safebrowsing") },
+      { label: "Domain expiry", state: findingState("sec-domain-expiry") }
+    ].concat(dnsRead("mx") && (dnsInfo.mx || []).length ? [
+      { label: "MTA-STS", state: findingState("sec-mta-sts") },
+      { label: "TLS-RPT", state: findingState("sec-tlsrpt") }
+    ] : []).concat([["Front-end libraries", "sec-libraries"], ["Privacy notice", "an-privacy"], ["Imprint", "an-imprint"], ["Accessibility statement", "a11y-statement"]]
+      .filter(([, key]) => findingState(key) !== "unknown")
+      .map(([label, key]) => findingState(key) === "person" ? { label, state: "unknown", person: true } : { label, state: findingState(key) })),
     tls: tls && tls.validTo ? { validTo: tls.validTo, daysLeft: tls.daysLeft, issuer: tls.issuer || "" } : null,
+    domain: extras.domain && extras.domain.read ? { domain: extras.domain.domain, expires: extras.domain.expires, daysLeft: extras.domain.daysLeft, registrar: extras.domain.registrar, locked: extras.domain.locked } : null,
+    bimi: dnsRead("bimi") ? { record: dnsInfo.bimi || "", eligible: /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "") } : null,
     pages: headerRows.slice(0, 40)
   };
+  const chatSeen = browsed && browsed.chat && (browsed.chat.found || []).length ? browsed.chat : null;
+  const chatLauncher = (chatSeen && chatSeen.launcher) || {};
+  const chatOpen = (chatSeen && chatSeen.open) || {};
+  const chatConsent = browsed && browsed.consent;
+  const chat = chatSeen ? {
+    vendors: chatSeen.found.map((row) => ({ name: row.name, ai: !!row.ai })),
+    requests: chatSeen.found.reduce((sum, row) => sum + row.requests, 0),
+    kb: Math.round(chatSeen.found.reduce((sum, row) => sum + row.bytes, 0) / 1024),
+    ms: chatSeen.found.reduce((sum, row) => sum + row.ms, 0),
+    banner: !!(chatConsent && chatConsent.banner),
+    cookies: (chatSeen.cookies || []).slice(0, 10),
+    rejected: chatConsent && chatConsent.rejected && chatSeen.after ? { cookies: (chatSeen.after.cookies || []).slice(0, 10), requests: chatSeen.after.requests || 0 } : null,
+    launcher: chatLauncher.found ? { name: chatLauncher.name || "", known: !!chatLauncher.known, covers: (chatLauncher.covers || []).length } : null,
+    opened: !!chatOpen.opened,
+    states: { consent: findingState("an-chat-consent"), reject: findingState("an-chat-reject"), weight: findingState("pf-chat"), cover: findingState("a11y-chat-cover"), name: findingState("a11y-chat-name"), focus: findingState("a11y-chat-focus"), trap: findingState("a11y-chat-trap"), privacy: findingState("an-chat-privacy") }
+  } : null;
 
   return {
     version: 1,
@@ -1253,8 +1575,10 @@ function analyze(input) {
     geo,
     analytics,
     security,
+    chat,
+    carbon,
     graph: { nodes: nodes.slice(0, 120), edges: edges.filter((edge) => edge.s < 120 && edge.t < 120) },
-    fixkit: fixKit({ home, face, read, indexable, origin, host, input, extras, tags, dnsInfo, entity, socialLinks })
+    fixkit: fixKit({ home, face, read, indexable, origin, host, input, extras, tags, dnsInfo, entity, socialLinks, findings, browsed, chat })
   };
 }
 
@@ -1339,7 +1663,53 @@ function fixKit(ctx) {
     if (!ctx.dnsInfo.spf && !unread.includes("spf") && !unread.includes("mx")) dnsRecords.push({ name: domain, type: "TXT", value: mail ? "v=spf1 include:<your mail provider> ~all" : "v=spf1 -all" });
     if (!ctx.dnsInfo.dmarc && !unread.includes("dmarc")) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: "v=DMARC1; p=none; rua=mailto:dmarc@" + domain });
     if (!(ctx.dnsInfo.caa || []).length && !unread.includes("caa")) dnsRecords.push({ name: domain, type: "CAA", value: "0 issue \"letsencrypt.org\"" });
+    if (mail && !ctx.dnsInfo.tlsRpt && !unread.includes("tlsrpt") && !unread.includes("mx")) dnsRecords.push({ name: "_smtp._tls." + domain, type: "TXT", value: "v=TLSRPTv1; rua=mailto:tlsrpt@" + domain });
+    if (mail && !ctx.dnsInfo.mtaSts && !unread.includes("mta-sts") && !unread.includes("mx")) dnsRecords.push({ name: "_mta-sts." + domain, type: "TXT", value: "v=STSv1; id=" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "01" });
   }
+  const open = (key) => (ctx.findings || []).some((item) => item.key === key && (item.verdict === "fail" || item.verdict === "risk"));
+  const mx = (ctx.dnsInfo && ctx.dnsInfo.mx) || [];
+  const mtaSts = mx.length && open("sec-mta-sts") && !(ctx.dnsInfo.mtaStsPolicy || {}).mode
+    ? ["version: STSv1", "mode: testing"].concat(mx.map((host) => "mx: " + host.replace(/\.$/, ""))).concat(["max_age: 86400", ""]).join("\n")
+    : "";
+  const libraryUpgrades = open("sec-libraries") ? libraryRows(ctx.read || [], ctx.browsed).filter((row) => row.flaws)
+    .map((row) => ({ name: row.name, version: row.version, fixed: row.fixed || "", ended: !!row.ended, worst: row.worst, flaws: row.flaws })) : [];
+  const legalOwner = name + " (" + ctx.origin + ")";
+  const privacyNotice = open("an-privacy") ? ["# Privacy notice", "", "Who is responsible: " + legalOwner + ", <legal name>, <postal address>, <email>.", "",
+    "## What we collect and why", "", "- Contact and form data: <fields>, to answer requests. Legal basis: <contract or legitimate interest>.",
+    "- Analytics and cookies: " + ((ctx.tags || []).length ? ctx.tags.map((tag) => tag.name).slice(0, 6).join(", ") : "<tools>") + ", only after consent where the law requires it.",
+    "", "## Who receives it", "", "- <hosting provider>, <analytics and chat vendors>, and where they process data (inside or outside the EU).",
+    "", "## How long we keep it", "", "- <period for each kind of data>.",
+    "", "## Your rights", "", "- Access, correction, deletion, restriction, objection, portability, and a complaint to <supervisory authority>. Write to <email>.",
+    "", "Last updated: <date>", ""].join("\n") : "";
+  const imprint = open("an-imprint") ? ["# Impressum", "", "<Name des Unternehmens und Rechtsform>", "<Straße und Hausnummer>", "<PLZ Ort>", "",
+    "Vertreten durch: <Geschäftsführung>", "E-Mail: <adresse>", "Telefon: <nummer>", "",
+    "Registergericht: <Gericht>, Registernummer: <HRB ...>", "Umsatzsteuer-ID: <DE...>", "",
+    "Verantwortlich für den Inhalt: <Name, Anschrift>", ""].join("\n") : "";
+  const statementState = ((ctx.findings || []).find((item) => item.key === "a11y-statement") || {}).verdict;
+  const accessibilityStatement = statementState && statementState !== "pass" ? ["# Accessibility statement", "",
+    legalOwner + " aims to meet EN 301 549, which includes WCAG 2.1 level AA.", "",
+    "## How accessible this site is", "", "- Partly conformant. Known gaps: <list each gap and where it is>.", "",
+    "## How we checked", "", "- <self-assessment or audit>, on <date>, with <tools> and manual testing.", "",
+    "## Contact for access problems", "", "- <email> or <phone>. We answer within <days>.", "",
+    "## Enforcement", "", "- If our answer does not help, contact <market surveillance or enforcement body>.", "",
+    "Prepared on <date>. Reviewed on <date>.", ""].join("\n") : "";
+  const chatNames = ctx.chat ? ctx.chat.vendors.map((row) => row.name) : [];
+  const chatOpen = { Intercom: "window.Intercom(\"show\");", Crisp: "window.$crisp.push([\"do\", \"chat:open\"]);", "Tawk.to": "window.Tawk_API.maximize();", Drift: "window.drift.api.openChat();", "HubSpot Chat": "window.HubSpotConversations.widget.open();", "Zendesk Messaging": "window.zE(\"messenger\", \"open\");", Tidio: "window.tidioChatApi.open();" };
+  const chatSnippet = chatNames.length && (open("an-chat-consent") || open("an-chat-reject")) ? [
+    "<!-- Click-to-load chat: nothing from " + chatNames.join(", ") + " loads until a visitor asks for help. -->",
+    "<!-- Remove the vendor's embed code from the page, and put its script address below. -->",
+    "<button type=\"button\" id=\"chat-load\" aria-label=\"Open chat\">Chat with us</button>",
+    "<script>",
+    "  document.getElementById(\"chat-load\").addEventListener(\"click\", function () {",
+    "    this.disabled = true;",
+    "    var script = document.createElement(\"script\");",
+    "    script.src = \"<the chat's embed script address>\";",
+    "    script.async = true;",
+    "    script.onload = function () { " + (chatOpen[chatNames[0]] || "/* open the widget with the vendor's API */") + " };",
+    "    document.head.appendChild(script);",
+    "  }, { once: true });",
+    "</script>",
+    ""].join("\n") : "";
   return {
     hosting: hostingHint(ctx.input && ctx.input.technologies, hdr),
     csp,
@@ -1347,8 +1717,14 @@ function fixKit(ctx) {
     jsonLd: ctx.entity ? null : jsonLd,
     llmsTxt: (ctx.extras.llms && ctx.extras.llms.status === 200 && !ctx.extras.llms.html) ? "" : llmsTxt,
     securityTxt: (ctx.extras.securityTxt && ctx.extras.securityTxt.status === 200 && !ctx.extras.securityTxt.html) ? "" : securityTxt,
-    dns: dnsRecords
+    dns: dnsRecords,
+    mtaSts,
+    libraries: libraryUpgrades,
+    privacyNotice,
+    imprint,
+    accessibilityStatement,
+    chatSnippet
   };
 }
 
-module.exports = { analyze, parseRobotsFull, robotsVerdict, AI_BOTS, AREAS };
+module.exports = { analyze, parseRobotsFull, robotsVerdict, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };
