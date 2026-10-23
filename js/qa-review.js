@@ -72,6 +72,13 @@
     return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
   }
 
+  // reviewUrl delivers a stream only when the run ends; reviewRun sends each log line as it is written.
+  function runEndpoint() {
+    const host = location.hostname;
+    if (host === "127.0.0.1" || host === "localhost") return "http://127.0.0.1:8768";
+    return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewRun";
+  }
+
   // Set from ?qatest= on the pay page; a matching key keeps the run out of Live Reports.
   function testKey() {
     try { return localStorage.getItem("qa-review-test-key") || ""; } catch (error) { return ""; }
@@ -488,13 +495,15 @@
 
   function appendLog(text) {
     const list = document.getElementById("run-log");
+    // Like a terminal: keep following new lines unless the reader has scrolled up.
+    const following = list.scrollHeight - list.scrollTop - list.clientHeight < 32;
     const item = document.createElement("li");
     const time = document.createElement("time");
     time.textContent = new Date().toLocaleTimeString();
     item.appendChild(time);
     item.appendChild(document.createTextNode(text));
     list.appendChild(item);
-    list.scrollTop = list.scrollHeight;
+    if (following) list.scrollTop = list.scrollHeight;
     if (window.ReviewProgress) ReviewProgress.line(text);
   }
 
@@ -1486,13 +1495,21 @@
     activeRun = runId;
     reviewBtn.disabled = true;
     stopBtn.disabled = true;
-    document.getElementById("run-log").innerHTML = "";
+    const runLog = document.getElementById("run-log");
+    runLog.innerHTML = "";
+    runLog.classList.add("is-live");
     if (window.ReviewProgress) ReviewProgress.start({ host: urlInput.value, pages: selectedPages() });
     setStatus("Checking the email domain, then analyzing the public page…", false);
     appendLog("Checking the fields, the email domain, and that this is a browser.");
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", reasonCode());
+    // The run record reads country, region, and city from here; only reviewUrl gets those headers.
+    fetch(endpoint() + "/place", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ runId: runId })
+    }).catch(() => {});
     try {
-      const res = await fetch(endpoint() + "/review", {
+      const res = await fetch(runEndpoint() + "/review", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
@@ -1557,6 +1574,7 @@
         setStatus(error.message || "The review failed.", true);
       }
     } finally {
+      runLog.classList.remove("is-live");
       activeRun = "";
       reviewBtn.disabled = !signedIn();
       stopBtn.disabled = true;

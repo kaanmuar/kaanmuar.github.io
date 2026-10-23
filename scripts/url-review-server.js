@@ -506,6 +506,10 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true, stopped: !!run }, origin, deviceHint);
     return;
   }
+  if (req.method === "POST" && url.pathname === "/place") {
+    sendJson(res, 200, { ok: true }, origin, deviceHint);
+    return;
+  }
   if (req.method === "GET" && url.pathname === "/checkout/quote") {
     try {
       const layerQuery = url.searchParams.get("layers");
