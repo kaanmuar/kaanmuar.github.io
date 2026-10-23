@@ -66,8 +66,9 @@
   const AI_BLOCK = "^user-agent:\\s*(?:OAI-SearchBot|ChatGPT-User|PerplexityBot|Perplexity-User|Claude-SearchBot|Claude-User|\\*)\\s*$(?:\\s*^user-agent:[^\\n]*$)*\\s*^disallow:\\s*/\\s*$";
 
   function checkFor(item, ctx) {
-    const at = ctx.startPath;
+    const at = item.path || ctx.startPath;
     if (item.journey && item.journey.selector && item.journey.target) return Object.assign({ kind: "journey" }, item.journey);
+    if (item.check && BROWSER_KINDS.indexOf(item.check.kind) !== -1) return Object.assign({}, item.check);
     switch (item.id) {
       case "FN-01": return { kind: "status", path: at };
       case "FN-02": return { kind: "title", path: at };
