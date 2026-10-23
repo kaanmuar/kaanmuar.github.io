@@ -1518,12 +1518,17 @@
     appendLog("Stop requested.");
     setStatus("Stopping the review…", false);
     try {
-      await fetch(endpoint() + "/stop", {
+      const res = await fetch(endpoint() + "/stop", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ runId: activeRun })
+        body: JSON.stringify(Object.assign(ReviewAuth.proof(), { runId: activeRun }))
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setStatus(body.error || "The stop was refused.", true);
+        stopBtn.disabled = false;
+      }
     } catch (error) {
       setStatus("Stop was requested. Waiting for the pages already open.", true);
     }
