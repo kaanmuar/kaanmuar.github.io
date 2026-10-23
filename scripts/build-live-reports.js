@@ -736,4 +736,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { AREAS, REGIONS, build, existingItems, writeAll, scrub };
+module.exports = { AREAS, REGIONS, REPORTS, RUN_FILES, loadRuns, build, existingItems, writeAll, scrub };
