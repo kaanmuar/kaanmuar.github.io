@@ -800,6 +800,7 @@ const server = http.createServer(async (req, res) => {
     const report = await core.reviewTarget(intake.value.url, {
       log: (text) => line(res, { type: "log", text }),
       stopped: () => run.stopped,
+      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email },
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
