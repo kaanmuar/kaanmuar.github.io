@@ -19,6 +19,11 @@ class Server(http.server.ThreadingHTTPServer):
 
 
 class Quiet(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        # scripts/static-server-check.js refuses to reuse a server without this header.
+        self.send_header("X-Static-Server", "lab")
+        super().end_headers()
+
     def log_message(self, *args):
         pass
 
