@@ -96,6 +96,19 @@ function nextSlot(state, countries) {
   return { cc, at, state: Object.assign({}, prev, { lap, pos: pos + 1, cursor }) };
 }
 
+// The intake intakeRecord prices and stores; a run is priced per framework, so it names the default one.
+function intake(target) {
+  return {
+    url: "https://" + target.host + "/",
+    name: "Country sweep",
+    email: "",
+    reason: "Country sweep: one of the most visited sites in " + target.cc.toUpperCase() + " (CrUX " + target.month + ")",
+    reasonCode: "sweep",
+    frameworks: ["Playwright"],
+    lang: langOf(target.cc)
+  };
+}
+
 function doneOn(state, day) {
   const today = ((state || {}).days || {})[day] || {};
   return (today.done || 0) + (today.failed || 0);
@@ -120,4 +133,4 @@ function totals(state, sinceDay) {
   return out;
 }
 
-module.exports = { PER_DAY, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, TIER1, langOf, seedHosts, lapOrder, nextSlot, doneOn, tally, totals };
+module.exports = { PER_DAY, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, TIER1, langOf, seedHosts, lapOrder, nextSlot, intake, doneOn, tally, totals };
