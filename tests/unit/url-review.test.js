@@ -164,6 +164,70 @@ function analyzeHtmlPages(rows, extras) {
   return insights.analyze({ pages, extras: extras || {} });
 }
 
+test.describe("page paths for the URL Review box (#632)", () => {
+  const zlib = require("node:zlib");
+  const xml = (urls) => "<?xml version=\"1.0\"?><urlset>" + urls.map((url) => "<url><loc>" + url + "</loc></url>").join("") + "</urlset>";
+
+  test("paths come from the robots.txt sitemap index and its .gz children, shallowest first", async () => {
+    const restore = fakeNetwork({
+      "https://shop.example.net/robots.txt": { status: 200, headers: { "content-type": "text/plain" }, body: "User-agent: *\nSitemap: https://shop.example.net/index.xml\n" },
+      "https://shop.example.net/index.xml": { status: 200, headers: { "content-type": "application/xml" }, body: "<sitemapindex><sitemap><loc>https://shop.example.net/pages.xml.gz</loc></sitemap></sitemapindex>" },
+      "https://shop.example.net/pages.xml.gz": { status: 200, headers: { "content-type": "application/x-gzip" }, body: zlib.gzipSync(Buffer.from(xml([
+        "https://shop.example.net/",
+        "https://shop.example.net/products/blue-mug",
+        "https://www.shop.example.net/pricing",
+        "https://shop.example.net/checkout",
+        "https://shop.example.net/docs/guide.pdf",
+        "https://cdn.example.net/elsewhere",
+        "https://shop.example.net/caf%C3%A9",
+        "https://shop.example.net/checkout"
+      ]))) }
+    });
+    try {
+      const result = await core.sitePaths("Shop.Example.net");
+      assert.equal(result.host, "shop.example.net");
+      assert.deepEqual(result.paths, ["/café", "/pricing", "/checkout", "/products/blue-mug"]);
+    } finally {
+      restore();
+    }
+  });
+
+  test("a site without a sitemap gives no paths and no error, and the answer is kept per host", async () => {
+    let restore = fakeNetwork({});
+    try {
+      assert.deepEqual((await core.sitePaths("bare.example.net")).paths, []);
+    } finally {
+      restore();
+    }
+    restore = fakeNetwork({ "https://kept.example.net/sitemap.xml": { status: 200, headers: { "content-type": "application/xml" }, body: xml(["https://kept.example.net/about"]) } });
+    try {
+      assert.deepEqual((await core.sitePaths("kept.example.net")).paths, ["/about"]);
+    } finally {
+      restore();
+    }
+    restore = fakeNetwork({});
+    try {
+      assert.deepEqual((await core.sitePaths("https://kept.example.net/anything")).paths, ["/about"]);
+    } finally {
+      restore();
+    }
+  });
+
+  test("private, internal, and malformed hosts are refused before any request", async () => {
+    for (const host of ["", "localhost", "printer.local", "metadata.google.internal", "10.0.0.1", "[::1]", "example", "exa mple.com"]) {
+      await assert.rejects(core.sitePaths(host), (error) => error.code === "BAD_HOST", host);
+    }
+  });
+
+  test("paths are capped and sorted by depth, then length", () => {
+    const urls = Array.from({ length: 400 }, (_, i) => "https://a.example.net/" + (i % 2 ? "deep/" : "") + "p" + i);
+    const paths = core.sitemapPaths(urls, "a.example.net");
+    assert.equal(paths.length, 300);
+    assert.equal(paths[0], "/p0");
+    assert.ok(paths.slice(0, 200).every((path) => !path.startsWith("/deep/")));
+  });
+});
+
 test.describe("false positives from the real-run series", () => {
   const zlib = require("node:zlib");
 
