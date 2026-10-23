@@ -207,6 +207,7 @@ function refine(cases, options) {
     item.order = index;
     if (!item.path && (item.pages || []).length && item.verdict && item.verdict !== "pass") item.path = item.pages[0];
     delete item.keys;
+    Object.keys(item).forEach((key) => { if (item[key] === undefined) delete item[key]; });
     item.risk = score(item);
     item.priority = priorityOf(item.risk);
   });
