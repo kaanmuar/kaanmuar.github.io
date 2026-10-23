@@ -441,8 +441,19 @@
         .sign-in-row input { flex: 1; min-width: 0; }
         .sign-in-row .btn { white-space: nowrap; }
         .sign-in-link { background: none; border: 0; padding: 0; color: var(--cyan); text-decoration: underline; cursor: pointer; font: inherit; }
-        .sign-in-done { margin: 8px 0 0; }
-        .sign-in-photo { width: 28px; height: 28px; border-radius: 50%; vertical-align: middle; margin-right: 8px; object-fit: cover; }
+        .sign-in.done .sign-in-title, .sign-in.done > .mail-note { display: none; }
+        .sign-in-done { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 14px; margin: 0; }
+        .sign-in-done[hidden] { display: none; }
+        .sign-in-avatar { position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: var(--cyan); color: var(--on-cyan); font-weight: 700; font-size: 16px; }
+        .sign-in-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .sign-in-id { flex: 1 1 160px; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; line-height: 1.35; }
+        .sign-in-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+        #sign-in-who { font-weight: 600; overflow-wrap: anywhere; }
+        #sign-in-mail { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+        .sign-in.done #sign-in-status:empty { display: none; }
+        .sign-in-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sign-in-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; }
+        @media (max-width: 560px) { .sign-in-actions { flex: 1 1 100%; } .sign-in-actions .btn { flex: 1; } }
         #sign-in-code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
         #email[readonly] { opacity: .8; }
         .verify-note { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, var(--card)); }
@@ -1234,7 +1245,11 @@
                             </div>
                             <p class="mail-note muted"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="sign-in-link" id="sign-in-restart" type="button" disabled>Start over</button></p>
                         </div>
-                        <p class="sign-in-done" id="sign-in-done" hidden><img class="sign-in-photo" id="sign-in-photo" alt="" width="28" height="28" referrerpolicy="no-referrer" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <a href="qa-review-account.html">Your reviews</a> · <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
+                        <div class="sign-in-done" id="sign-in-done" hidden>
+                            <span class="sign-in-avatar" aria-hidden="true"><span id="sign-in-initial" translate="no"></span><img class="sign-in-photo" id="sign-in-photo" alt="" width="40" height="40" referrerpolicy="no-referrer" hidden></span>
+                            <p class="sign-in-id"><span class="sign-in-label">You're signed in on this device</span><strong id="sign-in-who" translate="no"></strong><span id="sign-in-mail" translate="no" hidden></span></p>
+                            <div class="sign-in-actions"><a class="btn btn-ghost" href="qa-review-account.html">Your reviews</a><button class="btn btn-ghost" id="sign-out" type="button" disabled>Sign out</button></div>
+                        </div>
                         <p class="status" id="sign-in-status" role="status"></p>
                     </div>
                     <div class="grid-2">
