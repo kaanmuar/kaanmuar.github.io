@@ -2431,13 +2431,16 @@ async function reviewAccount(req, res, pathName) {
   res.status(404).json({ error: "Not found." });
 }
 
-exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
-  const origin = reviewOrigin(req);
-  res.set("Access-Control-Allow-Origin", origin);
+function reviewHeaders(req, res) {
+  res.set("Access-Control-Allow-Origin", reviewOrigin(req));
   res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type");
   res.set("Access-Control-Allow-Credentials", "true");
   res.set("Cache-Control", "no-store");
+}
+
+exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+  reviewHeaders(req, res);
   if (req.method === "OPTIONS") {
     res.status(204).send("");
     return;
@@ -2879,6 +2882,19 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(200).json({ ok: true });
     return;
   }
+  if (req.method === "POST" && pathName.indexOf("/place") !== -1) {
+    const runId = String((req.body && req.body.runId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    if (!runId) {
+      res.status(400).json({ error: "Missing run id." });
+      return;
+    }
+    await admin.firestore().collection("url_review_places").doc(runId).set(Object.assign(requestPlace(req), {
+      at: new Date().toISOString(),
+      expireAt: new Date(Date.now() + 864e5)
+    }));
+    res.status(204).send("");
+    return;
+  }
   if (req.method === "POST" && pathName.indexOf("/capture") !== -1) {
     const reportId = String((req.body && req.body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     const kind = ["print", "printscreen", "copy", "case-print"].indexOf(String((req.body && req.body.kind) || "")) === -1 ? "" : String(req.body.kind);
@@ -3120,7 +3136,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       }
       const listUsd = priced.usd;
       if (deal && deal.percent) priced = Object.assign({}, priced, { usd: deal.usd });
-      const base = origin + "/qa-review-pay.html?purpose=" + purpose + "&provider=" + choice;
+      const base = reviewOrigin(req) + "/qa-review-pay.html?purpose=" + purpose + "&provider=" + choice;
       const successUrl = choice === "stripe"
         ? base + "&result=success&session_id={CHECKOUT_SESSION_ID}"
         : base + "&result=success&reference=" + reference;
@@ -3230,6 +3246,30 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(405).json({ error: "Use POST." });
     return;
   }
+  await runReview(req, res, async () => requestPlace(req));
+});
+
+function requestPlace(req) {
+  return {
+    country: req.get("x-appengine-country") || "",
+    region: req.get("x-appengine-region") || "",
+    city: req.get("x-appengine-city") || ""
+  };
+}
+
+async function storedPlace(runId) {
+  if (!runId) return {};
+  try {
+    const snap = await admin.firestore().collection("url_review_places").doc(runId).get();
+    const data = snap.exists ? snap.data() || {} : {};
+    return { country: data.country || "", region: data.region || "", city: data.city || "" };
+  } catch (error) {
+    console.error("URL review place read failed:", error);
+    return {};
+  }
+}
+
+async function runReview(req, res, placeOf) {
   const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
   if (!signedIn.ok) {
     res.status(signedIn.status).json({ error: signedIn.error, signIn: true });
@@ -3365,15 +3405,12 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
     });
-    const record = urlReview.intakeRecord(intake.value, report, {
+    const record = urlReview.intakeRecord(intake.value, report, Object.assign({
       ip,
       deviceId,
       userAgent: req.get("user-agent"),
-      acceptLanguage: req.get("accept-language"),
-      country: req.get("x-appengine-country") || "",
-      region: req.get("x-appengine-region") || "",
-      city: req.get("x-appengine-city") || ""
-    });
+      acceptLanguage: req.get("accept-language")
+    }, await placeOf(runId)));
     record.signInProvider = signedIn.provider;
     if (urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY)) record.test = true;
     if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
@@ -3421,7 +3458,27 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   } finally {
     if (stopTimer) clearInterval(stopTimer);
     if (runId) admin.firestore().collection("url_review_stops").doc(runId).delete().catch(() => {});
+    if (runId) admin.firestore().collection("url_review_places").doc(runId).delete().catch(() => {});
   }
+}
+
+// 1st gen holds a response until the handler returns, so the run stream is served from 2nd gen.
+exports.reviewRun = require("firebase-functions/v2/https").onRequest({
+  memory: "512MiB",
+  timeoutSeconds: 180,
+  concurrency: 1,
+  secrets: ["SENDGRID_API_KEY"]
+}, async (req, res) => {
+  reviewHeaders(req, res);
+  if (req.method === "OPTIONS") {
+    res.status(204).send("");
+    return;
+  }
+  if (req.method !== "POST" || !String(req.path || "/").endsWith("/review")) {
+    res.status(405).json({ error: "Use POST /review." });
+    return;
+  }
+  await runReview(req, res, storedPlace);
 });
 
 async function reviewTotals() {
