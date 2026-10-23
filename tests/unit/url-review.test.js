@@ -1479,7 +1479,7 @@ test.describe("chat widgets", () => {
     };
     const withChat = await run({ found: [{ name: "Intercom", ai: false, hosts: ["widget.intercom.io"], requests: 3, bytes: 1000, ms: 0 }, { name: "Chatbase", ai: true, hosts: ["www.chatbase.co"], requests: 1, bytes: 100, ms: 0 }], cookies: [] });
     assert.deepEqual(withChat.technologies.filter((item) => /Chat|AI/.test(item.group)).map((item) => [item.name, item.group]), [["Intercom", "Chat"], ["Chatbase", "AI chatbot"]]);
-    assert.deepEqual(withChat.cases.filter((item) => /^CHAT-/.test(item.id)).map((item) => item.id), ["CHAT-01", "CHAT-02", "CHAT-03", "CHAT-04"]);
+    assert.deepEqual(withChat.cases.filter((item) => /^CHAT-/.test(item.id)).map((item) => item.id).sort(), ["CHAT-01", "CHAT-02", "CHAT-03", "CHAT-04"]);
     const without = await run(undefined);
     assert.equal(without.cases.filter((item) => /^CHAT-/.test(item.id)).length, 0);
   });
@@ -2000,4 +2000,110 @@ test("a review can ask for a language and stay under the start path", () => {
   assert.equal(failed.options.pageLang, "es");
   assert.equal(failed.options.section, true);
   assert.equal(failed.intake.section, true);
+});
+
+test.describe("cases built from evidence and ranked by risk", () => {
+  const caseRank = require("../../functions/url-review-cases");
+  const SITE = "https://garden.example.com/";
+  const page = (title, inner, head) => "<!doctype html><html lang=\"en\"><head>" + (title ? "<title>" + title + "</title>" : "") + (head || "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">") + "</head><body><main>" + inner + "</main></body></html>";
+  const routes = {
+    [SITE]: { status: 200, headers: STRONG_HEADERS, body: page("Garden tools", "<h1>Garden tools</h1><img src=\"a.png\"><a href=\"/about\">About</a> <a href=\"/login\">Sign in</a>") },
+    "https://garden.example.com/about": { status: 200, headers: STRONG_HEADERS, body: page("", "<h1>About</h1><img src=\"b.png\"><img src=\"c.png\">") },
+    "https://garden.example.com/login": { status: 200, headers: STRONG_HEADERS, body: page("Sign in", "<h1>Sign in</h1><form><input name=\"user\"><input type=\"password\" name=\"pw\"></form>", "<meta name=\"viewport\" content=\"width=device-width, user-scalable=no\">") }
+  };
+  const browser = {
+    ok: true,
+    start: { status: 200, finalPath: "/", requests: 40, vitals: { lcp: 1200, cls: 0, tbt: 0 }, dom: { links: [], nav: [], forms: 0, buttons: 0, iframes: 0 } },
+    consent: { banner: "", rejected: false, before: { vendors: [], cookies: [] }, after: null },
+    axe: { ran: true, version: "4.10.0", pages: [
+      { path: "/", violations: [{ id: "color-contrast", impact: "serious", help: "Elements must meet minimum color contrast ratio thresholds", nodes: 6, targets: [".hero p", ".footer a"] }, { id: "link-name", impact: "serious", help: "Links must have discernible text", nodes: 2, targets: ["a.social-x"] }] },
+      { path: "/about", violations: [{ id: "link-name", impact: "serious", help: "Links must have discernible text", nodes: 1, targets: ["a.icon"] }] }
+    ] },
+    mobile: { width: 390, overflow: 120, offenders: ["table.prices"] }
+  };
+  const review = async () => {
+    const restore = fakeNetwork(routes);
+    try {
+      return await core.reviewTarget(SITE, { browse: async (job) => job.html ? { ok: false } : browser });
+    } finally {
+      restore();
+    }
+  };
+
+  test("cases name the host and paths, span every page, and drop the retired duplicates", async () => {
+    const result = await review();
+    const byId = (id) => result.cases.find((item) => item.id === id);
+    const ids = result.cases.map((item) => item.id);
+    ["I18N-01", "VIS-02", "SEO-01", "A11Y-03", "FM-02", "LK-02", "RS-02", "LD-02", "LD-03", "LK-04"].forEach((id) => assert.ok(!ids.includes(id), id + " is retired"));
+    assert.equal(new Set(ids).size, ids.length, "ids are unique");
+    assert.match(byId("FN-01").title, /^garden\.example\.com answers over https$/);
+    assert.match(byId("FM-03").title, /garden\.example\.com\/login/);
+    assert.equal(byId("FM-03").path, "/login");
+    assert.equal(byId("FM-01").path, "/login");
+    assert.match(byId("A11Y-01").why, /3 images without alt across garden\.example\.com, garden\.example\.com\/about, most on garden\.example\.com\/about\./);
+    assert.equal(byId("A11Y-07").check.kind, "count");
+    assert.match(byId("FN-07").why, /garden\.example\.com\/about/);
+    assert.ok(result.cases.every((item) => !/the start page|the reviewed URL/i.test(item.title)), "titles name the site");
+  });
+
+  test("axe rules, the phone overflow and open findings become ranked cases", async () => {
+    const result = await review();
+    const byId = (id) => result.cases.find((item) => item.id === id);
+    const ids = result.cases.map((item) => item.id);
+    const axe = result.cases.filter((item) => /^AXE-/.test(item.id));
+    assert.deepEqual(axe.map((item) => [item.title, item.pages, item.verdict]), [["Links must have discernible text on garden.example.com", ["/", "/about"], "fail"]]);
+    assert.match(byId("A11Y-04").why, /color-contrast \(serious\).*\.hero p/);
+    assert.equal(byId("A11Y-04").verdict, "fail");
+    assert.match(byId("MB-01").why, /Seen on garden\.example\.com: At 390 px the page is 120 px wider than the screen\. Widest elements: table\.prices\./);
+    assert.ok(!ids.some((id) => /^RT-/.test(id) && /discernible text/.test(byId(id).title)), "the axe finding joins its AXE case");
+    assert.equal(byId("FN-02").verdict, undefined, "a missing title on /about does not fail the start page's title case");
+    assert.deepEqual([byId("FN-20").title, byId("FN-20").verdict, byId("FN-20").severity], ["garden.example.com/about has no title", "fail", "medium"]);
+    assert.deepEqual(byId("MB-01").selectors, ["table.prices"]);
+    assert.ok(result.cases.every((item) => /^P[1-4]$/.test(item.priority) && item.risk >= 0 && item.risk <= 100));
+    const risks = result.cases.map((item) => item.risk);
+    assert.deepEqual(risks, risks.slice().sort((a, b) => b - a), "ranked by risk");
+    assert.deepEqual(result.cases.map((item) => item.n), result.cases.map((item, index) => index + 1));
+    const first = result.cases.findIndex((item) => item.verdict === "fail");
+    const proposed = result.cases.findIndex((item) => !item.verdict);
+    assert.ok(first < proposed, "evidence ranks above guesses");
+    assert.deepEqual(result.counts.byLayer, caseRank.countLayers(result.cases));
+    assert.equal(Object.values(result.counts.byLayer).reduce((a, b) => a + b, 0), result.cases.length);
+  });
+
+  test("an open finding with no case becomes a retest, and a pass keeps its verdict", () => {
+    const cases = [{ id: "SEC-03", layer: "Security", title: "x", why: "y", fw: ["Playwright"] }, { id: "FN-04", layer: "Functional", title: "x", why: "y", fw: ["Playwright"] }];
+    const findings = [
+      { id: "F-01", key: "pf-console", area: "Performance", verdict: "fail", severity: "high", title: "3 JavaScript errors on load", evidence: "TypeError: x is undefined on /.", fix: "Fix the error", pages: ["/"], rank: 1 },
+      { id: "F-02", key: "a11y-lang", area: "Accessibility", verdict: "pass", severity: "info", title: "Language set", evidence: "", cases: ["I18N-01"] },
+      { id: "F-03", key: "sec-csp", area: "Security", verdict: "risk", severity: "medium", title: "No CSP", evidence: "content-security-policy was absent.", cases: ["SEC-03"], pages: ["/", "/a"] }
+    ];
+    const out = caseRank.refine(cases, { findings, origin: "https://shop.example.com" });
+    const byId = (id) => out.find((item) => item.id === id);
+    assert.equal(out[0].id, "RT-01");
+    assert.match(out[0].title, /^Retest on shop\.example\.com: 3 JavaScript errors on load$/);
+    assert.equal(out[0].priority, "P1");
+    assert.equal(byId("FN-04").verdict, "pass");
+    assert.equal(byId("SEC-03").verdict, "risk");
+    assert.match(byId("SEC-03").why, /Seen on shop\.example\.com: content-security-policy was absent\./);
+    assert.deepEqual(byId("SEC-03").pages, ["/", "/a"]);
+    assert.equal(byId("SEC-03").path, "/");
+  });
+
+  test("a case's own check and path drive its script", () => {
+    const report = { finalUrl: "https://shop.example.com/", host: "shop.example.com", pages: [{ path: "/", status: 200 }], cases: [
+      { id: "A11Y-07", layer: "Accessibility", title: "Pinch zoom is allowed", why: "Blocked. Expected none.", fw: ["Playwright"], path: "/login", check: { kind: "count", path: "/login", selector: "meta[name=\"viewport\"][content*=\"user-scalable=no\" i]", op: "eq", n: 0 } },
+      { id: "A11Y-01", layer: "Accessibility", title: "Images", why: "Missing. Expected none.", fw: ["Playwright"], path: "/about" }
+    ] };
+    const { files } = scripts.bundle(report, report.cases, ["Playwright"]);
+    const text = files.map((file) => file.content || file.text || "").join("\n");
+    assert.match(text, /\/login/);
+    assert.match(text, /user-scalable=no/);
+    assert.match(text, /\/about/);
+    assert.doesNotMatch(text, /test\.fixme\("A11Y-07/);
+  });
+
+  test("the preview keeps the priority and drops the selectors and checks", () => {
+    const preview = core.previewReport({ cases: [{ id: "MB-01", title: "Layout holds", why: "Wider. Pushed out.", priority: "P2", risk: 30, pages: ["/"], selectors: ["table.prices"], check: { kind: "viewport" } }] });
+    assert.deepEqual([preview.cases[0].priority, preview.cases[0].risk, preview.cases[0].selectors, preview.cases[0].check], ["P2", 30, undefined, undefined]);
+  });
 });
