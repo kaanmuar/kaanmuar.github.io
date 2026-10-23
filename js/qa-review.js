@@ -208,6 +208,28 @@
     if (code && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_reason", "URL Review", code);
   }
   document.getElementById("reasons").addEventListener("change", syncReasonExtras);
+  function paintSteps() {
+    const code = reasonCode();
+    const names = selectedFrameworks();
+    const done = {
+      you: signedIn() && !!document.getElementById("name").value.trim(),
+      why: !!code && (code !== "other" || !!reasonBox.value.trim()),
+      page: !!urlInput.value.trim(),
+      cases: names.length > 0,
+    };
+    reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
+      const ok = !!done[group.dataset.step];
+      group.classList.toggle("done", ok);
+      group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
+    });
+    const meta = reviewForm.querySelector(".rg-meta");
+    if (meta) meta.textContent = names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) : "");
+  }
+  reviewForm.addEventListener("input", paintSteps);
+  reviewForm.addEventListener("change", paintSteps);
+  reviewForm.addEventListener("invalid", (event) => openStepOf(event.target), true);
+  if (window.ReviewAuth) ReviewAuth.onChange(paintSteps);
+  paintSteps();
   const followUpBox = document.getElementById("follow-up");
   if (followUpBox) followUpBox.addEventListener("change", () => {
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_follow_up", "URL Review", followUpBox.checked ? "on" : "off");
@@ -330,7 +352,13 @@
       if (item.field === "clientUrl") document.getElementById("client-url-field").classList.add("invalid");
       if (item.field === "reason") document.getElementById("reasons").classList.add("invalid");
       if (item.field === "frameworks") document.getElementById("fw-picker").classList.add("invalid");
+      openStepOf(error);
     });
+  }
+
+  function openStepOf(el) {
+    const group = el && el.closest(".req-group");
+    if (group && !group.open) group.open = true;
   }
 
   function clientErrors() {

@@ -897,6 +897,41 @@
             .term-group, .term-group::details-content, .gate-progress span { transition: none; }
             .term-group:hover { transform: none; }
         }
+        #intake { --glass-edge: color-mix(in srgb, var(--text) 14%, transparent); interpolate-size: allow-keywords; border-radius: 22px; border-color: var(--glass-edge);
+            background: radial-gradient(70% 35% at 0% 0%, color-mix(in srgb, var(--cyan) 16%, transparent), transparent 70%),
+                radial-gradient(50% 30% at 100% 100%, color-mix(in srgb, var(--amber) 10%, transparent), transparent 70%),
+                linear-gradient(160deg, color-mix(in srgb, var(--card) 80%, transparent), color-mix(in srgb, var(--card) 58%, transparent));
+            box-shadow: 0 40px 90px -40px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .1);
+            backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%); }
+        #review-form { display: grid; gap: 10px; margin-top: 14px; perspective: 1000px; }
+        #review-form .row-actions { margin-top: 2px; }
+        .req-group:hover { transform: translateY(-1px); }
+        .req-group[open]:hover { transform: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
+        .req-group.done .tg-count { font-size: 12px; }
+        .rg-meta { font: 500 12px "Fira Code", ui-monospace, monospace; color: var(--cyan); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rg-meta:empty { display: none; }
+        .rg-body { padding: 2px 16px 16px; transform-origin: 50% 0; }
+        .req-group[open] .rg-body { animation: tg-open .45s cubic-bezier(.2, .8, .2, 1) both; }
+        #intake .sign-in { margin: 0 0 14px; border-radius: 14px; background: color-mix(in srgb, var(--cyan) 9%, transparent); }
+        #intake .sign-in.done { background: color-mix(in srgb, var(--panel) 40%, transparent); border-color: var(--glass-edge); }
+        #intake input[type="text"], #intake input[type="email"], #intake textarea, #intake .url-row { background: color-mix(in srgb, var(--panel) 70%, transparent); border-color: var(--glass-edge); border-radius: 10px; }
+        #intake input.invalid, #intake textarea.invalid, #intake .url-row.invalid { border-color: var(--red); }
+        #intake .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
+        #intake .check input, #intake .reasons input, #intake .fws input { accent-color: var(--cyan); }
+        #intake .reasons { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; margin: 0; padding: 0; border: 0; background: none; }
+        #intake .reasons legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+        #intake .reasons label { margin: 0; padding: 9px 10px; font-size: 13.5px; border-radius: 12px; border: 1px solid var(--glass-edge); background: color-mix(in srgb, var(--panel) 45%, transparent); cursor: pointer; transition: border-color .2s, background .2s, transform .2s; }
+        #intake .reasons label:hover { border-color: color-mix(in srgb, var(--cyan) 45%, transparent); transform: translateY(-1px); }
+        #intake .reasons label:has(input:checked) { background: color-mix(in srgb, var(--cyan) 18%, transparent); border-color: color-mix(in srgb, var(--cyan) 60%, transparent); }
+        #intake .reasons.invalid label { border-color: color-mix(in srgb, var(--red) 60%, transparent); }
+        #intake .fws label { border-color: var(--glass-edge); background: color-mix(in srgb, var(--panel) 45%, transparent); cursor: pointer; transition: border-color .2s, background .2s; }
+        #intake .fws label:has(input:checked) { background: color-mix(in srgb, var(--cyan) 16%, transparent); border-color: color-mix(in srgb, var(--cyan) 55%, transparent); }
+        #intake .verify-note { border-radius: 12px; }
+        #intake #review-btn { min-width: 160px; min-height: 44px; border-radius: 12px; font-size: 15px; }
+        @media (prefers-reduced-motion: reduce) {
+            .req-group[open] .rg-body { animation: none; }
+            .req-group:hover, #intake .reasons label:hover { transform: none; }
+        }
         .gate-waiting { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--cyan); background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--text); font-weight: 600; }
         .check { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 14px; line-height: 1.45; }
         .check[hidden] { display: none; }
@@ -949,6 +984,9 @@
             .term-group summary { grid-template-columns: 32px 1fr auto 12px; gap: 10px; padding: 12px; }
             .tg-icon { width: 32px; height: 32px; padding: 7px; }
             .tg-body { padding: 2px 12px 12px; }
+            #intake { border-radius: 18px; }
+            #intake .reasons { grid-template-columns: 1fr; }
+            .rg-body { padding: 2px 12px 14px; }
             .gate .btn { min-height: 44px; }
             .check { font-size: 15px; }
             .check input { width: 18px; height: 18px; flex: none; }
@@ -1171,102 +1209,122 @@
         <h2 class="request-title">The request</h2>
         <p class="lede">Who is asking, and which address should we open?</p>
         <form id="review-form">
-            <div class="sign-in" id="sign-in">
-                <p class="sign-in-title"><strong>Sign in to run a review</strong></p>
-                <p class="mail-note muted">The review runs on the device where you sign in. A code or link opened on another device or browser starts nothing.</p>
-                <div id="sign-in-start">
-                    <div class="sign-in-providers" id="sign-in-providers"></div>
-                    <p class="mail-note muted" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them for a future paid plan; they are not used yet. To share only your address, use email.</p>
-                    <p class="sign-in-or muted" id="sign-in-or" hidden>or with your email</p>
-                    <label for="sign-in-email">Email</label>
-                    <div class="sign-in-row">
-                        <input id="sign-in-email" type="email" autocomplete="email" disabled>
-                        <button class="btn" id="sign-in-send" type="button" disabled>Email me a code</button>
+            <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 0">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="tg-text"><b class="tg-title">You</b><span class="tg-gist">Sign in, add your name, and choose whether this review is published.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
+                <div class="rg-body">
+                    <div class="sign-in" id="sign-in">
+                        <p class="sign-in-title"><strong>Sign in to run a review</strong></p>
+                        <p class="mail-note muted">The review runs on the device where you sign in. A code or link opened on another device or browser starts nothing.</p>
+                        <div id="sign-in-start">
+                            <div class="sign-in-providers" id="sign-in-providers"></div>
+                            <p class="mail-note muted" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them for a future paid plan; they are not used yet. To share only your address, use email.</p>
+                            <p class="sign-in-or muted" id="sign-in-or" hidden>or with your email</p>
+                            <label for="sign-in-email">Email</label>
+                            <div class="sign-in-row">
+                                <input id="sign-in-email" type="email" autocomplete="email" disabled>
+                                <button class="btn" id="sign-in-send" type="button" disabled>Email me a code</button>
+                            </div>
+                        </div>
+                        <div id="sign-in-code-step" hidden>
+                            <label for="sign-in-code" id="sign-in-code-label">Code</label>
+                            <div class="sign-in-row">
+                                <input id="sign-in-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false" disabled>
+                                <button class="btn btn-primary" id="sign-in-check" type="button" disabled>Sign in</button>
+                            </div>
+                            <p class="mail-note muted"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="sign-in-link" id="sign-in-restart" type="button" disabled>Start over</button></p>
+                        </div>
+                        <p class="sign-in-done" id="sign-in-done" hidden><img class="sign-in-photo" id="sign-in-photo" alt="" width="28" height="28" referrerpolicy="no-referrer" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <a href="qa-review-account.html">Your reviews</a> · <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
+                        <p class="status" id="sign-in-status" role="status"></p>
                     </div>
-                </div>
-                <div id="sign-in-code-step" hidden>
-                    <label for="sign-in-code" id="sign-in-code-label">Code</label>
-                    <div class="sign-in-row">
-                        <input id="sign-in-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false" disabled>
-                        <button class="btn btn-primary" id="sign-in-check" type="button" disabled>Sign in</button>
+                    <div class="grid-2">
+                        <div>
+                            <label for="name">Name</label>
+                            <input id="name" name="name" type="text" autocomplete="name" required disabled>
+                            <p class="field-error" id="name-error"></p>
+                        </div>
+                        <div>
+                            <label for="email">Email</label>
+                            <input id="email" name="email" type="email" autocomplete="email" placeholder="Filled in when you sign in" readonly required disabled>
+                            <p class="field-error" id="email-error"></p>
+                            <p class="mail-note muted" id="own-note" hidden>Use an email at the same domain as the site. This page checks that the mailbox domain matches the host. It does not prove you are the legal owner.</p>
+                        </div>
                     </div>
-                    <p class="mail-note muted"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="sign-in-link" id="sign-in-restart" type="button" disabled>Start over</button></p>
+                            <p class="mail-note muted">We quickly check that this address can receive email, so anything we send about your review actually reaches you.</p>
+                    <label class="check" hidden><input id="follow-up" name="followUp" type="checkbox" disabled> Remind me when it is worth reviewing this page again. No more than three short notes a week, in my language, until 30 days after my last review. The stop link in each note, or a reply of "stop", ends them anytime.</label>
+                    <label class="check"><input id="no-publish" name="unlisted" type="checkbox" disabled> Don't publish this review as a Live Report or on social media.</label>
                 </div>
-                <p class="sign-in-done" id="sign-in-done" hidden><img class="sign-in-photo" id="sign-in-photo" alt="" width="28" height="28" referrerpolicy="no-referrer" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <a href="qa-review-account.html">Your reviews</a> · <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
-                <p class="status" id="sign-in-status" role="status"></p>
-            </div>
-            <div class="grid-2">
-                <div>
-                    <label for="name">Name</label>
-                    <input id="name" name="name" type="text" autocomplete="name" required disabled>
-                    <p class="field-error" id="name-error"></p>
-                </div>
-                <div>
-                    <label for="email">Email</label>
-                    <input id="email" name="email" type="email" autocomplete="email" placeholder="Filled in when you sign in" readonly required disabled>
-                    <p class="field-error" id="email-error"></p>
-                    <p class="mail-note muted" id="own-note" hidden>Use an email at the same domain as the site. This page checks that the mailbox domain matches the host. It does not prove you are the legal owner.</p>
-                </div>
-            </div>
-                    <p class="mail-note muted">We quickly check that this address can receive email, so anything we send about your review actually reaches you.</p>
-            <label class="check" hidden><input id="follow-up" name="followUp" type="checkbox" disabled> Remind me when it is worth reviewing this page again. No more than three short notes a week, in my language, until 30 days after my last review. The stop link in each note, or a reply of "stop", ends them anytime.</label>
-            <label class="check"><input id="no-publish" name="unlisted" type="checkbox" disabled> Don't publish this review as a Live Report or on social media.</label>
-            <fieldset class="reasons" id="reasons">
-                <legend>Reasons for this review</legend>
-            </fieldset>
-            <p class="field-error" id="reason-error"></p>
-            <div id="verify-note" class="verify-note" hidden>
-                <p><strong>QA-lab verification</strong> runs the cases. This review proposes them.</p>
-                <p>Request a verification at <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a>.</p>
-            </div>
-            <div id="credential-note" class="verify-note" hidden>
-                <p><strong>A signed-in run</strong> needs a login you are allowed to use. This page does not take the password, and it does not store one.</p>
-                <p>Payment comes before that run. The amount is shown then. The public analysis still does not sign in.</p>
-            </div>
-            <div id="client-box" hidden>
-                <div class="grid-2">
-                    <div>
-                        <label for="client-name">Client name</label>
-                        <input id="client-name" name="clientName" type="text" autocomplete="organization" disabled>
-                        <p class="field-error" id="clientName-error"></p>
+            </details>
+            <details class="term-group req-group" id="req-why" data-step="why" open style="--i: 1">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="tg-text"><b class="tg-title">Why this review</b><span class="tg-gist">Pick the reason that fits. Some ask for one more detail.</span></span><span class="tg-count" aria-hidden="true">2</span></summary>
+                <div class="rg-body">
+                    <fieldset class="reasons" id="reasons">
+                        <legend>Reasons for this review</legend>
+                    </fieldset>
+                    <p class="field-error" id="reason-error"></p>
+                    <div id="verify-note" class="verify-note" hidden>
+                        <p><strong>QA-lab verification</strong> runs the cases. This review proposes them.</p>
+                        <p>Request a verification at <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a>.</p>
                     </div>
-                    <div>
-                        <label for="client-email">Client email</label>
-                        <input id="client-email" name="clientEmail" type="email" autocomplete="email" disabled>
-                        <p class="field-error" id="clientEmail-error"></p>
+                    <div id="credential-note" class="verify-note" hidden>
+                        <p><strong>A signed-in run</strong> needs a login you are allowed to use. This page does not take the password, and it does not store one.</p>
+                        <p>Payment comes before that run. The amount is shown then. The public analysis still does not sign in.</p>
                     </div>
+                    <div id="client-box" hidden>
+                        <div class="grid-2">
+                            <div>
+                                <label for="client-name">Client name</label>
+                                <input id="client-name" name="clientName" type="text" autocomplete="organization" disabled>
+                                <p class="field-error" id="clientName-error"></p>
+                            </div>
+                            <div>
+                                <label for="client-email">Client email</label>
+                                <input id="client-email" name="clientEmail" type="email" autocomplete="email" disabled>
+                                <p class="field-error" id="clientEmail-error"></p>
+                            </div>
+                        </div>
+                        <label for="client-url">Client website</label>
+                        <div class="url-row notranslate" id="client-url-field">
+                            <span>https://</span>
+                            <input id="client-url" name="clientUrl" type="text" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="client.com" disabled>
+                        </div>
+                        <p class="field-error" id="clientUrl-error"></p>
+                    </div>
+                    <label for="reason">Other reason</label>
+                    <textarea id="reason" name="reason" disabled placeholder="Choose Other to write a reason."></textarea>
                 </div>
-                <label for="client-url">Client website</label>
-                <div class="url-row notranslate" id="client-url-field">
-                    <span>https://</span>
-                    <input id="client-url" name="clientUrl" type="text" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="client.com" disabled>
+            </details>
+            <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 2">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title">The page</b><span class="tg-gist">The public https address to analyze.</span></span><span class="tg-count" aria-hidden="true">3</span></summary>
+                <div class="rg-body">
+                    <label for="url">Public page</label>
+                    <div class="url-row notranslate" id="url-field">
+                        <span>https://</span>
+                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="url" placeholder="example.com/path" required disabled>
+                    </div>
+                    <p class="field-error" id="url-error"></p>
                 </div>
-                <p class="field-error" id="clientUrl-error"></p>
-            </div>
+            </details>
+            <details class="term-group req-group" id="req-cases" data-step="cases" style="--i: 3">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span class="tg-text"><b class="tg-title">Cases and scope</b><span class="tg-gist">Frameworks for the proposed cases, pages to analyze, and links deep.</span><span class="rg-meta" translate="no"></span></span><span class="tg-count" aria-hidden="true">4</span></summary>
+                <div class="rg-body">
+                    <label>Proposed cases for</label>
+                    <div class="fws" id="fw-picker"></div>
+                    <p class="field-error" id="frameworks-error"></p>
+                    <fieldset class="scope" id="page-scope">
+                        <legend>Pages to analyze</legend>
+                        <div class="fws" id="page-picker"></div>
+                    </fieldset>
+                    <fieldset class="scope" id="depth-scope">
+                        <legend>Links deep</legend>
+                        <div class="fws" id="depth-picker"></div>
+                    </fieldset>
+                    <p class="field-error" id="scope-error"></p>
+                </div>
+            </details>
             <div class="hp" aria-hidden="true">
                 <label for="hp-note">Leave this empty</label>
                 <input id="hp-note" name="hp_note" type="text" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
-            <label for="reason">Other reason</label>
-            <textarea id="reason" name="reason" disabled placeholder="Choose Other to write a reason."></textarea>
-            <label for="url">Public page</label>
-            <div class="url-row notranslate" id="url-field">
-                <span>https://</span>
-                <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="url" placeholder="example.com/path" required disabled>
-            </div>
-            <p class="field-error" id="url-error"></p>
-            <label>Proposed cases for</label>
-            <div class="fws" id="fw-picker"></div>
-            <p class="field-error" id="frameworks-error"></p>
-            <fieldset class="scope" id="page-scope">
-                <legend>Pages to analyze</legend>
-                <div class="fws" id="page-picker"></div>
-            </fieldset>
-            <fieldset class="scope" id="depth-scope">
-                <legend>Links deep</legend>
-                <div class="fws" id="depth-picker"></div>
-            </fieldset>
-            <p class="field-error" id="scope-error"></p>
             <p class="status" id="form-status" role="status"></p>
             <div class="row-actions">
                 <button class="btn btn-primary" id="review-btn" type="submit" disabled>Review</button>
@@ -1465,13 +1523,13 @@
 </div>
 <script src="js/site-i18n.js?v=20261028a"></script>
 <script src="js/site-glossary.js?v=20261029a"></script>
-<script src="js/site-tour.js?v=20261012a"></script>
+<script src="js/site-tour.js?v=20261023a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261029a"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261029e"></script>
+<script src="js/qa-review.js?v=20261029f"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
 </html>
