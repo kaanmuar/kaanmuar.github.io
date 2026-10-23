@@ -246,3 +246,16 @@ test("owner pages render every state in six languages", () => {
     assert.match(ownerMail.ownerPage(lang, "claim", Object.assign({ wrong: true }, link)), /@acme\.co/);
   }
 });
+
+test("a notice sent where the owner asked says so, in every language, instead of where the address was found", () => {
+  const rec = record("acme.co");
+  const row = Object.assign(notice.noticeRow(rec, notice.usableContacts(rec, notice.rankContacts(rec.report.contacts.found, "acme.co"))), { email: "nueva@acme.co", source: "owner-reply", sourceUrl: "" });
+  const card = { id: "u-acme-co", host: "acme.co", read: "2026-10-22", overall: 49, grade: "F", areas: { SEO: 23, GEO: 83, Analytics: 59, Security: 24, Accessibility: 33, Performance: 79 } };
+  const links = { claim: "https://fn/owner?t=x&do=claim", unlist: "https://fn/owner?t=x&do=unlist", stop: "https://fn/owner?t=x&do=stop", live: "https://carlosandmunoz.com/qa-review.html?live=u-acme-co" };
+  for (const lang of notice.LANGS) {
+    const mail = ownerMail.noticeMail(Object.assign({}, row, { lang }), card, links, SCORE);
+    assert.ok(mail.text.includes("nueva@acme.co") && mail.text.includes("acme.co"), lang);
+    assert.ok(!/\{\w+\}/.test(mail.text + mail.html), lang + " leaves no placeholder");
+  }
+  assert.ok(ownerMail.noticeMail(Object.assign({}, row, { lang: "en" }), card, links, SCORE).text.includes("replying to our first notice, asked us to send it to nueva@acme.co"));
+});
