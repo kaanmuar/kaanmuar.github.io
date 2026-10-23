@@ -91,6 +91,9 @@ const MAX_DEPTH = 5;
 const MAX_BYTES = 2000000;
 const PAGE_TIMEOUT_MS = 8000;
 const TOTAL_MS = 170000;
+// A start page whose HTML lists fewer same-host links than this is crawled from its rendered links.
+const SHELL_LINKS = 3;
+const SHELL_WAIT_MS = 45000;
 // Lighthouse mobile runs often outlast a short crawl's budget; reviewUrl's 180 s timeout leaves room.
 const SPEED_WAIT_MS = 80000;
 const RETAIN_MS = 365 * 24 * 60 * 60 * 1000;
@@ -738,6 +741,11 @@ function requestOnce(target, pinned, isStopped, keepPartial) {
       req.destroy(error);
       finish(reject, error);
     };
+    let keepArrived = null;
+    const slow = () => {
+      if (!settled && keepArrived && keepArrived()) return;
+      giveUp(new Error("The page took too long."));
+    };
     const req = lib.request({
       protocol: target.protocol,
       hostname: target.hostname,
@@ -770,6 +778,14 @@ function requestOnce(target, pinned, isStopped, keepPartial) {
         if (peer && peer.valid_to) cert = { validTo: peer.valid_to, issuer: clean((peer.issuer && (peer.issuer.O || peer.issuer.CN)) || "", 80) };
       } catch (error) { cert = null; }
       const encoding = res.headers["content-encoding"];
+      // A start page still arriving at the deadline is kept once its body has begun.
+      if (keepPartial) keepArrived = () => {
+        const body = decodeBody(Buffer.concat(chunks), encoding);
+        if (!/<body[\s>]/i.test(body)) return false;
+        req.destroy();
+        finish(resolve, { status: res.statusCode || 0, headers: res.headers, body, cert, truncated: true, slow: true });
+        return true;
+      };
       res.on("data", (chunk) => {
         size += chunk.length;
         if (size > MAX_BYTES) {
@@ -799,8 +815,8 @@ function requestOnce(target, pinned, isStopped, keepPartial) {
         finish(reject, haltError);
       }
     }, 150);
-    deadline = setTimeout(() => giveUp(new Error("The page took too long.")), PAGE_TIMEOUT_MS);
-    req.on("timeout", () => giveUp(new Error("The page took too long.")));
+    deadline = setTimeout(slow, PAGE_TIMEOUT_MS);
+    req.on("timeout", slow);
     req.on("error", (error) => finish(reject, haltError || error));
     req.end();
   });
@@ -825,7 +841,13 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial) {
       }
       const pinned = await assertPublic(current.hostname);
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
-      const res = await requestOnce(current, pinned, isStopped, keepPartial);
+      let res;
+      try {
+        res = await requestOnce(current, pinned, isStopped, keepPartial);
+      } catch (error) {
+        if (error && typeof error === "object" && !error.url) error.url = current.toString();
+        throw error;
+      }
       const location = res.headers.location;
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         if (onPulse) onPulse("The page redirected. Following the next public https address.");
@@ -842,6 +864,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial) {
         headers: res.headers,
         body: res.body,
         truncated: !!res.truncated,
+        slow: !!res.slow,
         cert: res.cert,
         ms: Date.now() - started
       };
@@ -1786,7 +1809,8 @@ function lookupMentions(hostname) {
 }
 
 function withTimeout(promise, ms, fallback) {
-  return Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(fallback), ms))]);
+  let timer = null;
+  return Promise.race([promise, new Promise((resolve) => { timer = setTimeout(() => resolve(fallback), ms); })]).finally(() => clearTimeout(timer));
 }
 
 async function fetchExtra(url, halt, keepPartial) {
@@ -2173,9 +2197,11 @@ async function reviewTarget(rawUrl, hooks) {
   };
   const halt = () => !!(controls.stopped && controls.stopped());
   const chosen = normalizeScope(controls.maxPages == null ? INCLUDED_PAGES : controls.maxPages, controls.maxDepth == null ? INCLUDED_DEPTH : controls.maxDepth) || { pages: INCLUDED_PAGES, depth: INCLUDED_DEPTH };
-  const deadline = Date.now() + budgetMs(chosen.pages);
+  const begun = Date.now();
+  let deadline = begun + budgetMs(chosen.pages);
   note("Checking that the address is public https.");
   let first;
+  let slowFirst = false;
   try {
     note("Opening the first page.");
     first = await fetchPublic(rawUrl, halt, note, true);
@@ -2184,7 +2210,9 @@ async function reviewTarget(rawUrl, hooks) {
       note("Stopped before the first page finished.");
       return stoppedReport(rawUrl, lines, null, chosen);
     }
-    throw error;
+    if (!/took too long/.test((error && error.message) || "") || typeof controls.browse !== "function") throw error;
+    slowFirst = true;
+    first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   let firstChallenge = challengeOf(first.url, first.headers, first.body);
   let readInBrowser = null;
@@ -2200,9 +2228,11 @@ async function reviewTarget(rawUrl, hooks) {
       : Promise.resolve(null);
   };
   const browserLog = (text) => note("Browser: " + text);
-  const refused = (first.status >= 400 && first.status < 500) || !!firstChallenge;
+  const refused = slowFirst || (first.status >= 400 && first.status < 500) || !!firstChallenge;
   if (refused && typeof controls.browse === "function") {
-    note("The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
+    note(slowFirst
+      ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
+      : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
     startSpeed(first.url);
     const browsed = await Promise.resolve().then(() => controls.browse({ url: first.url, paths: [], html: true }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
     if (halt()) {
@@ -2216,12 +2246,15 @@ async function reviewTarget(rawUrl, hooks) {
     if (!view || !view.html || !finalUrl || view.docStatus >= 400 || viewChallenge) {
       const status = (view && view.docStatus) || first.status;
       const guarded = (code) => [401, 403, 429].includes(code);
-      const error = new Error(!browsed || !browsed.ok
+      const where = slowFirst ? "in headless Chrome, after the plain request took too long" : "in the plain request and in headless Chrome";
+      const error = new Error(slowFirst && !viewChallenge && (!browsed || !browsed.ok || !(status >= 400))
+        ? "The page took too long in the plain request, and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
+        : !browsed || !browsed.ok
         ? (firstChallenge || guarded(first.status) ? "The site's bot protection refused the plain request" : "The URL returned status " + first.status + " to the plain request") +
           (firstChallenge || guarded(first.status) ? " (status " + first.status + ")" : "") + ", and headless Chrome did not finish (" + ((browsed && browsed.error) || "no answer") + ")."
         : (viewChallenge || firstChallenge || guarded(status))
-          ? "The site's bot protection refused the review (status " + status + (viewChallenge || firstChallenge ? ", " + insights.botCheck(viewChallenge || firstChallenge) : "") + "), in the plain request and in headless Chrome."
-          : "The URL returned status " + status + ", in the plain request and in headless Chrome.");
+          ? "The site's bot protection refused the review (status " + status + (viewChallenge || firstChallenge ? ", " + insights.botCheck(viewChallenge || firstChallenge) : "") + "), " + where + "."
+          : "The URL returned status " + status + ", " + where + ".");
       error.status = 422;
       throw error;
     }
@@ -2238,7 +2271,7 @@ async function reviewTarget(rawUrl, hooks) {
     };
     firstChallenge = "";
     readInBrowser = browsed;
-    note(browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
+    note(slowFirst ? insights.SLOW_READ_NOTE : browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
   } else if (first.status >= 400) {
     const error = new Error(firstChallenge
       ? "The site answered with " + insights.botCheck(firstChallenge) + " (status " + first.status + ") instead of the page."
@@ -2246,7 +2279,8 @@ async function reviewTarget(rawUrl, hooks) {
     error.status = 422;
     throw error;
   }
-  if (first.truncated) note(insights.CUT_NOTE);
+  if (first.slow) note(insights.SLOW_CUT_NOTE);
+  else if (first.truncated) note(insights.CUT_NOTE);
   const type = header(first.headers, "content-type");
   if (!/text\/html|application\/xhtml\+xml/i.test(type) && !/<html[\s>]/i.test(first.body)) {
     const error = new Error("The URL did not return an HTML page.");
@@ -2280,11 +2314,14 @@ async function reviewTarget(rawUrl, hooks) {
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
   const browsePaths = (homeInspect.links || []).filter((url) => pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
+  let showStart = null;
+  const renderedStart = new Promise((resolve) => { showStart = resolve; });
   const browserPromise = readInBrowser
     ? Promise.resolve(readInBrowser)
     : canBrowse
-      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
       : Promise.resolve(null);
+  browserPromise.then((done) => showStart(done && done.ok ? done.start : null), () => showStart(null));
   if (!stopped) startSpeed(first.url);
   else speedPromise = speedPromise || Promise.resolve(null);
   let extrasSettled = false;
@@ -2305,8 +2342,10 @@ async function reviewTarget(rawUrl, hooks) {
     depth: 0,
     from: "",
     challenge: firstChallenge,
-    readInBrowser: readInBrowser ? (readInBrowser.untagged ? "untagged" : "tagged") : "",
+    readInBrowser: readInBrowser ? (slowFirst ? "slow" : readInBrowser.untagged ? "untagged" : "tagged") : "",
     cut: !!first.truncated,
+    slow: !!first.slow,
+    renderedLinks: 0,
     inspect: homeInspect,
     html: first.body
   }];
@@ -2316,14 +2355,30 @@ async function reviewTarget(rawUrl, hooks) {
   note("First page answered " + first.status + " in " + first.ms + " ms. Title: " + (homeInspect.title || "none") + ". " + homeInspect.bytes + " bytes.");
   if (firstChallenge) note("The start page is " + insights.botCheck(firstChallenge) + ", not the site's own page. The scores describe that check page.");
   note(robotsNote);
-  const linkCount = (homeInspect.links || []).length;
+  let linkCount = (homeInspect.links || []).length;
+  let startQueue = null;
+  if (linkCount < SHELL_LINKS && canBrowse && !stopped && chosen.pages > 1) {
+    note(linkCount + " same-host link" + (linkCount === 1 ? " is" : "s are") + " in the HTML. Waiting up to " + SHELL_WAIT_MS / 1000 + " s for headless Chrome's rendered start page and its links.");
+    const waitFrom = Date.now();
+    const shown = await withTimeout(renderedStart, SHELL_WAIT_MS, null);
+    deadline = Math.min(deadline + (Date.now() - waitFrom), begun + TOTAL_MS);
+    const links = [...new Set(((shown && shown.dom && shown.dom.links) || []).map((href) => sameHost(first.url, href)).filter(Boolean))]
+      .filter((url) => !(homeInspect.links || []).includes(url) && pagePath(url) !== pagePath(first.url));
+    if (links.length) {
+      startQueue = (homeInspect.links || []).concat(links);
+      pages[0].renderedLinks = links.length;
+      linkCount = startQueue.length;
+      note(insights.SHELL_NOTE + " The rendered page adds " + links.length + ".");
+    } else note(shown ? "The rendered start page adds no same-host links." : "Headless Chrome did not return the rendered start page.");
+    stopped = stopped || halt();
+  }
   note(linkCount + " same-host links were listed. This review opens at most " + chosen.pages + " HTML pages and " + chosen.depth + " links deep.");
   if (!linkCount) note("No further pages to open on this host. The case list comes next.");
   while (!stopped && cursor < pages.length && pages.length < chosen.pages && Date.now() < deadline) {
     const page = pages[cursor];
     cursor += 1;
     if (page.depth >= chosen.depth) continue;
-    const queue = (page.inspect && page.inspect.links) || [];
+    const queue = (page === pages[0] && startQueue) || (page.inspect && page.inspect.links) || [];
     for (let i = 0; i < queue.length && pages.length < chosen.pages && Date.now() < deadline; i += 1) {
       if (halt()) { stopped = true; break; }
       const next = queue[i];
@@ -2337,7 +2392,7 @@ async function reviewTarget(rawUrl, hooks) {
       }
       try {
         note("Opening " + path + ".");
-        const child = await fetchPublic(next, halt, note);
+        const child = await fetchPublic(next, halt, note, true);
         const childType = header(child.headers, "content-type");
         if (!/text\/html|application\/xhtml\+xml/i.test(childType)) {
           note(path + " answered " + child.status + " with " + (childType.split(";")[0] || "no content type") + ", not an HTML page. It is not scored.");
@@ -2351,7 +2406,8 @@ async function reviewTarget(rawUrl, hooks) {
         }
         seen.add(child.url);
         if (challenge) note(path + " answered with " + insights.botCheck(challenge) + ". It is not scored.");
-        else note(path + " answered " + child.status + " in " + child.ms + " ms. " + (childInspect.links || []).length + " same-host links.");
+        else note(path + " answered " + child.status + " in " + child.ms + " ms. " + (childInspect.links || []).length + " same-host links." +
+          (child.slow ? " It was still arriving after " + PAGE_TIMEOUT_MS / 1000 + " s, so the part that had arrived was analyzed." : child.truncated ? " It is larger than 2 MB, so its first 2 MB were analyzed." : ""));
         pages.push({
           url: child.url,
           requested: next,

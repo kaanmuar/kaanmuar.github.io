@@ -2222,7 +2222,7 @@ async function redeemCoupon(code, record) {
 
 const BROWSER_URL = process.env.BROWSER_URL || "https://europe-west1-carlosm-interactive-cv.cloudfunctions.net/reviewBrowser";
 
-async function browseForReview(job, log) {
+async function browseForReview(job, log, onStart) {
   const key = process.env.BROWSER_KEY;
   if (!key) return null;
   const res = await fetch(BROWSER_URL, {
@@ -2233,10 +2233,10 @@ async function browseForReview(job, log) {
   });
   if (!res.ok) return { ok: false, error: res.status === 429 ? "the browser was busy" : "status " + res.status };
   if (!/ndjson/i.test(res.headers.get("content-type") || "")) return res.json();
-  return readBrowserStream(res.body, log);
+  return readBrowserStream(res.body, log, onStart);
 }
 
-async function readBrowserStream(body, log) {
+async function readBrowserStream(body, log, onStart) {
   const decoder = new TextDecoder();
   let buf = "";
   let result = null;
@@ -2245,6 +2245,7 @@ async function readBrowserStream(body, log) {
     let msg;
     try { msg = JSON.parse(part); } catch (error) { return; }
     if (msg.type === "log" && typeof log === "function") log(String(msg.text || "").slice(0, 400));
+    if (msg.type === "start" && msg.start && typeof onStart === "function") onStart(msg.start);
     if (msg.type === "done") result = msg.result;
   };
   for await (const chunk of body) {
@@ -3506,7 +3507,7 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
     const browserJob = require("./url-review-browser");
     const result = job.kind === "pdf"
       ? await browserJob.printPdf(job.html)
-      : await browserJob.browse(job, stream ? (text) => line({ type: "log", text }) : null);
+      : await browserJob.browse(job, stream ? (text) => line({ type: "log", text }) : null, stream ? (start) => line({ type: "start", start }) : null);
     if (stream) {
       line({ type: "done", result });
       res.end();

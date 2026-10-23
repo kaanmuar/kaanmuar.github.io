@@ -1050,7 +1050,7 @@ function stopForRefusal(job, docStatus) {
   return !!(job && job.html && Number(docStatus) >= 400);
 }
 
-async function browse(job, log) {
+async function browse(job, log, onStart) {
   const say = typeof log === "function" ? (text) => { try { log(text); } catch (error) { /* a closed log must not stop the pass */ } } : () => {};
   const started = Date.now();
   const budget = Math.min(110000, Math.max(30000, Number(job && job.budgetMs) || 85000));
@@ -1129,6 +1129,10 @@ async function browse(job, log) {
       bytes: rec.state.bytes,
       dom
     };
+    // The crawl of a start page that is an empty shell waits for these links, not for axe-core and the phone.
+    if (typeof onStart === "function") {
+      try { onStart({ finalPath: result.start.finalPath, status: first.status, dom: { links: (dom && dom.links) || [] } }); } catch (error) { /* a closed stream must not stop the pass */ }
+    }
     if (job.html) {
       let html = "";
       try { html = await page.content(); } catch (error) { html = ""; }
