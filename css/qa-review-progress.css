@@ -118,6 +118,10 @@
 @keyframes rp-fade-in { from { opacity: 0; } to { opacity: .26; } }
 @keyframes rp-fade-out { from { opacity: .26; } to { opacity: 0; } }
 
+/* Terminal cursor after the newest log line while a run streams. */
+#run-log.is-live li:last-child::after { content: ""; display: inline-block; width: .6em; height: 1.15em; margin-left: 6px; vertical-align: text-bottom; background: #7ee2b8; animation: rp-caret 1.06s steps(1) infinite; }
+@keyframes rp-caret { 50% { opacity: 0; } }
+
 @media (max-width: 800px) {
     .rp-num b { font-size: 38px; }
     .rp-msg { font-size: 21px; }
@@ -128,4 +132,5 @@
     .rp-fill::before, .rp-fill::after, .rp-head, .rp-dot, .rp-dot.is-beat::after, .rp.is-done .rp-head { animation: none; }
     .rp-msg { filter: blur(1.5px); transform: translate(-50%, -50%); animation: rp-fade-in .8s ease forwards; }
     .rp-msg.is-out { animation: rp-fade-out .8s ease forwards; }
+    #run-log.is-live li:last-child::after { animation: none; }
 }
