@@ -356,6 +356,7 @@
     <link rel="stylesheet" href="css/qa-review-folds.css?v=20261020a">
     <link rel="stylesheet" href="css/qa-review-live.css?v=20261028b">
     <link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a">
+    <link rel="stylesheet" href="css/qa-review-ask.css?v=20261023a">
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
@@ -1402,6 +1403,7 @@
             </div>
             <div class="actions">
                 <button class="btn btn-ghost" id="copy-link" type="button">Copy link</button>
+                <button class="btn btn-ghost" id="ask-open" type="button" aria-expanded="false" aria-controls="ask-panel" hidden>Ask the report</button>
                 <button class="btn btn-ghost" id="case-export-open" type="button">Export and print test cases</button>
                 <div class="menu-wrap">
                     <button class="btn btn-ghost" id="export-toggle" type="button" aria-expanded="false" aria-controls="export-menu">Export</button>
@@ -1511,6 +1513,24 @@
         <article class="card" id="cases"></article>
         </section>
     </div>
+    <aside class="ask-panel no-print" id="ask-panel" aria-labelledby="ask-title" hidden>
+        <div class="ask-head">
+            <div>
+                <p class="eyebrow">Ask the report</p>
+                <h2 id="ask-title">Answers from this report only</h2>
+            </div>
+            <button class="btn btn-ghost" id="ask-close" type="button">Close</button>
+        </div>
+        <p class="ask-note">It explains a finding from its evidence, writes the fix for the stack this review saw, writes the Playwright case for a case id, and drafts a GitHub or Jira issue. It answers nothing the report does not hold.</p>
+        <div class="ask-log" id="ask-log" role="log" aria-live="polite"></div>
+        <div class="ask-chips" id="ask-chips" hidden></div>
+        <form class="ask-form" id="ask-form" hidden>
+            <label class="ask-hidden" for="ask-input">Question about this report</label>
+            <input id="ask-input" type="text" maxlength="300" autocomplete="off" placeholder="Why is F-01 rated this way?">
+            <button class="btn btn-primary" type="submit">Ask</button>
+        </form>
+        <label class="ask-repo" id="ask-repo-row" for="ask-repo" hidden>GitHub repository for issues <input class="notranslate" translate="no" id="ask-repo" type="text" placeholder="owner/repo" autocomplete="off" spellcheck="false"></label>
+    </aside>
 </div>
 <div id="case-export" class="gate no-print" hidden>
     <div class="case-sheet" role="dialog" aria-modal="true" aria-labelledby="case-export-title">
@@ -1574,11 +1594,12 @@
 <script src="js/site-glossary.js?v=20261029a"></script>
 <script src="js/site-tour.js?v=20261023a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
-<script src="js/qa-review-scripts.js?v=20261031a"></script>
+<script src="js/qa-review-scripts.js?v=20261031b"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
+<script src="js/qa-review-ask.js?v=20261023a"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261031a"></script>
+<script src="js/qa-review.js?v=20261031b"></script>
 <script src="js/url-suggest.js?v=20261023b"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>

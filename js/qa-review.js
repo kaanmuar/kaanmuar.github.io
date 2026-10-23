@@ -1347,6 +1347,7 @@
     current = payload;
     liveId = report.id;
     if (!sample) remember(report.id);
+    if (window.QAReviewAsk) QAReviewAsk.show(payload);
     applyCopyMode(!!payload.paid);
     if (!sample) shareOpen.disabled = false;
     dash.classList.toggle("is-sample", sample);
