@@ -96,6 +96,18 @@ test("the desk counts a paid report once, through its payment row", () => {
   assert.equal(desk.snapshot(rows, [], [], [], []).tally.paid, 2);
 });
 
+test("the desk counts a test payment only once it is captured, and never as paid", () => {
+  const rows = [
+    { id: "credit", email: EMAIL, status: "run-credit", paid: true, test: true, priceUsd: 19, provider: "paypal" },
+    { id: "open1", email: EMAIL, status: "checkout-open", paid: false, test: true, priceUsd: 19, provider: "paypal" },
+    { id: "open2", email: EMAIL, status: "checkout-open", paid: false, test: true, priceUsd: 19, provider: "paypal" }
+  ];
+  const tally = desk.snapshot(rows, [], [], [], []).tally;
+  assert.equal(tally.test, 1);
+  assert.equal(tally.paid, 0);
+  assert.equal(tally.checkout, 2);
+});
+
 test("deleting the account drops a paid run whose payment has its own row, and keeps that row", async () => {
   const store = auth.memoryStore();
   await store.set("url_reviews", "run9", { email: EMAIL, status: "complete", paid: true, provider: "wompi", report: { cases: [1] } });
