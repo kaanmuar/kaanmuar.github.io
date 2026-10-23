@@ -1,0 +1,9 @@
+---
+description: Playwright and Chromium only run outside the Cursor agent sandbox
+globs: playwright.config.js,tests/**,scripts/**,simulador.html
+alwaysApply: false
+---
+# Browsers run outside the sandbox
+- Chromium, the system Chrome and Playwright segfault on launch inside the Cursor sandbox (`CURSOR_SANDBOX=seatbelt`). Run `npx playwright test`, `scripts/*-studio/build.js`, `scripts/build-share-images.js`, `scripts/translation-audit.js` and any `chromium.launch()` with `required_permissions: ["all"]`.
+- Never run `npx playwright install` to fix "Executable doesn't exist": the browsers are in `~/Library/Caches/ms-playwright`. After a sandboxed command, the unsandboxed shell still carries the sandbox's empty `PLAYWRIGHT_BROWSERS_PATH`.
+- Scripts that launch a browser start with `require('./scripts/playwright-sandbox')` (adjust the path). It stops with this advice inside the sandbox and drops the stale path outside it. One-off commands: `node -r ./scripts/playwright-sandbox.js ...`.

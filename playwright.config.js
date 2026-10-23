@@ -1,3 +1,4 @@
+require('./scripts/playwright-sandbox');
 const { defineConfig, devices } = require('@playwright/test');
 
 const port = process.env.TEST_PORT || '8765';
