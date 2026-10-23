@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <title>QA-lab URL Review: SEO, GEO und Testfälle aus einer URL</title>
     <meta name="description" content="Eine öffentliche https-Seite, geprüft und bewertet nach SEO, KI-Suche (GEO), Analytics, Sicherheit, Barrierefreiheit und Tempo, mit Testfällen für 20 Frameworks.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
@@ -754,6 +754,15 @@
         .url-row { display: flex; align-items: center; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; overflow: hidden; }
         .url-row span { padding: 10px 0 10px 12px; color: var(--muted); font-family: "Fira Code", ui-monospace, monospace; font-size: 13px; }
         .url-row input { border: 0; background: transparent; border-radius: 0; min-width: 0; flex: 1; width: 100%; }
+        .url-suggest { list-style: none; margin: 4px 0 0; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); font-family: "Fira Code", ui-monospace, monospace; font-size: 13px; }
+        .url-suggest li { padding: 7px 10px; border-radius: 6px; cursor: pointer; color: var(--text); overflow-wrap: anywhere; }
+        .url-suggest li:hover, .url-suggest li[aria-selected="true"] { background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--cyan); }
+        .url-hint { font-size: 12px; margin: 4px 0 0; color: var(--muted); }
+        .url-hint:empty { display: none; }
+        .url-hint.ok b { color: var(--green); }
+        .url-hint.warn b { color: var(--amber); }
+        .url-hint.bad b { color: var(--red); }
+        .url-hint .url-fix { font: inherit; font-weight: 600; color: var(--cyan); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
         .fws { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; border: 1px solid transparent; border-radius: 12px; padding: 4px; }
         .fws label { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 500; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
         .fw-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
@@ -1315,7 +1324,7 @@
                     <label for="url">Public page</label>
                     <div class="url-row notranslate" id="url-field">
                         <span>https://</span>
-                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="url" placeholder="example.com/path" required disabled>
+                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
                     </div>
                     <p class="field-error" id="url-error"></p>
                 </div>
@@ -1566,6 +1575,7 @@
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
 <script src="js/qa-review.js?v=20261030a"></script>
+<script src="js/url-suggest.js?v=20261023a"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
 </html>
