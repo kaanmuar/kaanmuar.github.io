@@ -12,6 +12,7 @@
  */
 const fs = require("fs");
 const path = require("path");
+require("./playwright-sandbox");
 const { chromium } = require("@playwright/test");
 const Glossary = require("../js/site-glossary.js");
 
