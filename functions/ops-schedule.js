@@ -25,6 +25,7 @@ const JOBS = [
   { job: "emailQuarterReviewReport", cron: "*/15 * * * *", gap: 1, what: "Quarter-hour review report, only when something happened" },
   { job: "exportFirestoreWeekly", cron: "0 8 * * 0", gap: 7 * 24 + 2, what: "Firestore backup" },
   { job: "opsWatchdog", cron: "10 8 * * *", gap: 26, what: "Flag missed or failed jobs; Monday digest of budgets" },
+  { job: "remindOwnerReplies", cron: "0 9 * * 1-6", gap: 50, what: "List owner replies still waiting for a decision (replies themselves arrive live on ownerReplies)" },
   { job: "sendReviewNotes", cron: "0 10 * * 1-6", gap: 50, what: "Follow-up notes to askers (REVIEW_NOTES_LIVE=1)" },
   { job: "sendOwnerNotices", cron: "0 11 * * 1-6", gap: 50, what: "Owner notices for sites now on Live Reports (OWNER_NOTICES_LIVE=1)" },
   // GitHub Actions crons are UTC, as written in .github/workflows (03:23, 11:07 and 04:00 Bogotá).

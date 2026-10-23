@@ -22,6 +22,7 @@ const COPY = {
     view: "See the public page",
     source: { "security.txt": "the site's security.txt", schema: "the site's structured data", llms: "the site's llms.txt", rdap: "the domain's registration record (RDAP)", dmarc: "the domain's DMARC record", soa: "the domain's DNS records", search: "public web search results for {domain}", page: "{url}" },
     why: "You get this single notice because {email} is public: we found it in {source}. We send at most one per domain every six months, and we never fill in contact forms.",
+    forwardWhy: "You get this notice because someone at {domain}, replying to our first notice, asked us to send it to {email}.",
     stop: "No more notices to this address or domain",
     claimWhy: "You get this because the report of {host} was claimed with this address at carlosandmunoz.com.",
     health: {
@@ -67,6 +68,7 @@ const COPY = {
     view: "Ver la página pública",
     source: { "security.txt": "el security.txt del sitio", schema: "los datos estructurados del sitio", llms: "el llms.txt del sitio", rdap: "el registro del dominio (RDAP)", dmarc: "el registro DMARC del dominio", soa: "los registros DNS del dominio", search: "resultados públicos de búsqueda web para {domain}", page: "{url}" },
     why: "Recibes este único aviso porque {email} es público: lo encontramos en {source}. Enviamos como máximo uno por dominio cada seis meses y nunca llenamos formularios de contacto.",
+    forwardWhy: "Recibes este aviso porque alguien de {domain}, al responder nuestro primer aviso, nos pidió enviarlo a {email}.",
     stop: "No más avisos a esta dirección ni a este dominio",
     claimWhy: "Recibes esto porque el informe de {host} se pidió con esta dirección en carlosandmunoz.com.",
     health: {
@@ -112,6 +114,7 @@ const COPY = {
     view: "Ver a página pública",
     source: { "security.txt": "o security.txt do site", schema: "os dados estruturados do site", llms: "o llms.txt do site", rdap: "o registro do domínio (RDAP)", dmarc: "o registro DMARC do domínio", soa: "os registros DNS do domínio", search: "resultados públicos de busca na web para {domain}", page: "{url}" },
     why: "Você recebe este único aviso porque {email} é público: nós o encontramos em {source}. Enviamos no máximo um por domínio a cada seis meses e nunca preenchemos formulários de contato.",
+    forwardWhy: "Você recebe este aviso porque alguém de {domain}, ao responder nosso primeiro aviso, pediu que o enviássemos para {email}.",
     stop: "Nenhum aviso mais para este endereço ou domínio",
     claimWhy: "Você recebeu isto porque o relatório de {host} foi pedido com este endereço em carlosandmunoz.com.",
     health: {
@@ -157,6 +160,7 @@ const COPY = {
     view: "Öffentliche Seite ansehen",
     source: { "security.txt": "der security.txt der Website", schema: "den strukturierten Daten der Website", llms: "der llms.txt der Website", rdap: "dem Registrierungseintrag der Domain (RDAP)", dmarc: "dem DMARC-Eintrag der Domain", soa: "den DNS-Einträgen der Domain", search: "öffentlichen Websuchergebnissen zu {domain}", page: "{url}" },
     why: "Du bekommst diesen einen Hinweis, weil {email} öffentlich ist: Wir haben die Adresse in {source} gefunden. Wir senden höchstens einen pro Domain alle sechs Monate und füllen nie Kontaktformulare aus.",
+    forwardWhy: "Du bekommst diesen Hinweis, weil jemand von {domain} in einer Antwort auf unseren ersten Hinweis gebeten hat, ihn an {email} zu senden.",
     stop: "Keine Hinweise mehr an diese Adresse oder Domain",
     claimWhy: "Du bekommst diese E-Mail, weil der Bericht zu {host} mit dieser Adresse auf carlosandmunoz.com angefordert wurde.",
     health: {
@@ -202,6 +206,7 @@ const COPY = {
     view: "Voir la page publique",
     source: { "security.txt": "le security.txt du site", schema: "les données structurées du site", llms: "le llms.txt du site", rdap: "la fiche d'enregistrement du domaine (RDAP)", dmarc: "l'enregistrement DMARC du domaine", soa: "les enregistrements DNS du domaine", search: "les résultats publics de recherche web pour {domain}", page: "{url}" },
     why: "Vous recevez cet avis unique parce que {email} est public : nous l'avons trouvé dans {source}. Nous en envoyons au plus un par domaine tous les six mois, et nous ne remplissons jamais de formulaire de contact.",
+    forwardWhy: "Vous recevez cet avis parce qu'une personne de {domain}, en répondant à notre premier avis, nous a demandé de l'envoyer à {email}.",
     stop: "Plus d'avis à cette adresse ni à ce domaine",
     claimWhy: "Vous recevez ce message parce que le rapport de {host} a été demandé avec cette adresse sur carlosandmunoz.com.",
     health: {
@@ -247,6 +252,7 @@ const COPY = {
     view: "Vedi la pagina pubblica",
     source: { "security.txt": "il security.txt del sito", schema: "i dati strutturati del sito", llms: "il llms.txt del sito", rdap: "la registrazione del dominio (RDAP)", dmarc: "il record DMARC del dominio", soa: "i record DNS del dominio", search: "i risultati pubblici di ricerca web per {domain}", page: "{url}" },
     why: "Ricevi questo unico avviso perché {email} è pubblico: l'abbiamo trovato in {source}. Ne inviamo al massimo uno per dominio ogni sei mesi e non compiliamo mai moduli di contatto.",
+    forwardWhy: "Ricevi questo avviso perché qualcuno di {domain}, rispondendo al nostro primo avviso, ci ha chiesto di inviarlo a {email}.",
     stop: "Nessun altro avviso a questo indirizzo o dominio",
     claimWhy: "Ricevi questa email perché il report di {host} è stato chiesto con questo indirizzo su carlosandmunoz.com.",
     health: {
@@ -395,8 +401,14 @@ function sourceText(t, notice) {
   return fill(t.source[notice.source] || t.source.page, { url: notice.sourceUrl || notice.host, domain: notice.domain });
 }
 
+// A notice sent where the owner asked, after a reply to the first one, says so instead of where the address was found.
+function whyText(t, notice) {
+  if (notice.source === "owner-reply") return fill(t.forwardWhy, { domain: notice.domain, email: notice.email });
+  return fill(t.why, { email: notice.email, source: sourceText(t, notice) });
+}
+
 function footer(t, notice, stopUrl) {
-  return esc(fill(t.why, { email: notice.email, source: sourceText(t, notice) })) + "<br>" +
+  return esc(whyText(t, notice)) + "<br>" +
     "<a href=\"" + esc(stopUrl) + "\" style=\"color:#0e7490;\">" + esc(t.stop) + "</a><br>" +
     "<a href=\"" + SITE + "/qa-review.html\" style=\"color:#0e7490;\">QA-lab URL Review</a> &middot; " + esc(POSTAL);
 }
@@ -425,7 +437,7 @@ function noticeMail(notice, card, links, score) {
     t.claim + ": " + links.claim, fill(t.claimNote, vars), "",
     fill(t.unlist, vars) + ": " + links.unlist, fill(t.unlistNote, vars), "",
     t.view + ": " + links.live, "",
-    fill(t.why, { email: notice.email, source: sourceText(t, notice) }),
+    whyText(t, notice),
     t.stop + ": " + links.stop,
     "QA-lab URL Review · " + POSTAL
   ].filter((line, i, all) => line !== "" || all[i - 1] !== "").join("\n");

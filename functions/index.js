@@ -209,7 +209,7 @@ function adminRespondUrl(type, id) {
   return url.toString();
 }
 
-async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLabel, to }) {
+async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLabel, to, replyTo }) {
   const from = prepareMail();
   if (!from) return false;
   const safeRows = (rows || []).filter((row) => row && row.value);
@@ -241,13 +241,13 @@ async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLa
     bodyHtml +
     buttonHtml +
     "</td></tr></table></body></html>";
-  await sgMail.send({
+  await sgMail.send(Object.assign({
     to: to || OWNER_EMAIL,
     from: from,
     subject: clip(subject, 140),
     text: text.slice(0, 16000),
     html: html
-  });
+  }, replyTo ? { replyTo } : {}));
   return true;
 }
 
@@ -1489,13 +1489,13 @@ async function stopLinkFor(email, lang) {
   return REVIEW_FN_URL + "/notes/stop?t=" + token;
 }
 
-async function sendAskerMail(email, mail, stopUrl, category, attachments) {
+async function sendAskerMail(email, mail, stopUrl, category, attachments, replyTo) {
   const from = prepareMail();
   if (!from) return false;
   await sgMail.send(Object.assign({
     to: email,
     from: from,
-    replyTo: REVIEW_ALERT_TO,
+    replyTo: replyTo || REVIEW_ALERT_TO,
     subject: mail.subject,
     text: mail.text,
     html: mail.html,
@@ -1621,7 +1621,7 @@ async function sendOwnerNotice(queued, email) {
     stop: link + "stop",
     live: customerMail.pageUrl(notice.lang, { live: card.id, utm_campaign: "owner-notice" })
   };
-  const sent = await sendAskerMail(notice.email, ownerMail.noticeMail(notice, card, links, score), links.stop, "url-review-owner-notice");
+  const sent = await sendAskerMail(notice.email, ownerMail.noticeMail(notice, card, links, score), links.stop, "url-review-owner-notice", null, ownerReplyTo(token));
   return sent ? { card, notice } : { error: "SendGrid is not configured, so nothing was sent." };
 }
 
@@ -1839,16 +1839,19 @@ async function opsWatchdog() {
   const monday = new Date(now).getUTCDay() === 1;
   if (!problems.length && !monday) return "all " + ops.JOBS.length + " jobs on time";
   const weekAgo = new Date(now - 7 * 864e5).toISOString();
-  const [sweepSnap, notices, reruns] = await Promise.all([
+  const [sweepSnap, notices, reruns, replies, waiting] = await Promise.all([
     db.collection("url_review_sweep").doc("state").get(),
     db.collection("url_review_owner_notice_log").where("sentAt", ">=", weekAgo).count().get(),
-    db.collection("url_review_reruns").where("at", ">=", weekAgo).count().get()
+    db.collection("url_review_reruns").where("at", ">=", weekAgo).count().get(),
+    db.collection("url_review_owner_replies").where("at", ">=", weekAgo).count().get(),
+    db.collection("url_review_owner_replies").where("status", "==", "waiting").count().get()
   ]);
   const swept = sweep.totals(sweepSnap.data() || {}, weekAgo.slice(0, 10));
   const rows = problems.map((p) => ({ label: p.job, value: p.why })).concat([
     { label: "Country sweep, 7 days", value: swept.done + " reviewed, " + swept.failed + " failed, " + swept.skipped + " skipped (cap " + ops.budget("sweepPerDay", process.env) + "/day" + (process.env.SWEEP_LIVE === "1" ? "" : ", off") + ")" },
     { label: "Owner notices, 7 days", value: notices.data().count + " sent (cap " + ops.budget("ownerNoticesPerDay", process.env) + "/day" + (process.env.OWNER_NOTICES_LIVE === "1" ? "" : ", off") + ")" },
-    { label: "Failure re-runs, 7 days", value: String(reruns.data().count) }
+    { label: "Failure re-runs, 7 days", value: String(reruns.data().count) },
+    { label: "Owner replies, 7 days", value: replies.data().count + " in, " + waiting.data().count + " waiting for a decision" }
   ]);
   await sendOwnerEmail({
     to: REVIEW_ALERT_TO,
@@ -1862,6 +1865,215 @@ async function opsWatchdog() {
 }
 
 exports.opsWatchdog = scheduled(withMail, "opsWatchdog", () => opsWatchdog());
+
+const ownerReplies = require("./url-review-owner-replies");
+const OWNER_REPLIES_URL = process.env.OWNER_REPLIES_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/ownerReplies";
+
+// Until the reply subdomain's MX points at SendGrid Inbound Parse, owners reply to the alert inbox.
+function ownerReplyTo(token) {
+  const domain = process.env.OWNER_REPLY_DOMAIN || "";
+  return domain && token ? "reply+" + token + "@" + domain : REVIEW_ALERT_TO;
+}
+
+// Plain text of an HTML-only reply, for reading: no tag survives, and no angle bracket is decoded back.
+function htmlText(html) {
+  let text = String(html || "").replace(/<(br|\/p|\/div|\/tr)[^>]*>/gi, "\n");
+  let before;
+  do {
+    before = text;
+    text = text.replace(/<[^<>]*>/g, "");
+  } while (text !== before);
+  return text.replace(/[<>]/g, "").replace(/&nbsp;/g, " ").replace(/&(lt|gt);/g, "")
+    .replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, "\"").replace(/&amp;/g, "&");
+}
+
+async function applyReplyAction(action, row) {
+  const db = admin.firestore();
+  const at = new Date().toISOString();
+  const domain = row.noticeDomain || row.domain;
+  if (action === "stop-address" && row.noticeEmail) {
+    await db.collection("url_review_owner_stops").doc(row.noticeEmail).set({ at, via: "reply-bounce", domain });
+  }
+  if (action === "stop-domain" && domain) {
+    await Promise.all([row.from, "@" + domain].filter(Boolean).map((key) => db.collection("url_review_owner_stops").doc(key).set({ at, via: "reply-" + row.kind, domain })));
+  }
+  if (action === "unlist" && row.host) {
+    await db.collection("url_review_unlisted").doc(reviewPublish.bare(row.host)).set({ at, via: "owner-reply", domain });
+    await db.collection("url_review_owner_notices").doc(domain).set({ unlistedAt: at }, { merge: true });
+  }
+}
+
+// Points the domain's notice at the address the owner gave, and sends it now. Returns "" or why not.
+async function resendNotice(row, email) {
+  if (!urlReview.emailSyntax(email)) return "That is not an email address.";
+  if (!row.noticeDomain) return "This reply matched no owner notice, so there is nothing to send.";
+  const ref = admin.firestore().collection("url_review_owner_notices").doc(row.noticeDomain);
+  const snap = await ref.get();
+  if (!snap.exists) return "The notice for " + row.noticeDomain + " is gone.";
+  const notice = snap.data();
+  if (notice.status === "sending") return "That notice is being sent right now.";
+  const candidates = [{ email, sources: ["owner-reply"], url: "", onDomain: urlReview.mailboxMatchesHost(email, notice.host) }]
+    .concat((notice.candidates || []).filter((item) => item.email !== email));
+  await ref.update({ status: "pending", email, candidates, tries: 0, lastError: "", redirectedFrom: row.from, redirectedAt: new Date().toISOString() });
+  const sent = await sendQueuedNotice(ref, "owner-reply");
+  return sent.outcome === "sent" ? "" : "Saved, but not sent yet: " + (sent.reason || sent.outcome);
+}
+
+async function noticeForReply(reply) {
+  const db = admin.firestore();
+  const link = reply.token ? (await db.collection("url_review_owner_links").doc(reply.token).get()).data() || null : null;
+  const notices = db.collection("url_review_owner_notices");
+  let snap = null;
+  const byDomain = (link && link.domain) || (reply.domain ? ownerNotice.domainOf(reply.domain) : "");
+  if (byDomain) snap = await notices.doc(byDomain).get();
+  if ((!snap || !snap.exists) && reply.from) {
+    const hit = await notices.where("email", "==", reply.from).limit(1).get();
+    snap = hit.empty ? null : hit.docs[0];
+  }
+  return { link, ref: snap && snap.exists ? snap.ref : null, notice: snap && snap.exists ? snap.data() : null };
+}
+
+async function takeOwnerReply(mail, auth) {
+  const reply = ownerReplies.read(mail);
+  const { link, ref, notice } = await noticeForReply(reply);
+  const decision = ownerReplies.plan(reply, notice);
+  const id = crypto.randomBytes(16).toString("hex");
+  const row = Object.assign({}, reply, {
+    at: new Date().toISOString(),
+    noticeDomain: ref ? ref.id : "",
+    host: (notice && notice.host) || (link && link.host) || "",
+    noticeEmail: (link && link.email) || (notice && notice.email) || "",
+    spf: clip(auth.spf, 40),
+    dkim: clip(auth.dkim, 200),
+    status: decision.status,
+    propose: decision.propose,
+    applied: decision.apply,
+    expireAt: keepUntil()
+  });
+  await admin.firestore().collection("url_review_owner_replies").doc(id).set(row);
+  for (const action of decision.apply) await applyReplyAction(action, row);
+  if (ref) await ref.set({ lastReplyAt: row.at, lastReplyKind: row.kind }, { merge: true });
+  if (row.kind !== "auto" && row.kind !== "bounce") {
+    await sendOwnerEmail({
+      to: REVIEW_ALERT_TO,
+      replyTo: row.from,
+      subject: "Owner reply: " + ownerReplies.summary(row, decision),
+      intro: ownerReplies.summary(row, decision),
+      rows: [
+        { label: "From", value: row.from },
+        { label: "Site", value: row.host || "no notice matched" },
+        { label: "Subject", value: row.subject },
+        { label: "Mail checks", value: "SPF " + (row.spf || "none") + ", DKIM " + (row.dkim || "none") },
+        { label: "Forwarded by", value: row.forwardedBy }
+      ],
+      body: row.words,
+      respondUrl: OWNER_REPLIES_URL + "/decide?t=" + id,
+      buttonLabel: row.status === "waiting" ? "Decide" : "See what was done"
+    });
+  }
+  return id;
+}
+
+function replyPage(id, row, message) {
+  const esc = escapeHtml;
+  const action = OWNER_REPLIES_URL + "/decide?t=" + id;
+  const button = (value, label, extra) => "<form method=\"post\" action=\"" + esc(action) + "\" style=\"margin:10px 0\"><input type=\"hidden\" name=\"do\" value=\"" + value + "\">" + (extra || "") + "<button style=\"padding:10px 16px;border-radius:8px;border:0;background:#0e7490;color:#fff;font-size:14px\">" + esc(label) + "</button></form>";
+  const proposed = String(row.propose || "").startsWith("resend:") ? row.propose.slice(7) : (row.mentioned || [])[0] || "";
+  const open = row.status === "waiting";
+  return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Owner reply</title></head>" +
+    "<body style=\"font-family:Arial,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;color:#1c2833\">" +
+    "<h1 style=\"font-size:20px\">" + esc(ownerReplies.KIND_LABELS[row.kind] || row.kind) + "</h1>" +
+    (message ? "<p style=\"padding:12px;background:#fef3c7;border-radius:8px\">" + esc(message) + "</p>" : "") +
+    "<p><b>" + esc(row.from) + "</b> about " + esc(row.host || "no matched notice") + " · " + esc(row.at) + "</p>" +
+    "<pre style=\"white-space:pre-wrap;background:#f4f7f8;padding:12px;border-radius:8px\">" + esc(row.words) + "</pre>" +
+    (open
+      ? button("resend", "Send the notice to this address", "<input name=\"email\" type=\"email\" value=\"" + esc(proposed) + "\" required style=\"padding:9px;margin-right:8px;width:260px\">") +
+        button("stop", "Stop notices to " + (row.noticeDomain || row.domain)) +
+        (row.host ? button("unlist", "Take " + row.host + " off Live Reports") : "") +
+        button("done", "Handled, nothing to do")
+      : "<p>Status: " + esc(row.status) + (row.decision ? " (" + esc(row.decision) + ")" : "") + (row.applied && row.applied.length ? " · applied: " + esc(row.applied.join(", ")) : "") + "</p>") +
+    "</body></html>";
+}
+
+exports.ownerReplies = functions.runWith({ timeoutSeconds: 60, memory: "256MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+  res.set("X-Robots-Tag", "noindex");
+  try {
+    if (req.path.startsWith("/inbound")) {
+      const key = process.env.OWNER_REPLY_KEY || "";
+      const given = String(req.query.key || "");
+      if (!key || given.length !== key.length || !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key))) {
+        res.status(403).send("Forbidden");
+        return;
+      }
+      if (req.method !== "POST" || !req.rawBody || req.rawBody.length > 8e6) {
+        res.status(400).send("Expected an Inbound Parse POST");
+        return;
+      }
+      const form = await new Response(req.rawBody, { headers: { "content-type": req.get("content-type") || "" } }).formData();
+      const field = (name) => String(form.get(name) || "");
+      const id = await takeOwnerReply({
+        from: field("from"),
+        to: field("to") + " " + field("envelope"),
+        subject: field("subject"),
+        text: field("text") || htmlText(field("html")),
+        headers: field("headers")
+      }, { spf: field("SPF"), dkim: field("dkim") });
+      res.status(200).send("ok " + id);
+      return;
+    }
+    if (req.path.startsWith("/decide")) {
+      res.set("Content-Type", "text/html; charset=utf-8");
+      const id = String(req.query.t || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+      const ref = id.length === 32 ? admin.firestore().collection("url_review_owner_replies").doc(id) : null;
+      const snap = ref ? await ref.get() : null;
+      if (!snap || !snap.exists) {
+        res.status(404).send("<p>This reply is gone or the link is wrong.</p>");
+        return;
+      }
+      const row = snap.data();
+      if (req.method !== "POST") {
+        res.status(200).send(replyPage(id, row, ""));
+        return;
+      }
+      const action = String((req.body && req.body.do) || "");
+      if (row.status !== "waiting" || ["resend", "stop", "unlist", "done"].indexOf(action) === -1) {
+        res.status(409).send(replyPage(id, row, "This reply was already decided."));
+        return;
+      }
+      const email = String((req.body && req.body.email) || "").trim().toLowerCase().slice(0, 200);
+      let problem = "";
+      if (action === "resend") problem = await resendNotice(row, email);
+      else if (action !== "done") await applyReplyAction(action === "stop" ? "stop-domain" : "unlist", row);
+      const decided = { status: "decided", decision: action, decidedAt: new Date().toISOString(), decidedEmail: action === "resend" ? email : "" };
+      if (!problem || problem.startsWith("Saved")) await ref.update(decided);
+      const shown = Object.assign({}, row, !problem || problem.startsWith("Saved") ? decided : {});
+      res.status(200).send(replyPage(id, shown, problem || "Done."));
+      return;
+    }
+    res.status(404).send("Not found");
+  } catch (error) {
+    console.error("ownerReplies failed:", error);
+    res.status(500).send("Something failed; Inbound Parse will try again.");
+  }
+});
+
+// Weekday mornings: replies still waiting for a decision after a day, in one mail.
+async function remindOwnerReplies() {
+  const snap = await admin.firestore().collection("url_review_owner_replies").where("status", "==", "waiting").limit(50).get();
+  const old = snap.docs.filter((doc) => Date.now() - Date.parse(doc.get("at") || "") > 20 * 3600000);
+  if (!old.length) return "nothing waiting";
+  await sendOwnerEmail({
+    to: REVIEW_ALERT_TO,
+    subject: "Owner replies: " + old.length + " waiting for a decision",
+    intro: old.length + " owner repl" + (old.length === 1 ? "y is" : "ies are") + " still waiting for a decision.",
+    rows: old.map((doc) => ({ label: doc.get("domain") || doc.get("from"), value: (ownerReplies.KIND_LABELS[doc.get("kind")] || doc.get("kind")) + " · " + OWNER_REPLIES_URL + "/decide?t=" + doc.id })),
+    respondUrl: OWNER_REPLIES_URL + "/decide?t=" + old[0].id,
+    buttonLabel: "Decide the oldest"
+  });
+  return old.length + " waiting";
+}
+
+exports.remindOwnerReplies = scheduled(withMail, "remindOwnerReplies", () => remindOwnerReplies());
 
 async function rememberReview(kind, source) {
   const note = reviewDesk.alertFrom(kind, source || {});
