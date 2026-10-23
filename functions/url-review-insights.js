@@ -7,6 +7,9 @@ const { germanSpeaking } = require("./url-review-legal");
 const BROWSER_READ_NOTE = "The site's bot protection refused the plain request; the page was analyzed in headless Chrome.";
 const UNTAGGED_READ_NOTE = "The site's bot protection refused the plain request and headless Chrome while it carried the review tag; the page was analyzed in headless Chrome without the tag.";
 const CUT_NOTE = "The start page is larger than 2 MB, so the review analyzed its first 2 MB.";
+const SLOW_READ_NOTE = "The plain request for the start page took longer than 8 s; the page was analyzed in headless Chrome.";
+const SLOW_CUT_NOTE = "The start page was still arriving after 8 s, so the review analyzed the part that had arrived.";
+const SHELL_NOTE = "The start page's HTML lists almost no same-host links, so the review followed the links on the page rendered in headless Chrome.";
 
 function botCheck(vendor) {
   return (/^[aeiou]/i.test(vendor) ? "an " : "a ") + vendor + " bot check";
@@ -557,7 +560,7 @@ function browserChecks(b, add, ctx) {
     const dom = start.dom;
     const rawLinks = ((ctx.face && ctx.face.links) || []).length;
     if (dom && dom.links.length >= 5 && rawLinks < Math.max(3, dom.links.length / 4)) add("SEO", "risk", "medium", "seo-links-js", "Most links appear only after JavaScript runs",
-      "The HTML lists " + plural(rawLinks, "same-host link") + "; the rendered page lists " + dom.links.length + ". Crawlers that skip JavaScript cannot find the other pages, and this review's crawl could not follow them either.",
+      "The HTML lists " + plural(rawLinks, "same-host link") + "; the rendered page lists " + dom.links.length + ". Crawlers that skip JavaScript cannot find the other pages" + (ctx.renderedCrawl ? "; this review followed the rendered links instead." : ", and this review's crawl could not follow them either."),
       "Render navigation as plain <a href> links in the server HTML, and keep the sitemap complete.", { effort: "days", cases: ["LK-01", "SEO-03"] });
     if (start.h1 && start.h1InHtml === false) add("GEO", "risk", "low", "geo-h1-rendered", "The main heading appears only after JavaScript", "\"" + start.h1 + "\" is on the rendered page but not in the HTML.", "Put the h1 in the server HTML.", { effort: "hours", cases: ["GEO-03"] });
   }
@@ -804,8 +807,10 @@ function analyze(input) {
   }
   const partialRead = linked.length >= 2 && blocked.length * 2 > linked.length;
   const warnings = [];
-  if (home.readInBrowser) warnings.push(home.readInBrowser === "untagged" ? UNTAGGED_READ_NOTE : BROWSER_READ_NOTE);
-  if (home.cut) warnings.push(CUT_NOTE);
+  if (home.readInBrowser) warnings.push(home.readInBrowser === "untagged" ? UNTAGGED_READ_NOTE : home.readInBrowser === "slow" ? SLOW_READ_NOTE : BROWSER_READ_NOTE);
+  if (home.slow) warnings.push(SLOW_CUT_NOTE);
+  else if (home.cut) warnings.push(CUT_NOTE);
+  if (home.renderedLinks) warnings.push(SHELL_NOTE);
   if (home.challenge) warnings.push("The start page answered with " + botCheck(home.challenge) + " instead of the site, so these scores describe that check page.");
   if (partialRead) warnings.push("Partial analysis: " + blocked.length + " of " + plural(linked.length, "linked page") + " answered with a bot check or a block, so the scores rest mostly on the start page.");
   if (broken.length) {
@@ -1413,7 +1418,7 @@ function analyze(input) {
   else if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
   if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was analyzed", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were analyzed. Slow responses use up the budget.", "");
 
-  if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face });
+  if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face, renderedCrawl: !!home.renderedLinks });
 
   // Rank and score.
   const actionable = findings.filter((item) => item.verdict === "fail" || item.verdict === "risk");
@@ -1722,4 +1727,4 @@ function fixKit(ctx) {
   };
 }
 
-module.exports = { analyze, parseRobotsFull, robotsVerdict, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, botCheck };
+module.exports = { analyze, parseRobotsFull, robotsVerdict, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };
