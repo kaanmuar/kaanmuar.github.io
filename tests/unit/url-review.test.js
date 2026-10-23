@@ -1095,7 +1095,7 @@ test("a failed run keeps its log, error and timings for 90 days", () => {
   assert.equal(record.timings.ms, 60000);
   assert.equal(record.expireAt.getTime() - 61000, 90 * 86400000);
   assert.equal(record.diagnosedAt, null);
-  assert.deepEqual(record.options, { pages: 20, depth: 2, frameworks: ["playwright"] });
+  assert.deepEqual(record.options, { pages: 20, depth: 2, pageLang: "", section: false, frameworks: ["playwright"] });
 
   const stopped = failures.failureRecord({ kind: "stopped", url: "https://shop.example.com/", lines: [] });
   assert.equal(stopped.error, null);
@@ -1953,4 +1953,51 @@ test("mentions come from search results on other sites only", () => {
     { title: "No link", url: "javascript:void(0)" }
   ];
   assert.deepEqual(core.parseMentions(rows, "acme.co").map((row) => [row.href, row.tone]), [["https://news.example/acme", "Favorable"]]);
+});
+
+test("a review can ask for a language and stay under the start path", () => {
+  const body = (extra) => Object.assign({
+    termsAccepted: true,
+    termsVersion: core.TERMS_VERSION,
+    name: "Ana Ruiz",
+    email: "ana@example.org",
+    reasonCode: "teaching",
+    frameworks: ["Playwright"],
+    url: "https://example.org/docs/guide"
+  }, extra);
+  const site = core.validateIntake(body()).value;
+  assert.equal(site.pageLang, "");
+  assert.equal(site.section, false);
+  const es = core.validateIntake(body({ pageLang: "es", section: true })).value;
+  assert.equal(es.pageLang, "es");
+  assert.equal(es.section, true);
+  const ignored = core.validateIntake(body({ pageLang: "english", section: "yes" })).value;
+  assert.equal(ignored.pageLang, "");
+  assert.equal(ignored.section, false);
+  assert.equal(core.sectionPrefix("https://example.org/docs/guide"), "/docs/guide");
+  assert.equal(core.sectionPrefix("https://example.org/docs/"), "/docs");
+  assert.equal(core.sectionPrefix("https://example.org/"), "");
+  assert.equal(core.underSection("https://example.org/docs/guide/install", "/docs/guide"), true);
+  assert.equal(core.underSection("https://example.org/docs", "/docs/guide"), false);
+  assert.equal(core.underSection("https://example.org/about", ""), true);
+  assert.deepEqual(core.sitemapCandidates([
+    "https://example.org/docs/guide",
+    "https://example.org/docs/guide/install",
+    "https://example.org/about",
+    "https://other.example/docs/guide/x",
+    "https://example.org/docs/guide/file.pdf",
+    "https://example.org/docs/guide/next"
+  ], "https://example.org/docs/guide", "/docs/guide", 10, ["https://example.org/docs/guide"]), [
+    "https://example.org/docs/guide/install",
+    "https://example.org/docs/guide/next"
+  ]);
+  const record = core.intakeRecord(es, { id: "r", status: "complete" }, {});
+  assert.equal(record.pageLang, "es");
+  assert.equal(record.section, true);
+  const failed = require("../../functions/url-review-failures").failureRecord({
+    kind: "failed", url: "https://example.org/docs", pageLang: "es", section: true, error: "x"
+  });
+  assert.equal(failed.options.pageLang, "es");
+  assert.equal(failed.options.section, true);
+  assert.equal(failed.intake.section, true);
 });

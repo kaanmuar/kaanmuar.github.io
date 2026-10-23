@@ -114,6 +114,7 @@
     document.querySelectorAll("[data-gated]").forEach((el) => { el.inert = false; });
     fields().forEach((el) => { el.disabled = false; });
     reasonBox.disabled = true;
+    syncSection();
     stopBtn.disabled = true;
     reviewBtn.disabled = !signedIn();
     sessionStorage.setItem(TERMS_KEY, TERMS_VERSION);
@@ -147,6 +148,44 @@
   function selectedDepth() {
     const picked = reviewForm.querySelector('input[name="depth"]:checked');
     return picked ? Number(picked.value) : 2;
+  }
+
+  function selectedPageLang() {
+    const picked = reviewForm.querySelector('input[name="pageLang"]:checked');
+    return picked ? picked.value : "";
+  }
+
+  const PAGE_LANG_LABEL = { en: "English", es: "Spanish", pt: "Portuguese", de: "German", fr: "French", it: "Italian" };
+  let sectionTouched = false;
+
+  function urlPath() {
+    const raw = urlInput.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    const slash = raw.indexOf("/");
+    if (slash === -1) return "";
+    return raw.slice(slash).replace(/[?#].*$/, "").replace(/\/+$/, "");
+  }
+
+  function syncSection() {
+    const box = document.getElementById("stay-section");
+    const note = document.getElementById("section-note");
+    if (!box) return;
+    const path = urlPath();
+    if (!path) sectionTouched = false;
+    else if (!sectionTouched) box.checked = true;
+    box.disabled = app.inert || !path;
+    if (!path) box.checked = false;
+    if (note) note.textContent = !path
+      ? "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site."
+      : box.checked
+        ? "Later pages stay under " + path + "."
+        : "Later pages can follow links outside " + path + ".";
+  }
+
+  function scopeSummary() {
+    const lang = selectedPageLang();
+    const parts = [selectedPages() + " pages", selectedDepth() + " deep", lang ? PAGE_LANG_LABEL[lang] || lang : "site language"];
+    if (document.getElementById("stay-section").checked) parts.push("this section");
+    return parts.join(", ");
   }
 
   function paintReasons() {
@@ -216,14 +255,17 @@
       why: !!code && (code !== "other" || !!reasonBox.value.trim()),
       page: !!urlInput.value.trim(),
       cases: names.length > 0,
+      scope: !!reviewForm.querySelector('input[name="pages"]:checked') && !!reviewForm.querySelector('input[name="depth"]:checked')
     };
     reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
       const ok = !!done[group.dataset.step];
       group.classList.toggle("done", ok);
       group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
     });
-    const meta = reviewForm.querySelector(".rg-meta");
+    const meta = reviewForm.querySelector("#req-cases .rg-meta");
     if (meta) meta.textContent = names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) : "");
+    const scopeMeta = reviewForm.querySelector("#req-scope .rg-meta");
+    if (scopeMeta) scopeMeta.textContent = scopeSummary();
   }
   reviewForm.addEventListener("input", paintSteps);
   reviewForm.addEventListener("change", paintSteps);
@@ -236,10 +278,14 @@
   });
   reviewForm.addEventListener("change", (event) => {
     const target = event.target;
+    if (target && target.id === "stay-section") {
+      sectionTouched = true;
+      syncSection();
+    }
     if (!target || !window.SiteAnalytics) return;
     if (target.name === "fw") SiteAnalytics.trackEvent("qa_review_frameworks", "URL Review", String(selectedFrameworks().length));
     if (target.name === "tool") SiteAnalytics.trackEvent("qa_review_tools", "URL Review", target.value);
-    if (target.name === "pages" || target.name === "depth") SiteAnalytics.trackEvent("qa_review_scope", "URL Review", selectedPages() + "x" + selectedDepth());
+    if (target.name === "pages" || target.name === "depth" || target.name === "pageLang" || target.name === "section") SiteAnalytics.trackEvent("qa_review_scope", "URL Review", scopeSummary());
   });
   function countryForHost(value) {
     const host = String(value || "").replace(/^\s*https?:\/\//i, "").split("/")[0].split(":")[0].replace(/^www\./, "").toLowerCase();
@@ -255,6 +301,7 @@
     const next = urlInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
     if (next !== urlInput.value) urlInput.value = next;
     syncLegal();
+    syncSection();
   });
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
@@ -1332,7 +1379,10 @@
       : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
     const obs = report.observed || {};
     const limits = report.limits || {};
-    document.getElementById("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(limits.robotsNote || "") + "</p>" +
+    const asked = "pageLang" in limits
+      ? (limits.pageLang ? "Requested in " + (PAGE_LANG_LABEL[limits.pageLang] || limits.pageLang) + ". " : "Requested in the site's own language. ") + (limits.section ? "Stayed under " + limits.section + ". " : "")
+      : "";
+    document.getElementById("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(asked) + esc(limits.robotsNote || "") + "</p>" +
       (limits.timedOut ? '<p class="muted">The time budget ended after ' + (limits.pagesRead || (report.pages || []).length) + " of up to " + (limits.maxPages || "?") + ' pages, usually because the site answered slowly. If pages that matter were left out, write to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a> with the report link and Carlos will look at a rerun.</p>' : "");
     paintAlarm(report, paid || alertsOpen(report.id));
     paintMentions(report);
@@ -1461,6 +1511,8 @@
           tools: selectedTools(),
           pages: selectedPages(),
           depth: selectedDepth(),
+          pageLang: selectedPageLang(),
+          section: document.getElementById("stay-section").checked === true,
           deviceId: deviceId(),
           runId: runId,
           openedAt: openedAt,
@@ -1873,6 +1925,7 @@
       { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
       { selector: "#url-field", title: "The page", body: "Type the host and path. https:// is already in front of the box, so the review always asks for a public secure page.", demoMs: 1500 },
       { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
+      { selector: "#req-scope", title: "Pages to review", body: "Choose how many pages to open, how many links deep, and the language to request. Stay in this section keeps later pages under the path in the address. The included first review is 20 pages and 2 links deep. A wider or deeper review shows its price before it starts.", demoMs: 1600 },
       { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it analyzes public pages on that host and writes a line for each step.", demoMs: 1500 },
       { selector: "#run-log", title: "The log", body: "Watch the analysis here: the first page, robots.txt, and each linked page. The same lines are kept with the run.", demoMs: 1600 },
       { selector: "#stop-btn", title: "Stop", body: "Stop ends the analysis. Pages already saved stay in the report, and the record says the review was stopped.", demoMs: 1500 },

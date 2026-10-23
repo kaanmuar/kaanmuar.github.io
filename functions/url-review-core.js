@@ -47,6 +47,33 @@ const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
 const DEPTH_CENTS = { 2: 0, 3: 400, 4: 700, 5: 1000 };
 const INCLUDED_PAGES = 20;
 const INCLUDED_DEPTH = 2;
+const PAGE_LANGS = ["en", "es", "pt", "de", "fr", "it"];
+const PAGE_LANG_LABEL = { en: "English", es: "Spanish", pt: "Portuguese", de: "German", fr: "French", it: "Italian" };
+
+function normalizePageLang(value) {
+  const code = String(value || "").trim().toLowerCase();
+  return PAGE_LANGS.indexOf(code) === -1 ? "" : code;
+}
+
+function sectionPrefix(url) {
+  try {
+    const path = new URL(url).pathname || "/";
+    if (path === "/") return "";
+    return path.replace(/\/+$/, "");
+  } catch (error) {
+    return "";
+  }
+}
+
+function underSection(url, prefix) {
+  if (!prefix) return true;
+  try {
+    const path = new URL(url).pathname.replace(/\/+$/, "") || "/";
+    return path === prefix || path.startsWith(prefix + "/");
+  } catch (error) {
+    return false;
+  }
+}
 
 function priceMatches(usd) {
   const cents = Math.round(Number(usd) * 100);
@@ -344,6 +371,8 @@ function validateIntake(body) {
       clientUrl,
       ownership: known && known.id === "own" ? "mailbox-domain" : "",
       lang: ["en", "es", "pt", "de", "fr", "it"].indexOf(String(src.lang || "").slice(0, 2).toLowerCase()) === -1 ? "" : String(src.lang).slice(0, 2).toLowerCase(),
+      pageLang: normalizePageLang(src.pageLang),
+      section: src.section === true,
       followUp: src.followUp === true,
       unlisted: src.unlisted === true
     } : null
@@ -722,7 +751,7 @@ function decodeBody(buffer, encoding) {
   }
 }
 
-function requestOnce(target, pinned, isStopped, keepPartial) {
+function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
     let settled = false;
@@ -753,12 +782,11 @@ function requestOnce(target, pinned, isStopped, keepPartial) {
       path: target.pathname + target.search,
       method: "GET",
       timeout: PAGE_TIMEOUT_MS,
-      headers: {
+      headers: Object.assign({
         "user-agent": USER_AGENT,
         accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-        "accept-language": "en",
         connection: "close"
-      },
+      }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
       lookup: (hostname, options, callback) => {
         if (typeof options === "function") {
           callback = options;
@@ -822,7 +850,7 @@ function requestOnce(target, pinned, isStopped, keepPartial) {
   });
 }
 
-async function fetchPublic(raw, isStopped, onPulse, keepPartial) {
+async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage) {
   let current = normalizeUrl(raw);
   const started = Date.now();
   let pulses = 0;
@@ -843,7 +871,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial) {
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
       let res;
       try {
-        res = await requestOnce(current, pinned, isStopped, keepPartial);
+        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage);
       } catch (error) {
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
         throw error;
@@ -1813,9 +1841,9 @@ function withTimeout(promise, ms, fallback) {
   return Promise.race([promise, new Promise((resolve) => { timer = setTimeout(() => resolve(fallback), ms); })]).finally(() => clearTimeout(timer));
 }
 
-async function fetchExtra(url, halt, keepPartial) {
+async function fetchExtra(url, halt, keepPartial, acceptLanguage) {
   try {
-    const res = await fetchPublic(url, halt, null, keepPartial);
+    const res = await fetchPublic(url, halt, null, keepPartial, acceptLanguage);
     const type = header(res.headers, "content-type");
     const body = String(res.body || "");
     return {
@@ -1831,6 +1859,23 @@ async function fetchExtra(url, halt, keepPartial) {
   }
 }
 
+function sitemapCandidates(urls, startUrl, prefix, limit, already) {
+  const skip = new Set(already || []);
+  let startPath = "";
+  try { startPath = pagePath(startUrl); } catch (error) { startPath = ""; }
+  const out = [];
+  (Array.isArray(urls) ? urls : []).forEach((raw) => {
+    if (out.length >= limit) return;
+    const next = sameHost(startUrl, raw);
+    if (!next || skip.has(next) || out.indexOf(next) !== -1) return;
+    if (startPath && pagePath(next) === startPath) return;
+    if (/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?|xml|gz|css|js)(\?|$)/i.test(next)) return;
+    if (prefix && !underSection(next, prefix)) return;
+    out.push(next);
+  });
+  return out;
+}
+
 function sitemapLocs(xml) {
   const locs = [];
   const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
@@ -1839,7 +1884,7 @@ function sitemapLocs(xml) {
   return locs;
 }
 
-async function readSitemap(origin, robotsText, halt) {
+async function readSitemap(origin, robotsText, halt, acceptLanguage) {
   const listed = [];
   let listedTotal = 0;
   String(robotsText || "").split(/\r?\n/).forEach((line) => {
@@ -1858,7 +1903,7 @@ async function readSitemap(origin, robotsText, halt) {
   const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
   let last = { status: 0 };
   for (let i = 0; i < candidates.length && i < 3; i += 1) {
-    const res = await fetchExtra(candidates[i], halt, true);
+    const res = await fetchExtra(candidates[i], halt, true, acceptLanguage);
     last = res;
     if (res.status !== 200 || res.html) continue;
     let urls = sitemapLocs(res.body);
@@ -1869,7 +1914,7 @@ async function readSitemap(origin, robotsText, halt) {
       if (all.length > children.length || all.length < urls.length) partial = true;
       urls = [];
       for (let j = 0; j < children.length; j += 1) {
-        const child = await fetchExtra(children[j], halt, true);
+        const child = await fetchExtra(children[j], halt, true, acceptLanguage);
         if (child.status === 200 && !child.html) urls = urls.concat(sitemapLocs(child.body));
         if (child.truncated) partial = true;
         if (urls.length >= 5000) break;
@@ -2145,22 +2190,24 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const tls = validTo && !isNaN(Date.parse(validTo))
     ? { validTo: new Date(Date.parse(validTo)).toISOString().slice(0, 10), daysLeft: Math.floor((Date.parse(validTo) - Date.now()) / 86400000), issuer: first.cert.issuer || "" }
     : null;
+  const acceptLanguage = (lookups && lookups.acceptLanguage) || "";
+  const sitemapJob = lookups && lookups.sitemap ? lookups.sitemap : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
   say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registrable(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
   say(tls ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
   const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing] = await Promise.all([
-    done(readSitemap(origin.origin, robotsText, halt).catch(() => ({ status: 0, urls: [] })), (map) => map.urls && map.urls.length
+    done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
-    done(fetchExtra(origin.origin + "/llms.txt", halt), (res) => answered("/llms.txt", res)),
-    done(fetchExtra(origin.origin + "/llms-full.txt", halt), (res) => answered("/llms-full.txt", res)),
-    done(fetchExtra(origin.origin + "/.well-known/security.txt", halt), (res) => answered("/.well-known/security.txt", res)),
+    done(fetchExtra(origin.origin + "/llms.txt", halt, false, acceptLanguage), (res) => answered("/llms.txt", res)),
+    done(fetchExtra(origin.origin + "/llms-full.txt", halt, false, acceptLanguage), (res) => answered("/llms-full.txt", res)),
+    done(fetchExtra(origin.origin + "/.well-known/security.txt", halt, false, acceptLanguage), (res) => answered("/.well-known/security.txt", res)),
     allowed(pagePath(utmUrl.toString()))
-      ? done(fetchPublic(utmUrl.toString(), halt).then((res) => ({ status: res.status, finalUrl: res.url, kept: new URL(res.url).searchParams.get("utm_source") === "qa-lab-review" })).catch(() => null), (res) => res
+      ? done(fetchPublic(utmUrl.toString(), halt, null, false, acceptLanguage).then((res) => ({ status: res.status, finalUrl: res.url, kept: new URL(res.url).searchParams.get("utm_source") === "qa-lab-review" })).catch(() => null), (res) => res
         ? "The start page with UTM tags answered " + res.status + " and " + (res.kept ? "kept" : "dropped") + " the tags."
         : "The start page with UTM tags could not be read.")
       : Promise.resolve(null).then(() => { say("The UTM check was skipped: robots.txt disallows that address."); return null; }),
     allowed(missingPath)
-      ? done(fetchExtra(origin.origin + missingPath, halt).then((res) => ({ status: res.status, title: res.html ? clean(textOf(res.body, "title"), 120) : "" })), (res) => "The made-up path answered " + (res.status || "nothing") + (res.status === 404 ? ", as it should." : ". A missing page should answer 404."))
+      ? done(fetchExtra(origin.origin + missingPath, halt, false, acceptLanguage).then((res) => ({ status: res.status, title: res.html ? clean(textOf(res.body, "title"), 120) : "" })), (res) => "The made-up path answered " + (res.status || "nothing") + (res.status === 404 ? ", as it should." : ". A missing page should answer 404."))
       : Promise.resolve(null).then(() => { say("The 404 check was skipped: robots.txt disallows that address."); return null; }),
     done(plainHttp(origin.hostname, halt), (res) => res.error
       ? "Plain http could not be read (" + res.error + ")."
@@ -2197,14 +2244,16 @@ async function reviewTarget(rawUrl, hooks) {
   };
   const halt = () => !!(controls.stopped && controls.stopped());
   const chosen = normalizeScope(controls.maxPages == null ? INCLUDED_PAGES : controls.maxPages, controls.maxDepth == null ? INCLUDED_DEPTH : controls.maxDepth) || { pages: INCLUDED_PAGES, depth: INCLUDED_DEPTH };
+  const acceptLanguage = normalizePageLang(controls.pageLang);
   const begun = Date.now();
   let deadline = begun + budgetMs(chosen.pages);
   note("Checking that the address is public https.");
+  note(acceptLanguage ? "Pages are requested in " + PAGE_LANG_LABEL[acceptLanguage] + "." : "Pages are requested in the site's own language.");
   let first;
   let slowFirst = false;
   try {
     note("Opening the first page.");
-    first = await fetchPublic(rawUrl, halt, note, true);
+    first = await fetchPublic(rawUrl, halt, note, true, acceptLanguage);
   } catch (error) {
     if (error && error.code === "STOPPED") {
       note("Stopped before the first page finished.");
@@ -2234,7 +2283,7 @@ async function reviewTarget(rawUrl, hooks) {
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
     startSpeed(first.url);
-    const browsed = await Promise.resolve().then(() => controls.browse({ url: first.url, paths: [], html: true }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
+    const browsed = await Promise.resolve().then(() => controls.browse({ url: first.url, paths: [], html: true, acceptLanguage }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
     if (halt()) {
       note("Stopped before the first page finished.");
       return stoppedReport(rawUrl, lines, null, chosen);
@@ -2298,7 +2347,7 @@ async function reviewTarget(rawUrl, hooks) {
     if (!stopped) {
       note("Reading robots.txt.");
       const robotsUrl = origin.origin + "/robots.txt";
-      const robotsRes = await fetchPublic(robotsUrl, halt, note);
+      const robotsRes = await fetchPublic(robotsUrl, halt, note, false, acceptLanguage);
     if (robotsRes.status === 200 && !/^\s*<(!doctype|html)/i.test(robotsRes.body)) {
       robotsText = robotsRes.body.slice(0, 200000);
       robots = parseRobots(robotsRes.body);
@@ -2309,17 +2358,21 @@ async function reviewTarget(rawUrl, hooks) {
     if (error && error.code === "STOPPED") stopped = true;
     else robotsNote = "robots.txt could not be read. Linked pages were still capped.";
   }
+  const prefix = controls.section === true ? sectionPrefix(first.url) : "";
+  if (prefix) note("Later pages stay under " + prefix + ".");
+  const keep = (url) => !prefix || underSection(url, prefix);
   const homeInspect = inspect(first.body, first.headers, first.url);
-  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk }).catch(() => ({}));
+  const sitemapPromise = stopped ? Promise.resolve({ status: 0, urls: [] }) : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
+  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
-  const browsePaths = (homeInspect.links || []).filter((url) => pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
+  const browsePaths = (homeInspect.links || []).filter((url) => keep(url) && pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
   let showStart = null;
   const renderedStart = new Promise((resolve) => { showStart = resolve; });
   const browserPromise = readInBrowser
     ? Promise.resolve(readInBrowser)
     : canBrowse
-      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths, acceptLanguage }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
       : Promise.resolve(null);
   browserPromise.then((done) => showStart(done && done.ok ? done.start : null), () => showStart(null));
   if (!stopped) startSpeed(first.url);
@@ -2355,22 +2408,33 @@ async function reviewTarget(rawUrl, hooks) {
   note("First page answered " + first.status + " in " + first.ms + " ms. Title: " + (homeInspect.title || "none") + ". " + homeInspect.bytes + " bytes.");
   if (firstChallenge) note("The start page is " + insights.botCheck(firstChallenge) + ", not the site's own page. The scores describe that check page.");
   note(robotsNote);
-  let linkCount = (homeInspect.links || []).length;
-  let startQueue = null;
+  const keptLinks = (homeInspect.links || []).filter(keep);
+  let linkCount = keptLinks.length;
+  let startQueue = prefix ? keptLinks : null;
   if (linkCount < SHELL_LINKS && canBrowse && !stopped && chosen.pages > 1) {
     note(linkCount + " same-host link" + (linkCount === 1 ? " is" : "s are") + " in the HTML. Waiting up to " + SHELL_WAIT_MS / 1000 + " s for headless Chrome's rendered start page and its links.");
     const waitFrom = Date.now();
     const shown = await withTimeout(renderedStart, SHELL_WAIT_MS, null);
     deadline = Math.min(deadline + (Date.now() - waitFrom), begun + TOTAL_MS);
     const links = [...new Set(((shown && shown.dom && shown.dom.links) || []).map((href) => sameHost(first.url, href)).filter(Boolean))]
-      .filter((url) => !(homeInspect.links || []).includes(url) && pagePath(url) !== pagePath(first.url));
+      .filter((url) => keep(url) && !(homeInspect.links || []).includes(url) && pagePath(url) !== pagePath(first.url));
     if (links.length) {
-      startQueue = (homeInspect.links || []).concat(links);
+      startQueue = (startQueue || keptLinks).concat(links);
       pages[0].renderedLinks = links.length;
       linkCount = startQueue.length;
       note(insights.SHELL_NOTE + " The rendered page adds " + links.length + ".");
     } else note(shown ? "The rendered start page adds no same-host links." : "Headless Chrome did not return the rendered start page.");
     stopped = stopped || halt();
+  }
+  if (linkCount < SHELL_LINKS && !stopped && chosen.pages > 1) {
+    note("The start page lists few same-host links. Taking further pages from the sitemap.");
+    const map = await sitemapPromise;
+    const added = sitemapCandidates(map && map.urls, first.url, prefix, chosen.pages - 1, (startQueue || keptLinks).concat([first.url]));
+    if (added.length) {
+      startQueue = (startQueue || keptLinks).concat(added);
+      linkCount = startQueue.length;
+      note("The sitemap adds " + added.length + " page" + (added.length === 1 ? "" : "s") + (prefix ? " under " + prefix : "") + ".");
+    } else note("The sitemap adds no further pages" + (prefix ? " under " + prefix : "") + ".");
   }
   note(linkCount + " same-host links were listed. This review opens at most " + chosen.pages + " HTML pages and " + chosen.depth + " links deep.");
   if (!linkCount) note("No further pages to open on this host. The case list comes next.");
@@ -2382,6 +2446,7 @@ async function reviewTarget(rawUrl, hooks) {
     for (let i = 0; i < queue.length && pages.length < chosen.pages && Date.now() < deadline; i += 1) {
       if (halt()) { stopped = true; break; }
       const next = queue[i];
+      if (prefix && !underSection(next, prefix)) continue;
       if (seen.has(next)) continue;
       seen.add(next);
       const path = pagePath(next);
@@ -2392,7 +2457,7 @@ async function reviewTarget(rawUrl, hooks) {
       }
       try {
         note("Opening " + path + ".");
-        const child = await fetchPublic(next, halt, note, true);
+        const child = await fetchPublic(next, halt, note, true, acceptLanguage);
         const childType = header(child.headers, "content-type");
         if (!/text\/html|application\/xhtml\+xml/i.test(childType)) {
           note(path + " answered " + child.status + " with " + (childType.split(";")[0] || "no content type") + ", not an HTML page. It is not scored.");
@@ -2546,7 +2611,9 @@ async function reviewTarget(rawUrl, hooks) {
       pagesRead: pages.length,
       robotsBlocked,
       robotsNote,
-      timedOut: Date.now() >= deadline
+      timedOut: Date.now() >= deadline,
+      pageLang: acceptLanguage,
+      section: prefix
     },
     pages: publishedPages,
     technologies: technologiesFound,
@@ -2646,6 +2713,8 @@ function intakeRecord(value, report, meta) {
     region: clean(meta.region, 80),
     city: clean(meta.city, 80),
     lang: value.lang || "",
+    pageLang: value.pageLang || "",
+    section: value.section === true,
     followUp: value.followUp === true,
     unlisted: value.unlisted === true,
     report
@@ -3318,6 +3387,11 @@ module.exports = {
   normalizeFrameworks,
   normalizeLayers,
   normalizeScope,
+  normalizePageLang,
+  sectionPrefix,
+  underSection,
+  sitemapCandidates,
+  PAGE_LANGS,
   PAGE_CHOICES,
   DEPTH_CHOICES,
   INCLUDED_PAGES,
