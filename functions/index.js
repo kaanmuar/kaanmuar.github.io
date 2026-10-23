@@ -2507,7 +2507,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       try { operator = await reviewDesk.verifyOperator(bearer); } catch (error) { operator = null; }
     }
     if (!operator) {
-      res.status(bearer ? 403 : 401).json({ error: bearer ? "This Google account cannot open the desk." : "Sign in with the operator Google account." });
+      res.status(bearer ? 403 : 401).json({ error: bearer ? "This account cannot open the desk." : "Sign in with the operator account." });
       return;
     }
     if (deskName === "data" && req.method === "GET") {
