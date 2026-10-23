@@ -31,6 +31,28 @@ function keepUntil() {
   return new Date(Date.now() + KEEP_MS);
 }
 const siteReport = require("./site-report-mail");
+const ops = require("./ops-schedule");
+
+// Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
+// short note ("12 sent") for the digest.
+async function track(job, run) {
+  const ref = admin.firestore().collection("ops_runs").doc(job);
+  const startedAt = new Date().toISOString();
+  try {
+    const note = await run();
+    await ref.set({ job, startedAt, endedAt: new Date().toISOString(), ok: true, note: typeof note === "string" ? note : "", error: "" });
+  } catch (error) {
+    await ref.set({ job, startedAt, endedAt: new Date().toISOString(), ok: false, note: "", error: String((error && error.message) || error).slice(0, 300) })
+      .catch((write) => console.error("ops_runs/" + job + " was not written:", write));
+    throw error;
+  }
+  return null;
+}
+
+// A v1 schedule from the ops table, on Bogotá time, tracked in ops_runs.
+function scheduled(builder, job, run) {
+  return builder.pubsub.schedule(ops.cron(job)).timeZone(ops.TIME_ZONE).onRun(() => track(job, run));
+}
 
 function prepareMail() {
   const apiKey = process.env.SENDGRID_API_KEY;
@@ -945,14 +967,10 @@ async function sendPeriodReport(period) {
   return null;
 }
 
-function scheduleReport(cron, period) {
-  return withMail.pubsub.schedule(cron).timeZone("America/Bogota").onRun(() => sendPeriodReport(period));
-}
-
-exports.emailDailySiteReport = scheduleReport("15 7 * * *", "daily");
-exports.emailWeeklySiteReport = scheduleReport("30 7 * * 1", "weekly");
-exports.emailMonthlySiteReport = scheduleReport("45 7 1 * *", "monthly");
-exports.emailQuarterSiteReport = scheduleReport("*/15 * * * *", "quarter");
+exports.emailDailySiteReport = scheduled(withMail, "emailDailySiteReport", () => sendPeriodReport("daily"));
+exports.emailWeeklySiteReport = scheduled(withMail, "emailWeeklySiteReport", () => sendPeriodReport("weekly"));
+exports.emailMonthlySiteReport = scheduled(withMail, "emailMonthlySiteReport", () => sendPeriodReport("monthly"));
+exports.emailQuarterSiteReport = scheduled(withMail, "emailQuarterSiteReport", () => sendPeriodReport("quarter"));
 
 const reviewMail = require("./url-review-mail");
 
@@ -1008,6 +1026,11 @@ async function loadFailureBugs() {
   }));
 }
 
+// Country-sweep reviews are counted in the ops digest, not as reviews people asked for.
+function askedFor(rows) {
+  return rows.filter((row) => row.source !== "sweep");
+}
+
 async function sendReviewPeriodReport(period) {
   const window = period === "quarter" ? quarterWindow(new Date()) : reportWindow(period, new Date());
   const earlier = period === "quarter" ? previousQuarter(window) : previousWindow(period, window);
@@ -1016,7 +1039,7 @@ async function sendReviewPeriodReport(period) {
   const endStamp = admin.firestore.Timestamp.fromDate(window.end);
   const [opens, reviews, captures, alerts, pageEvents, failed, priorFailed, reruns] = await Promise.all([
     loadBound("url_review_opens", "createdAt", startStamp, endStamp),
-    loadBound("url_reviews", "createdAt", window.start.toISOString(), window.end.toISOString()),
+    loadBound("url_reviews", "createdAt", window.start.toISOString(), window.end.toISOString()).then(askedFor),
     loadBound("url_review_captures", "at", window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_alerts", "at", window.start.toISOString(), window.end.toISOString()),
     loadEvents(window.start, window.end).then((rows) => rows.filter((row) => row.site === "review")),
@@ -1038,7 +1061,7 @@ async function sendReviewPeriodReport(period) {
     const summary = reviewMail.summarizePeriod(opens, reviews, captures, alerts);
     const [priorOpens, priorReviews] = await Promise.all([
       loadBound("url_review_opens", "createdAt", admin.firestore.Timestamp.fromDate(earlier.start), startStamp),
-      loadBound("url_reviews", "createdAt", earlier.start.toISOString(), window.start.toISOString())
+      loadBound("url_reviews", "createdAt", earlier.start.toISOString(), window.start.toISOString()).then(askedFor)
     ]);
     const previous = reviewMail.summarizePeriod(priorOpens, priorReviews, [], []);
     const quiet = period === "quarter" && !failed.length && !reruns.length;
@@ -1096,14 +1119,10 @@ async function sendReviewPeriodReport(period) {
   return null;
 }
 
-function scheduleReviewReport(cron, period) {
-  return withMail.pubsub.schedule(cron).timeZone("America/Bogota").onRun(() => sendReviewPeriodReport(period));
-}
-
-exports.emailDailyReviewReport = scheduleReviewReport("20 7 * * *", "daily");
-exports.emailWeeklyReviewReport = scheduleReviewReport("35 7 * * 1", "weekly");
-exports.emailMonthlyReviewReport = scheduleReviewReport("50 7 1 * *", "monthly");
-exports.emailQuarterReviewReport = scheduleReviewReport("*/15 * * * *", "quarter");
+exports.emailDailyReviewReport = scheduled(withMail, "emailDailyReviewReport", () => sendReviewPeriodReport("daily"));
+exports.emailWeeklyReviewReport = scheduled(withMail, "emailWeeklyReviewReport", () => sendReviewPeriodReport("weekly"));
+exports.emailMonthlyReviewReport = scheduled(withMail, "emailMonthlyReviewReport", () => sendReviewPeriodReport("monthly"));
+exports.emailQuarterReviewReport = scheduled(withMail, "emailQuarterReviewReport", () => sendReviewPeriodReport("quarter"));
 
 async function probeFailure(url) {
   let host = "";
@@ -1178,8 +1197,7 @@ async function diagnoseReviewFailures() {
   return null;
 }
 
-exports.diagnoseReviewFailures = functions.runWith({ timeoutSeconds: 540, memory: "512MB" })
-  .pubsub.schedule("0 6 * * *").timeZone("America/Bogota").onRun(() => diagnoseReviewFailures());
+exports.diagnoseReviewFailures = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB" }), "diagnoseReviewFailures", () => diagnoseReviewFailures());
 
 async function rerunFailure(group) {
   const db = admin.firestore();
@@ -1251,12 +1269,12 @@ async function rerunReviewFailures() {
 }
 
 exports.rerunReviewFailures = require("firebase-functions/v2/scheduler").onSchedule({
-  schedule: "30 6 * * *",
-  timeZone: "America/Bogota",
+  schedule: ops.cron("rerunReviewFailures"),
+  timeZone: ops.TIME_ZONE,
   timeoutSeconds: 1800,
   memory: "1GiB",
   secrets: ["SENDGRID_API_KEY"]
-}, () => rerunReviewFailures());
+}, () => track("rerunReviewFailures", () => rerunReviewFailures()));
 
 const BUG_REPO = "kaanmuar/kaanmuar.github.io";
 const BUG_TICKET = 320;
@@ -1320,8 +1338,7 @@ async function fileReviewFailureBugs() {
   return null;
 }
 
-exports.fileReviewFailureBugs = functions.runWith({ timeoutSeconds: 120, memory: "512MB" })
-  .pubsub.schedule("5 7 * * *").timeZone("America/Bogota").onRun(() => fileReviewFailureBugs());
+exports.fileReviewFailureBugs = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB" }), "fileReviewFailureBugs", () => fileReviewFailureBugs());
 
 // GitHub can skip scheduled runs, so this checks from outside GitHub that today's Live Reports batch
 // (auto-YYYY-MM-DD, dated in UTC) is on main or underway, and dispatches the workflow when it is neither.
@@ -1368,9 +1385,9 @@ async function ensureLiveReportsBatch() {
   return null;
 }
 
-exports.ensureLiveReportsBatch = withMail.pubsub.schedule("45 4 * * *").timeZone("America/Bogota").onRun(() => ensureLiveReportsBatch());
+exports.ensureLiveReportsBatch = scheduled(withMail, "ensureLiveReportsBatch", () => ensureLiveReportsBatch());
 
-exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("America/Bogota").onRun(async () => {
+exports.exportFirestoreWeekly = scheduled(withMail, "exportFirestoreWeekly", async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
   const stamp = dateStamp(bogotaParts(new Date()));
   try {
@@ -1393,6 +1410,7 @@ exports.exportFirestoreWeekly = withMail.pubsub.schedule("0 8 * * 0").timeZone("
     } catch (mailError) {
       console.error("Backup failure email failed:", mailError);
     }
+    throw error;
   }
   return null;
 });
@@ -1532,7 +1550,8 @@ async function unlistedHosts() {
   return snap.docs.map((doc) => doc.id);
 }
 
-function searchOwnerContacts(report) {
+function searchOwnerContacts(report, options) {
+  const search = options && options.search === false ? async () => [] : urlReview.webSearch;
   return ownerContactSearch.discover(report, {
     fetchPage: (url) => urlReview.fetchExtra(url, () => false),
     analyze: urlReview.analyzeHtml,
@@ -1540,13 +1559,14 @@ function searchOwnerContacts(report) {
       const res = await fetch("https://api.github.com/users/" + encodeURIComponent(name), { headers: { accept: "application/vnd.github+json", "user-agent": "qa-lab-url-review" }, signal: AbortSignal.timeout(6000) });
       return res.ok ? res.json() : null;
     },
-    search: urlReview.webSearch,
+    search,
     emailsInText: urlReview.emailsInText,
     registrable: urlReview.registrable
   });
 }
 
-async function queueOwnerNotice(record) {
+// options.search === false skips the web search, so no Brave or Tavily credit is spent.
+async function queueOwnerNotice(record, options) {
   const report = record && record.report;
   if (!report || !report.host) return;
   const domain = ownerNotice.domainOf(report.host);
@@ -1554,7 +1574,7 @@ async function queueOwnerNotice(record) {
   const [unlisted, domainStop, last] = await Promise.all([unlistedHosts(), ownerStops([], domain), ref.get()]);
   if (ownerNotice.heldBack(record, { unlisted, stopped: domainStop, notice: last.exists ? last.data() : null })) return;
   let more = [];
-  try { more = await searchOwnerContacts(report); } catch (error) { console.error("Owner contact search failed:", error && error.message); }
+  try { more = await searchOwnerContacts(report, options); } catch (error) { console.error("Owner contact search failed:", error && error.message); }
   const ranked = ownerNotice.rankContacts(((report.contacts && report.contacts.found) || []).concat(more), report.host);
   const stopped = await ownerStops(ranked.slice(0, 12).map((row) => row.email), domain);
   const usable = ownerNotice.usableContacts(record, ranked, stopped);
@@ -1644,7 +1664,212 @@ async function sendReviewNotes() {
 }
 
 // Monday to Saturday at 10:00 Bogotá: Ley 2300 de 2023 keeps commercial contact off Sundays and outside daytime hours.
-exports.sendReviewNotes = withMail.pubsub.schedule("0 10 * * 1-6").timeZone("America/Bogota").onRun(() => sendReviewNotes());
+exports.sendReviewNotes = scheduled(withMail, "sendReviewNotes", () => sendReviewNotes());
+
+// Claims one pending owner notice, sends it, and records the outcome. Shared by sendOwnerNotices and
+// scripts/owner-notice-send-all.js. Returns { outcome, reason, email, source, sourceUrl, sentAt }.
+async function sendQueuedNotice(ref, by) {
+  const db = admin.firestore();
+  let notice = null;
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() : null;
+    if (!data || data.status !== "pending") return;
+    notice = data;
+    tx.update(ref, { status: "sending" });
+  });
+  if (!notice) {
+    const snap = await ref.get();
+    return { outcome: "skipped", reason: snap.exists ? "already-" + snap.data().status : "no-contact" };
+  }
+  let result;
+  try {
+    result = await sendOwnerNotice(notice, notice.email);
+  } catch (error) {
+    result = { error: String((error && error.message) || "The notice failed.").slice(0, 200) };
+  }
+  if (result.error) {
+    await ref.update({ status: "pending", lastError: result.error, tries: admin.firestore.FieldValue.increment(1) });
+    return { outcome: "failed", reason: result.error, email: notice.email };
+  }
+  const at = new Date().toISOString();
+  const sent = result.notice;
+  await ref.update({ status: "sent", sentAt: at, decidedAt: at, by, cardId: result.card.id, email: sent.email, source: sent.source, sourceUrl: sent.sourceUrl || "", lastError: "", expireAt: keepUntil() });
+  await db.collection("url_review_owner_notice_log").add({
+    domain: notice.domain, host: notice.host, email: sent.email, source: sent.source, sourceUrl: sent.sourceUrl || "",
+    reviewId: notice.reviewId, cardId: result.card.id, sentAt: at, by, expireAt: keepUntil()
+  });
+  return { outcome: "sent", email: sent.email, source: sent.source, sourceUrl: sent.sourceUrl || "", sentAt: at };
+}
+
+const NOTICE_TRIES = 3;
+
+// Monday to Saturday late morning: pending notices whose site is now on Live Reports, up to the daily cap.
+async function sendOwnerNotices() {
+  if (process.env.OWNER_NOTICES_LIVE !== "1") return "off: OWNER_NOTICES_LIVE is not 1";
+  const cap = ops.budget("ownerNoticesPerDay", process.env);
+  const [pending, index] = await Promise.all([
+    admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(300).get(),
+    liveReportIndex()
+  ]);
+  const ready = pending.docs.filter((doc) => (doc.data().tries || 0) < NOTICE_TRIES && ownerNotice.liveCard(index, doc.data().host));
+  const tally = { sent: 0, failed: 0, skipped: 0 };
+  for (const doc of ready) {
+    if (tally.sent >= cap) break;
+    const row = await sendQueuedNotice(doc.ref, "sendOwnerNotices");
+    tally[row.outcome] = (tally[row.outcome] || 0) + 1;
+    if (row.outcome === "failed") console.error("Owner notice to " + doc.id + " failed: " + row.reason);
+    if (row.outcome === "sent") await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  return tally.sent + " sent, " + tally.failed + " failed, " + (pending.size - ready.length) + " waiting for a card";
+}
+
+exports.sendOwnerNotices = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "sendOwnerNotices", () => sendOwnerNotices());
+
+const sweep = require("./url-review-sweep");
+
+async function sweepJson(name) {
+  const res = await fetch(customerMail.SITE + "/assets/sweep/" + name, { cache: "no-store", signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error("Sweep seeds " + name + " answered " + res.status);
+  return res.json();
+}
+
+// Reviewed by anyone (or the sweep, which may have landed on another host) within REVISIT_DAYS.
+async function reviewedLately(host) {
+  const since = new Date(Date.now() - sweep.REVISIT_DAYS * 864e5).toISOString();
+  const reviews = admin.firestore().collection("url_reviews");
+  const snaps = await Promise.all([
+    reviews.where("report.host", "==", host).select("createdAt").limit(20).get(),
+    reviews.where("sweep.host", "==", host).select("createdAt").limit(20).get()
+  ]);
+  return snaps.some((snap) => snap.docs.some((doc) => String(doc.get("createdAt") || "") > since));
+}
+
+// One site per tick, at night, without web search. SWEEP_LIVE=1 turns it on.
+async function sweepReviews() {
+  if (process.env.SWEEP_LIVE !== "1") return "off: SWEEP_LIVE is not 1";
+  const db = admin.firestore();
+  const ref = db.collection("url_review_sweep").doc("state");
+  const day = new Date().toISOString().slice(0, 10);
+  let state = (await ref.get()).data() || {};
+  if (sweep.doneOn(state, day) >= ops.budget("sweepPerDay", process.env)) return "daily cap reached";
+  const [index, unlisted] = await Promise.all([sweepJson("index.json"), unlistedHosts()]);
+  const countries = Object.keys(index.countries || {}).filter((cc) => index.countries[cc] > 0);
+  if (!countries.length) return "no seeds";
+  let target = null;
+  for (let tries = 0; tries < 8 && !target; tries += 1) {
+    const slot = sweep.nextSlot(state, countries);
+    state = slot.state;
+    const hosts = (await sweepJson(slot.cc + ".json")).hosts || [];
+    if (!hosts.length) continue;
+    const host = hosts[slot.at % hosts.length];
+    const bare = reviewPublish.bare(host);
+    if (unlisted.some((u) => bare === u || bare.endsWith("." + u)) || await reviewedLately(host)) {
+      state = sweep.tally(state, day, "skipped", { host, cc: slot.cc, at: new Date().toISOString(), outcome: "skipped" });
+      continue;
+    }
+    target = { host, cc: slot.cc, month: index.month || "", rank: (slot.at % hosts.length) + 1 };
+  }
+  if (!target) {
+    await ref.set(state);
+    return "nothing to review this tick";
+  }
+  const url = "https://" + target.host + "/";
+  const startedAt = Date.now();
+  let outcome = "done";
+  let note = "";
+  try {
+    const report = await urlReview.reviewTarget(url, {
+      stopped: () => Date.now() - startedAt > 240000,
+      mentions: false,
+      browse: browseForReview,
+      pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
+    });
+    const record = Object.assign(urlReview.intakeRecord({
+      url,
+      name: "Country sweep",
+      email: "",
+      reason: "Country sweep: one of the most visited sites in " + target.cc.toUpperCase() + " (CrUX " + target.month + ")",
+      reasonCode: "sweep",
+      frameworks: [],
+      lang: sweep.langOf(target.cc)
+    }, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
+    await db.collection("url_reviews").doc(record.id).set(record);
+    await countReviewed(record.report);
+    try {
+      await queueOwnerNotice(record, { search: false });
+    } catch (error) {
+      console.error("Owner notice queue failed for " + target.host + ":", error);
+    }
+    note = target.host + " (" + target.cc + ") " + record.status + ", " + ((report.limits && report.limits.pagesRead) || 0) + " pages";
+  } catch (error) {
+    outcome = "failed";
+    note = target.host + " (" + target.cc + ") failed: " + String((error && error.message) || error).slice(0, 160);
+  }
+  state = sweep.tally(state, day, outcome, Object.assign({}, target, { at: new Date().toISOString(), outcome, note }));
+  await ref.set(state);
+  return note;
+}
+
+exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("sweepReviews"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 540,
+  memory: "1GiB",
+  maxInstances: 1
+}, () => track("sweepReviews", () => sweepReviews()));
+
+// Each morning: any job that failed or went quiet past its gap is mailed at once; on Mondays the mail
+// goes out anyway, with last week's sweep, notices and re-runs against their budgets.
+async function opsWatchdog() {
+  const db = admin.firestore();
+  const now = Date.now();
+  const metaRef = db.collection("ops_state").doc("watchdog");
+  const meta = (await metaRef.get()).data() || {};
+  const since = meta.since || new Date(now).toISOString();
+  if (!meta.since) await metaRef.set({ since });
+  const runs = {};
+  (await db.collection("ops_runs").get()).forEach((doc) => { runs[doc.id] = doc.data(); });
+  const problems = ops.overdue(runs, now, since);
+  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  for (const row of ops.JOBS.filter((item) => item.host === "github")) {
+    if (!token) break;
+    try {
+      const data = await githubGet("/repos/" + BUG_REPO + "/actions/workflows/" + row.job + "/runs?per_page=1&status=success", token);
+      const last = (data.workflow_runs || [])[0];
+      const quietSince = last ? Date.parse(last.updated_at) : Date.parse(since);
+      if (now - quietSince > row.gap * 3600000) problems.push({ job: row.job, why: last ? "last success " + last.updated_at : "no successful run" });
+    } catch (error) {
+      problems.push({ job: row.job, why: "could not be checked: " + error.message });
+    }
+  }
+  const monday = new Date(now).getUTCDay() === 1;
+  if (!problems.length && !monday) return "all " + ops.JOBS.length + " jobs on time";
+  const weekAgo = new Date(now - 7 * 864e5).toISOString();
+  const [sweepSnap, notices, reruns] = await Promise.all([
+    db.collection("url_review_sweep").doc("state").get(),
+    db.collection("url_review_owner_notice_log").where("sentAt", ">=", weekAgo).count().get(),
+    db.collection("url_review_reruns").where("at", ">=", weekAgo).count().get()
+  ]);
+  const swept = sweep.totals(sweepSnap.data() || {}, weekAgo.slice(0, 10));
+  const rows = problems.map((p) => ({ label: p.job, value: p.why })).concat([
+    { label: "Country sweep, 7 days", value: swept.done + " reviewed, " + swept.failed + " failed, " + swept.skipped + " skipped (cap " + ops.budget("sweepPerDay", process.env) + "/day" + (process.env.SWEEP_LIVE === "1" ? "" : ", off") + ")" },
+    { label: "Owner notices, 7 days", value: notices.data().count + " sent (cap " + ops.budget("ownerNoticesPerDay", process.env) + "/day" + (process.env.OWNER_NOTICES_LIVE === "1" ? "" : ", off") + ")" },
+    { label: "Failure re-runs, 7 days", value: String(reruns.data().count) }
+  ]);
+  await sendOwnerEmail({
+    to: REVIEW_ALERT_TO,
+    subject: problems.length ? "Ops: " + problems.length + " scheduled job" + (problems.length === 1 ? "" : "s") + " missed or failed" : "Ops: weekly digest, every job on time",
+    intro: problems.length ? "These jobs failed or went quiet for longer than their schedule allows." : "Every scheduled job ran on time last week.",
+    rows,
+    respondUrl: "https://console.cloud.google.com/logs/query?project=carlosm-interactive-cv",
+    buttonLabel: "Open the logs"
+  });
+  return problems.length + " problems mailed";
+}
+
+exports.opsWatchdog = scheduled(withMail, "opsWatchdog", () => opsWatchdog());
 
 async function rememberReview(kind, source) {
   const note = reviewDesk.alertFrom(kind, source || {});

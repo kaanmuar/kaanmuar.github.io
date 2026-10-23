@@ -22,6 +22,9 @@ const STATE = path.join(__dirname, "auto-live-reports.state.json");
 const BATCH_DIR = path.join(ROOT, "previews/auto-live-reports");
 const ENDPOINT = process.env.PUBLISH_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/publishable";
 const POST_EVERY_DAYS = 30;
+// Sites the country sweep reviewed (functions/url-review-sweep.js) all get a card, but only this
+// many become social posts per batch, so requested reviews keep the feed and Buffer stays under its cap.
+const SWEEP_POSTS_PER_BATCH = 2;
 
 // Top finding key: [the gap, in a few words; a lesson that is true for any site; hashtags].
 const LESSONS = {
@@ -193,12 +196,15 @@ async function main() {
   const today = new Date().toISOString().slice(0, 10);
   const batch = [];
   let added = 0;
-  for (const { report } of payload.reports || []) {
+  let sweepPosts = 0;
+  for (const { report, source } of payload.reports || []) {
     const host = bare(report.host);
     if (curated.has(host) || gone(host)) continue;
+    const swept = source === "sweep";
+    const scope = swept ? "National" : "Requested";
     const copy = copyFor(report, state.recent || []);
     const country = countryOf(host);
-    const run = { id: "u-" + host.replace(/[^a-z0-9]+/g, "-").slice(0, 60), data: report, scope: "Requested",
+    const run = { id: "u-" + host.replace(/[^a-z0-9]+/g, "-").slice(0, 60), data: report, scope,
       title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, meta: [host, "", "", "", country] };
     let built;
     try { built = live.build(run, "auto"); } catch (error) { console.warn("skip", host, "-", error.message); continue; }
@@ -207,8 +213,10 @@ async function main() {
     added += 1;
     const last = (state.posted || {})[host];
     if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
+    if (swept && sweepPosts >= SWEEP_POSTS_PER_BATCH) continue;
+    if (swept) sweepPosts += 1;
     const score = report.insights.score;
-    batch.push({ id: run.id, host, title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, scope: "Requested",
+    batch.push({ id: run.id, host, title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, scope,
       fetchedAt: report.fetchedAt, pages: report.limits.pagesRead, overall: score.overall,
       areas: Object.fromEntries(live.AREAS.map((a) => [a, score.areas[a].score])) });
     state.posted = Object.assign(state.posted || {}, { [host]: today });

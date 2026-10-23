@@ -43,7 +43,7 @@ const indexModule = new Module(file, module);
 indexModule.filename = file;
 indexModule.paths = Module._nodeModulePaths(FN);
 indexModule._compile(fs.readFileSync(file, "utf8") +
-  "\nmodule.exports.__notices = { queueOwnerNotice, sendOwnerNotice, liveReportIndex, keepUntil, unlistedHosts, ownerStops, sgMail, REVIEW_ALERT_TO };\n", file);
+  "\nmodule.exports.__notices = { queueOwnerNotice, sendQueuedNotice, liveReportIndex, keepUntil, unlistedHosts, ownerStops, sgMail, REVIEW_ALERT_TO };\n", file);
 const fn = indexModule.exports.__notices;
 const ownerNotice = fnRequire("./url-review-owner-notice");
 const publish = fnRequire("./url-review-publish");
@@ -63,39 +63,8 @@ async function latestRecords() {
   return byHost;
 }
 
-async function sendQueued(domain) {
-  const ref = db.collection("url_review_owner_notices").doc(domain);
-  let notice = null;
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const data = snap.exists ? snap.data() : null;
-    if (!data || data.status !== "pending") return;
-    notice = data;
-    tx.update(ref, { status: "sending" });
-  });
-  if (!notice) {
-    const snap = await ref.get();
-    return { outcome: "skipped", reason: snap.exists ? "already-" + snap.data().status : "no-contact" };
-  }
-  let result;
-  try {
-    result = await fn.sendOwnerNotice(notice, notice.email);
-  } catch (error) {
-    result = { error: String((error && error.message) || "The notice failed.").slice(0, 200) };
-  }
-  if (result.error) {
-    await ref.update({ status: "pending", lastError: result.error });
-    return { outcome: "failed", reason: result.error, email: notice.email };
-  }
-  const at = new Date().toISOString();
-  const sent = result.notice;
-  const by = "owner-notice-send-all";
-  await ref.update({ status: "sent", sentAt: at, decidedAt: at, by, cardId: result.card.id, email: sent.email, source: sent.source, sourceUrl: sent.sourceUrl || "", lastError: "", expireAt: fn.keepUntil() });
-  await db.collection("url_review_owner_notice_log").add({
-    domain: notice.domain, host: notice.host, email: sent.email, source: sent.source, sourceUrl: sent.sourceUrl || "",
-    reviewId: notice.reviewId, cardId: result.card.id, sentAt: at, by, expireAt: fn.keepUntil()
-  });
-  return { outcome: "sent", email: sent.email, source: sent.source, sourceUrl: sent.sourceUrl || "", sentAt: at };
+function sendQueued(domain) {
+  return fn.sendQueuedNotice(db.collection("url_review_owner_notices").doc(domain), "owner-notice-send-all");
 }
 
 async function main() {
