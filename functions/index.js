@@ -1478,6 +1478,7 @@ const reviewPublish = require("./url-review-publish");
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
+const reviewCompare = require("./url-review-compare");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
 const accountData = require("./url-review-account-data");
@@ -2183,7 +2184,16 @@ async function returnPrice(priced, opts) {
   if (priced.billing === "scope") return reviewOffers.discountFor(cents, priced.count, {});
   const coupon = await couponFor(opts.coupon, opts.purpose, opts.reportId);
   const rows = opts.rows || (opts.purpose === "report" ? await runsForEmail(opts.email) : await reviewRowsFor(opts.deviceId, opts.ip));
-  return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon });
+  return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon, compare: !!opts.compare });
+}
+
+// At checkout the comparison discount holds only for a base review run on the paying device.
+async function comparesFrom(id, deviceId) {
+  const key = reviewCompare.cleanId(id);
+  const device = String(deviceId || "").slice(0, 16);
+  if (!key || !device) return false;
+  const snap = await admin.firestore().collection("url_reviews").doc(key).get();
+  return snap.exists && !!snap.get("report.insights") && String(snap.get("deviceId") || "").slice(0, 16) === device;
 }
 
 function dealFields(deal) {
@@ -2946,14 +2956,16 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           const ownerSnap = await admin.firestore().collection("url_reviews").doc(quoteReport).get();
           owner = ownerSnap.exists ? ownerSnap.data() : {};
         }
+        const quoteDevice = String(req.query.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
         deal = await returnPrice(priced, {
           purpose: quotePurpose,
           reportId: quoteReport,
           email: owner.email,
           before: owner.createdAt,
           coupon: req.query.coupon,
-          deviceId: String(req.query.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32),
-          ip: req.ip || ""
+          deviceId: quoteDevice,
+          ip: req.ip || "",
+          compare: quotePurpose === "new-run" && req.query.compareWith ? await comparesFrom(req.query.compareWith, quoteDevice) : false
         });
       }
       const quote = await urlReview.copQuote(deal ? deal.usd : priced.usd);
@@ -3137,7 +3149,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           before: reportData.createdAt,
           coupon: req.body && req.body.coupon,
           deviceId,
-          ip: req.ip || ""
+          ip: req.ip || "",
+          compare: purpose === "new-run" && req.body && req.body.compareWith ? await comparesFrom(req.body.compareWith, deviceId) : false
         });
       }
       const listUsd = priced.usd;
@@ -3289,6 +3302,16 @@ async function runReview(req, res, placeOf) {
     res.status(intake.status || 400).json({ error: intake.error, fields: intake.fields || [] });
     return;
   }
+  let base = null;
+  if (intake.value.compareWith) {
+    const baseSnap = await admin.firestore().collection("url_reviews").doc(intake.value.compareWith).get();
+    base = baseSnap.exists ? baseSnap.data() : null;
+    const refused = reviewCompare.baseProblem(base, signedIn.email, intake.value.url);
+    if (refused) {
+      res.status(400).json({ error: refused, compare: true });
+      return;
+    }
+  }
   const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
   const ip = req.ip || "";
   const priorRows = free ? [] : await reviewRowsFor(deviceId, ip);
@@ -3299,7 +3322,8 @@ async function runReview(req, res, placeOf) {
     const deal = await returnPrice({ usd: decision.priceUsd, count: decision.count, billing: decision.billing }, {
       purpose: "new-run",
       rows: priorRows,
-      coupon: req.body && req.body.coupon
+      coupon: req.body && req.body.coupon,
+      compare: !!base
     });
     Object.assign(decision, { priceUsd: deal.usd }, dealFields(deal));
   }
@@ -3428,6 +3452,10 @@ async function runReview(req, res, placeOf) {
       report.history = history;
       writeLine({ type: "log", text: "Compared with your review of " + report.host + " from " + String(history.previousAt).slice(0, 10) + ": " + history.fixedCount + " fixed, " + history.freshCount + " new." });
     } else writeLine({ type: "log", text: "No earlier review of " + report.host + " under this email." });
+    if (base) {
+      report.compare = reviewCompare.compareSites(Object.assign({ id: intake.value.compareWith }, base.report), report);
+      if (report.compare) writeLine({ type: "log", text: "Compared with your review of " + base.report.host + ": " + report.compare.rivalOnlyCount + " open problems only " + report.host + " has, " + report.compare.ownOnlyCount + " only " + base.report.host + " has, " + report.compare.shared + " both have." });
+    }
     writeLine({ type: "log", text: "Saving the report." });
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
     await countReviewed(report);

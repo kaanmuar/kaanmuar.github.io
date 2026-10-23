@@ -106,6 +106,7 @@ const REASONS = [
   { id: "allowed", label: "I am checking a page I am allowed to review" },
   { id: "verify", label: "I want QA-lab to run a verification" },
   { id: "credentials", label: "I have a username and password for this site" },
+  { id: "compare", label: "I am comparing my site with a competitor" },
   { id: "other", label: "Other" }
 ];
 const BROWSER_FW = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha"];
@@ -354,6 +355,8 @@ function validateIntake(body) {
   if (known && known.id === "own" && target && emailSyntax(email) && !mailboxMatchesHost(email, target.hostname)) {
     fieldError(errors, "email", "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.");
   }
+  const compareWith = known && known.id === "compare" ? String(src.compareWith || "").replace(/[^a-f0-9]/g, "").slice(0, 32) : "";
+  if (known && known.id === "compare" && !compareWith) fieldError(errors, "reason", "Start a comparison from one of your reports.");
   const reason = known && known.id === "other" ? reasonText : (known ? known.label : "");
   return {
     errors,
@@ -376,7 +379,8 @@ function validateIntake(body) {
       pageLang: normalizePageLang(src.pageLang),
       section: src.section === true,
       followUp: src.followUp === true,
-      unlisted: src.unlisted === true
+      unlisted: src.unlisted === true,
+      compareWith
     } : null
   };
 }
@@ -656,7 +660,9 @@ function judgeAttempts(rows, identity, request) {
   }
   const used = new Set(mine.filter((row) => row.status === "run-credit-used").map((row) => row.creditId));
   const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope));
-  const completed = mine.some((row) => row.status === "complete");
+  // A comparison is priced as a second review, whichever device ran the first.
+  const compare = !Array.isArray(request) && !!(request && request.compareWith);
+  const completed = compare || mine.some((row) => row.status === "complete");
   if (!completed && scope.cents === 0) return { ok: true };
   if (credit) return { ok: true, consumeId: credit.id };
   const billing = completed ? "run" : "scope";
@@ -664,9 +670,11 @@ function judgeAttempts(rows, identity, request) {
   return {
     ok: false,
     code: "payment",
-    message: completed
-      ? "Another review asks for payment before it starts."
-      : "A wider or deeper review asks for payment before it starts.",
+    message: compare
+      ? "A comparison is priced as a second review and asks for payment before it starts."
+      : completed
+        ? "Another review asks for payment before it starts."
+        : "A wider or deeper review asks for payment before it starts.",
     priceUsd: priced.usd,
     count: priced.count,
     frameworks: priced.frameworks,
@@ -2775,6 +2783,7 @@ function intakeRecord(value, report, meta) {
     section: value.section === true,
     followUp: value.followUp === true,
     unlisted: value.unlisted === true,
+    compareWith: value.compareWith || "",
     report
   };
 }

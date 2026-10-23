@@ -130,6 +130,18 @@
         let pageCount = PAGE_CENTS[Number(params.get("pages"))] == null ? 20 : Number(params.get("pages"));
         let depthCount = DEPTH_CENTS[Number(params.get("depth"))] == null ? 2 : Number(params.get("depth"));
         let billing = params.get("billing") === "scope" ? "scope" : "run";
+        // PayPal returns without compareWith, so the review page's saved comparison remembers that this checkout was for it.
+        const compareWith = purpose === "new-run" ? (params.get("compareWith") || "").replace(/[^a-f0-9]/g, "").slice(0, 32) : "";
+        function savedCompare() {
+            try { return JSON.parse(sessionStorage.getItem("qa-review-compare") || "null"); } catch (error) { return null; }
+        }
+        if (compareWith) {
+            const saved = savedCompare();
+            if (saved && saved.id === compareWith) {
+                saved.checkout = true;
+                try { sessionStorage.setItem("qa-review-compare", JSON.stringify(saved)); } catch (error) { /* the run can still be started again by hand */ }
+            }
+        }
         function centsForIndex(index) {
             const off = index <= 1 ? 0 : index <= 3 ? 10 : index <= 5 ? 15 : index <= 7 ? 20 : index <= 9 ? 25 : index <= 11 ? 30 : index <= 13 ? 35 : 40;
             return Math.round(1900 * (100 - off) / 100);
@@ -357,7 +369,7 @@
                         : purpose === "alerts"
                             ? "purpose=alerts&count=" + alertCount
                             : purpose === "new-run"
-                                ? "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&pages=" + pageCount + "&depth=" + depthCount + "&billing=" + billing
+                                ? "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&pages=" + pageCount + "&depth=" + depthCount + "&billing=" + billing + (compareWith ? "&compareWith=" + compareWith : "")
                                 : "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&purpose=report&reportId=" + encodeURIComponent(params.get("reportId") || "");
                 const deal = purpose === "report" || purpose === "new-run"
                     ? "&deviceId=" + encodeURIComponent(deviceId()) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : "")
@@ -407,6 +419,13 @@
                 } catch (error) { /* the review page still needs the saved list */ }
                 location.href = next;
             }
+            const compared = purpose === "new-run" ? savedCompare() : null;
+            if (body.paid && compared && compared.checkout) {
+                compared.paid = true;
+                compared.checkout = false;
+                try { sessionStorage.setItem("qa-review-compare", JSON.stringify(compared)); } catch (error) { /* the run can still be started again by hand */ }
+                location.href = "qa-review.html?compareRun=1";
+            }
         }
         const backProvider = "paypal";
         const returnedId = params.get("session_id") || params.get("token") || params.get("id") || params.get("payment_id") || params.get("collection_id") || "";
@@ -429,7 +448,7 @@
                     method: "POST",
                     credentials: "include",
                     headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, coupon: coupon, testKey: testKey() })
+                    body: JSON.stringify({ purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, coupon: coupon, compareWith: compareWith, testKey: testKey() })
                 });
                 const body = await res.json();
                 if (res.ok && body.url) {

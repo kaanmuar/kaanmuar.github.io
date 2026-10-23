@@ -64,6 +64,8 @@
   let liveId = "";
   let layer = "All";
   let activeRun = "";
+  let compareTarget = null;
+  const COMPARE_KEY = "qa-review-compare";
   const fileUses = {};
 
   function endpoint() {
@@ -358,6 +360,7 @@
       params.set("pages", String(extra.pages || selectedPages()));
       params.set("depth", String(extra.depth || selectedDepth()));
       if (extra.billing) params.set("billing", extra.billing);
+      if (extra.compareWith) params.set("compareWith", extra.compareWith);
     }
     const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
     if (coupon && (purpose === "report" || purpose === "new-run")) params.set("coupon", coupon);
@@ -771,6 +774,76 @@
       ' <span class="delta ' + (change > 0 ? "up" : change < 0 ? "down" : "") + '">' + (change > 0 ? "+" : "") + change + "</span>. " +
       history.fixedCount + " fixed, " + history.freshCount + " new, " + history.still + " still open.</p>" +
       '<div class="exec-cols history-cols"><div><h3>Fixed since then</h3>' + list(history.fixed, history.fixedCount) + "</div><div><h3>New since then</h3>" + list(history.fresh, history.freshCount) + "</div></div></div>";
+  }
+
+  function paintCompare(report, sample) {
+    const ask = document.getElementById("compare-ask");
+    const result = document.getElementById("compare-result");
+    if (!ask || !result) return;
+    const cmp = report.compare;
+    document.getElementById("compare-error").textContent = "";
+    ask.hidden = !!cmp || sample;
+    result.hidden = !cmp && !sample;
+    if (!cmp) {
+      result.innerHTML = sample ? '<p class="muted">Open one of your own reports to compare it with a competitor.</p>' : "";
+      const stored = savedCompare();
+      document.getElementById("compare-url").value = stored && stored.id === report.id ? stored.url : "";
+      return;
+    }
+    const cell = (score) => score == null ? '<td class="muted">–</td>' : '<td><b style="color:' + scoreColor(score) + '">' + score + "</b></td>";
+    const lead = (own, rival) => {
+      if (own == null || rival == null) return '<td class="muted">–</td>';
+      const gap = own - rival;
+      return '<td><span class="delta ' + (gap > 0 ? "up" : gap < 0 ? "down" : "") + '">' + (gap > 0 ? "+" : "") + gap + "</span></td>";
+    };
+    const rows = [{ area: "Overall", own: cmp.overall.own, rival: cmp.overall.rival }].concat(cmp.areas || []).map((row) =>
+      '<tr><th scope="row">' + esc(row.area) + "</th>" + cell(row.own) + cell(row.rival) + lead(row.own, row.rival) + "</tr>").join("");
+    const list = (items, total) => items.length
+      ? "<ul>" + items.map((item) => "<li><strong>" + esc(item.title) + '</strong> <span class="meta-line">' + esc(item.area) + " · " + esc(item.severity) + "</span></li>").join("") + "</ul>" + (total > items.length ? '<p class="meta-line">and ' + (total - items.length) + " more</p>" : "")
+      : '<p class="muted">None.</p>';
+    const when = cmp.ownAt ? new Date(cmp.ownAt).toLocaleDateString() : "";
+    result.innerHTML = "<p>Your review of <strong>" + esc(cmp.ownHost) + "</strong>" + (when ? " from " + esc(when) : "") + " next to this review of <strong>" + esc(cmp.rivalHost) + "</strong>. " +
+      cmp.shared + " open problem" + (cmp.shared === 1 ? " is" : "s are") + " on both sites.</p>" +
+      '<div class="compare-scroll"><table class="compare-table"><thead><tr><th scope="col">Area</th><th scope="col">' + esc(cmp.ownHost) + '</th><th scope="col">' + esc(cmp.rivalHost) + '</th><th scope="col">Your lead</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      '<div class="exec-cols history-cols"><div><h3>Only ' + esc(cmp.ownHost) + " has</h3>" + list(cmp.ownOnly || [], cmp.ownOnlyCount) + "</div><div><h3>Only " + esc(cmp.rivalHost) + " has</h3>" + list(cmp.rivalOnly || [], cmp.rivalOnlyCount) + "</div></div>" +
+      '<p class="meta-line">' + esc(cmp.rivalHost) + " got the public, passive checks only: no chat conversation and no form sent. Both scores come from automated reviews, a starting point and not a verdict.</p>";
+  }
+
+  function savedCompare() {
+    try { return JSON.parse(sessionStorage.getItem(COMPARE_KEY) || "null"); } catch (error) { return null; }
+  }
+
+  function startCompare() {
+    const report = current && current.report;
+    const error = document.getElementById("compare-error");
+    const url = document.getElementById("compare-url").value.trim();
+    error.textContent = "";
+    if (!report || current.sample) return;
+    if (!url || /\s/.test(url)) {
+      error.textContent = "Enter the competitor's address.";
+      return;
+    }
+    if (activeRun) {
+      error.textContent = "Wait until the review that is running ends.";
+      return;
+    }
+    const stored = savedCompare();
+    const kept = stored && stored.id === report.id ? stored : null;
+    const limits = report.limits || {};
+    compareTarget = {
+      id: report.id,
+      url,
+      report,
+      frameworks: kept ? kept.frameworks : ((current.frameworks && current.frameworks.length) ? current.frameworks : selectedFrameworks()),
+      tools: kept ? kept.tools : selectedTools(),
+      pages: kept ? kept.pages : (limits.maxPages || selectedPages()),
+      depth: kept ? kept.depth : (limits.maxDepth || selectedDepth()),
+      paid: false
+    };
+    try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(compareTarget)); } catch (storageError) { /* only a payment round trip needs it */ }
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_compare", "URL Review", report.host || "");
+    closeDashboard();
+    reviewForm.requestSubmit();
   }
 
   function paintExec(report, ins) {
@@ -1362,6 +1435,7 @@
     const paid = !!payload.paid;
     paintVisuals(report, paid);
     paintInsights(report, paid);
+    paintCompare(report, sample);
     document.getElementById("report-statement").textContent = "";
     const counts = report.counts || { pages: 0, technologies: 0, cases: 0, byLayer: {} };
     const score = report.insights && report.insights.score;
@@ -1491,7 +1565,12 @@
       if (window.ReviewAuth) ReviewAuth.focus();
       return;
     }
-    const errors = clientErrors();
+    const compare = compareTarget;
+    compareTarget = null;
+    if (!compare) {
+      try { sessionStorage.removeItem(COMPARE_KEY); } catch (error) { /* nothing was kept */ }
+    }
+    const errors = compare ? clientErrors().filter((item) => item.field === "name") : clientErrors();
     markFields(errors);
     if (errors.length) {
       setStatus(errors[0].message, true);
@@ -1504,7 +1583,7 @@
     const runLog = document.getElementById("run-log");
     runLog.innerHTML = "";
     runLog.classList.add("is-live");
-    if (window.ReviewProgress) ReviewProgress.start({ host: urlInput.value, pages: selectedPages() });
+    if (window.ReviewProgress) ReviewProgress.start({ host: compare ? compare.url : urlInput.value, pages: compare ? compare.pages : selectedPages() });
     setStatus("Checking the email domain, then analyzing the public page…", false);
     appendLog("Checking the fields, the email domain, and that this is a browser.");
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", reasonCode());
@@ -1524,16 +1603,17 @@
           termsVersion: TERMS_VERSION,
           name: document.getElementById("name").value,
           email: document.getElementById("email").value,
-          reasonCode: reasonCode(),
+          reasonCode: compare ? "compare" : reasonCode(),
           reason: reasonBox.value,
           clientName: document.getElementById("client-name").value,
           clientEmail: document.getElementById("client-email").value,
           clientUrl: document.getElementById("client-url").value,
-          url: urlInput.value,
-          frameworks: selectedFrameworks(),
-          tools: selectedTools(),
-          pages: selectedPages(),
-          depth: selectedDepth(),
+          url: compare ? compare.url : urlInput.value,
+          compareWith: compare ? compare.id : "",
+          frameworks: compare ? compare.frameworks : selectedFrameworks(),
+          tools: compare ? compare.tools : selectedTools(),
+          pages: compare ? compare.pages : selectedPages(),
+          depth: compare ? compare.depth : selectedDepth(),
           pageLang: selectedPageLang(),
           section: document.getElementById("stay-section").checked === true,
           deviceId: deviceId(),
@@ -1551,7 +1631,10 @@
       const payload = await readStream(res);
       if (!payload || !payload.report) throw new Error("The review ended without a report.");
       layer = "All";
-      payload.reasonCode = reasonCode();
+      payload.reasonCode = compare ? "compare" : reasonCode();
+      if (compare) {
+        try { sessionStorage.removeItem(COMPARE_KEY); } catch (storageError) { /* nothing was kept */ }
+      }
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report && payload.report.host);
       render(payload);
       const stopped = payload.report.status === "stopped";
@@ -1570,8 +1653,8 @@
         ReviewAuth.focus();
         setStatus(error.message, true);
       } else if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
-        openRunPay(error.body);
-        setStatus("Another review waits on payment.", true);
+        openRunPay(compare ? Object.assign({}, error.body, { compareWith: compare.id }) : error.body);
+        setStatus(compare ? "The comparison waits on payment. It is priced as a second review." : "Another review waits on payment.", true);
       } else if (error.paymentRequired) {
         openPay(error.body || {});
         setStatus("Opening this report again waits on payment.", true);
@@ -2332,6 +2415,17 @@
   }
   restorePaid("alerts", "qa-review-alerts");
   restorePaid("credentialRun", "qa-review-credential");
+  restorePaid("compareRun", COMPARE_KEY, () => {
+    const saved = savedCompare();
+    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it.", false);
+  });
+  document.getElementById("compare-go").addEventListener("click", startCompare);
+  document.getElementById("compare-url").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      startCompare();
+    }
+  });
 
   const WIRE_CLIPS = ["assets/wire/scan.mp4", "assets/wire/bars.mp4", "assets/wire/orbit.mp4", "assets/wire/moon.mp4", "assets/wire/pulse.mp4", "assets/wire/drift.mp4", "assets/wire/mesh.mp4", "assets/wire/ring.mp4"];
   let wireItems = [];

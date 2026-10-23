@@ -11,6 +11,7 @@ const core = require("../functions/url-review-core");
 const newsWire = require("../functions/news-wire");
 const desk = require("../functions/url-review-desk");
 const offers = require("../functions/url-review-offers");
+const compare = require("../functions/url-review-compare");
 const auth = require("../functions/url-review-auth");
 const accountData = require("../functions/url-review-account-data");
 const oauth = require("../functions/url-review-oauth");
@@ -726,6 +727,12 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);
     return;
   }
+  const base = intake.value.compareWith ? readStore().find((row) => row.id === intake.value.compareWith) || null : null;
+  const refused = intake.value.compareWith ? compare.baseProblem(base, signedIn.email, intake.value.url) : "";
+  if (refused) {
+    sendJson(res, 400, { error: refused, compare: true }, origin, deviceId);
+    return;
+  }
   const identity = { deviceId, ip: clientIp(req) };
   const decision = core.judgeAttempts(readStore(), identity, intake.value);
   if (decision.ok && decision.consumeId) {
@@ -821,6 +828,7 @@ const server = http.createServer(async (req, res) => {
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
     const history = prior ? core.compareRuns(prior.report, report) : null;
     if (history) report.history = history;
+    if (base) report.compare = compare.compareSites(base.report, report);
     writeRecord(record);
     line(res, { type: "done", report, frameworks: record.frameworks, paid: false, priceUsd: record.priceUsd });
     res.end();
