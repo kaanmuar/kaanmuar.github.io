@@ -5,7 +5,8 @@
 
 const fs = require("fs");
 const path = require("path");
-const { SITE, GUIDE, BRAND, xPost } = require("./tips");
+const { SITE, GUIDE, xPost } = require("./tips");
+const { tagLine } = require("../social-tags");
 
 const OWN = SITE + "/qa-review.html";
 const FILE = process.env.AUTO_BATCH || path.resolve(__dirname, "../../previews/auto-live-reports/batch.json");
@@ -49,7 +50,6 @@ function link(platform, run) {
 }
 
 function plainTitle(run) { return run.title.join(" ").replace(/\*/g, "").replace(/\s+/g, " ").trim(); }
-function hashtags(run, n) { return run.tags.slice(0, n).map((t) => "#" + t).join(" "); }
 
 function captions(run) {
   const head = plainTitle(run);
@@ -57,13 +57,13 @@ function captions(run) {
   const fair = "One automated analysis of public pages on " + run.analyzed + how + " A starting point, not a verdict.";
   const own = "Review your own site: " + OWN;
   return {
-    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + link("linkedin", run), "", own, "", hashtags(run, 3) + " #QA " + BRAND].join("\n"),
-    x: xPost(head + "\n\n" + run.action, link("x", run)),
-    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Full report: link in bio.", "", own, "", hashtags(run, 3) + " #QA #WebDev " + BRAND].join("\n"),
-    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run), "", own, "", BRAND].join("\n"),
-    tiktok: head + " " + run.action + " " + own + " " + hashtags(run, 3) + " #QA #techtok " + BRAND,
+    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + link("linkedin", run), "", own, "", tagLine(run, "linkedin")].join("\n"),
+    x: xPost(head + "\n\n" + run.action, link("x", run), tagLine(run, "x")),
+    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Full report: link in bio.", "", own, "", tagLine(run, "instagram")].join("\n"),
+    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run), "", own, "", tagLine(run, "facebook")].join("\n"),
+    tiktok: head + " " + run.action + " " + own + " " + tagLine(run, "tiktok"),
     youtubeTitle: (head + " #Shorts").slice(0, 100),
-    youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Full report: " + link("youtube", run), "", own, "", (CATS[run.scope] || CATS.Requested).series + " · QA-lab URL Review", "", hashtags(run, 3) + " #QA " + BRAND].join("\n")
+    youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Full report: " + link("youtube", run), "", own, "", (CATS[run.scope] || CATS.Requested).series + " · QA-lab URL Review", "", tagLine(run, "youtube")].join("\n")
   };
 }
 

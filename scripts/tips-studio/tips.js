@@ -4,7 +4,7 @@
 
 const SITE = "https://carlosandmunoz.com";
 const GUIDE = SITE + "/qa-review-guide.html";
-const BRAND = "#QAlab";
+const { BRAND, tagLine } = require("../social-tags");
 
 const CATS = {
   QA: { label: "QA", color: "#7ef6fb" },
@@ -259,12 +259,18 @@ function link(platform, tip) {
 }
 
 function plainTitle(tip) { return tip.title.join(" ").replace(/\*/g, "").replace(/\s+/g, " ").trim(); }
-function hashtags(tip, n) { return tip.tags.slice(0, n).map((t) => "#" + t).join(" "); }
 
 // X counts every link as 23 characters; the text gets the rest of the 280 and the link always survives.
 // Buffer's bulk upload counts the link in full, so a post over 280 that way gets the bare link,
-// which X still turns into a link.
-function xPost(text, url) {
+// which X still turns into a link. Tags go in only when the text fits whole with them.
+function xPost(text, url, tags) {
+  const words = (tags || "").split(" ").filter(Boolean);
+  for (let n = words.length; n > 0; n -= 1) {
+    for (const u of [url, bareLink(url)]) {
+      const post = text + "\n\n" + u + "\n" + words.slice(-n).join(" ");
+      if (post.length <= 280) return post;
+    }
+  }
   const body = clip(text, 280 - 23 - 2);
   const post = body + "\n\n" + url;
   if (post.length <= 280) return post;
@@ -286,13 +292,13 @@ function captions(tip, index, total) {
   const head = plainTitle(tip);
   const counter = "Tip " + (index + 1) + "/" + total;
   return {
-    linkedin: [head, "", tip.body, "", "Try this today: " + tip.action, "", "How a public-page review works, step by step: " + link("linkedin", tip), "", hashtags(tip, 3) + " #QA " + BRAND].join("\n"),
-    x: xPost(head + "\n\n" + tip.action, link("x", tip)),
-    instagram: [head, "", tip.body, "", "Try this: " + tip.action, "", "Full guide: link in bio.", "", hashtags(tip, 3) + " #QA #WebDev " + BRAND].join("\n"),
-    facebook: [head, "", tip.body, "", "Try this: " + tip.action, "", link("facebook", tip), "", BRAND].join("\n"),
-    tiktok: head + " " + tip.action + " " + hashtags(tip, 3) + " #QA #techtok " + BRAND,
+    linkedin: [head, "", tip.body, "", "Try this today: " + tip.action, "", "How a public-page review works, step by step: " + link("linkedin", tip), "", tagLine(tip, "linkedin")].join("\n"),
+    x: xPost(head + "\n\n" + tip.action, link("x", tip), tagLine(tip, "x")),
+    instagram: [head, "", tip.body, "", "Try this: " + tip.action, "", "Full guide: link in bio.", "", tagLine(tip, "instagram")].join("\n"),
+    facebook: [head, "", tip.body, "", "Try this: " + tip.action, "", link("facebook", tip), "", tagLine(tip, "facebook")].join("\n"),
+    tiktok: head + " " + tip.action + " " + tagLine(tip, "tiktok"),
     youtubeTitle: (head + " #Shorts").slice(0, 100),
-    youtube: [tip.body, "", "Try this: " + tip.action, "", "Guide: " + link("youtube", tip), "", counter + " · QA-lab URL Review", "", hashtags(tip, 3) + " #QA " + BRAND].join("\n")
+    youtube: [tip.body, "", "Try this: " + tip.action, "", "Guide: " + link("youtube", tip), "", counter + " · QA-lab URL Review", "", tagLine(tip, "youtube")].join("\n")
   };
 }
 
