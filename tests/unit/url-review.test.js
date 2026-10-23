@@ -139,11 +139,14 @@ function fakeNetwork(routes) {
       req.destroy = () => {};
       req.end = () => setImmediate(() => {
         const route = routes[options.protocol + "//" + options.hostname + options.path] || { status: 404 };
+        // A route with timeout: true never ends; it sends its body, if any, then the socket times out.
+        if (route.timeout && !route.body) return req.emit("timeout");
         const res = new EventEmitter();
         Object.assign(res, { statusCode: route.status, headers: route.headers || {}, socket: null });
         onResponse(res);
         if (route.body) res.emit("data", Buffer.isBuffer(route.body) ? route.body : Buffer.from(route.body));
-        res.emit("end");
+        if (route.timeout) req.emit("timeout");
+        else res.emit("end");
       });
       return req;
     };
@@ -463,6 +466,67 @@ test.describe("start page reads", () => {
     assert.equal(report.pages[0].title, "Example shop for garden tools");
     assert.ok(lines.includes(insights.CUT_NOTE));
     assert.ok(report.insights.warnings.includes(insights.CUT_NOTE));
+  });
+
+  test("a linked page over 2 MB is analyzed in part instead of failing", async () => {
+    const big = HTML.replace("<h1>Garden tools</h1>", "<h1>About us</h1>").replace("</main>", "<p>" + "garden ".repeat(400000) + "</p></main>");
+    const { report, lines } = await review({ [BANK]: { status: 200, headers: STRONG_HEADERS, body: HTML }, [BANK + "about"]: { status: 200, headers: STRONG_HEADERS, body: big } });
+    const about = report.pages.find((page) => page.path === "/about");
+    assert.deepEqual([about.status, about.error], [200, ""]);
+    assert.ok(lines.some((line) => /^\/about answered 200 .* It is larger than 2 MB, so its first 2 MB were analyzed\.$/.test(line)));
+  });
+
+  test("a start page still arriving at the deadline keeps the part that arrived", async () => {
+    const half = HTML.replace("</main></body></html>", "<p>More garden tools are on their way");
+    const { report, lines } = await review({ [BANK]: { status: 200, headers: STRONG_HEADERS, body: half, timeout: true } });
+    assert.equal(report.pages[0].title, "Example shop for garden tools");
+    assert.ok(lines.includes(insights.SLOW_CUT_NOTE));
+    assert.ok(report.insights.warnings.includes(insights.SLOW_CUT_NOTE));
+    assert.ok(!report.insights.warnings.includes(insights.CUT_NOTE));
+  });
+
+  test("a start page that times out before its body is read in headless Chrome", async () => {
+    const failures = require("../../functions/url-review-failures");
+    const jobs = [];
+    const browse = async (job) => {
+      jobs.push(job);
+      return { ok: true, timing: { load: 11000 }, start: { status: 200, docStatus: 200, finalUrl: BANK, headers: STRONG_HEADERS, html: HTML, htmlCut: false } };
+    };
+    const { report, lines } = await review({ [BANK]: { timeout: true } }, browse);
+    assert.deepEqual([jobs.length, jobs[0].html, jobs[0].url], [1, true, BANK]);
+    assert.deepEqual([report.pages[0].status, report.pages[0].title], [200, "Example shop for garden tools"]);
+    assert.ok(lines.includes(insights.SLOW_READ_NOTE));
+    assert.ok(report.insights.warnings.includes(insights.SLOW_READ_NOTE));
+    assert.ok(!report.insights.warnings.includes(insights.BROWSER_READ_NOTE));
+
+    await assert.rejects(review({ [BANK]: { timeout: true } }), /^Error: The page took too long\.$/);
+    const hung = await review({ [BANK]: { timeout: true } }, async () => ({ ok: false, error: "net::ERR_HTTP2_PROTOCOL_ERROR" })).catch((error) => error);
+    assert.equal(hung.message, "The page took too long in the plain request, and headless Chrome could not open it either (net::ERR_HTTP2_PROTOCOL_ERROR).");
+    assert.equal(failures.causeOf(hung.message).id, "timeout");
+    const refused = await review({ [BANK]: { timeout: true } }, async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: {}, html: "<html><body>Access denied</body></html>" } })).catch((error) => error);
+    assert.equal(refused.message, "The site's bot protection refused the review (status 403), in headless Chrome, after the plain request took too long.");
+    assert.equal(failures.causeOf(refused.message).id, "bot-protection");
+  });
+
+  test("an empty shell start page is crawled from the links headless Chrome rendered", async () => {
+    const shell = "<!doctype html><html lang=\"en\"><head><title>Bank app</title></head><body><div id=\"root\"></div><script src=\"/app.js\"></script></body></html>";
+    const page = (h1) => HTML.replace("<h1>Garden tools</h1>", "<h1>" + h1 + "</h1>");
+    const browse = async (job, log, onStart) => {
+      onStart({ status: 200, dom: { links: [BANK + "accounts", BANK + "cards?utm_source=nav", BANK + "#top", "https://other.example.com/x"] } });
+      return { ok: false, error: "the browser was busy" };
+    };
+    const { report, lines } = await review({
+      [BANK]: { status: 200, headers: STRONG_HEADERS, body: shell },
+      [BANK + "accounts"]: { status: 200, headers: STRONG_HEADERS, body: page("Accounts") },
+      [BANK + "cards"]: { status: 200, headers: STRONG_HEADERS, body: page("Cards") }
+    }, browse);
+    assert.deepEqual(report.pages.slice(0, 3).map((row) => [row.path, row.status]), [["/", 200], ["/accounts", 200], ["/cards", 200]]);
+    assert.ok(lines.includes(insights.SHELL_NOTE + " The rendered page adds 2."));
+    assert.ok(report.insights.warnings.includes(insights.SHELL_NOTE));
+
+    const plain = await review({ [BANK]: { status: 200, headers: STRONG_HEADERS, body: shell } }, async () => ({ ok: false }));
+    assert.ok(plain.lines.includes("Headless Chrome did not return the rendered start page."));
+    assert.ok(!plain.report.insights.warnings.includes(insights.SHELL_NOTE));
   });
 });
 
@@ -983,6 +1047,8 @@ test("the optional don't-publish box rides from the form to the stored record an
 });
 
 const failures = require("../../functions/url-review-failures");
+// The failure tests are written against the fixes up to #365; a later fix to a cause they use would re-run their example failures.
+failures.FIXES.splice(failures.FIXES.findIndex((fix) => fix.ref === "#365") + 1);
 
 test("failure causes are classed from the review's own messages", () => {
   const cases = [
