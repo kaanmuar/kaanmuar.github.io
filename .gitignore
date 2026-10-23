@@ -34,3 +34,6 @@ media/social-posts/*/story/
 media/social-posts/*/clip/
 media/social-posts/*/cover/
 media/buffer-upload/
+
+# Owner notice run outcomes carry owners' email addresses
+owner-notices-*.csv
