@@ -1982,6 +1982,73 @@ async function readSitemap(origin, robotsText, halt, acceptLanguage) {
   return { source: candidates[0] || "", status: last.status || 0, urls: [] };
 }
 
+const PATHS_SHOWN = 300;
+const PATHS_DEADLINE_MS = 12000;
+const PATHS_KEEP_MS = 6 * 3600 * 1000;
+const PATHS_EMPTY_KEEP_MS = 30 * 60 * 1000;
+const pathsCache = new Map();
+
+function pathsHost(raw) {
+  const host = String(raw || "").trim().toLowerCase().replace(/^https?:\/\//, "").split(/[/?#]/)[0].replace(/\.$/, "");
+  if (host.length > 253 || !/^([a-z0-9-]+\.)+([a-z]{2,}|xn--[a-z0-9-]+)$/.test(host)) return "";
+  if (net.isIP(host) || hostBlocked(host)) return "";
+  return host;
+}
+
+// Same-site page paths from sitemap URLs, the shallowest and shortest first.
+function sitemapPaths(urls, host, limit) {
+  const bare = (name) => String(name || "").toLowerCase().replace(/^www\./, "");
+  const seen = new Set();
+  (Array.isArray(urls) ? urls : []).forEach((raw) => {
+    let parsed;
+    try { parsed = new URL(raw); } catch (error) { return; }
+    if (!/^https?:$/.test(parsed.protocol) || bare(parsed.hostname) !== bare(host)) return;
+    let path = parsed.pathname;
+    try { path = decodeURI(path); } catch (error) { /* keep it encoded */ }
+    if (path === "/" || path.length > 200 || /\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?|xml|gz|css|js|json|txt)$/i.test(path)) return;
+    seen.add(path);
+  });
+  const depth = (path) => path.replace(/\/$/, "").split("/").length;
+  return Array.from(seen)
+    .sort((a, b) => depth(a) - depth(b) || a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))
+    .slice(0, limit || PATHS_SHOWN);
+}
+
+async function readPaths(host) {
+  const origin = "https://" + host;
+  const stopAt = Date.now() + PATHS_DEADLINE_MS;
+  const halt = () => Date.now() > stopAt;
+  try {
+    const robots = await fetchExtra(origin + "/robots.txt", halt, true);
+    const robotsText = robots.status === 200 && !robots.html ? robots.body : "";
+    const map = await readSitemap(origin, robotsText, halt);
+    return { host, source: map.urls.length ? map.source : "", paths: sitemapPaths(map.urls, host) };
+  } catch (error) {
+    if (error && error.code === "STOPPED") return { host, source: "", paths: [] };
+    throw error;
+  }
+}
+
+// Page paths a site lists in its sitemap, for the URL Review box. Cached per host, so typing never reaches the site.
+async function sitePaths(raw) {
+  const host = pathsHost(raw);
+  if (!host) {
+    const error = new Error("Enter a public host name, like example.com.");
+    error.code = "BAD_HOST";
+    throw error;
+  }
+  const now = Date.now();
+  const kept = pathsCache.get(host);
+  if (kept && kept.until > now) return kept.result;
+  const result = readPaths(host);
+  pathsCache.set(host, { until: now + PATHS_KEEP_MS, result });
+  if (pathsCache.size > 500) pathsCache.delete(pathsCache.keys().next().value);
+  result.then((value) => {
+    if (!value.paths.length) pathsCache.set(host, { until: Date.now() + PATHS_EMPTY_KEEP_MS, result });
+  }, () => pathsCache.delete(host));
+  return result;
+}
+
 async function dnsFacts(hostname) {
   const domain = registrable(hostname);
   // Only "no such data" means the record is absent; a timeout or server failure leaves it unread (null).
@@ -3495,6 +3562,8 @@ module.exports = {
   plainHttp,
   probeRead,
   readSitemap,
+  sitemapPaths,
+  sitePaths,
   ipBlocked,
   hostBlocked
 };

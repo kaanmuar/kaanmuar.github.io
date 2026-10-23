@@ -5,7 +5,8 @@
  * about 100,000 of the most visited sites worldwide, sharded by the first two
  * characters of the host without www. or m. Once the host looks complete, a
  * DNS-over-HTTPS lookup says whether it is online and, when it is not a known
- * site, offers the closest popular host.
+ * site, offers the closest popular host. After an online host and a slash, it
+ * lists page paths from that site's sitemap, read once per host by reviewUrl/paths.
  */
 (function () {
   "use strict";
@@ -18,9 +19,11 @@
   const SHOWN = 6;
   const shards = new Map();
   const answers = new Map();
+  const sitePaths = new Map();
   let seq = 0;
   let timer = 0;
   let options = [];
+  let mode = "host";
   let active = -1;
   let picking = false;
 
@@ -79,6 +82,22 @@
     }
   }
 
+  function endpoint() {
+    const host = location.hostname;
+    if (host === "127.0.0.1" || host === "localhost") return "http://127.0.0.1:8768";
+    return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
+  }
+
+  function pathsFor(host) {
+    if (!sitePaths.has(host)) {
+      sitePaths.set(host, fetch(endpoint() + "/paths?host=" + encodeURIComponent(host))
+        .then((res) => (res.ok ? res.json() : {}))
+        .then((data) => (Array.isArray(data.paths) ? data.paths.filter((path) => typeof path === "string") : []))
+        .catch(() => []));
+    }
+    return sitePaths.get(host);
+  }
+
   function resolve(host) {
     if (!answers.has(host)) {
       answers.set(host, lookup(host, "A")
@@ -130,14 +149,15 @@
   }
 
   function render() {
-    list.replaceChildren(...options.map((host, index) => {
+    list.setAttribute("aria-label", mode === "path" ? "Suggested pages" : "Suggested sites");
+    list.replaceChildren(...options.map((option, index) => {
       const item = document.createElement("li");
       item.id = "url-opt-" + index;
       item.setAttribute("role", "option");
       item.setAttribute("aria-selected", index === active ? "true" : "false");
-      item.textContent = host;
+      item.textContent = option;
       item.addEventListener("mousedown", (event) => event.preventDefault());
-      item.addEventListener("click", () => pick(host, "list"));
+      item.addEventListener("click", () => choose(index));
       return item;
     }));
     list.hidden = !options.length;
@@ -152,16 +172,28 @@
     render();
   }
 
-  function pick(host, how) {
-    const rest = input.value.trim().slice(hostPart(input.value).length);
+  function fill(value, how) {
     picking = true;
-    input.value = host + rest;
+    input.value = value;
     input.dispatchEvent(new Event("input", { bubbles: true }));
     picking = false;
     close();
     check();
     input.focus();
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_url_suggest", "URL Review", how);
+  }
+
+  function pick(host, how) {
+    fill(host + input.value.trim().slice(hostPart(input.value).length), how);
+  }
+
+  function pickPath(path) {
+    fill(input.value.trim().match(/^(https?:\/\/)?[^/?#]*/i)[0] + path, "path");
+  }
+
+  function choose(index) {
+    if (mode === "path") pickPath(options[index]);
+    else pick(options[index], "list");
   }
 
   function say(state, text, host, fix) {
@@ -182,9 +214,28 @@
     }
   }
 
+  async function suggestPaths(mine, host, typed) {
+    if (!looksComplete(host)) return close();
+    const state = await resolve(host);
+    if (mine !== seq) return;
+    if (state !== "found") return close();
+    const pool = await pathsFor(host);
+    if (mine !== seq) return;
+    const want = typed.toLowerCase();
+    const starts = pool.filter((path) => path !== typed && path.toLowerCase().startsWith(want));
+    const within = want.length > 1 ? pool.filter((path) => !path.toLowerCase().startsWith(want) && path.toLowerCase().includes(want)) : [];
+    options = starts.concat(within).slice(0, SHOWN);
+    mode = "path";
+    active = -1;
+    render();
+  }
+
   async function suggest() {
     const mine = ++seq;
     const value = input.value;
+    const typed = value.trim().replace(/^https?:\/\//i, "");
+    const slash = typed.indexOf("/");
+    if (slash > 0 && !/[?#]/.test(typed)) return suggestPaths(mine, typed.slice(0, slash).toLowerCase(), typed.slice(slash));
     const host = hostPart(value);
     const key = keyOf(host);
     if (/[/?#]/.test(value) || key.length < 2) return close();
@@ -196,6 +247,7 @@
       if (matches.length === SHOWN) break;
     }
     options = matches.length === 1 && matches[0] === host ? [] : matches;
+    mode = "host";
     active = -1;
     render();
   }
@@ -233,7 +285,7 @@
       render();
     } else if ((event.key === "Enter" || event.key === "Tab") && active >= 0) {
       if (event.key === "Enter") event.preventDefault();
-      pick(options[active], "list");
+      choose(active);
     } else if (event.key === "Escape") {
       event.preventDefault();
       close();

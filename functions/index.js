@@ -2746,6 +2746,21 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     }
     return;
   }
+  if (req.method === "GET" && pathName.indexOf("/paths") !== -1) {
+    try {
+      const data = await urlReview.sitePaths(req.query.host);
+      res.set("Cache-Control", "public, max-age=3600");
+      res.status(200).json({ host: data.host, paths: data.paths });
+    } catch (error) {
+      if (error && error.code === "BAD_HOST") {
+        res.status(400).json({ error: error.message, paths: [] });
+        return;
+      }
+      console.error("Review paths failed:", error);
+      res.status(200).json({ paths: [] });
+    }
+    return;
+  }
   if (req.method === "GET" && pathName.indexOf("/stats") !== -1) {
     try {
       const data = await reviewTotals();
