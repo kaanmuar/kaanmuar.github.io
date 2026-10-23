@@ -15,6 +15,7 @@ const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
+const ownerProofs = require("./url-review-owner-proof");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-10-22.2";
@@ -272,12 +273,38 @@ function mailboxMatchesHost(email, hostname) {
   return !!domain && registrable(domain) === registrable(hostname);
 }
 
-// "own" when the asker chose "I own this site" from a mailbox on the host's domain, else "".
-// Anything that talks to the site (the chat conversation) runs only with this proof, checked against the host finally reviewed.
-function ownerProof(asker, hostname) {
+// Why the asker may talk to the host finally reviewed (the chat conversation, form testing), or "":
+// "own" for "I own this site" from a mailbox on the host's domain; "credentials" or "site" from the
+// unexpired url_review_owner_proofs rows the caller loaded for the signed-in email (url-review-owner-proof.js).
+// The "credentials" reason on its own proves nothing: it is a choice in a list.
+function ownerProof(asker, hostname, now) {
   const src = asker || {};
-  return src.reasonCode === "own" && mailboxMatchesHost(src.email, hostname) ? "own" : "";
+  if (src.reasonCode === "own" && mailboxMatchesHost(src.email, hostname)) return "own";
+  return ownerProofs.validFor(src.proofs, src.email, hostname, now);
 }
+
+// The homepage as visitors get it, through the same public-address checks as the review; "" when it lands on another host.
+async function fetchHomepage(host) {
+  const page = await fetchPublic("https://" + host + "/", null, null, true);
+  const landed = String(new URL(page.url).hostname).replace(/^www\./, "");
+  return landed === String(host).replace(/^www\./, "") && page.status >= 200 && page.status < 300 ? String(page.body || "") : "";
+}
+
+// ownerProof, then a live site-verification check when the caller gave a token for this account (asker.siteToken).
+async function proveOwner(asker, hostname, deps) {
+  const kind = ownerProof(asker, hostname);
+  if (kind) return { kind, how: "", checked: false };
+  const token = asker && typeof asker.siteToken === "function" ? asker.siteToken(hostname) : "";
+  if (!token) return { kind: "", how: "", checked: false };
+  const found = await ownerProofs.checkSite(token, hostname, Object.assign({ resolveTxt: (name) => dns.resolveTxt(name), fetchHome: fetchHomepage, registrable }, deps));
+  return found.ok ? { kind: "site", how: found.how, checked: true } : { kind: "", how: "", checked: false };
+}
+
+const PROOF_NOTE = {
+  own: (host) => "The asker's mailbox is on " + registrable(host) + ", so",
+  credentials: (host) => "QA-lab recorded a verified signed-in run of " + host + " for this account, so",
+  site: (host, how, checked) => (checked ? host + " carries this account's qa-lab-verify token in its " + (how === "meta" ? "homepage" : "DNS") : host + " was verified for this account in the last 30 days") + ", so"
+};
 
 async function emailCanReceive(email) {
   const domain = String(email || "").toLowerCase().split("@")[1] || "";
@@ -2506,16 +2533,21 @@ async function reviewTarget(rawUrl, hooks) {
       ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths, acceptLanguage }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
       : Promise.resolve(null);
   browserPromise.then((done) => showStart(done && done.ok ? done.start : null), () => showStart(null));
-  const talkAs = stopped ? "" : ownerProof(controls.asker, origin.hostname);
-  const talkScript = talkAs && typeof controls.browse === "function" ? chatTalk.script(acceptLanguage || homeInspect.lang) : null;
-  const published = talkScript ? chatTalk.facts() : null;
+  const proofPromise = stopped || !controls.asker ? Promise.resolve(null) : proveOwner(controls.asker, origin.hostname).catch(() => null);
+  const canTalk = !!controls.asker && typeof controls.browse === "function";
+  const published = canTalk ? chatTalk.facts() : null;
   if (published) published.read(visibleText(first.body));
-  if (talkScript) note("The asker's mailbox is on " + registrable(origin.hostname) + ", so a separate browser holds a short scripted conversation with the site's chat, if it has one.");
+  let talkScript = null;
   let talkSettled = false;
-  const talkPromise = talkScript
-    ? Promise.resolve().then(() => controls.browse({ kind: "chat", proof: talkAs, url: first.url, acceptLanguage, turns: talkScript.turns }, (text) => note("Chat conversation: " + text))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
-    : null;
-  if (talkPromise) talkPromise.then(() => { talkSettled = true; });
+  const talkPromise = canTalk
+    ? proofPromise.then((proof) => {
+      if (!proof || !proof.kind || halt()) return null;
+      talkScript = chatTalk.script(acceptLanguage || homeInspect.lang);
+      note(PROOF_NOTE[proof.kind](origin.hostname, proof.how, proof.checked) + " a separate browser holds a short scripted conversation with the site's chat, if it has one.");
+      return controls.browse({ kind: "chat", proof: proof.kind, url: first.url, acceptLanguage, turns: talkScript.turns }, (text) => note("Chat conversation: " + text));
+    }).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+    : Promise.resolve(null);
+  talkPromise.then(() => { talkSettled = true; });
   if (!stopped) startSpeed(first.url);
   else speedPromise = speedPromise || Promise.resolve(null);
   let extrasSettled = false;
@@ -2675,10 +2707,12 @@ async function reviewTarget(rawUrl, hooks) {
     });
     note("Chat seen in the browser: " + chat.found.map((row) => row.name).join(", ") + ".");
   }
+  const proof = await proofPromise;
   let talked = null;
-  if (talkPromise) {
+  if (proof && proof.kind && canTalk) {
     if (!talkSettled) note("Waiting for the chat conversation to finish.");
-    talked = chatTalk.judge(await talkPromise, { proof: talkAs, lang: acceptLanguage || homeInspect.lang, facts: published, planted: talkScript.planted });
+    const raw = await talkPromise;
+    talked = chatTalk.judge(raw, { proof: proof.kind, lang: acceptLanguage || homeInspect.lang, facts: published, planted: talkScript ? talkScript.planted : null });
     note("Chat conversation: " + talked.note);
   } else if (chat) talked = { ran: false, status: "needs-proof", note: chatTalk.STATUS_NOTE["needs-proof"], turns: [], checks: [] };
   let cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "", chat, libraries: browser.libraries || [] }, browser.start.dom) : null);
@@ -2806,6 +2840,7 @@ async function reviewTarget(rawUrl, hooks) {
       : "These cases are proposed from a public analysis. None of them were executed."
   };
   if (talked) result.chatTalk = talked;
+  if (proof && proof.kind) result.ownerProof = { kind: proof.kind, how: proof.how || "", host: ownerProofs.hostOf(origin.hostname), checked: proof.checked === true };
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
   return result;
 }
@@ -3564,6 +3599,8 @@ module.exports = {
   emailCanReceive,
   mailboxMatchesHost,
   ownerProof,
+  proveOwner,
+  fetchHomepage,
   emailSyntax,
   registrable,
   ownerContacts,

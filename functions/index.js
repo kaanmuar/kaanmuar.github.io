@@ -1481,6 +1481,31 @@ const reviewOffers = require("./url-review-offers");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
 const accountData = require("./url-review-account-data");
+const ownerProofs = require("./url-review-owner-proof");
+
+async function ownerProofRows(email) {
+  if (!ownerProofs.emailOf(email)) return [];
+  try {
+    const snap = await admin.firestore().collection(ownerProofs.COLLECTION).where("email", "==", ownerProofs.emailOf(email)).limit(50).get();
+    return snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  } catch (error) {
+    console.error("Owner proofs read failed:", error);
+    return [];
+  }
+}
+
+// Site verification is off until REVIEW_VERIFY_KEY is set: no token is issued or checked.
+function siteTokenFor(email) {
+  const key = process.env.REVIEW_VERIFY_KEY || "";
+  return key ? (host) => ownerProofs.siteToken(key, email, host) : null;
+}
+
+async function rememberSiteProof(email, host, how) {
+  const row = ownerProofs.siteRecord({ email, host, how });
+  if (!row.email || !row.host) return null;
+  await admin.firestore().collection(ownerProofs.COLLECTION).doc(ownerProofs.docId("site", row.email, row.host)).set(row);
+  return row;
+}
 const ownerContactSearch = require("./url-review-owner-contacts");
 const REVIEW_FN_URL = process.env.REVIEW_FN_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
 
@@ -2445,6 +2470,33 @@ async function reviewAccount(req, res, pathName) {
     res.status(200).json({ ok: true, paymentsKept: counts.paymentsKept || 0 });
     return;
   }
+  if (pathName.endsWith("/account/verify") || pathName.endsWith("/account/verify-check")) {
+    const tokenFor = siteTokenFor(signedIn.email);
+    const host = ownerProofs.hostOf(req.body && req.body.host);
+    const proofs = async () => (await ownerProofRows(signedIn.email)).map((row) => {
+      const shown = ownerProofs.publicRow(row.id, row);
+      delete shown.by;
+      return shown;
+    }).filter((row) => row.until > new Date().toISOString());
+    if (!tokenFor) {
+      res.status(200).json({ available: false, proofs: await proofs() });
+      return;
+    }
+    if ((req.body && req.body.host) && !host) {
+      res.status(400).json({ error: "Enter a public host name, such as shop.example.com." });
+      return;
+    }
+    const token = host ? tokenFor(host) : "";
+    const given = host ? { host, token, txt: ownerProofs.PREFIX + token, meta: "<meta name=\"qa-lab-verify\" content=\"" + token + "\">" } : {};
+    if (pathName.endsWith("/account/verify-check") && host) {
+      const found = await urlReview.proveOwner({ email: signedIn.email, siteToken: tokenFor }, host);
+      if (found.kind === "site") await rememberSiteProof(signedIn.email, host, found.how);
+      res.status(200).json(Object.assign({ available: true, ok: found.kind === "site", how: found.how || "" }, given, { proofs: await proofs() }));
+      return;
+    }
+    res.status(200).json(Object.assign({ available: true }, given, { proofs: await proofs() }));
+    return;
+  }
   res.status(404).json({ error: "Not found." });
 }
 
@@ -2492,7 +2544,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     ["/desk/free", "free"],
     ["/desk/rerun", "rerun"],
     ["/desk/unlist", "unlist"],
-    ["/desk/notice", "notice"]
+    ["/desk/notice", "notice"],
+    ["/desk/proof", "proof"]
   ];
   const routed = deskRoutes.find(([part]) => pathName.indexOf(part) !== -1);
   const deskName = routed
@@ -2525,15 +2578,18 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     if (deskName === "data" && req.method === "GET") {
-      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap] = await Promise.all([
+      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap, proofSnap] = await Promise.all([
         admin.firestore().collection("url_reviews").limit(400).get(),
         admin.firestore().collection("url_review_alerts").limit(80).get(),
         admin.firestore().collection("url_review_free_runs").limit(200).get(),
         admin.firestore().collection("url_review_notes").limit(1000).get(),
         admin.firestore().collection("url_review_reruns").orderBy("at", "desc").limit(30).get(),
         admin.firestore().collection("url_review_unlisted").get(),
-        admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get()
+        admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get(),
+        admin.firestore().collection(ownerProofs.COLLECTION).limit(200).get()
       ]);
+      const ownerProofList = proofSnap.docs.map((doc) => ownerProofs.publicRow(doc.id, doc.data() || {}))
+        .sort((a, b) => String(b.at).localeCompare(String(a.at)));
       const ownerNotices = noticeSnap.docs.map((doc) => Object.assign({ domain: doc.id }, doc.data()))
         .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
       const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
@@ -2554,8 +2610,32 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes, unlistedSnap.docs.map((doc) => doc.id)), {
         freeRuns,
         reruns,
-        ownerNotices
+        ownerNotices,
+        ownerProofs: ownerProofList
       }));
+      return;
+    }
+    if (deskName === "proof" && req.method === "POST") {
+      const body = req.body || {};
+      const ref = (id) => admin.firestore().collection(ownerProofs.COLLECTION).doc(id);
+      if (body.on === false) {
+        const id = String(body.id || "").replace(/[^a-z0-9-]/g, "").slice(0, 60);
+        if (!id) {
+          res.status(400).json({ error: "Which proof?" });
+          return;
+        }
+        await ref(id).delete();
+        res.status(200).json({ ok: true, id, on: false });
+        return;
+      }
+      const row = ownerProofs.operatorRecord({ email: body.email, host: body.host, by: operator });
+      if (!row.email || !row.host) {
+        res.status(400).json({ error: "Enter the account email and the site's host." });
+        return;
+      }
+      const id = ownerProofs.docId("operator", row.email, row.host);
+      await ref(id).set(row);
+      res.status(200).json({ ok: true, proof: ownerProofs.publicRow(id, row) });
       return;
     }
     if (deskName === "notice" && req.method === "POST") {
@@ -3432,7 +3512,7 @@ async function runReview(req, res, placeOf) {
     const report = await urlReview.reviewTarget(intake.value.url, {
       log: (text) => writeLine({ type: "log", text }),
       stopped: () => stopped,
-      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email },
+      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email, proofs: await ownerProofRows(intake.value.email), siteToken: siteTokenFor(intake.value.email) },
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
@@ -3451,6 +3531,13 @@ async function runReview(req, res, placeOf) {
     record.signInProvider = signedIn.provider;
     if (urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY)) record.test = true;
     if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
+    if (report.ownerProof && report.ownerProof.checked) {
+      try {
+        await rememberSiteProof(intake.value.email, report.ownerProof.host, report.ownerProof.how);
+      } catch (error) {
+        console.error("Site verification save failed:", error);
+      }
+    }
     writeLine({ type: "log", text: "Looking for your earlier reviews of " + report.host + "." });
     const history = await previousRun(intake.value.email, report);
     if (history) {

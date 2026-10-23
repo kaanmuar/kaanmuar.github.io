@@ -242,6 +242,19 @@
     .danger-zone h3 { color: var(--red); }
     .danger-zone input:focus { border-color: var(--red); box-shadow: 0 0 0 4px color-mix(in srgb, var(--red) 18%, transparent); }
     #privacy-status { margin: 14px 0 0; font-size: 14px; }
+    #verify-status { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+    #verify-status:empty { display: none; }
+    #verify-status.ok { color: var(--green); }
+    #verify-status.bad { color: var(--red); }
+    .verify-ways { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 16px; }
+    .verify-code { display: block; padding: 10px 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--cyan) 30%, transparent); background: color-mix(in srgb, var(--cyan) 8%, transparent);
+      color: var(--text); font: 500 12.5px/1.5 "Fira Code", ui-monospace, monospace; overflow-wrap: anywhere; user-select: all; }
+    .verify-list-head { margin: 22px 0 10px; font-size: 15px; font-weight: 700; }
+    .verify-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .verify-list:empty { display: none; }
+    .verify-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 45%, transparent); }
+    .verify-list strong { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+    .verify-until { font: 500 11.5px "Fira Code", ui-monospace, monospace; color: var(--muted); }
 
     .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; width: min(1080px, calc(100% - 40px)); margin: 0 auto; padding: 22px 0 40px; border-top: 1px solid var(--edge); font-size: 13px; color: var(--muted); }
     .foot nav { display: flex; gap: 16px; }
@@ -415,6 +428,43 @@
       </div>
     </div>
     <p id="privacy-status" role="status"></p>
+  </section>
+  <section class="panel notranslate" id="verify" style="--i: 3" translate="no" hidden>
+    <div class="panel-head">
+      <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+      <div>
+        <h2 data-copy="title"></h2>
+        <p class="muted" data-copy="intro"></p>
+      </div>
+    </div>
+    <div id="verify-form">
+      <label for="verify-host" data-copy="host"></label>
+      <div class="sign-in-row">
+        <input id="verify-host" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="shop.example.com">
+        <button class="btn" id="verify-get" type="button" data-copy="get"></button>
+      </div>
+      <div id="verify-steps" hidden>
+        <div class="data-grid verify-ways">
+          <div class="data-block">
+            <h3 data-copy="dns"></h3>
+            <p data-copy="dnsHow"></p>
+            <code class="verify-code" id="verify-txt"></code>
+          </div>
+          <div class="data-block">
+            <h3 data-copy="meta"></h3>
+            <p data-copy="metaHow"></p>
+            <code class="verify-code" id="verify-meta"></code>
+          </div>
+        </div>
+        <div class="panel-foot">
+          <button class="btn" id="verify-check" type="button" data-copy="check"></button>
+        </div>
+      </div>
+    </div>
+    <p id="verify-status" role="status"></p>
+    <h3 class="verify-list-head" data-copy="list"></h3>
+    <ul class="verify-list" id="verify-list"></ul>
+    <p class="empty" id="verify-none" data-copy="none"></p>
   </section>
 </main>
 <footer class="foot">
@@ -843,5 +893,6 @@
   });
   if (window.SiteI18n) SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));
 </script>
+<script src="js/qa-review-verify.js?v=20261023b"></script>
 </body>
 </html>
