@@ -196,6 +196,17 @@
     .run li::before { content: ""; position: absolute; left: 0; top: .5em; width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
     .layer { color: var(--muted); font-weight: 600; }
     .run .btn { margin-top: auto; align-self: flex-start; }
+    .fold { display: flex; flex-direction: column; gap: 10px; }
+    .fold summary { display: flex; align-items: center; gap: 8px; width: fit-content; padding: 6px 12px 6px 10px; border-radius: 999px; border: 1px solid var(--edge); list-style: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: var(--text); background: color-mix(in srgb, var(--card) 55%, transparent); transition: border-color .2s, background .2s; }
+    .fold summary::-webkit-details-marker { display: none; }
+    .fold summary:hover, .fold summary:focus-visible { outline: none; border-color: color-mix(in srgb, var(--cyan) 55%, transparent); background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+    .fold summary svg { width: 14px; height: 14px; fill: none; stroke: var(--cyan); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .3s var(--ease); }
+    .fold[open] summary svg { transform: rotate(90deg); }
+    .fold-count { font: 500 11.5px "Fira Code", ui-monospace, monospace; color: var(--muted); }
+    .fold[open] > :not(summary) { animation: fold-in .35s var(--ease) both; }
+    .fold-all { cursor: pointer; }
+    .fold-all svg { width: 16px; height: 16px; fill: none; stroke: var(--cyan); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
     .veil { display: inline-block; max-width: 46%; overflow: hidden; white-space: nowrap; vertical-align: bottom; filter: blur(5px); user-select: none; }
     .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
     .check-all, .pick { display: inline-flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; text-transform: none; letter-spacing: 0; }
@@ -247,6 +258,7 @@
     @keyframes panel-in { from { opacity: 0; transform: perspective(1200px) rotateX(14deg) translateY(40px) scale(.97); } }
     @keyframes run-in { from { opacity: 0; transform: rotateX(-22deg) translateY(18px); } }
     @keyframes rig-yaw { 0%, 100% { transform: rotateX(12deg) rotateY(-20deg); } 50% { transform: rotateX(8deg) rotateY(-6deg); } }
+    @keyframes fold-in { from { opacity: 0; transform: translateY(-6px); } }
     @keyframes bulk-in { from { opacity: 0; transform: perspective(900px) rotateX(-18deg) translateY(16px); } }
     @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
 
@@ -357,6 +369,7 @@
     <p id="file-status"></p>
     <div class="toolbar">
       <label class="check-all"><input type="checkbox" id="select-all"><span>Select all</span></label>
+      <button class="check-all fold-all" id="fold-all" type="button" aria-controls="list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><span>Expand all</span></button>
       <div class="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input id="search" type="search" placeholder="Search by site, URL, status or case" aria-label="Search saved reviews" autocomplete="off" spellcheck="false">
@@ -445,7 +458,9 @@
   const selectAllEl = document.getElementById("select-all");
   const bulkEl = document.getElementById("bulk");
   const bulkStatus = document.getElementById("bulk-status");
+  const foldAllEl = document.getElementById("fold-all");
   const picked = new Set();
+  const unfolded = new Set();
   let runs = [];
   function text(value) { return value == null || value === "" ? "—" : String(value); }
   function node(tag, content, className) {
@@ -562,6 +577,7 @@
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_enter", "URL Review", "open");
     runs = data.runs || [];
     picked.clear();
+    unfolded.clear();
     const opened = runs.filter((run) => run.open).length;
     document.getElementById("file-status").textContent = data.free ? "Your account opens every report."
       : data.pass ? "A 30-day pass is open on this account until " + new Date(data.paidUntil).toLocaleString() + ". Every report is open."
@@ -594,6 +610,14 @@
     document.getElementById("result-count").textContent = list.length !== runs.length ? list.length + " of " + runs.length
       : runs.length + (runs.length === 1 ? " review" : " reviews");
     paintBulk();
+    paintFold();
+  }
+  function paintFold() {
+    const folds = listEl.querySelectorAll(".fold");
+    const allOpen = !!folds.length && [...folds].every((fold) => fold.open);
+    foldAllEl.hidden = !folds.length;
+    foldAllEl.querySelector("span").textContent = allOpen ? "Collapse all" : "Expand all";
+    foldAllEl.setAttribute("aria-expanded", String(allOpen));
   }
   function syncPicks() {
     listEl.querySelectorAll(".run").forEach((block) => {
@@ -659,20 +683,39 @@
     url.className = "run-url";
     url.appendChild(valueNode(run.url, run.open));
     block.appendChild(url);
-    if (run.statement) {
-      const line = document.createElement("p");
-      line.className = "run-statement";
-      line.appendChild(valueNode(run.statement, run.open));
-      block.appendChild(line);
+    const shown = (run.cases || []).slice(0, 8);
+    if (run.statement || shown.length) {
+      const fold = document.createElement("details");
+      fold.className = "fold";
+      fold.open = unfolded.has(run.id);
+      const summary = document.createElement("summary");
+      summary.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>');
+      summary.appendChild(node("span", run.statement ? "Summary and cases" : "Cases"));
+      if (shown.length) summary.appendChild(node("span", shown.length + (run.caseCount > shown.length ? " of " + run.caseCount : ""), "fold-count"));
+      fold.appendChild(summary);
+      if (run.statement) {
+        const line = document.createElement("p");
+        line.className = "run-statement";
+        line.appendChild(valueNode(run.statement, run.open));
+        fold.appendChild(line);
+      }
+      if (shown.length) {
+        const cases = document.createElement("ul");
+        shown.forEach((item) => {
+          const li = document.createElement("li");
+          if (item.layer) li.appendChild(node("span", item.layer + " — ", "layer"));
+          li.appendChild(valueNode(item.title, run.open));
+          cases.appendChild(li);
+        });
+        fold.appendChild(cases);
+      }
+      fold.addEventListener("toggle", () => {
+        if (fold.open) unfolded.add(run.id);
+        else unfolded.delete(run.id);
+        paintFold();
+      });
+      block.appendChild(fold);
     }
-    const cases = document.createElement("ul");
-    (run.cases || []).slice(0, 8).forEach((item) => {
-      const li = document.createElement("li");
-      if (item.layer) li.appendChild(node("span", item.layer + " — ", "layer"));
-      li.appendChild(valueNode(item.title, run.open));
-      cases.appendChild(li);
-    });
-    block.appendChild(cases);
     const report = document.createElement("a");
     report.className = run.open ? "btn" : "btn btn-ghost";
     report.href = reportHref(run);
@@ -686,6 +729,17 @@
     if (event.key !== "/" || fileEl.hidden || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
     event.preventDefault();
     searchEl.focus();
+  });
+  foldAllEl.addEventListener("click", () => {
+    const open = foldAllEl.getAttribute("aria-expanded") !== "true";
+    listEl.querySelectorAll(".run").forEach((block) => {
+      if (open) unfolded.add(block.dataset.id);
+      else unfolded.delete(block.dataset.id);
+      const fold = block.querySelector(".fold");
+      if (fold) fold.open = open;
+    });
+    paintFold();
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_fold", "URL Review", open ? "expand_all" : "collapse_all");
   });
   selectAllEl.addEventListener("change", () => {
     shownRuns().forEach((run) => (selectAllEl.checked ? picked.add(run.id) : picked.delete(run.id)));
