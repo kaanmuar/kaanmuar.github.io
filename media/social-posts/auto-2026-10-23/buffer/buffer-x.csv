@@ -1,0 +1,16 @@
+Text,Image URL,Tags,Posting Time
+"pirouline.com: 74. The gap: framing.
+
+Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame…
+
+carlosandmunoz.com/qa-review?live=u-pirouline-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-pirouline-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg","","2026-10-24 08:35"
+"postobon.com: 49. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and the…
+
+carlosandmunoz.com/qa-review?live=u-postobon-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-postobon-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/02-u-postobon-com.jpg","","2026-10-25 13:25"
+"monsterenergy.com: 71. The gap: link names.
+
+Give every link text that says where it goes. An icon alone needs an aria-label.
+
+carlosandmunoz.com/qa-review?live=u-monsterenergy-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-monsterenergy-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg","","2026-10-26 11:35"

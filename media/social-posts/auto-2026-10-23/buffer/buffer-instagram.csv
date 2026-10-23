@@ -1,0 +1,37 @@
+Text,Image URL,Tags,Posting Time
+"pirouline.com: 74. The gap: framing.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+Lesson: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Clickjacking #HTTPHeaders #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg","","2026-10-24 15:45"
+"postobon.com: 49. The gap: form labels.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 25 form controls have no label.
+
+Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Forms #A11y #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/02-u-postobon-com.jpg","","2026-10-25 12:45"
+"monsterenergy.com: 71. The gap: link names.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.
+
+Lesson: Give every link text that says where it goes. An icon alone needs an aria-label.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #A11y #WebDev #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg","","2026-10-26 14:35"

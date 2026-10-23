@@ -1,0 +1,72 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step."
+ },
+ "clips": {
+  "u-pirouline-com": {
+   "lang": "es",
+   "strings": {
+    "title.0": "pirouline.com: 74.",
+    "title.1": "*The gap: framing.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.",
+    "action": "Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 22 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "pirouline.com · 50 pages analyzed · 22 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.\n\nLesson: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.\n\nOne automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-pirouline-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-pirouline-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#WebSecurity #Clickjacking #HTTPHeaders #QA #QAlab"
+   }
+  },
+  "u-postobon-com": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "postobon.com: 49.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But 25 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 22 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "postobon.com · 100 pages analyzed · 22 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But 25 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-postobon-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-postobon-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#Accessibility #Forms #A11y #QA #QAlab"
+   }
+  },
+  "u-monsterenergy-com": {
+   "lang": "de",
+   "strings": {
+    "title.0": "monsterenergy.com: 71.",
+    "title.1": "*The gap: link names.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.",
+    "action": "Give every link text that says where it goes. An icon alone needs an aria-label.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 22 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "monsterenergy.com · 77 pages analyzed · 22 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.\n\nLesson: Give every link text that says where it goes. An icon alone needs an aria-label.\n\nOne automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-monsterenergy-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#Accessibility #A11y #WebDev #QA #QAlab"
+   }
+  }
+ }
+}
