@@ -1416,9 +1416,13 @@
     };
     const picked = new Set(payload.frameworks || selectedFrameworks());
     const shown = (report.cases || []).filter((item) => (layer === "All" || item.layer === layer) && item.fw.some((fw) => picked.has(fw)));
-    document.getElementById("case-note").textContent = paid
+    const urgent = ["P1", "P2"].map((level) => shown.filter((item) => item.priority === level).length);
+    const ranked = shown.some((item) => item.priority)
+      ? " Ranked by risk: " + urgent[0] + " P1 and " + urgent[1] + " P2 come first, backed by what the review saw on " + (report.host || "the site") + "."
+      : "";
+    document.getElementById("case-note").textContent = (paid
       ? shown.length + " cases for the selected frameworks. The full wording is open because this copy is paid."
-      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The first sentence of each case stays visible. The rest stays blurred until the report is paid.";
+      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The first sentence of each case stays visible. The rest stays blurred until the report is paid.") + ranked;
     const extras = [];
     (report.cases || []).forEach((item) => {
       (item.also || []).forEach((name) => {
@@ -1438,7 +1442,9 @@
     document.getElementById("cases").innerHTML = shown.map((item) => {
       const extra = (item.also || []).filter(Boolean);
       const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
-      return '<article class="case"><div><span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + '</p><p class="muted fw-line">' + tools + "</p></article>";
+      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="Risk ' + esc(item.risk) + ' of 100">' + esc(item.priority) + "</span>" : "";
+      const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">Pages: ' + esc(item.pages.slice(0, 6).join(", ") + (item.pages.length > 6 ? " and " + (item.pages.length - 6) + " more" : "")) + "</p>" : "";
+      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
@@ -2132,7 +2138,7 @@
       azure: ["Work Item Type", "Title", "Test Step", "Step Action", "Step Expected", "Priority", "State", "Tags", "Automation scripts"],
       mantis: ["Summary", "Description", "Category", "Severity"]
     }[kind];
-    const rank = (item) => item.verdict === "fail" ? (item.severity === "critical" || item.severity === "high" ? 0 : 1) : item.verdict === "risk" ? (item.severity === "high" ? 1 : 2) : 2;
+    const rank = (item) => item.priority ? ({ P1: 0, P2: 1 }[item.priority] == null ? 2 : { P1: 0, P2: 1 }[item.priority]) : item.verdict === "fail" ? (item.severity === "critical" || item.severity === "high" ? 0 : 1) : item.verdict === "risk" ? (item.severity === "high" ? 1 : 2) : 2;
     const data = rows.map((row) => {
       const ref = sign.mark + " " + sign.sha256;
       const level = rank(row.item);
