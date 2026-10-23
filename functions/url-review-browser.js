@@ -534,11 +534,17 @@ async function settle(page) {
   try { await page.waitForNetworkIdle({ idleTime: 700, timeout: IDLE_MS }); } catch (error) { /* busy pages keep polling */ }
 }
 
-async function prepare(context, ua, rec, viewport) {
+async function prepare(context, ua, rec, viewport, acceptLanguage) {
   const page = await context.newPage();
   await page.setViewport(viewport);
   await page.setUserAgent(ua);
-  await page.setExtraHTTPHeaders({ "accept-language": "en-US,en;q=0.9" });
+  if (acceptLanguage) {
+    await page.setExtraHTTPHeaders({ "accept-language": acceptLanguage });
+    await page.evaluateOnNewDocument((lang) => {
+      Object.defineProperty(Navigator.prototype, "language", { get: () => lang });
+      Object.defineProperty(Navigator.prototype, "languages", { get: () => [lang] });
+    }, acceptLanguage);
+  }
   await page.evaluateOnNewDocument(() => { Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }); });
   await page.setRequestInterception(true);
   page.on("request", async (req) => {
@@ -1058,6 +1064,7 @@ async function browse(job, log, onStart) {
   const start = String((job && job.url) || "");
   if (!/^https:\/\//i.test(start) || blockedHost(start) || await privateAddress(new URL(start).hostname)) return { ok: false, error: "The start address was refused." };
   const extra = ((job && job.paths) || []).filter((url) => /^https:\/\//i.test(url) && !blockedHost(url)).slice(0, 2);
+  const acceptLanguage = /^[a-z]{2}$/.test(String((job && job.acceptLanguage) || "")) ? String(job.acceptLanguage) : "";
   const timing = {};
   let mark = Date.now();
   const lap = (name) => { const now = Date.now(); timing[name] = now - mark; mark = now; };
@@ -1078,7 +1085,7 @@ async function browse(job, log, onStart) {
     const visit = async () => {
       coldContext = await browser.createBrowserContext();
       rec = recorder(true, true);
-      page = await prepare(coldContext, ua, rec, { width: 1280, height: 800 });
+      page = await prepare(coldContext, ua, rec, { width: 1280, height: 800 }, acceptLanguage);
       try {
         const cdp = await page.createCDPSession();
         cdp.on("Network.requestWillBeSent", (event) => rec.wire(event.requestId, event.request.url));
@@ -1244,7 +1251,7 @@ async function browse(job, log, onStart) {
       say("Loading " + pathOf(start) + " on a 390×844 phone (Android, touch).");
       const phoneContext = await browser.createBrowserContext();
       const phoneUa = ua.replace(/\([^)]*\)/, "(Linux; Android 14; Pixel 8)").replace(/Safari\//, "Mobile Safari/");
-      const phone = await prepare(phoneContext, phoneUa, null, { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+      const phone = await prepare(phoneContext, phoneUa, null, { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 1 }, acceptLanguage);
       try {
         await open(phone, start);
         lap("phoneLoad");
@@ -1319,7 +1326,7 @@ async function browse(job, log, onStart) {
       say("Opening " + pathOf(url) + " for axe-core and the text comparison.");
       const context = await browser.createBrowserContext();
       const pageRec = recorder(true);
-      const other = await prepare(context, ua, pageRec, { width: 1280, height: 800 });
+      const other = await prepare(context, ua, pageRec, { width: 1280, height: 800 }, acceptLanguage);
       try {
         const got = await open(other, url);
         const seen = await rendered(other);

@@ -752,6 +752,7 @@
         .script-name .fw-logo { margin-right: 6px; vertical-align: -3px; }
         .fw-group-name { flex-basis: 100%; margin: 6px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
         .scope { border: 0; margin: 16px 0 0; padding: 0; }
+        #req-scope .scope:first-child { margin-top: 0; }
         .scope legend { font-weight: 650; padding: 0; }
         .scope-note { margin: 8px 0 0; }
         .alarm { margin: 16px 0; padding: 14px 16px 6px; border-radius: 18px; background: #14110c; color: #f7f3ea; border: 1px solid #c4a574; }
@@ -1305,19 +1306,38 @@
                 </div>
             </details>
             <details class="term-group req-group" id="req-cases" data-step="cases" style="--i: 3">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span class="tg-text"><b class="tg-title">Cases and scope</b><span class="tg-gist">Frameworks for the proposed cases, pages to analyze, and links deep.</span><span class="rg-meta" translate="no"></span></span><span class="tg-count" aria-hidden="true">4</span></summary>
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span class="tg-text"><b class="tg-title">Cases</b><span class="tg-gist">Frameworks the proposed cases are written for.</span><span class="rg-meta" translate="no"></span></span><span class="tg-count" aria-hidden="true">4</span></summary>
                 <div class="rg-body">
                     <label>Proposed cases for</label>
                     <div class="fws" id="fw-picker"></div>
                     <p class="field-error" id="frameworks-error"></p>
+                </div>
+            </details>
+            <details class="term-group req-group" id="req-scope" data-step="scope" open style="--i: 4">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l4 4v12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v4h4"/><path d="M4 7v13a1 1 0 0 0 1 1h11"/></svg><span class="tg-text"><b class="tg-title">Pages to review</b><span class="tg-gist">How many pages to open, how deep, in which language, and whether to stay on this path.</span><span class="rg-meta" translate="no"></span></span><span class="tg-count" aria-hidden="true">5</span></summary>
+                <div class="rg-body">
                     <fieldset class="scope" id="page-scope">
-                        <legend>Pages to analyze</legend>
+                        <legend>Pages</legend>
                         <div class="fws" id="page-picker"></div>
                     </fieldset>
                     <fieldset class="scope" id="depth-scope">
                         <legend>Links deep</legend>
                         <div class="fws" id="depth-picker"></div>
                     </fieldset>
+                    <fieldset class="scope" id="lang-scope">
+                        <legend>Language</legend>
+                        <div class="fws" id="lang-picker">
+                            <label><input type="radio" name="pageLang" value="" checked disabled> Site default</label>
+                            <label><input type="radio" name="pageLang" value="en" disabled> English</label>
+                            <label><input type="radio" name="pageLang" value="es" disabled> Spanish</label>
+                            <label><input type="radio" name="pageLang" value="pt" disabled> Portuguese</label>
+                            <label><input type="radio" name="pageLang" value="de" disabled> German</label>
+                            <label><input type="radio" name="pageLang" value="fr" disabled> French</label>
+                            <label><input type="radio" name="pageLang" value="it" disabled> Italian</label>
+                        </div>
+                    </fieldset>
+                    <label class="check" id="section-row"><input id="stay-section" name="section" type="checkbox" disabled> Stay in this section</label>
+                    <p class="scope-note muted" id="section-note">Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site.</p>
                     <p class="field-error" id="scope-error"></p>
                 </div>
             </details>
