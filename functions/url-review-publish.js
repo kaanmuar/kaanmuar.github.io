@@ -105,7 +105,7 @@ function selectPublishable(records, unlisted) {
   }
   const reports = [...byHost.values()]
     .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
-    .map((r) => ({ createdAt: r.createdAt, report: publicReport(r.report) }));
+    .map((r) => ({ createdAt: r.createdAt, source: r.source === "sweep" ? "sweep" : "request", report: publicReport(r.report) }));
   return { reports, held };
 }
 

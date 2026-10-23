@@ -1,4 +1,4 @@
-/* Requested reviews: one post per user review that went public that day.
+/* Requested reviews and country-sweep sites: one post per review that went public that day.
    The batch comes from scripts/auto-live-reports.js (previews/auto-live-reports/batch.json, or
    AUTO_BATCH). Copy is that script's template; each post links to the site's own Live Report.
    Posts carry no prices, no personal name, and nothing about who asked for the review. */
@@ -12,7 +12,8 @@ const FILE = process.env.AUTO_BATCH || path.resolve(__dirname, "../../previews/a
 const AREAS = [["SEO", "SEO"], ["GEO", "GEO"], ["Analytics", "Analytics"], ["Security", "Security"], ["Accessibility", "A11y"], ["Performance", "Speed"]];
 
 const CATS = {
-  Requested: { label: "Real run · requested", color: "#f2b37a" }
+  Requested: { label: "Real run · requested", color: "#f2b37a", counter: "Requested review", series: "Requested reviews" },
+  National: { label: "Real run · national", color: "#8fc1e3", counter: "Country sweep", series: "Country sweep" }
 };
 
 const RUNS = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, "utf8")) : [];
@@ -29,7 +30,7 @@ const TIPS = RUNS.map((run) => {
     body: fill(run.body),
     action: fill(run.action),
     cat: run.scope,
-    counter: "Requested review",
+    counter: (CATS[run.scope] || CATS.Requested).counter,
     actionLabel: "Lesson",
     footRight: "Analyzed on " + analyzed,
     analyzed,
@@ -43,7 +44,8 @@ const TIPS = RUNS.map((run) => {
 });
 
 function link(platform, run) {
-  return SITE + "/qa-review.html?live=" + run.id + "&utm_source=" + platform + "&utm_medium=social&utm_campaign=requested-reviews&utm_content=" + run.id;
+  const campaign = run.scope === "National" ? "country-sweep" : "requested-reviews";
+  return SITE + "/qa-review.html?live=" + run.id + "&utm_source=" + platform + "&utm_medium=social&utm_campaign=" + campaign + "&utm_content=" + run.id;
 }
 
 function plainTitle(run) { return run.title.join(" ").replace(/\*/g, "").replace(/\s+/g, " ").trim(); }
@@ -51,7 +53,8 @@ function hashtags(run, n) { return run.tags.slice(0, n).map((t) => "#" + t).join
 
 function captions(run) {
   const head = plainTitle(run);
-  const fair = "One automated analysis of public pages on " + run.analyzed + ", requested through QA-lab URL Review. A starting point, not a verdict.";
+  const how = run.scope === "National" ? ", one of the most visited sites in its country, from QA-lab URL Review's country sweep." : ", requested through QA-lab URL Review.";
+  const fair = "One automated analysis of public pages on " + run.analyzed + how + " A starting point, not a verdict.";
   const own = "Review your own site: " + OWN;
   return {
     linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + link("linkedin", run), "", own, "", hashtags(run, 3) + " #QA " + BRAND].join("\n"),
@@ -60,7 +63,7 @@ function captions(run) {
     facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run), "", own, "", BRAND].join("\n"),
     tiktok: head + " " + run.action + " " + own + " " + hashtags(run, 3) + " #QA #techtok " + BRAND,
     youtubeTitle: (head + " #Shorts").slice(0, 100),
-    youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Full report: " + link("youtube", run), "", own, "", "Requested reviews · QA-lab URL Review", "", hashtags(run, 3) + " #QA " + BRAND].join("\n")
+    youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Full report: " + link("youtube", run), "", own, "", (CATS[run.scope] || CATS.Requested).series + " · QA-lab URL Review", "", hashtags(run, 3) + " #QA " + BRAND].join("\n")
   };
 }
 

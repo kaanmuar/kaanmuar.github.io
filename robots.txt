@@ -10,6 +10,7 @@ Disallow: /functions/
 Disallow: /scripts/
 Disallow: /desk-host/
 Disallow: /media/social-posts/
+Disallow: /assets/sweep/
 
 Sitemap: https://carlosandmunoz.com/sitemap.xml
 

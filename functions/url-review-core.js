@@ -2254,8 +2254,8 @@ async function reviewTarget(rawUrl, hooks) {
     throw error;
   }
   const origin = new URL(first.url);
-  note("Searching for public write-ups about " + origin.hostname + " in the background.");
-  const mentionsPromise = lookupMentions(origin.hostname);
+  if (controls.mentions !== false) note("Searching for public write-ups about " + origin.hostname + " in the background.");
+  const mentionsPromise = controls.mentions === false ? Promise.resolve([]) : lookupMentions(origin.hostname);
   let robots = [];
   let robotsText = "";
   let robotsNote = "robots.txt was not read.";
