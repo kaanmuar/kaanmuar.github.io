@@ -53,6 +53,16 @@ test("the daily tally caps on done and failed, keeps two weeks, and sums for the
   assert.deepEqual(sweep.totals(state, "2026-11-15"), { done: 6, failed: 0, skipped: 0 });
 });
 
+test("a sweep intake builds a stored record with no undefined field", () => {
+  const value = sweep.intake({ host: "www.rionegro.com.ar", cc: "ar", month: "202609", rank: 3 });
+  const report = { id: "r1", host: "www.rionegro.com.ar", status: "complete", limits: { pagesRead: 4 } };
+  const record = core.intakeRecord(value, report, { country: "AR" });
+  assert.equal(record.requestedUrl, "https://www.rionegro.com.ar/");
+  assert.equal(record.lang, "es");
+  assert.equal(record.email, "");
+  assert.deepEqual(Object.keys(record).filter((key) => record[key] === undefined), []);
+});
+
 test("site language follows the country", () => {
   assert.equal(sweep.langOf("CO"), "es");
   assert.equal(sweep.langOf("br"), "pt");
