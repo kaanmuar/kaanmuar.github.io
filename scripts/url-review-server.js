@@ -830,6 +830,7 @@ const server = http.createServer(async (req, res) => {
     const record = core.intakeRecord(intake.value, report, {
       ip: identity.ip,
       deviceId,
+      creditId: decision.consumeId || "",
       userAgent: req.headers["user-agent"],
       acceptLanguage: req.headers["accept-language"],
       country: "",
@@ -841,7 +842,7 @@ const server = http.createServer(async (req, res) => {
     const history = prior ? core.compareRuns(prior.report, report) : null;
     if (history) report.history = history;
     writeRecord(record);
-    line(res, { type: "done", report, frameworks: record.frameworks, paid: false, priceUsd: record.priceUsd });
+    line(res, { type: "done", report, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
     res.end();
   } catch (error) {
     noteReview("failed", {
