@@ -1,5 +1,6 @@
 const net = require('net');
 const { spawn } = require('child_process');
+const { assertStaticServer } = require('../../scripts/static-server-check');
 
 const PORT = Number(process.env.TEST_PORT || 8765);
 
@@ -14,7 +15,7 @@ function portOpen(port) {
 }
 
 async function ensureServer() {
-  if (await portOpen(PORT)) return;
+  if (await portOpen(PORT)) return assertStaticServer(PORT);
   const child = spawn('python3', [require('path').join(__dirname, '..', '..', 'scripts', 'static-server.py'), String(PORT)], {
     cwd: require('path').join(__dirname, '..', '..'),
     stdio: 'ignore',
