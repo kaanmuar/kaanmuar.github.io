@@ -531,7 +531,7 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #case-note, #alarm-note, #tool-note";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-pick, #case-note, #alarm-note, #tool-note";
 
   function applyCopyMode(paid) {
     document.body.classList.toggle("preview-copy", !paid);
@@ -1144,6 +1144,102 @@
     closeDashboard();
     // requestSubmit would stop on the empty required address of a report opened from a link.
     reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
+  }
+
+  // Natural competitors (functions/url-review-rivals.js): the reader picks any or many, and each one with
+  // a public review is set next to this report, in full once it is paid and under the frost before.
+  const rivals = { id: "", data: null, picked: new Set(), open: false };
+
+  function paintRivals(report, sample) {
+    const box = document.getElementById("rivals");
+    if (!box) return;
+    rivals.id = report && !sample && report.status !== "stopped" && report.insights ? report.id : "";
+    rivals.data = null;
+    rivals.picked.clear();
+    box.hidden = !rivals.id;
+    if (!rivals.id) return;
+    box.innerHTML = rivalsHead(report) + '<p class="meta-line" role="status">' + esc(cc.t("rivalsLooking")) + "</p>";
+    const asked = rivals.id;
+    fetch(endpoint() + "/review/rivals", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: asked }))
+    })
+      .then((res) => res.json().then((body) => { if (!res.ok) throw new Error(body.error || "unavailable"); return body; }))
+      .then((body) => {
+        if (rivals.id !== asked) return;
+        rivals.data = body.rivals || { list: [] };
+        rivals.data.list.filter((row) => row.ready).forEach((row) => rivals.picked.add(row.host));
+        drawRivals(report);
+      })
+      .catch(() => { if (rivals.id === asked) box.hidden = true; });
+  }
+
+  function rivalsHead(report) {
+    return '<h3 class="cmp-h">' + esc(cc.t("rivalsTitle")) + '</h3><p class="meta-line">' + cc.t("rivalsIntro", { site: strong(report.host) }) + "</p>";
+  }
+
+  function drawRivals(report) {
+    const box = document.getElementById("rivals");
+    const list = (rivals.data && rivals.data.list) || [];
+    if (!list.length) {
+      box.innerHTML = rivalsHead(report) + '<p class="muted">' + esc(cc.t("rivalsNone")) + "</p>";
+      return;
+    }
+    const picked = list.filter((row) => rivals.picked.has(row.host));
+    const options = list.map((row) => '<label class="rival-option"><input type="checkbox" value="' + esc(row.host) + '"' + (rivals.picked.has(row.host) ? " checked" : "") + '> <span translate="no">' + esc(row.host) + "</span>" +
+      (row.rank ? ' <small class="muted">#' + row.rank.toLocaleString(cc.lang) + "</small>" : "") +
+      (row.ready ? "" : ' <small class="muted">' + esc(cc.t("rivalsNotYet")) + "</small>") + "</label>").join("");
+    box.innerHTML = rivalsHead(report) +
+      '<details class="rivals-pick"' + (rivals.open ? " open" : "") + '><summary>' + esc(picked.length ? cc.t("rivalsPick", { n: picked.length }) : cc.t("rivalsChoose")) + "</summary>" +
+      '<div class="rivals-options" role="group" aria-label="' + esc(cc.t("rivalsChoose")) + '">' + options + "</div></details>" +
+      (picked.length ? rivalsTable(report, picked, !!rivals.data.paid) : '<p class="muted">' + esc(cc.t("rivalsPickOne")) + "</p>");
+    box.querySelector(".rivals-pick").addEventListener("toggle", (event) => { rivals.open = event.target.open; });
+    box.querySelectorAll(".rivals-options input").forEach((input) => input.addEventListener("change", () => {
+      if (input.checked) rivals.picked.add(input.value);
+      else rivals.picked.delete(input.value);
+      drawRivals(report);
+    }));
+    box.querySelectorAll("[data-rival-full]").forEach((button) => button.addEventListener("click", () => {
+      const row = list.find((item) => item.host === button.getAttribute("data-rival-full"));
+      if (!row || !row.compare) return;
+      paintCompare(Object.assign({}, report, { compare: row.compare }), false);
+      document.getElementById("compare-result").scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+    box.querySelectorAll("[data-rival-run]").forEach((button) => button.addEventListener("click", () => {
+      document.getElementById("compare-url").value = button.getAttribute("data-rival-run");
+      startCompare();
+    }));
+  }
+
+  // One column per site. On a preview the competitors' cells hold placeholders under the frost:
+  // the server sends no competitor score until the report is paid.
+  function rivalsTable(report, picked, paid) {
+    const score = report.insights.score || {};
+    const ownArea = (name) => { const area = (score.areas || {})[name]; return area && typeof area.score === "number" ? area.score : null; };
+    const cell = (value) => value == null ? '<td class="muted">–</td>' : '<td><b style="color:' + scoreColor(value) + '">' + value + "</b></td>";
+    const frost = '<td class="rival-frost" aria-hidden="true">00</td>';
+    const rivalCell = (row, read) => !paid ? frost : row.compare ? read(row.compare) : '<td class="muted">–</td>';
+    const kpi = (cmp, key) => (cmp.kpis || []).find((item) => item.key === key) || {};
+    const areaOf = (cmp, name) => (cmp.areas || []).find((item) => item.area === name) || {};
+    const plain = (value) => value == null ? '<td class="muted">–</td>' : "<td>" + esc(String(value)) + "</td>";
+    const rows = [
+      [cc.t("overall"), cell(score.overall), (row) => rivalCell(row, (cmp) => cell(cmp.overall.rival))]
+    ].concat(["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"].map((name) =>
+      [cc.area(name), cell(ownArea(name)), (row) => rivalCell(row, (cmp) => cell(areaOf(cmp, name).rival))]
+    )).concat([
+      [cc.t("rivalsOpen"), plain(score.totals ? (score.totals.fail || 0) + (score.totals.risk || 0) : null), (row) => rivalCell(row, (cmp) => plain(kpi(cmp, "open").rival))],
+      [cc.t("rivalsWon"), '<td class="muted">–</td>', (row) => rivalCell(row, (cmp) => plain(cmp.dominance ? cmp.dominance.own + "–" + cmp.dominance.rival : null))],
+      [cc.t("rivalsRank"), plain(null), (row) => plain(row.rank ? "#" + row.rank.toLocaleString(cc.lang) : null)]
+    ]);
+    const actions = paid ? "<tr><td></td><td></td>" + picked.map((row) => "<td>" + (row.compare
+      ? '<button class="btn btn-ghost" type="button" data-rival-full="' + esc(row.host) + '">' + esc(cc.t("rivalsFull")) + "</button>"
+      : '<button class="btn btn-ghost" type="button" data-rival-run="' + esc(row.host) + '">' + esc(cc.t("rivalsRun")) + "</button>") + "</td>").join("") + "</tr>" : "";
+    return '<div class="compare-scroll' + (paid ? "" : " rivals-locked") + '"><table class="compare-table rivals-table"><thead><tr><th scope="col">' + esc(cc.t("rivalsMetric")) + '</th><th scope="col" translate="no">' + esc(report.host) + "</th>" +
+      picked.map((row) => '<th scope="col" translate="no">' + esc(row.host) + "</th>").join("") + "</tr></thead><tbody>" +
+      rows.map(([label, own, rival]) => '<tr><th scope="row">' + esc(label) + "</th>" + own + picked.map(rival).join("") + "</tr>").join("") + actions + "</tbody></table></div>" +
+      (paid ? "" : '<p class="meta-line">' + esc(cc.t("rivalsLocked")) + "</p>");
   }
 
   function showComparing(compare) {
@@ -1805,6 +1901,7 @@
     paintVisuals(report, paid);
     paintInsights(report, paid);
     paintCompare(report, sample);
+    paintRivals(report, sample);
     document.getElementById("report-statement").textContent = "";
     const counts = report.counts || { pages: 0, technologies: 0, cases: 0, byLayer: {} };
     const score = report.insights && report.insights.score;
