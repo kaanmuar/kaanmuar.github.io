@@ -123,6 +123,8 @@ const MAX_PAGES = 100;
 const MAX_DEPTH = 5;
 const MAX_BYTES = 2000000;
 const PAGE_TIMEOUT_MS = 8000;
+// Still "took too long", so the start page is tried in headless Chrome before the review gives up.
+const UNREACHABLE = "The page took too long: the site accepted no connection in " + PAGE_TIMEOUT_MS / 1000 + " s.";
 // A server that sends its certificate without the intermediate opens in browsers, which fetch the intermediate
 // from the certificate's AIA address. Node does not, so the review fetches it once per host and verifies again.
 const INTERMEDIATES = new Map();
@@ -921,7 +923,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
     let keepArrived = null;
     const slow = () => {
       if (!settled && keepArrived && keepArrived()) return;
-      giveUp(new Error("The page took too long."));
+      giveUp(new Error(req.socket && req.socket.connecting ? UNREACHABLE : "The page took too long."));
     };
     const req = lib.request({
       protocol: target.protocol,
@@ -2383,6 +2385,32 @@ async function plainHttp(hostname, halt) {
 }
 
 // The failure diagnosis re-reads a start page the way the review does and keeps every hop, the size and any bot check.
+// Tells a host that accepts no connection (down, or dropping the review's address) from one that accepts and then never answers.
+function tcpOpen(address, port, ms) {
+  const started = Date.now();
+  return new Promise((resolve) => {
+    const socket = net.connect({ host: address, port: port || 443 });
+    const done = (row) => {
+      socket.destroy();
+      resolve(Object.assign(row, { ms: Date.now() - started }));
+    };
+    socket.setTimeout(ms || 5000, () => done({ open: false, error: "no answer in " + Math.round((ms || 5000) / 1000) + " s" }));
+    socket.once("connect", () => done({ open: true }));
+    socket.once("error", (error) => done({ open: false, error: clean(error.code || error.message || "connection failed", 40) }));
+  });
+}
+
+// The same address the plain read was pinned to; `open` is null when the host could not be checked at all.
+async function tcpCheck(raw, ms) {
+  try {
+    const target = normalizeUrl(raw);
+    const address = await assertPublic(target.hostname);
+    return Object.assign({ address }, await tcpOpen(address, Number(target.port) || 443, ms));
+  } catch (error) {
+    return { open: null, error: clean((error && error.message) || "not checked", 80), ms: 0 };
+  }
+}
+
 async function probeRead(raw) {
   const started = Date.now();
   const hops = [];
@@ -2570,7 +2598,7 @@ async function reviewTarget(rawUrl, hooks) {
       return stoppedReport(rawUrl, lines, null, chosen);
     }
     if (!/took too long/.test((error && error.message) || "") || typeof controls.browse !== "function") throw error;
-    slowFirst = true;
+    slowFirst = error.message === UNREACHABLE ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   if (first.cert && first.cert.missingIntermediate) {
@@ -2593,7 +2621,9 @@ async function reviewTarget(rawUrl, hooks) {
   const browserLog = (text) => note("Browser: " + text);
   const refused = slowFirst || (first.status >= 400 && first.status < 500) || !!firstChallenge;
   if (refused && typeof controls.browse === "function") {
-    note(slowFirst
+    note(slowFirst === "unreachable"
+      ? "The site accepted no connection to the plain request in " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
+      : slowFirst
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
     startSpeed(first.url);
@@ -2611,7 +2641,7 @@ async function reviewTarget(rawUrl, hooks) {
       const guarded = (code) => [401, 403, 429].includes(code);
       const where = slowFirst ? "in headless Chrome, after the plain request took too long" : "in the plain request and in headless Chrome";
       const error = new Error(slowFirst && !viewChallenge && (!browsed || !browsed.ok || !(status >= 400))
-        ? "The page took too long in the plain request, and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
+        ? (slowFirst === "unreachable" ? "The site accepted no connection to the plain request" : "The page took too long in the plain request") + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
         : !browsed || !browsed.ok
         ? (firstChallenge || guarded(first.status) ? "The site's bot protection refused the plain request" : "The URL returned status " + first.status + " to the plain request") +
           (firstChallenge || guarded(first.status) ? " (status " + first.status + ")" : "") + ", and headless Chrome did not finish (" + ((browsed && browsed.error) || "no answer") + ")."
@@ -3815,6 +3845,8 @@ module.exports = {
   dnsFacts,
   plainHttp,
   probeRead,
+  tcpOpen,
+  tcpCheck,
   readSitemap,
   sitemapPaths,
   sitePaths,

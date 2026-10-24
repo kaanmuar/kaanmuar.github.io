@@ -16,7 +16,10 @@ const FIXES = [
   { cause: "timeout", at: "2026-10-23T19:50:00Z", ref: "#582", label: "A start page past 8 s keeps the part that arrived, or is read in headless Chrome" },
   { cause: "save", at: "2026-10-23T23:30:00Z", ref: "#640", label: "A finished report with an empty optional field is saved" },
   { cause: "tls", at: "2026-10-24T12:13:00Z", ref: "#736", label: "A server that leaves out its intermediate certificate is read with the intermediate from its AIA address" },
-  { cause: "timeout", at: "2026-10-24T12:18:01Z", ref: "#737", label: "A page whose load event stalls after its document arrived is read in headless Chrome as it stands" }
+  { cause: "timeout", at: "2026-10-24T12:18:01Z", ref: "#737", label: "A page whose load event stalls after its document arrived is read in headless Chrome as it stands" },
+  { cause: "timeout", at: "2026-10-24T19:30:00Z", ref: "#894", label: "A host that accepts no connection is named as down, and one that cuts off headless Chrome too is the site's own state" },
+  { cause: "status", at: "2026-10-24T19:30:00Z", ref: "#894", label: "An error status that headless Chrome gets too is the site's own answer, kept on the desk without a bug" },
+  { cause: "bot-protection", at: "2026-10-24T19:30:00Z", ref: "#894", label: "A bot wall that refuses plain Chrome too is the site's own answer, kept on the desk without a bug" }
 ];
 // The review form's default when a failure kept no frameworks (one taken from an alert).
 const RERUN_FRAMEWORKS = ["Playwright"];
@@ -35,6 +38,7 @@ const CAUSES = [
   ["status", "The site answered with an error status", /returned status \d+/i],
   ["not-html", "The address is not an HTML page", /did not return an HTML page/i],
   ["too-large", "The page is larger than the review limit", /larger than the review limit/i],
+  ["down", "The site accepted no connection", /accepted no connection/i],
   ["timeout", "The site took too long", /took too long|timed? ?out|ETIMEDOUT|aborted/i],
   ["tls", "The site's certificate or TLS failed", /certificate|CERT_|SSL|TLS|self[- ]signed|EPROTO/i],
   ["connection", "The connection to the site failed", /ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|socket hang up/i]
@@ -43,8 +47,14 @@ const CAUSES = [
 const READABLE = {
   readable: "The plain read gets the page now",
   "browser-read": "The plain read is refused, and headless Chrome reads the page",
-  "browser-untagged": "The plain read and tagged Chrome are refused, and plain Chrome reads the page"
+  "browser-untagged": "The plain read and tagged Chrome are refused, and plain Chrome reads the page",
+  "browser-unread": "The plain read fails, and headless Chrome reads the page"
 };
+
+// Chrome reached the host, and the host cut the connection or never answered it (not Chrome's own navigation timeout).
+const HOST_BROKE = /net::ERR_(?:CONNECTION_(?:RESET|CLOSED|REFUSED|TIMED_OUT)|HTTP2_PROTOCOL_ERROR|EMPTY_RESPONSE|TIMED_OUT|ADDRESS_UNREACHABLE)\b/;
+// The review's own error when both the plain read and headless Chrome were refused, or when Chrome too was cut off.
+const SITE_REFUSAL = new RegExp(", in the plain (?:request|read) and in headless Chrome\\.|, in headless Chrome, after the plain request took too long\\.|could not open it either \\(" + HOST_BROKE.source);
 
 function causeOf(message) {
   const text = String(message || "");
@@ -141,10 +151,7 @@ function stateOf(probe) {
   if (run.dns && run.dns.error) return { id: "dns", label: "The host name does not resolve (" + run.dns.error + ")" };
   const plain = run.plain || {};
   if (plain.httpRedirect) return { id: "http-redirect", label: "The site redirects to " + plain.httpRedirect };
-  if (plain.error) {
-    const cause = causeOf(plain.error + " " + (plain.code || ""));
-    return { id: cause.id, label: "The plain read fails: " + plain.error };
-  }
+  if (plain.error) return unreadState(run, plain);
   const refused = (plain.status >= 400 && plain.status < 500) || !!plain.challenge;
   if (!refused) {
     if (plain.status >= 500) return { id: "status", status: plain.status, label: "The site answers status " + plain.status };
@@ -152,16 +159,53 @@ function stateOf(probe) {
     return { id: "readable", label: READABLE.readable + " (status " + plain.status + ")" };
   }
   const browser = run.browser;
-  const guarded = (status) => [401, 403, 429].includes(status);
   const refusal = "The plain read is refused (status " + plain.status + (plain.challenge ? ", " + plain.challenge : "") + ")";
   if (!browser) return { id: plain.challenge || guarded(plain.status) ? "bot-protection" : "status", status: plain.status, label: refusal + "; headless Chrome was not tried" };
   if (!browser.ok) return { id: "browser", label: refusal + ", and headless Chrome did not finish (" + (browser.error || "no answer") + ")" };
-  if (browser.docStatus >= 400 || browser.challenge) {
-    const bot = !!(plain.challenge || browser.challenge) || guarded(browser.docStatus);
-    return { id: bot ? "bot-protection" : "status", status: browser.docStatus, label: refusal + ", and headless Chrome is refused too (status " + browser.docStatus + (browser.challenge ? ", " + browser.challenge : "") + ")" };
-  }
+  if (browser.docStatus >= 400 || browser.challenge) return chromeRefused(browser, !!plain.challenge, refusal + ", and headless Chrome is refused too");
   const id = browser.untagged ? "browser-untagged" : "browser-read";
   return { id, label: READABLE[id] + " (status " + (browser.docStatus || browser.status) + ")" };
+}
+
+const guarded = (status) => [401, 403, 429].includes(status);
+
+// The site's own answer to a real browser: a bot wall or an error page. `site` keeps it out of the failure bugs.
+function chromeRefused(browser, challenged, lead) {
+  const bot = challenged || !!browser.challenge || guarded(browser.docStatus);
+  return { id: bot ? "bot-protection" : "status", status: browser.docStatus, site: true, label: lead + " (status " + browser.docStatus + (browser.challenge ? ", " + browser.challenge : "") + ")" };
+}
+
+function unreadState(run, plain) {
+  const cause = causeOf(plain.error + " " + (plain.code || ""));
+  const failed = "The plain read fails: " + plain.error;
+  const tcp = run.tcp;
+  const browser = run.browser;
+  if (tcp && tcp.open === false) return { id: "down", site: true, label: "The host accepts no connection on port 443 (" + (tcp.error || "no answer") + "), so the site looks down" };
+  if (!browser) return { id: cause.id, label: failed };
+  if (browser.ok && (browser.docStatus >= 400 || browser.challenge)) return chromeRefused(browser, false, failed + ", and headless Chrome is refused");
+  if (browser.ok) return { id: "browser-unread", label: READABLE["browser-unread"] + " (status " + (browser.docStatus || browser.status) + ")" };
+  if (HOST_BROKE.test(browser.error || "")) return { id: "no-answer", site: true, label: "The host accepts a connection, but it answers neither the plain read (" + plain.error + ") nor headless Chrome (" + browser.error + ")" };
+  return { id: cause.id, label: failed + ", and headless Chrome did not finish (" + (browser.error || "no answer") + ")" };
+}
+
+// The daily probe checks the connection after a plain read that timed out or lost its connection,
+// and opens headless Chrome for a refused plain read or for a host that accepts a connection.
+function probeNeedsTcp(plain) {
+  const read = plain || {};
+  return !!read.error && !read.httpRedirect && ["down", "timeout", "connection"].includes(causeOf(read.error + " " + (read.code || "")).id);
+}
+
+function probeNeedsBrowser(plain, tcp) {
+  const read = plain || {};
+  if (read.httpRedirect) return false;
+  if (!read.error) return (read.status >= 400 && read.status < 500) || !!read.challenge;
+  return probeNeedsTcp(read) && !!tcp && tcp.open === true;
+}
+
+// The address the plain read was on when it failed: the last redirect it followed, or the address it started from.
+function unreadUrl(plain, url) {
+  const last = ((plain && plain.hops) || []).slice(-1)[0];
+  try { return last && last.location ? new URL(last.location, last.url).toString() : String(url || ""); } catch (error) { return String(url || ""); }
 }
 
 function diagnose(failure, probe) {
@@ -175,6 +219,7 @@ function diagnose(failure, probe) {
     now: now.id,
     nowLabel: now.label,
     cleared,
+    site: !!now.site,
     rerun: cleared && cause.id !== "input",
     summary: cause.label + ". " + (cleared ? "Cleared: " : unchanged ? "Still: " : "Now: ") + now.label + "."
   };
@@ -309,8 +354,16 @@ function rerunMail(done) {
   };
 }
 
-// The address itself is refused, or its host does not resolve: the asker fixes these, not the review.
-const SITE_SIDE = ["input", "dns"];
+// The address itself is refused, its host does not resolve, or it accepts no connection: the asker or the site fixes these, not the review.
+const SITE_SIDE = ["input", "dns", "down"];
+
+// Also the site's own state: refused in the plain read and in headless Chrome, or cut off in both, by the run's error or by the probe.
+// They stay on the review desk and in the reports, without a bug.
+function siteSide(doc, cause) {
+  if (SITE_SIDE.includes(cause)) return true;
+  if (SITE_REFUSAL.test(String((doc.error && doc.error.message) || ""))) return true;
+  return !!(doc.diagnosis && doc.diagnosis.site);
+}
 const BUG_ROWS = 12;
 const BUG_LOG_LINES = 15;
 
@@ -331,7 +384,7 @@ const scrubbed = (text, max, hidden) => clip((hidden || []).reduce((out, word) =
 function bugLead(row, source) {
   const doc = row || {};
   const cause = (doc.cause && doc.cause.id) || "";
-  if (!cause || SITE_SIDE.includes(cause)) return null;
+  if (!cause || siteSide(doc, cause)) return null;
   if (source === "failure") {
     if (doc.kind !== "failed" || !doc.diagnosedAt || !doc.diagnosis || doc.diagnosis.cleared || doc.rerun || fixAfter(doc)) return null;
   } else if (doc.status !== "failed" || FIXES.some((fix) => fix.cause === cause && msOf(fix.at) > msOf(doc.at))) {
@@ -371,8 +424,10 @@ function probeLines(probe) {
       ? "fails (" + scrubbed(plain.error, 160) + (plain.code ? ", " + plain.code : "") + ")"
       : "status " + plain.status + ", " + (plain.contentType || "no content type") + (plain.server ? ", server " + plain.server : "") + (plain.challenge ? ", " + plain.challenge + " bot check" : ""))
     + (redirects ? ", after " + redirects + " redirect" + (redirects === 1 ? "" : "s") : ""));
+  const tcp = run.tcp;
+  if (tcp) out.push("TCP connection to port 443: " + (tcp.open ? "opens in " + tcp.ms + " ms" : tcp.open === false ? "does not open (" + (tcp.error || "no answer") + ")" : "not checked (" + (tcp.error || "no address") + ")"));
   const browser = run.browser;
-  if (!browser) out.push("Headless Chrome: not tried");
+  if (!browser) out.push("Headless Chrome: not tried" + (tcp && tcp.open === false ? ", as the host accepts no connection" : ""));
   else if (!browser.ok) out.push("Headless Chrome: did not finish (" + scrubbed(browser.error || "no answer", 160) + ")");
   else out.push("Headless Chrome (" + (browser.untagged ? "untagged" : "tagged") + "): status " + (browser.docStatus || browser.status) + (browser.challenge ? ", " + browser.challenge + " bot check" : "") + ", " + (browser.words || 0) + " words");
   return out;
@@ -578,7 +633,7 @@ function failureDetail(doc, rerun) {
 
 module.exports = {
   KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
-  causeOf, failureRecord, failureFromAlert, stateOf, diagnose,
+  causeOf, failureRecord, failureFromAlert, stateOf, diagnose, probeNeedsTcp, probeNeedsBrowser, unreadUrl,
   recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
   bugPlan, periodFailures, failureRow, failureDetail
 };
