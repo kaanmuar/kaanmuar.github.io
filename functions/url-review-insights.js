@@ -1172,9 +1172,9 @@ function analyze(input) {
   const homeTags = new Set(((face.analytics && face.analytics.tags) || []).map((tag) => tag.name));
   const untagged = homeTags.size ? read.filter((page) => !((page.inspect.analytics && page.inspect.analytics.tags) || []).length && !(page.inspect.analytics && page.inspect.analytics.loader)).map((page) => page.path) : [];
   if (!tags.length && consentTools.length) {
-    if (!browsed) add("Analytics", "person", "info", "an-none", "Tags are probably loaded by a script", consentTools.join(", ") + " manages consent, but none of 26 known analytics tools is written in the HTML. The browser run lists what loads after the page starts.", "", { cases: ["AN-01"] });
+    if (!browsed) add("Analytics", "person", "info", "an-none", "Tags are probably loaded by a script", consentTools.join(", ") + " manages consent, but none of 27 known analytics tools is written in the HTML. The browser run lists what loads after the page starts.", "", { cases: ["AN-01"] });
   } else if (!tags.length) {
-    add("Analytics", "risk", "low", "an-none", "No known analytics tag is in the HTML", "None of 26 known analytics tools appeared in the HTML of the pages analyzed. A tag injected later by a script would not show here.",
+    add("Analytics", "risk", "low", "an-none", "No known analytics tag is in the HTML", "None of 27 known analytics tools appeared in the HTML of the pages analyzed. A tag injected later by a script would not show here.",
       "If visits matter, add a measurement tool. A cookieless one such as Plausible or Cloudflare Web Analytics avoids a consent banner.", { effort: "hours", cases: ["AN-01"] });
   } else {
     add("Analytics", "pass", "info", "an-inventory", plural(tags.length, "measurement tool was", "measurement tools were") + " found", tags.map((tag) => tag.name + (tag.ids.length ? " (" + tag.ids.join(", ") + ")" : "")).join(", ") + ".", "");
