@@ -92,7 +92,7 @@ service cloud.firestore {
     match /site_events/{id} {
       allow get, list: if isOwner();
       allow update, delete: if false;
-      allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'screen', 'page', 'title', 'timezone', 'languages', 'createdAt'])
+      allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'query', 'screen', 'page', 'title', 'timezone', 'languages', 'createdAt'])
         && request.resource.data.site in ['cv', 'studio', 'lab', 'review']
         && (
           (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
@@ -118,6 +118,7 @@ service cloud.firestore {
         && request.resource.data.lang.size() <= 12
         && request.resource.data.referrerHost is string
         && request.resource.data.referrerHost.size() <= 80
+        && (!('query' in request.resource.data) || request.resource.data.query.matches('^[A-Za-z0-9=&%_.?+\\-]{0,120}$'))
         && (!('screen' in request.resource.data) || request.resource.data.screen in ['phone', 'desktop'])
         && (!('page' in request.resource.data) || (request.resource.data.page is string && request.resource.data.page.size() <= 80))
         && (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 120))
