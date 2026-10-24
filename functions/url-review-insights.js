@@ -200,6 +200,10 @@ function cspDirectives(value) {
   return map;
 }
 
+function framesGuarded(xfo) {
+  return !!xfo && !/allow-from/i.test(xfo);
+}
+
 function grade(score) {
   if (score >= 90) return "A";
   if (score >= 80) return "B";
@@ -1248,7 +1252,7 @@ function analyze(input) {
       path: page.path,
       hsts: !!h.hsts,
       csp: !!h.csp,
-      frame: !!(h.frame || /frame-ancestors/i.test(h.csp || "")),
+      frame: framesGuarded(h.frame) || /frame-ancestors/i.test(h.csp || ""),
       nosniff: !!h.nosniff,
       referrer: !!h.referrer,
       permissions: !!r.permissions,
@@ -1304,8 +1308,9 @@ function analyze(input) {
       "Replace 'unsafe-inline' with nonces or hashes, limit hosts, and add object-src 'none' and base-uri 'self'.", { count: issues.length, effort: "hours", cases: ["SEC-03"] });
     else add("Security", "pass", "info", "sec-csp", "The content security policy is strict", "No unsafe-inline, unsafe-eval, or wildcard was found in script-src.", "", { cases: ["SEC-03"] });
   }
-  if (!hdr.frame && !csp["frame-ancestors"]) add("Security", "risk", "medium", "sec-frame", "Other sites can frame the page", "Neither X-Frame-Options nor CSP frame-ancestors was sent, so the page can be framed for clickjacking." + spread("frame").text, "Send Content-Security-Policy: frame-ancestors 'self' (and X-Frame-Options: SAMEORIGIN for old browsers).", { pages: spread("frame").pages, effort: "minutes", cases: ["SEC-04"] });
-  else add("Security", "pass", "info", "sec-frame", "Framing is limited", (hdr.frame ? "X-Frame-Options: " + hdr.frame : "frame-ancestors " + csp["frame-ancestors"].join(" ")) + ".", "", { cases: ["SEC-04"] });
+  const allowFrom = hdr.frame && !framesGuarded(hdr.frame) ? "X-Frame-Options: " + hdr.frame + " was sent, but current browsers ignore ALLOW-FROM" : "";
+  if (!framesGuarded(hdr.frame) && !csp["frame-ancestors"]) add("Security", "risk", "medium", "sec-frame", "Other sites can frame the page", (allowFrom ? allowFrom + " and no CSP frame-ancestors was sent" : "Neither X-Frame-Options nor CSP frame-ancestors was sent") + ", so the page can be framed for clickjacking." + spread("frame").text, allowFrom ? "Send Content-Security-Policy: frame-ancestors 'self' plus each origin allowed to frame the page, in place of ALLOW-FROM." : "Send Content-Security-Policy: frame-ancestors 'self' (and X-Frame-Options: SAMEORIGIN for old browsers).", { pages: spread("frame").pages, effort: "minutes", cases: ["SEC-04"] });
+  else add("Security", "pass", "info", "sec-frame", "Framing is limited", (framesGuarded(hdr.frame) ? "X-Frame-Options: " + hdr.frame : "frame-ancestors " + csp["frame-ancestors"].join(" ")) + "." + (allowFrom ? " " + allowFrom + "." : ""), "", { cases: ["SEC-04"] });
   if (!hdr.nosniff) add("Security", "risk", "low", "sec-nosniff", "X-Content-Type-Options is not sent", "Browsers may guess a file's type and run it as script." + spread("nosniff").text, "Send X-Content-Type-Options: nosniff.", { pages: spread("nosniff").pages, effort: "minutes", cases: ["SEC-04"] });
   if (!hdr.referrer) add("Security", "risk", "low", "sec-referrer", "Referrer-Policy is not sent", "Browsers fall back to their default. An explicit policy keeps full URLs from leaking to other sites." + spread("referrer").text, "Send Referrer-Policy: strict-origin-when-cross-origin.", { pages: spread("referrer").pages, effort: "minutes", cases: ["SEC-05"] });
   if (!rawHeaders.permissions) add("Security", "risk", "low", "sec-permissions", "Permissions-Policy is not sent", "Embedded content can ask for the camera, microphone, or location." + spread("permissions").text, "Send Permissions-Policy: camera=(), microphone=(), geolocation=().", { pages: spread("permissions").pages, effort: "minutes", cases: ["SEC-08"] });
@@ -1529,7 +1534,7 @@ function analyze(input) {
       { label: "HTTPS redirect", state: httpCheck ? ({ pass: "pass", risk: "risk" }[(findings.find((item) => item.key === "sec-http") || {}).verdict] || "fail") : "unknown" },
       { label: "HSTS", state: hdr.hsts ? "pass" : "fail" },
       { label: "Content-Security-Policy", state: hdr.csp ? (findings.some((item) => item.key === "sec-csp" && item.verdict === "risk") ? "risk" : "pass") : "risk" },
-      { label: "Frame protection", state: hdr.frame || csp["frame-ancestors"] ? "pass" : "risk" },
+      { label: "Frame protection", state: framesGuarded(hdr.frame) || csp["frame-ancestors"] ? "pass" : "risk" },
       { label: "X-Content-Type-Options", state: hdr.nosniff ? "pass" : "risk" },
       { label: "Referrer-Policy", state: hdr.referrer ? "pass" : "risk" },
       { label: "Permissions-Policy", state: rawHeaders.permissions ? "pass" : "risk" },
@@ -1628,7 +1633,7 @@ function fixKit(ctx) {
     { name: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains", missing: !hdr.hsts },
     { name: "Content-Security-Policy-Report-Only", value: csp, missing: !hdr.csp },
     { name: "X-Content-Type-Options", value: "nosniff", missing: !hdr.nosniff },
-    { name: "X-Frame-Options", value: "SAMEORIGIN", missing: !hdr.frame },
+    { name: "X-Frame-Options", value: "SAMEORIGIN", missing: !framesGuarded(hdr.frame) },
     { name: "Referrer-Policy", value: "strict-origin-when-cross-origin", missing: !hdr.referrer },
     { name: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()", missing: !raw.permissions }
   ];

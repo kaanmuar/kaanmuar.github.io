@@ -650,7 +650,7 @@
       ["HSTS", !!headers.hsts],
       ["CSP", !!headers.csp],
       ["nosniff", !!headers.nosniff],
-      ["Frame policy", !!headers.frame],
+      ["Frame policy", (!!headers.frame && !/allow-from/i.test(headers.frame)) || /frame-ancestors/i.test(headers.csp || "")],
       ["Referrer", !!headers.referrer],
       ["Language", !!obs.lang],
       ["Viewport", !!sig.viewport]
