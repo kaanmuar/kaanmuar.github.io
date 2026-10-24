@@ -1,0 +1,46 @@
+Text,Image URL,Tags,Posting Time
+"🎃 The missing CSP: anything can crawl in.
+
+Without a Content-Security-Policy header, the browser runs any script that ends up in your page, including one an attacker injected.
+
+Exorcise it today: Check your response headers for Content-Security-Policy. Start in report-only mode, read the reports, then enforce it.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=missing-csp
+
+#Halloween #CyberSecurity #Vulnerability #QA #CSP #QAlab","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/01-missing-csp.jpg","","2026-10-27 11:00"
+"🎃 The zombie redirect chain: it keeps coming back.
+
+An old link hops from http to https, then to www, then to a trailing slash. Every hop costs a round trip, and crawlers can stop following a long chain before they reach the page.
+
+Exorcise it today: Follow your old links to their final address. Send each one there in a single redirect, and update the links you control.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=zombie-redirects
+
+#Halloween #AI #SoftwareTesting #QA #Redirects #QAlab","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/02-zombie-redirects.jpg","","2026-10-28 11:10"
+"🎃 The haunted 404: the page is gone, the server says 200.
+
+A missing page that answers 200 OK is a soft 404. Search engines can index the error page, and monitors that only read status codes never see the broken link.
+
+Exorcise it today: Open a made-up address on your site. It should answer 404 and offer a way back: a link home and a search box.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=haunted-404
+
+#Halloween #AI #SoftwareTesting #QA #Soft404 #QAlab","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/03-haunted-404.jpg","","2026-10-29 11:05"
+"🎃 The cursed alt text: IMG_2041.jpg says nothing.
+
+Screen readers read alt text aloud. A file name or the word image leaves the picture a mystery, and a long description on a decorative image wastes the listener's time.
+
+Exorcise it today: Go through the images on your top page. Describe the ones that inform, and give decorative ones an empty alt.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=cursed-alt
+
+#Halloween #DevOps #Accessibility #QA #AltText #QAlab","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/04-cursed-alt.jpg","","2026-10-30 11:35"
+"🎃 The poltergeist layout shift: the button moved by itself.
+
+Images without dimensions, late ads and swapped fonts push content down while people read and tap. Cumulative Layout Shift measures it, and 0.1 or less counts as good.
+
+Exorcise it today: Load your page on a slow connection and watch it settle. Give images a width and height, and reserve space for ads and embeds.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=poltergeist-cls
+
+#Halloween #WebPerformance #SoftwareTesting #QA #CLS #QAlab","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/05-poltergeist-cls.jpg","","2026-10-31 11:05"
