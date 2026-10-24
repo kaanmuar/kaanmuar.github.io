@@ -2,7 +2,7 @@
 # Runs gh with whichever account still has GraphQL budget. Board commands (gh project ..., or GraphQL that names
 # a ProjectV2) go first as the qa-lab-agents app, whose installation on the enterprise org carlosandmunoz-hq gets
 # 10,000 points an hour (scripts/gh-app-token.js). Then as kaanmuar, which every chat shares (5,000 an hour), then
-# as the bot. A rate-limited request is not carried out, so the retry is safe for mutations. Queries and board
+# as the bot. The app can't reach boards owned by a user, so those fall through to kaanmuar. A rate-limited request is not carried out, so the retry is safe for mutations. Queries and board
 # mutations can be counted in different buckets, so checking rate_limit first does not predict whether a call passes.
 #
 # The bot's classic token (scopes repo, project) is in the macOS Keychain:
@@ -39,8 +39,8 @@ for who in $order; do
 	[ -n "$token" ] || continue
 	status=0
 	GH_TOKEN="$token" gh "$@" >"$out" 2>"$err" || status=$?
-	[ "$status" -ne 0 ] && grep -qi "rate limit" "$out" "$err" || break
-	echo "gh-budget: $who is rate limited; trying the next account" >&2
+	[ "$status" -ne 0 ] && grep -qiE "rate limit|not accessible by integration" "$out" "$err" || break
+	echo "gh-budget: $who is rate limited or has no access; trying the next account" >&2
 done
 cat "$out"
 cat "$err" >&2
