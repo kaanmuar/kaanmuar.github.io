@@ -7,6 +7,7 @@ const dns = require("dns").promises;
 const http = require("http");
 const https = require("https");
 const net = require("net");
+const tls = require("tls");
 const zlib = require("zlib");
 const crypto = require("crypto");
 const { URL } = require("url");
@@ -122,6 +123,11 @@ const MAX_PAGES = 100;
 const MAX_DEPTH = 5;
 const MAX_BYTES = 2000000;
 const PAGE_TIMEOUT_MS = 8000;
+// A server that sends its certificate without the intermediate opens in browsers, which fetch the intermediate
+// from the certificate's AIA address. Node does not, so the review fetches it once per host and verifies again.
+const INTERMEDIATES = new Map();
+const ISSUER_MAX_BYTES = 20000;
+const ISSUER_TIMEOUT_MS = 5000;
 const TOTAL_MS = 170000;
 // A start page whose HTML lists fewer same-host links than this is crawled from its rendered links.
 const SHELL_LINKS = 3;
@@ -798,7 +804,96 @@ function decodeBody(buffer, encoding) {
   }
 }
 
-function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
+// The connection only reads the certificate the server sends; nothing is requested over it, and the
+// request that follows verifies the whole chain against the usual roots.
+function serverLeaf(hostname, pinned) {
+  return new Promise((resolve, reject) => {
+    const socket = tls.connect({ host: pinned, port: 443, servername: net.isIP(hostname) ? undefined : hostname, rejectUnauthorized: false, timeout: ISSUER_TIMEOUT_MS }, () => {
+      const peer = socket.getPeerCertificate();
+      socket.destroy();
+      if (!peer || !peer.raw) reject(new Error("The server sent no certificate."));
+      else resolve(new crypto.X509Certificate(peer.raw));
+    });
+    socket.on("timeout", () => socket.destroy(new Error("The certificate read took too long.")));
+    socket.on("error", reject);
+  });
+}
+
+async function issuerBytes(raw) {
+  const target = new URL(raw);
+  if (!/^https?:$/.test(target.protocol) || target.username || target.password || (target.port && !["80", "443"].includes(target.port))) throw new Error("The AIA address is not a plain public URL.");
+  const pinned = await assertPublic(target.hostname);
+  return new Promise((resolve, reject) => {
+    const lib = target.protocol === "https:" ? https : http;
+    const chunks = [];
+    let size = 0;
+    const req = lib.request({
+      protocol: target.protocol,
+      hostname: target.hostname,
+      port: target.port || (target.protocol === "http:" ? 80 : 443),
+      path: target.pathname + target.search,
+      method: "GET",
+      timeout: ISSUER_TIMEOUT_MS,
+      headers: { "user-agent": USER_AGENT, connection: "close" },
+      lookup: (hostname, options, callback) => {
+        if (typeof options === "function") {
+          callback = options;
+          options = {};
+        }
+        const family = net.isIP(pinned);
+        if (options && options.all) callback(null, [{ address: pinned, family }]);
+        else callback(null, pinned, family);
+      }
+    }, (res) => {
+      if (res.statusCode !== 200) {
+        req.destroy();
+        reject(new Error("The AIA address answered " + res.statusCode + "."));
+        return;
+      }
+      res.on("data", (chunk) => {
+        size += chunk.length;
+        if (size > ISSUER_MAX_BYTES) {
+          req.destroy();
+          reject(new Error("The AIA certificate is too large."));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      res.on("end", () => resolve(Buffer.concat(chunks)));
+      res.on("error", reject);
+    });
+    req.on("timeout", () => req.destroy(new Error("The AIA address took too long.")));
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+const commonName = (subject) => (String(subject || "").match(/^CN=(.+)$/m) || [])[1] || String(subject || "").split("\n")[0];
+
+async function missingIntermediate(hostname, pinned) {
+  const leaf = await serverLeaf(hostname, pinned);
+  const from = (String(leaf.infoAccess || "").match(/^CA Issuers - URI:(https?:\/\/\S+)$/m) || [])[1];
+  if (!from) return null;
+  const issuer = new crypto.X509Certificate(await issuerBytes(from));
+  if (!issuer.ca || !leaf.checkIssued(issuer) || !leaf.verify(issuer.publicKey)) return null;
+  return { pem: issuer.toString(), issuer: clean(commonName(issuer.subject), 120), from: clean(from, 200) };
+}
+
+async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
+  try {
+    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage);
+  } catch (error) {
+    if (!error || error.code !== "UNABLE_TO_VERIFY_LEAF_SIGNATURE" || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
+    const chain = await missingIntermediate(target.hostname, pinned).catch(() => null);
+    if (!chain) throw error;
+    if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
+    INTERMEDIATES.set(target.hostname, chain);
+    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage);
+  }
+}
+
+function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
+  const chain = target.protocol === "https:" ? INTERMEDIATES.get(target.hostname) : null;
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
     let settled = false;
@@ -834,6 +929,7 @@ function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
         accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
         connection: "close"
       }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
+      ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
       lookup: (hostname, options, callback) => {
         if (typeof options === "function") {
           callback = options;
@@ -852,6 +948,7 @@ function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
         const peer = res.socket && res.socket.getPeerCertificate ? res.socket.getPeerCertificate() : null;
         if (peer && peer.valid_to) cert = { validTo: peer.valid_to, issuer: clean((peer.issuer && (peer.issuer.O || peer.issuer.CN)) || "", 80) };
       } catch (error) { cert = null; }
+      if (chain) cert = Object.assign(cert || {}, { missingIntermediate: chain.issuer, intermediateFrom: chain.from });
       const encoding = res.headers["content-encoding"];
       // A start page still arriving at the deadline is kept once its body has begun.
       if (keepPartial) keepArrived = () => {
@@ -2377,13 +2474,14 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   utmUrl.searchParams.set("utm_campaign", "redirect-check");
   const missingPath = "/qa-lab-review-" + crypto.randomBytes(4).toString("hex") + "-not-found";
   let validTo = first.cert && first.cert.validTo;
+  const missingIntermediate = (first.cert && first.cert.missingIntermediate) || "";
   const tls = validTo && !isNaN(Date.parse(validTo))
-    ? { validTo: new Date(Date.parse(validTo)).toISOString().slice(0, 10), daysLeft: Math.floor((Date.parse(validTo) - Date.now()) / 86400000), issuer: first.cert.issuer || "" }
-    : null;
+    ? Object.assign({ validTo: new Date(Date.parse(validTo)).toISOString().slice(0, 10), daysLeft: Math.floor((Date.parse(validTo) - Date.now()) / 86400000), issuer: first.cert.issuer || "" }, missingIntermediate ? { missingIntermediate } : {})
+    : missingIntermediate ? { missingIntermediate } : null;
   const acceptLanguage = (lookups && lookups.acceptLanguage) || "";
   const sitemapJob = lookups && lookups.sitemap ? lookups.sitemap : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
   say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registrable(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
-  say(tls ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
+  say(tls && tls.validTo ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
   const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
@@ -2455,6 +2553,9 @@ async function reviewTarget(rawUrl, hooks) {
     if (!/took too long/.test((error && error.message) || "") || typeof controls.browse !== "function") throw error;
     slowFirst = true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
+  }
+  if (first.cert && first.cert.missingIntermediate) {
+    note("The server sent its certificate without the intermediate " + first.cert.missingIntermediate + ". Fetched it from " + first.cert.intermediateFrom + ", as browsers do, and verified the chain again.");
   }
   let firstChallenge = challengeOf(first.url, first.headers, first.body);
   let readInBrowser = null;
