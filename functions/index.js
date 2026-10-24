@@ -1389,6 +1389,30 @@ async function ensureLiveReportsBatch() {
 
 exports.ensureLiveReportsBatch = scheduled(withMail, "ensureLiveReportsBatch", () => ensureLiveReportsBatch());
 
+// The same for the Facebook queue: Cloud Scheduler starts it unless today's run (UTC) succeeded or is underway.
+const FACEBOOK_WORKFLOW = "facebook-page.yml";
+
+async function dispatchFacebookQueue() {
+  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  if (!token) {
+    console.log("Facebook queue: GITHUB_BUGS_TOKEN is not set, so the workflow was not started.");
+    return null;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const path = "/repos/" + BUG_REPO + "/actions/workflows/" + FACEBOOK_WORKFLOW;
+  const runs = (await githubGet(path + "/runs?per_page=20&created=%3E%3D" + today, token)).workflow_runs || [];
+  const ran = runs.find((run) => run.status !== "completed" || run.conclusion === "success");
+  if (ran) {
+    console.log("Facebook queue: run " + ran.html_url + " is " + (ran.conclusion || ran.status) + " today.");
+    return null;
+  }
+  await github(path + "/dispatches", { ref: "main" }, token);
+  console.log("Facebook queue: dispatched " + FACEBOOK_WORKFLOW + " (today's earlier runs: " + (runs.map((run) => run.event + " " + run.conclusion).join(", ") || "none") + ").");
+  return null;
+}
+
+exports.dispatchFacebookQueue = scheduled(withMail, "dispatchFacebookQueue", () => dispatchFacebookQueue());
+
 exports.exportFirestoreWeekly = scheduled(withMail, "exportFirestoreWeekly", async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
   const stamp = dateStamp(bogotaParts(new Date()));

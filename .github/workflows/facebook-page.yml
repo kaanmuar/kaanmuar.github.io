@@ -5,6 +5,8 @@ name: Facebook Page queue
 
 on:
   schedule:
+    # dispatchFacebookQueue (functions/index.js) starts the queue at 11:07 Bogotá, because GitHub starts this
+    # slot hours late. The slot is the backup; a second run the same day only finds the slots already queued.
     - cron: '7 16 * * *' # 11:07 Bogotá, clear of the Live Reports slots
   workflow_dispatch:
     inputs:
