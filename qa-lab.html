@@ -635,7 +635,9 @@
         </label>
         <div class="report-checks" id="report-checks">
             <label><input type="checkbox" id="opt-graphs" checked> Graphs</label>
+            <label><input type="checkbox" id="opt-details" checked> Run details</label>
             <label><input type="checkbox" id="opt-cases" checked> Case results</label>
+            <label><input type="checkbox" id="opt-steps" checked> Where, when and how</label>
             <label><input type="checkbox" id="opt-runners" checked> Runner comparison</label>
             <label><input type="checkbox" id="opt-history"> Selected history runs</label>
             <label><input type="checkbox" id="opt-analysis"> Comparison analysis</label>
@@ -643,6 +645,7 @@
         <iframe id="report-preview" class="report-preview notranslate" title="Report preview" sandbox="allow-same-origin"></iframe>
         <div class="history-actions">
             <button class="btn btn-ghost" type="button" id="report-options-close">Close</button>
+            <button class="btn btn-ghost" type="button" id="report-options-copy">Copy</button>
             <button class="btn btn-ghost" type="button" id="report-options-print">Print</button>
             <button class="btn btn-primary" type="button" id="report-options-download">Download</button>
         </div>
