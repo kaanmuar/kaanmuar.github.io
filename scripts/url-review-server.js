@@ -397,7 +397,7 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true, paidUntil: until, charged: false }, origin, deviceHint);
     return;
   }
-  if (req.method === "POST" && ["/account/runs", "/account/stop", "/account/export", "/account/delete"].indexOf(url.pathname) !== -1) {
+  if (req.method === "POST" && ["/account/runs", "/account/stop", "/account/export", "/account/delete", "/account/delete-runs"].indexOf(url.pathname) !== -1) {
     let accountBody = {};
     try { accountBody = await readBody(req); } catch (error) { accountBody = {}; }
     const signedIn = await auth.checkSession(signIns, Object.assign({}, accountBody, { touch: false }));
@@ -413,6 +413,25 @@ const server = http.createServer(async (req, res) => {
       const data = await accountData.exportAccount(signIns, signedIn.email);
       data.reviews = readStore().filter((row) => row.email === signedIn.email);
       sendJson(res, 200, data, origin, deviceHint);
+      return;
+    }
+    if (url.pathname === "/account/delete-runs") {
+      const ids = Array.isArray(accountBody.ids) ? accountBody.ids.slice(0, 200).map(String) : [];
+      if (!ids.length) {
+        sendJson(res, 400, { error: "Pick at least one review to delete." }, origin, deviceHint);
+        return;
+      }
+      const rows = readStore();
+      const local = auth.memoryStore();
+      for (const row of rows) await local.set("url_reviews", row.id, row);
+      const counts = await accountData.deleteRuns(local, signedIn.email, ids);
+      const kept = [];
+      for (const row of rows) {
+        const now = await local.get("url_reviews", row.id);
+        if (now) kept.push(Object.assign({ id: row.id }, now));
+      }
+      fs.writeFileSync(FILE, kept.map((row) => JSON.stringify(row) + "\n").join(""));
+      sendJson(res, 200, Object.assign({ ok: true }, counts), origin, deviceHint);
       return;
     }
     if (url.pathname === "/account/delete") {
@@ -815,6 +834,7 @@ const server = http.createServer(async (req, res) => {
     const report = await core.reviewTarget(intake.value.url, {
       log: (text) => line(res, { type: "log", text }),
       stopped: () => run.stopped,
+      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email },
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
@@ -826,6 +846,7 @@ const server = http.createServer(async (req, res) => {
     const record = core.intakeRecord(intake.value, report, {
       ip: identity.ip,
       deviceId,
+      creditId: decision.consumeId || "",
       userAgent: req.headers["user-agent"],
       acceptLanguage: req.headers["accept-language"],
       country: "",
@@ -837,7 +858,7 @@ const server = http.createServer(async (req, res) => {
     const history = prior ? core.compareRuns(prior.report, report) : null;
     if (history) report.history = history;
     writeRecord(record);
-    line(res, { type: "done", report, frameworks: record.frameworks, paid: false, priceUsd: record.priceUsd });
+    line(res, { type: "done", report, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
     res.end();
   } catch (error) {
     noteReview("failed", {

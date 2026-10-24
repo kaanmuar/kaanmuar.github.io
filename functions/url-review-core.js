@@ -14,6 +14,7 @@ const insights = require("./url-review-insights");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 const caseRank = require("./url-review-cases");
+const chatTalk = require("./url-review-chat-talk");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-10-22.2";
@@ -269,6 +270,13 @@ function registrable(hostname) {
 function mailboxMatchesHost(email, hostname) {
   const domain = String(email || "").split("@")[1] || "";
   return !!domain && registrable(domain) === registrable(hostname);
+}
+
+// "own" when the asker chose "I own this site" from a mailbox on the host's domain, else "".
+// Anything that talks to the site (the chat conversation) runs only with this proof, checked against the host finally reviewed.
+function ownerProof(asker, hostname) {
+  const src = asker || {};
+  return src.reasonCode === "own" && mailboxMatchesHost(src.email, hostname) ? "own" : "";
 }
 
 async function emailCanReceive(email) {
@@ -2498,6 +2506,16 @@ async function reviewTarget(rawUrl, hooks) {
       ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths, acceptLanguage }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
       : Promise.resolve(null);
   browserPromise.then((done) => showStart(done && done.ok ? done.start : null), () => showStart(null));
+  const talkAs = stopped ? "" : ownerProof(controls.asker, origin.hostname);
+  const talkScript = talkAs && typeof controls.browse === "function" ? chatTalk.script(acceptLanguage || homeInspect.lang) : null;
+  const published = talkScript ? chatTalk.facts() : null;
+  if (published) published.read(visibleText(first.body));
+  if (talkScript) note("The asker's mailbox is on " + registrable(origin.hostname) + ", so a separate browser holds a short scripted conversation with the site's chat, if it has one.");
+  let talkSettled = false;
+  const talkPromise = talkScript
+    ? Promise.resolve().then(() => controls.browse({ kind: "chat", proof: talkAs, url: first.url, acceptLanguage, turns: talkScript.turns }, (text) => note("Chat conversation: " + text))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+    : null;
+  if (talkPromise) talkPromise.then(() => { talkSettled = true; });
   if (!stopped) startSpeed(first.url);
   else speedPromise = speedPromise || Promise.resolve(null);
   let extrasSettled = false;
@@ -2593,6 +2611,7 @@ async function reviewTarget(rawUrl, hooks) {
           continue;
         }
         seen.add(child.url);
+        if (published && !challenge) published.read(visibleText(child.body));
         if (challenge) note(path + " answered with " + insights.botCheck(challenge) + ". It is not scored.");
         else note(path + " answered " + child.status + " in " + child.ms + " ms. " + (childInspect.links || []).length + " same-host links." +
           (child.slow ? " It was still arriving after " + PAGE_TIMEOUT_MS / 1000 + " s, so the part that had arrived was analyzed." : child.truncated ? " It is larger than 2 MB, so its first 2 MB were analyzed." : ""));
@@ -2656,6 +2675,12 @@ async function reviewTarget(rawUrl, hooks) {
     });
     note("Chat seen in the browser: " + chat.found.map((row) => row.name).join(", ") + ".");
   }
+  let talked = null;
+  if (talkPromise) {
+    if (!talkSettled) note("Waiting for the chat conversation to finish.");
+    talked = chatTalk.judge(await talkPromise, { proof: talkAs, lang: acceptLanguage || homeInspect.lang, facts: published, planted: talkScript.planted });
+    note("Chat conversation: " + talked.note);
+  } else if (chat) talked = { ran: false, status: "needs-proof", note: chatTalk.STATUS_NOTE["needs-proof"], turns: [], checks: [] };
   let cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "", chat, libraries: browser.libraries || [] }, browser.start.dom) : null);
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   note("Proposed " + cases.length + " test cases across " + Object.keys(caseRank.countLayers(cases)).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
@@ -2780,6 +2805,7 @@ async function reviewTarget(rawUrl, hooks) {
       ? "This review was stopped. The cases below use only the pages analyzed before the stop. None of them were executed."
       : "These cases are proposed from a public analysis. None of them were executed."
   };
+  if (talked) result.chatTalk = talked;
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
   return result;
 }
@@ -2829,7 +2855,9 @@ function intakeRecord(value, report, meta) {
     requestedUrl: value.url,
     deviceId: clean(meta.deviceId || value.deviceId, 80),
     status: report.status || "complete",
-    paid: false,
+    // The run credit this run consumed paid for it, so it opens this report and no other.
+    paid: !!clean(meta.creditId, 40),
+    creditId: clean(meta.creditId, 40),
     priceUsd: priceForRun({ frameworks: value.frameworks || [], pages: value.pages || INCLUDED_PAGES, depth: value.depth || INCLUDED_DEPTH, billing: "run" }).usd,
     ip: clean(meta.ip, 80),
     userAgent: clean(meta.userAgent, 300),
@@ -3535,6 +3563,7 @@ module.exports = {
   screenIntake,
   emailCanReceive,
   mailboxMatchesHost,
+  ownerProof,
   emailSyntax,
   registrable,
   ownerContacts,

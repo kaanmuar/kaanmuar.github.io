@@ -6,7 +6,7 @@
     "build:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --minify",
     "watch:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --watch",
     "test": "npm run test:review && npm run test:playwright && npm run test:cypress",
-    "test:review": "node --disable-warning=ExperimentalWarning --test tests/unit/url-review.test.js tests/unit/url-review-auth.test.js tests/unit/url-review-ask.test.js tests/unit/url-review-account-data.test.js tests/unit/site-glossary.test.js tests/unit/url-review-owner-notice.test.js tests/unit/url-review-sweep.test.js tests/unit/url-review-owner-replies.test.js tests/unit/social-tags.test.js tests/unit/url-review-open-source.test.js tests/unit/static-server-check.test.js",
+    "test:review": "node --disable-warning=ExperimentalWarning --test tests/unit/url-review.test.js tests/unit/url-review-auth.test.js tests/unit/url-review-ask.test.js tests/unit/url-review-account-data.test.js tests/unit/site-glossary.test.js tests/unit/url-review-owner-notice.test.js tests/unit/url-review-chat-talk.test.js tests/unit/url-review-sweep.test.js tests/unit/url-review-owner-replies.test.js tests/unit/social-tags.test.js tests/unit/url-review-open-source.test.js tests/unit/static-server-check.test.js",
     "test:full": "npm run test:playwright && npm run test:cypress && npm run test:robot",
     "test:cy": "cypress run",
     "test:cypress": "cypress run",

@@ -160,3 +160,38 @@ test("the desk page offers email and password before Google and asks for the aut
     assert.doesNotMatch(page, /This Google account cannot open/);
   }
 });
+
+test("deleting chosen runs drops them and what hangs off them, and nothing else", async () => {
+  const store = await seeded();
+  const counts = await accountData.deleteRuns(store, "Ana@Example.com", ["run1"]);
+  assert.deepEqual(counts, { deleted: 1, paymentsKept: 0, skipped: 0 });
+  assert.equal(await store.get("url_reviews", "run1"), null);
+  assert.equal(await store.get("url_review_captures", "c1"), null);
+  assert.equal(await store.get("url_review_stops", "run1"), null);
+  assert.ok(await store.get("url_reviews", "run2"));
+  assert.ok(await store.get("url_review_captures", "c2"));
+  assert.ok(await store.get("url_review_accounts", EMAIL));
+});
+
+test("deleting chosen runs keeps a paid run's payment and skips other people's runs and payment rows", async () => {
+  const store = await seeded();
+  await store.set("url_reviews", "paid-report-run1", offers.reportPayment({ email: EMAIL }, { reportId: "run1", provider: "wompi", amount: 950, deviceId: "abc" }));
+  const counts = await accountData.deleteRuns(store, EMAIL, ["run2", "other", "credit1", "paid-report-run1", "../x", "missing"], { now: Date.parse("2026-10-23T00:00:00Z") });
+  assert.deepEqual(counts, { deleted: 1, paymentsKept: 1, skipped: 5 });
+  const kept = await store.get("url_reviews", "run2");
+  assert.equal(kept.report, undefined);
+  assert.equal(kept.amount, 950);
+  assert.equal(kept.accountDeletedAt, "2026-10-23T00:00:00.000Z");
+  assert.ok(await store.get("url_reviews", "other"));
+  assert.ok(await store.get("url_reviews", "credit1"));
+  assert.ok(await store.get("url_reviews", "paid-report-run1"));
+});
+
+test("deleting a paid run whose payment has its own row removes the run outright", async () => {
+  const store = await seeded();
+  await store.set("url_reviews", "paid-report-run2", offers.reportPayment({ email: EMAIL }, { reportId: "run2", provider: "wompi", amount: 950, deviceId: "abc" }));
+  const counts = await accountData.deleteRuns(store, EMAIL, ["run2"]);
+  assert.deepEqual(counts, { deleted: 1, paymentsKept: 0, skipped: 0 });
+  assert.equal(await store.get("url_reviews", "run2"), null);
+  assert.ok(await store.get("url_reviews", "paid-report-run2"));
+});

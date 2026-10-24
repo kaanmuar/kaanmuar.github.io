@@ -880,10 +880,11 @@
     const b = report.browser;
     const speed = speedBlock(report.pagespeed);
     const carbon = carbonLine(report.insights && report.insights.carbon);
+    const talk = report.chatTalk;
     if (!b || !b.ok) {
       host.innerHTML = speed + carbon + '<p class="muted">' + (b && b.error
         ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML alone."
-        : "This review ran without the headless browser, so the checks come from the HTML alone.") + "</p>";
+        : "This review ran without the headless browser, so the checks come from the HTML alone.") + "</p>" + talkHtml(talk);
       return;
     }
     const start = b.start || {};
@@ -961,7 +962,7 @@
       '</div><p class="meta-line">Lab numbers from one cold load on the review server, not field data from real visitors. Green, amber, and red follow the Core Web Vitals thresholds.</p>' : "";
     const shots = b.shots || {};
     const shotCount = ["desktop", "tablet", "mobile"].filter((key) => shots[key]).length;
-    const chatCard = chatHtml(report.insights && report.insights.chat);
+    const chatCard = chatHtml(report.insights && report.insights.chat) + talkHtml(talk);
     const textRows = [{ path: start.finalPath || "/", share: start.share, words: start.renderedWords, raw: start.rawWords }].concat((b.pages || []).filter((page) => !page.error).map((page) => ({ path: page.path, share: page.share, words: page.renderedWords, raw: page.rawWords })));
     host.innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + speed + (gauges && report.pagespeed && report.pagespeed.field ? '<h3 class="speed-title">One lab load</h3>' : "") + gauges +
@@ -977,7 +978,7 @@
         ? (axeRows ? '<table class="mini-table"><thead><tr><th>Rule</th><th>Impact</th><th>Elements</th><th>Pages</th></tr></thead><tbody>' + axeRows + "</tbody></table>" : '<p class="muted">No WCAG 2.2 AA rule failed on ' + axePages.length + " page" + (axePages.length === 1 ? "" : "s") + ". Automated rules catch about a third of real issues.</p>") +
           '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
         : '<p class="muted">axe-core did not finish in the time the browser had.</p>') + "</article>" +
-      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + (watch.before && watch.before.typed ? " A test address was typed into one form field, never submitted, and blocked wherever a script tried to send it." : "") + " Lab numbers come from one unthrottled load.</p>" + carbon;
+      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + (talk && talk.turns && talk.turns.length ? " A separate browser opened the chat and sent the scripted messages shown above." : "") + (watch.before && watch.before.typed ? " A test address was typed into one form field, never submitted, and blocked wherever a script tried to send it." : "") + " Lab numbers come from one unthrottled load.</p>" + carbon;
   }
 
   function chatHtml(chat) {
@@ -998,6 +999,23 @@
       (chat.vendors.some((row) => row.ai) ? " · AI chatbot" : "") + ". Weight and cookies were measured before anyone opened it. The launcher was checked at 390 px, then opened once.</p>" +
       '<table class="mini-table"><thead><tr><th>Check</th><th>Result</th><th>What the browser saw</th></tr></thead><tbody>' +
       rows.map(([label, state, text]) => "<tr><td><strong>" + esc(label) + "</strong></td><td>" + badge(state) + "</td><td>" + text + "</td></tr>").join("") + "</tbody></table></article>";
+  }
+
+  const TALK_LABEL = { pass: "Passes", risk: "At risk", fail: "Fails now", person: "Read it yourself" };
+
+  function talkHtml(talk) {
+    if (!talk) return "";
+    const turns = talk.turns || [];
+    const head = '<article class="card talk-card" style="margin-top:12px"><h3>Chat conversation</h3><p class="muted">' +
+      (talk.vendor ? '<span class="notranslate" translate="no">' + esc(talk.vendor) + "</span>" + (talk.ai ? " · AI chatbot" : "") + ". " : "") + esc(talk.note || "") +
+      (turns.length ? " This conversation stays on your private report and is never published in Live Reports." : "") + "</p>";
+    if (!turns.length) return head + "</article>";
+    const rows = (talk.checks || []).map((check) => "<tr><td><strong>" + esc(check.label) + '</strong></td><td><span class="badge v-' + esc(check.verdict) + '">' + esc(TALK_LABEL[check.verdict] || check.verdict) + "</span></td><td>" + esc(check.evidence) + "</td></tr>").join("");
+    const log = turns.map((turn) => '<li><p><strong>Review:</strong> <span class="notranslate" translate="no">' + esc(turn.sent) + "</span></p><p><strong>Chat" + (turn.reply ? " after " + (turn.ms / 1000).toFixed(1) + " s" : "") + ":</strong> " +
+      (turn.reply ? '<span class="notranslate" translate="no">' + esc(turn.reply) + "</span>" : "No reply in time.") + "</p></li>").join("");
+    return head + (rows ? '<table class="mini-table"><thead><tr><th>Check</th><th>Result</th><th>What the chat said</th></tr></thead><tbody>' + rows + "</tbody></table>" : "") +
+      '<details class="talk-log"><summary>Transcript (' + turns.length + " message" + (turns.length === 1 ? "" : "s") + ")</summary><ol>" + log + "</ol></details>" +
+      '<p class="meta-line">The script uses a made-up email and phone, asks no one to change an order or an account, sends at most six messages, and stops after one minute.</p></article>';
   }
 
   function carbonLine(c) {
@@ -2438,46 +2456,51 @@
     if (reduced) window.setInterval(loadWire, 3 * 60 * 1000);
   }
 
-  const reviewedFact = document.getElementById("reviewed-fact");
-  const reviewedCount = document.getElementById("reviewed-count");
-  let reviewedShown = 0;
-  let reviewedFrame = 0;
-  function paintReviewed(target) {
-    const lang = window.SiteI18n && SiteI18n.current ? SiteI18n.current() : "en";
-    const format = (value) => Math.round(value).toLocaleString(lang || "en");
-    cancelAnimationFrame(reviewedFrame);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || target <= reviewedShown) {
-      reviewedShown = target;
-      reviewedCount.textContent = format(target);
-      return;
-    }
-    const from = reviewedShown;
-    const start = performance.now();
-    const duration = from ? 900 : 1600;
-    const step = (now) => {
-      const t = Math.min(1, (now - start) / duration);
-      reviewedShown = from + (target - from) * (1 - Math.pow(1 - t, 3));
-      reviewedCount.textContent = format(reviewedShown);
-      if (t < 1) reviewedFrame = requestAnimationFrame(step);
-      else reviewedShown = target;
+  function liveCount(factId, countId) {
+    const fact = document.getElementById(factId);
+    const count = document.getElementById(countId);
+    if (!fact || !count) return null;
+    let shown = 0;
+    let frame = 0;
+    return function paint(target) {
+      if (!target) return;
+      fact.hidden = false;
+      const lang = window.SiteI18n && SiteI18n.current ? SiteI18n.current() : "en";
+      const format = (value) => Math.round(value).toLocaleString(lang || "en");
+      cancelAnimationFrame(frame);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || target <= shown) {
+        shown = target;
+        count.textContent = format(target);
+        return;
+      }
+      const from = shown;
+      const start = performance.now();
+      const duration = from ? 900 : 1600;
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / duration);
+        shown = from + (target - from) * (1 - Math.pow(1 - t, 3));
+        count.textContent = format(shown);
+        if (t < 1) frame = requestAnimationFrame(step);
+        else shown = target;
+      };
+      frame = requestAnimationFrame(step);
     };
-    reviewedFrame = requestAnimationFrame(step);
   }
+  const paintPages = liveCount("reviewed-fact", "reviewed-count");
+  const paintReviews = liveCount("reviews-fact", "reviews-count");
   async function loadReviewed() {
     if (document.hidden) return;
     try {
       const response = await fetch(endpoint() + "/stats");
       if (!response.ok) return;
       const body = await response.json();
-      const pages = Number(body && body.pages) || 0;
-      if (!pages) return;
-      reviewedFact.hidden = false;
-      paintReviewed(pages);
+      if (paintPages) paintPages(Number(body && body.pages) || 0);
+      if (paintReviews) paintReviews(Number(body && body.reviews) || 0);
     } catch (error) {
       return;
     }
   }
-  if (reviewedFact && reviewedCount) {
+  if (paintPages || paintReviews) {
     loadReviewed();
     window.setInterval(loadReviewed, 2 * 60 * 1000);
   }

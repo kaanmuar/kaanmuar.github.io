@@ -2423,6 +2423,17 @@ async function reviewAccount(req, res, pathName) {
     res.status(200).json(data);
     return;
   }
+  if (pathName.endsWith("/account/delete-runs")) {
+    const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.slice(0, 200) : [];
+    if (!ids.length) {
+      res.status(400).json({ error: "Pick at least one review to delete." });
+      return;
+    }
+    const counts = await accountData.deleteRuns(reviewAuth.firestoreStore(db), signedIn.email, ids);
+    console.log("Review runs deleted on request:", JSON.stringify(counts));
+    res.status(200).json(Object.assign({ ok: true }, counts));
+    return;
+  }
   if (pathName.endsWith("/account/delete")) {
     const confirm = String((req.body && req.body.confirm) || "").trim().toLowerCase();
     if (confirm !== String(signedIn.email).toLowerCase()) {
@@ -2467,6 +2478,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     } catch (error) {
       console.error("Review account failed:", error);
       const failed = pathName.endsWith("/account/delete") ? "The account was not fully deleted. Try again in a moment."
+        : pathName.endsWith("/account/delete-runs") ? "The reviews were not all deleted. Try again in a moment."
         : pathName.endsWith("/account/export") ? "Your data did not download. Try again in a moment."
           : "Your runs did not load. Try again in a moment.";
       if (!res.headersSent) res.status(500).json({ error: failed });
@@ -3434,6 +3446,7 @@ async function runReview(req, res, placeOf) {
     const report = await urlReview.reviewTarget(intake.value.url, {
       log: (text) => writeLine({ type: "log", text }),
       stopped: () => stopped,
+      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email },
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
@@ -3445,6 +3458,7 @@ async function runReview(req, res, placeOf) {
     const record = urlReview.intakeRecord(intake.value, report, Object.assign({
       ip,
       deviceId,
+      creditId: decision.consumeId || "",
       userAgent: req.get("user-agent"),
       acceptLanguage: req.get("accept-language")
     }, await placeOf(runId)));
