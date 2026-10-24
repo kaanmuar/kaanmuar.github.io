@@ -51,6 +51,21 @@
     #theme-toggle svg { width: 18px; height: 18px; }
     #theme-toggle .sun-icon, html.dark-mode #theme-toggle .moon-icon { display: none; }
     html.dark-mode #theme-toggle .sun-icon { display: block; }
+    .top-nav { display: flex; align-items: center; gap: 2px; margin: 0 auto 0 14px; min-width: 0; }
+    .top-nav a { padding: 8px 12px; border-radius: 999px; color: var(--muted); font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: color .2s, background .2s; }
+    .top-nav a:hover, .top-nav a:focus-visible { outline: none; color: var(--text); background: color-mix(in srgb, var(--cyan) 13%, transparent); }
+    .lang-wrap { position: relative; }
+    .lang-toggle { display: inline-grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1px solid var(--edge); background: transparent; cursor: pointer; }
+    .lang-toggle:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+    .lang-toggle img { width: 22px; height: 22px; border-radius: 50%; display: block; }
+    .lang-menu { display: none; position: absolute; right: 0; top: calc(100% + 8px); width: min(230px, calc(100vw - 24px)); flex-direction: column; gap: 6px; padding: 8px; border-radius: 16px; z-index: 30;
+      border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 92%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 24px 44px -24px rgba(0, 0, 0, .55); }
+    .lang-wrap.open .lang-menu { display: flex; animation: fold-in .2s var(--ease); }
+    .lang-search { min-height: 36px; padding: 6px 10px; border-radius: 10px; font-size: 13px; }
+    .lang-options-list { display: flex; flex-direction: column; gap: 2px; max-height: 13rem; overflow-y: auto; }
+    .lang-option { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: 0; border-radius: 8px; background: none; color: var(--text); font: 13px Inter, system-ui, sans-serif; text-align: left; cursor: pointer; }
+    .lang-option:hover, .lang-option:focus-visible { outline: none; background: color-mix(in srgb, var(--cyan) 13%, transparent); }
+    .lang-option img { width: 18px; height: 18px; border-radius: 50%; }
 
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 18px; border: 0; border-radius: 999px; cursor: pointer; text-decoration: none;
       font: 600 14px/1.1 Inter, system-ui, sans-serif; background: var(--cyan); color: var(--on-cyan);
@@ -233,6 +248,56 @@
     #bulk-status { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
     #bulk-status:empty { display: none; }
     #bulk-status.bad { color: var(--red); }
+
+    .cmp-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 16px; align-items: start; }
+    select { width: 100%; min-height: 46px; padding: 10px 40px 10px 14px; border-radius: 14px; border: 1px solid var(--edge); color: var(--text); font: 15px Inter, system-ui, sans-serif; cursor: pointer; appearance: none;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234db3bb' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E") right 14px center / 16px no-repeat, color-mix(in srgb, var(--card) 72%, transparent); }
+    select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 4px color-mix(in srgb, var(--cyan) 20%, transparent); }
+    .cmp-with { min-width: 0; margin: 0; padding: 0; border: 0; }
+    .cmp-with legend { padding: 0; margin: 12px 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    .cmp-picks { display: flex; flex-direction: column; gap: 4px; max-height: 236px; overflow-y: auto; padding: 6px; border-radius: 14px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 45%, transparent); }
+    .cmp-pick { display: flex; align-items: center; gap: 10px; margin: 0; padding: 8px 10px; border-radius: 10px; font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text); cursor: pointer; transition: background .2s; }
+    .cmp-pick:hover { background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+    .cmp-pick:has(input:checked) { background: color-mix(in srgb, var(--cyan) 16%, transparent); }
+    .cmp-pick:has(input:disabled) { opacity: .5; cursor: default; }
+    .cmp-pick input { flex: none; width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: var(--cyan); box-shadow: none; }
+    .cmp-pick .host { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cmp-pick small { flex: none; font: 500 11.5px "Fira Code", ui-monospace, monospace; color: var(--muted); }
+    .cmp-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 14px; }
+    .cmp-new { margin-top: 18px; padding-top: 6px; border-top: 1px dashed var(--edge); }
+    .cmp-new-row { display: flex; gap: 10px; align-items: flex-start; }
+    .cmp-new-row .compare-field { flex: 1; min-width: 0; }
+    .cmp-new-row .btn { min-height: 46px; white-space: nowrap; }
+    .cmp-new p { margin: 8px 0 0; }
+    .url-row { display: flex; align-items: center; border-radius: 14px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 72%, transparent); overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+    .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 4px color-mix(in srgb, var(--cyan) 20%, transparent); }
+    .url-row span { padding: 0 0 0 14px; color: var(--muted); font: 14px "Fira Code", ui-monospace, monospace; }
+    .url-row input { flex: 1; min-width: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; padding-left: 2px; }
+    .url-row input:focus { box-shadow: none; }
+    .url-suggest { list-style: none; margin: 6px 0 0; padding: 4px; border-radius: 12px; border: 1px solid var(--edge); background: var(--card); font: 13px "Fira Code", ui-monospace, monospace; }
+    .url-suggest li { padding: 7px 10px; border-radius: 8px; cursor: pointer; overflow-wrap: anywhere; }
+    .url-suggest li:hover, .url-suggest li[aria-selected="true"] { background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--cyan); }
+    .url-hint { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); }
+    .url-hint:empty { display: none; }
+    .url-hint.ok b { color: var(--green); }
+    .url-hint.warn b { color: var(--amber); }
+    .url-hint.bad b { color: var(--red); }
+    .url-hint .url-fix { padding: 0; border: 0; background: none; color: var(--cyan); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+    #cmp-status { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+    #cmp-status:empty { display: none; }
+    #cmp-status.bad { color: var(--red); }
+    .cmp-scroll { margin-top: 16px; overflow-x: auto; border-radius: 18px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 45%, transparent); }
+    .cmp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .cmp-table th, .cmp-table td { padding: 10px 14px; text-align: center; border-bottom: 1px solid var(--edge); white-space: nowrap; }
+    .cmp-table thead th { font-weight: 700; position: sticky; top: 0; background: color-mix(in srgb, var(--card) 90%, transparent); }
+    .cmp-table thead th:first-child, .cmp-table tbody th { text-align: left; font-weight: 600; color: var(--muted); }
+    .cmp-table thead th.base { color: var(--cyan); }
+    .cmp-table tbody tr:last-child > * { border-bottom: 0; }
+    .cmp-table td b { font: 600 15px "Fira Code", ui-monospace, monospace; }
+    .cmp-table td.lead { background: color-mix(in srgb, var(--green) 12%, transparent); }
+    .cmp-table td.note { color: var(--muted); font-size: 12.5px; white-space: normal; min-width: 120px; }
+    .cmp-table .btn { min-height: 34px; padding: 6px 12px; font-size: 12.5px; }
+    .cmp-foot { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
     .empty { grid-column: 1 / -1; margin: 0; padding: 28px; border-radius: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--edge); }
 
     .data-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; }
@@ -282,11 +347,16 @@
       .hero { grid-template-columns: 1fr; gap: 8px; }
       .stage { height: 280px; order: -1; }
       .data-grid { grid-template-columns: 1fr; }
+      .topbar { flex-wrap: wrap; row-gap: 4px; }
+      .top-nav { order: 3; flex: 1 0 100%; margin: 0 -8px; overflow-x: auto; scrollbar-width: none; }
+      .cmp-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 560px) {
       main, .foot { width: calc(100% - 24px); }
       .topbar { padding: 8px 12px; }
-      .top-actions .btn { padding: 8px 12px; min-height: 38px; font-size: 13px; }
+      .top-actions .btn { display: none; }
+      .top-nav a { padding: 7px 10px; font-size: 13px; }
+      .cmp-new-row { flex-direction: column; }
       .panel { padding: 18px 16px; border-radius: 20px; }
       h2 { font-size: 1.7rem; }
       .sign-in-row { flex-direction: column; }
@@ -305,8 +375,20 @@
 <body>
 <header class="topbar">
   <a class="brand" href="qa-review.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a>
+  <nav class="top-nav" aria-label="QA-lab URL Review">
+    <a href="qa-review.html">URL Review</a>
+    <a href="qa-review.html#live-reports">Live Reports</a>
+    <a href="qa-review-social.html">Social</a>
+    <a href="qa-review-guide.html">Guide</a>
+  </nav>
   <div class="top-actions">
     <a class="btn btn-ghost" href="qa-review.html">New review</a>
+    <div class="lang-wrap notranslate" id="langWrap">
+      <button class="lang-toggle" id="langToggle" type="button" aria-label="Language" aria-haspopup="true" aria-expanded="false">
+        <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English" width="20" height="20">
+      </button>
+      <div class="lang-menu" id="langMenu"></div>
+    </div>
     <button id="theme-toggle" type="button" aria-label="Toggle dark mode">
       <svg class="sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
       <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
@@ -395,6 +477,7 @@
     <div class="bulk" id="bulk" role="region" aria-label="Actions on the selected reviews" hidden>
       <span class="bulk-count" id="bulk-count"></span>
       <div class="bulk-actions">
+        <button class="btn btn-ghost" id="bulk-compare" type="button">Compare</button>
         <button class="btn btn-ghost" id="bulk-open" type="button">Open in new tabs</button>
         <button class="btn btn-ghost" id="bulk-download" type="button">Download JSON</button>
         <button class="btn" id="bulk-unlock" type="button">Unlock</button>
@@ -408,7 +491,44 @@
     </div>
   </section>
 
-  <section class="panel" id="privacy" style="--i: 2" hidden>
+  <section class="panel" id="compare" style="--i: 2" hidden>
+    <div class="panel-head">
+      <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      <h2>Compare</h2>
+    </div>
+    <p class="muted">Set one of your reviews next to up to four others: the health score, the six areas, the open problems and the indicators each site wins. Saved reviews are compared from their reports, with no new run and no charge.</p>
+    <div class="cmp-grid">
+      <div>
+        <label for="cmp-base">Your site</label>
+        <select id="cmp-base"></select>
+      </div>
+      <fieldset class="cmp-with">
+        <legend>Compare with <span id="cmp-count"></span></legend>
+        <div class="cmp-picks" id="cmp-picks"></div>
+      </fieldset>
+    </div>
+    <div class="cmp-actions">
+      <button class="btn" id="cmp-go" type="button" disabled>Compare</button>
+      <span class="muted small" id="cmp-hint">Pick at least one other review.</span>
+    </div>
+    <div class="cmp-new">
+      <label for="compare-url">Or a site without a review yet</label>
+      <div class="cmp-new-row">
+        <div class="compare-field">
+          <div class="url-row notranslate" id="compare-url-field">
+            <span>https://</span>
+            <input id="compare-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="competitor.com">
+          </div>
+        </div>
+        <button class="btn btn-ghost" id="cmp-new-go" type="button">Review and compare</button>
+      </div>
+      <p class="muted small">Opens the report of your site with this competitor ready to compare. It is reviewed first, priced as a second review, with the public, passive checks only.</p>
+    </div>
+    <p id="cmp-status" role="status"></p>
+    <div id="cmp-result"></div>
+  </section>
+
+  <section class="panel" id="privacy" style="--i: 3" hidden>
     <div class="panel-head">
       <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
       <h2>Your data</h2>
@@ -431,7 +551,7 @@
     </div>
     <p id="privacy-status" role="status"></p>
   </section>
-  <section class="panel notranslate" id="verify" style="--i: 3" translate="no" hidden>
+  <section class="panel notranslate" id="verify" style="--i: 4" translate="no" hidden>
     <div class="panel-head">
       <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
       <div>
@@ -540,6 +660,7 @@
     if (response.status !== 401) return false;
     fileEl.hidden = true;
     privacyEl.hidden = true;
+    document.getElementById("compare").hidden = true;
     window.ReviewAuth.expire("Your sign-in has ended. Sign in again to see your reviews.");
     return true;
   }
@@ -612,6 +733,7 @@
       listEl.replaceChildren();
       fileEl.hidden = true;
       privacyEl.hidden = true;
+      compareEl.hidden = true;
       window.ReviewAuth.expire("Your account and runs are deleted, and this device is signed out.");
     } catch (error) {
       sayPrivacy("The account was not fully deleted. Try again in a moment.", true);
@@ -638,6 +760,7 @@
     listEl.classList.remove("settled");
     render();
     listEl.classList.add("settled");
+    fillCompare();
   }
   function reportHref(run) {
     return "qa-review.html?report=" + encodeURIComponent(run.id);
@@ -686,6 +809,7 @@
     selectAllEl.indeterminate = on > 0 && on < list.length;
     const chosen = runs.filter((run) => picked.has(run.id));
     bulkEl.hidden = !chosen.length;
+    document.getElementById("bulk-compare").hidden = chosen.length < 2;
     document.getElementById("bulk-count").textContent = chosen.length + " selected";
     const locked = chosen.filter((run) => !run.open).length;
     const unlock = document.getElementById("bulk-unlock");
@@ -898,16 +1022,306 @@
       deleteEl.disabled = false;
     }
   });
+  const compareEl = document.getElementById("compare");
+  const cmpBase = document.getElementById("cmp-base");
+  const cmpPicks = document.getElementById("cmp-picks");
+  const cmpGo = document.getElementById("cmp-go");
+  const cmpStatus = document.getElementById("cmp-status");
+  const cmpResult = document.getElementById("cmp-result");
+  const CMP_OTHERS = 4;
+  const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
+  const cmpWith = new Set();
+  function bare(host) { return String(host || "").toLowerCase().replace(/^www\./, ""); }
+  function shortDate(at) { return at ? new Date(at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : ""; }
+  function sayCompare(message, bad) {
+    cmpStatus.textContent = message;
+    cmpStatus.classList.toggle("bad", !!bad);
+  }
+  function fillCompare() {
+    const finished = runs.filter((run) => run.status !== "stopped");
+    compareEl.hidden = !finished.length;
+    const kept = cmpBase.value;
+    cmpBase.replaceChildren(...finished.map((run) => {
+      const option = node("option", (run.host || "Review") + " · " + shortDate(run.at) + (run.open ? "" : " · opening shown"));
+      option.value = run.id;
+      return option;
+    }));
+    const first = finished.find((run) => run.id === kept) || finished.find((run) => run.open) || finished[0];
+    if (first) cmpBase.value = first.id;
+    [...cmpWith].forEach((id) => { if (!finished.some((run) => run.id === id)) cmpWith.delete(id); });
+    paintPicks();
+  }
+  function paintPicks() {
+    const base = runs.find((run) => run.id === cmpBase.value);
+    cmpWith.delete(cmpBase.value);
+    const others = runs.filter((run) => run.status !== "stopped" && run.id !== cmpBase.value);
+    cmpPicks.replaceChildren(...(others.length ? others.map((run) => {
+      const same = !!base && bare(run.host) === bare(base.host);
+      if (same) cmpWith.delete(run.id);
+      const row = document.createElement("label");
+      row.className = "cmp-pick";
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.value = run.id;
+      box.checked = cmpWith.has(run.id);
+      box.disabled = same || (!box.checked && cmpWith.size >= CMP_OTHERS);
+      box.addEventListener("change", () => {
+        if (box.checked) cmpWith.add(run.id);
+        else cmpWith.delete(run.id);
+        paintPicks();
+      });
+      row.append(box, node("span", run.host || "Review", "host"), node("small", same ? "same site" : shortDate(run.at) + (run.open ? "" : " · shut")));
+      row.querySelector(".host").setAttribute("translate", "no");
+      return row;
+    }) : [node("p", "Your other reviews show here. Add a site below to compare with one that has no review yet.", "muted small")]));
+    document.getElementById("cmp-count").textContent = "(" + cmpWith.size + " of " + CMP_OTHERS + ")";
+    cmpGo.disabled = !cmpWith.size;
+    document.getElementById("cmp-hint").textContent = cmpWith.size ? "" : "Pick at least one other review.";
+  }
+  cmpBase.addEventListener("change", () => {
+    paintPicks();
+    cmpResult.replaceChildren();
+    sayCompare("");
+  });
+  function scoreCell(value, best) {
+    const cell = document.createElement("td");
+    if (value == null) {
+      cell.textContent = "–";
+      cell.className = "note";
+      return cell;
+    }
+    const b = node("b", value);
+    b.style.color = value >= 80 ? "var(--green)" : value >= 50 ? "var(--amber)" : "var(--red)";
+    cell.appendChild(b);
+    if (best) cell.className = "lead";
+    return cell;
+  }
+  function plainCell(value, best) {
+    const cell = node("td", value == null ? "–" : value);
+    if (best) cell.className = "lead";
+    return cell;
+  }
+  function paintComparison(made) {
+    const base = made.base;
+    const ready = made.list.filter((row) => row.compare);
+    const first = ready[0] && ready[0].compare;
+    const columns = made.list.filter((row) => !row.missing);
+    const table = document.createElement("table");
+    table.className = "cmp-table";
+    const headRow = document.createElement("tr");
+    headRow.appendChild(node("th", "Indicator"));
+    const baseHead = node("th", base.host, "base");
+    baseHead.setAttribute("translate", "no");
+    headRow.appendChild(baseHead);
+    columns.forEach((row) => {
+      const th = node("th", row.host);
+      th.setAttribute("translate", "no");
+      headRow.appendChild(th);
+    });
+    headRow.querySelectorAll("th").forEach((th) => th.setAttribute("scope", "col"));
+    const thead = document.createElement("thead");
+    thead.appendChild(headRow);
+    const area = (cmp, name) => (cmp.areas || []).find((item) => item.area === name) || {};
+    const kpi = (cmp, key) => (cmp.kpis || []).find((item) => item.key === key) || {};
+    // Each line: the label, the base value, a reader for the competitor, the cell kind, and which way wins.
+    const lines = [["Health score", first && first.overall.own, (cmp) => cmp.overall.rival, scoreCell, "high"]]
+      .concat(AREAS.map((name) => [name, first && area(first, name).own, (cmp) => area(cmp, name).rival, scoreCell, "high"]))
+      .concat([
+        ["Checks passing (%)", first && kpi(first, "passRate").own, (cmp) => kpi(cmp, "passRate").rival, plainCell, "high"],
+        ["Open problems", first && kpi(first, "open").own, (cmp) => kpi(cmp, "open").rival, plainCell, "low"],
+        ["Critical and high", first && kpi(first, "urgent").own, (cmp) => kpi(cmp, "urgent").rival, plainCell, "low"]
+      ]);
+    const why = (row) => row.same ? "Same site. Its report shows the history between the two reviews."
+      : row.stopped ? "This review stopped early."
+        : row.locked ? "Opens in full once this report is paid." : "No scores saved.";
+    const tbody = document.createElement("tbody");
+    lines.forEach(([label, own, read, cell, better]) => {
+      const values = [own].concat(columns.map((row) => (row.compare ? read(row.compare) : null)));
+      const known = values.filter((value) => value != null);
+      const top = known.length > 1 ? (better === "high" ? Math.max(...known) : Math.min(...known)) : null;
+      const leads = top == null ? 0 : known.filter((value) => value === top).length;
+      const tr = document.createElement("tr");
+      const th = node("th", label);
+      th.setAttribute("scope", "row");
+      tr.appendChild(th);
+      values.forEach((value, index) => {
+        const row = index ? columns[index - 1] : null;
+        if (row && !row.compare) {
+          tr.appendChild(node("td", label === "Health score" ? why(row) : "", "note"));
+          return;
+        }
+        tr.appendChild(cell(value, leads === 1 && value === top));
+      });
+      tbody.appendChild(tr);
+    });
+    const wins = document.createElement("tr");
+    const winsHead = node("th", "Indicators won (yours–theirs)");
+    winsHead.setAttribute("scope", "row");
+    wins.append(winsHead, node("td", "–", "note"));
+    const actions = document.createElement("tr");
+    actions.append(node("th", ""), node("td", ""));
+    columns.forEach((row) => {
+      const cmp = row.compare;
+      wins.appendChild(cmp && cmp.dominance ? plainCell(cmp.dominance.own + "–" + cmp.dominance.rival + (cmp.dominance.tie ? " (" + cmp.dominance.tie + " level)" : "")) : node("td", "", "note"));
+      const td = document.createElement("td");
+      const link = document.createElement("a");
+      link.className = "btn btn-ghost";
+      if (row.compare) {
+        link.href = "qa-review.html?report=" + encodeURIComponent(base.id) + "&vs=" + encodeURIComponent(row.id);
+        link.textContent = "Full comparison";
+      } else if (row.locked) {
+        const run = runs.find((item) => item.id === row.id) || {};
+        link.href = "qa-review-pay.html?purpose=report&reportId=" + encodeURIComponent(row.id) + "&frameworks=" + encodeURIComponent((run.frameworks || []).join(","));
+        link.textContent = "Unlock";
+      } else {
+        link.href = reportHref(row);
+        link.textContent = "Open report";
+      }
+      td.appendChild(link);
+      actions.appendChild(td);
+    });
+    tbody.append(wins, actions);
+    table.append(thead, tbody);
+    const scroll = document.createElement("div");
+    scroll.className = "cmp-scroll";
+    scroll.appendChild(table);
+    cmpResult.replaceChildren(scroll, node("p", "Shaded cells lead their line. Full comparison opens the head-to-head on the review page: radar, speed and weight, the problems only one site has, and market presence.", "cmp-foot"));
+  }
+  async function runCompare() {
+    const ids = [cmpBase.value].concat([...cmpWith]);
+    if (ids.length < 2) return;
+    cmpGo.disabled = true;
+    sayCompare("Setting the reviews side by side…");
+    cmpResult.replaceChildren();
+    try {
+      const response = await account("/account/compare", { ids });
+      if (signedOut(response)) return;
+      const made = await response.json();
+      if (!response.ok || made.error) {
+        sayCompare(made.error || "The comparison did not load. Try again in a moment.", true);
+        return;
+      }
+      const shown = made.list.filter((row) => row.compare).length;
+      sayCompare(shown === made.list.length ? "" : shown + " of " + made.list.length + " reviews are compared. The others say why below.");
+      paintComparison(made);
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_compare", "URL Review", String(ids.length));
+    } catch (error) {
+      sayCompare("The comparison did not load. Try again in a moment.", true);
+    } finally {
+      cmpGo.disabled = !cmpWith.size;
+    }
+  }
+  cmpGo.addEventListener("click", runCompare);
+  document.getElementById("cmp-new-go").addEventListener("click", () => {
+    const input = document.getElementById("compare-url");
+    const url = input.value.trim().replace(/^\s*https?:\/\//i, "");
+    if (!url || /\s/.test(url)) {
+      sayCompare("Enter the competitor's address.", true);
+      input.focus();
+      return;
+    }
+    const base = runs.find((run) => run.id === cmpBase.value);
+    if (!base) return;
+    let host = "";
+    try { host = new URL("https://" + url).hostname; } catch (error) { host = ""; }
+    if (!host) {
+      sayCompare("Enter the competitor's address.", true);
+      input.focus();
+      return;
+    }
+    if (bare(host) === bare(base.host)) {
+      sayCompare("That is the same site. Enter a competitor's address.", true);
+      return;
+    }
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_compare", "URL Review", "new");
+    location.href = reportHref(base) + "&compare=" + encodeURIComponent(url);
+  });
+  document.getElementById("bulk-compare").addEventListener("click", () => {
+    const chosen = chosenRuns().filter((run) => run.status !== "stopped");
+    const base = chosen.find((run) => run.open) || chosen[0];
+    if (!base) return;
+    cmpBase.value = base.id;
+    cmpWith.clear();
+    chosen.filter((run) => run !== base && bare(run.host) !== bare(base.host)).slice(0, CMP_OTHERS).forEach((run) => cmpWith.add(run.id));
+    paintPicks();
+    compareEl.scrollIntoView({ behavior: still.matches ? "auto" : "smooth", block: "start" });
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "compare");
+    if (cmpWith.size) runCompare();
+    else sayCompare("Pick reviews of different sites to compare.", true);
+  });
   window.ReviewAuth.onChange((signed) => {
     if (signed) loadRuns();
     else {
-      fileEl.hidden = privacyEl.hidden = true;
+      fileEl.hidden = privacyEl.hidden = compareEl.hidden = true;
+      cmpResult.replaceChildren();
+      cmpWith.clear();
       runs = [];
       picked.clear();
     }
   });
-  if (window.SiteI18n) SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));
+  function mountLanguage() {
+    if (!window.SiteI18n) return;
+    const wrap = document.getElementById("langWrap");
+    const toggle = document.getElementById("langToggle");
+    const menu = document.getElementById("langMenu");
+    const flag = document.getElementById("langFlag");
+    const PAGE_LANGS = ["es", "pt", "de", "fr", "it"];
+    const show = (code) => {
+      flag.src = SiteI18n.flagUrl(code);
+      flag.alt = SiteI18n.displayName(code);
+      document.documentElement.lang = code;
+      // The Social hub has a page per language; the review page and the guide follow the saved choice.
+      document.querySelector('.top-nav a[href^="qa-review-social"]').href = PAGE_LANGS.includes(code) ? "qa-review-social-" + code + ".html" : "qa-review-social.html";
+      document.querySelector('.top-nav a[href^="qa-review-guide"]').href = "qa-review-guide.html?lang=" + encodeURIComponent(code);
+    };
+    const close = () => {
+      wrap.classList.remove("open");
+      toggle.setAttribute("aria-expanded", "false");
+    };
+    menu.innerHTML = '<input class="lang-search" type="search" placeholder="Search language" aria-label="Search language" autocomplete="off"><div class="lang-options-list"></div>';
+    const search = menu.querySelector(".lang-search");
+    const list = menu.querySelector(".lang-options-list");
+    const renderMenu = () => {
+      list.replaceChildren(...SiteI18n.orderedLanguages().filter((meta) => SiteI18n.matchesQuery(meta, search.value)).map((meta) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "lang-option";
+        option.innerHTML = '<img src="' + SiteI18n.flagUrl(meta.code) + '" alt="">';
+        option.appendChild(node("span", meta.native));
+        option.addEventListener("click", () => {
+          if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_language_change", "URL Review", meta.code);
+          close();
+          show(meta.code);
+          SiteI18n.selectLanguage(meta.code);
+        });
+        return option;
+      }));
+    };
+    search.addEventListener("input", renderMenu);
+    menu.addEventListener("click", (event) => event.stopPropagation());
+    renderMenu();
+    toggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const open = !wrap.classList.contains("open");
+      wrap.classList.toggle("open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+      if (open) search.focus();
+    });
+    document.addEventListener("click", close);
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !wrap.classList.contains("open")) return;
+      close();
+      toggle.focus();
+    });
+    SiteI18n.resolve().then((lang) => {
+      show(lang || "en");
+      SiteI18n.applyMachineTranslate(lang || "en");
+    });
+    SiteI18n.follow((lang) => show(lang || "en"));
+  }
+  mountLanguage();
 </script>
 <script src="js/qa-review-verify.js?v=20261023b"></script>
+<script src="js/url-suggest.js?v=20261024b"></script>
 </body>
 </html>
