@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Build qa-review-{es,pt,de,fr,it}.html from qa-review.html.
+"""Build qa-review-{es,pt,de,fr,it}.html from qa-review.html, and qa-review-pay-{es,pt,de,fr,it}.html
+from qa-review-pay.html with the copy in js/qa-review-pay-copy.js.
 
-The head, the structured data, the consent screen, the stage headline, the noscript
+The head, the structured data, the consent screen, the stage headline, the hero stats, the noscript
 Live Reports text, and the stored language are translated by hand (review_langs_copy.py),
 and the Ask the report panel copy comes from js/qa-review-ask.js;
 the rest of the body stays English and is translated in the browser. The noscript text on
@@ -15,7 +16,7 @@ import pathlib
 import re
 import sys
 
-from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE
+from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, FACTS, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BASE = "https://carlosandmunoz.com/"
@@ -205,6 +206,19 @@ def ask_panel(s, code):
     return swap(s, f'placeholder="{en["placeholder"]}"', f'placeholder="{t["placeholder"]}"')
 
 
+FACT_LABELS = ["kinds of cases", "frameworks you already know", "address to begin", "pages read so far", "reviews run so far"]
+
+
+def facts(s, code):
+    a = s.index('<ul class="facts">')
+    b = s.index('<a class="live-jump"', a)
+    part = s[a:b]
+    for english, local in zip(FACT_LABELS, FACTS[code]):
+        part = swap(part, f"<span>{english}</span>", f'<span lang="{code}" translate="no">{local}</span>')
+    s = s[:a] + part + s[b:]
+    return retag(s, '<a class="live-jump" href="#live-reports">', "</a>", FACTS[code][-1], code)
+
+
 def build(source, code, data):
     t = LANGS[code]
     page = f"qa-review-{code}.html"
@@ -232,6 +246,8 @@ def build(source, code, data):
     s = swap(s, '"url": "https://carlosandmunoz.com/qa-review.html#service-facts"', f'"url": "{url}#service-facts"')
     s = swap(s, '<div class="brand"><a href="qa-review.html">', f'<div class="brand"><a href="{page}">')
     s = swap(s, '<a class="btn btn-ghost" href="qa-review-social.html">', f'<a class="btn btn-ghost" href="qa-review-social-{code}.html">')
+    s = swap(s, 'href="qa-review-pay.html?purpose=report"', f'href="qa-review-pay-{code}.html?purpose=report"')
+    s = swap(s, 'href="qa-review-pay.html?purpose=new-run"', f'href="qa-review-pay-{code}.html?purpose=new-run"')
     flag_en = 'src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English"'
     s = swap(s, flag_en, f'src="https://hatscripts.github.io/circle-flags/flags/{code}.svg" alt="{t["native"]}"', 2)
     s = swap(s, '<h2 id="gate-title">Before a single address is analyzed.</h2>', f'<h2 id="gate-title" lang="{code}" translate="no">{t["gate"]}</h2>')
@@ -251,10 +267,57 @@ def build(source, code, data):
     )
     s = structured(s, code)
     s = gate(s, code)
+    s = facts(s, code)
     s = ask_panel(s, code)
     s = retag(s, '<p class="meta-line" id="compare-note">', "</p>", COMPARE_NOTE[code], code)
     s = with_live(s, code, data)
     s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js')
+    return page, s
+
+
+PAY_KEYS = ("title", "description", "testMode", "eyebrow", "headingRun", "intro", "payWith", "paypalWays", "itemRun",
+            "accountPaypal", "collected", "note", "disclaimers", "back", "continueTo")
+
+
+def pay_copy(code):
+    """The static payment page strings for one language, read from js/qa-review-pay-copy.js."""
+    js = (ROOT / "js/qa-review-pay-copy.js").read_text(encoding="utf-8")
+    start = js.index(f"\n    {code}: {{\n")
+    end = js.index("\n    }", start)
+    out = {}
+    for key in PAY_KEYS:
+        m = re.compile(rf'\b{key}: ("(?:[^"\\]|\\.)*")').search(js, start, end)
+        if not m:
+            raise SystemExit(f"js/qa-review-pay-copy.js has no {code}.{key}")
+        out[key] = json.loads(m.group(1)).replace("{name}", "PayPal")
+    return out
+
+
+def build_pay(source, code):
+    en, t = pay_copy("en"), pay_copy(code)
+    page = f"qa-review-pay-{code}.html"
+    mark = f' lang="{code}" translate="no"'
+    s = swap(source, '<html lang="en">', f'<html lang="{code}">')
+    s = swap(s, f"<title>{en['title']}</title>", f"<title>{t['title']}</title>")
+    s = swap(s, f'<meta name="description" content="{en["description"]}">', f'<meta name="description" content="{t["description"]}">')
+    s = swap(s, '<a class="brand" href="qa-review.html">', f'<a class="brand" href="qa-review-{code}.html">')
+    s = retag(s, '<p class="test-mode" id="test-mode" role="status" hidden>', "</p>", t["testMode"], code)
+    s = retag(s, '<p class="eyebrow">', "</p>", t["eyebrow"], code)
+    s = retag(s, '<h1 id="pay-heading">', "</h1>", t["headingRun"], code)
+    s = swap(s, '<p class="yield" id="pay-yield" hidden>', f'<p class="yield" id="pay-yield"{mark} hidden>')
+    s = swap(s, '<p id="pay-fx">', f'<p id="pay-fx"{mark}>')
+    s = retag(s, '<p id="pay-copy">', "</p>", t["intro"], code)
+    s = swap(s, '<ol class="lines" id="pay-lines" hidden>', f'<ol class="lines" id="pay-lines"{mark} hidden>')
+    s = retag(s, "<legend>", "</legend>", t["payWith"], code)
+    s = swap(s, f"<small>{en['paypalWays']}</small>", f"<small{mark}>{t['paypalWays']}</small>")
+    s = swap(s, f'<span id="pay-item">{en["itemRun"]}</span>', f'<span id="pay-item">{t["itemRun"]}</span>')
+    s = retag(s, '<span id="pay-collect-label">', "</span>", t["accountPaypal"], code)
+    s = retag(s, '<span id="pay-collector">', "</span>", t["collected"], code)
+    s = retag(s, '<p id="pay-note">', "</p>", t["note"], code)
+    s = swap(s, f'<a href="qa-review-legal.html">{en["disclaimers"]}</a>', f'<a href="qa-review-legal.html"{mark}>{t["disclaimers"]}</a>')
+    s = swap(s, f'<a class="btn btn-ghost" href="qa-review.html">{en["back"]}</a>', f'<a class="btn btn-ghost" href="qa-review-{code}.html"{mark}>{t["back"]}</a>')
+    s = retag(s, '<button class="btn btn-primary" id="charge" type="button">', "</button>", t["continueTo"], code)
+    s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n    <script src="js/site-i18n.js')
     return page, s
 
 
@@ -271,8 +334,9 @@ def main(check=None):
         else:
             english.write_text(source, encoding="utf-8")
             print("wrote", english.name)
-    for code in LANGS:
-        page, html = build(source, code, data)
+    pay = (ROOT / "qa-review-pay.html").read_text(encoding="utf-8")
+    pages = [build(source, code, data) for code in LANGS] + [build_pay(pay, code) for code in LANGS]
+    for page, html in pages:
         target = ROOT / page
         if check:
             if not target.exists() or target.read_text(encoding="utf-8") != html:

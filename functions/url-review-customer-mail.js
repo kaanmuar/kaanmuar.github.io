@@ -166,29 +166,29 @@ const COPY = {
     findings: "Was zuerst zu beheben ist",
     more: "+{n} weitere Befunde im vollständigen Bericht",
     open: "Vollständigen Bericht freischalten",
-    openNote: "Dort kannst du ihn herunterladen, die Testfälle exportieren oder drucken.",
+    openNote: "Dort können Sie ihn herunterladen, die Testfälle exportieren oder drucken.",
     reopen: "Letzten Bericht öffnen",
     another: "Eine andere URL prüfen",
-    deeper: "Willst du tiefer gehen?",
+    deeper: "Möchten Sie tiefer gehen?",
     deeperLines: ["Mehr Seiten, mehr Links oder mehr Websites prüfen?", "Echte, vollständige Testfälle in einem oder allen Automatisierungs-Frameworks ausführen?"],
-    deeperCta: "Schreib an qa@carlosandmunoz.com",
+    deeperCta: "Schreiben Sie an qa@carlosandmunoz.com",
     deeperSubject: "Tiefer gehen mit {host}",
-    why: "Du bekommst diese Nachricht, weil mit dieser Adresse eine Prüfung von {host} auf carlosandmunoz.com gestartet wurde.",
+    why: "Sie erhalten diese Nachricht, weil mit dieser Adresse eine Prüfung von {host} auf carlosandmunoz.com gestartet wurde.",
     stop: "Keine Notizen mehr",
     subjectOpen: "{host} hat {score}/100. Der vollständige Bericht ist offen.",
-    subjectRerun: "Deine Prüfung von {host} lief erneut und ist fertig.",
-    subjectStopped: "Deine Prüfung von {host} hat vor der letzten Seite angehalten.",
+    subjectRerun: "Ihre Prüfung von {host} lief erneut und ist fertig.",
+    subjectStopped: "Ihre Prüfung von {host} hat vor der letzten Seite angehalten.",
     titleStopped: "Die Prüfung von {host} hat vor der letzten Seite angehalten.",
     preheaderOpen: "Sechs Werte und {count} Befunde, alles offen.",
     leadOpen: "Die sechs Werte und die Befunde liegen offen, jede Zeile vollständig.",
     leadStopped: "Sie hat vor der letzten Seite angehalten und umfasst die bis dahin geprüften Seiten.",
-    rerun: "Deine frühere Prüfung von {host} ist am {date} fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
-    rerunUndated: "Deine frühere Prüfung von {host} ist fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
+    rerun: "Ihre frühere Prüfung von {host} ist am {date} fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
+    rerunUndated: "Ihre frühere Prüfung von {host} ist fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
     openFull: "Vollständigen Bericht öffnen",
-    account: "Deine Prüfungen",
+    account: "Ihre Prüfungen",
     kept: "Gespeichert bis {date}",
-    live: "Öffentliche Werte aus dieser Prüfung können als Live Report erscheinen. Gehört dir die Website und soll er entfernt werden, schreib an qa@carlosandmunoz.com.",
-    controller: "Carlos A. Muñoz, {postal}, ist für deine Daten verantwortlich.",
+    live: "Öffentliche Werte aus dieser Prüfung können als Live Report erscheinen. Gehört Ihnen die Website und soll er entfernt werden, schreiben Sie an qa@carlosandmunoz.com.",
+    controller: "Carlos A. Muñoz, {postal}, ist für Ihre Daten verantwortlich.",
     legal: "Wie sie verwendet werden",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicherheit", Accessibility: "Barrierefreiheit", Performance: "Leistung" },
     page: ["Keine Notizen mehr?", "Ja, stoppen", "Erledigt. An {email} gehen keine Notizen mehr.", "Dieser Link gilt nicht mehr."]
@@ -298,13 +298,13 @@ const PLAIN = {
   fr: { lead: "Les constats restent sous verre dépoli, juste assez visibles pour savoir lesquels comptent.", leadOpen: "Les constats sont ouverts, chaque ligne en entier.", preheader: "{count} constats attendent sous le flou.", preheaderOpen: "{count} constats, tout est ouvert.", leadClear: "Aucun constat sur les pages analysées, donc rien à corriger.", preheaderClear: "Aucun constat sur les pages analysées." },
   it: { lead: "I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.", leadOpen: "I rilievi sono aperti, ogni riga per intero.", preheader: "{count} rilievi aspettano sotto la sfocatura.", preheaderOpen: "{count} rilievi, tutto aperto.", leadClear: "Nessun rilievo nelle pagine analizzate, quindi non c'è niente da sistemare.", preheaderClear: "Nessun rilievo nelle pagine analizzate." }
 };
-const FIX_LABEL = { en: "Fix", es: "Cómo arreglarlo", pt: "Como corrigir", de: "So behebst du es", fr: "Correctif", it: "Come correggere" };
-// The comparison card's wording on the page (js/qa-review-compare-copy.js); German keeps the mail's "du".
+const FIX_LABEL = { en: "Fix", es: "Cómo arreglarlo", pt: "Como corrigir", de: "So beheben Sie es", fr: "Correctif", it: "Come correggere" };
+// The comparison card's wording on the page (js/qa-review-compare-copy.js).
 const CMP_COPY = {
   en: { title: "Next to a competitor", intro: "Your review of {own}{when} next to this review of {rival}.", introWhen: " from {date}", area: "Area", overall: "Overall", yourLead: "Your lead", wins: "{site} wins {n} of {total} indicators", sameWins: "The two sites win the same number of indicators", tally: "{own} {a}, {rival} {b}, level {c}.", onlyHas: "Only {site} has", openProblems: "open problems", shared_one: "{n} open problem is on both sites.", shared_other: "{n} open problems are on both sites.", more: "and {n} more", none: "None.", passive: "{rival} got the public, passive checks only: no chat conversation and no form sent.", verdictNote: "Both scores come from automated reviews, a starting point and not a verdict." },
   es: { title: "Frente a un competidor", intro: "Tu revisión de {own}{when} junto a esta revisión de {rival}.", introWhen: " del {date}", area: "Área", overall: "General", yourLead: "Tu ventaja", wins: "{site} gana {n} de {total} indicadores", sameWins: "Los dos sitios ganan el mismo número de indicadores", tally: "{own} {a}, {rival} {b}, empate {c}.", onlyHas: "Solo {site} tiene", openProblems: "problemas abiertos", shared_one: "{n} problema abierto está en los dos sitios.", shared_other: "{n} problemas abiertos están en los dos sitios.", more: "y {n} más", none: "Ninguno.", passive: "{rival} recibió solo las comprobaciones públicas y pasivas: sin conversación con el chat y sin enviar formularios.", verdictNote: "Las dos puntuaciones vienen de revisiones automatizadas: un punto de partida, no un veredicto." },
   pt: { title: "Ao lado de um concorrente", intro: "Sua revisão de {own}{when} ao lado desta revisão de {rival}.", introWhen: " de {date}", area: "Área", overall: "Geral", yourLead: "Sua vantagem", wins: "{site} vence {n} de {total} indicadores", sameWins: "Os dois sites vencem o mesmo número de indicadores", tally: "{own} {a}, {rival} {b}, empate {c}.", onlyHas: "Só {site} tem", openProblems: "problemas abertos", shared_one: "{n} problema aberto está nos dois sites.", shared_other: "{n} problemas abertos estão nos dois sites.", more: "e mais {n}", none: "Nenhum.", passive: "{rival} recebeu só as verificações públicas e passivas: sem conversa com o chat e sem envio de formulários.", verdictNote: "As duas pontuações vêm de revisões automatizadas: um ponto de partida, não um veredito." },
-  de: { title: "Neben einem Mitbewerber", intro: "Deine Prüfung von {own}{when} neben dieser Prüfung von {rival}.", introWhen: " vom {date}", area: "Bereich", overall: "Gesamt", yourLead: "Dein Vorsprung", wins: "{site} gewinnt {n} von {total} Kennzahlen", sameWins: "Beide Websites gewinnen gleich viele Kennzahlen", tally: "{own} {a}, {rival} {b}, gleichauf {c}.", onlyHas: "Nur {site} hat", openProblems: "offene Probleme", shared_one: "{n} offenes Problem gibt es auf beiden Websites.", shared_other: "{n} offene Probleme gibt es auf beiden Websites.", more: "und {n} weitere", none: "Keine.", passive: "{rival} erhielt nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular.", verdictNote: "Beide Werte stammen aus automatisierten Prüfungen: ein Ausgangspunkt, kein Urteil." },
+  de: { title: "Neben einem Mitbewerber", intro: "Ihre Prüfung von {own}{when} neben dieser Prüfung von {rival}.", introWhen: " vom {date}", area: "Bereich", overall: "Gesamt", yourLead: "Ihr Vorsprung", wins: "{site} gewinnt {n} von {total} Kennzahlen", sameWins: "Beide Websites gewinnen gleich viele Kennzahlen", tally: "{own} {a}, {rival} {b}, gleichauf {c}.", onlyHas: "Nur {site} hat", openProblems: "offene Probleme", shared_one: "{n} offenes Problem gibt es auf beiden Websites.", shared_other: "{n} offene Probleme gibt es auf beiden Websites.", more: "und {n} weitere", none: "Keine.", passive: "{rival} erhielt nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular.", verdictNote: "Beide Werte stammen aus automatisierten Prüfungen: ein Ausgangspunkt, kein Urteil." },
   fr: { title: "Face à un concurrent", intro: "Votre analyse de {own}{when} à côté de cette analyse de {rival}.", introWhen: " du {date}", area: "Domaine", overall: "Global", yourLead: "Votre avance", wins: "{site} gagne {n} indicateurs sur {total}", sameWins: "Les deux sites gagnent le même nombre d’indicateurs", tally: "{own} {a}, {rival} {b}, égalité {c}.", onlyHas: "Seul {site} a", openProblems: "problèmes ouverts", shared_one: "{n} problème ouvert est présent sur les deux sites.", shared_other: "{n} problèmes ouverts sont présents sur les deux sites.", more: "et {n} de plus", none: "Aucun.", passive: "{rival} n’a reçu que les vérifications publiques et passives : aucune conversation avec le chat et aucun formulaire envoyé.", verdictNote: "Les deux scores viennent d’analyses automatisées : un point de départ, pas un verdict." },
   it: { title: "Accanto a un concorrente", intro: "La tua revisione di {own}{when} accanto a questa revisione di {rival}.", introWhen: " del {date}", area: "Area", overall: "Complessivo", yourLead: "Il tuo vantaggio", wins: "{site} vince {n} indicatori su {total}", sameWins: "I due siti vincono lo stesso numero di indicatori", tally: "{own} {a}, {rival} {b}, pari {c}.", onlyHas: "Solo {site} ha", openProblems: "problemi aperti", shared_one: "{n} problema aperto è presente su entrambi i siti.", shared_other: "{n} problemi aperti sono presenti su entrambi i siti.", more: "e altri {n}", none: "Nessuno.", passive: "{rival} ha ricevuto solo i controlli pubblici e passivi: nessuna conversazione con la chat e nessun modulo inviato.", verdictNote: "Entrambi i punteggi vengono da revisioni automatizzate: un punto di partenza, non un verdetto." }
 };
@@ -938,13 +938,13 @@ const SIGN_IN = {
     why: "Você recebeu isto porque alguém pediu para entrar com este endereço em carlosandmunoz.com. Se não foi você, ignore este e-mail."
   },
   de: {
-    subject: "{code} ist dein Anmeldecode für QA-lab",
+    subject: "{code} ist Ihr Anmeldecode für QA-lab",
     title: "Bei QA-lab URL Review anmelden",
-    lead: "Gib diesen Code auf der Seite ein, auf der du ihn angefordert hast. Er gilt 15 Minuten.",
-    link: "Oder öffne diesen Link im selben Browser auf demselben Gerät:",
+    lead: "Geben Sie diesen Code auf der Seite ein, auf der Sie ihn angefordert haben. Er gilt 15 Minuten.",
+    link: "Oder öffnen Sie diesen Link im selben Browser auf demselben Gerät:",
     button: "Auf diesem Gerät anmelden",
     device: "Ein Code oder Link, der auf einem anderen Gerät oder Browser geöffnet wird, meldet niemanden an und startet keine Prüfung.",
-    why: "Du bekommst diese E-Mail, weil auf carlosandmunoz.com eine Anmeldung mit dieser Adresse angefordert wurde. Warst du es nicht, ignoriere sie."
+    why: "Sie erhalten diese E-Mail, weil auf carlosandmunoz.com eine Anmeldung mit dieser Adresse angefordert wurde. Waren Sie es nicht, ignorieren Sie sie."
   },
   fr: {
     subject: "{code} est votre code de connexion QA-lab",
@@ -1017,11 +1017,11 @@ const SHARED_OPEN = {
     once: "Este aviso é enviado uma vez por relatório. As próximas aberturas não geram e-mail."
   },
   de: {
-    subject: "Jemand anderes hat den Link zu deinem Bericht über {host} geöffnet",
-    title: "Ein anderes Konto hat deinen Berichtslink geöffnet",
-    lead: "Jemand mit einem anderen Konto hat am {date} den Link zu deiner Prüfung von {host} geöffnet.",
+    subject: "Jemand anderes hat den Link zu Ihrem Bericht über {host} geöffnet",
+    title: "Ein anderes Konto hat Ihren Berichtslink geöffnet",
+    lead: "Jemand mit einem anderen Konto hat am {date} den Link zu Ihrer Prüfung von {host} geöffnet.",
     safe: "Zu sehen war nur die unscharfe Vorschau, die Befunde blieben unter Frost. Ein Bericht öffnet sich vollständig nur für das Konto, das ihn gestartet hat.",
-    button: "Deinen Bericht öffnen",
+    button: "Ihren Bericht öffnen",
     once: "Dieser Hinweis kommt einmal pro Bericht. Spätere Aufrufe werden nicht gemailt."
   },
   fr: {
