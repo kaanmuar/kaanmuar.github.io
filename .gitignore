@@ -1,5 +1,6 @@
 node_modules
 functions/.env
+*.jdk/
 .DS_Store
 cypress/screenshots/
 cypress/videos/
