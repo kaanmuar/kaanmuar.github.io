@@ -404,6 +404,15 @@ COPY = {
 }
 
 # The note under the competitor field in the report's comparison card.
+# The hero stat labels, in the order of the facts list, then the live reports link under it.
+FACTS = {
+    "es": ["tipos de casos", "frameworks que ya conoces", "dirección para empezar", "páginas analizadas hasta ahora", "revisiones hechas hasta ahora", "Ver informes en vivo de sitios reales ↓"],
+    "pt": ["tipos de casos", "frameworks que você já conhece", "endereço para começar", "páginas analisadas até agora", "revisões feitas até agora", "Ver relatórios ao vivo de sites reais ↓"],
+    "de": ["Arten von Testfällen", "Frameworks, die Sie schon kennen", "Adresse zum Start", "bisher geprüfte Seiten", "bisher gelaufene Prüfungen", "Live Reports echter Websites ansehen ↓"],
+    "fr": ["types de cas", "frameworks que vous connaissez déjà", "adresse pour commencer", "pages analysées à ce jour", "analyses lancées à ce jour", "Voir les rapports en direct de vrais sites ↓"],
+    "it": ["tipi di casi", "framework che conosci già", "indirizzo per iniziare", "pagine analizzate finora", "revisioni eseguite finora", "Vedi i report dal vivo di siti reali ↓"],
+}
+
 COMPARE_NOTE = {
     "es": "Tiene el precio de una segunda revisión. El descuento por volver se aplica cuando comparas desde el dispositivo que hizo esta revisión. El sitio del competidor recibe solo las comprobaciones públicas y pasivas: sin conversación con el chat y sin enviar formularios. Como en cualquier revisión, su dueño puede recibir un correo sobre ella, y sus puntuaciones pueden aparecer en Live Reports.",
     "pt": "Tem o preço de uma segunda revisão. O desconto de retorno vale quando você compara pelo dispositivo que fez esta revisão. O site do concorrente recebe só as verificações públicas e passivas: sem conversa com o chat e sem envio de formulários. Como em qualquer revisão, o dono pode receber um e-mail sobre ela, e as pontuações podem aparecer nos Live Reports.",

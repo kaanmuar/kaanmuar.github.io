@@ -100,7 +100,7 @@
     </script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
     <script src="js/site-consent.js?v=20261027a" defer></script>
-    <script src="js/site-analytics.js?v=20261024a"></script>
+    <script src="js/site-analytics.js?v=20261024b"></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
@@ -597,9 +597,9 @@
 </aside>
 <div id="studio-report" class="overlay notranslate" hidden translate="no">
     <div class="report-card" role="dialog" aria-modal="true" aria-labelledby="studio-report-title">
-        <h2 id="studio-report-title">Sprint report</h2>
-        <p style="color:var(--muted)">The file stays in English until you pick another language. Check the preview, including the graphs, then download or print.</p>
-        <label class="report-lang notranslate">Report language
+        <h2 id="studio-report-title" data-studio-ui="title">Sprint report</h2>
+        <p style="color:var(--muted)" data-studio-ui="dlgIntro">The report uses the language picked here. Check the preview, then copy, print, or download it. Graphs are included.</p>
+        <label class="report-lang notranslate"><span data-studio-ui="dlgLang">Report language</span>
             <select id="studio-report-lang">
                 <option value="en" selected>English</option>
                 <option value="es">Español</option>
@@ -610,15 +610,18 @@
             </select>
         </label>
         <div class="report-checks">
-            <label><input type="checkbox" id="studio-opt-graphs" checked> Graphs</label>
-            <label><input type="checkbox" id="studio-opt-cases" checked> Case results</label>
-            <label><input type="checkbox" id="studio-opt-runners" checked> Runner comparison</label>
+            <label><input type="checkbox" id="studio-opt-graphs" checked> <span data-studio-ui="graphs">Graphs</span></label>
+            <label><input type="checkbox" id="studio-opt-details" checked> <span data-studio-ui="runDetails">Run details</span></label>
+            <label><input type="checkbox" id="studio-opt-cases" checked> <span data-studio-ui="cases">Case results</span></label>
+            <label><input type="checkbox" id="studio-opt-steps" checked> <span data-studio-ui="stepsTitle">Steps per case</span></label>
+            <label><input type="checkbox" id="studio-opt-runners" checked> <span data-studio-ui="runners">Runner comparison</span></label>
         </div>
         <iframe id="studio-report-preview" class="report-preview notranslate" title="Sprint report preview" sandbox="allow-same-origin"></iframe>
         <div class="row" style="margin-top:12px;justify-content:flex-end">
-            <button class="btn btn-ghost" type="button" id="studio-report-close">Close</button>
-            <button class="btn btn-ghost" type="button" id="studio-report-print">Print</button>
-            <button class="btn btn-primary" type="button" id="studio-report-download">Download</button>
+            <button class="btn btn-ghost" type="button" id="studio-report-close" data-studio-ui="dlgClose">Close</button>
+            <button class="btn btn-ghost" type="button" id="studio-report-copy" data-studio-ui="dlgCopy">Copy</button>
+            <button class="btn btn-ghost" type="button" id="studio-report-print" data-studio-ui="dlgPrint">Print</button>
+            <button class="btn btn-primary" type="button" id="studio-report-download" data-studio-ui="dlgDownload">Download</button>
         </div>
     </div>
 </div>
@@ -627,7 +630,7 @@
 </div>
 
     <script src="js/site-i18n.js?v=20261028a"></script>
-    <script src="js/site-glossary.js?v=20261029b"></script>
+    <script src="js/site-glossary.js?v=20261102a"></script>
     <script src="js/site-tour.js?v=20261012a"></script>
     <script>
 const AGENTS = [
@@ -2976,7 +2979,11 @@ async function runSprint() {
             await agentThink(testHosts, 'A3', `launching the ${fw} runner against staging…`);
             const ok = !(tc.id === 'XT-1401' && fw === 'Robot');
             const ms = 420 + Math.floor(Math.random() * 900);
-            state.results.push({ id: tc.id, fw, ok, ms, title: tc.title });
+            const ticket = state.tickets.find(t => t.tests.includes(tc)) || {};
+            state.results.push({
+                id: tc.id, fw, ok, ms, title: tc.title, ticket: ticket.key || '', story: ticket.summary || '', env: ticket.env || '', sprint: ticket.sprint || '',
+                steps: steps.map(step => step.what + (step.where ? ' · ' + step.where : '')), error: ok ? '' : 'row count did not match the ledger', at: Date.now()
+            });
             state.runnerLive = null;
             state.runnerFeed.push({ fw, text: (ok ? 'PASS' : 'FAIL') + '  ' + tc.id + '  ' + ms + ' ms' + (ok ? '' : '  row count did not match the ledger'), cls: ok ? 'ok' : 'fail' });
             state.runnerLog.push({ fw, id: tc.id, ok, ms, title: tc.title, where: steps[0] ? steps[0].where : '', how: steps[0] ? steps[0].what : tc.title, note: ok ? 'passed' : 'row count did not match the ledger' });
@@ -3104,7 +3111,8 @@ document.querySelectorAll('#studio-pace [data-pace]').forEach(btn => {
 document.getElementById('studio-report-close').onclick = () => closeStudioReport();
 document.getElementById('studio-report-print').onclick = () => printStudioReport();
 document.getElementById('studio-report-download').onclick = () => downloadStudioReport();
-['studio-report-lang', 'studio-opt-graphs', 'studio-opt-cases', 'studio-opt-runners'].forEach(id => {
+document.getElementById('studio-report-copy').onclick = (e) => copyStudioReport(e.currentTarget);
+['studio-report-lang', 'studio-opt-graphs', 'studio-opt-details', 'studio-opt-cases', 'studio-opt-steps', 'studio-opt-runners'].forEach(id => {
     document.getElementById(id).addEventListener('change', refreshStudioReport);
 });
 document.getElementById('resetBtn').onclick = () => {
@@ -3224,44 +3232,184 @@ const STUDIO_COPY = {
     fr: { title: 'Rapport de sprint', produced: 'Produit par le laboratoire QA de Carlos Muñoz', graphs: 'Graphiques', cases: 'Résultats des cas', runners: 'Comparaison des exécuteurs', pass: 'RÉUSSI', fail: 'ÉCHOUÉ', rate: 'Taux de réussite', duration: 'Durée', empty: 'Lancez le sprint pour remplir ce rapport.', footer: 'Produit par le laboratoire QA de Carlos Muñoz · https://carlosandmunoz.com · pas un certificat tiers' },
     it: { title: 'Report dello sprint', produced: 'Prodotto dal laboratorio QA di Carlos Muñoz', graphs: 'Grafici', cases: 'Risultati dei casi', runners: 'Confronto degli esecutori', pass: 'SUPERATO', fail: 'FALLITO', rate: 'Tasso di superamento', duration: 'Durata', empty: 'Esegui lo sprint per compilare questo report.', footer: 'Prodotto dal laboratorio QA di Carlos Muñoz · https://carlosandmunoz.com · non è un certificato di terzi' }
 };
+const STUDIO_MORE = {
+    en: {
+        runDetails: 'Run details', generated: 'Generated', environment: 'Environment', board: 'Board', sprint: 'Sprint', storyEnv: 'Story environments',
+        frameworksChosen: 'Frameworks chosen', started: 'Started', finished: 'Finished', caseTime: 'Total case time', casesRun: 'Cases run',
+        checks: 'checks across runners', passed: 'Passed', failed: 'Failed', reportLang: 'Report language', passedOf: 'passed',
+        summaryByRunner: 'Summary by runner', colRunner: 'Runner', colRan: 'Ran', colAvg: 'Avg ms', failures: 'Failures', noFailures: 'No case failed in this sprint run.',
+        story: 'Story', steps: 'Steps', error: 'Error', colTitle: 'Title', colResult: 'Result', colEvidence: 'Evidence', stepsTitle: 'Steps per case',
+        dlgIntro: 'The report uses the language picked here. Check the preview, then copy, print, or download it. Graphs are included.',
+        dlgLang: 'Report language', dlgClose: 'Close', dlgCopy: 'Copy', dlgPrint: 'Print', dlgDownload: 'Download', dlgCopied: 'Copied', dlgBlocked: 'Copy blocked', dlgPreview: 'Sprint report preview'
+    },
+    es: {
+        runDetails: 'Detalles de la ejecución', generated: 'Generado', environment: 'Entorno', board: 'Tablero', sprint: 'Sprint', storyEnv: 'Entornos de las historias',
+        frameworksChosen: 'Frameworks elegidos', started: 'Inicio', finished: 'Fin', caseTime: 'Tiempo total de los casos', casesRun: 'Casos ejecutados',
+        checks: 'comprobaciones en todos los ejecutores', passed: 'Aprobados', failed: 'Fallidos', reportLang: 'Idioma del informe', passedOf: 'aprobados',
+        summaryByRunner: 'Resumen por ejecutor', colRunner: 'Ejecutor', colRan: 'Ejecutados', colAvg: 'Promedio ms', failures: 'Fallos', noFailures: 'Ningún caso falló en esta ejecución del sprint.',
+        story: 'Historia', steps: 'Pasos', error: 'Error', colTitle: 'Título', colResult: 'Resultado', colEvidence: 'Evidencia', stepsTitle: 'Pasos por caso',
+        dlgIntro: 'El informe usa el idioma elegido aquí. Revisa la vista previa y luego cópialo, imprímelo o descárgalo. Las gráficas están incluidas.',
+        dlgLang: 'Idioma del informe', dlgClose: 'Cerrar', dlgCopy: 'Copiar', dlgPrint: 'Imprimir', dlgDownload: 'Descargar', dlgCopied: 'Copiado', dlgBlocked: 'Copia bloqueada', dlgPreview: 'Vista previa del informe del sprint'
+    },
+    pt: {
+        runDetails: 'Detalhes da execução', generated: 'Gerado', environment: 'Ambiente', board: 'Quadro', sprint: 'Sprint', storyEnv: 'Ambientes das histórias',
+        frameworksChosen: 'Frameworks escolhidos', started: 'Início', finished: 'Fim', caseTime: 'Tempo total dos casos', casesRun: 'Casos executados',
+        checks: 'verificações em todos os executores', passed: 'Aprovados', failed: 'Reprovados', reportLang: 'Idioma do relatório', passedOf: 'aprovados',
+        summaryByRunner: 'Resumo por executor', colRunner: 'Executor', colRan: 'Executados', colAvg: 'Média ms', failures: 'Falhas', noFailures: 'Nenhum caso falhou nesta execução do sprint.',
+        story: 'História', steps: 'Passos', error: 'Erro', colTitle: 'Título', colResult: 'Resultado', colEvidence: 'Evidência', stepsTitle: 'Passos por caso',
+        dlgIntro: 'O relatório usa o idioma escolhido aqui. Confira a prévia e depois copie, imprima ou baixe. Os gráficos estão incluídos.',
+        dlgLang: 'Idioma do relatório', dlgClose: 'Fechar', dlgCopy: 'Copiar', dlgPrint: 'Imprimir', dlgDownload: 'Baixar', dlgCopied: 'Copiado', dlgBlocked: 'Cópia bloqueada', dlgPreview: 'Prévia do relatório do sprint'
+    },
+    de: {
+        runDetails: 'Laufdetails', generated: 'Erstellt', environment: 'Umgebung', board: 'Board', sprint: 'Sprint', storyEnv: 'Umgebungen der Storys',
+        frameworksChosen: 'Gewählte Frameworks', started: 'Start', finished: 'Ende', caseTime: 'Gesamtzeit der Fälle', casesRun: 'Ausgeführte Fälle',
+        checks: 'Prüfungen über alle Runner', passed: 'Bestanden', failed: 'Fehlgeschlagen', reportLang: 'Berichtssprache', passedOf: 'bestanden',
+        summaryByRunner: 'Übersicht nach Runner', colRunner: 'Runner', colRan: 'Ausgeführt', colAvg: 'Ø ms', failures: 'Fehler', noFailures: 'In diesem Sprintlauf ist kein Fall fehlgeschlagen.',
+        story: 'Story', steps: 'Schritte', error: 'Fehlermeldung', colTitle: 'Titel', colResult: 'Ergebnis', colEvidence: 'Nachweis', stepsTitle: 'Schritte je Fall',
+        dlgIntro: 'Der Bericht nutzt die hier gewählte Sprache. Prüfen Sie die Vorschau, dann kopieren, drucken oder laden Sie ihn herunter. Diagramme sind enthalten.',
+        dlgLang: 'Berichtssprache', dlgClose: 'Schließen', dlgCopy: 'Kopieren', dlgPrint: 'Drucken', dlgDownload: 'Herunterladen', dlgCopied: 'Kopiert', dlgBlocked: 'Kopieren blockiert', dlgPreview: 'Vorschau des Sprintberichts'
+    },
+    fr: {
+        runDetails: 'Détails de l’exécution', generated: 'Généré', environment: 'Environnement', board: 'Tableau', sprint: 'Sprint', storyEnv: 'Environnements des stories',
+        frameworksChosen: 'Frameworks choisis', started: 'Début', finished: 'Fin', caseTime: 'Durée totale des cas', casesRun: 'Cas exécutés',
+        checks: 'vérifications sur tous les exécuteurs', passed: 'Réussis', failed: 'Échoués', reportLang: 'Langue du rapport', passedOf: 'réussis',
+        summaryByRunner: 'Synthèse par exécuteur', colRunner: 'Exécuteur', colRan: 'Exécutés', colAvg: 'Moy. ms', failures: 'Échecs', noFailures: 'Aucun cas n’a échoué dans cette exécution du sprint.',
+        story: 'Story', steps: 'Étapes', error: 'Erreur', colTitle: 'Titre', colResult: 'Résultat', colEvidence: 'Preuve', stepsTitle: 'Étapes par cas',
+        dlgIntro: 'Le rapport utilise la langue choisie ici. Vérifiez l’aperçu, puis copiez, imprimez ou téléchargez-le. Les graphiques sont inclus.',
+        dlgLang: 'Langue du rapport', dlgClose: 'Fermer', dlgCopy: 'Copier', dlgPrint: 'Imprimer', dlgDownload: 'Télécharger', dlgCopied: 'Copié', dlgBlocked: 'Copie bloquée', dlgPreview: 'Aperçu du rapport de sprint'
+    },
+    it: {
+        runDetails: 'Dettagli dell’esecuzione', generated: 'Generato', environment: 'Ambiente', board: 'Board', sprint: 'Sprint', storyEnv: 'Ambienti delle storie',
+        frameworksChosen: 'Framework scelti', started: 'Inizio', finished: 'Fine', caseTime: 'Tempo totale dei casi', casesRun: 'Casi eseguiti',
+        checks: 'verifiche su tutti gli esecutori', passed: 'Superati', failed: 'Falliti', reportLang: 'Lingua del report', passedOf: 'superati',
+        summaryByRunner: 'Riepilogo per esecutore', colRunner: 'Esecutore', colRan: 'Eseguiti', colAvg: 'Media ms', failures: 'Fallimenti', noFailures: 'Nessun caso è fallito in questa esecuzione dello sprint.',
+        story: 'Storia', steps: 'Passi', error: 'Errore', colTitle: 'Titolo', colResult: 'Risultato', colEvidence: 'Evidenza', stepsTitle: 'Passi per caso',
+        dlgIntro: 'Il report usa la lingua scelta qui. Controlla l’anteprima, poi copialo, stampalo o scaricalo. I grafici sono inclusi.',
+        dlgLang: 'Lingua del report', dlgClose: 'Chiudi', dlgCopy: 'Copia', dlgPrint: 'Stampa', dlgDownload: 'Scarica', dlgCopied: 'Copiato', dlgBlocked: 'Copia bloccata', dlgPreview: 'Anteprima del report dello sprint'
+    }
+};
 function studioCopy(lang) {
-    return Object.assign({}, STUDIO_COPY.en, STUDIO_COPY[lang] || {});
+    return Object.assign({}, STUDIO_COPY.en, STUDIO_MORE.en, STUDIO_COPY[lang] || {}, STUDIO_MORE[lang] || {});
+}
+function studioReportLang() {
+    const langEl = document.getElementById('studio-report-lang');
+    const picked = langEl ? langEl.value : '';
+    return Object.keys(STUDIO_COPY).find(code => code === picked) || 'en';
 }
 function studioReportHtml() {
-    const langEl = document.getElementById('studio-report-lang');
-    const lang = langEl && STUDIO_COPY[langEl.value] ? langEl.value : 'en';
+    const lang = studioReportLang();
     const c = studioCopy(lang);
-    const graphs = document.getElementById('studio-opt-graphs').checked;
-    const cases = document.getElementById('studio-opt-cases').checked;
-    const runners = document.getElementById('studio-opt-runners').checked;
+    const on = id => { const el = document.getElementById(id); return el ? el.checked : true; };
     const results = state.results || [];
     const passed = results.filter(row => row.ok).length;
+    const failedRows = results.filter(row => !row.ok);
     const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
-    let body = '<p><strong>' + esc(c.title) + '</strong><br>' + esc(c.produced) + ' · carlosandmunoz.com<br>' + passed + '/' + results.length + '</p>';
+    const stamp = new Date().toISOString();
+    const uniq = list => [...new Set(list.filter(Boolean))];
+    const fact = ([label, value]) => '<tr><th>' + esc(label) + '</th><td>' + esc(value === '' || value == null ? '—' : value) + '</td></tr>';
+    const table = (heads, rows) => '<table><thead><tr>' + heads.map(h => '<th>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + (rows || '<tr><td colspan="' + heads.length + '">' + esc(c.empty) + '</td></tr>') + '</tbody></table>';
+    const times = results.map(row => row.at).filter(Boolean);
+    const caseMs = results.reduce((sum, row) => sum + (row.ms || 0), 0);
+    const caseIds = uniq(results.map(row => row.id));
+    let body = '<p><strong>' + esc(c.title) + '</strong> · ' + esc(stamp) + '<br>' + esc(c.produced) + ' · carlosandmunoz.com<br>' + passed + '/' + results.length + ' ' + esc(c.passedOf) + '</p>';
     if (!results.length) body += '<p>' + esc(c.empty) + '</p>';
-    if (graphs) {
+    if (on('studio-opt-details')) {
+        body += '<h2>' + esc(c.runDetails) + '</h2><table class="facts"><tbody>' + [
+            [c.generated, stamp],
+            [c.environment, location.origin],
+            [c.board, currentBoard().name],
+            [c.sprint, uniq(results.map(row => row.sprint)).join(', ')],
+            [c.storyEnv, uniq(results.map(row => row.env)).join(' | ')],
+            [c.frameworksChosen, (state.frameworks || []).join(', ')],
+            [c.started, times.length ? new Date(Math.min(...times)).toISOString() : ''],
+            [c.finished, times.length ? new Date(Math.max(...times)).toISOString() : ''],
+            [c.caseTime, caseMs ? (caseMs / 1000).toFixed(1) + ' s' : ''],
+            [c.casesRun, caseIds.length + (results.length !== caseIds.length ? ' · ' + results.length + ' ' + c.checks : '')],
+            [c.passed, passed],
+            [c.failed, failedRows.length],
+            [c.rate, results.length ? Math.round((passed / results.length) * 100) + '%' : ''],
+            [c.reportLang, lang]
+        ].map(fact).join('') + '</tbody></table>';
+    }
+    if (on('studio-opt-graphs')) {
         const max = Math.max(...results.map(row => row.ms || 0), 1);
-        const bars = results.slice(0, 12).map(row => '<div style="display:grid;grid-template-columns:88px 1fr 64px;gap:8px;align-items:center;margin:6px 0;font-family:sans-serif;font-size:12px"><strong>' + esc(row.id) + '</strong><div style="height:10px;background:#e6ebf0;border-radius:999px;overflow:hidden"><span style="display:block;height:100%;width:' + Math.max(8, Math.round(((row.ms || 0) / max) * 100)) + '%;background:' + (row.ok ? '#0d6e76' : '#b42318') + '"></span></div><span>' + (row.ms || 0) + ' ms</span></div>').join('');
-        const byFw = {};
-        results.forEach(row => {
-            if (!byFw[row.fw]) byFw[row.fw] = { ran: 0, passed: 0 };
-            byFw[row.fw].ran += 1;
-            if (row.ok) byFw[row.fw].passed += 1;
-        });
-        const fwBars = Object.entries(byFw).map(([name, row]) => {
-            const rate = row.ran ? Math.round((row.passed / row.ran) * 100) : 0;
-            return '<div style="display:grid;grid-template-columns:110px 1fr 80px;gap:8px;align-items:center;margin:6px 0;font-family:sans-serif;font-size:12px"><strong>' + esc(name) + '</strong><div style="height:10px;background:#e6ebf0;border-radius:999px;overflow:hidden"><span style="display:block;height:100%;width:' + rate + '%;background:#0d6e76"></span></div><span>' + row.passed + '/' + row.ran + ' · ' + rate + '%</span></div>';
+        const bars = results.slice(0, 12).map(row => '<div class="bar-row"><strong>' + esc(row.id) + '</strong><div class="track"><span style="width:' + Math.max(8, Math.round(((row.ms || 0) / max) * 100)) + '%;background:' + (row.ok ? '#0d6e76' : '#b42318') + '"></span></div><span>' + esc(row.fw) + ' · ' + (row.ms || 0) + ' ms</span></div>').join('');
+        const fwBars = uniq(results.map(row => row.fw)).map(name => {
+            const rows = results.filter(row => row.fw === name);
+            const ok = rows.filter(row => row.ok).length;
+            const rate = Math.round((ok / rows.length) * 100);
+            return '<div class="bar-row"><strong>' + esc(name) + '</strong><div class="track"><span style="width:' + rate + '%;background:#0d6e76"></span></div><span>' + ok + '/' + rows.length + ' · ' + rate + '%</span></div>';
         }).join('');
         body += '<h2>' + esc(c.graphs) + '</h2><h3>' + esc(c.rate) + '</h3>' + (fwBars || '<p>' + esc(c.empty) + '</p>') + '<h3>' + esc(c.duration) + '</h3>' + bars;
     }
-    if (runners) {
-        body += '<h2>' + esc(c.runners) + '</h2><p>' + esc((state.frameworks || []).join(', ') || '—') + '</p>';
+    if (on('studio-opt-runners')) {
+        const rows = uniq(results.map(row => row.fw)).map(name => {
+            const list = results.filter(row => row.fw === name);
+            const ok = list.filter(row => row.ok).length;
+            return '<tr><td>' + esc(name) + '</td><td>' + list.length + '</td><td class="pass">' + ok + '</td><td class="' + (list.length - ok ? 'fail' : '') + '">' + (list.length - ok) + '</td><td>' + Math.round(list.reduce((sum, row) => sum + (row.ms || 0), 0) / list.length) + '</td></tr>';
+        }).join('');
+        body += '<h2>' + esc(c.runners) + '</h2><p>' + esc((state.frameworks || []).join(', ') || '—') + '</p><h3>' + esc(c.summaryByRunner) + '</h3>' + table([c.colRunner, c.colRan, c.passed, c.failed, c.colAvg], rows);
     }
-    if (cases) {
-        const rows = results.map(row => '<tr><td>' + esc(row.id) + '</td><td>' + esc(row.fw) + '</td><td style="color:' + (row.ok ? '#0d6e76' : '#b42318') + '">' + (row.ok ? esc(c.pass) : esc(c.fail)) + '</td><td>' + (row.ms || 0) + '</td></tr>').join('');
-        body += '<h2>' + esc(c.cases) + '</h2><table style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:12px"><thead><tr><th>ID</th><th>Runner</th><th></th><th>ms</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">' + esc(c.empty) + '</td></tr>') + '</tbody></table>';
+    if (on('studio-opt-cases')) {
+        const cards = failedRows.map(row => '<article class="fail-card"><h3>' + esc(row.id + ' · ' + row.title + ' · ' + row.fw) + '</h3><table class="facts"><tbody>' + [
+            [c.story, [row.ticket, row.story].filter(Boolean).join(' · ')],
+            [c.sprint, row.sprint],
+            [c.environment, row.env],
+            [c.colRunner, row.fw],
+            ['ms', row.ms || 0],
+            [c.steps, (row.steps || []).join(' → ')],
+            [c.error, row.error]
+        ].map(fact).join('') + '</tbody></table></article>').join('');
+        body += '<h2>' + esc(c.failures) + '</h2>' + (cards || '<p class="muted">' + esc(results.length ? c.noFailures : c.empty) + '</p>');
+        const rows = results.map(row => '<tr><td>' + esc(row.id) + '</td><td>' + esc(row.title) + '</td><td>' + esc([row.ticket, row.story].filter(Boolean).join(' · ')) + '</td><td>' + esc(row.fw) + '</td><td class="' + (row.ok ? 'pass' : 'fail') + '">' + (row.ok ? esc(c.pass) : esc(c.fail)) + '</td><td>' + (row.ms || 0) + '</td><td>' + esc(row.error || c.passedOf) + '</td></tr>').join('');
+        body += '<h2>' + esc(c.cases) + '</h2>' + table(['ID', c.colTitle, c.story, c.colRunner, c.colResult, 'ms', c.colEvidence], rows);
     }
-    return '<!DOCTYPE html><html lang="' + lang + '" translate="no" class="notranslate"><head><meta charset="utf-8"><meta name="google" content="notranslate"><title>' + esc(c.title) + ' · Carlos Muñoz</title></head><body style="font-family:Georgia,serif;color:#12181f;margin:32px"><div style="position:fixed;inset:30% 0 auto;text-align:center;font-weight:800;letter-spacing:.14em;font-size:28px;color:rgba(13,110,118,.28);transform:rotate(-18deg)">QA LAB · CARLOS MUÑOZ</div><h1>' + esc(c.title) + '</h1>' + body + '<footer style="margin-top:28px;font-size:12px">' + esc(c.footer) + '</footer></body></html>';
+    if (on('studio-opt-steps')) {
+        const rows = caseIds.map(id => {
+            const row = results.find(item => item.id === id);
+            return '<tr><td>' + esc(id) + '</td><td>' + esc(row.title) + '</td><td>' + ((row.steps || []).map(step => esc(step)).join('<br>') || '—') + '</td></tr>';
+        }).join('');
+        body += '<h2>' + esc(c.stepsTitle) + '</h2>' + table(['ID', c.colTitle, c.steps], rows);
+    }
+    const style = '<style>table{border-collapse:collapse;width:100%;font-family:sans-serif;font-size:12px;margin:8px 0 18px}td,th{border-bottom:1px solid #d5dce3;padding:6px 8px;text-align:left;vertical-align:top}td:first-child{white-space:nowrap}.facts th{width:32%;color:#5c6b76;font-weight:600}.pass{color:#0d6e76;font-weight:700}.fail{color:#b42318;font-weight:700}.muted{color:#5c6b76;font-size:12px}.fail-card{border:1px solid #f1c4bf;border-left:4px solid #b42318;border-radius:8px;padding:4px 12px;margin:10px 0;break-inside:avoid}.fail-card h3{margin:8px 0 4px;font-size:14px;color:#b42318}.bar-row{display:grid;grid-template-columns:110px 1fr 150px;gap:8px;align-items:center;margin:6px 0;font-family:sans-serif;font-size:12px}.track{height:10px;background:#e6ebf0;border-radius:999px;overflow:hidden}.track span{display:block;height:100%}h2,h3{break-after:avoid}@media print{.track span{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>';
+    return '<!DOCTYPE html><html lang="' + lang + '" translate="no" class="notranslate"><head><meta charset="utf-8"><meta name="google" content="notranslate"><title>' + esc(c.title) + ' · Carlos Muñoz</title>' + style + '</head><body style="font-family:Georgia,serif;color:#12181f;margin:32px"><div class="mark" style="position:fixed;inset:30% 0 auto;text-align:center;font-weight:800;letter-spacing:.14em;font-size:28px;color:rgba(13,110,118,.28);transform:rotate(-18deg)">QA LAB · CARLOS MUÑOZ</div><h1>' + esc(c.title) + '</h1>' + body + '<footer style="margin-top:28px;font-size:12px">' + esc(c.footer) + '</footer></body></html>';
+}
+function syncStudioDialog(lang) {
+    const box = document.getElementById('studio-report');
+    if (!box || box.dataset.lang === lang) return;
+    const c = studioCopy(lang);
+    box.dataset.lang = lang;
+    box.setAttribute('lang', lang);
+    box.querySelectorAll('[data-studio-ui]').forEach(el => {
+        const text = c[el.dataset.studioUi];
+        if (text) el.textContent = text;
+    });
+    const frame = document.getElementById('studio-report-preview');
+    if (frame) frame.title = c.dlgPreview;
+}
+async function copyStudioReport(btn) {
+    track('studio_report', 'SDLC Studio', 'copy');
+    const html = studioReportHtml();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    doc.querySelectorAll('.mark, style, script').forEach(el => el.remove());
+    doc.querySelectorAll('td, th').forEach(cell => { if (cell.nextElementSibling) cell.append('\t'); });
+    doc.querySelectorAll('tr, p, h1, h2, h3, li, article, div, br').forEach(el => el.after('\n'));
+    const text = doc.body.textContent.replace(/[ \u00a0]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    const c = studioCopy(studioReportLang());
+    let done = false;
+    try {
+        if (window.ClipboardItem && navigator.clipboard.write) {
+            await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' }) })]);
+        } else {
+            await navigator.clipboard.writeText(text);
+        }
+        done = true;
+    } catch (err) { /* clipboard blocked */ }
+    if (btn) {
+        btn.textContent = done ? c.dlgCopied : c.dlgBlocked;
+        setTimeout(() => { btn.textContent = studioCopy(studioReportLang()).dlgCopy; }, 1600);
+    }
+    return text;
 }
 function openStudioReport() {
     const box = document.getElementById('studio-report');
@@ -3282,6 +3430,7 @@ function refreshStudioReport() {
     if (langEl) {
         try { localStorage.setItem(STUDIO_REPORT_LANG, langEl.value || 'en'); } catch (err) { /* ignore */ }
     }
+    syncStudioDialog(studioReportLang());
     if (frame) frame.srcdoc = studioReportHtml();
 }
 function closeStudioReport() {
@@ -3323,7 +3472,7 @@ const STUDIO_TOUR = {
         { selector: '#studio-pace', title: 'Pace', body: 'The line runs from faster on the left to slower on the right. 0.5 holds the least between actions, 2.0 holds the most, including the moment the Test Designer writes each step.', demoMs: 1500 },
         { selector: '#view', title: 'Tickets and artifacts', body: 'The board matches the tool you picked. Open a story to read it. Sprint chips include Backlog, which hides the current sprint and shows the waiting stories. After the stories, choose Zephyr, Xray, or TestRail and watch the Test Designer write each step into that tool.', demoMs: 1700 },
         { selector: '#runner-edge', title: 'Runner console', body: 'Runners slides in from the right. Each tab is that framework’s sprint log. The regression lab is where its 20 frameworks, from Playwright and Selenium to Reqnroll, Maestro, and k6, run as their own processes, and the drawer there follows the one that is running.', demoMs: 1600, prepare: () => openStudioRunners() },
-        { selector: '#studio-report-open', title: 'Sprint report file', body: 'Report opens the file options. English is the default. Pick another language, leave the graphs on, check the preview, then download or print.', demoMs: 1600 },
+        { selector: '#studio-report-open', title: 'Sprint report file', body: 'Report opens the file options. English is the default. Pick another language and the dialog follows it. Check the preview, then copy, print, or download.', demoMs: 1600 },
         { selector: '#log', title: 'Agent log', body: 'Each line is the latest action: what the agent did, where, and why. Earlier lines stay here if you need them.', demoMs: 1500 },
         { selector: 'a[href="qa-lab.html"]', title: 'CV regression lab', body: 'Opens the regression lab. The same checks run in the browser against this CV, with a catalog, a pace, watch or background, and a results dashboard. Performance rows use k6, JMeter, and Gatling on the local server.', demoMs: 1700 }
     ]

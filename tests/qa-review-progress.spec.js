@@ -62,4 +62,19 @@ test.describe('Review progress', () => {
     await expect(page.locator('.rp-phase')).toHaveText('Verbinden');
     await expect(page.locator('.rp-phase')).toHaveAttribute('translate', 'no');
   });
+
+  test('translates the late server lines and leaves hosts and emails as sent', async ({ page }) => {
+    await prime(page);
+    await page.goto('/qa-review-es.html');
+    const say = (text) => page.evaluate((line) => window.ReviewProgress.translate(line), text);
+    expect(await say('Looking for your earlier reviews of carlosandmunoz.com.')).toBe('Buscando tus revisiones anteriores de carlosandmunoz.com.');
+    expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe('Informe guardado. Enviando una copia a ana@example.com.');
+    expect(await say('Market presence: a.com is #1,234 on Tranco, presence 80/100; b.com is outside the Tranco top million.'))
+      .toBe('Presencia en el mercado: a.com ocupa el puesto #1234 en Tranco, presencia 80/100; b.com está fuera del millón principal de Tranco.');
+    expect(await say('Reading robots.txt.')).toBe('Reading robots.txt.');
+    await page.goto('/qa-review-de.html');
+    expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe('Bericht gespeichert. Eine Kopie geht an ana@example.com.');
+    await page.goto('/qa-review.html');
+    expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe('Report saved. Emailing a copy to ana@example.com.');
+  });
 });
