@@ -28,6 +28,22 @@ test("a card escapes its text, shortens tagged links and links the report in the
   assert.match(html, /data-act="play" data-video="5b4Hr6r-cBk"/);
 });
 
+test("a card names its topic and the clip's voice in the page language and keeps caption paragraphs apart", () => {
+  const html = card.cardHtml(post({ cat: "Requested" }), COPY.de, "de");
+  assert.match(html, /<span class="post-tag">Angefragt<\/span>/);
+  assert.match(html, /aria-label="Clip ansehen \(mit Ton, ES\)"/);
+  assert.match(html, /<span class="post-par">Give every page a title.<\/span> <span class="post-par">Guide: /);
+  assert.equal(card.topic({ cat: "Brand new" }, COPY.de), "Brand new");
+  for (const lang of Object.keys(LANGS)) assert.deepEqual(Object.keys(COPY[lang].cats), Object.keys(COPY.en.cats), lang);
+});
+
+test("each page offers the topics of its posts, translated, and versions its CSS and JS by content", () => {
+  const html = hub.page("fr", [post({ cat: "Worldwide" }), post({ id: "b/2", cat: "Worldwide" }), post({ id: "b/3", cat: "Local" })], "2026-10-24");
+  assert.match(html, /<option value="all">Tous les thèmes<\/option><option value="Worldwide">Mondial<\/option><option value="Local">Local<\/option>/);
+  assert.match(html, /css\/social-hub.css\?v=[0-9a-f]{10}"/);
+  assert.match(html, /id="hub-clear"[^>]*>Effacer les filtres</);
+});
+
 test("posted cards come first, newest first, then scheduled ones, soonest first", () => {
   const order = card.arrange([post({ id: "a", date: "2026-11-30" }), post({ id: "b", date: "2026-10-01" }), post({ id: "c", date: "2026-11-02" }), post({ id: "d", date: "2026-10-20" })], "2026-10-24");
   assert.deepEqual(order.map((p) => p.id + (p.upcoming ? "+" : "")), ["d", "b", "c+", "a+"]);
