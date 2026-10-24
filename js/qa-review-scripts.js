@@ -2290,7 +2290,7 @@ namespace QaLab
     return new Blob(locals.concat(centrals, [end.buffer]), { type: "application/zip" });
   }
 
-  const api = { snippets, bundle, zip, checkFor, context };
+  const api = { snippets, bundle, zip, checkFor, context, headerFiles };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.QAReviewScripts = api;
 })(typeof window !== "undefined" ? window : globalThis);
