@@ -98,6 +98,14 @@ test("the ops table names every job once and flags failed, quiet and never-run j
   assert.deepEqual(ops.overdue({}, now, new Date(now - 1800000).toISOString()).map((p) => p.job), []);
 });
 
+test("the Live Reports batch starts after the night's last sweep tick", () => {
+  const hour = (cron) => Number(cron.split(" ")[1]);
+  const lastSweepHour = Number(ops.cron("sweepReviews").split(" ")[1].split("-")[1]);
+  assert.ok(hour(ops.cron("ensureLiveReportsBatch")) > lastSweepHour);
+  const firstBackupBogota = hour(ops.job("auto-live-reports.yml").cron) - 5;
+  assert.ok(firstBackupBogota > lastSweepHour);
+});
+
 test("the GitHub rows match the crons in the workflow files", () => {
   const fs = require("fs");
   const path = require("path");
