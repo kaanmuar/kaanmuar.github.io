@@ -1,5 +1,5 @@
 {
- "since": "2026-10-22T20:11:19.811Z",
+ "since": "2026-10-24T08:15:25.005Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -21,13 +21,18 @@
   "honda.com": "2026-10-22",
   "pirouline.com": "2026-10-23",
   "postobon.com": "2026-10-23",
-  "monsterenergy.com": "2026-10-23"
+  "monsterenergy.com": "2026-10-23",
+  "grupoexito.com.co": "2026-10-24",
+  "colombia.com": "2026-10-24",
+  "nibo.com.br": "2026-10-24",
+  "kreuzwort-raetsel.net": "2026-10-24",
+  "roottcostore.com": "2026-10-24"
  },
  "recent": [
-  "ax-link-name",
+  "sec-libraries",
   "a11y-labels",
-  "sec-frame",
-  "sec-http",
-  "sec-hsts"
+  "ax-color-contrast",
+  "seo-schema-parse",
+  "ax-button-name"
  ]
 }

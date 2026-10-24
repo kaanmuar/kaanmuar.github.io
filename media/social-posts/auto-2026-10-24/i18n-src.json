@@ -1,0 +1,112 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step."
+ },
+ "clips": {
+  "u-grupoexito-com-co": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "grupoexito.com.co: 68.",
+    "title.1": "*The gap: button names.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But buttons must have discernible text.",
+    "action": "Give every button text or an aria-label, so a screen reader can announce it.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 23 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "grupoexito.com.co · 100 pages analyzed · 23 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But buttons must have discernible text.\n\nLesson: Give every button text or an aria-label, so a screen reader can announce it.\n\nOne automated analysis of public pages on 23 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-grupoexito-com-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-grupoexito-com-co\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#Accessibility #OpenSource #WebDev #QA #A11y #Programming #LearnOnYouTube #QualityAssurance #WCAG #Frontend #TestAutomation #QAlab"
+   }
+  },
+  "u-colombia-com": {
+   "lang": "de",
+   "strings": {
+    "title.0": "colombia.com: 64.",
+    "title.1": "*The gap: JSON-LD.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But 2 JSON-LD blocks do not parse.",
+    "action": "Validate each JSON-LD block after every release. One stray comma hides all of it.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 23 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "colombia.com · 100 pages analyzed · 23 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But 2 JSON-LD blocks do not parse.\n\nLesson: Validate each JSON-LD block after every release. One stray comma hides all of it.\n\nOne automated analysis of public pages on 23 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-colombia-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#StructuredData #DevOps #Automation #QA #SEO #GEO #WebDevelopment #Coding #SEOTips #GenerativeEngineOptimization #SoftwareTesting #QAlab"
+   }
+  },
+  "u-nibo-com-br": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "nibo.com.br: 79.",
+    "title.1": "*The gap: text contrast.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.",
+    "action": "Keep body text at a 4.5:1 contrast ratio or more against its background.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "nibo.com.br · 20 pages analyzed · 24 Oct 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.\n\nLesson: Keep body text at a 4.5:1 contrast ratio or more against its background.\n\nOne automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-nibo-com-br&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-nibo-com-br\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #AI #DevOps #QA #Contrast #A11y #Coding #Programming #InclusiveDesign #Testing #DigitalAccessibility #QAlab"
+   }
+  },
+  "u-kreuzwort-raetsel-net": {
+   "lang": "it",
+   "strings": {
+    "title.0": "kreuzwort-raetsel.net: 86.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 115 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "kreuzwort-raetsel.net · 20 pages analyzed · 24 Oct 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 115 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-kreuzwort-raetsel-net&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-kreuzwort-raetsel-net\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #DevOps #Automation #QA #Forms #A11y #Coding #Programming #DigitalAccessibility #QAEngineer #UXDesign #QAlab"
+   }
+  },
+  "u-roottcostore-com": {
+   "lang": "en",
+   "strings": {
+    "title.0": "roottcostore.com: 59.",
+    "title.1": "*The gap: outdated libraries.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But 3 front-end libraries have known flaws.",
+    "action": "Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "roottcostore.com · 100 pages analyzed · 24 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But 3 front-end libraries have known flaws.\n\nLesson: Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.\n\nOne automated analysis of public pages on 24 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-roottcostore-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-roottcostore-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#WebSecurity #WebDev #Programming #QA #Dependencies #JavaScript #WebDevelopment #Coding #DevSecOps #WebDesign #SDET #QAlab"
+   }
+  }
+ }
+}

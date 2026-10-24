@@ -1,0 +1,29 @@
+Text,Image URL,Tags,Posting Time
+"grupoexito.com.co: 68. The gap: button names.
+
+Give every button text or an aria-label, so a screen reader can announce it.
+
+carlosandmunoz.com/qa-review?live=u-grupoexito-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-grupoexito-com-co
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/01-u-grupoexito-com-co.jpg","","2026-10-25 08:35"
+"colombia.com: 64. The gap: JSON-LD.
+
+Validate each JSON-LD block after every release. One stray comma hides all of it.
+
+carlosandmunoz.com/qa-review?live=u-colombia-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-colombia-com
+#StructuredData #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg","","2026-10-26 13:25"
+"nibo.com.br: 79. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+carlosandmunoz.com/qa-review?live=u-nibo-com-br&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-nibo-com-br
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/03-u-nibo-com-br.jpg","","2026-10-27 11:35"
+"kreuzwort-raetsel.net: 86. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers…
+
+carlosandmunoz.com/qa-review?live=u-kreuzwort-raetsel-net&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-kreuzwort-raetsel-net","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/04-u-kreuzwort-raetsel-net.jpg","","2026-10-28 09:50"
+"roottcostore.com: 59. The gap: outdated libraries.
+
+Check front-end library versions against a known-flaw list on every release…
+
+carlosandmunoz.com/qa-review?live=u-roottcostore-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-roottcostore-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/05-u-roottcostore-com.jpg","","2026-10-29 16:55"
