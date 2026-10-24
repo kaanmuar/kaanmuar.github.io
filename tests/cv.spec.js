@@ -102,14 +102,46 @@ test.describe('CV desktop', () => {
     }
   });
 
+  // html2canvas clones the whole CV once per PDF page, about 7 s each on a CI runner.
   test('PDF export loads its libraries on first use and downloads the file', async ({ page }) => {
+    test.setTimeout(180000);
     expect(await page.evaluate(() => [typeof window.jsPDF, typeof window.html2canvas])).toEqual(['undefined', 'undefined']);
     const cv = new CVPage(page);
     await cv.exportSelector.click({ force: true });
-    const download = page.waitForEvent('download', { timeout: 30000 });
+    const download = page.waitForEvent('download', { timeout: 150000 });
     await page.locator('#export-options').getByRole('button', { name: 'Export as PDF' }).click();
     expect((await download).suggestedFilename()).toBe('CarlosMunozCV_Export.pdf');
     expect(await page.evaluate(() => [typeof window.jsPDF, typeof window.html2canvas])).toEqual(['function', 'function']);
+  });
+
+  test('the content security policy blocks nothing the CV uses', async ({ page }) => {
+    test.setTimeout(240000);
+    const analytics = [];
+    await page.route(/google-analytics\.com\/g\/collect/, (route) => {
+      analytics.push(route.request().url());
+      return route.fulfill({ status: 204 });
+    });
+    await page.addInitScript(() => {
+      localStorage.setItem('site-analytics', 'allow');
+      window.__csp = [];
+      document.addEventListener('securitypolicyviolation', (event) => window.__csp.push(event.violatedDirective + ' ' + event.blockedURI));
+    });
+    await page.reload();
+    await waitForCVApp(page);
+    const cv = new CVPage(page);
+    await cv.exportSelector.click({ force: true });
+    for (const label of ['Export as PDF', 'Export as JPG']) {
+      const download = page.waitForEvent('download', { timeout: 150000 });
+      await page.locator('#export-options').getByRole('button', { name: label }).click();
+      await download;
+    }
+    await cv.profilePhoto.click();
+    await page.locator('.modal-close').click();
+    await cv.themeToggle.click();
+    await cv.selectLanguage('es');
+    await cv.selectLanguage('en');
+    expect(await page.evaluate(() => window.__csp)).toEqual([]);
+    expect(analytics.length).toBeGreaterThan(0);
   });
 
   test('print control is present', async ({ page }) => {
