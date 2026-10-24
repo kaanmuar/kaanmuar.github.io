@@ -10,11 +10,10 @@
 name: Live reports from user reviews
 
 on:
-  # GitHub drops scheduled runs under load, mostly at the top of the hour. The later slots are backups:
-  # the gate job lets them run only when today's batch commit is not on main yet. Outside GitHub, the Firebase
-  # ensureLiveReportsBatch function (04:45 Bogotá) dispatches with backup=true when no batch is on main or underway.
+  # The Firebase ensureLiveReportsBatch function starts the batch at 03:23 Bogotá (dispatch with backup=true),
+  # because GitHub starts scheduled runs hours late or drops them. These slots are backups: the gate job lets
+  # them run only when today's batch commit is not on main yet.
   schedule:
-    - cron: '23 8 * * *' # 03:23 Bogotá
     - cron: '41 10 * * *' # backup, 05:41 Bogotá
     - cron: '17 13 * * *' # backup, 08:17 Bogotá
   workflow_dispatch:
@@ -27,7 +26,7 @@ on:
         type: boolean
         default: false
       backup:
-        description: 'Run only if today''s batch is not on main yet (set by the Firebase ensureLiveReportsBatch watchdog)'
+        description: 'Run only if today''s batch is not on main yet (set by the Firebase ensureLiveReportsBatch trigger)'
         type: boolean
         default: false
 
@@ -55,8 +54,8 @@ jobs:
             echo "go=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if [ "${{ github.event.schedule }}" != "23 8 * * *" ]; then
-            echo "::warning::No auto-$TODAY batch on main yet, so the ${{ github.event.schedule || 'Firebase watchdog' }} backup is running it."
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "::warning::No auto-$TODAY batch on main yet, so the ${{ github.event.schedule }} backup slot is running it; check ensureLiveReportsBatch."
           fi
           echo "go=true" >> "$GITHUB_OUTPUT"
 
