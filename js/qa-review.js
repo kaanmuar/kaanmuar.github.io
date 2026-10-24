@@ -508,13 +508,13 @@
     const item = document.createElement("li");
     const time = document.createElement("time");
     time.textContent = new Date().toLocaleTimeString();
-    item.appendChild(time);
-    const local = window.ReviewProgress ? ReviewProgress.local(text) : "";
-    if (local) {
-      item.lang = ReviewProgress.lang;
+    const shown = window.ReviewProgress ? ReviewProgress.translate(text) : text;
+    if (shown !== text) {
+      item.lang = document.documentElement.lang;
       item.setAttribute("translate", "no");
     }
-    item.appendChild(document.createTextNode(local || text));
+    item.appendChild(time);
+    item.appendChild(document.createTextNode(shown));
     list.appendChild(item);
     if (following) list.scrollTop = list.scrollHeight;
     if (window.ReviewProgress) ReviewProgress.line(text);

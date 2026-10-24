@@ -13,7 +13,6 @@
       slow: "Still working. This step waits on the site.",
       slower: "Slow site, still running. Stop keeps the pages already saved.",
       ready: "Report ready", stopped: "Stopped", stopping: "Stopping…", failed: "The review ended early",
-      log: { earlier: "Looking for your earlier reviews of {host}.", emailing: "Report saved. Emailing a copy to {email}." },
       phases: ["Connecting", "Analyzing pages", "Browser pass", "Writing cases", "Speed checks", "Scoring and signing"],
       lines: [
         ["Checking the front door: https, DNS, certificate.", "First impressions count. Opening {host}."],
@@ -40,7 +39,6 @@
       slow: "Sigue trabajando. Este paso espera al sitio.",
       slower: "Sitio lento, sigue en marcha. Detener conserva las páginas ya guardadas.",
       ready: "Informe listo", stopped: "Detenido", stopping: "Deteniendo…", failed: "La revisión terminó antes de tiempo",
-      log: { earlier: "Buscando tus revisiones anteriores de {host}.", emailing: "Informe guardado. Enviando una copia a {email}." },
       phases: ["Conectando", "Analizando páginas", "Pasada del navegador", "Escribiendo casos", "Pruebas de velocidad", "Puntuando y firmando"],
       lines: [
         ["Revisando la puerta de entrada: https, DNS, certificado.", "La primera impresión cuenta. Abriendo {host}."],
@@ -59,7 +57,15 @@
         "Cada página analizada es un caso de prueba que toma forma.",
         "El mejor informe de fallo es el que se escribe antes del lanzamiento.",
         "La accesibilidad es calidad para todos."
-      ]
+      ],
+      log: {
+        fields: "Comprobando los campos, el dominio del correo y que esto es un navegador.", stop: "Detención solicitada.",
+        earlier: "Buscando tus revisiones anteriores de {1}.", history: "Comparado con tu revisión de {1} del {2}: {3} corregidos, {4} nuevos.",
+        none: "No hay una revisión anterior de {1} con este correo.", ranks: "Leyendo los rankings de Tranco y tu historial de puntuaciones de ambos sitios.",
+        compare: "Comparado con tu revisión de {1}: {2} problemas abiertos solo los tiene {3}, {4} solo {5} y {6} ambos.",
+        market: "Presencia en el mercado: {1}; {2}.", rank: "{1} ocupa el puesto #{2} en Tranco", out: "{1} está fuera del millón principal de Tranco", presence: ", presencia {1}/100",
+        saving: "Guardando el informe.", saved: "Informe guardado. Enviando una copia a {1}."
+      }
     },
     pt: {
       label: "Progresso da revisão", elapsed: "Tempo decorrido", live: "Ao vivo", pageOf: "{n} de {m}",
@@ -67,7 +73,6 @@
       slow: "Ainda trabalhando. Esta etapa espera pelo site.",
       slower: "Site lento, ainda em andamento. Parar mantém as páginas já salvas.",
       ready: "Relatório pronto", stopped: "Parado", stopping: "Parando…", failed: "A revisão terminou antes do tempo",
-      log: { earlier: "Procurando suas revisões anteriores de {host}.", emailing: "Relatório salvo. Enviando uma cópia para {email}." },
       phases: ["Conectando", "Analisando páginas", "Passada do navegador", "Escrevendo casos", "Testes de velocidade", "Pontuando e assinando"],
       lines: [
         ["Verificando a porta de entrada: https, DNS, certificado.", "A primeira impressão conta. Abrindo {host}."],
@@ -86,7 +91,15 @@
         "Cada página analisada é um caso de teste tomando forma.",
         "O melhor relatório de bug é o escrito antes do lançamento.",
         "Acessibilidade é qualidade para todos."
-      ]
+      ],
+      log: {
+        fields: "Verificando os campos, o domínio do e-mail e se isto é um navegador.", stop: "Parada solicitada.",
+        earlier: "Procurando suas revisões anteriores de {1}.", history: "Comparado com sua revisão de {1} de {2}: {3} corrigidos, {4} novos.",
+        none: "Nenhuma revisão anterior de {1} com este e-mail.", ranks: "Lendo os rankings do Tranco e seu histórico de pontuação dos dois sites.",
+        compare: "Comparado com sua revisão de {1}: {2} problemas abertos só {3} tem, {4} só {5} tem, {6} os dois têm.",
+        market: "Presença no mercado: {1}; {2}.", rank: "{1} está em #{2} no Tranco", out: "{1} está fora do top 1 milhão do Tranco", presence: ", presença {1}/100",
+        saving: "Salvando o relatório.", saved: "Relatório salvo. Enviando uma cópia para {1}."
+      }
     },
     de: {
       label: "Fortschritt der Prüfung", elapsed: "Verstrichene Zeit", live: "Live", pageOf: "{n} von {m}",
@@ -94,7 +107,6 @@
       slow: "Läuft noch. Dieser Schritt wartet auf die Website.",
       slower: "Langsame Website, läuft weiter. Stopp behält die bereits gespeicherten Seiten.",
       ready: "Bericht fertig", stopped: "Gestoppt", stopping: "Wird gestoppt…", failed: "Die Prüfung endete vorzeitig",
-      log: { earlier: "Ihre früheren Prüfungen von {host} werden gesucht.", emailing: "Bericht gespeichert. Eine Kopie geht an {email}." },
       phases: ["Verbinden", "Seiten prüfen", "Browser-Durchlauf", "Fälle schreiben", "Tempo-Messung", "Bewerten und signieren"],
       lines: [
         ["Prüfung der Eingangstür: https, DNS, Zertifikat.", "Der erste Eindruck zählt. {host} wird geöffnet."],
@@ -113,7 +125,15 @@
         "Jede geprüfte Seite wird zu einem Testfall.",
         "Der beste Fehlerbericht entsteht vor dem Launch.",
         "Barrierefreiheit ist Qualität für alle."
-      ]
+      ],
+      log: {
+        fields: "Die Felder, die E-Mail-Domain und der Browser werden geprüft.", stop: "Stopp angefordert.",
+        earlier: "Ihre früheren Prüfungen von {1} werden gesucht.", history: "Verglichen mit Ihrer Prüfung von {1} vom {2}: {3} behoben, {4} neu.",
+        none: "Keine frühere Prüfung von {1} unter dieser E-Mail-Adresse.", ranks: "Die Tranco-Ränge und Ihr Punkteverlauf für beide Websites werden gelesen.",
+        compare: "Verglichen mit Ihrer Prüfung von {1}: {2} offene Probleme hat nur {3}, {4} nur {5}, {6} haben beide.",
+        market: "Marktpräsenz: {1}; {2}.", rank: "{1} steht bei Tranco auf Platz {2}", out: "{1} liegt außerhalb der Tranco-Top-Million", presence: ", Präsenz {1}/100",
+        saving: "Der Bericht wird gespeichert.", saved: "Bericht gespeichert. Eine Kopie geht an {1}."
+      }
     },
     fr: {
       label: "Progression de l’analyse", elapsed: "Temps écoulé", live: "En direct", pageOf: "{n} sur {m}",
@@ -121,7 +141,6 @@
       slow: "Toujours en cours. Cette étape attend le site.",
       slower: "Site lent, toujours en cours. Arrêter garde les pages déjà enregistrées.",
       ready: "Rapport prêt", stopped: "Arrêté", stopping: "Arrêt en cours…", failed: "L’analyse s’est terminée plus tôt",
-      log: { earlier: "Recherche de vos analyses précédentes de {host}.", emailing: "Rapport enregistré. Envoi d’une copie à {email}." },
       phases: ["Connexion", "Analyse des pages", "Passage du navigateur", "Rédaction des cas", "Mesure de vitesse", "Notation et signature"],
       lines: [
         ["Vérification de la porte d’entrée : https, DNS, certificat.", "La première impression compte. Ouverture de {host}."],
@@ -140,7 +159,15 @@
         "Chaque page analysée est un cas de test qui prend forme.",
         "Le meilleur rapport de bug est celui écrit avant le lancement.",
         "L’accessibilité, c’est la qualité pour tous."
-      ]
+      ],
+      log: {
+        fields: "Vérification des champs, du domaine de l’e-mail et qu’il s’agit bien d’un navigateur.", stop: "Arrêt demandé.",
+        earlier: "Recherche de vos analyses précédentes de {1}.", history: "Comparé à votre analyse de {1} du {2} : {3} corrigés, {4} nouveaux.",
+        none: "Aucune analyse précédente de {1} avec cet e-mail.", ranks: "Lecture des rangs Tranco et de l’historique de vos scores pour les deux sites.",
+        compare: "Comparé à votre analyse de {1} : {2} problèmes ouverts que seul {3} a, {4} que seul {5} a, {6} communs aux deux.",
+        market: "Présence sur le marché : {1} ; {2}.", rank: "{1} est n° {2} sur Tranco", out: "{1} est hors du top million de Tranco", presence: ", présence {1}/100",
+        saving: "Enregistrement du rapport.", saved: "Rapport enregistré. Envoi d’une copie à {1}."
+      }
     },
     it: {
       label: "Avanzamento della revisione", elapsed: "Tempo trascorso", live: "In diretta", pageOf: "{n} di {m}",
@@ -148,7 +175,6 @@
       slow: "Ancora al lavoro. Questo passaggio attende il sito.",
       slower: "Sito lento, ancora in corso. Interrompi conserva le pagine già salvate.",
       ready: "Report pronto", stopped: "Interrotto", stopping: "Interruzione…", failed: "La revisione è finita in anticipo",
-      log: { earlier: "Ricerca delle tue revisioni precedenti di {host}.", emailing: "Report salvato. Invio di una copia a {email}." },
       phases: ["Connessione", "Analisi delle pagine", "Passaggio del browser", "Stesura dei casi", "Misura della velocità", "Punteggio e firma"],
       lines: [
         ["Controllo della porta d’ingresso: https, DNS, certificato.", "La prima impressione conta. Apertura di {host}."],
@@ -167,7 +193,15 @@
         "Ogni pagina analizzata è un caso di test che prende forma.",
         "Il miglior bug report è quello scritto prima del lancio.",
         "L’accessibilità è qualità per tutti."
-      ]
+      ],
+      log: {
+        fields: "Controllo dei campi, del dominio dell’email e che si tratti di un browser.", stop: "Interruzione richiesta.",
+        earlier: "Ricerca delle tue revisioni precedenti di {1}.", history: "Confronto con la tua revisione di {1} del {2}: {3} risolti, {4} nuovi.",
+        none: "Nessuna revisione precedente di {1} con questa email.", ranks: "Lettura dei ranking Tranco e dello storico dei tuoi punteggi per entrambi i siti.",
+        compare: "Confronto con la tua revisione di {1}: {2} problemi aperti solo su {3}, {4} solo su {5}, {6} su entrambi.",
+        market: "Presenza sul mercato: {1}; {2}.", rank: "{1} è al n. {2} su Tranco", out: "{1} è fuori dal primo milione di Tranco", presence: ", presenza {1}/100",
+        saving: "Salvataggio del report.", saved: "Report salvato. Invio di una copia a {1}."
+      }
     }
   };
 
@@ -196,10 +230,18 @@
     [/^(Scored |The scored checks could not)/, 96, 5],
     [/^Signed the report/, 98, 5]
   ];
-  // Server lines the page translator left in English; they are written in the page language here instead.
+  // The fixed lines the page and functions/index.js write; the crawl's own notes stay English.
   const LOG = [
-    [/^Looking for your earlier reviews of (\S+)\.$/, "earlier", "host"],
-    [/^Report saved\. Emailing a copy to (\S+)\.$/, "emailing", "email"]
+    [/^Checking the fields, the email domain, and that this is a browser\.$/, "fields"],
+    [/^Stop requested\.$/, "stop"],
+    [/^Looking for your earlier reviews of (\S+)\.$/, "earlier"],
+    [/^Compared with your review of (\S+) from (\S+): (\d+) fixed, (\d+) new\.$/, "history"],
+    [/^No earlier review of (\S+) under this email\.$/, "none"],
+    [/^Reading the Tranco ranks and your score history for both sites\.$/, "ranks"],
+    [/^Compared with your review of (\S+): (\d+) open problems only (\S+) has, (\d+) only (\S+) has, (\d+) both have\.$/, "compare"],
+    [/^Market presence: ([^;]+); (.+)\.$/, "market"],
+    [/^Saving the report\.$/, "saving"],
+    [/^Report saved\. Emailing a copy to (\S+)\.$/, "saved"]
   ];
 
   const code = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
@@ -247,6 +289,23 @@
 
   function fill(text, vars) {
     return String(text).replace(/\{(\w+)\}/g, (m, key) => (vars[key] == null ? m : vars[key]));
+  }
+
+  function rankSide(text) {
+    const m = text.match(/^(\S+) is (?:#([\d,]+) on Tranco|outside the Tranco top million)(?:, presence (\d+)\/100)?$/);
+    if (!m) return "";
+    const rank = m[2] ? Number(m[2].replace(/,/g, "")).toLocaleString(code) : "";
+    return fill(m[2] ? book.log.rank : book.log.out, { 1: m[1], 2: rank }) + (m[3] ? fill(book.log.presence, { 1: m[3] }) : "");
+  }
+
+  function translate(text) {
+    const value = String(text || "");
+    const hit = book.log && LOG.find((rule) => rule[0].test(value));
+    if (!hit) return value;
+    const m = value.match(hit[0]);
+    if (hit[1] !== "market") return fill(book.log[hit[1]], m);
+    const sides = [rankSide(m[1]), rankSide(m[2])];
+    return sides[0] && sides[1] ? fill(book.log.market, { 1: sides[0], 2: sides[1] }) : value;
   }
 
   function paint(key, node, value) {
@@ -458,16 +517,5 @@
     root.style.removeProperty("--ty");
   });
 
-  // The page-language text of a server log line, or "" when it has none and stays for the translator.
-  function local(text) {
-    if (!nt) return "";
-    const value = String(text || "");
-    for (const [pattern, key, slot] of LOG) {
-      const match = value.match(pattern);
-      if (match) return fill(book.log[key], { [slot]: match[1] });
-    }
-    return "";
-  }
-
-  window.ReviewProgress = { start: start, line: line, finish: finish, fail: fail, reset: reset, local: local, lang: code };
+  window.ReviewProgress = { start: start, line: line, finish: finish, fail: fail, reset: reset, translate: translate };
 })();

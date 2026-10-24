@@ -139,7 +139,7 @@ jobs:
           # The hub reads tracked files only, so it is built once the batch is staged. It also picks up
           # yesterday's clips, which Buffer uploads to YouTube a day after their batch.
           node scripts/build-social-hub.js
-          git add assets/social qa-review-social*.html sitemap-social.xml
+          git add assets/social qa-review-social*.html sitemap-social.xml social
           if git diff --cached --quiet; then echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0; fi
           git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} reviews, ${{ steps.reports.outputs.social }} posts ($BATCH) [skip ci]"
           # PRs merged during the render move main. The checkout is shallow, so the data commit is
@@ -154,7 +154,7 @@ jobs:
             git cherry-pick -X theirs "$DATA"
             python3 scripts/build-llms-full.py
             node scripts/build-social-hub.js --offline
-            git add llms.txt llms-full.txt qa-review*.html assets/social sitemap-social.xml
+            git add llms.txt llms-full.txt qa-review*.html assets/social sitemap-social.xml social
             git diff --cached --quiet || git commit -q --amend --no-edit
           done
           gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true

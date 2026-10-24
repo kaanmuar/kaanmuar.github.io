@@ -164,3 +164,24 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
   .hub-dialog[open] { animation: hub-in .18s ease-out; }
 }
 @keyframes hub-in { from { opacity: 0; transform: translateY(12px); } }
+
+/* Post pages (social/<post id>.html). */
+.post-page { max-width: 1040px; margin: 0 auto; padding: 16px 16px 40px; }
+.post-crumbs { font-size: 13px; color: var(--muted); margin: 4px 0 14px; }
+.post-crumbs a { color: var(--cyan); }
+.post-page .post-full { grid-template-columns: minmax(0, 400px) 1fr; gap: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.post-page .post-title { font-size: clamp(1.7rem, 3.2vw, 2.4rem); margin: 8px 0 12px; overflow: visible; display: block; -webkit-line-clamp: unset; }
+.post-page .post-share { flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.post-captions, .post-related { margin-top: 28px; }
+.post-captions h2, .post-related h2 { font: 400 1.5rem/1.2 "Instrument Serif", Georgia, serif; margin: 0 0 10px; }
+.post-captions details { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin: 8px 0; background: var(--card); }
+.post-captions summary { cursor: pointer; font-weight: 600; }
+.post-captions pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 14px; margin: 10px 0; color: var(--text); }
+.post-related ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.post-related a { color: var(--text); text-decoration: none; font-size: 14px; line-height: 1.3; display: grid; gap: 6px; }
+.post-related a:hover span, .post-related a:focus-visible span { color: var(--cyan); text-decoration: underline; }
+.post-related img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 10px; display: block; background: var(--panel-2); }
+.post-back { margin-top: 28px; }
+@media (max-width: 720px) {
+  .post-page .post-full { grid-template-columns: 1fr; padding: 12px; }
+}
