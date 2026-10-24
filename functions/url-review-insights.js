@@ -1337,6 +1337,11 @@ function analyze(input) {
     else if (days < 30) add("Security", "risk", "medium", "sec-tls", "The TLS certificate expires in " + plural(days, "day"), "Valid until " + tls.validTo + (tls.issuer ? ", issued by " + tls.issuer : "") + ".", "Confirm that automatic renewal is scheduled.", { effort: "minutes" });
     else add("Security", "pass", "info", "sec-tls", "The TLS certificate is valid for " + plural(days, "more day"), "Valid until " + tls.validTo + (tls.issuer ? ", issued by " + tls.issuer : "") + ".", "");
   }
+  if (tls && tls.missingIntermediate) {
+    add("Security", "risk", "medium", "sec-tls-chain", "The server leaves out its intermediate certificate",
+      "It sends its certificate without " + tls.missingIntermediate + ". Browsers fetch the missing certificate themselves, but apps, API clients, payment and webhook callers, curl and many crawlers refuse the connection with \"unable to verify the first certificate\".",
+      "Install the full chain on the server: the site certificate followed by the intermediate bundle from the certificate authority.", { effort: "minutes" });
+  }
   const sec = extras.securityTxt || null;
   if (sec) {
     if (sec.status === 200 && !sec.html && /contact\s*:/i.test(sec.body || "")) {
