@@ -3,7 +3,7 @@ const { openCV } = require('./helpers.js');
 
 test.describe('Smoke and assets', () => {
   test('public pages return 200', async ({ request }) => {
-    for (const path of ['/index.html', '/simulador.html', '/qa-lab.html', '/admin.html', '/style.css', '/css/cv.css', '/js/cv-data.js', '/js/cv-app.js', '/favicon.svg', '/site.webmanifest', '/robots.txt', '/sitemap.xml']) {
+    for (const path of ['/index.html', '/simulador.html', '/qa-lab.html', '/admin.html', '/style.css', '/css/cv.css', '/js/cv-data.js', '/js/cv-app.js', '/favicon.svg', '/site.webmanifest', '/robots.txt', '/sitemap.xml', '/qa-review-social.html', '/qa-review-social-es.html', '/assets/social/feed.json']) {
       const res = await request.get(path);
       expect(res.status(), path).toBe(200);
     }

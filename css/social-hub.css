@@ -1,0 +1,91 @@
+/* Social hub (qa-review-social*.html). Tokens match qa-review.html. */
+:root {
+  --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
+  --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; --on-cyan: #fff;
+  --green: #0f766e; --amber: #b45309; --red: #b42318; --rival: #7c3aed;
+}
+html.dark-mode {
+  --bg: #10161d; --panel: #161d26; --panel-2: #0c1118; --card: #1a2430;
+  --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; --on-cyan: #10161d;
+  --green: #5fb89a; --amber: #c4a574; --red: #e07a73; --rival: #b39ddb;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 Inter, system-ui, sans-serif; }
+a { color: var(--cyan); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 72%, transparent); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 20; flex-wrap: wrap; }
+.brand { font-family: "Instrument Serif", Georgia, serif; font-size: 1.35rem; letter-spacing: -0.03em; }
+.brand a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+.brand small { display: block; font-weight: 600; color: var(--muted); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; font-family: Inter, system-ui, sans-serif; }
+.logo { width: 36px; height: 36px; display: block; flex: none; }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { border: 0; border-radius: 999px; padding: 9px 14px; font-weight: 600; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-block; background: transparent; color: var(--text); }
+.btn-ghost { border: 1px solid var(--line); }
+.btn-primary { background: var(--cyan); color: var(--on-cyan); }
+.btn[hidden] { display: none; }
+
+.hub { max-width: 1240px; margin: 0 auto; padding: 0 16px 48px; }
+.hub-hero { padding: 48px 0 24px; max-width: 760px; }
+.hub-eyebrow { margin: 0 0 8px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.hub-hero h1 { margin: 0; font: 400 clamp(2.2rem, 5vw, 3.6rem)/1.05 "Instrument Serif", Georgia, serif; letter-spacing: -0.03em; }
+.hub-lead { margin: 14px 0 20px; color: var(--muted); font-size: 1.05rem; }
+.hub-follow, .hub-langs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 10px; }
+.hub-follow span { font-weight: 600; margin-right: 4px; }
+.hub-follow a, .hub-langs a { border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--text); background: var(--card); display: inline-flex; align-items: center; gap: 6px; }
+.hub-follow a:hover, .hub-langs a:hover { border-color: var(--cyan); }
+.hub-langs a[aria-current="page"] { border-color: var(--cyan); color: var(--cyan); }
+
+.hub-tools { position: sticky; top: 57px; z-index: 10; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 0; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.hub-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hub-chip { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 7px 13px; font: 600 13px Inter, system-ui, sans-serif; cursor: pointer; }
+.hub-chip[aria-pressed="true"] { background: var(--cyan); border-color: var(--cyan); color: var(--on-cyan); }
+.hub-field { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.hub-field select, .hub-field input { font: 14px Inter, system-ui, sans-serif; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; }
+.hub-search { flex: 1 1 200px; }
+.hub-search input { width: 100%; }
+.hub-count { margin: 0 0 0 auto; color: var(--muted); font-size: 13px; }
+
+.hub-feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+.post { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+.post-media { position: relative; aspect-ratio: 4 / 5; background: var(--panel-2); }
+.post-media img, .post-frame { width: 100%; height: 100%; display: block; object-fit: cover; border: 0; }
+.post-play { position: absolute; inset: 0; margin: auto; width: 68px; height: 68px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, .62); cursor: pointer; }
+.post-play span { display: block; margin-left: 26px; width: 0; height: 0; border-style: solid; border-width: 13px 0 13px 22px; border-color: transparent transparent transparent #fff; }
+.post-play:hover { background: var(--red); }
+.post-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.post-meta { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+.post-tag { border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-weight: 600; }
+.post-kind-tip { color: var(--green); border-color: currentColor; }
+.post-kind-review { color: var(--cyan); border-color: currentColor; }
+.post-kind-launch { color: var(--rival); border-color: currentColor; }
+.post-title { margin: 0; font: 400 1.35rem/1.15 "Instrument Serif", Georgia, serif; letter-spacing: -0.01em; }
+.post-title a { color: inherit; text-decoration: none; }
+.post-title a:hover { text-decoration: underline; }
+.post-text { margin: 0; color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 5; line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.post-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 4px; }
+.post-btn { border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 999px; padding: 6px 11px; font: 600 12px Inter, system-ui, sans-serif; cursor: pointer; text-decoration: none; }
+.post-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+.hub-empty { text-align: center; color: var(--muted); padding: 32px 0; }
+.hub-more-wrap { text-align: center; margin: 28px 0 0; }
+.hub-footer { border-top: 1px solid var(--line); padding: 20px 16px 32px; text-align: center; color: var(--muted); font-size: 13px; }
+
+.hub-dialog { border: 1px solid var(--line); border-radius: 18px; padding: 20px; width: min(720px, calc(100vw - 24px)); max-height: calc(100vh - 48px); background: var(--card); color: var(--text); }
+.hub-dialog::backdrop { background: rgba(8, 12, 16, .6); }
+.hub-close { position: sticky; top: 0; float: right; border: 0; background: var(--panel-2); color: var(--text); border-radius: 50%; width: 34px; height: 34px; font-size: 20px; cursor: pointer; z-index: 1; }
+.hub-dialog-title { margin: 0 0 14px; font: 400 1.6rem/1.15 "Instrument Serif", Georgia, serif; padding-right: 40px; }
+.hub-caption { margin-bottom: 14px; }
+.hub-caption-head { display: flex; justify-content: space-between; align-items: center; margin: 0 0 6px; }
+.hub-caption textarea { width: 100%; font: 13px/1.5 Inter, system-ui, sans-serif; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: vertical; }
+.hub-share { display: flex; flex-wrap: wrap; gap: 8px; }
+.post-full { border: 0; display: grid; grid-template-columns: minmax(0, 300px) 1fr; gap: 18px; }
+.post-full .post-media { border-radius: 12px; overflow: hidden; }
+.post-full .post-text { -webkit-line-clamp: unset; line-clamp: unset; display: block; }
+@media (max-width: 640px) {
+  .topbar { position: static; }
+  .hub-hero { padding-top: 28px; }
+  .hub-tools { top: 0; position: static; }
+  .post-full { grid-template-columns: 1fr; }
+}

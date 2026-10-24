@@ -33,6 +33,8 @@ jobs:
         run: npm run test:review
       - name: Review language pages match their builder
         run: python3 scripts/build-review-langs.py --check
+      - name: Social hub pages match their builder
+        run: node scripts/build-social-hub.js --check
 
   playwright:
     runs-on: ubuntu-latest

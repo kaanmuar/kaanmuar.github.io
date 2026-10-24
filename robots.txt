@@ -10,6 +10,8 @@ Disallow: /functions/
 Disallow: /scripts/
 Disallow: /desk-host/
 Disallow: /media/social-posts/
+# The post images the social hub (qa-review-social.html) shows and offers for download.
+Allow: /media/social-posts/*.jpg$
 Disallow: /assets/sweep/
 
 Sitemap: https://carlosandmunoz.com/sitemap.xml
