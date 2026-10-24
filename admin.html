@@ -168,6 +168,37 @@
         .cv-actions button { font-weight: 700; border-radius: 8px; padding: 0.55rem 0.9rem; }
         .cv-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
         .cv-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #d5dce3; }
+        .hub-admin-tools { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem; margin: 0.75rem 0; }
+        .hub-admin-tools > div { min-width: 12rem; }
+        #hub-pane .filter-label { display: block; font-weight: 600; color: #4a5560; }
+        #hub-admin-q { width: 100%; border: 1px solid #c5ced6; border-radius: 8px; padding: 0.5rem 0.65rem; background: #fff; }
+        .hub-admin-edit input[type="date"] { max-width: 12rem; display: block; }
+        .hub-admin-add { background: #f7f8fa; border: 1px solid #d5dce3; border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; }
+        .hub-admin-add h3 { font-weight: 700; }
+        .hub-admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.6rem 0.9rem; }
+        .hub-admin-add input, .hub-admin-add textarea, .hub-admin-edit input[type="date"], .hub-admin-edit textarea { width: 100%; border: 1px solid #c5ced6; border-radius: 8px; padding: 0.45rem 0.6rem; background: #fff; }
+        .hub-admin-buttons { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+        .hub-admin-list { display: grid; gap: 0.6rem; margin-top: 0.5rem; }
+        .hub-admin-row { display: grid; grid-template-columns: 72px 1fr auto; gap: 0.8rem; align-items: start; background: #fff; border: 1px solid #d5dce3; border-radius: 10px; padding: 0.7rem; }
+        .hub-admin-row img, .hub-admin-thumb { width: 72px; height: 90px; object-fit: cover; border-radius: 6px; background: #e8edf0; }
+        .hub-admin-row h3 { font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+        .hub-admin-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; font-size: 0.75rem; color: #4a5560; margin-bottom: 0.25rem; }
+        .hub-admin-tag { border-radius: 999px; padding: 0.05rem 0.5rem; background: #eef2f5; font-weight: 600; }
+        .hub-admin-tag.is-scheduled { background: #e0f2fe; color: #075985; }
+        .hub-admin-tag.is-edited { background: #d7ecee; color: #08545b; }
+        .hub-admin-tag.is-hidden { background: #fee2e2; color: #991b1b; }
+        .hub-admin-tag.is-pending { background: #fef3c7; color: #92400e; }
+        .hub-admin-id { font-size: 0.72rem; color: #6b7280; overflow-wrap: anywhere; }
+        .hub-admin-channels { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.45rem; font-size: 0.72rem; }
+        .hub-admin-channels li { border: 1px solid #d5dce3; border-radius: 6px; padding: 0.1rem 0.45rem; color: #4a5560; }
+        .hub-admin-channels .is-live { border-color: #059669; color: #065f46; background: #ecfdf5; }
+        .hub-admin-channels .is-queued { border-color: #0284c7; color: #075985; background: #f0f9ff; }
+        .hub-admin-channels .is-missing { border-color: #dc2626; color: #991b1b; background: #fef2f2; }
+        .hub-admin-channels .is-none, .hub-admin-channels .is-planned { opacity: 0.6; }
+        .hub-admin-actions { display: flex; flex-direction: column; align-items: stretch; }
+        .hub-admin-edit { grid-column: 1 / -1; border-top: 1px solid #d5dce3; padding-top: 0.6rem; }
+        .hub-admin-captions { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 0.5rem 0.9rem; }
+        @media (max-width: 640px) { .hub-admin-row { grid-template-columns: 56px 1fr; } .hub-admin-row img, .hub-admin-thumb { width: 56px; height: 70px; } .hub-admin-actions { grid-column: 1 / -1; flex-direction: row; } }
         .cv-studio { display: grid; grid-template-columns: 16.5rem minmax(0, 1fr); gap: 1rem; align-items: start; }
         .cv-rail { position: sticky; top: 0.75rem; background: #1a2430; border-radius: 16px; padding: 0.85rem 0.7rem 0.7rem; }
         .cv-rail .cv-kicker { color: #8fd0d5; margin: 0 0.35rem 0.45rem; }
@@ -288,7 +319,7 @@
             .admin-bar { margin-left: -1rem; margin-right: -1rem; }
         }
     </style>
-    <link rel="stylesheet" href="css/site-look.css?v=20261006d">
+    <link rel="stylesheet" href="css/site-look.css?v=20261024a">
     <script src="js/site-look.js"></script>
     <script>SiteLook.boot();</script>
 </head>
@@ -318,7 +349,39 @@
         <button id="blocked-tab-btn" class="tab-btn">Blocked Senders</button>
         <button id="stats-tab-btn" class="tab-btn">Statistics</button>
         <button id="cv-tab-btn" class="tab-btn">CV content</button>
+        <button id="hub-tab-btn" class="tab-btn">Social hub</button>
         <button id="styles-tab-btn" class="tab-btn">Styles</button>
+    </div>
+
+    <div id="hub-pane" class="hidden">
+        <h2 class="text-2xl font-semibold mb-2">Social hub</h2>
+        <p class="cv-note">Every post on the <a href="qa-review-social.html" target="_blank" rel="noopener" class="underline">social hub</a>, with its calendar slot on each channel. Edits save at once and reach the public hub with the next daily Live Reports run, which rebuilds it. Buffer and the Facebook Page keep no ledger here, so a past slot reads Out; YouTube is checked against the channel's uploads.</p>
+        <p id="hub-admin-status" class="cv-note" role="status"></p>
+        <div class="hub-admin-tools">
+            <div><label class="filter-label" for="hub-admin-q">Search</label><input type="search" id="hub-admin-q" placeholder="Title, caption or id" autocomplete="off"></div>
+            <div><label class="filter-label" for="hub-admin-kind">Kind</label><select id="hub-admin-kind"><option value="all">All kinds</option><option value="review">Site reviews</option><option value="tip">Tips</option><option value="launch">Product</option><option value="pick">Picks</option></select></div>
+            <div><label class="filter-label" for="hub-admin-state">Status</label><select id="hub-admin-state"><option value="all">Any status</option><option value="queued">Still queued on a channel</option><option value="missing">Not on YouTube yet</option><option value="scheduled">Scheduled on the hub</option><option value="edited">Edited or added</option><option value="hidden">Hidden</option><option value="pending">Waiting for the hub build</option></select></div>
+            <button type="button" id="hub-admin-add-open" class="cv-btn">Add an item</button>
+        </div>
+        <form id="hub-admin-add" class="hub-admin-add" hidden>
+            <h3>Add an item</h3>
+            <p class="cv-note">A link or asset worth sharing. It shows on the hub as a Pick.</p>
+            <div class="hub-admin-grid">
+                <div><label class="filter-label" for="hub-add-title">Title</label><input type="text" id="hub-add-title" name="title" maxlength="200" required></div>
+                <div><label class="filter-label" for="hub-add-url">Link</label><input type="url" id="hub-add-url" name="url" placeholder="https://"></div>
+                <div><label class="filter-label" for="hub-add-image">Image</label><input type="text" id="hub-add-image" name="image" placeholder="https://… or assets/… or media/…" required></div>
+                <div><label class="filter-label" for="hub-add-youtube">YouTube video</label><input type="text" id="hub-add-youtube" name="youtube" placeholder="https://youtu.be/…"></div>
+                <div><label class="filter-label" for="hub-add-lang">Language</label><select id="hub-add-lang" name="lang"><option value="en">English</option><option value="es">Spanish</option><option value="pt">Portuguese</option><option value="de">German</option><option value="fr">French</option><option value="it">Italian</option></select></div>
+                <div><label class="filter-label" for="hub-add-date">Date on the hub</label><input type="date" id="hub-add-date" name="date" required></div>
+                <div><label class="filter-label" for="hub-add-cat">Topic</label><input type="text" id="hub-add-cat" name="cat" maxlength="40" placeholder="SEO, Accessibility…"></div>
+            </div>
+            <label class="filter-label" for="hub-add-text">Text</label><textarea id="hub-add-text" name="text" rows="4" maxlength="3000"></textarea>
+            <div class="hub-admin-buttons"><button type="submit" class="cv-btn">Add to the hub</button><button type="button" id="hub-admin-add-cancel" class="cv-btn">Cancel</button></div>
+        </form>
+        <p id="hub-admin-message" class="text-sm" role="status"></p>
+        <p id="hub-admin-count" class="cv-note"></p>
+        <div id="hub-admin-list" class="hub-admin-list"></div>
+        <button type="button" id="hub-admin-more" class="cv-btn" hidden>Show more</button>
     </div>
 
     <div id="styles-pane" class="hidden">
@@ -599,6 +662,7 @@
         }
     </script>
     <script src="js/cv-data.js?v=20261003"></script>
+    <script src="js/social-hub-admin.js?v=20261024a"></script>
     <script type="module">
     // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -606,6 +670,7 @@
     import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, getDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
     import { createCvEditor } from "./js/cv-editor.js?v=20260928c";
+    import { createHubEditor } from "./js/social-hub-editor.js?v=20261024a";
 
     // Firebase Config
     const firebaseConfig = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", storageBucket: "carlosm-interactive-cv.firebasestorage.app", messagingSenderId: "976558418058", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
@@ -614,6 +679,7 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
     const cvEditor = createCvEditor({ db, auth, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, getDocs, query, orderBy, limit, addDoc, storage, ref, uploadString, getDownloadURL });
+    const hubEditor = createHubEditor({ db, auth, doc, getDoc, setDoc, serverTimestamp });
 
     // Global State
     let allMessages = [], allRatings = [], allBlockedSenders = [];
@@ -662,8 +728,8 @@
     const linkForm = document.getElementById('link-form');
     const LINK_EMAIL = 'adminLinkEmail';
     let linkEmailNeeded = false;
-    const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn'), cv: document.getElementById('cv-tab-btn'), styles: document.getElementById('styles-tab-btn') };
-    const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane'), cv: document.getElementById('cv-pane'), styles: document.getElementById('styles-pane') };
+    const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn'), cv: document.getElementById('cv-tab-btn'), hub: document.getElementById('hub-tab-btn'), styles: document.getElementById('styles-tab-btn') };
+    const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane'), cv: document.getElementById('cv-pane'), hub: document.getElementById('hub-pane'), styles: document.getElementById('styles-pane') };
     const lists = { messages: document.getElementById('messages-list'), ratings: document.getElementById('ratings-list'), rejected: document.getElementById('rejected-list'), blocked: document.getElementById('blocked-list') };
     // NEW: Response Modal Elements
     const responseModalOverlay = document.getElementById('response-modal-overlay');
@@ -879,6 +945,7 @@
         setupModalListeners();
         cvEditor.bind();
         cvEditor.load();
+        hubEditor.bind();
     }
 
     function switchTab(tabKey) {
@@ -888,6 +955,7 @@
             panes[key].classList.toggle('hidden', !isActive);
         });
         if (tabKey === 'stats') renderStatisticsGraph();
+        if (tabKey === 'hub') hubEditor.load();
     }
     Object.keys(tabButtons).forEach(key => tabButtons[key].addEventListener('click', () => switchTab(key)));
     document.querySelectorAll('.source-switch button').forEach((button) => {

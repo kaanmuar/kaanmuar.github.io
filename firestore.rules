@@ -146,6 +146,16 @@ service cloud.firestore {
       allow create, update, delete: if isOwner() && id == 'live';
     }
 
+    // Read by scripts/build-social-hub.js without credentials; everything in it goes on the public hub.
+    match /socialHub/{id} {
+      allow get: if true;
+      allow list, delete: if false;
+      allow create, update: if isOwner() && id == 'live'
+        && only(['json', 'updatedAt'])
+        && text('json', 2, 500000)
+        && request.resource.data.updatedAt == request.time;
+    }
+
     match /cvPhotos/{id} {
       allow get, list: if isOwner();
       allow create: if isOwner()
