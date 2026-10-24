@@ -3471,7 +3471,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       }, dealFields(deal)));
       return;
     }
-    res.status(200).json({ report: data.report || null, frameworks: data.frameworks || [], paid: true, free });
+    const comparisons = data.report.compare ? [] : await comparisonsFrom(id, data.email);
+    res.status(200).json({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free });
     return;
   }
   if (req.method !== "POST") {
@@ -3480,6 +3481,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   }
   await runReview(req, res, async () => requestPlace(req));
 });
+
+async function comparisonsFrom(id, email) {
+  try {
+    const snap = await admin.firestore().collection("url_reviews")
+      .where("compareWith", "==", id)
+      .select("email", "createdAt", "compareWith", "report.id", "report.host", "report.compare.ownId", "report.compare.ownHost", "report.compare.rivalHost", "report.compare.overall", "report.compare.dominance")
+      .limit(40)
+      .get();
+    return reviewCompare.comparisonsOf(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), id, email);
+  } catch (error) {
+    console.error("Comparisons of a report failed:", error);
+    return [];
+  }
+}
 
 function requestPlace(req) {
   return {
