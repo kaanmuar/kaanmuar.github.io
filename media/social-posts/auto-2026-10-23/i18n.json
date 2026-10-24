@@ -44,7 +44,7 @@
    "cap.youtube": "Todos los enlaces internos que se abrieron respondieron, y los rastreadores de búsqueda y respuestas de IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.\n\nLección: Envíe los ancestros del marco 'self' en el CSP, o X-Frame-Options: SAMEORIGIN, para que otros sitios no puedan enmarcar sus páginas.\n\nUn análisis automatizado de páginas públicas el 22 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.\n\nInforme completo: https://carlosandmunoz.com/qa-review.html?live=u-pirouline-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-pirouline-com\n\nRevise su propio sitio: https://carlosandmunoz.com/qa-review.html\n\nRevisiones solicitadas · Revisión de URL de QA-lab\n\n#WebSecurity #Clickjacking #HTTPHeaders #QA #QAlab"
   },
   "u-postobon-com": {
-   "title.0": "postobon. com: 49.",
+   "title.0": "postobon.com: 49.",
    "title.1": "*A lacuna: rótulos de formulário.*",
    "body": "Cada página tem um título, e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas 25 controles de formulário não possuem rótulo.",
    "action": "Dê a cada entrada um rótulo visível vinculado a ela com for e id. Os leitores de tela anunciam isso e o alvo do toque aumenta.",
@@ -116,7 +116,7 @@
   "es\u0000Full report:": "Informe completo:",
   "es\u0000Review your own site:": "Revise su propio sitio:",
   "es\u0000Requested reviews · QA-lab URL Review": "Revisiones solicitadas · Revisión de URL de QA-lab",
-  "pt\u0000postobon.com: 49.": "postobon. com: 49.",
+  "pt\u0000postobon.com: 49.": "postobon.com: 49.",
   "pt\u0000The gap: form labels.": "A lacuna: rótulos de formulário.",
   "pt\u0000Every page has a title, and AI answer and search crawlers may read the start page. But 25 form controls have no label.": "Cada página tem um título, e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas 25 controles de formulário não possuem rótulo.",
   "pt\u0000Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.": "Dê a cada entrada um rótulo visível vinculado a ela com for e id. Os leitores de tela anunciam isso e o alvo do toque aumenta.",
