@@ -1,10 +1,3 @@
-    // Import Firebase modules
-    // ** MODIFIED **: Added query and where for the new function
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-functions.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
-
     // IMPORTANT: Actual Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
@@ -15,11 +8,29 @@
         appId: "1:976558418058:web:1dc19bcd40915ea233e573"
     };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const functions = getFunctions(app);
-    const storage = getStorage(app);
+    // Firebase is ~230 KiB; importing it statically held the whole CV back until it downloaded on mobile.
+    const FIREBASE = 'https://www.gstatic.com/firebasejs/9.6.1/';
+    let firebaseReady = null;
+    function firebase() {
+        if (!firebaseReady) {
+            firebaseReady = Promise.all(['firebase-app.js', 'firebase-firestore.js', 'firebase-functions.js', 'firebase-storage.js']
+                .map((file) => import(FIREBASE + file)))
+                .then(([core, store, calls, files]) => {
+                    const app = core.initializeApp(firebaseConfig);
+                    return {
+                        db: store.getFirestore(app),
+                        functions: calls.getFunctions(app),
+                        storage: files.getStorage(app),
+                        collection: store.collection, addDoc: store.addDoc, serverTimestamp: store.serverTimestamp,
+                        query: store.query, orderBy: store.orderBy, onSnapshot: store.onSnapshot, doc: store.doc, getDoc: store.getDoc,
+                        httpsCallable: calls.httpsCallable,
+                        ref: files.ref, uploadBytes: files.uploadBytes, getDownloadURL: files.getDownloadURL
+                    };
+                })
+                .catch((error) => { firebaseReady = null; throw error; });
+        }
+        return firebaseReady;
+    }
 
     const PRINT_COPY = {
         en: {
@@ -929,12 +940,12 @@
                 };
                 const fallback = () => {
                     if (window.SiteAnalytics) SiteAnalytics.noteVisit();
-                    addDoc(collection(db, 'visits'), {
+                    firebase().then((fb) => fb.addDoc(fb.collection(fb.db, 'visits'), {
                         source: 'cv',
                         lang: payload.lang,
                         referrerHost: payload.referrerHost,
-                        createdAt: serverTimestamp()
-                    }).catch((error) => {
+                        createdAt: fb.serverTimestamp()
+                    })).catch((error) => {
                         console.warn('CV access note was not saved:', error && error.code ? error.code : error);
                     });
                 };
@@ -2447,9 +2458,7 @@
                 if (!container || !avgRatingEl) return;
 
                 // Query the new 'testimonials' collection, ordered by creation date
-                const q = query(collection(db, "testimonials"), orderBy("createdAt", "desc"));
-
-                onSnapshot(q, (snapshot) => {
+                firebase().then((fb) => fb.onSnapshot(fb.query(fb.collection(fb.db, "testimonials"), fb.orderBy("createdAt", "desc")), (snapshot) => {
                     if (snapshot.empty) {
                         container.parentElement.style.display = 'none'; // Hide section if no testimonials
                         return;
@@ -2477,7 +2486,7 @@
                     }
 
                     container.innerHTML = testimonialCardsHTML;
-                });
+                })).catch((error) => console.warn('Testimonials were not loaded:', error && error.code ? error.code : error));
             },
 
 // ADD THIS SECOND NEW FUNCTION
@@ -2663,7 +2672,7 @@
             },
 
             _watchFormCaptcha() {
-                onSnapshot(doc(db, 'abuse', 'forms'), (snap) => {
+                firebase().then((fb) => fb.onSnapshot(fb.doc(fb.db, 'abuse', 'forms'), (snap) => {
                     const data = snap.exists() ? snap.data() : null;
                     const until = data && data.until && typeof data.until.toMillis === 'function' ? data.until.toMillis() : 0;
                     const on = !!(data && data.captcha === true && until > Date.now());
@@ -2671,6 +2680,8 @@
                     this.state.captchaRequired = on;
                     this._syncFormCaptcha();
                 }, () => {
+                    this.state.captchaRequired = false;
+                })).catch(() => {
                     this.state.captchaRequired = false;
                 });
             },
@@ -2697,7 +2708,8 @@
                 if (input) input.value = '';
                 if (error) error.style.display = 'none';
                 try {
-                    const ask = httpsCallable(functions, 'getFormChallenge');
+                    const fb = await firebase();
+                    const ask = fb.httpsCallable(fb.functions, 'getFormChallenge');
                     const result = await ask({});
                     if (!result.data || !result.data.required) {
                         this.state.captchaRequired = false;
@@ -2721,12 +2733,13 @@
             },
 
             async _storeForm(kind, payload) {
+                const fb = await firebase();
                 if (!this.state.captchaRequired) {
-                    await addDoc(collection(db, kind === 'message' ? 'messages' : 'ratings'), payload);
+                    await fb.addDoc(fb.collection(fb.db, kind === 'message' ? 'messages' : 'ratings'), payload);
                     return;
                 }
                 const answer = document.getElementById(kind + '-captcha-answer').value;
-                const send = httpsCallable(functions, 'submitGuardedForm');
+                const send = fb.httpsCallable(fb.functions, 'submitGuardedForm');
                 try {
                     await send(Object.assign({
                         kind,
@@ -2800,11 +2813,12 @@
                 const file = fileUpload.files[0];
 
                 try {
+                    const fb = await firebase();
                     let fileURL = '';
                     if (file) {
-                        const storageRef = ref(storage, `attachments/${Date.now()}_${file.name}`);
-                        const snapshot = await uploadBytes(storageRef, file);
-                        fileURL = await getDownloadURL(snapshot.ref);
+                        const storageRef = fb.ref(fb.storage, `attachments/${Date.now()}_${file.name}`);
+                        const snapshot = await fb.uploadBytes(storageRef, file);
+                        fileURL = await fb.getDownloadURL(snapshot.ref);
                     }
 
                     await this._storeForm('message', {
@@ -2814,7 +2828,7 @@
                         message: senderMessage.value.trim(),
                         fileURL,
                         status: 'inbox',
-                        createdAt: serverTimestamp()
+                        createdAt: fb.serverTimestamp()
                     });
 
                     // This corrected line uses the available 'messageTopic' variable.
@@ -2851,6 +2865,7 @@
                 this._setButtonSendingState(sendRatingBtn, true);
 
                 try {
+                    const fb = await firebase();
                     await this._storeForm('rating', {
                         name: raterName.value.trim(),
                         email,
@@ -2858,7 +2873,7 @@
                         comment: raterComment.value.trim(),
                         status: 'pending',
                         isAnonymous: false,
-                        createdAt: serverTimestamp()
+                        createdAt: fb.serverTimestamp()
                     });
 
                     this._trackEvent('submit_rating', 'Form Submission', `Rating: ${ratingValue.value} Stars`);
@@ -4145,7 +4160,8 @@
                     return;
                 }
                 try {
-                    const snap = await getDoc(doc(db, 'cvContent', 'live'));
+                    const fb = await firebase();
+                    const snap = await fb.getDoc(fb.doc(fb.db, 'cvContent', 'live'));
                     if (!snap.exists()) return;
                     if (this._applyLiveCv(snap.data())) this._refreshAfterLiveCv();
                 } catch (error) {
@@ -4189,8 +4205,14 @@
                 catch (error) { console.error("Failed to load testimonials:", error); }
 
                 // Start the tour if it hasn't been seen. A framed CV (the lab preview) never starts it: its card would take focus from the host page.
+                // Opening on load made the tour tooltip the page's Largest Contentful Paint on mobile, so it waits for the visitor's first move.
                 if (!sessionStorage.getItem('hasSeenTour') && window.top === window.self) {
-                    setTimeout(() => this.startTour(true), 1000);
+                    const kinds = ['scroll', 'pointerdown', 'keydown', 'touchstart'];
+                    const begin = () => {
+                        kinds.forEach((kind) => window.removeEventListener(kind, begin, true));
+                        if (!sessionStorage.getItem('hasSeenTour') && !this.state.isTourActive) setTimeout(() => this.startTour(true), 600);
+                    };
+                    kinds.forEach((kind) => window.addEventListener(kind, begin, { capture: true, passive: true }));
                 }
                 // Tests wait for data-cv-settled: the live CV re-renders the competencies and the topic list when it lands.
                 this._loadLiveCv().finally(() => { document.documentElement.dataset.cvSettled = '1'; });
