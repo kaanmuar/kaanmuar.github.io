@@ -2875,9 +2875,12 @@
     });
     rows.forEach((row, i) => {
       const y = i * (h + 10);
-      svg.appendChild(svgEl('text', { x: 0, y: y + 15, fill: 'var(--muted)', 'font-size': '11' }, row.label));
-      svg.appendChild(svgEl('rect', { x: 108, y: y + 4, width: Math.max(4, (row.value / max) * 180), height: 14, rx: 3, fill: row.color || '#0d6e76' }));
-      svg.appendChild(svgEl('text', { x: 294, y: y + 15, fill: 'var(--text)', 'font-size': '11', 'text-anchor': 'end' }, String(row.value)));
+      const label = String(row.label);
+      const name = svgEl('text', { x: 0, y: y + 15, fill: 'var(--muted)', 'font-size': '11' }, label.length > 17 ? label.slice(0, 16) + '…' : label);
+      name.appendChild(svgEl('title', {}, label));
+      svg.appendChild(name);
+      svg.appendChild(svgEl('rect', { x: 108, y: y + 4, width: Math.max(4, (row.value / max) * 160), height: 14, rx: 3, fill: row.color || '#0d6e76' }));
+      svg.appendChild(svgEl('text', { x: 316, y: y + 15, fill: 'var(--text)', 'font-size': '11', 'text-anchor': 'end' }, String(row.value)));
     });
     return svg;
   }
@@ -3844,7 +3847,7 @@
       if (global.SiteAnalytics) SiteAnalytics.event('lab_report', 'QA Lab', 'copy');
       const html = this.reportFile();
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('.mark, style, script').forEach((el) => el.remove());
+      doc.querySelectorAll('.mark, style, script, svg title').forEach((el) => el.remove());
       doc.querySelectorAll('td, th').forEach((cell) => { if (cell.nextElementSibling) cell.append('\t'); });
       doc.querySelectorAll('tr, p, h1, h2, h3, h4, li, article, div').forEach((el) => el.append('\n'));
       const text = doc.body.textContent.replace(/[ \u00a0]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
