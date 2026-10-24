@@ -12,6 +12,9 @@
    them. The token is a Page access token with pages_manage_posts. Exits 1 when any post failed, after
    trying all of them.
 
+   Every post it schedules or finds on the Page goes into the ledger assets/social/facebook.json
+   (scripts/social-ledger.js), and each run first asks the Page whether the queued ones whose time has passed went out.
+
    The Page token never expires, but changing the Facebook password or removing the "QA-lab Page Publisher"
    app (1097031042944706) revokes it. To renew it, generate a user token in Graph API Explorer on that app
    with pages_manage_posts and pages_read_engagement, copy the app secret from App settings > Basic, then:
@@ -23,6 +26,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const ledger = require("./social-ledger");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
@@ -69,7 +73,8 @@ function graphError(status, json) {
   const error = json.error || {};
   const message = "Graph " + status + ": " + (error.message || JSON.stringify(json)).slice(0, 300);
   const revoked = error.code === 190 || /on behalf of user|session has been invalidated/i.test(error.message || "");
-  return new Error(revoked ? message + "\nFACEBOOK_PAGE_TOKEN was revoked. Renew it with node scripts/facebook-queue.js --renew (steps at the top of that file)." : message);
+  return Object.assign(new Error(revoked ? message + "\nFACEBOOK_PAGE_TOKEN was revoked. Renew it with node scripts/facebook-queue.js --renew (steps at the top of that file)." : message),
+    { revoked, subcode: error.error_subcode });
 }
 
 async function graph(edge, params) {
@@ -107,8 +112,25 @@ const key = (text) => String(text || "").replace(/\s+/g, " ").trim();
 async function onPage(page) {
   const since = String(Math.floor(Date.now() / 1000) - 40 * 86400);
   const scheduled = await graphAll(page + "/scheduled_posts", { fields: "message,scheduled_publish_time" });
-  const published = await graphAll(page + "/posts", { fields: "message", since });
-  return { scheduled, keys: new Set(scheduled.concat(published).map((p) => key(p.message))) };
+  const published = await graphAll(page + "/posts", { fields: "message,created_time,permalink_url", since });
+  const keys = new Map();
+  scheduled.forEach((p) => keys.set(key(p.message), { id: p.id, at: new Date(p.scheduled_publish_time * 1000).toISOString(), result: "queued" }));
+  published.forEach((p) => keys.set(key(p.message), { id: p.id, at: new Date(p.created_time).toISOString(), result: "sent", url: p.permalink_url }));
+  return { scheduled, published, keys };
+}
+
+// Code 100 with subcode 33 is a post the Page no longer has. Any other error leaves the entry queued for the next run.
+async function lookup(entry, published) {
+  const seen = published.find((p) => p.id === entry.id);
+  if (seen) return ledger.fromGraph({ is_published: true, permalink_url: seen.permalink_url });
+  try {
+    return ledger.fromGraph(await graphGet(entry.id, { fields: "is_published,permalink_url" }));
+  } catch (error) {
+    if (error.revoked) throw error;
+    if (error.subcode === 33) return ledger.fromGraph(null);
+    console.log("could not look up", entry.id, "-", error.message);
+    return null;
+  }
 }
 
 async function check(page) {
@@ -148,7 +170,7 @@ function posts(batch) {
   const dir = path.join(ROOT, "media/social-posts", batch);
   const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
   const when = facebookSlots(dir);
-  return Object.keys(captions).filter((slug) => captions[slug].facebook)
+  return Object.keys(captions).filter((slug) => captions[slug].facebook && !captions[slug].hold)
     .map((slug) => ({ batch, slug, cap: captions[slug], at: when[slug] || 0 }));
 }
 
@@ -170,8 +192,15 @@ async function main() {
     console.log("Waiting up to 20 minutes for the site to serve " + first);
     if (!(await waitFor(first, 20))) throw new Error("The site never served " + first);
   }
-  const done = live || process.env.FACEBOOK_PAGE_TOKEN ? (await onPage(page)).keys : new Set();
+  const found = live || process.env.FACEBOOK_PAGE_TOKEN ? await onPage(page) : { published: [], keys: new Map() };
+  const done = found.keys;
+  const book = ledger.read(ledger.FACEBOOK);
+  if (live) {
+    const counts = await ledger.upgrade(book, Date.now(), (entry) => lookup(entry, found.published));
+    console.log("ledger: " + counts.sent + " sent, " + counts.failed + " failed, " + counts.queued + " still queued");
+  }
   const horizon = Date.now() + MAX_LEAD_MS;
+  const record = (name, entry) => ledger.record(book, name, Object.assign({ channel: "facebook", profile: "Facebook Page", checked: new Date().toISOString() }, entry));
   let failed = 0;
   let queued = 0;
   let already = 0;
@@ -179,7 +208,13 @@ async function main() {
   let late = 0;
   for (const post of list) {
     const name = post.batch + "/" + post.slug;
-    if (done.has(key(post.cap.facebook))) { already += 1; continue; }
+    const there = done.get(key(post.cap.facebook));
+    if (there) {
+      already += 1;
+      const known = ledger.find(book, name, "facebook", "Facebook Page");
+      if (live && !(known && known.id === there.id && known.result !== "queued")) record(name, there);
+      continue;
+    }
     if (post.at > horizon) { later += 1; continue; }
     // A missed slot goes out 20 minutes from now, the next one 30 minutes after that, and so on.
     const due = post.at < Date.now() + MIN_LEAD_MS ? Date.now() + MIN_LEAD_MS + 30 * 60e3 * late++ : post.at;
@@ -196,11 +231,14 @@ async function main() {
       const r = await graph(page + "/photos", params);
       queued += 1;
       console.log("scheduled", name, at, r.id);
+      record(name, { id: r.post_id || r.id, at, result: "queued" });
     } catch (error) {
       failed += 1;
       console.log("failed", name, "-", error.message);
+      record(name, { at, result: "failed", error: error.message.split("\n")[0] });
     }
   }
+  if (live) ledger.write(ledger.FACEBOOK, book);
   console.log(queued + " scheduled, " + already + " already on the Page, " + later + " more than 29 days out, " + failed + " failed");
   if (failed) process.exit(1);
 }

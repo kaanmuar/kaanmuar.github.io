@@ -77,19 +77,49 @@ test("calendars give each post its first slot per channel, in Bogotá time, for 
   assert.equal(admin.batchOf("launch-2026-10/de/talking"), "launch-2026-10");
 });
 
-test("channel status: queued before the slot, out after it, YouTube from the uploads ledger", () => {
+test("channel status without a ledger entry: the calendar slot is only Scheduled, YouTube from the uploads ledger", () => {
   const now = Date.parse("2026-10-25T18:00:00-05:00");
   const slots = { linkedin: "2026-10-25T07:30:00-05:00", facebook: "2026-10-26T17:10:00-05:00", youtube: "2026-10-25T17:45:00-05:00" };
   const byNet = (list) => Object.fromEntries(list.map((c) => [c.net, c.state]));
-  assert.deepEqual(byNet(admin.channels(slots, null, now)), { linkedin: "out", x: "none", instagram: "none", "instagram-story": "none", facebook: "queued", youtube: "missing", tiktok: "none" });
+  assert.deepEqual(byNet(admin.channels(slots, null, now)), { linkedin: "scheduled", x: "none", instagram: "none", "instagram-story": "none", facebook: "scheduled", youtube: "missing", tiktok: "none" });
   assert.equal(byNet(admin.channels(slots, "5b4Hr6r-cBk", now)).youtube, "live");
   const facebook = admin.channels(slots, null, now).find((c) => c.net === "facebook");
   assert.equal(facebook.via, "Facebook Page");
-  assert.equal(admin.statusLabel(facebook), "Queued Oct 26, 17:10");
-  assert.equal(admin.statusLabel(admin.channels(slots, null, now)[0]), "Out Oct 25");
+  assert.equal(admin.statusLabel(facebook), "Scheduled Oct 26, 17:10");
+  assert.equal(admin.statusLabel(admin.channels(slots, null, now)[0]), "Scheduled Oct 25, 07:30");
   const later = admin.channels({ facebook: "2026-12-01T17:10:00-05:00", linkedin: "2026-12-01T07:30:00-05:00" }, null, now);
-  assert.deepEqual(later.filter((c) => c.at).map((c) => c.state), ["queued", "planned"]);
+  assert.deepEqual(later.filter((c) => c.at).map((c) => c.state), ["scheduled", "planned"]);
   assert.equal(admin.statusLabel(later.find((c) => c.net === "facebook")), "Planned Dec 1, 17:10");
+});
+
+test("channel status from the Buffer and Page ledgers: failed if any profile failed, queued while any is, then sent", () => {
+  const now = Date.parse("2026-10-25T18:00:00-05:00");
+  const slots = { linkedin: "2026-10-25T07:30:00-05:00", x: "2026-10-25T09:00:00-05:00", instagram: "2026-10-25T10:00:00-05:00", facebook: "2026-10-26T17:10:00-05:00", youtube: "2026-10-25T17:45:00-05:00" };
+  const ledgers = [
+    { version: 1, posts: { "auto-2026-10-24/01-a": [
+      { channel: "linkedin", profile: "linkedin (QA-lab)", id: "b1", at: "2026-10-25T12:31:04.000Z", result: "sent" },
+      { channel: "x", profile: "bluesky (qa)", id: "b2", at: "2026-10-25T14:00:00.000Z", result: "sent" },
+      { channel: "x", profile: "threads (qa)", id: "b3", at: "2026-10-25T14:00:00.000Z", result: "queued" },
+      { channel: "instagram", profile: "instagram (qa)", id: "b4", at: "2026-10-25T15:00:00.000Z", result: "failed", error: "Image ratio not supported" },
+      { channel: "youtube", profile: "youtube (qa)", id: "b5", at: "2026-10-25T22:45:00.000Z", result: "failed", error: "Quota" }
+    ] } },
+    { version: 1, posts: { "auto-2026-10-24/01-a": [{ channel: "facebook", profile: "Facebook Page", id: "1_2", at: "2026-10-26T22:10:00.000Z", result: "queued" }] } },
+    null
+  ];
+  const entries = admin.ledgerEntries(ledgers, "auto-2026-10-24/01-a");
+  assert.equal(entries.length, 6);
+  assert.deepEqual(admin.ledgerEntries(ledgers, "auto-2026-10-24/02-b"), []);
+  const list = admin.channels(slots, null, now, entries);
+  const byNet = Object.fromEntries(list.map((c) => [c.net, c]));
+  assert.deepEqual(list.map((c) => c.state), ["sent", "queued", "failed", "none", "queued", "failed", "none"]);
+  assert.equal(admin.statusLabel(byNet.linkedin), "Sent Oct 25");
+  assert.equal(admin.statusLabel(byNet.x), "Queued Oct 25, 09:00");
+  assert.equal(admin.statusLabel(byNet.instagram), "Failed Oct 25");
+  assert.equal(byNet.instagram.error, "Image ratio not supported");
+  assert.equal(byNet.linkedin.error, undefined);
+  assert.equal(admin.statusLabel(byNet.facebook), "Queued Oct 26, 17:10");
+  assert.equal(admin.channels(slots, "5b4Hr6r-cBk", now, entries)[5].state, "live");
+  assert.equal(admin.statusLabel({ state: "failed", at: "" }), "Failed");
 });
 
 test("a pick with a remote image renders on the hub with its own thumbnail, link and kind label", () => {
