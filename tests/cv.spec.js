@@ -112,6 +112,35 @@ test.describe('CV desktop', () => {
     expect(await page.evaluate(() => [typeof window.jsPDF, typeof window.html2canvas])).toEqual(['function', 'function']);
   });
 
+  test('the content security policy blocks nothing the CV uses', async ({ page }) => {
+    const analytics = [];
+    await page.route(/google-analytics\.com\/g\/collect/, (route) => {
+      analytics.push(route.request().url());
+      return route.fulfill({ status: 204 });
+    });
+    await page.addInitScript(() => {
+      localStorage.setItem('site-analytics', 'allow');
+      window.__csp = [];
+      document.addEventListener('securitypolicyviolation', (event) => window.__csp.push(event.violatedDirective + ' ' + event.blockedURI));
+    });
+    await page.reload();
+    await waitForCVApp(page);
+    const cv = new CVPage(page);
+    await cv.exportSelector.click({ force: true });
+    for (const label of ['Export as PDF', 'Export as JPG']) {
+      const download = page.waitForEvent('download', { timeout: 30000 });
+      await page.locator('#export-options').getByRole('button', { name: label }).click();
+      await download;
+    }
+    await cv.profilePhoto.click();
+    await page.locator('.modal-close').click();
+    await cv.themeToggle.click();
+    await cv.selectLanguage('es');
+    await cv.selectLanguage('en');
+    expect(await page.evaluate(() => window.__csp)).toEqual([]);
+    expect(analytics.length).toBeGreaterThan(0);
+  });
+
   test('print control is present', async ({ page }) => {
     await expect(page.locator('#print-btn')).toBeVisible();
   });
