@@ -1512,6 +1512,7 @@ const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
 const reviewCompare = require("./url-review-compare");
+const reviewMulti = require("./url-review-multi");
 const reviewMarket = require("./url-review-market");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
@@ -1576,24 +1577,37 @@ async function sendAskerMail(email, mail, stopUrl, category, attachments, replyT
   return true;
 }
 
-async function reportPdfFor(record) {
+// The browser function prints the HTML with no script and no network; the answer is the PDF in base64.
+async function printHtml(html) {
   const key = process.env.BROWSER_KEY;
   if (!key) return null;
   try {
-    const page = customerMail.reportPdf(record);
     const res = await fetch(BROWSER_URL, {
       method: "POST",
       headers: { "content-type": "application/json", "x-review-key": key },
-      body: JSON.stringify({ kind: "pdf", html: page.html }),
+      body: JSON.stringify({ kind: "pdf", html }),
       signal: AbortSignal.timeout(60000)
     });
     const body = res.ok ? await res.json() : null;
     if (!body || !body.ok || !body.pdf || body.pdf.length > 7000000) return null;
-    return { content: body.pdf, filename: page.filename, type: "application/pdf", disposition: "attachment" };
+    return body.pdf;
+  } catch (error) {
+    console.error("PDF print failed:", error && error.message);
+    return null;
+  }
+}
+
+async function reportPdfFor(record) {
+  if (!process.env.BROWSER_KEY) return null;
+  let page = null;
+  try {
+    page = customerMail.reportPdf(record);
   } catch (error) {
     console.error("Report PDF failed:", error && error.message);
     return null;
   }
+  const pdf = await printHtml(page.html);
+  return pdf ? { content: pdf, filename: page.filename, type: "application/pdf", disposition: "attachment" } : null;
 }
 
 async function mailReportToAsker(record) {
@@ -1920,20 +1934,23 @@ async function latestPublicReview(host, unlisted) {
   return rivals.latestPublic(records, unlisted);
 }
 
-function findRivals(host) {
+function findRivals(host, field, lang) {
   return rivals.findRivals(host, {
     search: (query) => urlReview.webSearch(query),
     ranker: (domains) => reviewMarket.trancoRanks(domains),
     registrable: urlReview.registrable
-  });
+  }, field, lang);
 }
 
-// Looks up a report's natural competitors once and stores them on the record.
-async function rivalsOf(ref, data) {
-  if (data.report && data.report.rivals) return data.report.rivals;
-  const found = await findRivals(data.report.host);
+// Looks up a report's natural competitors once per kind of competition and stores them on the record:
+// the site's own field in report.rivals, a picked field or topic in report.rivalsBy.<key>.
+async function rivalsOf(ref, data, field) {
+  const stored = rivals.storedFor(data.report, field);
+  if (stored) return stored;
+  const found = await findRivals(data.report.host, field, data.report.observed && data.report.observed.lang);
   const value = { at: new Date().toISOString(), ownRank: found.ownRank, list: found.list };
-  await ref.update({ "report.rivals": value, rivalsAt: value.at });
+  if (field) await ref.update({ ["report.rivalsBy." + field.key]: Object.assign({ term: field.term }, value) });
+  else await ref.update({ "report.rivals": value, rivalsAt: value.at });
   return value;
 }
 
@@ -2620,7 +2637,21 @@ async function reviewAccount(req, res, pathName) {
   if (pathName.endsWith("/account/runs")) {
     const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
     const freeAccount = await hasFreeRuns(signedIn.email);
-    res.status(200).json(reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email, Date.now(), { freeAccount }));
+    const file = reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email, Date.now(), { freeAccount });
+    res.status(200).json(Object.assign(file, { comparisons: await savedComparisons(db, signedIn.email) }));
+    return;
+  }
+  if (pathName.indexOf("/account/comparison/") !== -1) {
+    await reviewComparison(req, res, pathName, db, signedIn.email);
+    return;
+  }
+  if (pathName.endsWith("/account/compare")) {
+    const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
+    const records = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+    const file = reviewOffers.accountFile(records, signedIn.email, Date.now(), { freeAccount: await hasFreeRuns(signedIn.email) });
+    const open = new Set(file.runs.filter((run) => run.open).map((run) => run.id));
+    const made = reviewCompare.savedComparison(records, signedIn.email, req.body && req.body.ids, (row) => open.has(row.id));
+    res.status(made.error ? 400 : 200).json(made);
     return;
   }
   if (pathName.endsWith("/account/stop")) {
@@ -2691,6 +2722,71 @@ async function reviewAccount(req, res, pathName) {
   res.status(404).json({ error: "Not found." });
 }
 
+async function accountOpenRuns(db, email) {
+  const snap = await db.collection("url_reviews").where("email", "==", email).limit(200).get();
+  const records = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  const file = reviewOffers.accountFile(records, email, Date.now(), { freeAccount: await hasFreeRuns(email) });
+  return { records, open: new Set(file.runs.filter((run) => run.open).map((run) => run.id)) };
+}
+
+async function savedComparisons(db, email) {
+  try {
+    const snap = await db.collection("url_review_comparisons").where("email", "==", email).limit(reviewMulti.LISTED_MAX * 2).get();
+    return reviewMulti.listOf(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), email);
+  } catch (error) {
+    console.error("Saved comparisons did not load:", error);
+    return [];
+  }
+}
+
+// A many-URL comparison: saved from the account page or the review page, opened, deleted, and printed to PDF.
+async function reviewComparison(req, res, pathName, db, email) {
+  const body = req.body || {};
+  const { records, open } = await accountOpenRuns(db, email);
+  if (pathName.endsWith("/account/comparison/save")) {
+    const picked = reviewMulti.pickProblem(records, email, body.ids);
+    if (picked.error) {
+      res.status(400).json({ error: picked.error });
+      return;
+    }
+    const ref = await db.collection("url_review_comparisons").add(reviewMulti.savedRecord(email, picked, body.from));
+    res.status(200).json({ ok: true, id: ref.id });
+    return;
+  }
+  const id = reviewMulti.docId(body.id);
+  const snap = id ? await db.collection("url_review_comparisons").doc(id).get() : null;
+  const doc = snap && snap.exists ? snap.data() || {} : null;
+  if (!doc || String(doc.email || "").toLowerCase() !== String(email).toLowerCase()) {
+    res.status(404).json({ error: "That comparison is not saved under this account." });
+    return;
+  }
+  if (pathName.endsWith("/account/comparison/delete")) {
+    await snap.ref.delete();
+    res.status(200).json({ ok: true });
+    return;
+  }
+  const made = reviewMulti.payloadOf(id, doc, records, (row) => open.has(row.id));
+  if (pathName.endsWith("/account/comparison/open")) {
+    res.status(200).json(made);
+    return;
+  }
+  if (pathName.endsWith("/account/comparison/pdf")) {
+    const problem = reviewMulti.pdfProblem(made, body.html);
+    if (problem) {
+      res.status(made.paid ? 400 : 402).json({ error: problem, paymentRequired: !made.paid });
+      return;
+    }
+    const pdf = await printHtml(String(body.html));
+    if (!pdf) {
+      res.status(503).json({ error: "The PDF did not print. Try again in a moment, or use Print." });
+      return;
+    }
+    res.status(200).json({ ok: true, pdf, filename: reviewMulti.pdfName(made) });
+    return;
+  }
+  res.status(404).json({ error: "Not found." });
+}
+
 function reviewHeaders(req, res) {
   res.set("Access-Control-Allow-Origin", reviewOrigin(req));
   res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -2723,7 +2819,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       const failed = pathName.endsWith("/account/delete") ? "The account was not fully deleted. Try again in a moment."
         : pathName.endsWith("/account/delete-runs") ? "The reviews were not all deleted. Try again in a moment."
         : pathName.endsWith("/account/export") ? "Your data did not download. Try again in a moment."
-          : "Your runs did not load. Try again in a moment.";
+          : pathName.indexOf("/account/comparison/") !== -1 ? "The comparison did not load. Try again in a moment."
+            : "Your runs did not load. Try again in a moment.";
       if (!res.headersSent) res.status(500).json({ error: failed });
     }
     return;
@@ -3581,11 +3678,16 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         res.status(404).json({ error: access.error });
         return;
       }
-      const found = access.locked ? data.report.rivals || { list: [] } : await rivalsOf(snap.ref, data);
+      const field = rivals.fieldOf(body, data.report.observed && data.report.observed.lang);
+      if (!access.locked && !rivals.fieldRoom(data.report, field)) {
+        res.status(429).json({ error: "This report has searched " + rivals.FIELDS_MAX + " kinds of competition already. Pick one of them or the site's own field." });
+        return;
+      }
+      const found = access.locked ? rivals.storedFor(data.report, field) || { list: [] } : await rivalsOf(snap.ref, data, field);
       const unlisted = await unlistedHosts();
       const list = (found.list || []).filter((row) => !unlisted.some((u) => row.host === u || row.host.endsWith("." + u)));
       const records = await Promise.all(list.map((row) => latestPublicReview(row.host, unlisted)));
-      res.status(200).json({ rivals: rivals.payload(Object.assign({ id }, data.report), Object.assign({}, found, { list }), records, !!access.ok) });
+      res.status(200).json({ field: field ? field.key : "", rivals: rivals.payload(Object.assign({ id }, data.report), Object.assign({}, found, { list }), records, !!access.ok) });
     } catch (error) {
       console.error("Natural competitors failed for " + id + ":", error);
       res.status(503).json({ error: "The natural competitors are not available right now." });
@@ -3650,7 +3752,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     const comparisons = data.report && !data.report.compare ? await comparisonsFrom(id, data.email) : [];
-    res.status(200).json({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free });
+    const versus = req.method === "POST" ? await versusFrom(Object.assign({ id }, data), opening, proof) : null;
+    res.status(200).json(Object.assign({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free }, versus ? { versus } : {}));
     return;
   }
   if (req.method !== "POST") {
@@ -3659,6 +3762,24 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   }
   await runReview(req, res, async () => requestPlace(req));
 });
+
+// The account page opens a base review with ?vs= another saved review: the pair, from the stored reports.
+async function versusFrom(base, opening, proof) {
+  const vs = reviewCompare.cleanId(opening.vs);
+  if (!vs || vs === base.id) return null;
+  try {
+    const snap = await admin.firestore().collection("url_reviews").doc(vs).get();
+    if (!snap.exists) return null;
+    const other = Object.assign({ id: vs }, snap.data() || {});
+    const free = other.free === true || await hasFreeRuns(other.email);
+    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), proof, other, free);
+    const made = reviewCompare.savedComparison([base, other], base.email, [base.id, vs], (row) => row === base || access.ok);
+    return (made.list && made.list[0] && made.list[0].compare) || null;
+  } catch (error) {
+    console.error("Saved comparison failed for " + base.id + " vs " + vs + ":", error);
+    return null;
+  }
+}
 
 async function comparisonsFrom(id, email) {
   try {

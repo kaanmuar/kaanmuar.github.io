@@ -113,6 +113,15 @@ jobs:
         # The day number moves the language cycle on, so small daily batches still reach all six.
         run: node scripts/tips-studio/build.js --source runs-auto --batch "${{ steps.reports.outputs.batch }}" --start "$(date -u -d tomorrow +%F)" --lang-offset "$(( $(date -u +%s) / 86400 ))"
 
+      - name: Write the captions in six languages
+        if: steps.reports.outputs.social != '0'
+        # Sentences the phrasebooks lack go through Google's translator, marked for an agent to rewrite.
+        # If it refuses, the posts keep the languages the books already cover.
+        run: |
+          BATCH="${{ steps.reports.outputs.batch }}"
+          node scripts/social-hub/translate-captions.js --machine "$BATCH" \
+            || { echo "::warning::Google's translator refused; $BATCH keeps the languages the phrasebooks cover."; node scripts/social-hub/translate-captions.js "$BATCH"; }
+
       - name: Rebuild llms-full.txt and the Live Reports counts
         run: python3 scripts/build-llms-full.py
 
@@ -131,7 +140,7 @@ jobs:
           BATCH="${{ steps.reports.outputs.batch }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add assets/live-reports llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json
+          git add assets/live-reports llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json scripts/social-hub/phrases
           if [ -d "media/social-posts/$BATCH" ]; then
             git add "media/social-posts/$BATCH"
             git add -f "media/social-posts/$BATCH/story"

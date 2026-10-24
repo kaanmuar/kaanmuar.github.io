@@ -1,6 +1,6 @@
 /*
  * Predicts the host on the URL Review "Public page" box and the report's
- * competitor box, and checks it exists.
+ * five competitor boxes, and checks it exists.
  *
  * Suggestions come from assets/domains/ (built by scripts/build-domain-index.js):
  * about 100,000 of the most visited sites worldwide, sharded by the first two
@@ -351,4 +351,5 @@
 
   attach("url", "url-field", "");
   attach("compare-url", "compare-url-field", "compare-");
+  [2, 3, 4, 5].forEach((n) => attach("compare-url-" + n, "compare-url-" + n + "-field", "compare-"));
 })();

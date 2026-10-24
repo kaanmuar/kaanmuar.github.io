@@ -538,7 +538,7 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-pick, #case-note, #alarm-note, #tool-note";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note";
 
   function applyCopyMode(paid) {
     document.body.classList.toggle("preview-copy", !paid);
@@ -577,8 +577,8 @@
     return value;
   }
 
-  function fadeSections(root) {
-    if (!root || !document.body.classList.contains("preview-copy")) return;
+  function fadeSections(root, force) {
+    if (!root || (!force && !document.body.classList.contains("preview-copy"))) return;
     const nodes = [];
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) {
@@ -658,25 +658,25 @@
   }
 
   function paintAlarm(report, open) {
-    const box = document.getElementById("alarm");
-    const list = document.getElementById("alarm-list");
+    const box = slot("alarm");
+    const list = slot("alarm-list");
     const alerts = report.alerts || [];
     if (!box || !list) return;
     box.hidden = alerts.length === 0;
-    document.getElementById("alarm-note").textContent = alerts.length
+    slot("alarm-note").textContent = alerts.length
       ? (open
         ? "The full wording is open because this section is paid. These lines are still not proof of a break-in."
         : "The first words of each signal stay visible. The rest stays blurred until this section is paid. These lines are what the public response showed. They are not proof that someone broke in.")
       : "";
-    const opener = document.getElementById("alarm-open");
-    opener.hidden = open || alerts.length === 0;
+    const opener = slot("alarm-open");
+    if (opener) opener.hidden = open || alerts.length === 0;
     list.innerHTML = alerts.map((item) =>
       "<li><span class=\"alarm-kicker\">" + esc(item.level) + " · " + esc(item.id) + "</span><strong>" + fadeText(item.title, open) + "</strong><p>" + fadeText(item.detail, open) + "</p></li>"
     ).join("");
   }
 
   function paintMentions(report) {
-    const list = document.getElementById("mentions");
+    const list = slot("mentions");
     if (!list) return;
     const mentions = report.mentions || [];
     list.innerHTML = mentions.length
@@ -744,17 +744,17 @@
     if (!advice.length) advice.push(["Keep the proposal separate from a run", "These cases are a plan. Run them later in a browser you control, with accounts the owner issued."]);
     advice.push(["This is a snapshot", "The review does not certify that the site is safe, fast, or compliant."]);
     const adviceHtml = advice.slice(0, 4).map(([title, body, finding]) => "<article><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
-    document.getElementById("report-visuals").innerHTML =
+    slot("report-visuals").innerHTML =
       '<article class="card"><h2>Response time across the pages analyzed</h2><p class="muted">Milliseconds, in the order the pages were opened. One review, not a history of earlier days.</p>' + times + "</article>" +
       '<article class="card"><h2>Public marks on the first response</h2><div class="ticks">' + ticks + "</div></article>" +
       '<article class="card"><h2>Technology groups in this review</h2>' + groupBars + "</article>" +
       '<article class="card"><h2>Practices worth implementing</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString() : "";
-    document.getElementById("report-cover").innerHTML =
+    slot("report-cover").innerHTML =
       '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261013c" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || "Report") + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
       '<div><p class="report-kicker">' + ((report.counts && report.counts.cases) || 0) + ' proposed cases</p><p>' + esc(report.statement || "") + "</p></div>";
-    document.getElementById("print-mark").textContent = "";
+    if (!slotRoot) document.getElementById("print-mark").textContent = "";
   }
 
   const VERDICT_LABEL = { fail: "Fails now", risk: "At risk", pass: "Passes", person: "Needs a person" };
@@ -767,6 +767,33 @@
     Performance: "Speed, weight, paint, layout shift, chat weight"
   };
   let findingFilter = { area: "All", verdict: "open" };
+
+  // The section painters draw into the report on this page, or, while slotRoot is set, into one column
+  // of the many-URL comparison (js/qa-review-multi.js), where each section is a [data-slot] cell.
+  let slotRoot = null;
+
+  function slot(id, root) {
+    const at = root || slotRoot;
+    return at ? at.querySelector('[data-slot="' + id + '"]') : document.getElementById(id);
+  }
+
+  function inSlot(root, paint) {
+    const before = { root: slotRoot, current };
+    slotRoot = root;
+    if (root) current = root.payload;
+    try {
+      paint();
+    } finally {
+      slotRoot = before.root;
+      current = before.current;
+    }
+  }
+
+  function filterOf() {
+    if (!slotRoot) return findingFilter;
+    if (!slotRoot.findingFilter) slotRoot.findingFilter = { area: "All", verdict: "open" };
+    return slotRoot.findingFilter;
+  }
 
   function foundCount(limits) {
     const count = Number(limits && limits.pagesFound) || 0;
@@ -794,6 +821,7 @@
   }
 
   function setInsightsVisible(on) {
+    if (slotRoot) return;
     document.querySelectorAll("[data-insight]").forEach((node) => { node.hidden = !on; });
   }
 
@@ -803,7 +831,8 @@
     const circumference = 2 * Math.PI * 80;
     const totals = score.totals || {};
     const areas = score.areas || {};
-    document.getElementById("health").innerHTML =
+    const column = slotRoot;
+    slot("health").innerHTML =
       '<article class="card"><div class="health">' +
       '<div class="ring" role="img" aria-label="Health score ' + value + ' out of 100, grade ' + esc(score.grade || gradeOf(value)) + '">' +
       '<svg viewBox="0 0 196 196"><circle class="ring-track" cx="98" cy="98" r="80"></circle><circle class="ring-value" cx="98" cy="98" r="80" stroke="' + scoreColor(value) + '" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + (circumference * (1 - value / 100)).toFixed(1) + '"></circle></svg>' +
@@ -822,8 +851,16 @@
           '<div class="bar"><i style="width:' + area.score + "%;background:" + scoreColor(area.score) + '"></i></div>' +
           "<small>" + area.fail + " fail · " + area.risk + " at risk · " + area.pass + " pass — " + esc(AREA_NOTE[name]) + "</small></button>";
       }).join("") + "</div></article>";
-    document.querySelectorAll("#health .area").forEach((button) => {
+    slot("health").querySelectorAll(".area").forEach((button) => {
       button.addEventListener("click", () => {
+        if (column) {
+          inSlot(column, () => {
+            Object.assign(filterOf(), { area: button.getAttribute("data-area"), verdict: "all" });
+            paintFindings(column.payload.report.insights, !!column.payload.paid);
+          });
+          slot("findings", column).scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
         findingFilter = { area: button.getAttribute("data-area"), verdict: "all" };
         paintFindings(current.report.insights, !!current.paid);
         const target = document.getElementById("findings");
@@ -866,9 +903,9 @@
       result.setAttribute("lang", cc.lang);
     }
     if (!cmp) {
-      result.innerHTML = sample ? '<p class="muted">' + esc(cc.t("sample")) + "</p>" : made.length ? cmpMade(made) : "";
+      result.innerHTML = sample ? '<p class="muted">' + esc(cc.t("sample")) + "</p>" : made.length ? cmpMade(made, report.id) : "";
       const stored = savedCompare();
-      document.getElementById("compare-url").value = stored && stored.id === report.id ? String(stored.url || "").replace(/^\s*https?:\/\//i, "") : "";
+      fillCompareBoxes(stored && stored.id === report.id ? [stored.url].concat(stored.queue || []) : []);
       return;
     }
     const areas = (cmp.areas || []).map((row) => {
@@ -915,8 +952,11 @@
 
   const CMP_SIDES = ["own", "rival"];
 
-  function cmpMade(made) {
-    return '<h3 class="cmp-h">' + esc(cc.t("made")) + '</h3><ul class="cmp-made">' + made.map((line) =>
+  // The newest five comparisons from this review, with the review itself first, open as one report.
+  function cmpMade(made, baseId) {
+    const ids = [baseId].concat(made.slice(0, 5).map((line) => line.id));
+    const all = '<p class="cmp-all"><button class="btn" type="button" data-multi-save="' + esc(ids.join(",")) + '">' + esc(cc.t("openAll")) + '</button> <span class="muted multi-save-status" role="status"></span></p>';
+    return '<h3 class="cmp-h">' + esc(cc.t("made")) + "</h3>" + all + '<ul class="cmp-made">' + made.map((line) =>
       '<li><a href="?report=' + encodeURIComponent(line.id) + '">' + esc(line.rivalHost) + '</a> <span class="meta-line">' +
       esc([line.ownHost + " " + (line.own == null ? "–" : line.own) + " " + cc.t("vs") + " " + line.rivalHost + " " + (line.rival == null ? "–" : line.rival),
         line.at ? new Date(line.at).toLocaleDateString(cc.lang) : ""].filter(Boolean).join(" · ")) + "</span></li>").join("") + "</ul>";
@@ -1119,13 +1159,60 @@
     try { return JSON.parse(sessionStorage.getItem(COMPARE_KEY) || "null"); } catch (error) { return null; }
   }
 
-  function startCompare() {
+  // The first competitor box is always shown; the other four open one at a time.
+  const COMPARE_IDS = ["compare-url", "compare-url-2", "compare-url-3", "compare-url-4", "compare-url-5"];
+  const compareInputs = () => COMPARE_IDS.map((id) => document.getElementById(id));
+  const compareMore = () => [...document.querySelectorAll("[data-compare-more]")];
+  const typedHost = (value) => String(value || "").trim().replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+  const siteKey = (value) => typedHost(value).toLowerCase().split(/[/?#:]/)[0].replace(/\.$/, "").replace(/^www\./, "");
+
+  function syncCompareAdd() {
+    const left = compareMore().filter((row) => row.hidden).length;
+    document.getElementById("compare-add").hidden = !left;
+    document.getElementById("compare-add-left").textContent = "(" + left + " left)";
+  }
+
+  function compareUrls() {
+    return compareInputs().filter((input) => !input.closest("[data-compare-more][hidden]")).map((input) => input.value.trim()).filter(Boolean);
+  }
+
+  function fillCompareBoxes(urls) {
+    const list = urls.map(typedHost).slice(0, COMPARE_IDS.length);
+    compareInputs().forEach((input, index) => { input.value = list[index] || ""; });
+    compareMore().forEach((row, index) => { row.hidden = index + 1 >= list.length; });
+    syncCompareAdd();
+  }
+
+  // Adds sites after the ones already typed, skipping any already there. Answers how many were added.
+  function addCompareHosts(hosts) {
+    const typed = compareUrls();
+    const seen = new Set(typed.map(siteKey));
+    const fresh = hosts.filter((host) => !seen.has(siteKey(host)) && seen.add(siteKey(host)));
+    const room = COMPARE_IDS.length - typed.length;
+    fillCompareBoxes(typed.concat(fresh.slice(0, room)));
+    return { added: Math.min(fresh.length, room), full: fresh.length > room };
+  }
+
+  // only: the sites to compare instead of the boxes, as when a natural competitor's Compare is pressed.
+  function startCompare(only) {
     const report = current && current.report;
     const error = document.getElementById("compare-error");
-    const url = document.getElementById("compare-url").value.trim();
     error.textContent = "";
     if (!report || current.sample) return;
-    if (!url || /\s/.test(url)) {
+    const own = siteKey(report.host);
+    const urls = [];
+    for (const url of Array.isArray(only) ? only : compareUrls()) {
+      if (/\s/.test(url)) {
+        error.textContent = "Check the address " + url + ": it has a space in it.";
+        return;
+      }
+      if (siteKey(url) === own) {
+        error.textContent = url + " is the site of this report. Enter a competitor's address.";
+        return;
+      }
+      if (!urls.some((seen) => siteKey(seen) === siteKey(url))) urls.push(url);
+    }
+    if (!urls.length) {
       error.textContent = "Enter the competitor's address.";
       return;
     }
@@ -1138,7 +1225,9 @@
     const limits = report.limits || {};
     compareTarget = {
       id: report.id,
-      url,
+      url: urls[0],
+      queue: urls.slice(1),
+      total: urls.length,
       report,
       frameworks: kept ? kept.frameworks : ((current.frameworks && current.frameworks.length) ? current.frameworks : selectedFrameworks()),
       tools: kept ? kept.tools : selectedTools(),
@@ -1153,45 +1242,134 @@
     reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
   }
 
+  // Each competitor is its own review against the same base report; the next one starts once the
+  // last has ended, so the submit handler has let go of the run.
+  function nextCompare(compare) {
+    const queue = compare.queue || [];
+    if (!queue.length) return false;
+    compareTarget = Object.assign({}, compare, { url: queue[0], queue: queue.slice(1), paid: false });
+    try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(compareTarget)); } catch (storageError) { /* only a payment round trip needs it */ }
+    setTimeout(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), 0);
+    return true;
+  }
+
+  function compareDone(compare, tail) {
+    const failed = compare.failed || [];
+    const host = (compare.report && compare.report.host) || "your site";
+    return "The comparisons are done. Your report of " + host + " lists each one under Next to a competitor." +
+      (failed.length ? " These did not finish: " + failed.join(", ") + "." : "") + tail;
+  }
+
+  function compareStep(compare) {
+    const total = compare.total || 1;
+    return total > 1 ? " (" + (total - (compare.queue || []).length) + " of " + total + ")" : "";
+  }
+
   // Natural competitors (functions/url-review-rivals.js): the reader picks any or many, and each one with
   // a public review is set next to this report, in full once it is paid and under the frost before.
-  const rivals = { id: "", data: null, picked: new Set(), open: false };
+  // field: the kind of competition picked ("" is the site's own field, "topic" a typed topic).
+  const rivals = { id: "", data: null, picked: new Set(), open: false, field: "", topic: "", asked: "" };
 
   function paintRivals(report, sample) {
     const box = document.getElementById("rivals");
     if (!box) return;
     rivals.id = report && !sample && report.status !== "stopped" && report.insights ? report.id : "";
-    rivals.data = null;
-    rivals.picked.clear();
+    rivals.field = "";
+    rivals.topic = "";
     box.hidden = !rivals.id;
     if (!rivals.id) return;
+    loadRivals(report);
+  }
+
+  function loadRivals(report) {
+    const box = document.getElementById("rivals");
+    const asked = [rivals.id, rivals.field, rivals.topic].join("|");
+    rivals.asked = asked;
+    rivals.data = null;
+    rivals.picked.clear();
     box.innerHTML = rivalsHead(report) + '<p class="meta-line" role="status">' + esc(cc.t("rivalsLooking")) + "</p>";
-    const asked = rivals.id;
+    wireRivalsKind(report);
     fetch(endpoint() + "/review/rivals", {
       method: "POST",
       credentials: "include",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: asked }))
+      body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: rivals.id, field: rivals.field, topic: rivals.field === "topic" ? rivals.topic : "" }))
     })
-      .then((res) => res.json().then((body) => { if (!res.ok) throw new Error(body.error || "unavailable"); return body; }))
+      .then((res) => res.json().then((body) => { if (!res.ok) throw new Error(body.error || cc.t("rivalsFailed")); return body; }))
       .then((body) => {
-        if (rivals.id !== asked) return;
+        if (rivals.asked !== asked) return;
         rivals.data = body.rivals || { list: [] };
-        rivals.data.list.filter((row) => row.ready).forEach((row) => rivals.picked.add(row.host));
+        // A picked field shows all it found; the site's own field shows the ones already reviewed.
+        rivals.data.list.filter((row) => rivals.field || row.ready).forEach((row) => rivals.picked.add(row.host));
         drawRivals(report);
       })
-      .catch(() => { if (rivals.id === asked) box.hidden = true; });
+      .catch((error) => {
+        if (rivals.asked !== asked) return;
+        if (!rivals.field) {
+          box.hidden = true;
+          return;
+        }
+        rivals.data = { list: [], error: error.message };
+        drawRivals(report);
+      });
+  }
+
+  function rivalsFieldName() {
+    return rivals.field === "topic" ? rivals.topic : rivals.field ? cc.kind(rivals.field) : "";
   }
 
   function rivalsHead(report) {
-    return '<h3 class="cmp-h">' + esc(cc.t("rivalsTitle")) + '</h3><p class="meta-line">' + cc.t("rivalsIntro", { site: strong(report.host) }) + "</p>";
+    const intro = rivals.field ? cc.t("rivalsFieldIntro", { field: strong(rivalsFieldName()), site: strong(report.host) }) : cc.t("rivalsIntro", { site: strong(report.host) });
+    const topic = rivals.field === "topic";
+    const options = ['<option value="">' + esc(cc.t("kindSame", { site: report.host })) + "</option>"]
+      .concat(cc.kinds().map((id) => '<option value="' + id + '"' + (rivals.field === id ? " selected" : "") + ">" + esc(cc.kind(id)) + "</option>"))
+      .concat('<option value="topic"' + (topic ? " selected" : "") + ">" + esc(cc.t("kindTopic")) + "</option>");
+    return '<h3 class="cmp-h">' + esc(cc.t("rivalsTitle")) + "</h3>" +
+      '<div class="rivals-kind no-print"><label for="rivals-kind">' + esc(cc.t("kindLabel")) + '</label><select id="rivals-kind">' + options.join("") + "</select>" +
+      '<input id="rivals-topic" type="text" maxlength="60" autocomplete="off" aria-label="' + esc(cc.t("kindTopic")) + '" placeholder="' + esc(cc.t("kindTopicPh")) + '" value="' + esc(rivals.topic) + '"' + (topic ? "" : " hidden") + ">" +
+      '<button class="btn btn-ghost" id="rivals-topic-go" type="button"' + (topic ? "" : " hidden") + ">" + esc(cc.t("kindSearch")) + "</button></div>" +
+      '<p class="meta-line">' + intro + "</p>";
+  }
+
+  function wireRivalsKind(report) {
+    const select = document.getElementById("rivals-kind");
+    const topic = document.getElementById("rivals-topic");
+    const go = document.getElementById("rivals-topic-go");
+    const search = () => {
+      const value = topic.value.replace(/\s+/g, " ").trim();
+      if (value.length < 2) return topic.focus();
+      rivals.field = "topic";
+      rivals.topic = value;
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_rivals_kind", "URL Review", "topic");
+      loadRivals(report);
+    };
+    select.addEventListener("change", () => {
+      if (select.value === "topic") {
+        topic.hidden = false;
+        go.hidden = false;
+        topic.focus();
+        return;
+      }
+      rivals.field = select.value;
+      rivals.topic = "";
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_rivals_kind", "URL Review", select.value || "same");
+      loadRivals(report);
+    });
+    go.addEventListener("click", search);
+    topic.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      search();
+    });
   }
 
   function drawRivals(report) {
     const box = document.getElementById("rivals");
     const list = (rivals.data && rivals.data.list) || [];
     if (!list.length) {
-      box.innerHTML = rivalsHead(report) + '<p class="muted">' + esc(cc.t("rivalsNone")) + "</p>";
+      const why = rivals.data && rivals.data.error ? rivals.data.error : cc.t(rivals.field ? "rivalsFieldNone" : "rivalsNone");
+      box.innerHTML = rivalsHead(report) + '<p class="muted" role="status">' + esc(why) + "</p>";
+      wireRivalsKind(report);
       return;
     }
     const picked = list.filter((row) => rivals.picked.has(row.host));
@@ -1203,8 +1381,17 @@
     box.innerHTML = rivalsHead(report) +
       '<details class="rivals-pick"' + (rivals.open ? " open" : "") + '><summary>' + esc(picked.length ? cc.t("rivalsPick", { n: picked.length }) : cc.t("rivalsChoose")) + "</summary>" +
       '<div class="rivals-options" role="group" aria-label="' + esc(cc.t("rivalsChoose")) + '">' + options + "</div></details>" +
+      (report.compare ? "" : '<p class="rivals-add no-print"><button class="btn btn-ghost" id="rivals-add" type="button"' + (picked.length ? "" : " disabled") + ">" + esc(cc.t("rivalsAdd")) + '</button> <span class="meta-line" id="rivals-added" role="status"></span></p>') +
       (picked.length ? rivalsTable(report, picked, !!rivals.data.paid) : '<p class="muted">' + esc(cc.t("rivalsPickOne")) + "</p>");
+    wireRivalsKind(report);
     box.querySelector(".rivals-pick").addEventListener("toggle", (event) => { rivals.open = event.target.open; });
+    const add = document.getElementById("rivals-add");
+    if (add) add.addEventListener("click", () => {
+      if (document.getElementById("compare-ask").hidden) paintCompare(report, false);
+      const done = addCompareHosts(picked.map((row) => row.host));
+      document.getElementById("rivals-added").textContent = [done.added ? cc.t("rivalsAdded", { n: done.added }) : "", done.full ? cc.t("rivalsBoxesFull") : ""].filter(Boolean).join(" ");
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_rivals_add", "URL Review", rivals.field || "same");
+    });
     box.querySelectorAll(".rivals-options input").forEach((input) => input.addEventListener("change", () => {
       if (input.checked) rivals.picked.add(input.value);
       else rivals.picked.delete(input.value);
@@ -1216,10 +1403,7 @@
       paintCompare(Object.assign({}, report, { compare: row.compare }), false);
       document.getElementById("compare-result").scrollIntoView({ behavior: "smooth", block: "start" });
     }));
-    box.querySelectorAll("[data-rival-run]").forEach((button) => button.addEventListener("click", () => {
-      document.getElementById("compare-url").value = button.getAttribute("data-rival-run");
-      startCompare();
-    }));
+    box.querySelectorAll("[data-rival-run]").forEach((button) => button.addEventListener("click", () => startCompare([button.getAttribute("data-rival-run")])));
   }
 
   // One column per site. On a preview the competitors' cells hold placeholders under the frost:
@@ -1265,20 +1449,25 @@
 
   function showComparing(compare) {
     const own = (compare.report && compare.report.host) || "your site";
-    document.getElementById("compare-run-text").textContent = "Comparing " + own + " with " + compare.url + ".";
-    document.getElementById("compare-running-text").textContent = "The comparison with " + compare.url + " is running. Stop keeps the pages already checked.";
+    const left = (compare.queue || []).length;
+    document.getElementById("compare-run-text").textContent = "Comparing " + own + " with " + compare.url + compareStep(compare) + ".";
+    document.getElementById("compare-running-text").textContent = "The comparison with " + compare.url + compareStep(compare) + " is running. Stop keeps the pages already checked" +
+      (left ? " and does not start the other " + (left === 1 ? "competitor" : left + " competitors") : "") + ".";
     document.getElementById("compare-run").hidden = false;
     document.getElementById("compare-running").hidden = false;
     document.getElementById("compare-stop").disabled = true;
-    document.getElementById("compare-go").disabled = true;
-    document.getElementById("compare-url").disabled = true;
+    lockCompare(true);
   }
 
   function hideComparing() {
     document.getElementById("compare-run").hidden = true;
     document.getElementById("compare-running").hidden = true;
-    document.getElementById("compare-go").disabled = false;
-    document.getElementById("compare-url").disabled = false;
+    lockCompare(false);
+  }
+
+  function lockCompare(locked) {
+    document.querySelectorAll("#compare-go, #compare-add, .compare-remove").forEach((button) => { button.disabled = locked; });
+    compareInputs().forEach((input) => { input.disabled = locked; });
   }
 
   function backToReport() {
@@ -1293,8 +1482,8 @@
     hideComparing();
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
+    fillCompareBoxes([compare.url].concat(compare.queue || []));
     const input = document.getElementById("compare-url");
-    input.value = String(compare.url || "").replace(/^\s*https?:\/\//i, "");
     document.getElementById("compare-error").textContent = message;
     document.getElementById("compare").scrollIntoView({ block: "start" });
     input.focus({ preventScroll: true });
@@ -1303,7 +1492,7 @@
   }
 
   function paintExec(report, ins) {
-    const host = document.getElementById("exec");
+    const host = slot("exec");
     if (!host) return;
     const score = ins.score || {};
     const ranked = (ins.findings || []).filter((item) => item.rank);
@@ -1326,8 +1515,8 @@
       read + " page" + (read === 1 ? "" : "s") + " analyzed" + (found ? " of " + found + " found" : "") + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
       '<div class="exec-cols"><div><h3>Biggest risks</h3>' + list(risks) + "</div><div><h3>Quick wins</h3>" + list(quick) + "</div><div><h3>Already solid</h3>" +
       (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(name) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">No area scores B or better yet.</p>') + "</div></div>" +
-      '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">Print this summary</button></p>';
-    document.getElementById("print-exec").addEventListener("click", () => {
+      (slotRoot ? "" : '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">Print this summary</button></p>');
+    if (!slotRoot) document.getElementById("print-exec").addEventListener("click", () => {
       spend("print", () => {
         if (!current.paid) setStatus("The print sheet does not include the report. The attempt is recorded.", false);
         document.body.classList.add("printing-exec");
@@ -1338,7 +1527,7 @@
 
   function paintFixFirst(ins, paid) {
     const top = (ins.findings || []).filter((item) => item.rank).slice(0, 10);
-    document.getElementById("fix-first").innerHTML = top.length
+    slot("fix-first").innerHTML = top.length
       ? '<p class="muted">Ranked by severity, how many pages it touches, and how long the fix takes.</p><ol class="fix-list">' + top.map((item) =>
         '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(item.area) + "</span>" +
         "<strong>" + esc(item.title) + "</strong>" +
@@ -1366,14 +1555,14 @@
     if (!s.image) shareNotes.push("No https og:image: most apps show a grey box or no card at all.");
     if (s.fallback) shareNotes.push("Some Open Graph tags are missing, so apps fall back to the title and description.");
     if (!s.card) shareNotes.push("No twitter:card tag: X shows a small link instead of a large card.");
-    document.getElementById("previews").innerHTML =
+    slot("previews").innerHTML =
       '<div><div class="serp notranslate" translate="no"><div class="serp-site">' + icon + "<div>" + esc(g.site || "") + "<small>https://" + esc(g.url || "") + "</small></div></div>" +
       "<h3>" + esc(cut(g.title || "(no title)", 62)) + "</h3><p>" + esc(cut(g.description || "Google would pick a line of text from the page here.", 160)) + "</p></div>" +
       '<p class="preview-note">' + esc(notes.join(" ") || "Title and description fit the space Google gives them.") + "</p></div>" +
       '<div><div class="share notranslate" translate="no"><div class="share-img">' + (s.image ? '<img src="' + esc(s.image) + '" alt="" referrerpolicy="no-referrer" loading="lazy" data-fallback="image">' : "<span>No og:image</span>") + "</div>" +
       '<div class="share-body"><small>' + esc(s.host || "") + "</small><strong>" + esc(cut(s.title || "(no title)", 90)) + "</strong><p>" + esc(s.description || "") + "</p></div></div>" +
       '<p class="preview-note">' + esc(shareNotes.join(" ") || "LinkedIn, WhatsApp, Slack, and X have what they need for a full card.") + "</p></div>";
-    document.querySelectorAll("#previews img[data-fallback]").forEach((img) => {
+    slot("previews").querySelectorAll("img[data-fallback]").forEach((img) => {
       img.addEventListener("error", () => {
         const stand = document.createElement("span");
         if (img.getAttribute("data-fallback") === "dot") stand.className = "serp-dot";
@@ -1405,7 +1594,7 @@
   }
 
   function paintBrowser(report) {
-    const host = document.getElementById("browser-pass");
+    const host = slot("browser-pass");
     if (!host) return;
     const b = report.browser;
     const speed = speedBlock(report.pagespeed);
@@ -1581,7 +1770,7 @@
       ["Q&A shape", geo.questionHeadings || (geo.schemaTypes || []).indexOf("FAQPage") !== -1 ? "pass" : "risk", (geo.questionHeadings || 0) + " question headings"]
     ];
     const outlineHtml = (view.outline || []).length ? '<ul class="ai-outline">' + view.outline.map((item) => '<li class="l' + item.level + '">H' + item.level + " · " + esc(item.text) + "</li>").join("") + "</ul>" : '<p class="muted">No h1 to h3 headings in the HTML.</p>';
-    document.getElementById("geo").innerHTML =
+    slot("geo").innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' + facts.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
       '<div class="split"><article class="card"><h3>The text an AI crawler receives</h3><p class="muted">Most AI crawlers do not run JavaScript. This is what the raw HTML of the start page hands them' + (view.appShell ? ", and the page is an empty app shell" : "") + ".</p>" +
       '<div class="ai-view notranslate" translate="no">' + esc(view.text || "(no readable text)") + (view.chars > (view.text || "").length ? " …" : "") + "</div>" +
@@ -1597,7 +1786,7 @@
     const consent = a.consentTools && a.consentTools.length ? a.consentTools.join(", ") : "None found";
     const mode = a.consentMode ? "analytics_storage " + (a.consentMode.analytics || "unset") + (a.consentMode.v2 ? " · v2 signals present" : " · v2 signals missing") : "No default found";
     const utm = a.utm ? (a.utm.kept ? "Kept through redirects" : "Stripped on " + a.utm.finalPath) : "Not tested";
-    document.getElementById("analytics").innerHTML =
+    slot("analytics").innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' +
       '<div class="check-tile ' + ((a.tags || []).length ? "pass" : "risk") + '"><b>Tools</b>' + (a.tags || []).length + " found</div>" +
       '<div class="check-tile ' + (a.consentTools && a.consentTools.length ? "pass" : ((a.tags || []).some((tag) => !tag.cookieless) ? "risk" : "unknown")) + '"><b>Consent tool</b>' + esc(consent) + "</div>" +
@@ -1613,7 +1802,7 @@
     const map = seo.sitemap || {};
     const blocked = rows.filter((row) => !row.indexable);
     const dup = (seo.duplicates && seo.duplicates.titles) || [];
-    document.getElementById("seo").innerHTML =
+    slot("seo").innerHTML =
       '<div class="stat-row"><div class="stat"><b>' + (seo.indexable || 0) + " / " + rows.length + '</b><span>Pages indexable</span></div>' +
       '<div class="stat"><b>' + (map.found ? map.count : "—") + '</b><span>URLs in the sitemap</span></div>' +
       '<div class="stat"><b>' + (map.found ? (map.notListed || []).length : "—") + '</b><span>Indexable, not in sitemap</span></div>' +
@@ -1627,7 +1816,7 @@
   }
 
   function paintGraph(ins) {
-    const host = document.getElementById("site-graph");
+    const host = slot("site-graph");
     const graph = ins.graph || { nodes: [], edges: [] };
     const nodes = graph.nodes || [];
     if (nodes.length < 2) {
@@ -1686,8 +1875,8 @@
         return '<text x="' + (pos[index].x + dx).toFixed(1) + '" y="' + (pos[index].y + 3).toFixed(1) + '" text-anchor="' + anchor + '">' + esc(cut(label, 22)) + "</text>";
       }).join("") : "") + "</svg>";
     host.innerHTML = '<div class="graph-legend"><span style="--c:var(--text)">Start page</span><span style="--c:var(--green)">Answered</span><span style="--c:var(--amber)">Slower than 1.8 s</span><span style="--c:var(--red)">Error or no answer</span><span>Bigger dot = more links point to it</span></div>' +
-      '<div class="graph-wrap notranslate" translate="no">' + svg + '</div><p class="graph-detail" id="graph-detail">Select a dot to see the page.</p>';
-    const detail = document.getElementById("graph-detail");
+      '<div class="graph-wrap notranslate" translate="no">' + svg + '</div><p class="graph-detail"' + (slotRoot ? "" : ' id="graph-detail"') + '>Select a dot to see the page.</p>';
+    const detail = host.querySelector(".graph-detail");
     const show = (event) => {
       const circle = event.target.closest("circle");
       if (!circle) return;
@@ -1701,7 +1890,7 @@
   function paintSecurity(ins) {
     const sec = ins.security || {};
     const word = { pass: "In place", risk: "Missing or weak", fail: "Failing", unknown: "Not checked" };
-    document.getElementById("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
+    slot("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
       '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(item.person ? "Needs a person" : word[item.state] || item.state) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
       (sec.tls ? '<p class="meta-line">TLS certificate valid until ' + esc(sec.tls.validTo) + " (" + sec.tls.daysLeft + " days)" + (sec.tls.issuer ? ", issued by " + esc(sec.tls.issuer) : "") + ".</p>" : "") +
       (sec.domain ? '<p class="meta-line"><span class="notranslate" translate="no">' + esc(sec.domain.domain) + "</span> is registered" + (sec.domain.registrar ? " with " + esc(sec.domain.registrar) : "") + (sec.domain.expires ? " until " + esc(sec.domain.expires) + " (" + sec.domain.daysLeft + " days)" : "") +
@@ -1725,26 +1914,28 @@
     const all = ins.findings || [];
     const areas = ["All"].concat(Object.keys(AREA_NOTE));
     const verdicts = [["open", "Fails and risks"], ["all", "Everything"], ["fail", "Fails now"], ["risk", "At risk"], ["pass", "Passes"], ["person", "Needs a person"]];
-    const bar = document.getElementById("finding-filters");
-    bar.innerHTML = areas.map((name) => '<button type="button" data-area="' + esc(name) + '"' + (findingFilter.area === name ? ' class="on"' : "") + ">" + esc(name) + "</button>").join("") +
+    const bar = slot("finding-filters");
+    const filter = filterOf();
+    const column = slotRoot;
+    bar.innerHTML = areas.map((name) => '<button type="button" data-area="' + esc(name) + '"' + (filter.area === name ? ' class="on"' : "") + ">" + esc(name) + "</button>").join("") +
       '<span style="width:12px;display:inline-block"></span>' +
-      verdicts.map(([key, label]) => '<button type="button" data-verdict="' + key + '"' + (findingFilter.verdict === key ? ' class="on"' : "") + ">" + esc(label) + "</button>").join("");
+      verdicts.map(([key, label]) => '<button type="button" data-verdict="' + key + '"' + (filter.verdict === key ? ' class="on"' : "") + ">" + esc(label) + "</button>").join("");
     bar.onclick = (event) => {
       const button = event.target.closest("button");
       if (!button) return;
-      if (button.hasAttribute("data-area")) findingFilter.area = button.getAttribute("data-area");
-      if (button.hasAttribute("data-verdict")) findingFilter.verdict = button.getAttribute("data-verdict");
-      paintFindings(ins, paid);
+      if (button.hasAttribute("data-area")) filter.area = button.getAttribute("data-area");
+      if (button.hasAttribute("data-verdict")) filter.verdict = button.getAttribute("data-verdict");
+      inSlot(column, () => paintFindings(ins, paid));
     };
-    const shown = all.filter((item) => (findingFilter.area === "All" || item.area === findingFilter.area) &&
-      (findingFilter.verdict === "all" || (findingFilter.verdict === "open" ? (item.verdict === "fail" || item.verdict === "risk") : item.verdict === findingFilter.verdict)));
-    document.getElementById("findings").innerHTML = shown.length ? shown.map((item) =>
+    const shown = all.filter((item) => (filter.area === "All" || item.area === filter.area) &&
+      (filter.verdict === "all" || (filter.verdict === "open" ? (item.verdict === "fail" || item.verdict === "risk") : item.verdict === filter.verdict)));
+    slot("findings").innerHTML = shown.length ? shown.map((item) =>
       '<div class="finding"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(item.area) + "</span></div>" +
       "<strong>" + esc(item.title) + "</strong><p class=\"muted\">" + fadeText(item.evidence, paid) + "</p>" +
       (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
       ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + esc(item.pages.slice(0, 6).join(" · ")) + (item.pages.length > 6 ? " …" : "") + "</p>" : "") +
       ((item.cases || []).length ? '<p class="meta-line">Test cases: ' + esc(item.cases.join(", ")) + "</p>" : "") +
-      (window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") + "</div>").join("")
+      (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") + "</div>").join("")
       : '<p class="muted">No check matches this filter.</p>';
   }
 
@@ -1774,7 +1965,7 @@
     if (outlines.length) items.splice(-1, 0, ["Legal pages", "Outlines for the " + outlines.join(", ").replace(/, ([^,]*)$/, " and $1") + " the review found no link to. Fill the placeholders and have them checked."]);
     if (kit.chatSnippet) items.splice(-1, 0, ["Click-to-load chat", "A plain chat button that loads the widget on the first click, so nothing is stored before a visitor asks for help."]);
     const peek = "Content-Security-Policy-Report-Only: " + (kit.csp || "");
-    document.getElementById("fixkit").innerHTML =
+    slot("fixkit").innerHTML =
       '<p>The scripts ZIP now carries a <span class="notranslate" translate="no">fix-kit/</span> folder: copy-ready files made from this review.' + (kit.hosting ? " The site looks hosted on <strong>" + esc(kit.hosting) + "</strong>, so that file is listed first." : "") + "</p>" +
       '<div class="fixkit-list">' + items.map(([title, body]) => "<article><strong>" + esc(title) + "</strong><span class=\"muted\">" + esc(body) + "</span></article>").join("") + "</div>" +
       '<div class="code-peek notranslate" translate="no">' + fadeText(peek, paid) + "</div>";
@@ -1894,6 +2085,87 @@
   const reportRoot = document.getElementById("report");
   if (reportRoot) new MutationObserver(() => fadeSections(reportRoot)).observe(reportRoot, { childList: true, subtree: true });
 
+  function paintFacts(report) {
+    const counts = report.counts || { pages: 0, technologies: 0, cases: 0, byLayer: {} };
+    const score = report.insights && report.insights.score;
+    slot("kpis").innerHTML = (score ? [
+      [score.overall + "/100", "Health score"],
+      [score.totals.fail, "Fail now"],
+      [score.totals.risk, "At risk"],
+      [counts.pages, "Pages analyzed"]
+    ] : [
+      [counts.pages, "Pages analyzed"],
+      [counts.technologies, "Technologies"],
+      [counts.cases, "Proposed cases"],
+      [(report.observed && report.observed.ms) + " ms", "First response"]
+    ]).map(([value, label]) => "<div class=\"kpi\"><b>" + esc(value) + "</b><span>" + label + "</span></div>").join("");
+    const layers = Object.entries(counts.byLayer || {});
+    const max = Math.max.apply(null, layers.map((pair) => pair[1]).concat([1]));
+    slot("layers").innerHTML = layers.length ? layers.map(([name, count]) =>
+      '<div class="bar-row"><span>' + esc(name) + '</span><div class="bar"><i style="width:' + Math.round(count / max * 100) + '%"></i></div><span>' + count + "</span></div>"
+    ).join("") : '<p class="muted">No layer counts were saved.</p>';
+    const tech = slot("tech");
+    const technologies = report.technologies || [];
+    tech.innerHTML = technologies.length
+      ? technologies.map((item) => '<span class="pill"><b>' + esc(item.name) + "</b> " + esc(item.group) + "</span>").join("")
+      : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
+    const obs = report.observed || {};
+    const limits = report.limits || {};
+    const asked = "pageLang" in limits
+      ? (limits.pageLang ? "Requested in " + (PAGE_LANG_LABEL[limits.pageLang] || limits.pageLang) + ". " : "Requested in the site's own language. ") + (limits.section ? "Stayed under " + limits.section + ". " : "")
+      : "";
+    slot("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(asked) + esc(limits.robotsNote || "") + "</p>" +
+      (limits.timedOut ? '<p class="muted">The time budget ended after ' + (limits.pagesRead || (report.pages || []).length) + " of up to " + (limits.maxPages || "?") + ' pages, usually because the site answered slowly. If pages that matter were left out, write to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a> with the report link and Carlos will look at a rerun.</p>' : "");
+    const pages = report.pages || [];
+    const found = foundCount(limits);
+    const foundNote = slot("pages-found");
+    if (foundNote) {
+      const read = limits.pagesRead || pages.length;
+      foundNote.hidden = !found;
+      foundNote.textContent = found
+        ? found + " page" + (found === "1" ? " was" : "s were") + " found on " + (report.host || "the site") + " in the links of the pages analyzed and its sitemap. This review analyzed " + read + " of them" +
+          (limits.maxPages ? ", up to " + limits.maxPages + " pages and " + (limits.maxDepth || "?") + " links deep" : "") + "."
+        : "";
+    }
+    slot("pages").innerHTML = pages.length ? pages.map((page) =>
+      "<tr><td>" + esc(page.path) + "</td><td>" + esc(page.status || page.error || "—") + "</td><td>" + esc(page.ms) + "</td><td>" + esc(page.title) + "</td></tr>"
+    ).join("") : '<tr><td colspan="4">No page was saved.</td></tr>';
+    const savedLog = report.log || [];
+    slot("report-log").innerHTML = savedLog.length ? savedLog.map((line) =>
+      "<li><time>" + esc(line.at || "") + "</time>" + esc(line.text || "") + "</li>"
+    ).join("") : '<li>No log line was saved.</li>';
+    return layers;
+  }
+
+  function paintColumnCases(report, paid) {
+    const cases = report.cases || [];
+    slot("cases").innerHTML = cases.map((item) => {
+      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '">' + esc(item.priority) + "</span>" : "";
+      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + "</p></article>";
+    }).join("") || '<p class="muted">No proposed case was saved.</p>';
+  }
+
+  // One column of the many-URL comparison: every section of one report, drawn by the painters above.
+  function paintColumn(payload, root) {
+    const report = payload.report;
+    const paid = !!payload.paid;
+    root.payload = payload;
+    inSlot(root, () => {
+      paintVisuals(report, paid);
+      paintInsights(report, paid);
+      paintFacts(report);
+      paintAlarm(report, paid);
+      paintMentions(report);
+      paintColumnCases(report, paid);
+    });
+    (root.cells ? root.cells() : [root]).forEach((cell) => {
+      if (!paid) fadeSections(cell, true);
+      protectNames(cell);
+    });
+  }
+
+  window.QAReviewSections = { paint: paintColumn, esc, scoreColor, gradeOf };
+
   function render(payload) {
     const report = payload.report;
     if (!report) return;
@@ -1924,57 +2196,10 @@
     paintCompare(report, sample);
     paintRivals(report, sample);
     document.getElementById("report-statement").textContent = "";
-    const counts = report.counts || { pages: 0, technologies: 0, cases: 0, byLayer: {} };
-    const score = report.insights && report.insights.score;
-    document.getElementById("kpis").innerHTML = (score ? [
-      [score.overall + "/100", "Health score"],
-      [score.totals.fail, "Fail now"],
-      [score.totals.risk, "At risk"],
-      [counts.pages, "Pages analyzed"]
-    ] : [
-      [counts.pages, "Pages analyzed"],
-      [counts.technologies, "Technologies"],
-      [counts.cases, "Proposed cases"],
-      [(report.observed && report.observed.ms) + " ms", "First response"]
-    ]).map(([value, label]) => "<div class=\"kpi\"><b>" + esc(value) + "</b><span>" + label + "</span></div>").join("");
-    const layers = Object.entries(counts.byLayer || {});
-    const max = Math.max.apply(null, layers.map((pair) => pair[1]).concat([1]));
-    document.getElementById("layers").innerHTML = layers.length ? layers.map(([name, count]) =>
-      '<div class="bar-row"><span>' + esc(name) + '</span><div class="bar"><i style="width:' + Math.round(count / max * 100) + '%"></i></div><span>' + count + "</span></div>"
-    ).join("") : '<p class="muted">No layer counts were saved.</p>';
-    const tech = document.getElementById("tech");
-    const technologies = report.technologies || [];
-    tech.innerHTML = technologies.length
-      ? technologies.map((item) => '<span class="pill"><b>' + esc(item.name) + "</b> " + esc(item.group) + "</span>").join("")
-      : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
-    const obs = report.observed || {};
-    const limits = report.limits || {};
-    const asked = "pageLang" in limits
-      ? (limits.pageLang ? "Requested in " + (PAGE_LANG_LABEL[limits.pageLang] || limits.pageLang) + ". " : "Requested in the site's own language. ") + (limits.section ? "Stayed under " + limits.section + ". " : "")
-      : "";
-    document.getElementById("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(asked) + esc(limits.robotsNote || "") + "</p>" +
-      (limits.timedOut ? '<p class="muted">The time budget ended after ' + (limits.pagesRead || (report.pages || []).length) + " of up to " + (limits.maxPages || "?") + ' pages, usually because the site answered slowly. If pages that matter were left out, write to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a> with the report link and Carlos will look at a rerun.</p>' : "");
+    const layers = paintFacts(report);
     paintAlarm(report, paid || alertsOpen(report.id));
     paintMentions(report);
     paintCredential(payload);
-    const pages = report.pages || [];
-    const found = foundCount(limits);
-    const foundNote = document.getElementById("pages-found");
-    if (foundNote) {
-      const read = limits.pagesRead || pages.length;
-      foundNote.hidden = !found;
-      foundNote.textContent = found
-        ? found + " page" + (found === "1" ? " was" : "s were") + " found on " + (report.host || "the site") + " in the links of the pages analyzed and its sitemap. This review analyzed " + read + " of them" +
-          (limits.maxPages ? ", up to " + limits.maxPages + " pages and " + (limits.maxDepth || "?") + " links deep" : "") + "."
-        : "";
-    }
-    document.getElementById("pages").innerHTML = pages.length ? pages.map((page) =>
-      "<tr><td>" + esc(page.path) + "</td><td>" + esc(page.status || page.error || "—") + "</td><td>" + esc(page.ms) + "</td><td>" + esc(page.title) + "</td></tr>"
-    ).join("") : '<tr><td colspan="4">No page was saved.</td></tr>';
-    const savedLog = report.log || [];
-    document.getElementById("report-log").innerHTML = savedLog.length ? savedLog.map((line) =>
-      "<li><time>" + esc(line.at || "") + "</time>" + esc(line.text || "") + "</li>"
-    ).join("") : '<li>No log line was saved.</li>';
     const names = ["All"].concat(layers.map((pair) => pair[0]));
     document.getElementById("layer-filters").innerHTML = names.map((name) =>
       '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name) + "</button>"
@@ -2140,6 +2365,11 @@
       if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
       setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Report ready. Cases are proposed, not run.", false);
       dash.scrollTop = 0;
+      if (compare && (compare.total || 1) > 1) {
+        const left = (compare.queue || []).length;
+        if (!stopped && nextCompare(compare)) setStatus("The comparison with " + compare.url + " is ready. Next: " + compare.queue[0] + ".", false);
+        else setStatus(compareDone(compare, stopped && left ? " Stopped: the other " + (left === 1 ? "competitor was" : left + " competitors were") + " not started." : ""), false);
+      }
     } catch (error) {
       const rivalField = compare && (error.fields || []).find((item) => item.field === "url");
       if (error.fields) markFields(compare ? error.fields.filter((item) => item.field !== "url") : error.fields);
@@ -2161,7 +2391,13 @@
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", error.message || "");
         const reason = (rivalField && rivalField.message) || error.message || "The review failed.";
-        if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
+        if (compare && (compare.queue || []).length) {
+          const failed = (compare.failed || []).concat(compare.url);
+          setStatus("The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Next: " + compare.queue[0] + ".", true);
+          nextCompare(Object.assign({}, compare, { failed }));
+        } else if (compare && (compare.total || 1) > 1) {
+          setStatus(compareDone(Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) }), ""), true);
+        } else if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
           setStatus("The comparison with " + compare.url + " did not finish. Your report is open again.", true);
         } else {
           setStatus(reason, true);
@@ -2319,6 +2555,7 @@
     });
   });
   window.addEventListener("beforeprint", () => {
+    if (document.body.classList.contains("printing-multi")) return;
     if (document.body.classList.contains("printing-cases")) {
       registerCapture("case-print");
       return;
@@ -2569,7 +2806,19 @@
 
   bootLanguageAndTour();
 
-  const shared = new URLSearchParams(location.search).get("report");
+  const sharedWith = new URLSearchParams(location.search);
+  const shared = sharedWith.get("report");
+  // From the account page: ?vs= paints the pair of saved reviews the server built, and ?compare= readies a new competitor.
+  function showSharedCompare(body) {
+    const card = document.getElementById("compare");
+    if (!card || !body.report) return;
+    const asked = sharedWith.get("compare");
+    if (body.versus) paintCompare(Object.assign({}, body.report, { compare: body.versus }), false);
+    else if (asked && !body.report.compare) document.getElementById("compare-url").value = asked.replace(/^\s*https?:\/\//i, "");
+    else return;
+    card.scrollIntoView({ block: "start" });
+    if (!body.versus) document.getElementById("compare-go").focus({ preventScroll: true });
+  }
   if (shared) {
     let lockedShared = false;
     const openShared = async () => {
@@ -2581,7 +2830,7 @@
           method: "POST",
           credentials: "include",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: shared, coupon }))
+          body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: shared, coupon, vs: sharedWith.get("vs") || "" }))
         });
         const body = await res.json();
         lockedShared = !!body.locked;
@@ -2601,6 +2850,7 @@
         }
         if (!res.ok) throw new Error(body.error || "That report was not found.");
         render(body);
+        showSharedCompare(body);
       } catch (error) {
         setStatus(error.message, true);
       }
@@ -2946,9 +3196,23 @@
   restorePaid("credentialRun", "qa-review-credential");
   restorePaid("compareRun", COMPARE_KEY, () => {
     const saved = savedCompare();
-    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it.", false);
+    const left = saved ? (saved.queue || []).length : 0;
+    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it" + (left ? " and the other " + (left === 1 ? "competitor" : left + " competitors") + " after it" : "") + ".", false);
   });
   document.getElementById("compare-go").addEventListener("click", startCompare);
+  document.getElementById("compare-add").addEventListener("click", () => {
+    const row = compareMore().find((item) => item.hidden);
+    if (!row) return;
+    row.hidden = false;
+    syncCompareAdd();
+    row.querySelector("input").focus();
+  });
+  compareMore().forEach((row) => row.querySelector(".compare-remove").addEventListener("click", () => {
+    const kept = compareInputs().filter((input) => !input.closest("[data-compare-more][hidden]") && !row.contains(input)).map((input) => input.value.trim());
+    fillCompareBoxes(kept);
+    const open = compareMore().filter((item) => !item.hidden);
+    (open.length ? open[open.length - 1].querySelector("input") : document.getElementById("compare-add")).focus();
+  }));
   document.getElementById("compare-back").addEventListener("click", backToReport);
   document.getElementById("compare-stop").addEventListener("click", (event) => {
     if (!activeRun || stopBtn.disabled) return;
@@ -2956,16 +3220,17 @@
     document.getElementById("compare-running-text").textContent = "Stopping. The comparison uses the pages already checked.";
     stopBtn.click();
   });
-  const compareInput = document.getElementById("compare-url");
-  compareInput.addEventListener("input", () => {
-    const next = compareInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
-    if (next !== compareInput.value) compareInput.value = next;
-  });
-  compareInput.addEventListener("keydown", (event) => {
-    // Enter on a highlighted suggestion picks it (js/url-suggest.js) instead of starting the run.
-    if (event.key !== "Enter" || event.defaultPrevented || compareInput.hasAttribute("aria-activedescendant")) return;
-    event.preventDefault();
-    startCompare();
+  compareInputs().forEach((compareInput) => {
+    compareInput.addEventListener("input", () => {
+      const next = compareInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+      if (next !== compareInput.value) compareInput.value = next;
+    });
+    compareInput.addEventListener("keydown", (event) => {
+      // Enter on a highlighted suggestion picks it (js/url-suggest.js) instead of starting the run.
+      if (event.key !== "Enter" || event.defaultPrevented || compareInput.hasAttribute("aria-activedescendant")) return;
+      event.preventDefault();
+      startCompare();
+    });
   });
 
   const WIRE_CLIPS = ["assets/wire/scan.mp4", "assets/wire/bars.mp4", "assets/wire/orbit.mp4", "assets/wire/moon.mp4", "assets/wire/pulse.mp4", "assets/wire/drift.mp4", "assets/wire/mesh.mp4", "assets/wire/ring.mp4"];

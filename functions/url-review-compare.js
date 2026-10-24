@@ -207,4 +207,34 @@ function comparisonsOf(rows, baseId, email) {
     .slice(0, LIST_MAX);
 }
 
-module.exports = { AREAS, KPIS, LIST_MAX, LEVEL_GAP, ACTIVE_KEYS, sameSite, cleanId, baseProblem, winnerOf, compareSites, compareLine, comparisonsOf };
+// Saved reviews of one account side by side: the first id is the base, and each other one is compared with it
+// from the reports already stored, with no new run. A report that does not open in full for the account
+// is named but not compared, so a comparison never shows what its report would keep under the frost.
+const SAVED_MAX = 5;
+
+function savedComparison(records, email, ids, isOpen) {
+  const address = String(email || "").trim().toLowerCase();
+  const wanted = [...new Set((Array.isArray(ids) ? ids : []).map(cleanId).filter(Boolean))].slice(0, SAVED_MAX);
+  if (wanted.length < 2) return { error: "Pick at least two of your reviews to compare." };
+  const mine = new Map((records || [])
+    .filter((row) => row && row.report && row.report.insights && String(row.email || "").trim().toLowerCase() === address)
+    .map((row) => [cleanId(row.id), row]));
+  const base = mine.get(wanted[0]);
+  if (!base) return { error: "That review is not saved under this account." };
+  const host = base.report.host || "";
+  if (base.status === "stopped" || base.report.status === "stopped") return { error: "The review of " + host + " stopped early. Compare from a finished review." };
+  if (!isOpen(base)) return { error: "The report of " + host + " is not open in full yet. Unlock it to compare from it.", locked: wanted[0] };
+  const own = Object.assign({}, base.report, { id: wanted[0] });
+  const list = wanted.slice(1).map((id) => {
+    const row = mine.get(id);
+    if (!row) return { id, missing: true };
+    const out = { id, host: row.report.host || "", at: String(row.createdAt || "") };
+    if (sameSite(host, out.host)) return Object.assign(out, { same: true });
+    if (row.status === "stopped" || row.report.status === "stopped") return Object.assign(out, { stopped: true });
+    if (!isOpen(row)) return Object.assign(out, { locked: true });
+    return Object.assign(out, { compare: compareSites(own, row.report) });
+  });
+  return { base: { id: wanted[0], host, at: String(base.createdAt || "") }, list };
+}
+
+module.exports = { AREAS, KPIS, LIST_MAX, LEVEL_GAP, ACTIVE_KEYS, SAVED_MAX, sameSite, cleanId, baseProblem, winnerOf, compareSites, compareLine, comparisonsOf, savedComparison };
