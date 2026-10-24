@@ -297,7 +297,8 @@
 <div id="login-overlay">
     <div class="login-box">
         <h2 id="login-title" class="text-2xl font-bold mb-4">Admin Login</h2>
-        <form id="login-form"><div class="mb-4"><label for="email" class="block font-medium mb-1">Email</label><input type="email" id="email" required class="w-full p-2 border border-gray-300 rounded-md"></div><div class="mb-4"><label for="password" class="block font-medium mb-1">Password</label><input type="password" id="password" required class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Login</button><p id="login-error" class="text-red-600 text-sm mt-2"></p></form>
+        <form id="login-form"><div class="mb-4"><label for="email" class="block font-medium mb-1">Email</label><input type="email" id="email" required class="w-full p-2 border border-gray-300 rounded-md"></div><div class="mb-4"><label for="password" class="block font-medium mb-1">Password</label><input type="password" id="password" required class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Login</button><button type="button" id="login-link" class="w-full mt-2 p-2 font-medium text-cyan-700">Email me a sign-in link</button><p id="login-note" class="text-sm mt-2"></p><p id="login-error" class="text-red-600 text-sm mt-2"></p></form>
+        <form id="link-form" hidden><p class="text-sm mb-3">Enter the email the sign-in link was sent to.</p><div class="mb-4"><label for="link-email" class="block font-medium mb-1">Email</label><input type="email" id="link-email" autocomplete="username" required class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Finish sign-in</button><p id="link-error" class="text-red-600 text-sm mt-2"></p></form>
         <form id="mfa-form" hidden><p class="text-sm mb-3">Enter the 6-digit code from your authenticator app.</p><div class="mb-4"><label for="mfa-code" class="block font-medium mb-1">Authenticator code</label><input type="text" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Continue</button><button type="button" id="mfa-back" class="w-full mt-2 p-2 font-medium">Use a different account</button><p id="mfa-error" class="text-red-600 text-sm mt-2"></p></form>
         <form id="mfa-enroll" hidden><p id="mfa-enroll-lead" class="text-sm mb-3">Scan this with the authenticator app on your phone, then enter the 6-digit code.</p><canvas id="mfa-qr" class="mx-auto mb-3" width="200" height="200" hidden></canvas><p id="mfa-secret-line" class="text-sm mb-3" hidden>Key, if you type it instead: <code id="mfa-secret"></code></p><div class="mb-4"><label for="mfa-enroll-code" class="block font-medium mb-1">Authenticator code</label><input type="text" id="mfa-enroll-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="w-full p-2 border border-gray-300 rounded-md"></div><button type="submit" id="mfa-enroll-submit" class="w-full bg-cyan-600 text-white p-2 rounded-md font-bold hover:bg-cyan-700">Turn on</button><button type="button" id="mfa-enroll-cancel" class="w-full mt-2 p-2 font-medium">Log out</button><p id="mfa-enroll-error" class="text-red-600 text-sm mt-2"></p></form>
         <p class="text-center mt-4"><a href="index.html" id="admin-home" class="text-cyan-700 underline">← Back to CV</a></p>
@@ -601,7 +602,7 @@
     <script type="module">
     // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, multiFactor, TotpMultiFactorGenerator, getMultiFactorResolver, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, multiFactor, TotpMultiFactorGenerator, getMultiFactorResolver, sendEmailVerification, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
     import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, getDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
     import { createCvEditor } from "./js/cv-editor.js?v=20260928c";
@@ -658,6 +659,9 @@
     const loginTitle = document.getElementById('login-title');
     const mfaForm = document.getElementById('mfa-form');
     const enrollForm = document.getElementById('mfa-enroll');
+    const linkForm = document.getElementById('link-form');
+    const LINK_EMAIL = 'adminLinkEmail';
+    let linkEmailNeeded = false;
     const tabButtons = { messages: document.getElementById('messages-tab-btn'), ratings: document.getElementById('ratings-tab-btn'), rejected: document.getElementById('rejected-tab-btn'), blocked: document.getElementById('blocked-tab-btn'), stats: document.getElementById('stats-tab-btn'), cv: document.getElementById('cv-tab-btn'), styles: document.getElementById('styles-tab-btn') };
     const panes = { messages: document.getElementById('messages-pane'), ratings: document.getElementById('ratings-pane'), rejected: document.getElementById('rejected-pane'), blocked: document.getElementById('blocked-pane'), stats: document.getElementById('stats-pane'), cv: document.getElementById('cv-pane'), styles: document.getElementById('styles-pane') };
     const lists = { messages: document.getElementById('messages-list'), ratings: document.getElementById('ratings-list'), rejected: document.getElementById('rejected-list'), blocked: document.getElementById('blocked-list') };
@@ -673,7 +677,8 @@
         totpSecret = null;
         enrollmentTask = null;
         loginTitle.textContent = 'Admin Login';
-        loginForm.hidden = false;
+        loginForm.hidden = linkEmailNeeded;
+        linkForm.hidden = !linkEmailNeeded;
         mfaForm.hidden = true;
         enrollForm.hidden = true;
         loginOverlay.style.display = 'flex';
@@ -699,6 +704,7 @@
     async function runEnrollment(user) {
         loginTitle.textContent = 'Authenticator';
         loginForm.hidden = true;
+        linkForm.hidden = true;
         mfaForm.hidden = true;
         enrollForm.hidden = false;
         loginOverlay.style.display = 'flex';
@@ -741,22 +747,81 @@
         if (enrollmentFinished || multiFactor(user).enrolledFactors.length) { showDashboard(); return; }
         startEnrollment(user);
     });
+    function askForCode(err) {
+        if (!err || err.code !== 'auth/multi-factor-auth-required') return false;
+        mfaResolver = getMultiFactorResolver(auth, err);
+        loginTitle.textContent = 'Authenticator';
+        loginForm.hidden = true;
+        linkForm.hidden = true;
+        mfaForm.hidden = false;
+        document.getElementById('mfa-code').focus();
+        return true;
+    }
     document.getElementById('login-form').addEventListener('submit', (e) => {
         e.preventDefault();
         document.getElementById('login-error').textContent = '';
+        document.getElementById('login-note').textContent = '';
         signInWithEmailAndPassword(auth, e.target.email.value.trim(), e.target.password.value).catch((err) => {
-            if (err.code === 'auth/multi-factor-auth-required') {
-                mfaResolver = getMultiFactorResolver(auth, err);
-                loginTitle.textContent = 'Authenticator';
-                loginForm.hidden = true;
-                mfaForm.hidden = false;
-                document.getElementById('mfa-code').focus();
-                return;
-            }
+            if (askForCode(err)) return;
             document.getElementById('login-error').textContent = 'Login failed. Check the email and password.';
             console.error(err);
         });
     });
+    document.getElementById('login-link').addEventListener('click', async () => {
+        const field = document.getElementById('email');
+        const error = document.getElementById('login-error');
+        const note = document.getElementById('login-note');
+        error.textContent = '';
+        note.textContent = '';
+        if (!field.reportValidity()) return;
+        const email = field.value.trim();
+        try {
+            await sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname, handleCodeInApp: true });
+            localStorage.setItem(LINK_EMAIL, email);
+            note.textContent = `A sign-in link is on its way to ${email}. Open it in this browser.`;
+        } catch (err) {
+            console.error(err);
+            error.textContent = err.code === 'auth/too-many-requests' ? 'Too many attempts. Wait a few minutes and try again.'
+                : err.code === 'auth/operation-not-allowed' ? 'Sign-in links are not turned on yet.'
+                : err.code === 'auth/unauthorized-continue-uri' ? 'Firebase does not accept this address for sign-in links yet.'
+                : 'The link could not be sent.';
+        }
+    });
+    function clearLink() {
+        linkEmailNeeded = false;
+        localStorage.removeItem(LINK_EMAIL);
+        history.replaceState(null, '', location.pathname);
+    }
+    async function finishLink(email) {
+        document.getElementById('link-error').textContent = '';
+        try {
+            await signInWithEmailLink(auth, email, location.href);
+            clearLink();
+        } catch (err) {
+            console.error(err);
+            if (err.code === 'auth/invalid-email') {
+                linkEmailNeeded = true;
+                showPasswordForm();
+                document.getElementById('link-error').textContent = 'That is not the email the link was sent to.';
+                return;
+            }
+            clearLink();
+            if (askForCode(err)) return;
+            showPasswordForm();
+            document.getElementById('login-error').textContent = err.code === 'auth/invalid-action-code' || err.code === 'auth/expired-action-code'
+                ? 'This link was already used or has expired. Send a new one.'
+                : 'The link did not sign you in.';
+        }
+    }
+    linkForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        finishLink(document.getElementById('link-email').value.trim());
+    });
+    if (isSignInWithEmailLink(auth, location.href)) {
+        const saved = localStorage.getItem(LINK_EMAIL);
+        if (saved) finishLink(saved);
+        else { linkEmailNeeded = true; showPasswordForm(); }
+    }
     mfaForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const note = document.getElementById('mfa-error');
@@ -771,7 +836,7 @@
             console.error(error);
         }
     });
-    document.getElementById('mfa-back').addEventListener('click', () => signOut(auth));
+    document.getElementById('mfa-back').addEventListener('click', () => { signOut(auth); showPasswordForm(); });
     enrollForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const note = document.getElementById('mfa-enroll-error');

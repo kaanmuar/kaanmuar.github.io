@@ -129,35 +129,41 @@ test("deleting twice leaves the kept rows as they are", async () => {
   assert.equal((await store.get("url_reviews", "run2")).accountDeletedAt, "2026-10-22T00:00:00.000Z");
 });
 
-test("the desk opens for the operator email signed in by password or Google, and nothing else", async () => {
+test("the desk opens for the operator email signed in by password or emailed link, and not by Google", async () => {
   const realFetch = global.fetch;
   let user = null;
   global.fetch = async () => ({ json: async () => ({ users: [user] }) });
-  const as = (providerId, extra) => Object.assign({ email: "kaanmuar@gmail.com", emailVerified: true, providerUserInfo: [{ providerId }] }, extra);
-  const token = "t".repeat(40);
+  const as = (providerId, extra) => Object.assign({ localId: "op1", email: "kaanmuar@gmail.com", emailVerified: true, providerUserInfo: [{ providerId }] }, extra);
+  const signedBy = (method, sub = "op1") => ["h", Buffer.from(JSON.stringify({ sub, firebase: { sign_in_provider: method } })).toString("base64url"), "s".repeat(30)].join(".");
   try {
     user = as("password");
-    assert.equal(await desk.verifyOperator(token), "kaanmuar@gmail.com");
+    assert.equal(await desk.verifyOperator(signedBy("password")), "kaanmuar@gmail.com");
+    assert.equal(await desk.verifyOperator(signedBy("emailLink")), "kaanmuar@gmail.com");
+    assert.equal(await desk.verifyOperator(signedBy("google.com")), null);
+    assert.equal(await desk.verifyOperator(signedBy("password", "someone-else")), null);
+    user = as("password", { providerUserInfo: [{ providerId: "google.com" }, { providerId: "password" }] });
+    assert.equal(await desk.verifyOperator(signedBy("google.com")), null);
     user = as("google.com");
-    assert.equal(await desk.verifyOperator(token), "kaanmuar@gmail.com");
+    assert.equal(await desk.verifyOperator(signedBy("password")), null);
     user = as("password", { emailVerified: false });
-    assert.equal(await desk.verifyOperator(token), null);
+    assert.equal(await desk.verifyOperator(signedBy("password")), null);
     user = as("password", { email: "someone@example.com" });
-    assert.equal(await desk.verifyOperator(token), null);
-    user = as("github.com");
-    assert.equal(await desk.verifyOperator(token), null);
+    assert.equal(await desk.verifyOperator(signedBy("password")), null);
+    assert.equal(await desk.verifyOperator("t".repeat(40)), null);
     assert.equal(await desk.verifyOperator("short"), null);
   } finally {
     global.fetch = realFetch;
   }
 });
 
-test("the desk page offers email and password before Google and asks for the authenticator code", () => {
+test("the desk page offers email and password or an emailed link, asks for the authenticator code, and has no Google sign-in", () => {
   for (const page of [desk.PAGE, desk.FAILURES_PAGE]) {
-    assert.ok(page.indexOf('id="desk-password"') < page.indexOf('id="desk-google"'));
+    assert.ok(page.indexOf('id="desk-password"') < page.indexOf('id="desk-link"'));
     assert.match(page, /signInWithEmailAndPassword/);
+    assert.match(page, /sendSignInLinkToEmail/);
+    assert.match(page, /signInWithEmailLink/);
     assert.match(page, /auth\/multi-factor-auth-required/);
-    assert.doesNotMatch(page, /This Google account cannot open/);
+    assert.doesNotMatch(page, /GoogleAuthProvider|desk-google|Continue with Google/);
   }
 });
 
