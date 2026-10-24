@@ -327,17 +327,17 @@ const scrubbed = (text, max, hidden) => clip((hidden || []).reduce((out, word) =
   .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>)]*/gi, "$1?…"), max);
 
 // A failure is a lead while the probe still sees its cause and no re-run or later fix has settled it; a re-run is one when it failed.
+// A failure whose re-run failed is left to the re-run, so it is not listed twice or under a fix that shipped after it.
 function bugLead(row, source) {
   const doc = row || {};
   const cause = (doc.cause && doc.cause.id) || "";
   if (!cause || SITE_SIDE.includes(cause)) return null;
   if (source === "failure") {
-    if (doc.kind !== "failed" || !doc.diagnosedAt || !doc.diagnosis || doc.diagnosis.cleared) return null;
-    if ((doc.rerun && doc.rerun.status !== "failed") || fixAfter(doc)) return null;
+    if (doc.kind !== "failed" || !doc.diagnosedAt || !doc.diagnosis || doc.diagnosis.cleared || doc.rerun || fixAfter(doc)) return null;
   } else if (doc.status !== "failed" || FIXES.some((fix) => fix.cause === cause && msOf(fix.at) > msOf(doc.at))) {
     return null;
   }
-  const fix = fixBefore(cause, (doc.rerun && doc.rerun.at) || doc.at);
+  const fix = fixBefore(cause, doc.at);
   const intake = doc.intake || {};
   const hidden = [doc.name, doc.email, intake.clientName, intake.clientEmail].map((word) => String(word || "").trim()).filter((word) => word.length > 2);
   const scrub = (text, max) => scrubbed(text, max, hidden);
@@ -424,10 +424,12 @@ function bugIssue(key, leads) {
 // One bug per cause class, and per fix to that class: a class that fails again after its fix shipped is a new bug.
 function bugPlan(failures, reruns, filed) {
   const known = new Set(Array.isArray(filed) ? filed : []);
+  const probes = new Map((Array.isArray(failures) ? failures : []).filter((row) => row && row.probe).map((row) => [row.id, row.probe]));
   const classes = new Map();
   [[failures, "failure"], [reruns, "rerun"]].forEach(([rows, source]) => (Array.isArray(rows) ? rows : []).forEach((row) => {
     const lead = bugLead(row, source);
     if (!lead || known.has(lead.key)) return;
+    if (source === "rerun") lead.probe = (row.failureIds || []).map((id) => probes.get(id)).find(Boolean) || null;
     classes.set(lead.key, (classes.get(lead.key) || []).concat(lead));
   }));
   return Array.from(classes.entries()).map(([key, leads]) => bugIssue(key, leads));

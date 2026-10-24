@@ -1493,7 +1493,10 @@ test("a new cause class opens one bug, from failures the probe still sees and fr
   assert.equal(failures.bugPlan([stuck("2026-10-23T10:00:00Z", { cause: { id: "unknown" } })], [], [])[0].title, "BE: After #329, URL reviews still failed for a reason with no class yet");
 
   const rerunAfterFix = { status: "failed", at: "2026-10-22T11:30:00Z", cause: "bot-protection" };
-  assert.deepEqual(failures.bugPlan([Object.assign({}, oldBot, { rerun: rerunAfterFix })], [rerun], []).map((bug) => [bug.key, bug.runs]), [["bot-protection-319", 2]]);
+  const [again] = failures.bugPlan([Object.assign({}, oldBot, { id: "f1", rerun: rerunAfterFix, probe: newBot.probe })], [rerun], []);
+  assert.deepEqual([again.key, again.runs, again.firstAt], ["bot-protection-319", 1, rerun.at]);
+  assert.doesNotMatch(again.body, /2026-10-21/);
+  assert.match(again.body, /### Probe of the latest failure \(bbva\.com\.co\)\n- DNS: 0 addresses/);
 });
 
 test("a re-run of a failure that kept no frameworks reviews with the form's default", () => {
