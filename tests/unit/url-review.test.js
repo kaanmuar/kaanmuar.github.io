@@ -2485,3 +2485,26 @@ test("links sent as POST or to sign-out routes are not opened as pages", () => {
   assert.equal(core.actionLink('<a href="/authors/kim" rel="nofollow">'), false);
   assert.equal(core.actionLink('<a href="/auth/google">'), false);
 });
+
+test("a TXT read that times out is asked once more before it is left unread", async () => {
+  const dnsPromises = require("node:dns").promises;
+  const saved = { mx: dnsPromises.resolveMx, txt: dnsPromises.resolveTxt, caa: dnsPromises.resolveCaa };
+  const asked = {};
+  dnsPromises.resolveMx = async () => [{ exchange: "mx.example.org", priority: 10 }];
+  dnsPromises.resolveCaa = async () => [];
+  dnsPromises.resolveTxt = async (name) => {
+    asked[name] = (asked[name] || 0) + 1;
+    if (name === "example.org" && asked[name] === 1) throw Object.assign(new Error("ETIMEOUT"), { code: "ETIMEOUT" });
+    if (name === "_dmarc.example.org") throw Object.assign(new Error("ESERVFAIL"), { code: "ESERVFAIL" });
+    return name === "example.org" ? [["v=spf1 -all"]] : [];
+  };
+  let facts;
+  try {
+    facts = await core.dnsFacts("www.example.org");
+  } finally {
+    Object.assign(dnsPromises, { resolveMx: saved.mx, resolveTxt: saved.txt, resolveCaa: saved.caa });
+  }
+  assert.equal(facts.spf, "v=spf1 -all");
+  assert.deepEqual(facts.unread, ["dmarc"]);
+  assert.deepEqual([asked["example.org"], asked["_dmarc.example.org"]], [2, 1]);
+});
