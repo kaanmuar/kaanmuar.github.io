@@ -51,7 +51,8 @@ const VENDORS = [
   ["Inspectlet", /(^|\.)inspectlet\.com$/],
   ["Lucky Orange", /(^|\.)(luckyorange\.com|luckyorange\.net)$/],
   ["Contentsquare", /(^|\.)(contentsquare\.net|contentsquare\.com)$/],
-  ["Adobe Analytics", /(\.omtrdc\.net|\.2o7\.net|(^|\.)demdex\.net)$/]
+  ["Adobe Analytics", /(\.omtrdc\.net|\.2o7\.net|(^|\.)demdex\.net)$/],
+  ["Siteimprove Analytics", /(^|\.)siteimproveanalytics\.(com|io)$/]
 ];
 const RECORDERS = ["Hotjar", "FullStory", "Microsoft Clarity", "Mouseflow", "Smartlook", "LogRocket", "Inspectlet", "Lucky Orange", "Contentsquare"];
 const BOT_GUARDS = /(^|\.)(challenges\.cloudflare\.com|recaptcha\.net|hcaptcha\.com|perimeterx\.net|px-cdn\.net|px-cloud\.net|captcha-delivery\.com|datadome\.co|arkoselabs\.com|funcaptcha\.com|kasada\.io|incapsula\.com|imperva\.com|sift\.com|siftscience\.com|forter\.com|riskified\.com|signifyd\.com)$/;
@@ -84,8 +85,8 @@ const CHATS = [
 const CHAT_LAUNCHER = "[class*=launcher i], [id*=launcher i], [aria-label*=chat i], [title*=chat i], [id*=chat-widget i], [class*=chat-widget i], [id*=chatbot i], [class*=chatbot i]";
 const CHAT_FRAME = "intercom|drift|launcher|webwidget|messaging|hubspot-messages|tawk|chat|tidio|fc_|olark|ada-|gorgias|botpress|landbot|kommunicate|voiceflow";
 const CHAT_COOKIE = /^(intercom-|driftt?_|drift_|__zlcmid|ZD-|__zd|TawkConnectionTime|__tawkuuid|twk_|crisp-client|__lc_|__lc2_|lc_window_state|tidio_|messagesUtk|hblid|olfsk|wcsid|_okbk|_okdetect|_oklv|_okac|_okck|_ok$|gorgias|fc_|freshchat|chatbase|voiceflow|bp-|landbot|kommunicate)/i;
-const TRACKING_COOKIE = /^(_ga|_gid|_gat|_gcl_|_fbp|_fbc|_uet|_clck|_clsk|_hj|_tt_|_ttp|_pin_|_scid|_rdt_|_ym|li_|bcookie|lidc|IDE$|test_cookie$|NID$|MUID$|ANONCHK$|_mkto_trk|hubspotutk|__hs|ajs_|mp_|amp_|_derived_epik|_parsely|s_cc$|s_sq$|AMCV_|demdex)/i;
-const CONSENT_COOKIE = /^(OptanonConsent|OptanonAlertBoxClosed|CookieConsent|euconsent|didomi|cmplz_|cookieyes|uc_|_iub|osano|notice_|cookielawinfo|cookie_consent|cookieconsent|axeptio|borlabs|klaro|consent)/i;
+const TRACKING_COOKIE = /^(_ga|_gid|_gat|_gcl_|_fbp|_fbc|_uet|_clck|_clsk|_hj|_tt_|_ttp|_pin_|_scid|_rdt_|_ym|li_|bcookie|lidc|IDE$|test_cookie$|NID$|MUID$|ANONCHK$|_mkto_trk|hubspotutk|__hs|ajs_|mp_|amp_|_derived_epik|_parsely|s_cc$|s_sq$|AMCV_|demdex|nmstat$|siteimproveses$)/i;
+const CONSENT_COOKIE = /^(OptanonConsent|OptanonAlertBoxClosed|CookieConsent|euconsent|didomi|cmplz_|cookieyes|uc_|_iub|osano|notice_|cookielawinfo|cookie_consent|cookieconsent|axeptio|borlabs|klaro|cookie-agreed|consent)/i;
 
 const CMPS = [
   ["OneTrust", "#onetrust-banner-sdk", "#onetrust-reject-all-handler"],
@@ -99,7 +100,8 @@ const CMPS = [
   ["iubenda", "#iubenda-cs-banner", ".iubenda-cs-reject-btn"],
   ["Osano", ".osano-cm-window", ".osano-cm-denyAll"],
   ["TrustArc", "#truste-consent-track, #consent_blackbar", "#truste-consent-required"],
-  ["Klaro", ".klaro .cookie-notice", ".cn-decline"],
+  ["Klaro", ".klaro .cookie-notice, .klaro .cookie-modal", ".klaro .cn-decline, .klaro .cm-btn-decline"],
+  ["EU Cookie Compliance", "#sliding-popup, .eu-cookie-compliance-banner", "#sliding-popup .decline-button, #sliding-popup .eu-cookie-compliance-reject-button, #sliding-popup .eu-cookie-compliance-accept-only-neccesary-button"],
   ["Borlabs", "#BorlabsCookieBox", "[data-cookie-refuse]"],
   ["Axeptio", "#axeptio_overlay", "#axeptio_btn_dismiss"],
   ["Google consent message", ".fc-consent-root", ".fc-cta-do-not-consent"],

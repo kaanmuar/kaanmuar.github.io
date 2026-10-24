@@ -1294,7 +1294,8 @@ const ANALYTICS_TAGS = [
   ["Heap", /cdn\.heapanalytics\.com|heap\.load\(/, null],
   ["Vercel Analytics", /\/_vercel\/insights\/script\.js|va\.vercel-scripts\.com/, null],
   ["Cloudflare Web Analytics", /static\.cloudflareinsights\.com\/beacon/, null],
-  ["Yandex Metrica", /mc\.yandex\.ru\/metrika/, null]
+  ["Yandex Metrica", /mc\.yandex\.ru\/metrika/, null],
+  ["Siteimprove Analytics", /siteimproveanalytics\.(com|io)|siteimprove\.com\/js\/|siteanalyze_\d+\.js/, /siteanalyze_(\d{4,12})\.js/g]
 ];
 
 const CONSENT_TOOLS = [
@@ -1309,7 +1310,8 @@ const CONSENT_TOOLS = [
   ["Complianz", /complianz/i],
   ["Quantcast Choice", /quantcast\.mgr|cmp\.quantcast/i],
   ["TrustArc", /trustarc|consent\.truste/i],
-  ["Klaro", /klaro(\.min)?\.js|klaroConfig/],
+  ["Klaro", /klaro(-[\w-]+)?(\.min)?\.js|klaroConfig/],
+  ["EU Cookie Compliance", /eu[_-]cookie[_-]compliance|id=["']sliding-popup["']/i],
   ["CookieConsent", /cookieconsent(\.min)?\.js|CookieConsent\.run/i],
   ["Borlabs", /borlabs-cookie/i],
   ["Axeptio", /axeptio/i],
