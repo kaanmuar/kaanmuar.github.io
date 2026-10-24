@@ -24,7 +24,7 @@ test("an open report mail and PDF carry the fix of each finding, and a blurred o
   assert.ok(customerMail.reportPdf(open).html.includes(customerMail.esc(fix)));
   assert.ok(!customerMail.reportMail(record, {}).html.includes(customerMail.esc(fix)));
   assert.ok(!customerMail.reportPdf(record).html.includes(customerMail.esc(fix)));
-  assert.match(customerMail.reportMail(Object.assign({}, open, { lang: "de" }), {}).html, /So behebst du es:<\/b>/);
+  assert.match(customerMail.reportMail(Object.assign({}, open, { lang: "de" }), {}).html, /So beheben Sie es:<\/b>/);
 });
 
 test("a review without a score does not promise six scores", () => {
