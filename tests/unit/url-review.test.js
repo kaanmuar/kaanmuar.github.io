@@ -2462,6 +2462,33 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(readme([]), /Put a CDN such as Cloudflare in front/);
   });
 
+  test("the preview frosts every section, and leaves ids, addresses, dates and short labels as they are", () => {
+    const secret = "the admin panel answers on port 8443 without a password";
+    const report = {
+      id: "ab12",
+      host: "example.com",
+      finalUrl: "https://example.com/start?ref=a",
+      fetchedAt: "2026-10-24T16:00:00.000Z",
+      statement: "Twelve pages were read. Then " + secret + ".",
+      observed: { title: "Home", description: "A shop for coffee. Also " + secret + "." },
+      log: [{ at: "16:00:01", text: "Opened the start page. Saw " + secret + "." }],
+      pages: [{ path: "/admin", status: 200, title: "Admin" }],
+      insights: { findings: [{ id: "SEC-02", area: "Security", verdict: "fail", title: "HSTS is not sent", evidence: "Missing. " + secret }], geo: { note: "Read by four crawlers. " + secret } }
+    };
+    const preview = core.previewReport(report);
+    assert.ok(!JSON.stringify(preview).includes(secret));
+    assert.match(preview.statement, /^Twelve pages were read\. /);
+    assert.equal(preview.statement.length, report.statement.length);
+    assert.match(preview.statement, /^Twelve pages were read\. \u2060\w+ \u2060/, "each hidden word starts with the mark the page blurs from");
+    assert.match(preview.log[0].text, /^Opened the start page\. /);
+    assert.match(preview.insights.geo.note, /^Read by four crawlers\. /);
+    assert.deepEqual([preview.id, preview.host, preview.finalUrl, preview.fetchedAt, preview.log[0].at, preview.pages[0].path, preview.observed.title],
+      [report.id, report.host, report.finalUrl, report.fetchedAt, report.log[0].at, report.pages[0].path, report.observed.title]);
+    assert.deepEqual([preview.insights.findings[0].area, preview.insights.findings[0].verdict, preview.insights.findings[0].title], ["Security", "fail", "HSTS is not sent"]);
+    assert.deepEqual(core.previewReport(preview).statement, preview.statement, "frosting twice gives the same copy");
+    assert.equal(report.statement.includes(secret), true, "the stored report is not changed");
+  });
+
   test("the preview keeps the priority and drops the selectors and checks", () => {
     const preview = core.previewReport({ cases: [{ id: "MB-01", title: "Layout holds", why: "Wider. Pushed out.", priority: "P2", risk: 30, pages: ["/"], selectors: ["table.prices"], check: { kind: "viewport" } }] });
     assert.deepEqual([preview.cases[0].priority, preview.cases[0].risk, preview.cases[0].selectors, preview.cases[0].check], ["P2", 30, undefined, undefined]);
