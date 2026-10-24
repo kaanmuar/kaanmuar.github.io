@@ -82,7 +82,7 @@ async function phrase(options) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: instruction(input.lang) }] },
         contents: [{ role: "user", parts: [{ text: input.source }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 400 }
+        generationConfig: { temperature: 0.2, maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: "low" } }
       })
     });
   } catch (error) {
@@ -90,7 +90,10 @@ async function phrase(options) {
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) return fail(502, "AI phrasing did not answer.", "failed");
-  const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
+  const candidate = (data.candidates || [])[0] || {};
+  // Flash models think before answering and spend the output budget on it; a reply that did not stop on its own is cut short.
+  if (candidate.finishReason !== "STOP") return fail(502, "AI phrasing did not answer.", "failed");
+  const parts = (candidate.content || {}).parts || [];
   const text = parts.map((part) => part.text || "").join("").replace(/[*_#`]+/g, "").replace(/\s+/g, " ").trim();
   if (!text) return fail(502, "AI phrasing did not answer.", "failed");
   if (!faithful(input.source, text, input.ref)) return fail(422, "The AI phrasing added something the answer does not say, so it was dropped.", "unfaithful");
