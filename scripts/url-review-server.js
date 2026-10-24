@@ -11,6 +11,7 @@ const core = require("../functions/url-review-core");
 const newsWire = require("../functions/news-wire");
 const desk = require("../functions/url-review-desk");
 const offers = require("../functions/url-review-offers");
+const compare = require("../functions/url-review-compare");
 const auth = require("../functions/url-review-auth");
 const accountData = require("../functions/url-review-account-data");
 const oauth = require("../functions/url-review-oauth");
@@ -651,6 +652,7 @@ const server = http.createServer(async (req, res) => {
         pages: priced.pages || null,
         depth: priced.depth || null,
         billing: priced.billing || "",
+        compareWith: purpose === "new-run" ? compare.cleanId(payBody.compareWith) : "",
         priceUsd: priced.usd,
         amount: session.amount,
         currency: session.currency,
@@ -695,6 +697,7 @@ const server = http.createServer(async (req, res) => {
       let payer = result.deviceId || deviceId;
       let frameworks = result.frameworks || [];
       let priceUsd = result.amount || 0;
+      let compareWith = "";
       if (choice !== "stripe") {
         const open = readStore().find((row) => row && row.status === "checkout-open" && row.reference === result.reference);
         const sameLink = !result.linkId || (open && open.externalId === result.linkId);
@@ -708,6 +711,7 @@ const server = http.createServer(async (req, res) => {
         frameworks = open.frameworks || [];
         result.tools = open.tools || [];
         priceUsd = open.priceUsd || result.amount;
+        compareWith = compare.cleanId(open.compareWith);
         result.pages = open.pages;
         result.depth = open.depth;
         result.billing = open.billing;
@@ -726,6 +730,7 @@ const server = http.createServer(async (req, res) => {
         pages: result.pages || core.INCLUDED_PAGES,
         depth: result.depth || core.INCLUDED_DEPTH,
         billing: result.billing || "run",
+        compareWith: purpose === "new-run" ? compareWith : "",
         createdAt: new Date().toISOString(),
         priceUsd,
         amount: result.amount,
@@ -758,6 +763,12 @@ const server = http.createServer(async (req, res) => {
   const intake = await core.screenIntake(body, req.headers);
   if (!intake.ok) {
     sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);
+    return;
+  }
+  const base = intake.value.compareWith ? readStore().find((row) => row.id === intake.value.compareWith) || null : null;
+  const refused = intake.value.compareWith ? compare.baseProblem(base, signedIn.email, intake.value.url) : "";
+  if (refused) {
+    sendJson(res, 400, { error: refused, compare: true }, origin, deviceId);
     return;
   }
   const identity = { deviceId, ip: clientIp(req) };
@@ -839,6 +850,7 @@ const server = http.createServer(async (req, res) => {
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
       section: intake.value.section,
+      passive: !!intake.value.compareWith,
       browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined
@@ -857,6 +869,7 @@ const server = http.createServer(async (req, res) => {
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
     const history = prior ? core.compareRuns(prior.report, report) : null;
     if (history) report.history = history;
+    if (base) report.compare = compare.compareSites(base.report, report);
     writeRecord(record);
     line(res, { type: "done", report, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
     res.end();

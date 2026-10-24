@@ -107,6 +107,7 @@ const REASONS = [
   { id: "allowed", label: "I am checking a page I am allowed to review" },
   { id: "verify", label: "I want QA-lab to run a verification" },
   { id: "credentials", label: "I have a username and password for this site" },
+  { id: "compare", label: "I am comparing my site with a competitor" },
   { id: "other", label: "Other" }
 ];
 const BROWSER_FW = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha"];
@@ -362,6 +363,8 @@ function validateIntake(body) {
   if (known && known.id === "own" && target && emailSyntax(email) && !mailboxMatchesHost(email, target.hostname)) {
     fieldError(errors, "email", "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.");
   }
+  const compareWith = known && known.id === "compare" ? String(src.compareWith || "").replace(/[^a-f0-9]/g, "").slice(0, 32) : "";
+  if (known && known.id === "compare" && !compareWith) fieldError(errors, "reason", "Start a comparison from one of your reports.");
   const reason = known && known.id === "other" ? reasonText : (known ? known.label : "");
   return {
     errors,
@@ -384,7 +387,8 @@ function validateIntake(body) {
       pageLang: normalizePageLang(src.pageLang),
       section: src.section === true,
       followUp: src.followUp === true,
-      unlisted: src.unlisted === true
+      unlisted: src.unlisted === true,
+      compareWith
     } : null
   };
 }
@@ -663,8 +667,12 @@ function judgeAttempts(rows, identity, request) {
     return { ok: false, code: "invalid", message: error.message || "Choose the size of the review." };
   }
   const used = new Set(mine.filter((row) => row.status === "run-credit-used").map((row) => row.creditId));
-  const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope));
-  const completed = mine.some((row) => row.status === "complete");
+  const compareWith = !Array.isArray(request) && request ? String(request.compareWith || "") : "";
+  // A credit bought for a comparison pays for that comparison only, and a plain credit never pays for one.
+  const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope) && String(row.compareWith || "") === compareWith);
+  // A comparison is priced as a second review, whichever device ran the first.
+  const compare = !!compareWith;
+  const completed = compare || mine.some((row) => row.status === "complete");
   if (!completed && scope.cents === 0) return { ok: true };
   if (credit) return { ok: true, consumeId: credit.id };
   const billing = completed ? "run" : "scope";
@@ -672,9 +680,11 @@ function judgeAttempts(rows, identity, request) {
   return {
     ok: false,
     code: "payment",
-    message: completed
-      ? "Another review asks for payment before it starts."
-      : "A wider or deeper review asks for payment before it starts.",
+    message: compare
+      ? "A comparison is priced as a second review and asks for payment before it starts."
+      : completed
+        ? "Another review asks for payment before it starts."
+        : "A wider or deeper review asks for payment before it starts.",
     priceUsd: priced.usd,
     count: priced.count,
     frameworks: priced.frameworks,
@@ -2380,6 +2390,9 @@ async function reviewTarget(rawUrl, hooks) {
   let deadline = begun + budgetMs(chosen.pages);
   note("Checking that the address is public https.");
   note(acceptLanguage ? "Pages are requested in " + PAGE_LANG_LABEL[acceptLanguage] + "." : "Pages are requested in the site's own language.");
+  // A competitor's site gets passive checks only; the browser refuses typing and opening the chat as well.
+  const passive = controls.passive === true;
+  if (passive) note("This is a competitor run: the browser types into no field and does not open the chat.");
   let first;
   let slowFirst = false;
   try {
@@ -2414,7 +2427,7 @@ async function reviewTarget(rawUrl, hooks) {
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
     startSpeed(first.url);
-    const browsed = await Promise.resolve().then(() => controls.browse({ url: first.url, paths: [], html: true, acceptLanguage }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
+    const browsed = await Promise.resolve().then(() => controls.browse({ url: first.url, paths: [], html: true, acceptLanguage, passive }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
     if (halt()) {
       note("Stopped before the first page finished.");
       return stoppedReport(rawUrl, lines, null, chosen);
@@ -2503,17 +2516,17 @@ async function reviewTarget(rawUrl, hooks) {
   const browserPromise = readInBrowser
     ? Promise.resolve(readInBrowser)
     : canBrowse
-      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths, acceptLanguage }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths, acceptLanguage, passive }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
       : Promise.resolve(null);
   browserPromise.then((done) => showStart(done && done.ok ? done.start : null), () => showStart(null));
-  const talkAs = stopped ? "" : ownerProof(controls.asker, origin.hostname);
+  const talkAs = stopped || passive ? "" : ownerProof(controls.asker, origin.hostname);
   const talkScript = talkAs && typeof controls.browse === "function" ? chatTalk.script(acceptLanguage || homeInspect.lang) : null;
   const published = talkScript ? chatTalk.facts() : null;
   if (published) published.read(visibleText(first.body));
   if (talkScript) note("The asker's mailbox is on " + registrable(origin.hostname) + ", so a separate browser holds a short scripted conversation with the site's chat, if it has one.");
   let talkSettled = false;
   const talkPromise = talkScript
-    ? Promise.resolve().then(() => controls.browse({ kind: "chat", proof: talkAs, url: first.url, acceptLanguage, turns: talkScript.turns }, (text) => note("Chat conversation: " + text))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+    ? Promise.resolve().then(() => controls.browse({ kind: "chat", proof: talkAs, url: first.url, acceptLanguage, turns: talkScript.turns, passive }, (text) => note("Chat conversation: " + text))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
     : null;
   if (talkPromise) talkPromise.then(() => { talkSettled = true; });
   if (!stopped) startSpeed(first.url);
@@ -2680,7 +2693,10 @@ async function reviewTarget(rawUrl, hooks) {
     if (!talkSettled) note("Waiting for the chat conversation to finish.");
     talked = chatTalk.judge(await talkPromise, { proof: talkAs, lang: acceptLanguage || homeInspect.lang, facts: published, planted: talkScript.planted });
     note("Chat conversation: " + talked.note);
-  } else if (chat) talked = { ran: false, status: "needs-proof", note: chatTalk.STATUS_NOTE["needs-proof"], turns: [], checks: [] };
+  } else if (chat) {
+    const status = passive ? "competitor" : "needs-proof";
+    talked = { ran: false, status, note: chatTalk.STATUS_NOTE[status], turns: [], checks: [] };
+  }
   let cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "", chat, libraries: browser.libraries || [] }, browser.start.dom) : null);
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   note("Proposed " + cases.length + " test cases across " + Object.keys(caseRank.countLayers(cases)).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
@@ -2763,7 +2779,8 @@ async function reviewTarget(rawUrl, hooks) {
       robotsNote,
       timedOut: Date.now() >= deadline,
       pageLang: acceptLanguage,
-      section: prefix
+      section: prefix,
+      passive
     },
     pages: publishedPages,
     technologies: technologiesFound,
@@ -2870,6 +2887,7 @@ function intakeRecord(value, report, meta) {
     section: value.section === true,
     followUp: value.followUp === true,
     unlisted: value.unlisted === true,
+    compareWith: value.compareWith || "",
     report
   };
 }
