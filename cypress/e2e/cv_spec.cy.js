@@ -212,7 +212,7 @@ describe('Interactive CV', () => {
       cy.get('#message-topic').select('inquiry');
       cy.get('#sender-message').type('123456789');
       cy.get('#send-message-btn').should('be.disabled');
-      cy.get('#sender-email').blur();
+      cy.get('#sender-email').focus().blur();
       cy.get('#sender-email').should('have.class', 'invalid').and('have.attr', 'aria-invalid', 'true');
       cy.get('#sender-email').clear().type('ada@example.com');
       cy.get('#sender-message').clear().type('1234567890');

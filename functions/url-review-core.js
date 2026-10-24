@@ -17,6 +17,7 @@ const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
+const { registrable, registryDomain } = require("./url-review-suffix");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-10-24";
@@ -123,6 +124,8 @@ const MAX_PAGES = 100;
 const MAX_DEPTH = 5;
 const MAX_BYTES = 2000000;
 const PAGE_TIMEOUT_MS = 8000;
+// Still "took too long", so the start page is tried in headless Chrome before the review gives up.
+const UNREACHABLE = "The page took too long: the site accepted no connection in " + PAGE_TIMEOUT_MS / 1000 + " s.";
 // A server that sends its certificate without the intermediate opens in browsers, which fetch the intermediate
 // from the certificate's AIA address. Node does not, so the review fetches it once per host and verifies again.
 const INTERMEDIATES = new Map();
@@ -233,11 +236,6 @@ function clean(value, max) {
 }
 
 const EMAIL_RE = /^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/;
-const MULTI_TLDS = ["co.uk", "org.uk", "ac.uk", "gov.uk", "nhs.uk", "com.co", "net.co", "org.co", "edu.co", "gov.co", "mil.co",
-  "com.mx", "org.mx", "edu.mx", "gob.mx", "com.br", "org.br", "edu.br", "gov.br", "com.au", "org.au", "edu.au", "gov.au",
-  "co.jp", "ac.jp", "or.jp", "go.jp", "co.za", "org.za", "ac.za", "gov.za", "com.ar", "org.ar", "edu.ar", "gob.ar",
-  "com.pe", "org.pe", "edu.pe", "gob.pe", "com.ec", "org.ec", "edu.ec", "gob.ec", "com.uy", "org.uy", "edu.uy", "gub.uy",
-  "co.nz", "org.nz", "ac.nz", "govt.nz", "com.tr", "org.tr", "edu.tr", "gov.tr"];
 
 function emailSyntax(email) {
   const value = String(email || "");
@@ -275,18 +273,10 @@ function emailsInText(text, max) {
   return out;
 }
 
-function registrable(hostname) {
-  const host = String(hostname || "").replace(/\.$/, "").replace(/^www\./, "").toLowerCase();
-  const parts = host.split(".").filter(Boolean);
-  if (parts.length < 2) return host;
-  const lastTwo = parts.slice(-2).join(".");
-  if (MULTI_TLDS.indexOf(lastTwo) !== -1 && parts.length >= 3) return parts.slice(-3).join(".");
-  return lastTwo;
-}
-
 function mailboxMatchesHost(email, hostname) {
   const domain = String(email || "").split("@")[1] || "";
-  return !!domain && registrable(domain) === registrable(hostname);
+  const site = registrable(hostname);
+  return !!domain && !!site && registrable(domain) === site;
 }
 
 // Why the asker may talk to the host finally reviewed (the chat conversation, form testing), or "":
@@ -930,7 +920,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
     let keepArrived = null;
     const slow = () => {
       if (!settled && keepArrived && keepArrived()) return;
-      giveUp(new Error("The page took too long."));
+      giveUp(new Error(req.socket && req.socket.connecting ? UNREACHABLE : "The page took too long."));
     };
     const req = lib.request({
       protocol: target.protocol,
@@ -2147,7 +2137,9 @@ async function readSitemap(origin, robotsText, halt, acceptLanguage) {
       return parsed.toString();
     } catch (error) { return url; }
   });
-  const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
+  // Yoast and WordPress serve /sitemap_index.xml, and Next.js and Astro /sitemap-index.xml, often with nothing at /sitemap.xml.
+  const guesses = ["/sitemap.xml"].concat(listed.length ? [] : ["/sitemap_index.xml", "/sitemap-index.xml"]).map((path) => origin + path);
+  const candidates = upgraded.concat(guesses).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
   let last = { status: 0 };
   const readOne = async (url) => {
     const res = await fetchExtra(url, halt, true, acceptLanguage);
@@ -2183,10 +2175,9 @@ async function readSitemap(origin, robotsText, halt, acceptLanguage) {
     if (got.partial) partial = true;
     if (urls.length >= 5000) break;
   }
-  if (!urls.length) {
-    const fallback = candidates.find((url) => upgraded.indexOf(url) === -1);
-    const got = fallback ? await readOne(fallback) : null;
-    if (got) { source = fallback; urls = got.urls; partial = got.partial || listedTotal > 1; }
+  for (const fallback of urls.length ? [] : candidates.filter((url) => upgraded.indexOf(url) === -1)) {
+    const got = await readOne(fallback);
+    if (got) { source = fallback; urls = got.urls; partial = got.partial || listedTotal > 1; break; }
   }
   if (urls.length >= 5000) partial = true;
   if (urls.length) return { source, status: 200, urls: urls.slice(0, 5000), partial };
@@ -2261,7 +2252,7 @@ async function sitePaths(raw) {
 }
 
 async function dnsFacts(hostname) {
-  const domain = registrable(hostname);
+  const domain = registryDomain(hostname);
   // Only "no such data" means the record is absent; a timeout or server failure leaves it unread (null).
   const settle = (promise, slow = null) => withTimeout(promise.catch((err) => (/^(ENODATA|ENOTFOUND)$/.test(err && err.code) ? [] : err && err.code === "ETIMEOUT" ? slow : null)), 5000, slow);
   const read = (name, slow) => settle(dns.resolveTxt(name).then((rows) => rows.map((parts) => parts.join(""))), slow);
@@ -2368,7 +2359,7 @@ function readRdap(data, domain) {
 }
 
 async function domainFacts(hostname, halt) {
-  const domain = registrable(hostname);
+  const domain = registryDomain(hostname);
   const tld = domain.split(".").pop();
   const base = await rdapBase(tld, halt);
   if (base === null) return { domain, read: false, reason: "the IANA list of RDAP servers could not be read" };
@@ -2416,6 +2407,32 @@ async function plainHttp(hostname, halt) {
 }
 
 // The failure diagnosis re-reads a start page the way the review does and keeps every hop, the size and any bot check.
+// Tells a host that accepts no connection (down, or dropping the review's address) from one that accepts and then never answers.
+function tcpOpen(address, port, ms) {
+  const started = Date.now();
+  return new Promise((resolve) => {
+    const socket = net.connect({ host: address, port: port || 443 });
+    const done = (row) => {
+      socket.destroy();
+      resolve(Object.assign(row, { ms: Date.now() - started }));
+    };
+    socket.setTimeout(ms || 5000, () => done({ open: false, error: "no answer in " + Math.round((ms || 5000) / 1000) + " s" }));
+    socket.once("connect", () => done({ open: true }));
+    socket.once("error", (error) => done({ open: false, error: clean(error.code || error.message || "connection failed", 40) }));
+  });
+}
+
+// The same address the plain read was pinned to; `open` is null when the host could not be checked at all.
+async function tcpCheck(raw, ms) {
+  try {
+    const target = normalizeUrl(raw);
+    const address = await assertPublic(target.hostname);
+    return Object.assign({ address }, await tcpOpen(address, Number(target.port) || 443, ms));
+  } catch (error) {
+    return { open: null, error: clean((error && error.message) || "not checked", 80), ms: 0 };
+  }
+}
+
 async function probeRead(raw) {
   const started = Date.now();
   const hops = [];
@@ -2532,7 +2549,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
     : missingIntermediate ? { missingIntermediate } : null;
   const acceptLanguage = (lookups && lookups.acceptLanguage) || "";
   const sitemapJob = lookups && lookups.sitemap ? lookups.sitemap : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
-  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registrable(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
+  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registryDomain(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
   say(tls && tls.validTo ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
   const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
@@ -2603,7 +2620,7 @@ async function reviewTarget(rawUrl, hooks) {
       return stoppedReport(rawUrl, lines, null, chosen);
     }
     if (!/took too long/.test((error && error.message) || "") || typeof controls.browse !== "function") throw error;
-    slowFirst = true;
+    slowFirst = error.message === UNREACHABLE ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   if (first.cert && first.cert.missingIntermediate) {
@@ -2626,7 +2643,9 @@ async function reviewTarget(rawUrl, hooks) {
   const browserLog = (text) => note("Browser: " + text);
   const refused = slowFirst || (first.status >= 400 && first.status < 500) || !!firstChallenge;
   if (refused && typeof controls.browse === "function") {
-    note(slowFirst
+    note(slowFirst === "unreachable"
+      ? "The site accepted no connection to the plain request in " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
+      : slowFirst
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
     startSpeed(first.url);
@@ -2644,7 +2663,7 @@ async function reviewTarget(rawUrl, hooks) {
       const guarded = (code) => [401, 403, 429].includes(code);
       const where = slowFirst ? "in headless Chrome, after the plain request took too long" : "in the plain request and in headless Chrome";
       const error = new Error(slowFirst && !viewChallenge && (!browsed || !browsed.ok || !(status >= 400))
-        ? "The page took too long in the plain request, and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
+        ? (slowFirst === "unreachable" ? "The site accepted no connection to the plain request" : "The page took too long in the plain request") + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
         : !browsed || !browsed.ok
         ? (firstChallenge || guarded(first.status) ? "The site's bot protection refused the plain request" : "The URL returned status " + first.status + " to the plain request") +
           (firstChallenge || guarded(first.status) ? " (status " + first.status + ")" : "") + ", and headless Chrome did not finish (" + ((browsed && browsed.error) || "no answer") + ")."
@@ -3824,6 +3843,7 @@ module.exports = {
   fetchHomepage,
   emailSyntax,
   registrable,
+  registryDomain,
   ownerContacts,
   emailsInText,
   visibleText,
@@ -3848,6 +3868,8 @@ module.exports = {
   dnsFacts,
   plainHttp,
   probeRead,
+  tcpOpen,
+  tcpCheck,
   readSitemap,
   sitemapPaths,
   sitePaths,

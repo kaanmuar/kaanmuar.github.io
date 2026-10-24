@@ -48,6 +48,8 @@ module.exports = defineConfig({
     viewportWidth: 1280,
     viewportHeight: 720,
     defaultCommandTimeout: 10000,
+    // Analytics and the geo-IP language lookup are third parties: a stalled host holds back the page load event, and the IP picks the CV language.
+    blockHosts: ['*.googletagmanager.com', '*.google-analytics.com', '*.analytics.google.com', 'ipwho.is'],
     setupNodeEvents(on, config) {
       const { record, reset } = require('./tests/native/summary');
       on('task', {

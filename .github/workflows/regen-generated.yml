@@ -1,0 +1,46 @@
+# .github/workflows/regen-generated.yml
+# Two PRs that each pass CI can together leave generated files stale on main (#968): url-review-unit then fails on main
+# and on every open PR. On each push to main this runs every builder with a --check mode, rebuilds what is stale on the
+# tip of main, and pushes the rebuild (scripts/regen-generated.sh).
+# The push uses LIVE_REPORTS_DEPLOY_KEY: only deploy keys bypass the "main: fast checks before merge" ruleset, so a
+# GITHUB_TOKEN push would be refused. A deploy-key push starts CI and the Pages build like any merge, so main's checks go
+# green again; its own push carries [regen] and is skipped here. Bot commits with [skip ci] do not start this workflow;
+# the next merge does.
+
+name: Rebuild stale generated files
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: regen-main
+  cancel-in-progress: false
+
+jobs:
+  regen:
+    if: ${{ !contains(github.event.head_commit.message, '[regen]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rebuild what is stale and push it to main
+        id: regen
+        run: scripts/regen-generated.sh --push
+      - name: Ask Pages to publish the rebuild
+        if: steps.regen.outputs.pushed == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true

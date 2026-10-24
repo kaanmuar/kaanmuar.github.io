@@ -597,7 +597,7 @@
       assert(/index/i.test(robots), 'CV not indexable');
       assert(/carlosandmunoz\.com/.test(document.querySelector('link[rel="canonical"]').href), 'canonical host unexpected');
       var json = document.getElementById('person-structured-data').textContent;
-      assert(/Carlos/.test(json) && /18 (years|años)/i.test(json), 'JSON-LD incomplete');
+      assert(/Carlos/.test(json) && /18 (years|años|anos|Jahren|ans|anni)/i.test(json), 'JSON-LD incomplete');
       return 'index + canonical + Person JSON-LD';
     },
     'SEC-05': async function () {
