@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QA Lab running · Carlos A. Muñoz</title>
-    <meta name="description" content="A full catalog run in the QA regression lab. Cases move through the page in Watch, and the native runner log stays open. A 54-second clip of the free QA lab.">
+    <meta name="description" content="A full catalog run in the QA regression lab. Cases move through the page in Watch, and the native runner log stays open. A 57-second clip of the free QA lab.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
     <meta name="robots" content="index, follow, max-image-preview:large, max-video-preview:-1">
     <meta name="theme-color" content="#0d6e76">
@@ -17,7 +17,7 @@
     <meta property="og:locale" content="en_US">
     <meta property="og:url" content="https://carlosandmunoz.com/media/qa-lab-running.html">
     <meta property="og:title" content="QA Lab running">
-    <meta property="og:description" content="A full catalog run in the QA regression lab. Cases move through the page in Watch, and the native runner log stays open. A 54-second clip of the free QA lab.">
+    <meta property="og:description" content="A full catalog run in the QA regression lab. Cases move through the page in Watch, and the native runner log stays open. A 57-second clip of the free QA lab.">
     <meta property="og:image" content="https://carlosandmunoz.com/media/qa-lab-running.jpg">
     <meta property="og:image:width" content="1280">
     <meta property="og:image:height" content="720">
@@ -42,8 +42,8 @@
         "thumbnailUrl": "https://carlosandmunoz.com/media/qa-lab-running.jpg",
         "contentUrl": "https://carlosandmunoz.com/media/qa-lab-running.mp4",
         "embedUrl": "https://carlosandmunoz.com/media/qa-lab-running.html",
-        "uploadDate": "2026-10-02",
-        "duration": "PT54S",
+        "uploadDate": "2026-10-24",
+        "duration": "PT57S",
         "author": { "@type": "Person", "@id": "https://carlosandmunoz.com/#person", "name": "Carlos A. Muñoz Ardila", "url": "https://carlosandmunoz.com/" }
     }
     </script>
@@ -105,13 +105,12 @@
     </video>
     <h2>What the video shows</h2>
     <ol id="video-steps">
-        <li>0:00 The lab runs in Watch mode with the Native runners panel open on the right. The interface is shown in Spanish. The Playwright column reads "waiting for this process", and the counters show 1 passed and 0 failed.</li>
-        <li>0:05 The case list on the left scrolls from the smoke cases into the functional cases. The center panel shows the case being run, a view of the CV, and a live log with a PASS or FAIL line for each case.</li>
-        <li>0:10 FN-02, a language switch check, fails. The failed counter reads 1, and the Observer note explains why the check failed.</li>
-        <li>0:15 More functional cases run, and FN-16 fails. By 0:20 the counters show 12 passed and 3 failed.</li>
-        <li>0:35 The run reaches the security cases, starting with SEC-01, which checks robots.txt. The counters show 21 passed and 3 failed.</li>
-        <li>0:45 The accessibility cases start, and A11Y-01 fails. The counters show 30 passed and 4 failed.</li>
-        <li>0:50 A11Y-05 runs with 32 passed and 4 failed. The Playwright column in the runners panel still reads "waiting for this process".</li>
+        <li>0:00 The CV regression lab opens in Watch mode with all 20 frameworks checked and 86 of 86 cases listed. The counters read 0 passed and 0 failed.</li>
+        <li>0:02 Run full catalog starts the run, and the Native runners panel slides in on the right. The Playwright tab reads "waiting for this process", and the process log says this browser is running the catalog against the site.</li>
+        <li>0:04 SMK-01 and SMK-02 pass. The center panel shows the case being run, a view of the CV, the Observer note, and a live log with a PASS or FAIL line for each case.</li>
+        <li>0:08 The functional cases start with FN-01, a dark mode check. FN-02 and FN-03 switch the CV to French and Italian and back, and both pass.</li>
+        <li>0:22 FN-15, a core competency filter check, fails, and the Observer adds a note about it. FN-16 fails next, and the counters show 8 passed and 2 failed.</li>
+        <li>0:28 The remaining functional cases pass one by one, from FN-17 to FN-13. At 0:56 the counters show 21 passed and 2 failed, and FN-14, a tour check, is running.</li>
     </ol>
     <p>The CV regression lab is a free, in-browser suite that checks this CV. It runs one catalog in 20 frameworks, from Playwright, Cypress, and Robot to Appium, Maestro, and k6, across smoke, functional, security, accessibility, mobile, and performance checks, then opens a results dashboard and a downloadable text report.</p>
     <p>Built by Carlos A. Muñoz, a QA architect with over 18 years in test automation and delivery. <a href="../index.html">Read the interactive CV</a>, open the <a href="../qa-lab.html">QA regression lab</a>, or <a href="../qa-review.html">review any public URL</a>.</p>

@@ -2806,3 +2806,12 @@ test("a TXT read that times out is asked once more before it is left unread", as
   assert.deepEqual(facts.unread, ["dmarc"]);
   assert.deepEqual([asked["example.org"], asked["_dmarc.example.org"]], [2, 1]);
 });
+
+test("PayPal returns the payer to the payment page in the language they paid from", () => {
+  assert.equal(core.payPage("es"), "qa-review-pay-es.html");
+  assert.equal(core.payPage("DE"), "qa-review-pay-de.html");
+  assert.equal(core.payPage("en"), "qa-review-pay.html");
+  assert.equal(core.payPage("ja"), "qa-review-pay.html");
+  assert.equal(core.payPage("../x"), "qa-review-pay.html");
+  assert.equal(core.payPage(undefined), "qa-review-pay.html");
+});

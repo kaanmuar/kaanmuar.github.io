@@ -269,3 +269,5 @@ test("the account file names the base review of each comparison run", () => {
   assert.equal(file.runs.find((item) => item.id === "ab12").compare, null);
   assert.deepEqual(file.runs.find((item) => item.id === "cd34").compare, { id: "cd34", at: run.createdAt, baseId: "ab12", ownHost: own.host, rivalHost: rival.host, own: cmp.overall.own, rival: cmp.overall.rival, dominance: cmp.dominance });
 });
+
+require("./url-review-rivals.test");

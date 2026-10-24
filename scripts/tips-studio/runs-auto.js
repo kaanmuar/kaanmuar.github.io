@@ -1,4 +1,5 @@
-/* Requested reviews and country-sweep sites: one post per review that went public that day.
+/* Requested reviews, country-sweep sites and natural-competitor comparisons: one post per review or
+   comparison that went public that day.
    The batch comes from scripts/auto-live-reports.js (previews/auto-live-reports/batch.json, or
    AUTO_BATCH). Copy is that script's template; each post links to the site's own Live Report.
    Posts carry no prices, no personal name, and nothing about who asked for the review. */
@@ -20,8 +21,10 @@ const AREAS = [["SEO", "SEO"], ["GEO", "GEO"], ["Analytics", "Analytics"], ["Sec
 
 const CATS = {
   Requested: { label: "Real run · requested", color: "#f2b37a", counter: "Requested review", series: "Requested reviews" },
-  National: { label: "Real run · national", color: "#8fc1e3", counter: "Country sweep", series: "Country sweep" }
+  National: { label: "Real run · national", color: "#8fc1e3", counter: "Country sweep", series: "Country sweep" },
+  Versus: { label: "Real run · natural competitors", color: "#c9a7f0", counter: "Natural competitors", series: "Natural competitors" }
 };
+const CAMPAIGN = { National: "country-sweep", Versus: "natural-competitors" };
 
 const RUNS = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, "utf8")) : [];
 
@@ -41,7 +44,12 @@ const TIPS = RUNS.map((run) => {
     actionLabel: "Lesson",
     footRight: "Analyzed on " + analyzed,
     analyzed,
-    visual: {
+    visual: run.kind === "rivals" ? {
+      type: "matrix",
+      cols: ["Score"].concat(AREAS.map(([, label]) => label)),
+      rows: run.sites.map((site) => [site.host, site.overall].concat(AREAS.map(([key]) => site.areas[key] == null ? null : site.areas[key]))),
+      note: "Natural competitors found on the open web · " + analyzed
+    } : {
       type: "scores",
       overall: run.overall,
       areas: AREAS.map(([key, label]) => [label, run.areas[key]]),
@@ -51,16 +59,17 @@ const TIPS = RUNS.map((run) => {
 });
 
 function link(platform, run) {
-  const campaign = run.scope === "National" ? "country-sweep" : "requested-reviews";
-  return SITE + "/qa-review.html?live=" + run.id + "&utm_source=" + platform + "&utm_medium=social&utm_campaign=" + campaign + "&utm_content=" + run.id;
+  const campaign = CAMPAIGN[run.scope] || "requested-reviews";
+  return SITE + "/qa-review.html?live=" + (run.live || run.id) + "&utm_source=" + platform + "&utm_medium=social&utm_campaign=" + campaign + "&utm_content=" + run.id;
 }
 
 function plainTitle(run) { return run.title.join(" ").replace(/\*/g, "").replace(/\s+/g, " ").trim(); }
 
 function captions(run) {
   const head = plainTitle(run);
-  const how = run.scope === "National" ? ", one of the most visited sites in its country, from QA-lab URL Review's country sweep." : ", requested through QA-lab URL Review.";
-  const fair = "One automated analysis of public pages on " + run.analyzed + how + " A starting point, not a verdict.";
+  const how = run.scope === "Versus" ? " of " + run.sites.map((site) => site.host).join(", ") + ", natural competitors found on the open web by QA-lab URL Review's rival sweep."
+    : run.scope === "National" ? ", one of the most visited sites in its country, from QA-lab URL Review's country sweep." : ", requested through QA-lab URL Review.";
+  const fair = (run.scope === "Versus" ? "Automated analyses of public pages on " : "One automated analysis of public pages on ") + run.analyzed + how + " A starting point, not a verdict.";
   const own = ownLine(run.lang || "en");
   return {
     linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + link("linkedin", run), "", own, "", tagLine(run, "linkedin")].join("\n"),

@@ -124,6 +124,7 @@ function describe(v) {
   if (v.type === "check") return "Checklist: " + v.items.map((r) => r[0] + ", " + r[1] + " (" + MARK_WORDS[r[2]] + ")").join("; ");
   if (v.type === "bars") return "Bar chart: " + v.items.map((i) => i[0] + " " + i[1].toLocaleString("en-US") + " " + v.unit).join(", ") + note;
   if (v.type === "stat") return v.value + ", " + v.caption;
+  if (v.type === "matrix") return "Scores side by side: " + v.rows.map((r) => r[0] + " " + r.slice(1).map((n, i) => v.cols[i] + " " + (n == null ? "none" : n)).join(", ")).join("; ") + note;
   return "";
 }
 // LinkedIn caps image alt text at 300 characters, the lowest of the networks Buffer posts to.
