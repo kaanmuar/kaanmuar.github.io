@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com; frame-src https://www.youtube-nocookie.com; form-action 'self';">
+    <title>La CSP mancante: qualsiasi cosa può strisciare dentro. · QA-lab URL Review</title>
+    <meta name="description" content="Senza l’intestazione Content-Security-Policy, il browser esegue qualsiasi script finisca nella tua pagina, compreso uno iniettato da un attaccante.…">
+    <meta name="robots" content="noindex, follow">
+    <meta name="theme-color" content="#0d6e76">
+    <link rel="canonical" href="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-it.html">
+    <link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp.html">
+    <link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-es.html">
+    <link rel="alternate" hreflang="pt" href="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-pt.html">
+    <link rel="alternate" hreflang="de" href="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-de.html">
+    <link rel="alternate" hreflang="fr" href="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-fr.html">
+    <link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-it.html">
+    <link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp.html">
+    <link rel="icon" href="/assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="alternate" type="application/rss+xml" href="https://carlosandmunoz.com/assets/social/rss-it.xml" title="QA-lab URL Review · Social (RSS)">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="QA-lab URL Review">
+    <meta property="og:locale" content="it_IT">
+    <meta property="og:url" content="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-it.html">
+    <meta property="og:title" content="La CSP mancante: qualsiasi cosa può strisciare dentro.">
+    <meta property="og:description" content="Senza l’intestazione Content-Security-Policy, il browser esegue qualsiasi script finisca nella tua pagina, compreso uno iniettato da un attaccante.…">
+    <meta property="og:image" content="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/01-missing-csp.jpg">
+    <meta property="og:image:width" content="1080">
+    <meta property="og:image:height" content="1350">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:alt" content="Intestazioni horror, scheda Sicurezza. La CSP mancante: qualsiasi cosa può strisciare dentro. Nessuna CSP (fallito): HTTP/2 200, content-type: text/html. Con CSP (superato): content-security-policy:,   default-src &#39;self&#39;;,   object-src &#39;none&#39;.">
+    <meta property="article:published_time" content="2026-10-27">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@qalaburlreview">
+    <meta name="twitter:title" content="La CSP mancante: qualsiasi cosa può strisciare dentro.">
+    <meta name="twitter:description" content="Senza l’intestazione Content-Security-Policy, il browser esegue qualsiasi script finisca nella tua pagina, compreso uno iniettato da un attaccante.…">
+    <meta name="twitter:image" content="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/01-missing-csp.jpg">
+    <meta name="twitter:image:alt" content="Intestazioni horror, scheda Sicurezza. La CSP mancante: qualsiasi cosa può strisciare dentro. Nessuna CSP (fallito): HTTP/2 200, content-type: text/html. Con CSP (superato): content-security-policy:,   default-src &#39;self&#39;;,   object-src &#39;none&#39;.">
+    <script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "SocialMediaPosting",
+   "@id": "https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-it.html",
+   "url": "https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-it.html",
+   "headline": "La CSP mancante: qualsiasi cosa può strisciare dentro.",
+   "articleBody": "Senza l’intestazione Content-Security-Policy, il browser esegue qualsiasi script finisca nella tua pagina, compreso uno iniettato da un attaccante.\n\nEsorcizzalo oggi: Controlla se le intestazioni di risposta contengono Content-Security-Policy. Parti in modalità report-only, leggi i report, poi applica la policy.\n\nCome funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=missing-csp\n\n#Halloween #CyberSecurity #Vulnerability #QA #CSP #QAlab",
+   "datePublished": "2026-10-27",
+   "inLanguage": "it",
+   "image": {
+    "@type": "ImageObject",
+    "contentUrl": "https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/01-missing-csp.jpg",
+    "caption": "Intestazioni horror, scheda Sicurezza. La CSP mancante: qualsiasi cosa può strisciare dentro. Nessuna CSP (fallito): HTTP/2 200, content-type: text/html. Con CSP (superato): content-security-policy:,   default-src 'self';,   object-src 'none'."
+   },
+   "author": {
+    "@id": "https://carlosandmunoz.com/qa-review.html#organization"
+   },
+   "publisher": {
+    "@id": "https://carlosandmunoz.com/qa-review.html#organization"
+   },
+   "keywords": "Security",
+   "mainEntityOfPage": "https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-it.html",
+   "isPartOf": {
+    "@type": "CollectionPage",
+    "@id": "https://carlosandmunoz.com/qa-review-social-it.html#page",
+    "url": "https://carlosandmunoz.com/qa-review-social-it.html"
+   }
+  },
+  {
+   "@type": "Organization",
+   "@id": "https://carlosandmunoz.com/qa-review.html#organization",
+   "name": "QA-lab URL Review",
+   "url": "https://carlosandmunoz.com/qa-review.html",
+   "logo": "https://carlosandmunoz.com/assets/qa-review-mark.svg",
+   "sameAs": [
+    "https://www.youtube.com/@qalaburlreview",
+    "https://www.tiktok.com/@qalaburlreview",
+    "https://www.linkedin.com/company/qalab-url-review",
+    "https://x.com/qalaburlreview",
+    "https://www.facebook.com/qalaburlreview",
+    "https://www.reddit.com/user/qalaburlreview/",
+    "https://dev.to/qalaburlreview"
+   ]
+  },
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "QA-lab URL Review",
+     "item": "https://carlosandmunoz.com/qa-review-it.html"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "Social",
+     "item": "https://carlosandmunoz.com/qa-review-social-it.html"
+    },
+    {
+     "@type": "ListItem",
+     "position": 3,
+     "name": "La CSP mancante: qualsiasi cosa può strisciare dentro.",
+     "item": "https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-it.html"
+    }
+   ]
+  }
+ ]
+}
+    </script>
+    <script src="/js/site-analytics.js?v=20261024b"></script>
+    <script src="/js/qa-review-consent.js?v=20261028p"></script>
+    <script src="/js/site-theme.js"></script>
+    <script>SiteTheme.boot();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/social-hub.css?v=b9c6b35260">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand"><a href="/qa-review-it.html"><img class="logo" src="/assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
+    <nav class="actions" aria-label="QA-lab URL Review">
+        <a class="btn btn-ghost" href="/qa-review-it.html">URL Review</a>
+        <a class="btn btn-ghost" href="/qa-review-social-it.html">Tutti i post</a>
+    </nav>
+</header>
+<main class="post-page" data-post-id="tips-horror-headers-2026-10/01-missing-csp-it" data-url="https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-it.html" data-copied="Copiato">
+    <nav class="post-crumbs" aria-label="Breadcrumb"><a href="/qa-review-social-it.html">Social</a> › <span>Consiglio</span></nav>
+    <article class="post post-full" data-id="tips-horror-headers-2026-10/01-missing-csp-it" data-kind="tip" data-lang="it">
+        <div class="post-media"><img src="/media/social-posts/tips-horror-headers-2026-10/feed/01-missing-csp.jpg" width="1080" height="1350" decoding="async" alt="Intestazioni horror, scheda Sicurezza. La CSP mancante: qualsiasi cosa può strisciare dentro. Nessuna CSP (fallito): HTTP/2 200, content-type: text/html. Con CSP (superato): content-security-policy:,   default-src &#39;self&#39;;,   object-src &#39;none&#39;."></div>
+        <div class="post-body">
+            <p class="post-meta"><span class="post-tag post-kind-tip">Consiglio</span><span class="post-tag">Sicurezza</span><span class="post-tag post-lang" translate="no">IT</span><span class="post-tag post-scheduled">Programmato</span></p>
+            <h1 class="post-title" lang="it">La CSP mancante: qualsiasi cosa può strisciare dentro.</h1>
+            <div class="post-text" lang="it"><span class="post-par">Senza l’intestazione Content-Security-Policy, il browser esegue qualsiasi script finisca nella tua pagina, compreso uno iniettato da un attaccante.</span> <span class="post-par">Esorcizzalo oggi: Controlla se le intestazioni di risposta contengono Content-Security-Policy. Parti in modalità report-only, leggi i report, poi applica la policy.</span> <span class="post-par">Come funziona la review di una pagina pubblica, passo dopo passo: <a href="https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=horror-headers-2026-10&amp;utm_content=missing-csp" rel="noopener">carlosandmunoz.com/qa-review-guide.html</a></span> <span class="post-par">#Halloween #CyberSecurity #Vulnerability #QA #CSP #QAlab</span></div>
+            <p class="post-foot"><time datetime="2026-10-27">27 ott 2026</time></p>
+            <div class="post-actions post-share"><a class="post-btn" data-act="share" data-net="x" href="https://x.com/intent/post?text=La%20CSP%20mancante%3A%20qualsiasi%20cosa%20pu%C3%B2%20strisciare%20dentro.&amp;url=https%3A%2F%2Fcarlosandmunoz.com%2Fsocial%2Ftips-horror-headers-2026-10%2F01-missing-csp-it.html%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-hub%26utm_content%3Dpost-tips-horror-headers-2026-10-01-missing-csp-it" target="_blank" rel="noopener">X</a><a class="post-btn" data-act="share" data-net="linkedin" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcarlosandmunoz.com%2Fsocial%2Ftips-horror-headers-2026-10%2F01-missing-csp-it.html%3Futm_source%3Dlinkedin%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-hub%26utm_content%3Dpost-tips-horror-headers-2026-10-01-missing-csp-it" target="_blank" rel="noopener">LinkedIn</a><a class="post-btn" data-act="share" data-net="facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fcarlosandmunoz.com%2Fsocial%2Ftips-horror-headers-2026-10%2F01-missing-csp-it.html%3Futm_source%3Dfacebook%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-hub%26utm_content%3Dpost-tips-horror-headers-2026-10-01-missing-csp-it" target="_blank" rel="noopener">Facebook</a><a class="post-btn" data-act="share" data-net="whatsapp" href="https://wa.me/?text=La%20CSP%20mancante%3A%20qualsiasi%20cosa%20pu%C3%B2%20strisciare%20dentro.%20https%3A%2F%2Fcarlosandmunoz.com%2Fsocial%2Ftips-horror-headers-2026-10%2F01-missing-csp-it.html%3Futm_source%3Dwhatsapp%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-hub%26utm_content%3Dpost-tips-horror-headers-2026-10-01-missing-csp-it" target="_blank" rel="noopener">WhatsApp</a><button class="post-btn" type="button" data-act="copylink">Copia il link</button><a class="post-btn" data-act="download" href="/media/social-posts/tips-horror-headers-2026-10/feed/01-missing-csp.jpg" download>Scarica l’immagine</a></div>
+        </div>
+    </article>
+    <section class="post-captions">
+        <h2>Testi per ogni rete</h2>
+        <details><summary>LinkedIn</summary><pre id="cap-linkedin" lang="it">🎃 La CSP mancante: qualsiasi cosa può strisciare dentro.
+
+Senza l’intestazione Content-Security-Policy, il browser esegue qualsiasi script finisca nella tua pagina, compreso uno iniettato da un attaccante.
+
+Esorcizzalo oggi: Controlla se le intestazioni di risposta contengono Content-Security-Policy. Parti in modalità report-only, leggi i report, poi applica la policy.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=horror-headers-2026-10&amp;utm_content=missing-csp
+
+#Halloween #CyberSecurity #Vulnerability #QA #CSP #QAlab</pre><button class="post-btn" type="button" data-act="copy" data-net="linkedin" data-target="cap-linkedin">Copia il testo</button></details>
+        <details><summary>X</summary><pre id="cap-x" lang="it">🎃 La CSP mancante: qualsiasi cosa può strisciare dentro.
+
+Controlla se le intestazioni di risposta contengono Content-Security-Policy. Parti in modalità report-only, leggi i report, poi…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&amp;utm_medium=social&amp;utm_campaign=horror-headers-2026-10&amp;utm_content=missing-csp</pre><button class="post-btn" type="button" data-act="copy" data-net="x" data-target="cap-x">Copia il testo</button></details>
+        <details><summary>Instagram</summary><pre id="cap-instagram" lang="it">🎃 La CSP mancante: qualsiasi cosa può strisciare dentro.
+
+Senza l’intestazione Content-Security-Policy, il browser esegue qualsiasi script finisca nella tua pagina, compreso uno iniettato da un attaccante.
+
+Esorcizzalo: Controlla se le intestazioni di risposta contengono Content-Security-Policy. Parti in modalità report-only, leggi i report, poi applica la policy.
+
+Guida completa: link in bio.
+
+#Halloween #CyberSecurity #QA #CSP #QAlab</pre><button class="post-btn" type="button" data-act="copy" data-net="instagram" data-target="cap-instagram">Copia il testo</button></details>
+        <details><summary>Facebook</summary><pre id="cap-facebook" lang="it">🎃 La CSP mancante: qualsiasi cosa può strisciare dentro.
+
+Senza l’intestazione Content-Security-Policy, il browser esegue qualsiasi script finisca nella tua pagina, compreso uno iniettato da un attaccante.
+
+Esorcizzalo: Controlla se le intestazioni di risposta contengono Content-Security-Policy. Parti in modalità report-only, leggi i report, poi applica la policy.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=horror-headers-2026-10&amp;utm_content=missing-csp
+
+#Halloween #Vulnerability #QA #QAlab</pre><button class="post-btn" type="button" data-act="copy" data-net="facebook" data-target="cap-facebook">Copia il testo</button></details>
+        <details><summary>TikTok</summary><pre id="cap-tiktok" lang="it">🎃 The missing CSP: anything can crawl in. Check your response headers for Content-Security-Policy. Start in report-only mode, read the reports, then enforce it. #Halloween #CyberSecurity #Vulnerability #QA #CSP #WebSecurity #WebDev #QAlab</pre><button class="post-btn" type="button" data-act="copy" data-net="tiktok" data-target="cap-tiktok">Copia il testo</button></details>
+        <details><summary>YouTube</summary><pre id="cap-youtube" lang="it">Without a Content-Security-Policy header, the browser runs any script that ends up in your page, including one an attacker injected.
+
+Exorcise it: Check your response headers for Content-Security-Policy. Start in report-only mode, read the reports, then enforce it.
+
+Guide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&amp;utm_medium=social&amp;utm_campaign=horror-headers-2026-10&amp;utm_content=missing-csp
+
+Horror header 1/5 · QA-lab URL Review
+
+#Halloween #DevOps #CyberSecurity #QA #CSP #WebSecurity #Programming #LearnOnYouTube #QualityAssurance #InfoSec #TestAutomation #QAlab</pre><button class="post-btn" type="button" data-act="copy" data-net="youtube" data-target="cap-youtube">Copia il testo</button></details>
+    </section>
+    <p class="post-back"><a class="btn btn-ghost" href="/qa-review-social-it.html">← Tutti i post</a></p>
+</main>
+<footer class="hub-footer"><p>I post nascono da revisioni pubbliche di pagine pubbliche. Una revisione analizza le pagine; non vi esegue mai test.</p><p><a href="/qa-review-legal.html?lang=it">Legal</a> · <a href="/assets/social/rss-it.xml">RSS</a></p></footer>
+<script src="/js/social-post.js?v=fe995958fe"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+Text,Image URL,Tags,Posting Time
+"🎃 The missing CSP: anything can crawl in.
+
+Check your response headers for Content-Security-Policy. Start in report-only mode, read the reports, then…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=missing-csp","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/01-missing-csp.jpg","","2026-10-27 21:05"
+"🎃 The zombie redirect chain: it keeps coming back.
+
+Follow your old links to their final address. Send each one there in a single redirect, and…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=zombie-redirects","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/02-zombie-redirects.jpg","","2026-10-28 21:25"
+"🎃 The haunted 404: the page is gone, the server says 200.
+
+Open a made-up address on your site. It should answer 404 and offer a way back: a link home…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=haunted-404","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/03-haunted-404.jpg","","2026-10-29 21:15"
+"🎃 The cursed alt text: IMG_2041.jpg says nothing.
+
+Go through the images on your top page. Describe the ones that inform, and give decorative ones an…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=cursed-alt","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/04-cursed-alt.jpg","","2026-10-30 21:10"
+"🎃 The poltergeist layout shift: the button moved by itself.
+
+Load your page on a slow connection and watch it settle. Give images a width and…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=poltergeist-cls","https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/05-poltergeist-cls.jpg","","2026-10-31 21:40"
