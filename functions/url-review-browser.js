@@ -637,7 +637,11 @@ async function domFacts(page) {
   return page.evaluate(() => {
     const here = location.hostname;
     const links = new Set();
+    const authRoute = /\/(auth|oauth2?|log_?out|sign_?out)(\/|$|\?)/i;
     document.querySelectorAll("a[href]").forEach((node) => {
+      const method = (node.getAttribute("data-method") || "").trim().toLowerCase();
+      if (method && method !== "get") return;
+      if (/(^|\s)nofollow(\s|$)/i.test(node.getAttribute("rel") || "") && authRoute.test(node.getAttribute("href"))) return;
       try {
         const url = new URL(node.getAttribute("href"), location.href);
         if (url.hostname === here && /^https?:$/.test(url.protocol)) { url.hash = ""; links.add(url.href); }

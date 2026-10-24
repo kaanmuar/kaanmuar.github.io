@@ -1126,6 +1126,15 @@ function textOf(html, name) {
   return match ? decode(match[1].replace(/<[^>]+>/g, " ")) : "";
 }
 
+const AUTH_ROUTE = /\/(auth|oauth2?|log_?out|sign_?out)(\/|$|\?)/i;
+
+// Rails UJS and similar send these as POST, PUT or DELETE, so a GET can answer 404 or 405 on a working site.
+function actionLink(tag) {
+  const method = attr(tag, "data-method").trim().toLowerCase();
+  if (method && method !== "get") return true;
+  return /(^|\s)nofollow(\s|$)/i.test(attr(tag, "rel")) && AUTH_ROUTE.test(attr(tag, "href"));
+}
+
 function sameHost(from, href) {
   try {
     const next = new URL(href, from);
@@ -1413,7 +1422,7 @@ function inspect(html, headers, pageUrl) {
   const links = [];
   collect(markup, "a").forEach((tag) => {
     const raw = attr(tag, "href");
-    if (/\$\{|\{\{|%7B/i.test(raw)) return;
+    if (/\$\{|\{\{|%7B/i.test(raw) || actionLink(tag)) return;
     const href = sameHost(pageUrl, raw);
     if (href && links.length < 100) links.push(href);
   });
@@ -3706,6 +3715,7 @@ function previewReport(report) {
 
 module.exports = {
   decodeBody,
+  actionLink,
   domainCases,
   compareRuns,
   testKeyMatches,
