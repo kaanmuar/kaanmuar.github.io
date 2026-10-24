@@ -80,26 +80,26 @@ module.exports = {
   },
   de: {
     return: [
-      ["Die Seite redet noch.", "Deine Prüfung von {host} hat Dinge gefunden, die sich zu beheben lohnen, und sie liegen noch unter dem Milchglas. Öffne den vollständigen Bericht und lies, was die Unschärfe verdeckt hat.", "Was die Unschärfe auf {host} verdeckt hat"],
-      ["Gerade öffnet jemand {host} auf dem Handy.", "Diese Person schreibt dir nicht, wenn ein Button zu klein ist oder die Seite seitlich wegrutscht. Sie geht einfach. Der vollständige Bericht zeigt, wo das passiert.", "Gerade hat jemand {host} auf dem Handy geöffnet"],
-      ["Google hat {host} heute wieder gelesen.", "Die KI-Crawler auch. Sie warten nicht auf einen guten Moment, und sie bewerten, was sie finden. Sieh dir an, was sie sehen, bevor sie entscheiden.", "Google hat {host} heute wieder gelesen"],
-      ["Websites verändern sich von allein.", "Ein Plugin wurde aktualisiert, ein Deploy ging raus, jemand hat ein Skript eingebaut. Seit deiner Prüfung hatte {host} Zeit, sich zu verändern. Prüf noch einmal und sieh, was sich bewegt hat.", "{host} hatte Zeit, sich zu verändern"],
-      ["Ein halber Satz lässt einen nicht los.", "Du hast gesehen, wie jeder Befund zu {host} anfängt. Das Ende sagt, was zu ändern ist und wie lange es dauert. Es ist einen Klick entfernt.", "Die andere Hälfte jedes Befunds"],
-      ["Stell dir das nächste Meeting vor.", "Statt \"die Seite fühlt sich langsam an\" bringst du eine Liste mit: was fehlschlägt, warum, die Lösung und den Testfall, der es beweist. Die Liste für {host} wartet schon.", "Nimm die Liste für {host} ins nächste Meeting mit"]
+      ["Die Seite redet noch.", "Ihre Prüfung von {host} hat Dinge gefunden, die sich zu beheben lohnen, und sie liegen noch unter dem Milchglas. Öffnen Sie den vollständigen Bericht und lesen Sie, was die Unschärfe verdeckt hat.", "Was die Unschärfe auf {host} verdeckt hat"],
+      ["Gerade öffnet jemand {host} auf dem Handy.", "Diese Person schreibt Ihnen nicht, wenn ein Button zu klein ist oder die Seite seitlich wegrutscht. Sie geht einfach. Der vollständige Bericht zeigt, wo das passiert.", "Gerade hat jemand {host} auf dem Handy geöffnet"],
+      ["Google hat {host} heute wieder gelesen.", "Die KI-Crawler auch. Sie warten nicht auf einen guten Moment, und sie bewerten, was sie finden. Sehen Sie sich an, was sie sehen, bevor sie entscheiden.", "Google hat {host} heute wieder gelesen"],
+      ["Websites verändern sich von allein.", "Ein Plugin wurde aktualisiert, ein Deploy ging raus, jemand hat ein Skript eingebaut. Seit Ihrer Prüfung hatte {host} Zeit, sich zu verändern. Prüfen Sie noch einmal und sehen Sie, was sich bewegt hat.", "{host} hatte Zeit, sich zu verändern"],
+      ["Ein halber Satz lässt einen nicht los.", "Sie haben gesehen, wie jeder Befund zu {host} anfängt. Das Ende sagt, was zu ändern ist und wie lange es dauert. Es ist einen Klick entfernt.", "Die andere Hälfte jedes Befunds"],
+      ["Stellen Sie sich das nächste Meeting vor.", "Statt \"die Seite fühlt sich langsam an\" bringen Sie eine Liste mit: was fehlschlägt, warum, die Lösung und den Testfall, der es beweist. Die Liste für {host} wartet schon.", "Nehmen Sie die Liste für {host} ins nächste Meeting mit"]
     ],
     paid: [
-      ["Du hast Dinge behoben. Jetzt beweis es.", "Prüf {host} noch einmal, und der neue Bericht stellt sich neben den letzten: was behoben ist, was neu ist und was noch da ist.", "Haben die Korrekturen auf {host} gehalten?"],
+      ["Sie haben Dinge behoben. Jetzt beweisen Sie es.", "Prüfen Sie {host} noch einmal, und der neue Bericht stellt sich neben den letzten: was behoben ist, was neu ist und was noch da ist.", "Haben die Korrekturen auf {host} gehalten?"],
       ["Der zweite Blick findet, was die erste Korrektur kaputt gemacht hat.", "Änderungen ziehen Kreise. Ein neuer Header, ein verschobenes Menü, ein leichteres Bild können nebenan etwas brechen. Eine neue Prüfung von {host} findet es vor einem Besucher.", "Ein zweiter Blick auf {host}"],
-      ["Nebenan gibt es noch eine Website.", "Ein Kunde, ein Wettbewerber, die Landingpage von letzter Woche. Richte die Prüfung darauf und vergleiche sie mit {host}, Seite an Seite.", "Welche Website ist als Nächstes dran?"],
-      ["Gib es ans Team weiter.", "Die Testfälle für {host} lassen sich nach Jira, TestRail, Xray, Zephyr, Azure DevOps, Excel oder PDF exportieren, damit niemand etwas abtippen muss.", "Deine Testfälle für {host}, im Tool deines Teams"],
-      ["Geh eine Ebene tiefer.", "Die erste Prüfung hat einen Ausschnitt von {host} angesehen. Mehr Seiten und tiefere Links erreichen die Formulare, den Checkout und die Ecken, die in keiner Demo jemand anklickt.", "Die Ecken von {host}, die niemand anklickt"]
+      ["Nebenan gibt es noch eine Website.", "Ein Kunde, ein Wettbewerber, die Landingpage von letzter Woche. Richten Sie die Prüfung darauf und vergleichen Sie sie mit {host}, Seite an Seite.", "Welche Website ist als Nächstes dran?"],
+      ["Geben Sie es ans Team weiter.", "Die Testfälle für {host} lassen sich nach Jira, TestRail, Xray, Zephyr, Azure DevOps, Excel oder PDF exportieren, damit niemand etwas abtippen muss.", "Ihre Testfälle für {host}, im Tool Ihres Teams"],
+      ["Gehen Sie eine Ebene tiefer.", "Die erste Prüfung hat einen Ausschnitt von {host} angesehen. Mehr Seiten und tiefere Links erreichen die Formulare, den Checkout und die Ecken, die in keiner Demo jemand anklickt.", "Die Ecken von {host}, die niemand anklickt"]
     ],
     offer: [
-      ["Solange es frisch ist.", "Du hast {host} diese Woche geprüft. Die Details sind noch im Kopf: der beste Moment, die vollständigen Befunde zu lesen und den ersten zu beheben.", "Solange {host} noch frisch ist"],
-      ["Eine Korrektur diese Woche.", "Der Bericht sortiert, was auf {host} zuerst zu beheben ist. Nimm die oberste Zeile, gib ihr einen Nachmittag und prüf dann noch einmal, um den Wert steigen zu sehen.", "Eine Korrektur für {host} diese Woche"],
-      ["Wie schneidet dein Wettbewerber ab?", "Lass dieselbe Prüfung auf der Website laufen, mit der du dich vergleichst. Dann weißt du, ob {host} vorne liegt, hinten oder einfach anders ist.", "Wie schneidet dein Wettbewerber ab?"],
-      ["Die Testfälle sind schon geschrieben.", "Die Prüfung hat Testfälle für {host} in den Frameworks entworfen, die du gewählt hast. Öffne den Bericht, um sie vollständig zu lesen und selbst auszuführen.", "Die Testfälle für {host} warten"],
-      ["Stell dem Bericht eine Frage.", "Kann die KI-Suche {host} lesen? Startet das Tracking vor der Cookie-Wahl? Ist die Seite auf dem Handy schnell? Die Antworten stehen im vollständigen Bericht.", "Drei Fragen zu {host}"]
+      ["Solange es frisch ist.", "Sie haben {host} diese Woche geprüft. Die Details sind noch im Kopf: der beste Moment, die vollständigen Befunde zu lesen und den ersten zu beheben.", "Solange {host} noch frisch ist"],
+      ["Eine Korrektur diese Woche.", "Der Bericht sortiert, was auf {host} zuerst zu beheben ist. Nehmen Sie die oberste Zeile, geben Sie ihr einen Nachmittag und prüfen Sie dann noch einmal, um den Wert steigen zu sehen.", "Eine Korrektur für {host} diese Woche"],
+      ["Wie schneidet Ihr Wettbewerber ab?", "Lassen Sie dieselbe Prüfung auf der Website laufen, mit der Sie sich vergleichen. Dann wissen Sie, ob {host} vorne liegt, hinten oder einfach anders ist.", "Wie schneidet Ihr Wettbewerber ab?"],
+      ["Die Testfälle sind schon geschrieben.", "Die Prüfung hat Testfälle für {host} in den Frameworks entworfen, die Sie gewählt haben. Öffnen Sie den Bericht, um sie vollständig zu lesen und selbst auszuführen.", "Die Testfälle für {host} warten"],
+      ["Stellen Sie dem Bericht eine Frage.", "Kann die KI-Suche {host} lesen? Startet das Tracking vor der Cookie-Wahl? Ist die Seite auf dem Handy schnell? Die Antworten stehen im vollständigen Bericht.", "Drei Fragen zu {host}"]
     ]
   },
   fr: {

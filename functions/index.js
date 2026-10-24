@@ -806,7 +806,11 @@ async function loadEvents(start, end) {
     if (cursor) query = query.startAfter(cursor);
     const snap = await query.get();
     if (snap.empty) break;
-    snap.forEach((doc) => rows.push(doc.data() || {}));
+    // Social hub page views are counted by refreshSocialHubStats, not in the site reports.
+    snap.forEach((doc) => {
+      const row = doc.data() || {};
+      if (row.kind !== "view") rows.push(row);
+    });
     cursor = snap.docs[snap.docs.length - 1];
     if (snap.size < 400 || rows.length >= 20000) break;
   }
@@ -1137,10 +1141,11 @@ async function probeFailure(url) {
   if (probe.dns.error) return probe;
   probe.plain = await urlReview.probeRead(url);
   const plain = probe.plain;
-  const refused = !plain.error && !plain.httpRedirect && ((plain.status >= 400 && plain.status < 500) || !!plain.challenge);
-  if (!refused) return probe;
+  const target = plain.url || reviewFailures.unreadUrl(plain, url);
+  if (reviewFailures.probeNeedsTcp(plain)) probe.tcp = await urlReview.tcpCheck(target, 6000);
+  if (!reviewFailures.probeNeedsBrowser(plain, probe.tcp)) return probe;
   const started = Date.now();
-  const browsed = await browseForReview({ url: plain.url, paths: [], html: true, probe: true }, null)
+  const browsed = await browseForReview({ url: target, paths: [], html: true, probe: true }, null)
     .catch((error) => ({ ok: false, error: String((error && error.message) || "").slice(0, 120) }));
   const view = browsed && browsed.ok && browsed.start ? browsed.start : null;
   probe.browser = view ? {
@@ -1149,7 +1154,7 @@ async function probeFailure(url) {
     status: view.status || 0,
     docStatus: view.docStatus || 0,
     finalUrl: String(view.finalUrl || "").slice(0, 300),
-    challenge: view.html ? urlReview.challengeOf(view.finalUrl || plain.url, view.headers || {}, view.html) : "",
+    challenge: view.html ? urlReview.challengeOf(view.finalUrl || target, view.headers || {}, view.html) : "",
     words: view.renderedWords || 0,
     ms: Date.now() - started
   } : { ok: false, error: browsed ? browsed.error || "no answer" : "no browser key", ms: Date.now() - started };
@@ -1412,6 +1417,9 @@ async function dispatchFacebookQueue() {
 }
 
 exports.dispatchFacebookQueue = scheduled(withMail, "dispatchFacebookQueue", () => dispatchFacebookQueue());
+
+exports.refreshSocialHubStats = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB" }), "refreshSocialHubStats", () =>
+  require("./social-hub-stats").refresh(admin.firestore()));
 
 exports.exportFirestoreWeekly = scheduled(withMail, "exportFirestoreWeekly", async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
@@ -3673,8 +3681,8 @@ async function runReview(req, res, placeOf) {
       depth: intake.value.depth,
       reason: intake.value.reason
     });
-    const asked = (() => { try { return urlReview.registrable(new URL(intake.value.url).hostname); } catch (error) { return ""; } })();
-    const ranksPromise = base ? reviewMarket.trancoRanks([urlReview.registrable(base.report.host), asked]).catch(() => []) : null;
+    const asked = (() => { try { return urlReview.registryDomain(new URL(intake.value.url).hostname); } catch (error) { return ""; } })();
+    const ranksPromise = base ? reviewMarket.trancoRanks([urlReview.registryDomain(base.report.host), asked]).catch(() => []) : null;
     const report = await urlReview.reviewTarget(intake.value.url, {
       log: (text) => writeLine({ type: "log", text }),
       stopped: () => stopped,
@@ -3714,7 +3722,7 @@ async function runReview(req, res, placeOf) {
     if (base) {
       writeLine({ type: "log", text: "Reading the Tranco ranks and your score history for both sites." });
       let [ownRank, rivalRank] = await ranksPromise;
-      if (urlReview.registrable(report.host) !== asked) rivalRank = await reviewMarket.trancoRank(urlReview.registrable(report.host));
+      if (urlReview.registryDomain(report.host) !== asked) rivalRank = await reviewMarket.trancoRank(urlReview.registryDomain(report.host));
       const trail = await scoreTrail(intake.value.email, base.report.host, report);
       report.compare = reviewCompare.compareSites(Object.assign({ id: intake.value.compareWith }, base.report), report, { ranks: { own: ownRank, rival: rivalRank }, trail });
       if (report.compare) {
