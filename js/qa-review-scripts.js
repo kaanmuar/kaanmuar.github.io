@@ -19,6 +19,15 @@
     return JSON.stringify(String(value == null ? "" : value));
   }
 
+  // A rule may name several headers when any one of them satisfies it, such as a frame policy sent as X-Frame-Options or CSP frame-ancestors.
+  function headerNames(rule) {
+    return [].concat(rule.name);
+  }
+
+  function headerLabel(rule) {
+    return headerNames(rule).join(" or ");
+  }
+
   function xml(value) {
     return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
@@ -95,7 +104,7 @@
       case "SEC-01": return { kind: "httpsRedirect" };
       case "SEC-02": return { kind: "headers", path: at, rules: [{ name: "strict-transport-security" }] };
       case "SEC-03": return { kind: "headers", path: at, rules: [{ name: "content-security-policy" }] };
-      case "SEC-04": return { kind: "headers", path: at, rules: [{ name: "x-content-type-options", pattern: "nosniff" }, { name: "x-frame-options", pattern: "deny|sameorigin" }] };
+      case "SEC-04": return { kind: "headers", path: at, rules: [{ name: "x-content-type-options", pattern: "nosniff" }, { name: ["x-frame-options", "content-security-policy"], pattern: "deny|sameorigin|frame-ancestors" }] };
       case "SEC-05": return { kind: "headers", path: at, rules: [{ name: "referrer-policy" }] };
       case "SEC-08": return { kind: "headers", path: at, rules: [{ name: "permissions-policy" }] };
       case "RS-03": return { kind: "headers", path: at, rules: [{ name: "cache-control" }] };
@@ -172,7 +181,7 @@
         break;
       case "headers":
         body.push("const res = await request.get(BASE + " + q(check.path) + ");", "const headers = res.headers();");
-        check.rules.forEach((rule) => body.push(rule.pattern ? "expect(headers[" + q(rule.name) + "] || \"\").toMatch(/" + rule.pattern + "/i);" : "expect(headers[" + q(rule.name) + "]).toBeTruthy();"));
+        check.rules.forEach((rule) => body.push(rule.pattern ? "expect([" + headerNames(rule).map((n) => "headers[" + q(n) + "]").join(", ") + "].join(\" \")).toMatch(/" + rule.pattern + "/i);" : "expect(headers[" + q(rule.name) + "]).toBeTruthy();"));
         break;
       case "headerNoDigits":
         body.push("const res = await request.get(BASE + " + q(check.path) + ");", "expect(res.headers()[" + q(check.name) + "] || \"\").not.toMatch(/\\d/);");
@@ -242,7 +251,7 @@
         break;
       case "headers":
         body.push("cy.request(BASE + " + q(check.path) + ").then((res) => {");
-        check.rules.forEach((rule) => body.push(rule.pattern ? "  expect(String(res.headers[" + q(rule.name) + "] || \"\")).to.match(/" + rule.pattern + "/i);" : "  expect(res.headers).to.have.property(" + q(rule.name) + ");"));
+        check.rules.forEach((rule) => body.push(rule.pattern ? "  expect([" + headerNames(rule).map((n) => "res.headers[" + q(n) + "]").join(", ") + "].join(\" \")).to.match(/" + rule.pattern + "/i);" : "  expect(res.headers).to.have.property(" + q(rule.name) + ");"));
         body.push("});");
         break;
       case "headerNoDigits":
@@ -318,7 +327,7 @@
         break;
       case "headers":
         body.push("res = requests.get(BASE + " + q(check.path) + ", timeout=30)");
-        check.rules.forEach((rule) => body.push(rule.pattern ? "assert re.search(r\"" + rule.pattern + "\", res.headers.get(" + q(rule.name) + ", \"\"), re.I)" : "assert res.headers.get(" + q(rule.name) + ")"));
+        check.rules.forEach((rule) => body.push(rule.pattern ? "assert re.search(r\"" + rule.pattern + "\", \" \".join([" + headerNames(rule).map((n) => "res.headers.get(" + q(n) + ", \"\")").join(", ") + "]), re.I)" : "assert res.headers.get(" + q(rule.name) + ")"));
         break;
       case "headerNoDigits":
         body.push("res = requests.get(BASE + " + q(check.path) + ", timeout=30)", "assert not re.search(r\"\\d\", res.headers.get(" + q(check.name) + ", \"\"))");
@@ -394,7 +403,7 @@
         break;
       case "headers":
         lines.push("    ${resp}=    GET    ${BASE}" + check.path);
-        check.rules.forEach((rule) => lines.push(rule.pattern ? "    Should Match Regexp    ${resp.headers}[" + rule.name + "]    (?i)" + rule.pattern : "    Dictionary Should Contain Key    ${resp.headers}    " + rule.name));
+        check.rules.forEach((rule) => lines.push(rule.pattern ? "    ${value}=    Evaluate    " + headerNames(rule).map((n) => "$resp.headers.get('" + n + "', '')").join(" + ' ' + ") + "\n    Should Match Regexp    ${value}    (?i)" + rule.pattern : "    Dictionary Should Contain Key    ${resp.headers}    " + rule.name));
         break;
       case "headerNoDigits":
         lines.push("    ${resp}=    GET    ${BASE}" + check.path, "    ${value}=    Evaluate    $resp.headers.get('" + check.name + "', '')", "    Should Not Match Regexp    ${value}    \\\\d");
@@ -463,7 +472,7 @@
         break;
       case "headers":
         body.push("const res = await fetch(BASE + " + q(check.path) + ");");
-        check.rules.forEach((rule) => body.push(rule.pattern ? "expect(res.headers.get(" + q(rule.name) + ") || \"\").toMatch(/" + rule.pattern + "/i);" : "expect(res.headers.get(" + q(rule.name) + ")).toBeTruthy();"));
+        check.rules.forEach((rule) => body.push(rule.pattern ? "expect([" + headerNames(rule).map((n) => "res.headers.get(" + q(n) + ")").join(", ") + "].join(\" \")).toMatch(/" + rule.pattern + "/i);" : "expect(res.headers.get(" + q(rule.name) + ")).toBeTruthy();"));
         break;
       case "headerNoDigits":
         body.push("const res = await fetch(BASE + " + q(check.path) + ");", "expect(res.headers.get(" + q(check.name) + ") || \"\").not.toMatch(/\\d/);");
@@ -609,7 +618,7 @@
         break;
       case "headers":
         body.push("const res = await fetch(BASE + " + q(check.path) + ");");
-        check.rules.forEach((rule) => body.push(rule.pattern ? A.match("res.headers.get(" + q(rule.name) + ") || \"\"", "/" + rule.pattern + "/i") : A.truthy("res.headers.get(" + q(rule.name) + ")", q(rule.name))));
+        check.rules.forEach((rule) => body.push(rule.pattern ? A.match("[" + headerNames(rule).map((n) => "res.headers.get(" + q(n) + ")").join(", ") + "].join(\" \")", "/" + rule.pattern + "/i") : A.truthy("res.headers.get(" + q(rule.name) + ")", q(rule.name))));
         break;
       case "headerNoDigits":
         body.push("const res = await fetch(BASE + " + q(check.path) + ");", A.noMatch("res.headers.get(" + q(check.name) + ") || \"\"", "/\\d/"));
@@ -717,7 +726,7 @@
       case "headers":
         body.push("HttpResponse<byte[]> res = get(BASE + " + q(check.path) + ");");
         check.rules.forEach((rule) => body.push(rule.pattern
-          ? ok("Pattern.compile(" + q(rule.pattern) + ", Pattern.CASE_INSENSITIVE).matcher(" + header(rule.name) + ").find()", q(rule.name))
+          ? ok("Pattern.compile(" + q(rule.pattern) + ", Pattern.CASE_INSENSITIVE).matcher(" + headerNames(rule).map(header).join(" + \" \" + ") + ").find()", q(headerLabel(rule)))
           : ok("res.headers().firstValue(" + q(rule.name) + ").isPresent()", q(rule.name))));
         break;
       case "headerNoDigits":
@@ -819,7 +828,7 @@
         break;
       case "headers":
         body.push("res = http_get(BASE + " + rb(check.path) + ")");
-        check.rules.forEach((rule) => body.push(rule.pattern ? "expect(res[" + rb(rule.name) + "].to_s).to match(/" + rule.pattern + "/i)" : "expect(res[" + rb(rule.name) + "]).not_to be_nil"));
+        check.rules.forEach((rule) => body.push(rule.pattern ? "expect([" + headerNames(rule).map((n) => "res[" + rb(n) + "]").join(", ") + "].join(\" \")).to match(/" + rule.pattern + "/i)" : "expect(res[" + rb(rule.name) + "]).not_to be_nil"));
         break;
       case "headerNoDigits":
         body.push("res = http_get(BASE + " + rb(check.path) + ")", "expect(res[" + rb(check.name) + "].to_s).not_to match(/\\d/)");
@@ -910,7 +919,7 @@
         break;
       case "headers":
         check.rules.forEach((rule) => steps.push(rule.pattern
-          ? "Then the " + gq(rule.name) + " header of " + gq(check.path) + " matches " + gq(rule.pattern)
+          ? "Then the " + gq(headerLabel(rule)) + " header of " + gq(check.path) + " matches " + gq(rule.pattern)
           : "Then " + gq(check.path) + " sends the " + gq(rule.name) + " header"));
         break;
       case "headerNoDigits":
@@ -1106,7 +1115,7 @@ Then(/^"([^"]*)" sends the "([^"]*)" header$/, async function (path, header) {
 
 Then(/^the "([^"]*)" header of "([^"]*)" matches "([^"]*)"$/, async function (header, path, pattern) {
   const res = await fetch(BASE + path);
-  assert.match(res.headers.get(header) || "", new RegExp(pattern, "i"));
+  assert.match(header.split(" or ").map((name) => res.headers.get(name) || "").join(" "), new RegExp(pattern, "i"));
 });
 
 Then(/^the "([^"]*)" header of "([^"]*)" shows no version number$/, async function (header, path) {
@@ -1272,7 +1281,8 @@ def sends_header(context, path, header):
 
 @step(r'the "(?P<header>[^"]*)" header of "(?P<path>[^"]*)" matches "(?P<pattern>[^"]*)"')
 def header_matches(context, header, path, pattern):
-    value = requests.get(BASE + path, timeout=30).headers.get(header, "")
+    headers = requests.get(BASE + path, timeout=30).headers
+    value = " ".join(headers.get(name, "") for name in header.split(" or "))
     assert re.search(pattern, value, re.I), header
 
 
@@ -1467,7 +1477,12 @@ namespace QaLab
         public void SendsHeader(string path, string header) => Assert.That(Header(Get(BaseUrl + path), header), Is.Not.Empty, header);
 
         [StepDefinition(@"^the ""([^""]*)"" header of ""([^""]*)"" matches ""([^""]*)""$")]
-        public void HeaderMatches(string header, string path, string pattern) => Assert.That(Regex.IsMatch(Header(Get(BaseUrl + path), header), pattern, RegexOptions.IgnoreCase), Is.True, header);
+        public void HeaderMatches(string header, string path, string pattern)
+        {
+            var res = Get(BaseUrl + path);
+            var value = string.Join(" ", Array.ConvertAll(header.Split(new[] { " or " }, StringSplitOptions.None), name => Header(res, name)));
+            Assert.That(Regex.IsMatch(value, pattern, RegexOptions.IgnoreCase), Is.True, header);
+        }
 
         [StepDefinition(@"^the ""([^""]*)"" header of ""([^""]*)"" shows no version number$")]
         public void HeaderNoDigits(string header, string path) => Assert.That(Regex.IsMatch(Header(Get(BaseUrl + path), header), @"\d"), Is.False, header);
