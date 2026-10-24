@@ -119,3 +119,14 @@ test("the rival sweep runs after the country sweep starts and before the morning
   assert.match(ops.cron("rivalSweep"), /^7-52\/15 1-5 /);
   assert.equal(ops.budget("rivalsPerDay", {}), 4);
 });
+
+test("app-piracy, gambling and directory sites are never competitors, and a result only hosted somewhere does not count", () => {
+  const tally = rivals.tallyResults([
+    { title: "Best APK sites", url: "https://www.corporationwiki.com/x", description: "apkmody.com, bet365.com, topsimilarsites.com and uptodown.com" },
+    { title: "News", url: "https://www.yahoo.com.mx/news", description: "" }
+  ], "androforever.com", new Map(), core.registrable);
+  assert.deepEqual([...tally.keys()], ["uptodown.com"]);
+  const picked = rivals.pickRivals([{ host: "hosted.com", score: 1 }, { host: "named.com", score: 2 }], [{ read: true, rank: 500 }, { read: true, rank: 600 }], null);
+  assert.deepEqual(picked.map((row) => row.host), ["named.com"]);
+  assert.equal(rivals.pickBase([record("espacioapk.com", 70, { source: "sweep" })], {}, []), null);
+});

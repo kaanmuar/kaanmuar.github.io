@@ -794,6 +794,10 @@ function compareLine(summary, previous, phrase) {
     + " (" + phrase + ")";
 }
 
+function isHubEvent(row) {
+  return row.kind === "view" || /^(hub|post)_/.test(String(row.name || ""));
+}
+
 async function loadEvents(start, end) {
   const rows = [];
   let cursor = null;
@@ -806,10 +810,10 @@ async function loadEvents(start, end) {
     if (cursor) query = query.startAfter(cursor);
     const snap = await query.get();
     if (snap.empty) break;
-    // Social hub page views are counted by refreshSocialHubStats, not in the site reports.
+    // Social hub views and clicks are counted by refreshSocialHubStats, not in the site reports.
     snap.forEach((doc) => {
       const row = doc.data() || {};
-      if (row.kind !== "view") rows.push(row);
+      if (!isHubEvent(row)) rows.push(row);
     });
     cursor = snap.docs[snap.docs.length - 1];
     if (snap.size < 400 || rows.length >= 20000) break;
@@ -3021,7 +3025,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       const records = reviewSnap.docs.map((doc) => doc.data());
       const picked = reviewPublish.selectPublishable(records, unlisted);
       const until = records.length ? records[records.length - 1].createdAt : since;
-      const comparisons = reviewPublish.publicComparisons(rivalSnap.docs.map((doc) => doc.data()), unlisted);
+      const comparisons = reviewPublish.publicComparisons(rivalSnap.docs.map((doc) => doc.data()), unlisted)
+        .filter((row) => !rivals.shady(row.host))
+        .map((row) => Object.assign(row, { rivals: row.rivals.filter((rival) => !rivals.shady(rival.host)) }))
+        .filter((row) => row.rivals.length);
       res.status(200).json({ since, until, read: records.length, held: picked.held, unlisted, reports: picked.reports, comparisons });
     } catch (error) {
       console.error("Publishable reviews failed:", error);
