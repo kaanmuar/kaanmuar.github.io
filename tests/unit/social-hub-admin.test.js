@@ -101,7 +101,11 @@ test("a pick with a remote image renders on the hub with its own thumbnail, link
   assert.match(html, /data-video="5b4Hr6r-cBk"/);
   const page = hub.page("en", [Object.assign(item, { upcoming: false, date: "2026-10-01" })], "2026-10-24");
   const ld = JSON.parse(page.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
-  assert.equal(ld["@graph"].find((node) => node["@type"] === "ItemList").itemListElement[0].item.image, "https://example.com/a.png");
+  assert.equal(ld["@graph"].find((node) => node["@type"] === "ItemList").itemListElement[0].item.image.contentUrl, "https://example.com/a.png");
+  const outputs = hub.outputs([Object.assign(item, { date: "2026-10-01" })], "2026-10-24");
+  const feedXml = outputs["assets/social/rss-es.xml"];
+  assert.match(feedXml, /<media:content url="https:\/\/example.com\/a.png" medium="image"\/>/);
+  assert.doesNotMatch(feedXml, /<enclosure/);
 });
 
 test("the committed hub applies the committed edits", () => {

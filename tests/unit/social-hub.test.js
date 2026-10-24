@@ -59,6 +59,23 @@ test("every language has the full interface copy", () => {
   }
 });
 
+test("each RSS feed lists posted items only, linked to its own language page", () => {
+  const xml = hub.rss("de", [post(), post({ id: "later", date: "2099-01-01", title: "Later" })], "2026-10-24");
+  assert.match(xml, /<language>de<\/language>/);
+  assert.match(xml, /<link>https:\/\/carlosandmunoz\.com\/qa-review-social-de\.html\?p=auto-2026-10-22%2F01-u-uber-com<\/link>/);
+  assert.match(xml, /youtube\.com\/shorts\/5b4Hr6r-cBk/);
+  assert.doesNotMatch(xml, /Later/);
+});
+
+test("the social sitemap puts each clip under the page of the language it was voiced in", () => {
+  const xml = hub.sitemap([post()], "2026-10-24");
+  const es = xml.split("<url>").find((block) => block.includes("qa-review-social-es.html</loc>"));
+  const en = xml.split("<url>").find((block) => block.includes("qa-review-social.html</loc>"));
+  assert.match(es, /embed\/5b4Hr6r-cBk/);
+  assert.match(en, /image:loc>https:\/\/carlosandmunoz\.com\/media\/social-posts\/auto-2026-10-22\/feed\/01-u-uber-com\.jpg/);
+  assert.doesNotMatch(en, /video:video/);
+});
+
 test("the calendar parser keeps the header keys", () => {
   assert.deepEqual(hub.csvRows("Date,Language,Post\n2026-10-19,de,talking\n"), [{ Date: "2026-10-19", Language: "de", Post: "talking" }]);
 });

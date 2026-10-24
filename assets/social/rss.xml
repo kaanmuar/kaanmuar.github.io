@@ -1,0 +1,715 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>QA-lab URL Review · Social</title>
+    <link>https://carlosandmunoz.com/qa-review-social.html</link>
+    <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
+    <language>en</language>
+    <lastBuildDate>Sat, 24 Oct 2026 12:00:00 GMT</lastBuildDate>
+    <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
+    <image><url>https://carlosandmunoz.com/apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>mercadolibre.com.co: 50. The gap: AI crawler access.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=auto-2026-10-22%2F02-u-mercadolibre-com-co</link>
+      <guid isPermaLink="false">auto-2026-10-22/02-u-mercadolibre-com-co</guid>
+      <pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 5 AI answer or search crawlers are blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-mercadolibre-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-mercadolibre-com-co
+
+#GEO #AISearch #RobotsTxt #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg" length="219956" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>pirouline.com: 74. The gap: framing.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=auto-2026-10-23%2F01-u-pirouline-com</link>
+      <guid isPermaLink="false">auto-2026-10-23/01-u-pirouline-com</guid>
+      <pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-pirouline-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-pirouline-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Clickjacking #HTTPHeaders #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg" length="208414" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>epssura.com: 40. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=auto-2026-10-21%2F02-u-epssura-com</link>
+      <guid isPermaLink="false">auto-2026-10-21/02-u-epssura-com</guid>
+      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Requested</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But 161 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 20 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epssura-com
+
+#Accessibility #Forms #A11y #QA #QAlab
+
+https://www.youtube.com/shorts/0FypyDn0reM</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg" length="202224" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>uber.com: 66. The gap: page titles.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=auto-2026-10-22%2F01-u-uber-com</link>
+      <guid isPermaLink="false">auto-2026-10-22/01-u-uber-com</guid>
+      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 56 pages have no title.
+
+The lesson for every team: Give every page a unique title of about 60 characters: the page first, the site second.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uber-com
+
+#SEO #Titles #SERP #QA #QAlab
+
+https://www.youtube.com/shorts/5b4Hr6r-cBk</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg" length="201762" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Sie haben eine Website geerbt. Keine Doku, keine Tests, keine Ahnung, was drinsteckt.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fde%2Finherited</link>
+      <guid isPermaLink="false">launch-2026-10/de/inherited</guid>
+      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Eine Analyse der öffentlichen Seite nennt die sichtbaren Technologien, folgt den echten Links und schlägt die ersten Fälle vor. Sie beginnen bei Fakten statt bei Vermutungen.
+
+→ Öffentlich sichtbare Technologien
+→ Die echten Links, abgelaufen
+→ Erste Regressionsfälle
+
+Erste Prüfung inklusive · 20 Seiten · 2 Links tief
+Sie schlägt Testfälle aus einer öffentlichen Lesung vor. Sie führt sie nicht aus, meldet sich nicht an, sendet keine Formulare und erzeugt keine Last.
+
+Mit einer öffentlichen URL testen: https://carlosandmunoz.com/qa-review-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-inherited&amp;utm_content=de
+
+#Softwaretest #QA #Testautomatisierung #LegacyCode #RegressionTesting</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/inherited-portrait.jpg" length="209328" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/inherited-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>You inherited a site. No docs, no tests, no idea what is under the hood.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fen%2Finherited</link>
+      <guid isPermaLink="false">launch-2026-10/en/inherited</guid>
+      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <description>A public-page analysis names the technologies it can see, follows the real links, and proposes the first cases, so you start from facts instead of guesses.
+
+→ Technologies seen in public
+→ The real links, followed
+→ First cases for regression
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-inherited&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #LegacyCode #RegressionTesting</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/inherited-portrait.jpg" length="201954" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/inherited-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Heredaste un sitio. Sin documentación, sin pruebas, sin idea de qué hay por dentro.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fes%2Finherited</link>
+      <guid isPermaLink="false">launch-2026-10/es/inherited</guid>
+      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Un análisis de la página pública nombra las tecnologías que se ven, sigue los enlaces reales y propone los primeros casos, para que empieces por los hechos y no por suposiciones.
+
+→ Tecnologías visibles en público
+→ Los enlaces reales, recorridos
+→ Primeros casos de regresión
+
+Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
+Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
+
+Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-inherited&amp;utm_content=es
+
+#PruebasDeSoftware #QA #AutomatizaciónDePruebas #LegacyCode #RegressionTesting</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/inherited-portrait.jpg" length="204817" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/inherited-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Vous avez hérité d’un site. Pas de doc, pas de tests, aucune idée de ce qu’il y a dessous.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Ffr%2Finherited</link>
+      <guid isPermaLink="false">launch-2026-10/fr/inherited</guid>
+      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Une analyse de la page publique nomme les technologies visibles, suit les vrais liens et propose les premiers cas, pour partir des faits plutôt que de suppositions.
+
+→ Technologies visibles en public
+→ Les vrais liens, parcourus
+→ Premiers cas de régression
+
+Première revue incluse · 20 pages · 2 liens de profondeur
+Elle propose des cas de test à partir d’une lecture publique. Elle ne les exécute pas, ne se connecte pas, n’envoie pas de formulaires et ne génère pas de charge.
+
+Essayez avec une URL publique: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-inherited&amp;utm_content=fr
+
+#TestLogiciel #QA #AutomatisationDesTests #LegacyCode #RegressionTesting</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/inherited-portrait.jpg" length="206698" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/inherited-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Hai ereditato un sito. Niente documentazione, niente test, nessuna idea di cosa c’è sotto.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fit%2Finherited</link>
+      <guid isPermaLink="false">launch-2026-10/it/inherited</guid>
+      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Un’analisi della pagina pubblica nomina le tecnologie visibili, segue i link reali e propone i primi casi, così parti dai fatti e non dalle ipotesi.
+
+→ Tecnologie visibili in pubblico
+→ I link reali, percorsi
+→ Primi casi di regressione
+
+Prima revisione inclusa · 20 pagine · 2 link di profondità
+Propone casi di test da una lettura pubblica. Non li esegue, non fa login, non invia moduli e non genera carico.
+
+Provalo con un URL pubblico: https://carlosandmunoz.com/qa-review-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-inherited&amp;utm_content=it
+
+#TestSoftware #QA #AutomazioneDeiTest #LegacyCode #RegressionTesting</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/inherited-portrait.jpg" length="202067" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/inherited-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Você herdou um site. Sem documentação, sem testes, sem ideia do que tem por dentro.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fpt%2Finherited</link>
+      <guid isPermaLink="false">launch-2026-10/pt/inherited</guid>
+      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Uma análise da página pública nomeia as tecnologias visíveis, segue os links reais e propõe os primeiros casos, para você começar pelos fatos e não por palpites.
+
+→ Tecnologias visíveis em público
+→ Os links reais, percorridos
+→ Primeiros casos de regressão
+
+Primeira revisão incluída · 20 páginas · 2 links de profundidade
+Propõe casos de teste a partir de uma leitura pública. Não os executa, não faz login, não envia formulários nem gera carga.
+
+Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-inherited&amp;utm_content=pt
+
+#TesteDeSoftware #QA #AutomaçãoDeTestes #LegacyCode #RegressionTesting</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/inherited-portrait.jpg" length="201644" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/inherited-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>teaminternational.com: 64. The gap: broken links.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=auto-2026-10-21%2F01-u-teaminternational-com</link>
+      <guid isPermaLink="false">auto-2026-10-21/01-u-teaminternational-com</guid>
+      <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Requested</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But 16 internal links lead to an error.
+
+The lesson for every team: Check your own links after each release, and fix or redirect every one that answers 404.
+
+One automated analysis of public pages on 19 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-teaminternational-com
+
+#SEO #BrokenLinks #QA #QA #QAlab
+
+https://www.youtube.com/shorts/BZTtWQCzPCM</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg" length="214038" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Das Release steht an und niemand hat die Testfälle geschrieben. Kommt Ihnen bekannt vor?</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fde%2Frelease</link>
+      <guid isPermaLink="false">launch-2026-10/de/release</guid>
+      <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Richten Sie QA-lab URL Review auf die öffentliche Seite. Es schlägt die Fälle vor, die Sie vor dem Release auf Papier wollen, und das Team startet mit einer Liste statt mit einem leeren Dokument.
+
+→ Funktion, Links, Inhalt, Mobil
+→ Barrierefreiheit, Sicherheit, Performance
+→ Bereit für das Team
+
+Erste Prüfung inklusive · 20 Seiten · 2 Links tief
+Sie schlägt Testfälle aus einer öffentlichen Lesung vor. Sie führt sie nicht aus, meldet sich nicht an, sendet keine Formulare und erzeugt keine Last.
+
+Mit einer öffentlichen URL testen: https://carlosandmunoz.com/qa-review-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-release&amp;utm_content=de
+
+#Softwaretest #QA #Testautomatisierung #RegressionTesting #ReleaseManagement</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/release-portrait.jpg" length="201845" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/release-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>The release is close and nobody has written the test cases. Sound familiar?</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fen%2Frelease</link>
+      <guid isPermaLink="false">launch-2026-10/en/release</guid>
+      <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Point QA-lab URL Review at the public page. It proposes the cases you would want on paper before shipping, so the team starts from a list instead of a blank doc.
+
+→ Functional, links, content, mobile
+→ Accessibility, security, performance
+→ Ready to hand to the team
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-release&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #RegressionTesting #ReleaseManagement
+
+https://www.youtube.com/shorts/T1vH4T0yZRQ</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/release-portrait.jpg" length="196999" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/release-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La entrega está cerca y nadie ha escrito los casos de prueba. ¿Te suena?</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fes%2Frelease</link>
+      <guid isPermaLink="false">launch-2026-10/es/release</guid>
+      <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Apunta QA-lab URL Review a la página pública. Propone los casos que querrías en papel antes de publicar, para que el equipo empiece con una lista y no con un documento en blanco.
+
+→ Funcional, enlaces, contenido, móvil
+→ Accesibilidad, seguridad, rendimiento
+→ Lista para entregar al equipo
+
+Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
+Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
+
+Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-release&amp;utm_content=es
+
+#PruebasDeSoftware #QA #AutomatizaciónDePruebas #RegressionTesting #ReleaseManagement</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/release-portrait.jpg" length="201320" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/release-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La livraison approche et personne n’a écrit les cas de test. Ça vous parle ?</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Ffr%2Frelease</link>
+      <guid isPermaLink="false">launch-2026-10/fr/release</guid>
+      <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Pointez QA-lab URL Review vers la page publique. Il propose les cas que vous voudriez sur papier avant de livrer, pour que l’équipe parte d’une liste et non d’un document vide.
+
+→ Fonctionnel, liens, contenu, mobile
+→ Accessibilité, sécurité, performance
+→ Prête à confier à l’équipe
+
+Première revue incluse · 20 pages · 2 liens de profondeur
+Elle propose des cas de test à partir d’une lecture publique. Elle ne les exécute pas, ne se connecte pas, n’envoie pas de formulaires et ne génère pas de charge.
+
+Essayez avec une URL publique: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-release&amp;utm_content=fr
+
+#TestLogiciel #QA #AutomatisationDesTests #RegressionTesting #ReleaseManagement</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/release-portrait.jpg" length="201589" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/release-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Il rilascio è vicino e nessuno ha scritto i casi di test. Ti suona familiare?</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fit%2Frelease</link>
+      <guid isPermaLink="false">launch-2026-10/it/release</guid>
+      <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Punta QA-lab URL Review sulla pagina pubblica. Propone i casi che vorresti su carta prima del rilascio, così il team parte da una lista e non da un documento vuoto.
+
+→ Funzionale, link, contenuti, mobile
+→ Accessibilità, sicurezza, prestazioni
+→ Pronta da passare al team
+
+Prima revisione inclusa · 20 pagine · 2 link di profondità
+Propone casi di test da una lettura pubblica. Non li esegue, non fa login, non invia moduli e non genera carico.
+
+Provalo con un URL pubblico: https://carlosandmunoz.com/qa-review-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-release&amp;utm_content=it
+
+#TestSoftware #QA #AutomazioneDeiTest #RegressionTesting #ReleaseManagement</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/release-portrait.jpg" length="201274" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/release-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>A entrega está perto e ninguém escreveu os casos de teste. Soa familiar?</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fpt%2Frelease</link>
+      <guid isPermaLink="false">launch-2026-10/pt/release</guid>
+      <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Aponte o QA-lab URL Review para a página pública. Ele propõe os casos que você queria no papel antes de publicar, para a equipe começar com uma lista e não com um documento em branco.
+
+→ Funcional, links, conteúdo, mobile
+→ Acessibilidade, segurança, desempenho
+→ Pronta para entregar à equipe
+
+Primeira revisão incluída · 20 páginas · 2 links de profundidade
+Propõe casos de teste a partir de uma leitura pública. Não os executa, não faz login, não envia formulários nem gera carga.
+
+Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-release&amp;utm_content=pt
+
+#TesteDeSoftware #QA #AutomaçãoDeTestes #RegressionTesting #ReleaseManagement</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/release-portrait.jpg" length="199044" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/release-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Schluss damit, generische Testideen von Hand in Ihr Framework zu übersetzen.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fde%2Fframeworks</link>
+      <guid isPermaLink="false">launch-2026-10/de/frameworks</guid>
+      <pubDate>Wed, 21 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Wählen Sie Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling oder zwölf weitere, von Cucumber bis k6, und die vorgeschlagenen Fälle kommen in dieser Form.
+
+→ Eines wählen, oder alle zwanzig
+→ Jedes weitere Framework ist rabattiert
+→ Nichts wird gestartet. Sie nehmen die Liste mit.
+
+Erste Prüfung inklusive · 20 Seiten · 2 Links tief
+Sie schlägt Testfälle aus einer öffentlichen Lesung vor. Sie führt sie nicht aus, meldet sich nicht an, sendet keine Formulare und erzeugt keine Last.
+
+Mit einer öffentlichen URL testen: https://carlosandmunoz.com/qa-review-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-frameworks&amp;utm_content=de
+
+#Softwaretest #QA #Testautomatisierung #Playwright #Cypress</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/frameworks-portrait.jpg" length="178776" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/frameworks-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Stop translating generic test ideas into your framework by hand.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fen%2Fframeworks</link>
+      <guid isPermaLink="false">launch-2026-10/en/frameworks</guid>
+      <pubDate>Wed, 21 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Choose Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling, or twelve more, from Cucumber to k6, and the proposed cases come out in that shape.
+
+→ Pick one, or all twenty
+→ Each added framework is discounted
+→ Nothing is launched. You leave with the list.
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-frameworks&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #Playwright #Cypress
+
+https://www.youtube.com/shorts/BLfpJj-X1Kg</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/frameworks-portrait.jpg" length="171476" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/frameworks-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Deja de traducir a mano ideas de prueba genéricas a tu framework.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fes%2Fframeworks</link>
+      <guid isPermaLink="false">launch-2026-10/es/frameworks</guid>
+      <pubDate>Wed, 21 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Elige Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling u otros doce, de Cucumber a k6, y los casos propuestos salen con esa forma.
+
+→ Elige uno, o los veinte
+→ Cada framework adicional tiene descuento
+→ Nada se ejecuta. Te llevas la lista.
+
+Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
+Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
+
+Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-frameworks&amp;utm_content=es
+
+#PruebasDeSoftware #QA #AutomatizaciónDePruebas #Playwright #Cypress</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/frameworks-portrait.jpg" length="174138" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/frameworks-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Arrêtez de traduire à la main des idées de test génériques dans votre framework.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Ffr%2Fframeworks</link>
+      <guid isPermaLink="false">launch-2026-10/fr/frameworks</guid>
+      <pubDate>Wed, 21 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Choisissez Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling ou douze autres, de Cucumber à k6, et les cas proposés sortent dans cette forme.
+
+→ Choisissez-en un, ou les vingt
+→ Chaque framework ajouté est remisé
+→ Rien n’est lancé. Vous repartez avec la liste.
+
+Première revue incluse · 20 pages · 2 liens de profondeur
+Elle propose des cas de test à partir d’une lecture publique. Elle ne les exécute pas, ne se connecte pas, n’envoie pas de formulaires et ne génère pas de charge.
+
+Essayez avec une URL publique: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-frameworks&amp;utm_content=fr
+
+#TestLogiciel #QA #AutomatisationDesTests #Playwright #Cypress</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/frameworks-portrait.jpg" length="166996" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/frameworks-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Smetti di tradurre a mano idee di test generiche nel tuo framework.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fit%2Fframeworks</link>
+      <guid isPermaLink="false">launch-2026-10/it/frameworks</guid>
+      <pubDate>Wed, 21 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Scegli Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling o altri dodici, da Cucumber a k6, e i casi proposti escono in quella forma.
+
+→ Scegline uno, o tutti e venti
+→ Ogni framework aggiunto è scontato
+→ Niente viene avviato. Esci con la lista.
+
+Prima revisione inclusa · 20 pagine · 2 link di profondità
+Propone casi di test da una lettura pubblica. Non li esegue, non fa login, non invia moduli e non genera carico.
+
+Provalo con un URL pubblico: https://carlosandmunoz.com/qa-review-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-frameworks&amp;utm_content=it
+
+#TestSoftware #QA #AutomazioneDeiTest #Playwright #Cypress</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/frameworks-portrait.jpg" length="166949" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/frameworks-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Pare de traduzir à mão ideias de teste genéricas para o seu framework.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fpt%2Fframeworks</link>
+      <guid isPermaLink="false">launch-2026-10/pt/frameworks</guid>
+      <pubDate>Wed, 21 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Escolha Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling ou outros doze, de Cucumber a k6, e os casos propostos saem nesse formato.
+
+→ Escolha um, ou os vinte
+→ Cada framework adicional tem desconto
+→ Nada é executado. Você leva a lista.
+
+Primeira revisão incluída · 20 páginas · 2 links de profundidade
+Propõe casos de teste a partir de uma leitura pública. Não os executa, não faz login, não envia formulários nem gera carga.
+
+Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-frameworks&amp;utm_content=pt
+
+#TesteDeSoftware #QA #AutomaçãoDeTestes #Playwright #Cypress</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/frameworks-portrait.jpg" length="174450" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/frameworks-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Ihre erste Prüfung ist inklusive: 20 Seiten, 2 Links tief.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fde%2Ffirst-read</link>
+      <guid isPermaLink="false">launch-2026-10/de/first-read</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Öffentliche URL einfügen, annehmen, was die Prüfung tut und was nicht, und zusehen, wie der Bericht entsteht. Behalten Sie ihn nur, wenn er sich lohnt.
+
+→ Bericht einmal kostenlos sichtbar
+→ Behalten, Laden oder Teilen ab 19 USD
+→ Betrag vor der Bestätigung sichtbar
+
+Erste Prüfung inklusive · 20 Seiten · 2 Links tief
+Sie schlägt Testfälle aus einer öffentlichen Lesung vor. Sie führt sie nicht aus, meldet sich nicht an, sendet keine Formulare und erzeugt keine Last.
+
+Mit einer öffentlichen URL testen: https://carlosandmunoz.com/qa-review-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-first-read&amp;utm_content=de
+
+#Softwaretest #QA #Testautomatisierung #TestCases #QAtools</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/first-read-portrait.jpg" length="237971" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/first-read-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Your first review is included: 20 pages, 2 links deep.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fen%2Ffirst-read</link>
+      <guid isPermaLink="false">launch-2026-10/en/first-read</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Paste a public URL, accept what the review will and will not do, and watch the report get written. Keep it only if it earns its place.
+
+→ Report shown once at no charge
+→ Keep, download, or share from 19 USD
+→ Amount shown before you confirm
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-first-read&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #TestCases #QAtools
+
+https://www.youtube.com/shorts/VfAPT1W2nGA</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/first-read-portrait.jpg" length="231870" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/first-read-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Tu primera revisión está incluida: 20 páginas, 2 enlaces de profundidad.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fes%2Ffirst-read</link>
+      <guid isPermaLink="false">launch-2026-10/es/first-read</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Pega una URL pública, acepta lo que la revisión hará y no hará, y mira cómo se escribe el informe. Guárdalo solo si vale la pena.
+
+→ El informe se muestra una vez sin costo
+→ Guardar, descargar o compartir desde 19 USD
+→ El monto aparece antes de confirmar
+
+Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
+Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
+
+Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-first-read&amp;utm_content=es
+
+#PruebasDeSoftware #QA #AutomatizaciónDePruebas #TestCases #QAtools</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/first-read-portrait.jpg" length="241275" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/first-read-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Votre première revue est incluse : 20 pages, 2 liens de profondeur.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Ffr%2Ffirst-read</link>
+      <guid isPermaLink="false">launch-2026-10/fr/first-read</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Collez une URL publique, acceptez ce que la revue fera et ne fera pas, et regardez le rapport s’écrire. Gardez-le seulement s’il le mérite.
+
+→ Rapport affiché une fois sans frais
+→ Garder, télécharger ou partager dès 19 USD
+→ Montant affiché avant de confirmer
+
+Première revue incluse · 20 pages · 2 liens de profondeur
+Elle propose des cas de test à partir d’une lecture publique. Elle ne les exécute pas, ne se connecte pas, n’envoie pas de formulaires et ne génère pas de charge.
+
+Essayez avec une URL publique: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-first-read&amp;utm_content=fr
+
+#TestLogiciel #QA #AutomatisationDesTests #TestCases #QAtools</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/first-read-portrait.jpg" length="238117" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/first-read-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La tua prima revisione è inclusa: 20 pagine, 2 link di profondità.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fit%2Ffirst-read</link>
+      <guid isPermaLink="false">launch-2026-10/it/first-read</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Incolla un URL pubblico, accetta cosa farà e non farà la revisione, e guarda il rapporto scriversi. Tienilo solo se ne vale la pena.
+
+→ Rapporto visibile una volta senza costi
+→ Tenere, scaricare o condividere da 19 USD
+→ Importo visibile prima di confermare
+
+Prima revisione inclusa · 20 pagine · 2 link di profondità
+Propone casi di test da una lettura pubblica. Non li esegue, non fa login, non invia moduli e non genera carico.
+
+Provalo con un URL pubblico: https://carlosandmunoz.com/qa-review-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-first-read&amp;utm_content=it
+
+#TestSoftware #QA #AutomazioneDeiTest #TestCases #QAtools</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/first-read-portrait.jpg" length="236017" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/first-read-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Sua primeira revisão está incluída: 20 páginas, 2 links de profundidade.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fpt%2Ffirst-read</link>
+      <guid isPermaLink="false">launch-2026-10/pt/first-read</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Cole uma URL pública, aceite o que a revisão faz e não faz, e veja o relatório ser escrito. Guarde só se valer a pena.
+
+→ O relatório aparece uma vez sem custo
+→ Guardar, baixar ou compartilhar a partir de 19 USD
+→ O valor aparece antes de confirmar
+
+Primeira revisão incluída · 20 páginas · 2 links de profundidade
+Propõe casos de teste a partir de uma leitura pública. Não os executa, não faz login, não envia formulários nem gera carga.
+
+Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-first-read&amp;utm_content=pt
+
+#TesteDeSoftware #QA #AutomaçãoDeTestes #TestCases #QAtools</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/first-read-portrait.jpg" length="242112" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/first-read-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Jede öffentliche Seite sagt schon, was zu testen ist. Die meisten Teams schreiben es nie…</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fde%2Ftalking</link>
+      <guid isPermaLink="false">launch-2026-10/de/talking</guid>
+      <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Jede öffentliche Seite sagt schon, was zu testen ist. Die meisten Teams schreiben es nie auf.
+
+QA-lab URL Review liest eine öffentliche https-Seite, beschreibt die Antwort und schlägt die Testfälle vor, benannt nach dem Framework, das Ihr Team schon nutzt.
+
+→ 21 Arten von Fällen
+→ Skripte für 20 Frameworks
+→ 1 öffentliche Adresse genügt
+
+Erste Prüfung inklusive · 20 Seiten · 2 Links tief
+Sie schlägt Testfälle aus einer öffentlichen Lesung vor. Sie führt sie nicht aus, meldet sich nicht an, sendet keine Formulare und erzeugt keine Last.
+
+Mit einer öffentlichen URL testen: https://carlosandmunoz.com/qa-review-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-talking&amp;utm_content=de
+
+#Softwaretest #QA #Testautomatisierung #TestCases #Playwright</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/talking-portrait.jpg" length="163751" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/talking-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Every public page already tells you what to test. Most teams never write it down.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fen%2Ftalking</link>
+      <guid isPermaLink="false">launch-2026-10/en/talking</guid>
+      <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
+      <description>QA-lab URL Review reads a public https page, describes the response, and proposes the test cases, named for the framework your team already uses.
+
+→ 21 kinds of cases
+→ Scripts for 20 frameworks
+→ 1 public address to begin
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-talking&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #TestCases #Playwright
+
+https://www.youtube.com/shorts/Pyx79IX2Ajc</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/talking-portrait.jpg" length="168251" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/talking-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Cada página pública ya te dice qué probar. La mayoría de los equipos nunca lo escribe.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fes%2Ftalking</link>
+      <guid isPermaLink="false">launch-2026-10/es/talking</guid>
+      <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
+      <description>QA-lab URL Review lee una página https pública, describe la respuesta y propone los casos de prueba, con el nombre del framework que tu equipo ya usa.
+
+→ 21 tipos de casos
+→ Scripts para 20 frameworks
+→ 1 dirección pública para empezar
+
+Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
+Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
+
+Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-talking&amp;utm_content=es
+
+#PruebasDeSoftware #QA #AutomatizaciónDePruebas #TestCases #Playwright</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/talking-portrait.jpg" length="169442" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/talking-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Chaque page publique dit déjà quoi tester. La plupart des équipes ne l’écrivent jamais.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Ffr%2Ftalking</link>
+      <guid isPermaLink="false">launch-2026-10/fr/talking</guid>
+      <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
+      <description>QA-lab URL Review lit une page https publique, décrit la réponse et propose les cas de test, nommés pour le framework que votre équipe utilise déjà.
+
+→ 21 sortes de cas
+→ Scripts pour 20 frameworks
+→ 1 adresse publique pour commencer
+
+Première revue incluse · 20 pages · 2 liens de profondeur
+Elle propose des cas de test à partir d’une lecture publique. Elle ne les exécute pas, ne se connecte pas, n’envoie pas de formulaires et ne génère pas de charge.
+
+Essayez avec une URL publique: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-talking&amp;utm_content=fr
+
+#TestLogiciel #QA #AutomatisationDesTests #TestCases #Playwright</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/talking-portrait.jpg" length="164212" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/talking-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Ogni pagina pubblica dice già cosa testare. La maggior parte dei team non lo scrive mai.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fit%2Ftalking</link>
+      <guid isPermaLink="false">launch-2026-10/it/talking</guid>
+      <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
+      <description>QA-lab URL Review legge una pagina https pubblica, descrive la risposta e propone i casi di test, con il nome del framework che il team usa già.
+
+→ 21 tipi di casi
+→ Script per 20 framework
+→ 1 indirizzo pubblico per iniziare
+
+Prima revisione inclusa · 20 pagine · 2 link di profondità
+Propone casi di test da una lettura pubblica. Non li esegue, non fa login, non invia moduli e non genera carico.
+
+Provalo con un URL pubblico: https://carlosandmunoz.com/qa-review-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-talking&amp;utm_content=it
+
+#TestSoftware #QA #AutomazioneDeiTest #TestCases #Playwright</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/talking-portrait.jpg" length="163434" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/talking-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Toda página pública já diz o que testar. A maioria das equipes nunca escreve isso.</title>
+      <link>https://carlosandmunoz.com/qa-review-social.html?p=launch-2026-10%2Fpt%2Ftalking</link>
+      <guid isPermaLink="false">launch-2026-10/pt/talking</guid>
+      <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
+      <description>O QA-lab URL Review lê uma página https pública, descreve a resposta e propõe os casos de teste, com o nome do framework que sua equipe já usa.
+
+→ 21 tipos de casos
+→ Scripts para 20 frameworks
+→ 1 endereço público para começar
+
+Primeira revisão incluída · 20 páginas · 2 links de profundidade
+Propõe casos de teste a partir de uma leitura pública. Não os executa, não faz login, não envia formulários nem gera carga.
+
+Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-talking&amp;utm_content=pt
+
+#TesteDeSoftware #QA #AutomaçãoDeTestes #TestCases #Playwright</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/talking-portrait.jpg" length="168718" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/talking-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+  </channel>
+</rss>

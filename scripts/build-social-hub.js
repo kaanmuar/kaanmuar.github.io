@@ -12,7 +12,8 @@
    assets/social/edits.json holds the owner's edits from the Social hub pane in admin.html (captions, dates,
    hidden posts, items added by hand); online builds refresh it from Firestore socialHub/live.
    Writes assets/social/feed.json (cards), assets/social/captions.json (per-network captions, loaded on copy),
-   assets/social/thumbs/*.webp and the six pages. Posts still queued on the networks follow the posted ones,
+   assets/social/rss*.xml (an RSS feed per language), sitemap-social.xml (post images and clips per page),
+   assets/social/thumbs/*.webp and the six pages. Share cards come from scripts/build-share-images.js social. Posts still queued on the networks follow the posted ones,
    marked Scheduled, and stay out of the JSON-LD until their day. */
 
 const fs = require("fs");
@@ -33,6 +34,8 @@ const PRERENDER = 24;
 const TEXT_MAX = 1200;
 const LAUNCH = "launch-2026-10";
 const ORG = SITE + "qa-review.html#organization";
+const SHARE_VERSION = "20261024";
+const RSS_MAX = 50;
 
 const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
 const readJson = (file) => JSON.parse(read(file));
@@ -248,7 +251,7 @@ function jsonLd(lang, shown, total, copy) {
       articleBody: post.text.slice(0, 500),
       datePublished: post.date,
       inLanguage: post.lang,
-      image: admin.remote(post.image) ? post.image : SITE + post.image,
+      image: { "@type": "ImageObject", contentUrl: imageUrl(post), caption: post.alt || post.title },
       author: { "@id": ORG },
       publisher: { "@id": ORG }
     };
@@ -318,7 +321,7 @@ function page(lang, posts, asOf) {
   const visible = card.arrange(posts, asOf);
   const shown = visible.slice(0, PRERENDER);
   const published = shown.filter((post) => !post.upcoming);
-  const share = SITE + "assets/qa-review-share.png?v=20261012";
+  const share = SITE + "assets/share/qa-review-social" + sfx + ".jpg?v=" + SHARE_VERSION;
   const esc = card.esc;
   const alternates = ["x-default"].concat(Object.keys(LANGS)).map((code) => {
     const href = SITE + card.pageFor(code === "x-default" ? "en" : code);
@@ -349,6 +352,7 @@ ${alternates}
     <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="alternate" type="application/json" href="${SITE}${OUT}/feed.json" title="QA-lab URL Review social feed">
+    <link rel="alternate" type="application/rss+xml" href="${SITE}${OUT}/rss${sfx}.xml" title="QA-lab URL Review · Social (RSS)">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="QA-lab URL Review">
     <meta property="og:locale" content="${LANGS[lang].locale}">
@@ -359,11 +363,14 @@ ${ogAlt}
     <meta property="og:image" content="${share}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:alt" content="${esc(copy.card.title + " " + copy.card.em + " " + copy.card.sub)}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@qalaburlreview">
     <meta name="twitter:title" content="${esc(copy.h1)} · QA-lab URL Review">
     <meta name="twitter:description" content="${esc(copy.lead)}">
     <meta name="twitter:image" content="${share}">
+    <meta name="twitter:image:alt" content="${esc(copy.card.title + " " + copy.card.em + " " + copy.card.sub)}">
     <script type="application/ld+json">
 ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, copy))}
     </script>
@@ -404,7 +411,7 @@ ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
     <p class="hub-empty" id="hub-empty" hidden>${esc(copy.empty)}</p>
     <p class="hub-more-wrap"><button class="btn btn-primary" id="hub-more" type="button"${visible.length > PRERENDER ? "" : " hidden"}>${esc(copy.loadMore)}</button></p>
 </main>
-<footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">Legal</a> · <a href="${OUT}/feed.json">JSON feed</a></p></footer>
+<footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">Legal</a> · <a href="${OUT}/rss${sfx}.xml">RSS</a> · <a href="${OUT}/feed.json">JSON feed</a></p></footer>
 <dialog class="hub-dialog" id="hub-dialog" aria-label="${esc(copy.share)}"><form method="dialog"><button class="hub-close" value="close" aria-label="${esc(copy.close)}">×</button></form><div id="hub-dialog-body"></div></dialog>
 <script>window.SocialHubCopy = ${JSON.stringify(hubCopy).replace(/</g, "\\u003c")};</script>
 <script src="js/social-hub-card.js?v=${asOf.replace(/-/g, "")}"></script>
@@ -414,9 +421,75 @@ ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
 `;
 }
 
+const imageUrl = (post) => (admin.remote(post.image) ? post.image : SITE + post.image);
+const xml = (value) => String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const rfc822 = (day) => new Date(day + "T12:00:00Z").toUTCString();
+const live = (posts, asOf) => card.arrange(posts, asOf).filter((post) => !post.upcoming);
+
+function rss(lang, posts, asOf) {
+  const sfx = lang === "en" ? "" : "-" + lang;
+  const items = live(posts, asOf).slice(0, RSS_MAX).map((post) => {
+    const text = post.text + (post.youtube ? "\n\nhttps://www.youtube.com/shorts/" + post.youtube : "");
+    return `    <item>
+      <title>${xml(post.title)}</title>
+      <link>${xml(card.permalink(post, lang, true))}</link>
+      <guid isPermaLink="false">${xml(post.id)}</guid>
+      <pubDate>${rfc822(post.date)}</pubDate>${post.cat ? "\n      <category>" + xml(post.cat) + "</category>" : ""}
+      <description>${xml(text)}</description>
+${admin.remote(post.image)
+    ? `      <media:content url="${xml(post.image)}" medium="image"/>`
+    : `      <enclosure url="${xml(SITE + post.image)}" length="${fs.statSync(path.join(ROOT, post.image)).size}" type="image/jpeg"/>
+      <media:content url="${xml(SITE + post.image)}" medium="image" type="image/jpeg"/>`}
+    </item>`;
+  });
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>QA-lab URL Review · Social</title>
+    <link>${SITE}${card.pageFor(lang)}</link>
+    <description>${xml(COPY[lang].rss.description)}</description>
+    <language>${lang}</language>
+    <lastBuildDate>${rfc822(asOf)}</lastBuildDate>
+    <atom:link href="${SITE}${OUT}/rss${sfx}.xml" rel="self" type="application/rss+xml"/>
+    <image><url>${SITE}apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>${SITE}${card.pageFor(lang)}</link></image>
+${items.join("\n")}
+  </channel>
+</rss>
+`;
+}
+
+// Each page lists the images written in its language and the clips voiced in it.
+function sitemap(posts, asOf) {
+  const shown = live(posts, asOf);
+  const urls = Object.keys(LANGS).map((lang) => {
+    const images = shown.filter((post) => post.lang === lang).slice(0, 1000).map((post) =>
+      `    <image:image><image:loc>${xml(imageUrl(post))}</image:loc></image:image>`);
+    const videos = shown.filter((post) => post.youtube && (post.clipLang || post.lang) === lang).map((post) => `    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/${xml(post.youtube)}/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>${xml(post.title.slice(0, 100))}</video:title>
+      <video:description>${xml((post.text || post.title).slice(0, 2048))}</video:description>
+      <video:player_loc>https://www.youtube.com/embed/${xml(post.youtube)}</video:player_loc>
+      <video:publication_date>${post.date}</video:publication_date>
+    </video:video>`);
+    return `  <url>
+    <loc>${SITE}${card.pageFor(lang)}</loc>
+    <lastmod>${asOf}</lastmod>
+${images.concat(videos).join("\n")}
+  </url>`;
+  });
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+${urls.join("\n")}
+</urlset>
+`;
+}
+
 function outputs(posts, asOf) {
-  const files = { [OUT + "/feed.json"]: feedJson(posts, asOf), [OUT + "/captions.json"]: captionsJson(posts) };
-  Object.keys(LANGS).forEach((lang) => { files[card.pageFor(lang)] = page(lang, posts, asOf); });
+  const files = { [OUT + "/feed.json"]: feedJson(posts, asOf), [OUT + "/captions.json"]: captionsJson(posts), "sitemap-social.xml": sitemap(posts, asOf) };
+  Object.keys(LANGS).forEach((lang) => {
+    files[card.pageFor(lang)] = page(lang, posts, asOf);
+    files[OUT + "/rss" + (lang === "en" ? "" : "-" + lang) + ".xml"] = rss(lang, posts, asOf);
+  });
   return files;
 }
 
@@ -458,4 +531,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, collect, feedJson, page, outputs };
+module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, collect, feedJson, page, rss, sitemap, outputs };
