@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* Render the share cards and app icons the pages point at.
 
-     node scripts/build-share-images.js
+     node scripts/build-share-images.js          # every card and icon
+     node scripts/build-share-images.js social   # only the outputs whose path contains "social"
 
    Share cards are 1200x630 JPEGs under assets/share/; WhatsApp drops previews over
    about 300 KB, which PNG cards exceed. Icons are written next to the files that
@@ -22,7 +23,7 @@ function dataUri(file) {
   return "data:image/" + ext + ";base64," + fs.readFileSync(path.join(ROOT, file)).toString("base64");
 }
 
-function card({ eyebrow, title, em, sub, art }) {
+function card({ eyebrow, title, em, sub, art, size = 84 }) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${FONTS}"><style>
   * { box-sizing: border-box; margin: 0; }
   body { width: 1200px; height: 630px; overflow: hidden; font-family: Inter, sans-serif; color: #12181f;
@@ -32,7 +33,7 @@ function card({ eyebrow, title, em, sub, art }) {
     display: grid; place-items: center; overflow: hidden; }
   .copy { position: absolute; left: 392px; right: 56px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
   .eyebrow { font-size: 21px; letter-spacing: .06em; text-transform: uppercase; color: #0d6e76; margin-bottom: 26px; }
-  h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: 84px; line-height: .98; letter-spacing: -.02em; color: #12181f; text-shadow: 0 6px 18px rgba(0,0,0,.12); }
+  h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: ${size}px; line-height: .98; letter-spacing: -.02em; color: #12181f; text-shadow: 0 6px 18px rgba(0,0,0,.12); }
   h1 em { display: block; font-style: normal; color: #0d7d85; }
   .sub { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: 38px; color: #1e2b33; margin-top: 34px; line-height: 1.15; }
   .domain { font-size: 20px; color: #0d6e76; margin-top: 44px; }
@@ -82,6 +83,20 @@ const CARDS = {
   })
 };
 
+// The social hub's card, one per language, over a wall of its latest tip posts.
+const HUB = require("./social-hub/copy");
+const HUB_POSTS = JSON.parse(fs.readFileSync(path.join(ROOT, "assets/social/feed.json"), "utf8")).posts
+  .filter((post) => post.kind === "tip" && post.thumb && fs.existsSync(path.join(ROOT, post.thumb)))
+  .sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id))
+  .slice(0, 6);
+const HUB_WALL = '<div style="display:grid;grid-template-columns:repeat(2,112px);gap:12px">' + HUB_POSTS.map((post) => `<img src="${dataUri(post.thumb)}" style="width:112px;height:140px;object-fit:cover;border-radius:12px;box-shadow:0 8px 18px rgba(0,0,0,.25)">`).join("") + "</div>";
+Object.keys(HUB.LANGS).forEach((lang) => {
+  const { title, em, sub } = HUB.COPY[lang].card;
+  CARDS["assets/share/qa-review-social" + (lang === "en" ? "" : "-" + lang) + ".jpg"] = card({
+    eyebrow: "QA-lab URL Review · Social", title, em, sub, art: HUB_WALL, size: Math.max(title.length, em.length) > 18 ? 68 : 80
+  });
+});
+
 function icon(svgFile, size, maskable) {
   const svg = fs.readFileSync(path.join(ROOT, svgFile), "utf8");
   const inner = maskable
@@ -119,6 +134,7 @@ function ico(pngs) {
 }
 
 async function main() {
+  const only = process.argv[2];
   const browser = await chromium.launch();
   const page = await browser.newPage({ deviceScaleFactor: 1 });
   async function shoot(html, width, height, out, transparent) {
@@ -134,7 +150,8 @@ async function main() {
     }
     return buffer;
   }
-  for (const [out, html] of Object.entries(CARDS)) await shoot(html, 1200, 630, out);
+  for (const [out, html] of Object.entries(CARDS)) if (!only || out.includes(only)) await shoot(html, 1200, 630, out);
+  if (only) return browser.close();
   for (const [out, svg, size, maskable] of ICONS) await shoot(icon(svg, size, maskable), size, size, out, !maskable);
   const sizes = [16, 32, 48];
   const pngs = [];

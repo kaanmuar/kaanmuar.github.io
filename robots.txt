@@ -15,6 +15,7 @@ Allow: /media/social-posts/*.jpg$
 Disallow: /assets/sweep/
 
 Sitemap: https://carlosandmunoz.com/sitemap.xml
+Sitemap: https://carlosandmunoz.com/sitemap-social.xml
 
 # Facts for answer engines: https://carlosandmunoz.com/llms.txt
 # Full text in one file: https://carlosandmunoz.com/llms-full.txt
