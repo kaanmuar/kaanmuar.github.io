@@ -830,6 +830,7 @@ const server = http.createServer(async (req, res) => {
     const report = await core.reviewTarget(intake.value.url, {
       log: (text) => line(res, { type: "log", text }),
       stopped: () => run.stopped,
+      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email },
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
@@ -842,6 +843,7 @@ const server = http.createServer(async (req, res) => {
     const record = core.intakeRecord(intake.value, report, {
       ip: identity.ip,
       deviceId,
+      creditId: decision.consumeId || "",
       userAgent: req.headers["user-agent"],
       acceptLanguage: req.headers["accept-language"],
       country: "",
@@ -854,7 +856,7 @@ const server = http.createServer(async (req, res) => {
     if (history) report.history = history;
     if (base) report.compare = compare.compareSites(base.report, report);
     writeRecord(record);
-    line(res, { type: "done", report, frameworks: record.frameworks, paid: false, priceUsd: record.priceUsd });
+    line(res, { type: "done", report, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
     res.end();
   } catch (error) {
     noteReview("failed", {

@@ -560,6 +560,11 @@
         .fix-rank { width: 28px; height: 28px; border-radius: 50%; display: grid; place-content: center; background: var(--panel-2); font-weight: 700; font-size: 13px; }
         .badge { display: inline-block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; margin-right: 6px; vertical-align: 1px; }
         .meta-line { font-size: 12px; color: var(--muted); margin: 3px 0 0; }
+        .talk-card .badge { white-space: nowrap; }
+        .talk-log { margin-top: 10px; }
+        .talk-log summary { cursor: pointer; font-weight: 600; }
+        .talk-log ol { padding-left: 20px; margin: 8px 0 0; }
+        .talk-log li p { margin: 4px 0; overflow-wrap: anywhere; }
         .fix-line { margin: 6px 0 0; padding-left: 10px; border-left: 3px solid var(--cyan); font-size: 13.5px; }
         .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .serp { font-family: Arial, Helvetica, sans-serif; background: #fff; color: #202124; border-radius: 14px; padding: 16px 18px; border: 1px solid var(--line); }
@@ -707,10 +712,10 @@
             .reel3d > img:first-child, .reel3d > .clip:first-child { opacity: 1; }
             .wire-track.run { transform: none; }
         }
-        .facts { display: flex; gap: 22px; list-style: none; padding: 0; margin: 18px 0 0; }
+        .facts { display: flex; flex-wrap: wrap; gap: 14px 22px; list-style: none; padding: 0; margin: 18px 0 0; }
         .facts b { display: block; font-family: "Instrument Serif", Georgia, serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.03em; line-height: 1; }
         .facts span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; letter-spacing: .04em; }
-        #reviewed-count { font-variant-numeric: tabular-nums; }
+        #reviewed-count, #reviews-count { font-variant-numeric: tabular-nums; }
         .ribbon { overflow: hidden; margin: 0 0 22px; border-block: 1px solid var(--line); }
         .ribbon-track { display: flex; width: max-content; gap: 0; animation: ribbon-drift 46s linear infinite; }
         .ribbon-track span { padding: 11px 0; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
@@ -1001,7 +1006,7 @@
             .stage-rig { height: 190px; }
             .reel3d { height: 180px; top: 0; }
             .facts { gap: 10px; }
-            .facts li { flex: 1; min-width: 0; }
+            .facts li { flex: 1 1 28%; min-width: 0; }
             .facts b { font-size: 1.55rem; }
             .facts span { font-size: 11px; line-height: 1.25; }
             .ribbon { margin: 0 0 14px; }
@@ -1168,7 +1173,8 @@
                 <li><b>21</b><span>kinds of cases</span></li>
                 <li><b>20</b><span>frameworks you already know</span></li>
                 <li><b>1</b><span>address to begin</span></li>
-                <li id="reviewed-fact" hidden><b id="reviewed-count" translate="no" aria-live="off">0</b><span>URLs reviewed so far</span></li>
+                <li id="reviewed-fact" hidden><b id="reviewed-count" translate="no" aria-live="off">0</b><span>pages read so far</span></li>
+                <li id="reviews-fact" hidden><b id="reviews-count" translate="no" aria-live="off">0</b><span>reviews run so far</span></li>
             </ul>
             <a class="live-jump" href="#live-reports">See live reports of real sites ↓</a>
         </div>
@@ -1601,7 +1607,7 @@
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261031d"></script>
+<script src="js/qa-review.js?v=20261031e"></script>
 <script src="js/url-suggest.js?v=20261023b"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>

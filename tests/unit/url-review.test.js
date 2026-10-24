@@ -836,6 +836,48 @@ test.describe("account page file", () => {
   });
 });
 
+test.describe("a run paid through a credit", () => {
+  const offers = require("../../functions/url-review-offers");
+  const desk = require("../../functions/url-review-desk");
+  const now = Date.parse("2026-10-22T10:00:00Z");
+  const value = core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.com", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://shop.example.com/" }).value;
+  const report = (id, host) => ({ id, host, statement: "The checkout keeps a stale price", cases: [{ id: "c1", layer: "UI", title: "Coupon total does not refresh" }], pages: [] });
+  const credit = { id: "k1", status: "run-credit", paid: true, deviceId: "d1", frameworks: ["Playwright"], tools: [], pages: 20, depth: 2, priceUsd: 19, createdAt: "2026-10-21T00:00:00Z" };
+  const earlier = Object.assign(core.intakeRecord(value, report("r0", "old.example.com"), { deviceId: "d1" }), { createdAt: "2026-10-20T00:00:00Z" });
+
+  test("opens its own report for its owner, and only that report", () => {
+    const decision = core.judgeAttempts([credit, earlier], { deviceId: "d1", ip: "" }, value);
+    assert.deepEqual(decision, { ok: true, consumeId: "k1" });
+    const run = Object.assign(core.intakeRecord(value, report("r1", "shop.example.com"), { deviceId: "d1", creditId: decision.consumeId }), { createdAt: "2026-10-21T12:00:00Z" });
+    assert.equal(run.paid, true);
+    assert.equal(run.creditId, "k1");
+    const file = offers.accountFile([credit, earlier, run], "ana@example.com", now);
+    assert.equal(file.open, false);
+    assert.deepEqual(file.runs.map((row) => [row.id, row.open]), [["r1", true], ["r0", false]]);
+    assert.equal(file.runs[0].cases[0].title, "Coupon total does not refresh");
+    assert.notEqual(file.runs[1].cases[0].title, "Coupon total does not refresh");
+  });
+
+  test("a credit bought but not yet used unlocks nothing", () => {
+    const file = offers.accountFile([credit, earlier], "ana@example.com", now);
+    assert.deepEqual(file.runs.map((row) => [row.id, row.open]), [["r0", false]]);
+    assert.equal(earlier.paid, false);
+    assert.equal(earlier.creditId, "");
+  });
+
+  test("a normal unpaid run stays blurred", () => {
+    const run = core.intakeRecord(value, report("r2", "shop.example.com"), { deviceId: "d1" });
+    assert.equal(run.paid, false);
+    assert.equal(offers.accountFile([run], "ana@example.com", now).runs[0].open, false);
+  });
+
+  test("the desk counts the payment once, through the credit row", () => {
+    const run = Object.assign(core.intakeRecord(value, report("r1", "shop.example.com"), { deviceId: "d1", creditId: "k1" }), { createdAt: "2026-10-21T12:00:00Z" });
+    const used = { id: "u1", status: "run-credit-used", creditId: "k1", deviceId: "d1", createdAt: "2026-10-21T11:59:00Z" };
+    assert.equal(desk.snapshot([credit, used, run], [], [], [], []).tally.paid, 1);
+  });
+});
+
 test.describe("return price", () => {
   const offers = require("../../functions/url-review-offers");
   const now = Date.parse("2026-10-20T15:00:00Z");
@@ -1775,14 +1817,17 @@ test.describe("legal pages and front-end libraries", () => {
     try {
       const jobs = [];
       const lines = [];
-      const passive = await core.reviewTarget("https://shop.example.de/", { passive: true, log: (text) => lines.push(text), browse: async (job) => { jobs.push(job); return { ok: false }; } });
+      const owner = { reasonCode: "own", email: "ana@shop.example.de" };
+      const passive = await core.reviewTarget("https://shop.example.de/", { passive: true, asker: owner, log: (text) => lines.push(text), browse: async (job) => { jobs.push(job); return { ok: false }; } });
       assert.ok(jobs.length >= 1);
       jobs.forEach((job) => assert.equal(job.passive, true));
+      assert.ok(!jobs.some((job) => job.kind === "chat"), "a competitor run never starts the chat conversation, even with the owner's proof");
       assert.equal(passive.limits.passive, true);
       assert.ok(lines.some((text) => /competitor run: the browser types into no field and does not open the chat/.test(text)));
       jobs.length = 0;
-      const plain = await core.reviewTarget("https://shop.example.de/", { browse: async (job) => { jobs.push(job); return { ok: false }; } });
+      const plain = await core.reviewTarget("https://shop.example.de/", { asker: owner, browse: async (job) => { jobs.push(job); return { ok: false }; } });
       jobs.forEach((job) => assert.equal(job.passive, false));
+      assert.ok(jobs.some((job) => job.kind === "chat"));
       assert.equal(plain.limits.passive, false);
     } finally {
       restore();

@@ -3462,6 +3462,7 @@ async function runReview(req, res, placeOf) {
     const report = await urlReview.reviewTarget(intake.value.url, {
       log: (text) => writeLine({ type: "log", text }),
       stopped: () => stopped,
+      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email },
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
@@ -3474,6 +3475,7 @@ async function runReview(req, res, placeOf) {
     const record = urlReview.intakeRecord(intake.value, report, Object.assign({
       ip,
       deviceId,
+      creditId: decision.consumeId || "",
       userAgent: req.get("user-agent"),
       acceptLanguage: req.get("accept-language")
     }, await placeOf(runId)));

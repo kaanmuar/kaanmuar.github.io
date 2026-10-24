@@ -135,6 +135,18 @@ test("the browser refuses to type into a field or open the chat on a competitor 
   await assert.rejects(browser.typeProbe(page, {}, "first", { passive: true }), /Typing into a field was refused: a competitor run is strictly passive/);
   await assert.rejects(browser.openChat(page, [], { passive: true }), /Opening the chat was refused: a competitor run is strictly passive/);
   assert.deepEqual(touched, []);
+  const refused = { ok: false, error: "The conversation was refused: a competitor run is strictly passive." };
+  assert.deepEqual(await browser.talk({ kind: "chat", proof: "own", passive: true, url: "https://shop.example.com/", turns: [{ id: "hello", text: "Hi" }] }), refused);
+  assert.deepEqual(await browser.browse({ kind: "chat", proof: "own", passive: true, url: "https://shop.example.com/", turns: [] }), refused);
+});
+
+test("a comparison paid through a credit opens its own report and keeps its base", () => {
+  const value = core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", frameworks: ["Playwright"], url: "https://excalidraw.com/", reasonCode: "compare", compareWith: "abc123" }).value;
+  const paid = core.intakeRecord(value, { id: "r1" }, { creditId: "t1" });
+  assert.equal(paid.paid, true);
+  assert.equal(paid.creditId, "t1");
+  assert.equal(paid.compareWith, "abc123");
+  assert.equal(core.intakeRecord(value, { id: "r2" }, {}).paid, false);
 });
 
 test("a comparison stands at least on the first return step and climbs the ladder from there", () => {
