@@ -4181,8 +4181,8 @@
                 try { this._loadAndRenderReviews(); }
                 catch (error) { console.error("Failed to load testimonials:", error); }
 
-                // Start the tour if it hasn't been seen.
-                if (!sessionStorage.getItem('hasSeenTour')) {
+                // Start the tour if it hasn't been seen. A framed CV (the lab preview) never starts it: its card would take focus from the host page.
+                if (!sessionStorage.getItem('hasSeenTour') && window.top === window.self) {
                     setTimeout(() => this.startTour(true), 1000);
                 }
                 // Tests wait for data-cv-settled: the live CV re-renders the competencies and the topic list when it lands.

@@ -18,6 +18,47 @@
   const answers = new Map();
   const sitePaths = new Map();
 
+  const T = {
+    en: {
+      sites: "Suggested sites", pages: "Suggested pages",
+      top: "{host} is online and is one of the most visited sites worldwide.", online: "{host} is online.",
+      missing: "{host} does not exist.", spell: "{host} does not exist. Check the spelling.",
+      bare: "{host} is registered but has no website address.", mean: "Did you mean {fix}?"
+    },
+    es: {
+      sites: "Sitios sugeridos", pages: "Páginas sugeridas",
+      top: "{host} está en línea y es uno de los sitios más visitados del mundo.", online: "{host} está en línea.",
+      missing: "{host} no existe.", spell: "{host} no existe. Revisa cómo se escribe.",
+      bare: "{host} está registrado, pero no tiene dirección de sitio web.", mean: "¿Quisiste decir {fix}?"
+    },
+    pt: {
+      sites: "Sites sugeridos", pages: "Páginas sugeridas",
+      top: "{host} está no ar e é um dos sites mais visitados do mundo.", online: "{host} está no ar.",
+      missing: "{host} não existe.", spell: "{host} não existe. Confira a grafia.",
+      bare: "{host} está registrado, mas não tem endereço de site.", mean: "Você quis dizer {fix}?"
+    },
+    de: {
+      sites: "Vorgeschlagene Websites", pages: "Vorgeschlagene Seiten",
+      top: "{host} ist online und gehört zu den meistbesuchten Websites der Welt.", online: "{host} ist online.",
+      missing: "{host} existiert nicht.", spell: "{host} existiert nicht. Bitte prüfen Sie die Schreibweise.",
+      bare: "{host} ist registriert, hat aber keine Website-Adresse.", mean: "Meinten Sie {fix}?"
+    },
+    fr: {
+      sites: "Sites suggérés", pages: "Pages suggérées",
+      top: "{host} est en ligne et fait partie des sites les plus visités au monde.", online: "{host} est en ligne.",
+      missing: "{host} n’existe pas.", spell: "{host} n’existe pas. Vérifiez l’orthographe.",
+      bare: "{host} est enregistré, mais n’a pas d’adresse de site web.", mean: "Vouliez-vous dire {fix} ?"
+    },
+    it: {
+      sites: "Siti suggeriti", pages: "Pagine suggerite",
+      top: "{host} è online ed è uno dei siti più visitati al mondo.", online: "{host} è online.",
+      missing: "{host} non esiste.", spell: "{host} non esiste. Controlla l’ortografia.",
+      bare: "{host} è registrato, ma non ha un indirizzo web.", mean: "Forse intendevi {fix}?"
+    }
+  };
+  const code = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
+  const book = T[code] || T.en;
+
   function keyOf(host) {
     return host.replace(/^(www|m)\./, "");
   }
@@ -135,7 +176,7 @@
     list.id = inputId + "-suggest";
     list.className = "url-suggest notranslate";
     list.setAttribute("role", "listbox");
-    list.setAttribute("aria-label", "Suggested sites");
+    list.setAttribute("aria-label", book.sites);
     list.hidden = true;
     field.after(list);
 
@@ -143,6 +184,10 @@
     hint.id = inputId + "-hint";
     hint.className = "url-hint";
     hint.setAttribute("aria-live", "polite");
+    if (book !== T.en) {
+      hint.lang = code;
+      hint.setAttribute("translate", "no");
+    }
     (document.getElementById(inputId + "-error") || list).after(hint);
 
     input.setAttribute("role", "combobox");
@@ -152,7 +197,7 @@
     input.setAttribute("aria-describedby", hint.id);
 
     function render() {
-      list.setAttribute("aria-label", mode === "path" ? "Suggested pages" : "Suggested sites");
+      list.setAttribute("aria-label", mode === "path" ? book.pages : book.sites);
       list.replaceChildren(...options.map((option, index) => {
         const item = document.createElement("li");
         item.id = inputId + "-opt-" + index;
@@ -199,21 +244,26 @@
       else pick(options[index], "list");
     }
 
-    function say(state, text, host, fix) {
+    function words(template, key, node) {
+      const at = template.indexOf("{" + key + "}");
+      return [template.slice(0, at), node, template.slice(at + key.length + 2)].filter(Boolean);
+    }
+
+    function say(state, key, host, fix) {
       hint.className = "url-hint" + (state ? " " + state : "");
       hint.replaceChildren();
-      if (!text) return;
+      if (!key) return;
       const name = document.createElement("b");
       name.className = "notranslate";
       name.textContent = host;
-      hint.append(name, " " + text);
+      hint.append(...words(book[key], "host", name));
       if (fix) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "url-fix notranslate";
         button.textContent = fix;
         button.addEventListener("click", () => pick(fix, "did-you-mean"));
-        hint.append(" Did you mean ", button, "?");
+        hint.append(" ", ...words(book.mean, "fix", button));
       }
     }
 
@@ -261,12 +311,12 @@
       const [state, pool] = await Promise.all([resolve(host), shardFor(keyOf(host))]);
       if (host !== hostPart(input.value)) return;
       const known = pool.some((candidate) => keyOf(candidate) === keyOf(host));
-      if (state === "found" && known) return say("ok", "is online and is one of the most visited sites worldwide.", host);
+      if (state === "found" && known) return say("ok", "top", host);
       const fix = await nearest(host);
       if (host !== hostPart(input.value)) return;
-      if (state === "found") return say(fix ? "warn" : "ok", "is online.", host, fix);
-      if (state === "missing") return say("bad", fix ? "does not exist." : "does not exist. Check the spelling.", host, fix);
-      if (state === "no-address") return say("bad", "is registered but has no website address.", host, fix);
+      if (state === "found") return say(fix ? "warn" : "ok", "online", host, fix);
+      if (state === "missing") return say("bad", fix ? "missing" : "spell", host, fix);
+      if (state === "no-address") return say("bad", "bare", host, fix);
       say("", "");
     }
 

@@ -3,16 +3,41 @@
   <url>
     <loc>https://carlosandmunoz.com/qa-review-social.html</loc>
     <lastmod>2026-10-24</lastmod>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-es.html</loc>
+    <lastmod>2026-10-24</lastmod>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-pt.html</loc>
+    <lastmod>2026-10-24</lastmod>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-de.html</loc>
+    <lastmod>2026-10-24</lastmod>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-fr.html</loc>
+    <lastmod>2026-10-24</lastmod>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-it.html</loc>
+    <lastmod>2026-10-24</lastmod>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/02-u-mercadolibre-com-co.html</loc>
+    <lastmod>2026-10-24</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-23/01-u-pirouline-com.html</loc>
+    <lastmod>2026-10-24</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/02-u-epssura-com.html</loc>
+    <lastmod>2026-10-23</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/inherited-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/release-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/frameworks-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/first-read-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/talking-portrait.jpg</image:loc></image:image>
     <video:video>
       <video:thumbnail_loc>https://i.ytimg.com/vi/0FypyDn0reM/hqdefault.jpg</video:thumbnail_loc>
       <video:title>epssura.com: 40. The gap: form labels.</video:title>
@@ -27,6 +52,11 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&am
       <video:player_loc>https://www.youtube.com/embed/0FypyDn0reM</video:player_loc>
       <video:publication_date>2026-10-23</video:publication_date>
     </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg</image:loc></image:image>
     <video:video>
       <video:thumbnail_loc>https://i.ytimg.com/vi/5b4Hr6r-cBk/hqdefault.jpg</video:thumbnail_loc>
       <video:title>uber.com: 66. The gap: page titles.</video:title>
@@ -41,6 +71,41 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;u
       <video:player_loc>https://www.youtube.com/embed/5b4Hr6r-cBk</video:player_loc>
       <video:publication_date>2026-10-23</video:publication_date>
     </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/de/inherited.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/inherited-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/en/inherited.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/inherited-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/es/inherited.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/inherited-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/fr/inherited.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/inherited-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/it/inherited.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/inherited-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/pt/inherited.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/inherited-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/01-u-teaminternational-com.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg</image:loc></image:image>
     <video:video>
       <video:thumbnail_loc>https://i.ytimg.com/vi/BZTtWQCzPCM/hqdefault.jpg</video:thumbnail_loc>
       <video:title>teaminternational.com: 64. The gap: broken links.</video:title>
@@ -55,6 +120,16 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-teaminternatio
       <video:player_loc>https://www.youtube.com/embed/BZTtWQCzPCM</video:player_loc>
       <video:publication_date>2026-10-22</video:publication_date>
     </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/de/release.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/release-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/en/release.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/release-portrait.jpg</image:loc></image:image>
     <video:video>
       <video:thumbnail_loc>https://i.ytimg.com/vi/T1vH4T0yZRQ/hqdefault.jpg</video:thumbnail_loc>
       <video:title>The release is close and nobody has written the test cases. Sound familiar?</video:title>
@@ -73,6 +148,36 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
       <video:player_loc>https://www.youtube.com/embed/T1vH4T0yZRQ</video:player_loc>
       <video:publication_date>2026-10-22</video:publication_date>
     </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/es/release.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/release-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/fr/release.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/release-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/it/release.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/release-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/pt/release.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/release-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/de/frameworks.html</loc>
+    <lastmod>2026-10-21</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/frameworks-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/en/frameworks.html</loc>
+    <lastmod>2026-10-21</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/frameworks-portrait.jpg</image:loc></image:image>
     <video:video>
       <video:thumbnail_loc>https://i.ytimg.com/vi/BLfpJj-X1Kg/hqdefault.jpg</video:thumbnail_loc>
       <video:title>Stop translating generic test ideas into your framework by hand.</video:title>
@@ -91,6 +196,36 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
       <video:player_loc>https://www.youtube.com/embed/BLfpJj-X1Kg</video:player_loc>
       <video:publication_date>2026-10-21</video:publication_date>
     </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/es/frameworks.html</loc>
+    <lastmod>2026-10-21</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/frameworks-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/fr/frameworks.html</loc>
+    <lastmod>2026-10-21</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/frameworks-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/it/frameworks.html</loc>
+    <lastmod>2026-10-21</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/frameworks-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/pt/frameworks.html</loc>
+    <lastmod>2026-10-21</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/frameworks-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/de/first-read.html</loc>
+    <lastmod>2026-10-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/first-read-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/en/first-read.html</loc>
+    <lastmod>2026-10-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/first-read-portrait.jpg</image:loc></image:image>
     <video:video>
       <video:thumbnail_loc>https://i.ytimg.com/vi/VfAPT1W2nGA/hqdefault.jpg</video:thumbnail_loc>
       <video:title>Your first review is included: 20 pages, 2 links deep.</video:title>
@@ -109,6 +244,36 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
       <video:player_loc>https://www.youtube.com/embed/VfAPT1W2nGA</video:player_loc>
       <video:publication_date>2026-10-20</video:publication_date>
     </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/es/first-read.html</loc>
+    <lastmod>2026-10-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/first-read-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/fr/first-read.html</loc>
+    <lastmod>2026-10-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/first-read-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/it/first-read.html</loc>
+    <lastmod>2026-10-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/first-read-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/pt/first-read.html</loc>
+    <lastmod>2026-10-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/first-read-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/de/talking.html</loc>
+    <lastmod>2026-10-19</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/talking-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/en/talking.html</loc>
+    <lastmod>2026-10-19</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/talking-portrait.jpg</image:loc></image:image>
     <video:video>
       <video:thumbnail_loc>https://i.ytimg.com/vi/Pyx79IX2Ajc/hqdefault.jpg</video:thumbnail_loc>
       <video:title>Every public page already tells you what to test. Most teams never write it down.</video:title>
@@ -129,48 +294,23 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
     </video:video>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-es.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/inherited-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/release-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/frameworks-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/first-read-portrait.jpg</image:loc></image:image>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/es/talking.html</loc>
+    <lastmod>2026-10-19</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/talking-portrait.jpg</image:loc></image:image>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-pt.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/inherited-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/release-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/frameworks-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/first-read-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/talking-portrait.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-de.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/inherited-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/release-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/frameworks-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/first-read-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/talking-portrait.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-fr.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/inherited-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/release-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/frameworks-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/first-read-portrait.jpg</image:loc></image:image>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/fr/talking.html</loc>
+    <lastmod>2026-10-19</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/talking-portrait.jpg</image:loc></image:image>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-it.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/inherited-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/release-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/frameworks-portrait.jpg</image:loc></image:image>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/first-read-portrait.jpg</image:loc></image:image>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/it/talking.html</loc>
+    <lastmod>2026-10-19</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/talking-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/launch-2026-10/pt/talking.html</loc>
+    <lastmod>2026-10-19</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/talking-portrait.jpg</image:loc></image:image>
   </url>
 </urlset>

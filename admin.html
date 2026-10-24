@@ -201,6 +201,13 @@
         .hub-admin-actions { display: flex; flex-direction: column; align-items: stretch; }
         .hub-admin-edit { grid-column: 1 / -1; border-top: 1px solid #d5dce3; padding-top: 0.6rem; }
         .hub-admin-captions { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 0.5rem 0.9rem; }
+        .hub-numbers { margin: 0.75rem 0 1rem; }
+        .hub-numbers .split-row { grid-template-columns: minmax(0, 15rem) 1fr auto; }
+        .hub-numbers .split-row > span { overflow-wrap: anywhere; }
+        .hub-numbers-table { overflow-x: auto; }
+        .hub-numbers-table table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .hub-numbers-table th, .hub-numbers-table td { padding: 0.35rem 0.5rem; border-bottom: 1px solid #e6ebf0; text-align: right; white-space: nowrap; }
+        .hub-numbers-table th:first-child, .hub-numbers-table td:first-child { text-align: left; white-space: normal; overflow-wrap: anywhere; }
         .hub-proposals { border-top: 1px solid #d5dce3; border-bottom: 1px solid #d5dce3; padding: 0.75rem 0; margin: 0.75rem 0; }
         .hub-proposals > h3 { font-weight: 700; }
         .hub-proposal h3 a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
@@ -364,6 +371,7 @@
         <h2 class="text-2xl font-semibold mb-2">Social hub</h2>
         <p class="cv-note">Every post on the <a href="qa-review-social.html" target="_blank" rel="noopener" class="underline">social hub</a>, with its calendar slot on each channel. Edits save at once and reach the public hub with the next daily Live Reports run, which rebuilds it. Buffer and the Facebook Page keep no ledger here, so a past slot reads Out; YouTube is checked against the channel's uploads.</p>
         <p id="hub-admin-status" class="cv-note" role="status"></p>
+        <section id="hub-numbers" class="hub-numbers" aria-label="Social hub numbers"></section>
         <div class="hub-admin-tools">
             <div><label class="filter-label" for="hub-admin-q">Search</label><input type="search" id="hub-admin-q" placeholder="Title, caption or id" autocomplete="off"></div>
             <div><label class="filter-label" for="hub-admin-kind">Kind</label><select id="hub-admin-kind"><option value="all">All kinds</option><option value="review">Site reviews</option><option value="tip">Tips</option><option value="launch">Product</option><option value="pick">Picks</option></select></div>
@@ -685,6 +693,7 @@
     import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
     import { createCvEditor } from "./js/cv-editor.js?v=20260928c";
     import { createHubEditor } from "./js/social-hub-editor.js?v=20261024c";
+    import { createHubNumbers } from "./js/social-hub-numbers.js?v=20261024a";
 
     // Firebase Config
     const firebaseConfig = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", storageBucket: "carlosm-interactive-cv.firebasestorage.app", messagingSenderId: "976558418058", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
@@ -694,6 +703,7 @@
     const storage = getStorage(app);
     const cvEditor = createCvEditor({ db, auth, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, getDocs, query, orderBy, limit, addDoc, storage, ref, uploadString, getDownloadURL });
     const hubEditor = createHubEditor({ db, auth, doc, getDoc, setDoc, serverTimestamp });
+    const hubNumbers = createHubNumbers({ db, doc, getDoc });
 
     // Global State
     let allMessages = [], allRatings = [], allBlockedSenders = [];
@@ -969,7 +979,7 @@
             panes[key].classList.toggle('hidden', !isActive);
         });
         if (tabKey === 'stats') renderStatisticsGraph();
-        if (tabKey === 'hub') hubEditor.load();
+        if (tabKey === 'hub') { hubEditor.load(); hubNumbers.load(); }
     }
     Object.keys(tabButtons).forEach(key => tabButtons[key].addEventListener('click', () => switchTab(key)));
     document.querySelectorAll('.source-switch button').forEach((button) => {
@@ -1661,7 +1671,7 @@
         else start.setDate(start.getDate() - Number(range));
         try {
             const snap = await getDocs(query(collection(db, 'site_events'), where('createdAt', '>=', start), orderBy('createdAt', 'desc'), limit(2000)));
-            const rows = snap.docs.map((item) => item.data());
+            const rows = snap.docs.map((item) => item.data()).filter((row) => row.kind !== 'view');
             const summary = summarizeSiteEvents(rows);
             const cards = [['Opens', summary.opens], ['Clicks', summary.clicks], ['Exports', summary.exports], ['Lab runs', summary.runs]];
             host.innerHTML = cards.map(([label, value]) => `<div class="stat-kpi"><span>${label}</span><strong>${value}</strong></div>`).join('');
