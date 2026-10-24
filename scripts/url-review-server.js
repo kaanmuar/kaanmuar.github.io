@@ -524,6 +524,21 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { report: found.report, frameworks: found.frameworks, paid: true }, origin, found.deviceId || deviceHint);
     return;
   }
+  if (req.method === "POST" && url.pathname === "/review/ask") {
+    let askBody = {};
+    try { askBody = await readBody(req); } catch (error) { askBody = {}; }
+    const id = String(askBody.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const rows = readStore();
+    const found = id ? rows.slice().reverse().find((row) => row && row.id === id && row.report) : null;
+    const paidLater = !!found && rows.some((row) => row && row.status === "paid-report" && row.reportId === found.id && row.paid === true);
+    const access = await auth.askAccess(signIns, askBody, found, paidLater || (!!found && found.free === true));
+    if (!access.ok) {
+      sendJson(res, access.status, { error: access.error, signIn: !!access.signIn }, origin, deviceHint);
+      return;
+    }
+    sendJson(res, 200, { ok: true }, origin, deviceHint);
+    return;
+  }
   if (req.method === "POST" && (url.pathname === "/review/pay" || url.pathname === "/pay")) {
     sendJson(res, 402, {
       paymentRequired: true,

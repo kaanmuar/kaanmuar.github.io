@@ -2917,6 +2917,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(204).send("");
     return;
   }
+  if (req.method === "POST" && pathName.endsWith("/review/ask")) {
+    const body = req.body || {};
+    const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const snap = id ? await admin.firestore().collection("url_reviews").doc(id).get() : null;
+    const row = snap && snap.exists ? snap.data() || {} : null;
+    const free = !!row && (row.free === true || await hasFreeRuns(row.email));
+    const access = await reviewAuth.askAccess(reviewAuth.firestoreStore(admin.firestore()), body, row, free);
+    if (!access.ok) {
+      res.status(access.status).json({ error: access.error, signIn: !!access.signIn });
+      return;
+    }
+    res.status(200).json({ ok: true });
+    return;
+  }
   if (req.method === "POST" && pathName.indexOf("/stop") !== -1) {
     const stop = await reviewAuth.stopRun(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
     if (!stop.ok) {

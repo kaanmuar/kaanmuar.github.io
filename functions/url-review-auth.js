@@ -353,6 +353,16 @@ async function stopRun(store, input) {
   return { ok: true };
 }
 
+// Ask the report opens for the account that ran the report, once that report is paid or free.
+async function askAccess(store, input, row, free) {
+  const signedIn = await checkSession(store, Object.assign({}, input, { touch: false }));
+  if (!signedIn.ok) return signedIn;
+  if (!row || !row.report || row.report.preview) return fail(404, "That report was not found.");
+  if (!row.email || row.email !== signedIn.email) return fail(403, "Only the account that ran this report can ask it.");
+  if (row.paid !== true && free !== true) return fail(402, "Ask the report opens once this report is paid.");
+  return { ok: true, email: signedIn.email };
+}
+
 async function closeSession(store, session) {
   const clean = String(session || "").replace(/[^a-f0-9]/g, "");
   if (clean.length === 64) await store.remove("url_review_sessions", hashOf(clean));
@@ -419,6 +429,7 @@ module.exports = {
   reportAccess,
   claimRun,
   stopRun,
+  askAccess,
   closeSession,
   dropAuthUsers,
   lookupIdToken
