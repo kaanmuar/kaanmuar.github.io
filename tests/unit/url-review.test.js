@@ -399,6 +399,24 @@ test.describe("false positives from the real-run series", () => {
     assert.equal(noDmarc.findings.find((item) => item.key === "sec-dmarc").severity, "low");
   });
 
+  test("an order email on a null MX domain cannot receive mail", async () => {
+    const dnsPromises = require("node:dns").promises;
+    const saved = { mx: dnsPromises.resolveMx, lookup: dnsPromises.lookup };
+    dnsPromises.lookup = async () => [{ address: "93.184.216.34", family: 4 }];
+    const canReceive = async (exchanges) => {
+      dnsPromises.resolveMx = async () => exchanges.map((exchange) => ({ exchange, priority: 0 }));
+      return core.emailCanReceive("ana@sura.example.co");
+    };
+    try {
+      assert.equal(await canReceive([""]), false);
+      assert.equal(await canReceive(["."]), false);
+      assert.equal(await canReceive(["mx.sura.example.co"]), true);
+      assert.equal(await canReceive(["", "mx.sura.example.co"]), true);
+    } finally {
+      Object.assign(dnsPromises, { resolveMx: saved.mx, lookup: saved.lookup });
+    }
+  });
+
   test("a DNS lookup that fails is unread, not a missing record", async () => {
     const dnsPromises = require("node:dns").promises;
     const saved = { mx: dnsPromises.resolveMx, txt: dnsPromises.resolveTxt, caa: dnsPromises.resolveCaa };
