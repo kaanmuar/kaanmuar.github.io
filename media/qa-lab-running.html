@@ -86,6 +86,8 @@
         a { color: #0d6e76; font-weight: 600; text-decoration: none; }
         h1 { font-family: "Source Serif 4", Georgia, serif; font-size: 1.8rem; margin: 8px 0; }
         p { margin: 0 0 14px; line-height: 1.5; }
+        h2 { font-family: "Source Serif 4", Georgia, serif; font-size: 1.3rem; margin: 0 0 8px; }
+        ol { margin: 0 0 18px; padding-left: 22px; line-height: 1.5; }
         video { width: 100%; height: auto; border-radius: 16px; background: #10161d; display: block; margin-bottom: 18px; }
         .more { margin-top: 14px; }
     </style>
@@ -98,9 +100,19 @@
 <main>
     <h1>QA Lab running</h1>
     <p>A full catalog run in Watch. Cases move through the page, and the native runner log stays open.</p>
-    <video controls playsinline preload="metadata" poster="qa-lab-running.jpg" width="1280" height="720">
+    <video controls playsinline preload="metadata" poster="qa-lab-running.jpg" width="1280" height="720" aria-describedby="video-steps">
         <source src="qa-lab-running.mp4" type="video/mp4">
     </video>
+    <h2>What the video shows</h2>
+    <ol id="video-steps">
+        <li>0:00 The lab runs in Watch mode with the Native runners panel open on the right. The interface is shown in Spanish. The Playwright column reads "waiting for this process", and the counters show 1 passed and 0 failed.</li>
+        <li>0:05 The case list on the left scrolls from the smoke cases into the functional cases. The center panel shows the case being run, a view of the CV, and a live log with a PASS or FAIL line for each case.</li>
+        <li>0:10 FN-02, a language switch check, fails. The failed counter reads 1, and the Observer note explains why the check failed.</li>
+        <li>0:15 More functional cases run, and FN-16 fails. By 0:20 the counters show 12 passed and 3 failed.</li>
+        <li>0:35 The run reaches the security cases, starting with SEC-01, which checks robots.txt. The counters show 21 passed and 3 failed.</li>
+        <li>0:45 The accessibility cases start, and A11Y-01 fails. The counters show 30 passed and 4 failed.</li>
+        <li>0:50 A11Y-05 runs with 32 passed and 4 failed. The Playwright column in the runners panel still reads "waiting for this process".</li>
+    </ol>
     <p>The CV regression lab is a free, in-browser suite that checks this CV. It runs one catalog in 20 frameworks, from Playwright, Cypress, and Robot to Appium, Maestro, and k6, across smoke, functional, security, accessibility, mobile, and performance checks, then opens a results dashboard and a downloadable text report.</p>
     <p>Built by Carlos A. Muñoz, a QA architect with over 18 years in test automation and delivery. <a href="../index.html">Read the interactive CV</a>, open the <a href="../qa-lab.html">QA regression lab</a>, or <a href="../qa-review.html">review any public URL</a>.</p>
     <p class="more"><a href="qa-lab-tour.html">Watch the tour</a> · <a href="../accessibility.html">Accessibility</a></p>

@@ -86,6 +86,8 @@
         a { color: #0d6e76; font-weight: 600; text-decoration: none; }
         h1 { font-family: "Source Serif 4", Georgia, serif; font-size: 1.8rem; margin: 8px 0; }
         p { margin: 0 0 14px; line-height: 1.5; }
+        h2 { font-family: "Source Serif 4", Georgia, serif; font-size: 1.3rem; margin: 0 0 8px; }
+        ol { margin: 0 0 18px; padding-left: 22px; line-height: 1.5; }
         video { width: 100%; height: auto; border-radius: 16px; background: #10161d; display: block; margin-bottom: 18px; }
         .more { margin-top: 14px; }
     </style>
@@ -98,9 +100,18 @@
 <main>
     <h1>SDLC Studio tour</h1>
     <p>All 9 tour steps, from Sprint views through the CV regression lab.</p>
-    <video controls playsinline preload="metadata" poster="sdlc-studio-tour.jpg" width="1280" height="720">
+    <video controls playsinline preload="metadata" poster="sdlc-studio-tour.jpg" width="1280" height="720" aria-describedby="video-steps">
         <source src="sdlc-studio-tour.mp4" type="video/mp4">
     </video>
+    <h2>What the video shows</h2>
+    <ol id="video-steps">
+        <li>0:00 The PayStream studio opens on step 1 of 9, "Sprint views". The interface is shown in Spanish. The card lists the board, test tool, automation lab, verification, report, and analysis views.</li>
+        <li>0:04 Step 2, "Four agents", highlights the agent chips at the top: Ticket Steward, Test Designer, Automation Engineer, and Release Verifier. A small animation moves a story across the board columns.</li>
+        <li>0:08 Step 3, "Run the sprint", highlights the Run sprint with 4 agents button. The card says each agent waits for you to accept or keep the story, save the cases, pick the runners, and sign off.</li>
+        <li>0:12 Step 5, "Tickets and items", says the board matches the chosen tool and the Test Designer writes each step in Zephyr, Xray, or TestRail.</li>
+        <li>0:16 The Native runners panel opens on the right with Playwright, Cypress, and Robot tabs, idle until a run starts. Step 7 describes the sprint report file, and step 8 describes the agent log.</li>
+        <li>0:22 The last step, 9 of 9, says the CV regression lab runs the same checks in the browser against this CV, with a catalog, a pace, watch or background, and a results dashboard.</li>
+    </ol>
     <p>The SDLC studio is a free, in-browser sprint with four agents. Ticket Steward rewrites the story on Jira, Azure DevOps, Monday, Trello, Linear, Asana, MS Project, or Backlog. Test Designer writes Gherkin and Xray cases. Automation Engineer generates Playwright, Cypress, and Robot scripts. Release Verifier checks the Definition of Done. No account is needed.</p>
     <p>Built by Carlos A. Muñoz, a QA architect with over 18 years in test automation and delivery. <a href="../index.html">Read the interactive CV</a>, open the <a href="../simulador.html">SDLC studio</a>, or <a href="../qa-review.html">review any public URL</a>.</p>
     <p class="more"><a href="sdlc-studio-running.html">Watch a sprint</a> · <a href="../accessibility.html">Accessibility</a></p>

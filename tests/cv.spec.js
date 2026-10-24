@@ -102,6 +102,16 @@ test.describe('CV desktop', () => {
     }
   });
 
+  test('PDF export loads its libraries on first use and downloads the file', async ({ page }) => {
+    expect(await page.evaluate(() => [typeof window.jsPDF, typeof window.html2canvas])).toEqual(['undefined', 'undefined']);
+    const cv = new CVPage(page);
+    await cv.exportSelector.click({ force: true });
+    const download = page.waitForEvent('download', { timeout: 30000 });
+    await page.locator('#export-options').getByRole('button', { name: 'Export as PDF' }).click();
+    expect((await download).suggestedFilename()).toBe('CarlosMunozCV_Export.pdf');
+    expect(await page.evaluate(() => [typeof window.jsPDF, typeof window.html2canvas])).toEqual(['function', 'function']);
+  });
+
   test('print control is present', async ({ page }) => {
     await expect(page.locator('#print-btn')).toBeVisible();
   });
