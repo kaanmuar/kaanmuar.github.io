@@ -157,6 +157,15 @@ test.describe("scoring", () => {
       assert.equal(verdict(result, "an-consent"), "missing", name);
       assert.equal(result.findings.find((item) => item.key === "an-consent-mode").title, name + " is present but Google Consent Mode defaults were not found");
     });
+    const ga = (hits, denied) => ({ name: "Google Analytics", loads: 0, hits, denied, signals: denied ? ["G100"] : ["G111"] });
+    const browsed = (vendors) => insights.analyze({ pages: [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(gtm + gavi, STRONG_HEADERS, URL_) }],
+      browser: { ok: true, start: { status: 200, finalPath: "/" }, consent: { banner: "A cookie banner", rejectLabel: "Accept only necessary", rejected: false, before: { vendors, cookies: [] }, after: null } } }).findings.find((item) => item.key === "an-consent-mode");
+    const runtime = browsed([{ name: "Google Tag Manager", loads: 3, hits: 0, denied: 0, signals: [] }, ga(0, 1), { name: "Google Ads", loads: 0, hits: 0, denied: 1, signals: ["G100"] }]);
+    assert.equal(runtime.verdict, "pass");
+    assert.equal(runtime.title, "Consent Mode starts in denied, set when the page runs");
+    assert.match(runtime.evidence, /before a choice Google Analytics, Google Ads only sent pings with storage denied \(gcs=G100\), so EU Cookie Compliance or Tag Manager/);
+    assert.equal(browsed([ga(2, 1)]).verdict, "risk");
+    assert.equal(browsed([]).verdict, "risk");
     assert.deepEqual(core.analyzeHtml(wien, STRONG_HEADERS, URL_).analytics.tags, [{ name: "Siteimprove Analytics", ids: ["6002359"] }]);
     ["https://siteimproveanalytics.io/js/siteanalyze_66356571.js", "https://siteimprove.com/js/siteanalyze.js", "/assets/siteanalyze_6002359.js"].forEach((src) => {
       assert.deepEqual(core.analyzeHtml("<script src=\"" + src + "\"></script>", STRONG_HEADERS, URL_).analytics.tags.map((tag) => tag.name), ["Siteimprove Analytics"], src);

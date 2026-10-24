@@ -1182,6 +1182,8 @@ function analyze(input) {
   });
   const tracking = tags.filter((tag) => !tag.cookieless);
   const googleTags = tags.filter((tag) => /^Google/.test(tag.name));
+  const googleSeen = browsed && browsed.consent ? (browsed.consent.before.vendors || []).filter((row) => /^Google/.test(row.name)) : [];
+  const deniedPings = googleSeen.some((row) => row.hits > 0) ? [] : googleSeen.filter((row) => row.denied > 0 && (row.signals || []).length);
   const homeTags = new Set(((face.analytics && face.analytics.tags) || []).map((tag) => tag.name));
   const untagged = homeTags.size ? read.filter((page) => !((page.inspect.analytics && page.inspect.analytics.tags) || []).length && !(page.inspect.analytics && page.inspect.analytics.loader)).map((page) => page.path) : [];
   if (!tags.length && consentTools.length) {
@@ -1215,6 +1217,10 @@ function analyze(input) {
     add("Analytics", "risk", "high", "an-consent", "Tracking tags load with no consent tool in the page",
       tracking.map((tag) => tag.name).join(", ") + (tracking.length === 1 ? " appears" : " appear") + " in the HTML and no consent platform or Google Consent Mode default was found. In the EU, the UK, Brazil, and Colombia this is a legal exposure.",
       "Add a consent platform and set Google Consent Mode v2 defaults to denied before any tag loads.", { effort: "hours", cases: ["PR-03", "AN-01"] });
+  } else if (googleTags.length && consentTools.length && !consentMode && deniedPings.length) {
+    add("Analytics", "pass", "info", "an-consent-mode", "Consent Mode starts in denied, set when the page runs",
+      "Consent Mode defaults are not written in the HTML, but before a choice " + deniedPings.map((row) => row.name).join(", ") + " only sent pings with storage denied (gcs=" + deniedPings[0].signals[0] + "), so " + consentTools.join(", ") + " or Tag Manager sets them at runtime. Tag Assistant shows whether ad_user_data and ad_personalization are set too.",
+      "", { cases: ["PR-03", "AN-01"] });
   } else if (googleTags.length && consentTools.length && !consentMode) {
     add("Analytics", "risk", "medium", "an-consent-mode", consentTools.join(", ") + " is present but Google Consent Mode defaults were not found",
       "Without Consent Mode v2 defaults, Google tags can fire before the visitor chooses, and Google Ads loses modelled conversions.",

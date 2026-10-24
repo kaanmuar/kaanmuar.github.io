@@ -1298,6 +1298,7 @@
     const hits = (rows) => (rows || []).reduce((sum, row) => sum + (row.hits || 0), 0);
     const beforeBad = hits(before.vendors) + (before.cookies || []).length;
     const afterBad = after ? hits(after.vendors) + (after.cookies || []).length : 0;
+    const pings = (rows) => (rows || []).reduce((sum, row) => sum + (row.denied || 0), 0);
     const axePages = (b.axe && b.axe.ran && b.axe.pages) || [];
     const rules = new Map();
     axePages.forEach((page) => (page.violations || []).forEach((rule) => {
@@ -1322,8 +1323,8 @@
       typedTo(watch.before).length || typedTo(watchAfter).length ? "typing sent" : ""
     ].filter(Boolean).join(" · ") || "None seen" : "Not checked";
     const tiles = [
-      ["Before a choice", beforeBad ? (consent.banner ? "fail" : "risk") : "pass", beforeBad ? beforeBad + " tracking signal" + (beforeBad === 1 ? "" : "s") : "Nothing tracked"],
-      ["After Reject", after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? afterBad + " still tracked" : "Tracking stopped") : (consent.banner ? "Reject not found" : "No banner showed")],
+      ["Before a choice", beforeBad ? (consent.banner ? "fail" : "risk") : "pass", beforeBad ? beforeBad + " tracking signal" + (beforeBad === 1 ? "" : "s") : pings(before.vendors) ? "Only cookieless pings" : "Nothing tracked"],
+      ["After Reject", after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? afterBad + " still tracked" : pings(after.vendors) ? "Only cookieless pings" : "Tracking stopped") : (consent.banner ? "Reject not found" : "No banner showed")],
       ["Fingerprinting and recording", !watch.before ? "unknown" : spied ? (consent.banner ? "fail" : "risk") : printers(watch.before).length ? "risk" : "pass", watchText],
       ["axe-core", axePages.length ? (rules.size ? "fail" : "pass") : "unknown", axePages.length ? rules.size + " rules fail on " + axePages.length + " page" + (axePages.length === 1 ? "" : "s") : "Did not run"],
       ["Phone width", mobile.width ? (mobile.overflow > 2 ? "fail" : "pass") : "unknown", mobile.width ? (mobile.overflow > 2 ? mobile.overflow + " px too wide" : "Fits " + mobile.width + " px") : "Not checked"],
