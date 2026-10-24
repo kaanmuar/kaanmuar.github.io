@@ -675,7 +675,7 @@
         assert(/carlosandmunoz\.com/.test(canonical), 'canonical host unexpected');
         const json = cv.document.getElementById('person-structured-data').textContent;
         assert(/Carlos/.test(json), 'JSON-LD name missing');
-        assert(/18 (years|años)/i.test(json), '18 years missing from JSON-LD');
+        assert(/18 (years|años|anos|Jahren|ans|anni)/i.test(json), '18 years missing from JSON-LD');
         return 'index + canonical + Person JSON-LD';
       }
     },
