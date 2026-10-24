@@ -112,7 +112,7 @@ test.describe("who gets a conversation", () => {
 
   test("the browser refuses a chat job that carries no proof, before it starts Chromium", async () => {
     assert.deepEqual(await browser.talk({ kind: "chat", url: SHOP, turns: [{ id: "hello", text: "Hi" }] }), { ok: false, error: "The conversation needs the owner's proof." });
-    assert.deepEqual(await browser.browse({ kind: "chat", proof: "credentials", url: SHOP, turns: [] }), { ok: false, error: "The conversation needs the owner's proof." });
+    assert.deepEqual(await browser.browse({ kind: "chat", proof: "dropdown", url: SHOP, turns: [] }), { ok: false, error: "The conversation needs the owner's proof." });
   });
 });
 

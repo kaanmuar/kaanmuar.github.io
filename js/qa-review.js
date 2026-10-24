@@ -1076,13 +1076,20 @@
   }
 
   const TALK_LABEL = { pass: "Passes", risk: "At risk", fail: "Fails now", person: "Read it yourself" };
+  const TALK_PROOF = {
+    own: "It ran because the review was asked from a mailbox at this site's domain.",
+    credentials: "It ran because QA-lab recorded a verified signed-in run of this site for your account.",
+    site: "It ran because this site carries your account's verification token."
+  };
 
   function talkHtml(talk) {
     if (!talk) return "";
     const turns = talk.turns || [];
     const head = '<article class="card talk-card" style="margin-top:12px"><h3>Chat conversation</h3><p class="muted">' +
       (talk.vendor ? '<span class="notranslate" translate="no">' + esc(talk.vendor) + "</span>" + (talk.ai ? " · AI chatbot" : "") + ". " : "") + esc(talk.note || "") +
-      (turns.length ? " This conversation stays on your private report and is never published in Live Reports." : "") + "</p>";
+      (TALK_PROOF[talk.proof] ? " " + TALK_PROOF[talk.proof] : "") +
+      (turns.length ? " This conversation stays on your private report and is never published in Live Reports." : "") +
+      (talk.status === "needs-proof" ? ' <a href="qa-review-account.html#verify">Verify a site you own</a>.' : "") + "</p>";
     if (!turns.length) return head + "</article>";
     const rows = (talk.checks || []).map((check) => "<tr><td><strong>" + esc(check.label) + '</strong></td><td><span class="badge v-' + esc(check.verdict) + '">' + esc(TALK_LABEL[check.verdict] || check.verdict) + "</span></td><td>" + esc(check.evidence) + "</td></tr>").join("");
     const log = turns.map((turn) => '<li><p><strong>Review:</strong> <span class="notranslate" translate="no">' + esc(turn.sent) + "</span></p><p><strong>Chat" + (turn.reply ? " after " + (turn.ms / 1000).toFixed(1) + " s" : "") + ":</strong> " +

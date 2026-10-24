@@ -1188,7 +1188,7 @@ async function talk(job, log) {
   const left = () => budget - (Date.now() - started);
   const start = String((job && job.url) || "");
   if (passiveJob(job)) return { ok: false, error: "The conversation was refused: a competitor run is strictly passive." };
-  if (!job || job.proof !== "own") return { ok: false, error: "The conversation needs the owner's proof." };
+  if (!job || ["own", "credentials", "site"].indexOf(job.proof) === -1) return { ok: false, error: "The conversation needs the owner's proof." };
   if (!/^https:\/\//i.test(start) || blockedHost(start) || await privateAddress(new URL(start).hostname)) return { ok: false, error: "The start address was refused." };
   const turns = ((job && job.turns) || []).filter((turn) => turn && turn.id && turn.text).slice(0, chatTalk.MAX_TURNS);
   const acceptLanguage = /^[a-z]{2}$/.test(String((job && job.acceptLanguage) || "")) ? String(job.acceptLanguage) : "";

@@ -579,6 +579,16 @@ const PAGE = `<!DOCTYPE html>
       <div id="free-list"></div>
     </section>
     <section>
+      <h2>Owner proofs</h2>
+      <p class="empty">Mark a site as verified for an account after a signed-in run with the owner's credentials worked. That account's reviews of the host then hold a short scripted conversation with the site's chatbot. Only who marked it, when, the host and the account email are kept, for a year. Never paste a password here. Sites the owner verified with a DNS record or a homepage tag are listed too, for 30 days.</p>
+      <div class="tools">
+        <input id="proof-email" type="email" placeholder="Account email" aria-label="Account email for the owner proof">
+        <input id="proof-host" type="text" placeholder="Host, such as shop.example.com" aria-label="Host for the owner proof">
+        <button id="proof-add" type="button">Mark verified</button>
+      </div>
+      <div id="proof-list"></div>
+    </section>
+    <section>
       <h2>Return prices and 30-day passes</h2>
       <div id="offers"></div>
     </section>
@@ -627,6 +637,7 @@ const PAGE = `<!DOCTYPE html>
     const offersEl = document.getElementById("offers");
     const notesEl = document.getElementById("notes");
     const freeListEl = document.getElementById("free-list");
+    const proofListEl = document.getElementById("proof-list");
     const rerunsEl = document.getElementById("reruns");
     const noticesEl = document.getElementById("owner-notices");
     const freeEmailEl = document.getElementById("free-email");
@@ -678,6 +689,7 @@ const PAGE = `<!DOCTYPE html>
       renderOffers();
       renderNotes();
       renderFree();
+      renderProofs();
       renderReruns();
       renderNotices();
 
@@ -982,6 +994,39 @@ const PAGE = `<!DOCTYPE html>
       });
       load();
     }
+    function renderProofs() {
+      proofListEl.replaceChildren();
+      (data.ownerProofs || []).forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        block.appendChild(node("b", item.host + " · " + item.email));
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = [
+          item.kind === "operator" ? "credentials run, marked by " + item.by : "owner's " + (item.how === "meta" ? "homepage tag" : "DNS record"),
+          item.at ? "on " + when(item.at) : "",
+          item.until ? "until " + when(item.until) : ""
+        ].filter(Boolean).join(" · ");
+        block.appendChild(meta);
+        const revoke = document.createElement("button");
+        revoke.type = "button";
+        revoke.textContent = "Revoke";
+        revoke.addEventListener("click", () => setProof({ id: item.id, on: false }));
+        block.appendChild(revoke);
+        proofListEl.appendChild(block);
+      });
+      if (!(data.ownerProofs || []).length) proofListEl.appendChild(Object.assign(node("p", "No site is verified for any account."), { className: "empty" }));
+    }
+    async function setProof(body) {
+      const res = await fetch(deskBase() + "/desk/proof", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) alert((await res.json().catch(() => ({}))).error || "The proof did not save.");
+      load();
+    }
     async function setFree(email, on, note) {
       await fetch(deskBase() + "/desk/free", {
         method: "POST",
@@ -1027,6 +1072,14 @@ ${SIGN_IN}
       await setFree(email, true, freeNoteEl.value.trim());
       freeEmailEl.value = "";
       freeNoteEl.value = "";
+    });
+    document.getElementById("proof-add").addEventListener("click", async () => {
+      const email = document.getElementById("proof-email").value.trim().toLowerCase();
+      const host = document.getElementById("proof-host").value.trim().toLowerCase();
+      if (!email || email.indexOf("@") === -1 || !host) return;
+      await setProof({ email: email, host: host });
+      document.getElementById("proof-email").value = "";
+      document.getElementById("proof-host").value = "";
     });
     qEl.addEventListener("input", render);
     statusEl.addEventListener("change", render);

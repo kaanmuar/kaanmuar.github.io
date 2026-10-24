@@ -17,7 +17,8 @@ const BY_EMAIL = [
   ["coupons", "url_review_coupons"],
   ["stopLinks", "url_review_stop_links"],
   ["signIns", "url_review_sign_ins"],
-  ["sessions", "url_review_sessions"]
+  ["sessions", "url_review_sessions"],
+  ["ownerProofs", "url_review_owner_proofs"]
 ];
 
 // Their ids are a hash of a live secret or the secret itself.
