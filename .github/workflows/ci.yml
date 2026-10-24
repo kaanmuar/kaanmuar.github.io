@@ -31,6 +31,8 @@ jobs:
           node-version: '22'
       - name: URL review scoring, journeys, pricing, guards, and generated scripts
         run: npm run test:review
+      - name: Review language pages match their builder
+        run: python3 scripts/build-review-langs.py --check
 
   playwright:
     runs-on: ubuntu-latest

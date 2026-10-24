@@ -2208,7 +2208,9 @@ namespace QaLab
     });
     lines.push("## Files", "");
     files.forEach((file) => lines.push("- `" + file.path.replace(/^fix-kit\//, "") + "`"));
-    if (kit.hosting === "GitHub Pages") lines.push("", "GitHub Pages cannot send custom headers. Put Cloudflare (or another CDN) in front and use the `_headers` file there, or move to a host that supports headers.");
+    const proxied = (report.technologies || []).some((row) => /cloudflare/i.test(row.name || ""));
+    if (kit.hosting === "GitHub Pages" && proxied) lines.push("", "GitHub Pages cannot send custom headers, but this review also saw Cloudflare in front of the site. Add each header there with a Response Header Transform Rule (or a Worker). A `_headers` file only works on Cloudflare Pages or Netlify.");
+    else if (kit.hosting === "GitHub Pages") lines.push("", "GitHub Pages cannot send custom headers. Put a CDN such as Cloudflare in front and set the headers there, or move to a host that sends headers. The `_headers` file works on Cloudflare Pages and Netlify.");
     else if (kit.hosting) lines.push("", "The site looks hosted on " + kit.hosting + ", so that header file is listed first.");
     files.unshift({ path: "fix-kit/README.md", content: lines.join("\n") + "\n" });
     return files;
