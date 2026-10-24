@@ -12,8 +12,11 @@
   <script src="js/site-theme.js"></script>
   <script>SiteTheme.boot();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/site-look.css?v=20261104a">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"></noscript>
+  <style data-critical="css/site-look.css?v=20261104a">html[data-look] body{background-color:var(--bg, var(--bg-primary));background-image:var(--look-gradient);background-attachment:fixed;color:var(--text, var(--text-secondary))}html[data-look] .panel{background:var(--look-card);border-color:var(--look-edge);border-radius:var(--look-radius);backdrop-filter:blur(var(--look-blur)) saturate(1.35);-webkit-backdrop-filter:blur(var(--look-blur)) saturate(1.35)}html[data-look] .topbar{background:color-mix(in srgb, var(--bg-secondary) 42%, transparent);border-color:var(--look-edge);backdrop-filter:blur(var(--look-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--look-blur)) saturate(1.5)}html[data-look] .topbar #theme-toggle,html[data-look] .topbar .lang-toggle{position:relative;isolation:isolate;border-color:transparent;background:transparent;transition:transform 0.28s cubic-bezier(.2, .8, .2, 1)}html[data-look] .topbar #theme-toggle::before,html[data-look] .topbar .lang-toggle::before{content:"";position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(183, 243, 241, 0.72) 48%, rgba(20, 147, 155, 0.28) 100%);box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 10px rgba(13, 110, 118, 0.18);z-index:-1;pointer-events:none}html[data-look] .topbar #theme-toggle:hover,html[data-look] .topbar .lang-toggle:hover{background:transparent;transform:scale(1.06)}@media (prefers-reduced-motion: reduce){html[data-look] .topbar #theme-toggle,html[data-look] .topbar .lang-toggle{transition:none}html[data-look] .topbar #theme-toggle:hover,html[data-look] .topbar .lang-toggle:hover{transform:none;filter:none}}.skip-link{position:fixed;top:8px;left:8px;z-index:10000;padding:10px 16px;border-radius:8px;background:#12181f;color:#ffffff;font:600 15px/1.2 Inter, system-ui, sans-serif;text-decoration:none;transform:translateY(calc(-100% - 16px))}.skip-link:focus{transform:none;outline:3px solid #4db3bb;outline-offset:2px}html.dark-mode .skip-link{background:#ffffff;color:#12181f;outline-color:#0d6e76}main[tabindex="-1"]:focus{outline:none}</style>
+  <link rel="preload" href="css/site-look.css?v=20261104a" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
   <style>
     :root {
       --bg: #eef2f4; --panel: #f7f8fa; --card: #fff; --line: #d5dce3; --text: #12181f; --muted: #4a5560;
@@ -608,10 +611,11 @@
   <span translate="no">QA-lab URL Review · Carlos Muñoz</span>
   <nav><a href="qa-review.html">Review a URL</a><a href="qa-review-guide.html">Guide</a><a href="qa-review-legal.html">Disclaimers</a><a href="accessibility.html">Accessibility</a></nav>
 </footer>
-<script src="js/site-analytics.js?v=20261024b"></script>
-<script src="js/qa-review-consent.js?v=20261028p"></script>
+<script>window.SiteAnalytics=window.SiteAnalytics||{q:[]};["track","event","trackEvent","once","page","bind","noteVisit"].forEach(function(n){SiteAnalytics[n]=SiteAnalytics[n]||function(){SiteAnalytics.q.push([n,arguments])}});</script>
+<script src="js/site-analytics.js?v=20261030a" defer></script>
+<script src="js/qa-review-consent.js?v=20261028p" defer></script>
 <script src="js/site-i18n.js?v=20261104a"></script>
-<script src="js/site-glossary.js?v=20261102a"></script>
+<script src="js/site-glossary.js?v=20261102a" defer></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script>
   function endpoint() {

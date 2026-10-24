@@ -133,6 +133,13 @@ jobs:
           path: media/social-posts/${{ steps.reports.outputs.batch }}
           retention-days: 7
 
+      - name: Install the critical CSS builder
+        # build-social-hub.js inlines each page's critical CSS with these packages (#1028).
+        if: ${{ !inputs.dry_run }}
+        run: |
+          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" $(node scripts/build-critical-css.js --deps)
+          echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
+
       - name: Commit and publish the site
         id: commit
         if: ${{ !inputs.dry_run }}

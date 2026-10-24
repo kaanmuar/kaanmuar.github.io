@@ -22,6 +22,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 const card = require("../js/social-hub-card");
 const admin = require("../js/social-hub-admin");
+const critical = require("./build-critical-css");
 const { PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -459,8 +460,8 @@ ${ogAlt}
     <script type="application/ld+json">
 ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, copy))}
     </script>
-    <script src="js/site-analytics.js?v=20261024b"></script>
-    <script src="js/qa-review-consent.js?v=20261028p"></script>
+    <script src="js/site-analytics.js?v=20261030a" defer></script>
+    <script src="js/qa-review-consent.js?v=20261028p" defer></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -504,8 +505,8 @@ ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
 <footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">Legal</a> · <a href="accessibility.html?lang=${lang}">${esc(copy.accessibility)}</a> · <a href="${OUT}/rss${sfx}.xml">RSS</a> · <a href="${OUT}/feed${sfx}.json">JSON feed</a></p></footer>
 <dialog class="hub-dialog" id="hub-dialog" aria-label="${esc(copy.share)}"><form method="dialog"><button class="hub-close" value="close" aria-label="${esc(copy.close)}">×</button></form><div id="hub-dialog-body"></div></dialog>
 <script>window.SocialHubCopy = ${JSON.stringify(hubCopy).replace(/</g, "\\u003c")};</script>
-<script src="js/social-hub-card.js?v=${version("js/social-hub-card.js")}"></script>
-<script src="js/social-hub.js?v=${version("js/social-hub.js")}"></script>
+<script src="js/social-hub-card.js?v=${version("js/social-hub-card.js")}" defer></script>
+<script src="js/social-hub.js?v=${version("js/social-hub.js")}" defer></script>
 </body>
 </html>
 `;
@@ -669,8 +670,8 @@ ${alternates}    <link rel="icon" href="/assets/qa-review-mark.svg?v=20261013c" 
     <script type="application/ld+json">
 ${json(graph)}
     </script>
-    <script src="/js/site-analytics.js?v=20261024b"></script>
-    <script src="/js/qa-review-consent.js?v=20261028p"></script>
+    <script src="/js/site-analytics.js?v=20261030a" defer></script>
+    <script src="/js/qa-review-consent.js?v=20261028p" defer></script>
     <script src="/js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -708,7 +709,7 @@ ${captions ? `    <section class="post-captions">
 ` : ""}    <p class="post-back"><a class="btn btn-ghost" href="/qa-review-social${sfx}.html">← ${esc(copy.allPosts)}</a></p>
 </main>
 <footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="/qa-review-legal.html?lang=${lang}">Legal</a> · <a href="/${OUT}/rss${sfx}.xml">RSS</a></p></footer>
-<script src="/js/social-post.js?v=${version("js/social-post.js")}"></script>
+<script src="/js/social-post.js?v=${version("js/social-post.js")}" defer></script>
 </body>
 </html>
 `;
@@ -740,7 +741,11 @@ function outputs(posts, asOf) {
     files[card.pageFor(lang)] = page(lang, shown, asOf);
     files[OUT + "/rss" + sfx + ".xml"] = rss(lang, shown, asOf);
   });
-  return Object.assign(files, postPages(posts, asOf));
+  Object.assign(files, postPages(posts, asOf));
+  Object.keys(files).filter((file) => file.endsWith(".html")).forEach((file) => {
+    files[file] = critical.inline(files[file], file);
+  });
+  return files;
 }
 
 function orphans(files) {
