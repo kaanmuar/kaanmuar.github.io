@@ -794,6 +794,10 @@ function compareLine(summary, previous, phrase) {
     + " (" + phrase + ")";
 }
 
+function isHubEvent(row) {
+  return row.kind === "view" || /^(hub|post)_/.test(String(row.name || ""));
+}
+
 async function loadEvents(start, end) {
   const rows = [];
   let cursor = null;
@@ -806,10 +810,10 @@ async function loadEvents(start, end) {
     if (cursor) query = query.startAfter(cursor);
     const snap = await query.get();
     if (snap.empty) break;
-    // Social hub page views are counted by refreshSocialHubStats, not in the site reports.
+    // Social hub views and clicks are counted by refreshSocialHubStats, not in the site reports.
     snap.forEach((doc) => {
       const row = doc.data() || {};
-      if (row.kind !== "view") rows.push(row);
+      if (!isHubEvent(row)) rows.push(row);
     });
     cursor = snap.docs[snap.docs.length - 1];
     if (snap.size < 400 || rows.length >= 20000) break;
