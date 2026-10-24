@@ -33,9 +33,17 @@ Element Should Not Have Class
 Prepare Storage And Open
     [Arguments]    ${url}
     Open Browser    ${url}    ${BROWSER}    options=${CHROME_OPTIONS}
-    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); localStorage.setItem('theme','light');
+    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); localStorage.setItem('theme','light'); localStorage.setItem('cv-preferred-lang','en');
     Go To    ${url}
     Wait Until Element Is Visible    id:main-name    15s
+    # The live CV re-renders the competencies when it lands; a click before that hits a moving target.
+    Wait Until Page Contains Element    css:html[data-cv-settled]    20s
+
+Click Into View
+    [Arguments]    ${locator}
+    ${element}=    Get WebElement    ${locator}
+    Execute Javascript    arguments[0].scrollIntoView({block: 'center', behavior: 'instant'})    ARGUMENTS    ${element}
+    Click Element    ${locator}
 
 Open CV in Desktop Browser
     Prepare Storage And Open    ${CV_URL}
@@ -47,14 +55,14 @@ Open CV in Mobile Browser
 
 Open Studio In Mobile Browser
     Open Browser    ${SIM_URL}    ${BROWSER}    options=${CHROME_OPTIONS}
-    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); sessionStorage.setItem('hasSeenStudioTour','true'); localStorage.setItem('theme','light');
+    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); sessionStorage.setItem('hasSeenStudioTour','true'); localStorage.setItem('theme','light'); localStorage.setItem('cv-preferred-lang','en');
     Go To    ${SIM_URL}
     Set Window Size    390    844
     Wait Until Element Is Visible    id:runBtn    15s
 
 Open Lab In Mobile Browser
     Open Browser    ${BASE_URL}/qa-lab.html    ${BROWSER}    options=${CHROME_OPTIONS}
-    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); sessionStorage.setItem('hasSeenLabTour','true'); localStorage.setItem('theme','light');
+    Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); sessionStorage.setItem('hasSeenLabTour','true'); localStorage.setItem('theme','light'); localStorage.setItem('cv-preferred-lang','en');
     Go To    ${BASE_URL}/qa-lab.html
     Set Window Size    390    844
     Wait Until Element Is Visible    id:run-all    15s
@@ -103,15 +111,13 @@ Verify Toolkit Is Filtered
     Wait Until Page Contains Element    css:.tech-tag[data-skill-name="Cypress"].selected
 
 Scroll To Bottom Of Page
-    Execute Javascript    window.scrollTo(0, 800)
-    Sleep    0.5s
+    Execute Javascript    window.scrollTo({top: 1600, behavior: 'instant'}); window.dispatchEvent(new Event('scroll'));
 
 Scroll To Top Of Page
-    Execute Javascript    window.scrollTo(0, 0)
-    Sleep    0.5s
+    Execute Javascript    window.scrollTo({top: 0, behavior: 'instant'}); window.dispatchEvent(new Event('scroll'));
 
 Verify Mobile Toolbar Is Sticky
-    Element Should Have Class    ${MOBILE_TOOLBAR}    is-sticky
+    Wait Until Page Contains Element    css:.mobile-toolbar.is-sticky    8s
 
 Verify Mobile Toolbar Is Not Sticky
-    Element Should Not Have Class    ${MOBILE_TOOLBAR}    is-sticky
+    Wait Until Page Does Not Contain Element    css:.mobile-toolbar.is-sticky    8s

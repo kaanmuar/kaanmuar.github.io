@@ -1,6 +1,6 @@
 # .github/workflows/ci.yml
 # Merges are gated by Lint Code, url-review-unit, and playwright (branch ruleset on main).
-# Cypress, Robot, load, and the native catalogs report but do not block a merge.
+# Cypress and Robot fail their job when a case fails. Load and the native catalogs report but do not block a merge.
 # The Cypress catalog runs on pushes to main and manual runs, not on pull requests.
 
 name: E2E and Visual Tests
@@ -114,7 +114,6 @@ jobs:
           cat /tmp/static-server.log; exit 1
       - name: Run Cypress tests
         run: npx cypress run --spec "${{ fromJSON(env.CYPRESS_SPECS)[matrix.group] }}"
-        continue-on-error: true
       - name: Upload Cypress report
         if: always()
         uses: actions/upload-artifact@v4
@@ -146,7 +145,6 @@ jobs:
           cat /tmp/static-server.log; exit 1
       - name: Run Robot Framework tests
         run: npm run test:robot
-        continue-on-error: true
       - name: Upload Robot results
         if: always()
         uses: actions/upload-artifact@v4

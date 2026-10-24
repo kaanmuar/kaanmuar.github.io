@@ -12,10 +12,13 @@ const crypto = require("crypto");
 const dns = require("dns").promises;
 const { legalLinks, LEGAL_ANY } = require("./url-review-legal");
 const chatTalk = require("./url-review-chat-talk");
+const { registrable: siteOf } = require("./url-review-suffix");
 const { fromUrl: libraryFromUrl, fromContent: libraryFromContent, fromGlobals: libraryFromGlobals, PROBE: LIBRARY_PROBE } = require("./url-review-libraries");
 
 const AGENT_TAG = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
 const NAV_MS = 20000;
+// browseForReview in index.js waits longer than this, and reviewBrowser's 120 s timeout is longer still.
+const BUDGET_MAX_MS = 110000;
 const IDLE_MS = 5000;
 const HTML_MAX = 2000000;
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -180,12 +183,6 @@ function coveredBy(box, targets) {
     if (target.under === true || target.under === false) return target.under;
     return (w * h) / (r.w * r.h) >= 0.2;
   });
-}
-
-function siteOf(host) {
-  const parts = String(host || "").replace(/^www\./, "").split(".");
-  if (parts.length > 2 && parts[parts.length - 1].length === 2 && /^(co|com|org|net|gov|ac|edu|or|ne)$/.test(parts[parts.length - 2])) return parts.slice(-3).join(".");
-  return parts.slice(-2).join(".");
 }
 
 function trim(text, max) {
@@ -1230,10 +1227,19 @@ async function printPdf(html) {
 }
 
 // A recovery read (job.html) only needs the document. Once that document is still refused,
-// axe-core, screenshots and the phone visit cannot become the review, and they can keep
-// running until the caller aborts at 100 s ("The operation was aborted due to timeout").
+// axe-core, screenshots and the phone visit cannot become the review.
 function stopForRefusal(job, docStatus) {
   return !!(job && job.html && Number(docStatus) >= 400);
+}
+
+// A step that started inside the budget can still run past it (a 20 s navigation, then axe-core), and
+// the pass must answer before the caller stops waiting, or the start page it already read is lost.
+function withinBudget(work, ms, step) {
+  let timer = null;
+  const out = new Promise((resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(step + " was still running when the browser's budget ran out")), Math.max(0, ms));
+  });
+  return Promise.race([work, out]).finally(() => clearTimeout(timer));
 }
 
 // job.kind "chat": the scripted conversation (url-review-chat-talk.js). The caller sends it only with the owner's proof.
@@ -1363,7 +1369,7 @@ async function browse(job, log, onStart) {
   if (job && job.kind === "chat") return talk(job, log);
   const say = typeof log === "function" ? (text) => { try { log(text); } catch (error) { /* a closed log must not stop the pass */ } } : () => {};
   const started = Date.now();
-  const budget = Math.min(110000, Math.max(30000, Number(job && job.budgetMs) || 85000));
+  const budget = Math.min(BUDGET_MAX_MS, Math.max(30000, Number(job && job.budgetMs) || 85000));
   const left = () => budget - (Date.now() - started);
   const start = String((job && job.url) || "");
   if (!/^https:\/\//i.test(start) || blockedHost(start) || await privateAddress(new URL(start).hostname)) return { ok: false, error: "The start address was refused." };
@@ -1559,19 +1565,20 @@ async function browse(job, log, onStart) {
       const phoneContext = await browser.createBrowserContext();
       const phoneUa = ua.replace(/\([^)]*\)/, "(Linux; Android 14; Pixel 8)").replace(/Safari\//, "Mobile Safari/");
       const phone = await prepare(phoneContext, phoneUa, null, { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 1 }, acceptLanguage);
-      try {
+      const phoneVisit = async () => {
         await open(phone, start);
         lap("phoneLoad");
-        result.mobile = await mobileCheck(phone);
+        const mobile = await mobileCheck(phone);
+        result.mobile = mobile;
         lap("phoneLayout");
-        say(result.mobile.overflow > 2 ? "On the phone the page is " + result.mobile.overflow + " px wider than the screen" + (result.mobile.offenders.length ? ", from " + result.mobile.offenders.join(", ") : "") + "." : "On the phone the page fits the screen width.");
+        say(mobile.overflow > 2 ? "On the phone the page is " + mobile.overflow + " px wider than the screen" + (mobile.offenders.length ? ", from " + mobile.offenders.join(", ") : "") + "." : "On the phone the page fits the screen width.");
         const taps = await runAxe(phone, ["target-size"]);
         lap("phoneAxe");
         const rule = taps.violations[0];
-        result.mobile.targetsChecked = taps.ran;
-        result.mobile.smallTargets = rule ? rule.nodes : 0;
-        result.mobile.targetSamples = rule ? rule.targets : [];
-        say(taps.ran ? result.mobile.smallTargets + " tap targets are smaller than 24×24 px." : "The tap target check did not finish.");
+        mobile.targetsChecked = taps.ran;
+        mobile.smallTargets = rule ? rule.nodes : 0;
+        mobile.targetSamples = rule ? rule.targets : [];
+        say(taps.ran ? mobile.smallTargets + " tap targets are smaller than 24×24 px." : "The tap target check did not finish.");
         result.shots.mobile = "data:image/jpeg;base64," + await phone.screenshot({ type: "jpeg", quality: 50, encoding: "base64", captureBeyondViewport: false, optimizeForSpeed: true });
         lap("phoneShot");
         say("Took the phone screenshot.");
@@ -1583,6 +1590,9 @@ async function browse(job, log, onStart) {
             ? "The chat launcher is " + (launcher.known ? (launcher.name ? "named \"" + launcher.name + "\"" : "unnamed") : "inside a frame this review cannot read") + (result.chat.launcher.covers.length ? " and covers " + result.chat.launcher.covers.map((row) => "\"" + row.label + "\"").join(", ") : " and covers no button") + " on the phone."
             : "No chat launcher was found on the phone.");
         }
+      };
+      try {
+        await withinBudget(phoneVisit(), left(), "The phone visit");
       } catch (error) {
         result.mobile = { error: trim(error.message, 120) };
         say("The phone visit failed (" + result.mobile.error + ").");
@@ -1637,9 +1647,11 @@ async function browse(job, log, onStart) {
       const pageRec = recorder(true);
       const other = await prepare(context, ua, pageRec, { width: 1280, height: 800 }, acceptLanguage);
       try {
-        const got = await open(other, url);
-        const seen = await rendered(other);
-        const axe = left() > 15000 ? await runAxe(other) : { ran: false, violations: [] };
+        const { got, seen, axe } = await withinBudget((async () => {
+          const got = await open(other, url);
+          const seen = await rendered(other);
+          return { got, seen, axe: left() > 15000 ? await runAxe(other) : { ran: false, violations: [] } };
+        })(), left(), "Opening " + pathOf(url));
         const rw = words(seen.text);
         const hw = words(htmlText(got.raw));
         result.pages.push({ path: pathOf(got.finalUrl), status: got.status, renderedWords: rw, rawWords: hw, share: rw ? Math.min(100, Math.round((hw / rw) * 100)) : 100, errors: pageRec.state.errorCount });
@@ -1661,4 +1673,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, open, talk, printPdf, stopForRefusal, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, open, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

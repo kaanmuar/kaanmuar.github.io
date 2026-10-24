@@ -253,8 +253,8 @@
             'Speed, weight, paint, and layout shift': 'Velocidade, peso, renderização e mudanças de layout'
         },
         de: {
-            'Copy link (opens for you)': 'Link kopieren (öffnet sich für dich)',
-            'This link opens in full only for you, signed in. Anyone else sees a blurred preview.': 'Dieser Link öffnet sich vollständig nur für dich, wenn du angemeldet bist. Alle anderen sehen eine unscharfe Vorschau.',
+            'Copy link (opens for you)': 'Link kopieren (öffnet sich für Sie)',
+            'This link opens in full only for you, signed in. Anyone else sees a blurred preview.': 'Dieser Link öffnet sich vollständig nur für Sie, wenn Sie angemeldet sind. Alle anderen sehen eine unscharfe Vorschau.',
             'Close': 'Schließen',
             'Run dashboard': 'Prüfungsübersicht',
             'What a review is': 'Was eine Prüfung ist',

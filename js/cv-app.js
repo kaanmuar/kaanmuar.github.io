@@ -4197,9 +4197,9 @@
                 try { this._loadAndRenderReviews(); }
                 catch (error) { console.error("Failed to load testimonials:", error); }
 
-                // Start the tour if it hasn't been seen.
+                // Start the tour if it hasn't been seen. A framed CV (the lab preview) never starts it: its card would take focus from the host page.
                 // Opening on load made the tour tooltip the page's Largest Contentful Paint on mobile, so it waits for the visitor's first move.
-                if (!sessionStorage.getItem('hasSeenTour')) {
+                if (!sessionStorage.getItem('hasSeenTour') && window.top === window.self) {
                     const kinds = ['scroll', 'pointerdown', 'keydown', 'touchstart'];
                     const begin = () => {
                         kinds.forEach((kind) => window.removeEventListener(kind, begin, true));
