@@ -24,7 +24,7 @@ test("an open report mail and PDF carry the fix of each finding, and a blurred o
   assert.ok(customerMail.reportPdf(open).html.includes(customerMail.esc(fix)));
   assert.ok(!customerMail.reportMail(record, {}).html.includes(customerMail.esc(fix)));
   assert.ok(!customerMail.reportPdf(record).html.includes(customerMail.esc(fix)));
-  assert.match(customerMail.reportMail(Object.assign({}, open, { lang: "de" }), {}).html, /So behebst du es:<\/b>/);
+  assert.match(customerMail.reportMail(Object.assign({}, open, { lang: "de" }), {}).html, /So beheben Sie es:<\/b>/);
 });
 
 test("a review without a score does not promise six scores", () => {
@@ -192,7 +192,7 @@ test("the comparison in the mail and the PDF speaks the record's language", () =
     assert.ok(customerMail.reportPdf(each).html.includes("<h2>" + customerMail.esc(title) + "</h2>"), lang);
     assert.doesNotMatch(customerMail.reportMail(each, {}).text, /Your lead|open problems|indicators/, lang);
   }
-  assert.match(customerMail.reportMail(Object.assign({}, compared, { lang: "de" }), {}).text, /^Deine Prüfung von /m);
+  assert.match(customerMail.reportMail(Object.assign({}, compared, { lang: "de" }), {}).text, /^Ihre Prüfung von /m);
 });
 
 test("the mail's comparison wording matches the comparison card on the page", () => {

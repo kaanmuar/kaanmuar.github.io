@@ -343,6 +343,11 @@
     return Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2);
   }
 
+  function payPage() {
+    const lang = ((location.pathname.split("/").pop() || "").match(/^qa-review-(es|pt|de|fr|it)\.html$/) || [])[1];
+    return lang ? "qa-review-pay-" + lang + ".html" : "qa-review-pay.html";
+  }
+
   function payQuery(purpose, extra) {
     const params = new URLSearchParams();
     params.set("purpose", purpose);
@@ -364,7 +369,7 @@
     }
     const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
     if (coupon && (purpose === "report" || purpose === "new-run")) params.set("coupon", coupon);
-    return "qa-review-pay.html?" + params.toString();
+    return payPage() + "?" + params.toString();
   }
 
   function showDeal(hostId, priceId, body) {
@@ -2713,7 +2718,7 @@
       return;
     }
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_alerts", "URL Review", String(alerts.length));
-    location.href = "qa-review-pay.html?purpose=alerts&reportId=" + encodeURIComponent(current.report.id) + "&count=" + alerts.length;
+    location.href = payPage() + "?purpose=alerts&reportId=" + encodeURIComponent(current.report.id) + "&count=" + alerts.length;
   });
   document.getElementById("credential-open").addEventListener("click", () => {
     if (!current || !current.report) return;
@@ -2734,7 +2739,7 @@
       return;
     }
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_credentials", "URL Review", "open");
-    location.href = "qa-review-pay.html?purpose=credentials&reportId=" + encodeURIComponent(current.report.id);
+    location.href = payPage() + "?purpose=credentials&reportId=" + encodeURIComponent(current.report.id);
   });
   document.getElementById("case-export-open").addEventListener("click", openCaseExport);
   document.getElementById("case-export-close").addEventListener("click", () => { caseExport.hidden = true; });
@@ -2763,7 +2768,7 @@
       return;
     }
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_cases", "URL Review", String(layers.length));
-    location.href = "qa-review-pay.html?purpose=cases&reportId=" + encodeURIComponent(current.report.id) + "&layers=" + encodeURIComponent(layers.join(","));
+    location.href = payPage() + "?purpose=cases&reportId=" + encodeURIComponent(current.report.id) + "&layers=" + encodeURIComponent(layers.join(","));
   });
 
   const FORMAT_CHOICES = [
