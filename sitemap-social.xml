@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/inherited-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/release-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/frameworks-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/first-read-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/talking-portrait.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0FypyDn0reM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>epssura.com: 40. The gap: form labels.</video:title>
+      <video:description>Every page has a title, and AI answer and search crawlers may read the start page. But 161 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 20 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epssura-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0FypyDn0reM</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/5b4Hr6r-cBk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>uber.com: 66. The gap: page titles.</video:title>
+      <video:description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 56 pages have no title.
+
+The lesson for every team: Give every page a unique title of about 60 characters: the page first, the site second.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uber-com
+
+#SEO #Titles #SERP #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/5b4Hr6r-cBk</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/BZTtWQCzPCM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>teaminternational.com: 64. The gap: broken links.</video:title>
+      <video:description>Every page has a title, and AI answer and search crawlers may read the start page. But 16 internal links lead to an error.
+
+The lesson for every team: Check your own links after each release, and fix or redirect every one that answers 404.
+
+One automated analysis of public pages on 19 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-teaminternational-com
+
+#SEO #BrokenLinks #QA #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/BZTtWQCzPCM</video:player_loc>
+      <video:publication_date>2026-10-22</video:publication_date>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/T1vH4T0yZRQ/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>The release is close and nobody has written the test cases. Sound familiar?</video:title>
+      <video:description>Point QA-lab URL Review at the public page. It proposes the cases you would want on paper before shipping, so the team starts from a list instead of a blank doc.
+
+→ Functional, links, content, mobile
+→ Accessibility, security, performance
+→ Ready to hand to the team
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-release&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #RegressionTesting #ReleaseManagement</video:description>
+      <video:player_loc>https://www.youtube.com/embed/T1vH4T0yZRQ</video:player_loc>
+      <video:publication_date>2026-10-22</video:publication_date>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/BLfpJj-X1Kg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Stop translating generic test ideas into your framework by hand.</video:title>
+      <video:description>Choose Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling, or twelve more, from Cucumber to k6, and the proposed cases come out in that shape.
+
+→ Pick one, or all twenty
+→ Each added framework is discounted
+→ Nothing is launched. You leave with the list.
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-frameworks&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #Playwright #Cypress</video:description>
+      <video:player_loc>https://www.youtube.com/embed/BLfpJj-X1Kg</video:player_loc>
+      <video:publication_date>2026-10-21</video:publication_date>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/VfAPT1W2nGA/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Your first review is included: 20 pages, 2 links deep.</video:title>
+      <video:description>Paste a public URL, accept what the review will and will not do, and watch the report get written. Keep it only if it earns its place.
+
+→ Report shown once at no charge
+→ Keep, download, or share from 19 USD
+→ Amount shown before you confirm
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-first-read&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #TestCases #QAtools</video:description>
+      <video:player_loc>https://www.youtube.com/embed/VfAPT1W2nGA</video:player_loc>
+      <video:publication_date>2026-10-20</video:publication_date>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/Pyx79IX2Ajc/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Every public page already tells you what to test. Most teams never write it down.</video:title>
+      <video:description>QA-lab URL Review reads a public https page, describes the response, and proposes the test cases, named for the framework your team already uses.
+
+→ 21 kinds of cases
+→ Scripts for 20 frameworks
+→ 1 public address to begin
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-talking&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #TestCases #Playwright</video:description>
+      <video:player_loc>https://www.youtube.com/embed/Pyx79IX2Ajc</video:player_loc>
+      <video:publication_date>2026-10-19</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-es.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/inherited-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/release-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/frameworks-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/first-read-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/talking-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-pt.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/inherited-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/release-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/frameworks-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/first-read-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/talking-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-de.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/inherited-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/release-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/frameworks-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/first-read-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/de/talking-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-fr.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/inherited-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/release-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/frameworks-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/first-read-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/fr/talking-portrait.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qa-review-social-it.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/inherited-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/release-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/frameworks-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/first-read-portrait.jpg</image:loc></image:image>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/talking-portrait.jpg</image:loc></image:image>
+  </url>
+</urlset>
