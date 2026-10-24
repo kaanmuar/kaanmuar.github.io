@@ -6,7 +6,7 @@
   const COPY = {
     en: {
       rivalsTitle: "Natural competitors", rivalsIntro: "The sites the open web names as competitors of {site}, ranked by Tranco. Choose any or many to see them next to this report.", rivalsLooking: "Looking for natural competitors…", rivalsNone: "No natural competitors were found for this site.", rivalsPick_one: "{n} competitor shown", rivalsPick_other: "{n} competitors shown", rivalsPickOne: "Choose at least one competitor to compare.", rivalsNotYet: "not reviewed yet", rivalsLocked: "The scores of each competitor open in full once this report is paid.", rivalsMetric: "Indicator", rivalsWon: "Indicators won (this site–competitor)", rivalsOpen: "Open problems", rivalsRank: "Tranco rank", rivalsFull: "Full head to head", rivalsRun: "Compare", rivalsChoose: "Choose competitors",
-      sample: "Open one of your own reports to compare it with a competitor.",
+      sample: "Open one of your own reports to compare it with a competitor.", made: "Comparisons from this review",
       more: "and {n} more", none: "None.",
       intro: "Your review of {own}{when} next to this review of {rival}.", introWhen: " from {date}",
       shared_one: "{n} open problem is on both sites.", shared_other: "{n} open problems are on both sites.",
@@ -45,7 +45,7 @@
     },
     es: {
       rivalsTitle: "Competidores naturales", rivalsIntro: "Los sitios que la web abierta nombra como competidores de {site}, con su posición en Tranco. Elige uno o varios para verlos junto a este informe.", rivalsLooking: "Buscando competidores naturales…", rivalsNone: "No se encontraron competidores naturales para este sitio.", rivalsPick_one: "{n} competidor a la vista", rivalsPick_other: "{n} competidores a la vista", rivalsPickOne: "Elige al menos un competidor para comparar.", rivalsNotYet: "aún sin revisar", rivalsLocked: "Las puntuaciones de cada competidor se abren completas cuando este informe está pagado.", rivalsMetric: "Indicador", rivalsWon: "Indicadores ganados (este sitio–competidor)", rivalsOpen: "Problemas abiertos", rivalsRank: "Posición en Tranco", rivalsFull: "Cara a cara completo", rivalsRun: "Comparar", rivalsChoose: "Elegir competidores",
-      sample: "Abre uno de tus propios informes para compararlo con un competidor.",
+      sample: "Abre uno de tus propios informes para compararlo con un competidor.", made: "Comparaciones hechas desde esta revisión",
       more: "y {n} más", none: "Ninguno.",
       intro: "Tu revisión de {own}{when} junto a esta revisión de {rival}.", introWhen: " del {date}",
       shared_one: "{n} problema abierto está en los dos sitios.", shared_other: "{n} problemas abiertos están en los dos sitios.",
@@ -84,7 +84,7 @@
     },
     pt: {
       rivalsTitle: "Concorrentes naturais", rivalsIntro: "Os sites que a web aberta aponta como concorrentes de {site}, com a posição no Tranco. Escolha um ou vários para vê-los ao lado deste relatório.", rivalsLooking: "Procurando concorrentes naturais…", rivalsNone: "Nenhum concorrente natural foi encontrado para este site.", rivalsPick_one: "{n} concorrente à vista", rivalsPick_other: "{n} concorrentes à vista", rivalsPickOne: "Escolha pelo menos um concorrente para comparar.", rivalsNotYet: "ainda sem revisão", rivalsLocked: "As pontuações de cada concorrente abrem por completo quando este relatório estiver pago.", rivalsMetric: "Indicador", rivalsWon: "Indicadores vencidos (este site–concorrente)", rivalsOpen: "Problemas abertos", rivalsRank: "Posição no Tranco", rivalsFull: "Frente a frente completo", rivalsRun: "Comparar", rivalsChoose: "Escolher concorrentes",
-      sample: "Abra um dos seus próprios relatórios para compará-lo com um concorrente.",
+      sample: "Abra um dos seus próprios relatórios para compará-lo com um concorrente.", made: "Comparações feitas a partir desta revisão",
       more: "e mais {n}", none: "Nenhum.",
       intro: "Sua revisão de {own}{when} ao lado desta revisão de {rival}.", introWhen: " de {date}",
       shared_one: "{n} problema aberto está nos dois sites.", shared_other: "{n} problemas abertos estão nos dois sites.",
@@ -123,7 +123,7 @@
     },
     de: {
       rivalsTitle: "Natürliche Wettbewerber", rivalsIntro: "Die Websites, die das offene Web als Wettbewerber von {site} nennt, mit ihrem Tranco-Rang. Wählen Sie einen oder mehrere, um sie neben diesem Bericht zu sehen.", rivalsLooking: "Natürliche Wettbewerber werden gesucht…", rivalsNone: "Für diese Website wurden keine natürlichen Wettbewerber gefunden.", rivalsPick_one: "{n} Wettbewerber angezeigt", rivalsPick_other: "{n} Wettbewerber angezeigt", rivalsPickOne: "Wählen Sie mindestens einen Wettbewerber zum Vergleich.", rivalsNotYet: "noch nicht geprüft", rivalsLocked: "Die Werte jedes Wettbewerbers öffnen sich vollständig, sobald dieser Bericht bezahlt ist.", rivalsMetric: "Kennzahl", rivalsWon: "Gewonnene Kennzahlen (diese Website–Wettbewerber)", rivalsOpen: "Offene Probleme", rivalsRank: "Tranco-Rang", rivalsFull: "Vollständiger Direktvergleich", rivalsRun: "Vergleichen", rivalsChoose: "Wettbewerber wählen",
-      sample: "Öffnen Sie einen Ihrer eigenen Berichte, um ihn mit einem Wettbewerber zu vergleichen.",
+      sample: "Öffnen Sie einen Ihrer eigenen Berichte, um ihn mit einem Wettbewerber zu vergleichen.", made: "Vergleiche aus dieser Prüfung",
       more: "und {n} weitere", none: "Keine.",
       intro: "Ihre Prüfung von {own}{when} neben dieser Prüfung von {rival}.", introWhen: " vom {date}",
       shared_one: "{n} offenes Problem gibt es auf beiden Websites.", shared_other: "{n} offene Probleme gibt es auf beiden Websites.",
@@ -162,7 +162,7 @@
     },
     fr: {
       rivalsTitle: "Concurrents naturels", rivalsIntro: "Les sites que le web ouvert désigne comme concurrents de {site}, avec leur rang Tranco. Choisissez-en un ou plusieurs pour les voir à côté de ce rapport.", rivalsLooking: "Recherche des concurrents naturels…", rivalsNone: "Aucun concurrent naturel n’a été trouvé pour ce site.", rivalsPick_one: "{n} concurrent affiché", rivalsPick_other: "{n} concurrents affichés", rivalsPickOne: "Choisissez au moins un concurrent à comparer.", rivalsNotYet: "pas encore analysé", rivalsLocked: "Les scores de chaque concurrent s’ouvrent en entier une fois ce rapport payé.", rivalsMetric: "Indicateur", rivalsWon: "Indicateurs gagnés (ce site–concurrent)", rivalsOpen: "Problèmes ouverts", rivalsRank: "Rang Tranco", rivalsFull: "Face-à-face complet", rivalsRun: "Comparer", rivalsChoose: "Choisir des concurrents",
-      sample: "Ouvrez l’un de vos propres rapports pour le comparer à un concurrent.",
+      sample: "Ouvrez l’un de vos propres rapports pour le comparer à un concurrent.", made: "Comparaisons faites depuis cette analyse",
       more: "et {n} de plus", none: "Aucun.",
       intro: "Votre analyse de {own}{when} à côté de cette analyse de {rival}.", introWhen: " du {date}",
       shared_one: "{n} problème ouvert est présent sur les deux sites.", shared_other: "{n} problèmes ouverts sont présents sur les deux sites.",
@@ -170,7 +170,7 @@
       onlyHas: "Seul {site} a", problemMix: "Types de problèmes",
       passive: "{rival} n’a reçu que les vérifications publiques et passives : aucune conversation avec le chat et aucun formulaire envoyé.",
       passiveMore: "Comme il s’agit d’une analyse de concurrent, rien n’a été saisi dans ses champs et son chat n’a pas été ouvert : les vérifications des champs et du chat ont donc été ignorées et ne figurent pas dans les listes ci-dessus.",
-      verdictNote: "Les deux scores viennent de analyses automatisées : un point de départ, pas un verdict.",
+      verdictNote: "Les deux scores viennent d’analyses automatisées : un point de départ, pas un verdict.",
       ring: "Score de santé de {site} : {n} sur 100", grade: "Note {g}", vs: "vs", leadSmall: "votre avance",
       wins: "{site} gagne {n} indicateurs sur {total}", sameWins: "Les deux sites gagnent le même nombre d’indicateurs",
       tally: "{own} {a}, {rival} {b}, égalité {c}.", winsTitle: "{site} gagne {n}", levelTitle: "Égalité sur {n}",
@@ -201,7 +201,7 @@
     },
     it: {
       rivalsTitle: "Concorrenti naturali", rivalsIntro: "I siti che il web aperto indica come concorrenti di {site}, con la posizione Tranco. Scegline uno o più per vederli accanto a questo report.", rivalsLooking: "Ricerca dei concorrenti naturali…", rivalsNone: "Non sono stati trovati concorrenti naturali per questo sito.", rivalsPick_one: "{n} concorrente mostrato", rivalsPick_other: "{n} concorrenti mostrati", rivalsPickOne: "Scegli almeno un concorrente da confrontare.", rivalsNotYet: "non ancora analizzato", rivalsLocked: "I punteggi di ogni concorrente si aprono per intero quando questo report è pagato.", rivalsMetric: "Indicatore", rivalsWon: "Indicatori vinti (questo sito–concorrente)", rivalsOpen: "Problemi aperti", rivalsRank: "Posizione Tranco", rivalsFull: "Testa a testa completo", rivalsRun: "Confronta", rivalsChoose: "Scegli i concorrenti",
-      sample: "Apri uno dei tuoi report per confrontarlo con un concorrente.",
+      sample: "Apri uno dei tuoi report per confrontarlo con un concorrente.", made: "Confronti fatti da questa revisione",
       more: "e altri {n}", none: "Nessuno.",
       intro: "La tua revisione di {own}{when} accanto a questa revisione di {rival}.", introWhen: " del {date}",
       shared_one: "{n} problema aperto è presente su entrambi i siti.", shared_other: "{n} problemi aperti sono presenti su entrambi i siti.",
