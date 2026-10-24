@@ -536,6 +536,13 @@
         .compare-table th, .compare-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
         .compare-table th:first-child { text-align: left; }
         .compare-table thead th { font-size: 12px; letter-spacing: .04em; color: var(--muted); }
+        #rivals { margin-bottom: 18px; }
+        .rivals-pick { margin: 10px 0 12px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; max-width: 520px; }
+        .rivals-pick summary { cursor: pointer; font-weight: 600; }
+        .rivals-options { display: grid; gap: 6px; padding-top: 8px; }
+        .rival-option { display: flex; gap: 8px; align-items: center; font-weight: 400; cursor: pointer; }
+        .rivals-locked .rival-frost { filter: blur(5px); user-select: none; color: var(--muted); }
+        .rivals-table .btn { padding: 6px 10px; font-size: 13px; }
         #compare-error:empty { display: none; }
         #compare-error { color: var(--red); }
         #compare-result { --own: var(--cyan); }
@@ -1545,6 +1552,7 @@
         <article class="card" data-insight id="exec"></article>
         <h2 data-insight>Next to a competitor</h2>
         <article class="card" data-insight id="compare">
+            <div id="rivals" hidden></div>
             <div class="no-print" id="compare-ask">
                 <p>Run the same review on a competitor's site and see who wins each indicator: the six areas as a radar and 3D columns, speed and page weight head to head, your advantages and theirs, the common ground, the open problems only one site has, and how present each site is in the market, from its Tranco rank and 30-day trend.</p>
                 <div class="compare-form">
