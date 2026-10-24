@@ -232,6 +232,7 @@ def build(source, code, data):
     s = swap(s, '"item": "https://carlosandmunoz.com/qa-review.html"', f'"item": "{url}"')
     s = swap(s, '"url": "https://carlosandmunoz.com/qa-review.html#service-facts"', f'"url": "{url}#service-facts"')
     s = swap(s, '<div class="brand"><a href="qa-review.html">', f'<div class="brand"><a href="{page}">')
+    s = swap(s, '<a class="btn btn-ghost" href="qa-review-social.html">', f'<a class="btn btn-ghost" href="qa-review-social-{code}.html">')
     flag_en = 'src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English"'
     s = swap(s, flag_en, f'src="https://hatscripts.github.io/circle-flags/flags/{code}.svg" alt="{t["native"]}"', 2)
     s = swap(s, '<h2 id="gate-title">Before a single address is analyzed.</h2>', f'<h2 id="gate-title" lang="{code}" translate="no">{t["gate"]}</h2>')

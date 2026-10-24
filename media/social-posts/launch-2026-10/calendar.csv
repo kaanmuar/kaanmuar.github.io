@@ -1,0 +1,517 @@
+Date,Time,Channel,Language,Post,Format,Asset,How,Caption key
+2026-10-19,08:30,LinkedIn,de,talking,Image 1080x1350,de/talking-portrait.jpg,Buffer CSV,linkedin
+2026-10-19,08:30,LinkedIn,en,talking,Image 1080x1350,en/talking-portrait.jpg,Buffer CSV,linkedin
+2026-10-19,08:30,LinkedIn,es,talking,Image 1080x1350,es/talking-portrait.jpg,Buffer CSV,linkedin
+2026-10-19,08:30,LinkedIn,fr,talking,Image 1080x1350,fr/talking-portrait.jpg,Buffer CSV,linkedin
+2026-10-19,08:30,LinkedIn,it,talking,Image 1080x1350,it/talking-portrait.jpg,Buffer CSV,linkedin
+2026-10-19,08:30,LinkedIn,pt,talking,Image 1080x1350,pt/talking-portrait.jpg,Buffer CSV,linkedin
+2026-10-19,09:15,X,de,talking,Image 1600x900,de/talking-landscape.jpg,Buffer CSV,x
+2026-10-19,09:15,X,en,talking,Image 1600x900,en/talking-landscape.jpg,Buffer CSV,x
+2026-10-19,09:15,X,es,talking,Image 1600x900,es/talking-landscape.jpg,Buffer CSV,x
+2026-10-19,09:15,X,fr,talking,Image 1600x900,fr/talking-landscape.jpg,Buffer CSV,x
+2026-10-19,09:15,X,it,talking,Image 1600x900,it/talking-landscape.jpg,Buffer CSV,x
+2026-10-19,09:15,X,pt,talking,Image 1600x900,pt/talking-landscape.jpg,Buffer CSV,x
+2026-10-19,12:00,Instagram feed,de,talking,Image 1080x1350,de/talking-portrait.jpg,Buffer CSV,instagram
+2026-10-19,12:00,Instagram story,de,talking,Image 1080x1920,de/talking-story.jpg,"Buffer composer, add link sticker",story
+2026-10-19,12:00,Instagram feed,en,talking,Image 1080x1350,en/talking-portrait.jpg,Buffer CSV,instagram
+2026-10-19,12:00,Instagram story,en,talking,Image 1080x1920,en/talking-story.jpg,"Buffer composer, add link sticker",story
+2026-10-19,12:00,Instagram feed,es,talking,Image 1080x1350,es/talking-portrait.jpg,Buffer CSV,instagram
+2026-10-19,12:00,Instagram story,es,talking,Image 1080x1920,es/talking-story.jpg,"Buffer composer, add link sticker",story
+2026-10-19,12:00,Instagram feed,fr,talking,Image 1080x1350,fr/talking-portrait.jpg,Buffer CSV,instagram
+2026-10-19,12:00,Instagram story,fr,talking,Image 1080x1920,fr/talking-story.jpg,"Buffer composer, add link sticker",story
+2026-10-19,12:00,Instagram feed,it,talking,Image 1080x1350,it/talking-portrait.jpg,Buffer CSV,instagram
+2026-10-19,12:00,Instagram story,it,talking,Image 1080x1920,it/talking-story.jpg,"Buffer composer, add link sticker",story
+2026-10-19,12:00,Instagram feed,pt,talking,Image 1080x1350,pt/talking-portrait.jpg,Buffer CSV,instagram
+2026-10-19,12:00,Instagram story,pt,talking,Image 1080x1920,pt/talking-story.jpg,"Buffer composer, add link sticker",story
+2026-10-19,13:00,Facebook,de,talking,Image 1080x1350,de/talking-portrait.jpg,Buffer CSV,facebook
+2026-10-19,13:00,Facebook,en,talking,Image 1080x1350,en/talking-portrait.jpg,Buffer CSV,facebook
+2026-10-19,13:00,Facebook,es,talking,Image 1080x1350,es/talking-portrait.jpg,Buffer CSV,facebook
+2026-10-19,13:00,Facebook,fr,talking,Image 1080x1350,fr/talking-portrait.jpg,Buffer CSV,facebook
+2026-10-19,13:00,Facebook,it,talking,Image 1080x1350,it/talking-portrait.jpg,Buffer CSV,facebook
+2026-10-19,13:00,Facebook,pt,talking,Image 1080x1350,pt/talking-portrait.jpg,Buffer CSV,facebook
+2026-10-19,18:00,TikTok,de,talking,Video 1080x1920,de/talking-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-19,18:00,TikTok,en,talking,Video 1080x1920,en/talking-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-19,18:00,TikTok,es,talking,Video 1080x1920,es/talking-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-19,18:00,TikTok,fr,talking,Video 1080x1920,fr/talking-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-19,18:00,TikTok,it,talking,Video 1080x1920,it/talking-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-19,18:00,TikTok,pt,talking,Video 1080x1920,pt/talking-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-19,18:30,YouTube Shorts,de,talking,Video 1080x1920,de/talking-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-19,18:30,YouTube Shorts,en,talking,Video 1080x1920,en/talking-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-19,18:30,YouTube Shorts,es,talking,Video 1080x1920,es/talking-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-19,18:30,YouTube Shorts,fr,talking,Video 1080x1920,fr/talking-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-19,18:30,YouTube Shorts,it,talking,Video 1080x1920,it/talking-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-19,18:30,YouTube Shorts,pt,talking,Video 1080x1920,pt/talking-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-19,19:00,Instagram Reels,de,talking,Video 1080x1920,de/talking-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-19,19:00,Instagram Reels,en,talking,Video 1080x1920,en/talking-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-19,19:00,Instagram Reels,es,talking,Video 1080x1920,es/talking-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-19,19:00,Instagram Reels,fr,talking,Video 1080x1920,fr/talking-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-19,19:00,Instagram Reels,it,talking,Video 1080x1920,it/talking-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-19,19:00,Instagram Reels,pt,talking,Video 1080x1920,pt/talking-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-20,08:30,LinkedIn,de,first-read,Image 1080x1350,de/first-read-portrait.jpg,Buffer CSV,linkedin
+2026-10-20,08:30,LinkedIn,en,first-read,Image 1080x1350,en/first-read-portrait.jpg,Buffer CSV,linkedin
+2026-10-20,08:30,LinkedIn,es,first-read,Image 1080x1350,es/first-read-portrait.jpg,Buffer CSV,linkedin
+2026-10-20,08:30,LinkedIn,fr,first-read,Image 1080x1350,fr/first-read-portrait.jpg,Buffer CSV,linkedin
+2026-10-20,08:30,LinkedIn,it,first-read,Image 1080x1350,it/first-read-portrait.jpg,Buffer CSV,linkedin
+2026-10-20,08:30,LinkedIn,pt,first-read,Image 1080x1350,pt/first-read-portrait.jpg,Buffer CSV,linkedin
+2026-10-20,09:15,X,de,first-read,Image 1600x900,de/first-read-landscape.jpg,Buffer CSV,x
+2026-10-20,09:15,X,en,first-read,Image 1600x900,en/first-read-landscape.jpg,Buffer CSV,x
+2026-10-20,09:15,X,es,first-read,Image 1600x900,es/first-read-landscape.jpg,Buffer CSV,x
+2026-10-20,09:15,X,fr,first-read,Image 1600x900,fr/first-read-landscape.jpg,Buffer CSV,x
+2026-10-20,09:15,X,it,first-read,Image 1600x900,it/first-read-landscape.jpg,Buffer CSV,x
+2026-10-20,09:15,X,pt,first-read,Image 1600x900,pt/first-read-landscape.jpg,Buffer CSV,x
+2026-10-20,12:00,Instagram feed,de,first-read,Image 1080x1350,de/first-read-portrait.jpg,Buffer CSV,instagram
+2026-10-20,12:00,Instagram story,de,first-read,Image 1080x1920,de/first-read-story.jpg,"Buffer composer, add link sticker",story
+2026-10-20,12:00,Instagram feed,en,first-read,Image 1080x1350,en/first-read-portrait.jpg,Buffer CSV,instagram
+2026-10-20,12:00,Instagram story,en,first-read,Image 1080x1920,en/first-read-story.jpg,"Buffer composer, add link sticker",story
+2026-10-20,12:00,Instagram feed,es,first-read,Image 1080x1350,es/first-read-portrait.jpg,Buffer CSV,instagram
+2026-10-20,12:00,Instagram story,es,first-read,Image 1080x1920,es/first-read-story.jpg,"Buffer composer, add link sticker",story
+2026-10-20,12:00,Instagram feed,fr,first-read,Image 1080x1350,fr/first-read-portrait.jpg,Buffer CSV,instagram
+2026-10-20,12:00,Instagram story,fr,first-read,Image 1080x1920,fr/first-read-story.jpg,"Buffer composer, add link sticker",story
+2026-10-20,12:00,Instagram feed,it,first-read,Image 1080x1350,it/first-read-portrait.jpg,Buffer CSV,instagram
+2026-10-20,12:00,Instagram story,it,first-read,Image 1080x1920,it/first-read-story.jpg,"Buffer composer, add link sticker",story
+2026-10-20,12:00,Instagram feed,pt,first-read,Image 1080x1350,pt/first-read-portrait.jpg,Buffer CSV,instagram
+2026-10-20,12:00,Instagram story,pt,first-read,Image 1080x1920,pt/first-read-story.jpg,"Buffer composer, add link sticker",story
+2026-10-20,13:00,Facebook,de,first-read,Image 1080x1350,de/first-read-portrait.jpg,Buffer CSV,facebook
+2026-10-20,13:00,Facebook,en,first-read,Image 1080x1350,en/first-read-portrait.jpg,Buffer CSV,facebook
+2026-10-20,13:00,Facebook,es,first-read,Image 1080x1350,es/first-read-portrait.jpg,Buffer CSV,facebook
+2026-10-20,13:00,Facebook,fr,first-read,Image 1080x1350,fr/first-read-portrait.jpg,Buffer CSV,facebook
+2026-10-20,13:00,Facebook,it,first-read,Image 1080x1350,it/first-read-portrait.jpg,Buffer CSV,facebook
+2026-10-20,13:00,Facebook,pt,first-read,Image 1080x1350,pt/first-read-portrait.jpg,Buffer CSV,facebook
+2026-10-20,18:00,TikTok,de,first-read,Video 1080x1920,de/first-read-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-20,18:00,TikTok,en,first-read,Video 1080x1920,en/first-read-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-20,18:00,TikTok,es,first-read,Video 1080x1920,es/first-read-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-20,18:00,TikTok,fr,first-read,Video 1080x1920,fr/first-read-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-20,18:00,TikTok,it,first-read,Video 1080x1920,it/first-read-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-20,18:00,TikTok,pt,first-read,Video 1080x1920,pt/first-read-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-20,18:30,YouTube Shorts,de,first-read,Video 1080x1920,de/first-read-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-20,18:30,YouTube Shorts,en,first-read,Video 1080x1920,en/first-read-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-20,18:30,YouTube Shorts,es,first-read,Video 1080x1920,es/first-read-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-20,18:30,YouTube Shorts,fr,first-read,Video 1080x1920,fr/first-read-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-20,18:30,YouTube Shorts,it,first-read,Video 1080x1920,it/first-read-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-20,18:30,YouTube Shorts,pt,first-read,Video 1080x1920,pt/first-read-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-20,19:00,Instagram Reels,de,first-read,Video 1080x1920,de/first-read-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-20,19:00,Instagram Reels,en,first-read,Video 1080x1920,en/first-read-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-20,19:00,Instagram Reels,es,first-read,Video 1080x1920,es/first-read-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-20,19:00,Instagram Reels,fr,first-read,Video 1080x1920,fr/first-read-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-20,19:00,Instagram Reels,it,first-read,Video 1080x1920,it/first-read-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-20,19:00,Instagram Reels,pt,first-read,Video 1080x1920,pt/first-read-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-21,08:30,LinkedIn,de,frameworks,Image 1080x1350,de/frameworks-portrait.jpg,Buffer CSV,linkedin
+2026-10-21,08:30,LinkedIn,en,frameworks,Image 1080x1350,en/frameworks-portrait.jpg,Buffer CSV,linkedin
+2026-10-21,08:30,LinkedIn,es,frameworks,Image 1080x1350,es/frameworks-portrait.jpg,Buffer CSV,linkedin
+2026-10-21,08:30,LinkedIn,fr,frameworks,Image 1080x1350,fr/frameworks-portrait.jpg,Buffer CSV,linkedin
+2026-10-21,08:30,LinkedIn,it,frameworks,Image 1080x1350,it/frameworks-portrait.jpg,Buffer CSV,linkedin
+2026-10-21,08:30,LinkedIn,pt,frameworks,Image 1080x1350,pt/frameworks-portrait.jpg,Buffer CSV,linkedin
+2026-10-21,09:15,X,de,frameworks,Image 1600x900,de/frameworks-landscape.jpg,Buffer CSV,x
+2026-10-21,09:15,X,en,frameworks,Image 1600x900,en/frameworks-landscape.jpg,Buffer CSV,x
+2026-10-21,09:15,X,es,frameworks,Image 1600x900,es/frameworks-landscape.jpg,Buffer CSV,x
+2026-10-21,09:15,X,fr,frameworks,Image 1600x900,fr/frameworks-landscape.jpg,Buffer CSV,x
+2026-10-21,09:15,X,it,frameworks,Image 1600x900,it/frameworks-landscape.jpg,Buffer CSV,x
+2026-10-21,09:15,X,pt,frameworks,Image 1600x900,pt/frameworks-landscape.jpg,Buffer CSV,x
+2026-10-21,12:00,Instagram feed,de,frameworks,Image 1080x1350,de/frameworks-portrait.jpg,Buffer CSV,instagram
+2026-10-21,12:00,Instagram story,de,frameworks,Image 1080x1920,de/frameworks-story.jpg,"Buffer composer, add link sticker",story
+2026-10-21,12:00,Instagram feed,en,frameworks,Image 1080x1350,en/frameworks-portrait.jpg,Buffer CSV,instagram
+2026-10-21,12:00,Instagram story,en,frameworks,Image 1080x1920,en/frameworks-story.jpg,"Buffer composer, add link sticker",story
+2026-10-21,12:00,Instagram feed,es,frameworks,Image 1080x1350,es/frameworks-portrait.jpg,Buffer CSV,instagram
+2026-10-21,12:00,Instagram story,es,frameworks,Image 1080x1920,es/frameworks-story.jpg,"Buffer composer, add link sticker",story
+2026-10-21,12:00,Instagram feed,fr,frameworks,Image 1080x1350,fr/frameworks-portrait.jpg,Buffer CSV,instagram
+2026-10-21,12:00,Instagram story,fr,frameworks,Image 1080x1920,fr/frameworks-story.jpg,"Buffer composer, add link sticker",story
+2026-10-21,12:00,Instagram feed,it,frameworks,Image 1080x1350,it/frameworks-portrait.jpg,Buffer CSV,instagram
+2026-10-21,12:00,Instagram story,it,frameworks,Image 1080x1920,it/frameworks-story.jpg,"Buffer composer, add link sticker",story
+2026-10-21,12:00,Instagram feed,pt,frameworks,Image 1080x1350,pt/frameworks-portrait.jpg,Buffer CSV,instagram
+2026-10-21,12:00,Instagram story,pt,frameworks,Image 1080x1920,pt/frameworks-story.jpg,"Buffer composer, add link sticker",story
+2026-10-21,13:00,Facebook,de,frameworks,Image 1080x1350,de/frameworks-portrait.jpg,Buffer CSV,facebook
+2026-10-21,13:00,Facebook,en,frameworks,Image 1080x1350,en/frameworks-portrait.jpg,Buffer CSV,facebook
+2026-10-21,13:00,Facebook,es,frameworks,Image 1080x1350,es/frameworks-portrait.jpg,Buffer CSV,facebook
+2026-10-21,13:00,Facebook,fr,frameworks,Image 1080x1350,fr/frameworks-portrait.jpg,Buffer CSV,facebook
+2026-10-21,13:00,Facebook,it,frameworks,Image 1080x1350,it/frameworks-portrait.jpg,Buffer CSV,facebook
+2026-10-21,13:00,Facebook,pt,frameworks,Image 1080x1350,pt/frameworks-portrait.jpg,Buffer CSV,facebook
+2026-10-21,17:00,LinkedIn,de,frameworks,PDF carousel,de/frameworks-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-21,17:00,Instagram feed,de,frameworks,Carousel 10 slides,de/frameworks-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-21,17:00,LinkedIn,en,frameworks,PDF carousel,en/frameworks-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-21,17:00,Instagram feed,en,frameworks,Carousel 10 slides,en/frameworks-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-21,17:00,LinkedIn,es,frameworks,PDF carousel,es/frameworks-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-21,17:00,Instagram feed,es,frameworks,Carousel 10 slides,es/frameworks-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-21,17:00,LinkedIn,fr,frameworks,PDF carousel,fr/frameworks-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-21,17:00,Instagram feed,fr,frameworks,Carousel 10 slides,fr/frameworks-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-21,17:00,LinkedIn,it,frameworks,PDF carousel,it/frameworks-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-21,17:00,Instagram feed,it,frameworks,Carousel 10 slides,it/frameworks-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-21,17:00,LinkedIn,pt,frameworks,PDF carousel,pt/frameworks-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-21,17:00,Instagram feed,pt,frameworks,Carousel 10 slides,pt/frameworks-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-21,18:00,TikTok,de,frameworks,Video 1080x1920,de/frameworks-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-21,18:00,TikTok,en,frameworks,Video 1080x1920,en/frameworks-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-21,18:00,TikTok,es,frameworks,Video 1080x1920,es/frameworks-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-21,18:00,TikTok,fr,frameworks,Video 1080x1920,fr/frameworks-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-21,18:00,TikTok,it,frameworks,Video 1080x1920,it/frameworks-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-21,18:00,TikTok,pt,frameworks,Video 1080x1920,pt/frameworks-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-21,18:30,YouTube Shorts,de,frameworks,Video 1080x1920,de/frameworks-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-21,18:30,YouTube Shorts,en,frameworks,Video 1080x1920,en/frameworks-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-21,18:30,YouTube Shorts,es,frameworks,Video 1080x1920,es/frameworks-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-21,18:30,YouTube Shorts,fr,frameworks,Video 1080x1920,fr/frameworks-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-21,18:30,YouTube Shorts,it,frameworks,Video 1080x1920,it/frameworks-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-21,18:30,YouTube Shorts,pt,frameworks,Video 1080x1920,pt/frameworks-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-21,19:00,Instagram Reels,de,frameworks,Video 1080x1920,de/frameworks-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-21,19:00,Instagram Reels,en,frameworks,Video 1080x1920,en/frameworks-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-21,19:00,Instagram Reels,es,frameworks,Video 1080x1920,es/frameworks-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-21,19:00,Instagram Reels,fr,frameworks,Video 1080x1920,fr/frameworks-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-21,19:00,Instagram Reels,it,frameworks,Video 1080x1920,it/frameworks-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-21,19:00,Instagram Reels,pt,frameworks,Video 1080x1920,pt/frameworks-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-22,08:30,LinkedIn,de,release,Image 1080x1350,de/release-portrait.jpg,Buffer CSV,linkedin
+2026-10-22,08:30,LinkedIn,en,release,Image 1080x1350,en/release-portrait.jpg,Buffer CSV,linkedin
+2026-10-22,08:30,LinkedIn,es,release,Image 1080x1350,es/release-portrait.jpg,Buffer CSV,linkedin
+2026-10-22,08:30,LinkedIn,fr,release,Image 1080x1350,fr/release-portrait.jpg,Buffer CSV,linkedin
+2026-10-22,08:30,LinkedIn,it,release,Image 1080x1350,it/release-portrait.jpg,Buffer CSV,linkedin
+2026-10-22,08:30,LinkedIn,pt,release,Image 1080x1350,pt/release-portrait.jpg,Buffer CSV,linkedin
+2026-10-22,09:15,X,de,release,Image 1600x900,de/release-landscape.jpg,Buffer CSV,x
+2026-10-22,09:15,X,en,release,Image 1600x900,en/release-landscape.jpg,Buffer CSV,x
+2026-10-22,09:15,X,es,release,Image 1600x900,es/release-landscape.jpg,Buffer CSV,x
+2026-10-22,09:15,X,fr,release,Image 1600x900,fr/release-landscape.jpg,Buffer CSV,x
+2026-10-22,09:15,X,it,release,Image 1600x900,it/release-landscape.jpg,Buffer CSV,x
+2026-10-22,09:15,X,pt,release,Image 1600x900,pt/release-landscape.jpg,Buffer CSV,x
+2026-10-22,12:00,Instagram feed,de,release,Image 1080x1350,de/release-portrait.jpg,Buffer CSV,instagram
+2026-10-22,12:00,Instagram story,de,release,Image 1080x1920,de/release-story.jpg,"Buffer composer, add link sticker",story
+2026-10-22,12:00,Instagram feed,en,release,Image 1080x1350,en/release-portrait.jpg,Buffer CSV,instagram
+2026-10-22,12:00,Instagram story,en,release,Image 1080x1920,en/release-story.jpg,"Buffer composer, add link sticker",story
+2026-10-22,12:00,Instagram feed,es,release,Image 1080x1350,es/release-portrait.jpg,Buffer CSV,instagram
+2026-10-22,12:00,Instagram story,es,release,Image 1080x1920,es/release-story.jpg,"Buffer composer, add link sticker",story
+2026-10-22,12:00,Instagram feed,fr,release,Image 1080x1350,fr/release-portrait.jpg,Buffer CSV,instagram
+2026-10-22,12:00,Instagram story,fr,release,Image 1080x1920,fr/release-story.jpg,"Buffer composer, add link sticker",story
+2026-10-22,12:00,Instagram feed,it,release,Image 1080x1350,it/release-portrait.jpg,Buffer CSV,instagram
+2026-10-22,12:00,Instagram story,it,release,Image 1080x1920,it/release-story.jpg,"Buffer composer, add link sticker",story
+2026-10-22,12:00,Instagram feed,pt,release,Image 1080x1350,pt/release-portrait.jpg,Buffer CSV,instagram
+2026-10-22,12:00,Instagram story,pt,release,Image 1080x1920,pt/release-story.jpg,"Buffer composer, add link sticker",story
+2026-10-22,13:00,Facebook,de,release,Image 1080x1350,de/release-portrait.jpg,Buffer CSV,facebook
+2026-10-22,13:00,Facebook,en,release,Image 1080x1350,en/release-portrait.jpg,Buffer CSV,facebook
+2026-10-22,13:00,Facebook,es,release,Image 1080x1350,es/release-portrait.jpg,Buffer CSV,facebook
+2026-10-22,13:00,Facebook,fr,release,Image 1080x1350,fr/release-portrait.jpg,Buffer CSV,facebook
+2026-10-22,13:00,Facebook,it,release,Image 1080x1350,it/release-portrait.jpg,Buffer CSV,facebook
+2026-10-22,13:00,Facebook,pt,release,Image 1080x1350,pt/release-portrait.jpg,Buffer CSV,facebook
+2026-10-22,18:00,TikTok,de,release,Video 1080x1920,de/release-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-22,18:00,TikTok,en,release,Video 1080x1920,en/release-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-22,18:00,TikTok,es,release,Video 1080x1920,es/release-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-22,18:00,TikTok,fr,release,Video 1080x1920,fr/release-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-22,18:00,TikTok,it,release,Video 1080x1920,it/release-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-22,18:00,TikTok,pt,release,Video 1080x1920,pt/release-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-22,18:30,YouTube Shorts,de,release,Video 1080x1920,de/release-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-22,18:30,YouTube Shorts,en,release,Video 1080x1920,en/release-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-22,18:30,YouTube Shorts,es,release,Video 1080x1920,es/release-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-22,18:30,YouTube Shorts,fr,release,Video 1080x1920,fr/release-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-22,18:30,YouTube Shorts,it,release,Video 1080x1920,it/release-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-22,18:30,YouTube Shorts,pt,release,Video 1080x1920,pt/release-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-22,19:00,Instagram Reels,de,release,Video 1080x1920,de/release-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-22,19:00,Instagram Reels,en,release,Video 1080x1920,en/release-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-22,19:00,Instagram Reels,es,release,Video 1080x1920,es/release-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-22,19:00,Instagram Reels,fr,release,Video 1080x1920,fr/release-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-22,19:00,Instagram Reels,it,release,Video 1080x1920,it/release-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-22,19:00,Instagram Reels,pt,release,Video 1080x1920,pt/release-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-23,08:30,LinkedIn,de,inherited,Image 1080x1350,de/inherited-portrait.jpg,Buffer CSV,linkedin
+2026-10-23,08:30,LinkedIn,en,inherited,Image 1080x1350,en/inherited-portrait.jpg,Buffer CSV,linkedin
+2026-10-23,08:30,LinkedIn,es,inherited,Image 1080x1350,es/inherited-portrait.jpg,Buffer CSV,linkedin
+2026-10-23,08:30,LinkedIn,fr,inherited,Image 1080x1350,fr/inherited-portrait.jpg,Buffer CSV,linkedin
+2026-10-23,08:30,LinkedIn,it,inherited,Image 1080x1350,it/inherited-portrait.jpg,Buffer CSV,linkedin
+2026-10-23,08:30,LinkedIn,pt,inherited,Image 1080x1350,pt/inherited-portrait.jpg,Buffer CSV,linkedin
+2026-10-23,09:15,X,de,inherited,Image 1600x900,de/inherited-landscape.jpg,Buffer CSV,x
+2026-10-23,09:15,X,en,inherited,Image 1600x900,en/inherited-landscape.jpg,Buffer CSV,x
+2026-10-23,09:15,X,es,inherited,Image 1600x900,es/inherited-landscape.jpg,Buffer CSV,x
+2026-10-23,09:15,X,fr,inherited,Image 1600x900,fr/inherited-landscape.jpg,Buffer CSV,x
+2026-10-23,09:15,X,it,inherited,Image 1600x900,it/inherited-landscape.jpg,Buffer CSV,x
+2026-10-23,09:15,X,pt,inherited,Image 1600x900,pt/inherited-landscape.jpg,Buffer CSV,x
+2026-10-23,12:00,Instagram feed,de,inherited,Image 1080x1350,de/inherited-portrait.jpg,Buffer CSV,instagram
+2026-10-23,12:00,Instagram story,de,inherited,Image 1080x1920,de/inherited-story.jpg,"Buffer composer, add link sticker",story
+2026-10-23,12:00,Instagram feed,en,inherited,Image 1080x1350,en/inherited-portrait.jpg,Buffer CSV,instagram
+2026-10-23,12:00,Instagram story,en,inherited,Image 1080x1920,en/inherited-story.jpg,"Buffer composer, add link sticker",story
+2026-10-23,12:00,Instagram feed,es,inherited,Image 1080x1350,es/inherited-portrait.jpg,Buffer CSV,instagram
+2026-10-23,12:00,Instagram story,es,inherited,Image 1080x1920,es/inherited-story.jpg,"Buffer composer, add link sticker",story
+2026-10-23,12:00,Instagram feed,fr,inherited,Image 1080x1350,fr/inherited-portrait.jpg,Buffer CSV,instagram
+2026-10-23,12:00,Instagram story,fr,inherited,Image 1080x1920,fr/inherited-story.jpg,"Buffer composer, add link sticker",story
+2026-10-23,12:00,Instagram feed,it,inherited,Image 1080x1350,it/inherited-portrait.jpg,Buffer CSV,instagram
+2026-10-23,12:00,Instagram story,it,inherited,Image 1080x1920,it/inherited-story.jpg,"Buffer composer, add link sticker",story
+2026-10-23,12:00,Instagram feed,pt,inherited,Image 1080x1350,pt/inherited-portrait.jpg,Buffer CSV,instagram
+2026-10-23,12:00,Instagram story,pt,inherited,Image 1080x1920,pt/inherited-story.jpg,"Buffer composer, add link sticker",story
+2026-10-23,13:00,Facebook,de,inherited,Image 1080x1350,de/inherited-portrait.jpg,Buffer CSV,facebook
+2026-10-23,13:00,Facebook,en,inherited,Image 1080x1350,en/inherited-portrait.jpg,Buffer CSV,facebook
+2026-10-23,13:00,Facebook,es,inherited,Image 1080x1350,es/inherited-portrait.jpg,Buffer CSV,facebook
+2026-10-23,13:00,Facebook,fr,inherited,Image 1080x1350,fr/inherited-portrait.jpg,Buffer CSV,facebook
+2026-10-23,13:00,Facebook,it,inherited,Image 1080x1350,it/inherited-portrait.jpg,Buffer CSV,facebook
+2026-10-23,13:00,Facebook,pt,inherited,Image 1080x1350,pt/inherited-portrait.jpg,Buffer CSV,facebook
+2026-10-23,18:00,TikTok,de,inherited,Video 1080x1920,de/inherited-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-23,18:00,TikTok,en,inherited,Video 1080x1920,en/inherited-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-23,18:00,TikTok,es,inherited,Video 1080x1920,es/inherited-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-23,18:00,TikTok,fr,inherited,Video 1080x1920,fr/inherited-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-23,18:00,TikTok,it,inherited,Video 1080x1920,it/inherited-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-23,18:00,TikTok,pt,inherited,Video 1080x1920,pt/inherited-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-23,18:30,YouTube Shorts,de,inherited,Video 1080x1920,de/inherited-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-23,18:30,YouTube Shorts,en,inherited,Video 1080x1920,en/inherited-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-23,18:30,YouTube Shorts,es,inherited,Video 1080x1920,es/inherited-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-23,18:30,YouTube Shorts,fr,inherited,Video 1080x1920,fr/inherited-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-23,18:30,YouTube Shorts,it,inherited,Video 1080x1920,it/inherited-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-23,18:30,YouTube Shorts,pt,inherited,Video 1080x1920,pt/inherited-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-23,19:00,Instagram Reels,de,inherited,Video 1080x1920,de/inherited-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-23,19:00,Instagram Reels,en,inherited,Video 1080x1920,en/inherited-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-23,19:00,Instagram Reels,es,inherited,Video 1080x1920,es/inherited-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-23,19:00,Instagram Reels,fr,inherited,Video 1080x1920,fr/inherited-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-23,19:00,Instagram Reels,it,inherited,Video 1080x1920,it/inherited-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-23,19:00,Instagram Reels,pt,inherited,Video 1080x1920,pt/inherited-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-26,08:30,LinkedIn,de,a11y,Image 1080x1350,de/a11y-portrait.jpg,Buffer CSV,linkedin
+2026-10-26,08:30,LinkedIn,en,a11y,Image 1080x1350,en/a11y-portrait.jpg,Buffer CSV,linkedin
+2026-10-26,08:30,LinkedIn,es,a11y,Image 1080x1350,es/a11y-portrait.jpg,Buffer CSV,linkedin
+2026-10-26,08:30,LinkedIn,fr,a11y,Image 1080x1350,fr/a11y-portrait.jpg,Buffer CSV,linkedin
+2026-10-26,08:30,LinkedIn,it,a11y,Image 1080x1350,it/a11y-portrait.jpg,Buffer CSV,linkedin
+2026-10-26,08:30,LinkedIn,pt,a11y,Image 1080x1350,pt/a11y-portrait.jpg,Buffer CSV,linkedin
+2026-10-26,09:15,X,de,a11y,Image 1600x900,de/a11y-landscape.jpg,Buffer CSV,x
+2026-10-26,09:15,X,en,a11y,Image 1600x900,en/a11y-landscape.jpg,Buffer CSV,x
+2026-10-26,09:15,X,es,a11y,Image 1600x900,es/a11y-landscape.jpg,Buffer CSV,x
+2026-10-26,09:15,X,fr,a11y,Image 1600x900,fr/a11y-landscape.jpg,Buffer CSV,x
+2026-10-26,09:15,X,it,a11y,Image 1600x900,it/a11y-landscape.jpg,Buffer CSV,x
+2026-10-26,09:15,X,pt,a11y,Image 1600x900,pt/a11y-landscape.jpg,Buffer CSV,x
+2026-10-26,12:00,Instagram feed,de,a11y,Image 1080x1350,de/a11y-portrait.jpg,Buffer CSV,instagram
+2026-10-26,12:00,Instagram story,de,a11y,Image 1080x1920,de/a11y-story.jpg,"Buffer composer, add link sticker",story
+2026-10-26,12:00,Instagram feed,en,a11y,Image 1080x1350,en/a11y-portrait.jpg,Buffer CSV,instagram
+2026-10-26,12:00,Instagram story,en,a11y,Image 1080x1920,en/a11y-story.jpg,"Buffer composer, add link sticker",story
+2026-10-26,12:00,Instagram feed,es,a11y,Image 1080x1350,es/a11y-portrait.jpg,Buffer CSV,instagram
+2026-10-26,12:00,Instagram story,es,a11y,Image 1080x1920,es/a11y-story.jpg,"Buffer composer, add link sticker",story
+2026-10-26,12:00,Instagram feed,fr,a11y,Image 1080x1350,fr/a11y-portrait.jpg,Buffer CSV,instagram
+2026-10-26,12:00,Instagram story,fr,a11y,Image 1080x1920,fr/a11y-story.jpg,"Buffer composer, add link sticker",story
+2026-10-26,12:00,Instagram feed,it,a11y,Image 1080x1350,it/a11y-portrait.jpg,Buffer CSV,instagram
+2026-10-26,12:00,Instagram story,it,a11y,Image 1080x1920,it/a11y-story.jpg,"Buffer composer, add link sticker",story
+2026-10-26,12:00,Instagram feed,pt,a11y,Image 1080x1350,pt/a11y-portrait.jpg,Buffer CSV,instagram
+2026-10-26,12:00,Instagram story,pt,a11y,Image 1080x1920,pt/a11y-story.jpg,"Buffer composer, add link sticker",story
+2026-10-26,13:00,Facebook,de,a11y,Image 1080x1350,de/a11y-portrait.jpg,Buffer CSV,facebook
+2026-10-26,13:00,Facebook,en,a11y,Image 1080x1350,en/a11y-portrait.jpg,Buffer CSV,facebook
+2026-10-26,13:00,Facebook,es,a11y,Image 1080x1350,es/a11y-portrait.jpg,Buffer CSV,facebook
+2026-10-26,13:00,Facebook,fr,a11y,Image 1080x1350,fr/a11y-portrait.jpg,Buffer CSV,facebook
+2026-10-26,13:00,Facebook,it,a11y,Image 1080x1350,it/a11y-portrait.jpg,Buffer CSV,facebook
+2026-10-26,13:00,Facebook,pt,a11y,Image 1080x1350,pt/a11y-portrait.jpg,Buffer CSV,facebook
+2026-10-26,18:00,TikTok,de,a11y,Video 1080x1920,de/a11y-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-26,18:00,TikTok,en,a11y,Video 1080x1920,en/a11y-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-26,18:00,TikTok,es,a11y,Video 1080x1920,es/a11y-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-26,18:00,TikTok,fr,a11y,Video 1080x1920,fr/a11y-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-26,18:00,TikTok,it,a11y,Video 1080x1920,it/a11y-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-26,18:00,TikTok,pt,a11y,Video 1080x1920,pt/a11y-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-26,18:30,YouTube Shorts,de,a11y,Video 1080x1920,de/a11y-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-26,18:30,YouTube Shorts,en,a11y,Video 1080x1920,en/a11y-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-26,18:30,YouTube Shorts,es,a11y,Video 1080x1920,es/a11y-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-26,18:30,YouTube Shorts,fr,a11y,Video 1080x1920,fr/a11y-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-26,18:30,YouTube Shorts,it,a11y,Video 1080x1920,it/a11y-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-26,18:30,YouTube Shorts,pt,a11y,Video 1080x1920,pt/a11y-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-26,19:00,Instagram Reels,de,a11y,Video 1080x1920,de/a11y-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-26,19:00,Instagram Reels,en,a11y,Video 1080x1920,en/a11y-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-26,19:00,Instagram Reels,es,a11y,Video 1080x1920,es/a11y-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-26,19:00,Instagram Reels,fr,a11y,Video 1080x1920,fr/a11y-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-26,19:00,Instagram Reels,it,a11y,Video 1080x1920,it/a11y-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-26,19:00,Instagram Reels,pt,a11y,Video 1080x1920,pt/a11y-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-27,08:30,LinkedIn,de,security,Image 1080x1350,de/security-portrait.jpg,Buffer CSV,linkedin
+2026-10-27,08:30,LinkedIn,en,security,Image 1080x1350,en/security-portrait.jpg,Buffer CSV,linkedin
+2026-10-27,08:30,LinkedIn,es,security,Image 1080x1350,es/security-portrait.jpg,Buffer CSV,linkedin
+2026-10-27,08:30,LinkedIn,fr,security,Image 1080x1350,fr/security-portrait.jpg,Buffer CSV,linkedin
+2026-10-27,08:30,LinkedIn,it,security,Image 1080x1350,it/security-portrait.jpg,Buffer CSV,linkedin
+2026-10-27,08:30,LinkedIn,pt,security,Image 1080x1350,pt/security-portrait.jpg,Buffer CSV,linkedin
+2026-10-27,09:15,X,de,security,Image 1600x900,de/security-landscape.jpg,Buffer CSV,x
+2026-10-27,09:15,X,en,security,Image 1600x900,en/security-landscape.jpg,Buffer CSV,x
+2026-10-27,09:15,X,es,security,Image 1600x900,es/security-landscape.jpg,Buffer CSV,x
+2026-10-27,09:15,X,fr,security,Image 1600x900,fr/security-landscape.jpg,Buffer CSV,x
+2026-10-27,09:15,X,it,security,Image 1600x900,it/security-landscape.jpg,Buffer CSV,x
+2026-10-27,09:15,X,pt,security,Image 1600x900,pt/security-landscape.jpg,Buffer CSV,x
+2026-10-27,12:00,Instagram feed,de,security,Image 1080x1350,de/security-portrait.jpg,Buffer CSV,instagram
+2026-10-27,12:00,Instagram story,de,security,Image 1080x1920,de/security-story.jpg,"Buffer composer, add link sticker",story
+2026-10-27,12:00,Instagram feed,en,security,Image 1080x1350,en/security-portrait.jpg,Buffer CSV,instagram
+2026-10-27,12:00,Instagram story,en,security,Image 1080x1920,en/security-story.jpg,"Buffer composer, add link sticker",story
+2026-10-27,12:00,Instagram feed,es,security,Image 1080x1350,es/security-portrait.jpg,Buffer CSV,instagram
+2026-10-27,12:00,Instagram story,es,security,Image 1080x1920,es/security-story.jpg,"Buffer composer, add link sticker",story
+2026-10-27,12:00,Instagram feed,fr,security,Image 1080x1350,fr/security-portrait.jpg,Buffer CSV,instagram
+2026-10-27,12:00,Instagram story,fr,security,Image 1080x1920,fr/security-story.jpg,"Buffer composer, add link sticker",story
+2026-10-27,12:00,Instagram feed,it,security,Image 1080x1350,it/security-portrait.jpg,Buffer CSV,instagram
+2026-10-27,12:00,Instagram story,it,security,Image 1080x1920,it/security-story.jpg,"Buffer composer, add link sticker",story
+2026-10-27,12:00,Instagram feed,pt,security,Image 1080x1350,pt/security-portrait.jpg,Buffer CSV,instagram
+2026-10-27,12:00,Instagram story,pt,security,Image 1080x1920,pt/security-story.jpg,"Buffer composer, add link sticker",story
+2026-10-27,13:00,Facebook,de,security,Image 1080x1350,de/security-portrait.jpg,Buffer CSV,facebook
+2026-10-27,13:00,Facebook,en,security,Image 1080x1350,en/security-portrait.jpg,Buffer CSV,facebook
+2026-10-27,13:00,Facebook,es,security,Image 1080x1350,es/security-portrait.jpg,Buffer CSV,facebook
+2026-10-27,13:00,Facebook,fr,security,Image 1080x1350,fr/security-portrait.jpg,Buffer CSV,facebook
+2026-10-27,13:00,Facebook,it,security,Image 1080x1350,it/security-portrait.jpg,Buffer CSV,facebook
+2026-10-27,13:00,Facebook,pt,security,Image 1080x1350,pt/security-portrait.jpg,Buffer CSV,facebook
+2026-10-27,18:00,TikTok,de,security,Video 1080x1920,de/security-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-27,18:00,TikTok,en,security,Video 1080x1920,en/security-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-27,18:00,TikTok,es,security,Video 1080x1920,es/security-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-27,18:00,TikTok,fr,security,Video 1080x1920,fr/security-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-27,18:00,TikTok,it,security,Video 1080x1920,it/security-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-27,18:00,TikTok,pt,security,Video 1080x1920,pt/security-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-27,18:30,YouTube Shorts,de,security,Video 1080x1920,de/security-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-27,18:30,YouTube Shorts,en,security,Video 1080x1920,en/security-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-27,18:30,YouTube Shorts,es,security,Video 1080x1920,es/security-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-27,18:30,YouTube Shorts,fr,security,Video 1080x1920,fr/security-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-27,18:30,YouTube Shorts,it,security,Video 1080x1920,it/security-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-27,18:30,YouTube Shorts,pt,security,Video 1080x1920,pt/security-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-27,19:00,Instagram Reels,de,security,Video 1080x1920,de/security-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-27,19:00,Instagram Reels,en,security,Video 1080x1920,en/security-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-27,19:00,Instagram Reels,es,security,Video 1080x1920,es/security-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-27,19:00,Instagram Reels,fr,security,Video 1080x1920,fr/security-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-27,19:00,Instagram Reels,it,security,Video 1080x1920,it/security-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-27,19:00,Instagram Reels,pt,security,Video 1080x1920,pt/security-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-28,08:30,LinkedIn,de,performance,Image 1080x1350,de/performance-portrait.jpg,Buffer CSV,linkedin
+2026-10-28,08:30,LinkedIn,en,performance,Image 1080x1350,en/performance-portrait.jpg,Buffer CSV,linkedin
+2026-10-28,08:30,LinkedIn,es,performance,Image 1080x1350,es/performance-portrait.jpg,Buffer CSV,linkedin
+2026-10-28,08:30,LinkedIn,fr,performance,Image 1080x1350,fr/performance-portrait.jpg,Buffer CSV,linkedin
+2026-10-28,08:30,LinkedIn,it,performance,Image 1080x1350,it/performance-portrait.jpg,Buffer CSV,linkedin
+2026-10-28,08:30,LinkedIn,pt,performance,Image 1080x1350,pt/performance-portrait.jpg,Buffer CSV,linkedin
+2026-10-28,09:15,X,de,performance,Image 1600x900,de/performance-landscape.jpg,Buffer CSV,x
+2026-10-28,09:15,X,en,performance,Image 1600x900,en/performance-landscape.jpg,Buffer CSV,x
+2026-10-28,09:15,X,es,performance,Image 1600x900,es/performance-landscape.jpg,Buffer CSV,x
+2026-10-28,09:15,X,fr,performance,Image 1600x900,fr/performance-landscape.jpg,Buffer CSV,x
+2026-10-28,09:15,X,it,performance,Image 1600x900,it/performance-landscape.jpg,Buffer CSV,x
+2026-10-28,09:15,X,pt,performance,Image 1600x900,pt/performance-landscape.jpg,Buffer CSV,x
+2026-10-28,12:00,Instagram feed,de,performance,Image 1080x1350,de/performance-portrait.jpg,Buffer CSV,instagram
+2026-10-28,12:00,Instagram story,de,performance,Image 1080x1920,de/performance-story.jpg,"Buffer composer, add link sticker",story
+2026-10-28,12:00,Instagram feed,en,performance,Image 1080x1350,en/performance-portrait.jpg,Buffer CSV,instagram
+2026-10-28,12:00,Instagram story,en,performance,Image 1080x1920,en/performance-story.jpg,"Buffer composer, add link sticker",story
+2026-10-28,12:00,Instagram feed,es,performance,Image 1080x1350,es/performance-portrait.jpg,Buffer CSV,instagram
+2026-10-28,12:00,Instagram story,es,performance,Image 1080x1920,es/performance-story.jpg,"Buffer composer, add link sticker",story
+2026-10-28,12:00,Instagram feed,fr,performance,Image 1080x1350,fr/performance-portrait.jpg,Buffer CSV,instagram
+2026-10-28,12:00,Instagram story,fr,performance,Image 1080x1920,fr/performance-story.jpg,"Buffer composer, add link sticker",story
+2026-10-28,12:00,Instagram feed,it,performance,Image 1080x1350,it/performance-portrait.jpg,Buffer CSV,instagram
+2026-10-28,12:00,Instagram story,it,performance,Image 1080x1920,it/performance-story.jpg,"Buffer composer, add link sticker",story
+2026-10-28,12:00,Instagram feed,pt,performance,Image 1080x1350,pt/performance-portrait.jpg,Buffer CSV,instagram
+2026-10-28,12:00,Instagram story,pt,performance,Image 1080x1920,pt/performance-story.jpg,"Buffer composer, add link sticker",story
+2026-10-28,13:00,Facebook,de,performance,Image 1080x1350,de/performance-portrait.jpg,Buffer CSV,facebook
+2026-10-28,13:00,Facebook,en,performance,Image 1080x1350,en/performance-portrait.jpg,Buffer CSV,facebook
+2026-10-28,13:00,Facebook,es,performance,Image 1080x1350,es/performance-portrait.jpg,Buffer CSV,facebook
+2026-10-28,13:00,Facebook,fr,performance,Image 1080x1350,fr/performance-portrait.jpg,Buffer CSV,facebook
+2026-10-28,13:00,Facebook,it,performance,Image 1080x1350,it/performance-portrait.jpg,Buffer CSV,facebook
+2026-10-28,13:00,Facebook,pt,performance,Image 1080x1350,pt/performance-portrait.jpg,Buffer CSV,facebook
+2026-10-28,18:00,TikTok,de,performance,Video 1080x1920,de/performance-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-28,18:00,TikTok,en,performance,Video 1080x1920,en/performance-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-28,18:00,TikTok,es,performance,Video 1080x1920,es/performance-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-28,18:00,TikTok,fr,performance,Video 1080x1920,fr/performance-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-28,18:00,TikTok,it,performance,Video 1080x1920,it/performance-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-28,18:00,TikTok,pt,performance,Video 1080x1920,pt/performance-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-28,18:30,YouTube Shorts,de,performance,Video 1080x1920,de/performance-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-28,18:30,YouTube Shorts,en,performance,Video 1080x1920,en/performance-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-28,18:30,YouTube Shorts,es,performance,Video 1080x1920,es/performance-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-28,18:30,YouTube Shorts,fr,performance,Video 1080x1920,fr/performance-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-28,18:30,YouTube Shorts,it,performance,Video 1080x1920,it/performance-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-28,18:30,YouTube Shorts,pt,performance,Video 1080x1920,pt/performance-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-28,19:00,Instagram Reels,de,performance,Video 1080x1920,de/performance-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-28,19:00,Instagram Reels,en,performance,Video 1080x1920,en/performance-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-28,19:00,Instagram Reels,es,performance,Video 1080x1920,es/performance-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-28,19:00,Instagram Reels,fr,performance,Video 1080x1920,fr/performance-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-28,19:00,Instagram Reels,it,performance,Video 1080x1920,it/performance-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-28,19:00,Instagram Reels,pt,performance,Video 1080x1920,pt/performance-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-29,08:30,LinkedIn,de,exports,Image 1080x1350,de/exports-portrait.jpg,Buffer CSV,linkedin
+2026-10-29,08:30,LinkedIn,en,exports,Image 1080x1350,en/exports-portrait.jpg,Buffer CSV,linkedin
+2026-10-29,08:30,LinkedIn,es,exports,Image 1080x1350,es/exports-portrait.jpg,Buffer CSV,linkedin
+2026-10-29,08:30,LinkedIn,fr,exports,Image 1080x1350,fr/exports-portrait.jpg,Buffer CSV,linkedin
+2026-10-29,08:30,LinkedIn,it,exports,Image 1080x1350,it/exports-portrait.jpg,Buffer CSV,linkedin
+2026-10-29,08:30,LinkedIn,pt,exports,Image 1080x1350,pt/exports-portrait.jpg,Buffer CSV,linkedin
+2026-10-29,09:15,X,de,exports,Image 1600x900,de/exports-landscape.jpg,Buffer CSV,x
+2026-10-29,09:15,X,en,exports,Image 1600x900,en/exports-landscape.jpg,Buffer CSV,x
+2026-10-29,09:15,X,es,exports,Image 1600x900,es/exports-landscape.jpg,Buffer CSV,x
+2026-10-29,09:15,X,fr,exports,Image 1600x900,fr/exports-landscape.jpg,Buffer CSV,x
+2026-10-29,09:15,X,it,exports,Image 1600x900,it/exports-landscape.jpg,Buffer CSV,x
+2026-10-29,09:15,X,pt,exports,Image 1600x900,pt/exports-landscape.jpg,Buffer CSV,x
+2026-10-29,12:00,Instagram feed,de,exports,Image 1080x1350,de/exports-portrait.jpg,Buffer CSV,instagram
+2026-10-29,12:00,Instagram story,de,exports,Image 1080x1920,de/exports-story.jpg,"Buffer composer, add link sticker",story
+2026-10-29,12:00,Instagram feed,en,exports,Image 1080x1350,en/exports-portrait.jpg,Buffer CSV,instagram
+2026-10-29,12:00,Instagram story,en,exports,Image 1080x1920,en/exports-story.jpg,"Buffer composer, add link sticker",story
+2026-10-29,12:00,Instagram feed,es,exports,Image 1080x1350,es/exports-portrait.jpg,Buffer CSV,instagram
+2026-10-29,12:00,Instagram story,es,exports,Image 1080x1920,es/exports-story.jpg,"Buffer composer, add link sticker",story
+2026-10-29,12:00,Instagram feed,fr,exports,Image 1080x1350,fr/exports-portrait.jpg,Buffer CSV,instagram
+2026-10-29,12:00,Instagram story,fr,exports,Image 1080x1920,fr/exports-story.jpg,"Buffer composer, add link sticker",story
+2026-10-29,12:00,Instagram feed,it,exports,Image 1080x1350,it/exports-portrait.jpg,Buffer CSV,instagram
+2026-10-29,12:00,Instagram story,it,exports,Image 1080x1920,it/exports-story.jpg,"Buffer composer, add link sticker",story
+2026-10-29,12:00,Instagram feed,pt,exports,Image 1080x1350,pt/exports-portrait.jpg,Buffer CSV,instagram
+2026-10-29,12:00,Instagram story,pt,exports,Image 1080x1920,pt/exports-story.jpg,"Buffer composer, add link sticker",story
+2026-10-29,13:00,Facebook,de,exports,Image 1080x1350,de/exports-portrait.jpg,Buffer CSV,facebook
+2026-10-29,13:00,Facebook,en,exports,Image 1080x1350,en/exports-portrait.jpg,Buffer CSV,facebook
+2026-10-29,13:00,Facebook,es,exports,Image 1080x1350,es/exports-portrait.jpg,Buffer CSV,facebook
+2026-10-29,13:00,Facebook,fr,exports,Image 1080x1350,fr/exports-portrait.jpg,Buffer CSV,facebook
+2026-10-29,13:00,Facebook,it,exports,Image 1080x1350,it/exports-portrait.jpg,Buffer CSV,facebook
+2026-10-29,13:00,Facebook,pt,exports,Image 1080x1350,pt/exports-portrait.jpg,Buffer CSV,facebook
+2026-10-29,17:00,LinkedIn,de,exports,PDF carousel,de/exports-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-29,17:00,Instagram feed,de,exports,Carousel 10 slides,de/exports-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-29,17:00,LinkedIn,en,exports,PDF carousel,en/exports-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-29,17:00,Instagram feed,en,exports,Carousel 10 slides,en/exports-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-29,17:00,LinkedIn,es,exports,PDF carousel,es/exports-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-29,17:00,Instagram feed,es,exports,Carousel 10 slides,es/exports-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-29,17:00,LinkedIn,fr,exports,PDF carousel,fr/exports-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-29,17:00,Instagram feed,fr,exports,Carousel 10 slides,fr/exports-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-29,17:00,LinkedIn,it,exports,PDF carousel,it/exports-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-29,17:00,Instagram feed,it,exports,Carousel 10 slides,it/exports-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-29,17:00,LinkedIn,pt,exports,PDF carousel,pt/exports-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-29,17:00,Instagram feed,pt,exports,Carousel 10 slides,pt/exports-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-29,18:00,TikTok,de,exports,Video 1080x1920,de/exports-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-29,18:00,TikTok,en,exports,Video 1080x1920,en/exports-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-29,18:00,TikTok,es,exports,Video 1080x1920,es/exports-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-29,18:00,TikTok,fr,exports,Video 1080x1920,fr/exports-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-29,18:00,TikTok,it,exports,Video 1080x1920,it/exports-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-29,18:00,TikTok,pt,exports,Video 1080x1920,pt/exports-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-29,18:30,YouTube Shorts,de,exports,Video 1080x1920,de/exports-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-29,18:30,YouTube Shorts,en,exports,Video 1080x1920,en/exports-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-29,18:30,YouTube Shorts,es,exports,Video 1080x1920,es/exports-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-29,18:30,YouTube Shorts,fr,exports,Video 1080x1920,fr/exports-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-29,18:30,YouTube Shorts,it,exports,Video 1080x1920,it/exports-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-29,18:30,YouTube Shorts,pt,exports,Video 1080x1920,pt/exports-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-29,19:00,Instagram Reels,de,exports,Video 1080x1920,de/exports-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-29,19:00,Instagram Reels,en,exports,Video 1080x1920,en/exports-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-29,19:00,Instagram Reels,es,exports,Video 1080x1920,es/exports-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-29,19:00,Instagram Reels,fr,exports,Video 1080x1920,fr/exports-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-29,19:00,Instagram Reels,it,exports,Video 1080x1920,it/exports-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-29,19:00,Instagram Reels,pt,exports,Video 1080x1920,pt/exports-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-30,08:30,LinkedIn,de,layers,Image 1080x1350,de/layers-portrait.jpg,Buffer CSV,linkedin
+2026-10-30,08:30,LinkedIn,en,layers,Image 1080x1350,en/layers-portrait.jpg,Buffer CSV,linkedin
+2026-10-30,08:30,LinkedIn,es,layers,Image 1080x1350,es/layers-portrait.jpg,Buffer CSV,linkedin
+2026-10-30,08:30,LinkedIn,fr,layers,Image 1080x1350,fr/layers-portrait.jpg,Buffer CSV,linkedin
+2026-10-30,08:30,LinkedIn,it,layers,Image 1080x1350,it/layers-portrait.jpg,Buffer CSV,linkedin
+2026-10-30,08:30,LinkedIn,pt,layers,Image 1080x1350,pt/layers-portrait.jpg,Buffer CSV,linkedin
+2026-10-30,09:15,X,de,layers,Image 1600x900,de/layers-landscape.jpg,Buffer CSV,x
+2026-10-30,09:15,X,en,layers,Image 1600x900,en/layers-landscape.jpg,Buffer CSV,x
+2026-10-30,09:15,X,es,layers,Image 1600x900,es/layers-landscape.jpg,Buffer CSV,x
+2026-10-30,09:15,X,fr,layers,Image 1600x900,fr/layers-landscape.jpg,Buffer CSV,x
+2026-10-30,09:15,X,it,layers,Image 1600x900,it/layers-landscape.jpg,Buffer CSV,x
+2026-10-30,09:15,X,pt,layers,Image 1600x900,pt/layers-landscape.jpg,Buffer CSV,x
+2026-10-30,12:00,Instagram feed,de,layers,Image 1080x1350,de/layers-portrait.jpg,Buffer CSV,instagram
+2026-10-30,12:00,Instagram story,de,layers,Image 1080x1920,de/layers-story.jpg,"Buffer composer, add link sticker",story
+2026-10-30,12:00,Instagram feed,en,layers,Image 1080x1350,en/layers-portrait.jpg,Buffer CSV,instagram
+2026-10-30,12:00,Instagram story,en,layers,Image 1080x1920,en/layers-story.jpg,"Buffer composer, add link sticker",story
+2026-10-30,12:00,Instagram feed,es,layers,Image 1080x1350,es/layers-portrait.jpg,Buffer CSV,instagram
+2026-10-30,12:00,Instagram story,es,layers,Image 1080x1920,es/layers-story.jpg,"Buffer composer, add link sticker",story
+2026-10-30,12:00,Instagram feed,fr,layers,Image 1080x1350,fr/layers-portrait.jpg,Buffer CSV,instagram
+2026-10-30,12:00,Instagram story,fr,layers,Image 1080x1920,fr/layers-story.jpg,"Buffer composer, add link sticker",story
+2026-10-30,12:00,Instagram feed,it,layers,Image 1080x1350,it/layers-portrait.jpg,Buffer CSV,instagram
+2026-10-30,12:00,Instagram story,it,layers,Image 1080x1920,it/layers-story.jpg,"Buffer composer, add link sticker",story
+2026-10-30,12:00,Instagram feed,pt,layers,Image 1080x1350,pt/layers-portrait.jpg,Buffer CSV,instagram
+2026-10-30,12:00,Instagram story,pt,layers,Image 1080x1920,pt/layers-story.jpg,"Buffer composer, add link sticker",story
+2026-10-30,13:00,Facebook,de,layers,Image 1080x1350,de/layers-portrait.jpg,Buffer CSV,facebook
+2026-10-30,13:00,Facebook,en,layers,Image 1080x1350,en/layers-portrait.jpg,Buffer CSV,facebook
+2026-10-30,13:00,Facebook,es,layers,Image 1080x1350,es/layers-portrait.jpg,Buffer CSV,facebook
+2026-10-30,13:00,Facebook,fr,layers,Image 1080x1350,fr/layers-portrait.jpg,Buffer CSV,facebook
+2026-10-30,13:00,Facebook,it,layers,Image 1080x1350,it/layers-portrait.jpg,Buffer CSV,facebook
+2026-10-30,13:00,Facebook,pt,layers,Image 1080x1350,pt/layers-portrait.jpg,Buffer CSV,facebook
+2026-10-30,17:00,LinkedIn,de,layers,PDF carousel,de/layers-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-30,17:00,Instagram feed,de,layers,Carousel 13 slides,de/layers-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-30,17:00,LinkedIn,en,layers,PDF carousel,en/layers-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-30,17:00,Instagram feed,en,layers,Carousel 13 slides,en/layers-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-30,17:00,LinkedIn,es,layers,PDF carousel,es/layers-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-30,17:00,Instagram feed,es,layers,Carousel 13 slides,es/layers-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-30,17:00,LinkedIn,fr,layers,PDF carousel,fr/layers-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-30,17:00,Instagram feed,fr,layers,Carousel 13 slides,fr/layers-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-30,17:00,LinkedIn,it,layers,PDF carousel,it/layers-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-30,17:00,Instagram feed,it,layers,Carousel 13 slides,it/layers-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-30,17:00,LinkedIn,pt,layers,PDF carousel,pt/layers-carousel.pdf,"Buffer composer, attach PDF",linkedin
+2026-10-30,17:00,Instagram feed,pt,layers,Carousel 13 slides,pt/layers-carousel-NN.jpg,"Buffer composer, add slides in order",instagram
+2026-10-30,18:00,TikTok,de,layers,Video 1080x1920,de/layers-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-30,18:00,TikTok,en,layers,Video 1080x1920,en/layers-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-30,18:00,TikTok,es,layers,Video 1080x1920,es/layers-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-30,18:00,TikTok,fr,layers,Video 1080x1920,fr/layers-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-30,18:00,TikTok,it,layers,Video 1080x1920,it/layers-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-30,18:00,TikTok,pt,layers,Video 1080x1920,pt/layers-reel.mp4,"Buffer composer, upload video",tiktok
+2026-10-30,18:30,YouTube Shorts,de,layers,Video 1080x1920,de/layers-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-30,18:30,YouTube Shorts,en,layers,Video 1080x1920,en/layers-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-30,18:30,YouTube Shorts,es,layers,Video 1080x1920,es/layers-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-30,18:30,YouTube Shorts,fr,layers,Video 1080x1920,fr/layers-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-30,18:30,YouTube Shorts,it,layers,Video 1080x1920,it/layers-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-30,18:30,YouTube Shorts,pt,layers,Video 1080x1920,pt/layers-reel.mp4,"Buffer composer, title from youtubeTitle",youtube
+2026-10-30,19:00,Instagram Reels,de,layers,Video 1080x1920,de/layers-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-30,19:00,Instagram Reels,en,layers,Video 1080x1920,en/layers-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-30,19:00,Instagram Reels,es,layers,Video 1080x1920,es/layers-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-30,19:00,Instagram Reels,fr,layers,Video 1080x1920,fr/layers-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-30,19:00,Instagram Reels,it,layers,Video 1080x1920,it/layers-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
+2026-10-30,19:00,Instagram Reels,pt,layers,Video 1080x1920,pt/layers-reel.mp4,"Buffer composer, cover reel-cover.jpg",instagram
