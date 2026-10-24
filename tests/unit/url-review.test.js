@@ -191,6 +191,39 @@ test.describe("scoring", () => {
     assert.equal(verdict(partial, "seo-sitemap"), "pass");
   });
 
+  test("noindex pages a complete sitemap leaves out are private, and need no canonical", () => {
+    const inspect = core.analyzeHtml(HTML, STRONG_HEADERS, URL_);
+    const hidden = core.analyzeHtml("<!doctype html><html lang=\"en\"><head><title>Account</title><meta name=\"robots\" content=\"noindex, nofollow\"></head><body><h1>Account</h1></body></html>", STRONG_HEADERS, URL_ + "account");
+    const pages = [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect }, { url: URL_ + "account", path: "/account", status: 200, ms: 90, depth: 1, inspect: hidden }];
+    const sitemap = { source: URL_ + "sitemap.xml", status: 200, urls: [URL_] };
+    const kept = insights.analyze({ pages, extras: { sitemap } });
+    assert.equal(verdict(kept, "seo-noindex"), "pass");
+    assert.equal(verdict(kept, "seo-canonical-missing"), "missing");
+    const listed = insights.analyze({ pages, extras: { sitemap: Object.assign({}, sitemap, { urls: [URL_, URL_ + "account"] }) } });
+    assert.equal(verdict(listed, "seo-noindex"), "risk");
+    assert.equal(verdict(insights.analyze({ pages, extras: { sitemap: Object.assign({ partial: true }, sitemap) } }), "seo-noindex"), "risk");
+    assert.equal(verdict(insights.analyze({ pages }), "seo-noindex"), "risk");
+  });
+
+  test("Cloudflare's email protection links are read as mail, not as pages", () => {
+    const html = HTML.replace("</body>", "<a href=\"/cdn-cgi/l/email-protection#95fef4f4fbf8e0f4e7d5f2f8f4fcf9bbf6faf8\">Mail</a>" +
+      "<span class=\"__cf_email__\" data-cfemail=\"0a6e6f7c4a6f726b677a666f2465786d\">[email&#160;protected]</span></body>");
+    const inspect = core.analyzeHtml(html, STRONG_HEADERS, URL_);
+    assert.equal(inspect.links.some((href) => href.indexOf("/cdn-cgi/") !== -1), false);
+    assert.deepEqual(inspect.mailtos.filter((m) => /kaanmuar|dev@/.test(m)), ["kaanmuar@gmail.com", "dev@example.org"]);
+  });
+
+  test("a self-updating tag host is not asked for an integrity hash", async () => {
+    const tag = "<script async src=\"https://www.googletagmanager.com/gtag/js?id=G-1\"></script>";
+    const run = async (head) => {
+      const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: HTML.replace("</head>", head + "</head>") } });
+      try { return (await core.reviewTarget(URL_, { browse: async () => ({ ok: false }) })).cases.find((item) => item.id === "SEC-14"); } finally { restore(); }
+    };
+    assert.equal(await run(tag), undefined);
+    const mixed = await run(tag + "<script src=\"https://cdn.example.net/lib.js\"></script>");
+    assert.match(mixed.why, /^Scripts from cdn\.example\.net load/);
+  });
+
   test("a compressed response is read as HTML even when it was not asked for", () => {
     const zlib = require("node:zlib");
     const html = Buffer.from(HTML);
@@ -321,6 +354,28 @@ test.describe("false positives from the real-run series", () => {
     try {
       const sitemap = await core.readSitemap("https://docs.example.org", "Sitemap: https://docs.example.org/sitemap.xml\n", () => false);
       assert.deepEqual(sitemap.urls, ["https://docs.example.org/en/a", "https://docs.example.org/en/b", "https://docs.example.org/es/a", "https://docs.example.org/es/b"]);
+    } finally {
+      restore();
+    }
+  });
+
+  test("every sitemap robots.txt lists is read, and the read is whole only when all of them answered", async () => {
+    const map = (paths) => ({ status: 200, headers: { "content-type": "application/xml" }, body: "<urlset>" + paths.map((p) => "<url><loc>https://docs.example.org/" + p + "</loc></url>").join("") + "</urlset>" });
+    const robots = "Sitemap: https://docs.example.org/sitemap.xml\nSitemap: https://docs.example.org/sitemap-social.xml\n";
+    let restore = fakeNetwork({ "https://docs.example.org/sitemap.xml": map(["", "a"]), "https://docs.example.org/sitemap-social.xml": map(["a", "social"]) });
+    try {
+      const both = await core.readSitemap("https://docs.example.org", robots, () => false);
+      assert.deepEqual(both.urls, ["https://docs.example.org/", "https://docs.example.org/a", "https://docs.example.org/social"]);
+      assert.equal(both.partial, false);
+      assert.equal(both.source, "https://docs.example.org/sitemap.xml");
+    } finally {
+      restore();
+    }
+    restore = fakeNetwork({ "https://docs.example.org/sitemap.xml": map(["a"]) });
+    try {
+      const one = await core.readSitemap("https://docs.example.org", robots, () => false);
+      assert.deepEqual(one.urls, ["https://docs.example.org/a"]);
+      assert.equal(one.partial, true);
     } finally {
       restore();
     }
