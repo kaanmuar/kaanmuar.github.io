@@ -3145,6 +3145,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       } else if (purpose === "report") {
         const reportSnap = await admin.firestore().collection("url_reviews").doc(reportId).get();
         reportData = reportSnap.exists ? reportSnap.data() : {};
+        const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), req.body || {}, reportData, false);
+        if (!access.ok && access.status !== 402) {
+          res.status(access.status).json({ error: access.locked ? "Only the account that ran this report can unlock it. Sign in with that account. No charge was made." : access.error, signIn: !!access.signIn });
+          return;
+        }
         priced = urlReview.priceFor((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools));
       } else {
         priced = urlReview.priceForRun({
@@ -3244,8 +3249,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     });
     return;
   }
-  if (req.method === "GET") {
-    const id = String(req.query.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const opening = req.method === "GET" ? { id: req.query.id, coupon: req.query.coupon }
+    : (req.method === "POST" && pathName.endsWith("/review/open") ? (req.body || {}) : null);
+  if (opening) {
+    const id = String(opening.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     if (!id) {
       res.status(400).json({ error: "Missing report id." });
       return;
@@ -3257,10 +3264,30 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     }
     const data = snap.data() || {};
     const free = data.free === true || await hasFreeRuns(data.email);
-    if (!data.paid && !free) {
+    // A GET carries no session, so a bare link always lands on the preview.
+    const proof = req.method === "GET" ? {} : { session: opening.session, deviceKey: opening.deviceKey };
+    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), proof, data, free);
+    if (access.status === 404) {
+      res.status(404).json({ error: access.error });
+      return;
+    }
+    if (access.locked) {
+      res.status(access.status).json({
+        error: access.error,
+        signIn: true,
+        locked: true,
+        id,
+        host: data.report.host,
+        status: data.status || "",
+        frameworks: data.frameworks || [],
+        preview: urlReview.previewReport(data.report)
+      });
+      return;
+    }
+    if (!access.ok) {
       let priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] };
       try { priced = urlReview.priceFor(data.frameworks || []); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [], count: 1 }; }
-      const deal = await returnPrice(priced, { purpose: "report", reportId: id, email: data.email, before: data.createdAt, coupon: req.query.coupon });
+      const deal = await returnPrice(priced, { purpose: "report", reportId: id, email: data.email, before: data.createdAt, coupon: opening.coupon });
       res.status(402).json(Object.assign({
         paymentRequired: true,
         priceUsd: deal.usd,

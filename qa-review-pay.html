@@ -225,7 +225,7 @@
                 ? (purpose === "cases"
                     ? "This export of " + count + (count === 1 ? " kind costs " : " kinds costs ") + money(usd) + " USD. "
                     : purpose === "report"
-                        ? "Seeing, downloading, printing, or sharing this report again costs " + money(usd) + " USD. "
+                        ? "Seeing, downloading, or printing this report again, on the account that ran it, costs " + money(usd) + " USD. "
                         : "This run costs " + money(usd) + " USD. ") + schedule
                 : "Go back and choose what this payment covers. " + schedule;
             document.getElementById("pay-item").textContent = purpose === "cases"
@@ -257,6 +257,15 @@
         }
         function deviceId() {
             try { return localStorage.getItem("qa-review-device") || ""; } catch (error) { return ""; }
+        }
+        // Unlocking a report needs the sign-in of the account that ran it, kept by qa-review-auth.js.
+        function signInProof() {
+            try {
+                return {
+                    session: (JSON.parse(localStorage.getItem("qa-review-session") || "null") || {}).session || "",
+                    deviceKey: JSON.parse(localStorage.getItem("qa-review-device-key") || "null") || ""
+                };
+            } catch (error) { return { session: "", deviceKey: "" }; }
         }
         function testKey() {
             try {
@@ -429,7 +438,7 @@
                     method: "POST",
                     credentials: "include",
                     headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, coupon: coupon, testKey: testKey() })
+                    body: JSON.stringify({ session: signInProof().session, deviceKey: signInProof().deviceKey, purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, coupon: coupon, testKey: testKey() })
                 });
                 const body = await res.json();
                 if (res.ok && body.url) {

@@ -480,15 +480,34 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true }, origin, deviceFrom(req, body));
     return;
   }
-  if (req.method === "GET" && url.pathname === "/review") {
-    const id = url.searchParams.get("id") || "";
+  if ((req.method === "GET" && url.pathname === "/review") || (req.method === "POST" && url.pathname === "/review/open")) {
+    let openBody = {};
+    if (req.method === "POST") {
+      try { openBody = await readBody(req); } catch (error) { openBody = {}; }
+    }
+    const id = req.method === "GET" ? url.searchParams.get("id") || "" : String(openBody.id || "");
     const found = readStore().reverse().find((row) => row.id === id);
     if (!found || !found.report) {
       sendJson(res, 404, { error: "That report was not found on this machine." }, origin, deviceHint);
       return;
     }
     const paidLater = readStore().some((row) => row && row.status === "paid-report" && row.reportId === found.id && row.paid === true);
-    if (!found.paid && !paidLater) {
+    const proof = req.method === "GET" ? {} : { session: openBody.session, deviceKey: openBody.deviceKey };
+    const access = await auth.reportAccess(signIns, proof, Object.assign({}, found, { paid: found.paid === true || paidLater }), found.free === true);
+    if (access.locked) {
+      sendJson(res, access.status, {
+        error: access.error,
+        signIn: true,
+        locked: true,
+        id: found.id,
+        host: found.report.host,
+        status: found.status,
+        frameworks: found.frameworks || [],
+        preview: core.previewReport(found.report)
+      }, origin, deviceHint);
+      return;
+    }
+    if (!access.ok) {
       let priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] };
       try { priced = core.priceFor(found.frameworks || []); } catch (error) { priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] }; }
       sendJson(res, 402, {
@@ -587,6 +606,11 @@ const server = http.createServer(async (req, res) => {
     const urls = payReturn(purpose, choice, reference);
     try {
       const stored = purpose === "report" ? (readStore().find((item) => item && item.id === reportId && item.report) || {}) : {};
+      const access = purpose === "report" ? await auth.reportAccess(signIns, payBody, stored, false) : { ok: true };
+      if (!access.ok && access.status !== 402) {
+        sendJson(res, access.status, { error: access.locked ? "Only the account that ran this report can unlock it. Sign in with that account. No charge was made." : access.error, signIn: !!access.signIn }, origin, deviceId);
+        return;
+      }
       const priced = purpose === "cases"
         ? core.priceForLayers(payBody.layers)
         : purpose === "credentials"

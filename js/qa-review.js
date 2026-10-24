@@ -3,7 +3,7 @@
   const DEVICE_KEY = "qa-review-device";
   const SHOWN_KEY = "qa-review-shown";
   const SAMPLE_URL = "assets/qa-review-sample.json";
-  const TERMS_VERSION = "2026-10-22.2";
+  const TERMS_VERSION = "2026-10-23";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PRICE = 19;
@@ -1617,7 +1617,7 @@
     const usd = (body && body.priceUsd) || reviewUsd(list, tools);
     const selections = list.length + tools.length;
     document.getElementById("pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
-    document.getElementById("pay-detail").textContent = "Seeing it again, or downloading, printing, or sharing it again, costs " + formatUsd(usd) + " USD for " + selections + (selections === 1 ? " selection." : " selections.") + " Frameworks come first. Checked tools follow on the same discount. The first selection is 19 USD. A paid copy keeps one line: this report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
+    document.getElementById("pay-detail").textContent = "Seeing it again, or downloading or printing it again, on the account that ran it, costs " + formatUsd(usd) + " USD for " + selections + (selections === 1 ? " selection." : " selections.") + " Frameworks come first. Checked tools follow on the same discount. The first selection is 19 USD. A paid copy keeps one line: this report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
     document.getElementById("pay-btn").href = payQuery("report");
     showDeal("pay-deal", "pay-price", body);
     payBox.hidden = false;
@@ -1704,7 +1704,7 @@
   document.getElementById("copy-link").addEventListener("click", () => {
     spend("link", async () => {
       const link = document.getElementById("share-link").textContent;
-      try { await navigator.clipboard.writeText(link); setStatus("Link copied. Opening it again asks for payment.", false); }
+      try { await navigator.clipboard.writeText(link); setStatus("Link copied. It opens in full only for the account that ran this report, once signed in. Anyone else sees the blurred preview.", false); }
       catch (error) { setStatus("Copy the link from the report window.", true); }
     });
   });
@@ -1973,13 +1973,26 @@
 
   const shared = new URLSearchParams(location.search).get("report");
   if (shared) {
+    let lockedShared = false;
     const openShared = async () => {
       if (app.inert) return;
       setStatus("Opening the saved report…", false);
       try {
         const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
-        const res = await fetch(endpoint() + "/review?id=" + encodeURIComponent(shared) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : ""), { credentials: "include" });
+        const res = await fetch(endpoint() + "/review/open", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: shared, coupon }))
+        });
         const body = await res.json();
+        lockedShared = !!body.locked;
+        if (body.locked) {
+          if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
+          setStatus((body.preview ? "This report of " + (body.host || "this site") + " is below, under the frost. " : "") + (body.error || "Sign in with the account that ran this report to read it in full."), true);
+          if (window.ReviewAuth) ReviewAuth.focus();
+          return;
+        }
         if (res.status === 402 || body.paymentRequired) {
           if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
           openPay(body);
@@ -1994,6 +2007,7 @@
         setStatus(error.message, true);
       }
     };
+    if (window.ReviewAuth) ReviewAuth.onChange((on) => { if (on && lockedShared) openShared(); });
     if (!app.inert) openShared();
     else {
       const waiting = document.createElement("p");
