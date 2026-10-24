@@ -41,6 +41,7 @@ test("each page offers the topics of its posts, translated, and versions its CSS
   const html = hub.page("fr", [post({ cat: "Worldwide" }), post({ id: "b/2", cat: "Worldwide" }), post({ id: "b/3", cat: "Local" })], "2026-10-24");
   assert.match(html, /<option value="all">Tous les thèmes<\/option><option value="Worldwide">Mondial<\/option><option value="Local">Local<\/option>/);
   assert.match(html, /css\/social-hub.css\?v=[0-9a-f]{10}"/);
+  assert.match(html, /script-src [^;]*https:\/\/www\.gstatic\.com[ ;]/, "js/site-analytics.js loads the Firebase SDK from gstatic to store hub events");
   assert.match(html, /id="hub-clear"[^>]*>Effacer les filtres</);
 });
 
