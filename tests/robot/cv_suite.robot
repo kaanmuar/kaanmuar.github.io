@@ -27,33 +27,33 @@ Suite Teardown    Close All Browsers
 [Desktop] Core Competency Highlights Related Content
     [Tags]    Desktop    Interactive
     Open CV in Desktop Browser
-    Click Element    css:.competency-item[data-competency="pm"]
+    Click Into View    css:.competency-item[data-competency="pm"]
     Wait Until Page Contains Element    css:html.topic-focus
     Page Should Contain Element    css:.experience-item.topic-match
     Page Should Contain Element    css:#languages-section.topic-dim
-    Click Element    id:languages-heading
+    Click Into View    id:languages-heading
     Wait Until Page Does Not Contain Element    css:html.topic-focus
 
-[Desktop] All Seven Competencies Are Clickable
+[Desktop] All Eight Competencies Are Clickable
     [Tags]    Desktop    Interactive
     Open CV in Desktop Browser
     ${count}=    Execute Javascript    return document.querySelectorAll('.competency-item').length
-    Should Be Equal As Integers    ${count}    7
+    Should Be Equal As Integers    ${count}    8
 
 [Desktop] Same Competency Click Restores The CV
     [Tags]    Desktop    Interactive
     Open CV in Desktop Browser
-    Click Element    css:.competency-item[data-competency="qa"]
+    Click Into View    css:.competency-item[data-competency="qa"]
     Wait Until Page Contains Element    css:html.topic-focus
-    Click Element    css:.competency-item[data-competency="qa"]
+    Click Into View    css:.competency-item[data-competency="qa"]
     Wait Until Page Does Not Contain Element    css:html.topic-focus
 
 [Desktop] Reset Filters Clears Competency Focus
     [Tags]    Desktop    Interactive
     Open CV in Desktop Browser
-    Click Element    css:.competency-item[data-competency="qa"]
+    Click Into View    css:.competency-item[data-competency="qa"]
     Wait Until Page Contains Element    css:html.topic-focus
-    Click Element    id:reset-filter
+    Click Into View    id:reset-filter
     Wait Until Page Does Not Contain Element    css:html.topic-focus
 
 [Desktop] Radar QA Label Applies Competency Focus
@@ -66,7 +66,7 @@ Suite Teardown    Close All Browsers
 [Desktop] Theme Toggle Keeps Competency Focus
     [Tags]    Desktop    Interactive
     Open CV in Desktop Browser
-    Click Element    css:.competency-item[data-competency="cloud"]
+    Click Into View    css:.competency-item[data-competency="cloud"]
     Wait Until Page Contains Element    css:html.topic-focus
     Toggle The Theme On Desktop
     Wait Until Page Contains Element    css:html.topic-focus
