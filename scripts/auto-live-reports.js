@@ -188,9 +188,8 @@ function versusCopy(sites) {
   const parts = [...byHost].map(([host, areas]) => host + " leads in " + (areas.length === live.AREAS.length ? "all six areas" : areas.join(", ")));
   const vs = names.join(" vs ");
   return {
-    title: [vs.length <= 44 ? vs + "." : names.length + " natural competitors.", "*" + (order.length > 1 && lead.overall === order[1].overall ? "A tie at the top: " + lead.overall + "." : lead.host + " leads: " + lead.overall + ".") + "*"],
-    body: "Health scores: " + order.map((site) => site.host + " " + site.overall).join(", ") + "." + (parts.length ? " " + parts.join("; ") + "." : "") +
-      (byHost.has(base.host) ? "" : " " + base.host + " leads in none of the six areas."),
+    title: [vs.length <= 30 ? vs + "." : names.length + " natural competitors.", "*" + (order.length > 1 && lead.overall === order[1].overall ? "A tie at the top: " + lead.overall + "." : lead.host + " leads: " + lead.overall + ".") + "*"],
+    body: (parts.length ? parts.join("; ") + "." : "") + (byHost.has(base.host) ? "" : " " + base.host + " leads in none of the six areas."),
     action: "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
     tags: ["SEO", "WebPerf", "QA"]
   };

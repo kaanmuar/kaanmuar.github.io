@@ -98,15 +98,19 @@
   .feed .ring.big .n { font-size: 92px; }
   .feed .area small { font-size: 18px; }
   .feed .glass:has(.scores) { padding: calc(var(--u) * .9) calc(var(--u) * 1.1); }
-  .matrix { width: 100%; border-collapse: separate; border-spacing: 0 10px; font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .8); }
-  .matrix th { font-size: 18px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; text-align: center; }
+  .matrix { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0 12px; font-family: "Fira Code", monospace; font-size: var(--mono); }
+  .matrix col.host { width: 27%; } .matrix col.total { width: 12%; }
+  .matrix th { font-family: Inter, system-ui, sans-serif; font-size: 15px; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); font-weight: 600; text-align: center; padding: 0 2px; }
   .matrix th:first-child, .matrix td:first-child { text-align: left; }
-  .matrix td { text-align: center; padding: 10px 8px; background: rgba(5,12,15,.4); }
-  .matrix td:first-child { border-radius: 14px 0 0 14px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .matrix td:last-child { border-radius: 0 14px 14px 0; }
+  .matrix td { text-align: center; padding: 12px 4px; background: rgba(5,12,15,.45); white-space: nowrap; }
+  .matrix td:first-child { border-radius: 18px 0 0 18px; padding-left: 20px; overflow: hidden; text-overflow: ellipsis; font-family: Inter, system-ui, sans-serif; font-size: calc(var(--body) * .7); font-weight: 700; color: var(--accent); }
+  .matrix td:last-child { border-radius: 0 18px 18px 0; }
   .matrix tr.own td { background: rgba(126,246,251,.12); }
+  .matrix tr.own td:first-child { color: var(--cyan-hi); box-shadow: inset 4px 0 0 var(--cyan-hi); }
+  .matrix td.total { font-family: "Instrument Serif", Georgia, serif; font-size: calc(var(--mono) * 1.4); line-height: 1; }
   .matrix td.pass { color: var(--pass); } .matrix td.risk { color: var(--risk); } .matrix td.fail { color: var(--fail); }
-  .matrix td.lead { font-weight: 800; text-decoration: underline; text-underline-offset: 6px; }
+  .matrix td.lead { font-weight: 700; text-shadow: 0 0 14px currentColor; }
+  .matrix td.lead::after { content: "✓"; font-family: Inter, system-ui, sans-serif; font-size: .5em; vertical-align: super; margin-left: 3px; }
   .scores-note { margin-top: calc(var(--u) * .9); font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .7); color: var(--muted); text-align: center; }
   .clip .fg.a { animation-name: ring; animation-duration: 1.4s; }
   @keyframes ring { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: var(--o); } }
@@ -177,8 +181,8 @@ function visual(v, t0) {
   if (v.type === "matrix") {
     const tone = (n) => n >= 90 ? "pass" : n >= 70 ? "risk" : "fail";
     const best = v.cols.map((c, i) => Math.max(...v.rows.map((r) => typeof r[i + 1] === "number" ? r[i + 1] : -1)));
-    const cell = (n, i) => typeof n !== "number" ? "<td>–</td>" : '<td class="' + tone(n) + (n === best[i] && v.rows.length > 1 ? " lead" : "") + '">' + n + "</td>";
-    return '<div class="glass"><table class="matrix"><thead><tr><th></th>' + v.cols.map((c) => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
+    const cell = (n, i) => typeof n !== "number" ? '<td' + (i === 0 ? ' class="total"' : "") + ">–</td>" : '<td class="' + tone(n) + (i === 0 ? " total" : "") + (n === best[i] && v.rows.length > 1 ? " lead" : "") + '">' + n + "</td>";
+    return '<div class="glass"><table class="matrix"><colgroup><col class="host"><col class="total">' + v.cols.slice(1).map(() => "<col>").join("") + '</colgroup><thead><tr><th></th>' + v.cols.map((c) => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
       v.rows.map((r, k) => '<tr class="a' + (k === 0 ? " own" : "") + '" style="animation-delay:' + step(.45).toFixed(2) + 's"><td>' + esc(r[0]) + "</td>" + r.slice(1).map(cell).join("") + "</tr>").join("") +
       "</tbody></table>" + (v.note ? '<div class="scores-note">' + esc(v.note) + "</div>" : "") + "</div>";
   }
