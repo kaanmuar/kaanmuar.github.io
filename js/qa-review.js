@@ -503,8 +503,13 @@
     const item = document.createElement("li");
     const time = document.createElement("time");
     time.textContent = new Date().toLocaleTimeString();
+    const shown = window.ReviewProgress ? ReviewProgress.translate(text) : text;
+    if (shown !== text) {
+      item.lang = document.documentElement.lang;
+      item.setAttribute("translate", "no");
+    }
     item.appendChild(time);
-    item.appendChild(document.createTextNode(text));
+    item.appendChild(document.createTextNode(shown));
     list.appendChild(item);
     if (following) list.scrollTop = list.scrollHeight;
     if (window.ReviewProgress) ReviewProgress.line(text);
