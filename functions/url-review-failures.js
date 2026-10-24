@@ -15,7 +15,8 @@ const FIXES = [
   { cause: "browser", at: "2026-10-22T19:15:54Z", ref: "#365", label: "A refused page finishes as a refusal instead of a browser timeout" },
   { cause: "timeout", at: "2026-10-23T19:50:00Z", ref: "#582", label: "A start page past 8 s keeps the part that arrived, or is read in headless Chrome" },
   { cause: "save", at: "2026-10-23T23:30:00Z", ref: "#640", label: "A finished report with an empty optional field is saved" },
-  { cause: "tls", at: "2026-10-24T12:13:00Z", ref: "#736", label: "A server that leaves out its intermediate certificate is read with the intermediate from its AIA address" }
+  { cause: "tls", at: "2026-10-24T12:13:00Z", ref: "#736", label: "A server that leaves out its intermediate certificate is read with the intermediate from its AIA address" },
+  { cause: "timeout", at: "2026-10-24T12:18:01Z", ref: "#737", label: "A page whose load event stalls after its document arrived is read in headless Chrome as it stands" }
 ];
 // The review form's default when a failure kept no frameworks (one taken from an alert).
 const RERUN_FRAMEWORKS = ["Playwright"];
