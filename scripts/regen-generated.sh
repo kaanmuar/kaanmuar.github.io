@@ -24,7 +24,9 @@ main() {
 	export PYTHONDONTWRITEBYTECODE=1
 	# The critical CSS builder, which build-social-hub.js also runs, needs packages a bare runner does not have.
 	if [ -n "${GITHUB_ACTIONS:-}" ] && [ -f scripts/build-critical-css.js ] && ! node -e 'require("postcss")' 2>/dev/null; then
-		npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" $(node scripts/build-critical-css.js --deps) >/dev/null
+		local deps
+		read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+		npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}" >/dev/null
 		export NODE_PATH="$RUNNER_TEMP/critical-css/node_modules${NODE_PATH:+:$NODE_PATH}"
 	fi
 

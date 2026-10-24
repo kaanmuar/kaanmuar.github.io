@@ -31,7 +31,8 @@ jobs:
           node-version: '22'
       - name: Install the critical CSS builder
         run: |
-          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" $(node scripts/build-critical-css.js --deps)
+          read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
           echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
       - name: URL review scoring, journeys, pricing, guards, and generated scripts
         run: npm run test:review

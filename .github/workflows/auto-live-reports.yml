@@ -137,7 +137,8 @@ jobs:
         # build-social-hub.js inlines each page's critical CSS with these packages (#1028).
         if: ${{ !inputs.dry_run }}
         run: |
-          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" $(node scripts/build-critical-css.js --deps)
+          read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
           echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
 
       - name: Commit and publish the site
