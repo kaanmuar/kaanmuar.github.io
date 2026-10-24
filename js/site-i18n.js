@@ -226,7 +226,7 @@
     }
 
     function usesDictionary(code) {
-        if (/simulador\.html$/i.test(root.location.pathname) || /qa-lab\.html$/i.test(root.location.pathname) || /qa-review[\w-]*\.html$/i.test(root.location.pathname)) return false;
+        if (/simulador\.html$/i.test(root.location.pathname) || /qa-lab\.html$/i.test(root.location.pathname) || /qa-review[\w-]*\.html$/i.test(root.location.pathname) || /accessibility\.html$/i.test(root.location.pathname)) return false;
         return isNative(code);
     }
 

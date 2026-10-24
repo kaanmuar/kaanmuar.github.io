@@ -64,6 +64,7 @@ const COPY = {
     captionsFor: "Captions for each network",
     close: "Close",
     nav: { review: "URL Review", live: "Live Reports", guide: "Guide" },
+    accessibility: "Accessibility",
     footer: "Posts are written from public reviews of public pages. A review analyzes pages; it never runs tests on them."
   },
   es: {
@@ -103,6 +104,7 @@ const COPY = {
     captionsFor: "Textos para cada red",
     close: "Cerrar",
     nav: { review: "URL Review", live: "Informes en vivo", guide: "Guía" },
+    accessibility: "Accesibilidad",
     footer: "Las publicaciones salen de revisiones públicas de páginas públicas. Una revisión analiza las páginas; nunca ejecuta pruebas en ellas."
   },
   pt: {
@@ -142,6 +144,7 @@ const COPY = {
     captionsFor: "Legendas para cada rede",
     close: "Fechar",
     nav: { review: "URL Review", live: "Relatórios ao vivo", guide: "Guia" },
+    accessibility: "Acessibilidade",
     footer: "As publicações vêm de análises públicas de páginas públicas. Uma análise examina as páginas; nunca executa testes nelas."
   },
   de: {
@@ -181,6 +184,7 @@ const COPY = {
     captionsFor: "Texte für jedes Netzwerk",
     close: "Schließen",
     nav: { review: "URL Review", live: "Live-Berichte", guide: "Leitfaden" },
+    accessibility: "Barrierefreiheit",
     footer: "Die Beiträge entstehen aus öffentlichen Prüfungen öffentlicher Seiten. Eine Prüfung analysiert Seiten; sie führt nie Tests auf ihnen aus."
   },
   fr: {
@@ -220,6 +224,7 @@ const COPY = {
     captionsFor: "Textes pour chaque réseau",
     close: "Fermer",
     nav: { review: "URL Review", live: "Rapports en direct", guide: "Guide" },
+    accessibility: "Accessibilité",
     footer: "Les publications viennent de revues publiques de pages publiques. Une revue analyse les pages ; elle n’y exécute jamais de tests."
   },
   it: {
@@ -259,6 +264,7 @@ const COPY = {
     captionsFor: "Testi per ogni rete",
     close: "Chiudi",
     nav: { review: "URL Review", live: "Report dal vivo", guide: "Guida" },
+    accessibility: "Accessibilità",
     footer: "I post nascono da revisioni pubbliche di pagine pubbliche. Una revisione analizza le pagine; non vi esegue mai test."
   }
 };

@@ -9,6 +9,7 @@ Full text for answer engines, in one file: https://carlosandmunoz.com/llms-full.
 - [Interactive CV](https://carlosandmunoz.com/): Senior IT Project Manager, QA Architect, and QA Leader. Available for contract, freelance, advisory, and mentoring, and to build a full QA path: strategy, automation, CI, and the team. Readable in English, Spanish, Portuguese, German, French, and Italian, with competency filters, a career timeline, print, and PDF, JPG, Word, JSON, and text downloads.
 - CV languages: [Spanish](https://carlosandmunoz.com/?lang=es), [Portuguese](https://carlosandmunoz.com/?lang=pt), [German](https://carlosandmunoz.com/?lang=de), [French](https://carlosandmunoz.com/?lang=fr), [Italian](https://carlosandmunoz.com/?lang=it)
 - [LinkedIn](https://www.linkedin.com/in/carlos-andres-m-2a60b8b/)
+- [Accessibility statement](https://carlosandmunoz.com/accessibility.html): the WCAG 2.2 AA target for the whole site, how it is checked, the known gaps, and how to report a barrier
 - Contact: the form on the CV, or kaanmuar@gmail.com.
 
 ## Free QA tools

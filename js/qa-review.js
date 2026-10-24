@@ -1188,9 +1188,11 @@
       return;
     }
     const picked = list.filter((row) => rivals.picked.has(row.host));
-    const options = list.map((row) => '<label class="rival-option"><input type="checkbox" value="' + esc(row.host) + '"' + (rivals.picked.has(row.host) ? " checked" : "") + '> <span translate="no">' + esc(row.host) + "</span>" +
-      (row.rank ? ' <small class="muted">#' + row.rank.toLocaleString(cc.lang) + "</small>" : "") +
-      (row.ready ? "" : ' <small class="muted">' + esc(cc.t("rivalsNotYet")) + "</small>") + "</label>").join("");
+    const options = list.map((row) => {
+      const facts = [row.rank ? "#" + row.rank.toLocaleString(cc.lang) : "", row.ready ? "" : cc.t("rivalsNotYet")].filter(Boolean).join(" · ");
+      return '<label class="rival-option"><input type="checkbox" value="' + esc(row.host) + '"' + (rivals.picked.has(row.host) ? " checked" : "") + '> <span translate="no">' + esc(row.host) + "</span>" +
+        (facts ? "<small>" + esc(facts) + "</small>" : "") + "</label>";
+    }).join("");
     box.innerHTML = rivalsHead(report) +
       '<details class="rivals-pick"' + (rivals.open ? " open" : "") + '><summary>' + esc(picked.length ? cc.t("rivalsPick", { n: picked.length }) : cc.t("rivalsChoose")) + "</summary>" +
       '<div class="rivals-options" role="group" aria-label="' + esc(cc.t("rivalsChoose")) + '">' + options + "</div></details>" +
@@ -1215,30 +1217,42 @@
 
   // One column per site. On a preview the competitors' cells hold placeholders under the frost:
   // the server sends no competitor score until the report is paid.
+  // Each row's leader gets the check the head-to-head uses; open problems lead when fewest.
   function rivalsTable(report, picked, paid) {
     const score = report.insights.score || {};
     const ownArea = (name) => { const area = (score.areas || {})[name]; return area && typeof area.score === "number" ? area.score : null; };
-    const cell = (value) => value == null ? '<td class="muted">–</td>' : '<td><b style="color:' + scoreColor(value) + '">' + value + "</b></td>";
-    const frost = '<td class="rival-frost" aria-hidden="true">00</td>';
-    const rivalCell = (row, read) => !paid ? frost : row.compare ? read(row.compare) : '<td class="muted">–</td>';
     const kpi = (cmp, key) => (cmp.kpis || []).find((item) => item.key === key) || {};
     const areaOf = (cmp, name) => (cmp.areas || []).find((item) => item.area === name) || {};
-    const plain = (value) => value == null ? '<td class="muted">–</td>' : "<td>" + esc(String(value)) + "</td>";
-    const rows = [
-      [cc.t("overall"), cell(score.overall), (row) => rivalCell(row, (cmp) => cell(cmp.overall.rival))]
-    ].concat(["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"].map((name) =>
-      [cc.area(name), cell(ownArea(name)), (row) => rivalCell(row, (cmp) => cell(areaOf(cmp, name).rival))]
-    )).concat([
-      [cc.t("rivalsOpen"), plain(score.totals ? (score.totals.fail || 0) + (score.totals.risk || 0) : null), (row) => rivalCell(row, (cmp) => plain(kpi(cmp, "open").rival))],
-      [cc.t("rivalsWon"), '<td class="muted">–</td>', (row) => rivalCell(row, (cmp) => plain(cmp.dominance ? cmp.dominance.own + "–" + cmp.dominance.rival : null))],
-      [cc.t("rivalsRank"), plain(null), (row) => plain(row.rank ? "#" + row.rank.toLocaleString(cc.lang) : null)]
-    ]);
-    const actions = paid ? "<tr><td></td><td></td>" + picked.map((row) => "<td>" + (row.compare
+    const read = (row, pick) => paid && row.compare ? pick(row.compare) : null;
+    const open = score.totals ? (score.totals.fail || 0) + (score.totals.risk || 0) : null;
+    const rows = [[cc.t("overall"), score.overall, (row) => read(row, (cmp) => cmp.overall.rival), "high"]]
+      .concat(["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"].map((name) =>
+        [cc.area(name), ownArea(name), (row) => read(row, (cmp) => areaOf(cmp, name).rival), "high"]))
+      .concat([
+        [cc.t("rivalsOpen"), open, (row) => read(row, (cmp) => kpi(cmp, "open").rival), "low"],
+        [cc.t("rivalsWon"), null, (row) => read(row, (cmp) => cmp.dominance ? cmp.dominance.own + "–" + cmp.dominance.rival : null), ""],
+        [cc.t("rivalsRank"), null, (row) => row.rank ? "#" + row.rank.toLocaleString(cc.lang) : null, ""]
+      ]);
+    const td = (value, best, own, toned) => {
+      const cls = [own ? "rival-own" : "", value != null && value === best ? "won" : "", value == null ? "muted" : ""].filter(Boolean).join(" ");
+      const body = value == null ? "–" : toned ? '<b style="color:' + scoreColor(value) + '">' + value + "</b>" : "<span>" + esc(String(value)) + "</span>";
+      return "<td" + (cls ? ' class="' + cls + '"' : "") + ">" + body + "</td>";
+    };
+    const frost = '<td class="rival-frost" aria-hidden="true">00</td>';
+    const body = rows.map(([label, own, pick, lead], index) => {
+      const values = picked.map(pick);
+      const numbers = [own].concat(values).filter((value) => typeof value === "number");
+      const best = paid && lead && numbers.length > 1 ? (lead === "high" ? Math.max : Math.min).apply(null, numbers) : null;
+      const toned = index < 7;
+      return '<tr><th scope="row">' + esc(label) + "</th>" + td(own, best, true, toned) +
+        picked.map((row, i) => !paid && index < rows.length - 1 ? frost : td(values[i], best, false, toned)).join("") + "</tr>";
+    }).join("");
+    const actions = paid ? '<tr class="rival-actions"><th></th><td class="rival-own"></td>' + picked.map((row) => "<td>" + (row.compare
       ? '<button class="btn btn-ghost" type="button" data-rival-full="' + esc(row.host) + '">' + esc(cc.t("rivalsFull")) + "</button>"
       : '<button class="btn btn-ghost" type="button" data-rival-run="' + esc(row.host) + '">' + esc(cc.t("rivalsRun")) + "</button>") + "</td>").join("") + "</tr>" : "";
-    return '<div class="compare-scroll' + (paid ? "" : " rivals-locked") + '"><table class="compare-table rivals-table"><thead><tr><th scope="col">' + esc(cc.t("rivalsMetric")) + '</th><th scope="col" translate="no">' + esc(report.host) + "</th>" +
-      picked.map((row) => '<th scope="col" translate="no">' + esc(row.host) + "</th>").join("") + "</tr></thead><tbody>" +
-      rows.map(([label, own, rival]) => '<tr><th scope="row">' + esc(label) + "</th>" + own + picked.map(rival).join("") + "</tr>").join("") + actions + "</tbody></table></div>" +
+    return '<div class="compare-scroll' + (paid ? "" : " rivals-locked") + '"><table class="compare-table rivals-table"><thead><tr><th scope="col">' + esc(cc.t("rivalsMetric")) + '</th><th scope="col" class="rival-own" translate="no">' + esc(report.host) + "</th>" +
+      picked.map((row) => '<th scope="col" class="rival-col" translate="no">' + esc(row.host) + "</th>").join("") + "</tr></thead><tbody>" +
+      body + actions + "</tbody></table></div>" +
       (paid ? "" : '<p class="meta-line">' + esc(cc.t("rivalsLocked")) + "</p>");
   }
 

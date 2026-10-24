@@ -536,13 +536,35 @@
         .compare-table th, .compare-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
         .compare-table th:first-child { text-align: left; }
         .compare-table thead th { font-size: 12px; letter-spacing: .04em; color: var(--muted); }
-        #rivals { margin-bottom: 18px; }
-        .rivals-pick { margin: 10px 0 12px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; max-width: 520px; }
-        .rivals-pick summary { cursor: pointer; font-weight: 600; }
-        .rivals-options { display: grid; gap: 6px; padding-top: 8px; }
-        .rival-option { display: flex; gap: 8px; align-items: center; font-weight: 400; cursor: pointer; }
-        .rivals-locked .rival-frost { filter: blur(5px); user-select: none; color: var(--muted); }
-        .rivals-table .btn { padding: 6px 10px; font-size: 13px; }
+        #rivals { --own: var(--cyan); margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+        #rivals .cmp-h { margin-top: 4px; }
+        .rivals-pick { margin: 12px 0 14px; }
+        .rivals-pick summary { list-style: none; display: inline-flex; align-items: center; gap: 12px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); cursor: pointer; font-weight: 600; font-size: 14px; }
+        .rivals-pick summary::-webkit-details-marker { display: none; }
+        .rivals-pick summary::after { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--cyan); border-bottom: 2px solid var(--cyan); transform: rotate(45deg); margin-top: -4px; transition: transform .2s; }
+        .rivals-pick[open] summary::after { transform: rotate(-135deg); margin-top: 4px; }
+        .rivals-pick summary:hover, .rivals-pick[open] summary { border-color: var(--cyan); }
+        .rivals-pick summary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .rivals-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; padding-top: 10px; }
+        .rival-option { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: var(--card); cursor: pointer; }
+        .rival-option:has(input:checked) { border-color: var(--rival); background: color-mix(in srgb, var(--rival) 6%, var(--card)); }
+        .rival-option input { accent-color: var(--cyan); margin: 0; }
+        .rival-option span { font-weight: 600; overflow-wrap: anywhere; }
+        .rival-option small { grid-column: 2; font-size: 12px; color: var(--muted); }
+        .rivals-table th, .rivals-table td { padding: 8px 12px; }
+        .rivals-table thead th { white-space: nowrap; }
+        .rivals-table thead .rival-own { color: var(--own); }
+        .rivals-table thead .rival-col { color: var(--rival); }
+        .rivals-table tbody th { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; color: var(--text); white-space: normal; min-width: 150px; }
+        .rivals-table .rival-own { background: color-mix(in srgb, var(--own) 7%, transparent); }
+        @media (max-width: 720px) {
+            .rivals-table tbody th { min-width: 120px; }
+            .rivals-table tr > :first-child { position: sticky; left: 0; z-index: 1; background: color-mix(in srgb, var(--card) 92%, var(--bg)); }
+        }
+        .rivals-table td.won b::after, .rivals-table td.won span::after { content: " ✓"; color: var(--green); }
+        .rivals-table .rival-actions td, .rivals-table .rival-actions th { border-bottom: 0; padding-top: 12px; }
+        .rivals-table .btn { padding: 6px 12px; font-size: 13px; }
+        .rivals-locked .rival-frost { filter: blur(4px); opacity: .72; user-select: none; color: var(--muted); }
         #compare-error:empty { display: none; }
         #compare-error { color: var(--red); }
         #compare-result { --own: var(--cyan); }
@@ -1247,7 +1269,7 @@
             </div>
             <div class="gate-foot">
                 <div class="gate-progress" aria-hidden="true"><span></span></div>
-                <p class="records-note" lang="it" translate="no"><b>Avvertenze.</b> Leggile prima di spuntare una casella. <a id="legal-origin" href="qa-review-legal.html">Avvertenze locali e nazionali, per la Colombia, dove opera questo servizio</a>. <a id="legal-site" href="qa-review-legal.html">Avvertenze internazionali, per il paese del sito che invii</a>.</p>
+                <p class="records-note" lang="it" translate="no"><b>Avvertenze.</b> Leggile prima di spuntare una casella. <a id="legal-origin" href="qa-review-legal.html">Avvertenze locali e nazionali, per la Colombia, dove opera questo servizio</a>. <a id="legal-site" href="qa-review-legal.html">Avvertenze internazionali, per il paese del sito che invii</a>. <a href="accessibility.html">Accessibilità</a>.</p>
                 <button class="btn btn-primary" id="accept" type="submit" disabled lang="it" translate="no">Accetta e continua</button>
             </div>
         </form>
