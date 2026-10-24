@@ -1857,6 +1857,53 @@ test.describe("chat widgets", () => {
   });
 });
 
+test.describe("the cookie banner in the browser pass", () => {
+  const browser = require("../../functions/url-review-browser");
+  const matchIn = (nodes, query) => {
+    const tokens = query.split(",").map((token) => token.trim());
+    return nodes.filter((node) => tokens.some((token) => token === "*" || node.sel.includes(token)));
+  };
+  const node = (sel, { shown = true, tag = "DIV", text = "", kids = [] } = {}) => ({
+    sel, tagName: tag, innerText: text, attrs: {}, kids,
+    style: { display: shown ? "block" : "none", visibility: "visible", opacity: "1", position: "fixed" },
+    getBoundingClientRect: () => (shown ? { width: 1280, height: 179 } : { width: 0, height: 0 }),
+    getAttribute(key) { return key in this.attrs ? this.attrs[key] : null; },
+    setAttribute(key, value) { this.attrs[key] = value; },
+    querySelectorAll(query) { return matchIn(kids, query); }
+  });
+  const findIn = async (nodes) => {
+    const saved = [globalThis.document, globalThis.getComputedStyle];
+    globalThis.document = { querySelectorAll: (query) => matchIn(nodes, query), querySelector: (query) => matchIn(nodes, query)[0] || null };
+    globalThis.getComputedStyle = (one) => one.style;
+    try { return await browser.findBanner({ evaluate: async (fn, ...args) => fn(...args) }); } finally { [globalThis.document, globalThis.getComputedStyle] = saved; }
+  };
+
+  test("a hidden twin ahead of gavi.org's EU Cookie Compliance banner does not hide its name or its reject button", async () => {
+    const reject = node(["button", "#sliding-popup .eu-cookie-compliance-accept-only-neccesary-button"], { tag: "BUTTON", text: "ACCEPT ONLY NECESSARY" });
+    const accept = node(["button", ".agree-button"], { tag: "BUTTON", text: "ACCEPT ALL" });
+    const inner = node([".eu-cookie-compliance-banner", "[class*=cookie i]"], { text: "We use cookies on this site.", kids: [reject, accept] });
+    const twin = node(["#custom_popup_outer", ".eu-cookie-compliance-banner", "[class*=cookie i]"], { shown: false });
+    const popup = node(["#sliding-popup"], { text: inner.innerText, kids: [inner, reject, accept] });
+    assert.deepEqual(await findIn([twin, popup, inner, reject, accept]), { name: "EU Cookie Compliance", rejectLabel: "ACCEPT ONLY NECESSARY", clicked: false });
+    assert.equal(reject.attrs["data-qa-reject"], "1");
+    assert.equal(accept.attrs["data-qa-reject"], undefined);
+  });
+
+  test("a banner no known tool matches keeps the generic name and its reject button", async () => {
+    const reject = node(["button"], { tag: "BUTTON", text: "Reject all" });
+    const box = node(["[class*=cookie i]"], { text: "This site uses cookies.", kids: [reject] });
+    assert.deepEqual(await findIn([box, reject]), { name: "A cookie banner", rejectLabel: "Reject all", clicked: false });
+    assert.deepEqual(await findIn([]), { name: "", rejectLabel: "", clicked: false });
+  });
+
+  test("the log names a known banner once and an unnamed one without doubling 'cookie banner'", () => {
+    assert.equal(browser.bannerLine({ name: "A cookie banner", rejectLabel: "ACCEPT ONLY NECESSARY" }, 4), "Found a cookie banner with a \"ACCEPT ONLY NECESSARY\" button. 4 cookies were set before any choice.");
+    assert.equal(browser.bannerLine({ name: "EU Cookie Compliance", rejectLabel: "" }, 0), "Found the EU Cookie Compliance cookie banner with no reject button. 0 cookies were set before any choice.");
+    assert.equal(browser.bannerLine({ name: "", rejectLabel: "" }, 2), "No cookie banner was found. 2 cookies were set on the first visit.");
+    assert.equal(browser.bannerLine(null, 1), "No cookie banner was found. 1 cookie was set on the first visit.");
+  });
+});
+
 test.describe("fingerprinting, session recording and typed text", () => {
   const browser = require("../../functions/url-review-browser");
   const PRINTER = {

@@ -748,15 +748,12 @@ async function findBanner(page) {
     let root = null;
     let reject = null;
     for (const [cmp, box, button] of cmps) {
-      const node = document.querySelector(box);
+      // A hidden twin can come before the shown banner in the document, so the first match is not enough.
+      const node = Array.from(document.querySelectorAll(box)).find((one) => one.tagName === "IFRAME" || one.shadowRoot || visible(one));
       if (!node) continue;
-      if (node.tagName !== "IFRAME" && !visible(node) && !node.shadowRoot) continue;
       name = cmp;
       root = node;
-      if (button) {
-        const hit = document.querySelector(button);
-        if (hit && visible(hit)) reject = hit;
-      }
+      if (button) reject = Array.from(document.querySelectorAll(button)).find(visible) || null;
       break;
     }
     if (!root) {
@@ -777,6 +774,13 @@ async function findBanner(page) {
     if (reject) reject.setAttribute("data-qa-reject", "1");
     return { name, rejectLabel, clicked: false };
   }, CMPS, REJECT_TEXT);
+}
+
+function bannerLine(banner, cookieCount) {
+  const set = plural(cookieCount, "cookie was", "cookies were") + " set";
+  if (!banner || !banner.name) return "No cookie banner was found. " + set + " on the first visit.";
+  return (banner.name === "A cookie banner" ? "Found a cookie banner" : "Found the " + banner.name + " cookie banner") +
+    (banner.rejectLabel ? " with a \"" + banner.rejectLabel + "\" button" : " with no reject button") + ". " + set + " before any choice.";
 }
 
 async function cookiesOf(context, page, host) {
@@ -1471,9 +1475,7 @@ async function browse(job, log, onStart) {
     say("Core Web Vitals in the lab: LCP " + result.start.vitals.lcp + " ms, CLS " + result.start.vitals.cls + ", TBT " + result.start.vitals.tbt + " ms. Took the desktop screenshot.");
     const banner = await findBanner(page);
     const beforeCookies = await cookiesOf(coldContext, page, host);
-    say(banner.name
-      ? "Found the " + banner.name + " cookie banner" + (banner.rejectLabel ? " with a \"" + banner.rejectLabel + "\" button" : " with no reject button") + ". " + beforeCookies.length + " cookies were set before any choice."
-      : "No cookie banner was found. " + beforeCookies.length + " cookies were set on the first visit.");
+    say(bannerLine(banner, beforeCookies.length));
     const consent = {
       banner: banner.name,
       rejectLabel: banner.rejectLabel,
@@ -1661,4 +1663,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, open, talk, printPdf, stopForRefusal, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, open, talk, printPdf, stopForRefusal, findBanner, bannerLine, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
