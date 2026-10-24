@@ -2053,17 +2053,25 @@
     if (!gate.hidden) {
       steps.push({ selector: "#terms-form", title: "The disclaimers", body: "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text.", demoMs: 1800 });
     }
+    const counts = document.getElementById("reviews-fact");
+    if (counts && !counts.hidden) {
+      steps.push({ selector: "ul.facts", title: "You are not the first", body: "These two numbers count up live: pages read and reviews run by everyone so far. Only a review that really read a page adds to them.", demoMs: 1500 });
+    }
     steps.push(
       { selector: "#sign-in", title: "Sign in", body: "Sign in with email or an account you already have. The review runs only on the device where you sign in.", demoMs: 1500 },
       { selector: "#name", title: "Who is asking", body: "Your name is stored with the review. Your email comes from the sign-in. Changing the name does not open a second completed review.", demoMs: 1500 },
       { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
-      { selector: "#url-field", title: "The page", body: "Type the host and path. https:// is already in front of the box, so the review always asks for a public secure page.", demoMs: 1500 },
+      { selector: "#url-field", title: "The page", body: "Start typing and the box helps. It suggests well-known sites, says \"Did you mean…?\" when a host does not exist, and after a / it offers real pages from the site's sitemap. https:// is already in front, so the review always asks for a public secure page.", demoMs: 1800 },
       { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
-      { selector: "#req-scope", title: "Pages to review", body: "Choose how many pages to open, how many links deep, and the language to request. Stay in this section keeps later pages under the path in the address. The included first review is 20 pages and 2 links deep. A wider or deeper review shows its price before it starts.", demoMs: 1600 },
+      { selector: "#req-scope", title: "Pages to review", body: "Only care about the docs? Type example.com/docs and Stay in this section keeps later pages under that path. Pick how many pages, how many links deep, and the language to ask the site for. The included first review is 20 pages and 2 links deep. A bigger one shows its price before it starts.", demoMs: 1800 },
       { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it analyzes public pages on that host and writes a line for each step.", demoMs: 1500 },
-      { selector: "#run-log", title: "The log", body: "Watch the analysis here: the first page, robots.txt, and each linked page. The same lines are kept with the run.", demoMs: 1600 },
-      { selector: "#stop-btn", title: "Stop", body: "Stop ends the analysis. Pages already saved stay in the report, and the record says the review was stopped.", demoMs: 1500 },
-      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions.", demoMs: 1800 },
+      { selector: "#run-log", title: "The log", body: "Grab a coffee and watch. A meter walks through connecting, the pages, the browser pass, the cases, the speed checks, and the score, and each line shows up the moment it happens. A slow site gets a \"Still working\" note instead of silence.", demoMs: 1800 },
+      { selector: "#stop-btn", title: "Stop", body: "Changed your mind? Stop ends the analysis, the pages already saved stay in the report, and the record says it was stopped. Only your sign-in on this device can stop your run.", demoMs: 1600 },
+      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions. Its cases come first by risk, and each one names the real page it saw.", demoMs: 1800 },
+      { selector: "#report-once", title: "Ask the report", body: "In a paid report, ask \"Why is F-01 rated this way?\" and the answer comes only from this review, with the fix, a Playwright case, or a GitHub or Jira issue ready to paste. It never guesses past what the review saw.", demoMs: 1800 },
+      { selector: "#report-once", title: "Next to a competitor", body: "Curious how the shop next door does? Compare in the report runs the same public checks on their site and puts the six scores side by side, with what only one of you has. It is priced as a second review.", demoMs: 1800 },
+      { selector: "#report-once", title: "A word with your chatbot", body: "On a site you have shown is yours, the review chats with its chat widget: pricing, asking for a human, a refund, and two tricks a bot should refuse. At most six messages in one minute, with a made-up email and phone.", demoMs: 1800 },
+      { selector: ".topbar a[href='qa-review-account.html']", title: "Your reviews", body: "Every run you start waits here. Search them, open several at once, download them, delete them, or verify a site you own with a DNS record or a homepage tag.", demoMs: 1600 },
       { selector: "#langWrap", title: "Language", body: "A language chosen here is the language on the CV, the studio, the lab, and this review. The same choice sticks when you move between them.", demoMs: 1500 },
       { selector: "#tour-start-btn", title: "Open this tour again", body: "This walkthrough stays closed after the first visit. How this review works brings it back whenever you want it.", demoMs: 1500 }
     );
