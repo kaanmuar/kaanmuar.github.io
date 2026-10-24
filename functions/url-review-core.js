@@ -2855,7 +2855,9 @@ function intakeRecord(value, report, meta) {
     requestedUrl: value.url,
     deviceId: clean(meta.deviceId || value.deviceId, 80),
     status: report.status || "complete",
-    paid: false,
+    // The run credit this run consumed paid for it, so it opens this report and no other.
+    paid: !!clean(meta.creditId, 40),
+    creditId: clean(meta.creditId, 40),
     priceUsd: priceForRun({ frameworks: value.frameworks || [], pages: value.pages || INCLUDED_PAGES, depth: value.depth || INCLUDED_DEPTH, billing: "run" }).usd,
     ip: clean(meta.ip, 80),
     userAgent: clean(meta.userAgent, 300),

@@ -3444,6 +3444,7 @@ async function runReview(req, res, placeOf) {
     const record = urlReview.intakeRecord(intake.value, report, Object.assign({
       ip,
       deviceId,
+      creditId: decision.consumeId || "",
       userAgent: req.get("user-agent"),
       acceptLanguage: req.get("accept-language")
     }, await placeOf(runId)));
