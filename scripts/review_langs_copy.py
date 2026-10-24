@@ -37,7 +37,7 @@ LIVE = {
     "it": "I Live Reports hanno bisogno di JavaScript per aprirsi. Al {date}, la serie comprende {count} siti pubblici in {sectors} settori, analizzati dal {since} con la stessa revisione che chiunque può avviare; le nuove revisioni si aggiungono in un lotto quotidiano. Il punteggio complessivo medio è {overall} su 100: SEO {SEO}, GEO {GEO}, analytics {Analytics}, sicurezza {Security}, accessibilità {Accessibility} e prestazioni {Performance}. I punteggi complessivi più alti sono {top}. ",
 }
 
-GATE_LINKS = ('<a id="legal-origin" href="qa-review-legal.html">{origin}</a>. <a id="legal-site" href="qa-review-legal.html">{site}</a>.')
+GATE_LINKS = ('<a id="legal-origin" href="qa-review-legal.html">{origin}</a>. <a id="legal-site" href="qa-review-legal.html">{site}</a>. <a href="accessibility.html">{a11y}</a>.')
 SAMPLE = ('<button class="btn btn-ghost" id="sample-open" type="button">{button}</button> {text} <a id="guide-open" href="qa-review-guide.html">{tour}</a>.')
 
 COPY = {
@@ -45,7 +45,7 @@ COPY = {
         "gate": {
             "lede": "Todos los controles de esta página siguen desactivados hasta que aceptes. Para ejecutar una revisión, inicias sesión en este dispositivo con tu correo o con una cuenta que ya tienes (Google, Microsoft, GitHub, Yahoo o X). La revisión obtiene páginas públicas, abre hasta tres de ellas en un navegador sin interfaz desde una dirección de la UE en Bélgica y propone casos de prueba. En ese navegador pulsa una vez el botón de rechazo del banner de cookies y nada más. Google PageSpeed Insights califica la página de inicio y Google Web Risk la compara con las listas de Navegación segura, así que Google recibe esa dirección, y se consulta al registro del dominio por RDAP. No ejecuta los casos, no inicia sesión en tu sitio, no envía formularios ni genera carga. El selector de idioma está en esta pantalla.",
             "sample": {"button": "Ver un informe de ejemplo", "text": "Es la revisión de este mismo sitio, difuminada como un informe sin pagar. Abrirlo no envía nada. ¿Eres nuevo?", "tour": "Haz el recorrido de cinco minutos"},
-            "legal": {"lead": "<b>Avisos legales.</b> Léelos antes de marcar una casilla.", "origin": "Avisos locales y nacionales, para Colombia, donde opera este servicio", "site": "Avisos internacionales, para el país del sitio que envías"},
+            "legal": {"lead": "<b>Avisos legales.</b> Léelos antes de marcar una casilla.", "origin": "Avisos locales y nacionales, para Colombia, donde opera este servicio", "site": "Avisos internacionales, para el país del sitio que envías", "a11y": "Accesibilidad"},
             "all": "Seleccionar todo",
             "t1": "Tengo al menos 18 años. Si no acepto estos avisos, no puedo ingresar una URL.",
             "t2": "Este servicio obtendrá páginas públicas, describirá lo que encuentre y propondrá casos de prueba. No ejecutará esos casos.",
@@ -117,7 +117,7 @@ COPY = {
         "gate": {
             "lede": "Todos os controles desta página ficam desativados até você aceitar. Para fazer uma revisão, você entra neste dispositivo com seu e-mail ou com uma conta que já tem (Google, Microsoft, GitHub, Yahoo ou X). A revisão busca páginas públicas, abre até três delas em um navegador headless a partir de um endereço da UE na Bélgica e propõe casos de teste. Nesse navegador, ela clica uma vez no botão de recusar do banner de cookies e em nada mais. O Google PageSpeed Insights pontua a página inicial e o Google Web Risk a confere nas listas do Navegação segura, então o Google recebe esse endereço, e o registro do domínio é consultado via RDAP. Ela não executa os casos, não faz login no seu site, não envia formulários nem gera carga. O seletor de idioma está nesta tela.",
             "sample": {"button": "Ver um relatório de exemplo", "text": "É a revisão deste próprio site, desfocada como um relatório não pago. Abrir não envia nada. Primeira vez aqui?", "tour": "Faça o tour de cinco minutos"},
-            "legal": {"lead": "<b>Avisos legais.</b> Leia antes de marcar uma caixa.", "origin": "Avisos locais e nacionais, para a Colômbia, onde este serviço é operado", "site": "Avisos internacionais, para o país do site que você enviar"},
+            "legal": {"lead": "<b>Avisos legais.</b> Leia antes de marcar uma caixa.", "origin": "Avisos locais e nacionais, para a Colômbia, onde este serviço é operado", "site": "Avisos internacionais, para o país do site que você enviar", "a11y": "Acessibilidade"},
             "all": "Selecionar tudo",
             "t1": "Tenho pelo menos 18 anos. Se eu não aceitar estes avisos, não posso inserir uma URL.",
             "t2": "Este serviço vai buscar páginas públicas, descrever o que encontrar e propor casos de teste. Ele não vai executar esses casos.",
@@ -189,7 +189,7 @@ COPY = {
         "gate": {
             "lede": "Alle Bedienelemente dieser Seite bleiben aus, bis Sie zustimmen. Für eine Prüfung melden Sie sich auf diesem Gerät mit Ihrer E-Mail-Adresse oder einem bestehenden Konto an (Google, Microsoft, GitHub, Yahoo oder X). Die Prüfung ruft öffentliche Seiten ab, öffnet bis zu drei davon in einem Headless-Browser von einer EU-Adresse in Belgien und schlägt Testfälle vor. In diesem Browser klickt sie einmal auf die Ablehnen-Schaltfläche eines Cookie-Banners und sonst nichts. Google PageSpeed Insights bewertet die Startseite, und Google Web Risk gleicht sie mit den Safe-Browsing-Listen ab, daher erhält Google diese Adresse; außerdem wird die Registrierungsstelle der Domain per RDAP abgefragt. Sie führt die Fälle nicht aus, meldet sich nicht auf Ihrer Website an, sendet keine Formulare und erzeugt keine Last. Die Sprachauswahl ist auf diesem Bildschirm.",
             "sample": {"button": "Beispielbericht ansehen", "text": "Es ist die Prüfung dieser Website selbst, unscharf wie ein unbezahlter Bericht. Zum Öffnen wird nichts gesendet. Neu hier?", "tour": "Machen Sie die Fünf-Minuten-Tour"},
-            "legal": {"lead": "<b>Hinweise.</b> Lesen Sie sie, bevor Sie ein Kästchen ankreuzen.", "origin": "Lokale und nationale Hinweise für Kolumbien, wo dieser Dienst betrieben wird", "site": "Internationale Hinweise für das Land der eingereichten Website"},
+            "legal": {"lead": "<b>Hinweise.</b> Lesen Sie sie, bevor Sie ein Kästchen ankreuzen.", "origin": "Lokale und nationale Hinweise für Kolumbien, wo dieser Dienst betrieben wird", "site": "Internationale Hinweise für das Land der eingereichten Website", "a11y": "Barrierefreiheit"},
             "all": "Alle auswählen",
             "t1": "Ich bin mindestens 18 Jahre alt. Wenn ich diese Hinweise nicht akzeptiere, kann ich keine URL eingeben.",
             "t2": "Dieser Dienst ruft öffentliche Seiten ab, beschreibt, was er findet, und schlägt Testfälle vor. Er führt diese Fälle nicht aus.",
@@ -261,7 +261,7 @@ COPY = {
         "gate": {
             "lede": "Toutes les commandes de cette page restent désactivées tant que vous n’avez pas accepté. Pour lancer une analyse, vous vous connectez sur cet appareil avec votre e-mail ou un compte que vous avez déjà (Google, Microsoft, GitHub, Yahoo ou X). L’analyse récupère des pages publiques, en ouvre jusqu’à trois dans un navigateur headless depuis une adresse de l’UE en Belgique et propose des cas de test. Dans ce navigateur, elle clique une fois sur le bouton de refus d’un bandeau de cookies, et rien d’autre. Google PageSpeed Insights note la page d’accueil et Google Web Risk la compare aux listes Safe Browsing : Google reçoit donc cette adresse, et le registre du domaine est interrogé via RDAP. Elle n’exécute pas les cas, ne se connecte pas à votre site, n’envoie pas de formulaires et ne génère pas de charge. Le choix de la langue se trouve sur cet écran.",
             "sample": {"button": "Voir un exemple de rapport", "text": "C’est l’analyse de ce site lui-même, floutée comme un rapport non payé. L’ouvrir n’envoie rien. Première visite ?", "tour": "Suivez la visite de cinq minutes"},
-            "legal": {"lead": "<b>Avertissements.</b> Lisez-les avant de cocher une case.", "origin": "Avertissements locaux et nationaux, pour la Colombie, où ce service est exploité", "site": "Avertissements internationaux, pour le pays du site que vous soumettez"},
+            "legal": {"lead": "<b>Avertissements.</b> Lisez-les avant de cocher une case.", "origin": "Avertissements locaux et nationaux, pour la Colombie, où ce service est exploité", "site": "Avertissements internationaux, pour le pays du site que vous soumettez", "a11y": "Accessibilité"},
             "all": "Tout sélectionner",
             "t1": "J’ai au moins 18 ans. Si je n’accepte pas ces avertissements, je ne peux pas saisir d’URL.",
             "t2": "Ce service récupérera des pages publiques, décrira ce qu’il trouve et proposera des cas de test. Il n’exécutera pas ces cas.",
@@ -333,7 +333,7 @@ COPY = {
         "gate": {
             "lede": "Tutti i controlli di questa pagina restano disattivati finché non accetti. Per avviare una revisione, accedi su questo dispositivo con la tua email o con un account che hai già (Google, Microsoft, GitHub, Yahoo o X). La revisione recupera pagine pubbliche, ne apre fino a tre in un browser headless da un indirizzo UE in Belgio e propone casi di test. In quel browser preme una volta il pulsante di rifiuto del banner dei cookie e nient’altro. Google PageSpeed Insights valuta la pagina iniziale e Google Web Risk la confronta con gli elenchi di Navigazione sicura, quindi Google riceve quell’indirizzo, e il registro del dominio viene interrogato tramite RDAP. Non esegue i casi, non accede al tuo sito, non invia moduli e non genera carico. La scelta della lingua è in questa schermata.",
             "sample": {"button": "Vedi un report di esempio", "text": "È la revisione di questo stesso sito, sfocata come un report non pagato. Aprirlo non invia nulla. Prima volta qui?", "tour": "Fai il tour di cinque minuti"},
-            "legal": {"lead": "<b>Avvertenze.</b> Leggile prima di spuntare una casella.", "origin": "Avvertenze locali e nazionali, per la Colombia, dove opera questo servizio", "site": "Avvertenze internazionali, per il paese del sito che invii"},
+            "legal": {"lead": "<b>Avvertenze.</b> Leggile prima di spuntare una casella.", "origin": "Avvertenze locali e nazionali, per la Colombia, dove opera questo servizio", "site": "Avvertenze internazionali, per il paese del sito che invii", "a11y": "Accessibilità"},
             "all": "Seleziona tutto",
             "t1": "Ho almeno 18 anni. Se non accetto queste avvertenze, non posso inserire un URL.",
             "t2": "Questo servizio recupererà pagine pubbliche, descriverà ciò che trova e proporrà casi di test. Non eseguirà quei casi.",

@@ -38,6 +38,7 @@
             footer_capabilities: 'Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, eight competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.',
             footer_pdf: 'Download PDF',
             footer_privacy: 'Privacy and disclaimers',
+            footer_accessibility: 'Accessibility',
             roles: [
                 'Senior QA & Program Consultant',
                 'Senior Technical Project Manager & Consultant',
@@ -71,6 +72,7 @@
             footer_capabilities: 'Se lee en inglés, español, portugués, alemán, francés e italiano. Incluye un recorrido guiado, temas claro y oscuro, ocho filtros de competencias, un toolkit, una línea de tiempo, impresión y descargas en PDF, JPG, Word, JSON y texto plano.',
             footer_pdf: 'Descargar PDF',
             footer_privacy: 'Privacidad y avisos legales',
+            footer_accessibility: 'Accesibilidad',
             roles: [
                 'Consultor Senior de QA y Programas',
                 'Gerente Senior de Proyectos Técnicos y Consultor',
@@ -104,6 +106,7 @@
             footer_capabilities: 'Leitura em inglês, espanhol, português, alemão, francês e italiano. Inclui um tour guiado, temas claro e escuro, oito filtros de competências, um toolkit, uma linha do tempo, impressão e downloads em PDF, JPG, Word, JSON e texto simples.',
             footer_pdf: 'Baixar PDF',
             footer_privacy: 'Privacidade e avisos legais',
+            footer_accessibility: 'Acessibilidade',
             roles: [
                 'Consultor Sênior de QA e Programas',
                 'Gerente Sênior de Projetos Técnicos e Consultor',
@@ -137,6 +140,7 @@
             footer_capabilities: 'Lesbar auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Enthält eine Führung, helles und dunkles Design, acht Kompetenzfilter, ein Toolkit, eine Zeitachse, Druck und Downloads als PDF, JPG, Word, JSON und Klartext.',
             footer_pdf: 'PDF herunterladen',
             footer_privacy: 'Datenschutz und Hinweise',
+            footer_accessibility: 'Barrierefreiheit',
             roles: [
                 'Senior QA- und Programmberater',
                 'Senior Technical Project Manager und Berater',
@@ -170,6 +174,7 @@
             footer_capabilities: 'Lisible en anglais, espagnol, portugais, allemand, français et italien. Comprend une visite guidée, les thèmes clair et sombre, huit filtres de compétences, une boîte à outils, une chronologie, l\'impression et des téléchargements PDF, JPG, Word, JSON et texte brut.',
             footer_pdf: 'Télécharger le PDF',
             footer_privacy: 'Confidentialité et mentions',
+            footer_accessibility: 'Accessibilité',
             roles: [
                 'Consultant senior QA et programmes',
                 'Chef de projet technique senior et consultant',
@@ -203,6 +208,7 @@
             footer_capabilities: 'Leggibile in inglese, spagnolo, portoghese, tedesco, francese e italiano. Include un tour guidato, temi chiaro e scuro, otto filtri delle competenze, un toolkit, una linea del tempo, stampa e download in PDF, JPG, Word, JSON e testo semplice.',
             footer_pdf: 'Scarica il PDF',
             footer_privacy: 'Privacy e avvertenze',
+            footer_accessibility: 'Accessibilità',
             roles: [
                 'Consulente senior QA e programmi',
                 'Senior Technical Project Manager e consulente',
