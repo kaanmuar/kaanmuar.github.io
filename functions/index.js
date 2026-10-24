@@ -806,7 +806,11 @@ async function loadEvents(start, end) {
     if (cursor) query = query.startAfter(cursor);
     const snap = await query.get();
     if (snap.empty) break;
-    snap.forEach((doc) => rows.push(doc.data() || {}));
+    // Social hub page views are counted by refreshSocialHubStats, not in the site reports.
+    snap.forEach((doc) => {
+      const row = doc.data() || {};
+      if (row.kind !== "view") rows.push(row);
+    });
     cursor = snap.docs[snap.docs.length - 1];
     if (snap.size < 400 || rows.length >= 20000) break;
   }
@@ -1413,6 +1417,9 @@ async function dispatchFacebookQueue() {
 }
 
 exports.dispatchFacebookQueue = scheduled(withMail, "dispatchFacebookQueue", () => dispatchFacebookQueue());
+
+exports.refreshSocialHubStats = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB" }), "refreshSocialHubStats", () =>
+  require("./social-hub-stats").refresh(admin.firestore()));
 
 exports.exportFirestoreWeekly = scheduled(withMail, "exportFirestoreWeekly", async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
