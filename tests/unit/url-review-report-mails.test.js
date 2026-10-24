@@ -213,5 +213,5 @@ test("an unpaid PDF frosts the problem titles of the comparison, and an open one
   const title = cmp.rivalOnly[0].title;
   assert.ok(customerMail.reportPdf(Object.assign({}, compared, { paid: true })).html.includes(customerMail.esc(title)));
   assert.ok(!customerMail.reportPdf(compared).html.includes(customerMail.esc(title)));
-  assert.match(customerMail.reportPdf(compared).html, new RegExp("Only " + rival.host.replace(/\./g, "\\.") + " has: " + cmp.rivalOnlyCount + "</h3>"));
+  assert.ok(customerMail.reportPdf(compared).html.includes("Only " + rival.host + " has: " + cmp.rivalOnlyCount + "</h3>"));
 });
