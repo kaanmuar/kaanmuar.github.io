@@ -18,8 +18,13 @@
     return "qa-review-social" + suffix(lang) + ".html";
   }
 
+  // Every post has its own page, in the language it is written in.
+  function postPath(post) {
+    return "social/" + post.id + ".html";
+  }
+
   function permalink(post, lang, absolute) {
-    return (absolute ? SITE : "") + pageFor(lang) + "?p=" + encodeURIComponent(post.id);
+    return (absolute ? SITE : "") + postPath(post);
   }
 
   function anchor(post) {
@@ -100,5 +105,5 @@
       + "</div></div></article>";
   }
 
-  return { SITE, ICON, esc, pageFor, permalink, anchor, day, textHtml, parasHtml, topic, arrange, cardHtml };
+  return { SITE, ICON, esc, pageFor, postPath, permalink, anchor, day, textHtml, parasHtml, topic, arrange, cardHtml };
 });
