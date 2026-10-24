@@ -23,6 +23,9 @@
 .ask-chips button, .ask-actions button, .ask-code-head button { border: 1px solid var(--ask-edge); background: var(--ask-card); color: var(--text); border-radius: 999px; padding: 6px 12px; font: 600 12.5px/1.3 Inter, system-ui, sans-serif; text-align: left; cursor: pointer; transition: border-color .2s, color .2s; }
 .ask-chips button:hover, .ask-actions button:hover, .ask-code-head button:hover { border-color: var(--cyan); color: var(--cyan); }
 .ask-chips button:focus-visible, .ask-actions button:focus-visible, .ask-code-head button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.ask-about { margin-top: 10px; border: 1px solid var(--look-edge, var(--line)); background: transparent; color: var(--cyan); border-radius: 999px; padding: 5px 12px; font: 600 12.5px/1.3 Inter, system-ui, sans-serif; cursor: pointer; transition: border-color .2s; }
+.ask-about:hover { border-color: var(--cyan); }
+.ask-about:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
 .ask-form { display: flex; gap: 8px; }
 .ask-form input, .ask-repo input { flex: 1; min-width: 0; box-sizing: border-box; border: 1px solid var(--ask-edge); border-radius: 10px; padding: 10px 12px; background: color-mix(in srgb, var(--panel) 70%, transparent); color: var(--text); font: inherit; font-size: 14px; }
 .ask-form input:focus, .ask-repo input:focus { outline: 2px solid var(--cyan); outline-offset: 1px; }

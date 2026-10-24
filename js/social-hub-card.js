@@ -47,6 +47,13 @@
     }).replace(/\n/g, "<br>");
   }
 
+  // Posted ones first, newest first; then the ones still queued on the networks, soonest first.
+  function arrange(posts, today) {
+    const due = posts.filter((post) => post.date <= today).sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
+    const later = posts.filter((post) => post.date > today).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    return due.map((post) => Object.assign({}, post, { upcoming: false })).concat(later.map((post) => Object.assign({}, post, { upcoming: true })));
+  }
+
   function cardHtml(post, copy, lang) {
     const kind = copy.kind[post.kind] || post.kind;
     const play = post.youtube
@@ -62,6 +69,7 @@
       + (post.cat ? "<span class=\"post-tag\">" + esc(post.cat) + "</span>" : "")
       + "<span class=\"post-tag post-lang\" translate=\"no\">" + esc(post.lang.toUpperCase()) + "</span>"
       + (post.youtube && post.clipLang && post.clipLang !== post.lang ? "<span class=\"post-tag post-lang\" translate=\"no\" title=\"" + esc(copy.watch) + "\">▶ " + esc(post.clipLang.toUpperCase()) + "</span>" : "")
+      + (post.upcoming ? "<span class=\"post-tag post-scheduled\">" + esc(copy.scheduled) + "</span>" : "")
       + "<time datetime=\"" + esc(post.date) + "\">" + esc(day(post.date, lang)) + "</time></p>"
       + "<h2 class=\"post-title\" lang=\"" + esc(post.lang) + "\"><a href=\"" + esc(permalink(post, lang)) + "\" data-act=\"open\">" + esc(post.title) + "</a></h2>"
       + "<p class=\"post-text\" lang=\"" + esc(post.lang) + "\">" + textHtml(post.text) + "</p>"
@@ -73,5 +81,5 @@
       + "</div></div></article>";
   }
 
-  return { SITE, esc, pageFor, permalink, anchor, day, textHtml, cardHtml };
+  return { SITE, esc, pageFor, permalink, anchor, day, textHtml, arrange, cardHtml };
 });

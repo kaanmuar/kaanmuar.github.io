@@ -178,7 +178,6 @@ def locale_block(code):
     lines += [f'    <meta property="og:locale:alternate" content="{loc}">' for _, loc in order[1:]]
     return "\n".join(lines)
 
-
 ASK_KEYS = ("open", "title", "close", "note", "inputLabel", "placeholder", "send", "repo")
 
 

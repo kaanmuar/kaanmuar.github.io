@@ -10,8 +10,8 @@
    calendar.csv, assets/live-reports/index.json for report links, and assets/social/youtube.json, the uploads
    ledger. The channel feed lists only the latest 15 uploads, so the ledger keeps every one it has seen.
    Writes assets/social/feed.json (cards), assets/social/captions.json (per-network captions, loaded on copy),
-   assets/social/thumbs/*.webp and the six pages. Posts dated after the as-of day stay out of the prerendered
-   cards; js/social-hub.js shows them on their day. */
+   assets/social/thumbs/*.webp and the six pages. Posts still queued on the networks follow the posted ones,
+   marked Scheduled, and stay out of the JSON-LD until their day. */
 
 const fs = require("fs");
 const path = require("path");
@@ -286,8 +286,9 @@ function page(lang, posts, asOf) {
   const copy = COPY[lang];
   const sfx = lang === "en" ? "" : "-" + lang;
   const url = SITE + card.pageFor(lang);
-  const visible = posts.filter((post) => post.date <= asOf);
+  const visible = card.arrange(posts, asOf);
   const shown = visible.slice(0, PRERENDER);
+  const published = shown.filter((post) => !post.upcoming);
   const share = SITE + "assets/qa-review-share.png?v=20261012";
   const esc = card.esc;
   const alternates = ["x-default"].concat(Object.keys(LANGS)).map((code) => {
@@ -335,7 +336,7 @@ ${ogAlt}
     <meta name="twitter:description" content="${esc(copy.lead)}">
     <meta name="twitter:image" content="${share}">
     <script type="application/ld+json">
-${json(jsonLd(lang, shown, visible.length, copy))}
+${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, copy))}
     </script>
     <script src="js/site-analytics.js?v=20261024a"></script>
     <script src="js/qa-review-consent.js?v=20261028p"></script>

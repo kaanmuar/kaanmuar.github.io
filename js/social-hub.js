@@ -219,8 +219,7 @@
     bind();
     try {
       const feed = await (await fetch("assets/social/feed.json")).json();
-      const now = today();
-      posts = feed.posts.filter((post) => post.date <= now);
+      posts = Card.arrange(feed.posts, today());
     } catch (error) {
       return;
     }
