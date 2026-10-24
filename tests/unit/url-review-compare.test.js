@@ -270,4 +270,32 @@ test("the account file names the base review of each comparison run", () => {
   assert.deepEqual(file.runs.find((item) => item.id === "cd34").compare, { id: "cd34", at: run.createdAt, baseId: "ab12", ownHost: own.host, rivalHost: rival.host, own: cmp.overall.own, rival: cmp.overall.rival, dominance: cmp.dominance });
 });
 
+test("saved reviews of one account are compared with the first one, and only when each opens in full", () => {
+  const row = (id, report, extra) => Object.assign({ id, email: "Ana@Example.com", status: "complete", createdAt: "2026-10-2" + id.length + "T10:00:00Z", report }, extra);
+  const records = [
+    row("aa01", own),
+    row("bb02", rival),
+    row("cc03", rival, { status: "stopped" }),
+    row("dd04", rival),
+    row("ee05", Object.assign({}, own, { host: "www." + own.host })),
+    row("ff06", rival, { email: "bob@example.com" })
+  ];
+  const shut = new Set(["dd04"]);
+  const made = compare.savedComparison(records, "ana@example.com", ["aa01", "bb02", "cc03", "dd04", "ee05", "ff06"], (item) => !shut.has(item.id));
+  assert.deepEqual(made.base, { id: "aa01", host: own.host, at: records[0].createdAt });
+  assert.equal(made.list.length, compare.SAVED_MAX - 1, "the base and four others at most");
+  assert.deepEqual(made.list[0].compare, compare.compareSites(Object.assign({}, own, { id: "aa01" }), rival));
+  assert.equal(made.list[1].stopped, true);
+  assert.equal(made.list[2].locked, true);
+  assert.equal(made.list[2].compare, undefined, "a shut report is never compared");
+  assert.equal(made.list[3].same, true);
+
+  assert.match(compare.savedComparison(records, "ana@example.com", ["aa01"], () => true).error, /at least two/);
+  assert.match(compare.savedComparison(records, "ana@example.com", ["ff06", "aa01"], () => true).error, /not saved under this account/);
+  assert.match(compare.savedComparison(records, "ana@example.com", ["cc03", "aa01"], () => true).error, /stopped early/);
+  const locked = compare.savedComparison(records, "ana@example.com", ["dd04", "aa01"], (item) => !shut.has(item.id));
+  assert.equal(locked.locked, "dd04");
+  assert.match(locked.error, /Unlock it/);
+});
+
 require("./url-review-rivals.test");

@@ -2626,6 +2626,15 @@ async function reviewAccount(req, res, pathName) {
     res.status(200).json(reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email, Date.now(), { freeAccount }));
     return;
   }
+  if (pathName.endsWith("/account/compare")) {
+    const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
+    const records = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+    const file = reviewOffers.accountFile(records, signedIn.email, Date.now(), { freeAccount: await hasFreeRuns(signedIn.email) });
+    const open = new Set(file.runs.filter((run) => run.open).map((run) => run.id));
+    const made = reviewCompare.savedComparison(records, signedIn.email, req.body && req.body.ids, (row) => open.has(row.id));
+    res.status(made.error ? 400 : 200).json(made);
+    return;
+  }
   if (pathName.endsWith("/account/stop")) {
     await db.collection("url_review_notes").add({
       status: "follow-stop",
@@ -3658,7 +3667,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     const comparisons = data.report && !data.report.compare ? await comparisonsFrom(id, data.email) : [];
-    res.status(200).json({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free });
+    const versus = req.method === "POST" ? await versusFrom(Object.assign({ id }, data), opening, proof) : null;
+    res.status(200).json(Object.assign({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free }, versus ? { versus } : {}));
     return;
   }
   if (req.method !== "POST") {
@@ -3667,6 +3677,24 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   }
   await runReview(req, res, async () => requestPlace(req));
 });
+
+// The account page opens a base review with ?vs= another saved review: the pair, from the stored reports.
+async function versusFrom(base, opening, proof) {
+  const vs = reviewCompare.cleanId(opening.vs);
+  if (!vs || vs === base.id) return null;
+  try {
+    const snap = await admin.firestore().collection("url_reviews").doc(vs).get();
+    if (!snap.exists) return null;
+    const other = Object.assign({ id: vs }, snap.data() || {});
+    const free = other.free === true || await hasFreeRuns(other.email);
+    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), proof, other, free);
+    const made = reviewCompare.savedComparison([base, other], base.email, [base.id, vs], (row) => row === base || access.ok);
+    return (made.list && made.list[0] && made.list[0].compare) || null;
+  } catch (error) {
+    console.error("Saved comparison failed for " + base.id + " vs " + vs + ":", error);
+    return null;
+  }
+}
 
 async function comparisonsFrom(id, email) {
   try {

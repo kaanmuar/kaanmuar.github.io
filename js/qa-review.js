@@ -2728,7 +2728,19 @@
 
   bootLanguageAndTour();
 
-  const shared = new URLSearchParams(location.search).get("report");
+  const sharedWith = new URLSearchParams(location.search);
+  const shared = sharedWith.get("report");
+  // From the account page: ?vs= paints the pair of saved reviews the server built, and ?compare= readies a new competitor.
+  function showSharedCompare(body) {
+    const card = document.getElementById("compare");
+    if (!card || !body.report) return;
+    const asked = sharedWith.get("compare");
+    if (body.versus) paintCompare(Object.assign({}, body.report, { compare: body.versus }), false);
+    else if (asked && !body.report.compare) document.getElementById("compare-url").value = asked.replace(/^\s*https?:\/\//i, "");
+    else return;
+    card.scrollIntoView({ block: "start" });
+    if (!body.versus) document.getElementById("compare-go").focus({ preventScroll: true });
+  }
   if (shared) {
     let lockedShared = false;
     const openShared = async () => {
@@ -2740,7 +2752,7 @@
           method: "POST",
           credentials: "include",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: shared, coupon }))
+          body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: shared, coupon, vs: sharedWith.get("vs") || "" }))
         });
         const body = await res.json();
         lockedShared = !!body.locked;
@@ -2760,6 +2772,7 @@
         }
         if (!res.ok) throw new Error(body.error || "That report was not found.");
         render(body);
+        showSharedCompare(body);
       } catch (error) {
         setStatus(error.message, true);
       }
