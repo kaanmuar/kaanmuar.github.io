@@ -16,7 +16,7 @@
       eyebrow: "Live reports", title: "Real sites. Real reviews.", titleEm: "Open any of them.",
       lede: "<b>{n} public sites</b>, analyzed by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Turn the ring, filter by sector or country, and open a report. Reviews people request are added in a daily batch. View and share only.",
       explore: "Explore {n} live reports", gateLine: "Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.",
-      back: "Back", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
+      back: "Back", hub: "Back to Social", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
       carousel: "Live reports carousel", all: "All", sector: "Sector", scope: "Scope", country: "Country", focus: "Test focus",
       worldwide: "Worldwide", national: "National", regional: "Regional", local: "Local", requested: "Requested", global: "Global",
       status: "{i} of {n}: {name}, {score} out of 100, grade {grade}.", slide: "{i} of {n}: {name}",
@@ -44,7 +44,7 @@
       eyebrow: "Informes en vivo", title: "Sitios reales. Análisis reales.", titleEm: "Abre el informe que quieras.",
       lede: "<b>{n} sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Solo para ver y compartir.",
       explore: "Explorar {n} informes en vivo", gateLine: "Análisis reales de sitios públicos, desde GOV.UK hasta la Alcaldía de Bogotá. Solo para ver y compartir.",
-      back: "Volver", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
+      back: "Volver", hub: "Volver a Social", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
       carousel: "Carrusel de informes en vivo", all: "Todos", sector: "Sector", scope: "Alcance", country: "País", focus: "Tipo de prueba",
       worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
@@ -72,7 +72,7 @@
       eyebrow: "Relatórios ao vivo", title: "Sites reais. Análises reais.", titleEm: "Abra o relatório que quiser.",
       lede: "<b>{n} sites públicos</b>, analisados pela mesma revisão que qualquer pessoa pode executar: portais de governo, veículos de imprensa, bancos, universidades, projetos de código aberto e sistemas de transporte. Percorra o carrossel, filtre por setor ou país e abra um relatório. As revisões que as pessoas solicitam entram em um lote diário. Só para ver e compartilhar.",
       explore: "Explorar {n} relatórios ao vivo", gateLine: "Análises reais de sites públicos, do GOV.UK à Prefeitura de Bogotá. Só para ver e compartilhar.",
-      back: "Voltar", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
+      back: "Voltar", hub: "Voltar ao Social", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
       carousel: "Carrossel de relatórios ao vivo", all: "Todos", sector: "Setor", scope: "Alcance", country: "País", focus: "Tipo de teste",
       worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
@@ -100,7 +100,7 @@
       eyebrow: "Live-Berichte", title: "Echte Websites. Echte Prüfungen.", titleEm: "Öffnen Sie jeden Bericht.",
       lede: "<b>{n} öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Von Nutzern angefragte Prüfungen kommen täglich gesammelt hinzu. Nur ansehen und teilen.",
       explore: "{n} Live-Berichte ansehen", gateLine: "Echte Prüfungen öffentlicher Websites, von GOV.UK bis zum Rathaus von Bogotá. Nur ansehen und teilen.",
-      back: "Zurück", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
+      back: "Zurück", hub: "Zurück zu Social", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
       carousel: "Karussell der Live-Berichte", all: "Alle", sector: "Branche", scope: "Reichweite", country: "Land", focus: "Testart",
       worldwide: "Weltweit", national: "National", regional: "Regional", local: "Lokal", requested: "Angefragt", global: "Global",
       status: "{i} von {n}: {name}, {score} von 100, Note {grade}.", slide: "{i} von {n}: {name}",
@@ -128,7 +128,7 @@
       eyebrow: "Rapports en direct", title: "De vrais sites. De vraies analyses.", titleEm: "Ouvrez le rapport de votre choix.",
       lede: "<b>{n} sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Consultation et partage uniquement.",
       explore: "Explorer {n} rapports en direct", gateLine: "De vraies analyses de sites publics, de GOV.UK à la mairie de Bogotá. Consultation et partage uniquement.",
-      back: "Retour", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
+      back: "Retour", hub: "Retour à Social", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
       carousel: "Carrousel des rapports en direct", all: "Tous", sector: "Secteur", scope: "Portée", country: "Pays", focus: "Type de test",
       worldwide: "Mondial", national: "National", regional: "Régional", local: "Local", requested: "Demandé", global: "Mondial",
       status: "{i} sur {n} : {name}, {score} sur 100, note {grade}.", slide: "{i} sur {n} : {name}",
@@ -156,7 +156,7 @@
       eyebrow: "Report dal vivo", title: "Siti veri. Analisi vere.", titleEm: "Apri il report che vuoi.",
       lede: "<b>{n} siti pubblici</b>, analizzati con la stessa revisione che chiunque può avviare: portali pubblici, redazioni, banche, università, progetti open source e trasporti. Scorri il carosello, filtra per settore o paese e apri un report. Le revisioni richieste dagli utenti si aggiungono ogni giorno, in un unico lotto. Solo visualizzazione e condivisione.",
       explore: "Esplora {n} report dal vivo", gateLine: "Analisi reali di siti pubblici, da GOV.UK al comune di Bogotá. Solo visualizzazione e condivisione.",
-      back: "Indietro", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
+      back: "Indietro", hub: "Torna a Social", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
       carousel: "Carosello dei report dal vivo", all: "Tutti", sector: "Settore", scope: "Portata", country: "Paese", focus: "Tipo di test",
       worldwide: "Mondiale", national: "Nazionale", regional: "Regionale", local: "Locale", requested: "Richiesto", global: "Globale",
       status: "{i} di {n}: {name}, {score} su 100, voto {grade}.", slide: "{i} di {n}: {name}",
@@ -319,7 +319,7 @@
     filters: { sector: "", scope: "", country: "", focus: "" },
     auto: !reduced.matches, hover: false, focusIn: false, visible: false,
     cw: 300, R: 600, step: 30, vis: 2.6, flat: reduced.matches,
-    cache: new Map(), openId: "", opener: null, suppressUntil: 0
+    cache: new Map(), openId: "", opener: null, suppressUntil: 0, hub: false
   };
   const cards = new Map();
   const lastD = new Map();
@@ -837,6 +837,7 @@
       if (!action) return;
       const act = action.dataset.act;
       if (act === "close") closeReport();
+      else if (act === "hub") { event.preventDefault(); closeReport(); }
       else if (act === "copy") copyLink();
       else if (act === "native") nativeShare();
       else if (act === "own") reviewOwn();
@@ -980,7 +981,8 @@
       const name = label || t("email");
       return '<button class="lv-btn icon" type="button" data-act="net" data-net="' + net + '" aria-label="' + esc(t("shareOn", { net: name })) + '" title="' + esc(t("shareOn", { net: name })) + '">' + ICONS[net] + "</button>";
     }).join("");
-    actions.innerHTML = native + nets +
+    const hub = state.hub ? '<a class="lv-btn" data-act="hub" href="' + hubUrl() + '"' + nt() + ">" + ICONS.prev + "<span>" + esc(t("hub")) + "</span></a>" : "";
+    actions.innerHTML = hub + native + nets +
       '<button class="lv-btn" type="button" data-act="copy"' + nt() + ">" + ICONS.link + "<span>" + esc(t("copy")) + "</span></button>" +
       '<button class="lv-btn icon close" type="button" data-act="close" aria-label="' + esc(t("close")) + '">' + ICONS.close + "</button>";
   }
@@ -1033,7 +1035,22 @@
     setUrl("");
     const back = state.opener;
     state.opener = null;
+    if (state.hub) { backToHub(); return; }
     if (back && document.contains(back) && back.focus) back.focus({ preventScroll: true });
+  }
+
+  function hubUrl() {
+    const match = location.pathname.match(/qa-review(-[a-z]{2})?(?:\.html)?$/);
+    return "qa-review-social" + (match && match[1] ? match[1] : "") + ".html";
+  }
+  // Going back keeps the hub's filters, "Show more" and scroll. The referrer can be qa-review.html when it
+  // replaced itself with a language page; a report opened in a new tab has no hub behind it.
+  function backToHub() {
+    state.hub = false;
+    let ref = null;
+    try { ref = new URL(document.referrer); } catch (error) { /* no referrer */ }
+    if (ref && ref.origin === location.origin && history.length > 1) history.back();
+    else location.href = hubUrl();
   }
 
   function ms(value) { return value >= 1000 ? (value / 1000).toFixed(1) + " s" : Math.round(value) + " ms"; }
@@ -1179,7 +1196,8 @@
     state.active = at;
     layout();
     announce();
-    openReport(id, null, "link");
+    state.hub = new URLSearchParams(location.search).get("from") === "social";
+    openReport(id, null, state.hub ? "social" : "link");
   }
 
   async function boot() {
