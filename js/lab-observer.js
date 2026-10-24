@@ -265,11 +265,11 @@
         try { runs = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch (err) { runs = []; }
         const previous = runs.length ? runs[runs.length - 1] : null;
         if (!previous || !Array.isArray(previous.cases)) return;
-        const flipped = ids.filter((id) => {
-            const now = lab.results.find((row) => row.id === id);
-            const then = previous.cases.find((row) => row.id === id);
-            return now && then && now.ok !== !!then.ok;
-        });
+        const flipped = lab.results.filter((now) => {
+            if (!ids.includes(now.id)) return false;
+            const then = previous.cases.find((row) => row.id === now.id && (row.frame || '') === (now.frame || ''));
+            return then && now.ok !== !!then.ok;
+        }).map((row) => row.id + (row.frame ? ' (' + row.frame + ')' : ''));
         if (flipped.length) say(lab, 'These cases changed since the previous saved run: ' + flipped.join(', ') + '.');
     }
 
