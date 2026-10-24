@@ -4,8 +4,9 @@
 # tip of main, and pushes the rebuild (scripts/regen-generated.sh).
 # The push uses LIVE_REPORTS_DEPLOY_KEY: only deploy keys bypass the "main: fast checks before merge" ruleset, so a
 # GITHUB_TOKEN push would be refused. A deploy-key push starts CI and the Pages build like any merge, so main's checks go
-# green again; its own push carries [regen] and is skipped here. Bot commits with [skip ci] do not start this workflow;
-# the next merge does.
+# green again. Its own push is skipped by its subject: a squash merge copies the PR's commit messages into the body, so
+# matching a marker anywhere in the message would skip human merges too (#985). Bot commits with [skip ci] do not
+# start this workflow; the next merge does.
 
 name: Rebuild stale generated files
 
@@ -20,7 +21,7 @@ concurrency:
 
 jobs:
   regen:
-    if: ${{ !contains(github.event.head_commit.message, '[regen]') }}
+    if: ${{ !startsWith(github.event.head_commit.message, 'Rebuild generated pages left stale on main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
