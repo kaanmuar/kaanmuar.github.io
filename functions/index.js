@@ -3057,7 +3057,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     const free = !!row && (row.free === true || await hasFreeRuns(row.email));
     const access = await reviewAuth.askAccess(reviewAuth.firestoreStore(admin.firestore()), body, row, free);
     if (!access.ok) {
-      res.status(access.status).json({ error: access.error, signIn: !!access.signIn });
+      res.status(access.status).json({ error: access.error, code: access.code || "", signIn: !!access.signIn });
       return;
     }
     res.status(200).json({ ok: true });

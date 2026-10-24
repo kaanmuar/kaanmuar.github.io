@@ -46,12 +46,37 @@ test("the fix is written for the host the review saw, and GitHub Pages is not re
   assert.match(text, /served from GitHub Pages/);
   assert.match(text, /Technologies seen: Tailwind, Google Tag Manager/);
   assert.match(text, /GitHub Pages cannot send custom headers, but this review also saw Cloudflare in front of the site\. Add the header there with a Response Header Transform Rule/);
-  const bare = report({ technologies: sample.technologies.filter((row) => !/cloudflare/i.test(row.name)) });
-  assert.match(words(ask.answer(bare, "fix F-01")), /Put a CDN such as Cloudflare in front and set the header there/);
   const files = result.parts.filter((part) => part.kind === "code");
   assert.equal(files.length, 1);
-  assert.equal(files[0].label, "netlify-or-cloudflare-pages/_headers");
-  assert.match(files[0].text, /Strict-Transport-Security: max-age=31536000; includeSubDomains/);
+  assert.equal(files[0].label, "Cloudflare Transform Rule");
+  assert.match(files[0].text, /Response Header Transform Rule/);
+  assert.match(files[0].text, /Header name: Strict-Transport-Security\nValue: max-age=31536000; includeSubDomains/);
+  assert.doesNotMatch(files[0].text, /^\/\*/m);
+  const bare = report({ technologies: sample.technologies.filter((row) => !/cloudflare/i.test(row.name)) });
+  const direct = ask.answer(bare, "fix F-01");
+  assert.match(words(direct), /Put a CDN such as Cloudflare in front and set the header there/);
+  assert.deepEqual(direct.parts.filter((part) => part.kind === "code").map((part) => part.label), ["netlify-or-cloudflare-pages/_headers"]);
+});
+
+test("the frame fix sends CSP frame-ancestors and X-Frame-Options, on every host", () => {
+  const proxied = ask.answer(report(), "Show me the fix for F-02 on GitHub Pages");
+  const rule = proxied.parts.filter((part) => part.kind === "code");
+  assert.deepEqual(rule.map((part) => part.label), ["Cloudflare Transform Rule"]);
+  assert.match(rule[0].text, /Header name: Content-Security-Policy\nValue: frame-ancestors 'self'\n\nHeader name: X-Frame-Options\nValue: SAMEORIGIN/);
+  const onNginx = report();
+  onNginx.insights.fixkit.hosting = "nginx";
+  const nginx = ask.answer(onNginx, "fix F-02").parts.find((part) => part.kind === "code").text;
+  assert.match(nginx, /add_header Content-Security-Policy "frame-ancestors 'self'" always;/);
+  assert.match(nginx, /add_header X-Frame-Options "SAMEORIGIN" always;/);
+  assert.doesNotMatch(nginx, /Report-Only/);
+  const deny = report();
+  deny.insights.fixkit.csp = "default-src 'self'";
+  deny.insights.fixkit.headers = deny.insights.fixkit.headers.map((row) => (row.name === "X-Frame-Options" ? Object.assign({}, row, { value: "DENY" }) : row));
+  assert.match(ask.answer(deny, "fix F-02").parts.find((part) => part.kind === "code").text, /Value: frame-ancestors 'none'\n\nHeader name: X-Frame-Options\nValue: DENY/);
+  Object.keys(ask.T).forEach((lang) => {
+    const asked = ask.suggestions(report(), lang)[1].replace("F-01", "F-02");
+    assert.deepEqual(ask.answer(report(), asked, { lang }).parts.filter((part) => part.kind === "code"), rule, lang);
+  });
 });
 
 test("each host gets its own header file, and an unknown host gets the common ones", () => {
@@ -93,6 +118,24 @@ test("AN-01 is written as a fixme the person fills in, and a load case says it h
   assert.match(words(ask.answer(report(), "Playwright test for LD-01")), /LD-01 is written for JMeter, Gatling, k6, not Playwright/);
   const viaFinding = ask.answer(report(), "playwright test for F-01");
   assert.match(words(viaFinding), /F-01 is a finding\. Its test case is SEC-02/);
+});
+
+test("a case left to a person gets real steps in its fixme, with the trackers this report saw", () => {
+  const an = ask.answer(report(), "write the playwright case for AN-01").parts.find((part) => part.kind === "code").text;
+  assert.match(an, /\/\/ An analytics marker was seen/);
+  assert.match(an, /Fill in any TODO, then change test\.fixme to test\./);
+  assert.match(an, /const TRACKERS = \["googletagmanager\.com","google-analytics\.com","analytics\.google\.com"\];/);
+  assert.match(an, /page\.on\("request"/);
+  assert.match(an, /expect\(await stored\(\), "analytics cookies before a choice"\)\.toEqual\(\[\]\);/);
+  assert.match(an, /await page\.locator\(ACCEPT\)\.click\(\);/);
+  assert.doesNotMatch(an, /A person runs this case/);
+  const noScript = ask.answer(report(), "playwright case for CMP-01").parts.find((part) => part.kind === "code").text;
+  assert.match(noScript, /test\.fixme\("CMP-01 · [^"]+", async \(\{ browser \}\) => \{/);
+  assert.match(noScript, /javaScriptEnabled: false/);
+  assert.match(ask.answer(report(), "playwright case for A11Y-03").parts.find((part) => part.kind === "code").text, /skips a level/);
+  const generic = ask.answer(report(), "playwright case for SEO-01").parts.find((part) => part.kind === "code").text;
+  assert.match(generic, /await page\.goto\(BASE \+ "\/"\);/);
+  assert.match(generic, /test-results\/seo-01\.png/);
 });
 
 test("an export drafts the issue as Markdown, a Jira CSV row and a prefilled GitHub link", () => {
@@ -213,6 +256,10 @@ test("every suggestion in every language is understood as the question it offers
       assert.equal(result.intent, expected[index], lang + ": " + question);
       assert.equal(result.ref, refs[index], lang + ": " + question);
     });
+    ask.answer(report(), ask.T[lang].askWhy.replace("{id}", "F-02"), { lang }).suggest.forEach((question, index) => {
+      const result = ask.answer(report(), question, { lang });
+      assert.deepEqual([result.intent, result.ref], [["fix", "F-02"], ["playwright", "SEC-04"], ["export", "F-02"]][index], lang + ": " + question);
+    });
     ["why", "fix", "playwright", "export"].forEach((intent) => {
       const picked = ask.answer(report(), { why: "why is this high?", fix: "show me the fix", playwright: "write a playwright test", export: "export to jira" }[intent], { lang });
       picked.suggest.forEach((question) => assert.equal(ask.answer(report(), question, { lang }).intent, intent, lang + ": " + question));
@@ -253,9 +300,12 @@ test("ask access needs the signed-in account that ran the report, on its device,
   const anonymous = await auth.askAccess(store, { deviceKey: DESKTOP }, row, false);
   assert.equal(anonymous.status, 401);
   assert.equal(anonymous.signIn, true);
+  assert.equal(anonymous.code, "sign-in");
+  assert.doesNotMatch(anonymous.error, /run a review/);
 
   const otherDevice = await auth.askAccess(store, { session: ana.session, deviceKey: PHONE }, row, false);
   assert.equal(otherDevice.status, 401);
+  assert.equal(otherDevice.code, "sign-in");
 
   const stranger = await auth.askAccess(store, { session: bo.session, deviceKey: PHONE }, row, false);
   assert.equal(stranger.status, 403);

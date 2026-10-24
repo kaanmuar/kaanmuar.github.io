@@ -1596,7 +1596,8 @@
       "<strong>" + esc(item.title) + "</strong><p class=\"muted\">" + fadeText(item.evidence, paid) + "</p>" +
       (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
       ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + esc(item.pages.slice(0, 6).join(" · ")) + (item.pages.length > 6 ? " …" : "") + "</p>" : "") +
-      ((item.cases || []).length ? '<p class="meta-line">Test cases: ' + esc(item.cases.join(", ")) + "</p>" : "") + "</div>").join("")
+      ((item.cases || []).length ? '<p class="meta-line">Test cases: ' + esc(item.cases.join(", ")) + "</p>" : "") +
+      (window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") + "</div>").join("")
       : '<p class="muted">No check matches this filter.</p>';
   }
 

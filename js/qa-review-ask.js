@@ -29,7 +29,7 @@
       missingTitle: "Not in this report", missing: "This report has no {id}.", missingRange: "Its findings run from {first} to {last}.", missingCases: "Its cases include {list}.",
       whichTitle: "Which one?", which: "Name the finding or case by its id, such as F-01 or SEC-02.", whichFirst: "The first ones on this report:",
       askRated: "Why is {id} rated {severity}?", askWhy: "Why is {id} rated this way?", askFixOn: "Show me the fix for {id} on {host}", askFix: "Show me the fix for {id}",
-      askPlaywright: "Write the Playwright case for {id}", askExport: "Export {id} as a GitHub or Jira issue",
+      askCard: "Ask about this", askPlaywright: "Write the Playwright case for {id}", askExport: "Export {id} as a GitHub or Jira issue",
       verdict: { fail: "Fails now", risk: "At risk", person: "Needs a person", pass: "Passes", proposed: "Proposed, not checked yet" },
       severity: { critical: "critical", high: "high", medium: "medium", low: "low", info: "info" },
       effort: { minutes: "minutes", hours: "hours", days: "days", none: "not estimated" },
@@ -85,7 +85,7 @@
       missingTitle: "No está en este informe", missing: "Este informe no tiene {id}.", missingRange: "Sus hallazgos van de {first} a {last}.", missingCases: "Entre sus casos están {list}.",
       whichTitle: "¿Cuál?", which: "Indica el hallazgo o el caso por su id, por ejemplo F-01 o SEC-02.", whichFirst: "Los primeros de este informe:",
       askRated: "¿Por qué {id} tiene severidad {severity}?", askWhy: "¿Por qué {id} tiene esta calificación?", askFixOn: "Muéstrame la corrección de {id} en {host}", askFix: "Muéstrame la corrección de {id}",
-      askPlaywright: "Escribe el caso de Playwright para {id}", askExport: "Exporta {id} como issue de GitHub o Jira",
+      askCard: "Preguntar sobre esto", askPlaywright: "Escribe el caso de Playwright para {id}", askExport: "Exporta {id} como issue de GitHub o Jira",
       verdict: { fail: "Falla ahora", risk: "En riesgo", person: "Requiere una persona", pass: "Pasa", proposed: "Propuesto, aún sin comprobar" },
       severity: { critical: "crítica", high: "alta", medium: "media", low: "baja", info: "informativa" },
       effort: { minutes: "minutos", hours: "horas", days: "días", none: "sin estimar" },
@@ -141,7 +141,7 @@
       missingTitle: "Não está neste relatório", missing: "Este relatório não tem {id}.", missingRange: "Os achados vão de {first} a {last}.", missingCases: "Entre os casos estão {list}.",
       whichTitle: "Qual?", which: "Indique o achado ou caso pelo id, como F-01 ou SEC-02.", whichFirst: "Os primeiros deste relatório:",
       askRated: "Por que {id} tem severidade {severity}?", askWhy: "Por que {id} tem esta classificação?", askFixOn: "Mostre a correção de {id} em {host}", askFix: "Mostre a correção de {id}",
-      askPlaywright: "Escreva o caso de Playwright para {id}", askExport: "Exporte {id} como issue do GitHub ou do Jira",
+      askCard: "Perguntar sobre isto", askPlaywright: "Escreva o caso de Playwright para {id}", askExport: "Exporte {id} como issue do GitHub ou do Jira",
       verdict: { fail: "Falha agora", risk: "Em risco", person: "Precisa de uma pessoa", pass: "Passa", proposed: "Proposto, ainda não verificado" },
       severity: { critical: "crítica", high: "alta", medium: "média", low: "baixa", info: "informativa" },
       effort: { minutes: "minutos", hours: "horas", days: "dias", none: "sem estimativa" },
@@ -197,7 +197,7 @@
       missingTitle: "Nicht in diesem Bericht", missing: "Dieser Bericht hat kein {id}.", missingRange: "Seine Befunde reichen von {first} bis {last}.", missingCases: "Zu seinen Fällen gehören {list}.",
       whichTitle: "Welcher?", which: "Nennen Sie den Befund oder Fall mit seiner ID, etwa F-01 oder SEC-02.", whichFirst: "Die ersten in diesem Bericht:",
       askRated: "Warum ist {id} als {severity} eingestuft?", askWhy: "Warum ist {id} so eingestuft?", askFixOn: "Zeigen Sie mir die Korrektur für {id} auf {host}", askFix: "Zeigen Sie mir die Korrektur für {id}",
-      askPlaywright: "Schreiben Sie den Playwright-Fall für {id}", askExport: "Exportieren Sie {id} als GitHub- oder Jira-Issue",
+      askCard: "Dazu fragen", askPlaywright: "Schreiben Sie den Playwright-Fall für {id}", askExport: "Exportieren Sie {id} als GitHub- oder Jira-Issue",
       verdict: { fail: "Schlägt jetzt fehl", risk: "Gefährdet", person: "Braucht eine Person", pass: "Besteht", proposed: "Vorgeschlagen, noch nicht geprüft" },
       severity: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig", info: "informativ" },
       effort: { minutes: "Minuten", hours: "Stunden", days: "Tage", none: "nicht geschätzt" },
@@ -253,7 +253,7 @@
       missingTitle: "Absent de ce rapport", missing: "Ce rapport n’a pas de {id}.", missingRange: "Ses constats vont de {first} à {last}.", missingCases: "Parmi ses cas : {list}.",
       whichTitle: "Lequel ?", which: "Nommez le constat ou le cas par son identifiant, par exemple F-01 ou SEC-02.", whichFirst: "Les premiers de ce rapport :",
       askRated: "Pourquoi {id} a-t-il une gravité {severity} ?", askWhy: "Pourquoi {id} est-il classé ainsi ?", askFixOn: "Montrez-moi la correction de {id} sur {host}", askFix: "Montrez-moi la correction de {id}",
-      askPlaywright: "Écrivez le cas Playwright pour {id}", askExport: "Exportez {id} en ticket GitHub ou Jira",
+      askCard: "Poser une question", askPlaywright: "Écrivez le cas Playwright pour {id}", askExport: "Exportez {id} en ticket GitHub ou Jira",
       verdict: { fail: "Échoue maintenant", risk: "À risque", person: "Demande une personne", pass: "Réussit", proposed: "Proposé, pas encore vérifié" },
       severity: { critical: "critique", high: "élevée", medium: "moyenne", low: "faible", info: "informative" },
       effort: { minutes: "minutes", hours: "heures", days: "jours", none: "non estimé" },
@@ -309,7 +309,7 @@
       missingTitle: "Non è in questo report", missing: "Questo report non ha {id}.", missingRange: "I suoi risultati vanno da {first} a {last}.", missingCases: "Tra i suoi casi ci sono {list}.",
       whichTitle: "Quale?", which: "Indica il risultato o il caso con il suo id, per esempio F-01 o SEC-02.", whichFirst: "I primi di questo report:",
       askRated: "Perché {id} ha gravità {severity}?", askWhy: "Perché {id} ha questa valutazione?", askFixOn: "Mostrami la correzione di {id} su {host}", askFix: "Mostrami la correzione di {id}",
-      askPlaywright: "Scrivi il caso Playwright per {id}", askExport: "Esporta {id} come issue GitHub o Jira",
+      askCard: "Chiedi su questo", askPlaywright: "Scrivi il caso Playwright per {id}", askExport: "Esporta {id} come issue GitHub o Jira",
       verdict: { fail: "Fallisce ora", risk: "A rischio", person: "Serve una persona", pass: "Supera", proposed: "Proposto, non ancora verificato" },
       severity: { critical: "critica", high: "alta", medium: "media", low: "bassa", info: "informativa" },
       effort: { minutes: "minuti", hours: "ore", days: "giorni", none: "non stimato" },
@@ -348,7 +348,7 @@
   };
   const SEVERITY_RANK = { critical: 5, high: 4, medium: 3, low: 2, info: 1 };
   const JIRA_PRIORITY = { critical: "Highest", high: "High", medium: "Medium", low: "Low", info: "Lowest" };
-  const HEADER_OF = { "sec-hsts": "Strict-Transport-Security", "sec-csp": "Content-Security-Policy-Report-Only", "sec-nosniff": "X-Content-Type-Options", "sec-frame": "X-Frame-Options", "sec-referrer": "Referrer-Policy", "sec-permissions": "Permissions-Policy" };
+  const HEADER_OF = { "sec-hsts": "Strict-Transport-Security", "sec-csp": "Content-Security-Policy-Report-Only", "sec-nosniff": "X-Content-Type-Options", "sec-referrer": "Referrer-Policy", "sec-permissions": "Permissions-Policy" };
   const HOST_FILE = { Netlify: "netlify", Cloudflare: "netlify", "GitHub Pages": "netlify", Vercel: "vercel", "Firebase Hosting": "firebase", nginx: "nginx", Apache: "apache" };
   const DNS_OF = {
     "sec-spf": (row) => /^v=spf1/.test(row.value),
@@ -377,6 +377,8 @@
   const STOP = ["what", "this", "that", "with", "from", "does", "have", "high", "show", "write", "case", "test", "tests", "issue", "github", "jira", "export", "playwright", "stack", "about", "report", "finding", "explain", "there", "which", "would", "could", "should", "please", "rated", "rank", "ranked", "turn", "into", "make", "give", "the", "for", "why", "fix",
     "por", "que", "porque", "para", "como", "una", "los", "las", "del", "esta", "alto", "alta", "und", "der", "die", "das", "ist", "warum", "hoch", "pour", "les", "des", "une", "est", "elevee", "eleve", "perche", "che", "della", "per", "sono"];
   const MAX_BODY = 6000;
+  const TRACKER_HOSTS = /(^|\.)(googletagmanager\.com|google-analytics\.com|analytics\.google\.com|doubleclick\.net|facebook\.net|hotjar\.com|clarity\.ms|segment\.(io|com)|mixpanel\.com|hs-analytics\.net|hs-scripts\.com|plausible\.io|matomo\.cloud)$/;
+  const ANALYTICS_COOKIES = "^(_ga|_gid|_gcl|_fbp|_hj|_clck|_clsk|ajs_|mp_)";
 
   function book(lang) {
     return T[String(lang || "en").slice(0, 2).toLowerCase()] || T.en;
@@ -476,6 +478,20 @@
     return asks;
   }
 
+  function followUps(L, report, hit) {
+    const hosting = (report.insights && report.insights.fixkit && report.insights.fixkit.hosting) || "";
+    const item = hit.item;
+    const backing = hit.kind === "finding" ? item : findingOf(report, item);
+    const runnable = hit.kind === "case"
+      ? ((item.fw || []).indexOf("Playwright") !== -1 ? item : null)
+      : playwrightCases(report).find((row) => (item.cases || []).indexOf(row.id) !== -1);
+    const asks = [];
+    if (backing && backing.verdict !== "pass") asks.push(fill(hosting ? L.askFixOn : L.askFix, { id: item.id, host: hosting }));
+    if (runnable) asks.push(fill(L.askPlaywright, { id: runnable.id }));
+    asks.push(fill(L.askExport, { id: item.id }));
+    return asks;
+  }
+
   function pagesPart(L, item) {
     const pages = item.pages || [];
     if (!pages.length) return null;
@@ -527,18 +543,42 @@
     return parts;
   }
 
+  // Browsers ignore frame-ancestors in a Report-Only policy, so the frame fix sends it in an enforced one of its own.
+  function headersFor(kit, key) {
+    const rows = kit.headers || [];
+    if (key === "sec-frame") {
+      const legacy = rows.find((row) => row.name === "X-Frame-Options");
+      const ancestors = (String(kit.csp || "").match(/frame-ancestors[^;]+/) || [])[0] || (legacy && /deny/i.test(legacy.value) ? "frame-ancestors 'none'" : "frame-ancestors 'self'");
+      return [{ name: "Content-Security-Policy", value: ancestors.trim() }].concat(legacy ? [legacy] : []);
+    }
+    const row = HEADER_OF[key] && rows.find((item) => item.name === HEADER_OF[key]);
+    return row ? [row] : [];
+  }
+
+  function transformRule(headers) {
+    return [
+      "# Cloudflare dashboard: Rules > Overview > Create rule > Response Header Transform Rule",
+      "# If incoming requests match: All incoming requests",
+      "# Then, for each header below: Set static",
+      ""
+    ].concat(...headers.map((row) => ["Header name: " + row.name, "Value: " + row.value, ""])).join("\n");
+  }
+
   function recipes(L, report, item) {
     const kit = (report.insights && report.insights.fixkit) || {};
     const hosting = kit.hosting || "";
     const parts = [];
-    const header = HEADER_OF[item.key] && (kit.headers || []).find((row) => row.name === HEADER_OF[item.key]);
-    if (header && Scripts && Scripts.headerFiles) {
-      const files = Scripts.headerFiles([header], hosting);
-      const want = HOST_FILE[hosting];
-      const picked = want ? files.filter((file) => file.path.indexOf(want) !== -1).slice(0, 1) : files.slice(0, 3);
+    const headers = headersFor(kit, item.key);
+    if (headers.length && Scripts && Scripts.headerFiles) {
       const proxied = (report.technologies || []).some((row) => /cloudflare/i.test(row.name || ""));
       if (hosting === "GitHub Pages") parts.push(text(proxied ? L.ghPagesProxied : L.ghPages));
-      picked.forEach((file) => parts.push(code(file.content, file.path.replace(/^fix-kit\/headers\//, ""))));
+      if (hosting === "GitHub Pages" && proxied) parts.push(code(transformRule(headers), "Cloudflare Transform Rule"));
+      else {
+        const files = Scripts.headerFiles(headers, hosting);
+        const want = HOST_FILE[hosting];
+        const picked = want ? files.filter((file) => file.path.indexOf(want) !== -1).slice(0, 1) : files.slice(0, 3);
+        picked.forEach((file) => parts.push(code(file.content, file.path.replace(/^fix-kit\/headers\//, ""))));
+      }
     }
     const dns = DNS_OF[item.key] ? (kit.dns || []).filter(DNS_OF[item.key]) : [];
     if (dns.length) parts.push(code(dns.map((row) => row.name + "\t" + row.type + "\t" + row.value).join("\n"), L.dns));
@@ -572,6 +612,84 @@
     return parts;
   }
 
+  function trackers(report) {
+    const csp = String((report.insights && report.insights.fixkit && report.insights.fixkit.csp) || "");
+    const seen = (csp.match(/https?:\/\/[^\s;'"]+/g) || []).map((url) => url.replace(/^https?:\/\/(\*\.|www\.)?/, "").replace(/\/.*$/, ""));
+    const hosts = seen.filter((host, index) => TRACKER_HOSTS.test(host) && seen.indexOf(host) === index);
+    return hosts.length ? hosts : ["googletagmanager.com", "google-analytics.com"];
+  }
+
+  // A case the generator leaves to a person becomes a fixme with real steps, so the person fills in only what the report cannot know.
+  function skeleton(report, item, ctx, generated) {
+    const path = JSON.stringify(item.path || ctx.startPath || "/");
+    const notes = generated.split("\n").filter((line) => /^\s*\/\/ /.test(line) && !/A person runs this case/.test(line)).map((line) => line.trim());
+    let args = "{ page }";
+    let body;
+    if (/^AN-|^PR-0[23]$/.test(item.id)) {
+      body = [
+        "const TRACKERS = " + JSON.stringify(trackers(report)) + ";",
+        "const ACCEPT = \"TODO: the consent banner's accept button, such as #accept-all\";",
+        "const tracked = (url: string) => TRACKERS.some((host) => { const name = new URL(url).hostname; return name === host || name.endsWith(\".\" + host); });",
+        "const stored = async () => (await page.context().cookies()).filter((cookie) => /" + ANALYTICS_COOKIES + "/.test(cookie.name)).map((cookie) => cookie.name);",
+        "const calls: string[] = [];",
+        "page.on(\"request\", (req) => { if (tracked(req.url())) calls.push(req.url()); });",
+        "await page.goto(BASE + " + path + ");",
+        "await page.waitForLoadState(\"networkidle\");",
+        "expect(await stored(), \"analytics cookies before a choice\").toEqual([]);",
+        "expect.soft(calls, \"analytics requests before a choice; Consent Mode pings without cookies may be allowed\").toEqual([]);",
+        "await page.locator(ACCEPT).click();",
+        "await page.waitForLoadState(\"networkidle\");",
+        "expect((await stored()).length, \"analytics cookies after consent\").toBeGreaterThan(0);"
+      ];
+    } else if (item.id === "CMP-01") {
+      args = "{ browser }";
+      body = [
+        "const context = await browser.newContext({ javaScriptEnabled: false });",
+        "const page = await context.newPage();",
+        "await page.goto(BASE + " + path + ");",
+        "await expect(page).toHaveTitle(/\\S/);",
+        "await expect(page.locator(\"h1\").first()).toBeVisible();",
+        "await context.close();"
+      ];
+    } else if (item.id === "A11Y-03") {
+      body = [
+        "await page.goto(BASE + " + path + ");",
+        "const levels = await page.$$eval(\"h1, h2, h3, h4, h5, h6\", (nodes) => nodes.map((node) => Number(node.tagName[1])));",
+        "expect(levels[0], \"the first heading\").toBe(1);",
+        "levels.slice(1).forEach((level, index) => expect.soft(level - levels[index], \"heading \" + (index + 2) + \" skips a level\").toBeLessThanOrEqual(1));"
+      ];
+    } else if (item.id === "A11Y-04") {
+      body = [
+        "await page.goto(BASE + " + path + ");",
+        "const stops: string[] = [];",
+        "for (let step = 0; step < 15; step++) {",
+        "  await page.keyboard.press(\"Tab\");",
+        "  const stop = await page.evaluate(() => {",
+        "    const el = document.activeElement as HTMLElement | null;",
+        "    if (!el || el === document.body) return null;",
+        "    const style = getComputedStyle(el);",
+        "    return { name: el.tagName.toLowerCase() + \" \" + (el.getAttribute(\"aria-label\") || el.textContent || \"\").trim().slice(0, 40), ring: style.outlineStyle !== \"none\" || style.boxShadow !== \"none\" };",
+        "  });",
+        "  if (!stop) break;",
+        "  stops.push(stop.name);",
+        "  expect.soft(stop.ring, \"focus ring on \" + stop.name).toBe(true);",
+        "}",
+        "expect(stops.length, \"keyboard stops\").toBeGreaterThan(0);",
+        "// TODO: compare the stops with the visual reading order.",
+        "console.log(stops.join(\"\\n\"));"
+      ];
+    } else {
+      body = [
+        "await page.goto(BASE + " + path + ");",
+        "await expect(page).toHaveTitle(/\\S/);",
+        "// TODO: write the step and the expected result above as actions and expect() lines.",
+        "await page.screenshot({ path: \"test-results/" + item.id.toLowerCase() + ".png\", fullPage: true });"
+      ];
+    }
+    const lines = notes.concat("// Fill in any TODO, then change test.fixme to test.", body);
+    return "test.fixme(" + JSON.stringify(item.id + " · " + String(item.title).replace(/\s+/g, " ").trim()) + ", async (" + args + ") => {\n" + lines.map((line) => "  " + line).join("\n") + "\n});";
+  }
+
   function playwrightFor(L, report, hit) {
     let item = hit.kind === "case" ? hit.item : null;
     const parts = [];
@@ -584,6 +702,7 @@
     if (!out.length) return parts.concat(text(fill(L.pwOther, { id: item.id, list: (item.fw || []).join(", ") || L.noFramework })));
     const ctx = Scripts.context(report);
     const name = item.id.toLowerCase() + ".spec.ts";
+    const manual = /test\.fixme\(/.test(out[0].code);
     const file = [
       "// " + item.id + " · " + ctx.label,
       "// Proposed from this report's evidence. Review selectors and budgets before a run.",
@@ -592,11 +711,11 @@
       "const BASE = " + JSON.stringify(ctx.base) + ";",
       "const HOST = " + JSON.stringify(ctx.host) + ";",
       "",
-      out[0].code,
+      manual ? skeleton(report, item, ctx, out[0].code) : out[0].code,
       ""
     ].join("\n");
     parts.push(text(fill(L.pwSave, { name })));
-    if (/test\.fixme\(/.test(out[0].code)) parts.push(text(L.pwFixme));
+    if (manual) parts.push(text(L.pwFixme));
     parts.push(code(file, name));
     return parts;
   }
@@ -688,7 +807,7 @@
         ref: hit.item.id
       };
     }
-    return { intent: kind, title: heading(hit), parts: hit.kind === "finding" ? explainFinding(L, report, hit.item, asked) : explainCase(L, report, hit.item), ref: hit.item.id };
+    return { intent: kind, title: heading(hit), parts: hit.kind === "finding" ? explainFinding(L, report, hit.item, asked) : explainCase(L, report, hit.item), suggest: followUps(L, report, hit), ref: hit.item.id };
   }
 
   function esc(value) {
@@ -823,9 +942,10 @@
           allowed.set(id, true);
           return true;
         }
-        if (body.signIn && root.ReviewAuth.expire) root.ReviewAuth.expire(body.error);
-        const said = body.signIn ? words.expired : { 402: words.notPaid, 403: words.notOwner, 404: words.notFound }[res.status] || words.failed;
-        note(said, body.signIn ? ["sign-in", words.signInButton] : null);
+        const signIn = body.code === "sign-in" || body.signIn === true;
+        if (signIn && root.ReviewAuth.expire) root.ReviewAuth.expire(words.expired);
+        const said = signIn ? words.expired : { 402: words.notPaid, 403: words.notOwner, 404: words.notFound }[res.status] || words.failed;
+        note(said, signIn ? ["sign-in", words.signInButton] : null);
       } catch (error) {
         note(words.failed);
       }
@@ -838,24 +958,37 @@
     }
 
     async function open() {
-      if (!payload) return;
+      if (!payload) return false;
       paintCopy();
       panel.hidden = false;
       opener.setAttribute("aria-expanded", "true");
       if (allowed.get(payload.report.id) === true) {
         input.focus();
-        return;
+        return true;
       }
       ready(false);
       log.innerHTML = "";
       panel.setAttribute("aria-busy", "true");
       const ok = await unlock();
       panel.removeAttribute("aria-busy");
-      if (!ok || !payload) return;
+      if (!ok || !payload) return false;
       ready(true);
       paintChips();
       note(fill(L().intro, { scope: L().scope }));
       input.focus();
+      return true;
+    }
+
+    async function about(id) {
+      if (!payload || !(await open())) return;
+      ask(fill(L().askWhy, { id }));
+    }
+
+    function cardLink(id) {
+      if (!payload) return "";
+      const words = L();
+      const mark = words === T.en ? "" : ' lang="' + lang() + '" translate="no"';
+      return '<button type="button" class="ask-about" data-ask-about="' + esc(id) + '" aria-label="' + esc(words.askCard + ": " + id) + '"' + mark + ">" + esc(words.askCard) + "</button>";
     }
 
     function show(next) {
@@ -907,8 +1040,12 @@
         if (root.ReviewAuth) root.ReviewAuth.focus();
       }
     });
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest && event.target.closest("[data-ask-about]");
+      if (button) about(button.getAttribute("data-ask-about"));
+    });
     if (root.ReviewAuth && root.ReviewAuth.onChange) root.ReviewAuth.onChange((on) => { if (!on) allowed.clear(); });
-    return { show, close };
+    return { show, close, cardLink };
   }
 
   const api = { T, answer, suggestions, intentOf, idsIn, githubIssueUrl, issueFor: (report, id, options) => { const hit = lookup(report, id); return hit ? issueFor(report, hit, options || {}) : null; } };
@@ -918,5 +1055,6 @@
     const panel = typeof document !== "undefined" ? mount() : null;
     api.show = panel ? panel.show : () => {};
     api.close = panel ? panel.close : () => {};
+    api.cardLink = panel ? panel.cardLink : () => "";
   }
 })(typeof window !== "undefined" ? window : globalThis);
