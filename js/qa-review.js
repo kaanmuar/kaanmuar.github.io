@@ -2211,6 +2211,11 @@
 
   function mountLanguage() {
     if (!window.SiteI18n) return;
+    const PAGE_LANGS = ["es", "pt", "de", "fr", "it"];
+    const here = location.pathname.split("/").pop() || "qa-review.html";
+    const pageLang = (here.match(/^qa-review-(es|pt|de|fr|it)\.html$/) || [])[1] || "en";
+    // A language with its own page is shown as that page's language, never machine-translated over it.
+    const shown = (code) => (code === "en" || PAGE_LANGS.includes(code) ? pageLang : code);
     const syncFlag = (code) => {
       ["langFlag", "langFlagGate"].forEach((id) => {
         const flag = document.getElementById(id);
@@ -2235,8 +2240,7 @@
           option.innerHTML = '<img src="' + SiteI18n.flagUrl(meta.code) + '" alt=""><span>' + meta.native + "</span>";
           option.onclick = () => {
             if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_language_change", "URL Review", meta.code);
-            const page = ["es", "pt", "de", "fr", "it"].includes(meta.code) ? "qa-review-" + meta.code + ".html" : "qa-review.html";
-            const here = location.pathname.split("/").pop() || "qa-review.html";
+            const page = PAGE_LANGS.includes(meta.code) ? "qa-review-" + meta.code + ".html" : "qa-review.html";
             if (page !== here) {
               SiteI18n.persist(meta.code);
               location.assign(page + "?lang=" + encodeURIComponent(meta.code));
@@ -2263,14 +2267,18 @@
       document.querySelectorAll(".lang-wrap.open").forEach((open) => open.classList.remove("open"));
     });
     SiteI18n.resolve().then((lang) => {
-      const code = lang || "en";
+      if (pageLang === "en" && PAGE_LANGS.includes(lang) && !navigator.webdriver) {
+        location.replace("qa-review-" + lang + ".html" + location.search + location.hash);
+        return;
+      }
+      const code = shown(lang || "en");
       syncFlag(code);
       document.documentElement.lang = code;
       SiteI18n.loadWidget();
       SiteI18n.applyMachineTranslate(code);
     });
     SiteI18n.follow((lang) => {
-      const code = lang || "en";
+      const code = shown(lang || "en");
       syncFlag(code);
       document.documentElement.lang = code;
       SiteI18n.applyMachineTranslate(code);
