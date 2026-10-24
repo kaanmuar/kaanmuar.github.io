@@ -104,7 +104,8 @@ function batchPosts(files, reports) {
         alt: c.alt || cleanTitle(c.title),
         report: reports.has(report) ? report : null,
         ytTitle: c.youtubeTitle || "",
-        captions: Object.fromEntries(CAPTIONS.map(([net]) => [net, c[net] || ""]).filter(([, text]) => text))
+        captions: Object.fromEntries(CAPTIONS.map(([net]) => [net, c[net] || ""]).filter(([, text]) => text)),
+        i18n: c.textLang ? null : c.i18n || null
       });
     }
   }
@@ -163,10 +164,38 @@ function groupOf(post) {
   return match && match[3] === post.lang ? match[1] + "/" + match[2] : null;
 }
 
+// A post with translated captions (scripts/social-hub/translate-captions.js) gets a variant per language,
+// with its own page; the English post keeps its id and the others add "-<lang>".
+function expand(posts) {
+  const TEXT_NETS = ["linkedin", "x", "instagram", "facebook"];
+  return posts.flatMap((post) => [post].concat(Object.entries(post.i18n || {}).filter(([lang]) => LANGS[lang] && lang !== post.lang).map(([lang, t]) =>
+    Object.assign({}, post, {
+      id: post.id + "-" + lang,
+      base: post.id,
+      lang,
+      title: cleanTitle(t.title || post.title),
+      text: t.linkedin || t.facebook || post.text,
+      alt: t.alt || post.alt,
+      captions: Object.assign({}, post.captions, Object.fromEntries(TEXT_NETS.filter((net) => t[net]).map((net) => [net, t[net]])))
+    }))));
+}
+
+// One card per post on each language's page: the post in that language, else in English, else as written.
+function forLang(posts, lang) {
+  const best = new Map();
+  const fit = (post) => (post.lang === lang ? 2 : post.lang === "en" ? 1 : 0);
+  posts.forEach((post) => {
+    const key = post.group || post.id;
+    const held = best.get(key);
+    if (!held || fit(post) > fit(held)) best.set(key, post);
+  });
+  return posts.filter((post) => best.get(post.group || post.id) === post);
+}
+
 function collect() {
   const files = tracked();
   const edits = admin.clean(exists(EDITS) ? readJson(EDITS) : null);
-  const posts = admin.apply(batchPosts(files, liveIds()).concat(launchPosts(files)), edits, isTracked);
+  const posts = expand(admin.apply(batchPosts(files, liveIds()).concat(launchPosts(files)), edits, isTracked));
   const ledger = exists(LEDGER) ? readJson(LEDGER) : { videos: {} };
   const byTitle = new Map();
   Object.entries(ledger.videos).forEach(([id, video]) => {
@@ -178,10 +207,20 @@ function collect() {
   const rank = new Map(trends.map((id, i) => [id, i + 1]));
   posts.forEach((post) => {
     post.youtube = post.youtube || byTitle.get(titleKey(post.ytTitle)) || (post.kind === "review" && byTitle.get(scoreKey(post.title))) || null;
-    post.thumb = admin.remote(post.image) ? post.image : thumbFor(post.id);
+    post.thumb = admin.remote(post.image) ? post.image : thumbFor(post.base || post.id);
     post.text = body(post);
-    post.group = groupOf(post);
-    if (rank.has(post.id)) post.trend = rank.get(post.id);
+    post.group = groupOf(post) || post.base || (post.i18n && Object.keys(post.i18n).length ? post.id : null);
+    delete post.i18n;
+  });
+  // A view of any language's page ranks the whole post.
+  const groupRank = new Map();
+  posts.forEach((post) => {
+    const key = post.group || post.id;
+    if (rank.has(post.id)) groupRank.set(key, Math.min(groupRank.get(key) || Infinity, rank.get(post.id)));
+  });
+  posts.forEach((post) => {
+    const at = groupRank.get(post.group || post.id);
+    if (at) post.trend = at;
   });
   posts.sort((a, b) => (b.date || "").localeCompare(a.date || "") || a.id.localeCompare(b.id));
   return { posts, ledger };
@@ -397,7 +436,7 @@ function page(lang, posts, asOf) {
 ${alternates}
     <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="alternate" type="application/json" href="${SITE}${OUT}/feed.json" title="QA-lab URL Review social feed">
+    <link rel="alternate" type="application/json" href="${SITE}${OUT}/feed${sfx}.json" title="QA-lab URL Review social feed">
     <link rel="alternate" type="application/rss+xml" href="${SITE}${OUT}/rss${sfx}.xml" title="QA-lab URL Review · Social (RSS)">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="QA-lab URL Review">
@@ -448,7 +487,7 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
     <section class="hub-tools" aria-label="${esc(copy.search)}">
         <div class="hub-chips" role="group" aria-label="${esc(copy.kinds.all)}">${kinds}</div>
         <div class="hub-selects">
-            <label class="hub-field"><span>${esc(copy.language)}</span><select id="hub-lang">${langOptions}</select></label>
+            <label class="hub-field"><span>${esc(copy.clipLang)}</span><select id="hub-lang">${langOptions}</select></label>
             <label class="hub-field"><span>${esc(copy.topic)}</span><select id="hub-topic">${topicOptions}</select></label>
         </div>
         <label class="hub-field hub-search"><span class="sr-only">${esc(copy.search)}</span><input id="hub-q" type="search" placeholder="${esc(copy.search)}" autocomplete="off"></label>
@@ -460,7 +499,7 @@ ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
     <div class="hub-empty" id="hub-empty" hidden><p>${esc(copy.empty)}</p><button class="btn btn-ghost" id="hub-clear" type="button">${esc(copy.clear)}</button></div>
     <p class="hub-more-wrap"><button class="btn btn-primary" id="hub-more" type="button"${visible.length > PRERENDER ? "" : " hidden"}>${esc(copy.loadMore)}</button></p>
 </main>
-<footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">Legal</a> · <a href="${OUT}/rss${sfx}.xml">RSS</a> · <a href="${OUT}/feed.json">JSON feed</a></p></footer>
+<footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">Legal</a> · <a href="${OUT}/rss${sfx}.xml">RSS</a> · <a href="${OUT}/feed${sfx}.json">JSON feed</a></p></footer>
 <dialog class="hub-dialog" id="hub-dialog" aria-label="${esc(copy.share)}"><form method="dialog"><button class="hub-close" value="close" aria-label="${esc(copy.close)}">×</button></form><div id="hub-dialog-body"></div></dialog>
 <script>window.SocialHubCopy = ${JSON.stringify(hubCopy).replace(/</g, "\\u003c")};</script>
 <script src="js/social-hub-card.js?v=${version("js/social-hub-card.js")}"></script>
@@ -679,9 +718,10 @@ function postPages(posts, asOf) {
   const groups = {};
   posts.forEach((post) => { if (post.group) (groups[post.group] = groups[post.group] || []).push(post); });
   const files = {};
+  const shownIn = {};
   posts.forEach((post) => {
     const siblings = post.group ? groups[post.group].slice().sort((a, b) => Object.keys(LANGS).indexOf(a.lang) - Object.keys(LANGS).indexOf(b.lang)) : [post];
-    const related = shown.filter((other) => other.id !== post.id && other.kind === post.kind && (!post.group || other.group !== post.group))
+    const related = (shownIn[post.lang] = shownIn[post.lang] || forLang(shown, post.lang)).filter((other) => other.id !== post.id && other.kind === post.kind && (!post.group || other.group !== post.group))
       .sort((a, b) => (a.lang === post.lang ? 0 : 1) - (b.lang === post.lang ? 0 : 1)).slice(0, 6);
     files[card.postPath(post)] = postPage(post, siblings, related, asOf);
   });
@@ -689,10 +729,14 @@ function postPages(posts, asOf) {
 }
 
 function outputs(posts, asOf) {
-  const files = { [OUT + "/feed.json"]: feedJson(posts, asOf), [OUT + "/captions.json"]: captionsJson(posts), "sitemap-social.xml": sitemap(posts, asOf) };
+  const files = { "sitemap-social.xml": sitemap(posts, asOf) };
   Object.keys(LANGS).forEach((lang) => {
-    files[card.pageFor(lang)] = page(lang, posts, asOf);
-    files[OUT + "/rss" + (lang === "en" ? "" : "-" + lang) + ".xml"] = rss(lang, posts, asOf);
+    const sfx = lang === "en" ? "" : "-" + lang;
+    const shown = forLang(posts, lang);
+    files[OUT + "/feed" + sfx + ".json"] = feedJson(shown, asOf);
+    files[OUT + "/captions" + sfx + ".json"] = captionsJson(shown);
+    files[card.pageFor(lang)] = page(lang, shown, asOf);
+    files[OUT + "/rss" + sfx + ".xml"] = rss(lang, shown, asOf);
   });
   return Object.assign(files, postPages(posts, asOf));
 }
@@ -753,4 +797,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };
+module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };
