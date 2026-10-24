@@ -88,7 +88,7 @@
     <script>SiteLook.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/site-look.css?v=20261006d">
+    <link rel="stylesheet" href="css/site-look.css?v=20261104a">
     <style>
         :root { --bg: #eef2f4; --card: #fff; --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; }
         html.dark-mode { --bg: #10161d; --card: #1a2430; --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; color-scheme: dark; }
@@ -118,6 +118,7 @@
     </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 <header>
     <a class="brand" href="index.html"><img class="logo" src="favicon.svg" alt="" width="36" height="36"><span translate="no">Carlos A. Muñoz<small>carlosandmunoz.com</small></span></a>
     <div class="lang-wrap notranslate" id="langWrap">
@@ -127,7 +128,7 @@
         <div class="lang-menu" id="langMenu"></div>
     </div>
 </header>
-<main>
+<main id="main" tabindex="-1">
     <p class="muted">carlosandmunoz.com</p>
     <h1>Accessibility statement</h1>
     <p>Carlos A. Muñoz wants everyone to be able to use this site. This statement says what the site aims for, how it is checked, what does not work yet, and how to tell us about a barrier.</p>
@@ -154,6 +155,7 @@
         <ul>
             <li>The <a href="qa-lab.html">QA regression lab</a> runs six accessibility cases, A11Y-01 to A11Y-06, in the browser. They check that axe-core 4.10 finds no serious or critical WCAG 2 A or AA problem on the CV; that the CV has one main landmark and a heading with the name; that the theme button takes keyboard focus and the profile photo has a text alternative; and that the guided tours of the CV, the studio, and the lab open as dialogs, take keyboard focus, and close with Escape.</li>
             <li>The same cases run in Playwright (<code>tests/a11y.spec.js</code>) and in Cypress with cypress-axe (<code>cypress/e2e/a11y_spec.cy.js</code>). The full-page axe-core scan of the CV leaves out color contrast. Contrast is scanned on the CV tour card.</li>
+            <li>Playwright also checks that the skip link is the first thing the keyboard reaches and moves focus to the main content, that the language menus work with the keyboard alone, and that the SDLC studio's scanning beam does not play when the reduce motion setting is on.</li>
             <li>The site's own <a href="qa-review.html">URL Review</a> was run against carlosandmunoz.com on 2026-10-24 and scored 100 for accessibility. Its accessibility checks run axe-core on the rendered pages, and look for a main landmark, one h1 per page, blocked zoom, frames without a title, a positive tabindex, and sideways scrolling on a phone.</li>
             <li>Automated checks find only part of the barriers people meet. They do not replace use with a keyboard and a screen reader.</li>
         </ul>
@@ -162,9 +164,12 @@
     <section class="sheet" id="works" aria-labelledby="works-title">
         <h2 id="works-title">What works</h2>
         <ul>
-            <li>Apart from the gaps below, links, buttons, and form fields work with a keyboard. The guided tours and the enlarged profile photo open as dialogs and close with Escape.</li>
+            <li>Links, buttons, and form fields work with a keyboard. The guided tours and the enlarged profile photo open as dialogs and close with Escape.</li>
+            <li>Each page starts with a "Skip to main content" link. It appears when it takes keyboard focus and moves focus to the main content.</li>
+            <li>The language menus open with Enter, Space, or the down arrow. The arrow keys, Home, and End move between languages, and Escape closes the menu and returns focus to the language button.</li>
             <li>Keyboard focus is visible. The CV draws its own focus outline. The other pages keep the browser's focus ring.</li>
             <li>Each page has a main landmark.</li>
+            <li>When the reduce motion setting is on, the CV, the QA lab, the SDLC studio, and the URL Review pages stop their animations. The guided tours stop their pulsing highlight and show their short clips at the last frame, the studio's scanning beam does not play, and its runner drawer opens without sliding.</li>
             <li>Light and dark themes.</li>
             <li>Six languages: English, Spanish, Portuguese, German, French, and Italian.</li>
             <li>The CV downloads as plain text, Word, and JSON, besides PDF and JPG.</li>
@@ -178,9 +183,6 @@
             <li>The PDF and JPG downloads of the CV are images of the page. A screen reader cannot read their text. Use the plain text, Word, or JSON download instead.</li>
             <li>The CV is written by hand in all six languages. On the QA lab, the SDLC studio, the URL Review pages, and this page, other languages come from Google machine translation, so the text may read awkwardly. The URL Review pages in Spanish, Portuguese, German, French, and Italian have a hand-written headline and consent screen; the rest of each page is machine translated.</li>
             <li>The clips have no audio and no captions. Each clip page has a short written description, not a full list of the steps. The same steps are written out in the guided tours of the QA lab and the SDLC studio.</li>
-            <li>The SDLC studio does not check the reduce motion setting, so its scanning animation always plays. The QA lab stops its pulsing tour highlight and its runner dot when the setting is on. The CV and the URL Review pages also cut their animations when it is on.</li>
-            <li>There is no skip link. Keyboard users tab through the header before they reach the main content.</li>
-            <li>On the URL Review pages, the guide, and the disclaimers, the choices in the language menu cannot be reached with the keyboard. Add <code>?lang=es</code>, or another language code, to the address instead.</li>
             <li>The CV's contact widget is left out of the automated axe-core scan.</li>
             <li>Google Translate and PayPal's checkout, which the payment page opens, are run by those companies. This site cannot fix barriers inside them.</li>
         </ul>
@@ -210,7 +212,7 @@
 
     <p class="muted"><a href="index.html">Interactive CV</a> · <a href="qa-lab.html">QA lab</a> · <a href="simulador.html">SDLC studio</a> · <a href="qa-review.html">URL Review</a> · <a href="qa-review-legal.html">Privacy and disclaimers</a></p>
 </main>
-<script src="js/site-i18n.js?v=20261028b"></script>
+<script src="js/site-i18n.js?v=20261104a"></script>
 <script>
 (function () {
     if (!window.SiteI18n) return;
@@ -231,23 +233,7 @@
         option.onclick = () => SiteI18n.selectLanguage(meta.code);
         list.appendChild(option);
     });
-    const toggle = document.getElementById("langToggle");
-    const show = (open) => {
-        menu.style.display = open ? "block" : "none";
-        toggle.setAttribute("aria-expanded", String(open));
-    };
-    toggle.setAttribute("aria-expanded", "false");
-    toggle.onclick = (event) => {
-        event.stopPropagation();
-        show(menu.style.display !== "block");
-    };
-    document.addEventListener("click", () => show(false));
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && menu.style.display === "block") {
-            show(false);
-            toggle.focus();
-        }
-    });
+    SiteI18n.bindMenu(wrap, document.getElementById("langToggle"), menu, (open) => { menu.style.display = open ? "block" : "none"; });
     SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));
 })();
 </script>

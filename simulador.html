@@ -210,6 +210,9 @@
             82% { opacity: .45; }
             100% { left: 110%; opacity: 0; }
         }
+        @media (prefers-reduced-motion: reduce) {
+            .scanning > .laser { animation: none; }
+        }
         .ticket-console, .agent-console {
             display: none;
             background: var(--console);
@@ -395,8 +398,8 @@
         .lang-wrap.open .lang-menu { display: flex; }
         .lang-search { width: 100%; box-sizing: border-box; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 12px; }
         .lang-options-list { display: flex; flex-direction: column; gap: 4px; max-height: calc(6 * 1.75rem + 5 * 0.25rem); overflow-y: auto; }
-        .lang-option { display: flex; align-items: center; gap: 8px; min-height: 1.75rem; padding: 2px 4px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .lang-option:hover { background: var(--card); }
+        .lang-option { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 1.75rem; padding: 2px 4px; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+        .lang-option:hover, .lang-option:focus-visible { background: var(--card); }
         .lang-option img { width: 18px; height: 18px; border-radius: 50%; }
         .runner-edge {
             position: fixed; right: 0; top: 42%; z-index: 40; border: 0; border-radius: 8px 0 0 8px;
@@ -411,6 +414,9 @@
             display: flex; flex-direction: column;
         }
         .runner-drawer.open { transform: none; }
+        @media (prefers-reduced-motion: reduce) {
+            .runner-drawer { transition: none; }
+        }
         .runner-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px; border-bottom: 1px solid var(--line); }
         .runner-tabs button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; }
         .runner-tabs button.on { background: #0d6e76; color: #fff; border-color: #0d6e76; }
@@ -527,9 +533,10 @@
             .flow-grid, .release-grid { grid-template-columns: 1fr; }
         }
     </style>
-    <link rel="stylesheet" href="css/site-look.css?v=20261006d">
+    <link rel="stylesheet" href="css/site-look.css?v=20261104a">
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 <header class="topbar">
     <div class="brand">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#0d6e76"/><path d="M7 12l3 3 7-7" stroke="#fff" stroke-width="2"/></svg>
@@ -576,7 +583,7 @@
         <a href="https://github.com/kaanmuar/kaanmuar.github.io/tree/main/tests" target="_blank" rel="noopener noreferrer">Test suite on GitHub</a>
         <a href="accessibility.html">Accessibility</a>
     </aside>
-    <main class="workspace">
+    <main id="main" class="workspace" tabindex="-1">
         <p class="studio-lead">The board chips open the same tickets in Jira, Azure DevOps, Monday, Trello, Linear, Asana, and MS Project. The sprint chips include Backlog. Sprint report keeps the earlier studio runs. Design files open from a ticket’s Resources tab. <a href="media/sdlc-studio-running.html">Watch a sprint</a>. <a href="media/sdlc-studio-tour.html">Watch the tour</a>.</p>
         <noscript><p class="studio-lead">The studio runs in the browser and needs JavaScript. It walks one sprint through four agents: Ticket Steward rewrites the story on Jira, Azure DevOps, Monday, Trello, Linear, Asana, MS Project, or Backlog; Test Designer writes Gherkin and Xray cases; Automation Engineer generates Playwright, Cypress, and Robot scripts; Release Verifier checks the Definition of Done. It is free and needs no account. <a href="media/sdlc-studio-running.html">Watch a sprint</a> or open the <a href="qa-lab.html">CV regression lab</a>.</p></noscript>
         <div class="phase-banner" id="banner">Explore the board, open any ticket, then start the four-agent sprint.</div>
@@ -587,7 +594,7 @@
 <div class="log" id="log"><div><b>SYSTEM</b> Sprint 24 loaded. Interactive CV delivery is on the board. Four agents standing by.</div></div>
 
 <button class="runner-edge" id="runner-edge" type="button">Runners</button>
-<aside id="runner-drawer" class="runner-drawer" aria-label="Native runner views">
+<aside id="runner-drawer" class="runner-drawer" aria-label="Native runner views" inert>
     <div class="m-head" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)">
         <strong>Native runners</strong>
         <button class="btn btn-ghost" type="button" id="runner-close">Close</button>
@@ -629,9 +636,9 @@
     <div class="modal" id="modal"></div>
 </div>
 
-    <script src="js/site-i18n.js?v=20261024b"></script>
+    <script src="js/site-i18n.js?v=20261104a"></script>
     <script src="js/site-glossary.js?v=20261102a"></script>
-    <script src="js/site-tour.js?v=20261012a"></script>
+    <script src="js/site-tour.js?v=20261104a"></script>
     <script>
 const AGENTS = [
     { id: 'a1', name: 'Ticket Steward', role: 'Reads and rewrites the stories on the board' },
@@ -2819,7 +2826,7 @@ async function runSprint() {
         if (wrap) wrap.classList.add('active-review');
         if (card) {
             card.classList.add('pulse');
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
         }
         const hosts = [boardConsole];
         await agentThink(hosts, 'A1', `opening ${t.key} · where ${stageLabel(t.column)} · when Sprint 24 review starts`);
@@ -3145,8 +3152,10 @@ function mountLanguageMenu() {
         list.innerHTML = '';
         SiteI18n.orderedLanguages().forEach((meta) => {
             if (!SiteI18n.matchesQuery(meta, query)) return;
-            const option = document.createElement('div');
+            const option = document.createElement('button');
+            option.type = 'button';
             option.className = 'lang-option';
+            option.lang = meta.code;
             option.dataset.lang = meta.code;
             option.innerHTML = `<img src="${SiteI18n.flagUrl(meta.code)}" alt=""><span>${meta.native}</span>`;
             option.onclick = () => {
@@ -3160,14 +3169,11 @@ function mountLanguageMenu() {
     menu.innerHTML = '<input class="lang-search" type="search" placeholder="Search language" aria-label="Search language"><div class="lang-options-list"></div>';
     const search = menu.querySelector('.lang-search');
     search.addEventListener('input', () => render(search.value));
-    search.addEventListener('click', (e) => e.stopPropagation());
     render('');
-    toggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        wrap.classList.toggle('open');
-        if (wrap.classList.contains('open')) track('sim_language_menu', 'Simulator', 'Opened');
+    SiteI18n.bindMenu(wrap, toggle, menu, (open) => {
+        if (open && !wrap.classList.contains('open')) track('sim_language_menu', 'Simulator', 'Opened');
+        wrap.classList.toggle('open', open);
     });
-    document.addEventListener('click', () => wrap.classList.remove('open'));
     SiteI18n.resolve().then((lang) => {
         syncFlag(lang);
         document.documentElement.lang = lang || 'en';
@@ -3192,12 +3198,18 @@ mountLanguageMenu();
 
 function openStudioRunners() {
     const drawer = document.getElementById('runner-drawer');
-    if (drawer) drawer.classList.add('open');
+    if (drawer) {
+        drawer.classList.add('open');
+        drawer.inert = false;
+    }
     renderStudioRunners();
 }
 function closeStudioRunners() {
     const drawer = document.getElementById('runner-drawer');
-    if (drawer) drawer.classList.remove('open');
+    if (drawer) {
+        drawer.classList.remove('open');
+        drawer.inert = true;
+    }
 }
 function renderStudioRunners(active) {
     const tabs = document.getElementById('runner-tabs');

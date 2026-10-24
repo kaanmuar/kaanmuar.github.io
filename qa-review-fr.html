@@ -352,7 +352,7 @@
     <script>SiteLook.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/site-look.css?v=20261006d">
+    <link rel="stylesheet" href="css/site-look.css?v=20261104a">
     <link rel="stylesheet" href="css/qa-review-folds.css?v=20261020a">
     <link rel="stylesheet" href="css/qa-review-live.css?v=20261028b">
     <link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a">
@@ -399,8 +399,8 @@
         .lang-wrap.open .lang-menu { display: flex; }
         .lang-search { width: 100%; box-sizing: border-box; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 12px; }
         .lang-options-list { display: flex; flex-direction: column; gap: 4px; max-height: calc(6 * 1.75rem + 5 * 0.25rem); overflow-y: auto; }
-        .lang-option { display: flex; align-items: center; gap: 8px; min-height: 1.75rem; padding: 2px 4px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .lang-option:hover { background: var(--panel-2); }
+        .lang-option { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 1.75rem; padding: 2px 4px; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+        .lang-option:hover, .lang-option:focus-visible { background: var(--panel-2); }
         .lang-option img { width: 18px; height: 18px; border-radius: 50%; }
         #google_translate_element, .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt, iframe.skiptranslate, .goog-te-gadget { display: none !important; visibility: hidden !important; height: 0 !important; }
         html, body { top: 0 !important; }
@@ -1203,6 +1203,7 @@
     </style>
 </head>
 <body class="preview-copy">
+<a class="skip-link" href="#review-app" lang="fr" translate="no">Aller au contenu principal</a>
 <div class="mark" id="watermark" aria-hidden="true"></div>
 <div class="print-mark" id="print-mark" aria-hidden="true"></div>
 <header class="topbar">
@@ -1227,7 +1228,7 @@
     </div>
 </header>
 <div id="gate" class="gate">
-    <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="gate-title" tabindex="-1">
         <div class="gate-head">
             <div>
                 <img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36">
@@ -1342,7 +1343,7 @@
         <div class="live-main" data-live-app><noscript><p class="live-lede" lang="fr" translate="no">Les Live Reports ont besoin de JavaScript pour s’ouvrir. Au 24 octobre 2026, la série compte 263 sites publics dans 27 secteurs, analysés depuis le 19 octobre 2026 par la même analyse que chacun peut lancer ; les nouvelles analyses s’ajoutent par lot chaque jour. Le score global moyen est de 75 sur 100 : SEO 67, GEO 84, analytics 83, sécurité 66, accessibilité 77 et performance 78. Les meilleurs scores globaux sont MDN Web Docs 95, CA.gov 92, GOV.UK 92 et GitHub Docs 91. La série couvre des portails publics comme GOV.UK, GOV.CO et l’Alcaldía de Bogotá ; des gouvernements régionaux comme CA.gov, la Generalitat de Catalunya et la Gobernación del Valle del Cauca ; des rédactions comme la BBC, The Guardian et El País ; des banques comme Bancolombia et Davivienda ; des universités comme le MIT, Stanford et l’Universidad de los Andes ; des projets open source comme Python.org, Node.js et Kubernetes ; et des réseaux de transport comme TransMilenio et le Metro de Medellín. Chaque rapport est une analyse automatisée de pages publiques, un point de départ et non un verdict.</p></noscript></div>
     </div>
 </section>
-<main id="review-app" inert>
+<main id="review-app" tabindex="-1" inert>
     <div class="ribbon" aria-hidden="true">
         <div class="ribbon-track">
             <span>Functional</span><span>Content</span><span>Links</span><span>Accessibility</span><span>Security</span><span>Privacy</span><span>SEO</span><span>GEO</span><span>Performance</span><span>Load</span><span>Mobile</span><span>Internationalization</span><span>Resilience</span><span>Compatibility</span>
@@ -1790,9 +1791,9 @@
     </div>
 </div>
 <script>try{localStorage.setItem("cv-preferred-lang","fr")}catch(e){}</script>
-<script src="js/site-i18n.js?v=20261024b"></script>
+<script src="js/site-i18n.js?v=20261104a"></script>
 <script src="js/site-glossary.js?v=20261102a"></script>
-<script src="js/site-tour.js?v=20261023a"></script>
+<script src="js/site-tour.js?v=20261104a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261031c"></script>
 <script src="js/qa-review-deal.js?v=20261102a"></script>
@@ -1800,7 +1801,7 @@
 <script src="js/qa-review-ask.js?v=20261024c"></script>
 <script src="js/qa-review-progress.js?v=20261024a"></script>
 <script src="js/qa-review-compare-copy.js?v=20261103a"></script>
-<script src="js/qa-review.js?v=20261103a"></script>
+<script src="js/qa-review.js?v=20261104a"></script>
 <script src="js/qa-review-multi.js?v=20261024a"></script>
 <script src="js/url-suggest.js?v=20261024b"></script>
 <script src="js/qa-review-live.js?v=20261029d"></script>

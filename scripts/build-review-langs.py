@@ -16,7 +16,7 @@ import pathlib
 import re
 import sys
 
-from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, FACTS, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE
+from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, FACTS, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE, SKIP
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BASE = "https://carlosandmunoz.com/"
@@ -244,6 +244,7 @@ def build(source, code, data):
     s = swap(s, '"url": "https://carlosandmunoz.com/qa-review.html",\n                "applicationCategory"', f'"url": "{url}",\n                "applicationCategory"')
     s = swap(s, '"item": "https://carlosandmunoz.com/qa-review.html"', f'"item": "{url}"')
     s = swap(s, '"url": "https://carlosandmunoz.com/qa-review.html#service-facts"', f'"url": "{url}#service-facts"')
+    s = swap(s, '<a class="skip-link" href="#review-app">Skip to main content</a>', f'<a class="skip-link" href="#review-app" lang="{code}" translate="no">{SKIP[code]}</a>')
     s = swap(s, '<div class="brand"><a href="qa-review.html">', f'<div class="brand"><a href="{page}">')
     s = swap(s, '<a class="btn btn-ghost" href="qa-review-social.html">', f'<a class="btn btn-ghost" href="qa-review-social-{code}.html">')
     s = swap(s, 'href="qa-review-pay.html?purpose=report"', f'href="qa-review-pay-{code}.html?purpose=report"')

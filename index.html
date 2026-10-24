@@ -86,12 +86,12 @@
     <!-- Compiled Tailwind CSS (see `npm run build:css`) -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="css/cv.css?v=20261024c">
-    <link rel="stylesheet" href="css/site-look.css?v=20261006d">
+    <link rel="stylesheet" href="css/site-look.css?v=20261104a">
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
     <script>SiteLook.boot();</script>
-    <script src="js/site-i18n.js?v=20261024b" defer></script>
+    <script src="js/site-i18n.js?v=20261104a" defer></script>
     <!-- Google Fonts for typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -323,6 +323,7 @@
     </script>
 </head>
 <body data-author="Carlos A. Muñoz">
+<a class="skip-link" href="#main" data-translate-key="skip_to_main">Skip to main content</a>
 <div id="print-content" style="display: none;" aria-hidden="true"></div>
 
 <!-- =================================================================
@@ -457,7 +458,7 @@
             </aside>
 
             <!-- Main Content (Right Column) -->
-            <main class="w-full p-6 main-content rounded-b-lg md:rounded-b-none md:rounded-r-lg">
+            <main id="main" tabindex="-1" class="w-full p-6 main-content rounded-b-lg md:rounded-b-none md:rounded-r-lg">
                 <!-- Page Header and Controls -->
                 <!--<div id="page-header-controls" class="flex justify-between items-center">-->
                 <div id="page-header-controls" class="flex justify-between items-center">
@@ -837,7 +838,7 @@
 <!-- =================================================================
 |                         APPLICATION JAVASCRIPT                      |
 ================================================================== -->
-<script src="js/cv-data.js?v=20261028t"></script>
+<script src="js/cv-data.js?v=20261104a"></script>
 <script type="module" src="js/cv-app.js?v=20261029q"></script>
 </body>
 </html>
