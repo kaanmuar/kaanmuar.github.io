@@ -3021,7 +3021,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       const records = reviewSnap.docs.map((doc) => doc.data());
       const picked = reviewPublish.selectPublishable(records, unlisted);
       const until = records.length ? records[records.length - 1].createdAt : since;
-      const comparisons = reviewPublish.publicComparisons(rivalSnap.docs.map((doc) => doc.data()), unlisted);
+      const comparisons = reviewPublish.publicComparisons(rivalSnap.docs.map((doc) => doc.data()), unlisted)
+        .filter((row) => !rivals.shady(row.host))
+        .map((row) => Object.assign(row, { rivals: row.rivals.filter((rival) => !rivals.shady(rival.host)) }))
+        .filter((row) => row.rivals.length);
       res.status(200).json({ since, until, read: records.length, held: picked.held, unlisted, reports: picked.reports, comparisons });
     } catch (error) {
       console.error("Publishable reviews failed:", error);
