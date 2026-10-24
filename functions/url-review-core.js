@@ -3691,6 +3691,8 @@ function previewReport(report) {
       securityTxt: !!kit.securityTxt
     };
   }
+  // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
+  delete copy.compare;
   copy.preview = true;
   return copy;
 }
