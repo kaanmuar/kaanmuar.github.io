@@ -91,12 +91,10 @@
     <script src="js/site-look.js"></script>
     <script>SiteLook.boot();</script>
     <script src="js/site-i18n.js?v=20261028a" defer></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js" integrity="sha384-NaWTHo/8YCBYJ59830LTz/P4aQZK1sS0SneOgAvhsIl3zBu8r9RevNg5lHCHAuQ/" crossorigin="anonymous"></script>
-
     <!-- Google Fonts for typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://ipwho.is" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
 
     <!-- Structured Data (JSON-LD) for Rich Snippets -->
@@ -337,7 +335,7 @@
                 <!-- Profile Header -->
                 <div class="flex flex-col items-center">
                     <div class="relative">
-                        <img id="profile-photo" src="assets/profile.jpg?v=20260925" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400 cursor-pointer" alt="Profile photo of Carlos Muñoz Ardila" width="140" height="140" tabindex="0" role="button" aria-label="View larger profile photo">
+                        <img id="profile-photo" src="assets/profile.jpg?v=20260925" srcset="assets/profile-280.jpg?v=20261024 279w, assets/profile.jpg?v=20260925 360w" sizes="140px" class="w-[140px] h-[140px] object-cover rounded-full border-4 border-gray-400 cursor-pointer" alt="Profile photo of Carlos Muñoz Ardila" width="140" height="140" tabindex="0" role="button" aria-label="View larger profile photo">
                         <span class="trademark" data-trademark role="img" aria-label="Trademark, CAM"><span class="trademark-seal" data-count="3">CAM</span></span>
                     </div>
                     <div class="mt-5 text-center">
@@ -825,6 +823,6 @@
 |                         APPLICATION JAVASCRIPT                      |
 ================================================================== -->
 <script src="js/cv-data.js?v=20261028s"></script>
-<script type="module" src="js/cv-app.js?v=20261028c"></script>
+<script type="module" src="js/cv-app.js?v=20261028d"></script>
 </body>
 </html>

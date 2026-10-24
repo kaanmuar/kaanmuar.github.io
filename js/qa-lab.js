@@ -1182,6 +1182,7 @@
         const files = [];
         const proto = win.HTMLAnchorElement.prototype;
         const origClick = proto.click;
+        await cvApp(cv)._loadExportLibs();
         const realCanvas = win.html2canvas;
         const realAlert = win.alert;
         proto.click = function () {
