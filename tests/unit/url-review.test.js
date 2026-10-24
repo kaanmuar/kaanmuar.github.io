@@ -2136,6 +2136,13 @@ test("a review can ask for a language and stay under the start path", () => {
     "https://example.org/docs/guide/install",
     "https://example.org/docs/guide/next"
   ]);
+  const found = core.pagesFound([
+    { url: "https://example.org/", requested: "https://example.org/", inspect: { links: ["https://example.org/a", "https://example.org/b", "https://example.org/report.pdf"] } },
+    { url: "https://example.org/a/", requested: "https://example.org/a", inspect: { links: ["https://example.org/c", "https://example.org/"] } },
+    { url: "https://example.org/b", requested: "https://example.org/b", error: "timeout", inspect: null }
+  ], ["https://example.org/rendered"], { urls: ["https://example.org/c", "https://example.org/d", "https://other.example/e", "https://example.org/sitemap-2.xml"], partial: true }, "https://example.org/", "");
+  assert.deepEqual(found, { count: 6, partial: true });
+  assert.equal(core.pagesFound([{ url: "https://example.org/docs/guide", inspect: { links: ["https://example.org/docs/guide/x", "https://example.org/about"] } }], null, { urls: [] }, "https://example.org/docs/guide", "/docs/guide").count, 2);
   const record = core.intakeRecord(es, { id: "r", status: "complete" }, {});
   assert.equal(record.pageLang, "es");
   assert.equal(record.section, true);
