@@ -1143,7 +1143,7 @@
                     <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg><span class="tg-text"><b class="tg-title" data-tg="pay" lang="es" translate="no">Pago y tus derechos</b><span class="tg-gist" data-tg="pay" lang="es" translate="no">La primera revisión está incluida; lo demás se paga antes de empezar. No renuncias a los derechos de desistimiento que la ley mantiene.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
                     <div class="tg-body">
                         <label class="check" lang="es" translate="no"><input type="checkbox" name="t7"> La primera revisión incluida es de 20 páginas y 2 enlaces de profundidad. Una revisión más amplia o más profunda, y cada ejecución posterior, pide un pago antes de empezar, salvo que la cuenta tenga una asignación gratuita o de prueba, un cupón o un pase otorgado por el operador. El monto se muestra en ese momento, en la página de pago. Usar otro nombre u otro correo no evita ese cobro. Las revisiones detenidas se guardan. Tres detenciones en un día pausan nuevas revisiones.</label>
-                        <label class="check" lang="es" translate="no"><input type="checkbox" name="t8"> El informe se muestra una vez, y las ejecuciones con sesión iniciada aparecen en la página de mi cuenta. Verlo, descargarlo, imprimirlo o compartirlo otra vez pide un pago, salvo que la cuenta tenga una asignación gratuita o de prueba, un cupón o un pase otorgado por el operador. El monto se muestra entonces. El inicio de cada caso propuesto sigue legible. El resto del caso sigue difuminado hasta que se confirme ese pago. Una copia difuminada de las puntuaciones y los hallazgos llega a mi correo cuando termina la revisión.</label>
+                        <label class="check" lang="es" translate="no"><input type="checkbox" name="t8"> El informe se muestra una vez, y las ejecuciones con sesión iniciada aparecen en la página de mi cuenta. El informe completo solo se abre para la cuenta con sesión iniciada que lo ejecutó. Cualquier otra persona con el enlace ve la vista previa difuminada y se le pide iniciar sesión. Verlo, descargarlo o imprimirlo otra vez pide un pago, salvo que la cuenta tenga una asignación gratuita o de prueba, un cupón o un pase otorgado por el operador. El monto se muestra entonces. El inicio de cada caso propuesto sigue legible. El resto del caso sigue difuminado hasta que se confirme ese pago. Una copia de las puntuaciones y los hallazgos llega a mi correo cuando termina la revisión, difuminada salvo que el informe esté pagado o mi cuenta sea gratuita.</label>
                         <label class="check" lang="es" translate="no"><input type="checkbox" name="t10"> Pido que el servicio empiece durante cualquier plazo de desistimiento. Reconozco que un consumidor en la Unión Europea, según la Directiva 2011/83/UE, artículo 16, y un consumidor en el Reino Unido, según las Consumer Contracts Regulations 2013, regulación 36(2), pierde el derecho de desistimiento solo cuando el servicio se ha prestado por completo. No renuncio a un derecho de desistimiento que esas normas mantengan.</label>
                     </div>
                 </details>
@@ -1598,7 +1598,7 @@
         <h2 id="pay-title">This report was already shown</h2>
         <div id="pay-deal" hidden></div>
         <p class="pay-price" id="pay-price">—</p>
-        <p class="muted" id="pay-detail">The amount for seeing, downloading, printing, or sharing this report again is shown here.</p>
+        <p class="muted" id="pay-detail">The amount for seeing, downloading, or printing this report again, on the account that ran it, is shown here.</p>
         <p class="status" id="pay-note" role="status"></p>
         <div class="actions">
             <button class="btn btn-ghost" id="pay-close" type="button">Close</button>
@@ -1629,7 +1629,7 @@
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-ask.js?v=20261023b"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261031e"></script>
+<script src="js/qa-review.js?v=20261031s"></script>
 <script src="js/url-suggest.js?v=20261023b"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
