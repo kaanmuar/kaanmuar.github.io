@@ -54,3 +54,42 @@ test("admin site visits use the same source rule", () => {
   const row = { query: "?utm_source=linkedin", referrerHost: "" };
   assert.equal(reviewOpenSource(row), visitSource(row));
 });
+
+test("a tagged visit reaches site_events with its query and a server time", async () => {
+  const vm = require("vm");
+  const source = fs.readFileSync(path.join(__dirname, "../../js/site-analytics.js"), "utf8")
+    .replace(/import\('https:\/\/www\.gstatic\.com\/firebasejs\/[^']+\/(firebase-[a-z]+)\.js'\)/g, "loadFirebase('$1')");
+  const added = [];
+  const firestore = {
+    getFirestore: () => "db",
+    collection: (db, name) => name,
+    serverTimestamp: () => "server-time",
+    addDoc: async (collection, row) => added.push({ collection, row })
+  };
+  const app = { getApps: () => [], initializeApp: () => ({}) };
+  const store = {};
+  const window = {
+    location: { hostname: "carlosandmunoz.com", pathname: "/qa-review.html", search: "?utm_source=linkedin&signin=abc", href: "" },
+    history: { replaceState() {} },
+    innerWidth: 1280
+  };
+  window.top = window;
+  window.self = window;
+  const context = {
+    window,
+    document: { referrer: "", title: "QA-lab URL Review", documentElement: { lang: "en" }, addEventListener() {} },
+    navigator: { webdriver: false, languages: ["en"] },
+    sessionStorage: { getItem: (key) => store[key] || null, setItem: (key, value) => { store[key] = value; } },
+    loadFirebase: async (name) => (name === "firebase-app" ? app : firestore),
+    URL, URLSearchParams, Intl
+  };
+  vm.runInNewContext(source, context);
+  window.SiteAnalytics.bind("review");
+  assert.doesNotThrow(() => window.SiteAnalytics.noteVisit());
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(added.length, 1);
+  assert.equal(added[0].collection, "site_events");
+  assert.equal(added[0].row.kind, "visit");
+  assert.equal(added[0].row.query, "?utm_source=linkedin");
+  assert.equal(added[0].row.createdAt, "server-time");
+});
