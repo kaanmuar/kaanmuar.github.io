@@ -193,6 +193,7 @@ const STATUS_NOTE = {
   "no-launcher": "The chat loaded, but no launcher button was found to open it, so nothing was sent.",
   "not-opened": "The chat button was pressed, but the chat did not open, so nothing was sent.",
   "no-composer": "The chat opened, but no message box was found in it, so nothing was sent.",
+  "not-a-chat": "The site's own chat button opened a contact form, not a conversation, so nothing was sent.",
   "no-reply": "The first message got no reply within " + REPLY_MS / 1000 + " s. The script stopped there, so a person on the other end got one message.",
   failed: "The conversation could not run in the browser."
 };
