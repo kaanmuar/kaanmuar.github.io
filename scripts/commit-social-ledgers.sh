@@ -3,8 +3,15 @@
 #   scripts/commit-social-ledgers.sh "<what ran>"
 # Both the Live Reports and the Facebook Page workflows write them, so a push that loses the race is retried on
 # the new main with each ledger merged entry by entry, not overwritten.
-# The body is one function so bash has read all of it before git reset rewrites this file.
+# The social hub pages show chips read from the ledgers, so they are rebuilt and committed with them, or every PR
+# fails the hub check in CI.
+# The body is in functions so bash has read all of it before git reset rewrites this file.
 set -euo pipefail
+
+stage() {
+	node scripts/build-social-hub.js --offline
+	git add "${files[@]}" assets/social qa-review-social*.html sitemap-social.xml
+}
 
 main() {
 	local files=() file attempt saved
@@ -18,7 +25,7 @@ main() {
 
 	git config user.name "github-actions[bot]"
 	git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-	git add "${files[@]}"
+	stage
 	if git diff --cached --quiet; then
 		echo "The ledgers did not change."
 		return 0
@@ -35,7 +42,7 @@ main() {
 		for file in "${files[@]}"; do
 			node scripts/social-ledger.js --merge "$saved/$(basename "$file")" "$file"
 		done
-		git add "${files[@]}"
+		stage
 		if git diff --cached --quiet; then
 			echo "main already has these entries."
 			return 0

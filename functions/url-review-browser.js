@@ -12,6 +12,7 @@ const crypto = require("crypto");
 const dns = require("dns").promises;
 const { legalLinks, LEGAL_ANY } = require("./url-review-legal");
 const chatTalk = require("./url-review-chat-talk");
+const { registrable: siteOf } = require("./url-review-suffix");
 const { fromUrl: libraryFromUrl, fromContent: libraryFromContent, fromGlobals: libraryFromGlobals, PROBE: LIBRARY_PROBE } = require("./url-review-libraries");
 
 const AGENT_TAG = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
@@ -182,12 +183,6 @@ function coveredBy(box, targets) {
     if (target.under === true || target.under === false) return target.under;
     return (w * h) / (r.w * r.h) >= 0.2;
   });
-}
-
-function siteOf(host) {
-  const parts = String(host || "").replace(/^www\./, "").split(".");
-  if (parts.length > 2 && parts[parts.length - 1].length === 2 && /^(co|com|org|net|gov|ac|edu|or|ne)$/.test(parts[parts.length - 2])) return parts.slice(-3).join(".");
-  return parts.slice(-2).join(".");
 }
 
 function trim(text, max) {
