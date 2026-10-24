@@ -1474,6 +1474,7 @@ const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
 const reviewCompare = require("./url-review-compare");
+const reviewMarket = require("./url-review-market");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
 const accountData = require("./url-review-account-data");
@@ -3598,6 +3599,8 @@ async function runReview(req, res, placeOf) {
       depth: intake.value.depth,
       reason: intake.value.reason
     });
+    const asked = (() => { try { return urlReview.registrable(new URL(intake.value.url).hostname); } catch (error) { return ""; } })();
+    const ranksPromise = base ? reviewMarket.trancoRanks([urlReview.registrable(base.report.host), asked]).catch(() => []) : null;
     const report = await urlReview.reviewTarget(intake.value.url, {
       log: (text) => writeLine({ type: "log", text }),
       stopped: () => stopped,
@@ -3635,8 +3638,16 @@ async function runReview(req, res, placeOf) {
       writeLine({ type: "log", text: "Compared with your review of " + report.host + " from " + String(history.previousAt).slice(0, 10) + ": " + history.fixedCount + " fixed, " + history.freshCount + " new." });
     } else writeLine({ type: "log", text: "No earlier review of " + report.host + " under this email." });
     if (base) {
-      report.compare = reviewCompare.compareSites(Object.assign({ id: intake.value.compareWith }, base.report), report);
-      if (report.compare) writeLine({ type: "log", text: "Compared with your review of " + base.report.host + ": " + report.compare.rivalOnlyCount + " open problems only " + report.host + " has, " + report.compare.ownOnlyCount + " only " + base.report.host + " has, " + report.compare.shared + " both have." });
+      writeLine({ type: "log", text: "Reading the Tranco ranks and your score history for both sites." });
+      let [ownRank, rivalRank] = await ranksPromise;
+      if (urlReview.registrable(report.host) !== asked) rivalRank = await reviewMarket.trancoRank(urlReview.registrable(report.host));
+      const trail = await scoreTrail(intake.value.email, base.report.host, report);
+      report.compare = reviewCompare.compareSites(Object.assign({ id: intake.value.compareWith }, base.report), report, { ranks: { own: ownRank, rival: rivalRank }, trail });
+      if (report.compare) {
+        const rankLine = (host, side) => host + (side.rank ? " is #" + side.rank.toLocaleString("en-US") + " on Tranco" : " is outside the Tranco top million") + (side.score == null ? "" : ", presence " + side.score + "/100");
+        writeLine({ type: "log", text: "Compared with your review of " + base.report.host + ": " + report.compare.rivalOnlyCount + " open problems only " + report.host + " has, " + report.compare.ownOnlyCount + " only " + base.report.host + " has, " + report.compare.shared + " both have." });
+        writeLine({ type: "log", text: "Market presence: " + rankLine(base.report.host, report.compare.market.own) + "; " + rankLine(report.host, report.compare.market.rival) + "." });
+      }
     }
     writeLine({ type: "log", text: "Saving the report." });
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
@@ -3754,6 +3765,29 @@ async function previousRun(email, report) {
     console.error("URL review history failed:", error);
     return null;
   }
+}
+
+// The overall score of every finished review of either host under this email, oldest first, with this run last.
+async function scoreTrail(email, ownHost, report) {
+  const trail = { own: [], rival: [] };
+  try {
+    const snap = await admin.firestore().collection("url_reviews")
+      .where("email", "==", email)
+      .select("createdAt", "status", "report.id", "report.host", "report.fetchedAt", "report.insights.score.overall")
+      .limit(120)
+      .get();
+    snap.docs.map((doc) => doc.data())
+      .filter((row) => row.report && row.report.id !== report.id && row.status !== "stopped" && row.report.insights && row.report.insights.score)
+      .sort((a, b) => String(a.report.fetchedAt || a.createdAt).localeCompare(String(b.report.fetchedAt || b.createdAt)))
+      .forEach((row) => {
+        const side = row.report.host === ownHost ? trail.own : row.report.host === report.host ? trail.rival : null;
+        if (side) side.push({ at: row.report.fetchedAt || row.createdAt, overall: row.report.insights.score.overall });
+      });
+  } catch (error) {
+    console.error("URL review score trail failed:", error);
+  }
+  if (report.insights && report.insights.score) trail.rival.push({ at: report.fetchedAt, overall: report.insights.score.overall });
+  return trail;
 }
 
 exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
