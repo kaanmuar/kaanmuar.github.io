@@ -191,6 +191,39 @@ test.describe("scoring", () => {
     assert.equal(verdict(partial, "seo-sitemap"), "pass");
   });
 
+  test("noindex pages a complete sitemap leaves out are private, and need no canonical", () => {
+    const inspect = core.analyzeHtml(HTML, STRONG_HEADERS, URL_);
+    const hidden = core.analyzeHtml("<!doctype html><html lang=\"en\"><head><title>Account</title><meta name=\"robots\" content=\"noindex, nofollow\"></head><body><h1>Account</h1></body></html>", STRONG_HEADERS, URL_ + "account");
+    const pages = [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect }, { url: URL_ + "account", path: "/account", status: 200, ms: 90, depth: 1, inspect: hidden }];
+    const sitemap = { source: URL_ + "sitemap.xml", status: 200, urls: [URL_] };
+    const kept = insights.analyze({ pages, extras: { sitemap } });
+    assert.equal(verdict(kept, "seo-noindex"), "pass");
+    assert.equal(verdict(kept, "seo-canonical-missing"), "missing");
+    const listed = insights.analyze({ pages, extras: { sitemap: Object.assign({}, sitemap, { urls: [URL_, URL_ + "account"] }) } });
+    assert.equal(verdict(listed, "seo-noindex"), "risk");
+    assert.equal(verdict(insights.analyze({ pages, extras: { sitemap: Object.assign({ partial: true }, sitemap) } }), "seo-noindex"), "risk");
+    assert.equal(verdict(insights.analyze({ pages }), "seo-noindex"), "risk");
+  });
+
+  test("Cloudflare's email protection links are read as mail, not as pages", () => {
+    const html = HTML.replace("</body>", "<a href=\"/cdn-cgi/l/email-protection#95fef4f4fbf8e0f4e7d5f2f8f4fcf9bbf6faf8\">Mail</a>" +
+      "<span class=\"__cf_email__\" data-cfemail=\"0a6e6f7c4a6f726b677a666f2465786d\">[email&#160;protected]</span></body>");
+    const inspect = core.analyzeHtml(html, STRONG_HEADERS, URL_);
+    assert.equal(inspect.links.some((href) => href.indexOf("/cdn-cgi/") !== -1), false);
+    assert.deepEqual(inspect.mailtos.filter((m) => /kaanmuar|dev@/.test(m)), ["kaanmuar@gmail.com", "dev@example.org"]);
+  });
+
+  test("a self-updating tag host is not asked for an integrity hash", async () => {
+    const tag = "<script async src=\"https://www.googletagmanager.com/gtag/js?id=G-1\"></script>";
+    const run = async (head) => {
+      const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: HTML.replace("</head>", head + "</head>") } });
+      try { return (await core.reviewTarget(URL_, { browse: async () => ({ ok: false }) })).cases.find((item) => item.id === "SEC-14"); } finally { restore(); }
+    };
+    assert.equal(await run(tag), undefined);
+    const mixed = await run(tag + "<script src=\"https://cdn.example.net/lib.js\"></script>");
+    assert.match(mixed.why, /^Scripts from cdn\.example\.net load/);
+  });
+
   test("a compressed response is read as HTML even when it was not asked for", () => {
     const zlib = require("node:zlib");
     const html = Buffer.from(HTML);
@@ -324,6 +357,74 @@ test.describe("false positives from the real-run series", () => {
     } finally {
       restore();
     }
+  });
+
+  test("every sitemap robots.txt lists is read, and the read is whole only when all of them answered", async () => {
+    const map = (paths) => ({ status: 200, headers: { "content-type": "application/xml" }, body: "<urlset>" + paths.map((p) => "<url><loc>https://docs.example.org/" + p + "</loc></url>").join("") + "</urlset>" });
+    const robots = "Sitemap: https://docs.example.org/sitemap.xml\nSitemap: https://docs.example.org/sitemap-social.xml\n";
+    let restore = fakeNetwork({ "https://docs.example.org/sitemap.xml": map(["", "a"]), "https://docs.example.org/sitemap-social.xml": map(["a", "social"]) });
+    try {
+      const both = await core.readSitemap("https://docs.example.org", robots, () => false);
+      assert.deepEqual(both.urls, ["https://docs.example.org/", "https://docs.example.org/a", "https://docs.example.org/social"]);
+      assert.equal(both.partial, false);
+      assert.equal(both.source, "https://docs.example.org/sitemap.xml");
+    } finally {
+      restore();
+    }
+    restore = fakeNetwork({ "https://docs.example.org/sitemap.xml": map(["a"]) });
+    try {
+      const one = await core.readSitemap("https://docs.example.org", robots, () => false);
+      assert.deepEqual(one.urls, ["https://docs.example.org/a"]);
+      assert.equal(one.partial, true);
+    } finally {
+      restore();
+    }
+  });
+
+  test("a sitemap reached by a redirect from /sitemap.xml, or only at /sitemap-index.xml, is found", async () => {
+    const urlset = (urls) => "<?xml version=\"1.0\"?><urlset>" + urls.map((url) => "<url><loc>" + url + "</loc></url>").join("") + "</urlset>";
+    const xml = { "content-type": "text/xml; charset=UTF-8" };
+    // fiscalia.gov.co: /sitemap.xml redirects to a Yoast /sitemap_index.xml, and robots.txt names no sitemap.
+    let restore = fakeNetwork({
+      "https://www.yoast.example.org/sitemap.xml": { status: 301, headers: { location: "https://www.yoast.example.org/sitemap_index.xml", "content-type": "text/html" } },
+      "https://www.yoast.example.org/sitemap_index.xml": { status: 200, headers: xml, body: "<?xml version=\"1.0\"?><?xml-stylesheet type=\"text/xsl\" href=\"/main-sitemap.xsl\"?><sitemapindex><sitemap><loc>https://www.yoast.example.org/page-sitemap.xml</loc></sitemap></sitemapindex>" },
+      "https://www.yoast.example.org/page-sitemap.xml": { status: 200, headers: xml, body: urlset(["https://www.yoast.example.org/", "https://www.yoast.example.org/contacto/"]) }
+    });
+    try {
+      const map = await core.readSitemap("https://www.yoast.example.org", "User-agent: *\nDisallow:\n", () => false);
+      assert.equal(map.source, "https://www.yoast.example.org/sitemap.xml");
+      assert.deepEqual(map.urls, ["https://www.yoast.example.org/", "https://www.yoast.example.org/contacto/"]);
+    } finally {
+      restore();
+    }
+    // typescriptlang.org: robots.txt is 404, /sitemap.xml is 404, and /sitemap-index.xml is a valid index.
+    restore = fakeNetwork({
+      "https://www.ts.example.org/sitemap-index.xml": { status: 200, headers: { "content-type": "application/xml" }, body: "<?xml version=\"1.0\"?><sitemapindex><sitemap><loc>https://www.ts.example.org/sitemap-0.xml</loc></sitemap></sitemapindex>" },
+      "https://www.ts.example.org/sitemap-0.xml": { status: 200, headers: { "content-type": "application/xml" }, body: urlset(["https://www.ts.example.org/docs/"]) }
+    });
+    try {
+      const map = await core.readSitemap("https://www.ts.example.org", "", () => false);
+      assert.equal(map.source, "https://www.ts.example.org/sitemap-index.xml");
+      assert.deepEqual(map.urls, ["https://www.ts.example.org/docs/"]);
+    } finally {
+      restore();
+    }
+    // A sitemap named in robots.txt is trusted: the guessed index paths are not requested.
+    const asked = [];
+    restore = fakeNetwork({ "https://www.ts.example.org/sitemap-index.xml": { status: 200, headers: { "content-type": "application/xml" }, body: urlset(["https://www.ts.example.org/never"]) } });
+    const https = require("node:https");
+    const request = https.request;
+    https.request = (options, onResponse) => { asked.push(options.path); return request(options, onResponse); };
+    try {
+      const map = await core.readSitemap("https://www.ts.example.org", "Sitemap: https://www.ts.example.org/maps/main.xml\n", () => false);
+      assert.deepEqual(map.urls, []);
+      assert.deepEqual(asked, ["/maps/main.xml", "/sitemap.xml"]);
+    } finally {
+      https.request = request;
+      restore();
+    }
+    const missing = insights.analyze({ pages: [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(HTML, STRONG_HEADERS, URL_) }], extras: { sitemap: { status: 404, urls: [] } } });
+    assert.equal(missing.findings.find((item) => item.key === "seo-sitemap").evidence, "robots.txt names no sitemap, and /sitemap.xml, /sitemap_index.xml and /sitemap-index.xml returned no URLs.");
   });
 
   test("gzip bytes without content-encoding decode, and an oversized archive keeps its start", () => {
@@ -615,6 +716,27 @@ test.describe("start page reads", () => {
       assert.equal(browser.stopForRefusal(seen, 403), true);
       return { ok: true, untagged: true, timing: { load: 1800 }, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: { "content-type": "text/html" }, html: block } };
     }), /^Error: The site's bot protection refused the review \(status 403\), in the plain request and in headless Chrome\.$/);
+  });
+
+  test("a phone visit still running when the budget ends is cut, and the caller waits longer than any budget", async () => {
+    const browser = require("../../functions/url-review-browser");
+    const fs = require("node:fs");
+    const path = require("node:path");
+    assert.equal(await browser.withinBudget(Promise.resolve("read"), 50, "The phone visit"), "read");
+    let late = null;
+    const stalled = new Promise((resolve) => { late = setTimeout(() => resolve("too late"), 1000); });
+    const started = Date.now();
+    await assert.rejects(browser.withinBudget(stalled, 30, "The phone visit"), /^Error: The phone visit was still running when the browser's budget ran out$/);
+    assert.ok(Date.now() - started < 500);
+    clearTimeout(late);
+    await assert.rejects(browser.withinBudget(Promise.reject(new Error("net::ERR_ABORTED")), 50, "The phone visit"), /net::ERR_ABORTED/);
+    // #366: the caller aborted at 100 s while a pass of up to 110 s was still on the phone.
+    const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+    const wait = Number((index.match(/const BROWSER_WAIT_MS = (\d+);/) || [])[1]);
+    const limit = Number((index.match(/exports\.reviewBrowser = [\s\S]*?timeoutSeconds: (\d+)/) || [])[1]) * 1000;
+    assert.match(index, /AbortSignal\.timeout\(BROWSER_WAIT_MS\)/);
+    assert.ok(wait > browser.BUDGET_MAX_MS + 3000, "wait " + wait);
+    assert.ok(wait < limit, "reviewBrowser timeout " + limit);
   });
 
   test("a redirect to http is named as such, not as a wrong address", async () => {

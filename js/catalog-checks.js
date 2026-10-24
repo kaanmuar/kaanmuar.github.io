@@ -452,6 +452,7 @@
       var files = [];
       var proto = HTMLAnchorElement.prototype;
       var origClick = proto.click;
+      await app()._loadExportLibs();
       var realCanvas = global.html2canvas;
       proto.click = function () {
         var name = this.getAttribute('download') || '';

@@ -8,6 +8,8 @@
 
    State lives in Firestore url_review_sweep/state: { lap, pos, cursor: { cc: n }, days: { date: {done, failed} }, last }. */
 
+const url = require("url");
+
 const PER_DAY = 24;
 const REVISIT_DAYS = 182;
 const KEEP_DAYS = 14;
@@ -47,11 +49,36 @@ function hostOf(origin) {
   }
 }
 
+// The ICANN section of the Public Suffix List (publicsuffix.org/list/public_suffix_list.dat) as a
+// registrable(host): the public suffix plus one label, or "" when the host is itself a public suffix (gv.at).
+function suffixRegistrable(listText) {
+  const rules = new Set();
+  const section = String(listText || "").split("===BEGIN ICANN DOMAINS===")[1] || "";
+  section.split("===END ICANN DOMAINS===")[0].split("\n").forEach((line) => {
+    const rule = line.trim().split(/\s/)[0];
+    if (!rule || rule.startsWith("//")) return;
+    const [, mark, name] = rule.match(/^(!|\*\.)?(.*)$/);
+    rules.add((mark || "") + (url.domainToASCII(name) || name));
+  });
+  return (hostname) => {
+    const labels = String(hostname || "").replace(/\.$/, "").toLowerCase().split(".").filter(Boolean);
+    let suffix = 1;
+    for (let at = 0; at < labels.length; at += 1) {
+      const name = labels.slice(at).join(".");
+      if (rules.has("!" + name)) { suffix = labels.length - at - 1; break; }
+      if (rules.has(name) || (at + 1 < labels.length && rules.has("*." + labels.slice(at + 1).join(".")))) { suffix = labels.length - at; break; }
+    }
+    return labels.length > suffix ? labels.slice(-suffix - 1).join(".") : "";
+  };
+}
+
 // rows: [[origin, rank]] in rank order; globalDomains: registrable domains in the global top list.
-// Returns up to `limit` hosts, one per registrable domain: its www or bare host when the list has one,
-// else the bare domain, since app., login. and campus. hosts sit behind a sign-in.
-function seedHosts(rows, globalDomains, registrable, limit, cc) {
+// Returns up to `limit` hosts that `resolves(host)` accepts, one per registrable domain: its www or bare
+// host when the list has one, else the bare domain, since app., login. and campus. hosts sit behind a
+// sign-in, else the domain's most visited host when the bare domain does not resolve.
+async function seedHosts(rows, globalDomains, registrable, limit, cc, resolves) {
   const own = CC_TLD[cc] || cc;
+  const max = limit || PER_COUNTRY;
   const byDomain = new Map();
   for (const [origin] of rows) {
     const host = hostOf(origin);
@@ -61,14 +88,21 @@ function seedHosts(rows, globalDomains, registrable, limit, cc) {
     if (!domain || globalDomains.has(domain) || !(tld === own || GENERIC_TLDS.includes(tld))) continue;
     const plain = host === domain || host === "www." + domain;
     const seen = byDomain.get(domain);
-    if (!seen) {
-      if (byDomain.size >= (limit || PER_COUNTRY)) break;
-      byDomain.set(domain, { host: plain ? host : domain, plain });
-    } else if (plain && !seen.plain) {
-      Object.assign(seen, { host, plain });
-    }
+    if (!seen) byDomain.set(domain, { hosts: plain ? [host] : [domain, host], plain });
+    else if (plain && !seen.plain) Object.assign(seen, { hosts: [host], plain });
   }
-  return [...byDomain.values()].map((seed) => seed.host);
+  const seeds = [...byDomain.values()];
+  const out = [];
+  for (let at = 0; at < seeds.length && out.length < max;) {
+    const batch = seeds.slice(at, at + max - out.length);
+    at += batch.length;
+    const picked = await Promise.all(batch.map(async (seed) => {
+      for (const host of seed.hosts) if (!resolves || await resolves(host)) return host;
+      return "";
+    }));
+    out.push(...picked.filter(Boolean));
+  }
+  return out;
 }
 
 // One lap: the tier-one countries, half the rest, the tier-one countries again, the other half.
@@ -133,4 +167,4 @@ function totals(state, sinceDay) {
   return out;
 }
 
-module.exports = { PER_DAY, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, TIER1, langOf, seedHosts, lapOrder, nextSlot, intake, doneOn, tally, totals };
+module.exports = { PER_DAY, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, TIER1, langOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, intake, doneOn, tally, totals };

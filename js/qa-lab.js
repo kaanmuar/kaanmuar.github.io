@@ -1182,6 +1182,7 @@
         const files = [];
         const proto = win.HTMLAnchorElement.prototype;
         const origClick = proto.click;
+        await cvApp(cv)._loadExportLibs();
         const realCanvas = win.html2canvas;
         const realAlert = win.alert;
         proto.click = function () {
@@ -2523,6 +2524,49 @@
     }
   };
 
+  const REPORT_UI = {
+    en: {
+      title: 'Report', intro: 'The report uses the language picked here. Check the preview, then copy, print, or download it. Graphs are included.',
+      lang: 'Report language', graphs: 'Graphs', details: 'Run details', cases: 'Case results', steps: 'Where, when and how',
+      runners: 'Runner comparison', history: 'Selected history runs', analysis: 'Comparison analysis',
+      close: 'Close', copy: 'Copy', print: 'Print', download: 'Download', copied: 'Copied', copyBlocked: 'Copy blocked', preview: 'Report preview'
+    },
+    es: {
+      title: 'Informe', intro: 'El informe usa el idioma elegido aquí. Revisa la vista previa y luego cópialo, imprímelo o descárgalo. Las gráficas están incluidas.',
+      lang: 'Idioma del informe', graphs: 'Gráficas', details: 'Detalles de la ejecución', cases: 'Resultados por caso', steps: 'Dónde, cuándo y cómo',
+      runners: 'Comparación de ejecutores', history: 'Ejecuciones seleccionadas del historial', analysis: 'Análisis comparativo',
+      close: 'Cerrar', copy: 'Copiar', print: 'Imprimir', download: 'Descargar', copied: 'Copiado', copyBlocked: 'Copia bloqueada', preview: 'Vista previa del informe'
+    },
+    pt: {
+      title: 'Relatório', intro: 'O relatório usa o idioma escolhido aqui. Confira a prévia e depois copie, imprima ou baixe. Os gráficos estão incluídos.',
+      lang: 'Idioma do relatório', graphs: 'Gráficos', details: 'Detalhes da execução', cases: 'Resultados por caso', steps: 'Onde, quando e como',
+      runners: 'Comparação de executores', history: 'Execuções selecionadas do histórico', analysis: 'Análise comparativa',
+      close: 'Fechar', copy: 'Copiar', print: 'Imprimir', download: 'Baixar', copied: 'Copiado', copyBlocked: 'Cópia bloqueada', preview: 'Prévia do relatório'
+    },
+    de: {
+      title: 'Bericht', intro: 'Der Bericht nutzt die hier gewählte Sprache. Prüfen Sie die Vorschau, dann kopieren, drucken oder laden Sie ihn herunter. Diagramme sind enthalten.',
+      lang: 'Berichtssprache', graphs: 'Diagramme', details: 'Laufdetails', cases: 'Ergebnisse je Fall', steps: 'Wo, wann und wie',
+      runners: 'Runner-Vergleich', history: 'Ausgewählte Läufe aus dem Verlauf', analysis: 'Vergleichsanalyse',
+      close: 'Schließen', copy: 'Kopieren', print: 'Drucken', download: 'Herunterladen', copied: 'Kopiert', copyBlocked: 'Kopieren blockiert', preview: 'Berichtsvorschau'
+    },
+    fr: {
+      title: 'Rapport', intro: 'Le rapport utilise la langue choisie ici. Vérifiez l’aperçu, puis copiez, imprimez ou téléchargez-le. Les graphiques sont inclus.',
+      lang: 'Langue du rapport', graphs: 'Graphiques', details: 'Détails de l’exécution', cases: 'Résultats par cas', steps: 'Où, quand et comment',
+      runners: 'Comparaison des exécuteurs', history: 'Exécutions sélectionnées de l’historique', analysis: 'Analyse comparative',
+      close: 'Fermer', copy: 'Copier', print: 'Imprimer', download: 'Télécharger', copied: 'Copié', copyBlocked: 'Copie bloquée', preview: 'Aperçu du rapport'
+    },
+    it: {
+      title: 'Report', intro: 'Il report usa la lingua scelta qui. Controlla l’anteprima, poi copialo, stampalo o scaricalo. I grafici sono inclusi.',
+      lang: 'Lingua del report', graphs: 'Grafici', details: 'Dettagli dell’esecuzione', cases: 'Risultati per caso', steps: 'Dove, quando e come',
+      runners: 'Confronto degli esecutori', history: 'Esecuzioni selezionate dalla cronologia', analysis: 'Analisi comparativa',
+      close: 'Chiudi', copy: 'Copia', print: 'Stampa', download: 'Scarica', copied: 'Copiato', copyBlocked: 'Copia bloccata', preview: 'Anteprima del report'
+    }
+  };
+
+  function reportUi(lang) {
+    return REPORT_UI[lang] || REPORT_UI.en;
+  }
+
   function readReportLang() {
     try {
       const saved = localStorage.getItem(REPORT_LANG_KEY);
@@ -3243,9 +3287,25 @@
     },
 
     refreshReportPreview() {
+      const choices = this.reportChoices();
+      this.syncReportDialog(choices.lang);
       const frame = document.getElementById('report-preview');
       if (!frame) return;
-      frame.srcdoc = this.reportDocument(this.reportChoices());
+      frame.srcdoc = this.reportDocument(choices);
+    },
+
+    syncReportDialog(lang) {
+      const box = document.getElementById('report-options');
+      if (!box || box.dataset.lang === lang) return;
+      const ui = reportUi(lang);
+      box.dataset.lang = lang;
+      box.setAttribute('lang', lang);
+      box.querySelectorAll('[data-report-ui]').forEach((el) => {
+        const text = ui[el.dataset.reportUi];
+        if (text) el.textContent = text;
+      });
+      const frame = document.getElementById('report-preview');
+      if (frame) frame.title = ui.preview;
     },
 
     openReportOptions(preset) {
@@ -3777,7 +3837,7 @@
       doc.querySelectorAll('td, th').forEach((cell) => { if (cell.nextElementSibling) cell.append('\t'); });
       doc.querySelectorAll('tr, p, h1, h2, h3, h4, li, article, div').forEach((el) => el.append('\n'));
       const text = doc.body.textContent.replace(/[ \u00a0]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-      const label = btn ? btn.textContent : '';
+      const ui = reportUi(this.reportChoices().lang);
       let done = false;
       try {
         if (global.ClipboardItem && navigator.clipboard.write) {
@@ -3791,8 +3851,8 @@
         done = true;
       } catch (err) { /* clipboard blocked */ }
       if (btn) {
-        btn.textContent = done ? 'Copied' : 'Copy blocked';
-        setTimeout(() => { btn.textContent = label; }, 1600);
+        btn.textContent = done ? ui.copied : ui.copyBlocked;
+        setTimeout(() => { btn.textContent = reportUi(this.reportChoices().lang).copy; }, 1600);
       }
       return text;
     },
