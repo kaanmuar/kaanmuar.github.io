@@ -85,7 +85,7 @@
    "cap.youtube": "Todos los enlaces internos que se abrieron respondieron y los rastreadores de entrenamiento de modelos se bloquean por elección. Pero 5 rastreadores de búsqueda o respuestas de IA están bloqueados.\n\nLección: Decida por bot en robots.txt: permita los motores de respuesta por los que desea ser citado y bloquee solo los rastreadores de capacitación.\n\nUn análisis automatizado de páginas públicas el 21 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.\n\nInforme completo: https://carlosandmunoz.com/qa-review.html?live=u-mercadolibre-com-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-mercadolibre-com-co\n\nRevisiones solicitadas · Revisión de URL de QA-lab"
   },
   "u-whatsapp-com": {
-   "title.0": "whatsapp. com: 67.",
+   "title.0": "whatsapp.com: 67.",
    "title.1": "*A lacuna: hreflang.*",
    "body": "Cada link interno aberto é respondido e os rastreadores de treinamento de modelo são bloqueados por opção. Mas 1002 problemas alternativos de linguagem.",
    "action": "Faça com que cada versão de idioma liste todas as outras, inclusive, com links hreflang correspondentes.",
@@ -187,7 +187,7 @@
    "cap.youtube": "Cada página tiene un título, y los rastreadores de búsqueda y respuestas de IA pueden leer la página de inicio. Pero 1 enlace interno genera un error.\n\nLección: Verifique sus propios enlaces después de cada lanzamiento y corrija o redirija todos los que respondan 404.\n\nUn análisis automatizado de páginas públicas el 21 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.\n\nInforme completo: https://carlosandmunoz.com/qa-review.html?live=u-avvillas-com-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-avvillas-com-co\n\nRevisiones solicitadas · Revisión de URL de QA-lab"
   },
   "u-lenovo-com": {
-   "title.0": "lenovo. com: 67.",
+   "title.0": "lenovo.com: 67.",
    "title.1": "*A lacuna: o redirecionamento https.*",
    "body": "Cada página tem um título, e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas o http simples atende o site sem redirecionar.",
    "action": "Redirecione todas as solicitações http para https com um 301 permanente e adicione HSTS.",
@@ -289,7 +289,7 @@
    "cap.youtube": "Cada página tiene un título, y los rastreadores de búsqueda y respuestas de IA pueden leer la página de inicio. Pero HSTS no se envía.\n\nLección: Envíe Strict-Transport-Security con una antigüedad máxima de al menos un año, para que los navegadores nunca vuelvan a probar http simple.\n\nUn análisis automatizado de páginas públicas el 22 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.\n\nInforme completo: https://carlosandmunoz.com/qa-review.html?live=u-co-computrabajo-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-co-computrabajo-com\n\nRevisiones solicitadas · Revisión de URL de QA-lab"
   },
   "u-nice-com": {
-   "title.0": "nice. com: 56.",
+   "title.0": "nice.com: 56.",
    "title.1": "*A lacuna: HSTS.*",
    "body": "Cada página tem um título, e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas o HSTS não é enviado.",
    "action": "Envie Strict-Transport-Security com uma idade máxima de pelo menos um ano, para que os navegadores nunca mais tentem http simples novamente.",
@@ -396,7 +396,7 @@
   "es\u0000One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.": "Un análisis automatizado de páginas públicas el 21 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.",
   "es\u0000Full report:": "Informe completo:",
   "es\u0000Requested reviews · QA-lab URL Review": "Revisiones solicitadas · Revisión de URL de QA-lab",
-  "pt\u0000whatsapp.com: 67.": "whatsapp. com: 67.",
+  "pt\u0000whatsapp.com: 67.": "whatsapp.com: 67.",
   "pt\u0000The gap: hreflang.": "A lacuna: hreflang.",
   "pt\u0000Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 1002 language alternate problems.": "Cada link interno aberto é respondido e os rastreadores de treinamento de modelo são bloqueados por opção. Mas 1002 problemas alternativos de linguagem.",
   "pt\u0000Make every language version list all the others, itself included, with matching hreflang links.": "Faça com que cada versão de idioma liste todas as outras, inclusive, com links hreflang correspondentes.",
@@ -480,7 +480,7 @@
   "es\u0000Check your own links after each release, and fix or redirect every one that answers 404.": "Verifique sus propios enlaces después de cada lanzamiento y corrija o redirija todos los que respondan 404.",
   "es\u0000avvillas.com.co · 100 pages analyzed · 21 Oct 2026": "avvillas.com.co · 100 páginas analizadas · 21 oct 2026",
   "es\u0000Lesson: Check your own links after each release, and fix or redirect every one that answers 404.": "Lección: Verifique sus propios enlaces después de cada lanzamiento y corrija o redirija todos los que respondan 404.",
-  "pt\u0000lenovo.com: 67.": "lenovo. com: 67.",
+  "pt\u0000lenovo.com: 67.": "lenovo.com: 67.",
   "pt\u0000The gap: the https redirect.": "A lacuna: o redirecionamento https.",
   "pt\u0000Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.": "Cada página tem um título, e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas o http simples atende o site sem redirecionar.",
   "pt\u0000Redirect every http request to https with one permanent 301, then add HSTS.": "Redirecione todas as solicitações http para https com um 301 permanente e adicione HSTS.",
@@ -518,7 +518,7 @@
   "es\u0000co.computrabajo.com · 91 pages analyzed · 22 Oct 2026": "co.computrabajo.com · 91 páginas analizadas · 22 oct 2026",
   "es\u0000Lesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.": "Lección: Envíe Strict-Transport-Security con una antigüedad máxima de al menos un año, para que los navegadores nunca vuelvan a probar http simple.",
   "es\u0000One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.": "Un análisis automatizado de páginas públicas el 22 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.",
-  "pt\u0000nice.com: 56.": "nice. com: 56.",
+  "pt\u0000nice.com: 56.": "nice.com: 56.",
   "pt\u0000The gap: HSTS.": "A lacuna: HSTS.",
   "pt\u0000Every page has a title, and AI answer and search crawlers may read the start page. But HSTS is not sent.": "Cada página tem um título, e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas o HSTS não é enviado.",
   "pt\u0000Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.": "Envie Strict-Transport-Security com uma idade máxima de pelo menos um ano, para que os navegadores nunca mais tentem http simples novamente.",
