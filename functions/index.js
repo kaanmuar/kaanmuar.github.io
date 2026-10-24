@@ -1564,6 +1564,23 @@ async function mailReportToAsker(record) {
   await sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []);
 }
 
+async function noteSharedOpen(ref, record) {
+  const at = new Date().toISOString();
+  const step = await admin.firestore().runTransaction(async (tx) => {
+    const next = reviewAuth.sharedOpenStep((await tx.get(ref)).data(), at);
+    tx.set(ref, { sharedOpen: next.sharedOpen }, { merge: true });
+    return next;
+  });
+  if (!step.notify) return;
+  let sent = false;
+  try {
+    sent = await sendAskerMail(record.email, customerMail.sharedOpenMail(record, at), "", "url-review-shared-open");
+  } finally {
+    // The next open by another account tries the notice again.
+    if (!sent) await ref.set({ sharedOpen: { noticeAt: "" } }, { merge: true });
+  }
+}
+
 async function ownerStops(emails, domain) {
   const db = admin.firestore();
   const keys = [].concat(emails || [], "@" + domain).filter((key) => key && key !== "@");
@@ -3378,6 +3395,13 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     if (access.locked) {
+      if (access.status === 403) {
+        try {
+          await noteSharedOpen(snap.ref, Object.assign({}, data, { id }));
+        } catch (error) {
+          console.error("Shared report open note failed:", error);
+        }
+      }
       res.status(access.status).json({
         error: access.error,
         signIn: true,

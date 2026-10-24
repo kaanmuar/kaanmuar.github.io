@@ -325,6 +325,22 @@ async function reportAccess(store, input, row, free) {
   return { ok: true, email: signedIn.email };
 }
 
+// Opens of the link by another signed-in account are counted on the report, never who opened it.
+// Its owner is emailed on the first one only.
+function sharedOpenStep(row, at) {
+  const seen = (row && row.sharedOpen) || {};
+  const notify = !seen.noticeAt && !!(row && row.email);
+  return {
+    notify,
+    sharedOpen: {
+      count: (Number(seen.count) || 0) + 1,
+      firstAt: seen.firstAt || at,
+      lastAt: at,
+      noticeAt: seen.noticeAt || (notify ? at : "")
+    }
+  };
+}
+
 // A run's stop row names the email and device that started it; only that pair can stop it.
 async function claimRun(store, input) {
   const now = input.now || Date.now();
@@ -427,6 +443,7 @@ module.exports = {
   openSession,
   checkSession,
   reportAccess,
+  sharedOpenStep,
   claimRun,
   stopRun,
   askAccess,

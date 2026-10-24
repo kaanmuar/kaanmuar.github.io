@@ -92,3 +92,34 @@ test("the link in the report email carries only the report id, so opened signed 
   assert.equal(signedOut.locked, true);
   assert.equal((await auth.reportAccess(store, ana, run(), false)).ok, true, "the same link opens in full once the owner signs in");
 });
+
+test("opens of the link by another signed-in account are counted, and the owner is told once, without who opened it", () => {
+  const first = auth.sharedOpenStep(run(), "2026-10-24T08:00:00.000Z");
+  assert.equal(first.notify, true);
+  assert.deepEqual(first.sharedOpen, { count: 1, firstAt: "2026-10-24T08:00:00.000Z", lastAt: "2026-10-24T08:00:00.000Z", noticeAt: "2026-10-24T08:00:00.000Z" });
+  const second = auth.sharedOpenStep(run({ sharedOpen: first.sharedOpen }), "2026-10-25T09:00:00.000Z");
+  assert.equal(second.notify, false, "later opens are not emailed");
+  assert.equal(second.sharedOpen.count, 2);
+  assert.equal(second.sharedOpen.firstAt, "2026-10-24T08:00:00.000Z");
+  assert.equal(second.sharedOpen.noticeAt, "2026-10-24T08:00:00.000Z");
+  assert.equal(auth.sharedOpenStep(run({ email: "" }), "2026-10-24T08:00:00.000Z").notify, false, "a run with no account has no one to tell");
+});
+
+test("the shared-open notice names the site and date in the owner's language, links the report, and says nothing of the opener", () => {
+  for (const lang of ["en", "es", "pt", "de", "fr", "it"]) {
+    const mail = customerMail.sharedOpenMail(run({ lang, report: Object.assign({}, sample.report, { id: "ab12cd34", host: "example.com" }) }), "2026-10-24T08:00:00.000Z");
+    assert.equal(mail.lang, lang);
+    assert.match(mail.subject, /example\.com/, lang);
+    assert.match(mail.text, /2026-10-24/, lang);
+    assert.equal(new URL(mail.text.match(/https:\/\/\S+[?&]report=\S+/)[0]).searchParams.get("report"), "ab12cd34", lang);
+    assert.doesNotMatch(mail.text + mail.html, /ben@example\.com|\{\w+\}/, lang);
+  }
+});
+
+test("the emailed report PDF is watermarked with the address it is sent to", () => {
+  const marked = customerMail.reportPdf(run()).html;
+  assert.match(marked, /<div class="wm"[^>]*>(<span>ana@example\.com<\/span>){40}<\/div>/);
+  assert.match(marked, /\.wm\{position:fixed;/, "fixed, so it prints on every page");
+  assert.doesNotMatch(customerMail.reportPdf(run({ email: "" })).html, /class="wm"/);
+  assert.match(customerMail.reportPdf(run({ email: "<b>@x.co" })).html, /<span>&lt;b&gt;@x\.co<\/span>/);
+});
