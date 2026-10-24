@@ -9,7 +9,7 @@ const ID = 'cd34ef56ab12';
 const ANA = 'a'.repeat(64);
 const days = (start, step) => Array.from({ length: 30 }, (item, index) => ({ date: '2026-09-' + String(index + 1).padStart(2, '0'), rank: start + index * step }));
 
-async function open(page, cmp, review, file = '/qa-review.html', extra = {}) {
+async function open(page, cmp, review, file = '/qa-review.html', extra = {}, from = {}) {
   const store = auth.memoryStore();
   const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
   const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
@@ -35,19 +35,37 @@ async function open(page, cmp, review, file = '/qa-review.html', extra = {}) {
       const checked = await auth.checkSession(store, Object.assign({}, body, { deviceKey: ANA }));
       return json(checked.ok ? 200 : checked.status, checked);
     }
-    if (path === '/review/open') return json(200, { report: row.report, frameworks: row.frameworks, paid: true });
+    if (path === '/review/open') return json(200, Object.assign({ report: row.report, frameworks: row.frameworks, paid: true }, from.versus && body.vs === 'ab12' ? { versus: from.versus } : {}));
     if (path === '/review' && review) {
       const answer = await review(body);
       return typeof answer === 'string' ? route.fulfill({ status: 200, contentType: 'application/x-ndjson', headers: cors, body: answer }) : json(400, answer);
     }
     return json(200, path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
   });
-  await page.goto(file + '?report=' + ID);
-  const card = page.locator(cmp ? '#compare-result' : '#compare-ask');
+  await page.goto(file + '?report=' + ID + (from.query || ''));
+  const card = page.locator(cmp || from.versus ? '#compare-result' : '#compare-ask');
   await expect(card).toBeVisible({ timeout: 20000 });
   await card.scrollIntoViewIfNeeded();
   return card;
 }
+
+test.describe('From the account page', () => {
+  test('?vs= shows the pair of saved reviews the server built', async ({ page }) => {
+    const versus = compare.compareSites(Object.assign({}, sample.report, { id: ID }), own);
+    const card = await open(page, null, null, '/qa-review.html', {}, { query: '&vs=ab12', versus });
+    await expect(card.locator('.cmp-ring')).toHaveCount(2);
+    await expect(card).toContainText(own.host);
+    await expect(page.locator('#compare-ask')).toBeHidden();
+  });
+
+  test('?compare= puts the competitor in the box and the Compare button in focus, without starting a run', async ({ page }) => {
+    let runs = 0;
+    const card = await open(page, null, () => { runs += 1; return { error: 'no' }; }, '/qa-review.html', {}, { query: '&compare=rival.example.com' });
+    await expect(card.locator('#compare-url')).toHaveValue('rival.example.com');
+    await expect(card.locator('#compare-go')).toBeFocused();
+    expect(runs).toBe(0);
+  });
+});
 
 test.describe('The competitor comparison is drawn as charts', () => {
   test('indicators, radar, leads, 3D columns, edges, mixes, market presence and history all render', async ({ page }) => {

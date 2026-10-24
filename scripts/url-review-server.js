@@ -399,7 +399,7 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true, paidUntil: until, charged: false }, origin, deviceHint);
     return;
   }
-  if (req.method === "POST" && ["/account/runs", "/account/stop", "/account/export", "/account/delete", "/account/delete-runs"].indexOf(url.pathname) !== -1) {
+  if (req.method === "POST" && ["/account/runs", "/account/compare", "/account/stop", "/account/export", "/account/delete", "/account/delete-runs"].indexOf(url.pathname) !== -1) {
     let accountBody = {};
     try { accountBody = await readBody(req); } catch (error) { accountBody = {}; }
     const signedIn = await auth.checkSession(signIns, Object.assign({}, accountBody, { touch: false }));
@@ -409,6 +409,13 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === "/account/runs") {
       sendJson(res, 200, offers.accountFile(readStore(), signedIn.email), origin, deviceHint);
+      return;
+    }
+    if (url.pathname === "/account/compare") {
+      const records = readStore();
+      const open = new Set(offers.accountFile(records, signedIn.email).runs.filter((run) => run.open).map((run) => run.id));
+      const made = compare.savedComparison(records, signedIn.email, accountBody.ids, (row) => open.has(row.id));
+      sendJson(res, made.error ? 400 : 200, made, origin, deviceHint);
       return;
     }
     if (url.pathname === "/account/export") {
@@ -522,7 +529,11 @@ const server = http.createServer(async (req, res) => {
       }, origin, found.deviceId || deviceHint);
       return;
     }
-    sendJson(res, 200, { report: found.report, frameworks: found.frameworks, paid: true }, origin, found.deviceId || deviceHint);
+    const other = openBody.vs ? readStore().reverse().find((row) => row.id === openBody.vs && row.id !== found.id) : null;
+    const otherOpen = other && (await auth.reportAccess(signIns, proof, other, other.free === true)).ok;
+    const pair = other ? compare.savedComparison([found, other], found.email, [found.id, other.id], (row) => row === found || otherOpen) : null;
+    const versus = pair && pair.list && pair.list[0] && pair.list[0].compare;
+    sendJson(res, 200, Object.assign({ report: found.report, frameworks: found.frameworks, paid: true }, versus ? { versus } : {}), origin, found.deviceId || deviceHint);
     return;
   }
   if (req.method === "POST" && (url.pathname === "/review/ask" || url.pathname === "/review/ask/phrase")) {
