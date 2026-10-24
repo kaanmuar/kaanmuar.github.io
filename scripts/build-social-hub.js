@@ -161,7 +161,7 @@ async function growLedger() {
   const res = await fetch("https://www.youtube.com/feeds/videos.xml?channel_id=" + CHANNEL, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error("YouTube feed answered " + res.status);
   const xml = await res.text();
-  const decode = (s) => s.replace(/&amp;/g, "&").replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  const decode = (s) => s.replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
   let added = 0;
   for (const entry of xml.split("<entry>").slice(1)) {
     const id = (entry.match(/<yt:videoId>([^<]+)</) || [])[1];
@@ -376,7 +376,7 @@ ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
 </main>
 <footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">Legal</a> · <a href="${OUT}/feed.json">JSON feed</a></p></footer>
 <dialog class="hub-dialog" id="hub-dialog" aria-label="${esc(copy.share)}"><form method="dialog"><button class="hub-close" value="close" aria-label="${esc(copy.close)}">×</button></form><div id="hub-dialog-body"></div></dialog>
-<script id="hub-copy" type="application/json">${JSON.stringify(hubCopy).replace(/</g, "\\u003c")}</script>
+<script>window.SocialHubCopy = ${JSON.stringify(hubCopy).replace(/</g, "\\u003c")};</script>
 <script src="js/social-hub-card.js?v=${asOf.replace(/-/g, "")}"></script>
 <script src="js/social-hub.js?v=${asOf.replace(/-/g, "")}"></script>
 </body>

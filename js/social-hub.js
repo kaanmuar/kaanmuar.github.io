@@ -2,7 +2,7 @@
    The page arrives with its first cards prerendered by scripts/build-social-hub.js; this takes over once the feed loads. */
 (function () {
   const Card = window.SocialHubCard;
-  const copy = JSON.parse(document.getElementById("hub-copy").textContent);
+  const copy = window.SocialHubCopy;
   const lang = copy.lang;
   const STEP = 24;
   const feedEl = document.getElementById("hub-feed");
