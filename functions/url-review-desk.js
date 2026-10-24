@@ -227,9 +227,11 @@ function snapshot(records, alerts, active, noteRows, unlisted) {
   });
   const runs = list.map((row) => summary(row || {}, index, unlisted || [])).sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const notes = (Array.isArray(alerts) ? alerts : []).slice().sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 80);
-  // A report paid after its run has its own payment row; the run then counts once, through that row.
+  // A report paid after its run has its own payment row, and a run paid through a credit has its credit row;
+  // either way the run counts once, through that row.
   const reportPaid = new Set(list.filter((row) => row && row.status === "paid-report" && row.reportId).map((row) => row.reportId));
-  const settled = (row) => !row.free && (row.status === "paid-report" || row.status === "run-credit" || (row.paid && !reportPaid.has(row.id)));
+  const creditPaid = new Set(list.filter((row) => row && row.report && row.creditId).map((row) => row.id));
+  const settled = (row) => !row.free && (row.status === "paid-report" || row.status === "run-credit" || (row.paid && !reportPaid.has(row.id) && !creditPaid.has(row.id)));
   const tally = {
     runs: runs.length,
     running: (active || []).length,
