@@ -10,6 +10,11 @@ const PAGES = new Set([
   "qa-review-fr.html",
   "qa-review-it.html",
   "qa-review-pay.html",
+  "qa-review-pay-es.html",
+  "qa-review-pay-pt.html",
+  "qa-review-pay-de.html",
+  "qa-review-pay-fr.html",
+  "qa-review-pay-it.html",
   "qa-review-account.html",
   "qa-review-guide.html",
   "qa-review-legal.html"

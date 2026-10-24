@@ -4,15 +4,15 @@ const ONLINE = ['www.google.com', 'carlosandmunoz.com', 'gooogle.com'];
 const SITEMAPS = { 'carlosandmunoz.com': ['/qa-lab', '/pricing', '/checkout', '/qa-review', '/blog/checkout-tips'] };
 const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 
-async function open(page) {
-  await page.addInitScript((version) => {
+async function open(page, file = '/qa-review.html', lang = 'en') {
+  await page.addInitScript(([version, code]) => {
     try {
       sessionStorage.setItem('qa-review-terms', version);
       localStorage.setItem('hasSeenReviewTour', 'true');
       localStorage.setItem('qa-review-analytics', 'necessary');
-      localStorage.setItem('cv-preferred-lang', 'en');
+      localStorage.setItem('cv-preferred-lang', code);
     } catch (e) { /* storage is optional */ }
-  }, TERMS);
+  }, [TERMS, lang]);
   await page.route(/\/news\?/, (route) => route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"items":[]}' }));
   await page.route(/ipwho\.is/, (route) => route.fulfill({ contentType: 'application/json', body: '{"success":false}' }));
   await page.route(/dns\.google\/resolve/, (route) => {
@@ -24,7 +24,7 @@ async function open(page) {
     const host = new URL(route.request().url()).searchParams.get('host');
     route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ host, paths: SITEMAPS[host] || [] }) });
   });
-  await page.goto('/qa-review.html');
+  await page.goto(file);
   const box = page.locator('#url');
   await expect(box).toBeEnabled();
   return box;
@@ -93,6 +93,21 @@ test.describe('URL Review page box predictions', () => {
     await expect(page.locator('#url-suggest')).toBeHidden();
     await expect(page.locator('#url-hint')).toContainText('is online');
     await expect(page.locator('#url-error')).toBeEmpty();
+  });
+
+  test('on the Spanish page the address check speaks Spanish and is kept out of machine translation', async ({ page }) => {
+    const box = await open(page, '/qa-review-es.html', 'es');
+    await box.fill('carlosandmunoz.com');
+    const hint = page.locator('#url-hint');
+    await expect(hint).toHaveText('carlosandmunoz.com está en línea.');
+    await expect(hint).toHaveAttribute('translate', 'no');
+    await expect(hint).toHaveAttribute('lang', 'es');
+    await box.fill('gooogle.com');
+    await expect(hint).toHaveText('gooogle.com está en línea. ¿Quisiste decir www.google.com?');
+    await box.fill('gogle.com');
+    await expect(hint).toHaveText('gogle.com no existe. ¿Quisiste decir www.google.com?');
+    await box.fill('carlosandmunoz.com/');
+    await expect(page.locator('#url-suggest')).toHaveAttribute('aria-label', 'Páginas sugeridas');
   });
 });
 

@@ -166,29 +166,29 @@ const COPY = {
     findings: "Was zuerst zu beheben ist",
     more: "+{n} weitere Befunde im vollständigen Bericht",
     open: "Vollständigen Bericht freischalten",
-    openNote: "Dort kannst du ihn herunterladen, die Testfälle exportieren oder drucken.",
+    openNote: "Dort können Sie ihn herunterladen, die Testfälle exportieren oder drucken.",
     reopen: "Letzten Bericht öffnen",
     another: "Eine andere URL prüfen",
-    deeper: "Willst du tiefer gehen?",
+    deeper: "Möchten Sie tiefer gehen?",
     deeperLines: ["Mehr Seiten, mehr Links oder mehr Websites prüfen?", "Echte, vollständige Testfälle in einem oder allen Automatisierungs-Frameworks ausführen?"],
-    deeperCta: "Schreib an qa@carlosandmunoz.com",
+    deeperCta: "Schreiben Sie an qa@carlosandmunoz.com",
     deeperSubject: "Tiefer gehen mit {host}",
-    why: "Du bekommst diese Nachricht, weil mit dieser Adresse eine Prüfung von {host} auf carlosandmunoz.com gestartet wurde.",
+    why: "Sie erhalten diese Nachricht, weil mit dieser Adresse eine Prüfung von {host} auf carlosandmunoz.com gestartet wurde.",
     stop: "Keine Notizen mehr",
     subjectOpen: "{host} hat {score}/100. Der vollständige Bericht ist offen.",
-    subjectRerun: "Deine Prüfung von {host} lief erneut und ist fertig.",
-    subjectStopped: "Deine Prüfung von {host} hat vor der letzten Seite angehalten.",
+    subjectRerun: "Ihre Prüfung von {host} lief erneut und ist fertig.",
+    subjectStopped: "Ihre Prüfung von {host} hat vor der letzten Seite angehalten.",
     titleStopped: "Die Prüfung von {host} hat vor der letzten Seite angehalten.",
     preheaderOpen: "Sechs Werte und {count} Befunde, alles offen.",
     leadOpen: "Die sechs Werte und die Befunde liegen offen, jede Zeile vollständig.",
     leadStopped: "Sie hat vor der letzten Seite angehalten und umfasst die bis dahin geprüften Seiten.",
-    rerun: "Deine frühere Prüfung von {host} ist am {date} fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
-    rerunUndated: "Deine frühere Prüfung von {host} ist fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
+    rerun: "Ihre frühere Prüfung von {host} ist am {date} fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
+    rerunUndated: "Ihre frühere Prüfung von {host} ist fehlgeschlagen. Sie lief erneut, nachdem die Ursache behoben war. Hier ist das Ergebnis, offen und kostenlos.",
     openFull: "Vollständigen Bericht öffnen",
-    account: "Deine Prüfungen",
+    account: "Ihre Prüfungen",
     kept: "Gespeichert bis {date}",
-    live: "Öffentliche Werte aus dieser Prüfung können als Live Report erscheinen. Gehört dir die Website und soll er entfernt werden, schreib an qa@carlosandmunoz.com.",
-    controller: "Carlos A. Muñoz, {postal}, ist für deine Daten verantwortlich.",
+    live: "Öffentliche Werte aus dieser Prüfung können als Live Report erscheinen. Gehört Ihnen die Website und soll er entfernt werden, schreiben Sie an qa@carlosandmunoz.com.",
+    controller: "Carlos A. Muñoz, {postal}, ist für Ihre Daten verantwortlich.",
     legal: "Wie sie verwendet werden",
     areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicherheit", Accessibility: "Barrierefreiheit", Performance: "Leistung" },
     page: ["Keine Notizen mehr?", "Ja, stoppen", "Erledigt. An {email} gehen keine Notizen mehr.", "Dieser Link gilt nicht mehr."]
@@ -298,7 +298,7 @@ const PLAIN = {
   fr: { lead: "Les constats restent sous verre dépoli, juste assez visibles pour savoir lesquels comptent.", leadOpen: "Les constats sont ouverts, chaque ligne en entier.", preheader: "{count} constats attendent sous le flou.", preheaderOpen: "{count} constats, tout est ouvert.", leadClear: "Aucun constat sur les pages analysées, donc rien à corriger.", preheaderClear: "Aucun constat sur les pages analysées." },
   it: { lead: "I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.", leadOpen: "I rilievi sono aperti, ogni riga per intero.", preheader: "{count} rilievi aspettano sotto la sfocatura.", preheaderOpen: "{count} rilievi, tutto aperto.", leadClear: "Nessun rilievo nelle pagine analizzate, quindi non c'è niente da sistemare.", preheaderClear: "Nessun rilievo nelle pagine analizzate." }
 };
-const FIX_LABEL = { en: "Fix", es: "Cómo arreglarlo", pt: "Como corrigir", de: "So behebst du es", fr: "Correctif", it: "Come correggere" };
+const FIX_LABEL = { en: "Fix", es: "Cómo arreglarlo", pt: "Como corrigir", de: "So beheben Sie es", fr: "Correctif", it: "Come correggere" };
 const PDF_CASES = 24;
 const FILLER_WORDS = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua".split(" ");
 
@@ -809,13 +809,13 @@ const SIGN_IN = {
     why: "Você recebeu isto porque alguém pediu para entrar com este endereço em carlosandmunoz.com. Se não foi você, ignore este e-mail."
   },
   de: {
-    subject: "{code} ist dein Anmeldecode für QA-lab",
+    subject: "{code} ist Ihr Anmeldecode für QA-lab",
     title: "Bei QA-lab URL Review anmelden",
-    lead: "Gib diesen Code auf der Seite ein, auf der du ihn angefordert hast. Er gilt 15 Minuten.",
-    link: "Oder öffne diesen Link im selben Browser auf demselben Gerät:",
+    lead: "Geben Sie diesen Code auf der Seite ein, auf der Sie ihn angefordert haben. Er gilt 15 Minuten.",
+    link: "Oder öffnen Sie diesen Link im selben Browser auf demselben Gerät:",
     button: "Auf diesem Gerät anmelden",
     device: "Ein Code oder Link, der auf einem anderen Gerät oder Browser geöffnet wird, meldet niemanden an und startet keine Prüfung.",
-    why: "Du bekommst diese E-Mail, weil auf carlosandmunoz.com eine Anmeldung mit dieser Adresse angefordert wurde. Warst du es nicht, ignoriere sie."
+    why: "Sie erhalten diese E-Mail, weil auf carlosandmunoz.com eine Anmeldung mit dieser Adresse angefordert wurde. Waren Sie es nicht, ignorieren Sie sie."
   },
   fr: {
     subject: "{code} est votre code de connexion QA-lab",
@@ -888,11 +888,11 @@ const SHARED_OPEN = {
     once: "Este aviso é enviado uma vez por relatório. As próximas aberturas não geram e-mail."
   },
   de: {
-    subject: "Jemand anderes hat den Link zu deinem Bericht über {host} geöffnet",
-    title: "Ein anderes Konto hat deinen Berichtslink geöffnet",
-    lead: "Jemand mit einem anderen Konto hat am {date} den Link zu deiner Prüfung von {host} geöffnet.",
+    subject: "Jemand anderes hat den Link zu Ihrem Bericht über {host} geöffnet",
+    title: "Ein anderes Konto hat Ihren Berichtslink geöffnet",
+    lead: "Jemand mit einem anderen Konto hat am {date} den Link zu Ihrer Prüfung von {host} geöffnet.",
     safe: "Zu sehen war nur die unscharfe Vorschau, die Befunde blieben unter Frost. Ein Bericht öffnet sich vollständig nur für das Konto, das ihn gestartet hat.",
-    button: "Deinen Bericht öffnen",
+    button: "Ihren Bericht öffnen",
     once: "Dieser Hinweis kommt einmal pro Bericht. Spätere Aufrufe werden nicht gemailt."
   },
   fr: {
