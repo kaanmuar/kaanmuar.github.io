@@ -130,6 +130,13 @@
     if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
   }
 
+  const skipLink = document.querySelector(".skip-link");
+  if (skipLink) skipLink.addEventListener("click", (event) => {
+    if (!app.inert || gate.hidden) return;
+    event.preventDefault();
+    gate.querySelector(".gate-card").focus();
+  });
+
   function paintFrameworks() {
     const box = document.getElementById("fw-picker");
     box.innerHTML = FRAMEWORK_GROUPS.map((group) =>
@@ -2477,8 +2484,10 @@
         list.innerHTML = "";
         SiteI18n.orderedLanguages().forEach((meta) => {
           if (!SiteI18n.matchesQuery(meta, query)) return;
-          const option = document.createElement("div");
+          const option = document.createElement("button");
+          option.type = "button";
           option.className = "lang-option";
+          option.lang = meta.code;
           option.innerHTML = '<img src="' + SiteI18n.flagUrl(meta.code) + '" alt=""><span>' + meta.native + "</span>";
           option.onclick = () => {
             if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_language_change", "URL Review", meta.code);
@@ -2497,16 +2506,8 @@
       menu.innerHTML = '<input class="lang-search" type="search" placeholder="Search language" aria-label="Search language"><div class="lang-options-list"></div>';
       const search = menu.querySelector(".lang-search");
       search.addEventListener("input", () => renderMenu(search.value));
-      search.addEventListener("click", (event) => event.stopPropagation());
       renderMenu("");
-      toggle.addEventListener("click", (event) => {
-        event.stopPropagation();
-        document.querySelectorAll(".lang-wrap.open").forEach((open) => { if (open !== wrap) open.classList.remove("open"); });
-        wrap.classList.toggle("open");
-      });
-    });
-    document.addEventListener("click", () => {
-      document.querySelectorAll(".lang-wrap.open").forEach((open) => open.classList.remove("open"));
+      SiteI18n.bindMenu(wrap, toggle, menu, (open) => wrap.classList.toggle("open", open));
     });
     SiteI18n.resolve().then((lang) => {
       if (pageLang === "en" && PAGE_LANGS.includes(lang) && !navigator.webdriver) {

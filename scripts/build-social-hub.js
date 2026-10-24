@@ -426,9 +426,11 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
     <script>SiteTheme.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/site-look.css?v=${version("css/site-look.css")}">
     <link rel="stylesheet" href="css/social-hub.css?v=${version("css/social-hub.css")}">
 </head>
 <body>
+<a class="skip-link" href="#main">${esc(copy.skip)}</a>
 <header class="topbar">
     <div class="brand"><a href="qa-review${sfx}.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
     <nav class="actions" aria-label="QA-lab URL Review">
@@ -437,7 +439,7 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
         <a class="btn btn-ghost" href="qa-review-guide.html?lang=${lang}">${esc(copy.nav.guide)}</a>
     </nav>
 </header>
-<main class="hub">
+<main id="main" class="hub" tabindex="-1">
     <section class="hub-hero">
         <p class="hub-eyebrow" translate="no">QA-lab URL Review · Social</p>
         <h1>${esc(copy.h1)}</h1>
