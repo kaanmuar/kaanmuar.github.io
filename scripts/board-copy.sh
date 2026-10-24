@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016 # GraphQL $variables stay literal
 # Adds every issue and PR on one Projects board to another with the same Status. A board can't be transferred,
 # so copyProjectV2 makes the new board (fields, views, drafts) and this fills it. Items already on the target with
 # the same Status are skipped and the rest are corrected, so it can be stopped, run again, and run once more at

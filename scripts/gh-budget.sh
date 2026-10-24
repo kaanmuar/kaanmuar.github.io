@@ -12,14 +12,18 @@
 #   scripts/gh-budget.sh --status                  # GraphQL points left on each account
 set -uo pipefail
 
-bot=$(security find-generic-password -a qa-lab-bot -s qa-lab-bot -w 2>/dev/null || true)
-app=$("$(dirname "$0")/gh-app-token.js" 2>/dev/null || true)
-me=$(gh auth token 2>/dev/null || true)
+token_for() {
+	case "$1" in
+	app) "$(dirname "$0")/gh-app-token.js" 2>/dev/null ;;
+	me) gh auth token 2>/dev/null ;;
+	bot) security find-generic-password -a qa-lab-bot -s qa-lab-bot -w 2>/dev/null ;;
+	esac || true
+}
 
 if [ "${1:-}" = "--status" ]; then
 	query='.data.rateLimit | "\(.remaining)/\(.limit) GraphQL points left, resets \(.resetAt)"'
 	for who in app me bot; do
-		token=${!who}
+		token=$(token_for "$who")
 		if [ -n "$token" ]; then
 			echo "$who: $(GH_TOKEN="$token" gh api graphql -f query='{rateLimit{limit remaining resetAt}}' -q "$query" 2>&1)"
 		else echo "$who: no token"; fi
@@ -35,11 +39,11 @@ trap 'rm -f "$out" "$err"' EXIT
 
 status=1
 for who in $order; do
-	token=${!who}
+	token=$(token_for "$who")
 	[ -n "$token" ] || continue
 	status=0
 	GH_TOKEN="$token" gh "$@" >"$out" 2>"$err" || status=$?
-	[ "$status" -ne 0 ] && grep -qiE "rate limit|not accessible by integration" "$out" "$err" || break
+	if [ "$status" -eq 0 ] || ! grep -qiE "rate limit|not accessible by integration|resolve to a ProjectV2" "$out" "$err"; then break; fi
 	echo "gh-budget: $who is rate limited or has no access; trying the next account" >&2
 done
 cat "$out"
