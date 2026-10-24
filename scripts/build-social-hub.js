@@ -29,6 +29,7 @@ const SITE = card.SITE;
 const OUT = "assets/social";
 const LEDGER = OUT + "/youtube.json";
 const EDITS = OUT + "/edits.json";
+const TRENDS = OUT + "/trends.json";
 const FIRESTORE = "https://firestore.googleapis.com/v1/projects/carlosm-interactive-cv/databases/(default)/documents";
 const CHANNEL = "UCf-yFKiAHooXPsRsCXFKBjg";
 const PRERENDER = 24;
@@ -173,11 +174,14 @@ function collect() {
       if (key && !byTitle.has(key)) byTitle.set(key, id);
     });
   });
+  const trends = exists(TRENDS) ? readJson(TRENDS).ids || [] : [];
+  const rank = new Map(trends.map((id, i) => [id, i + 1]));
   posts.forEach((post) => {
     post.youtube = post.youtube || byTitle.get(titleKey(post.ytTitle)) || (post.kind === "review" && byTitle.get(scoreKey(post.title))) || null;
     post.thumb = admin.remote(post.image) ? post.image : thumbFor(post.id);
     post.text = body(post);
     post.group = groupOf(post);
+    if (rank.has(post.id)) post.trend = rank.get(post.id);
   });
   posts.sort((a, b) => (b.date || "").localeCompare(a.date || "") || a.id.localeCompare(b.id));
   return { posts, ledger };
@@ -222,6 +226,19 @@ async function pullEdits() {
   return Object.keys(edits.edits).length + edits.items.length;
 }
 
+// socialHub/trends is written each morning by refreshSocialHubStats (functions/social-hub-stats.js): post ids only.
+async function pullTrends() {
+  const res = await fetch(FIRESTORE + "/socialHub/trends", { signal: AbortSignal.timeout(15000) });
+  if (res.status === 404) return 0;
+  if (!res.ok) throw new Error("Firestore answered " + res.status);
+  const doc = await res.json();
+  const data = JSON.parse((doc.fields && doc.fields.json && doc.fields.json.stringValue) || "{}");
+  const ids = (Array.isArray(data.ids) ? data.ids : []).filter((id) => typeof id === "string" && /^[\w./-]{1,120}$/.test(id));
+  fs.mkdirSync(path.join(ROOT, OUT), { recursive: true });
+  fs.writeFileSync(path.join(ROOT, TRENDS), JSON.stringify({ updatedAt: String(data.updatedAt || ""), ids }, null, 1) + "\n");
+  return ids.length;
+}
+
 const needsThumb = (post) => !admin.remote(post.thumb) && !exists(post.thumb);
 
 async function writeThumbs(posts) {
@@ -246,7 +263,7 @@ function feedJson(posts, asOf) {
   const cards = posts.map((post) => ({
     id: post.id, kind: post.kind, date: post.date, lang: post.lang, clipLang: post.clipLang, cat: post.cat, title: post.title,
     text: post.text.length > TEXT_MAX ? post.text.slice(0, TEXT_MAX).replace(/\s+\S*$/, "") + "…" : post.text,
-    image: post.image, thumb: post.thumb, alt: post.alt, youtube: post.youtube, report: post.report
+    image: post.image, thumb: post.thumb, alt: post.alt, youtube: post.youtube, report: post.report, trend: post.trend
   }));
   return JSON.stringify({ version: 1, asOf, count: cards.length, posts: cards }) + "\n";
 }
@@ -360,7 +377,7 @@ function page(lang, posts, asOf) {
     "<a href=\"" + card.pageFor(code) + "\" hreflang=\"" + code + "\" lang=\"" + code + "\"" + (code === lang ? " aria-current=\"page\"" : "") + ">"
     + "<img src=\"https://hatscripts.github.io/circle-flags/flags/" + info.flag + ".svg\" alt=\"\" width=\"18\" height=\"18\">" + esc(info.native) + "</a>").join("");
   const follow = PROFILES.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("");
-  const kinds = ["all", "tip", "review", "launch", "video"].map((kind) =>
+  const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], ["tip", "review", "launch", "video"]).map((kind) =>
     "<button type=\"button\" class=\"hub-chip\" data-kind=\"" + kind + "\" aria-pressed=\"" + (kind === "all") + "\">" + esc(copy.kinds[kind]) + "</button>").join("");
   const langOptions = "<option value=\"all\">" + esc(copy.allLangs) + "</option>" + Object.entries(LANGS).map(([code, info]) => "<option value=\"" + code + "\">" + esc(info.native) + "</option>").join("");
   const topicOptions = "<option value=\"all\">" + esc(copy.allTopics) + "</option>" + topics(visible).map((cat) => "<option value=\"" + esc(cat) + "\">" + esc(card.topic({ cat }, copy)) + "</option>").join("");
@@ -403,7 +420,7 @@ ${ogAlt}
     <script type="application/ld+json">
 ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, copy))}
     </script>
-    <script src="js/site-analytics.js?v=20261024a"></script>
+    <script src="js/site-analytics.js?v=20261024b"></script>
     <script src="js/qa-review-consent.js?v=20261028p"></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
@@ -611,7 +628,7 @@ ${alternates}    <link rel="icon" href="/assets/qa-review-mark.svg?v=20261013c" 
     <script type="application/ld+json">
 ${json(graph)}
     </script>
-    <script src="/js/site-analytics.js?v=20261024a"></script>
+    <script src="/js/site-analytics.js?v=20261024b"></script>
     <script src="/js/qa-review-consent.js?v=20261028p"></script>
     <script src="/js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
@@ -701,6 +718,11 @@ async function main() {
       console.log("Admin: " + (await pullEdits()) + " edited or added posts");
     } catch (error) {
       console.warn("Admin edits skipped: " + error.message);
+    }
+    try {
+      console.log("Trending: " + (await pullTrends()) + " posts");
+    } catch (error) {
+      console.warn("Trending skipped: " + error.message);
     }
   }
   const { posts } = collect();

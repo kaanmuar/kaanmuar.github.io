@@ -44,6 +44,14 @@ test("each page offers the topics of its posts, translated, and versions its CSS
   assert.match(html, /id="hub-clear"[^>]*>Effacer les filtres</);
 });
 
+test("a Trending chip appears only when posts carry a trending rank, and the feed keeps the rank", () => {
+  assert.doesNotMatch(hub.page("es", [post()], "2026-10-24"), /data-kind="trending"/);
+  const html = hub.page("es", [post({ trend: 1 })], "2026-10-24");
+  assert.match(html, /data-kind="all" aria-pressed="true">Todo<\/button><button type="button" class="hub-chip" data-kind="trending" aria-pressed="false">Tendencias</);
+  for (const lang of Object.keys(LANGS)) assert.ok(COPY[lang].kinds.trending, lang);
+  assert.equal(JSON.parse(hub.feedJson([post({ trend: 3 })], "2026-10-24")).posts[0].trend, 3);
+});
+
 test("posted cards come first, newest first, then scheduled ones, soonest first", () => {
   const order = card.arrange([post({ id: "a", date: "2026-11-30" }), post({ id: "b", date: "2026-10-01" }), post({ id: "c", date: "2026-11-02" }), post({ id: "d", date: "2026-10-20" })], "2026-10-24");
   assert.deepEqual(order.map((p) => p.id + (p.upcoming ? "+" : "")), ["d", "b", "c+", "a+"]);

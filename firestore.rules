@@ -98,6 +98,7 @@ service cloud.firestore {
           (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
           || (request.resource.data.kind == 'export' && request.resource.data.name in ['export_cv', 'print_cv', 'lab_report', 'studio_report'])
           || (request.resource.data.kind == 'run' && request.resource.data.name in ['lab_run', 'qa_review_start', 'qa_review_done'])
+          || (request.resource.data.kind == 'view' && request.resource.data.name in ['hub_view', 'post_view'])
           || (request.resource.data.kind == 'click' && request.resource.data.name in [
             'share_cv', 'open_simulator', 'open_qa_lab', 'open_contact_widget',
             'submit_message', 'submit_rating', 'sim_run_sprint', 'sim_sprint_complete',
@@ -109,7 +110,9 @@ service cloud.firestore {
             'qa_review_news', 'qa_review_alerts', 'qa_review_credentials', 'qa_review_cases',
             'qa_review_language_change', 'qa_review_account_enter', 'qa_review_account_stop',
             'qa_review_sign_in', 'qa_review_sign_in_failed', 'qa_review_sign_in_needed', 'qa_review_deal_shown',
-            'qa_review_live_open', 'qa_review_live_filter', 'qa_review_live_nav', 'open_url_review'
+            'qa_review_live_open', 'qa_review_live_filter', 'qa_review_live_nav', 'open_url_review',
+            'hub_open', 'hub_play', 'hub_copy', 'hub_share', 'hub_download', 'hub_report',
+            'post_play', 'post_copy', 'post_share', 'post_download', 'post_report', 'post_related'
           ])
         )
         && request.resource.data.label is string
@@ -144,6 +147,12 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
       allow create, update, delete: if isOwner() && id == 'live';
+    }
+
+    // Written by refreshSocialHubStats (functions/social-hub-stats.js) for the Social hub pane.
+    match /socialHubStats/{id} {
+      allow get, list: if isOwner();
+      allow write: if false;
     }
 
     // Read by scripts/build-social-hub.js without credentials; everything in it goes on the public hub.
