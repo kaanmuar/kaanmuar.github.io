@@ -1,0 +1,34 @@
+# .github/workflows/mail-dns-reminder.yml
+# One-off reminder for #928: on Nov 7 (stage 1: DMARC pct=100, MTA-STS enforce) and Nov 21 (stage 2: DMARC reject)
+# scripts/mail-dns-reminder.sh comments on #928 with the live records and the go/no-go checklist.
+# Not in functions/ops-schedule.js, since it does not recur. Delete this file when #928 closes.
+
+name: Mail DNS reminder
+
+on:
+  schedule:
+    - cron: '0 14 7 11 *'
+    - cron: '0 14 21 11 *'
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Stage to check (1: pct=100 and MTA-STS enforce, 2: reject)'
+        type: choice
+        options: ['1', '2']
+        default: '1'
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Comment on #928
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGE: ${{ inputs.stage }}
+        run: scripts/mail-dns-reminder.sh ${STAGE:+"$STAGE"}
