@@ -4198,8 +4198,14 @@
                 catch (error) { console.error("Failed to load testimonials:", error); }
 
                 // Start the tour if it hasn't been seen.
+                // Opening on load made the tour tooltip the page's Largest Contentful Paint on mobile, so it waits for the visitor's first move.
                 if (!sessionStorage.getItem('hasSeenTour')) {
-                    setTimeout(() => this.startTour(true), 1000);
+                    const kinds = ['scroll', 'pointerdown', 'keydown', 'touchstart'];
+                    const begin = () => {
+                        kinds.forEach((kind) => window.removeEventListener(kind, begin, true));
+                        if (!sessionStorage.getItem('hasSeenTour') && !this.state.isTourActive) setTimeout(() => this.startTour(true), 600);
+                    };
+                    kinds.forEach((kind) => window.addEventListener(kind, begin, { capture: true, passive: true }));
                 }
                 // Tests wait for data-cv-settled: the live CV re-renders the competencies and the topic list when it lands.
                 this._loadLiveCv().finally(() => { document.documentElement.dataset.cvSettled = '1'; });

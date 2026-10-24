@@ -293,3 +293,15 @@ test.describe('CV mobile', () => {
     await expect(cv.html).toHaveClass(/dark-mode/);
   });
 });
+
+test.describe('CV first visit', () => {
+  test('the guided tour waits for the first key press instead of opening on load', async ({ page }) => {
+    await prepareCV(page, { tour: true, theme: 'light' });
+    await page.goto('/index.html');
+    await waitForCVApp(page);
+    await page.waitForTimeout(2000);
+    await expect(page.locator('html')).not.toHaveClass(/cv-tour/);
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('html')).toHaveClass(/cv-tour/, { timeout: 5000 });
+  });
+});
