@@ -13,8 +13,11 @@ const FILE = path.join(__dirname, "..", "qa-review-legal.html");
 const NOTICES = ["local-notice", "origin-notice", "site-notice"];
 
 function painted(html) {
-  const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((code) => code.includes("function paint("));
-  if (!script) throw new Error("The disclaimers script was not found.");
+  const at = html.indexOf("function paint(");
+  const start = html.lastIndexOf("<script>", at);
+  const end = html.indexOf("</script>", at);
+  if (at === -1 || start === -1 || end === -1) throw new Error("The disclaimers script was not found.");
+  const script = html.slice(start + "<script>".length, end);
   const nodes = {};
   const node = (id) => nodes[id] || (nodes[id] = { id, innerHTML: "", value: "", appendChild() {}, addEventListener() {} });
   const context = {

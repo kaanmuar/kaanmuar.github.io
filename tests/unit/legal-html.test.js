@@ -15,6 +15,7 @@ test("each notice carries its heading and text without scripts", () => {
   assert.match(notices["local-notice"], /^<h2>Local law\. The operator's domicile<\/h2><p>The operator/);
   assert.match(notices["origin-notice"], /Ley Estatutaria 1581 de 2012/);
   assert.match(notices["site-notice"], /The address did not name a country\./);
-  const text = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, "").replace(/<[^>]+>/g, " ");
-  assert.ok(text.split(/\s+/).filter((word) => /\w/.test(word)).length > 1000);
+  const words = Object.values(notices).join(" ").split(/\s+/).length;
+  assert.ok(words > 1000, words + " words");
+  Object.entries(notices).forEach(([id, inner]) => assert.ok(html.includes('id="' + id + '">' + inner + "</article>"), id + " is in the HTML"));
 });
