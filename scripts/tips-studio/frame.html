@@ -98,6 +98,15 @@
   .feed .ring.big .n { font-size: 92px; }
   .feed .area small { font-size: 18px; }
   .feed .glass:has(.scores) { padding: calc(var(--u) * .9) calc(var(--u) * 1.1); }
+  .matrix { width: 100%; border-collapse: separate; border-spacing: 0 10px; font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .8); }
+  .matrix th { font-size: 18px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; text-align: center; }
+  .matrix th:first-child, .matrix td:first-child { text-align: left; }
+  .matrix td { text-align: center; padding: 10px 8px; background: rgba(5,12,15,.4); }
+  .matrix td:first-child { border-radius: 14px 0 0 14px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .matrix td:last-child { border-radius: 0 14px 14px 0; }
+  .matrix tr.own td { background: rgba(126,246,251,.12); }
+  .matrix td.pass { color: var(--pass); } .matrix td.risk { color: var(--risk); } .matrix td.fail { color: var(--fail); }
+  .matrix td.lead { font-weight: 800; text-decoration: underline; text-underline-offset: 6px; }
   .scores-note { margin-top: calc(var(--u) * .9); font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .7); color: var(--muted); text-align: center; }
   .clip .fg.a { animation-name: ring; animation-duration: 1.4s; }
   @keyframes ring { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: var(--o); } }
@@ -164,6 +173,14 @@ function visual(v, t0) {
     const big = '<div class="ring big">' + ring(v.overall, 110, "gold", step(.3)) + '<span class="n a in-up" style="animation-delay:' + (at - .1).toFixed(2) + 's">' + v.overall + "</span></div>";
     const areas = v.areas.map((a) => '<div class="area"><div class="ring">' + ring(a[1], 46, "", step(.22)) + '<span class="n">' + a[1] + "</span></div><small>" + esc(a[0]) + "</small></div>").join("");
     return '<div class="glass"><div class="scores">' + big + '<div class="areas">' + areas + "</div></div>" + (v.note ? '<div class="scores-note">' + esc(v.note) + "</div>" : "") + "</div>";
+  }
+  if (v.type === "matrix") {
+    const tone = (n) => n >= 90 ? "pass" : n >= 70 ? "risk" : "fail";
+    const best = v.cols.map((c, i) => Math.max(...v.rows.map((r) => typeof r[i + 1] === "number" ? r[i + 1] : -1)));
+    const cell = (n, i) => typeof n !== "number" ? "<td>–</td>" : '<td class="' + tone(n) + (n === best[i] && v.rows.length > 1 ? " lead" : "") + '">' + n + "</td>";
+    return '<div class="glass"><table class="matrix"><thead><tr><th></th>' + v.cols.map((c) => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
+      v.rows.map((r, k) => '<tr class="a' + (k === 0 ? " own" : "") + '" style="animation-delay:' + step(.45).toFixed(2) + 's"><td>' + esc(r[0]) + "</td>" + r.slice(1).map(cell).join("") + "</tr>").join("") +
+      "</tbody></table>" + (v.note ? '<div class="scores-note">' + esc(v.note) + "</div>" : "") + "</div>";
   }
   if (v.type === "stat") {
     return '<div class="glass stat"><b class="a in-up" style="animation-delay:' + step(.5).toFixed(2) + 's">' + esc(v.value) + "</b><small>" + esc(v.caption) + "</small></div>";
