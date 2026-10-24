@@ -25,7 +25,11 @@ const STOP = /unsubscribe|remove (me|us)|do not (contact|email|write)|stop (send
 const REDIRECT = /forward|redirect|instead|reenv[ií]|remit|redirig|dir[ií]j|dirigir|escrib(a|ir|an) a|nuev[oa] (responsable|encargad|contacto)|responsable|encargad|contact(e|ar|o) (a|con)|weiterleit|zust[äa]ndig|wenden sie sich|transf[ée]r|adress(ez|er)|inoltr|rivolger|responsabile|encaminh|respons[áa]vel/i;
 const INTERESTED = /thank|gracias|interes|cotiza|precio|\bprice|quote|how much|cu[áa]nto|propuesta|reuni[óo]n|meeting|llamad|danke|merci|grazie|obrigad|angebot|devis|preventivo|or[çc]amento/i;
 
-const FORWARD = /-{4,}\s*(forwarded message|mensaje reenviado|message transf[ée]r[ée]|weitergeleitete nachricht|messaggio inoltrato|mensagem encaminhada)\s*-{4,}/i;
+const FORWARD = /-{4,}\s*(forwarded message|mensaje reenviado|message transf[ée]r[ée]|weitergeleitete nachricht|messaggio inoltrato|mensagem encaminhada)\s*-{4,}|^[ \t]*(begin forwarded message|inicio del mensaje reenviado|d[ée]but du message r[ée]exp[ée]di[ée]|anfang der weitergeleiteten nachricht|inizio messaggio inoltrato|in[íi]cio da mensagem (re)?encaminhada)\s?:/im;
+const FROM_KEYS = ["from", "de", "von", "da"];
+const SUBJECT_KEYS = ["subject", "asunto", "betreff", "objet", "oggetto", "assunto"];
+const OTHER_KEYS = ["sent", "date", "to", "cc", "reply-to", "enviado", "enviada", "fecha", "para", "gesendet", "datum", "an", "envoyé", "à", "a", "inviato", "data"];
+const HEADER_LINE = /^[\s*]*([^:*]{1,12}?)[\s*]*:[\s*]*(.*?)[\s*]*$/;
 const QUOTE_START = /^\s*(on .+wrote:|el .+escribi[óo]:|le .+a [ée]crit\s?:|am .+schrieb.*:|il giorno .+ha scritto:|em .+escreveu:|-{3,}\s*(original message|mensaje original|message d'origine|urspr[üu]ngliche nachricht|messaggio originale|mensagem original)\s*-{3,}|(from|de|von|da):\s.+@.+|_{8,})/im;
 const EMAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 
@@ -42,6 +46,11 @@ function domainOfEmail(email) {
   return lower(String(email || "").split("@")[1]);
 }
 
+function ours(email) {
+  const domain = domainOfEmail(email);
+  return OPERATORS.includes(lower(email)) || OWN_DOMAINS.some((d) => domain === d || domain.endsWith("." + d));
+}
+
 // The reply's own words: no quoted notice, no "On ... wrote:" tail.
 function ownWords(text) {
   const lines = String(text || "").replace(/\r/g, "").split("\n").filter((line) => !/^\s*>/.test(line));
@@ -50,23 +59,42 @@ function ownWords(text) {
   return (cut > 0 ? body.slice(0, cut) : body).trim();
 }
 
+// One forwarded header block (From/Sent/To/Subject) starting at a From line; a wrapped From line is joined.
+function headerBlock(lines, start) {
+  const head = { from: "", subject: "", fields: 0 };
+  let last = "";
+  let i = start;
+  for (; i < lines.length && lines[i].trim(); i += 1) {
+    const m = lines[i].match(HEADER_LINE);
+    const key = m ? lower(m[1]) : "";
+    if (FROM_KEYS.includes(key) && i === start) head.from = m[2];
+    else if (SUBJECT_KEYS.includes(key)) head.subject = m[2];
+    else if (!OTHER_KEYS.includes(key)) {
+      if (last !== "from" || addressOf(head.from)) break;
+      head.from += " " + lines[i].trim();
+      continue;
+    }
+    last = i === start ? "from" : key;
+    head.fields += 1;
+  }
+  return { from: addressOf(head.from), subject: head.subject.trim(), fields: head.fields, end: i };
+}
+
 // A reply the operator forwarded from the inbox: the original sender, subject and text.
+// Outlook forwards have no marker line, so the first header block that is not ours is the sender.
 function unforward(text) {
   const raw = String(text || "").replace(/\r/g, "");
   const at = raw.search(FORWARD);
-  if (at < 0) return null;
-  const rest = raw.slice(at).split("\n").slice(1);
-  const head = {};
-  let i = 0;
-  for (; i < rest.length && rest[i].trim(); i += 1) {
-    const m = rest[i].match(/^\s*([^:]{2,12}):\s*(.*)$/);
-    if (!m) continue;
-    const key = lower(m[1]);
-    if (["from", "de", "von", "da"].includes(key)) head.from = m[2];
-    if (["subject", "asunto", "betreff", "objet", "oggetto", "assunto"].includes(key)) head.subject = m[2];
+  const lines = at < 0 ? raw.split("\n") : raw.slice(at).split("\n").slice(1);
+  for (let i = 0; i < lines.length; i += 1) {
+    const m = lines[i].match(HEADER_LINE);
+    if (!m || !FROM_KEYS.includes(lower(m[1]))) continue;
+    const head = headerBlock(lines, i);
+    if (head.from && head.fields > 1 && !ours(head.from)) {
+      return { from: head.from, subject: head.subject, text: lines.slice(head.end).join("\n").trim() };
+    }
   }
-  const from = addressOf(head.from);
-  return from ? { from, subject: String(head.subject || "").trim(), text: rest.slice(i).join("\n").trim() } : null;
+  return null;
 }
 
 // mail: { from, to, subject, text, headers }. Returns what the reply is and what it points to.
@@ -85,7 +113,6 @@ function read(mail) {
   const token = (String(mail.to || "").match(/reply\+([a-f0-9]{32})@/i) || [])[1] || "";
   const words = ownWords(text);
   const headers = String(mail.headers || "");
-  const ours = (email) => OWN_DOMAINS.some((d) => domainOfEmail(email) === d || domainOfEmail(email).endsWith("." + d));
   const mentioned = [...new Set((words.match(EMAIL) || []).map(lower))]
     .filter((email) => email !== from && !ours(email) && !/^(no-?reply|mailer-daemon|postmaster)@/.test(email));
   let kind = "other";
