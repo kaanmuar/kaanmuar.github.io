@@ -2226,6 +2226,16 @@
     typeNeed: 'Type totals need case lines. Older runs stored only the pass rate.',
     noHistory: 'Select at least one saved run in Run history.',
     pt: 'pt',
+    runDetails: 'Run details', generated: 'Generated', browserInUse: 'Browser in use', windowSize: 'Window size',
+    screens: 'Screen sizes run', desktop: 'Desktop window', browsersChosen: 'Browsers chosen',
+    frameworksChosen: 'Frameworks chosen', started: 'Started', finished: 'Finished', caseTime: 'Total case time',
+    casesRun: 'Cases run', inCatalog: 'in the catalog', reportLang: 'Report language',
+    summaryByType: 'Summary by type', colRan: 'Ran', colPassed: 'Passed', colFailed: 'Failed',
+    colAvg: 'Avg ms', colSlowest: 'Slowest case', failures: 'Failures', noFailures: 'No case failed in this session.',
+    expected: 'Expected', error: 'Error', explanation: 'Explanation', colFrameworks: 'Frameworks', colScreen: 'Screen',
+    caseResults: 'Case results', caseSteps: 'Where, when and how', colWhen: 'When',
+    notRun: 'Catalog cases not run in this session', allRan: 'Every catalog case ran.',
+    nativeFailures: 'Failures reported by native runners', noNative: 'No native runner reported a failure.',
     verdicts: {
       regression: 'regression', fixed: 'fixed', flaky: 'flaky', 'stable pass': 'stable pass',
       'stable fail': 'stable fail', partial: 'partial', pass: 'pass', fail: 'fail'
@@ -2274,6 +2284,16 @@
       noStored: 'No hay líneas de casos guardadas.',
       typeNeed: 'Los totales por tipo necesitan líneas de casos. Las ejecuciones antiguas solo guardaron la tasa.',
       noHistory: 'Selecciona al menos una ejecución guardada en el historial.',
+      runDetails: 'Detalles de la ejecución', generated: 'Generado', browserInUse: 'Navegador usado', windowSize: 'Tamaño de la ventana',
+      screens: 'Tamaños de pantalla ejecutados', desktop: 'Ventana de escritorio', browsersChosen: 'Navegadores elegidos',
+      frameworksChosen: 'Frameworks elegidos', started: 'Inicio', finished: 'Fin', caseTime: 'Tiempo total de los casos',
+      casesRun: 'Casos ejecutados', inCatalog: 'en el catálogo', reportLang: 'Idioma del informe',
+      summaryByType: 'Resumen por tipo', colRan: 'Ejecutados', colPassed: 'Aprobados', colFailed: 'Fallidos',
+      colAvg: 'Promedio ms', colSlowest: 'Caso más lento', failures: 'Fallos', noFailures: 'Ningún caso falló en esta sesión.',
+      expected: 'Esperado', error: 'Error', explanation: 'Explicación', colFrameworks: 'Frameworks', colScreen: 'Pantalla',
+      caseResults: 'Resultados por caso', caseSteps: 'Dónde, cuándo y cómo', colWhen: 'Cuándo',
+      notRun: 'Casos del catálogo no ejecutados en esta sesión', allRan: 'Se ejecutaron todos los casos del catálogo.',
+      nativeFailures: 'Fallos reportados por los ejecutores nativos', noNative: 'Ningún ejecutor nativo reportó un fallo.',
       verdicts: { regression: 'regresión', fixed: 'corregido', flaky: 'inestable', 'stable pass': 'aprobado estable', 'stable fail': 'fallo estable', partial: 'parcial', pass: 'aprobado', fail: 'fallo' }
     },
     pt: {
@@ -2318,6 +2338,16 @@
       noStored: 'Não há linhas de casos guardadas.',
       typeNeed: 'Os totais por tipo precisam das linhas dos casos. Execuções antigas só guardaram a taxa.',
       noHistory: 'Selecione pelo menos uma execução salva no histórico.',
+      runDetails: 'Detalhes da execução', generated: 'Gerado', browserInUse: 'Navegador usado', windowSize: 'Tamanho da janela',
+      screens: 'Tamanhos de tela executados', desktop: 'Janela de desktop', browsersChosen: 'Navegadores escolhidos',
+      frameworksChosen: 'Frameworks escolhidos', started: 'Início', finished: 'Fim', caseTime: 'Tempo total dos casos',
+      casesRun: 'Casos executados', inCatalog: 'no catálogo', reportLang: 'Idioma do relatório',
+      summaryByType: 'Resumo por tipo', colRan: 'Executados', colPassed: 'Aprovados', colFailed: 'Reprovados',
+      colAvg: 'Média ms', colSlowest: 'Caso mais lento', failures: 'Falhas', noFailures: 'Nenhum caso falhou nesta sessão.',
+      expected: 'Esperado', error: 'Erro', explanation: 'Explicação', colFrameworks: 'Frameworks', colScreen: 'Tela',
+      caseResults: 'Resultados por caso', caseSteps: 'Onde, quando e como', colWhen: 'Quando',
+      notRun: 'Casos do catálogo não executados nesta sessão', allRan: 'Todos os casos do catálogo foram executados.',
+      nativeFailures: 'Falhas relatadas pelos executores nativos', noNative: 'Nenhum executor nativo relatou falha.',
       verdicts: { regression: 'regressão', fixed: 'corrigido', flaky: 'instável', 'stable pass': 'aprovação estável', 'stable fail': 'falha estável', partial: 'parcial', pass: 'aprovado', fail: 'falha' }
     },
     de: {
@@ -2362,6 +2392,16 @@
       noStored: 'Keine Fallzeilen gespeichert.',
       typeNeed: 'Typ-Summen brauchen Fallzeilen. Ältere Läufe speicherten nur die Quote.',
       noHistory: 'Wählen Sie mindestens einen gespeicherten Lauf im Verlauf.',
+      runDetails: 'Laufdetails', generated: 'Erstellt', browserInUse: 'Verwendeter Browser', windowSize: 'Fenstergröße',
+      screens: 'Geprüfte Bildschirmgrößen', desktop: 'Desktop-Fenster', browsersChosen: 'Gewählte Browser',
+      frameworksChosen: 'Gewählte Frameworks', started: 'Start', finished: 'Ende', caseTime: 'Gesamtzeit der Fälle',
+      casesRun: 'Ausgeführte Fälle', inCatalog: 'im Katalog', reportLang: 'Berichtssprache',
+      summaryByType: 'Übersicht nach Typ', colRan: 'Ausgeführt', colPassed: 'Bestanden', colFailed: 'Fehlgeschlagen',
+      colAvg: 'Ø ms', colSlowest: 'Langsamster Fall', failures: 'Fehler', noFailures: 'In dieser Sitzung ist kein Fall fehlgeschlagen.',
+      expected: 'Erwartet', error: 'Fehlermeldung', explanation: 'Erklärung', colFrameworks: 'Frameworks', colScreen: 'Bildschirm',
+      caseResults: 'Ergebnisse je Fall', caseSteps: 'Wo, wann und wie', colWhen: 'Wann',
+      notRun: 'Katalogfälle, die in dieser Sitzung nicht liefen', allRan: 'Alle Katalogfälle liefen.',
+      nativeFailures: 'Von nativen Runnern gemeldete Fehler', noNative: 'Kein nativer Runner hat einen Fehler gemeldet.',
       verdicts: { regression: 'Regression', fixed: 'behoben', flaky: 'instabil', 'stable pass': 'stabil bestanden', 'stable fail': 'stabil fehlgeschlagen', partial: 'teilweise', pass: 'bestanden', fail: 'fehlgeschlagen' }
     },
     fr: {
@@ -2406,6 +2446,16 @@
       noStored: 'Aucune ligne de cas enregistrée.',
       typeNeed: 'Les totaux par type exigent les lignes de cas. Les anciennes exécutions n’ont gardé que le taux.',
       noHistory: 'Sélectionnez au moins une exécution enregistrée dans l’historique.',
+      runDetails: 'Détails de l’exécution', generated: 'Généré', browserInUse: 'Navigateur utilisé', windowSize: 'Taille de la fenêtre',
+      screens: 'Tailles d’écran exécutées', desktop: 'Fenêtre de bureau', browsersChosen: 'Navigateurs choisis',
+      frameworksChosen: 'Frameworks choisis', started: 'Début', finished: 'Fin', caseTime: 'Durée totale des cas',
+      casesRun: 'Cas exécutés', inCatalog: 'dans le catalogue', reportLang: 'Langue du rapport',
+      summaryByType: 'Synthèse par type', colRan: 'Exécutés', colPassed: 'Réussis', colFailed: 'Échoués',
+      colAvg: 'Moy. ms', colSlowest: 'Cas le plus lent', failures: 'Échecs', noFailures: 'Aucun cas n’a échoué dans cette session.',
+      expected: 'Attendu', error: 'Erreur', explanation: 'Explication', colFrameworks: 'Frameworks', colScreen: 'Écran',
+      caseResults: 'Résultats par cas', caseSteps: 'Où, quand et comment', colWhen: 'Quand',
+      notRun: 'Cas du catalogue non exécutés dans cette session', allRan: 'Tous les cas du catalogue ont été exécutés.',
+      nativeFailures: 'Échecs signalés par les exécuteurs natifs', noNative: 'Aucun exécuteur natif n’a signalé d’échec.',
       verdicts: { regression: 'régression', fixed: 'corrigé', flaky: 'instable', 'stable pass': 'réussite stable', 'stable fail': 'échec stable', partial: 'partiel', pass: 'réussi', fail: 'échec' }
     },
     it: {
@@ -2450,6 +2500,16 @@
       noStored: 'Nessuna riga di caso salvata.',
       typeNeed: 'I totali per tipo richiedono le righe dei casi. Le esecuzioni vecchie hanno salvato solo il tasso.',
       noHistory: 'Seleziona almeno un’esecuzione salvata nella cronologia.',
+      runDetails: 'Dettagli dell’esecuzione', generated: 'Generato', browserInUse: 'Browser usato', windowSize: 'Dimensione della finestra',
+      screens: 'Dimensioni schermo eseguite', desktop: 'Finestra desktop', browsersChosen: 'Browser scelti',
+      frameworksChosen: 'Framework scelti', started: 'Inizio', finished: 'Fine', caseTime: 'Tempo totale dei casi',
+      casesRun: 'Casi eseguiti', inCatalog: 'nel catalogo', reportLang: 'Lingua del report',
+      summaryByType: 'Riepilogo per tipo', colRan: 'Eseguiti', colPassed: 'Superati', colFailed: 'Falliti',
+      colAvg: 'Media ms', colSlowest: 'Caso più lento', failures: 'Fallimenti', noFailures: 'Nessun caso è fallito in questa sessione.',
+      expected: 'Atteso', error: 'Errore', explanation: 'Spiegazione', colFrameworks: 'Framework', colScreen: 'Schermo',
+      caseResults: 'Risultati per caso', caseSteps: 'Dove, quando e come', colWhen: 'Quando',
+      notRun: 'Casi del catalogo non eseguiti in questa sessione', allRan: 'Tutti i casi del catalogo sono stati eseguiti.',
+      nativeFailures: 'Fallimenti segnalati dagli esecutori nativi', noNative: 'Nessun esecutore nativo ha segnalato un fallimento.',
       verdicts: { regression: 'regressione', fixed: 'corretto', flaky: 'instabile', 'stable pass': 'superamento stabile', 'stable fail': 'fallimento stabile', partial: 'parziale', pass: 'superato', fail: 'fallito' }
     }
   };
@@ -2590,7 +2650,7 @@
     const sections = ordered.map((run) => {
       const rows = (run.cases || []).map((row) => {
         const meta = caseMeta(row.id);
-        return '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(meta.title) + '</td><td class="' + (row.ok ? 'pass' : 'fail') + '">' + (row.ok ? c.pass : c.fail) + '</td><td>' + (row.ms || 0) + '</td><td>' + escHtml(row.layer || meta.layer) + '</td><td>' + escHtml(row.note || '') + '</td></tr>';
+        return '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(meta.title) + '</td><td class="' + (row.ok ? 'pass' : 'fail') + '">' + (row.ok ? c.pass : c.fail) + '</td><td>' + (row.ms || 0) + '</td><td>' + escHtml(row.layer || meta.layer) + '</td><td>' + escHtml([row.note, row.frame, row.explain].filter(Boolean).join(' · ')) + '</td></tr>';
       }).join('');
       const stats = runnerStats(run).map((row) => '<li>' + escHtml(row.name) + ' · ' + row.passed + '/' + row.ran + ' · avg ' + row.avg + ' ms</li>').join('');
       const view = run.view === 'background' ? c.background : (run.view === 'watch' ? c.watch : (run.view || '—'));
@@ -2628,6 +2688,10 @@
         .h-meter span, .fw-track span { display: block; height: 100%; border-radius: 999px; }
         .fw-row { display: grid; grid-template-columns: 110px 1fr; gap: 4px 8px; align-items: center; font-size: 12px; margin: 6px 0; font-family: sans-serif; }
         .fw-meta { grid-column: 2; color: #5c6b76; }
+        .facts th { width: 32%; color: #5c6b76; font-weight: 600; }
+        .fail-card { border: 1px solid #f1c4bf; border-left: 4px solid #b42318; border-radius: 8px; padding: 4px 12px; margin: 10px 0; break-inside: avoid; }
+        .fail-card h3 { margin: 8px 0 4px; font-size: 14px; color: #b42318; }
+        .not-run { columns: 2; font-family: sans-serif; font-size: 12px; }
         footer { margin-top: 28px; font-size: 12px; }
         h2, h3 { break-after: avoid; }
         @media print { a { color: inherit; text-decoration: none; } .chart-card, .fw-row, .h-meter { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
@@ -2817,19 +2881,110 @@
     return '<div class="chart-grid">' + cards.join('') + '</div>';
   }
 
-  function buildReport(results, opts, picked) {
+  function browserName(ua) {
+    const s = String(ua || '');
+    const hit = [[/Edg\/(\d+)/, 'Edge'], [/Firefox\/(\d+)/, 'Firefox'], [/CriOS\/(\d+)/, 'Chrome'], [/Chrome\/(\d+)/, 'Chrome'], [/Version\/(\d+).*Safari/, 'Safari']]
+      .find(([re]) => re.test(s));
+    const os = /iPhone|iPad/.test(s) ? 'iOS' : /Android/.test(s) ? 'Android' : /Mac OS X/.test(s) ? 'macOS' : /Windows/.test(s) ? 'Windows' : /Linux/.test(s) ? 'Linux' : '';
+    if (!hit) return s || '—';
+    return hit[1] + ' ' + s.match(hit[0])[1] + (os ? ' · ' + os : '');
+  }
+
+  function buildReport(results, opts, picked, ctx) {
     const copy = reportCopy(opts && opts.lang);
+    const info = ctx || {};
     const stamp = new Date().toISOString();
     const passed = results.filter((row) => row.ok).length;
+    const failed = results.filter((row) => !row.ok);
+    const caseMs = results.reduce((sum, row) => sum + (row.ms || 0), 0);
+    const times = results.map((row) => row.at).filter(Boolean);
+    const chosen = info.runners || [];
+    const fwFor = (meta) => (meta.fw ? runnersFor(meta).filter((name) => !chosen.length || chosen.includes(name)) : []);
+    const screenOf = (row) => row.frame || copy.desktop;
+    const evidence = (row) => [row.detail || row.error || '', row.explain || ''].filter(Boolean).join(' · ');
+    const fact = ([label, value]) => '<tr><th>' + escHtml(label) + '</th><td>' + escHtml(value == null || value === '' ? '—' : String(value)) + '</td></tr>';
+    const table = (heads, rows, empty) => '<div class="matrix-wrap"><table><thead><tr>' + heads.map((h) => '<th>' + escHtml(h) + '</th>').join('') + '</tr></thead><tbody>'
+      + (rows || '<tr><td colspan="' + heads.length + '">' + escHtml(empty) + '</td></tr>') + '</tbody></table></div>';
     let body = '<p><strong>' + escHtml(copy.title) + '</strong> · ' + escHtml(stamp) + '<br>'
       + escHtml(copy.produced) + ' · carlosandmunoz.com<br>'
       + escHtml(copy.environment) + ': ' + escHtml(location.origin) + ' · ' + passed + '/' + results.length + ' ' + escHtml(copy.passedOf) + '</p>';
-    if (!opts || opts.graphs !== false) body += '<h2>' + escHtml(copy.graphs) + '</h2>' + sessionChartsHtml(results, copy);
-    if (!opts || opts.runners !== false) body += '<h2>' + escHtml(copy.runnerComparison) + '</h2>' + frameworkCompare(results, copy).outerHTML;
+    if (!opts || opts.details !== false) {
+      const view = info.view === 'background' ? copy.background : (info.view === 'watch' ? copy.watch : info.view);
+      body += '<h2>' + escHtml(copy.runDetails) + '</h2><table class="facts"><tbody>' + [
+        [copy.generated, stamp],
+        [copy.environment, location.origin],
+        [copy.browserInUse, browserName(info.userAgent)],
+        [copy.windowSize, info.window],
+        [copy.screens, (info.screens || []).join(', ') || copy.desktop],
+        [copy.browsersChosen, (info.browsers || []).join(', ')],
+        [copy.frameworksChosen, chosen.join(', ')],
+        [copy.pace, info.pace != null ? info.pace + ' s' : ''],
+        [copy.view, view],
+        [copy.started, times.length ? new Date(Math.min(...times)).toISOString() : ''],
+        [copy.finished, times.length ? new Date(Math.max(...times)).toISOString() : ''],
+        [copy.caseTime, caseMs ? (caseMs / 1000).toFixed(1) + ' s' : ''],
+        [copy.casesRun, results.length + ' / ' + CASES.length + ' ' + copy.inCatalog],
+        [copy.colPassed, passed],
+        [copy.colFailed, failed.length],
+        [copy.passRate, results.length ? Math.round((passed / results.length) * 100) + '%' : ''],
+        [copy.reportLang, (opts && opts.lang) || 'en']
+      ].map(fact).join('') + '</tbody></table>';
+      const layers = [];
+      results.forEach((row) => { const layer = row.layer || caseMeta(row.id).layer; if (!layers.includes(layer)) layers.push(layer); });
+      const typeRows = layers.map((layer) => {
+        const rows = results.filter((row) => (row.layer || caseMeta(row.id).layer) === layer);
+        const ok = rows.filter((row) => row.ok).length;
+        const avg = Math.round(rows.reduce((sum, row) => sum + (row.ms || 0), 0) / rows.length);
+        const slow = rows.slice().sort((a, b) => (b.ms || 0) - (a.ms || 0))[0];
+        return '<tr><td>' + escHtml(layer) + '</td><td>' + rows.length + '</td><td class="pass">' + ok + '</td><td class="' + (rows.length - ok ? 'fail' : '') + '">' + (rows.length - ok) + '</td><td>' + avg + '</td><td>' + escHtml(slow.id + ' · ' + (slow.ms || 0) + ' ms') + '</td></tr>';
+      }).join('');
+      body += '<h2>' + escHtml(copy.summaryByType) + '</h2>' + table([copy.colType, copy.colRan, copy.colPassed, copy.colFailed, copy.colAvg, copy.colSlowest], typeRows, copy.empty);
+    }
     if (!opts || opts.cases !== false) {
-      const rows = results.map((row) => '<tr><td>' + escHtml(row.id) + '</td><td class="' + (row.ok ? 'pass' : 'fail') + '">' + (row.ok ? copy.pass : copy.fail) + '</td><td>' + (row.ms || 0) + '</td><td>' + escHtml(row.detail || row.error || '') + '</td></tr>').join('');
-      body += '<h2>' + escHtml(copy.colResult) + '</h2><table><thead><tr><th>' + escHtml(copy.colId) + '</th><th>' + escHtml(copy.colResult) + '</th><th>' + escHtml(copy.colMs) + '</th><th>' + escHtml(copy.colEvidence) + '</th></tr></thead><tbody>'
-        + (rows || '<tr><td colspan="4">' + escHtml(copy.empty) + '</td></tr>') + '</tbody></table><p class="muted">' + escHtml(copy.security) + ' · ' + escHtml(stamp) + '</p>';
+      const cards = failed.map((row) => {
+        const meta = caseMeta(row.id);
+        return '<article class="fail-card"><h3>' + escHtml(row.id + ' · ' + meta.title) + '</h3><table class="facts"><tbody>' + [
+          [copy.colType, row.layer || meta.layer],
+          [copy.colFrameworks, fwFor(meta).join(', ')],
+          [copy.colScreen, screenOf(row)],
+          [copy.colMs, row.ms || 0],
+          [copy.colWhere, meta.where],
+          [copy.colWhen, meta.when],
+          [copy.expected, meta.how],
+          [copy.error, row.error],
+          [copy.explanation, row.explain]
+        ].map(fact).join('') + '</tbody></table></article>';
+      }).join('');
+      body += '<h2>' + escHtml(copy.failures) + '</h2>' + (cards || '<p class="muted">' + escHtml(results.length ? copy.noFailures : copy.empty) + '</p>');
+    }
+    if (!opts || opts.graphs !== false) body += '<h2>' + escHtml(copy.graphs) + '</h2>' + sessionChartsHtml(results, copy);
+    if (!opts || opts.runners !== false) {
+      body += '<h2>' + escHtml(copy.runnerComparison) + '</h2>' + frameworkCompare(results, copy).outerHTML;
+      const native = info.native || {};
+      const nativeRows = Object.keys(native).flatMap((name) => ((native[name] && native[name].cases) || []).filter((item) => !item.ok)
+        .map((item) => '<li><strong>' + escHtml(name) + '</strong> · ' + escHtml(item.id || '') + (item.ms ? ' · ' + item.ms + ' ms' : '') + ((item.error || item.message) ? ' · ' + escHtml(item.error || item.message) : '') + '</li>'));
+      if (Object.keys(native).length) body += '<h3>' + escHtml(copy.nativeFailures) + '</h3>' + (nativeRows.length ? '<ul>' + nativeRows.join('') + '</ul>' : '<p class="muted">' + escHtml(copy.noNative) + '</p>');
+    }
+    if (!opts || opts.cases !== false) {
+      const rows = results.map((row) => {
+        const meta = caseMeta(row.id);
+        return '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(meta.title) + '</td><td>' + escHtml(row.layer || meta.layer) + '</td><td class="' + (row.ok ? 'pass' : 'fail') + '">' + (row.ok ? copy.pass : copy.fail) + '</td><td>' + (row.ms || 0) + '</td><td>' + escHtml(screenOf(row)) + '</td><td>' + escHtml(fwFor(meta).join(', ')) + '</td><td>' + escHtml(evidence(row)) + '</td></tr>';
+      }).join('');
+      body += '<h2>' + escHtml(copy.caseResults) + '</h2>' + table([copy.colId, copy.colTitle, copy.colType, copy.colResult, copy.colMs, copy.colScreen, copy.colFrameworks, copy.colEvidence], rows, copy.empty)
+        + '<p class="muted">' + escHtml(copy.security) + ' · ' + escHtml(stamp) + '</p>';
+    }
+    if (!opts || opts.steps !== false) {
+      const rows = results.map((row) => {
+        const meta = caseMeta(row.id);
+        return '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(meta.where) + '</td><td>' + escHtml(meta.when) + '</td><td>' + escHtml(meta.how) + '</td></tr>';
+      }).join('');
+      body += '<h2>' + escHtml(copy.caseSteps) + '</h2>' + table([copy.colId, copy.colWhere, copy.colWhen, copy.colHow], rows, copy.empty);
+      if (results.length) {
+        const ran = new Set(results.map((row) => row.id));
+        const skipped = CASES.filter((c) => !ran.has(c.id));
+        body += '<h3>' + escHtml(copy.notRun) + ' (' + skipped.length + ')</h3>'
+          + (skipped.length ? '<ul class="not-run">' + skipped.map((c) => '<li><strong>' + escHtml(c.id) + '</strong> ' + escHtml(c.title) + ' · ' + escHtml(c.layer) + '</li>').join('') + '</ul>' : '<p class="muted">' + escHtml(copy.allRan) + '</p>');
+      }
     }
     if (opts && opts.history) body += (picked && picked.length) ? runsBody(picked, opts.lang) : '<p>' + escHtml(copy.noHistory) + '</p>';
     if (opts && opts.analysis) body += (picked && picked.length) ? analysisBody(picked, opts.lang) : '<p>' + escHtml(copy.noHistory) + '</p>';
@@ -3011,9 +3166,11 @@
         <h3>Runner comparison</h3>
         <div class="report-compare"></div>
         <table>
-          <thead><tr><th>ID</th><th>Result</th><th>ms</th><th>Where / evidence</th></tr></thead>
+          <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Result</th><th>ms</th><th>Evidence</th></tr></thead>
           <tbody>${this.results.map((r) => `<tr>
             <td>${r.id}</td>
+            <td>${escHtml(caseMeta(r.id).title)}</td>
+            <td>${escHtml(r.layer || caseMeta(r.id).layer)}</td>
             <td class="${r.ok ? 'pass' : 'fail'}">${r.ok ? 'PASSED' : 'FAILED'}</td>
             <td>${r.ms}</td>
             <td>${(r.detail || r.error || '').replace(/</g, '&lt;')}${r.explain ? ' · ' + String(r.explain).replace(/</g, '&lt;') : ''}</td>
@@ -3046,7 +3203,9 @@
       return {
         lang: langEl && REPORT_LANGS.includes(langEl.value) ? langEl.value : readReportLang(),
         graphs: on('opt-graphs', true),
+        details: on('opt-details', true),
         cases: on('opt-cases', true),
+        steps: on('opt-steps', true),
         runners: on('opt-runners', true),
         history: on('opt-history', false),
         analysis: on('opt-analysis', false)
@@ -3054,7 +3213,21 @@
     },
 
     reportDocument(opts) {
-      return buildReport(this.results, opts || this.reportChoices(), this.pickedRuns());
+      return buildReport(this.results, opts || this.reportChoices(), this.pickedRuns(), this.reportContext());
+    },
+
+    reportContext() {
+      const labels = Object.fromEntries(BASE_BROWSERS.map((item) => [item.id, item.label]));
+      return {
+        userAgent: navigator.userAgent,
+        window: window.innerWidth + ' × ' + window.innerHeight + ' px · DPR ' + (window.devicePixelRatio || 1),
+        screens: this.runFrames().filter(Boolean).map((frame) => frame.label + (frame.width ? ' · ' + frame.width + ' × ' + frame.height + ' px' : '')),
+        browsers: this.selectedBrowsers().map((id) => labels[id] || id),
+        runners: this.selectedFrameworks(),
+        pace: this.pace,
+        view: this.view,
+        native: this.nativeSummaries
+      };
     },
 
     refreshReportPreview() {
@@ -3073,7 +3246,9 @@
         if (el) el.checked = value;
       };
       set('opt-graphs', !(preset && preset.graphs === false));
+      set('opt-details', !(preset && preset.details === false));
       set('opt-cases', !(preset && preset.cases === false));
+      set('opt-steps', !(preset && preset.steps === false));
       set('opt-runners', !(preset && preset.runners === false));
       set('opt-history', !!(preset && preset.history));
       set('opt-analysis', !!(preset && preset.analysis));
@@ -3365,6 +3540,7 @@
       try {
         for (const frame of frames) {
         this.deviceFrame = frame && frame.width ? frame : null;
+        const frameLabel = frame ? frame.label + (frame.width ? ' · ' + frame.width + ' × ' + frame.height + ' px' : '') : '';
         if (frames.length > 1 && frame) this.log('<b>LAB</b> ' + frame.label);
         await this.withTargets(async (ctx) => {
           const iframe = document.getElementById('sut');
@@ -3403,12 +3579,12 @@
               const detail = await withTimeout(c.run(ctx), 40000, c.id) || 'ok';
               const ms = Math.round(performance.now() - t0);
               this.results = this.results.filter((r) => r.id !== c.id);
-              this.results.push({ id: c.id, ok: true, ms, detail, layer: c.layer });
+              this.results.push({ id: c.id, ok: true, ms, detail, layer: c.layer, at: Date.now(), frame: frameLabel });
               this.log(`<span class="ok">PASS</span> ${c.id} · ${ms} ms · ${String(detail).replace(/</g, '&lt;')}`);
             } catch (err) {
               const ms = Math.round(performance.now() - t0);
               this.results = this.results.filter((r) => r.id !== c.id);
-              const result = { id: c.id, ok: false, ms, error: err.message, layer: c.layer };
+              const result = { id: c.id, ok: false, ms, error: err.message, layer: c.layer, at: Date.now(), frame: frameLabel };
               this.results.push(result);
               this.log(`<span class="fail">FAIL</span> ${c.id} · ${ms} ms · ${String(err.message).replace(/</g, '&lt;')}`);
               if (global.LabObserver) await global.LabObserver.caseEnd(this, c, result);
@@ -3477,7 +3653,9 @@
           ok: !!r.ok,
           ms: r.ms || 0,
           layer: r.layer || '',
-          note: String(r.detail || r.error || '').slice(0, 220)
+          note: String(r.detail || r.error || '').slice(0, 220),
+          frame: r.frame || '',
+          explain: String(r.explain || '').slice(0, 420)
         }))
       };
     },
@@ -3576,6 +3754,34 @@
       a.download = 'qa-lab-carlos-munoz-report.html';
       a.click();
       URL.revokeObjectURL(a.href);
+    },
+
+    async copyReport(btn) {
+      if (global.SiteAnalytics) SiteAnalytics.event('lab_report', 'QA Lab', 'copy');
+      const html = this.reportFile();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('.mark, style, script').forEach((el) => el.remove());
+      doc.querySelectorAll('td, th').forEach((cell) => { if (cell.nextElementSibling) cell.append('\t'); });
+      doc.querySelectorAll('tr, p, h1, h2, h3, h4, li, article, div').forEach((el) => el.append('\n'));
+      const text = doc.body.textContent.replace(/[ \u00a0]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+      const label = btn ? btn.textContent : '';
+      let done = false;
+      try {
+        if (global.ClipboardItem && navigator.clipboard.write) {
+          await navigator.clipboard.write([new ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html' }),
+            'text/plain': new Blob([text], { type: 'text/plain' })
+          })]);
+        } else {
+          await navigator.clipboard.writeText(text);
+        }
+        done = true;
+      } catch (err) { /* clipboard blocked */ }
+      if (btn) {
+        btn.textContent = done ? 'Copied' : 'Copy blocked';
+        setTimeout(() => { btn.textContent = label; }, 1600);
+      }
+      return text;
     },
 
     printReport() {
@@ -4106,6 +4312,8 @@
       const reportClose = document.getElementById('report-options-close');
       const reportPrint = document.getElementById('report-options-print');
       const reportDownload = document.getElementById('report-options-download');
+      const reportCopyBtn = document.getElementById('report-options-copy');
+      if (reportCopyBtn) reportCopyBtn.onclick = () => this.copyReport(reportCopyBtn);
       if (reportClose) reportClose.onclick = () => this.closeReportOptions();
       if (reportPrint) reportPrint.onclick = () => this.printReport();
       if (reportDownload) reportDownload.onclick = () => this.downloadReport();

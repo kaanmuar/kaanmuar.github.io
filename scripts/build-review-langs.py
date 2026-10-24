@@ -15,7 +15,7 @@ import pathlib
 import re
 import sys
 
-from review_langs_copy import AND, COPY, DATE, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE
+from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BASE = "https://carlosandmunoz.com/"
@@ -178,10 +178,6 @@ def locale_block(code):
     lines += [f'    <meta property="og:locale:alternate" content="{loc}">' for _, loc in order[1:]]
     return "\n".join(lines)
 
-
-COMPARE_NOTE = ("Priced as a second review, with the return discount. The competitor's site gets the public, passive checks only: no chat conversation and no form sent. "
-                "Like any review, its owner may get one email about it, and its scores can appear in Live Reports.")
-
 ASK_KEYS = ("open", "title", "close", "note", "inputLabel", "placeholder", "send", "repo")
 
 
@@ -256,7 +252,7 @@ def build(source, code, data):
     s = structured(s, code)
     s = gate(s, code)
     s = ask_panel(s, code)
-    s = swap(s, f'<p class="meta-line">{COMPARE_NOTE}</p>', f'<p class="meta-line" lang="{code}" translate="no">{COPY[code]["compare_note"]}</p>')
+    s = retag(s, '<p class="meta-line" id="compare-note">', "</p>", COMPARE_NOTE[code], code)
     s = with_live(s, code, data)
     s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js')
     return page, s
