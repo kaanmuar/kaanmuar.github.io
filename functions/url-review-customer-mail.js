@@ -571,6 +571,7 @@ const PDF_STYLE = "@page{size:A4;margin:12mm 0 0}@page:first{margin:0}*{box-sizi
   "body{font-family:Inter,'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10.5pt;line-height:1.45}" +
   ".foot{position:fixed;bottom:0;left:0;right:0;height:11mm;padding:3mm 16mm 0;font-size:8pt;color:#64748b;display:flex;justify-content:space-between;border-top:1px solid #dbe3ea;background:#fff;z-index:2}" +
   ".page{position:relative;z-index:1;padding:0 0 16mm}" +
+  ".wm{position:fixed;top:-30%;left:-30%;width:160%;height:160%;z-index:3;pointer-events:none;display:flex;flex-wrap:wrap;align-content:space-around;justify-content:space-around;gap:18mm 26mm;transform:rotate(-30deg);font-size:13pt;font-weight:600;color:rgba(15,23,42,.08);white-space:nowrap;overflow:hidden}" +
   ".hero{background:#0f172a;background-image:radial-gradient(circle at 85% 20%,rgba(94,234,212,.28),transparent 45%),linear-gradient(135deg,#0f172a 0%,#0e4a5c 60%,#0e7490 100%);color:#fff;padding:14mm 16mm 12mm;display:flex;gap:10mm;align-items:center}" +
   ".hero .who{flex:1}.eyebrow{font-size:8.5pt;letter-spacing:.16em;text-transform:uppercase;color:#7dd3fc;margin:0 0 3mm}" +
   ".host{font-family:Georgia,'Times New Roman',serif;font-size:26pt;line-height:1.1;margin:0 0 3mm;word-break:break-all}" +
@@ -639,7 +640,11 @@ function reportPdf(record, options) {
     "<div class=\"case\"><code>" + esc(item.id || "") + "</code><small>" + esc(item.layer || "") + "</small><br>" + lineOf(item.title, index + 7) + "</div>"
   ).join("");
   const moreCases = Math.max(0, facts.cases - PDF_CASES);
+  // Fixed, so the print engine repeats it on every page.
+  const mark = String((record && record.email) || "");
+  const watermark = mark ? "<div class=\"wm\" aria-hidden=\"true\">" + ("<span>" + esc(mark) + "</span>").repeat(40) + "</div>" : "";
   const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + (open ? "" : ".fz{background-image:url(" + stripUrl() + ")}") + "</style></head><body>" +
+    watermark +
     "<div class=\"foot\"><span>QA-lab URL Review · carlosandmunoz.com/qa-review.html</span><span>" + esc(facts.id) + "</span></div>" +
     "<div class=\"page\">" +
     "<div class=\"hero\"><div class=\"who\"><p class=\"eyebrow\">QA-lab URL Review</p><p class=\"host\">" + esc(facts.host) + "</p>" +

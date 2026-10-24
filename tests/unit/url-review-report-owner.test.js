@@ -115,3 +115,11 @@ test("the shared-open notice names the site and date in the owner's language, li
     assert.doesNotMatch(mail.text + mail.html, /ben@example\.com|\{\w+\}/, lang);
   }
 });
+
+test("the emailed report PDF is watermarked with the address it is sent to", () => {
+  const marked = customerMail.reportPdf(run()).html;
+  assert.match(marked, /<div class="wm"[^>]*>(<span>ana@example\.com<\/span>){40}<\/div>/);
+  assert.match(marked, /\.wm\{position:fixed;/, "fixed, so it prints on every page");
+  assert.doesNotMatch(customerMail.reportPdf(run({ email: "" })).html, /class="wm"/);
+  assert.match(customerMail.reportPdf(run({ email: "<b>@x.co" })).html, /<span>&lt;b&gt;@x\.co<\/span>/);
+});
