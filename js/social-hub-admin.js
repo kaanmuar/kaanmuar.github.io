@@ -206,7 +206,6 @@
     return "Not planned";
   }
 
-<<<<<<< HEAD
   // One address per article, however a feed or a share link spells it.
   function canonUrl(value) {
     let url;
