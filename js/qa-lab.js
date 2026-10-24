@@ -2087,6 +2087,11 @@
     return '<div class="h-meter" aria-hidden="true"><span style="width:' + n + '%;background:' + (color || '#0d6e76') + '"></span></div>';
   }
 
+  function screenTag(frame) {
+    const parts = String(frame || '').split(' · ');
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  }
+
   function caseMeta(id) {
     return CASES.find((item) => item.id === id) || { id: id, title: id, layer: '', where: '', when: '', how: '' };
   }
@@ -2094,11 +2099,13 @@
   function analyzeRuns(runs) {
     const ordered = runs.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
     const withCases = ordered.filter((run) => Array.isArray(run.cases) && run.cases.length);
-    const ids = [];
-    withCases.forEach((run) => run.cases.forEach((row) => { if (!ids.includes(row.id)) ids.push(row.id); }));
-    const matrix = ids.map((id) => {
+    const keys = [];
+    withCases.forEach((run) => run.cases.forEach((row) => {
+      if (!keys.some((key) => key.id === row.id && key.frame === (row.frame || ''))) keys.push({ id: row.id, frame: row.frame || '' });
+    }));
+    const matrix = keys.map(({ id, frame }) => {
       const meta = caseMeta(id);
-      const cells = ordered.map((run) => (run.cases || []).find((row) => row.id === id) || null);
+      const cells = ordered.map((run) => (run.cases || []).find((row) => row.id === id && (row.frame || '') === frame) || null);
       const present = cells.filter(Boolean);
       const first = present[0];
       const last = present[present.length - 1];
@@ -2113,6 +2120,8 @@
       else if (present.length === 1) verdict = last && last.ok ? 'pass' : 'fail';
       return {
         id,
+        frame,
+        label: id + (frame ? ' · ' + screenTag(frame) : ''),
         title: meta.title,
         layer: (last && last.layer) || meta.layer || '',
         where: meta.where || '',
@@ -2229,7 +2238,7 @@
     runDetails: 'Run details', generated: 'Generated', browserInUse: 'Browser in use', windowSize: 'Window size',
     screens: 'Screen sizes run', desktop: 'Desktop window', browsersChosen: 'Browsers chosen',
     frameworksChosen: 'Frameworks chosen', started: 'Started', finished: 'Finished', caseTime: 'Total case time',
-    casesRun: 'Cases run', inCatalog: 'in the catalog', reportLang: 'Report language',
+    casesRun: 'Cases run', inCatalog: 'in the catalog', screenChecks: 'checks across screens', reportLang: 'Report language',
     summaryByType: 'Summary by type', colRan: 'Ran', colPassed: 'Passed', colFailed: 'Failed',
     colAvg: 'Avg ms', colSlowest: 'Slowest case', failures: 'Failures', noFailures: 'No case failed in this session.',
     expected: 'Expected', error: 'Error', explanation: 'Explanation', colFrameworks: 'Frameworks', colScreen: 'Screen',
@@ -2287,7 +2296,7 @@
       runDetails: 'Detalles de la ejecución', generated: 'Generado', browserInUse: 'Navegador usado', windowSize: 'Tamaño de la ventana',
       screens: 'Tamaños de pantalla ejecutados', desktop: 'Ventana de escritorio', browsersChosen: 'Navegadores elegidos',
       frameworksChosen: 'Frameworks elegidos', started: 'Inicio', finished: 'Fin', caseTime: 'Tiempo total de los casos',
-      casesRun: 'Casos ejecutados', inCatalog: 'en el catálogo', reportLang: 'Idioma del informe',
+      casesRun: 'Casos ejecutados', inCatalog: 'en el catálogo', screenChecks: 'comprobaciones en todas las pantallas', reportLang: 'Idioma del informe',
       summaryByType: 'Resumen por tipo', colRan: 'Ejecutados', colPassed: 'Aprobados', colFailed: 'Fallidos',
       colAvg: 'Promedio ms', colSlowest: 'Caso más lento', failures: 'Fallos', noFailures: 'Ningún caso falló en esta sesión.',
       expected: 'Esperado', error: 'Error', explanation: 'Explicación', colFrameworks: 'Frameworks', colScreen: 'Pantalla',
@@ -2341,7 +2350,7 @@
       runDetails: 'Detalhes da execução', generated: 'Gerado', browserInUse: 'Navegador usado', windowSize: 'Tamanho da janela',
       screens: 'Tamanhos de tela executados', desktop: 'Janela de desktop', browsersChosen: 'Navegadores escolhidos',
       frameworksChosen: 'Frameworks escolhidos', started: 'Início', finished: 'Fim', caseTime: 'Tempo total dos casos',
-      casesRun: 'Casos executados', inCatalog: 'no catálogo', reportLang: 'Idioma do relatório',
+      casesRun: 'Casos executados', inCatalog: 'no catálogo', screenChecks: 'verificações em todas as telas', reportLang: 'Idioma do relatório',
       summaryByType: 'Resumo por tipo', colRan: 'Executados', colPassed: 'Aprovados', colFailed: 'Reprovados',
       colAvg: 'Média ms', colSlowest: 'Caso mais lento', failures: 'Falhas', noFailures: 'Nenhum caso falhou nesta sessão.',
       expected: 'Esperado', error: 'Erro', explanation: 'Explicação', colFrameworks: 'Frameworks', colScreen: 'Tela',
@@ -2395,7 +2404,7 @@
       runDetails: 'Laufdetails', generated: 'Erstellt', browserInUse: 'Verwendeter Browser', windowSize: 'Fenstergröße',
       screens: 'Geprüfte Bildschirmgrößen', desktop: 'Desktop-Fenster', browsersChosen: 'Gewählte Browser',
       frameworksChosen: 'Gewählte Frameworks', started: 'Start', finished: 'Ende', caseTime: 'Gesamtzeit der Fälle',
-      casesRun: 'Ausgeführte Fälle', inCatalog: 'im Katalog', reportLang: 'Berichtssprache',
+      casesRun: 'Ausgeführte Fälle', inCatalog: 'im Katalog', screenChecks: 'Prüfungen über alle Bildschirme', reportLang: 'Berichtssprache',
       summaryByType: 'Übersicht nach Typ', colRan: 'Ausgeführt', colPassed: 'Bestanden', colFailed: 'Fehlgeschlagen',
       colAvg: 'Ø ms', colSlowest: 'Langsamster Fall', failures: 'Fehler', noFailures: 'In dieser Sitzung ist kein Fall fehlgeschlagen.',
       expected: 'Erwartet', error: 'Fehlermeldung', explanation: 'Erklärung', colFrameworks: 'Frameworks', colScreen: 'Bildschirm',
@@ -2449,7 +2458,7 @@
       runDetails: 'Détails de l’exécution', generated: 'Généré', browserInUse: 'Navigateur utilisé', windowSize: 'Taille de la fenêtre',
       screens: 'Tailles d’écran exécutées', desktop: 'Fenêtre de bureau', browsersChosen: 'Navigateurs choisis',
       frameworksChosen: 'Frameworks choisis', started: 'Début', finished: 'Fin', caseTime: 'Durée totale des cas',
-      casesRun: 'Cas exécutés', inCatalog: 'dans le catalogue', reportLang: 'Langue du rapport',
+      casesRun: 'Cas exécutés', inCatalog: 'dans le catalogue', screenChecks: 'vérifications sur tous les écrans', reportLang: 'Langue du rapport',
       summaryByType: 'Synthèse par type', colRan: 'Exécutés', colPassed: 'Réussis', colFailed: 'Échoués',
       colAvg: 'Moy. ms', colSlowest: 'Cas le plus lent', failures: 'Échecs', noFailures: 'Aucun cas n’a échoué dans cette session.',
       expected: 'Attendu', error: 'Erreur', explanation: 'Explication', colFrameworks: 'Frameworks', colScreen: 'Écran',
@@ -2503,7 +2512,7 @@
       runDetails: 'Dettagli dell’esecuzione', generated: 'Generato', browserInUse: 'Browser usato', windowSize: 'Dimensione della finestra',
       screens: 'Dimensioni schermo eseguite', desktop: 'Finestra desktop', browsersChosen: 'Browser scelti',
       frameworksChosen: 'Framework scelti', started: 'Inizio', finished: 'Fine', caseTime: 'Tempo totale dei casi',
-      casesRun: 'Casi eseguiti', inCatalog: 'nel catalogo', reportLang: 'Lingua del report',
+      casesRun: 'Casi eseguiti', inCatalog: 'nel catalogo', screenChecks: 'verifiche su tutti gli schermi', reportLang: 'Lingua del report',
       summaryByType: 'Riepilogo per tipo', colRan: 'Eseguiti', colPassed: 'Superati', colFailed: 'Falliti',
       colAvg: 'Media ms', colSlowest: 'Caso più lento', failures: 'Fallimenti', noFailures: 'Nessun caso è fallito in questa sessione.',
       expected: 'Atteso', error: 'Errore', explanation: 'Spiegazione', colFrameworks: 'Framework', colScreen: 'Schermo',
@@ -2545,7 +2554,7 @@
         if (!cell) return '<td class="muted">—</td>';
         return '<td class="' + (cell.ok ? 'pass' : 'fail') + '">' + (cell.ok ? c.pass : c.fail) + ' · ' + (cell.ms || 0) + 'ms</td>';
       }).join('');
-      return '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(row.title) + '</td><td>' + escHtml(row.layer) + '</td>' + cells + '<td>' + escHtml(c.verdicts[row.verdict] || row.verdict) + '</td><td>' + signed(row.delta) + 'ms</td><td>' + escHtml(row.note) + '</td></tr>';
+      return '<tr><td>' + escHtml(row.label) + '</td><td>' + escHtml(row.title) + '</td><td>' + escHtml(row.layer) + '</td>' + cells + '<td>' + escHtml(c.verdicts[row.verdict] || row.verdict) + '</td><td>' + signed(row.delta) + 'ms</td><td>' + escHtml(row.note) + '</td></tr>';
     }).join('');
     const layerRows = model.layers.map((layer) => {
       const cells = model.ordered.map((run) => {
@@ -2562,7 +2571,7 @@
       const lines = stats.map((row) => '<div class="fw-row"><strong>' + escHtml(row.name) + '</strong>' + meter(row.rate, '#0d6e76') + '<span class="fw-meta">' + row.passed + '/' + row.ran + ' ' + escHtml(c.passedOf) + ' · ' + row.rate + '% · avg ' + row.avg + ' ms</span></div>').join('');
       return '<h4>' + escHtml(runKey(run)) + ' · ' + escHtml(formatWhen(run.ts)) + '</h4><div class="fw-compare">' + lines + '</div>';
     }).join('');
-    const list = (rows, empty) => (rows.length ? '<ul>' + rows.map((row) => '<li><strong>' + escHtml(row.id) + '</strong> ' + escHtml(row.title) + ' · ' + escHtml(row.note) + '</li>').join('') + '</ul>' : '<p class="muted">' + empty + '</p>');
+    const list = (rows, empty) => (rows.length ? '<ul>' + rows.map((row) => '<li><strong>' + escHtml(row.label) + '</strong> ' + escHtml(row.title) + ' · ' + escHtml(row.note) + '</li>').join('') + '</ul>' : '<p class="muted">' + empty + '</p>');
     const from = formatWhen(model.ordered[0].ts);
     const to = formatWhen(model.ordered[model.ordered.length - 1].ts);
     const payload = {
@@ -2581,11 +2590,11 @@
         meanDurationMs: model.meanMs,
         bestRun: model.best ? runKey(model.best) : '',
         weakestRun: model.weakest ? runKey(model.weakest) : '',
-        regressions: model.regressions.map((row) => row.id),
-        fixes: model.fixes.map((row) => row.id),
-        flaky: model.flaky.map((row) => row.id),
-        stablePass: model.stablePass.map((row) => row.id),
-        stableFail: model.stableFail.map((row) => row.id)
+        regressions: model.regressions.map((row) => row.label),
+        fixes: model.fixes.map((row) => row.label),
+        flaky: model.flaky.map((row) => row.label),
+        stablePass: model.stablePass.map((row) => row.label),
+        stableFail: model.stableFail.map((row) => row.label)
       }
     };
     return `
@@ -2638,7 +2647,7 @@
       <h3>${escHtml(c.whereHow)}</h3>
       <div class="matrix-wrap"><table>
         <thead><tr><th>${escHtml(c.colId)}</th><th>${escHtml(c.colWhere)}</th><th>${escHtml(c.colHow)}</th></tr></thead>
-        <tbody>${model.matrix.map((row) => '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(row.where) + '</td><td>' + escHtml(row.how) + '</td></tr>').join('') || '<tr><td colspan="3">' + escHtml(c.noStored) + '</td></tr>'}</tbody>
+        <tbody>${model.matrix.filter((row, i) => model.matrix.findIndex((other) => other.id === row.id) === i).map((row) => '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(row.where) + '</td><td>' + escHtml(row.how) + '</td></tr>').join('') || '<tr><td colspan="3">' + escHtml(c.noStored) + '</td></tr>'}</tbody>
       </table></div>
       <script type="application/json" id="qa-lab-analysis">${JSON.stringify(payload).replace(/</g, '\\u003c')}</script>`;
   }
@@ -2867,7 +2876,7 @@
     chosen.forEach((name) => { byFw[name] = 0; });
     CASES.forEach((item) => runnersFor(item).forEach((name) => { if (byFw[name] != null) byFw[name] += 1; }));
     const durations = results.slice().sort((a, b) => (b.ms || 0) - (a.ms || 0)).slice(0, 8).map((row) => ({
-      label: row.id, value: row.ms || 0, color: row.ok ? '#0d6e76' : '#b42318'
+      label: row.id + (row.frame ? ' · ' + screenTag(row.frame) : ''), value: row.ms || 0, color: row.ok ? '#0d6e76' : '#b42318'
     }));
     const history = readHistory().map((run) => Number(run.rate) || 0);
     const cards = [
@@ -2898,6 +2907,7 @@
     const failed = results.filter((row) => !row.ok);
     const caseMs = results.reduce((sum, row) => sum + (row.ms || 0), 0);
     const times = results.map((row) => row.at).filter(Boolean);
+    const uniqueRun = new Set(results.map((row) => row.id)).size;
     const chosen = info.runners || [];
     const fwFor = (meta) => (meta.fw ? runnersFor(meta).filter((name) => !chosen.length || chosen.includes(name)) : []);
     const screenOf = (row) => row.frame || copy.desktop;
@@ -2923,7 +2933,7 @@
         [copy.started, times.length ? new Date(Math.min(...times)).toISOString() : ''],
         [copy.finished, times.length ? new Date(Math.max(...times)).toISOString() : ''],
         [copy.caseTime, caseMs ? (caseMs / 1000).toFixed(1) + ' s' : ''],
-        [copy.casesRun, results.length + ' / ' + CASES.length + ' ' + copy.inCatalog],
+        [copy.casesRun, uniqueRun + ' / ' + CASES.length + ' ' + copy.inCatalog + (results.length !== uniqueRun ? ' · ' + results.length + ' ' + copy.screenChecks : '')],
         [copy.colPassed, passed],
         [copy.colFailed, failed.length],
         [copy.passRate, results.length ? Math.round((passed / results.length) * 100) + '%' : ''],
@@ -2943,7 +2953,7 @@
     if (!opts || opts.cases !== false) {
       const cards = failed.map((row) => {
         const meta = caseMeta(row.id);
-        return '<article class="fail-card"><h3>' + escHtml(row.id + ' · ' + meta.title) + '</h3><table class="facts"><tbody>' + [
+        return '<article class="fail-card"><h3>' + escHtml(row.id + ' · ' + meta.title + (row.frame ? ' · ' + screenTag(row.frame) : '')) + '</h3><table class="facts"><tbody>' + [
           [copy.colType, row.layer || meta.layer],
           [copy.colFrameworks, fwFor(meta).join(', ')],
           [copy.colScreen, screenOf(row)],
@@ -2974,13 +2984,13 @@
         + '<p class="muted">' + escHtml(copy.security) + ' · ' + escHtml(stamp) + '</p>';
     }
     if (!opts || opts.steps !== false) {
-      const rows = results.map((row) => {
-        const meta = caseMeta(row.id);
-        return '<tr><td>' + escHtml(row.id) + '</td><td>' + escHtml(meta.where) + '</td><td>' + escHtml(meta.when) + '</td><td>' + escHtml(meta.how) + '</td></tr>';
+      const ran = new Set(results.map((row) => row.id));
+      const rows = [...ran].map((id) => {
+        const meta = caseMeta(id);
+        return '<tr><td>' + escHtml(id) + '</td><td>' + escHtml(meta.where) + '</td><td>' + escHtml(meta.when) + '</td><td>' + escHtml(meta.how) + '</td></tr>';
       }).join('');
       body += '<h2>' + escHtml(copy.caseSteps) + '</h2>' + table([copy.colId, copy.colWhere, copy.colWhen, copy.colHow], rows, copy.empty);
       if (results.length) {
-        const ran = new Set(results.map((row) => row.id));
         const skipped = CASES.filter((c) => !ran.has(c.id));
         body += '<h3>' + escHtml(copy.notRun) + ' (' + skipped.length + ')</h3>'
           + (skipped.length ? '<ul class="not-run">' + skipped.map((c) => '<li><strong>' + escHtml(c.id) + '</strong> ' + escHtml(c.title) + ' · ' + escHtml(c.layer) + '</li>').join('') + '</ul>' : '<p class="muted">' + escHtml(copy.allRan) + '</p>');
@@ -3079,7 +3089,7 @@
       const c = CASES.find((x) => x.id === this.selectedId);
       const el = document.getElementById('case-detail');
       if (!c || !el) return;
-      const result = this.results.find((r) => r.id === c.id);
+      const found = this.results.filter((r) => r.id === c.id);
       el.innerHTML = `
         <h3>${c.id} · ${c.title}</h3>
         <p class="muted notranslate" translate="no">${runnersFor(c).map((name) => this.fwLabel(name)).join(' · ')}</p>
@@ -3089,7 +3099,7 @@
           <dt>When</dt><dd>${c.when}</dd>
           <dt>How</dt><dd>${c.how}</dd>
         </dl>
-        ${result ? `<p class="${result.ok ? 'pass' : 'fail'}">${result.ok ? 'PASSED' : 'FAILED'} · ${result.ms} ms${result.detail ? ' · ' + result.detail : ''}</p>` : '<p class="muted">Not executed in this session yet.</p>'}
+        ${found.length ? found.map((result) => `<p class="${result.ok ? 'pass' : 'fail'}">${result.ok ? 'PASSED' : 'FAILED'} · ${result.ms} ms${result.frame ? ' · ' + escHtml(result.frame) : ''}${result.detail ? ' · ' + result.detail : ''}</p>`).join('') : '<p class="muted">Not executed in this session yet.</p>'}
         <button type="button" class="btn btn-ghost" id="run-one">Run this case</button>`;
       document.getElementById('run-one').onclick = () => {
         dismissGuide('5');
@@ -3112,7 +3122,7 @@
         byFw[name] = native && native.cases ? native.cases.filter((item) => item.ok).length : 0;
       });
       const durations = this.results.slice().sort((a, b) => b.ms - a.ms).slice(0, 8).map((r) => ({
-        label: r.id, value: r.ms, color: r.ok ? '#0d6e76' : '#b42318'
+        label: r.id + (r.frame ? ' · ' + screenTag(r.frame) : ''), value: r.ms, color: r.ok ? '#0d6e76' : '#b42318'
       }));
       const history = readHistory();
       wrap.innerHTML = '';
@@ -3166,11 +3176,12 @@
         <h3>Runner comparison</h3>
         <div class="report-compare"></div>
         <table>
-          <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Result</th><th>ms</th><th>Evidence</th></tr></thead>
+          <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Screen</th><th>Result</th><th>ms</th><th>Evidence</th></tr></thead>
           <tbody>${this.results.map((r) => `<tr>
             <td>${r.id}</td>
             <td>${escHtml(caseMeta(r.id).title)}</td>
             <td>${escHtml(r.layer || caseMeta(r.id).layer)}</td>
+            <td>${escHtml(r.frame ? screenTag(r.frame) : 'Desktop window')}</td>
             <td class="${r.ok ? 'pass' : 'fail'}">${r.ok ? 'PASSED' : 'FAILED'}</td>
             <td>${r.ms}</td>
             <td>${(r.detail || r.error || '').replace(/</g, '&lt;')}${r.explain ? ' · ' + String(r.explain).replace(/</g, '&lt;') : ''}</td>
@@ -3527,6 +3538,7 @@
       document.getElementById('run-visible').disabled = true;
       document.querySelectorAll('[data-pace]').forEach((b) => { b.disabled = true; });
       const pack = CASES.filter((c) => ids.includes(c.id));
+      this.results = this.results.filter((r) => !ids.includes(r.id));
       const holdMs = Math.round(this.pace * 1000);
       const frameNames = frames.filter(Boolean).map((frame) => frame.label).join(', ');
       this.log(`<b>LAB</b> Starting ${pack.length} case${pack.length === 1 ? '' : 's'} against ${location.origin}` + (frameNames ? ' · ' + frameNames : '') + ` · pace ${formatPace(this.pace)} s · ${this.view === 'watch' ? 'Watch' : 'Background'}`);
@@ -3578,12 +3590,12 @@
             try {
               const detail = await withTimeout(c.run(ctx), 40000, c.id) || 'ok';
               const ms = Math.round(performance.now() - t0);
-              this.results = this.results.filter((r) => r.id !== c.id);
+              this.results = this.results.filter((r) => !(r.id === c.id && (r.frame || '') === frameLabel));
               this.results.push({ id: c.id, ok: true, ms, detail, layer: c.layer, at: Date.now(), frame: frameLabel });
               this.log(`<span class="ok">PASS</span> ${c.id} · ${ms} ms · ${String(detail).replace(/</g, '&lt;')}`);
             } catch (err) {
               const ms = Math.round(performance.now() - t0);
-              this.results = this.results.filter((r) => r.id !== c.id);
+              this.results = this.results.filter((r) => !(r.id === c.id && (r.frame || '') === frameLabel));
               const result = { id: c.id, ok: false, ms, error: err.message, layer: c.layer, at: Date.now(), frame: frameLabel };
               this.results.push(result);
               this.log(`<span class="fail">FAIL</span> ${c.id} · ${ms} ms · ${String(err.message).replace(/</g, '&lt;')}`);
