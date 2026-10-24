@@ -2147,7 +2147,9 @@ async function readSitemap(origin, robotsText, halt, acceptLanguage) {
       return parsed.toString();
     } catch (error) { return url; }
   });
-  const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
+  // Yoast and WordPress serve /sitemap_index.xml, and Next.js and Astro /sitemap-index.xml, often with nothing at /sitemap.xml.
+  const guesses = ["/sitemap.xml"].concat(listed.length ? [] : ["/sitemap_index.xml", "/sitemap-index.xml"]).map((path) => origin + path);
+  const candidates = upgraded.concat(guesses).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
   let last = { status: 0 };
   const readOne = async (url) => {
     const res = await fetchExtra(url, halt, true, acceptLanguage);
@@ -2183,10 +2185,9 @@ async function readSitemap(origin, robotsText, halt, acceptLanguage) {
     if (got.partial) partial = true;
     if (urls.length >= 5000) break;
   }
-  if (!urls.length) {
-    const fallback = candidates.find((url) => upgraded.indexOf(url) === -1);
-    const got = fallback ? await readOne(fallback) : null;
-    if (got) { source = fallback; urls = got.urls; partial = got.partial || listedTotal > 1; }
+  for (const fallback of urls.length ? [] : candidates.filter((url) => upgraded.indexOf(url) === -1)) {
+    const got = await readOne(fallback);
+    if (got) { source = fallback; urls = got.urls; partial = got.partial || listedTotal > 1; break; }
   }
   if (urls.length >= 5000) partial = true;
   if (urls.length) return { source, status: 200, urls: urls.slice(0, 5000), partial };
