@@ -73,6 +73,43 @@ test.describe('Natural competitors in the comparison section', () => {
     await expect(page.locator('#compare-result')).toContainText('rival-two.com');
   });
 
+  test('the reader picks the kind of competition, and its sites fill the competitor boxes', async ({ page }) => {
+    const box = await open(page, true);
+    const asked = [];
+    const churches = ['supresencia.com', 'casaroca.org', 'elshaddai.org', 'mci12.com', 'avivamiento.com'];
+    await page.route('http://127.0.0.1:8768/review/rivals', async (route) => {
+      const req = route.request();
+      const body = req.postData() ? JSON.parse(req.postData()) : {};
+      if (req.method() !== 'POST' || !body.field) return route.fallback();
+      asked.push(body);
+      const found = { at: '2026-10-24T03:00:00Z', ownRank: null, list: body.field === 'religion' ? churches.map((host) => ({ host, rank: null })) : [] };
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true' },
+        body: JSON.stringify({ field: body.field, rivals: rivals.payload(Object.assign({}, own, { id: ID }), found, churches.map(() => null), true) }) });
+    });
+    await expect(box.getByLabel('Kind of competition')).toHaveValue('');
+    await box.getByLabel('Kind of competition').selectOption('religion');
+    await expect(box.locator('.rivals-options input:checked')).toHaveCount(5);
+    expect(asked[0]).toMatchObject({ id: ID, field: 'religion' });
+    await expect(box).toContainText('Religious: churches and ministries');
+    await page.locator('#compare-url').fill('first.example');
+    await box.getByRole('button', { name: 'Add the checked sites to your competitors' }).click();
+    await expect(box.locator('#rivals-added')).toHaveText('4 sites added to your competitors below. Your five competitor boxes are full.');
+    await expect(page.locator('#compare-url')).toHaveValue('first.example');
+    await expect(page.locator('#compare-url-5')).toHaveValue('mci12.com');
+    await expect(page.locator('#compare-add')).toBeHidden();
+    if (process.env.COMPARE_SHOT) {
+      await page.setViewportSize({ width: 1100, height: 1400 });
+      await page.locator('#compare').screenshot({ path: process.env.COMPARE_SHOT + '-kind.png' });
+    }
+
+    await box.getByLabel('Kind of competition').selectOption('topic');
+    await box.getByLabel('Another topic, field or interest…').fill('Música cristiana');
+    await box.getByLabel('Another topic, field or interest…').press('Enter');
+    await expect(box).toContainText('No sites were found for that kind of competition.');
+    expect(asked[1]).toMatchObject({ field: 'topic', topic: 'Música cristiana' });
+    await expect(box.getByLabel('Kind of competition')).toHaveValue('topic');
+  });
+
   test('an unpaid report keeps the competitor names readable and their scores under the frost', async ({ page }) => {
     const box = await open(page, false);
     const table = box.locator('.rivals-table');

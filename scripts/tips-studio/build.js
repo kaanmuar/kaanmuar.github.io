@@ -323,6 +323,8 @@ async function renderClip(page, tip, index, total, file, cover, said) {
   });
   rows.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   fs.writeFileSync(path.join(OUT, "captions.json"), JSON.stringify(captions, null, 2));
+  // The text captions in the other five languages, from the phrasebooks; the daily workflow also fills their gaps.
+  require("child_process").execFileSync(process.execPath, [path.join(ROOT, "scripts/social-hub/translate-captions.js"), BATCH], { stdio: "inherit" });
   fs.writeFileSync(path.join(OUT, "calendar.csv"), ["Date,Time,Channel,Post,Asset"].concat(rows.map((r) => [r.date, r.time, r.channel, r.slug, r.asset].join(","))).join("\n") + "\n");
 
   fs.mkdirSync(path.join(OUT, "buffer"), { recursive: true });

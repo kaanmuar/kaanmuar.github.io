@@ -1,9 +1,10 @@
-/* The social hub feed (qa-review-social*.html): filters, copy, share, download and clips over assets/social/feed.json.
+/* The social hub feed (qa-review-social*.html): filters, copy, share, download and clips over assets/social/feed[-<lang>].json: one card per post, in the page's language when it exists.
    The page arrives with its first cards prerendered by scripts/build-social-hub.js; this takes over once the feed loads. */
 (function () {
   const Card = window.SocialHubCard;
   const copy = window.SocialHubCopy;
   const lang = copy.lang;
+  const sfx = lang === "en" ? "" : "-" + lang;
   const STEP = 24;
   const feedEl = document.getElementById("hub-feed");
   const countEl = document.getElementById("hub-count");
@@ -29,7 +30,7 @@
 
   function matches(post) {
     if (state.kind === "trending" ? !post.trend : state.kind === "video" ? !post.youtube : state.kind !== "all" && post.kind !== state.kind) return false;
-    if (state.lang !== "all" && post.lang !== state.lang) return false;
+    if (state.lang !== "all" && post.clipLang !== state.lang) return false;
     if (state.topic !== "all" && post.cat !== state.topic) return false;
     if (!state.q) return true;
     const q = state.q.toLowerCase();
@@ -68,7 +69,7 @@
   }
 
   async function loadCaptions() {
-    if (!captions) captions = await (await fetch("assets/social/captions.json")).json();
+    if (!captions) captions = await (await fetch("assets/social/captions" + sfx + ".json")).json();
     return captions;
   }
 
@@ -245,14 +246,14 @@
     bind();
     if (!params.get("p")) track("hub_view", lang);
     try {
-      const feed = await (await fetch("assets/social/feed.json")).json();
+      const feed = await (await fetch("assets/social/feed" + sfx + ".json")).json();
       posts = Card.arrange(feed.posts, today());
     } catch (error) {
       return;
     }
     render();
     // Links shared before posts had their own pages (?p=<id>) go to the post's page.
-    const wanted = params.get("p") && byId(params.get("p"));
+    const wanted = params.get("p") && (byId(params.get("p")) || byId(params.get("p") + "-" + lang));
     if (wanted) location.replace(Card.permalink(wanted, lang));
   }
 

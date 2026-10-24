@@ -352,11 +352,12 @@
     <script>SiteLook.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/site-look.css?v=20261102k">
+    <link rel="stylesheet" href="css/site-look.css?v=20261104a">
     <link rel="stylesheet" href="css/qa-review-folds.css?v=20261020a">
     <link rel="stylesheet" href="css/qa-review-live.css?v=20261028b">
     <link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a">
     <link rel="stylesheet" href="css/qa-review-ask.css?v=20261024c">
+    <link rel="stylesheet" href="css/qa-review-multi.css?v=20261024a">
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
@@ -525,6 +526,17 @@
         .compare-form label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
         .compare-field { flex: 1 1 240px; min-width: 0; }
         .compare-form .url-row { border-radius: 12px; }
+        .compare-more { flex-basis: 100%; }
+        .compare-more[hidden], .compare-add[hidden], .rivals-kind [hidden] { display: none; }
+        .compare-remove { border: 0; background: none; color: var(--muted); font-size: 20px; line-height: 1; padding: 8px 12px; cursor: pointer; }
+        .compare-remove:hover, .compare-remove:focus-visible { color: var(--red); }
+        .compare-add { flex-basis: auto; }
+        .rivals-kind { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 4px; max-width: 640px; }
+        .rivals-kind label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
+        .rivals-kind select, .rivals-kind input { flex: 1 1 220px; min-width: 0; }
+        .rivals-kind select { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 12px; padding: 10px 12px; font: inherit; }
+        .rivals-kind select:focus-visible { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
+        .rivals-add { margin: 0 0 12px; }
         .compare-form .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
         .compare-run, .compare-running { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 8px 0; }
         .compare-run[hidden], .compare-running[hidden] { display: none; }
@@ -1590,8 +1602,37 @@
                         </div>
                     </div>
                     <button class="btn btn-primary" id="compare-go" type="button">Compare</button>
+                    <div class="compare-field compare-more" data-compare-more hidden>
+                        <div class="url-row notranslate" id="compare-url-2-field">
+                            <span>https://</span>
+                            <input id="compare-url-2" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="second-competitor.com" aria-label="Second competitor's address">
+                            <button class="compare-remove" type="button" aria-label="Remove the second competitor">×</button>
+                        </div>
+                    </div>
+                    <div class="compare-field compare-more" data-compare-more hidden>
+                        <div class="url-row notranslate" id="compare-url-3-field">
+                            <span>https://</span>
+                            <input id="compare-url-3" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="third-competitor.com" aria-label="Third competitor's address">
+                            <button class="compare-remove" type="button" aria-label="Remove the third competitor">×</button>
+                        </div>
+                    </div>
+                    <div class="compare-field compare-more" data-compare-more hidden>
+                        <div class="url-row notranslate" id="compare-url-4-field">
+                            <span>https://</span>
+                            <input id="compare-url-4" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="fourth-competitor.com" aria-label="Fourth competitor's address">
+                            <button class="compare-remove" type="button" aria-label="Remove the fourth competitor">×</button>
+                        </div>
+                    </div>
+                    <div class="compare-field compare-more" data-compare-more hidden>
+                        <div class="url-row notranslate" id="compare-url-5-field">
+                            <span>https://</span>
+                            <input id="compare-url-5" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="fifth-competitor.com" aria-label="Fifth competitor's address">
+                            <button class="compare-remove" type="button" aria-label="Remove the fifth competitor">×</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost compare-add" id="compare-add" type="button">+ Add another competitor <span id="compare-add-left">(4 left)</span></button>
                 </div>
-                <p class="meta-line" id="compare-note">Priced as a second review. The return discount applies when you compare from the device that ran this review. The competitor's site gets the public, passive checks only: no chat conversation and no form sent. Like any review, its owner may get one email about it, and its scores can appear in Live Reports.</p>
+                <p class="meta-line" id="compare-note">Each competitor is priced as a second review, and they run one after another. The return discount applies when you compare from the device that ran this review. The competitor's site gets the public, passive checks only: no chat conversation and no form sent. Like any review, its owner may get one email about it, and its scores can appear in Live Reports.</p>
                 <p class="meta-line" id="compare-error" role="alert"></p>
                 <p class="compare-running" id="compare-running" role="status" hidden><span id="compare-running-text"></span><button class="btn btn-stop" id="compare-stop" type="button">Stop the comparison</button></p>
             </div>
@@ -1749,17 +1790,18 @@
         </div>
     </div>
 </div>
-<script src="js/site-i18n.js?v=20261102k"></script>
+<script src="js/site-i18n.js?v=20261104a"></script>
 <script src="js/site-glossary.js?v=20261102a"></script>
-<script src="js/site-tour.js?v=20261102k"></script>
+<script src="js/site-tour.js?v=20261104a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261031c"></script>
 <script src="js/qa-review-deal.js?v=20261102a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-ask.js?v=20261024c"></script>
 <script src="js/qa-review-progress.js?v=20261024a"></script>
-<script src="js/qa-review-compare-copy.js?v=20261101b"></script>
-<script src="js/qa-review.js?v=20261102k"></script>
+<script src="js/qa-review-compare-copy.js?v=20261103a"></script>
+<script src="js/qa-review.js?v=20261104a"></script>
+<script src="js/qa-review-multi.js?v=20261024a"></script>
 <script src="js/url-suggest.js?v=20261024b"></script>
 <script src="js/qa-review-live.js?v=20261029d"></script>
 </body>

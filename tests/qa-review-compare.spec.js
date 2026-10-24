@@ -9,7 +9,7 @@ const ID = 'cd34ef56ab12';
 const ANA = 'a'.repeat(64);
 const days = (start, step) => Array.from({ length: 30 }, (item, index) => ({ date: '2026-09-' + String(index + 1).padStart(2, '0'), rank: start + index * step }));
 
-async function open(page, cmp, review, file = '/qa-review.html', extra = {}) {
+async function open(page, cmp, review, file = '/qa-review.html', extra = {}, from = {}) {
   const store = auth.memoryStore();
   const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
   const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
@@ -35,19 +35,37 @@ async function open(page, cmp, review, file = '/qa-review.html', extra = {}) {
       const checked = await auth.checkSession(store, Object.assign({}, body, { deviceKey: ANA }));
       return json(checked.ok ? 200 : checked.status, checked);
     }
-    if (path === '/review/open') return json(200, { report: row.report, frameworks: row.frameworks, paid: true });
+    if (path === '/review/open') return json(200, Object.assign({ report: row.report, frameworks: row.frameworks, paid: true }, from.versus && body.vs === 'ab12' ? { versus: from.versus } : {}));
     if (path === '/review' && review) {
       const answer = await review(body);
       return typeof answer === 'string' ? route.fulfill({ status: 200, contentType: 'application/x-ndjson', headers: cors, body: answer }) : json(400, answer);
     }
     return json(200, path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
   });
-  await page.goto(file + '?report=' + ID);
-  const card = page.locator(cmp ? '#compare-result' : '#compare-ask');
+  await page.goto(file + '?report=' + ID + (from.query || ''));
+  const card = page.locator(cmp || from.versus ? '#compare-result' : '#compare-ask');
   await expect(card).toBeVisible({ timeout: 20000 });
   await card.scrollIntoViewIfNeeded();
   return card;
 }
+
+test.describe('From the account page', () => {
+  test('?vs= shows the pair of saved reviews the server built', async ({ page }) => {
+    const versus = compare.compareSites(Object.assign({}, sample.report, { id: ID }), own);
+    const card = await open(page, null, null, '/qa-review.html', {}, { query: '&vs=ab12', versus });
+    await expect(card.locator('.cmp-ring')).toHaveCount(2);
+    await expect(card).toContainText(own.host);
+    await expect(page.locator('#compare-ask')).toBeHidden();
+  });
+
+  test('?compare= puts the competitor in the box and the Compare button in focus, without starting a run', async ({ page }) => {
+    let runs = 0;
+    const card = await open(page, null, () => { runs += 1; return { error: 'no' }; }, '/qa-review.html', {}, { query: '&compare=rival.example.com' });
+    await expect(card.locator('#compare-url')).toHaveValue('rival.example.com');
+    await expect(card.locator('#compare-go')).toBeFocused();
+    expect(runs).toBe(0);
+  });
+});
 
 test.describe('The competitor comparison is drawn as charts', () => {
   test('indicators, radar, leads, 3D columns, edges, mixes, market presence and history all render', async ({ page }) => {
@@ -102,7 +120,7 @@ test.describe('The competitor comparison is drawn as charts', () => {
       await card.evaluate((node) => node.scrollIntoView({ block: 'start' }));
       await page.screenshot({ path: process.env.COMPARE_SHOT + '-es.png' });
     }
-    await expect(page.locator('#compare-note')).toHaveText(/^Tiene el precio de una segunda revisión\. El descuento por volver se aplica cuando comparas desde el dispositivo/);
+    await expect(page.locator('#compare-note')).toHaveText(/^Cada competidor tiene el precio de una segunda revisión, y se revisan uno tras otro\. El descuento por volver se aplica cuando comparas desde el dispositivo/);
   });
 
   test('a comparison saved before the charts still shows its scores, leads and lists', async ({ page }) => {
@@ -182,6 +200,54 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await expect(page.locator('#compare-error')).toContainText('did not finish: Enter a public https address. Check the address');
     await expect(page.locator('#url-field')).not.toHaveClass(/invalid/);
     await expect(page.locator('#url-error')).toHaveText('');
+  });
+
+  test('up to four more competitor boxes open one at a time behind https://, and a removed box closes', async ({ page }) => {
+    const ask = await open(page, null, null);
+    const add = ask.locator('#compare-add');
+    await expect(ask.locator('[data-compare-more]:visible')).toHaveCount(0);
+    await expect(add).toContainText('(4 left)');
+    for (const [n, host] of [[2, 'two.example'], [3, 'three.example'], [4, 'four.example'], [5, 'five.example']]) {
+      await add.click();
+      await expect(ask.locator('#compare-url-' + n)).toBeFocused();
+      await expect(ask.locator('#compare-url-' + n + '-field span')).toHaveText('https://');
+      await ask.locator('#compare-url-' + n).fill('https://' + host);
+      await expect(ask.locator('#compare-url-' + n)).toHaveValue(host);
+    }
+    await expect(add).toBeHidden();
+    await ask.getByRole('button', { name: 'Remove the third competitor' }).click();
+    await expect(ask.locator('[data-compare-more]:visible')).toHaveCount(3);
+    await expect(ask.locator('#compare-url-3')).toHaveValue('four.example');
+    await expect(ask.locator('#compare-url-4')).toHaveValue('five.example');
+    await expect(add).toContainText('(1 left)');
+  });
+
+  test('several competitors run one after another against the same report, and a failed one does not stop the rest', async ({ page }) => {
+    const sent = [];
+    const ask = await open(page, null, (body) => {
+      sent.push(body);
+      return JSON.stringify({ type: 'error', error: 'The site did not answer' }) + '\n';
+    });
+    await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+    await ask.locator('#compare-url').fill('one.example');
+    await ask.locator('#compare-add').click();
+    await ask.locator('#compare-url-2').fill('two.example');
+    await ask.locator('#compare-add').click();
+    await ask.locator('#compare-url-3').fill('www.one.example');
+    await ask.locator('#compare-add').click();
+    await ask.locator('#compare-url-4').fill('three.example');
+    await ask.locator('#compare-go').click();
+    await expect(page.locator('#form-status')).toContainText('These did not finish: one.example, two.example, three.example.', { timeout: 20000 });
+    expect(sent.map((body) => body.url)).toEqual(['one.example', 'two.example', 'three.example']);
+    expect(sent.every((body) => body.compareWith === ID && body.reasonCode === 'compare')).toBe(true);
+    await expect(page.locator('#compare-go')).toBeEnabled();
+  });
+
+  test('the report\'s own site is refused as a competitor', async ({ page }) => {
+    const ask = await open(page, null, () => { throw new Error('no run expected'); });
+    await ask.locator('#compare-url').fill('www.' + sample.report.host.replace(/^www\./, ''));
+    await ask.locator('#compare-go').click();
+    await expect(page.locator('#compare-error')).toContainText('is the site of this report');
   });
 
   test('a base report links the comparisons made from it', async ({ page }) => {

@@ -216,6 +216,8 @@
         if (fromUrl) return persist(fromUrl);
         const stored = saved();
         if (stored) return stored;
+        const browser = fromBrowser();
+        if (NATIVE.has(browser)) return persist(browser);
         const geo = await fromGeo();
         if (geo && find(geo)) return persist(geo);
         return persist(fromBrowser());
