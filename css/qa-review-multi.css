@@ -1,0 +1,52 @@
+/* The many-URL comparison report (js/qa-review-multi.js): a summary table, then every report section
+   with one column per URL. Printed on its own, A4 landscape. */
+.multi-modal { width: min(1680px, calc(100vw - 36px)); }
+.multi-head { align-items: center; }
+.multi-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#multi-status:empty { display: none; }
+#multi-status.bad { color: var(--red); }
+.multi-locked { margin: 12px 0; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--amber) 10%, transparent); }
+.multi-locked p { margin: 0 0 8px; }
+.multi-locked p:last-child { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.multi-scroll { overflow-x: auto; }
+.multi-summary { margin: 18px 0 8px; }
+.multi-table { width: 100%; min-width: max-content; }
+.multi-table th[scope="row"] { text-align: left; font-weight: 600; }
+.multi-table td { text-align: center; }
+.multi-table td.lead { background: color-mix(in srgb, var(--green) 16%, transparent); }
+.multi-wins th, .multi-wins td { border-top: 2px solid var(--line); font-weight: 700; }
+.multi-grid { margin-top: 18px; }
+.multi-row { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(340px, 1fr)); gap: 14px; }
+.multi-hosts { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 6px 0; border-bottom: 1px solid var(--line); }
+.multi-host { margin: 0; font-weight: 800; font-size: 1.05rem; overflow-wrap: anywhere; }
+.multi-hosts .meta-line { margin: 2px 0 0; }
+.multi-sec { margin: 22px 0 0; }
+.multi-sec > h2 { position: sticky; left: 0; margin: 0 0 10px; font-size: 1.15rem; }
+.multi-cell { min-width: 0; }
+.multi-cell > * { margin-top: 0; }
+.multi-cell .split, .multi-cell .exec-cols, .multi-cell .visuals, .multi-cell .previews, .multi-cell .fixkit-list, .multi-cell .gauges { grid-template-columns: minmax(0, 1fr); }
+.multi-cell .health { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+.multi-cell .areas, .multi-cell .stat-row, .multi-cell .checks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.multi-cell .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.multi-cell .report-cover { display: block; }
+.multi-cell [data-slot="findings"], .multi-cell [data-slot="cases"], .multi-cell [data-slot="pages"], .multi-cell [data-slot="report-log"] { max-height: 640px; overflow: auto; }
+.multi-cell .page-table { width: 100%; table-layout: fixed; font-size: 12.5px; }
+.multi-cell .page-table td { overflow-wrap: anywhere; }
+.multi-cell svg { max-width: 100%; height: auto; }
+
+@media print {
+  body:not(.printing-multi) #multi-overlay { display: none !important; }
+  body.printing-multi > :not(#multi-overlay) { display: none !important; }
+  body.printing-multi #multi-overlay { display: block !important; position: static; background: #fff; padding: 0; overflow: visible; }
+  body.printing-multi .multi-modal { page: multi; width: auto; margin: 0; padding: 0; border: 0; box-shadow: none; overflow: visible; background: #fff; color: #12181f; font-size: 9.5pt; }
+  body.printing-multi .no-print, body.printing-multi .multi-locked { display: none !important; }
+  body.printing-multi .multi-scroll { overflow: visible; }
+  body.printing-multi .multi-table { min-width: 0; }
+  body.printing-multi .multi-row { grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 8px; }
+  body.printing-multi .multi-hosts { position: static; }
+  body.printing-multi .multi-sec > h2 { break-after: avoid; }
+  body.printing-multi .multi-cell [data-slot] { max-height: none !important; overflow: visible !important; }
+  body.printing-multi .multi-cell .areas, body.printing-multi .multi-cell .checks-grid, body.printing-multi .multi-cell .kpis { grid-template-columns: minmax(0, 1fr); }
+  body.printing-multi .multi-modal, body.printing-multi .multi-table td.lead { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@page multi { size: A4 landscape; margin: 10mm; }

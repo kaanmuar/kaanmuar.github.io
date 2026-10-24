@@ -10,6 +10,7 @@ const LIMIT = 500;
 // Collections whose rows carry the address in an `email` field, under the name each takes in the export.
 const BY_EMAIL = [
   ["reviews", "url_reviews"],
+  ["comparisons", "url_review_comparisons"],
   ["notes", "url_review_notes"],
   ["alerts", "url_review_alerts"],
   ["failures", "url_review_failures"],

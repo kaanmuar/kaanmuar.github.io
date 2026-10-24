@@ -298,6 +298,14 @@
     .cmp-table td.note { color: var(--muted); font-size: 12.5px; white-space: normal; min-width: 120px; }
     .cmp-table .btn { min-height: 34px; padding: 6px 12px; font-size: 12.5px; }
     .cmp-foot { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+    .cmp-full { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; }
+    .saved-cmps { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--edge); border-radius: 14px; }
+    .saved-cmps h3 { margin: 0 0 8px; font-size: 15px; }
+    .saved-cmps ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+    .saved-cmps li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13.5px; overflow-wrap: anywhere; }
+    .saved-cmps li a { font-weight: 700; }
+    .saved-cmps li .btn { min-height: 30px; padding: 4px 10px; font-size: 12.5px; }
+    #saved-cmps-status:empty { display: none; }
     .empty { grid-column: 1 / -1; margin: 0; padding: 28px; border-radius: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--edge); }
 
     .data-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; }
@@ -464,6 +472,11 @@
       <h2>Saved reviews</h2>
     </div>
     <p id="file-status"></p>
+    <div class="saved-cmps" id="saved-cmps" hidden>
+      <h3>Saved comparisons</h3>
+      <ul id="saved-cmps-list"></ul>
+      <p id="saved-cmps-status" role="status"></p>
+    </div>
     <div class="toolbar">
       <label class="check-all"><input type="checkbox" id="select-all"><span>Select all</span></label>
       <button class="check-all fold-all" id="fold-all" type="button" aria-controls="list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><span>Expand all</span></button>
@@ -750,6 +763,7 @@
     privacyEl.hidden = false;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_enter", "URL Review", "open");
     runs = data.runs || [];
+    paintSavedComparisons(data.comparisons || []);
     picked.clear();
     unfolded.clear();
     const opened = runs.filter((run) => run.open).length;
@@ -1185,7 +1199,70 @@
     const scroll = document.createElement("div");
     scroll.className = "cmp-scroll";
     scroll.appendChild(table);
-    cmpResult.replaceChildren(scroll, node("p", "Shaded cells lead their line. Full comparison opens the head-to-head on the review page: radar, speed and weight, the problems only one site has, and market presence.", "cmp-foot"));
+    const ids = [base.id].concat(made.list.filter((row) => !row.missing && !row.stopped).map((row) => row.id));
+    const full = document.createElement("p");
+    full.className = "cmp-full";
+    const fullGo = node("button", "Open the full comparison report", "btn");
+    fullGo.type = "button";
+    const fullStatus = node("span", "", "muted small");
+    fullStatus.setAttribute("role", "status");
+    fullGo.addEventListener("click", () => openFull(ids, fullGo, fullStatus));
+    full.append(fullGo, fullStatus);
+    cmpResult.replaceChildren(full, scroll, node("p", "Shaded cells lead their line. Full comparison opens the head-to-head on the review page: radar, speed and weight, the problems only one site has, and market presence. The full comparison report sets every section of each report side by side, is kept under Saved comparisons, and prints or downloads as a PDF once every report in it is paid.", "cmp-foot"));
+  }
+  // Saves the reviews as one comparison and opens it on the review page.
+  async function openFull(ids, button, status) {
+    button.disabled = true;
+    status.textContent = "Saving the comparison…";
+    try {
+      const response = await account("/account/comparison/save", { ids, from: "account" });
+      if (signedOut(response)) return;
+      const data = await response.json();
+      if (!response.ok || !data.id) {
+        status.textContent = data.error || "The comparison was not saved. Try again in a moment.";
+        return;
+      }
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_multi", "URL Review", String(ids.length));
+      location.href = "qa-review.html?comparison=" + encodeURIComponent(data.id);
+    } catch (error) {
+      status.textContent = "The comparison was not saved. Try again in a moment.";
+    } finally {
+      button.disabled = false;
+    }
+  }
+  const savedCmpsEl = document.getElementById("saved-cmps");
+  function paintSavedComparisons(list) {
+    savedCmpsEl.hidden = !list.length;
+    document.getElementById("saved-cmps-list").replaceChildren(...list.map((line) => {
+      const item = document.createElement("li");
+      const link = node("a", line.hosts.join(" vs "));
+      link.href = "qa-review.html?comparison=" + encodeURIComponent(line.id);
+      link.setAttribute("translate", "no");
+      const when = node("span", (line.at ? new Date(line.at).toLocaleDateString() : "") + " · " + line.ids.length + " reviews", "muted");
+      const drop = node("button", "Delete", "btn btn-ghost");
+      drop.type = "button";
+      drop.addEventListener("click", async () => {
+        drop.disabled = true;
+        const say = document.getElementById("saved-cmps-status");
+        try {
+          const response = await account("/account/comparison/delete", { id: line.id });
+          if (signedOut(response)) return;
+          if (!response.ok) {
+            say.textContent = await failure(response, "The comparison was not deleted. Try again in a moment.");
+            drop.disabled = false;
+            return;
+          }
+          say.textContent = "The comparison of " + line.hosts.join(", ") + " is deleted. The reviews in it stay saved.";
+          item.remove();
+          savedCmpsEl.hidden = !document.querySelector("#saved-cmps-list li");
+        } catch (error) {
+          say.textContent = "The comparison was not deleted. Try again in a moment.";
+          drop.disabled = false;
+        }
+      });
+      item.append(link, when, drop);
+      return item;
+    }));
   }
   async function runCompare() {
     const ids = [cmpBase.value].concat([...cmpWith]);
