@@ -4,7 +4,8 @@
 
    { version: 1,
      edits: { "<post id>": { captions: { linkedin: "...", ... }, date: "YYYY-MM-DD", hidden: true } },
-     items: [{ id: "pick/<slug>", date, lang, title, text, url, image, youtube, cat }] }   added by hand */
+     items: [{ id: "pick/<slug>", date, lang, title, text, url, image, youtube, cat }],   added by hand
+     decisions: { "<proposal id>": "approved" | "dismissed" } }   field sweep proposals (scripts/field-sweep.js) already handled */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
   else root.SocialHubAdmin = factory();
@@ -20,6 +21,9 @@
   const CAPTION_MAX = 5000;
   const TEXT_MAX = 3000;
   const TITLE_MAX = 200;
+  const PROPOSAL_ID = /^[a-f0-9]{12}$/;
+  const DECISIONS = ["approved", "dismissed"];
+  const PROPOSAL_IMAGE = "assets/share/qa-review-social.jpg";
 
   function empty() {
     return { version: 1, edits: {}, items: [] };
@@ -94,6 +98,10 @@
     (Array.isArray(src.items) ? src.items : []).forEach((item) => {
       const kept = cleanItem(item);
       if (kept && !out.items.some((other) => other.id === kept.id)) out.items.push(kept);
+    });
+    const decisions = src.decisions && typeof src.decisions === "object" ? src.decisions : {};
+    Object.keys(decisions).sort().forEach((id) => {
+      if (PROPOSAL_ID.test(id) && DECISIONS.includes(decisions[id])) (out.decisions || (out.decisions = {}))[id] = decisions[id];
     });
     return out;
   }
@@ -181,5 +189,43 @@
     return "Not planned";
   }
 
-  return { NETS, LANGS, CHANNELS, empty, clean, cleanItem, same, apply, itemPost, remote, imageOk, videoId, slug, newId, batchOf, parseCalendar, channels, statusLabel };
+  // One address per article, however a feed or a share link spells it.
+  function canonUrl(value) {
+    let url;
+    try {
+      url = new URL(String(value || "").trim());
+    } catch (error) {
+      return "";
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") return "";
+    url.protocol = "https:";
+    url.hash = "";
+    url.hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+    [...url.searchParams.keys()].filter((key) => /^(utm_\w+|ref|ref_src|fbclid|gclid|mc_cid|mc_eid)$/i.test(key)).forEach((key) => url.searchParams.delete(key));
+    url.pathname = url.pathname.replace(/\/+$/, "") || "/";
+    return url.toString();
+  }
+
+  // Proposals still waiting: not approved or dismissed, and not already a hub item under the same address.
+  function pendingProposals(proposals, state) {
+    const decided = (state && state.decisions) || {};
+    const shared = new Set(((state && state.items) || []).map((item) => canonUrl(item.url)).filter(Boolean));
+    return (Array.isArray(proposals) ? proposals : []).filter((proposal) => proposal && PROPOSAL_ID.test(proposal.id || "") && !decided[proposal.id] && !shared.has(canonUrl(proposal.url)));
+  }
+
+  // The hand-added item a proposal starts as. The credit line keeps the source, author and date with it.
+  function proposalDraft(proposal, today) {
+    const credit = "Via " + [proposal.source, proposal.author && "by " + proposal.author, proposal.date].filter(Boolean).join(", ") + ".";
+    return {
+      title: text(proposal.title, TITLE_MAX),
+      url: HTTPS.test(proposal.url || "") ? proposal.url : "",
+      image: imageOk(proposal.image) ? proposal.image : PROPOSAL_IMAGE,
+      lang: LANGS.includes(proposal.lang) ? proposal.lang : "en",
+      date: today,
+      cat: text(proposal.topic, 40),
+      text: text([text(proposal.summary, TEXT_MAX), credit].filter(Boolean).join("\n\n"), TEXT_MAX)
+    };
+  }
+
+  return { NETS, LANGS, CHANNELS, PROPOSAL_ID, canonUrl, pendingProposals, proposalDraft, empty, clean, cleanItem, same, apply, itemPost, remote, imageOk, videoId, slug, newId, batchOf, parseCalendar, channels, statusLabel };
 });

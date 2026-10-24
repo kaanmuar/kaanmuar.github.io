@@ -196,12 +196,17 @@ async function growLedger() {
 }
 
 // socialHub/live is public to read (firestore.rules), so the build needs no credentials.
-async function pullEdits() {
+async function liveEdits() {
   const res = await fetch(FIRESTORE + "/socialHub/live", { signal: AbortSignal.timeout(15000) });
-  if (res.status === 404) return 0;
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error("Firestore answered " + res.status);
   const doc = await res.json();
-  const edits = admin.clean(JSON.parse((doc.fields && doc.fields.json && doc.fields.json.stringValue) || "{}"));
+  return admin.clean(JSON.parse((doc.fields && doc.fields.json && doc.fields.json.stringValue) || "{}"));
+}
+
+async function pullEdits() {
+  const edits = await liveEdits();
+  if (!edits) return 0;
   fs.mkdirSync(path.join(ROOT, OUT), { recursive: true });
   fs.writeFileSync(path.join(ROOT, EDITS), JSON.stringify(edits, null, 1) + "\n");
   return Object.keys(edits.edits).length + edits.items.length;
@@ -531,4 +536,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, collect, feedJson, page, rss, sitemap, outputs };
+module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, collect, liveEdits, feedJson, page, rss, sitemap, outputs };
