@@ -1014,9 +1014,9 @@ async function loadFailureBugs() {
   }));
 }
 
-// Country-sweep reviews are counted in the ops digest, not as reviews people asked for.
+// Country-sweep and rival-sweep reviews are counted in the ops digest, not as reviews people asked for.
 function askedFor(rows) {
-  return rows.filter((row) => row.source !== "sweep");
+  return rows.filter((row) => row.source !== "sweep" && row.source !== "rivals");
 }
 
 async function sendReviewPeriodReport(period) {
@@ -1896,6 +1896,119 @@ exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
   memory: "1GiB",
   maxInstances: 1
 }, () => track("sweepReviews", () => sweepReviews()));
+
+const rivals = require("./url-review-rivals");
+
+// Reviews of a host (with or without www.) that could go public; the newest recent one, or null.
+async function latestPublicReview(host, unlisted) {
+  const reviews = admin.firestore().collection("url_reviews");
+  const name = rivals.bare(host);
+  const snaps = await Promise.all([name, "www." + name].map((value) => reviews.where("report.host", "==", value).limit(20).get()));
+  const records = [].concat(...snaps.map((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))));
+  return rivals.latestPublic(records, unlisted);
+}
+
+function findRivals(host) {
+  return rivals.findRivals(host, {
+    search: (query) => urlReview.webSearch(query),
+    ranker: (domains) => reviewMarket.trancoRanks(domains),
+    registrable: urlReview.registrable
+  });
+}
+
+// Looks up a report's natural competitors once and stores them on the record.
+async function rivalsOf(ref, data) {
+  if (data.report && data.report.rivals) return data.report.rivals;
+  const found = await findRivals(data.report.host);
+  const value = { at: new Date().toISOString(), ownRank: found.ownRank, list: found.list };
+  await ref.update({ "report.rivals": value, rivalsAt: value.at });
+  return value;
+}
+
+/* Rival sweep: after the country sweep, each tick takes one step for one country-sweep site: find its
+   2-3 natural competitors (web search + Tranco), then review each competitor passively unless a recent
+   public review exists, then store the comparison in url_review_rivals/<baseId> for /publishable.
+   SWEEP_LIVE=1 turns it on, like the country sweep. */
+async function rivalSweep() {
+  if (process.env.SWEEP_LIVE !== "1") return "off: SWEEP_LIVE is not 1";
+  const db = admin.firestore();
+  const ref = db.collection("url_review_sweep").doc("rivals");
+  const day = new Date().toISOString().slice(0, 10);
+  let state = (await ref.get()).data() || {};
+  const unlisted = await unlistedHosts();
+  if (!state.job) {
+    if (rivals.doneOn(state, day) >= ops.budget("rivalsPerDay", process.env)) return "daily cap reached";
+    const recent = await db.collection("url_reviews").orderBy("createdAt", "desc").limit(120).get();
+    const base = rivals.pickBase(recent.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), state, unlisted);
+    if (!base) return "no country-sweep site waiting";
+    let found = { list: [] };
+    try {
+      const value = await rivalsOf(db.collection("url_reviews").doc(base.id), base);
+      found = { list: value.list || [] };
+    } catch (error) {
+      console.error("Rival lookup failed for " + base.report.host + ":", error);
+    }
+    state = rivals.started(state, base, found, day);
+    await ref.set(state);
+    return base.report.host + ": " + (found.list.map((row) => row.host).join(", ") || "no competitors found");
+  }
+  const job = state.job;
+  const next = job.list.find((row) => !row.done);
+  let note = "";
+  if (next) {
+    const fresh = unlisted.some((u) => next.host === u || next.host.endsWith("." + u)) ? "unlisted" : await latestPublicReview(next.host, unlisted) ? "fresh" : "";
+    next.outcome = fresh || "done";
+    if (!fresh) {
+      const startedAt = Date.now();
+      try {
+        const value = rivals.intake(next.host, job.host, sweep.langOf(job.cc));
+        const report = await urlReview.reviewTarget(value.url, {
+          stopped: () => Date.now() - startedAt > 240000,
+          mentions: false,
+          passive: true,
+          browse: browseForReview,
+          pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
+          webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
+        });
+        const record = Object.assign(urlReview.intakeRecord(value, report, { country: job.cc.toUpperCase() }), { source: "rivals", rivalOf: job.baseId });
+        await db.collection("url_reviews").doc(record.id).set(record);
+        await countReviewed(record.report);
+        try {
+          await queueOwnerNotice(record, { search: false });
+        } catch (error) {
+          console.error("Owner notice queue failed for " + next.host + ":", error);
+        }
+      } catch (error) {
+        next.outcome = "failed";
+        console.error("Rival review failed for " + next.host + ":", error);
+      }
+    }
+    next.done = true;
+    note = next.host + " " + next.outcome;
+  }
+  if (job.list.every((row) => row.done)) {
+    const baseSnap = await db.collection("url_reviews").doc(job.baseId).get();
+    const base = Object.assign({ id: job.baseId }, baseSnap.data() || {});
+    const records = await Promise.all(job.list.map((row) => latestPublicReview(row.host, unlisted)));
+    const summary = base.report && base.report.insights ? rivals.socialSummary(base, records, base.report.rivals) : null;
+    const outcome = summary && summary.rivals.length ? "done" : "failed";
+    if (outcome === "done") await db.collection("url_review_rivals").doc(job.baseId).set(Object.assign({ createdAt: new Date().toISOString() }, summary));
+    state = Object.assign(rivals.tally(state, day, outcome, { host: job.host, at: new Date().toISOString(), outcome, rivals: job.list.map((row) => row.host + " " + row.outcome) }), { job: null });
+    note = (note ? note + "; " : "") + job.host + " compared with " + ((summary && summary.rivals.map((row) => row.host).join(", ")) || "none");
+  } else {
+    state = Object.assign({}, state, { job });
+  }
+  await ref.set(state);
+  return note;
+}
+
+exports.rivalSweep = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("rivalSweep"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 540,
+  memory: "1GiB",
+  maxInstances: 1
+}, () => track("rivalSweep", () => rivalSweep()));
 
 // Each morning: any job that failed or went quiet past its gap is mailed at once; on Mondays the mail
 // goes out anyway, with last week's sweep, notices and re-runs against their budgets.
@@ -2889,15 +3002,17 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     }
     const since = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(String(req.query.since || "")) ? String(req.query.since) : new Date(Date.now() - 864e5).toISOString();
     try {
-      const [reviewSnap, unlistedSnap] = await Promise.all([
+      const [reviewSnap, unlistedSnap, rivalSnap] = await Promise.all([
         admin.firestore().collection("url_reviews").where("createdAt", ">", since).orderBy("createdAt").limit(500).get(),
-        admin.firestore().collection("url_review_unlisted").get()
+        admin.firestore().collection("url_review_unlisted").get(),
+        admin.firestore().collection("url_review_rivals").where("createdAt", ">", since).orderBy("createdAt").limit(50).get()
       ]);
       const unlisted = unlistedSnap.docs.map((doc) => doc.id);
       const records = reviewSnap.docs.map((doc) => doc.data());
       const picked = reviewPublish.selectPublishable(records, unlisted);
       const until = records.length ? records[records.length - 1].createdAt : since;
-      res.status(200).json({ since, until, read: records.length, held: picked.held, unlisted, reports: picked.reports });
+      const comparisons = reviewPublish.publicComparisons(rivalSnap.docs.map((doc) => doc.data()), unlisted);
+      res.status(200).json({ since, until, read: records.length, held: picked.held, unlisted, reports: picked.reports, comparisons });
     } catch (error) {
       console.error("Publishable reviews failed:", error);
       res.status(503).json({ error: "The reviews are not available right now." });
@@ -3429,6 +3544,35 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       priceUsd: urlReview.PRICE_USD,
       error: "Reopening a report asks for payment. A card payment is not connected on this page."
     });
+    return;
+  }
+  // A report's natural competitors: looked up once for the account that ran it, compared in full once
+  // the report is paid; anyone else holding the link gets the names already found, under the frost.
+  if (req.method === "POST" && pathName.endsWith("/review/rivals")) {
+    const body = req.body || {};
+    const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const snap = id ? await admin.firestore().collection("url_reviews").doc(id).get() : null;
+    const data = snap && snap.exists ? snap.data() || {} : null;
+    if (!data || !data.report || !data.report.insights) {
+      res.status(404).json({ error: "That report was not found." });
+      return;
+    }
+    try {
+      const free = data.free === true || await hasFreeRuns(data.email);
+      const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), { session: body.session, deviceKey: body.deviceKey }, data, free);
+      if (access.status === 404) {
+        res.status(404).json({ error: access.error });
+        return;
+      }
+      const found = access.locked ? data.report.rivals || { list: [] } : await rivalsOf(snap.ref, data);
+      const unlisted = await unlistedHosts();
+      const list = (found.list || []).filter((row) => !unlisted.some((u) => row.host === u || row.host.endsWith("." + u)));
+      const records = await Promise.all(list.map((row) => latestPublicReview(row.host, unlisted)));
+      res.status(200).json({ rivals: rivals.payload(Object.assign({ id }, data.report), Object.assign({}, found, { list }), records, !!access.ok) });
+    } catch (error) {
+      console.error("Natural competitors failed for " + id + ":", error);
+      res.status(503).json({ error: "The natural competitors are not available right now." });
+    }
     return;
   }
   const opening = req.method === "GET" ? { id: req.query.id, coupon: req.query.coupon }
