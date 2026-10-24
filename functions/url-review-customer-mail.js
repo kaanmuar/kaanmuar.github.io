@@ -271,6 +271,16 @@ const PDF_COPY = {
   fr: { badgeOpen: "Rapport complet", attachedOpen: "Le rapport complet est joint en PDF.", fileOpen: "rapport", badge: "Aperçu flouté", note: "Le début de chaque ligne est lisible. Le reste reste flou jusqu'au déverrouillage du rapport.", findings: "Constats", cases: "Cas de test proposés", moreCases: "+{n} cas de plus dans le rapport complet", unlock: "Déverrouiller le rapport complet", attached: "Le rapport flouté est joint en PDF.", fails: "échouent", risks: "à risque", read: "Analysé le {date}", file: "rapport-floute", sev: { critical: "critique", high: "élevé", medium: "moyen", low: "faible" } },
   it: { badgeOpen: "Rapporto completo", attachedOpen: "Il rapporto completo è allegato in PDF.", fileOpen: "rapporto", badge: "Anteprima sfocata", note: "L'inizio di ogni riga è leggibile. Il resto resta sfocato finché il rapporto non viene sbloccato.", findings: "Risultati", cases: "Casi di test proposti", moreCases: "+{n} casi in più nel rapporto completo", unlock: "Sblocca il rapporto completo", attached: "Il rapporto sfocato è allegato in PDF.", fails: "falliscono ora", risks: "a rischio", read: "Analizzato il {date}", file: "rapporto-sfocato", sev: { critical: "critico", high: "alto", medium: "medio", low: "basso" } }
 };
+// The lead and preheader of a review that has findings but no score, so the mail never mentions six scores it does not show.
+const PLAIN = {
+  en: { lead: "The findings sit under frost, with just enough showing to tell which ones matter.", leadOpen: "The findings are open, each line in full.", preheader: "{count} findings wait under the blur.", preheaderOpen: "{count} findings, all open." },
+  es: { lead: "Los hallazgos siguen empañados, con lo justo para saber cuáles importan.", leadOpen: "Los hallazgos están abiertos, cada línea completa.", preheader: "{count} hallazgos esperan bajo el desenfoque.", preheaderOpen: "{count} hallazgos, todo abierto." },
+  pt: { lead: "Os achados seguem embaçados, com o suficiente para saber quais importam.", leadOpen: "Os achados estão abertos, cada linha completa.", preheader: "{count} achados esperam sob o desfoque.", preheaderOpen: "{count} achados, tudo aberto." },
+  de: { lead: "Die Befunde stehen unter Milchglas, gerade so sichtbar, dass man erkennt, welche zählen.", leadOpen: "Die Befunde liegen offen, jede Zeile vollständig.", preheader: "{count} Befunde warten unter der Unschärfe.", preheaderOpen: "{count} Befunde, alles offen." },
+  fr: { lead: "Les constats restent sous verre dépoli, juste assez visibles pour savoir lesquels comptent.", leadOpen: "Les constats sont ouverts, chaque ligne en entier.", preheader: "{count} constats attendent sous le flou.", preheaderOpen: "{count} constats, tout est ouvert." },
+  it: { lead: "I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.", leadOpen: "I rilievi sono aperti, ogni riga per intero.", preheader: "{count} rilievi aspettano sotto la sfocatura.", preheaderOpen: "{count} rilievi, tutto aperto." }
+};
+const FIX_LABEL = { en: "Fix", es: "Cómo arreglarlo", pt: "Como corrigir", de: "So behebst du es", fr: "Correctif", it: "Come correggere" };
 const PDF_CASES = 24;
 const FILLER_WORDS = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua".split(" ");
 
@@ -346,16 +356,21 @@ function reportFacts(record, open) {
     .filter((item) => item && (item.verdict === "fail" || item.verdict === "risk"))
     .sort((a, b) => (a.rank || 999) - (b.rank || 999));
   const counts = report.counts || {};
+  const fails = actionable.filter((item) => item.verdict === "fail").length;
   return {
     id: String((record && record.id) || report.id || ""),
     host: String(report.host || "").slice(0, 120) || "your site",
+    date: dateOf(report.fetchedAt || (record && record.createdAt)),
     score,
     pages: Number(counts.pages) || (Array.isArray(report.pages) ? report.pages.length : 0),
     found: Number(report.limits && report.limits.pagesFound) ? report.limits.pagesFound + (report.limits.pagesFoundPartial ? "+" : "") : "",
     cases: Number(counts.cases) || (Array.isArray(report.cases) ? report.cases.length : 0),
-    findings: actionable.slice(0, SHOWN_FINDINGS).map((item) => Object.assign({ area: item.area || "", severity: item.severity || "low" }, open ? { shown: String(item.title || "").replace(/\s+/g, " ").trim(), hidden: 0 } : frost(item.title))),
+    findings: actionable.slice(0, SHOWN_FINDINGS).map((item) => Object.assign({ area: item.area || "", severity: item.severity || "low" },
+      open ? { shown: String(item.title || "").replace(/\s+/g, " ").trim(), hidden: 0, fix: String(item.fix || "").replace(/\s+/g, " ").trim() } : frost(item.title))),
     moreCount: Math.max(0, actionable.length - SHOWN_FINDINGS),
-    total: actionable.length
+    total: actionable.length,
+    fails,
+    risks: actionable.length - fails
   };
 }
 
@@ -415,7 +430,20 @@ function footerText(t, why, opts) {
   ].filter(Boolean).join("\n");
 }
 
-function scoreBlock(t, facts, title) {
+function metaHtml(t, p, facts) {
+  return "<p style=\"margin:14px 0 0;font-size:13px;line-height:19px;color:#cbd5e1;\">" +
+    [facts.date ? esc(fill(p.read, { date: facts.date })) : "", facts.pages + " " + esc(t.pages) + (facts.found ? " " + esc(t.pagesFound.replace("{n}", facts.found)) : ""), facts.cases + " " + esc(t.cases)].filter(Boolean).join(" &middot; ") + "</p>" +
+    (facts.total ? "<p style=\"margin:4px 0 0;font-size:13px;line-height:19px;font-weight:bold;\"><span style=\"color:#fca5a5;\">" + facts.fails + " " + esc(p.fails) + "</span><span style=\"color:#cbd5e1;\"> &middot; </span><span style=\"color:#fcd34d;\">" + facts.risks + " " + esc(p.risks) + "</span></p>" : "");
+}
+
+function metaText(t, p, facts) {
+  return [
+    [facts.date ? fill(p.read, { date: facts.date }) : "", facts.pages + " " + t.pages + (facts.found ? " " + t.pagesFound.replace("{n}", facts.found) : ""), facts.cases + " " + t.cases].filter(Boolean).join(" · "),
+    facts.total ? facts.fails + " " + p.fails + " · " + facts.risks + " " + p.risks : ""
+  ].filter(Boolean).join("\n");
+}
+
+function scoreBlock(t, p, facts, title) {
   if (!facts.score) return "";
   const overall = Number(facts.score.overall) || 0;
   const bars = AREAS.map((area) => {
@@ -438,19 +466,21 @@ function scoreBlock(t, facts, title) {
     "<td style=\"font-size:64px;line-height:64px;font-weight:bold;color:#ffffff;padding-right:14px;\">" + overall + "</td>" +
     "<td style=\"vertical-align:bottom;padding-bottom:8px;\"><span style=\"display:inline-block;background:" + scoreColor(overall) + ";color:#ffffff;font-size:14px;font-weight:bold;padding:4px 10px;border-radius:999px;\">" + esc(facts.score.grade || "") + "</span><br><span style=\"font-size:13px;color:#cbd5e1;\">" + esc(t.outOf) + "</span></td>" +
     "</tr></table>" +
-    "<p style=\"margin:14px 0 0;font-size:13px;color:#cbd5e1;\">" + facts.pages + " " + esc(t.pages) + (facts.found ? " " + esc(t.pagesFound.replace("{n}", facts.found)) : "") + " &middot; " + facts.cases + " " + esc(t.cases) + "</p>" +
+    metaHtml(t, p, facts) +
     "</td></tr>" +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:20px 28px 8px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">" + bars + "</table></td></tr>";
 }
 
-function findingsBlock(t, facts) {
+function findingsBlock(t, p, lang, facts) {
   if (!facts.findings.length) return "";
   const rows = facts.findings.map((item) =>
     "<tr><td style=\"padding:10px 0;border-top:1px solid #eef2f6;font-family:Arial,Helvetica,sans-serif;\">" +
     "<span style=\"display:inline-block;width:8px;height:8px;border-radius:8px;background:" + (SEVERITY_COLOR[item.severity] || SEVERITY_COLOR.low) + ";\"></span>&nbsp; " +
-    "<span style=\"font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;\">" + esc(t.areas[item.area] || item.area) + "</span><br>" +
+    "<span style=\"font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;\">" + esc(t.areas[item.area] || item.area) + " &middot; </span>" +
+    "<span style=\"font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:bold;color:" + (SEVERITY_COLOR[item.severity] || SEVERITY_COLOR.low) + ";\">" + esc(p.sev[item.severity] || item.severity) + "</span><br>" +
     "<span style=\"font-size:15px;line-height:24px;color:#0f172a;\">" + esc(item.shown) + "</span>" +
     (item.hidden ? " <span aria-hidden=\"true\" style=\"display:inline-block;background:#d6dee8;color:#d6dee8;border-radius:5px;font-size:15px;line-height:18px;\">" + "&nbsp;".repeat(Math.min(34, item.hidden)) + "</span>" : "") +
+    (item.fix ? "<br><span style=\"font-size:13px;line-height:20px;color:#475569;\"><b style=\"color:#0e7490;\">" + esc(FIX_LABEL[lang]) + ":</b> " + esc(item.fix) + "</span>" : "") +
     "</td></tr>"
   ).join("");
   const more = facts.moreCount ? "<p style=\"margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#64748b;\">" + esc(fill(t.more, { n: facts.moreCount })) + "</p>" : "";
@@ -461,8 +491,9 @@ function findingsBlock(t, facts) {
 }
 
 // What the report mail says depends on whether the record is open, a re-run, or stopped early.
-function reportStory(record, t, facts) {
+function reportStory(record, t, facts, lang) {
   const open = isOpen(record);
+  const plain = facts.score ? null : PLAIN[lang];
   const stopped = !!record && record.status === "stopped";
   const rerun = !!record && Array.isArray(record.rerunOf) && record.rerunOf.length > 0;
   const failedOn = rerun ? dateOf(record.failedAt) : "";
@@ -481,9 +512,9 @@ function reportStory(record, t, facts) {
     lead: [
       rerun ? fill(failedOn ? t.rerun : t.rerunUndated, { host: facts.host, date: failedOn }) : "",
       stopped ? t.leadStopped : "",
-      open ? t.leadOpen : t.lead
+      (plain || t)[open ? "leadOpen" : "lead"]
     ].filter(Boolean).join(" "),
-    preheader: fill(open ? t.preheaderOpen : t.preheader, { count: facts.total }),
+    preheader: fill((plain || t)[open ? "preheaderOpen" : "preheader"], { count: facts.total }),
     cta: open ? t.openFull : t.open
   };
 }
@@ -494,15 +525,17 @@ function reportMail(record, options) {
   const t = COPY[lang];
   const p = PDF_COPY[lang];
   const facts = reportFacts(record, isOpen(record));
-  const story = reportStory(record, t, facts);
+  const story = reportStory(record, t, facts, lang);
   const attached = story.open ? p.attachedOpen : p.attached;
   const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report" });
   const anotherUrl = pageUrl(lang, { utm_campaign: "report-another" });
-  const scoreHtml = scoreBlock(t, facts, story.title);
-  const head = scoreHtml || "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;border-radius:16px 16px 0 0;padding:28px;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:28px;color:#ffffff;\">" + esc(story.title) + "</td></tr>";
+  const scoreHtml = scoreBlock(t, p, facts, story.title);
+  const head = scoreHtml || "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 26px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 0 6px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
+    "<p style=\"margin:0;font-size:22px;line-height:28px;color:#ffffff;\">" + esc(story.title) + "</p>" + metaHtml(t, p, facts) + "</td></tr>";
   const inner = head +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:16px 28px 4px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#334155;\">" + esc(story.lead) + "</td></tr>" +
-    findingsBlock(t, facts) +
+    findingsBlock(t, p, lang, facts) +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:18px 28px 22px;\">" +
     button(openUrl, story.cta, true) + button(anotherUrl, t.another, false) +
     "<p style=\"margin:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.openNote) + "</p>" +
@@ -510,13 +543,15 @@ function reportMail(record, options) {
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
     deeperBlock(t, facts.host, facts.id);
-  const findingLines = facts.findings.map((item) => "- " + item.shown + (item.hidden ? " …" : ""));
+  const findingLines = facts.findings.map((item) => "- [" + (t.areas[item.area] || item.area) + " · " + (p.sev[item.severity] || item.severity) + "] " + item.shown + (item.hidden ? " …" : "") +
+    (item.fix ? "\n  " + FIX_LABEL[lang] + ": " + item.fix : ""));
   const why = opts.why || fill(t.why, { host: facts.host });
   const foot = { stopUrl: opts.stopUrl, kept: dateOf(record && record.retainUntil), live: true };
   const text = [
     story.title,
     facts.score ? (Number(facts.score.overall) || 0) + " " + t.outOf + " (" + (facts.score.grade || "") + ")" : "",
     facts.score ? AREAS.filter((area) => facts.score.areas && facts.score.areas[area]).map((area) => (t.areas[area] || area) + " " + facts.score.areas[area].score).join(" · ") : "",
+    metaText(t, p, facts),
     "",
     story.lead,
     findingLines.length ? "\n" + t.findings + "\n" + findingLines.join("\n") : "",
@@ -574,10 +609,9 @@ function frostedLine(text, seed) {
   return esc(cut.shown) + " " + words.join(" ");
 }
 
-const PDF_STYLE = "@page{size:A4;margin:12mm 0 0}@page:first{margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0}" +
+const PDF_STYLE = "@page{size:A4;margin:12mm 0 14mm}@page:first{margin:0 0 14mm}*{box-sizing:border-box}html,body{margin:0;padding:0}" +
   "body{font-family:Inter,'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10.5pt;line-height:1.45}" +
-  ".foot{position:fixed;bottom:0;left:0;right:0;height:11mm;padding:3mm 16mm 0;font-size:8pt;color:#64748b;display:flex;justify-content:space-between;border-top:1px solid #dbe3ea;background:#fff;z-index:2}" +
-  ".page{position:relative;z-index:1;padding:0 0 16mm}" +
+  ".page{position:relative;z-index:1;padding:0 0 4mm}" +
   ".wm{position:fixed;top:-30%;left:-30%;width:160%;height:160%;z-index:3;pointer-events:none;display:flex;flex-wrap:wrap;align-content:space-around;justify-content:space-around;gap:18mm 26mm;transform:rotate(-30deg);font-size:13pt;font-weight:600;color:rgba(15,23,42,.08);white-space:nowrap;overflow:hidden}" +
   ".hero{background:#0f172a;background-image:radial-gradient(circle at 85% 20%,rgba(94,234,212,.28),transparent 45%),linear-gradient(135deg,#0f172a 0%,#0e4a5c 60%,#0e7490 100%);color:#fff;padding:14mm 16mm 12mm;display:flex;gap:10mm;align-items:center}" +
   ".hero .who{flex:1}.eyebrow{font-size:8.5pt;letter-spacing:.16em;text-transform:uppercase;color:#7dd3fc;margin:0 0 3mm}" +
@@ -599,6 +633,8 @@ const PDF_STYLE = "@page{size:A4;margin:12mm 0 0}@page:first{margin:0}*{box-sizi
   ".finding{background:#fff;border:1px solid #dbe3ea;border-left:1.4mm solid #94a3b8;border-radius:3mm;padding:3.2mm 4mm;margin:0 0 2.6mm;break-inside:avoid}" +
   ".finding .k{font-size:7.8pt;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin:0 0 1mm}" +
   ".finding .t{font-weight:700;margin:0 0 1mm}.finding .e{color:#475569;margin:0;font-size:9.5pt}" +
+  ".finding .f{margin:1.6mm 0 0;padding:1.6mm 2.4mm;border-radius:2mm;background:#f0f9fb;color:#0f172a;font-size:9.5pt}.finding .f b{color:#0e7490}" +
+  ".meta .url{display:block;margin-top:1mm;color:#94a3b8;word-break:break-all}" +
   ".fz{display:inline-block;height:1.25em;vertical-align:-.28em;background-repeat:repeat-x;background-size:auto 2.3em}" +
   ".cases{display:grid;grid-template-columns:1fr 1fr;gap:2mm 5mm}" +
   ".case{background:#fff;border:1px solid #e2e8f0;border-radius:2.6mm;padding:2.4mm 3mm;font-size:9pt;break-inside:avoid}" +
@@ -609,6 +645,14 @@ const PDF_STYLE = "@page{size:A4;margin:12mm 0 0}@page:first{margin:0}*{box-sizi
   ".btns{margin-top:4mm;display:flex;gap:3mm;flex-wrap:wrap}" +
   ".btn{display:inline-block;padding:2.8mm 5mm;border-radius:2.6mm;font-weight:700;text-decoration:none;font-size:10pt}" +
   ".btn.p{background:#5eead4;color:#0f172a}.btn.s{border:1px solid #5eead4;color:#99f6e4}";
+
+// The running footer sits in the page margin: a position:fixed footer lands over the content on pages after the first.
+function pdfFooter(id) {
+  const box = "font-family:Inter,'Helvetica Neue',Arial,sans-serif;font-size:8pt;color:#64748b;border-top:1px solid #dbe3ea;vertical-align:middle;";
+  const quoted = "\"" + String(id || "").replace(/[^A-Za-z0-9_-]/g, "") + "\"";
+  return "@page{@bottom-left{content:\"QA-lab URL Review · carlosandmunoz.com/qa-review.html\";padding-left:16mm;" + box + "}" +
+    "@bottom-right{content:" + quoted + " \"  ·  \" counter(page) \" / \" counter(pages);padding-right:16mm;text-align:right;" + box + "}}";
+}
 
 // A print page for the mail attachment. On an unpaid report hidden words are filler, so the PDF never carries them.
 function reportPdf(record, options) {
@@ -641,21 +685,22 @@ function reportPdf(record, options) {
     "<p class=\"k\">" + esc(t.areas[item.area] || item.area || "") + " · " + esc(p.sev[item.severity] || item.severity || p.sev.low) + "</p>" +
     "<p class=\"t\">" + lineOf(item.title, index) + "</p>" +
     (item.evidence ? "<p class=\"e\">" + lineOf(item.evidence, index + 3) + "</p>" : "") +
+    (open && item.fix ? "<p class=\"f\"><b>" + esc(FIX_LABEL[lang]) + ":</b> " + esc(item.fix) + "</p>" : "") +
     "</div>"
   ).join("");
   const caseRows = (Array.isArray(report.cases) ? report.cases : []).slice(0, PDF_CASES).map((item, index) =>
     "<div class=\"case\"><code>" + esc(item.id || "") + "</code><small>" + esc(item.layer || "") + "</small><br>" + lineOf(item.title, index + 7) + "</div>"
   ).join("");
   const moreCases = Math.max(0, facts.cases - PDF_CASES);
+  const finalUrl = /^https?:\/\//i.test(String(report.finalUrl || "")) ? String(report.finalUrl).slice(0, 200) : "";
   // Fixed, so the print engine repeats it on every page.
   const mark = String((record && record.email) || "");
   const watermark = mark ? "<div class=\"wm\" aria-hidden=\"true\">" + ("<span>" + esc(mark) + "</span>").repeat(40) + "</div>" : "";
-  const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + (open ? "" : ".fz{background-image:url(" + stripUrl() + ")}") + "</style></head><body>" +
+  const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + pdfFooter(facts.id) + (open ? "" : ".fz{background-image:url(" + stripUrl() + ")}") + "</style></head><body>" +
     watermark +
-    "<div class=\"foot\"><span>QA-lab URL Review · carlosandmunoz.com/qa-review.html</span><span>" + esc(facts.id) + "</span></div>" +
     "<div class=\"page\">" +
     "<div class=\"hero\"><div class=\"who\"><p class=\"eyebrow\">QA-lab URL Review</p><p class=\"host\">" + esc(facts.host) + "</p>" +
-    "<p class=\"meta\">" + esc(fill(p.read, { date })) + " · <code>" + esc(facts.id) + "</code></p><span class=\"badge\">" + esc(open ? p.badgeOpen : p.badge) + "</span></div>" +
+    "<p class=\"meta\">" + esc(fill(p.read, { date })) + " · <code>" + esc(facts.id) + "</code>" + (finalUrl ? "<span class=\"url\">" + esc(finalUrl) + "</span>" : "") + "</p><span class=\"badge\">" + esc(open ? p.badgeOpen : p.badge) + "</span></div>" +
     (facts.score ? "<div class=\"ring\" style=\"background:conic-gradient(" + ringColor + " " + overall * 3.6 + "deg,rgba(255,255,255,.14) 0)\"><div><b>" + overall + "</b><i>" + esc(t.outOf) + "</i><em style=\"background:" + ringColor + "\">" + esc(facts.score.grade || "") + "</em></div></div>" : "") +
     "</div>" +
     "<div class=\"stats\">" +

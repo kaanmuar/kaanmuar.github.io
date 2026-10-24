@@ -1452,9 +1452,9 @@ test("the review reports carry a failure section with causes, sites, re-runs, op
   assert.equal(row("Re-runs"), "1 held for you, 0 sent, 0 dropped, 2 failed again");
   assert.equal(row("Failure bugs"), "#331 browser, #330 bot-protection open, 1 closed");
   assert.deepEqual(section.openBugs, [331, 330]);
-  assert.match(section.body, /^Failed reviews\n2026-10-21 21:00 UTC · bbva\.com\.co · Ana · timeout · cleared: /);
-  assert.match(section.body, /2026-10-21 19:42 UTC · americanairlines\.com · Ana · bot-protection · now: The plain read is refused \(status 403\) · re-run failed again 2026-10-21/);
-  assert.match(section.body, /2026-10-21 20:00 UTC · bbva\.com\.co · Ana · timeout · not diagnosed yet/);
+  assert.match(section.body, /^Failed reviews\n21 Oct, 16:00 · bbva\.com\.co · Ana · timeout · cleared: /);
+  assert.match(section.body, /21 Oct, 14:42 · americanairlines\.com · Ana · bot-protection · now: The plain read is refused \(status 403\) · re-run failed again 2026-10-21/);
+  assert.match(section.body, /21 Oct, 15:00 · bbva\.com\.co · Ana · timeout · not diagnosed yet/);
   assert.match(section.body, /Open failure bugs\n#331 BE: URL reviews failed because headless Chrome did not finish \(1 run, americanairlines\.com\)\n#330 .* \(7 runs, bancodebogota\.com, globant\.com\)/);
   assert.doesNotMatch(section.body, /#300/);
   assert.match(section.body, /Each run's full log and probe: https:\/\/desk\.example\/desk\/failures$/);

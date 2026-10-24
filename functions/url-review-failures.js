@@ -448,7 +448,12 @@ function countBy(rows, keyOf) {
 
 const ranked = (counts) => Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
 const causeId = (row) => (row.cause && row.cause.id) || "unknown";
-const minute = (at) => String(at || "").slice(0, 16).replace("T", " ") + " UTC";
+// The period report around this section reads in Bogotá time, so these lines do too.
+const BOGOTA = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Bogota", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const minute = (at) => {
+  const when = new Date(at || "");
+  return isNaN(when) ? "" : BOGOTA.format(when);
+};
 
 function rerunState(row) {
   const rerun = row.rerun;
