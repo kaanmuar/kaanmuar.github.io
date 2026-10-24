@@ -1,6 +1,7 @@
 {
   "functions": {
-    "source": "functions"
+    "source": "functions",
+    "ignore": ["node_modules", ".git", "*.jdk"]
   },
   "hosting": {
     "public": "desk-host",
