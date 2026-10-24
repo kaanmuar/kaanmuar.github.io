@@ -3673,8 +3673,8 @@ async function runReview(req, res, placeOf) {
       depth: intake.value.depth,
       reason: intake.value.reason
     });
-    const asked = (() => { try { return urlReview.registrable(new URL(intake.value.url).hostname); } catch (error) { return ""; } })();
-    const ranksPromise = base ? reviewMarket.trancoRanks([urlReview.registrable(base.report.host), asked]).catch(() => []) : null;
+    const asked = (() => { try { return urlReview.registryDomain(new URL(intake.value.url).hostname); } catch (error) { return ""; } })();
+    const ranksPromise = base ? reviewMarket.trancoRanks([urlReview.registryDomain(base.report.host), asked]).catch(() => []) : null;
     const report = await urlReview.reviewTarget(intake.value.url, {
       log: (text) => writeLine({ type: "log", text }),
       stopped: () => stopped,
@@ -3714,7 +3714,7 @@ async function runReview(req, res, placeOf) {
     if (base) {
       writeLine({ type: "log", text: "Reading the Tranco ranks and your score history for both sites." });
       let [ownRank, rivalRank] = await ranksPromise;
-      if (urlReview.registrable(report.host) !== asked) rivalRank = await reviewMarket.trancoRank(urlReview.registrable(report.host));
+      if (urlReview.registryDomain(report.host) !== asked) rivalRank = await reviewMarket.trancoRank(urlReview.registryDomain(report.host));
       const trail = await scoreTrail(intake.value.email, base.report.host, report);
       report.compare = reviewCompare.compareSites(Object.assign({ id: intake.value.compareWith }, base.report), report, { ranks: { own: ownRank, rival: rivalRank }, trail });
       if (report.compare) {
