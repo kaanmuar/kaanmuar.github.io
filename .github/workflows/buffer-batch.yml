@@ -1,0 +1,51 @@
+# Queues one committed social batch (media/social-posts/<batch>) in Buffer, for batches the daily Live Reports
+# job does not queue itself, such as the social hub promo. Clips come from the GitHub release named after the
+# batch (gh release create <batch> media/social-posts/<batch>/clip/*.mp4); without one, TikTok and YouTube are
+# skipped. Posts marked hold in captions.json stay in the hub only. Needs the BUFFER_API_KEY secret.
+name: Buffer batch queue
+
+on:
+  workflow_dispatch:
+    inputs:
+      batch:
+        description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10'
+        required: true
+      dry_run:
+        description: 'List what would be queued, post nothing'
+        type: boolean
+        default: false
+
+concurrency:
+  group: buffer-batch
+  cancel-in-progress: false
+
+jobs:
+  queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BATCH: ${{ inputs.batch }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Queue the batch
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          if ! [[ "$BATCH" =~ ^[a-z0-9-]+$ ]] || [ ! -f "media/social-posts/$BATCH/captions.json" ]; then
+            echo "::error::No committed batch media/social-posts/$BATCH"; exit 1
+          fi
+          if gh release view "$BATCH" > /dev/null 2>&1; then
+            export CLIP_BASE="https://github.com/${{ github.repository }}/releases/download/$BATCH"
+          else
+            echo "::warning::No $BATCH release, so TikTok and YouTube are skipped."
+          fi
+          if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --batch "$BATCH" --dry-run; else node scripts/buffer-queue.js --batch "$BATCH"; fi

@@ -86,13 +86,14 @@ function batchPosts(files, reports) {
       const image = "media/social-posts/" + batch + "/feed/" + slug + ".jpg";
       if (!files.has(image)) continue;
       const report = slug.replace(/^\d+-/, "");
-      // The text captions are English; c.lang is the language the clip was voiced in (TikTok and YouTube copy).
+      // The text captions are English unless the post was written in its own language (c.textLang);
+      // c.lang is the language the clip was voiced in (TikTok and YouTube copy).
       posts.push({
         id: batch + "/" + slug,
-        kind: batch.startsWith("tips") ? "tip" : "review",
+        kind: batch.startsWith("tips") ? "tip" : batch.startsWith("promo") ? "launch" : "review",
         batch,
         date: c.date,
-        lang: "en",
+        lang: LANGS[c.textLang] ? c.textLang : "en",
         clipLang: LANGS[c.lang] ? c.lang : null,
         cat: c.cat || "",
         title: cleanTitle(c.title),
