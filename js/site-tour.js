@@ -18,6 +18,7 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .site-tour-hit { animation: none; box-shadow: 0 0 0 3px #0d6e76; transform: none; }
+      #site-tour-clip * { animation-duration: 1ms; animation-delay: 0s; }
     }
     #site-tour-tooltip {
       display: none; position: fixed; z-index: 4600; left: 12px; bottom: 12px; box-sizing: border-box;

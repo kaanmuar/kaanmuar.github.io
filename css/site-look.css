@@ -336,3 +336,28 @@ html[data-look] .topbar .lang-toggle:hover {
 @media (max-width: 720px) {
     .style-minis { grid-template-columns: 1fr 1fr; }
 }
+
+.skip-link {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 10000;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #12181f;
+    color: #ffffff;
+    font: 600 15px/1.2 Inter, system-ui, sans-serif;
+    text-decoration: none;
+    transform: translateY(calc(-100% - 16px));
+}
+.skip-link:focus {
+    transform: none;
+    outline: 3px solid #4db3bb;
+    outline-offset: 2px;
+}
+html.dark-mode .skip-link {
+    background: #ffffff;
+    color: #12181f;
+    outline-color: #0d6e76;
+}
+main[tabindex="-1"]:focus { outline: none; }
