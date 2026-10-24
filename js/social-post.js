@@ -1,5 +1,6 @@
 /* A social hub post page (social/<post id>.html): plays the clip in place, copies captions and the link,
-   and reports plays, copies, shares and downloads as "Social post" events. */
+   and reports the view, plays, copies, shares and downloads as "Social post" events. Copies and shares are
+   labelled "<network>:<post id>" so functions/social-hub-stats.js can count them per post and per network. */
 (function () {
   const main = document.querySelector(".post-page");
   if (!main) return;
@@ -30,14 +31,16 @@
     frame.focus();
   }
 
+  track("post_view", id);
+
   main.addEventListener("click", (event) => {
     const el = event.target.closest("[data-act]");
     if (!el) return;
     const act = el.dataset.act;
     if (act === "play") { event.preventDefault(); play(el); track("post_play", id); }
-    else if (act === "copy") { copied(el, document.getElementById(el.dataset.target).textContent); track("post_copy", el.dataset.net); }
-    else if (act === "copylink") { copied(el, main.dataset.url); track("post_copy", "link"); }
-    else if (act === "share") track("post_share", el.dataset.net);
+    else if (act === "copy") { copied(el, document.getElementById(el.dataset.target).textContent); track("post_copy", el.dataset.net + ":" + id); }
+    else if (act === "copylink") { copied(el, main.dataset.url); track("post_copy", "link:" + id); }
+    else if (act === "share") track("post_share", el.dataset.net + ":" + id);
     else if (act === "download") track("post_download", id);
     else if (act === "report") track("post_report", id);
     else if (act === "related") track("post_related", el.dataset.id);
