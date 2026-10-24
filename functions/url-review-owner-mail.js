@@ -28,7 +28,7 @@ const COPY = {
     health: {
       title: "Health score", grade: "Grade",
       summary: "{host} scores {overall} out of 100 ({grade}). {fail} checks fail now, {risk} are at risk, and {pass} pass.",
-      fail: "Fails now", risk: "At risk", pass: "Passes", person: "Needs a browser",
+      fail: "Fails now", risk: "At risk", pass: "Passes", person: "Needs a person",
       critical: "critical", high: "high", medium: "medium", low: "low",
       measured: "Every check was measured from the public response, not guessed.",
       counts: "{fail} fail · {risk} at risk · {pass} pass",
@@ -74,7 +74,7 @@ const COPY = {
     health: {
       title: "Puntaje de salud", grade: "Nota",
       summary: "{host} obtiene {overall} de 100 ({grade}). {fail} controles fallan ahora, {risk} están en riesgo y {pass} pasan.",
-      fail: "Fallan ahora", risk: "En riesgo", pass: "Pasan", person: "Necesita un navegador",
+      fail: "Fallan ahora", risk: "En riesgo", pass: "Pasan", person: "Requiere una persona",
       critical: "crítico", high: "alto", medium: "medio", low: "bajo",
       measured: "Cada control se midió en la respuesta pública, no se adivinó.",
       counts: "{fail} fallan · {risk} en riesgo · {pass} pasan",
@@ -120,7 +120,7 @@ const COPY = {
     health: {
       title: "Nota de saúde", grade: "Nota",
       summary: "{host} tem {overall} de 100 ({grade}). {fail} verificações falham agora, {risk} estão em risco e {pass} passam.",
-      fail: "Falham agora", risk: "Em risco", pass: "Passam", person: "Precisa de navegador",
+      fail: "Falham agora", risk: "Em risco", pass: "Passam", person: "Precisa de uma pessoa",
       critical: "crítico", high: "alto", medium: "médio", low: "baixo",
       measured: "Cada verificação foi medida na resposta pública, sem suposições.",
       counts: "{fail} falham · {risk} em risco · {pass} passam",
@@ -166,7 +166,7 @@ const COPY = {
     health: {
       title: "Gesundheitswert", grade: "Note",
       summary: "{host} erreicht {overall} von 100 ({grade}). {fail} Prüfungen scheitern jetzt, {risk} sind gefährdet und {pass} bestehen.",
-      fail: "Scheitern jetzt", risk: "Gefährdet", pass: "Bestanden", person: "Braucht einen Browser",
+      fail: "Scheitern jetzt", risk: "Gefährdet", pass: "Bestanden", person: "Braucht eine Person",
       critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig",
       measured: "Jede Prüfung wurde an der öffentlichen Antwort gemessen, nicht geschätzt.",
       counts: "{fail} scheitern · {risk} gefährdet · {pass} bestanden",
@@ -212,7 +212,7 @@ const COPY = {
     health: {
       title: "Score de santé", grade: "Note",
       summary: "{host} obtient {overall} sur 100 ({grade}). {fail} contrôles échouent, {risk} sont à risque et {pass} réussissent.",
-      fail: "Échouent", risk: "À risque", pass: "Réussis", person: "Nécessite un navigateur",
+      fail: "Échouent", risk: "À risque", pass: "Réussis", person: "Demande une personne",
       critical: "critique", high: "élevé", medium: "moyen", low: "faible",
       measured: "Chaque contrôle a été mesuré sur la réponse publique, sans supposition.",
       counts: "{fail} échouent · {risk} à risque · {pass} réussis",
@@ -258,7 +258,7 @@ const COPY = {
     health: {
       title: "Punteggio di salute", grade: "Voto",
       summary: "{host} ottiene {overall} su 100 ({grade}). {fail} controlli falliscono ora, {risk} sono a rischio e {pass} passano.",
-      fail: "Falliscono ora", risk: "A rischio", pass: "Superati", person: "Serve un browser",
+      fail: "Falliscono ora", risk: "A rischio", pass: "Superati", person: "Serve una persona",
       critical: "critico", high: "alto", medium: "medio", low: "basso",
       measured: "Ogni controllo è stato misurato sulla risposta pubblica, non indovinato.",
       counts: "{fail} falliscono · {risk} a rischio · {pass} superati",
