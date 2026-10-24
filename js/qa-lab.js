@@ -249,12 +249,15 @@
       async run({ cv, reloadCv }) {
         const btn = cv.document.getElementById('theme-toggle');
         assert(btn, '#theme-toggle missing');
+        const before = localStorage.getItem('theme');
         cv.document.documentElement.classList.remove('dark-mode');
         localStorage.setItem('theme', 'light');
         btn.click();
         assert(cv.document.documentElement.classList.contains('dark-mode'), 'dark-mode not applied');
         const again = await reloadCv();
         assert(again.document.documentElement.classList.contains('dark-mode'), 'theme did not persist');
+        const back = again.document.getElementById('theme-toggle');
+        if (before !== 'dark' && back) back.click();
         return 'html.dark-mode persisted';
       }
     },
@@ -1485,10 +1488,10 @@
       how: 'Heading, canonical, video source, poster, and VideoObject duration match that clip. Sitemap lists the page. The mp4 is video/mp4 and the jpg is image/jpeg.',
       async run() {
         const clips = [
-          ['media/qa-lab-running.html', 'QA Lab running', 'PT54S', 'media/qa-lab-running.mp4', 'media/qa-lab-running.jpg'],
+          ['media/qa-lab-running.html', 'QA Lab running', 'PT57S', 'media/qa-lab-running.mp4', 'media/qa-lab-running.jpg'],
           ['media/qa-lab-tour.html', 'QA Lab tour', 'PT41S', 'media/qa-lab-tour.mp4', 'media/qa-lab-tour.jpg'],
-          ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M33S', 'media/sdlc-studio-running.mp4', 'media/sdlc-studio-running.jpg'],
-          ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT26S', 'media/sdlc-studio-tour.mp4', 'media/sdlc-studio-tour.jpg']
+          ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M39S', 'media/sdlc-studio-running.mp4', 'media/sdlc-studio-running.jpg'],
+          ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT31S', 'media/sdlc-studio-tour.mp4', 'media/sdlc-studio-tour.jpg']
         ];
         const sitemap = await fetchText('sitemap.xml');
         for (const clip of clips) {
