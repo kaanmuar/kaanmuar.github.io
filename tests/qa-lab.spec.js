@@ -85,6 +85,38 @@ test.describe('CV regression lab', () => {
     await expect(page.locator('#sut')).toBeVisible();
   });
 
+  test('Watch mode leaves the CV frame room on a 1280x720 screen', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await expect(page.locator('html')).toHaveClass(/lab-watch/);
+    await expect(page.locator('html')).not.toHaveClass(/lab-running/);
+    await expect(page.locator('#case-detail .spec')).toBeVisible();
+    const shown = (selector) => page.evaluate((selector) => {
+      const target = document.querySelector(selector);
+      const box = target.getBoundingClientRect();
+      let top = box.top;
+      let bottom = box.bottom;
+      for (let el = target.parentElement; el && el !== document.body; el = el.parentElement) {
+        if (getComputedStyle(el).overflowY === 'visible') continue;
+        const r = el.getBoundingClientRect();
+        top = Math.max(top, r.top);
+        bottom = Math.min(bottom, r.bottom);
+      }
+      return Math.round(bottom - top);
+    }, selector);
+    expect(await shown('#sut')).toBeGreaterThanOrEqual(240);
+    await page.locator('#sut').scrollIntoViewIfNeeded();
+    const hits = await page.evaluate(() => {
+      const box = document.getElementById('sut').getBoundingClientRect();
+      const x = box.left + box.width / 2;
+      return [box.top + 4, box.top + 240].map((y) => y < innerHeight && document.elementFromPoint(x, y)?.id);
+    });
+    expect(hits).toEqual(['sut', 'sut']);
+    expect(await shown('#sut')).toBeGreaterThanOrEqual(240);
+    await page.locator('[data-view="background"]').click();
+    await expect(page.locator('html')).toHaveClass(/lab-background/);
+    expect(await shown('.sut-bg-note')).toBeGreaterThanOrEqual(30);
+  });
+
   test('ships full SEO chrome', async ({ page }) => {
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /qa-lab\.html/);
     await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
