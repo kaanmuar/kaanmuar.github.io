@@ -136,6 +136,19 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await expect(page.locator('#review-btn')).toBeEnabled();
   });
 
+  test('on the Spanish page the earlier-reviews and emailing log lines are written in Spanish', async ({ page }) => {
+    const lines = [{ type: 'log', text: 'Looking for your earlier reviews of rival.example.' }, { type: 'log', text: 'Report saved. Emailing a copy to ana@example.com.' }, { type: 'error', error: 'The site did not answer' }];
+    const ask = await open(page, null, () => lines.map((line) => JSON.stringify(line)).join('\n') + '\n', '/qa-review-es.html');
+    await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+    await ask.locator('#compare-url').fill('rival.example');
+    await ask.locator('#compare-go').click();
+    await expect(page.locator('#compare-error')).toContainText('rival.example');
+    const log = page.locator('#run-log li');
+    await expect(log.filter({ hasText: 'Buscando tus revisiones anteriores de rival.example.' })).toHaveAttribute('translate', 'no');
+    await expect(log.filter({ hasText: 'Informe guardado. Enviando una copia a ana@example.com.' })).toHaveAttribute('lang', 'es');
+    await expect(log.filter({ hasText: /Looking for|Emailing/ })).toHaveCount(0);
+  });
+
   test('while a comparison runs, the log leads back to the report and the report says it is running', async ({ page }) => {
     let answer;
     const held = new Promise((resolve) => { answer = resolve; });

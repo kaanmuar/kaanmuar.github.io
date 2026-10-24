@@ -13,6 +13,7 @@
       slow: "Still working. This step waits on the site.",
       slower: "Slow site, still running. Stop keeps the pages already saved.",
       ready: "Report ready", stopped: "Stopped", stopping: "Stopping…", failed: "The review ended early",
+      log: { earlier: "Looking for your earlier reviews of {host}.", emailing: "Report saved. Emailing a copy to {email}." },
       phases: ["Connecting", "Analyzing pages", "Browser pass", "Writing cases", "Speed checks", "Scoring and signing"],
       lines: [
         ["Checking the front door: https, DNS, certificate.", "First impressions count. Opening {host}."],
@@ -39,6 +40,7 @@
       slow: "Sigue trabajando. Este paso espera al sitio.",
       slower: "Sitio lento, sigue en marcha. Detener conserva las páginas ya guardadas.",
       ready: "Informe listo", stopped: "Detenido", stopping: "Deteniendo…", failed: "La revisión terminó antes de tiempo",
+      log: { earlier: "Buscando tus revisiones anteriores de {host}.", emailing: "Informe guardado. Enviando una copia a {email}." },
       phases: ["Conectando", "Analizando páginas", "Pasada del navegador", "Escribiendo casos", "Pruebas de velocidad", "Puntuando y firmando"],
       lines: [
         ["Revisando la puerta de entrada: https, DNS, certificado.", "La primera impresión cuenta. Abriendo {host}."],
@@ -65,6 +67,7 @@
       slow: "Ainda trabalhando. Esta etapa espera pelo site.",
       slower: "Site lento, ainda em andamento. Parar mantém as páginas já salvas.",
       ready: "Relatório pronto", stopped: "Parado", stopping: "Parando…", failed: "A revisão terminou antes do tempo",
+      log: { earlier: "Procurando suas revisões anteriores de {host}.", emailing: "Relatório salvo. Enviando uma cópia para {email}." },
       phases: ["Conectando", "Analisando páginas", "Passada do navegador", "Escrevendo casos", "Testes de velocidade", "Pontuando e assinando"],
       lines: [
         ["Verificando a porta de entrada: https, DNS, certificado.", "A primeira impressão conta. Abrindo {host}."],
@@ -91,6 +94,7 @@
       slow: "Läuft noch. Dieser Schritt wartet auf die Website.",
       slower: "Langsame Website, läuft weiter. Stopp behält die bereits gespeicherten Seiten.",
       ready: "Bericht fertig", stopped: "Gestoppt", stopping: "Wird gestoppt…", failed: "Die Prüfung endete vorzeitig",
+      log: { earlier: "Ihre früheren Prüfungen von {host} werden gesucht.", emailing: "Bericht gespeichert. Eine Kopie geht an {email}." },
       phases: ["Verbinden", "Seiten prüfen", "Browser-Durchlauf", "Fälle schreiben", "Tempo-Messung", "Bewerten und signieren"],
       lines: [
         ["Prüfung der Eingangstür: https, DNS, Zertifikat.", "Der erste Eindruck zählt. {host} wird geöffnet."],
@@ -117,6 +121,7 @@
       slow: "Toujours en cours. Cette étape attend le site.",
       slower: "Site lent, toujours en cours. Arrêter garde les pages déjà enregistrées.",
       ready: "Rapport prêt", stopped: "Arrêté", stopping: "Arrêt en cours…", failed: "L’analyse s’est terminée plus tôt",
+      log: { earlier: "Recherche de vos analyses précédentes de {host}.", emailing: "Rapport enregistré. Envoi d’une copie à {email}." },
       phases: ["Connexion", "Analyse des pages", "Passage du navigateur", "Rédaction des cas", "Mesure de vitesse", "Notation et signature"],
       lines: [
         ["Vérification de la porte d’entrée : https, DNS, certificat.", "La première impression compte. Ouverture de {host}."],
@@ -143,6 +148,7 @@
       slow: "Ancora al lavoro. Questo passaggio attende il sito.",
       slower: "Sito lento, ancora in corso. Interrompi conserva le pagine già salvate.",
       ready: "Report pronto", stopped: "Interrotto", stopping: "Interruzione…", failed: "La revisione è finita in anticipo",
+      log: { earlier: "Ricerca delle tue revisioni precedenti di {host}.", emailing: "Report salvato. Invio di una copia a {email}." },
       phases: ["Connessione", "Analisi delle pagine", "Passaggio del browser", "Stesura dei casi", "Misura della velocità", "Punteggio e firma"],
       lines: [
         ["Controllo della porta d’ingresso: https, DNS, certificato.", "La prima impressione conta. Apertura di {host}."],
@@ -189,6 +195,11 @@
     [/^Scoring the checks/, 93, 5],
     [/^(Scored |The scored checks could not)/, 96, 5],
     [/^Signed the report/, 98, 5]
+  ];
+  // Server lines the page translator left in English; they are written in the page language here instead.
+  const LOG = [
+    [/^Looking for your earlier reviews of (\S+)\.$/, "earlier", "host"],
+    [/^Report saved\. Emailing a copy to (\S+)\.$/, "emailing", "email"]
   ];
 
   const code = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
@@ -447,5 +458,16 @@
     root.style.removeProperty("--ty");
   });
 
-  window.ReviewProgress = { start: start, line: line, finish: finish, fail: fail, reset: reset };
+  // The page-language text of a server log line, or "" when it has none and stays for the translator.
+  function local(text) {
+    if (!nt) return "";
+    const value = String(text || "");
+    for (const [pattern, key, slot] of LOG) {
+      const match = value.match(pattern);
+      if (match) return fill(book.log[key], { [slot]: match[1] });
+    }
+    return "";
+  }
+
+  window.ReviewProgress = { start: start, line: line, finish: finish, fail: fail, reset: reset, local: local, lang: code };
 })();

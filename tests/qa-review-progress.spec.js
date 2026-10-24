@@ -62,4 +62,13 @@ test.describe('Review progress', () => {
     await expect(page.locator('.rp-phase')).toHaveText('Verbinden');
     await expect(page.locator('.rp-phase')).toHaveAttribute('translate', 'no');
   });
+
+  test('writes the earlier-reviews and emailing lines in the page language, and leaves English pages alone', async ({ page }) => {
+    await prime(page);
+    await page.goto('/qa-review-pt.html');
+    const pt = await page.evaluate(() => ['Looking for your earlier reviews of example.com.', 'Report saved. Emailing a copy to ana@example.com.', 'Opening /a.'].map((text) => window.ReviewProgress.local(text)));
+    expect(pt).toEqual(['Procurando suas revisões anteriores de example.com.', 'Relatório salvo. Enviando uma cópia para ana@example.com.', '']);
+    await page.goto('/qa-review.html');
+    expect(await page.evaluate(() => window.ReviewProgress.local('Looking for your earlier reviews of example.com.'))).toBe('');
+  });
 });

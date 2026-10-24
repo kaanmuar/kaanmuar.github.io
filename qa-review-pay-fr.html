@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com; frame-src https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <title>Paiement · QA-lab URL Review</title>
+    <meta name="description" content="PayPal encaisse le paiement de QA-lab URL Review. Le montant s’affiche sur cette page avant que vous confirmiez. Les numéros de carte se saisissent sur PayPal.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#0d6e76">
+    <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+    <script>
+        try {
+            const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("cv-preferred-lang") || "").slice(0, 2).toLowerCase();
+            if (document.documentElement.lang === "en" && ["es", "pt", "de", "fr", "it"].indexOf(lang) !== -1 && !navigator.webdriver) {
+                // The body scripts still run until the new page loads; this keeps them from confirming a PayPal return twice.
+                window.payLeaving = true;
+                location.replace("qa-review-pay-" + lang + ".html" + location.search + location.hash);
+            }
+        } catch (error) { /* the English page stays */ }
+    </script>
+    <script src="js/site-theme.js"></script>
+    <script>SiteTheme.boot();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #eef2f4; --card: #fff; --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; }
+        html.dark-mode { --bg: #10161d; --card: #1a2430; --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; color: var(--text); font-family: Inter, system-ui, sans-serif; font-size: 16px;
+            background: radial-gradient(900px 420px at 50% -10%, rgba(13, 110, 118, .22), transparent 60%), var(--bg);
+            display: grid; place-items: center; padding: 24px;
+        }
+        .mark { position: fixed; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='440' height='180'><text x='16' y='90' fill='%230d6e76' font-size='13' font-family='sans-serif' transform='rotate(-18 220 90)'>QA-lab URL Review · Carlos Muñoz · https://carlosandmunoz.com · Preview copy · Not a certification</text></svg>"); background-repeat: repeat; opacity: .2; }
+        .sheet {
+            position: relative; z-index: 2; width: min(560px, 100%); padding: 32px 28px 24px; border-radius: 28px;
+            background: radial-gradient(420px 180px at 100% 0%, rgba(13, 110, 118, .2), transparent 62%), var(--card);
+            border: 1px solid var(--line); box-shadow: 0 28px 70px rgba(8, 14, 18, .28);
+        }
+        .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; color: inherit; text-decoration: none; font-family: "Instrument Serif", Georgia, serif; font-size: 1.4rem; }
+        .brand small { display: block; font-family: Inter, system-ui, sans-serif; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+        .logo { width: 36px; height: 36px; display: block; }
+        .test-mode { margin: 0 0 12px; padding: 8px 12px; border-radius: 10px; background: #fff3c4; color: #5a4300; border: 1px solid #e0b93a; font-size: 13px; font-weight: 700; }
+        .test-mode[hidden] { display: none; }
+        .eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); }
+        h1 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 2.4rem; margin: 8px 0; letter-spacing: -0.03em; }
+        .price { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 4.6rem; letter-spacing: -0.04em; line-height: .9; }
+        .price span { font-size: 1.1rem; letter-spacing: .08em; color: var(--muted); margin-left: 8px; }
+        .yield { margin: 14px 0 0; font-family: "Instrument Serif", Georgia, serif; font-size: 1.7rem; color: var(--text); }
+        .yield[hidden] { display: none; }
+        p { color: var(--muted); line-height: 1.5; }
+        .row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; color: var(--text); }
+        .lines { list-style: none; margin: 8px 0 0; padding: 0; }
+        .lines[hidden] { display: none; }
+        .lines li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+        .lines span { color: var(--muted); }
+        .methods { border: 0; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+        .methods legend { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0; }
+        .method { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; cursor: pointer; background: transparent; color: var(--text); }
+        .method:has(input:checked) { border-color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); }
+        .method b { display: block; font-size: 15px; }
+        .method small { display: block; color: var(--muted); line-height: 1.4; margin-top: 3px; }
+        .method input { margin-top: 3px; accent-color: var(--cyan); }
+        .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+        button:disabled { opacity: .55; cursor: wait; }
+        .btn { border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 700; cursor: pointer; font-size: 14px; text-decoration: none; display: inline-block; }
+        .btn-primary { background: var(--cyan); color: #fff; }
+        .btn[hidden] { display: none; }
+        .btn-ghost { border: 1px solid var(--line); color: var(--text); background: transparent; }
+        a { color: var(--cyan); }
+        .cookie-note { position: fixed; z-index: 5; left: 16px; right: 16px; bottom: 16px; max-width: 720px; margin: 0 auto; padding: 16px 18px; border-radius: 18px; background: #fff; color: #12181f; border: 1px solid #d5dce3; box-shadow: 0 18px 50px rgba(8, 14, 18, .28); }
+        .cookie-note[hidden] { display: none; }
+        .cookie-note p { margin: 0 0 12px; font-size: 15px; line-height: 1.45; color: #12181f; }
+        .cookie-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+        .cookie-actions button { border-radius: 999px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
+        #cookie-necessary { background: transparent; color: #12181f; border: 1px solid #d5dce3; }
+        #cookie-allow { background: #0d6e76; color: #fff; border: 0; }
+        @media (max-width: 800px) {
+            body { padding: 12px 12px 180px; place-items: start center; }
+            .sheet { padding: 20px 16px 16px; border-radius: 18px; }
+            h1 { font-size: 1.8rem; }
+            .price { font-size: 3.2rem; }
+            .actions { flex-wrap: wrap; }
+            .actions .btn { flex: 1; text-align: center; min-height: 44px; }
+            .cookie-note { left: 10px; right: 10px; bottom: 10px; padding: 12px; }
+            .cookie-actions button { flex: 1; min-height: 40px; }
+        }
+    </style>
+</head>
+<body class="preview-copy">
+    <div class="mark" aria-hidden="true"></div>
+    <main class="sheet">
+        <a class="brand" href="qa-review-fr.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span>QA-lab<small>URL Review</small></span></a>
+        <p class="test-mode" id="test-mode" role="status" hidden lang="fr" translate="no">Mode test · sandbox PayPal. Payez avec un compte acheteur sandbox. Aucun argent réel ne circule.</p>
+        <p class="eyebrow" lang="fr" translate="no">Paiement</p>
+        <h1 id="pay-heading" lang="fr" translate="no">Une nouvelle analyse</h1>
+        <div id="pay-deal" hidden></div>
+        <p class="price">—</p>
+        <p class="yield" id="pay-yield" lang="fr" translate="no" hidden></p>
+        <p id="pay-fx" lang="fr" translate="no"></p>
+        <p id="pay-copy" lang="fr" translate="no">Le montant pour les frameworks de cette analyse est calculé sur cette page. PayPal encaisse le paiement. Les numéros de carte et les identifiants bancaires se saisissent sur PayPal, pas ici.</p>
+        <ol class="lines" id="pay-lines" lang="fr" translate="no" hidden></ol>
+        <fieldset class="methods">
+            <legend lang="fr" translate="no">Payer avec</legend>
+            <label class="method"><input type="radio" name="provider" value="paypal" checked><span><b>PayPal</b><small lang="fr" translate="no">Solde, banque ou carte. PayPal encaisse le paiement.</small></span></label>
+        </fieldset>
+        <div class="row"><span id="pay-item">Nouvelle analyse</span><b id="pay-amount">—</b></div>
+        <div class="row"><span id="pay-collect-label" lang="fr" translate="no">Compte PayPal</span><span id="pay-collector" lang="fr" translate="no">Encaissé par PayPal</span></div>
+        <p id="pay-note" lang="fr" translate="no">Une analyse n’est marquée payée qu’après la confirmation du paiement par PayPal.</p>
+        <p><a href="qa-review-legal.html" lang="fr" translate="no">Avertissements</a></p>
+        <div class="actions">
+            <a class="btn btn-ghost" href="qa-review-fr.html" lang="fr" translate="no">Retour à l’analyse</a>
+            <button class="btn btn-primary" id="charge" type="button" lang="fr" translate="no">Continuer vers PayPal</button>
+        </div>
+    </main>
+    <script src="js/site-analytics.js?v=20261024a"></script>
+    <script src="js/qa-review-consent.js?v=20261028p"></script>
+    <script src="js/qa-review-deal.js?v=20261029a"></script>
+    <script>try{localStorage.setItem("cv-preferred-lang","fr")}catch(e){}</script>
+    <script src="js/site-i18n.js?v=20261028a"></script>
+    <script src="js/site-glossary.js?v=20261102a"></script>
+    <script src="js/qa-review-pay-copy.js?v=20261102a"></script>
+    <script>
+        if (window.SiteI18n) SiteI18n.resolve().then((lang) => {
+            const own = ["en", "es", "pt", "de", "fr", "it"];
+            SiteI18n.applyMachineTranslate(own.indexOf(lang) === -1 ? lang : document.documentElement.lang);
+        });
+    </script>
+    <script>
+        const pc = window.QAReviewPayCopy;
+        const params = new URLSearchParams(location.search);
+        const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
+        let dealShown = false;
+        let listUsd = 0;
+        const purposeName = params.get("purpose");
+        const purpose = ["report", "cases", "credentials", "alerts"].indexOf(purposeName) === -1 ? "new-run" : purposeName;
+        if (window.SiteAnalytics && !window.payLeaving) SiteAnalytics.trackEvent("qa_review_pay_view", "URL Review", purpose);
+        const alertCount = Math.max(0, Math.min(8, Math.round(Number(params.get("count")) || 0)));
+        const KNOWN = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha", "Appium", "Maestro", "JMeter", "Gatling", "k6"];
+        const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
+        const LAYER_NAMES = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
+        let frameworkList = (params.get("frameworks") || "").split(",").map((name) => name.trim()).filter((name) => KNOWN.indexOf(name) !== -1);
+        let toolList = (params.get("tools") || "").split(",").map((name) => name.trim()).filter((name) => TOOLS.indexOf(name) !== -1);
+        let layerList = (params.get("layers") || "").split(",").map((name) => name.trim()).filter((name) => LAYER_NAMES.indexOf(name) !== -1);
+        const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
+        const DEPTH_CENTS = { 2: 0, 3: 400, 4: 700, 5: 1000 };
+        let pageCount = PAGE_CENTS[Number(params.get("pages"))] == null ? 20 : Number(params.get("pages"));
+        let depthCount = DEPTH_CENTS[Number(params.get("depth"))] == null ? 2 : Number(params.get("depth"));
+        let billing = params.get("billing") === "scope" ? "scope" : "run";
+        // PayPal returns without compareWith, so the review page's saved comparison remembers that this checkout was for it.
+        const compareWith = purpose === "new-run" ? (params.get("compareWith") || "").replace(/[^a-f0-9]/g, "").slice(0, 32) : "";
+        function savedCompare() {
+            try { return JSON.parse(sessionStorage.getItem("qa-review-compare") || "null"); } catch (error) { return null; }
+        }
+        if (compareWith) {
+            const saved = savedCompare();
+            if (saved && saved.id === compareWith) {
+                saved.checkout = true;
+                try { sessionStorage.setItem("qa-review-compare", JSON.stringify(saved)); } catch (error) { /* the run can still be started again by hand */ }
+            }
+        }
+        function centsForIndex(index) {
+            const off = index <= 1 ? 0 : index <= 3 ? 10 : index <= 5 ? 15 : index <= 7 ? 20 : index <= 9 ? 25 : index <= 11 ? 30 : index <= 13 ? 35 : 40;
+            return Math.round(1900 * (100 - off) / 100);
+        }
+        function chargeFor(count) {
+            let total = 0;
+            for (let index = 1; index <= count; index += 1) total += centsForIndex(index);
+            return total / 100;
+        }
+        function money(cents) {
+            const dollars = Math.round(Number(cents) * 100) / 100;
+            return Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2);
+        }
+        function scopeDollars() {
+            return ((PAGE_CENTS[pageCount] || 0) + (DEPTH_CENTS[depthCount] || 0)) / 100;
+        }
+        function covered() {
+            if (purpose === "credentials") return true;
+            if (purpose === "alerts") return alertCount > 0;
+            if (purpose === "cases") return layerList.length > 0;
+            return frameworkList.length > 0;
+        }
+        let usd = purpose === "cases"
+            ? chargeFor(layerList.length)
+            : purpose === "credentials"
+                ? chargeFor(2)
+                : purpose === "alerts"
+                    ? chargeFor(alertCount)
+                    : purpose === "new-run"
+                        ? (billing === "scope" ? scopeDollars() : chargeFor(frameworkList.length + toolList.length) + scopeDollars())
+                        : chargeFor(frameworkList.length + toolList.length);
+        if (purpose === "report") {
+            document.getElementById("pay-heading").textContent = pc.t("headingReport");
+            document.getElementById("pay-item").textContent = pc.t("itemReport");
+        }
+        function receivedCases() {
+            if (purpose !== "cases") return 0;
+            try {
+                const saved = JSON.parse(sessionStorage.getItem("qa-review-case-export") || "null");
+                const cases = saved && saved.report && saved.report.cases;
+                if (!cases) return 0;
+                const want = new Set(layerList);
+                return cases.filter((item) => item && want.has(item.layer)).length;
+            } catch (error) {
+                return 0;
+            }
+        }
+        function paintYield() {
+            const yieldEl = document.getElementById("pay-yield");
+            if (purpose !== "cases") {
+                yieldEl.hidden = true;
+                return;
+            }
+            const total = receivedCases();
+            yieldEl.hidden = false;
+            yieldEl.textContent = total ? pc.t("yield", { n: total }) : pc.t("yieldNone");
+        }
+        if (purpose === "cases") document.getElementById("pay-heading").textContent = pc.t("headingCases");
+        function describe() {
+            if (purpose === "credentials") {
+                document.getElementById("pay-heading").textContent = pc.t("headingCredentials");
+                document.getElementById("pay-item").textContent = pc.t("itemCredentials");
+                document.getElementById("pay-copy").textContent = pc.t("copyCredentials", { usd: money(usd) });
+                document.getElementById("pay-yield").hidden = true;
+                paintLines();
+                return;
+            }
+            if (purpose === "alerts") {
+                document.getElementById("pay-heading").textContent = pc.t("headingAlerts");
+                document.getElementById("pay-item").textContent = pc.t("signals", { n: alertCount });
+                document.getElementById("pay-copy").textContent = pc.t("copyAlerts", { n: alertCount, usd: money(usd) });
+                document.getElementById("pay-yield").hidden = true;
+                paintLines();
+                return;
+            }
+            const count = purpose === "cases" ? layerList.length : frameworkList.length + (billing === "scope" ? 0 : toolList.length);
+            const schedule = pc.t("schedule");
+            if (purpose === "new-run" && count) {
+                const pagesLine = PAGE_CENTS[pageCount] ? pc.t("pagesAdd", { n: pageCount, usd: money(PAGE_CENTS[pageCount] / 100) }) : pc.t("pagesIncluded", { n: pageCount });
+                const depthLine = DEPTH_CENTS[depthCount] ? pc.t("depthAdd", { n: depthCount, usd: money(DEPTH_CENTS[depthCount] / 100) }) : pc.t("depthIncluded", { n: depthCount });
+                const frameworks = pc.t("frameworks", { n: frameworkList.length });
+                document.getElementById("pay-copy").textContent = billing === "scope"
+                    ? pc.t("copyScope", { usd: money(usd), pages: pagesLine, depth: depthLine })
+                    : pc.t("copyRun", { usd: money(usd), count: toolList.length ? pc.t("and", { a: frameworks, b: pc.t("tools", { n: toolList.length }) }) : frameworks, pages: pagesLine, depth: depthLine });
+                document.getElementById("pay-item").textContent = pc.t("itemScope", { pages: pageCount, depth: depthCount });
+                if (purpose === "new-run") document.getElementById("pay-heading").textContent = billing === "scope" ? pc.t("headingScope") : pc.t("headingRun");
+                paintLines();
+                return;
+            }
+            paintYield();
+            document.getElementById("pay-copy").textContent = count
+                ? (purpose === "cases"
+                    ? pc.t("copyCases", { n: count, usd: money(usd) })
+                    : purpose === "report"
+                        ? pc.t("copyReport", { usd: money(usd) })
+                        : pc.t("copyThisRun", { usd: money(usd) })) + schedule
+                : pc.t("copyChoose") + schedule;
+            document.getElementById("pay-item").textContent = purpose === "cases"
+                ? (count ? layerList.join(", ") : pc.t("itemKinds"))
+                : (frameworkList.length || toolList.length ? frameworkList.concat(toolList).join(", ") : (purpose === "report" ? pc.t("itemReport") : pc.t("itemFrameworks")));
+            paintLines();
+        }
+        function paintLines() {
+            const box = document.getElementById("pay-lines");
+            const names = (purpose === "report" || (purpose === "new-run" && billing !== "scope")) ? frameworkList.concat(toolList) : [];
+            box.hidden = names.length === 0;
+            box.replaceChildren();
+            names.forEach((name, index) => {
+                const step = index + 1;
+                const off = step <= 1 ? 0 : step <= 3 ? 10 : step <= 5 ? 15 : step <= 7 ? 20 : step <= 9 ? 25 : step <= 11 ? 30 : step <= 13 ? 35 : 40;
+                const line = document.createElement("li");
+                const label = document.createElement("span");
+                const amount = document.createElement("b");
+                label.textContent = step + " · " + name + " · " + (off ? pc.t("off", { n: off }) : pc.t("full"));
+                amount.textContent = money(centsForIndex(step) / 100) + " USD";
+                line.append(label, amount);
+                box.append(line);
+            });
+        }
+        function endpoint() {
+            const host = location.hostname;
+            if (host === "127.0.0.1" || host === "localhost") return "http://127.0.0.1:8768";
+            return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
+        }
+        function deviceId() {
+            try { return localStorage.getItem("qa-review-device") || ""; } catch (error) { return ""; }
+        }
+        // Unlocking a report needs the sign-in of the account that ran it, kept by qa-review-auth.js.
+        function signInProof() {
+            try {
+                return {
+                    session: (JSON.parse(localStorage.getItem("qa-review-session") || "null") || {}).session || "",
+                    deviceKey: JSON.parse(localStorage.getItem("qa-review-device-key") || "null") || ""
+                };
+            } catch (error) { return { session: "", deviceKey: "" }; }
+        }
+        function testKey() {
+            try {
+                const given = params.get("qatest");
+                if (given === "off") localStorage.removeItem("qa-review-test-key");
+                else if (given) localStorage.setItem("qa-review-test-key", given);
+                return localStorage.getItem("qa-review-test-key") || "";
+            } catch (error) { return ""; }
+        }
+        document.getElementById("test-mode").hidden = !testKey();
+        if (params.has("qatest")) {
+            const clean = new URL(location.href);
+            clean.searchParams.delete("qatest");
+            history.replaceState(null, "", clean.pathname + clean.search + clean.hash);
+        }
+        const note = document.getElementById("pay-note");
+        const charge = document.getElementById("charge");
+        const priceEl = document.querySelector(".price");
+        const amountEl = document.getElementById("pay-amount");
+        const collectLabel = document.getElementById("pay-collect-label");
+        const collector = document.getElementById("pay-collector");
+        const fx = document.getElementById("pay-fx");
+        let quote = null;
+        const names = { stripe: "Stripe", paypal: "PayPal", pse: "Wompi", wompi: "Wompi", mercadopago: "Mercado Pago" };
+        function selected() {
+            const input = document.querySelector('input[name="provider"]:checked');
+            return input ? input.value : "paypal";
+        }
+        function paint() {
+            const choice = selected();
+            const pesos = choice === "pse" || choice === "wompi" || choice === "mercadopago";
+            if (choice === "paypal") {
+                collectLabel.textContent = pc.t("accountPaypal");
+                collector.textContent = pc.t("collected", { name: "PayPal" });
+                charge.textContent = pc.t("continueTo", { name: "PayPal" });
+            } else if (choice === "pse") {
+                collectLabel.textContent = pc.t("accountPse");
+                collector.textContent = pc.t("collected", { name: "Wompi" });
+                charge.textContent = pc.t("continueTo", { name: "PSE" });
+            } else if (choice === "wompi") {
+                collectLabel.textContent = pc.t("accountWompi");
+                collector.textContent = pc.t("collected", { name: "Wompi" });
+                charge.textContent = pc.t("continueTo", { name: "Wompi" });
+            } else if (choice === "mercadopago") {
+                collectLabel.textContent = pc.t("accountMercadopago");
+                collector.textContent = pc.t("collected", { name: "Mercado Pago" });
+                charge.textContent = pc.t("continueTo", { name: "Mercado Pago" });
+            } else {
+                collectLabel.textContent = pc.t("accountStripe");
+                collector.textContent = pc.t("collected", { name: "Stripe" });
+                charge.textContent = pc.t("pay", { usd: money(usd) });
+            }
+            if (!covered()) {
+                priceEl.innerHTML = "—<span>USD</span>";
+                amountEl.textContent = purpose === "cases" ? pc.t("chooseKinds") : pc.t("chooseFrameworks");
+                fx.textContent = "";
+                charge.disabled = true;
+                return;
+            }
+            if (!pesos) {
+                priceEl.innerHTML = money(usd) + "<span>USD</span>";
+                priceEl.hidden = dealShown;
+                amountEl.textContent = money(usd) + " USD";
+                if (dealShown) {
+                    const was = document.createElement("s");
+                    was.textContent = money(listUsd) + " USD";
+                    amountEl.prepend(was, " ");
+                }
+                fx.textContent = "";
+                charge.disabled = false;
+                return;
+            }
+            fx.textContent = quote ? pc.t("fx", { usd: usd, rate: Math.round(quote.rate).toLocaleString("es-CO") }) : "";
+            if (!quote) {
+                priceEl.innerHTML = "…<span>COP</span>";
+                amountEl.textContent = "…";
+                charge.disabled = true;
+                return;
+            }
+            const shown = quote.cop.toLocaleString("es-CO") + " COP";
+            priceEl.innerHTML = quote.cop.toLocaleString("es-CO") + "<span>COP</span>";
+            amountEl.textContent = shown;
+            charge.disabled = false;
+        }
+        async function loadQuote() {
+            if (!covered()) {
+                describe();
+                paint();
+                return;
+            }
+            try {
+                const query = purpose === "cases"
+                    ? "layers=" + encodeURIComponent(layerList.join(","))
+                    : purpose === "credentials"
+                        ? "purpose=credentials"
+                        : purpose === "alerts"
+                            ? "purpose=alerts&count=" + alertCount
+                            : purpose === "new-run"
+                                ? "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&pages=" + pageCount + "&depth=" + depthCount + "&billing=" + billing + (compareWith ? "&compareWith=" + compareWith : "")
+                                : "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&purpose=report&reportId=" + encodeURIComponent(params.get("reportId") || "");
+                const deal = purpose === "report" || purpose === "new-run"
+                    ? "&deviceId=" + encodeURIComponent(deviceId()) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : "")
+                    : "";
+                const res = await fetch(endpoint() + "/checkout/quote?" + query + deal);
+                const body = await res.json();
+                if (!res.ok || !body.cop) throw new Error(body.error || "The peso price could not be loaded.");
+                quote = body;
+                if (body.usd) usd = body.usd;
+                listUsd = Number(body.listUsd) || 0;
+                dealShown = !!(window.ReviewDeal && ReviewDeal.render(document.getElementById("pay-deal"), body));
+                if (dealShown && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_deal_shown", "URL Review", body.discountSource || "return");
+                if (body.frameworks && body.frameworks.length) frameworkList = body.frameworks;
+                if (Array.isArray(body.tools)) toolList = body.tools.filter((name) => TOOLS.indexOf(name) !== -1);
+                if (body.pages) pageCount = body.pages;
+                if (body.depth) depthCount = body.depth;
+                if (body.billing === "scope" || body.billing === "run") billing = body.billing;
+            } catch (error) {
+                quote = null;
+                note.textContent = pc.t("pesoFailed");
+            }
+            describe();
+            paint();
+        }
+        document.querySelectorAll('input[name="provider"]').forEach((input) => input.addEventListener("change", () => {
+            note.textContent = pc.t("note");
+            paint();
+        }));
+        async function confirm(sessionId, provider) {
+            note.textContent = pc.t("asking", { name: names[provider] || names.paypal });
+            const res = await fetch(endpoint() + "/checkout/confirm", {
+                method: "POST",
+                credentials: "include",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ sessionId: sessionId, purpose: purpose, provider: provider, deviceId: deviceId(), testKey: testKey() })
+            });
+            const body = await res.json();
+            note.textContent = body.paid ? pc.t("confirmed", { name: names[provider] || names.paypal }) : (body.error || pc.t("notConfirmed"));
+            if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_result", "URL Review", body.paid ? "paid" : "unpaid");
+            if (body.paid && (purpose === "cases" || purpose === "credentials" || purpose === "alerts")) {
+                const key = purpose === "cases" ? "qa-review-case-export" : purpose === "credentials" ? "qa-review-credential" : "qa-review-alerts";
+                const next = pc.review + (purpose === "cases" ? "?caseExport=1" : purpose === "credentials" ? "?credentialRun=1" : "?alerts=1");
+                try {
+                    const saved = JSON.parse(sessionStorage.getItem(key) || "{}");
+                    saved.paid = true;
+                    sessionStorage.setItem(key, JSON.stringify(saved));
+                } catch (error) { /* the review page still needs the saved list */ }
+                location.href = next;
+            }
+            const compared = purpose === "new-run" ? savedCompare() : null;
+            if (body.paid && compared && compared.checkout) {
+                compared.paid = true;
+                compared.checkout = false;
+                try { sessionStorage.setItem("qa-review-compare", JSON.stringify(compared)); } catch (error) { /* the run can still be started again by hand */ }
+                location.href = pc.review + "?compareRun=1";
+            }
+        }
+        const backProvider = "paypal";
+        const returnedId = params.get("session_id") || params.get("token") || params.get("id") || params.get("payment_id") || params.get("collection_id") || "";
+        if (params.get("result") === "cancel") {
+            note.textContent = pc.t("cancelled");
+            if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_result", "URL Review", "cancel");
+        }
+        if (params.get("result") === "pending") {
+            note.textContent = pc.t("pending");
+            if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_result", "URL Review", "pending");
+        }
+        if (params.get("result") === "success" && returnedId && !window.payLeaving) confirm(returnedId, backProvider);
+        charge.addEventListener("click", async () => {
+            const choice = selected();
+            note.textContent = pc.t("opening", { name: names[choice] || names.paypal });
+            if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_checkout", "URL Review", purpose);
+            charge.disabled = true;
+            try {
+                const res = await fetch(endpoint() + "/checkout", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ session: signInProof().session, deviceKey: signInProof().deviceKey, purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, coupon: coupon, compareWith: compareWith, testKey: testKey() })
+                });
+                const body = await res.json();
+                if (res.ok && body.url) {
+                    location.href = body.url;
+                    return;
+                }
+                note.textContent = body.error || pc.t("notStarted");
+                charge.disabled = false;
+            } catch (error) {
+                note.textContent = pc.t("failed");
+                charge.disabled = false;
+            }
+        });
+        async function loadReportPrice() {
+            const id = params.get("reportId") || "";
+            if (purpose !== "report" || !id) return;
+            try {
+                const res = await fetch(endpoint() + "/review?id=" + encodeURIComponent(id), { credentials: "include" });
+                const body = await res.json();
+                if (body.frameworks && body.frameworks.length) frameworkList = body.frameworks;
+                if (body.report && Array.isArray(body.report.tools)) {
+                    const applicable = body.report.tools.map((item) => item.name).filter((name) => TOOLS.indexOf(name) !== -1);
+                    toolList = params.has("tools") ? toolList.filter((name) => applicable.indexOf(name) !== -1) : applicable;
+                }
+            } catch (error) { /* the quote request still prices the named frameworks */ }
+        }
+        loadReportPrice().then(loadQuote);
+    </script>
+</body>
+</html>
