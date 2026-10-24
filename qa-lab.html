@@ -224,7 +224,7 @@
         .sut-bg-note { display: none; padding: 10px 14px; font-size: 12px; color: var(--muted); }
         html.lab-watch .sut-wrap { overflow: hidden; }
         html.lab-watch #sut { width: 100%; height: 100%; min-height: 180px; border: 0; background: var(--panel); display: block; }
-        html.lab-background .sut-wrap { height: 42px; overflow: hidden; }
+        html.lab-background .sut-wrap { flex: 0 0 42px; height: 42px; overflow: hidden; }
         html.lab-background .sut-bg-note { display: block; }
         html.lab-background #sut { position: absolute; left: -120vw; top: 0; width: 1024px; min-width: 390px; height: 768px; border: 0; visibility: hidden; pointer-events: none; }
         .spec { display: grid; grid-template-columns: 64px 1fr; gap: 6px 10px; font-size: 13px; }
@@ -697,7 +697,7 @@
 <script src="js/site-glossary.js?v=20261029b"></script>
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/lab-observer.js"></script>
-<script src="js/qa-lab.js?v=20261023b"></script>
+<script src="js/qa-lab.js?v=20261024a"></script>
 <script>
     document.getElementById('theme-toggle').addEventListener('click', () => SiteTheme.toggle());
     QALab.boot();
