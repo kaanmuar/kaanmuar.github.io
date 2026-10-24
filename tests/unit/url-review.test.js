@@ -121,6 +121,37 @@ test.describe("scoring", () => {
     assert.equal(core.analyzeHtml("<div>x</div>", STRONG_HEADERS, URL_).signals.main, false);
   });
 
+  test("Drupal's EU Cookie Compliance and Klaro count as consent tools, and Siteimprove as analytics", () => {
+    const gtm = "<script src=\"https://www.googletagmanager.com/gtm.js?id=GTM-M7H54VD\"></script>";
+    const consentOf = (html) => core.analyzeHtml(gtm + html, STRONG_HEADERS, URL_).analytics.consent;
+    const reviewOf = (html) => insights.analyze({ pages: [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(html, STRONG_HEADERS, URL_) }] });
+    const gavi = "<script src=\"/modules/contrib/eu_cookie_compliance/js/eu_cookie_compliance.min.js?v=10\"></script>";
+    const drupalSettings = "<script type=\"application/json\" data-drupal-selector=\"drupal-settings-json\">{\"eu_cookie_compliance\":{\"popup_html_info\":\"\\u003Cdiv class=\\u0022eu-cookie-compliance-banner\\u0022\\u003E\"}}</script>";
+    const iucn = "<script src=\"/libraries/klaro/dist/klaro-no-translations-no-css.js?tn8y89\" defer id=\"klaro-js\"></script>";
+    const wien = "<script src=\"https://siteimproveanalytics.com/js/siteanalyze_6002359.js\"></script>";
+    assert.deepEqual(consentOf(gavi), ["EU Cookie Compliance"]);
+    assert.deepEqual(consentOf(drupalSettings), ["EU Cookie Compliance"]);
+    assert.deepEqual(consentOf("<div id=\"sliding-popup\" class=\"sliding-popup-bottom\"></div>"), ["EU Cookie Compliance"]);
+    assert.deepEqual(consentOf(iucn), ["Klaro"]);
+    assert.deepEqual(consentOf("<script src=\"/js/klaro.min.js\"></script>"), ["Klaro"]);
+    assert.deepEqual(consentOf("<p>Klaro, we use cookies.</p>"), []);
+    assert.equal(verdict(reviewOf(gtm), "an-consent"), "risk");
+    [[gavi, "EU Cookie Compliance"], [iucn, "Klaro"]].forEach(([html, name]) => {
+      const result = reviewOf(gtm + html);
+      assert.equal(verdict(result, "an-consent"), "missing", name);
+      assert.equal(result.findings.find((item) => item.key === "an-consent-mode").title, name + " is present but Google Consent Mode defaults were not found");
+    });
+    assert.deepEqual(core.analyzeHtml(wien, STRONG_HEADERS, URL_).analytics.tags, [{ name: "Siteimprove Analytics", ids: ["6002359"] }]);
+    ["https://siteimproveanalytics.io/js/siteanalyze_66356571.js", "https://siteimprove.com/js/siteanalyze.js", "/assets/siteanalyze_6002359.js"].forEach((src) => {
+      assert.deepEqual(core.analyzeHtml("<script src=\"" + src + "\"></script>", STRONG_HEADERS, URL_).analytics.tags.map((tag) => tag.name), ["Siteimprove Analytics"], src);
+    });
+    assert.equal(verdict(reviewOf(wien), "an-none"), "missing");
+    assert.equal(verdict(reviewOf(wien), "an-inventory"), "pass");
+    const browser = require("../../functions/url-review-browser");
+    assert.equal(browser.vendorOf("siteimproveanalytics.com"), "Siteimprove Analytics");
+    assert.equal(browser.vendorOf("global.siteimproveanalytics.io"), "Siteimprove Analytics");
+  });
+
   test("a linked page that timed out needs a person and is not scored as broken", () => {
     const inspect = core.analyzeHtml(HTML, STRONG_HEADERS, URL_);
     const home = { url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect };
