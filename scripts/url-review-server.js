@@ -13,6 +13,7 @@ const desk = require("../functions/url-review-desk");
 const offers = require("../functions/url-review-offers");
 const compare = require("../functions/url-review-compare");
 const auth = require("../functions/url-review-auth");
+const phraser = require("../functions/url-review-phrase");
 const accountData = require("../functions/url-review-account-data");
 const oauth = require("../functions/url-review-oauth");
 
@@ -524,7 +525,7 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { report: found.report, frameworks: found.frameworks, paid: true }, origin, found.deviceId || deviceHint);
     return;
   }
-  if (req.method === "POST" && url.pathname === "/review/ask") {
+  if (req.method === "POST" && (url.pathname === "/review/ask" || url.pathname === "/review/ask/phrase")) {
     let askBody = {};
     try { askBody = await readBody(req); } catch (error) { askBody = {}; }
     const id = String(askBody.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
@@ -536,7 +537,12 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, access.status, { error: access.error, code: access.code || "", signIn: !!access.signIn }, origin, deviceHint);
       return;
     }
-    sendJson(res, 200, { ok: true }, origin, deviceHint);
+    if (url.pathname === "/review/ask/phrase") {
+      const result = await phraser.phrase({ key: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL, store: signIns, id, input: askBody });
+      sendJson(res, result.ok ? 200 : result.status, result.ok ? { text: result.text } : { error: result.error, code: result.code }, origin, deviceHint);
+      return;
+    }
+    sendJson(res, 200, { ok: true, phrase: !!process.env.GEMINI_API_KEY }, origin, deviceHint);
     return;
   }
   if (req.method === "POST" && (url.pathname === "/review/pay" || url.pathname === "/pay")) {

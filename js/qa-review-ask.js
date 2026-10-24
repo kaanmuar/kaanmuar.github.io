@@ -29,6 +29,9 @@
       missingTitle: "Not in this report", missing: "This report has no {id}.", missingRange: "Its findings run from {first} to {last}.", missingCases: "Its cases include {list}.",
       whichTitle: "Which one?", which: "Name the finding or case by its id, such as F-01 or SEC-02.", whichFirst: "The first ones on this report:",
       askRated: "Why is {id} rated {severity}?", askWhy: "Why is {id} rated this way?", askFixOn: "Show me the fix for {id} on {host}", askFix: "Show me the fix for {id}",
+      aiToggle: "Plain words by AI", aiPrivacy: "Sends only this answer's sentences to Google Gemini, never the report, code or your account.",
+      aiWorking: "Writing it in plain words…", aiTag: "In plain words (AI):",
+      aiDropped: "The AI version added something this report does not say, so it is not shown.", aiLimit: "AI phrasing has reached today's limit for this report.", aiFailed: "The AI version did not load. The answer below is complete.",
       askCard: "Ask about this", askPlaywright: "Write the Playwright case for {id}", askExport: "Export {id} as a GitHub or Jira issue",
       verdict: { fail: "Fails now", risk: "At risk", person: "Needs a person", pass: "Passes", proposed: "Proposed, not checked yet" },
       severity: { critical: "critical", high: "high", medium: "medium", low: "low", info: "info" },
@@ -85,6 +88,9 @@
       missingTitle: "No está en este informe", missing: "Este informe no tiene {id}.", missingRange: "Sus hallazgos van de {first} a {last}.", missingCases: "Entre sus casos están {list}.",
       whichTitle: "¿Cuál?", which: "Indica el hallazgo o el caso por su id, por ejemplo F-01 o SEC-02.", whichFirst: "Los primeros de este informe:",
       askRated: "¿Por qué {id} tiene severidad {severity}?", askWhy: "¿Por qué {id} tiene esta calificación?", askFixOn: "Muéstrame la corrección de {id} en {host}", askFix: "Muéstrame la corrección de {id}",
+      aiToggle: "Palabras sencillas con IA", aiPrivacy: "Solo envía las frases de esta respuesta a Google Gemini, nunca el informe, el código ni tu cuenta.",
+      aiWorking: "Escribiéndolo en palabras sencillas…", aiTag: "En palabras sencillas (IA):",
+      aiDropped: "La versión de IA agregó algo que este informe no dice, así que no se muestra.", aiLimit: "La redacción con IA llegó al límite de hoy para este informe.", aiFailed: "La versión de IA no cargó. La respuesta de abajo está completa.",
       askCard: "Preguntar sobre esto", askPlaywright: "Escribe el caso de Playwright para {id}", askExport: "Exporta {id} como issue de GitHub o Jira",
       verdict: { fail: "Falla ahora", risk: "En riesgo", person: "Requiere una persona", pass: "Pasa", proposed: "Propuesto, aún sin comprobar" },
       severity: { critical: "crítica", high: "alta", medium: "media", low: "baja", info: "informativa" },
@@ -141,6 +147,9 @@
       missingTitle: "Não está neste relatório", missing: "Este relatório não tem {id}.", missingRange: "Os achados vão de {first} a {last}.", missingCases: "Entre os casos estão {list}.",
       whichTitle: "Qual?", which: "Indique o achado ou caso pelo id, como F-01 ou SEC-02.", whichFirst: "Os primeiros deste relatório:",
       askRated: "Por que {id} tem severidade {severity}?", askWhy: "Por que {id} tem esta classificação?", askFixOn: "Mostre a correção de {id} em {host}", askFix: "Mostre a correção de {id}",
+      aiToggle: "Palavras simples com IA", aiPrivacy: "Envia ao Google Gemini só as frases desta resposta, nunca o relatório, o código ou a sua conta.",
+      aiWorking: "Escrevendo em palavras simples…", aiTag: "Em palavras simples (IA):",
+      aiDropped: "A versão de IA acrescentou algo que este relatório não diz, então ela não é mostrada.", aiLimit: "A redação com IA atingiu o limite de hoje para este relatório.", aiFailed: "A versão de IA não carregou. A resposta abaixo está completa.",
       askCard: "Perguntar sobre isto", askPlaywright: "Escreva o caso de Playwright para {id}", askExport: "Exporte {id} como issue do GitHub ou do Jira",
       verdict: { fail: "Falha agora", risk: "Em risco", person: "Precisa de uma pessoa", pass: "Passa", proposed: "Proposto, ainda não verificado" },
       severity: { critical: "crítica", high: "alta", medium: "média", low: "baixa", info: "informativa" },
@@ -197,6 +206,9 @@
       missingTitle: "Nicht in diesem Bericht", missing: "Dieser Bericht hat kein {id}.", missingRange: "Seine Befunde reichen von {first} bis {last}.", missingCases: "Zu seinen Fällen gehören {list}.",
       whichTitle: "Welcher?", which: "Nennen Sie den Befund oder Fall mit seiner ID, etwa F-01 oder SEC-02.", whichFirst: "Die ersten in diesem Bericht:",
       askRated: "Warum ist {id} als {severity} eingestuft?", askWhy: "Warum ist {id} so eingestuft?", askFixOn: "Zeigen Sie mir die Korrektur für {id} auf {host}", askFix: "Zeigen Sie mir die Korrektur für {id}",
+      aiToggle: "Einfache Worte mit KI", aiPrivacy: "Sendet nur die Sätze dieser Antwort an Google Gemini, nie den Bericht, Code oder Ihr Konto.",
+      aiWorking: "Wird in einfachen Worten geschrieben …", aiTag: "In einfachen Worten (KI):",
+      aiDropped: "Die KI-Fassung hat etwas ergänzt, das nicht in diesem Bericht steht, daher wird sie nicht gezeigt.", aiLimit: "Die KI-Formulierung hat das heutige Limit für diesen Bericht erreicht.", aiFailed: "Die KI-Fassung wurde nicht geladen. Die Antwort unten ist vollständig.",
       askCard: "Dazu fragen", askPlaywright: "Schreiben Sie den Playwright-Fall für {id}", askExport: "Exportieren Sie {id} als GitHub- oder Jira-Issue",
       verdict: { fail: "Schlägt jetzt fehl", risk: "Gefährdet", person: "Braucht eine Person", pass: "Besteht", proposed: "Vorgeschlagen, noch nicht geprüft" },
       severity: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig", info: "informativ" },
@@ -253,6 +265,9 @@
       missingTitle: "Absent de ce rapport", missing: "Ce rapport n’a pas de {id}.", missingRange: "Ses constats vont de {first} à {last}.", missingCases: "Parmi ses cas : {list}.",
       whichTitle: "Lequel ?", which: "Nommez le constat ou le cas par son identifiant, par exemple F-01 ou SEC-02.", whichFirst: "Les premiers de ce rapport :",
       askRated: "Pourquoi {id} a-t-il une gravité {severity} ?", askWhy: "Pourquoi {id} est-il classé ainsi ?", askFixOn: "Montrez-moi la correction de {id} sur {host}", askFix: "Montrez-moi la correction de {id}",
+      aiToggle: "Mots simples par IA", aiPrivacy: "N’envoie à Google Gemini que les phrases de cette réponse, jamais le rapport, le code ni votre compte.",
+      aiWorking: "Rédaction en mots simples…", aiTag: "En mots simples (IA) :",
+      aiDropped: "La version IA a ajouté quelque chose que ce rapport ne dit pas, elle n’est donc pas affichée.", aiLimit: "La reformulation par IA a atteint la limite du jour pour ce rapport.", aiFailed: "La version IA ne s’est pas chargée. La réponse ci-dessous est complète.",
       askCard: "Poser une question", askPlaywright: "Écrivez le cas Playwright pour {id}", askExport: "Exportez {id} en ticket GitHub ou Jira",
       verdict: { fail: "Échoue maintenant", risk: "À risque", person: "Demande une personne", pass: "Réussit", proposed: "Proposé, pas encore vérifié" },
       severity: { critical: "critique", high: "élevée", medium: "moyenne", low: "faible", info: "informative" },
@@ -309,6 +324,9 @@
       missingTitle: "Non è in questo report", missing: "Questo report non ha {id}.", missingRange: "I suoi risultati vanno da {first} a {last}.", missingCases: "Tra i suoi casi ci sono {list}.",
       whichTitle: "Quale?", which: "Indica il risultato o il caso con il suo id, per esempio F-01 o SEC-02.", whichFirst: "I primi di questo report:",
       askRated: "Perché {id} ha gravità {severity}?", askWhy: "Perché {id} ha questa valutazione?", askFixOn: "Mostrami la correzione di {id} su {host}", askFix: "Mostrami la correzione di {id}",
+      aiToggle: "Parole semplici con l’IA", aiPrivacy: "Invia a Google Gemini solo le frasi di questa risposta, mai il report, il codice o il tuo account.",
+      aiWorking: "Scrittura in parole semplici…", aiTag: "In parole semplici (IA):",
+      aiDropped: "La versione IA ha aggiunto qualcosa che questo report non dice, quindi non viene mostrata.", aiLimit: "La riformulazione con l’IA ha raggiunto il limite di oggi per questo report.", aiFailed: "La versione IA non si è caricata. La risposta qui sotto è completa.",
       askCard: "Chiedi su questo", askPlaywright: "Scrivi il caso Playwright per {id}", askExport: "Esporta {id} come issue GitHub o Jira",
       verdict: { fail: "Fallisce ora", risk: "A rischio", person: "Serve una persona", pass: "Supera", proposed: "Proposto, non ancora verificato" },
       severity: { critical: "critica", high: "alta", medium: "media", low: "bassa", info: "informativa" },
@@ -825,8 +843,17 @@
     const input = el("ask-input");
     const repo = el("ask-repo");
     const REPO_KEY = "qa-review-ask-repo";
+    const AI_KEY = "qa-review-ask-ai";
     const allowed = new Map();
     let payload = null;
+    let canPhrase = false;
+    const aiRow = document.createElement("label");
+    aiRow.className = "ask-ai";
+    aiRow.hidden = true;
+    aiRow.innerHTML = '<input type="checkbox" id="ask-ai"><span><span data-ask-text="aiToggle"></span><small data-ask-text="aiPrivacy"></small></span>';
+    el("ask-repo-row").after(aiRow);
+    const aiBox = aiRow.querySelector("input");
+    try { aiBox.checked = localStorage.getItem(AI_KEY) === "1"; } catch (error) { aiBox.checked = false; }
     try { repo.value = localStorage.getItem(REPO_KEY) || ""; } catch (error) { repo.value = ""; }
 
     const lang = () => String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
@@ -902,13 +929,40 @@
       box.copies = copies;
       box.issue = result.issue || null;
       log.appendChild(box);
+      return box;
+    }
+
+    async function phrased(box, result) {
+      const words = L();
+      const lines = result.parts.filter((part) => part.kind !== "code").map((part) => (part.kind === "list" ? part.items.join("; ") : part.text));
+      const slot = document.createElement("p");
+      slot.className = "ask-ai-text";
+      slot.textContent = words.aiWorking;
+      box.querySelector("strong").after(slot);
+      try {
+        const res = await fetch(endpoint() + "/review/ask/phrase", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(Object.assign(root.ReviewAuth.proof(), { id: payload.report.id, lang: lang(), title: result.title, lines, ref: result.ref }))
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok && body.text) {
+          slot.innerHTML = '<span class="ask-ai-tag">' + esc(words.aiTag) + "</span> " + esc(body.text);
+          return;
+        }
+        slot.textContent = { 422: words.aiDropped, 429: words.aiLimit }[res.status] || words.aiFailed;
+      } catch (error) {
+        slot.textContent = words.aiFailed;
+      }
+      slot.classList.add("is-off");
     }
 
     function ask(question) {
       if (!payload || allowed.get(payload.report.id) !== true) return;
       const asked = mine(question);
       const result = answer(payload.report, question, { repo: repo.value, reportUrl: reportUrl(), lang: lang() });
-      reply(result);
+      const box = reply(result);
+      if (canPhrase && aiBox.checked && result.ref && (result.intent === "why" || result.intent === "fix") && root.ReviewAuth) phrased(box, result);
       log.scrollTop = asked.offsetTop - log.offsetTop - 4;
       if (root.SiteAnalytics) root.SiteAnalytics.trackEvent("qa_review_ask", "URL Review", result.intent);
     }
@@ -921,6 +975,7 @@
       form.hidden = !on;
       chips.hidden = !on;
       el("ask-repo-row").hidden = !on;
+      aiRow.hidden = !(on && canPhrase);
     }
 
     async function unlock() {
@@ -940,6 +995,7 @@
         const body = await res.json().catch(() => ({}));
         if (res.ok && body.ok) {
           allowed.set(id, true);
+          canPhrase = body.phrase === true;
           return true;
         }
         const signIn = body.code === "sign-in" || body.signIn === true;
@@ -1012,6 +1068,9 @@
       if (!question) return;
       input.value = "";
       ask(question);
+    });
+    aiBox.addEventListener("change", () => {
+      try { localStorage.setItem(AI_KEY, aiBox.checked ? "1" : "0"); } catch (error) { /* kept for this page only */ }
     });
     repo.addEventListener("change", () => {
       try { localStorage.setItem(REPO_KEY, repo.value.trim()); } catch (error) { /* kept for this page only */ }
