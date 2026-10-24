@@ -61,7 +61,7 @@ Suite Teardown    Close All Browsers
     Open CV in Desktop Browser
     Click Radar Chart Label    QA & Automation
     Wait Until Page Contains Element    css:html.topic-focus
-    Element Attribute Value Should Be    css:.competency-item[data-competency="qa"]    aria-pressed    true
+    Wait Until Page Contains Element    css:.competency-item[data-competency="qa"][aria-pressed="true"]    15s
 
 [Desktop] Theme Toggle Keeps Competency Focus
     [Tags]    Desktop    Interactive
@@ -70,7 +70,7 @@ Suite Teardown    Close All Browsers
     Wait Until Page Contains Element    css:html.topic-focus
     Toggle The Theme On Desktop
     Wait Until Page Contains Element    css:html.topic-focus
-    Element Attribute Value Should Be    css:.competency-item[data-competency="cloud"]    aria-pressed    true
+    Wait Until Page Contains Element    css:.competency-item[data-competency="cloud"][aria-pressed="true"]    15s
 
 [Desktop] Topic Query Deep Links QA
     [Tags]    Desktop    Interactive
@@ -78,7 +78,7 @@ Suite Teardown    Close All Browsers
     Execute Javascript    sessionStorage.setItem('hasSeenTour','true'); localStorage.setItem('theme','light');
     Go To    ${CV_URL}?topic=qa
     Wait Until Page Contains Element    css:html.topic-focus
-    Element Attribute Value Should Be    css:.competency-item[data-competency="qa"]    aria-pressed    true
+    Wait Until Page Contains Element    css:.competency-item[data-competency="qa"][aria-pressed="true"]    15s
 
 [Desktop] Unknown Topic Query Leaves CV Unfiltered
     [Tags]    Desktop    Interactive
