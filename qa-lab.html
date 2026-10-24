@@ -482,6 +482,16 @@
             html:not(.lab-running) #case-detail { flex-shrink: 1; min-height: 96px; overflow-y: auto; }
             html.lab-watch .sut-wrap { flex: 1 0 260px; }
         }
+        @media (min-width: 901px) and (max-height: 820px) {
+            .intro { display: flex; align-items: baseline; gap: 12px; padding-top: 4px; }
+            .intro h1 { flex: 0 0 auto; font-size: 1rem; }
+            .intro p:not(.clip-links) { display: none; }
+            .clip-links { margin: 0; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+            .kpis { padding: 6px 16px; gap: 6px; }
+            .kpi { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 4px 10px; }
+            .kpi b { font-size: 1rem; }
+            #case-detail.stage-head { max-height: 112px; overflow-y: auto; }
+        }
         @media (max-width: 1100px) {
             .work { grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); }
         }
