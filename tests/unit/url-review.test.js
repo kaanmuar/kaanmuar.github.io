@@ -67,6 +67,39 @@ test.describe("scoring", () => {
     assert.ok(bare.score.areas.Security.score < strong.score.areas.Security.score);
   });
 
+  test("X-Frame-Options ALLOW-FROM without frame-ancestors leaves the page open to framing", () => {
+    const result = analyzeOne({ "content-type": "text/html", "x-frame-options": "ALLOW-FROM https://www.gather.town" });
+    const found = result.findings.find((item) => item.key === "sec-frame");
+    assert.equal(found.verdict, "risk");
+    assert.equal(found.title, "Other sites can frame the page");
+    assert.match(found.evidence, /^X-Frame-Options: ALLOW-FROM https:\/\/www\.gather\.town was sent, but current browsers ignore ALLOW-FROM/);
+    assert.match(found.fix, /frame-ancestors 'self' plus each origin allowed to frame the page/);
+    assert.equal(result.security.headers.find((item) => item.label === "Frame protection").state, "risk");
+    assert.equal(result.fixkit.headers.find((item) => item.name === "X-Frame-Options").missing, true);
+  });
+
+  test("X-Frame-Options ALLOW-FROM with frame-ancestors passes on frame-ancestors", () => {
+    const result = analyzeOne({ "content-type": "text/html", "x-frame-options": "allow-from https://partner.example", "content-security-policy": "default-src 'self'; frame-ancestors 'self' https://partner.example" });
+    const found = result.findings.find((item) => item.key === "sec-frame");
+    assert.equal(found.verdict, "pass");
+    assert.equal(found.evidence, "frame-ancestors 'self' https://partner.example. X-Frame-Options: allow-from https://partner.example was sent, but current browsers ignore ALLOW-FROM.");
+    assert.equal(result.security.headers.find((item) => item.label === "Frame protection").state, "pass");
+  });
+
+  test("X-Frame-Options SAMEORIGIN still limits framing", () => {
+    const result = analyzeOne({ "content-type": "text/html", "x-frame-options": "SAMEORIGIN" });
+    assert.equal(result.findings.find((item) => item.key === "sec-frame").evidence, "X-Frame-Options: SAMEORIGIN.");
+    assert.equal(result.fixkit.headers.find((item) => item.name === "X-Frame-Options").missing, false);
+  });
+
+  test("the SEC-04 script expects DENY or SAMEORIGIN, not any X-Frame-Options value", () => {
+    const check = scripts.checkFor({ id: "SEC-04", path: "/" }, { startPath: "/" });
+    const rule = check.rules.find((item) => item.name === "x-frame-options");
+    assert.ok(new RegExp(rule.pattern, "i").test("SAMEORIGIN"));
+    assert.ok(new RegExp(rule.pattern, "i").test("deny"));
+    assert.ok(!new RegExp(rule.pattern, "i").test("ALLOW-FROM https://www.gather.town"));
+  });
+
   test("a robots.txt that shuts out an AI answer crawler fails the GEO crawler check", () => {
     assert.equal(verdict(analyzeOne(STRONG_HEADERS, ""), "geo-crawlers"), "pass");
     assert.equal(verdict(analyzeOne(STRONG_HEADERS, "User-agent: OAI-SearchBot\nDisallow: /\n"), "geo-crawlers"), "fail");
