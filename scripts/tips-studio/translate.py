@@ -15,6 +15,7 @@ import urllib.request
 from pathlib import Path
 
 KEEP = re.compile(r"(https?://\S+|#\w+|\n)")
+HOST = re.compile(r"\b(?:[a-z0-9-]+\.)+[a-z]{2,6}\b", re.I)
 URL = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&dt=t&tl="
 
 
@@ -39,6 +40,13 @@ def pieces(text):
     return [p.strip() for p in KEEP.split(text.replace("*", "")) if p and not KEEP.fullmatch(p) and re.search(r"[A-Za-z]", p)]
 
 
+def keep_hosts(src, out):
+    """The translator spaces the dots of a domain ("postobon. com"); put each host of the English back together."""
+    for host in sorted(set(HOST.findall(src)), key=len, reverse=True):
+        out = re.sub(r"\s*\.\s*".join(map(re.escape, host.split("."))), host, out, flags=re.I)
+    return out
+
+
 def fill(texts, lang, cache):
     """Translate every uncached fragment of these strings, one request per ~4,000 characters."""
     todo = list(dict.fromkeys(p for t in texts for p in pieces(t) if lang + "\x00" + p not in cache))
@@ -53,7 +61,7 @@ def fill(texts, lang, cache):
         if len(lines) != len(batch):
             lines = [gtx(p, lang) for p in batch]
         for src, out in zip(batch, lines):
-            cache[lang + "\x00" + src] = out.strip()
+            cache[lang + "\x00" + src] = keep_hosts(src, out.strip())
 
 
 def translate(text, lang, cache):
@@ -78,7 +86,7 @@ def main():
     src = json.loads((out_dir / "i18n-src.json").read_text())
     dest = out_dir / "i18n.json"
     done = json.loads(dest.read_text()) if dest.exists() else {}
-    cache = done.get("cache", {})
+    cache = {key: keep_hosts(key.split("\x00", 1)[-1], value) for key, value in done.get("cache", {}).items()}
     result = {"ui": {}, "clips": {}, "cache": cache}
     for lang in sorted({clip["lang"] for clip in src["clips"].values()}):
         fill(src["ui"].values(), lang, cache)
