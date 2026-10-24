@@ -2384,4 +2384,12 @@ test.describe("cases built from evidence and ranked by risk", () => {
     const preview = core.previewReport({ cases: [{ id: "MB-01", title: "Layout holds", why: "Wider. Pushed out.", priority: "P2", risk: 30, pages: ["/"], selectors: ["table.prices"], check: { kind: "viewport" } }] });
     assert.deepEqual([preview.cases[0].priority, preview.cases[0].risk, preview.cases[0].selectors, preview.cases[0].check], ["P2", 30, undefined, undefined]);
   });
+
+  test("the preview leaves out the asker's comparison", () => {
+    const report = { host: "rival.example", compare: { ownId: "abc123", own: { host: "asker.example" }, ownOnly: ["4 pages have no title"] } };
+    const preview = core.previewReport(report);
+    assert.equal(preview.compare, undefined);
+    assert.ok(!JSON.stringify(preview).includes("asker.example"));
+    assert.ok(report.compare, "the stored report is not changed");
+  });
 });
