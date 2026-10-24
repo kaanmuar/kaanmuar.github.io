@@ -1571,7 +1571,14 @@ async function noteSharedOpen(ref, record) {
     tx.set(ref, { sharedOpen: next.sharedOpen }, { merge: true });
     return next;
   });
-  if (step.notify) await sendAskerMail(record.email, customerMail.sharedOpenMail(record, at), "", "url-review-shared-open");
+  if (!step.notify) return;
+  let sent = false;
+  try {
+    sent = await sendAskerMail(record.email, customerMail.sharedOpenMail(record, at), "", "url-review-shared-open");
+  } finally {
+    // The next open by another account tries the notice again.
+    if (!sent) await ref.set({ sharedOpen: { noticeAt: "" } }, { merge: true });
+  }
 }
 
 async function ownerStops(emails, domain) {
