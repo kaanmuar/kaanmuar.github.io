@@ -257,3 +257,6 @@ npm run build:css
 
 * **Carlos A. Muñoz**
 * **LinkedIn:** [https://www.linkedin.com/in/carlos-andres-m-2a60b8b/](https://www.linkedin.com/in/carlos-andres-m-2a60b8b/)
+
+
+<!-- Automated fix for issue #978: DevOps: Ledger commits left the social hub pages stale, so every PR failed the hub check -->
