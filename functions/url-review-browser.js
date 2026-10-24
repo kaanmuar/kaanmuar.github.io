@@ -595,12 +595,21 @@ async function open(page, url) {
   };
   page.on("response", watch);
   try {
-    const res = await page.goto(url, { waitUntil: "load" });
+    let res;
+    let stalled = false;
+    try {
+      res = await page.goto(url, { waitUntil: "load" });
+    } catch (error) {
+      // A document that arrived and parsed, but whose load event waits on a stalled image or script, is read as it stands.
+      if (!last || (error && error.name) !== "TimeoutError" || !(await page.evaluate(() => document.readyState !== "loading" && !!document.body).catch(() => false))) throw error;
+      res = last;
+      stalled = true;
+    }
     await settle(page);
     let raw = "";
     try { raw = res ? await res.text() : ""; } catch (error) { raw = ""; }
     const doc = last || res;
-    return { status: res ? res.status() : 0, finalUrl: page.url(), raw, docStatus: doc ? doc.status() : 0, docHeaders: doc ? doc.headers() : {} };
+    return { status: res ? res.status() : 0, finalUrl: page.url(), raw, docStatus: doc ? doc.status() : 0, docHeaders: doc ? doc.headers() : {}, stalled };
   } finally {
     page.off("response", watch);
   }
@@ -1340,6 +1349,7 @@ async function browse(job, log, onStart) {
       await visit();
     }
     lap("load");
+    if (first.stalled) say("The page's load event had not fired after " + NAV_MS / 1000 + " s, though its document had arrived. Reading the page as it stands.");
     say(pathOf(first.finalUrl) + " loaded with status " + first.status + " in " + Math.round(timing.load / 100) / 10 + " s, after " + rec.state.requests + " requests to " + rec.state.hosts.size + " hosts.");
     const view = await rendered(page);
     let dom = null;
@@ -1588,4 +1598,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, talk, printPdf, stopForRefusal, passiveJob, typeProbe, openChat, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, open, talk, printPdf, stopForRefusal, passiveJob, typeProbe, openChat, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

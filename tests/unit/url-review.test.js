@@ -636,6 +636,35 @@ test.describe("start page reads", () => {
     assert.equal(failures.causeOf(wrong.message).id, "tls");
   });
 
+  test("headless Chrome reads a page whose load event stalls once its document has arrived", async () => {
+    // Re-run zyvKsDINcVhGirMeIupU on www.supersociedades.gov.co (#733): the document parses in about 12 s,
+    // but an image or script never finishes, so the load event never fires and goto timed out at 20 s.
+    const browser = require("../../functions/url-review-browser");
+    const html = "<html><body><h1>Superintendencia</h1></body></html>";
+    const fakePage = ({ arrives, ready, error }) => {
+      const listeners = [];
+      const main = {};
+      const doc = { request: () => ({ isNavigationRequest: () => true }), frame: () => main, status: () => 200, headers: () => ({ "content-type": "text/html" }), text: async () => html };
+      return {
+        on: (name, fn) => listeners.push(fn),
+        off: (name, fn) => listeners.splice(listeners.indexOf(fn), 1),
+        mainFrame: () => main,
+        url: () => BANK,
+        evaluate: async () => ready,
+        waitForNetworkIdle: async () => {},
+        goto: async () => {
+          if (arrives) listeners.forEach((fn) => fn(doc));
+          throw Object.assign(new Error(error === "empty" ? "net::ERR_EMPTY_RESPONSE at " + BANK : "Navigation timeout of 20000 ms exceeded"), { name: error === "empty" ? "Error" : "TimeoutError" });
+        }
+      };
+    };
+    const read = await browser.open(fakePage({ arrives: true, ready: true }), BANK);
+    assert.deepEqual([read.status, read.docStatus, read.stalled, read.raw, read.finalUrl], [200, 200, true, html, BANK]);
+    await assert.rejects(browser.open(fakePage({ arrives: false, ready: true }), BANK), /^TimeoutError: Navigation timeout of 20000 ms exceeded$/);
+    await assert.rejects(browser.open(fakePage({ arrives: true, ready: false }), BANK), /Navigation timeout/);
+    await assert.rejects(browser.open(fakePage({ arrives: true, ready: true, error: "empty" }), BANK), /ERR_EMPTY_RESPONSE/);
+  });
+
   test("an empty shell start page is crawled from the links headless Chrome rendered", async () => {
     const shell = "<!doctype html><html lang=\"en\"><head><title>Bank app</title></head><body><div id=\"root\"></div><script src=\"/app.js\"></script></body></html>";
     const page = (h1) => HTML.replace("<h1>Garden tools</h1>", "<h1>" + h1 + "</h1>");
