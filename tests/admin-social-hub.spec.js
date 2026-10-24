@@ -53,6 +53,16 @@ const CALENDARS = {
   'tips-2026-10': 'Date,Time,Channel,Post,Asset\n2026-10-20,07:50,linkedin,01-img-size,feed/a.jpg\n2026-10-20,17:45,youtube,01-img-size,clip/a.mp4\n2026-10-20,18:30,tiktok,01-img-size,clip/a.mp4\n',
   'launch-2026-10': 'Date,Time,Channel,Language,Post,Format,Asset,How,Caption key\n2026-10-19,08:30,LinkedIn,de,talking,Image,de/a.jpg,Buffer CSV,linkedin\n'
 };
+const LEDGERS = {
+  buffer: { version: 1, posts: {
+    'auto-2099-01-01/01-u-example-com': [{ channel: 'linkedin', profile: 'linkedin (QA-lab)', id: 'b1', at: '2099-01-02T12:30:00.000Z', result: 'queued' }],
+    'tips-2026-10/01-img-size': [
+      { channel: 'linkedin', profile: 'linkedin (QA-lab)', id: 'b2', at: '2026-10-20T12:51:00.000Z', result: 'sent' },
+      { channel: 'tiktok', profile: 'tiktok (qa)', id: 'b3', at: '2026-10-20T23:30:00.000Z', result: 'failed', error: '<b>Video</b> too short' }
+    ]
+  } },
+  facebook: null
+};
 
 async function openHub(page, saved) {
   await page.addInitScript((data) => { window.__store = data ? { 'socialHub/live': { json: JSON.stringify(data) } } : {}; }, saved || null);
@@ -62,6 +72,9 @@ async function openHub(page, saved) {
   await page.route('**/assets/social/feed.json', (route) => route.fulfill({ json: FEED }));
   await page.route('**/assets/social/captions.json', (route) => route.fulfill({ json: CAPTIONS }));
   await page.route('**/assets/social/edits.json', (route) => route.fulfill({ status: 404, body: '' }));
+  for (const [name, json] of Object.entries(LEDGERS)) {
+    await page.route(`**/assets/social/${name}.json`, (route) => (json ? route.fulfill({ json }) : route.fulfill({ status: 404, body: '' })));
+  }
   await page.route('**/media/social-posts/*/calendar.csv', (route) => {
     const batch = new URL(route.request().url()).pathname.split('/')[3];
     return CALENDARS[batch] ? route.fulfill({ contentType: 'text/csv', body: CALENDARS[batch] }) : route.fulfill({ status: 404, body: '' });
@@ -81,20 +94,32 @@ const savedState = async (page) => {
 };
 
 test.describe('admin social hub', () => {
-  test('lists hub posts with each channel slot and filters them', async ({ page }) => {
+  test('lists hub posts with each channel from the Buffer and Page ledgers, the calendar only as Scheduled, and filters them', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await openHub(page);
     await expect(page.locator('#hub-admin-status')).toContainText('3 posts on the hub, as of 2026-10-24');
     const review = row(page, 'auto-2099-01-01/01-u-example-com');
     await expect(review).toContainText('Scheduled on the hub');
-    await expect(review.locator('.hub-admin-channels .is-queued')).toHaveCount(2);
+    await expect(review.locator('.hub-admin-channels .is-queued')).toHaveCount(1);
     await expect(review.locator('li.is-queued', { hasText: 'LinkedIn' })).toContainText('Queued Jan 2, 07:30');
+    await expect(review.locator('li.is-scheduled', { hasText: 'YouTube' })).toContainText('Scheduled Jan 2, 17:45');
     await expect(review.locator('li.is-planned', { hasText: 'Facebook' })).toContainText('Planned Jan 2, 17:10');
     const tip = row(page, 'tips-2026-10/01-img-size');
     await expect(tip.locator('li', { hasText: 'YouTube' })).toHaveClass('is-live');
-    await expect(tip.locator('li', { hasText: 'TikTok' })).toContainText('Out Oct 20');
-    await expect(row(page, 'launch-2026-10/de/talking').locator('li', { hasText: 'LinkedIn' })).toContainText('Out Oct 19');
+    await expect(tip.locator('li.is-sent', { hasText: 'LinkedIn' })).toContainText('Sent Oct 20');
+    const tiktok = tip.locator('li.is-failed', { hasText: 'TikTok' });
+    await expect(tiktok).toContainText('Failed Oct 20');
+    await expect(tiktok).toHaveAttribute('title', 'Buffer: <b>Video</b> too short');
+    await expect(row(page, 'launch-2026-10/de/talking').locator('li.is-scheduled', { hasText: 'LinkedIn' })).toContainText('Scheduled Oct 19, 08:30');
+    await expect(page.locator('#hub-admin-list')).not.toContainText('Out ');
+    await page.locator('#hub-admin-state').selectOption('failed');
+    await expect(page.locator('#hub-admin-list .hub-admin-row')).toHaveCount(1);
+    await expect(row(page, 'tips-2026-10/01-img-size')).toBeVisible();
+    await page.locator('#hub-admin-state').selectOption('queued');
+    await expect(page.locator('#hub-admin-list .hub-admin-row')).toHaveCount(1);
+    await expect(row(page, 'auto-2099-01-01/01-u-example-com')).toBeVisible();
+    await page.locator('#hub-admin-state').selectOption('all');
     await page.locator('#hub-admin-q').fill('images');
     await expect(page.locator('#hub-admin-list .hub-admin-row')).toHaveCount(1);
     await expect(page.locator('#hub-admin-count')).toHaveText('1 of 3 shown');

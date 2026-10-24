@@ -30,6 +30,7 @@ export function createHubEditor(deps) {
     let published = Admin.empty();
     let saved = Admin.empty();
     let slots = {};
+    let ledgers = [];
     let loading = null;
     let shown = PAGE;
     let open = '';
@@ -52,12 +53,15 @@ export function createHubEditor(deps) {
 
     async function pull() {
         $('hub-admin-status').textContent = 'Loading the hub…';
-        const [feedJson, captionsJson, editsJson] = await Promise.all([
+        const [feedJson, captionsJson, editsJson, bufferJson, facebookJson] = await Promise.all([
             fetchJson('assets/social/feed.json', { posts: [], asOf: '' }),
             fetchJson('assets/social/captions.json', {}),
-            fetchJson('assets/social/edits.json', null)
+            fetchJson('assets/social/edits.json', null),
+            fetchJson('assets/social/buffer.json', null),
+            fetchJson('assets/social/facebook.json', null)
         ]);
         feed = feedJson;
+        ledgers = [bufferJson, facebookJson];
         captions = captionsJson;
         published = Admin.clean(editsJson);
         saved = published;
@@ -104,7 +108,7 @@ export function createHubEditor(deps) {
                 scheduled: !!date && date > today,
                 hidden: !!edit.hidden,
                 edited: !!saved.edits[id] || !!item,
-                channels: Admin.channels(slots[id], row.post.youtube, Date.now())
+                channels: Admin.channels(slots[id], row.post.youtube, Date.now(), Admin.ledgerEntries(ledgers, id))
             });
         }).sort((a, b) => (b.date || '').localeCompare(a.date || '') || a.id.localeCompare(b.id));
     }
@@ -112,6 +116,7 @@ export function createHubEditor(deps) {
     function matches(row, q, kind, state) {
         if (kind !== 'all' && row.post.kind !== kind) return false;
         if (state === 'queued' && !row.channels.some((channel) => channel.state === 'queued')) return false;
+        if (state === 'failed' && !row.channels.some((channel) => channel.state === 'failed')) return false;
         if (state === 'missing' && !row.channels.some((channel) => channel.state === 'missing')) return false;
         if (state === 'scheduled' && !row.scheduled) return false;
         if (state === 'edited' && !row.edited) return false;
@@ -128,7 +133,7 @@ export function createHubEditor(deps) {
             + (row.edited && !row.hidden ? '<span class="hub-admin-tag is-edited">Edited</span>' : '')
             + (row.pending ? '<span class="hub-admin-tag is-pending">Waiting for the hub build</span>' : '');
         const channels = post.kind && post.kind !== 'pick'
-            ? `<ul class="hub-admin-channels" aria-label="Channels">${row.channels.map((channel) => `<li class="is-${channel.state}" title="${escapeHtml(channel.via)}"><b>${escapeHtml(channel.name)}</b> ${escapeHtml(Admin.statusLabel(channel))}</li>`).join('')}</ul>`
+            ? `<ul class="hub-admin-channels" aria-label="Channels">${row.channels.map((channel) => `<li class="is-${channel.state}" title="${escapeHtml(channel.error ? `${channel.via}: ${channel.error}` : channel.via)}"><b>${escapeHtml(channel.name)}</b> ${escapeHtml(Admin.statusLabel(channel))}</li>`).join('')}</ul>`
             : '';
         const thumb = post.thumb ? `<img src="${escapeHtml(post.thumb)}" alt="" width="72" height="90" loading="lazy">` : '<span class="hub-admin-thumb"></span>';
         const link = row.onHub ? `<a class="cv-btn" href="qa-review-social.html?p=${encodeURIComponent(post.id)}" target="_blank" rel="noopener">Open</a>` : '';
