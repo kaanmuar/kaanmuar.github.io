@@ -59,6 +59,9 @@ const COPY = {
     sound: "with sound",
     report: "Open the report",
     more: "Read more",
+    allPosts: "All posts",
+    related: "More posts",
+    captionsFor: "Captions for each network",
     close: "Close",
     nav: { review: "URL Review", live: "Live Reports", guide: "Guide" },
     footer: "Posts are written from public reviews of public pages. A review analyzes pages; it never runs tests on them."
@@ -95,6 +98,9 @@ const COPY = {
     sound: "con sonido",
     report: "Abrir el informe",
     more: "Leer más",
+    allPosts: "Todas las publicaciones",
+    related: "Más publicaciones",
+    captionsFor: "Textos para cada red",
     close: "Cerrar",
     nav: { review: "URL Review", live: "Informes en vivo", guide: "Guía" },
     footer: "Las publicaciones salen de revisiones públicas de páginas públicas. Una revisión analiza las páginas; nunca ejecuta pruebas en ellas."
@@ -131,6 +137,9 @@ const COPY = {
     sound: "com som",
     report: "Abrir o relatório",
     more: "Ler mais",
+    allPosts: "Todas as publicações",
+    related: "Mais publicações",
+    captionsFor: "Legendas para cada rede",
     close: "Fechar",
     nav: { review: "URL Review", live: "Relatórios ao vivo", guide: "Guia" },
     footer: "As publicações vêm de análises públicas de páginas públicas. Uma análise examina as páginas; nunca executa testes nelas."
@@ -167,6 +176,9 @@ const COPY = {
     sound: "mit Ton",
     report: "Bericht öffnen",
     more: "Weiterlesen",
+    allPosts: "Alle Beiträge",
+    related: "Weitere Beiträge",
+    captionsFor: "Texte für jedes Netzwerk",
     close: "Schließen",
     nav: { review: "URL Review", live: "Live-Berichte", guide: "Leitfaden" },
     footer: "Die Beiträge entstehen aus öffentlichen Prüfungen öffentlicher Seiten. Eine Prüfung analysiert Seiten; sie führt nie Tests auf ihnen aus."
@@ -203,6 +215,9 @@ const COPY = {
     sound: "avec le son",
     report: "Ouvrir le rapport",
     more: "Lire la suite",
+    allPosts: "Toutes les publications",
+    related: "Plus de publications",
+    captionsFor: "Textes pour chaque réseau",
     close: "Fermer",
     nav: { review: "URL Review", live: "Rapports en direct", guide: "Guide" },
     footer: "Les publications viennent de revues publiques de pages publiques. Une revue analyse les pages ; elle n’y exécute jamais de tests."
@@ -239,6 +254,9 @@ const COPY = {
     sound: "con audio",
     report: "Apri il report",
     more: "Leggi tutto",
+    allPosts: "Tutti i post",
+    related: "Altri post",
+    captionsFor: "Testi per ogni rete",
     close: "Chiudi",
     nav: { review: "URL Review", live: "Report dal vivo", guide: "Guida" },
     footer: "I post nascono da revisioni pubbliche di pagine pubbliche. Una revisione analizza le pagine; non vi esegue mai test."

@@ -150,14 +150,6 @@
     showShare(post);
   }
 
-  function showPost(post) {
-    openDialog(Card.cardHtml(post, copy, lang).replace("class=\"post", "class=\"post post-full"), post.title);
-    const url = new URL(location.href);
-    url.searchParams.set("p", post.id);
-    history.replaceState(null, "", url);
-    track("hub_open", post.id);
-  }
-
   function play(button, post) {
     const frame = document.createElement("iframe");
     frame.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(button.dataset.video) + "?autoplay=1&rel=0";
@@ -177,7 +169,8 @@
     if (!el) return;
     const act = el.dataset.act;
     const card = el.closest(".post");
-    if (act === "open" || act === "play") event.preventDefault();
+    if (act === "open") { track("hub_open", card.dataset.id); return; }
+    if (act === "play") event.preventDefault();
     await ready;
     const post = byId(card.dataset.id);
     if (!post) return;
@@ -185,7 +178,6 @@
     if (act === "copy") showCopy(post);
     else if (act === "share") share(post);
     else if (act === "play" && el) play(el, post);
-    else if (act === "open") showPost(post);
     else if (act === "download") track("hub_download", post.id);
     else if (act === "report") track("hub_report", post.report);
   }
@@ -257,8 +249,9 @@
       return;
     }
     render();
+    // Links shared before posts had their own pages (?p=<id>) go to the post's page.
     const wanted = params.get("p") && byId(params.get("p"));
-    if (wanted) showPost(wanted);
+    if (wanted) location.replace(Card.permalink(wanted, lang));
   }
 
   const ready = boot();
