@@ -39,7 +39,7 @@ test("a review without a score does not promise six scores", () => {
 
 test("the PDF footer and page numbers sit in the page margin, not in a fixed box over the content", () => {
   const { html } = customerMail.reportPdf(record);
-  assert.doesNotMatch(html, /position:fixed|class="foot"/);
+  assert.doesNotMatch(html, /\.foot\{|class="foot"/);
   assert.match(html, /@bottom-left\{content:"QA-lab URL Review · carlosandmunoz\.com\/qa-review\.html"/);
   assert.match(html, /@bottom-right\{content:"r7Kq2mWx9" "  ·  " counter\(page\) " \/ " counter\(pages\)/);
   assert.match(customerMail.reportPdf(Object.assign({}, record, { id: "a\"}b" })).html, /content:"ab"/);

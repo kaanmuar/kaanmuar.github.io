@@ -12,6 +12,7 @@
  */
 const fs = require("fs");
 const path = require("path");
+require("./playwright-sandbox");
 const { chromium } = require("@playwright/test");
 const Glossary = require("../js/site-glossary.js");
 
@@ -21,6 +22,7 @@ const args = process.argv.slice(2);
 const raw = args.includes("--raw");
 const langs = args.filter((a) => !a.startsWith("--"));
 const LANGS = langs.length ? langs : ["es", "pt", "de", "fr", "it"];
+const TERMS = fs.readFileSync(path.join(__dirname, "..", "js", "qa-review.js"), "utf8").match(/TERMS_VERSION = "([^"]+)"/)[1];
 const REVIEW_PAGE = { es: "qa-review-es.html", pt: "qa-review-pt.html", de: "qa-review-de.html", fr: "qa-review-fr.html", it: "qa-review-it.html" };
 
 function cell(text) {
@@ -78,7 +80,7 @@ async function harvest(page) {
     let langNodes = 0;
     for (const [label, url] of pages(lang)) {
       const context = await browser.newContext({ locale: lang, viewport: { width: 1280, height: 900 } });
-      await context.addInitScript(([code, off]) => {
+      await context.addInitScript(([code, off, terms]) => {
         try {
           localStorage.setItem("site-translate", "picked");
           localStorage.setItem("hasSeenReviewTour", "true");
@@ -86,10 +88,10 @@ async function harvest(page) {
           localStorage.setItem("qa-review-analytics", "necessary");
           localStorage.setItem("site-analytics", "necessary");
           localStorage.setItem("cv-preferred-lang", code);
-          sessionStorage.setItem("qa-review-terms", "2026-10-22");
+          sessionStorage.setItem("qa-review-terms", terms);
           if (off) window.__glossaryOff = true;
         } catch (e) { /* storage is optional */ }
-      }, [lang, raw]);
+      }, [lang, raw, TERMS]);
       const page = await context.newPage();
       await page.goto(BASE + url, { waitUntil: "domcontentloaded" });
       const fonts = await settle(page);

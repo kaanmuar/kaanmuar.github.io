@@ -17,7 +17,8 @@ const BY_EMAIL = [
   ["coupons", "url_review_coupons"],
   ["stopLinks", "url_review_stop_links"],
   ["signIns", "url_review_sign_ins"],
-  ["sessions", "url_review_sessions"]
+  ["sessions", "url_review_sessions"],
+  ["ownerProofs", "url_review_owner_proofs"]
 ];
 
 // Their ids are a hash of a live secret or the secret itself.
@@ -141,4 +142,32 @@ async function deleteAccount(store, email, opts) {
   return counts;
 }
 
-module.exports = { exportAccount, deleteAccount, isPayment, keeps, paymentOnly };
+const RUN_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+// Only the address's own runs go; a payment row is never picked, and a paid run keeps its payment the same way deleteAccount does.
+async function deleteRuns(store, email, ids, opts) {
+  const key = cleanEmail(email);
+  const at = new Date((opts && opts.now) || Date.now()).toISOString();
+  const counts = { deleted: 0, paymentsKept: 0, skipped: 0 };
+  if (!key) return counts;
+  for (const id of new Set((ids || []).map(String))) {
+    const row = RUN_ID.test(id) && id.indexOf("paid-report-") !== 0 ? await store.get("url_reviews", id) : null;
+    if (!row || cleanEmail(row.email) !== key || !row.report || PAYMENT_STATUSES.has(row.status)) {
+      counts.skipped += 1;
+      continue;
+    }
+    const linked = await byRun(store, [id]);
+    for (const capture of linked.captures) await store.remove("url_review_captures", capture.id);
+    for (const stop of linked.stops) await store.remove("url_review_stops", stop.id);
+    if (isPayment(row) && !await store.get("url_reviews", "paid-report-" + id)) {
+      await store.replace("url_reviews", id, paymentOnly(row, at));
+      counts.paymentsKept += 1;
+    } else {
+      await store.remove("url_reviews", id);
+    }
+    counts.deleted += 1;
+  }
+  return counts;
+}
+
+module.exports = { exportAccount, deleteAccount, deleteRuns, isPayment, keeps, paymentOnly };

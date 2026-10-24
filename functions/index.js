@@ -11,6 +11,8 @@ const sgMail = require("@sendgrid/mail");
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
+// An optional field left undefined is dropped instead of failing the whole write, such as a finished review's report.
+admin.firestore().settings({ ignoreUndefinedProperties: true });
 
 // SENDGRID_API_KEY is a Secret Manager secret (firebase functions:secrets:set).
 // SENDGRID_FROM is a plain env var in functions/.env.
@@ -1216,6 +1218,9 @@ async function rerunFailure(group) {
       stopped: () => Date.now() - startedAt > 240000,
       maxPages: options.pages || undefined,
       maxDepth: options.depth || undefined,
+      pageLang: options.pageLang || "",
+      section: options.section === true,
+      passive: !!(group.intake && group.intake.reasonCode === "compare"),
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
@@ -1226,7 +1231,9 @@ async function rerunFailure(group) {
       email: group.email,
       frameworks: options.frameworks || [],
       pages: options.pages,
-      depth: options.depth
+      depth: options.depth,
+      pageLang: options.pageLang || "",
+      section: options.section === true
     }), report, { deviceId: (group.intake || {}).deviceId });
   } catch (caught) {
     error = caught;
@@ -1341,8 +1348,9 @@ async function fileReviewFailureBugs() {
 
 exports.fileReviewFailureBugs = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB" }), "fileReviewFailureBugs", () => fileReviewFailureBugs());
 
-// GitHub can skip scheduled runs, so this checks from outside GitHub that today's Live Reports batch
-// (auto-YYYY-MM-DD, dated in UTC) is on main or underway, and dispatches the workflow when it is neither.
+// GitHub starts scheduled runs hours late or skips them, so Cloud Scheduler starts the Live Reports batch:
+// when today's batch (auto-YYYY-MM-DD, dated in UTC) is neither on main nor underway, it dispatches the
+// workflow. The workflow's own schedule slots are the backups.
 const LIVE_REPORTS_WORKFLOW = "auto-live-reports.yml";
 
 async function githubGet(path, token) {
@@ -1374,15 +1382,7 @@ async function ensureLiveReportsBatch() {
   }
   await github(repo + "/actions/workflows/" + LIVE_REPORTS_WORKFLOW + "/dispatches", { ref: "main", inputs: { backup: "true" } }, token);
   const finished = runs.workflow_runs.map((run) => run.event + " " + run.conclusion).join(", ") || "none";
-  console.log("Live Reports watchdog: no batch auto-" + today + " on main and no run underway (today's runs: " + finished + "), so the workflow was dispatched.");
-  await sendOwnerEmail({
-    to: REVIEW_ALERT_TO,
-    subject: "Live Reports: today's batch was missing, the backup started it",
-    intro: "GitHub did not publish the auto-" + today + " Live Reports batch on schedule, so the Firebase watchdog dispatched the workflow.",
-    rows: [{ label: "Today's runs before the backup", value: finished }],
-    respondUrl: "https://github.com/" + BUG_REPO + "/actions/workflows/" + LIVE_REPORTS_WORKFLOW,
-    buttonLabel: "Open the workflow runs"
-  });
+  console.log("Live Reports watchdog: dispatched batch auto-" + today + " (today's earlier runs: " + finished + ").");
   return null;
 }
 
@@ -1474,9 +1474,35 @@ const reviewPublish = require("./url-review-publish");
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
+const reviewCompare = require("./url-review-compare");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
 const accountData = require("./url-review-account-data");
+const ownerProofs = require("./url-review-owner-proof");
+
+async function ownerProofRows(email) {
+  if (!ownerProofs.emailOf(email)) return [];
+  try {
+    const snap = await admin.firestore().collection(ownerProofs.COLLECTION).where("email", "==", ownerProofs.emailOf(email)).limit(50).get();
+    return snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  } catch (error) {
+    console.error("Owner proofs read failed:", error);
+    return [];
+  }
+}
+
+// Site verification is off until REVIEW_VERIFY_KEY is set: no token is issued or checked.
+function siteTokenFor(email) {
+  const key = process.env.REVIEW_VERIFY_KEY || "";
+  return key ? (host) => ownerProofs.siteToken(key, email, host) : null;
+}
+
+async function rememberSiteProof(email, host, how) {
+  const row = ownerProofs.siteRecord({ email, host, how });
+  if (!row.email || !row.host) return null;
+  await admin.firestore().collection(ownerProofs.COLLECTION).doc(ownerProofs.docId("site", row.email, row.host)).set(row);
+  return row;
+}
 const ownerContactSearch = require("./url-review-owner-contacts");
 const REVIEW_FN_URL = process.env.REVIEW_FN_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
 
@@ -1551,6 +1577,23 @@ async function sendReportMail(id, send, pdf) {
     throw error;
   } finally {
     if (id) await admin.firestore().collection("url_reviews").doc(id).set({ mail: mark }, { merge: true }).catch((error) => console.error("Report mail mark failed:", error));
+  }
+}
+
+async function noteSharedOpen(ref, record) {
+  const at = new Date().toISOString();
+  const step = await admin.firestore().runTransaction(async (tx) => {
+    const next = reviewAuth.sharedOpenStep((await tx.get(ref)).data(), at);
+    tx.set(ref, { sharedOpen: next.sharedOpen }, { merge: true });
+    return next;
+  });
+  if (!step.notify) return;
+  let sent = false;
+  try {
+    sent = await sendAskerMail(record.email, customerMail.sharedOpenMail(record, at), "", "url-review-shared-open");
+  } finally {
+    // The next open by another account tries the notice again.
+    if (!sent) await ref.set({ sharedOpen: { noticeAt: "" } }, { merge: true });
   }
 }
 
@@ -2193,7 +2236,16 @@ async function returnPrice(priced, opts) {
   if (priced.billing === "scope") return reviewOffers.discountFor(cents, priced.count, {});
   const coupon = await couponFor(opts.coupon, opts.purpose, opts.reportId);
   const rows = opts.rows || (opts.purpose === "report" ? await runsForEmail(opts.email) : await reviewRowsFor(opts.deviceId, opts.ip));
-  return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon });
+  return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon, compare: !!opts.compare });
+}
+
+// At checkout the comparison discount holds only for a base review run on the paying device.
+async function comparesFrom(id, deviceId) {
+  const key = reviewCompare.cleanId(id);
+  const device = String(deviceId || "").slice(0, 16);
+  if (!key || !device) return false;
+  const snap = await admin.firestore().collection("url_reviews").doc(key).get();
+  return snap.exists && !!snap.get("report.insights") && String(snap.get("deviceId") || "").slice(0, 16) === device;
 }
 
 function dealFields(deal) {
@@ -2433,6 +2485,17 @@ async function reviewAccount(req, res, pathName) {
     res.status(200).json(data);
     return;
   }
+  if (pathName.endsWith("/account/delete-runs")) {
+    const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.slice(0, 200) : [];
+    if (!ids.length) {
+      res.status(400).json({ error: "Pick at least one review to delete." });
+      return;
+    }
+    const counts = await accountData.deleteRuns(reviewAuth.firestoreStore(db), signedIn.email, ids);
+    console.log("Review runs deleted on request:", JSON.stringify(counts));
+    res.status(200).json(Object.assign({ ok: true }, counts));
+    return;
+  }
   if (pathName.endsWith("/account/delete")) {
     const confirm = String((req.body && req.body.confirm) || "").trim().toLowerCase();
     if (confirm !== String(signedIn.email).toLowerCase()) {
@@ -2444,16 +2507,46 @@ async function reviewAccount(req, res, pathName) {
     res.status(200).json({ ok: true, paymentsKept: counts.paymentsKept || 0 });
     return;
   }
+  if (pathName.endsWith("/account/verify") || pathName.endsWith("/account/verify-check")) {
+    const tokenFor = siteTokenFor(signedIn.email);
+    const host = ownerProofs.hostOf(req.body && req.body.host);
+    const proofs = async () => (await ownerProofRows(signedIn.email)).map((row) => {
+      const shown = ownerProofs.publicRow(row.id, row);
+      delete shown.by;
+      return shown;
+    }).filter((row) => row.until > new Date().toISOString());
+    if (!tokenFor) {
+      res.status(200).json({ available: false, proofs: await proofs() });
+      return;
+    }
+    if ((req.body && req.body.host) && !host) {
+      res.status(400).json({ error: "Enter a public host name, such as shop.example.com." });
+      return;
+    }
+    const token = host ? tokenFor(host) : "";
+    const given = host ? { host, token, txt: ownerProofs.PREFIX + token, meta: "<meta name=\"qa-lab-verify\" content=\"" + token + "\">" } : {};
+    if (pathName.endsWith("/account/verify-check") && host) {
+      const found = await urlReview.proveOwner({ email: signedIn.email, siteToken: tokenFor }, host);
+      if (found.kind === "site") await rememberSiteProof(signedIn.email, host, found.how);
+      res.status(200).json(Object.assign({ available: true, ok: found.kind === "site", how: found.how || "" }, given, { proofs: await proofs() }));
+      return;
+    }
+    res.status(200).json(Object.assign({ available: true }, given, { proofs: await proofs() }));
+    return;
+  }
   res.status(404).json({ error: "Not found." });
 }
 
-exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
-  const origin = reviewOrigin(req);
-  res.set("Access-Control-Allow-Origin", origin);
+function reviewHeaders(req, res) {
+  res.set("Access-Control-Allow-Origin", reviewOrigin(req));
   res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type");
   res.set("Access-Control-Allow-Credentials", "true");
   res.set("Cache-Control", "no-store");
+}
+
+exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+  reviewHeaders(req, res);
   if (req.method === "OPTIONS") {
     res.status(204).send("");
     return;
@@ -2474,6 +2567,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     } catch (error) {
       console.error("Review account failed:", error);
       const failed = pathName.endsWith("/account/delete") ? "The account was not fully deleted. Try again in a moment."
+        : pathName.endsWith("/account/delete-runs") ? "The reviews were not all deleted. Try again in a moment."
         : pathName.endsWith("/account/export") ? "Your data did not download. Try again in a moment."
           : "Your runs did not load. Try again in a moment.";
       if (!res.headersSent) res.status(500).json({ error: failed });
@@ -2487,7 +2581,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     ["/desk/free", "free"],
     ["/desk/rerun", "rerun"],
     ["/desk/unlist", "unlist"],
-    ["/desk/notice", "notice"]
+    ["/desk/notice", "notice"],
+    ["/desk/proof", "proof"]
   ];
   const routed = deskRoutes.find(([part]) => pathName.indexOf(part) !== -1);
   const deskName = routed
@@ -2516,19 +2611,22 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       try { operator = await reviewDesk.verifyOperator(bearer); } catch (error) { operator = null; }
     }
     if (!operator) {
-      res.status(bearer ? 403 : 401).json({ error: bearer ? "This Google account cannot open the desk." : "Sign in with the operator Google account." });
+      res.status(bearer ? 403 : 401).json({ error: bearer ? "This account cannot open the desk." : "Sign in with the operator account." });
       return;
     }
     if (deskName === "data" && req.method === "GET") {
-      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap] = await Promise.all([
+      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap, proofSnap] = await Promise.all([
         admin.firestore().collection("url_reviews").limit(400).get(),
         admin.firestore().collection("url_review_alerts").limit(80).get(),
         admin.firestore().collection("url_review_free_runs").limit(200).get(),
         admin.firestore().collection("url_review_notes").limit(1000).get(),
         admin.firestore().collection("url_review_reruns").orderBy("at", "desc").limit(30).get(),
         admin.firestore().collection("url_review_unlisted").get(),
-        admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get()
+        admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get(),
+        admin.firestore().collection(ownerProofs.COLLECTION).limit(200).get()
       ]);
+      const ownerProofList = proofSnap.docs.map((doc) => ownerProofs.publicRow(doc.id, doc.data() || {}))
+        .sort((a, b) => String(b.at).localeCompare(String(a.at)));
       const ownerNotices = noticeSnap.docs.map((doc) => Object.assign({ domain: doc.id }, doc.data()))
         .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
       const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
@@ -2549,8 +2647,32 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       res.status(200).json(Object.assign(reviewDesk.snapshot(records, alerts, [], notes, unlistedSnap.docs.map((doc) => doc.id)), {
         freeRuns,
         reruns,
-        ownerNotices
+        ownerNotices,
+        ownerProofs: ownerProofList
       }));
+      return;
+    }
+    if (deskName === "proof" && req.method === "POST") {
+      const body = req.body || {};
+      const ref = (id) => admin.firestore().collection(ownerProofs.COLLECTION).doc(id);
+      if (body.on === false) {
+        const id = String(body.id || "").replace(/[^a-z0-9-]/g, "").slice(0, 60);
+        if (!id) {
+          res.status(400).json({ error: "Which proof?" });
+          return;
+        }
+        await ref(id).delete();
+        res.status(200).json({ ok: true, id, on: false });
+        return;
+      }
+      const row = ownerProofs.operatorRecord({ email: body.email, host: body.host, by: operator });
+      if (!row.email || !row.host) {
+        res.status(400).json({ error: "Enter the account email and the site's host." });
+        return;
+      }
+      const id = ownerProofs.docId("operator", row.email, row.host);
+      await ref(id).set(row);
+      res.status(200).json({ ok: true, proof: ownerProofs.publicRow(id, row) });
       return;
     }
     if (deskName === "notice" && req.method === "POST") {
@@ -2755,6 +2877,21 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     }
     return;
   }
+  if (req.method === "GET" && pathName.indexOf("/paths") !== -1) {
+    try {
+      const data = await urlReview.sitePaths(req.query.host);
+      res.set("Cache-Control", "public, max-age=3600");
+      res.status(200).json({ host: data.host, paths: data.paths });
+    } catch (error) {
+      if (error && error.code === "BAD_HOST") {
+        res.status(400).json({ error: error.message, paths: [] });
+        return;
+      }
+      console.error("Review paths failed:", error);
+      res.status(200).json({ paths: [] });
+    }
+    return;
+  }
   if (req.method === "GET" && pathName.indexOf("/stats") !== -1) {
     try {
       const data = await reviewTotals();
@@ -2886,6 +3023,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(204).send("");
     return;
   }
+  if (req.method === "POST" && pathName.endsWith("/review/ask")) {
+    const body = req.body || {};
+    const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const snap = id ? await admin.firestore().collection("url_reviews").doc(id).get() : null;
+    const row = snap && snap.exists ? snap.data() || {} : null;
+    const free = !!row && (row.free === true || await hasFreeRuns(row.email));
+    const access = await reviewAuth.askAccess(reviewAuth.firestoreStore(admin.firestore()), body, row, free);
+    if (!access.ok) {
+      res.status(access.status).json({ error: access.error, signIn: !!access.signIn });
+      return;
+    }
+    res.status(200).json({ ok: true });
+    return;
+  }
   if (req.method === "POST" && pathName.indexOf("/stop") !== -1) {
     const stop = await reviewAuth.stopRun(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
     if (!stop.ok) {
@@ -2893,6 +3044,19 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     res.status(200).json({ ok: true });
+    return;
+  }
+  if (req.method === "POST" && pathName.indexOf("/place") !== -1) {
+    const runId = String((req.body && req.body.runId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    if (!runId) {
+      res.status(400).json({ error: "Missing run id." });
+      return;
+    }
+    await admin.firestore().collection("url_review_places").doc(runId).set(Object.assign(requestPlace(req), {
+      at: new Date().toISOString(),
+      expireAt: new Date(Date.now() + 864e5)
+    }));
+    res.status(204).send("");
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/capture") !== -1) {
@@ -2940,14 +3104,16 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           const ownerSnap = await admin.firestore().collection("url_reviews").doc(quoteReport).get();
           owner = ownerSnap.exists ? ownerSnap.data() : {};
         }
+        const quoteDevice = String(req.query.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
         deal = await returnPrice(priced, {
           purpose: quotePurpose,
           reportId: quoteReport,
           email: owner.email,
           before: owner.createdAt,
           coupon: req.query.coupon,
-          deviceId: String(req.query.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32),
-          ip: req.ip || ""
+          deviceId: quoteDevice,
+          ip: req.ip || "",
+          compare: quotePurpose === "new-run" && req.query.compareWith ? await comparesFrom(req.query.compareWith, quoteDevice) : false
         });
       }
       const quote = await urlReview.copQuote(deal ? deal.usd : priced.usd);
@@ -3017,6 +3183,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         let paidFrameworks = result.frameworks || [];
         let paidTools = result.tools || [];
         let paidPrice = result.amount || 0;
+        let paidCompare = "";
         if (choice !== "stripe") {
           if (!result.reference) {
             res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
@@ -3035,6 +3202,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           paidFrameworks = open.frameworks || [];
           paidTools = open.tools || [];
           paidPrice = open.priceUsd || result.amount;
+          paidCompare = reviewCompare.cleanId(open.compareWith);
           if (open.coupon) await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
           result.pages = open.pages;
           result.depth = open.depth;
@@ -3088,6 +3256,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
             pages: result.pages || urlReview.INCLUDED_PAGES,
             depth: result.depth || urlReview.INCLUDED_DEPTH,
             billing: result.billing || "run",
+            compareWith: paidCompare,
             createdAt: new Date().toISOString(),
             priceUsd: paidPrice,
             amount: result.amount,
@@ -3112,6 +3281,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       } else if (purpose === "report") {
         const reportSnap = await admin.firestore().collection("url_reviews").doc(reportId).get();
         reportData = reportSnap.exists ? reportSnap.data() : {};
+        const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), req.body || {}, reportData, false);
+        if (!access.ok && access.status !== 402) {
+          res.status(access.status).json({ error: access.locked ? "Only the account that ran this report can unlock it. Sign in with that account. No charge was made." : access.error, signIn: !!access.signIn });
+          return;
+        }
         priced = urlReview.priceFor((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools));
       } else {
         priced = urlReview.priceForRun({
@@ -3123,6 +3297,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         });
       }
       let deal = null;
+      const compareWith = purpose === "new-run" && req.body ? reviewCompare.cleanId(req.body.compareWith) : "";
       if (purpose === "report" || purpose === "new-run") {
         deal = await returnPrice(priced, {
           purpose,
@@ -3131,12 +3306,13 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           before: reportData.createdAt,
           coupon: req.body && req.body.coupon,
           deviceId,
-          ip: req.ip || ""
+          ip: req.ip || "",
+          compare: compareWith ? await comparesFrom(compareWith, deviceId) : false
         });
       }
       const listUsd = priced.usd;
       if (deal && deal.percent) priced = Object.assign({}, priced, { usd: deal.usd });
-      const base = origin + "/qa-review-pay.html?purpose=" + purpose + "&provider=" + choice;
+      const base = reviewOrigin(req) + "/qa-review-pay.html?purpose=" + purpose + "&provider=" + choice;
       const successUrl = choice === "stripe"
         ? base + "&result=success&session_id={CHECKOUT_SESSION_ID}"
         : base + "&result=success&reference=" + reference;
@@ -3176,6 +3352,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         pages: priced.pages || null,
         depth: priced.depth || null,
         billing: priced.billing || "",
+        compareWith,
         priceUsd: priced.usd,
         amount: session.amount,
         currency: session.currency,
@@ -3211,8 +3388,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     });
     return;
   }
-  if (req.method === "GET") {
-    const id = String(req.query.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const opening = req.method === "GET" ? { id: req.query.id, coupon: req.query.coupon }
+    : (req.method === "POST" && pathName.endsWith("/review/open") ? (req.body || {}) : null);
+  if (opening) {
+    const id = String(opening.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     if (!id) {
       res.status(400).json({ error: "Missing report id." });
       return;
@@ -3224,10 +3403,37 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     }
     const data = snap.data() || {};
     const free = data.free === true || await hasFreeRuns(data.email);
-    if (!data.paid && !free) {
+    // A GET carries no session, so a bare link always lands on the preview.
+    const proof = req.method === "GET" ? {} : { session: opening.session, deviceKey: opening.deviceKey };
+    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), proof, data, free);
+    if (access.status === 404) {
+      res.status(404).json({ error: access.error });
+      return;
+    }
+    if (access.locked) {
+      if (access.status === 403) {
+        try {
+          await noteSharedOpen(snap.ref, Object.assign({}, data, { id }));
+        } catch (error) {
+          console.error("Shared report open note failed:", error);
+        }
+      }
+      res.status(access.status).json({
+        error: access.error,
+        signIn: true,
+        locked: true,
+        id,
+        host: data.report.host,
+        status: data.status || "",
+        frameworks: data.frameworks || [],
+        preview: urlReview.previewReport(data.report)
+      });
+      return;
+    }
+    if (!access.ok) {
       let priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] };
       try { priced = urlReview.priceFor(data.frameworks || []); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [], count: 1 }; }
-      const deal = await returnPrice(priced, { purpose: "report", reportId: id, email: data.email, before: data.createdAt, coupon: req.query.coupon });
+      const deal = await returnPrice(priced, { purpose: "report", reportId: id, email: data.email, before: data.createdAt, coupon: opening.coupon });
       res.status(402).json(Object.assign({
         paymentRequired: true,
         priceUsd: deal.usd,
@@ -3246,6 +3452,30 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(405).json({ error: "Use POST." });
     return;
   }
+  await runReview(req, res, async () => requestPlace(req));
+});
+
+function requestPlace(req) {
+  return {
+    country: req.get("x-appengine-country") || "",
+    region: req.get("x-appengine-region") || "",
+    city: req.get("x-appengine-city") || ""
+  };
+}
+
+async function storedPlace(runId) {
+  if (!runId) return {};
+  try {
+    const snap = await admin.firestore().collection("url_review_places").doc(runId).get();
+    const data = snap.exists ? snap.data() || {} : {};
+    return { country: data.country || "", region: data.region || "", city: data.city || "" };
+  } catch (error) {
+    console.error("URL review place read failed:", error);
+    return {};
+  }
+}
+
+async function runReview(req, res, placeOf) {
   const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
   if (!signedIn.ok) {
     res.status(signedIn.status).json({ error: signedIn.error, signIn: true });
@@ -3259,6 +3489,16 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(intake.status || 400).json({ error: intake.error, fields: intake.fields || [] });
     return;
   }
+  let base = null;
+  if (intake.value.compareWith) {
+    const baseSnap = await admin.firestore().collection("url_reviews").doc(intake.value.compareWith).get();
+    base = baseSnap.exists ? baseSnap.data() : null;
+    const refused = reviewCompare.baseProblem(base, signedIn.email, intake.value.url);
+    if (refused) {
+      res.status(400).json({ error: refused, compare: true });
+      return;
+    }
+  }
   const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
   const ip = req.ip || "";
   const priorRows = free ? [] : await reviewRowsFor(deviceId, ip);
@@ -3269,7 +3509,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     const deal = await returnPrice({ usd: decision.priceUsd, count: decision.count, billing: decision.billing }, {
       purpose: "new-run",
       rows: priorRows,
-      coupon: req.body && req.body.coupon
+      coupon: req.body && req.body.coupon,
+      compare: !!base
     });
     Object.assign(decision, { priceUsd: deal.usd }, dealFields(deal));
   }
@@ -3375,30 +3616,43 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     const report = await urlReview.reviewTarget(intake.value.url, {
       log: (text) => writeLine({ type: "log", text }),
       stopped: () => stopped,
+      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email, proofs: await ownerProofRows(intake.value.email), siteToken: siteTokenFor(intake.value.email) },
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
+      pageLang: intake.value.pageLang,
+      section: intake.value.section,
+      passive: !!intake.value.compareWith,
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
     });
-    const record = urlReview.intakeRecord(intake.value, report, {
+    const record = urlReview.intakeRecord(intake.value, report, Object.assign({
       ip,
       deviceId,
+      creditId: decision.consumeId || "",
       userAgent: req.get("user-agent"),
-      acceptLanguage: req.get("accept-language"),
-      country: req.get("x-appengine-country") || "",
-      region: req.get("x-appengine-region") || "",
-      city: req.get("x-appengine-city") || ""
-    });
+      acceptLanguage: req.get("accept-language")
+    }, await placeOf(runId)));
     record.signInProvider = signedIn.provider;
     if (urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY)) record.test = true;
     if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
+    if (report.ownerProof && report.ownerProof.checked) {
+      try {
+        await rememberSiteProof(intake.value.email, report.ownerProof.host, report.ownerProof.how);
+      } catch (error) {
+        console.error("Site verification save failed:", error);
+      }
+    }
     writeLine({ type: "log", text: "Looking for your earlier reviews of " + report.host + "." });
     const history = await previousRun(intake.value.email, report);
     if (history) {
       report.history = history;
       writeLine({ type: "log", text: "Compared with your review of " + report.host + " from " + String(history.previousAt).slice(0, 10) + ": " + history.fixedCount + " fixed, " + history.freshCount + " new." });
     } else writeLine({ type: "log", text: "No earlier review of " + report.host + " under this email." });
+    if (base) {
+      report.compare = reviewCompare.compareSites(Object.assign({ id: intake.value.compareWith }, base.report), report);
+      if (report.compare) writeLine({ type: "log", text: "Compared with your review of " + base.report.host + ": " + report.compare.rivalOnlyCount + " open problems only " + report.host + " has, " + report.compare.ownOnlyCount + " only " + base.report.host + " has, " + report.compare.shared + " both have." });
+    }
     writeLine({ type: "log", text: "Saving the report." });
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
     await countReviewed(report);
@@ -3437,7 +3691,27 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   } finally {
     if (stopTimer) clearInterval(stopTimer);
     if (runId) admin.firestore().collection("url_review_stops").doc(runId).delete().catch(() => {});
+    if (runId) admin.firestore().collection("url_review_places").doc(runId).delete().catch(() => {});
   }
+}
+
+// 1st gen holds a response until the handler returns, so the run stream is served from 2nd gen.
+exports.reviewRun = require("firebase-functions/v2/https").onRequest({
+  memory: "512MiB",
+  timeoutSeconds: 180,
+  concurrency: 1,
+  secrets: ["SENDGRID_API_KEY"]
+}, async (req, res) => {
+  reviewHeaders(req, res);
+  if (req.method === "OPTIONS") {
+    res.status(204).send("");
+    return;
+  }
+  if (req.method !== "POST" || !String(req.path || "/").endsWith("/review")) {
+    res.status(405).json({ error: "Use POST /review." });
+    return;
+  }
+  await runReview(req, res, storedPlace);
 });
 
 async function reviewTotals() {

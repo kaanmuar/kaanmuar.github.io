@@ -3,7 +3,7 @@
   const DEVICE_KEY = "qa-review-device";
   const SHOWN_KEY = "qa-review-shown";
   const SAMPLE_URL = "assets/qa-review-sample.json";
-  const TERMS_VERSION = "2026-10-22.2";
+  const TERMS_VERSION = "2026-10-23";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PRICE = 19;
@@ -64,12 +64,21 @@
   let liveId = "";
   let layer = "All";
   let activeRun = "";
+  let compareTarget = null;
+  const COMPARE_KEY = "qa-review-compare";
   const fileUses = {};
 
   function endpoint() {
     const host = location.hostname;
     if (host === "127.0.0.1" || host === "localhost") return "http://127.0.0.1:8768";
     return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
+  }
+
+  // reviewUrl delivers a stream only when the run ends; reviewRun sends each log line as it is written.
+  function runEndpoint() {
+    const host = location.hostname;
+    if (host === "127.0.0.1" || host === "localhost") return "http://127.0.0.1:8768";
+    return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewRun";
   }
 
   // Set from ?qatest= on the pay page; a matching key keeps the run out of Live Reports.
@@ -114,6 +123,7 @@
     document.querySelectorAll("[data-gated]").forEach((el) => { el.inert = false; });
     fields().forEach((el) => { el.disabled = false; });
     reasonBox.disabled = true;
+    syncSection();
     stopBtn.disabled = true;
     reviewBtn.disabled = !signedIn();
     sessionStorage.setItem(TERMS_KEY, TERMS_VERSION);
@@ -147,6 +157,44 @@
   function selectedDepth() {
     const picked = reviewForm.querySelector('input[name="depth"]:checked');
     return picked ? Number(picked.value) : 2;
+  }
+
+  function selectedPageLang() {
+    const picked = reviewForm.querySelector('input[name="pageLang"]:checked');
+    return picked ? picked.value : "";
+  }
+
+  const PAGE_LANG_LABEL = { en: "English", es: "Spanish", pt: "Portuguese", de: "German", fr: "French", it: "Italian" };
+  let sectionTouched = false;
+
+  function urlPath() {
+    const raw = urlInput.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    const slash = raw.indexOf("/");
+    if (slash === -1) return "";
+    return raw.slice(slash).replace(/[?#].*$/, "").replace(/\/+$/, "");
+  }
+
+  function syncSection() {
+    const box = document.getElementById("stay-section");
+    const note = document.getElementById("section-note");
+    if (!box) return;
+    const path = urlPath();
+    if (!path) sectionTouched = false;
+    else if (!sectionTouched) box.checked = true;
+    box.disabled = app.inert || !path;
+    if (!path) box.checked = false;
+    if (note) note.textContent = !path
+      ? "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site."
+      : box.checked
+        ? "Later pages stay under " + path + "."
+        : "Later pages can follow links outside " + path + ".";
+  }
+
+  function scopeSummary() {
+    const lang = selectedPageLang();
+    const parts = [selectedPages() + " pages", selectedDepth() + " deep", lang ? PAGE_LANG_LABEL[lang] || lang : "site language"];
+    if (document.getElementById("stay-section").checked) parts.push("this section");
+    return parts.join(", ");
   }
 
   function paintReasons() {
@@ -216,14 +264,17 @@
       why: !!code && (code !== "other" || !!reasonBox.value.trim()),
       page: !!urlInput.value.trim(),
       cases: names.length > 0,
+      scope: !!reviewForm.querySelector('input[name="pages"]:checked') && !!reviewForm.querySelector('input[name="depth"]:checked')
     };
     reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
       const ok = !!done[group.dataset.step];
       group.classList.toggle("done", ok);
       group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
     });
-    const meta = reviewForm.querySelector(".rg-meta");
+    const meta = reviewForm.querySelector("#req-cases .rg-meta");
     if (meta) meta.textContent = names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) : "");
+    const scopeMeta = reviewForm.querySelector("#req-scope .rg-meta");
+    if (scopeMeta) scopeMeta.textContent = scopeSummary();
   }
   reviewForm.addEventListener("input", paintSteps);
   reviewForm.addEventListener("change", paintSteps);
@@ -236,10 +287,14 @@
   });
   reviewForm.addEventListener("change", (event) => {
     const target = event.target;
+    if (target && target.id === "stay-section") {
+      sectionTouched = true;
+      syncSection();
+    }
     if (!target || !window.SiteAnalytics) return;
     if (target.name === "fw") SiteAnalytics.trackEvent("qa_review_frameworks", "URL Review", String(selectedFrameworks().length));
     if (target.name === "tool") SiteAnalytics.trackEvent("qa_review_tools", "URL Review", target.value);
-    if (target.name === "pages" || target.name === "depth") SiteAnalytics.trackEvent("qa_review_scope", "URL Review", selectedPages() + "x" + selectedDepth());
+    if (target.name === "pages" || target.name === "depth" || target.name === "pageLang" || target.name === "section") SiteAnalytics.trackEvent("qa_review_scope", "URL Review", scopeSummary());
   });
   function countryForHost(value) {
     const host = String(value || "").replace(/^\s*https?:\/\//i, "").split("/")[0].split(":")[0].replace(/^www\./, "").toLowerCase();
@@ -255,6 +310,7 @@
     const next = urlInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
     if (next !== urlInput.value) urlInput.value = next;
     syncLegal();
+    syncSection();
   });
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
@@ -304,6 +360,7 @@
       params.set("pages", String(extra.pages || selectedPages()));
       params.set("depth", String(extra.depth || selectedDepth()));
       if (extra.billing) params.set("billing", extra.billing);
+      if (extra.compareWith) params.set("compareWith", extra.compareWith);
     }
     const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
     if (coupon && (purpose === "report" || purpose === "new-run")) params.set("coupon", coupon);
@@ -441,13 +498,15 @@
 
   function appendLog(text) {
     const list = document.getElementById("run-log");
+    // Like a terminal: keep following new lines unless the reader has scrolled up.
+    const following = list.scrollHeight - list.scrollTop - list.clientHeight < 32;
     const item = document.createElement("li");
     const time = document.createElement("time");
     time.textContent = new Date().toLocaleTimeString();
     item.appendChild(time);
     item.appendChild(document.createTextNode(text));
     list.appendChild(item);
-    list.scrollTop = list.scrollHeight;
+    if (following) list.scrollTop = list.scrollHeight;
     if (window.ReviewProgress) ReviewProgress.line(text);
   }
 
@@ -717,6 +776,77 @@
       '<div class="exec-cols history-cols"><div><h3>Fixed since then</h3>' + list(history.fixed, history.fixedCount) + "</div><div><h3>New since then</h3>" + list(history.fresh, history.freshCount) + "</div></div></div>";
   }
 
+  function paintCompare(report, sample) {
+    const ask = document.getElementById("compare-ask");
+    const result = document.getElementById("compare-result");
+    if (!ask || !result) return;
+    const cmp = report.compare;
+    document.getElementById("compare-error").textContent = "";
+    ask.hidden = !!cmp || sample;
+    result.hidden = !cmp && !sample;
+    if (!cmp) {
+      result.innerHTML = sample ? '<p class="muted">Open one of your own reports to compare it with a competitor.</p>' : "";
+      const stored = savedCompare();
+      document.getElementById("compare-url").value = stored && stored.id === report.id ? String(stored.url || "").replace(/^\s*https?:\/\//i, "") : "";
+      return;
+    }
+    const cell = (score) => score == null ? '<td class="muted">–</td>' : '<td><b style="color:' + scoreColor(score) + '">' + score + "</b></td>";
+    const lead = (own, rival) => {
+      if (own == null || rival == null) return '<td class="muted">–</td>';
+      const gap = own - rival;
+      return '<td><span class="delta ' + (gap > 0 ? "up" : gap < 0 ? "down" : "") + '">' + (gap > 0 ? "+" : "") + gap + "</span></td>";
+    };
+    const rows = [{ area: "Overall", own: cmp.overall.own, rival: cmp.overall.rival }].concat(cmp.areas || []).map((row) =>
+      '<tr><th scope="row">' + esc(row.area) + "</th>" + cell(row.own) + cell(row.rival) + lead(row.own, row.rival) + "</tr>").join("");
+    const list = (items, total) => items.length
+      ? "<ul>" + items.map((item) => "<li><strong>" + esc(item.title) + '</strong> <span class="meta-line">' + esc(item.area) + " · " + esc(item.severity) + "</span></li>").join("") + "</ul>" + (total > items.length ? '<p class="meta-line">and ' + (total - items.length) + " more</p>" : "")
+      : '<p class="muted">None.</p>';
+    const when = cmp.ownAt ? new Date(cmp.ownAt).toLocaleDateString() : "";
+    result.innerHTML = "<p>Your review of <strong>" + esc(cmp.ownHost) + "</strong>" + (when ? " from " + esc(when) : "") + " next to this review of <strong>" + esc(cmp.rivalHost) + "</strong>. " +
+      cmp.shared + " open problem" + (cmp.shared === 1 ? " is" : "s are") + " on both sites.</p>" +
+      '<div class="compare-scroll"><table class="compare-table"><thead><tr><th scope="col">Area</th><th scope="col">' + esc(cmp.ownHost) + '</th><th scope="col">' + esc(cmp.rivalHost) + '</th><th scope="col">Your lead</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      '<div class="exec-cols history-cols"><div><h3>Only ' + esc(cmp.ownHost) + " has</h3>" + list(cmp.ownOnly || [], cmp.ownOnlyCount) + "</div><div><h3>Only " + esc(cmp.rivalHost) + " has</h3>" + list(cmp.rivalOnly || [], cmp.rivalOnlyCount) + "</div></div>" +
+      '<p class="meta-line">' + esc(cmp.rivalHost) + " got the public, passive checks only: no chat conversation and no form sent." +
+      (cmp.passive ? " Because this is a competitor run, nothing was typed into its fields and its chat was not opened, so the typed-field and open-chat checks were skipped and are left out of the lists above." : "") + " Both scores come from automated reviews, a starting point and not a verdict.</p>";
+  }
+
+  function savedCompare() {
+    try { return JSON.parse(sessionStorage.getItem(COMPARE_KEY) || "null"); } catch (error) { return null; }
+  }
+
+  function startCompare() {
+    const report = current && current.report;
+    const error = document.getElementById("compare-error");
+    const url = document.getElementById("compare-url").value.trim();
+    error.textContent = "";
+    if (!report || current.sample) return;
+    if (!url || /\s/.test(url)) {
+      error.textContent = "Enter the competitor's address.";
+      return;
+    }
+    if (activeRun) {
+      error.textContent = "Wait until the review that is running ends.";
+      return;
+    }
+    const stored = savedCompare();
+    const kept = stored && stored.id === report.id ? stored : null;
+    const limits = report.limits || {};
+    compareTarget = {
+      id: report.id,
+      url,
+      report,
+      frameworks: kept ? kept.frameworks : ((current.frameworks && current.frameworks.length) ? current.frameworks : selectedFrameworks()),
+      tools: kept ? kept.tools : selectedTools(),
+      pages: kept ? kept.pages : (limits.maxPages || selectedPages()),
+      depth: kept ? kept.depth : (limits.maxDepth || selectedDepth()),
+      paid: false
+    };
+    try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(compareTarget)); } catch (storageError) { /* only a payment round trip needs it */ }
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_compare", "URL Review", report.host || "");
+    closeDashboard();
+    reviewForm.requestSubmit();
+  }
+
   function paintExec(report, ins) {
     const host = document.getElementById("exec");
     if (!host) return;
@@ -824,10 +954,11 @@
     const b = report.browser;
     const speed = speedBlock(report.pagespeed);
     const carbon = carbonLine(report.insights && report.insights.carbon);
+    const talk = report.chatTalk;
     if (!b || !b.ok) {
       host.innerHTML = speed + carbon + '<p class="muted">' + (b && b.error
         ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML alone."
-        : "This review ran without the headless browser, so the checks come from the HTML alone.") + "</p>";
+        : "This review ran without the headless browser, so the checks come from the HTML alone.") + "</p>" + talkHtml(talk);
       return;
     }
     const start = b.start || {};
@@ -905,7 +1036,7 @@
       '</div><p class="meta-line">Lab numbers from one cold load on the review server, not field data from real visitors. Green, amber, and red follow the Core Web Vitals thresholds.</p>' : "";
     const shots = b.shots || {};
     const shotCount = ["desktop", "tablet", "mobile"].filter((key) => shots[key]).length;
-    const chatCard = chatHtml(report.insights && report.insights.chat);
+    const chatCard = chatHtml(report.insights && report.insights.chat) + talkHtml(talk);
     const textRows = [{ path: start.finalPath || "/", share: start.share, words: start.renderedWords, raw: start.rawWords }].concat((b.pages || []).filter((page) => !page.error).map((page) => ({ path: page.path, share: page.share, words: page.renderedWords, raw: page.rawWords })));
     host.innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + speed + (gauges && report.pagespeed && report.pagespeed.field ? '<h3 class="speed-title">One lab load</h3>' : "") + gauges +
@@ -921,7 +1052,7 @@
         ? (axeRows ? '<table class="mini-table"><thead><tr><th>Rule</th><th>Impact</th><th>Elements</th><th>Pages</th></tr></thead><tbody>' + axeRows + "</tbody></table>" : '<p class="muted">No WCAG 2.2 AA rule failed on ' + axePages.length + " page" + (axePages.length === 1 ? "" : "s") + ". Automated rules catch about a third of real issues.</p>") +
           '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
         : '<p class="muted">axe-core did not finish in the time the browser had.</p>') + "</article>" +
-      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + (watch.before && watch.before.typed ? " A test address was typed into one form field, never submitted, and blocked wherever a script tried to send it." : "") + " Lab numbers come from one unthrottled load.</p>" + carbon;
+      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + (talk && talk.turns && talk.turns.length ? " A separate browser opened the chat and sent the scripted messages shown above." : "") + (watch.before && watch.before.typed ? " A test address was typed into one form field, never submitted, and blocked wherever a script tried to send it." : "") + " Lab numbers come from one unthrottled load.</p>" + carbon;
   }
 
   function chatHtml(chat) {
@@ -942,6 +1073,30 @@
       (chat.vendors.some((row) => row.ai) ? " · AI chatbot" : "") + ". Weight and cookies were measured before anyone opened it. The launcher was checked at 390 px, then opened once.</p>" +
       '<table class="mini-table"><thead><tr><th>Check</th><th>Result</th><th>What the browser saw</th></tr></thead><tbody>' +
       rows.map(([label, state, text]) => "<tr><td><strong>" + esc(label) + "</strong></td><td>" + badge(state) + "</td><td>" + text + "</td></tr>").join("") + "</tbody></table></article>";
+  }
+
+  const TALK_LABEL = { pass: "Passes", risk: "At risk", fail: "Fails now", person: "Read it yourself" };
+  const TALK_PROOF = {
+    own: "It ran because the review was asked from a mailbox at this site's domain.",
+    credentials: "It ran because QA-lab recorded a verified signed-in run of this site for your account.",
+    site: "It ran because this site carries your account's verification token."
+  };
+
+  function talkHtml(talk) {
+    if (!talk) return "";
+    const turns = talk.turns || [];
+    const head = '<article class="card talk-card" style="margin-top:12px"><h3>Chat conversation</h3><p class="muted">' +
+      (talk.vendor ? '<span class="notranslate" translate="no">' + esc(talk.vendor) + "</span>" + (talk.ai ? " · AI chatbot" : "") + ". " : "") + esc(talk.note || "") +
+      (TALK_PROOF[talk.proof] ? " " + TALK_PROOF[talk.proof] : "") +
+      (turns.length ? " This conversation stays on your private report and is never published in Live Reports." : "") +
+      (talk.status === "needs-proof" ? ' <a href="qa-review-account.html#verify">Verify a site you own</a>.' : "") + "</p>";
+    if (!turns.length) return head + "</article>";
+    const rows = (talk.checks || []).map((check) => "<tr><td><strong>" + esc(check.label) + '</strong></td><td><span class="badge v-' + esc(check.verdict) + '">' + esc(TALK_LABEL[check.verdict] || check.verdict) + "</span></td><td>" + esc(check.evidence) + "</td></tr>").join("");
+    const log = turns.map((turn) => '<li><p><strong>Review:</strong> <span class="notranslate" translate="no">' + esc(turn.sent) + "</span></p><p><strong>Chat" + (turn.reply ? " after " + (turn.ms / 1000).toFixed(1) + " s" : "") + ":</strong> " +
+      (turn.reply ? '<span class="notranslate" translate="no">' + esc(turn.reply) + "</span>" : "No reply in time.") + "</p></li>").join("");
+    return head + (rows ? '<table class="mini-table"><thead><tr><th>Check</th><th>Result</th><th>What the chat said</th></tr></thead><tbody>' + rows + "</tbody></table>" : "") +
+      '<details class="talk-log"><summary>Transcript (' + turns.length + " message" + (turns.length === 1 ? "" : "s") + ")</summary><ol>" + log + "</ol></details>" +
+      '<p class="meta-line">The script uses a made-up email and phone, asks no one to change an order or an account, sends at most six messages, and stops after one minute.</p></article>';
   }
 
   function carbonLine(c) {
@@ -1291,6 +1446,7 @@
     current = payload;
     liveId = report.id;
     if (!sample) remember(report.id);
+    if (window.QAReviewAsk) QAReviewAsk.show(payload);
     applyCopyMode(!!payload.paid);
     if (!sample) shareOpen.disabled = false;
     dash.classList.toggle("is-sample", sample);
@@ -1306,6 +1462,7 @@
     const paid = !!payload.paid;
     paintVisuals(report, paid);
     paintInsights(report, paid);
+    paintCompare(report, sample);
     document.getElementById("report-statement").textContent = "";
     const counts = report.counts || { pages: 0, technologies: 0, cases: 0, byLayer: {} };
     const score = report.insights && report.insights.score;
@@ -1332,7 +1489,10 @@
       : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
     const obs = report.observed || {};
     const limits = report.limits || {};
-    document.getElementById("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(limits.robotsNote || "") + "</p>" +
+    const asked = "pageLang" in limits
+      ? (limits.pageLang ? "Requested in " + (PAGE_LANG_LABEL[limits.pageLang] || limits.pageLang) + ". " : "Requested in the site's own language. ") + (limits.section ? "Stayed under " + limits.section + ". " : "")
+      : "";
+    document.getElementById("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(asked) + esc(limits.robotsNote || "") + "</p>" +
       (limits.timedOut ? '<p class="muted">The time budget ended after ' + (limits.pagesRead || (report.pages || []).length) + " of up to " + (limits.maxPages || "?") + ' pages, usually because the site answered slowly. If pages that matter were left out, write to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a> with the report link and Carlos will look at a rerun.</p>' : "");
     paintAlarm(report, paid || alertsOpen(report.id));
     paintMentions(report);
@@ -1357,9 +1517,13 @@
     };
     const picked = new Set(payload.frameworks || selectedFrameworks());
     const shown = (report.cases || []).filter((item) => (layer === "All" || item.layer === layer) && item.fw.some((fw) => picked.has(fw)));
-    document.getElementById("case-note").textContent = paid
+    const urgent = ["P1", "P2"].map((level) => shown.filter((item) => item.priority === level).length);
+    const ranked = shown.some((item) => item.priority)
+      ? " Ranked by risk: " + urgent[0] + " P1 and " + urgent[1] + " P2 come first, backed by what the review saw on " + (report.host || "the site") + "."
+      : "";
+    document.getElementById("case-note").textContent = (paid
       ? shown.length + " cases for the selected frameworks. The full wording is open because this copy is paid."
-      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The first sentence of each case stays visible. The rest stays blurred until the report is paid.";
+      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The first sentence of each case stays visible. The rest stays blurred until the report is paid.") + ranked;
     const extras = [];
     (report.cases || []).forEach((item) => {
       (item.also || []).forEach((name) => {
@@ -1379,7 +1543,9 @@
     document.getElementById("cases").innerHTML = shown.map((item) => {
       const extra = (item.also || []).filter(Boolean);
       const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
-      return '<article class="case"><div><span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + '</p><p class="muted fw-line">' + tools + "</p></article>";
+      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="Risk ' + esc(item.risk) + ' of 100">' + esc(item.priority) + "</span>" : "";
+      const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">Pages: ' + esc(item.pages.slice(0, 6).join(", ") + (item.pages.length > 6 ? " and " + (item.pages.length - 6) + " more" : "")) + "</p>" : "";
+      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
@@ -1426,7 +1592,12 @@
       if (window.ReviewAuth) ReviewAuth.focus();
       return;
     }
-    const errors = clientErrors();
+    const compare = compareTarget;
+    compareTarget = null;
+    if (!compare) {
+      try { sessionStorage.removeItem(COMPARE_KEY); } catch (error) { /* nothing was kept */ }
+    }
+    const errors = compare ? clientErrors().filter((item) => item.field === "name") : clientErrors();
     markFields(errors);
     if (errors.length) {
       setStatus(errors[0].message, true);
@@ -1436,13 +1607,21 @@
     activeRun = runId;
     reviewBtn.disabled = true;
     stopBtn.disabled = true;
-    document.getElementById("run-log").innerHTML = "";
-    if (window.ReviewProgress) ReviewProgress.start({ host: urlInput.value, pages: selectedPages() });
+    const runLog = document.getElementById("run-log");
+    runLog.innerHTML = "";
+    runLog.classList.add("is-live");
+    if (window.ReviewProgress) ReviewProgress.start({ host: compare ? compare.url : urlInput.value, pages: compare ? compare.pages : selectedPages() });
     setStatus("Checking the email domain, then analyzing the public page…", false);
     appendLog("Checking the fields, the email domain, and that this is a browser.");
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", reasonCode());
+    // The run record reads country, region, and city from here; only reviewUrl gets those headers.
+    fetch(endpoint() + "/place", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ runId: runId })
+    }).catch(() => {});
     try {
-      const res = await fetch(endpoint() + "/review", {
+      const res = await fetch(runEndpoint() + "/review", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
@@ -1451,16 +1630,19 @@
           termsVersion: TERMS_VERSION,
           name: document.getElementById("name").value,
           email: document.getElementById("email").value,
-          reasonCode: reasonCode(),
+          reasonCode: compare ? "compare" : reasonCode(),
           reason: reasonBox.value,
           clientName: document.getElementById("client-name").value,
           clientEmail: document.getElementById("client-email").value,
           clientUrl: document.getElementById("client-url").value,
-          url: urlInput.value,
-          frameworks: selectedFrameworks(),
-          tools: selectedTools(),
-          pages: selectedPages(),
-          depth: selectedDepth(),
+          url: compare ? compare.url : urlInput.value,
+          compareWith: compare ? compare.id : "",
+          frameworks: compare ? compare.frameworks : selectedFrameworks(),
+          tools: compare ? compare.tools : selectedTools(),
+          pages: compare ? compare.pages : selectedPages(),
+          depth: compare ? compare.depth : selectedDepth(),
+          pageLang: selectedPageLang(),
+          section: document.getElementById("stay-section").checked === true,
           deviceId: deviceId(),
           runId: runId,
           openedAt: openedAt,
@@ -1476,7 +1658,10 @@
       const payload = await readStream(res);
       if (!payload || !payload.report) throw new Error("The review ended without a report.");
       layer = "All";
-      payload.reasonCode = reasonCode();
+      payload.reasonCode = compare ? "compare" : reasonCode();
+      if (compare) {
+        try { sessionStorage.removeItem(COMPARE_KEY); } catch (storageError) { /* nothing was kept */ }
+      }
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report && payload.report.host);
       render(payload);
       const stopped = payload.report.status === "stopped";
@@ -1495,8 +1680,8 @@
         ReviewAuth.focus();
         setStatus(error.message, true);
       } else if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
-        openRunPay(error.body);
-        setStatus("Another review waits on payment.", true);
+        openRunPay(compare ? Object.assign({}, error.body, { compareWith: compare.id }) : error.body);
+        setStatus(compare ? "The comparison waits on payment. It is priced as a second review." : "Another review waits on payment.", true);
       } else if (error.paymentRequired) {
         openPay(error.body || {});
         setStatus("Opening this report again waits on payment.", true);
@@ -1505,6 +1690,7 @@
         setStatus(error.message || "The review failed.", true);
       }
     } finally {
+      runLog.classList.remove("is-live");
       activeRun = "";
       reviewBtn.disabled = !signedIn();
       stopBtn.disabled = true;
@@ -1541,7 +1727,7 @@
     const usd = (body && body.priceUsd) || reviewUsd(list, tools);
     const selections = list.length + tools.length;
     document.getElementById("pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
-    document.getElementById("pay-detail").textContent = "Seeing it again, or downloading, printing, or sharing it again, costs " + formatUsd(usd) + " USD for " + selections + (selections === 1 ? " selection." : " selections.") + " Frameworks come first. Checked tools follow on the same discount. The first selection is 19 USD. A paid copy keeps one line: this report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
+    document.getElementById("pay-detail").textContent = "Seeing it again, or downloading or printing it again, on the account that ran it, costs " + formatUsd(usd) + " USD for " + selections + (selections === 1 ? " selection." : " selections.") + " Frameworks come first. Checked tools follow on the same discount. The first selection is 19 USD. A paid copy keeps one line: this report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
     document.getElementById("pay-btn").href = payQuery("report");
     showDeal("pay-deal", "pay-price", body);
     payBox.hidden = false;
@@ -1628,7 +1814,7 @@
   document.getElementById("copy-link").addEventListener("click", () => {
     spend("link", async () => {
       const link = document.getElementById("share-link").textContent;
-      try { await navigator.clipboard.writeText(link); setStatus("Link copied. Opening it again asks for payment.", false); }
+      try { await navigator.clipboard.writeText(link); setStatus("Link copied. It opens in full only for the account that ran this report, once signed in. Anyone else sees the blurred preview.", false); }
       catch (error) { setStatus("Copy the link from the report window.", true); }
     });
   });
@@ -1867,16 +2053,25 @@
     if (!gate.hidden) {
       steps.push({ selector: "#terms-form", title: "The disclaimers", body: "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text.", demoMs: 1800 });
     }
+    const counts = document.getElementById("reviews-fact");
+    if (counts && !counts.hidden) {
+      steps.push({ selector: "ul.facts", title: "You are not the first", body: "These two numbers count up live: pages read and reviews run by everyone so far. Only a review that really read a page adds to them.", demoMs: 1500 });
+    }
     steps.push(
       { selector: "#sign-in", title: "Sign in", body: "Sign in with email or an account you already have. The review runs only on the device where you sign in.", demoMs: 1500 },
       { selector: "#name", title: "Who is asking", body: "Your name is stored with the review. Your email comes from the sign-in. Changing the name does not open a second completed review.", demoMs: 1500 },
       { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
-      { selector: "#url-field", title: "The page", body: "Type the host and path. https:// is already in front of the box, so the review always asks for a public secure page.", demoMs: 1500 },
+      { selector: "#url-field", title: "The page", body: "Start typing and the box helps. It suggests well-known sites, says \"Did you mean…?\" when a host does not exist, and after a / it offers real pages from the site's sitemap. https:// is already in front, so the review always asks for a public secure page.", demoMs: 1800 },
       { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
+      { selector: "#req-scope", title: "Pages to review", body: "Only care about the docs? Type example.com/docs and Stay in this section keeps later pages under that path. Pick how many pages, how many links deep, and the language to ask the site for. The included first review is 20 pages and 2 links deep. A bigger one shows its price before it starts.", demoMs: 1800 },
       { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it analyzes public pages on that host and writes a line for each step.", demoMs: 1500 },
-      { selector: "#run-log", title: "The log", body: "Watch the analysis here: the first page, robots.txt, and each linked page. The same lines are kept with the run.", demoMs: 1600 },
-      { selector: "#stop-btn", title: "Stop", body: "Stop ends the analysis. Pages already saved stay in the report, and the record says the review was stopped.", demoMs: 1500 },
-      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions.", demoMs: 1800 },
+      { selector: "#run-log", title: "The log", body: "Grab a coffee and watch. A meter walks through connecting, the pages, the browser pass, the cases, the speed checks, and the score, and each line shows up the moment it happens. A slow site gets a \"Still working\" note instead of silence.", demoMs: 1800 },
+      { selector: "#stop-btn", title: "Stop", body: "Changed your mind? Stop ends the analysis, the pages already saved stay in the report, and the record says it was stopped. Only your sign-in on this device can stop your run.", demoMs: 1600 },
+      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions. Its cases come first by risk, and each one names the real page it saw.", demoMs: 1800 },
+      { selector: "#report-once", title: "Ask the report", body: "In a paid report, ask \"Why is F-01 rated this way?\" and the answer comes only from this review, with the fix, a Playwright case, or a GitHub or Jira issue ready to paste. It never guesses past what the review saw.", demoMs: 1800 },
+      { selector: "#report-once", title: "Next to a competitor", body: "Curious how the shop next door does? Compare in the report runs the same public checks on their site and puts the six scores side by side, with what only one of you has. It is priced as a second review.", demoMs: 1800 },
+      { selector: "#report-once", title: "A word with your chatbot", body: "On a site you have shown is yours, the review chats with its chat widget: pricing, asking for a human, a refund, and two tricks a bot should refuse. At most six messages in one minute, with a made-up email and phone.", demoMs: 1800 },
+      { selector: ".topbar a[href='qa-review-account.html']", title: "Your reviews", body: "Every run you start waits here. Search them, open several at once, download them, delete them, or verify a site you own with a DNS record or a homepage tag.", demoMs: 1600 },
       { selector: "#langWrap", title: "Language", body: "A language chosen here is the language on the CV, the studio, the lab, and this review. The same choice sticks when you move between them.", demoMs: 1500 },
       { selector: "#tour-start-btn", title: "Open this tour again", body: "This walkthrough stays closed after the first visit. How this review works brings it back whenever you want it.", demoMs: 1500 }
     );
@@ -1896,13 +2091,26 @@
 
   const shared = new URLSearchParams(location.search).get("report");
   if (shared) {
+    let lockedShared = false;
     const openShared = async () => {
       if (app.inert) return;
       setStatus("Opening the saved report…", false);
       try {
         const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
-        const res = await fetch(endpoint() + "/review?id=" + encodeURIComponent(shared) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : ""), { credentials: "include" });
+        const res = await fetch(endpoint() + "/review/open", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: shared, coupon }))
+        });
         const body = await res.json();
+        lockedShared = !!body.locked;
+        if (body.locked) {
+          if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
+          setStatus((body.preview ? "This report of " + (body.host || "this site") + " is below, under the frost. " : "") + (body.error || "Sign in with the account that ran this report to read it in full."), true);
+          if (window.ReviewAuth) ReviewAuth.focus();
+          return;
+        }
         if (res.status === 402 || body.paymentRequired) {
           if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
           openPay(body);
@@ -1917,6 +2125,7 @@
         setStatus(error.message, true);
       }
     };
+    if (window.ReviewAuth) ReviewAuth.onChange((on) => { if (on && lockedShared) openShared(); });
     if (!app.inert) openShared();
     else {
       const waiting = document.createElement("p");
@@ -2061,7 +2270,7 @@
       azure: ["Work Item Type", "Title", "Test Step", "Step Action", "Step Expected", "Priority", "State", "Tags", "Automation scripts"],
       mantis: ["Summary", "Description", "Category", "Severity"]
     }[kind];
-    const rank = (item) => item.verdict === "fail" ? (item.severity === "critical" || item.severity === "high" ? 0 : 1) : item.verdict === "risk" ? (item.severity === "high" ? 1 : 2) : 2;
+    const rank = (item) => item.priority ? ({ P1: 0, P2: 1 }[item.priority] == null ? 2 : { P1: 0, P2: 1 }[item.priority]) : item.verdict === "fail" ? (item.severity === "critical" || item.severity === "high" ? 0 : 1) : item.verdict === "risk" ? (item.severity === "high" ? 1 : 2) : 2;
     const data = rows.map((row) => {
       const ref = sign.mark + " " + sign.sha256;
       const level = rank(row.item);
@@ -2255,6 +2464,22 @@
   }
   restorePaid("alerts", "qa-review-alerts");
   restorePaid("credentialRun", "qa-review-credential");
+  restorePaid("compareRun", COMPARE_KEY, () => {
+    const saved = savedCompare();
+    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it.", false);
+  });
+  document.getElementById("compare-go").addEventListener("click", startCompare);
+  const compareInput = document.getElementById("compare-url");
+  compareInput.addEventListener("input", () => {
+    const next = compareInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+    if (next !== compareInput.value) compareInput.value = next;
+  });
+  compareInput.addEventListener("keydown", (event) => {
+    // Enter on a highlighted suggestion picks it (js/url-suggest.js) instead of starting the run.
+    if (event.key !== "Enter" || event.defaultPrevented || compareInput.hasAttribute("aria-activedescendant")) return;
+    event.preventDefault();
+    startCompare();
+  });
 
   const WIRE_CLIPS = ["assets/wire/scan.mp4", "assets/wire/bars.mp4", "assets/wire/orbit.mp4", "assets/wire/moon.mp4", "assets/wire/pulse.mp4", "assets/wire/drift.mp4", "assets/wire/mesh.mp4", "assets/wire/ring.mp4"];
   let wireItems = [];
@@ -2360,46 +2585,51 @@
     if (reduced) window.setInterval(loadWire, 3 * 60 * 1000);
   }
 
-  const reviewedFact = document.getElementById("reviewed-fact");
-  const reviewedCount = document.getElementById("reviewed-count");
-  let reviewedShown = 0;
-  let reviewedFrame = 0;
-  function paintReviewed(target) {
-    const lang = window.SiteI18n && SiteI18n.current ? SiteI18n.current() : "en";
-    const format = (value) => Math.round(value).toLocaleString(lang || "en");
-    cancelAnimationFrame(reviewedFrame);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || target <= reviewedShown) {
-      reviewedShown = target;
-      reviewedCount.textContent = format(target);
-      return;
-    }
-    const from = reviewedShown;
-    const start = performance.now();
-    const duration = from ? 900 : 1600;
-    const step = (now) => {
-      const t = Math.min(1, (now - start) / duration);
-      reviewedShown = from + (target - from) * (1 - Math.pow(1 - t, 3));
-      reviewedCount.textContent = format(reviewedShown);
-      if (t < 1) reviewedFrame = requestAnimationFrame(step);
-      else reviewedShown = target;
+  function liveCount(factId, countId) {
+    const fact = document.getElementById(factId);
+    const count = document.getElementById(countId);
+    if (!fact || !count) return null;
+    let shown = 0;
+    let frame = 0;
+    return function paint(target) {
+      if (!target) return;
+      fact.hidden = false;
+      const lang = window.SiteI18n && SiteI18n.current ? SiteI18n.current() : "en";
+      const format = (value) => Math.round(value).toLocaleString(lang || "en");
+      cancelAnimationFrame(frame);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || target <= shown) {
+        shown = target;
+        count.textContent = format(target);
+        return;
+      }
+      const from = shown;
+      const start = performance.now();
+      const duration = from ? 900 : 1600;
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / duration);
+        shown = from + (target - from) * (1 - Math.pow(1 - t, 3));
+        count.textContent = format(shown);
+        if (t < 1) frame = requestAnimationFrame(step);
+        else shown = target;
+      };
+      frame = requestAnimationFrame(step);
     };
-    reviewedFrame = requestAnimationFrame(step);
   }
+  const paintPages = liveCount("reviewed-fact", "reviewed-count");
+  const paintReviews = liveCount("reviews-fact", "reviews-count");
   async function loadReviewed() {
     if (document.hidden) return;
     try {
       const response = await fetch(endpoint() + "/stats");
       if (!response.ok) return;
       const body = await response.json();
-      const pages = Number(body && body.pages) || 0;
-      if (!pages) return;
-      reviewedFact.hidden = false;
-      paintReviewed(pages);
+      if (paintPages) paintPages(Number(body && body.pages) || 0);
+      if (paintReviews) paintReviews(Number(body && body.reviews) || 0);
     } catch (error) {
       return;
     }
   }
-  if (reviewedFact && reviewedCount) {
+  if (paintPages || paintReviews) {
     loadReviewed();
     window.setInterval(loadReviewed, 2 * 60 * 1000);
   }

@@ -28,6 +28,7 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+require("../playwright-sandbox");
 const { chromium } = require("playwright");
 const ROOT = path.resolve(__dirname, "../..");
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";

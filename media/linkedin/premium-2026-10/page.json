@@ -1,0 +1,70 @@
+{
+  "batch": "premium-2026-10",
+  "renews": "2026-11-19",
+  "totals": {
+    "reports": 114,
+    "pages": 2227,
+    "countries": 11,
+    "sectors": 26,
+    "exports": [
+      "Jira",
+      "TestRail",
+      "Xray",
+      "Zephyr",
+      "Azure DevOps",
+      "Mantis",
+      "Excel",
+      "PDF",
+      "JSON"
+    ]
+  },
+  "carousel": [
+    "mdn",
+    "govuk",
+    "nodejs",
+    "cloudflare",
+    "worldbank"
+  ],
+  "carouselTitle": "QA-lab URL Review: what it finds on the best sites we read",
+  "carouselPost": "What a URL Review finds on the best sites we read.\n\nWe read 114 public sites, 2,227 pages across 11 countries. The top site in each of five sectors still had one thing to fix first:\n\n→ MDN Web Docs, 95: Permissions-Policy is not sent\n→ GOV.UK, 92: 19 pages have no canonical link\n→ Node.js, 89: Other sites can frame the page\n→ Cloudflare, 88: Security headers on the start page are missing on other pages\n→ World Bank, 87: No content security policy\n\nSwipe for the six area scores and what each site already does well.\n\nOne automated read of public pages on 19 Oct 2026. A starting point, not a verdict.\nYour first review is included, up to 20 pages: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=social&utm_campaign=premium-carousel\n\n#QA #SEO #Accessibility #WebPerformance",
+  "tagline": "One public URL in. A plain-language QA review out: SEO, AI search, analytics, security, accessibility, speed.",
+  "button": {
+    "label": "Visit website",
+    "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-cta"
+  },
+  "highlights": [
+    {
+      "text": "114 public sites reviewed in Live Reports",
+      "detail": "2,227 pages, 11 countries",
+      "featured": true,
+      "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-highlight"
+    },
+    {
+      "text": "Proposed test cases for 20 frameworks",
+      "detail": "Exports to Jira, TestRail, Xray, Zephyr",
+      "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-highlight"
+    },
+    {
+      "text": "Reports in six languages",
+      "detail": "English, Spanish, Portuguese, French, +2",
+      "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-highlight"
+    },
+    {
+      "text": "First review included",
+      "detail": "Up to 20 pages, 2 links deep",
+      "url": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=company_page&utm_campaign=premium-highlight"
+    }
+  ],
+  "competitors": [
+    "Siteimprove",
+    "Semrush",
+    "Ahrefs",
+    "Screaming Frog",
+    "Sitebulb",
+    "Lumar (formerly Deepcrawl)",
+    "Silktide",
+    "Deque Systems, Inc",
+    "Testlio"
+  ],
+  "testimonial": "Leave off until a URL Review client gives a quote in their own words. Do not reuse CV testimonials here."
+}

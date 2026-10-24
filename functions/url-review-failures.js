@@ -13,7 +13,8 @@ const FIXES = [
   { cause: "too-large", at: "2026-10-21T20:45:53Z", ref: "#319", label: "A start page past 2 MB is read up to 2 MB" },
   { cause: "unknown", at: "2026-10-21T22:20:00Z", ref: "#329", label: "A re-run of a failure with no saved frameworks reviews with Playwright" },
   { cause: "browser", at: "2026-10-22T19:15:54Z", ref: "#365", label: "A refused page finishes as a refusal instead of a browser timeout" },
-  { cause: "timeout", at: "2026-10-23T19:50:00Z", ref: "#582", label: "A start page past 8 s keeps the part that arrived, or is read in headless Chrome" }
+  { cause: "timeout", at: "2026-10-23T19:50:00Z", ref: "#582", label: "A start page past 8 s keeps the part that arrived, or is read in headless Chrome" },
+  { cause: "save", at: "2026-10-23T23:30:00Z", ref: "#640", label: "A finished report with an empty optional field is saved" }
 ];
 // The review form's default when a failure kept no frameworks (one taken from an alert).
 const RERUN_FRAMEWORKS = ["Playwright"];
@@ -22,6 +23,7 @@ const clip = (value, max) => String(value == null ? "" : value).replace(/\s+/g, 
 
 // Order matters: a message that names both a refused plain read and a browser that did not finish is a browser cause.
 const CAUSES = [
+  ["save", "The finished report could not be saved", /not a valid Firestore document|as a Firestore value/i],
   ["input", "The address could not be reviewed", /^Enter a|Only https URLs|Remove the username|standard https port|not a public website|private address/i],
   ["dns", "The host name did not resolve", /did not resolve|ENOTFOUND|EAI_AGAIN/i],
   ["http-redirect", "The site redirected to http://", /an http:\/\/ address/i],
@@ -97,10 +99,14 @@ function failureRecord(input) {
     options: {
       pages: Number(run.pages) || 0,
       depth: Number(run.depth) || 0,
+      pageLang: clip(run.pageLang, 2),
+      section: run.section === true,
       frameworks: Array.isArray(run.frameworks) ? run.frameworks.slice(0, 12).map((name) => clip(name, 40)) : []
     },
     intake: {
       lang: clip(run.lang, 8),
+      pageLang: clip(run.pageLang, 2),
+      section: run.section === true,
       reason: clip(run.reason, 600),
       reasonCode: clip(run.reasonCode, 40),
       clientName: clip(run.clientName, 120),

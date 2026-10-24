@@ -13,10 +13,14 @@ const { URL } = require("url");
 const insights = require("./url-review-insights");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
+const caseRank = require("./url-review-cases");
+const chatTalk = require("./url-review-chat-talk");
+const ownerProofs = require("./url-review-owner-proof");
+const { siteLabel } = caseRank;
 
-const TERMS_VERSION = "2026-10-22.2";
+const TERMS_VERSION = "2026-10-23";
 // A page loaded before a terms change still sends the version before it.
-const PREVIOUS_TERMS_VERSION = "2026-10-22";
+const PREVIOUS_TERMS_VERSION = "2026-10-22.2";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 
@@ -47,6 +51,33 @@ const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
 const DEPTH_CENTS = { 2: 0, 3: 400, 4: 700, 5: 1000 };
 const INCLUDED_PAGES = 20;
 const INCLUDED_DEPTH = 2;
+const PAGE_LANGS = ["en", "es", "pt", "de", "fr", "it"];
+const PAGE_LANG_LABEL = { en: "English", es: "Spanish", pt: "Portuguese", de: "German", fr: "French", it: "Italian" };
+
+function normalizePageLang(value) {
+  const code = String(value || "").trim().toLowerCase();
+  return PAGE_LANGS.indexOf(code) === -1 ? "" : code;
+}
+
+function sectionPrefix(url) {
+  try {
+    const path = new URL(url).pathname || "/";
+    if (path === "/") return "";
+    return path.replace(/\/+$/, "");
+  } catch (error) {
+    return "";
+  }
+}
+
+function underSection(url, prefix) {
+  if (!prefix) return true;
+  try {
+    const path = new URL(url).pathname.replace(/\/+$/, "") || "/";
+    return path === prefix || path.startsWith(prefix + "/");
+  } catch (error) {
+    return false;
+  }
+}
 
 function priceMatches(usd) {
   const cents = Math.round(Number(usd) * 100);
@@ -77,6 +108,7 @@ const REASONS = [
   { id: "allowed", label: "I am checking a page I am allowed to review" },
   { id: "verify", label: "I want QA-lab to run a verification" },
   { id: "credentials", label: "I have a username and password for this site" },
+  { id: "compare", label: "I am comparing my site with a competitor" },
   { id: "other", label: "Other" }
 ];
 const BROWSER_FW = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha"];
@@ -242,6 +274,39 @@ function mailboxMatchesHost(email, hostname) {
   return !!domain && registrable(domain) === registrable(hostname);
 }
 
+// Why the asker may talk to the host finally reviewed (the chat conversation, form testing), or "":
+// "own" for "I own this site" from a mailbox on the host's domain; "credentials" or "site" from the
+// unexpired url_review_owner_proofs rows the caller loaded for the signed-in email (url-review-owner-proof.js).
+// The "credentials" reason on its own proves nothing: it is a choice in a list.
+function ownerProof(asker, hostname, now) {
+  const src = asker || {};
+  if (src.reasonCode === "own" && mailboxMatchesHost(src.email, hostname)) return "own";
+  return ownerProofs.validFor(src.proofs, src.email, hostname, now);
+}
+
+// The homepage as visitors get it, through the same public-address checks as the review; "" when it lands on another host.
+async function fetchHomepage(host) {
+  const page = await fetchPublic("https://" + host + "/", null, null, true);
+  const landed = String(new URL(page.url).hostname).replace(/^www\./, "");
+  return landed === String(host).replace(/^www\./, "") && page.status >= 200 && page.status < 300 ? String(page.body || "") : "";
+}
+
+// ownerProof, then a live site-verification check when the caller gave a token for this account (asker.siteToken).
+async function proveOwner(asker, hostname, deps) {
+  const kind = ownerProof(asker, hostname);
+  if (kind) return { kind, how: "", checked: false };
+  const token = asker && typeof asker.siteToken === "function" ? asker.siteToken(hostname) : "";
+  if (!token) return { kind: "", how: "", checked: false };
+  const found = await ownerProofs.checkSite(token, hostname, Object.assign({ resolveTxt: (name) => dns.resolveTxt(name), fetchHome: fetchHomepage, registrable }, deps));
+  return found.ok ? { kind: "site", how: found.how, checked: true } : { kind: "", how: "", checked: false };
+}
+
+const PROOF_NOTE = {
+  own: (host) => "The asker's mailbox is on " + registrable(host) + ", so",
+  credentials: (host) => "QA-lab recorded a verified signed-in run of " + host + " for this account, so",
+  site: (host, how, checked) => (checked ? host + " carries this account's qa-lab-verify token in its " + (how === "meta" ? "homepage" : "DNS") : host + " was verified for this account in the last 30 days") + ", so"
+};
+
 async function emailCanReceive(email) {
   const domain = String(email || "").toLowerCase().split("@")[1] || "";
   if (!domain || hostBlocked(domain) || net.isIP(domain)) return false;
@@ -325,6 +390,8 @@ function validateIntake(body) {
   if (known && known.id === "own" && target && emailSyntax(email) && !mailboxMatchesHost(email, target.hostname)) {
     fieldError(errors, "email", "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.");
   }
+  const compareWith = known && known.id === "compare" ? String(src.compareWith || "").replace(/[^a-f0-9]/g, "").slice(0, 32) : "";
+  if (known && known.id === "compare" && !compareWith) fieldError(errors, "reason", "Start a comparison from one of your reports.");
   const reason = known && known.id === "other" ? reasonText : (known ? known.label : "");
   return {
     errors,
@@ -344,8 +411,11 @@ function validateIntake(body) {
       clientUrl,
       ownership: known && known.id === "own" ? "mailbox-domain" : "",
       lang: ["en", "es", "pt", "de", "fr", "it"].indexOf(String(src.lang || "").slice(0, 2).toLowerCase()) === -1 ? "" : String(src.lang).slice(0, 2).toLowerCase(),
+      pageLang: normalizePageLang(src.pageLang),
+      section: src.section === true,
       followUp: src.followUp === true,
-      unlisted: src.unlisted === true
+      unlisted: src.unlisted === true,
+      compareWith
     } : null
   };
 }
@@ -624,8 +694,12 @@ function judgeAttempts(rows, identity, request) {
     return { ok: false, code: "invalid", message: error.message || "Choose the size of the review." };
   }
   const used = new Set(mine.filter((row) => row.status === "run-credit-used").map((row) => row.creditId));
-  const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope));
-  const completed = mine.some((row) => row.status === "complete");
+  const compareWith = !Array.isArray(request) && request ? String(request.compareWith || "") : "";
+  // A credit bought for a comparison pays for that comparison only, and a plain credit never pays for one.
+  const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope) && String(row.compareWith || "") === compareWith);
+  // A comparison is priced as a second review, whichever device ran the first.
+  const compare = !!compareWith;
+  const completed = compare || mine.some((row) => row.status === "complete");
   if (!completed && scope.cents === 0) return { ok: true };
   if (credit) return { ok: true, consumeId: credit.id };
   const billing = completed ? "run" : "scope";
@@ -633,9 +707,11 @@ function judgeAttempts(rows, identity, request) {
   return {
     ok: false,
     code: "payment",
-    message: completed
-      ? "Another review asks for payment before it starts."
-      : "A wider or deeper review asks for payment before it starts.",
+    message: compare
+      ? "A comparison is priced as a second review and asks for payment before it starts."
+      : completed
+        ? "Another review asks for payment before it starts."
+        : "A wider or deeper review asks for payment before it starts.",
     priceUsd: priced.usd,
     count: priced.count,
     frameworks: priced.frameworks,
@@ -722,7 +798,7 @@ function decodeBody(buffer, encoding) {
   }
 }
 
-function requestOnce(target, pinned, isStopped, keepPartial) {
+function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
     let settled = false;
@@ -753,12 +829,11 @@ function requestOnce(target, pinned, isStopped, keepPartial) {
       path: target.pathname + target.search,
       method: "GET",
       timeout: PAGE_TIMEOUT_MS,
-      headers: {
+      headers: Object.assign({
         "user-agent": USER_AGENT,
         accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-        "accept-language": "en",
         connection: "close"
-      },
+      }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
       lookup: (hostname, options, callback) => {
         if (typeof options === "function") {
           callback = options;
@@ -822,7 +897,7 @@ function requestOnce(target, pinned, isStopped, keepPartial) {
   });
 }
 
-async function fetchPublic(raw, isStopped, onPulse, keepPartial) {
+async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage) {
   let current = normalizeUrl(raw);
   const started = Date.now();
   let pulses = 0;
@@ -843,7 +918,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial) {
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
       let res;
       try {
-        res = await requestOnce(current, pinned, isStopped, keepPartial);
+        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage);
       } catch (error) {
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
         throw error;
@@ -1539,6 +1614,20 @@ function propose(pages, robotsBlocked, limits, dom) {
   const face = withRendered(home.inspect || {}, dom);
   const sig = face.signals || {};
   const browser = BROWSER_FW;
+  const origin = (() => { try { return new URL(home.url).origin; } catch (error) { return ""; } })();
+  const host = origin.replace(/^https?:\/\//, "");
+  const startPath = pagePath(home.url);
+  const on = (path) => siteLabel(host, path);
+  const here = on(startPath);
+  const read = pages.filter((page) => page.inspect && page.status >= 200 && page.status < 300);
+  const inspectOf = (page) => page === home ? face : page.inspect;
+  const across = (test) => read.filter((page) => test(inspectOf(page), page)).map((page) => page.path);
+  const most = (value) => read.reduce((best, page) => (value(inspectOf(page)) > (best ? value(inspectOf(best)) : 0) ? page : best), null);
+  const sumOf = (value) => read.reduce((sum, page) => sum + (value(inspectOf(page)) || 0), 0);
+  const listed = (paths, max) => {
+    const shown = paths.slice(0, max || 3).map(on);
+    return shown.join(", ") + (paths.length > shown.length ? " and " + (paths.length - shown.length) + " more" : "");
+  };
   const names = techNames(pages);
   const stack = names.length ? names.slice(0, 6).join(", ") : "no named library";
   const fit = toolFit(face, sig, names);
@@ -1550,31 +1639,38 @@ function propose(pages, robotsBlocked, limits, dom) {
   const duplicateTitles = titles.filter((title, index) => titles.indexOf(title) !== index).length;
   const multilingual = (sig.hreflang || 0) > 0 || (face.links || []).some((url) => /\/(en|es|pt|de|fr|it|nl|ja|zh|ko|ru|ar)(-[a-z]{2})?(\/|$)|[?&](lang|hl|locale)=/i.test(url));
   const tracked = (sig.thirdParty || []).length > 0 || face.cookies.length > 0 || !!sig.consent || hasTech(names, /Google Tag Manager|Google Analytics|Meta Pixel|HubSpot|Hotjar|Clarity|Segment|Mixpanel/i);
-  const later = " A later run would open a real browser, keep the same host, and assert the step without submitting a form or generating load.";
-  addCase(cases, { id: "FN-01", layer: "Functional", title: "The reviewed URL answers over https", why: "The final URL was " + home.url + " with status " + home.status + "." + later, fw: browser });
-  addCase(cases, { id: "FN-02", layer: "Functional", title: "The document has a title", why: (face.title ? "A title is present: " + face.title + "." : "No title element was found.") + later, fw: browser });
-  addCase(cases, { id: "FN-03", layer: "Functional", title: "The document has one clear h1", why: (face.h1.length === 1 ? "One h1 was found." : face.h1.length + " h1 elements were found.") + " Heading text would be compared with the visible hero, not only the tag count.", fw: browser });
-  addCase(cases, { id: "FN-04", layer: "Functional", title: "The html element declares a language", why: (face.lang ? "lang=\"" + face.lang + "\" is present." : "No lang attribute was found.") + " The declared language would be checked against the visible copy.", fw: browser });
-  addCase(cases, { id: "FN-05", layer: "Functional", title: "Primary controls have an accessible name", why: face.buttons + " button elements were counted." + later + " Empty buttons and icon-only controls would fail.", fw: browser });
-  addCase(cases, { id: "FN-06", layer: "Functional", title: "Discovered pages keep a successful document status", why: failed.length ? failed.length + " saved pages were outside 200–399." : pages.length + " saved pages stayed in the success range." + " A regression run would fail on a new 404 or 500 inside the same path list.", fw: browser });
-  addCase(cases, { id: "FN-07", layer: "Functional", title: "Each saved page keeps a title", why: (untitled.length ? untitled.length + " saved pages had no title." : "Every saved page had a title.") + " Titles would be asserted per path, including pages reached through one link.", fw: browser });
-  if (duplicateTitles) addCase(cases, { id: "FN-08", layer: "Functional", title: "Titles stay distinct across the pages that were analyzed", why: duplicateTitles + " titles repeated inside this review. A content regression would flag two indexable URLs that share one title.", fw: browser });
-  addCase(cases, { id: "CT-01", layer: "Content", title: "The meta description is present and short enough to read", why: (face.description ? "A description of " + face.description.length + " characters is present." : "No meta description was found.") + " The useful band for a snippet is about 50 to 160 characters.", fw: browser });
-  addCase(cases, { id: "CT-02", layer: "Content", title: "A canonical link points at the preferred URL", why: (face.canonical ? "Canonical is " + face.canonical + "." : "No canonical link was found.") + " The preferred URL would be compared with the final https address of this review.", fw: browser });
-  addCase(cases, { id: "CT-03", layer: "Content", title: "Open Graph and Twitter cards describe the same page", why: (sig.openGraph ? "Open Graph tags are present." : "No Open Graph tag was found.") + (sig.twitter ? " A Twitter card tag is present." : " No Twitter card tag was found.") + " A later case would assert og:title, og:image, and the card type.", fw: browser });
-  addCase(cases, { id: "CT-04", layer: "Content", title: "Structured data is valid when the page publishes it", why: (sig.jsonLd ? sig.jsonLd + " JSON-LD block(s) were found." : "No JSON-LD block was found.") + " The type would be checked against the visible page, for example an organization, article, or product.", fw: browser });
-  addCase(cases, { id: "CT-05", layer: "Content", title: "The h1 and the title agree", why: (face.h1[0] ? "The first h1 is \"" + face.h1[0] + "\"." : "There is no h1 text to compare.") + " The title and the h1 do not have to be identical, and they should not describe different pages.", fw: browser });
+  const later = " A later run would open " + here + " in a real browser, stay on " + host + ", and assert the step without submitting a form or generating load.";
+  const elsewhere = (paths, what) => {
+    const other = paths.filter((path) => path !== startPath);
+    return other.length ? " " + what + " " + listed(other) + "." : "";
+  };
+  addCase(cases, { id: "FN-01", layer: "Functional", title: here + " answers over https", why: "The final URL was " + home.url + " with status " + home.status + "." + later, fw: browser });
+  addCase(cases, { id: "FN-02", layer: "Functional", title: here + " has a title", why: (face.title ? "The title on " + here + " is \"" + face.title + "\"." : "No title element was found on " + here + ".") + later, fw: browser });
+  const notOneH1 = across((page) => (page.h1 || []).length !== 1);
+  addCase(cases, { id: "FN-03", layer: "Functional", title: here + " has one clear h1 above its h2 headings", why: face.h1.length + " h1 and " + (sig.h2 || 0) + " h2 elements were counted on " + here + "." + elsewhere(notOneH1, "Pages without exactly one h1:") + " Heading text would be compared with the visible hero, and the order checked in the rendered accessibility tree.", fw: browser, pages: notOneH1.slice(0, 12) });
+  const noLang = across((page) => !page.lang);
+  addCase(cases, { id: "FN-04", layer: "Functional", title: "The html element on " + here + " declares the language a person reads", why: (face.lang ? "lang=\"" + face.lang + "\" is declared on " + here + (face.textLang && face.lang.slice(0, 2).toLowerCase() !== face.textLang ? ", while the visible text reads as " + face.textLang : "") + "." : "No lang attribute was found on " + here + ".") + elsewhere(noLang, "Also without lang:") + " A bilingual site would need hreflang and a visible language switch as well.", fw: browser, pages: noLang.slice(0, 12) });
+  addCase(cases, { id: "FN-05", layer: "Functional", title: "Buttons on " + here + " have an accessible name", why: face.buttons + " button elements were counted on " + here + "." + later + " Empty buttons and icon-only controls would fail.", fw: browser });
+  addCase(cases, { id: "FN-06", layer: "Functional", title: "Every page analyzed on " + host + " keeps a successful status", why: failed.length ? failed.length + " of " + pages.length + " pages were outside 200–399: " + failed.slice(0, 4).map((page) => on(page.path) + " answered " + (page.status || page.error)).join(", ") + "." : pages.length + " pages on " + host + " stayed in the success range. A regression run would fail on a new 404 or 500 on the same paths.", fw: browser, pages: failed.map((page) => page.path).slice(0, 12) });
+  addCase(cases, { id: "FN-07", layer: "Functional", title: "Each page on " + host + " keeps a title", why: (untitled.length ? untitled.length + " pages had no title: " + listed(untitled.map((page) => page.path)) + "." : "Every page analyzed on " + host + " had a title.") + " Titles would be asserted per path, including pages reached through one link.", fw: browser, pages: untitled.map((page) => page.path).slice(0, 12) });
+  if (duplicateTitles) addCase(cases, { id: "FN-08", layer: "Functional", title: "Titles stay distinct across the pages analyzed on " + host, why: duplicateTitles + " titles repeated on " + host + ". A content regression would flag two indexable URLs that share one title.", fw: browser });
+  const noDescription = across((page) => !page.description);
+  addCase(cases, { id: "CT-01", layer: "Content", title: "The meta description on " + here + " is present and 50 to 160 characters", why: (face.description ? "The description on " + here + " has " + face.description.length + " characters." : "No meta description was found on " + here + ".") + elsewhere(noDescription, "Also without one:") + " The useful band for a snippet is about 50 to 160 characters.", fw: browser, pages: noDescription.slice(0, 12) });
+  const canonicalAway = face.seo && face.seo.canonicalAbs && face.seo.canonicalAbs.replace(/\/$/, "") !== home.url.replace(/\/$/, "") ? face.seo.canonicalAbs : "";
+  addCase(cases, { id: "CT-02", layer: "Content", title: "The canonical link on " + here + " points at the preferred URL", why: (face.canonical ? "Canonical is " + face.canonical + (canonicalAway ? ", which is not the final URL " + home.url : "") + "." : "No canonical link was found on " + here + ".") + " The preferred URL would be compared with " + home.url + ".", fw: browser });
+  const social = face.social || {};
+  addCase(cases, { id: "CT-03", layer: "Content", title: "Title, description, canonical, and social cards on " + here + " describe the same page", why: (sig.openGraph ? "Open Graph is present" + (social.ogImage ? " with an image" : " without og:image") + (social.ogUrl && social.ogUrl.replace(/\/$/, "") !== home.url.replace(/\/$/, "") ? ", and og:url is " + social.ogUrl : "") + "." : "No Open Graph tag was found on " + here + ".") + (social.twitterCard ? " The Twitter card is " + social.twitterCard + "." : sig.twitter ? " A Twitter card tag is present." : " No Twitter card tag was found.") + " A later case would assert og:title, og:image, og:url, and the card type against the title and canonical.", fw: browser });
+  addCase(cases, { id: "CT-04", layer: "Content", title: "Structured data on " + here + " is valid when the page publishes it", why: (sig.jsonLd ? sig.jsonLd + " JSON-LD block(s) were found on " + here + "." : "No JSON-LD block was found on " + here + ".") + " The type would be checked against the visible page, for example an organization, article, or product.", fw: browser });
+  addCase(cases, { id: "CT-05", layer: "Content", title: "The h1 and the title on " + here + " agree", why: (face.h1[0] ? "The first h1 is \"" + face.h1[0] + "\"" + (face.title ? " and the title is \"" + face.title + "\"" : "") + "." : "There is no h1 text on " + here + " to compare.") + " The two do not have to be identical, and they should not describe different pages.", fw: browser });
   const capPages = (limits && limits.maxPages) || MAX_PAGES;
-  const capDepth = (limits && limits.maxDepth) || MAX_DEPTH;
-  addCase(cases, { id: "LK-01", layer: "Links", title: "Same-host links discovered from the start page resolve", why: face.links.length + " same-host links were listed" + (face.renderedLinks ? ", " + face.renderedLinks + " of them only after JavaScript ran" : "") + ". This review opened at most " + capPages + " of them and did not click them. A later run would request each href and accept only an HTML document on this host.", fw: browser });
-  addCase(cases, { id: "LK-02", layer: "Links", title: "The crawl stays inside the page cap and the host", why: pages.length + " HTML pages were saved, " + capDepth + " links deep at most, with a cap of " + capPages + " pages. A regression would fail if a link left the host or if the cap stopped hiding a broken primary path.", fw: browser });
-  addCase(cases, { id: "LK-03", layer: "Links", title: "A crawler honors robots.txt for linked pages", why: (robotsBlocked ? robotsBlocked + " linked URLs were skipped because robots.txt disallows them for this agent." : "No linked URL was skipped for robots.txt during this review.") + " The start URL is still fetched. A later crawler case would log each skipped path.", fw: browser });
+  addCase(cases, { id: "LK-01", layer: "Links", title: "Links from " + here + " to other pages on " + host + " resolve", why: face.links.length + " same-host links were listed on " + here + (face.renderedLinks ? ", " + face.renderedLinks + " of them only after JavaScript ran" : "") + ". This review opened at most " + capPages + " of them and did not click them. A later run would request each href and accept only an HTML document on " + host + ".", fw: browser });
+  if (robotsBlocked) addCase(cases, { id: "LK-03", layer: "Links", title: "robots.txt on " + host + " still lets crawlers reach the pages that matter", why: robotsBlocked + " linked URLs were skipped because robots.txt on " + host + " disallows them. A later crawler case would log each skipped path and flag any that the navigation promotes.", fw: browser });
   journeys(pages, dom).forEach((step, index) => {
     addCase(cases, {
       id: "JR-0" + (index + 1),
       layer: "Functional",
-      title: "Clicking “" + step.text + "” opens " + step.target,
-      why: "The start page " + (step.where === "main" ? "content" : "navigation") + " links “" + step.text + "” to " + step.target + " (" + step.selector + ")." +
+      title: "Clicking “" + step.text + "” on " + here + " opens " + on(step.target),
+      why: here + " " + (step.where === "main" ? "content" : "navigation") + " links “" + step.text + "” to " + on(step.target) + " (" + step.selector + ")." +
         (step.h1 ? " The page analyzed there has the heading “" + step.h1 + "”." : "") +
         " A browser run would click the link at 1280 px, wait for " + step.target + (step.h1 ? ", and check the heading" : "") + ". Nothing is submitted." +
         (dom.banner ? " " + (dom.banner === "A cookie banner" ? "A cookie banner" : "The " + dom.banner + " banner") + " covers the first visit, so close it before the click." : ""),
@@ -1582,101 +1678,134 @@ function propose(pages, robotsBlocked, limits, dom) {
       journey: step
     });
   });
-  if (face.links.length) addCase(cases, { id: "LK-04", layer: "Links", title: "In-page anchors and repeated hrefs stay intentional", why: "Same-host hrefs were deduped before the crawl. A UI case would open repeated navigation items once and check that a hash target exists on the page.", fw: browser });
-  if (face.forms) {
-    addCase(cases, { id: "FM-01", layer: "Forms", title: "Visible fields have labels", why: face.forms + " form(s) are present. " + face.unlabeled + " controls had no label element, aria-label, aria-labelledby, or title. Nothing was submitted. A later case would pair each control with its label.", fw: browser });
-    addCase(cases, { id: "FM-02", layer: "Forms", title: "A later functional run uses a test account the owner provides", why: "Submitting the form is a different act from reading it. The account, the fixture data, and the expected confirmation stay outside this review.", fw: browser });
-    addCase(cases, { id: "FM-04", layer: "Forms", title: "Required fields block an empty submit", why: sig.required + " inputs were marked required in the HTML. A browser case would submit the empty form and expect the constraint message, without creating a record.", fw: browser });
+  const formPages = across((page) => (page.forms || 0) > 0);
+  if (formPages.length) {
+    const worstForm = most((page) => (page.forms ? 1 : 0) + (page.unlabeled || 0) * 2) || home;
+    const formAt = worstForm.path || startPath;
+    const unlabeled = sumOf((page) => page.unlabeled);
+    const requiredPages = across((page) => ((page.signals && page.signals.required) || 0) > 0);
+    addCase(cases, { id: "FM-01", layer: "Forms", title: "Fields on " + on(formAt) + " have labels", why: "Forms were found on " + listed(formPages) + ". " + unlabeled + " controls across them had no label element, aria-label, aria-labelledby, or title" + ((inspectOf(worstForm).unlabeled || 0) ? ", " + inspectOf(worstForm).unlabeled + " of them on " + on(formAt) : "") + ". Nothing was submitted. A later case would pair each control with its label, using a test account the owner provides for anything behind a submit.", fw: browser, path: formAt, pages: formPages.slice(0, 12) });
+    const requiredAt = requiredPages[0] || formAt;
+    addCase(cases, { id: "FM-04", layer: "Forms", title: "Required fields on " + on(requiredAt) + " block an empty submit", why: sumOf((page) => page.signals && page.signals.required) + " inputs were marked required in the HTML" + (requiredPages.length ? " on " + listed(requiredPages) : "") + ". A browser case would submit the empty form and expect the constraint message, without creating a record.", fw: browser, path: requiredAt, pages: requiredPages.slice(0, 12) });
   }
-  if (face.password) addCase(cases, { id: "FM-03", layer: "Forms", title: "The sign-in form is reviewed only with credentials the owner issued", why: "A password field is present. This review did not type in it. A later case would use a disposable account and would assert the error for a wrong password.", fw: browser });
-  if (sig.search) addCase(cases, { id: "FM-05", layer: "Forms", title: "Search accepts a known term and an empty term", why: "A search control was detected in the HTML. The case would submit one known term and one empty term, and it would not scrape the result set.", fw: browser });
-  if (sig.fileInput) addCase(cases, { id: "FM-06", layer: "Forms", title: "File inputs state an accepted type before a file is chosen", why: "A file input is present. The case would assert the accept attribute and would not upload a file during this proposal.", fw: browser });
-  addCase(cases, { id: "A11Y-01", layer: "Accessibility", title: "Images expose a text alternative", why: face.images + " images, " + face.missingAlt + " without an alt attribute. Informative images need text. Decorative images need an empty alt.", fw: browser });
-  addCase(cases, { id: "A11Y-02", layer: "Accessibility", title: "The page has a main landmark and a skip link", why: (sig.main ? "A main element is present." : "No main element was found.") + (sig.skip ? " A skip link was found." : " No skip link was found.") + (fit["axe-core"] ? " The review's headless browser runs axe-core on the rendered page." : ""), fw: browser, also: named(["axe-core"]) });
-  addCase(cases, { id: "A11Y-03", layer: "Accessibility", title: "Heading order follows h1 then h2", why: face.h1.length + " h1 and " + (sig.h2 || 0) + " h2 elements were counted. The order would be checked in the rendered accessibility tree.", fw: browser });
-  addCase(cases, { id: "A11Y-04", layer: "Accessibility", title: "Text contrast and keyboard focus are checked on the rendered page", why: "Contrast is measured by axe-core in the review's headless browser. Focus order still needs a person: the case would tab from the top of the page and record the focus ring.", fw: browser });
-  if (sig.iframes) addCase(cases, { id: "A11Y-05", layer: "Accessibility", title: "Frames expose a title", why: (sig.iframes || 0) + " iframe(s), " + (sig.untitledFrames || 0) + " without a title attribute. Each embedded document needs a name a screen reader can announce.", fw: browser });
+  const passwordPages = across((page) => !!page.password);
+  if (passwordPages.length) addCase(cases, { id: "FM-03", layer: "Forms", title: "The sign-in form on " + on(passwordPages[0]) + " is reviewed only with credentials the owner issued", why: "A password field is on " + listed(passwordPages) + ". This review did not type in it. A later case would use a disposable account and would assert the error for a wrong password.", fw: browser, path: passwordPages[0], pages: passwordPages.slice(0, 12) });
+  const searchPages = across((page) => !!(page.signals && page.signals.search));
+  if (searchPages.length) addCase(cases, { id: "FM-05", layer: "Forms", title: "Search on " + on(searchPages[0]) + " accepts a known term and an empty term", why: "A search control was found on " + listed(searchPages) + ". The case would submit one known term and one empty term, and it would not scrape the result set.", fw: browser, path: searchPages[0], pages: searchPages.slice(0, 12) });
+  const filePages = across((page) => !!(page.signals && page.signals.fileInput));
+  if (filePages.length) addCase(cases, { id: "FM-06", layer: "Forms", title: "File inputs on " + on(filePages[0]) + " state an accepted type before a file is chosen", why: "A file input is on " + listed(filePages) + ". The case would assert the accept attribute and would not upload a file.", fw: browser, path: filePages[0], pages: filePages.slice(0, 12) });
+  const altPages = across((page) => (page.missingAlt || 0) > 0);
+  const worstAlt = most((page) => page.missingAlt || 0);
+  addCase(cases, { id: "A11Y-01", layer: "Accessibility", title: "Images on " + host + " expose a text alternative", why: face.images + " images on " + here + ", " + face.missingAlt + " without an alt attribute." + (altPages.length ? " " + sumOf((page) => page.missingAlt) + " images without alt across " + listed(altPages) + (worstAlt ? ", most on " + on(worstAlt.path) : "") + "." : "") + " Informative images need text. Decorative images need an empty alt.", fw: browser, path: worstAlt && worstAlt.path !== startPath ? worstAlt.path : undefined, pages: altPages.slice(0, 12) });
+  addCase(cases, { id: "A11Y-02", layer: "Accessibility", title: here + " has a main landmark and a skip link", why: (sig.main ? "A main element is present on " + here + "." : "No main element was found on " + here + ".") + (sig.skip ? " A skip link was found." : " No skip link was found.") + (fit["axe-core"] ? " The review's headless browser runs axe-core on the rendered page." : ""), fw: browser, also: named(["axe-core"]) });
+  addCase(cases, { id: "A11Y-04", layer: "Accessibility", title: "Text contrast and keyboard focus on " + here + " hold up", why: "Contrast is measured by axe-core in the review's headless browser. Focus order still needs a person: the case would tab from the top of " + here + " and record the focus ring.", fw: browser });
+  const framePages = across((page) => ((page.signals && page.signals.untitledFrames) || 0) > 0);
+  if (sig.iframes || framePages.length) addCase(cases, { id: "A11Y-05", layer: "Accessibility", title: "Frames on " + host + " expose a title", why: (sig.iframes || 0) + " iframe(s) on " + here + ", " + (sig.untitledFrames || 0) + " without a title attribute." + elsewhere(framePages, "Untitled frames also on:") + " Each embedded document needs a name a screen reader can announce.", fw: browser, pages: framePages.slice(0, 12) });
   const legal = face.legal || {};
-  addCase(cases, { id: "A11Y-06", layer: "Accessibility", title: "An accessibility statement is linked from every page", why: (legal.accessibility ? "The start page links \"" + (legal.accessibility.text || legal.accessibility.href) + "\"." : "The start page links no accessibility statement.") + " The European Accessibility Act has required one from shops and services sold to EU consumers since June 2025. The case would follow the footer link on each template and check the page names a contact for access problems.", fw: browser });
-  addCase(cases, { id: "SEC-01", layer: "Security", title: "HTTPS is the only way in", why: "The review refused any URL that was not https on port 443. A browser case would also request the http address and expect a redirect to https.", fw: browser });
-  addCase(cases, { id: "SEC-02", layer: "Security", title: "HSTS is set", why: (face.headers.hsts ? "strict-transport-security is present." : "strict-transport-security was absent.") + " The later assertion is max-age, includeSubDomains, and a fresh profile that stays on https.", fw: browser });
-  addCase(cases, { id: "SEC-03", layer: "Security", title: "A content security policy is set", why: (face.headers.csp ? "content-security-policy is present." : "content-security-policy was absent.") + " The policy would be checked for script-src and frame-ancestors, not only for the header name.", fw: browser });
-  addCase(cases, { id: "SEC-04", layer: "Security", title: "nosniff and a frame policy are set", why: "x-content-type-options: " + (face.headers.nosniff || "absent") + ". x-frame-options: " + (face.headers.frame || "absent") + ". A framed copy of the page would be expected to fail when a frame policy is present.", fw: browser });
-  addCase(cases, { id: "SEC-05", layer: "Security", title: "Referrer-Policy is set", why: (face.headers.referrer ? "referrer-policy is " + face.headers.referrer + "." : "referrer-policy was absent.") + " The later case would open an outbound link and confirm the referrer is no wider than the policy.", fw: browser });
+  addCase(cases, { id: "A11Y-06", layer: "Accessibility", title: "An accessibility statement is linked from every page on " + host, why: (legal.accessibility ? here + " links \"" + (legal.accessibility.text || legal.accessibility.href) + "\"." : here + " links no accessibility statement.") + " The European Accessibility Act has required one from shops and services sold to EU consumers since June 2025. The case would follow the footer link on each template and check the page names a contact for access problems.", fw: browser });
+  const zoomPages = across((page) => !!(page.signals && page.signals.zoomBlocked));
+  if (zoomPages.length) addCase(cases, { id: "A11Y-07", layer: "Accessibility", title: "Pinch zoom is allowed on " + on(zoomPages[0]), why: "The viewport meta tag on " + listed(zoomPages) + " sets user-scalable=no or a maximum scale of 1. People with low vision cannot enlarge the text on a phone.", fw: browser, path: zoomPages[0], pages: zoomPages.slice(0, 12), keys: ["a11y-zoom"], verdict: "fail", severity: "medium", check: { kind: "count", path: zoomPages[0], selector: "meta[name=\"viewport\"][content*=\"user-scalable=no\" i], meta[name=\"viewport\"][content*=\"user-scalable=0\" i], meta[name=\"viewport\"][content*=\"maximum-scale=1\" i]", op: "eq", n: 0 } });
+  const tabPages = across((page) => ((page.signals && page.signals.positiveTabindex) || 0) > 0);
+  if (tabPages.length) addCase(cases, { id: "A11Y-08", layer: "Accessibility", title: "Keyboard order on " + on(tabPages[0]) + " follows the page, not a positive tabindex", why: sumOf((page) => page.signals && page.signals.positiveTabindex) + " elements set tabindex above 0 on " + listed(tabPages) + ". They jump the keyboard ahead of the rest of the page.", fw: browser, path: tabPages[0], pages: tabPages.slice(0, 12), keys: ["a11y-tabindex"], verdict: "risk", severity: "low", check: { kind: "count", path: tabPages[0], selector: "[tabindex]:not([tabindex=\"0\"]):not([tabindex^=\"-\"])", op: "eq", n: 0 } });
+  addCase(cases, { id: "SEC-01", layer: "Security", title: "http://" + host + "/ redirects to https://" + host + "/", why: "The review read " + home.url + " over https. A browser case would request http://" + host + "/ and expect one redirect to the https address, with no page served over plain http.", fw: browser, keys: ["sec-http"] });
+  addCase(cases, { id: "SEC-02", layer: "Security", title: here + " sets HSTS", why: (face.headers.hsts ? "strict-transport-security on " + here + " is " + face.headers.hsts + "." : "strict-transport-security was absent on " + here + ".") + " The later assertion is max-age, includeSubDomains, and a fresh profile that stays on https.", fw: browser });
+  const csp = String(face.headers.csp || "");
+  const cspGaps = csp ? [/'unsafe-inline'/.test(csp) && !/'nonce-|'sha(256|384|512)-|'strict-dynamic'/.test(csp) ? "'unsafe-inline' without a nonce or hash" : "", /'unsafe-eval'/.test(csp) ? "'unsafe-eval'" : "", !/frame-ancestors/.test(csp) ? "no frame-ancestors" : "", !/(default|script)-src/.test(csp) ? "no script-src or default-src" : "", /(default|script)-src[^;]*\s\*(\s|;|$)/.test(csp) ? "a wildcard script source" : ""].filter(Boolean) : [];
+  addCase(cases, { id: "SEC-03", layer: "Security", title: here + " sends a content security policy that limits scripts", why: (csp ? "content-security-policy is present on " + here + (cspGaps.length ? ", with " + cspGaps.join(", ") : " and names script sources and frame-ancestors") + "." : "content-security-policy was absent on " + here + ".") + " The policy would be checked for script-src and frame-ancestors, not only for the header name.", fw: browser });
+  addCase(cases, { id: "SEC-04", layer: "Security", title: here + " sets nosniff and a frame policy", why: "x-content-type-options: " + (face.headers.nosniff || "absent") + ". x-frame-options: " + (face.headers.frame || "absent") + ". A framed copy of " + here + " would be expected to fail when a frame policy is present.", fw: browser });
+  addCase(cases, { id: "SEC-05", layer: "Security", title: here + " sets Referrer-Policy", why: (face.headers.referrer ? "referrer-policy on " + here + " is " + face.headers.referrer + "." : "referrer-policy was absent on " + here + ".") + " The later case would open an outbound link and confirm the referrer is no wider than the policy.", fw: browser });
   if (face.cookies.length) {
     const loose = face.cookies.filter((cookie) => !cookie.secure || !cookie.httpOnly);
     const site = face.cookies.filter((cookie) => !cookie.sameSite);
-    addCase(cases, { id: "SEC-06", layer: "Security", title: "Cookies are Secure and HttpOnly where they carry a session", why: face.cookies.length + " cookies were set. " + loose.length + " were missing Secure or HttpOnly. " + site.length + " had no SameSite attribute.", fw: browser });
+    const nameOf = (list) => list.slice(0, 4).map((cookie) => cookie.name).filter(Boolean).join(", ");
+    addCase(cases, { id: "SEC-06", layer: "Security", title: "Cookies set by " + here + " are Secure and HttpOnly where they carry a session", why: face.cookies.length + " cookies were set by " + here + ". " + loose.length + " were missing Secure or HttpOnly" + (loose.length && nameOf(loose) ? " (" + nameOf(loose) + ")" : "") + ". " + site.length + " had no SameSite attribute" + (site.length && nameOf(site) ? " (" + nameOf(site) + ")" : "") + ".", fw: browser });
   }
-  addCase(cases, { id: "SEC-07", layer: "Security", title: "Response headers do not need to reveal the server build", why: (face.headers.server ? "Server header: " + face.headers.server + "." : "No Server header was sent.") + " The case records the header and does not treat a product name as a vulnerability by itself.", fw: browser });
-  addCase(cases, { id: "SEC-08", layer: "Security", title: "A permissions policy limits powerful features", why: (sig.permissions ? "A permissions policy is present." : "No permissions-policy header was found.") + " Camera, microphone, and geolocation would be expected to stay disabled unless the page needs them.", fw: browser });
-  addCase(cases, { id: "SEC-09", layer: "Security", title: "The HTML does not reference plain http resources", why: (sig.mixed || 0) + " scripts, images, frames, or stylesheets load over plain http. Mixed content would be confirmed in a browser console, not by downloading those URLs here.", fw: browser });
+  addCase(cases, { id: "SEC-07", layer: "Security", title: "Response headers from " + host + " do not reveal the server build", why: (face.headers.server ? "Server header: " + face.headers.server + "." : "No Server header was sent by " + host + ".") + ((face.rawHeaders && face.rawHeaders.poweredBy) ? " x-powered-by: " + face.rawHeaders.poweredBy + "." : "") + " The case records the header and does not treat a product name as a vulnerability by itself.", fw: browser });
+  addCase(cases, { id: "SEC-08", layer: "Security", title: "A permissions policy on " + here + " limits powerful features", why: (sig.permissions ? "A permissions policy is present on " + here + "." : "No permissions-policy header was found on " + here + ".") + " Camera, microphone, and geolocation would be expected to stay disabled unless the page needs them.", fw: browser });
+  const mixedPages = across((page) => ((page.signals && page.signals.mixed) || 0) > 0);
+  addCase(cases, { id: "SEC-09", layer: "Security", title: "Pages on " + host + " load nothing over plain http", why: sumOf((page) => page.signals && page.signals.mixed) + " scripts, images, frames, or stylesheets load over plain http" + (mixedPages.length ? " on " + listed(mixedPages) : " on the pages analyzed") + ". Mixed content would be confirmed in a browser console, not by downloading those URLs here.", fw: browser, pages: mixedPages.slice(0, 12) });
   const libs = [...new Set(pages.reduce((all, page) => all.concat((page.inspect && page.inspect.libraries) || []), (dom && dom.libraries) || []).map((row) => row.name + " " + row.version))];
-  if (libs.length) addCase(cases, { id: "SEC-10", layer: "Security", title: "Front-end libraries have no known flaw", why: "The review found " + libs.slice(0, 5).join(", ") + " from script addresses, banners or page globals. The case would compare each version with the retire.js list on every release.", fw: browser });
-  addCase(cases, { id: "PR-01", layer: "Privacy", title: "A privacy notice is linked from the page", why: (legal.privacy ? "The start page links \"" + (legal.privacy.text || legal.privacy.href) + "\"." : sig.privacyLink ? "The HTML mentions a privacy or legal destination, but no link to a privacy notice was found." : "No privacy or legal wording was found in the markup.") + " Confirm the link in a browser before treating it as found.", fw: browser });
-  if (legal.imprint || germanSpeaking(face.lang, face.textLang, home.url)) addCase(cases, { id: "PR-04", layer: "Privacy", title: "An imprint names who runs the site", why: (legal.imprint ? "The start page links \"" + (legal.imprint.text || legal.imprint.href) + "\"." : "The start page links no imprint.") + " German-speaking sites must name the provider, an address and a contact (§ 5 DDG in Germany, § 5 ECG in Austria). The case would open the imprint from every template.", fw: browser });
-  addCase(cases, { id: "PR-02", layer: "Privacy", title: "Third-party scripts are named before they run", why: (sig.thirdParty || []).length + " other hosts were referenced by script src" + ((sig.thirdParty || []).length ? " (" + sig.thirdParty.slice(0, 4).join(", ") + ")." : ".") + " A privacy case would load the page with tags blocked and then with consent.", fw: browser });
-  if (tracked) addCase(cases, { id: "PR-03", layer: "Privacy", title: "A consent notice is present when tags or cookies appear before a choice", why: (sig.consent ? "Cookie or consent wording was found in the HTML." : "No cookie or consent wording was found.") + " The case would assert the notice before analytics storage is written.", fw: browser });
-  addCase(cases, { id: "SEO-01", layer: "SEO", title: "Title, description, canonical, and social tags agree", why: "Title and description were read from the HTML. Open Graph tags would be asserted in a later browser case against the same final URL.", fw: browser });
-  if (multilingual) addCase(cases, { id: "SEO-02", layer: "SEO", title: "Language alternates are explicit when the site has more than one language", why: (sig.hreflang || 0) + " hreflang alternate(s) were found. Each alternate would point at an https URL and include a self reference.", fw: browser });
-  addCase(cases, { id: "SEO-03", layer: "SEO", title: "A sitemap is advertised from the page or robots.txt", why: (sig.sitemap ? "The word sitemap appears in the HTML." : "No sitemap reference was seen in the HTML.") + " The review fetches the sitemap from robots.txt or /sitemap.xml and compares it with the pages it read.", fw: browser });
+  if (libs.length) addCase(cases, { id: "SEC-10", layer: "Security", title: "Front-end libraries on " + host + " have no known flaw", why: "The review found " + libs.slice(0, 5).join(", ") + " from script addresses, banners or page globals. The case would compare each version with the retire.js list on every release.", fw: browser });
+  const sriHosts = (face.sri && face.sri.missing) || [];
+  if (sriHosts.length) addCase(cases, { id: "SEC-14", layer: "Security", title: "Scripts from other hosts on " + here + " carry an integrity hash", why: "Scripts from " + sriHosts.slice(0, 4).join(", ") + " load on " + here + " without an integrity attribute. A changed file on one of those hosts would run on " + host + " unchecked. The case would assert integrity and crossorigin on each pinned script.", fw: browser, keys: ["sec-sri"], verdict: "risk", severity: "low" });
+  const formHosts = (face.resources && face.resources.forms) || [];
+  if (formHosts.length) addCase(cases, { id: "SEC-15", layer: "Security", title: "Forms on " + here + " post only to hosts the owner names", why: "A form on " + here + " posts to " + formHosts.slice(0, 3).join(", ") + ", not to " + host + ". The case would check that the host is the owner's processor, uses https, and is named in the privacy notice. Nothing is submitted.", fw: browser });
+  addCase(cases, { id: "PR-01", layer: "Privacy", title: "A privacy notice is linked from " + here, why: (legal.privacy ? here + " links \"" + (legal.privacy.text || legal.privacy.href) + "\"." : sig.privacyLink ? "The HTML of " + here + " mentions a privacy or legal destination, but no link to a privacy notice was found." : "No privacy or legal wording was found on " + here + ".") + " Confirm the link in a browser before treating it as found.", fw: browser });
+  if (legal.imprint || germanSpeaking(face.lang, face.textLang, home.url)) addCase(cases, { id: "PR-04", layer: "Privacy", title: "An imprint on " + host + " names who runs the site", why: (legal.imprint ? here + " links \"" + (legal.imprint.text || legal.imprint.href) + "\"." : here + " links no imprint.") + " German-speaking sites must name the provider, an address and a contact (§ 5 DDG in Germany, § 5 ECG in Austria). The case would open the imprint from every template.", fw: browser });
+  addCase(cases, { id: "PR-02", layer: "Privacy", title: "Third-party scripts on " + here + " are named before they run", why: (sig.thirdParty || []).length + " other hosts were referenced by script src on " + here + ((sig.thirdParty || []).length ? " (" + sig.thirdParty.slice(0, 4).join(", ") + ")." : ".") + " A privacy case would load the page with tags blocked and then with consent.", fw: browser });
+  if (tracked) addCase(cases, { id: "PR-03", layer: "Privacy", title: "A consent notice on " + here + " appears before tags or cookies", why: (sig.consent ? "Cookie or consent wording was found on " + here + "." : "No cookie or consent wording was found on " + here + ".") + " The case would assert the notice before analytics storage is written.", fw: browser });
+  if (multilingual) addCase(cases, { id: "SEO-02", layer: "SEO", title: "Language alternates on " + host + " are explicit", why: (sig.hreflang || 0) + " hreflang alternate(s) were found on " + here + ". Each alternate would point at an https URL on " + host + " and include a self reference.", fw: browser });
+  addCase(cases, { id: "SEO-03", layer: "SEO", title: "A sitemap for " + host + " is advertised in robots.txt", why: (sig.sitemap ? "The word sitemap appears on " + here + "." : "No sitemap reference was seen on " + here + ".") + " The review fetches the sitemap from robots.txt or /sitemap.xml and compares it with the pages it read.", fw: browser });
   const types = [].concat.apply([], ((face.schema && face.schema.items) || []).map((item) => item.types || []));
   const entityType = types.find((type) => /^(\w*Organization|Corporation|LocalBusiness|Person|NGO|Store|Restaurant|ProfessionalService|OnlineBusiness)$/.test(type));
-  addCase(cases, { id: "GEO-01", layer: "GEO", title: "AI answer and search crawlers may read the site", why: "robots.txt would be read for OAI-SearchBot, ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot, and Claude-User. A full Disallow for any of them keeps the site out of the answers that product writes. Training crawlers are a separate choice and are not asserted here.", fw: browser });
-  addCase(cases, { id: "GEO-02", layer: "GEO", title: "llms.txt lists the pages that matter, under a one-line summary", why: "The case fetches /llms.txt and expects a > summary line, the layout llmstxt.org proposes. It is a convention some AI tools read, not a ranking factor.", fw: browser });
-  addCase(cases, { id: "GEO-03", layer: "GEO", title: "The main heading and text are in the HTML before scripts run", why: (face.words || 0) + " words of text were in the served HTML" + (sig.appShell ? ", around an empty app root." : ".") + " Most AI crawlers do not run JavaScript, so they quote only what the server sends.", fw: browser });
-  addCase(cases, { id: "GEO-04", layer: "GEO", title: "An Organization or Person entity names who is behind the site", why: (entityType ? "A " + entityType + " entity is published in JSON-LD." : types.length ? "JSON-LD is present (" + types.slice(0, 4).join(", ") + ") without an Organization or Person entity." : "No JSON-LD was found on the start page.") + " AI answers use the entity to name the brand, its logo, and its profiles.", fw: browser });
-  addCase(cases, { id: "GEO-05", layer: "GEO", title: "Questions customers ask are answered under question headings or FAQ markup", why: (face.questionHeadings || 0) + " heading(s) on the start page are phrased as a question" + (types.indexOf("FAQPage") !== -1 ? ", and FAQPage data is present." : ".") + " Answer engines favour a short answer under the question it answers.", fw: browser });
-  addCase(cases, { id: "GEO-06", layer: "GEO", title: "Content pages show when they were published or changed", why: (face.dated ? "A published or modified date is present on the start page." : "No published or modified date was found on the start page.") + (face.author ? " An author is named." : " No author is named, which the report lists separately.") + " Search engines and AI answers weigh whether a page is current.", fw: browser });
-  addCase(cases, { id: "PF-01", layer: "Performance", title: "The HTML document arrives inside a stated budget", why: "This request took " + home.ms + " ms and " + face.bytes + " bytes. That is one fetch, not a load test. A budget case would fail above 800 ms or 1.5 MB for the document alone. Lighthouse, through PageSpeed Insights, scores the rendered start page in the Performance findings.", fw: browser.concat(LOAD_FW), also: named(["Lighthouse"]) });
-  addCase(cases, { id: "PF-02", layer: "Performance", title: "Script and stylesheet counts stay inside a budget", why: face.scripts + " external scripts and " + face.styles + " stylesheets were referenced. The later case would record the counts and the render-blocking ones.", fw: browser.concat(LOAD_FW) });
-  addCase(cases, { id: "PF-03", layer: "Performance", title: "The slowest page in this review stays inside the same budget", why: "The slowest saved response was " + (slow.path || home.url) + " at " + (slow.ms || 0) + " ms. The trend across the crawl is the order the pages were opened, not a history of previous days.", fw: browser.concat(LOAD_FW) });
-  addCase(cases, { id: "LD-01", layer: "Load", title: "An authorised baseline could repeat the document fetch", why: "JMeter, Gatling, or k6 would need written permission, a verified domain, and a scheduled window. This review did not open a single virtual user. The baseline would be one request per second for a few minutes.", fw: LOAD_FW });
-  addCase(cases, { id: "LD-02", layer: "Load", title: "A ramp would add users only inside an agreed ceiling", why: "The proposal is a short ramp, then a hold, then a stop. Error rate and response time would be the gates. No profile is generated by this review.", fw: LOAD_FW });
-  addCase(cases, { id: "LD-03", layer: "Load", title: "A spike would last seconds, not an open-ended flood", why: "A spike case belongs on a staging host or a window the owner schedules. The public analysis here is still one document at a time.", fw: LOAD_FW });
-  addCase(cases, { id: "MB-01", layer: "Mobile", title: "The layout holds at a phone width", why: "A viewport meta tag " + (sig.viewport ? "is present." : "was not found.") + " Appium or Maestro would open a phone profile later and compare the same h1 and primary link.", fw: browser.concat(MOBILE_FW) });
-  addCase(cases, { id: "MB-02", layer: "Mobile", title: "The same primary path works in a tablet width", why: "Width, orientation, and a touch scroll would be checked in Appium, Maestro, or a browser device profile. This HTML analysis did not resize a window.", fw: browser.concat(MOBILE_FW) });
-  addCase(cases, { id: "I18N-01", layer: "Internationalization", title: "The lang attribute matches the copy a person reads", why: (face.lang ? "Declared language: " + face.lang + "." : "No language was declared.") + " A bilingual page would need hreflang plus a visible language switch.", fw: browser });
-  if (multilingual) addCase(cases, { id: "I18N-02", layer: "Internationalization", title: "Direction and locale formats stay with the language", why: (sig.hreflang || 0) + " alternate language links were counted. Dates, currency, and layout direction would be asserted only for locales the site claims.", fw: browser });
-  addCase(cases, { id: "RS-01", layer: "Resilience", title: "A missing path returns a deliberate not-found page", why: (failed.length ? "This review already saved a non-success status." : "This review did not save a 404.") + " A later case would request one unknown path and expect a branded not-found document, not a stack trace.", fw: browser });
-  addCase(cases, { id: "RS-02", layer: "Resilience", title: "A slow document fails the case instead of hanging the suite", why: "This review stops a single page at " + Math.round(PAGE_TIMEOUT_MS / 1000) + " seconds. A suite would use its own timeout and a screenshot of the last frame.", fw: browser });
-  addCase(cases, { id: "RS-03", layer: "Resilience", title: "A repeat visit can reuse a cache policy the response already states", why: (sig.cacheControl ? "cache-control is present." : "No cache-control header was seen on the first response.") + " The later case would record the header. It would not flush a shared cache.", fw: browser });
-  addCase(cases, { id: "CMP-01", layer: "Compatibility", title: "The page still explains itself when scripts do not run", why: (sig.noscript ? "A noscript element is present." : "No noscript element was found.") + " The case would disable JavaScript and check that the title and the main heading remain.", fw: browser });
-  addCase(cases, { id: "CMP-02", layer: "Compatibility", title: "The named stack is recorded with the case", why: "Markers seen in this review: " + stack + ". The case list is filtered by the frameworks you select. Those tools are not launched. A later cross-browser pass could use BrowserStack. It is not started here.", fw: browser, also: named(["BrowserStack"]) });
-  if (sig.manifest) addCase(cases, { id: "CMP-03", layer: "Compatibility", title: "An advertised manifest still leaves the page readable in a normal tab", why: "A manifest link is present. The case would open the page in a browser tab and confirm the title and the main heading. It would not install the app.", fw: browser });
-  if (sig.video) addCase(cases, { id: "MED-01", layer: "Media", title: "Video exposes captions or a transcript path", why: sig.video + " video element(s) were counted. A later case would check tracks and would not download the media file.", fw: browser });
-  if (hasTech(names, /Google Tag Manager|Google Analytics|HubSpot/i)) addCase(cases, { id: "AN-01", layer: "Analytics", title: "Analytics tags wait for a recorded choice when the page asks for consent", why: "An analytics marker was seen (" + stack + "). The case would compare a cold load with a load after consent, and it would not invent a consent click.", fw: browser });
+  addCase(cases, { id: "GEO-01", layer: "GEO", title: "AI answer and search crawlers may read " + host, why: "robots.txt on " + host + " would be read for OAI-SearchBot, ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot, and Claude-User. A full Disallow for any of them keeps " + host + " out of the answers that product writes. Training crawlers are a separate choice and are not asserted here.", fw: browser });
+  addCase(cases, { id: "GEO-02", layer: "GEO", title: host + "/llms.txt lists the pages that matter, under a one-line summary", why: "The case fetches https://" + host + "/llms.txt and expects a > summary line, the layout llmstxt.org proposes. It is a convention some AI tools read, not a ranking factor.", fw: browser });
+  addCase(cases, { id: "GEO-03", layer: "GEO", title: "The main heading and text of " + here + " are in the HTML before scripts run", why: (face.words || 0) + " words of text were in the HTML " + host + " served for " + here + (sig.appShell ? ", around an empty app root." : ".") + " Most AI crawlers do not run JavaScript, so they quote only what the server sends.", fw: browser });
+  addCase(cases, { id: "GEO-04", layer: "GEO", title: "An Organization or Person entity names who is behind " + host, why: (entityType ? "A " + entityType + " entity is published in JSON-LD on " + here + "." : types.length ? "JSON-LD on " + here + " is present (" + types.slice(0, 4).join(", ") + ") without an Organization or Person entity." : "No JSON-LD was found on " + here + ".") + " AI answers use the entity to name the brand, its logo, and its profiles.", fw: browser });
+  addCase(cases, { id: "GEO-05", layer: "GEO", title: "Questions customers ask are answered on " + host + " under question headings or FAQ markup", why: (face.questionHeadings || 0) + " heading(s) on " + here + " are phrased as a question" + (types.indexOf("FAQPage") !== -1 ? ", and FAQPage data is present." : ".") + " Answer engines favour a short answer under the question it answers.", fw: browser });
+  addCase(cases, { id: "GEO-06", layer: "GEO", title: "Content pages on " + host + " show when they were published or changed", why: (face.dated ? "A published or modified date is present on " + here + "." : "No published or modified date was found on " + here + ".") + (face.author ? " An author is named." : " No author is named, which the report lists separately.") + " Search engines and AI answers weigh whether a page is current.", fw: browser });
+  const budgetMs = Math.max(800, Math.ceil(((home.ms || 0) * 1.5) / 100) * 100);
+  addCase(cases, { id: "PF-01", layer: "Performance", title: here + " arrives inside an 800 ms and 1.5 MB budget", why: "This request for " + here + " took " + home.ms + " ms and " + face.bytes + " bytes. That is one fetch, not a load test, and a suite stops a page that hangs past its own timeout. A budget case would fail above 800 ms or 1.5 MB for the document alone. Lighthouse, through PageSpeed Insights, scores the rendered start page in the Performance findings.", fw: browser.concat(LOAD_FW), also: named(["Lighthouse"]) });
+  addCase(cases, { id: "PF-02", layer: "Performance", title: "Scripts and stylesheets on " + here + " stay inside a budget", why: face.scripts + " external scripts and " + face.styles + " stylesheets were referenced on " + here + ((sig.blockingScripts || 0) ? ", and " + sig.blockingScripts + " script(s) in the head block rendering without async or defer" : "") + ". The later case would record the counts and the render-blocking ones.", fw: browser.concat(LOAD_FW) });
+  if (slow !== home && (slow.ms || 0) > (home.ms || 0)) addCase(cases, { id: "PF-03", layer: "Performance", title: on(slow.path) + ", the slowest page analyzed, stays inside the same budget", why: "The slowest response on " + host + " was " + on(slow.path) + " at " + (slow.ms || 0) + " ms, against " + home.ms + " ms for " + here + ". The trend across the crawl is the order the pages were opened, not a history of previous days.", fw: browser.concat(LOAD_FW), path: slow.path });
+  addCase(cases, { id: "LD-01", layer: "Load", title: "An authorised load run on " + here + " holds under " + budgetMs + " ms", why: here + " answered in " + home.ms + " ms to one request. JMeter, Gatling, or k6 would hold one request per second for a few minutes, ramp inside an agreed ceiling, and stop, failing above " + budgetMs + " ms at the 95th percentile or 1% errors. It needs written permission, a verified domain, and a scheduled window. This review did not open a single virtual user.", fw: LOAD_FW });
+  addCase(cases, { id: "MB-01", layer: "Mobile", title: here + " holds its layout at a 390 px phone width", why: "A viewport meta tag " + (sig.viewport ? "is present on " + here + "." : "was not found on " + here + ".") + " Appium, Maestro, or a browser device profile would open the phone width, look for a horizontal scroll, and compare the same h1 and primary link.", fw: browser.concat(MOBILE_FW), also: named(["Applitools", "Percy"]) });
+  addCase(cases, { id: "MB-02", layer: "Mobile", title: "The same primary path on " + here + " works at a 768 px tablet width", why: "Width, orientation, and a touch scroll would be checked in Appium, Maestro, or a browser device profile on " + here + ".", fw: browser.concat(MOBILE_FW) });
+  if (multilingual) addCase(cases, { id: "I18N-02", layer: "Internationalization", title: "Direction and locale formats on " + host + " stay with the language", why: (sig.hreflang || 0) + " alternate language links were counted on " + here + ". Dates, currency, and layout direction would be asserted only for locales " + host + " claims.", fw: browser });
+  addCase(cases, { id: "RS-01", layer: "Resilience", title: "A missing path on " + host + " returns a deliberate 404 page", why: (failed.length ? "This review already saw a non-success status on " + on(failed[0].path) + "." : "This review did not see a 404 among the pages it read.") + " A later case would request one unknown path on " + host + " and expect status 404 with a branded page, not a stack trace or a 200.", fw: browser, keys: ["seo-soft-404"] });
+  addCase(cases, { id: "RS-03", layer: "Resilience", title: "A repeat visit to " + here + " can reuse its cache policy", why: (sig.cacheControl ? "cache-control on " + here + " is " + sig.cacheControl + "." : "No cache-control header was seen on " + here + ".") + " The later case would record the header. It would not flush a shared cache.", fw: browser });
+  addCase(cases, { id: "CMP-01", layer: "Compatibility", title: here + " still explains itself when scripts do not run", why: (sig.noscript ? "A noscript element is present on " + here + "." : "No noscript element was found on " + here + ".") + " The case would disable JavaScript and check that the title and the main heading remain.", fw: browser });
+  addCase(cases, { id: "CMP-02", layer: "Compatibility", title: here + " renders the same in Chromium, Firefox, and WebKit", why: "Markers seen on " + host + ": " + stack + ". The case would open " + here + " in each engine and compare the title, the h1, and the primary link. A later cross-browser pass could use BrowserStack. It is not started here.", fw: browser, also: named(["BrowserStack"]) });
+  if (sig.manifest) addCase(cases, { id: "CMP-03", layer: "Compatibility", title: "The manifest on " + here + " still leaves the page readable in a normal tab", why: "A manifest link is present on " + here + ". The case would open the page in a browser tab and confirm the title and the main heading. It would not install the app.", fw: browser });
+  const videoPages = across((page) => ((page.signals && page.signals.video) || 0) > 0);
+  if (videoPages.length) addCase(cases, { id: "MED-01", layer: "Media", title: "Video on " + on(videoPages[0]) + " exposes captions or a transcript", why: sumOf((page) => page.signals && page.signals.video) + " video element(s) were counted on " + listed(videoPages) + ". A later case would check tracks and would not download the media file.", fw: browser, path: videoPages[0], pages: videoPages.slice(0, 12) });
+  if (hasTech(names, /Google Tag Manager|Google Analytics|HubSpot/i)) addCase(cases, { id: "AN-01", layer: "Analytics", title: "Analytics tags on " + here + " wait for a recorded choice", why: "An analytics marker was seen on " + host + " (" + stack + "). The case would compare a cold load of " + here + " with a load after consent, and it would not invent a consent click.", fw: browser });
   const chat = dom && dom.chat && (dom.chat.found || []).length ? dom.chat : null;
   if (chat) {
     const chats = chat.found.map((row) => row.name).join(", ");
-    addCase(cases, { id: "CHAT-01", layer: "Accessibility", title: "The chat button has a name and leaves the cookie banner and main buttons clear on a phone", why: chats + " loaded in the browser. The case would read the launcher's accessible name at 390 px and check that it sits over no banner or call-to-action button.", fw: browser });
-    addCase(cases, { id: "CHAT-02", layer: "Privacy", title: "The chat waits for consent and stops after Reject", why: "The case would compare chat requests and cookies on a cold load, before a choice, and after Reject. It would not open a conversation.", fw: browser });
-    addCase(cases, { id: "CHAT-03", layer: "Accessibility", title: "The open chat links the privacy notice and can be left with the keyboard", why: "The case would open the chat with Enter, look for a privacy link, and press Tab and Escape until focus leaves it. No message is sent.", fw: browser });
-    if (chat.found.some((row) => row.ai)) addCase(cases, { id: "CHAT-04", layer: "Privacy", title: "The AI chatbot says it is an AI and offers a person", why: chat.found.filter((row) => row.ai).map((row) => row.name).join(", ") + " answers with a language model. A later run would open the chat and read the first message for an AI disclosure and a way to reach a person. It would not send a message in this review.", fw: browser });
+    addCase(cases, { id: "CHAT-01", layer: "Accessibility", title: "The chat button on " + here + " has a name and leaves the cookie banner and main buttons clear on a phone", why: chats + " loaded on " + here + " in the browser. The case would read the launcher's accessible name at 390 px and check that it sits over no banner or call-to-action button.", fw: browser });
+    addCase(cases, { id: "CHAT-02", layer: "Privacy", title: "The chat on " + here + " waits for consent and stops after Reject", why: "The case would compare " + chats + " requests and cookies on a cold load of " + here + ", before a choice, and after Reject. It would not open a conversation.", fw: browser });
+    addCase(cases, { id: "CHAT-03", layer: "Accessibility", title: "The open chat on " + here + " links the privacy notice and can be left with the keyboard", why: "The case would open the chat with Enter, look for a privacy link, and press Tab and Escape until focus leaves it. No message is sent.", fw: browser });
+    if (chat.found.some((row) => row.ai)) addCase(cases, { id: "CHAT-04", layer: "Privacy", title: "The AI chatbot on " + here + " says it is an AI and offers a person", why: chat.found.filter((row) => row.ai).map((row) => row.name).join(", ") + " answers with a language model. A later run would open the chat and read the first message for an AI disclosure and a way to reach a person. It would not send a message in this review.", fw: browser });
   }
   if (hasTech(names, /Shopify|Magento|WooCommerce|Stripe/i)) {
     const commerceTools = [];
     if (hasTech(names, /Shopify/i)) commerceTools.push("Theme Check");
     if (hasTech(names, /Magento/i)) commerceTools.push("MFTF");
-    addCase(cases, { id: "CM-01", layer: "Commerce", title: "A catalog or payment marker is covered without placing an order", why: "A commerce or payment marker was seen (" + stack + "). The case would open the public listing and stop before payment. No card data is entered." + (commerceTools.length ? " " + commerceTools.join(" and ") + " would inspect the theme or the Magento suite later. Neither is launched here." : ""), fw: browser, also: commerceTools });
+    addCase(cases, { id: "CM-01", layer: "Commerce", title: "The catalog on " + host + " is covered up to payment without placing an order", why: "A commerce or payment marker was seen on " + host + " (" + stack + "). The case would open the public listing and stop before payment. No card data is entered." + (commerceTools.length ? " " + commerceTools.join(" and ") + " would inspect the theme or the Magento suite later. Neither is launched here." : ""), fw: browser, also: commerceTools });
   }
-  addCase(cases, { id: "VIS-01", layer: "Visual", title: "Images reserve their box before they paint", why: (sig.imgNoSize || 0) + " images had neither width nor height in the markup." + (named(["Applitools", "Percy"]).length ? " Applitools or Percy would own a later visual diff." : "") + " The review's headless browser measures layout shift on the start page.", fw: browser, also: named(["Applitools", "Percy"]) });
-  addCase(cases, { id: "VIS-02", layer: "Visual", title: "The first view stays inside the width the viewport asks for", why: (sig.viewport ? "A viewport meta tag is present." : "No viewport meta tag was found.") + " The later case would open that width and look for a horizontal scroll on the main content.", fw: browser, also: named(["Applitools", "Percy"]) });
-  if (sig.robotsMeta) addCase(cases, { id: "SEO-04", layer: "SEO", title: "A robots meta tag matches the pages that should be indexed", why: "A robots meta tag is present. The later case would compare it with the canonical URL. This review does not submit the page to a search engine.", fw: browser });
+  const sizePages = across((page) => ((page.signals && page.signals.imgNoSize) || 0) > 0);
+  addCase(cases, { id: "VIS-01", layer: "Visual", title: "Images on " + host + " reserve their box before they paint", why: (sig.imgNoSize || 0) + " images on " + here + " had neither width nor height in the markup." + elsewhere(sizePages, "Unsized images also on:") + (named(["Applitools", "Percy"]).length ? " Applitools or Percy would own a later visual diff." : "") + " The review's headless browser measures layout shift on " + here + ".", fw: browser, also: named(["Applitools", "Percy"]), pages: sizePages.slice(0, 12) });
+  if (sig.robotsMeta) addCase(cases, { id: "SEO-04", layer: "SEO", title: "The robots meta tag on " + here + " matches the pages that should be indexed", why: "The robots meta tag on " + here + " says " + ((face.seo && face.seo.robots) || "something") + ". The later case would compare it with the canonical URL. This review does not submit the page to a search engine.", fw: browser, keys: ["seo-noindex"] });
   if (hasTech(names, /^Salesforce$/)) {
-    addCase(cases, { id: "PLAT-01", layer: "Platform", title: "The public Salesforce path stays available without an org login", why: "Salesforce markers were seen (" + stack + "). Provar and Copado know Lightning, Visualforce, and Experience Cloud. This review did not open an org and did not sign in.", fw: browser, also: named(["Provar", "Copado"]) });
-    addCase(cases, { id: "PLAT-02", layer: "Platform", title: "Salesforce controls expose a name Provar can store", why: "A later Provar or Copado case would read the accessible name of each public control. This HTML analysis did not click one.", fw: browser, also: named(["Provar", "Copado"]) });
+    addCase(cases, { id: "PLAT-01", layer: "Platform", title: "The public Salesforce path on " + host + " stays available without an org login", why: "Salesforce markers were seen (" + stack + "). Provar and Copado know Lightning, Visualforce, and Experience Cloud. This review did not open an org and did not sign in.", fw: browser, also: named(["Provar", "Copado"]) });
+    addCase(cases, { id: "PLAT-02", layer: "Platform", title: "Salesforce controls on " + here + " expose a name Provar can store", why: "A later Provar or Copado case would read the accessible name of each public control on " + here + ". This HTML analysis did not click one.", fw: browser, also: named(["Provar", "Copado"]) });
   }
-  if (hasTech(names, /^SAP$/)) addCase(cases, { id: "PLAT-03", layer: "Platform", title: "A public SAP page is named for Tosca, not exercised here", why: "SAP UI markers were seen (" + stack + "). Tricentis Tosca is the suite that scans SAP screens. This review did not sign in and did not start Tosca.", fw: browser, also: ["Tricentis Tosca"] });
-  if (hasTech(names, /^ServiceNow$/)) addCase(cases, { id: "PLAT-04", layer: "Platform", title: "A public ServiceNow portal is separate from the instance test framework", why: "ServiceNow markers were seen (" + stack + "). ServiceNow ATF runs inside the instance the owner controls. This review only analyzed the public page and did not sign in to it.", fw: browser, also: ["ServiceNow ATF"] });
-  if (sig.apiHint) addCase(cases, { id: "API-01", layer: "API", title: "A public API description is listed without calling the API", why: "The HTML mentions an API description. Postman could hold that collection later. This review did not send an API request.", fw: browser, also: ["Postman"] });
-  pages.slice(1, 8).forEach((page, index) => {
+  if (hasTech(names, /^SAP$/)) addCase(cases, { id: "PLAT-03", layer: "Platform", title: "A public SAP page on " + host + " is named for Tosca, not exercised here", why: "SAP UI markers were seen (" + stack + "). Tricentis Tosca is the suite that scans SAP screens. This review did not sign in and did not start Tosca.", fw: browser, also: ["Tricentis Tosca"] });
+  if (hasTech(names, /^ServiceNow$/)) addCase(cases, { id: "PLAT-04", layer: "Platform", title: "The public ServiceNow portal on " + host + " is separate from the instance test framework", why: "ServiceNow markers were seen (" + stack + "). ServiceNow ATF runs inside the instance the owner controls. This review only analyzed the public page and did not sign in to it.", fw: browser, also: ["ServiceNow ATF"] });
+  if (sig.apiHint) addCase(cases, { id: "API-01", layer: "API", title: "The public API description on " + host + " is listed without calling the API", why: "The HTML of " + here + " mentions an API description. Postman could hold that collection later. This review did not send an API request.", fw: browser, also: ["Postman"] });
+  const notable = pages.slice(1).map((page) => {
+    const inspect = page.inspect || {};
+    const ok = page.status >= 200 && page.status < 400;
+    if (!ok) return { page, severity: "high", issue: "answered " + (page.status || page.error || "nothing"), check: { kind: "status", path: page.path } };
+    if (!page.title) return { page, severity: "medium", issue: "has no title", check: { kind: "title", path: page.path } };
+    if (page.inspect && !(inspect.h1 || []).length) return { page, severity: "low", issue: "has no h1", check: { kind: "count", path: page.path, selector: "h1", op: "gte", n: 1 } };
+    if ((page.ms || 0) > 1500) return { page, severity: "low", issue: "took " + page.ms + " ms", check: { kind: "budget", path: page.path, ms: 800, bytes: 1500000 } };
+    return null;
+  }).filter(Boolean).slice(0, 10);
+  notable.forEach((row, index) => {
+    const page = row.page;
     addCase(cases, {
       id: "FN-" + String(20 + index),
       layer: "Functional",
-      title: "Discovered page answers: " + page.path,
-      why: "Status " + (page.status || page.error || "unread") + " in " + (page.ms || 0) + " ms. Title: " + (page.title || "none") + ". The path stays on the same host and is not clicked beyond the analysis.",
-      fw: browser
+      title: on(page.path) + " " + row.issue,
+      why: on(page.path) + " " + row.issue + " in this review (status " + (page.status || page.error || "unread") + ", " + (page.ms || 0) + " ms, title " + (page.title ? "\"" + page.title + "\"" : "none") + "). The case requests " + origin + page.path + " and fails until it answers with a title, an h1, and a success status inside 800 ms.",
+      fw: browser,
+      path: page.path,
+      pages: [page.path],
+      check: row.check,
+      verdict: "fail",
+      severity: row.severity
     });
   });
   return cases.map((item, index) => Object.assign({ n: index + 1 }, item));
@@ -1813,9 +1942,9 @@ function withTimeout(promise, ms, fallback) {
   return Promise.race([promise, new Promise((resolve) => { timer = setTimeout(() => resolve(fallback), ms); })]).finally(() => clearTimeout(timer));
 }
 
-async function fetchExtra(url, halt, keepPartial) {
+async function fetchExtra(url, halt, keepPartial, acceptLanguage) {
   try {
-    const res = await fetchPublic(url, halt, null, keepPartial);
+    const res = await fetchPublic(url, halt, null, keepPartial, acceptLanguage);
     const type = header(res.headers, "content-type");
     const body = String(res.body || "");
     return {
@@ -1831,6 +1960,23 @@ async function fetchExtra(url, halt, keepPartial) {
   }
 }
 
+function sitemapCandidates(urls, startUrl, prefix, limit, already) {
+  const skip = new Set(already || []);
+  let startPath = "";
+  try { startPath = pagePath(startUrl); } catch (error) { startPath = ""; }
+  const out = [];
+  (Array.isArray(urls) ? urls : []).forEach((raw) => {
+    if (out.length >= limit) return;
+    const next = sameHost(startUrl, raw);
+    if (!next || skip.has(next) || out.indexOf(next) !== -1) return;
+    if (startPath && pagePath(next) === startPath) return;
+    if (/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?|xml|gz|css|js)(\?|$)/i.test(next)) return;
+    if (prefix && !underSection(next, prefix)) return;
+    out.push(next);
+  });
+  return out;
+}
+
 function sitemapLocs(xml) {
   const locs = [];
   const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
@@ -1839,7 +1985,7 @@ function sitemapLocs(xml) {
   return locs;
 }
 
-async function readSitemap(origin, robotsText, halt) {
+async function readSitemap(origin, robotsText, halt, acceptLanguage) {
   const listed = [];
   let listedTotal = 0;
   String(robotsText || "").split(/\r?\n/).forEach((line) => {
@@ -1858,7 +2004,7 @@ async function readSitemap(origin, robotsText, halt) {
   const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
   let last = { status: 0 };
   for (let i = 0; i < candidates.length && i < 3; i += 1) {
-    const res = await fetchExtra(candidates[i], halt, true);
+    const res = await fetchExtra(candidates[i], halt, true, acceptLanguage);
     last = res;
     if (res.status !== 200 || res.html) continue;
     let urls = sitemapLocs(res.body);
@@ -1869,7 +2015,7 @@ async function readSitemap(origin, robotsText, halt) {
       if (all.length > children.length || all.length < urls.length) partial = true;
       urls = [];
       for (let j = 0; j < children.length; j += 1) {
-        const child = await fetchExtra(children[j], halt, true);
+        const child = await fetchExtra(children[j], halt, true, acceptLanguage);
         if (child.status === 200 && !child.html) urls = urls.concat(sitemapLocs(child.body));
         if (child.truncated) partial = true;
         if (urls.length >= 5000) break;
@@ -1879,6 +2025,73 @@ async function readSitemap(origin, robotsText, halt) {
     if (urls.length) return { source: candidates[i], status: 200, urls: urls.slice(0, 5000), partial };
   }
   return { source: candidates[0] || "", status: last.status || 0, urls: [] };
+}
+
+const PATHS_SHOWN = 300;
+const PATHS_DEADLINE_MS = 12000;
+const PATHS_KEEP_MS = 6 * 3600 * 1000;
+const PATHS_EMPTY_KEEP_MS = 30 * 60 * 1000;
+const pathsCache = new Map();
+
+function pathsHost(raw) {
+  const host = String(raw || "").trim().toLowerCase().replace(/^https?:\/\//, "").split(/[/?#]/)[0].replace(/\.$/, "");
+  if (host.length > 253 || !/^([a-z0-9-]+\.)+([a-z]{2,}|xn--[a-z0-9-]+)$/.test(host)) return "";
+  if (net.isIP(host) || hostBlocked(host)) return "";
+  return host;
+}
+
+// Same-site page paths from sitemap URLs, the shallowest and shortest first.
+function sitemapPaths(urls, host, limit) {
+  const bare = (name) => String(name || "").toLowerCase().replace(/^www\./, "");
+  const seen = new Set();
+  (Array.isArray(urls) ? urls : []).forEach((raw) => {
+    let parsed;
+    try { parsed = new URL(raw); } catch (error) { return; }
+    if (!/^https?:$/.test(parsed.protocol) || bare(parsed.hostname) !== bare(host)) return;
+    let path = parsed.pathname;
+    try { path = decodeURI(path); } catch (error) { /* keep it encoded */ }
+    if (path === "/" || path.length > 200 || /\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?|xml|gz|css|js|json|txt)$/i.test(path)) return;
+    seen.add(path);
+  });
+  const depth = (path) => path.replace(/\/$/, "").split("/").length;
+  return Array.from(seen)
+    .sort((a, b) => depth(a) - depth(b) || a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))
+    .slice(0, limit || PATHS_SHOWN);
+}
+
+async function readPaths(host) {
+  const origin = "https://" + host;
+  const stopAt = Date.now() + PATHS_DEADLINE_MS;
+  const halt = () => Date.now() > stopAt;
+  try {
+    const robots = await fetchExtra(origin + "/robots.txt", halt, true);
+    const robotsText = robots.status === 200 && !robots.html ? robots.body : "";
+    const map = await readSitemap(origin, robotsText, halt);
+    return { host, source: map.urls.length ? map.source : "", paths: sitemapPaths(map.urls, host) };
+  } catch (error) {
+    if (error && error.code === "STOPPED") return { host, source: "", paths: [] };
+    throw error;
+  }
+}
+
+// Page paths a site lists in its sitemap, for the URL Review box. Cached per host, so typing never reaches the site.
+async function sitePaths(raw) {
+  const host = pathsHost(raw);
+  if (!host) {
+    const error = new Error("Enter a public host name, like example.com.");
+    error.code = "BAD_HOST";
+    throw error;
+  }
+  const now = Date.now();
+  const kept = pathsCache.get(host);
+  if (kept && kept.until > now) return kept.result;
+  const result = readPaths(host);
+  pathsCache.set(host, { until: now + PATHS_KEEP_MS, result });
+  if (pathsCache.size > 500) pathsCache.delete(pathsCache.keys().next().value);
+  result.then((value) => {
+    if (!value.paths.length) pathsCache.set(host, { until: Date.now() + PATHS_EMPTY_KEEP_MS, result });
+  }, () => pathsCache.delete(host));
+  return result;
 }
 
 async function dnsFacts(hostname) {
@@ -2145,22 +2358,24 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const tls = validTo && !isNaN(Date.parse(validTo))
     ? { validTo: new Date(Date.parse(validTo)).toISOString().slice(0, 10), daysLeft: Math.floor((Date.parse(validTo) - Date.now()) / 86400000), issuer: first.cert.issuer || "" }
     : null;
+  const acceptLanguage = (lookups && lookups.acceptLanguage) || "";
+  const sitemapJob = lookups && lookups.sitemap ? lookups.sitemap : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
   say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registrable(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
   say(tls ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
   const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing] = await Promise.all([
-    done(readSitemap(origin.origin, robotsText, halt).catch(() => ({ status: 0, urls: [] })), (map) => map.urls && map.urls.length
+    done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
-    done(fetchExtra(origin.origin + "/llms.txt", halt), (res) => answered("/llms.txt", res)),
-    done(fetchExtra(origin.origin + "/llms-full.txt", halt), (res) => answered("/llms-full.txt", res)),
-    done(fetchExtra(origin.origin + "/.well-known/security.txt", halt), (res) => answered("/.well-known/security.txt", res)),
+    done(fetchExtra(origin.origin + "/llms.txt", halt, false, acceptLanguage), (res) => answered("/llms.txt", res)),
+    done(fetchExtra(origin.origin + "/llms-full.txt", halt, false, acceptLanguage), (res) => answered("/llms-full.txt", res)),
+    done(fetchExtra(origin.origin + "/.well-known/security.txt", halt, false, acceptLanguage), (res) => answered("/.well-known/security.txt", res)),
     allowed(pagePath(utmUrl.toString()))
-      ? done(fetchPublic(utmUrl.toString(), halt).then((res) => ({ status: res.status, finalUrl: res.url, kept: new URL(res.url).searchParams.get("utm_source") === "qa-lab-review" })).catch(() => null), (res) => res
+      ? done(fetchPublic(utmUrl.toString(), halt, null, false, acceptLanguage).then((res) => ({ status: res.status, finalUrl: res.url, kept: new URL(res.url).searchParams.get("utm_source") === "qa-lab-review" })).catch(() => null), (res) => res
         ? "The start page with UTM tags answered " + res.status + " and " + (res.kept ? "kept" : "dropped") + " the tags."
         : "The start page with UTM tags could not be read.")
       : Promise.resolve(null).then(() => { say("The UTM check was skipped: robots.txt disallows that address."); return null; }),
     allowed(missingPath)
-      ? done(fetchExtra(origin.origin + missingPath, halt).then((res) => ({ status: res.status, title: res.html ? clean(textOf(res.body, "title"), 120) : "" })), (res) => "The made-up path answered " + (res.status || "nothing") + (res.status === 404 ? ", as it should." : ". A missing page should answer 404."))
+      ? done(fetchExtra(origin.origin + missingPath, halt, false, acceptLanguage).then((res) => ({ status: res.status, title: res.html ? clean(textOf(res.body, "title"), 120) : "" })), (res) => "The made-up path answered " + (res.status || "nothing") + (res.status === 404 ? ", as it should." : ". A missing page should answer 404."))
       : Promise.resolve(null).then(() => { say("The 404 check was skipped: robots.txt disallows that address."); return null; }),
     done(plainHttp(origin.hostname, halt), (res) => res.error
       ? "Plain http could not be read (" + res.error + ")."
@@ -2197,14 +2412,19 @@ async function reviewTarget(rawUrl, hooks) {
   };
   const halt = () => !!(controls.stopped && controls.stopped());
   const chosen = normalizeScope(controls.maxPages == null ? INCLUDED_PAGES : controls.maxPages, controls.maxDepth == null ? INCLUDED_DEPTH : controls.maxDepth) || { pages: INCLUDED_PAGES, depth: INCLUDED_DEPTH };
+  const acceptLanguage = normalizePageLang(controls.pageLang);
   const begun = Date.now();
   let deadline = begun + budgetMs(chosen.pages);
   note("Checking that the address is public https.");
+  note(acceptLanguage ? "Pages are requested in " + PAGE_LANG_LABEL[acceptLanguage] + "." : "Pages are requested in the site's own language.");
+  // A competitor's site gets passive checks only; the browser refuses typing and opening the chat as well.
+  const passive = controls.passive === true;
+  if (passive) note("This is a competitor run: the browser types into no field and does not open the chat.");
   let first;
   let slowFirst = false;
   try {
     note("Opening the first page.");
-    first = await fetchPublic(rawUrl, halt, note, true);
+    first = await fetchPublic(rawUrl, halt, note, true, acceptLanguage);
   } catch (error) {
     if (error && error.code === "STOPPED") {
       note("Stopped before the first page finished.");
@@ -2234,7 +2454,7 @@ async function reviewTarget(rawUrl, hooks) {
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
     startSpeed(first.url);
-    const browsed = await Promise.resolve().then(() => controls.browse({ url: first.url, paths: [], html: true }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
+    const browsed = await Promise.resolve().then(() => controls.browse({ url: first.url, paths: [], html: true, acceptLanguage, passive }, browserLog)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
     if (halt()) {
       note("Stopped before the first page finished.");
       return stoppedReport(rawUrl, lines, null, chosen);
@@ -2298,7 +2518,7 @@ async function reviewTarget(rawUrl, hooks) {
     if (!stopped) {
       note("Reading robots.txt.");
       const robotsUrl = origin.origin + "/robots.txt";
-      const robotsRes = await fetchPublic(robotsUrl, halt, note);
+      const robotsRes = await fetchPublic(robotsUrl, halt, note, false, acceptLanguage);
     if (robotsRes.status === 200 && !/^\s*<(!doctype|html)/i.test(robotsRes.body)) {
       robotsText = robotsRes.body.slice(0, 200000);
       robots = parseRobots(robotsRes.body);
@@ -2309,19 +2529,38 @@ async function reviewTarget(rawUrl, hooks) {
     if (error && error.code === "STOPPED") stopped = true;
     else robotsNote = "robots.txt could not be read. Linked pages were still capped.";
   }
+  const prefix = controls.section === true ? sectionPrefix(first.url) : "";
+  if (prefix) note("Later pages stay under " + prefix + ".");
+  const keep = (url) => !prefix || underSection(url, prefix);
   const homeInspect = inspect(first.body, first.headers, first.url);
-  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk }).catch(() => ({}));
+  const sitemapPromise = stopped ? Promise.resolve({ status: 0, urls: [] }) : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
+  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
-  const browsePaths = (homeInspect.links || []).filter((url) => pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
+  const browsePaths = (homeInspect.links || []).filter((url) => keep(url) && pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
   let showStart = null;
   const renderedStart = new Promise((resolve) => { showStart = resolve; });
   const browserPromise = readInBrowser
     ? Promise.resolve(readInBrowser)
     : canBrowse
-      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+      ? Promise.resolve().then(() => controls.browse({ url: first.url, paths: browsePaths, acceptLanguage, passive }, browserLog, (start) => showStart(start))).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
       : Promise.resolve(null);
   browserPromise.then((done) => showStart(done && done.ok ? done.start : null), () => showStart(null));
+  const proofPromise = stopped || passive || !controls.asker ? Promise.resolve(null) : proveOwner(controls.asker, origin.hostname).catch(() => null);
+  const canTalk = !passive && !!controls.asker && typeof controls.browse === "function";
+  const published = canTalk ? chatTalk.facts() : null;
+  if (published) published.read(visibleText(first.body));
+  let talkScript = null;
+  let talkSettled = false;
+  const talkPromise = canTalk
+    ? proofPromise.then((proof) => {
+      if (!proof || !proof.kind || halt()) return null;
+      talkScript = chatTalk.script(acceptLanguage || homeInspect.lang);
+      note(PROOF_NOTE[proof.kind](origin.hostname, proof.how, proof.checked) + " a separate browser holds a short scripted conversation with the site's chat, if it has one.");
+      return controls.browse({ kind: "chat", proof: proof.kind, url: first.url, acceptLanguage, turns: talkScript.turns, passive }, (text) => note("Chat conversation: " + text));
+    }).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
+    : Promise.resolve(null);
+  talkPromise.then(() => { talkSettled = true; });
   if (!stopped) startSpeed(first.url);
   else speedPromise = speedPromise || Promise.resolve(null);
   let extrasSettled = false;
@@ -2355,22 +2594,33 @@ async function reviewTarget(rawUrl, hooks) {
   note("First page answered " + first.status + " in " + first.ms + " ms. Title: " + (homeInspect.title || "none") + ". " + homeInspect.bytes + " bytes.");
   if (firstChallenge) note("The start page is " + insights.botCheck(firstChallenge) + ", not the site's own page. The scores describe that check page.");
   note(robotsNote);
-  let linkCount = (homeInspect.links || []).length;
-  let startQueue = null;
+  const keptLinks = (homeInspect.links || []).filter(keep);
+  let linkCount = keptLinks.length;
+  let startQueue = prefix ? keptLinks : null;
   if (linkCount < SHELL_LINKS && canBrowse && !stopped && chosen.pages > 1) {
     note(linkCount + " same-host link" + (linkCount === 1 ? " is" : "s are") + " in the HTML. Waiting up to " + SHELL_WAIT_MS / 1000 + " s for headless Chrome's rendered start page and its links.");
     const waitFrom = Date.now();
     const shown = await withTimeout(renderedStart, SHELL_WAIT_MS, null);
     deadline = Math.min(deadline + (Date.now() - waitFrom), begun + TOTAL_MS);
     const links = [...new Set(((shown && shown.dom && shown.dom.links) || []).map((href) => sameHost(first.url, href)).filter(Boolean))]
-      .filter((url) => !(homeInspect.links || []).includes(url) && pagePath(url) !== pagePath(first.url));
+      .filter((url) => keep(url) && !(homeInspect.links || []).includes(url) && pagePath(url) !== pagePath(first.url));
     if (links.length) {
-      startQueue = (homeInspect.links || []).concat(links);
+      startQueue = (startQueue || keptLinks).concat(links);
       pages[0].renderedLinks = links.length;
       linkCount = startQueue.length;
       note(insights.SHELL_NOTE + " The rendered page adds " + links.length + ".");
     } else note(shown ? "The rendered start page adds no same-host links." : "Headless Chrome did not return the rendered start page.");
     stopped = stopped || halt();
+  }
+  if (linkCount < SHELL_LINKS && !stopped && chosen.pages > 1) {
+    note("The start page lists few same-host links. Taking further pages from the sitemap.");
+    const map = await sitemapPromise;
+    const added = sitemapCandidates(map && map.urls, first.url, prefix, chosen.pages - 1, (startQueue || keptLinks).concat([first.url]));
+    if (added.length) {
+      startQueue = (startQueue || keptLinks).concat(added);
+      linkCount = startQueue.length;
+      note("The sitemap adds " + added.length + " page" + (added.length === 1 ? "" : "s") + (prefix ? " under " + prefix : "") + ".");
+    } else note("The sitemap adds no further pages" + (prefix ? " under " + prefix : "") + ".");
   }
   note(linkCount + " same-host links were listed. This review opens at most " + chosen.pages + " HTML pages and " + chosen.depth + " links deep.");
   if (!linkCount) note("No further pages to open on this host. The case list comes next.");
@@ -2382,6 +2632,7 @@ async function reviewTarget(rawUrl, hooks) {
     for (let i = 0; i < queue.length && pages.length < chosen.pages && Date.now() < deadline; i += 1) {
       if (halt()) { stopped = true; break; }
       const next = queue[i];
+      if (prefix && !underSection(next, prefix)) continue;
       if (seen.has(next)) continue;
       seen.add(next);
       const path = pagePath(next);
@@ -2392,7 +2643,7 @@ async function reviewTarget(rawUrl, hooks) {
       }
       try {
         note("Opening " + path + ".");
-        const child = await fetchPublic(next, halt, note, true);
+        const child = await fetchPublic(next, halt, note, true, acceptLanguage);
         const childType = header(child.headers, "content-type");
         if (!/text\/html|application\/xhtml\+xml/i.test(childType)) {
           note(path + " answered " + child.status + " with " + (childType.split(";")[0] || "no content type") + ", not an HTML page. It is not scored.");
@@ -2405,6 +2656,7 @@ async function reviewTarget(rawUrl, hooks) {
           continue;
         }
         seen.add(child.url);
+        if (published && !challenge) published.read(visibleText(child.body));
         if (challenge) note(path + " answered with " + insights.botCheck(challenge) + ". It is not scored.");
         else note(path + " answered " + child.status + " in " + child.ms + " ms. " + (childInspect.links || []).length + " same-host links." +
           (child.slow ? " It was still arriving after " + PAGE_TIMEOUT_MS / 1000 + " s, so the part that had arrived was analyzed." : child.truncated ? " It is larger than 2 MB, so its first 2 MB were analyzed." : ""));
@@ -2468,11 +2720,20 @@ async function reviewTarget(rawUrl, hooks) {
     });
     note("Chat seen in the browser: " + chat.found.map((row) => row.name).join(", ") + ".");
   }
+  const proof = await proofPromise;
+  let talked = null;
+  if (proof && proof.kind && canTalk) {
+    if (!talkSettled) note("Waiting for the chat conversation to finish.");
+    const raw = await talkPromise;
+    talked = chatTalk.judge(raw, { proof: proof.kind, lang: acceptLanguage || homeInspect.lang, facts: published, planted: talkScript ? talkScript.planted : null });
+    note("Chat conversation: " + talked.note);
+  } else if (chat) {
+    const status = passive ? "competitor" : "needs-proof";
+    talked = { ran: false, status, note: chatTalk.STATUS_NOTE[status], turns: [], checks: [] };
+  }
   let cases = propose(pages, robotsBlocked, { maxPages: chosen.pages, maxDepth: chosen.depth }, browser && browser.ok && browser.start && browser.start.dom ? Object.assign({ banner: (browser.consent && browser.consent.banner) || "", chat, libraries: browser.libraries || [] }, browser.start.dom) : null);
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
-  const byLayer = {};
-  cases.forEach((item) => { byLayer[item.layer] = (byLayer[item.layer] || 0) + 1; });
-  note("Proposed " + cases.length + " test cases across " + Object.keys(byLayer).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
+  note("Proposed " + cases.length + " test cases across " + Object.keys(caseRank.countLayers(cases)).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
   const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
   let extras = {};
   if (!extrasSettled) note("Waiting for the background checks to finish.");
@@ -2504,15 +2765,19 @@ async function reviewTarget(rawUrl, hooks) {
       homeText: homeText(first.body),
       limits: { maxPages: chosen.pages, maxDepth: chosen.depth, pagesRead: pages.length, timedOut: Date.now() >= deadline }
     });
-    cases.forEach((item) => {
-      const verdict = analysis.caseVerdicts[item.id];
-      if (verdict) Object.assign(item, { verdict: verdict.verdict, severity: verdict.severity, finding: verdict.finding });
-    });
     note("Scored " + analysis.findings.length + " checks: " + analysis.score.totals.fail + " fail, " + analysis.score.totals.risk + " at risk, " + analysis.score.totals.pass + " pass. Health " + analysis.score.overall + "/100.");
   } catch (error) {
     console.error("URL review insights failed:", error);
     note("The scored checks could not be written for this review. The proposed cases are unaffected.");
   }
+  try {
+    cases = caseRank.refine(cases, { findings: (analysis && analysis.findings) || [], browser, origin: origin.origin, startPath: pagePath(first.url), fw: BROWSER_FW });
+    const top = cases.filter((item) => item.priority === "P1").length;
+    note("Ranked " + cases.length + " cases by risk on " + origin.hostname + ": " + top + " P1, " + cases.filter((item) => item.priority === "P2").length + " P2" + (top ? ". First: " + cases[0].id + " " + cases[0].title : "") + ".");
+  } catch (error) {
+    console.error("URL review case ranking failed:", error);
+  }
+  const byLayer = caseRank.countLayers(cases);
   const reportId = crypto.randomBytes(9).toString("hex");
   const fetchedAt = new Date().toISOString();
   const signature = signReport({ id: reportId, fetchedAt, host: origin.hostname, cases });
@@ -2546,7 +2811,10 @@ async function reviewTarget(rawUrl, hooks) {
       pagesRead: pages.length,
       robotsBlocked,
       robotsNote,
-      timedOut: Date.now() >= deadline
+      timedOut: Date.now() >= deadline,
+      pageLang: acceptLanguage,
+      section: prefix,
+      passive
     },
     pages: publishedPages,
     technologies: technologiesFound,
@@ -2588,6 +2856,8 @@ async function reviewTarget(rawUrl, hooks) {
       ? "This review was stopped. The cases below use only the pages analyzed before the stop. None of them were executed."
       : "These cases are proposed from a public analysis. None of them were executed."
   };
+  if (talked) result.chatTalk = talked;
+  if (proof && proof.kind) result.ownerProof = { kind: proof.kind, how: proof.how || "", host: ownerProofs.hostOf(origin.hostname), checked: proof.checked === true };
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
   return result;
 }
@@ -2637,7 +2907,9 @@ function intakeRecord(value, report, meta) {
     requestedUrl: value.url,
     deviceId: clean(meta.deviceId || value.deviceId, 80),
     status: report.status || "complete",
-    paid: false,
+    // The run credit this run consumed paid for it, so it opens this report and no other.
+    paid: !!clean(meta.creditId, 40),
+    creditId: clean(meta.creditId, 40),
     priceUsd: priceForRun({ frameworks: value.frameworks || [], pages: value.pages || INCLUDED_PAGES, depth: value.depth || INCLUDED_DEPTH, billing: "run" }).usd,
     ip: clean(meta.ip, 80),
     userAgent: clean(meta.userAgent, 300),
@@ -2646,8 +2918,11 @@ function intakeRecord(value, report, meta) {
     region: clean(meta.region, 80),
     city: clean(meta.city, 80),
     lang: value.lang || "",
+    pageLang: value.pageLang || "",
+    section: value.section === true,
     followUp: value.followUp === true,
     unlisted: value.unlisted === true,
+    compareWith: value.compareWith || "",
     report
   };
 }
@@ -3262,7 +3537,7 @@ function previewReport(report) {
   (copy.cases || []).forEach((item) => {
     item.title = frostText(item.title);
     item.why = frostText(item.why);
-    ["steps", "expected", "script", "scripts", "data"].forEach((key) => { delete item[key]; });
+    ["steps", "expected", "script", "scripts", "data", "selectors", "check"].forEach((key) => { delete item[key]; });
   });
   (copy.alerts || []).forEach((item) => {
     item.title = frostText(item.title);
@@ -3318,6 +3593,11 @@ module.exports = {
   normalizeFrameworks,
   normalizeLayers,
   normalizeScope,
+  normalizePageLang,
+  sectionPrefix,
+  underSection,
+  sitemapCandidates,
+  PAGE_LANGS,
   PAGE_CHOICES,
   DEPTH_CHOICES,
   INCLUDED_PAGES,
@@ -3336,6 +3616,9 @@ module.exports = {
   screenIntake,
   emailCanReceive,
   mailboxMatchesHost,
+  ownerProof,
+  proveOwner,
+  fetchHomepage,
   emailSyntax,
   registrable,
   ownerContacts,
@@ -3363,6 +3646,8 @@ module.exports = {
   plainHttp,
   probeRead,
   readSitemap,
+  sitemapPaths,
+  sitePaths,
   ipBlocked,
   hostBlocked
 };

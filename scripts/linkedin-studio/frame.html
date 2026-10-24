@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LinkedIn studio frame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=block" rel="stylesheet">
+<style>
+  :root {
+    --ink: #050c0f; --cyan: #4db3bb; --cyan-hi: #7ef6fb; --teal: #0d6e76;
+    --gold: #e2c48a; --text: #eef6f7; --muted: #a9bcc1; --line: rgba(126, 246, 251, .22);
+    --amber: #f0b45a; --ok: #6fe3b1;
+  }
+  html, body { margin: 0; background: var(--ink); }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+  #c { position: relative; overflow: hidden; background: var(--ink); }
+  .glow { position: absolute; inset: 0; background: radial-gradient(55% 90% at 88% 0%, rgba(77, 179, 187, .32), transparent 70%), radial-gradient(45% 80% at 30% 120%, rgba(226, 196, 138, .18), transparent 70%); }
+  .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(126, 246, 251, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(126, 246, 251, .05) 1px, transparent 1px); background-size: 28px 28px; mask-image: linear-gradient(90deg, transparent 0%, #000 35%, #000 100%); }
+  .serif { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -0.02em; }
+  em.hi { font-style: italic; background: linear-gradient(92deg, var(--cyan-hi) 0%, #b8f3ea 45%, var(--gold) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: rgba(10, 30, 36, .6); border-radius: 999px; padding: 4px 11px; font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--cyan-hi); white-space: nowrap; }
+  .chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+  .mono { font-family: "Fira Code", monospace; }
+
+  /* Cover: 1128x191. The page logo covers the lower-left corner, so content starts at x=300. */
+  .cover { width: 1128px; height: 191px; }
+  .cover .body { position: absolute; left: 300px; right: 40px; top: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+  .cover h1 { margin: 10px 0 0; font-size: 44px; line-height: 1; }
+  .cover .side { text-align: right; font-size: 13px; line-height: 1.7; color: var(--muted); }
+  .cover .side b { color: var(--text); font-weight: 600; }
+  .cover .stats { display: flex; gap: 30px; }
+  .cover .stat b { display: block; font-family: "Instrument Serif", serif; font-weight: 400; font-size: 50px; line-height: .95; background: linear-gradient(180deg, #fff, var(--cyan-hi)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .cover .stat:last-child b { background: linear-gradient(180deg, #fff3d9, var(--gold)); -webkit-background-clip: text; background-clip: text; }
+  .cover .stat span { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .cover .tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 330px; }
+  .cover .tags span { font-size: 11.5px; font-weight: 600; padding: 4px 9px; border-radius: 8px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(126, 246, 251, .18); }
+
+  /* Portrait: 1080x1350 proof cards and carousel pages. */
+  .portrait { width: 1080px; height: 1350px; }
+  .portrait .pad { position: absolute; inset: 84px 84px 84px 84px; display: flex; flex-direction: column; }
+  .portrait .chip { font-size: 20px; padding: 10px 22px; gap: 12px; align-self: flex-start; }
+  .bars { margin-top: 40px; display: grid; gap: 14px; }
+  .bars div { display: grid; grid-template-columns: 220px 1fr 70px; gap: 18px; align-items: center; font-size: 24px; }
+  .bars span { color: var(--muted); }
+  .bars u { display: block; height: 14px; border-radius: 99px; background: rgba(255, 255, 255, .07); text-decoration: none; overflow: hidden; }
+  .bars u s { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--teal), var(--cyan-hi)); }
+  .bars b { font-family: "Fira Code", monospace; font-weight: 500; text-align: right; }
+  .portrait .chip i { width: 11px; height: 11px; }
+  .portrait h1 { margin: 40px 0 0; font-size: 104px; line-height: .98; }
+  .portrait h2 { margin: 0; font-size: 46px; font-weight: 700; letter-spacing: -0.01em; }
+  .portrait p.lead { margin: 30px 0 0; font-size: 34px; line-height: 1.35; color: var(--muted); max-width: 860px; }
+  .site { display: flex; align-items: center; gap: 22px; margin-top: 48px; }
+  .site .flag { font-size: 64px; }
+  .site .host { font-size: 28px; color: var(--muted); margin-top: 6px; }
+  .score { display: flex; align-items: flex-end; gap: 28px; margin-top: 44px; }
+  .score b { font-family: "Instrument Serif", serif; font-weight: 400; font-size: 260px; line-height: .8; background: linear-gradient(180deg, #fff, var(--cyan-hi)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .score .grade { font-size: 30px; color: var(--muted); padding-bottom: 18px; line-height: 1.4; }
+  .score .grade strong { display: inline-block; font-family: "Fira Code", monospace; color: var(--ink); background: linear-gradient(135deg, var(--gold), #f4dcae); border-radius: 12px; padding: 2px 16px; font-size: 40px; margin-bottom: 8px; }
+  .note { margin-top: 36px; border-radius: 26px; padding: 30px 34px; background: linear-gradient(160deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .02)); border: 1.5px solid rgba(126, 246, 251, .2); }
+  .note small { display: block; font-size: 20px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 12px; }
+  .note.fix small { color: var(--amber); }
+  .note.ok small { color: var(--ok); }
+  .note div { font-size: 32px; line-height: 1.3; }
+  .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; font-size: 22px; color: var(--muted); }
+  .foot .mono { color: var(--cyan-hi); }
+  .big-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 60px; }
+  .big-stats div { border-radius: 26px; padding: 34px; background: rgba(255, 255, 255, .04); border: 1.5px solid rgba(126, 246, 251, .16); }
+  .big-stats b { display: block; font-family: "Instrument Serif", serif; font-weight: 400; font-size: 120px; line-height: .9; background: linear-gradient(180deg, #fff, var(--cyan-hi)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .big-stats span { font-size: 26px; color: var(--muted); }
+  .list { margin: 50px 0 0; padding: 0; list-style: none; display: grid; gap: 20px; }
+  .list li { font-size: 34px; line-height: 1.3; padding-left: 46px; position: relative; }
+  .list li::before { content: ""; position: absolute; left: 0; top: .42em; width: 20px; height: 20px; border-radius: 6px; background: linear-gradient(135deg, var(--cyan-hi), var(--gold)); }
+  .cta { display: inline-block; margin-top: 54px; font-size: 34px; font-weight: 700; padding: 22px 40px; border-radius: 999px; background: linear-gradient(135deg, #12a3ad, #0d6e76); color: #fff; box-shadow: 0 14px 40px rgba(18, 163, 173, .45); align-self: flex-start; }
+  .honest { margin-top: 30px; font-size: 24px; line-height: 1.4; color: var(--muted); max-width: 880px; }
+</style>
+</head>
+<body>
+<div id="c"></div>
+<script>
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  const nf = (n) => Number(n).toLocaleString("en-US");
+  const chip = (text) => '<span class="chip"><i></i>' + esc(text) + "</span>";
+  const backdrop = '<div class="glow"></div><div class="grid"></div>';
+
+  const COVERS = {
+    promise: (d) => '<div class="body"><div>' + chip("QA-lab URL Review") +
+      '<h1 class="serif">One public URL in.<br><em class="hi">A QA review out.</em></h1></div>' +
+      '<div class="side"><b>SEO · AI search · Analytics</b><br><b>Security · Accessibility · Speed</b><br>Fix-first list and proposed test cases</div></div>',
+    proof: (d) => '<div class="body"><div>' + chip("Live Reports, read in public") +
+      '<h1 class="serif" style="font-size:36px">Real sites.<br><em class="hi">Real scores.</em></h1></div>' +
+      '<div class="stats">' +
+      '<div class="stat"><b>' + nf(d.reports) + "</b><span>sites</span></div>" +
+      '<div class="stat"><b>' + nf(d.pages) + "</b><span>pages read</span></div>" +
+      '<div class="stat"><b>' + d.countries + "</b><span>countries</span></div>" +
+      '<div class="stat"><b>' + d.sectors + "</b><span>sectors</span></div></div></div>",
+    handoff: (d) => '<div class="body"><div>' + chip("Ready for your team") +
+      '<h1 class="serif" style="font-size:40px">Test cases for<br><em class="hi">20 frameworks.</em></h1></div>' +
+      '<div class="tags">' + d.exports.map((x) => "<span>" + esc(x) + "</span>").join("") + "</div></div>"
+  };
+
+  function proof(d) {
+    const r = d.report;
+    return '<div class="pad">' + chip("Live Report · " + r.sectorLabel) +
+      '<div class="site"><span class="flag">' + r.flag + '</span><div><h2>' + esc(r.name) + '</h2><div class="host mono">' + esc(r.host) + "</div></div></div>" +
+      '<div class="score"><b>' + r.overall + '</b><div class="grade"><strong>' + esc(r.grade) + "</strong><br>out of 100<br>#" + r.rank + " of " + r.of + "</div></div>" +
+      '<div class="note fix"><small>Fix first</small><div>' + esc(r.fix) + "</div></div>" +
+      '<div class="note ok"><small>Already works</small><div>' + esc(r.works) + "</div></div>" +
+      '<div class="bars">' + r.areas.map((a) => "<div><span>" + esc(a[0]) + '</span><u><s style="width:' + a[1] + '%"></s></u><b>' + a[1] + "</b></div>").join("") + "</div>" +
+      '<div class="foot"><span>Read ' + esc(r.read) + " · " + r.pages + ' pages</span><span class="mono">carlosandmunoz.com</span></div></div>';
+  }
+
+  const PAGES = {
+    open: (d) => '<div class="pad">' + chip("QA-lab URL Review") +
+      '<h1 class="serif">What a URL Review <em class="hi">finds.</em></h1>' +
+      '<p class="lead">We read ' + nf(d.reports) + " public sites the way a visitor and a crawler would, and scored each one. Here are five of them.</p>" +
+      '<div class="big-stats"><div><b>' + nf(d.pages) + "</b><span>pages read</span></div><div><b>" + d.countries + "</b><span>countries</span></div>" +
+      "<div><b>" + d.sectors + "</b><span>sectors</span></div><div><b>6</b><span>languages</span></div></div>" +
+      '<div class="foot"><span>Swipe →</span><span class="mono">1 / ' + d.total + "</span></div></div>",
+    close: (d) => '<div class="pad">' + chip("Your turn") +
+      '<h1 class="serif">Try it on <em class="hi">your page.</em></h1>' +
+      '<ul class="list"><li>A score for SEO, AI search, analytics, security, accessibility, and speed</li><li>A fix-first list with the evidence behind each item</li><li>Proposed test cases with starting scripts for 20 frameworks</li><li>Exports for Jira, TestRail, Xray, Zephyr, Azure DevOps, Excel, and PDF</li></ul>' +
+      '<span class="cta">carlosandmunoz.com/qa-review</span>' +
+      '<p class="honest">It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.</p>' +
+      '<div class="foot"><span>First review included · 20 pages</span><span class="mono">' + d.total + " / " + d.total + "</span></div></div>"
+  };
+
+  window.render = function (spec) {
+    const c = document.getElementById("c");
+    c.className = spec.kind === "cover" ? "cover" : "portrait";
+    let inner = "";
+    if (spec.kind === "cover") inner = COVERS[spec.variant](spec.data);
+    else if (spec.kind === "proof") inner = proof(spec.data);
+    else inner = PAGES[spec.variant](spec.data);
+    c.innerHTML = backdrop + inner;
+    return document.fonts.ready.then(() => true);
+  };
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <title>QA-lab URL Review: SEO, GEO, and QA test cases from a URL</title>
     <meta name="description" content="One public https page, analyzed and scored for SEO, AI search (GEO), analytics, security, accessibility, and speed, with proposed test cases for 20 frameworks.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
@@ -355,7 +355,8 @@
     <link rel="stylesheet" href="css/site-look.css?v=20261006d">
     <link rel="stylesheet" href="css/qa-review-folds.css?v=20261020a">
     <link rel="stylesheet" href="css/qa-review-live.css?v=20261028b">
-    <link rel="stylesheet" href="css/qa-review-progress.css?v=20261022a">
+    <link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a">
+    <link rel="stylesheet" href="css/qa-review-ask.css?v=20261023a">
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
@@ -441,8 +442,19 @@
         .sign-in-row input { flex: 1; min-width: 0; }
         .sign-in-row .btn { white-space: nowrap; }
         .sign-in-link { background: none; border: 0; padding: 0; color: var(--cyan); text-decoration: underline; cursor: pointer; font: inherit; }
-        .sign-in-done { margin: 8px 0 0; }
-        .sign-in-photo { width: 28px; height: 28px; border-radius: 50%; vertical-align: middle; margin-right: 8px; object-fit: cover; }
+        .sign-in.done .sign-in-title, .sign-in.done > .mail-note { display: none; }
+        .sign-in-done { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 14px; margin: 0; }
+        .sign-in-done[hidden] { display: none; }
+        .sign-in-avatar { position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: var(--cyan); color: var(--on-cyan); font-weight: 700; font-size: 16px; }
+        .sign-in-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .sign-in-id { flex: 1 1 160px; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; line-height: 1.35; }
+        .sign-in-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+        #sign-in-who { font-weight: 600; overflow-wrap: anywhere; }
+        #sign-in-mail { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+        .sign-in.done #sign-in-status:empty { display: none; }
+        .sign-in-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sign-in-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; }
+        @media (max-width: 560px) { .sign-in-actions { flex: 1 1 100%; } .sign-in-actions .btn { flex: 1; } }
         #sign-in-code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
         #email[readonly] { opacity: .8; }
         .verify-note { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, var(--card)); }
@@ -509,6 +521,18 @@
         .history-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .delta { font-size: 12px; font-weight: 700; color: var(--muted); }
         .delta.up { color: var(--green); } .delta.down { color: var(--red); }
+        .compare-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin: 10px 0 6px; }
+        .compare-form label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
+        .compare-field { flex: 1 1 240px; min-width: 0; }
+        .compare-form .url-row { border-radius: 12px; }
+        .compare-form .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
+        .compare-scroll { overflow-x: auto; margin: 10px 0 4px; }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .compare-table th, .compare-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+        .compare-table th:first-child { text-align: left; }
+        .compare-table thead th { font-size: 12px; letter-spacing: .04em; color: var(--muted); }
+        #compare-error:empty { display: none; }
+        #compare-error { color: var(--red); }
         .gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 4px; }
         .speed-title { margin: 14px 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #5b6672); }
         .gauge { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
@@ -539,6 +563,11 @@
         .fix-rank { width: 28px; height: 28px; border-radius: 50%; display: grid; place-content: center; background: var(--panel-2); font-weight: 700; font-size: 13px; }
         .badge { display: inline-block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; margin-right: 6px; vertical-align: 1px; }
         .meta-line { font-size: 12px; color: var(--muted); margin: 3px 0 0; }
+        .talk-card .badge { white-space: nowrap; }
+        .talk-log { margin-top: 10px; }
+        .talk-log summary { cursor: pointer; font-weight: 600; }
+        .talk-log ol { padding-left: 20px; margin: 8px 0 0; }
+        .talk-log li p { margin: 4px 0; overflow-wrap: anywhere; }
         .fix-line { margin: 6px 0 0; padding-left: 10px; border-left: 3px solid var(--cyan); font-size: 13.5px; }
         .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .serp { font-family: Arial, Helvetica, sans-serif; background: #fff; color: #202124; border-radius: 14px; padding: 16px 18px; border: 1px solid var(--line); }
@@ -686,10 +715,10 @@
             .reel3d > img:first-child, .reel3d > .clip:first-child { opacity: 1; }
             .wire-track.run { transform: none; }
         }
-        .facts { display: flex; gap: 22px; list-style: none; padding: 0; margin: 18px 0 0; }
+        .facts { display: flex; flex-wrap: wrap; gap: 14px 22px; list-style: none; padding: 0; margin: 18px 0 0; }
         .facts b { display: block; font-family: "Instrument Serif", Georgia, serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.03em; line-height: 1; }
         .facts span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; letter-spacing: .04em; }
-        #reviewed-count { font-variant-numeric: tabular-nums; }
+        #reviewed-count, #reviews-count { font-variant-numeric: tabular-nums; }
         .ribbon { overflow: hidden; margin: 0 0 22px; border-block: 1px solid var(--line); }
         .ribbon-track { display: flex; width: max-content; gap: 0; animation: ribbon-drift 46s linear infinite; }
         .ribbon-track span { padding: 11px 0; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
@@ -743,6 +772,15 @@
         .url-row { display: flex; align-items: center; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; overflow: hidden; }
         .url-row span { padding: 10px 0 10px 12px; color: var(--muted); font-family: "Fira Code", ui-monospace, monospace; font-size: 13px; }
         .url-row input { border: 0; background: transparent; border-radius: 0; min-width: 0; flex: 1; width: 100%; }
+        .url-suggest { list-style: none; margin: 4px 0 0; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); font-family: "Fira Code", ui-monospace, monospace; font-size: 13px; }
+        .url-suggest li { padding: 7px 10px; border-radius: 6px; cursor: pointer; color: var(--text); overflow-wrap: anywhere; }
+        .url-suggest li:hover, .url-suggest li[aria-selected="true"] { background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--cyan); }
+        .url-hint { font-size: 12px; margin: 4px 0 0; color: var(--muted); }
+        .url-hint:empty { display: none; }
+        .url-hint.ok b { color: var(--green); }
+        .url-hint.warn b { color: var(--amber); }
+        .url-hint.bad b { color: var(--red); }
+        .url-hint .url-fix { font: inherit; font-weight: 600; color: var(--cyan); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
         .fws { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; border: 1px solid transparent; border-radius: 12px; padding: 4px; }
         .fws label { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 500; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
         .fw-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
@@ -752,6 +790,7 @@
         .script-name .fw-logo { margin-right: 6px; vertical-align: -3px; }
         .fw-group-name { flex-basis: 100%; margin: 6px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
         .scope { border: 0; margin: 16px 0 0; padding: 0; }
+        #req-scope .scope:first-child { margin-top: 0; }
         .scope legend { font-weight: 650; padding: 0; }
         .scope-note { margin: 8px 0 0; }
         .alarm { margin: 16px 0; padding: 14px 16px 6px; border-radius: 18px; background: #14110c; color: #f7f3ea; border: 1px solid #c4a574; }
@@ -787,7 +826,7 @@
         .capture-note { display: none; }
         .sheet-mark { display: none; position: absolute; inset: 0; z-index: 4; pointer-events: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='440' height='180'><text x='16' y='90' fill='%230d6e76' font-size='13' font-family='sans-serif' transform='rotate(-18 220 90)'>QA-lab URL Review · Carlos Muñoz · Preview copy · Not a certification</text></svg>"); background-repeat: repeat; opacity: .2; }
         body.preview-copy .sheet-mark { display: block; }
-        #report, #share-link { position: relative; z-index: 5; min-width: 0; max-width: 100%; }
+        #report, #share-link, #share-note { position: relative; z-index: 5; min-width: 0; max-width: 100%; }
         .dash-modal-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
         .dash-modal-head h2 { margin: 0; }
         #pay.gate, #run-pay.gate, #case-export.gate, #case-formats.gate { z-index: 120; align-items: center; background: rgba(12, 17, 24, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
@@ -824,6 +863,10 @@
         .filters button.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
         .case { padding: 10px 0; border-bottom: 1px solid var(--line); }
         .case .id { font-family: "Fira Code", ui-monospace, monospace; font-size: 12px; color: var(--cyan); }
+        .prio { display: inline-block; margin-right: 8px; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; font-family: "Fira Code", ui-monospace, monospace; font-size: 11px; font-weight: 700; color: var(--muted); }
+        .prio-P1 { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
+        .prio-P2 { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
+        .case-pages { font-size: 12px; overflow-wrap: anywhere; }
         .tag { display: inline-block; margin-left: 6px; font-size: 11px; color: var(--amber); }
         .muted { color: var(--muted); }
         .gate { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 88%, #000); z-index: 40; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px; overflow: auto; }
@@ -831,7 +874,7 @@
         .sample-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 14px; color: var(--muted); font-size: 14px; }
         .sample-note { position: relative; z-index: 5; margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 10px; background: var(--panel); }
         .dash-overlay.is-sample .report-toolbar .actions > :not(#dash-close),
-        .dash-overlay.is-sample #share-link, .dash-overlay.is-sample #tool-block, .dash-overlay.is-sample #alarm-open,
+        .dash-overlay.is-sample #share-link, .dash-overlay.is-sample #share-note, .dash-overlay.is-sample #tool-block, .dash-overlay.is-sample #alarm-open,
         .dash-overlay.is-sample #credential-run { display: none !important; }
         .gate-card { width: min(720px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
         #gate { --glass-edge: color-mix(in srgb, var(--text) 14%, transparent); align-items: center; perspective: 1400px; interpolate-size: allow-keywords;
@@ -966,7 +1009,7 @@
             .stage-rig { height: 190px; }
             .reel3d { height: 180px; top: 0; }
             .facts { gap: 10px; }
-            .facts li { flex: 1; min-width: 0; }
+            .facts li { flex: 1 1 28%; min-width: 0; }
             .facts b { font-size: 1.55rem; }
             .facts span { font-size: 11px; line-height: 1.25; }
             .ribbon { margin: 0 0 14px; }
@@ -1006,7 +1049,7 @@
             body #site-tour-tooltip { left: auto; right: 16px; }
         }
         @media print {
-            .topbar, .gate, #intake, #run-panel, .filters, .no-print, .report-toolbar, #share-link, #pay, #run-pay, .wire, .stage { display: none !important; }
+            .topbar, .gate, #intake, #run-panel, .filters, .no-print, .report-toolbar, #share-link, #share-note, #pay, #run-pay, .wire, .stage { display: none !important; }
             .dash-overlay { display: block !important; position: static; background: #fff; padding: 0; overflow: visible; }
             .dash-modal { box-shadow: none; margin: 0; max-width: none; border: 0; background: #fff; color: #12181f; }
             .card, .kpi, .tick, .report-cover { box-shadow: none; break-inside: avoid; }
@@ -1102,7 +1145,7 @@
                     <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg><span class="tg-text"><b class="tg-title" data-tg="pay">Payment and your rights</b><span class="tg-gist" data-tg="pay">The first review is included; anything more is paid before it starts. Withdrawal rights the law keeps are not waived.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
                     <div class="tg-body">
                         <label class="check"><input type="checkbox" name="t7"> The included first review is 20 pages and 2 links deep. A wider or deeper review, and each later run, asks for payment before it starts, unless the account has a free or test allowance, a coupon, or a pass granted by the operator. The amount is shown at that moment, on the payment page. A different name or email does not skip that charge. Stopped reviews are kept. Three stops in a day pause further reviews.</label>
-                        <label class="check"><input type="checkbox" name="t8"> The report is shown once, and signed-in runs are listed on my account page. Seeing, downloading, printing, or sharing it again asks for payment, unless the account has a free or test allowance, a coupon, or a pass granted by the operator. The amount is shown then. The opening of each proposed case stays readable. The rest of the case stays blurred until that payment is confirmed. A copy of the scores and findings goes to my email when the review finishes, blurred unless the report is paid or my account is free.</label>
+                        <label class="check"><input type="checkbox" name="t8"> The report is shown once, and signed-in runs are listed on my account page. The full report opens only for the signed-in account that ran it. Anyone else with the link sees the blurred preview and is asked to sign in. Seeing, downloading, or printing it again asks for payment, unless the account has a free or test allowance, a coupon, or a pass granted by the operator. The amount is shown then. The opening of each proposed case stays readable. The rest of the case stays blurred until that payment is confirmed. A copy of the scores and findings goes to my email when the review finishes, blurred unless the report is paid or my account is free.</label>
                         <label class="check"><input type="checkbox" name="t10"> I ask for the service to start during any withdrawal period. I acknowledge that a consumer in the European Union, under Directive 2011/83/EU, Article 16, and a consumer in the United Kingdom, under the Consumer Contracts Regulations 2013, regulation 36(2), loses the right to withdraw only once the service has been fully performed. A withdrawal right those rules keep is not waived.</label>
                     </div>
                 </details>
@@ -1133,7 +1176,8 @@
                 <li><b>21</b><span>kinds of cases</span></li>
                 <li><b>20</b><span>frameworks you already know</span></li>
                 <li><b>1</b><span>address to begin</span></li>
-                <li id="reviewed-fact" hidden><b id="reviewed-count" translate="no" aria-live="off">0</b><span>URLs reviewed so far</span></li>
+                <li id="reviewed-fact" hidden><b id="reviewed-count" translate="no" aria-live="off">0</b><span>pages read so far</span></li>
+                <li id="reviews-fact" hidden><b id="reviews-count" translate="no" aria-live="off">0</b><span>reviews run so far</span></li>
             </ul>
             <a class="live-jump" href="#live-reports">See live reports of real sites ↓</a>
         </div>
@@ -1233,7 +1277,11 @@
                             </div>
                             <p class="mail-note muted"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="sign-in-link" id="sign-in-restart" type="button" disabled>Start over</button></p>
                         </div>
-                        <p class="sign-in-done" id="sign-in-done" hidden><img class="sign-in-photo" id="sign-in-photo" alt="" width="28" height="28" referrerpolicy="no-referrer" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <a href="qa-review-account.html">Your reviews</a> · <button class="sign-in-link" id="sign-out" type="button" disabled>Sign out</button></p>
+                        <div class="sign-in-done" id="sign-in-done" hidden>
+                            <span class="sign-in-avatar" aria-hidden="true"><span id="sign-in-initial" translate="no"></span><img class="sign-in-photo" id="sign-in-photo" alt="" width="40" height="40" referrerpolicy="no-referrer" hidden></span>
+                            <p class="sign-in-id"><span class="sign-in-label">You're signed in on this device</span><strong id="sign-in-who" translate="no"></strong><span id="sign-in-mail" translate="no" hidden></span></p>
+                            <div class="sign-in-actions"><a class="btn btn-ghost" href="qa-review-account.html">Your reviews</a><button class="btn btn-ghost" id="sign-out" type="button" disabled>Sign out</button></div>
+                        </div>
                         <p class="status" id="sign-in-status" role="status"></p>
                     </div>
                     <div class="grid-2">
@@ -1268,6 +1316,7 @@
                     <div id="credential-note" class="verify-note" hidden>
                         <p><strong>A signed-in run</strong> needs a login you are allowed to use. This page does not take the password, and it does not store one.</p>
                         <p>Payment comes before that run. The amount is shown then. The public analysis still does not sign in.</p>
+                        <p>Once that run works, QA-lab records the site as yours, so your reviews of it also hold a short conversation with its chatbot. To verify a site yourself, add a DNS record or a homepage tag from <a href="qa-review-account.html#verify">your account page</a>.</p>
                     </div>
                     <div id="client-box" hidden>
                         <div class="grid-2">
@@ -1299,25 +1348,44 @@
                     <label for="url">Public page</label>
                     <div class="url-row notranslate" id="url-field">
                         <span>https://</span>
-                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="url" placeholder="example.com/path" required disabled>
+                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
                     </div>
                     <p class="field-error" id="url-error"></p>
                 </div>
             </details>
             <details class="term-group req-group" id="req-cases" data-step="cases" style="--i: 3">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span class="tg-text"><b class="tg-title">Cases and scope</b><span class="tg-gist">Frameworks for the proposed cases, pages to analyze, and links deep.</span><span class="rg-meta" translate="no"></span></span><span class="tg-count" aria-hidden="true">4</span></summary>
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span class="tg-text"><b class="tg-title">Cases</b><span class="tg-gist">Frameworks the proposed cases are written for.</span><span class="rg-meta" translate="no"></span></span><span class="tg-count" aria-hidden="true">4</span></summary>
                 <div class="rg-body">
                     <label>Proposed cases for</label>
                     <div class="fws" id="fw-picker"></div>
                     <p class="field-error" id="frameworks-error"></p>
+                </div>
+            </details>
+            <details class="term-group req-group" id="req-scope" data-step="scope" open style="--i: 4">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l4 4v12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v4h4"/><path d="M4 7v13a1 1 0 0 0 1 1h11"/></svg><span class="tg-text"><b class="tg-title">Pages to review</b><span class="tg-gist">How many pages to open, how deep, in which language, and whether to stay on this path.</span><span class="rg-meta" translate="no"></span></span><span class="tg-count" aria-hidden="true">5</span></summary>
+                <div class="rg-body">
                     <fieldset class="scope" id="page-scope">
-                        <legend>Pages to analyze</legend>
+                        <legend>Pages</legend>
                         <div class="fws" id="page-picker"></div>
                     </fieldset>
                     <fieldset class="scope" id="depth-scope">
                         <legend>Links deep</legend>
                         <div class="fws" id="depth-picker"></div>
                     </fieldset>
+                    <fieldset class="scope" id="lang-scope">
+                        <legend>Language</legend>
+                        <div class="fws" id="lang-picker">
+                            <label><input type="radio" name="pageLang" value="" checked disabled> Site default</label>
+                            <label><input type="radio" name="pageLang" value="en" disabled> English</label>
+                            <label><input type="radio" name="pageLang" value="es" disabled> Spanish</label>
+                            <label><input type="radio" name="pageLang" value="pt" disabled> Portuguese</label>
+                            <label><input type="radio" name="pageLang" value="de" disabled> German</label>
+                            <label><input type="radio" name="pageLang" value="fr" disabled> French</label>
+                            <label><input type="radio" name="pageLang" value="it" disabled> Italian</label>
+                        </div>
+                    </fieldset>
+                    <label class="check" id="section-row"><input id="stay-section" name="section" type="checkbox" disabled> Stay in this section</label>
+                    <p class="scope-note muted" id="section-note">Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site.</p>
                     <p class="field-error" id="scope-error"></p>
                 </div>
             </details>
@@ -1353,7 +1421,8 @@
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-ghost" id="copy-link" type="button">Copy link</button>
+                <button class="btn btn-ghost" id="copy-link" type="button">Copy link (opens for you)</button>
+                <button class="btn btn-ghost" id="ask-open" type="button" aria-expanded="false" aria-controls="ask-panel" hidden>Ask the report</button>
                 <button class="btn btn-ghost" id="case-export-open" type="button">Export and print test cases</button>
                 <div class="menu-wrap">
                     <button class="btn btn-ghost" id="export-toggle" type="button" aria-expanded="false" aria-controls="export-menu">Export</button>
@@ -1379,6 +1448,7 @@
             </div>
         </div>
         <p id="share-link" class="muted"></p>
+        <p id="share-note" class="muted">This link opens in full only for you, signed in. Anyone else sees a blurred preview.</p>
         <p id="sample-note" class="sample-note" hidden></p>
         <section id="report">
         <header class="report-cover" id="report-cover"></header>
@@ -1387,6 +1457,25 @@
         <div class="kpis" id="kpis"></div>
         <h2 data-insight>One-page summary</h2>
         <article class="card" data-insight id="exec"></article>
+        <h2 data-insight>Next to a competitor</h2>
+        <article class="card" data-insight id="compare">
+            <div class="no-print" id="compare-ask">
+                <p>Run the same review on a competitor's site and see the six area scores side by side, with the open problems only one of the two sites has.</p>
+                <div class="compare-form">
+                    <label for="compare-url">Competitor's address</label>
+                    <div class="compare-field">
+                        <div class="url-row notranslate" id="compare-url-field">
+                            <span>https://</span>
+                            <input id="compare-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="competitor.com">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="compare-go" type="button">Compare</button>
+                </div>
+                <p class="meta-line">Priced as a second review, with the return discount. The competitor's site gets the public, passive checks only: no chat conversation and no form sent. Like any review, its owner may get one email about it, and its scores can appear in Live Reports.</p>
+                <p class="meta-line" id="compare-error" role="alert"></p>
+            </div>
+            <div id="compare-result" hidden></div>
+        </article>
         <h2 data-insight>Health score</h2>
         <div data-insight id="health"></div>
         <h2 data-insight>Fix first</h2>
@@ -1463,6 +1552,24 @@
         <article class="card" id="cases"></article>
         </section>
     </div>
+    <aside class="ask-panel no-print" id="ask-panel" aria-labelledby="ask-title" hidden>
+        <div class="ask-head">
+            <div>
+                <p class="eyebrow" data-ask-text="open">Ask the report</p>
+                <h2 id="ask-title" data-ask-text="title">Answers from this report only</h2>
+            </div>
+            <button class="btn btn-ghost" id="ask-close" type="button" data-ask-text="close">Close</button>
+        </div>
+        <p class="ask-note" data-ask-text="note">It explains a finding from its evidence, writes the fix for the stack this review saw, writes the Playwright case for a case id, and drafts a GitHub or Jira issue. It answers nothing the report does not hold.</p>
+        <div class="ask-log" id="ask-log" role="log" aria-live="polite"></div>
+        <div class="ask-chips" id="ask-chips" hidden></div>
+        <form class="ask-form" id="ask-form" hidden>
+            <label class="ask-hidden" for="ask-input" data-ask-text="inputLabel">Question about this report</label>
+            <input id="ask-input" type="text" maxlength="300" autocomplete="off" placeholder="Why is F-01 rated this way?">
+            <button class="btn btn-primary" type="submit" data-ask-text="send">Ask</button>
+        </form>
+        <label class="ask-repo" id="ask-repo-row" for="ask-repo" hidden><span data-ask-text="repo">GitHub repository for issues</span> <input class="notranslate" translate="no" id="ask-repo" type="text" placeholder="owner/repo" autocomplete="off" spellcheck="false"></label>
+    </aside>
 </div>
 <div id="case-export" class="gate no-print" hidden>
     <div class="case-sheet" role="dialog" aria-modal="true" aria-labelledby="case-export-title">
@@ -1500,7 +1607,7 @@
         <h2 id="pay-title">This report was already shown</h2>
         <div id="pay-deal" hidden></div>
         <p class="pay-price" id="pay-price">—</p>
-        <p class="muted" id="pay-detail">The amount for seeing, downloading, printing, or sharing this report again is shown here.</p>
+        <p class="muted" id="pay-detail">The amount for seeing, downloading, or printing this report again, on the account that ran it, is shown here.</p>
         <p class="status" id="pay-note" role="status"></p>
         <div class="actions">
             <button class="btn btn-ghost" id="pay-close" type="button">Close</button>
@@ -1522,14 +1629,16 @@
     </div>
 </div>
 <script src="js/site-i18n.js?v=20261028a"></script>
-<script src="js/site-glossary.js?v=20261029a"></script>
+<script src="js/site-glossary.js?v=20261029b"></script>
 <script src="js/site-tour.js?v=20261023a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
-<script src="js/qa-review-scripts.js?v=20261029a"></script>
+<script src="js/qa-review-scripts.js?v=20261031b"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
+<script src="js/qa-review-ask.js?v=20261023b"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261029f"></script>
+<script src="js/qa-review.js?v=20261031u"></script>
+<script src="js/url-suggest.js?v=20261024a"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
 </html>

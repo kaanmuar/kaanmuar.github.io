@@ -4,31 +4,137 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#eef2f4">
   <title>Your reviews · QA-lab URL Review</title>
   <meta name="description" content="Sign in to see the QA-lab URL Review reviews saved under your email. A paid report or a free account opens in full; otherwise the opening of each shows.">
+  <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <script src="js/site-theme.js"></script>
+  <script>SiteTheme.boot();</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    :root { color-scheme: light; --ink:#102027; --muted:#5c6e78; --line:#d5e0e4; --teal:#0d6e76; --paper:#f4f7f8; --card:#fff; }
+    :root {
+      --bg: #eef2f4; --panel: #f7f8fa; --card: #fff; --line: #d5dce3; --text: #12181f; --muted: #4a5560;
+      --cyan: #0d6e76; --on-cyan: #fff; --green: #0f766e; --amber: #b45309; --red: #b42318;
+      --edge: color-mix(in srgb, var(--text) 13%, transparent);
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+    html.dark-mode {
+      --bg: #10161d; --panel: #161d26; --card: #1a2430; --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1;
+      --cyan: #4db3bb; --on-cyan: #10161d; --green: #5fb89a; --amber: #c4a574; --red: #e07a73;
+      color-scheme: dark;
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; font: 16px/1.45 Georgia, "Times New Roman", serif; color: var(--ink); background: var(--paper); }
-    main { width: min(820px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
-    h1 { font-weight: normal; font-size: 32px; margin: 0 0 8px; }
-    h2 { font-weight: normal; font-size: 20px; }
-    a { color: var(--teal); }
-    section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 14px 0; }
-    label { display: block; font-family: Arial, sans-serif; font-size: 13px; color: var(--muted); margin-top: 10px; }
-    input { width: 100%; font: 16px Arial, sans-serif; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
-    button { margin-top: 12px; font: 14px Arial, sans-serif; background: var(--teal); color: #fff; border: 0; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
-    .muted { color: var(--muted); }
-    .veil { display: inline-block; max-width: 46%; overflow: hidden; white-space: nowrap; vertical-align: bottom; filter: blur(5px); }
-    table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px; }
-    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
-    th { color: var(--muted); font-weight: 600; }
-    ul { margin: 8px 0 0; padding-left: 18px; }
     [hidden] { display: none !important; }
-    .sign-in[aria-busy="true"] { opacity: .7; }
+    #google_translate_element, .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt, iframe.skiptranslate, .goog-te-gadget { display: none !important; visibility: hidden !important; height: 0 !important; }
+    html, body { margin: 0; top: 0 !important; }
+    body {
+      min-height: 100vh; color: var(--text); font: 16px/1.5 Inter, system-ui, sans-serif;
+      background:
+        radial-gradient(1100px 480px at 0% -10%, rgba(13, 110, 118, .2), transparent 58%),
+        radial-gradient(800px 360px at 100% 0%, rgba(180, 83, 9, .11), transparent 46%),
+        var(--bg);
+      background-attachment: fixed;
+    }
+    a { color: var(--cyan); }
+    p { margin: 0 0 12px; }
+    .muted { color: var(--muted); }
+
+    .topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 20px; border-bottom: 1px solid var(--edge);
+      background: color-mix(in srgb, var(--panel) 62%, transparent); backdrop-filter: blur(16px) saturate(1.5); -webkit-backdrop-filter: blur(16px) saturate(1.5); }
+    .brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-family: "Instrument Serif", Georgia, serif; font-size: 1.35rem; letter-spacing: -.03em; line-height: 1.05; }
+    .brand small { display: block; font: 600 10px Inter, system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+    .logo { width: 36px; height: 36px; display: block; flex: none; }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+    #theme-toggle { display: inline-grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1px solid var(--edge); background: transparent; color: var(--text); cursor: pointer; }
+    #theme-toggle svg { width: 18px; height: 18px; }
+    #theme-toggle .sun-icon, html.dark-mode #theme-toggle .moon-icon { display: none; }
+    html.dark-mode #theme-toggle .sun-icon { display: block; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 18px; border: 0; border-radius: 999px; cursor: pointer; text-decoration: none;
+      font: 600 14px/1.1 Inter, system-ui, sans-serif; background: var(--cyan); color: var(--on-cyan);
+      box-shadow: 0 12px 26px -16px var(--cyan), inset 0 1px 0 rgba(255, 255, 255, .22);
+      transition: transform .25s var(--ease), box-shadow .25s var(--ease), background .25s, border-color .25s; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 18px 32px -16px var(--cyan), inset 0 1px 0 rgba(255, 255, 255, .22); }
+    .btn:active { transform: translateY(0); }
+    .btn-ghost { background: color-mix(in srgb, var(--card) 55%, transparent); color: var(--text); border: 1px solid var(--edge); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1); }
+    .btn-ghost:hover { border-color: color-mix(in srgb, var(--cyan) 55%, transparent); box-shadow: 0 14px 28px -20px rgba(0, 0, 0, .5); }
+    .btn-danger { background: var(--red); color: #fff; box-shadow: 0 12px 26px -16px var(--red); }
+    .btn-danger:hover { box-shadow: 0 18px 32px -16px var(--red); }
+    .btn:disabled { opacity: .55; cursor: default; transform: none; }
+    .btn:focus-visible, #theme-toggle:focus-visible, .text-link:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+    main { width: min(1080px, calc(100% - 40px)); margin: 0 auto; padding: 44px 0 64px; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 32px; align-items: center; margin-bottom: 30px; }
+    .hero-copy > * { animation: rise .8s var(--ease) backwards; }
+    .hero-copy > :nth-child(2) { animation-delay: 80ms; }
+    .hero-copy > :nth-child(3) { animation-delay: 160ms; }
+    .hero-copy > :nth-child(4) { animation-delay: 240ms; }
+    .eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--cyan); }
+    h1 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: clamp(3rem, 7vw, 5rem); line-height: .95; letter-spacing: -.035em; margin: 10px 0 18px; }
+    h1 em { padding-right: .08em; background: linear-gradient(100deg, var(--cyan) 10%, var(--amber) 95%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .lede { max-width: 54ch; font-size: 17px; line-height: 1.55; }
+    .returns { max-width: 58ch; margin: 0; padding: 12px 14px; border-radius: 14px; font-size: 14px; color: var(--muted); border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 45%, transparent); }
+    .returns b { font: 600 12.5px "Fira Code", ui-monospace, monospace; padding: 1px 7px; border-radius: 999px; color: var(--cyan); background: color-mix(in srgb, var(--cyan) 12%, transparent); }
+
+    .stage { position: relative; height: 320px; perspective: 1200px; --rx: 0deg; --ry: 0deg; }
+    .stage::before { content: ""; position: absolute; inset: 12% 8%; border-radius: 50%; filter: blur(48px); opacity: .55;
+      background: radial-gradient(circle at 35% 40%, var(--cyan), transparent 60%), radial-gradient(circle at 70% 70%, var(--amber), transparent 55%); }
+    .stage-tilt { position: relative; height: 100%; transform-style: preserve-3d; transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform .6s var(--ease); }
+    .rig { position: relative; width: min(330px, 100%); height: 100%; margin: 0 auto; transform-style: preserve-3d; animation: rig-yaw 16s ease-in-out infinite; }
+    .sheet { position: absolute; inset: 34px 22px; border-radius: 22px; border: 1px solid var(--edge);
+      background: linear-gradient(160deg, color-mix(in srgb, var(--card) 88%, transparent), color-mix(in srgb, var(--card) 58%, transparent));
+      box-shadow: 0 44px 80px -40px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .16);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .sheet-3 { transform: translate3d(38px, -30px, -130px) rotateZ(7deg); opacity: .5; }
+    .sheet-2 { transform: translate3d(18px, -14px, -65px) rotateZ(3.5deg); opacity: .78; }
+    .sheet-1 { display: grid; align-content: start; gap: 13px; padding: 22px; transform-style: preserve-3d; }
+    .sheet-head { display: flex; align-items: center; gap: 10px; }
+    .sheet-head .logo { width: 30px; height: 30px; }
+    .sheet-head div { flex: 1; display: grid; gap: 6px; }
+    .bar { display: block; height: 9px; border-radius: 999px; background: color-mix(in srgb, var(--text) 14%, transparent); }
+    .bar.thin { height: 7px; width: 60%; opacity: .7; }
+    .case { display: flex; align-items: center; gap: 10px; }
+    .case i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .case.warn i { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+    .case.fail i { background: var(--red); box-shadow: 0 0 10px var(--red); }
+    .case .bar { flex: 1; }
+    .case.veiled .bar { filter: blur(3px); background: linear-gradient(90deg, var(--cyan), var(--amber)); opacity: .55; }
+    .sheet-cta { height: 30px; margin-top: 4px; border-radius: 999px; background: var(--cyan); opacity: .9; transform: translateZ(26px); box-shadow: 0 14px 24px -12px var(--cyan); }
+    .float { position: absolute; display: grid; place-items: center; border-radius: 18px; border: 1px solid var(--edge);
+      background: color-mix(in srgb, var(--card) 78%, transparent); box-shadow: 0 26px 40px -22px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .2);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .float svg { width: 26px; height: 26px; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .float-check { right: -2px; bottom: 56px; width: 62px; height: 62px; transform: translateZ(90px); animation: bob 6s ease-in-out infinite; }
+    .float-check svg { stroke: var(--green); }
+    .float-lock { left: 0; top: 46px; width: 52px; height: 52px; border-radius: 16px; transform: translateZ(60px); animation: bob 7s ease-in-out -2s infinite; }
+    .float-lock svg { width: 22px; height: 22px; stroke: var(--amber); }
+
+    .panel { position: relative; margin: 0 0 22px; padding: 24px 26px; border-radius: 24px; border: 1px solid var(--edge);
+      background:
+        radial-gradient(70% 45% at 0% 0%, color-mix(in srgb, var(--cyan) 14%, transparent), transparent 70%),
+        radial-gradient(50% 35% at 100% 100%, color-mix(in srgb, var(--amber) 9%, transparent), transparent 70%),
+        linear-gradient(160deg, color-mix(in srgb, var(--card) 82%, transparent), color-mix(in srgb, var(--card) 60%, transparent));
+      box-shadow: 0 40px 90px -46px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .12);
+      backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);
+      transform-origin: 50% 0; animation: panel-in .9s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 110ms + 260ms); }
+    .panel-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .panel-icon { flex: none; width: 44px; height: 44px; padding: 10px; border-radius: 14px; fill: none; stroke: var(--cyan); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+      background: linear-gradient(145deg, color-mix(in srgb, var(--cyan) 26%, transparent), color-mix(in srgb, var(--cyan) 6%, transparent));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
+    h2 { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 2rem; line-height: 1; letter-spacing: -.02em; }
+    .panel-head p { margin: 4px 0 0; font-size: 14px; }
+    .panel-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--edge); }
+    .small { font-size: 13.5px; line-height: 1.5; }
+
+    .sign-in { border-color: color-mix(in srgb, var(--cyan) 40%, var(--edge)); }
+    .sign-in.done { border-color: var(--edge); }
     .sign-in.elsewhere { border-color: #dc2626; }
-    .sign-in-providers { display: flex; flex-wrap: wrap; gap: 8px; }
-    .sign-in-provider { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+    .sign-in[aria-busy="true"] { opacity: .7; }
+    .sign-in-providers { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 4px; }
+    .sign-in-provider { min-height: 46px; padding: 10px 16px; background: color-mix(in srgb, var(--card) 70%, transparent); color: var(--text); border: 1px solid var(--edge); box-shadow: 0 10px 22px -18px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .14); }
+    .sign-in-provider:hover { border-color: color-mix(in srgb, var(--cyan) 55%, transparent); box-shadow: 0 18px 30px -18px rgba(0, 0, 0, .55); }
     .sign-in-mark { width: 18px; height: 18px; border-radius: 4px; background: currentColor; opacity: .85; }
     .sign-in-mark.sign-in-google { background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); border-radius: 50%; opacity: 1; }
     .sign-in-mark.sign-in-microsoft { background: linear-gradient(90deg, #f25022 50%, #7fba00 0) top / 100% 50% no-repeat, linear-gradient(90deg, #00a4ef 50%, #ffb900 0) bottom / 100% 50% no-repeat; border-radius: 0; opacity: 1; }
@@ -40,71 +146,331 @@
     .sign-in-mark.sign-in-facebook { background: #1877f2; border-radius: 50%; opacity: 1; }
     .sign-in-mark.sign-in-twitter { border-radius: 3px; opacity: 1; }
     .sign-in-mark.sign-in-slack { background: conic-gradient(#36c5f0 0 25%, #2eb67d 0 50%, #ecb22e 0 75%, #e01e5a 0); border-radius: 5px; opacity: 1; }
-    .sign-in-row { display: flex; gap: 8px; align-items: stretch; }
+    .or { display: flex; align-items: center; gap: 12px; margin: 16px 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--edge); }
+    label { display: block; margin: 12px 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    input { width: 100%; min-height: 46px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--edge); color: var(--text); font: 16px Inter, system-ui, sans-serif;
+      background: color-mix(in srgb, var(--card) 72%, transparent); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .06); transition: border-color .2s, box-shadow .2s; }
+    input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 4px color-mix(in srgb, var(--cyan) 20%, transparent); }
+    #sign-in-code { font-family: "Fira Code", ui-monospace, monospace; letter-spacing: .4em; }
+    .sign-in-row { display: flex; gap: 10px; align-items: stretch; }
     .sign-in-row input { flex: 1; min-width: 0; }
-    .sign-in-row button { margin-top: 0; white-space: nowrap; }
-    .sign-in-link { background: none; color: var(--teal); padding: 0; margin: 0; text-decoration: underline; font: inherit; }
-    .sign-in-photo { width: 28px; height: 28px; border-radius: 50%; vertical-align: middle; margin-right: 8px; object-fit: cover; }
-    #sign-in-status.bad, #privacy-status.bad { color: #b91c1c; }
-    button.danger { background: #b91c1c; }
-    button:disabled { opacity: .6; cursor: default; }
-    .cookie-note { position: fixed; z-index: 55; left: 16px; right: 16px; bottom: 16px; max-width: 720px; margin: 0 auto; padding: 16px 18px; border-radius: 18px; background: var(--card); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(8, 14, 18, .28); font-family: Arial, sans-serif; }
+    .sign-in-row .btn { min-height: 46px; white-space: nowrap; }
+    .text-link { padding: 0; margin: 0; border: 0; background: none; color: var(--cyan); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .sign-in-done { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 14px; padding: 14px; border-radius: 18px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 50%, transparent); }
+    .sign-in-avatar { position: relative; flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; overflow: hidden; font-weight: 700; font-size: 18px;
+      background: linear-gradient(140deg, var(--cyan), color-mix(in srgb, var(--cyan) 55%, var(--amber))); color: var(--on-cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 25%, transparent); }
+    .sign-in-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .sign-in-id { flex: 1 1 180px; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; line-height: 1.35; }
+    .sign-in-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    #sign-in-who { font-weight: 600; overflow-wrap: anywhere; }
+    #sign-in-mail { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+    #sign-in-status { margin: 10px 0 0; font-size: 14px; color: var(--muted); }
+    #sign-in-status:empty, #privacy-status:empty, #file-status:empty { display: none; }
+    #sign-in-status.bad, #privacy-status.bad { color: var(--red); }
+
+    #file-status { display: inline-block; margin: 0 0 4px; padding: 8px 12px; border-radius: 12px; font-size: 14px; color: var(--text); border: 1px solid color-mix(in srgb, var(--cyan) 30%, transparent); background: color-mix(in srgb, var(--cyan) 9%, transparent); }
+    #list { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; margin-top: 16px; perspective: 1100px; }
+    .run { --rx: 0deg; --ry: 0deg; position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 20px; overflow: hidden; border: 1px solid var(--edge);
+      background: linear-gradient(165deg, color-mix(in srgb, var(--panel) 80%, transparent), color-mix(in srgb, var(--panel) 50%, transparent));
+      box-shadow: 0 18px 36px -30px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .1);
+      transform: rotateX(var(--rx)) rotateY(var(--ry)); transform-style: preserve-3d;
+      transition: transform .45s var(--ease), box-shadow .45s var(--ease), border-color .3s;
+      animation: run-in .7s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms + 120ms); }
+    .settled .run { animation: none; }
+    .run::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s;
+      background: radial-gradient(260px circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, .16), transparent 60%); }
+    .run:hover { border-color: color-mix(in srgb, var(--cyan) 45%, transparent); box-shadow: 0 30px 50px -28px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .14); }
+    .run:hover::after { opacity: 1; }
+    .run-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .run h3 { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 1.65rem; line-height: 1.05; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .pill { flex: none; font: 600 11px "Fira Code", ui-monospace, monospace; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+    .pill.open { color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 50%, transparent); background: color-mix(in srgb, var(--green) 11%, transparent); }
+    .pill.shut { color: var(--amber); border: 1px solid color-mix(in srgb, var(--amber) 50%, transparent); background: color-mix(in srgb, var(--amber) 11%, transparent); }
+    .run-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+    .run-meta span { font: 500 11.5px "Fira Code", ui-monospace, monospace; padding: 3px 8px; border-radius: 999px; color: var(--muted); border: 1px solid var(--edge); }
+    .run-url { margin: 0; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .run-statement { margin: 0; font-size: 14.5px; line-height: 1.5; }
+    .run ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+    .run li { position: relative; padding-left: 16px; font-size: 13.5px; line-height: 1.4; }
+    .run li::before { content: ""; position: absolute; left: 0; top: .5em; width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+    .layer { color: var(--muted); font-weight: 600; }
+    .run .btn { margin-top: auto; align-self: flex-start; }
+    .fold { display: flex; flex-direction: column; gap: 10px; }
+    .fold summary { display: flex; align-items: center; gap: 8px; width: fit-content; padding: 6px 12px 6px 10px; border-radius: 999px; border: 1px solid var(--edge); list-style: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: var(--text); background: color-mix(in srgb, var(--card) 55%, transparent); transition: border-color .2s, background .2s; }
+    .fold summary::-webkit-details-marker { display: none; }
+    .fold summary:hover, .fold summary:focus-visible { outline: none; border-color: color-mix(in srgb, var(--cyan) 55%, transparent); background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+    .fold summary svg { width: 14px; height: 14px; fill: none; stroke: var(--cyan); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .3s var(--ease); }
+    .fold[open] summary svg { transform: rotate(90deg); }
+    .fold-count { font: 500 11.5px "Fira Code", ui-monospace, monospace; color: var(--muted); }
+    .fold[open] > :not(summary) { animation: fold-in .35s var(--ease) both; }
+    .fold-all { cursor: pointer; }
+    .fold-all svg { width: 16px; height: 16px; fill: none; stroke: var(--cyan); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .veil { display: inline-block; max-width: 46%; overflow: hidden; white-space: nowrap; vertical-align: bottom; filter: blur(5px); user-select: none; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
+    .check-all, .pick { display: inline-flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; text-transform: none; letter-spacing: 0; }
+    .check-all { min-height: 46px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 60%, transparent); font-size: 14px; font-weight: 600; color: var(--text); }
+    .check-all input, .pick input { width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: var(--cyan); cursor: pointer; box-shadow: none; }
+    .search { position: relative; flex: 1 1 260px; }
+    .search svg { position: absolute; left: 14px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+    .search input { padding-left: 42px; }
+    .result-count { font: 500 12px "Fira Code", ui-monospace, monospace; color: var(--muted); }
+    .run.picked { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 24px 44px -28px var(--cyan); }
+    .run-head { flex-wrap: wrap; }
+    .run-title { flex: 1 1 auto; display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+    .run-title h3 { overflow-wrap: break-word; }
+    .pick { margin-top: 5px; flex: none; }
+    .bulk { position: sticky; bottom: 16px; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; margin-top: 18px; padding: 12px 14px 12px 18px; border-radius: 20px;
+      border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--edge)); background: color-mix(in srgb, var(--card) 82%, transparent);
+      box-shadow: 0 28px 60px -26px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .14);
+      backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); animation: bulk-in .45s var(--ease) both; }
+    .bulk-count { font-weight: 700; }
+    .bulk-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .bulk-actions .btn { min-height: 38px; padding: 8px 14px; font-size: 13px; }
+    #bulk-status { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
+    #bulk-status:empty { display: none; }
+    #bulk-status.bad { color: var(--red); }
+    .empty { grid-column: 1 / -1; margin: 0; padding: 28px; border-radius: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--edge); }
+
+    .data-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; }
+    .data-block { display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: 18px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 45%, transparent); }
+    .data-block h3 { margin: 0; font-size: 15px; font-weight: 700; }
+    .data-block p { margin: 0; color: var(--muted); }
+    .data-block > .btn { align-self: flex-start; margin-top: auto; }
+    .danger-zone { border-color: color-mix(in srgb, var(--red) 38%, transparent); background: linear-gradient(160deg, color-mix(in srgb, var(--red) 8%, transparent), transparent 70%); }
+    .danger-zone h3 { color: var(--red); }
+    .danger-zone input:focus { border-color: var(--red); box-shadow: 0 0 0 4px color-mix(in srgb, var(--red) 18%, transparent); }
+    #privacy-status { margin: 14px 0 0; font-size: 14px; }
+    #verify-status { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+    #verify-status:empty { display: none; }
+    #verify-status.ok { color: var(--green); }
+    #verify-status.bad { color: var(--red); }
+    .verify-ways { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 16px; }
+    .verify-code { display: block; padding: 10px 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--cyan) 30%, transparent); background: color-mix(in srgb, var(--cyan) 8%, transparent);
+      color: var(--text); font: 500 12.5px/1.5 "Fira Code", ui-monospace, monospace; overflow-wrap: anywhere; user-select: all; }
+    .verify-list-head { margin: 22px 0 10px; font-size: 15px; font-weight: 700; }
+    .verify-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .verify-list:empty { display: none; }
+    .verify-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 45%, transparent); }
+    .verify-list strong { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+    .verify-until { font: 500 11.5px "Fira Code", ui-monospace, monospace; color: var(--muted); }
+
+    .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; width: min(1080px, calc(100% - 40px)); margin: 0 auto; padding: 22px 0 40px; border-top: 1px solid var(--edge); font-size: 13px; color: var(--muted); }
+    .foot nav { display: flex; gap: 16px; }
+
+    .cookie-note { position: fixed; z-index: 55; left: 16px; right: 16px; bottom: 16px; max-width: 720px; margin: 0 auto; padding: 16px 18px; border-radius: 20px; color: var(--text); border: 1px solid var(--edge);
+      background: color-mix(in srgb, var(--card) 88%, transparent); box-shadow: 0 24px 60px rgba(8, 14, 18, .3); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
     .cookie-note p { margin: 0 0 12px; font-size: 15px; line-height: 1.45; }
     .cookie-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
-    .cookie-actions button { margin-top: 0; border-radius: 999px; padding: 8px 14px; font-weight: 700; }
-    #cookie-necessary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    .cookie-actions button { border-radius: 999px; padding: 8px 14px; font: 700 14px Inter, system-ui, sans-serif; cursor: pointer; }
+    #cookie-necessary { background: transparent; color: var(--text); border: 1px solid var(--edge); }
+    #cookie-allow { background: var(--cyan); color: var(--on-cyan); border: 0; }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(18px); } }
+    @keyframes panel-in { from { opacity: 0; transform: perspective(1200px) rotateX(14deg) translateY(40px) scale(.97); } }
+    @keyframes run-in { from { opacity: 0; transform: rotateX(-22deg) translateY(18px); } }
+    @keyframes rig-yaw { 0%, 100% { transform: rotateX(12deg) rotateY(-20deg); } 50% { transform: rotateX(8deg) rotateY(-6deg); } }
+    @keyframes fold-in { from { opacity: 0; transform: translateY(-6px); } }
+    @keyframes bulk-in { from { opacity: 0; transform: perspective(900px) rotateX(-18deg) translateY(16px); } }
+    @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+
+    @media (max-width: 860px) {
+      main { padding-top: 28px; }
+      .hero { grid-template-columns: 1fr; gap: 8px; }
+      .stage { height: 280px; order: -1; }
+      .data-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      main, .foot { width: calc(100% - 24px); }
+      .topbar { padding: 8px 12px; }
+      .top-actions .btn { padding: 8px 12px; min-height: 38px; font-size: 13px; }
+      .panel { padding: 18px 16px; border-radius: 20px; }
+      h2 { font-size: 1.7rem; }
+      .sign-in-row { flex-direction: column; }
+      .sign-in-provider { flex: 1 1 100%; }
+      .bulk { bottom: 10px; padding: 12px; }
+      .bulk-actions .btn { flex: 1 1 calc(50% - 8px); }
+      .cookie-note { left: 10px; right: 10px; bottom: 10px; padding: 12px; }
+      .cookie-actions button { flex: 1; min-height: 40px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .run { transform: none; }
+    }
   </style>
 </head>
 <body>
+<header class="topbar">
+  <a class="brand" href="qa-review.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a>
+  <div class="top-actions">
+    <a class="btn btn-ghost" href="qa-review.html">New review</a>
+    <button id="theme-toggle" type="button" aria-label="Toggle dark mode">
+      <svg class="sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+      <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+    </button>
+  </div>
+</header>
 <main>
-  <p class="muted">QA-lab URL Review</p>
-  <h1>Your reviews</h1>
-  <p>Sign in to see the reviews saved under your email. A paid report or a free account opens in full; otherwise the opening of each one shows, and the rest opens when that report is paid.</p>
-  <p class="muted">A return takes 10% off the first time in 30 days, 15% the second, and 20% after that. A selection never falls under 9.50 USD.</p>
-  <section class="sign-in" id="sign-in">
-    <h2>Sign in</h2>
-    <p class="muted">Use the same sign-in as the review page. A code or link opened on another device or browser signs in nowhere.</p>
+  <div class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Your account</p>
+      <h1>Your <em>reviews</em></h1>
+      <p class="lede">Sign in to see the reviews saved under your email. A paid report or a free account opens in full; otherwise the opening of each one shows, and the rest opens when that report is paid.</p>
+      <p class="returns">A return takes <b>10%</b> off the first time in 30 days, <b>15%</b> the second, and <b>20%</b> after that. A selection never falls under 9.50 USD.</p>
+    </div>
+    <div class="stage" id="stage" aria-hidden="true">
+      <div class="stage-tilt">
+        <div class="rig">
+          <div class="sheet sheet-3"></div>
+          <div class="sheet sheet-2"></div>
+          <div class="sheet sheet-1">
+            <div class="sheet-head"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="30" height="30"><div><span class="bar"></span><span class="bar thin"></span></div></div>
+            <div class="case"><i></i><span class="bar"></span></div>
+            <div class="case warn"><i></i><span class="bar"></span></div>
+            <div class="case veiled fail"><i></i><span class="bar"></span></div>
+            <div class="case veiled"><i></i><span class="bar"></span></div>
+            <div class="sheet-cta"></div>
+          </div>
+          <div class="float float-lock"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+          <div class="float float-check"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="panel sign-in" id="sign-in" style="--i: 0">
+    <div class="panel-head">
+      <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+      <div>
+        <h2>Sign in</h2>
+        <p class="muted">Use the same sign-in as the review page. A code or link opened on another device or browser signs in nowhere.</p>
+      </div>
+    </div>
     <div id="sign-in-start">
-      <p class="muted">Signing in stores your email and what the provider you pick shares with it. See <a href="qa-review-legal.html">Disclaimers</a>.</p>
       <div class="sign-in-providers" id="sign-in-providers"></div>
-      <p class="muted" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them. To share only your address, use email.</p>
-      <p class="muted" id="sign-in-or" hidden>or with your email</p>
+      <p class="muted small" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them. To share only your address, use email.</p>
+      <p class="or" id="sign-in-or" hidden>or with your email</p>
       <label for="sign-in-email">Email</label>
       <div class="sign-in-row">
-        <input id="sign-in-email" type="email" autocomplete="email">
-        <button id="sign-in-send" type="button">Email me a code</button>
+        <input id="sign-in-email" type="email" autocomplete="email" placeholder="you@company.com">
+        <button class="btn" id="sign-in-send" type="button">Email me a code</button>
       </div>
+      <p class="muted small" style="margin-top: 12px">Signing in stores your email and what the provider you pick shares with it. See <a href="qa-review-legal.html">Disclaimers</a>.</p>
     </div>
     <div id="sign-in-code-step" hidden>
       <label for="sign-in-code" id="sign-in-code-label">Code</label>
       <div class="sign-in-row">
         <input id="sign-in-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false">
-        <button id="sign-in-check" type="button">Sign in</button>
+        <button class="btn" id="sign-in-check" type="button">Sign in</button>
       </div>
-      <p class="muted"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="sign-in-link" id="sign-in-restart" type="button">Start over</button></p>
+      <p class="muted small" style="margin-top: 12px"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="text-link" id="sign-in-restart" type="button">Start over</button></p>
     </div>
-    <p id="sign-in-done" hidden><img class="sign-in-photo" id="sign-in-photo" alt="" width="28" height="28" referrerpolicy="no-referrer" hidden>Signed in on this device as <strong id="sign-in-who"></strong>. <button class="sign-in-link" id="sign-out" type="button">Sign out</button></p>
-    <p class="muted" id="sign-in-status" role="status"></p>
+    <div class="sign-in-done" id="sign-in-done" hidden>
+      <span class="sign-in-avatar" aria-hidden="true"><span id="sign-in-initial" translate="no"></span><img class="sign-in-photo" id="sign-in-photo" alt="" width="46" height="46" referrerpolicy="no-referrer" hidden></span>
+      <p class="sign-in-id"><span class="sign-in-label">Signed in on this device</span><strong id="sign-in-who" translate="no"></strong><span id="sign-in-mail" translate="no" hidden></span></p>
+      <button class="btn btn-ghost" id="sign-out" type="button">Sign out</button>
+    </div>
+    <p id="sign-in-status" role="status"></p>
   </section>
-  <section id="file" hidden>
-    <h2>Saved reviews</h2>
-    <p class="muted" id="file-status"></p>
+
+  <section class="panel" id="file" style="--i: 1" hidden>
+    <div class="panel-head">
+      <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+      <h2>Saved reviews</h2>
+    </div>
+    <p id="file-status"></p>
+    <div class="toolbar">
+      <label class="check-all"><input type="checkbox" id="select-all"><span>Select all</span></label>
+      <button class="check-all fold-all" id="fold-all" type="button" aria-controls="list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><span>Expand all</span></button>
+      <div class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="Search by site, URL, status or case" aria-label="Search saved reviews" autocomplete="off" spellcheck="false">
+      </div>
+      <span class="result-count" id="result-count" aria-live="polite"></span>
+    </div>
     <div id="list"></div>
-    <button id="stop" type="button">Stop follow-up notes</button>
-  </section>
-  <section id="privacy" hidden>
-    <h2>Your data</h2>
-    <p>Download everything kept under this address as a JSON file: the account, its sign-ins, saved reviews, notes and alerts.</p>
-    <button id="export" type="button">Download my data</button>
-    <p>Deleting removes the account, its sign-ins on every device, saved reviews, notes, alerts, and the sign-in with Google or any other provider. A payment record stays for five years, as Colombian tax law requires, without the report. A stop on follow-up notes stays, so they do not start again. This cannot be undone.</p>
-    <label for="delete-confirm">Type your email to confirm</label>
-    <div class="sign-in-row">
-      <input id="delete-confirm" type="email" autocomplete="off" spellcheck="false">
-      <button id="delete" class="danger" type="button">Delete my account and runs</button>
+    <div class="bulk" id="bulk" role="region" aria-label="Actions on the selected reviews" hidden>
+      <span class="bulk-count" id="bulk-count"></span>
+      <div class="bulk-actions">
+        <button class="btn btn-ghost" id="bulk-open" type="button">Open in new tabs</button>
+        <button class="btn btn-ghost" id="bulk-download" type="button">Download JSON</button>
+        <button class="btn" id="bulk-unlock" type="button">Unlock</button>
+        <button class="btn btn-danger" id="bulk-delete" type="button">Delete</button>
+        <button class="text-link" id="bulk-clear" type="button">Clear</button>
+      </div>
     </div>
-    <p class="muted" id="privacy-status" role="status"></p>
+    <p id="bulk-status" role="status"></p>
+    <div class="panel-foot">
+      <button class="btn btn-ghost" id="stop" type="button">Stop follow-up notes</button>
+    </div>
+  </section>
+
+  <section class="panel" id="privacy" style="--i: 2" hidden>
+    <div class="panel-head">
+      <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <h2>Your data</h2>
+    </div>
+    <div class="data-grid">
+      <div class="data-block">
+        <h3>Download</h3>
+        <p>Download everything kept under this address as a JSON file: the account, its sign-ins, saved reviews, notes and alerts.</p>
+        <button class="btn btn-ghost" id="export" type="button">Download my data</button>
+      </div>
+      <div class="data-block danger-zone">
+        <h3>Delete</h3>
+        <p>Deleting removes the account, its sign-ins on every device, saved reviews, notes, alerts, and the sign-in with Google or any other provider. A payment record stays for five years, as Colombian tax law requires, without the report. A stop on follow-up notes stays, so they do not start again. This cannot be undone.</p>
+        <label for="delete-confirm">Type your email to confirm</label>
+        <div class="sign-in-row">
+          <input id="delete-confirm" type="email" autocomplete="off" spellcheck="false">
+          <button class="btn btn-danger" id="delete" type="button">Delete my account and runs</button>
+        </div>
+      </div>
+    </div>
+    <p id="privacy-status" role="status"></p>
+  </section>
+  <section class="panel notranslate" id="verify" style="--i: 3" translate="no" hidden>
+    <div class="panel-head">
+      <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+      <div>
+        <h2 data-copy="title"></h2>
+        <p class="muted" data-copy="intro"></p>
+      </div>
+    </div>
+    <div id="verify-form">
+      <label for="verify-host" data-copy="host"></label>
+      <div class="sign-in-row">
+        <input id="verify-host" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="shop.example.com">
+        <button class="btn" id="verify-get" type="button" data-copy="get"></button>
+      </div>
+      <div id="verify-steps" hidden>
+        <div class="data-grid verify-ways">
+          <div class="data-block">
+            <h3 data-copy="dns"></h3>
+            <p data-copy="dnsHow"></p>
+            <code class="verify-code" id="verify-txt"></code>
+          </div>
+          <div class="data-block">
+            <h3 data-copy="meta"></h3>
+            <p data-copy="metaHow"></p>
+            <code class="verify-code" id="verify-meta"></code>
+          </div>
+        </div>
+        <div class="panel-foot">
+          <button class="btn" id="verify-check" type="button" data-copy="check"></button>
+        </div>
+      </div>
+    </div>
+    <p id="verify-status" role="status"></p>
+    <h3 class="verify-list-head" data-copy="list"></h3>
+    <ul class="verify-list" id="verify-list"></ul>
+    <p class="empty" id="verify-none" data-copy="none"></p>
   </section>
 </main>
+<footer class="foot">
+  <span translate="no">QA-lab URL Review · Carlos Muñoz</span>
+  <nav><a href="qa-review.html">Review a URL</a><a href="qa-review-guide.html">Guide</a><a href="qa-review-legal.html">Disclaimers</a></nav>
+</footer>
 <script src="js/site-analytics.js?v=20261022p"></script>
 <script src="js/qa-review-consent.js?v=20261028p"></script>
 <script src="js/site-i18n.js?v=20261028a"></script>
@@ -116,12 +482,41 @@
     if (host === "127.0.0.1" || host === "localhost") return location.port === "8768" ? "" : "http://127.0.0.1:8768";
     return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
   }
+  document.getElementById("theme-toggle").addEventListener("click", () => SiteTheme.toggle());
+  const still = matchMedia("(prefers-reduced-motion: reduce)");
+  const fine = matchMedia("(hover: hover) and (pointer: fine)");
+  function tilt(el, depth) {
+    el.addEventListener("pointermove", (event) => {
+      if (still.matches || !fine.matches) return;
+      const box = el.getBoundingClientRect();
+      const x = (event.clientX - box.left) / box.width;
+      const y = (event.clientY - box.top) / box.height;
+      el.style.setProperty("--rx", ((0.5 - y) * depth).toFixed(2) + "deg");
+      el.style.setProperty("--ry", ((x - 0.5) * depth).toFixed(2) + "deg");
+      el.style.setProperty("--gx", (x * 100).toFixed(1) + "%");
+      el.style.setProperty("--gy", (y * 100).toFixed(1) + "%");
+    });
+    el.addEventListener("pointerleave", () => {
+      el.style.setProperty("--rx", "0deg");
+      el.style.setProperty("--ry", "0deg");
+    });
+  }
+  tilt(document.getElementById("stage"), 18);
   const fileEl = document.getElementById("file");
   const listEl = document.getElementById("list");
+  const searchEl = document.getElementById("search");
+  const selectAllEl = document.getElementById("select-all");
+  const bulkEl = document.getElementById("bulk");
+  const bulkStatus = document.getElementById("bulk-status");
+  const foldAllEl = document.getElementById("fold-all");
+  const picked = new Set();
+  const unfolded = new Set();
+  let runs = [];
   function text(value) { return value == null || value === "" ? "—" : String(value); }
-  function node(tag, content) {
+  function node(tag, content, className) {
     const el = document.createElement(tag);
     el.textContent = content == null ? "" : String(content);
+    if (className) el.className = className;
     return el;
   }
   function valueNode(value, open) {
@@ -159,6 +554,16 @@
     privacyStatus.textContent = message;
     privacyStatus.classList.toggle("bad", !!bad);
   }
+  function save(data, prefix) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = prefix + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
   async function failure(response, fallback) {
     try { return (await response.json()).error || fallback; } catch (error) { return fallback; }
   }
@@ -173,14 +578,7 @@
         sayPrivacy(await failure(response, "Your data did not download. Try again in a moment."), true);
         return;
       }
-      const blob = new Blob([JSON.stringify(await response.json(), null, 2)], { type: "application/json" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "qa-review-data-" + new Date().toISOString().slice(0, 10) + ".json";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      save(await response.json(), "qa-review-data-");
       sayPrivacy("Your data is downloaded.");
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_export", "URL Review", "export");
     } catch (error) {
@@ -227,45 +625,274 @@
     fileEl.hidden = false;
     privacyEl.hidden = false;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_enter", "URL Review", "open");
-    const opened = (data.runs || []).filter((run) => run.open).length;
+    runs = data.runs || [];
+    picked.clear();
+    unfolded.clear();
+    const opened = runs.filter((run) => run.open).length;
     document.getElementById("file-status").textContent = data.free ? "Your account opens every report."
       : data.pass ? "A 30-day pass is open on this account until " + new Date(data.paidUntil).toLocaleString() + ". Every report is open."
         : opened ? "Paid reports are open. For the others, the opening of each shows, and the rest opens when that report is paid."
           : "The opening of each review shows. The rest opens when that report is paid.";
-    listEl.replaceChildren();
-    (data.runs || []).forEach((run) => {
-      const block = document.createElement("article");
-      block.appendChild(node("h2", run.host || "Review"));
-      const dl = document.createElement("p");
-      dl.appendChild(document.createTextNode((run.at ? new Date(run.at).toLocaleString() : "—") + " · " + text(run.status) + " · " + text(run.caseCount) + " cases · "));
-      dl.appendChild(valueNode(run.url, run.open));
-      block.appendChild(dl);
+    listEl.classList.remove("settled");
+    render();
+    listEl.classList.add("settled");
+  }
+  function reportHref(run) {
+    return "qa-review.html?report=" + encodeURIComponent(run.id);
+  }
+  function haystack(run) {
+    return [run.host, run.url, run.status, run.statement, run.at ? new Date(run.at).toLocaleString() : ""]
+      .concat((run.cases || []).map((item) => (item.layer || "") + " " + (item.title || ""))).join(" ").toLowerCase();
+  }
+  function shownRuns() {
+    const terms = searchEl.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return runs.filter((run) => {
+      const hay = haystack(run);
+      return terms.every((term) => hay.indexOf(term) !== -1);
+    });
+  }
+  function render() {
+    const list = shownRuns();
+    listEl.replaceChildren(...list.map(card));
+    if (!runs.length) listEl.appendChild(node("p", "No finished review is saved for this address.", "empty"));
+    else if (!list.length) listEl.appendChild(node("p", "No saved review matches “" + searchEl.value.trim() + "”.", "empty"));
+    document.querySelector(".toolbar").hidden = !runs.length;
+    document.getElementById("result-count").textContent = list.length !== runs.length ? list.length + " of " + runs.length
+      : runs.length + (runs.length === 1 ? " review" : " reviews");
+    paintBulk();
+    paintFold();
+  }
+  function paintFold() {
+    const folds = listEl.querySelectorAll(".fold");
+    const allOpen = !!folds.length && [...folds].every((fold) => fold.open);
+    foldAllEl.hidden = !folds.length;
+    foldAllEl.querySelector("span").textContent = allOpen ? "Collapse all" : "Expand all";
+    foldAllEl.setAttribute("aria-expanded", String(allOpen));
+  }
+  function syncPicks() {
+    listEl.querySelectorAll(".run").forEach((block) => {
+      const on = picked.has(block.dataset.id);
+      block.classList.toggle("picked", on);
+      block.querySelector(".pick input").checked = on;
+    });
+    paintBulk();
+  }
+  function paintBulk() {
+    const list = shownRuns();
+    const on = list.filter((run) => picked.has(run.id)).length;
+    selectAllEl.checked = !!list.length && on === list.length;
+    selectAllEl.indeterminate = on > 0 && on < list.length;
+    const chosen = runs.filter((run) => picked.has(run.id));
+    bulkEl.hidden = !chosen.length;
+    document.getElementById("bulk-count").textContent = chosen.length + " selected";
+    const locked = chosen.filter((run) => !run.open).length;
+    const unlock = document.getElementById("bulk-unlock");
+    unlock.hidden = !locked;
+    unlock.disabled = locked > 1;
+    unlock.title = locked > 1 ? "Unlock one report at a time for now." : "";
+    disarmDelete();
+  }
+  function sayBulk(message, bad) {
+    bulkStatus.textContent = message;
+    bulkStatus.classList.toggle("bad", !!bad);
+  }
+  function card(run, index) {
+    const block = document.createElement("article");
+    block.className = "run" + (picked.has(run.id) ? " picked" : "");
+    block.dataset.id = run.id;
+    block.style.setProperty("--i", Math.min(index, 8));
+    const head = document.createElement("div");
+    head.className = "run-head";
+    const title = document.createElement("div");
+    title.className = "run-title";
+    const pick = document.createElement("label");
+    pick.className = "pick";
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = picked.has(run.id);
+    box.setAttribute("aria-label", "Select " + (run.host || "review"));
+    box.addEventListener("change", () => {
+      if (box.checked) picked.add(run.id);
+      else picked.delete(run.id);
+      block.classList.toggle("picked", box.checked);
+      paintBulk();
+    });
+    pick.appendChild(box);
+    title.appendChild(pick);
+    title.appendChild(node("h3", run.host || "Review"));
+    head.appendChild(title);
+    head.appendChild(node("span", run.open ? "Open" : "Opening shown", "pill " + (run.open ? "open" : "shut")));
+    block.appendChild(head);
+    const meta = document.createElement("p");
+    meta.className = "run-meta";
+    meta.appendChild(node("span", run.at ? new Date(run.at).toLocaleString() : "—"));
+    meta.appendChild(node("span", text(run.status)));
+    meta.appendChild(node("span", text(run.caseCount) + " cases"));
+    block.appendChild(meta);
+    const url = document.createElement("p");
+    url.className = "run-url";
+    url.appendChild(valueNode(run.url, run.open));
+    block.appendChild(url);
+    const shown = (run.cases || []).slice(0, 8);
+    if (run.statement || shown.length) {
+      const fold = document.createElement("details");
+      fold.className = "fold";
+      fold.open = unfolded.has(run.id);
+      const summary = document.createElement("summary");
+      summary.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>');
+      summary.appendChild(node("span", run.statement ? "Summary and cases" : "Cases"));
+      if (shown.length) summary.appendChild(node("span", shown.length + (run.caseCount > shown.length ? " of " + run.caseCount : ""), "fold-count"));
+      fold.appendChild(summary);
       if (run.statement) {
         const line = document.createElement("p");
+        line.className = "run-statement";
         line.appendChild(valueNode(run.statement, run.open));
-        block.appendChild(line);
+        fold.appendChild(line);
       }
-      const cases = document.createElement("ul");
-      (run.cases || []).slice(0, 8).forEach((item) => {
-        const li = document.createElement("li");
-        li.appendChild(document.createTextNode((item.layer ? item.layer + " — " : "")));
-        li.appendChild(valueNode(item.title, run.open));
-        cases.appendChild(li);
+      if (shown.length) {
+        const cases = document.createElement("ul");
+        shown.forEach((item) => {
+          const li = document.createElement("li");
+          if (item.layer) li.appendChild(node("span", item.layer + " — ", "layer"));
+          li.appendChild(valueNode(item.title, run.open));
+          cases.appendChild(li);
+        });
+        fold.appendChild(cases);
+      }
+      fold.addEventListener("toggle", () => {
+        if (fold.open) unfolded.add(run.id);
+        else unfolded.delete(run.id);
+        paintFold();
       });
-      block.appendChild(cases);
-      const report = document.createElement("a");
-      report.href = "qa-review.html?report=" + encodeURIComponent(run.id);
-      report.textContent = run.open ? "Open the full report" : "Open this report on the review page";
-      block.appendChild(report);
-      listEl.appendChild(block);
-    });
-    if (!(data.runs || []).length) listEl.appendChild(node("p", "No finished review is saved for this address."));
+      block.appendChild(fold);
+    }
+    const report = document.createElement("a");
+    report.className = run.open ? "btn" : "btn btn-ghost";
+    report.href = reportHref(run);
+    report.textContent = run.open ? "Open the full report" : "Open this report on the review page";
+    block.appendChild(report);
+    tilt(block, 7);
+    return block;
   }
+  searchEl.addEventListener("input", render);
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "/" || fileEl.hidden || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+    event.preventDefault();
+    searchEl.focus();
+  });
+  foldAllEl.addEventListener("click", () => {
+    const open = foldAllEl.getAttribute("aria-expanded") !== "true";
+    listEl.querySelectorAll(".run").forEach((block) => {
+      if (open) unfolded.add(block.dataset.id);
+      else unfolded.delete(block.dataset.id);
+      const fold = block.querySelector(".fold");
+      if (fold) fold.open = open;
+    });
+    paintFold();
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_fold", "URL Review", open ? "expand_all" : "collapse_all");
+  });
+  selectAllEl.addEventListener("change", () => {
+    shownRuns().forEach((run) => (selectAllEl.checked ? picked.add(run.id) : picked.delete(run.id)));
+    syncPicks();
+  });
+  document.getElementById("bulk-clear").addEventListener("click", () => {
+    picked.clear();
+    syncPicks();
+  });
+  function chosenRuns() {
+    return runs.filter((run) => picked.has(run.id));
+  }
+  function tally(count, done) {
+    return count + (count === 1 ? " review " : " reviews ") + done + ".";
+  }
+  document.getElementById("bulk-open").addEventListener("click", () => {
+    let blocked = 0;
+    chosenRuns().forEach((run) => {
+      const tab = window.open(reportHref(run), "_blank");
+      if (tab) tab.opener = null;
+      else blocked += 1;
+    });
+    sayBulk(blocked ? "The browser blocked " + blocked + " of the tabs. Allow pop-ups for this site and try again." : "", !!blocked);
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "open");
+  });
+  document.getElementById("bulk-download").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const ids = new Set(picked);
+    button.disabled = true;
+    sayBulk("Gathering the selected reviews…");
+    try {
+      const response = await account("/account/export");
+      if (signedOut(response)) return;
+      if (!response.ok) {
+        sayBulk(await failure(response, "The reviews did not download. Try again in a moment."), true);
+        return;
+      }
+      const data = await response.json();
+      save({
+        exportedAt: data.exportedAt,
+        email: data.email,
+        reviews: (data.reviews || []).filter((row) => ids.has(row.id)),
+        captures: (data.captures || []).filter((row) => ids.has(row.reportId)),
+        stops: (data.stops || []).filter((row) => ids.has(row.id))
+      }, "qa-review-selected-");
+      sayBulk(tally(ids.size, "downloaded"));
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "download");
+    } catch (error) {
+      sayBulk("The reviews did not download. Try again in a moment.", true);
+    } finally {
+      button.disabled = false;
+    }
+  });
+  document.getElementById("bulk-unlock").addEventListener("click", () => {
+    const run = chosenRuns().find((item) => !item.open);
+    if (!run) return;
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "unlock");
+    location.href = "qa-review-pay.html?purpose=report&reportId=" + encodeURIComponent(run.id) + "&frameworks=" + encodeURIComponent((run.frameworks || []).join(","));
+  });
+  const deleteEl = document.getElementById("bulk-delete");
+  let armed = 0;
+  function disarmDelete() {
+    clearTimeout(armed);
+    armed = 0;
+    deleteEl.textContent = "Delete";
+  }
+  deleteEl.addEventListener("click", async () => {
+    const ids = [...picked];
+    if (!armed) {
+      deleteEl.textContent = "Delete " + ids.length + "? Click again";
+      armed = setTimeout(disarmDelete, 5000);
+      return;
+    }
+    disarmDelete();
+    deleteEl.disabled = true;
+    sayBulk("Deleting…");
+    try {
+      const response = await account("/account/delete-runs", { ids });
+      if (signedOut(response)) return;
+      if (!response.ok) {
+        sayBulk(await failure(response, "The reviews were not all deleted. Try again in a moment."), true);
+        return;
+      }
+      const counts = await response.json();
+      await loadRuns();
+      sayBulk(tally(counts.deleted, "deleted") + (counts.paymentsKept ? " A payment record stays for five years, as Colombian tax law requires, without the report." : ""));
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "delete");
+    } catch (error) {
+      sayBulk("The reviews were not all deleted. Try again in a moment.", true);
+    } finally {
+      deleteEl.disabled = false;
+    }
+  });
   window.ReviewAuth.onChange((signed) => {
     if (signed) loadRuns();
-    else fileEl.hidden = privacyEl.hidden = true;
+    else {
+      fileEl.hidden = privacyEl.hidden = true;
+      runs = [];
+      picked.clear();
+    }
   });
   if (window.SiteI18n) SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));
 </script>
+<script src="js/qa-review-verify.js?v=20261023b"></script>
 </body>
 </html>

@@ -604,7 +604,8 @@ function frostedLine(text, seed) {
 
 const PDF_STYLE = "@page{size:A4;margin:12mm 0 14mm}@page:first{margin:0 0 14mm}*{box-sizing:border-box}html,body{margin:0;padding:0}" +
   "body{font-family:Inter,'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10.5pt;line-height:1.45}" +
-  ".page{padding:0 0 4mm}" +
+  ".page{position:relative;z-index:1;padding:0 0 4mm}" +
+  ".wm{position:fixed;top:-30%;left:-30%;width:160%;height:160%;z-index:3;pointer-events:none;display:flex;flex-wrap:wrap;align-content:space-around;justify-content:space-around;gap:18mm 26mm;transform:rotate(-30deg);font-size:13pt;font-weight:600;color:rgba(15,23,42,.08);white-space:nowrap;overflow:hidden}" +
   ".hero{background:#0f172a;background-image:radial-gradient(circle at 85% 20%,rgba(94,234,212,.28),transparent 45%),linear-gradient(135deg,#0f172a 0%,#0e4a5c 60%,#0e7490 100%);color:#fff;padding:14mm 16mm 12mm;display:flex;gap:10mm;align-items:center}" +
   ".hero .who{flex:1}.eyebrow{font-size:8.5pt;letter-spacing:.16em;text-transform:uppercase;color:#7dd3fc;margin:0 0 3mm}" +
   ".host{font-family:Georgia,'Times New Roman',serif;font-size:26pt;line-height:1.1;margin:0 0 3mm;word-break:break-all}" +
@@ -685,7 +686,11 @@ function reportPdf(record, options) {
   ).join("");
   const moreCases = Math.max(0, facts.cases - PDF_CASES);
   const finalUrl = /^https?:\/\//i.test(String(report.finalUrl || "")) ? String(report.finalUrl).slice(0, 200) : "";
+  // Fixed, so the print engine repeats it on every page.
+  const mark = String((record && record.email) || "");
+  const watermark = mark ? "<div class=\"wm\" aria-hidden=\"true\">" + ("<span>" + esc(mark) + "</span>").repeat(40) + "</div>" : "";
   const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + pdfFooter(facts.id) + (open ? "" : ".fz{background-image:url(" + stripUrl() + ")}") + "</style></head><body>" +
+    watermark +
     "<div class=\"page\">" +
     "<div class=\"hero\"><div class=\"who\"><p class=\"eyebrow\">QA-lab URL Review</p><p class=\"host\">" + esc(facts.host) + "</p>" +
     "<p class=\"meta\">" + esc(fill(p.read, { date })) + " · <code>" + esc(facts.id) + "</code>" + (finalUrl ? "<span class=\"url\">" + esc(finalUrl) + "</span>" : "") + "</p><span class=\"badge\">" + esc(open ? p.badgeOpen : p.badge) + "</span></div>" +
@@ -829,6 +834,83 @@ function signInMail(lang, sign, page) {
   };
 }
 
+const SHARED_OPEN = {
+  en: {
+    subject: "Someone else opened your report link for {host}",
+    title: "Another account opened your report link",
+    lead: "Someone signed in with a different account opened the link to your review of {host} on {date}.",
+    safe: "They saw only the blurred preview, with the findings under frost. A report opens in full only for the account that ran it.",
+    button: "Open your report",
+    once: "This notice is sent once per report. Later opens are not emailed."
+  },
+  es: {
+    subject: "Alguien más abrió el enlace de tu informe de {host}",
+    title: "Otra cuenta abrió el enlace de tu informe",
+    lead: "Alguien con otra cuenta abrió el enlace de tu revisión de {host} el {date}.",
+    safe: "Solo vio la vista previa difuminada, con los hallazgos bajo la escarcha. Un informe se abre completo solo para la cuenta que lo pidió.",
+    button: "Abrir tu informe",
+    once: "Este aviso se envía una vez por informe. Las aperturas siguientes no se avisan por correo."
+  },
+  pt: {
+    subject: "Outra pessoa abriu o link do seu relatório de {host}",
+    title: "Outra conta abriu o link do seu relatório",
+    lead: "Alguém com outra conta abriu o link da sua revisão de {host} em {date}.",
+    safe: "Essa pessoa viu só a prévia desfocada, com os achados sob a geada. Um relatório abre completo só para a conta que o pediu.",
+    button: "Abrir seu relatório",
+    once: "Este aviso é enviado uma vez por relatório. As próximas aberturas não geram e-mail."
+  },
+  de: {
+    subject: "Jemand anderes hat den Link zu deinem Bericht über {host} geöffnet",
+    title: "Ein anderes Konto hat deinen Berichtslink geöffnet",
+    lead: "Jemand mit einem anderen Konto hat am {date} den Link zu deiner Prüfung von {host} geöffnet.",
+    safe: "Zu sehen war nur die unscharfe Vorschau, die Befunde blieben unter Frost. Ein Bericht öffnet sich vollständig nur für das Konto, das ihn gestartet hat.",
+    button: "Deinen Bericht öffnen",
+    once: "Dieser Hinweis kommt einmal pro Bericht. Spätere Aufrufe werden nicht gemailt."
+  },
+  fr: {
+    subject: "Quelqu'un d'autre a ouvert le lien de votre rapport sur {host}",
+    title: "Un autre compte a ouvert le lien de votre rapport",
+    lead: "Une personne connectée avec un autre compte a ouvert le lien de votre revue de {host} le {date}.",
+    safe: "Elle n'a vu que l'aperçu flouté, avec les constats sous le givre. Un rapport ne s'ouvre en entier que pour le compte qui l'a lancé.",
+    button: "Ouvrir votre rapport",
+    once: "Cet avis est envoyé une fois par rapport. Les ouvertures suivantes ne sont pas signalées par e-mail."
+  },
+  it: {
+    subject: "Qualcun altro ha aperto il link del tuo report su {host}",
+    title: "Un altro account ha aperto il link del tuo report",
+    lead: "Qualcuno con un altro account ha aperto il link della tua revisione di {host} il {date}.",
+    safe: "Ha visto solo l'anteprima sfocata, con i risultati sotto la brina. Un report si apre per intero solo per l'account che l'ha avviato.",
+    button: "Apri il tuo report",
+    once: "Questo avviso arriva una volta per report. Le aperture successive non vengono segnalate via email."
+  }
+};
+
+// Never names or describes who opened the link.
+function sharedOpenMail(record, at) {
+  const code = langOf(record && record.lang);
+  const t = SHARED_OPEN[code];
+  const host = (record && record.report && record.report.host) || "";
+  const vars = { host, date: dateOf(at) };
+  const link = pageUrl(code, { report: record && record.id, utm_campaign: "shared-open" });
+  const why = fill(COPY[code].why, { host });
+  const inner = "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
+    "<p style=\"margin:0;font-size:26px;line-height:32px;color:#ffffff;font-weight:bold;\">" + esc(t.title) + "</p>" +
+    "</td></tr>" +
+    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 28px 22px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 0 14px;font-size:16px;line-height:25px;color:#334155;\">" + esc(fill(t.lead, vars)) + "</p>" +
+    "<p style=\"margin:0 0 20px;font-size:15px;line-height:23px;color:#334155;\">" + esc(t.safe) + "</p>" +
+    button(link, t.button, true) +
+    "<p style=\"margin:6px 0 0;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.once) + "</p>" +
+    "</td></tr>";
+  return {
+    lang: code,
+    subject: fill(t.subject, vars),
+    text: [t.title, "", fill(t.lead, vars), "", t.safe, "", t.button + ": " + link, "", t.once, "", footerText(COPY[code], why)].join("\n"),
+    html: shell(code, fill(t.lead, vars), inner, footerHtml(COPY[code], why))
+  };
+}
+
 function stopPage(lang, state, email) {
   const code = langOf(lang);
   const t = COPY[code].page;
@@ -840,4 +922,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, stopPage, pageUrl };
+module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, stopPage, pageUrl };
