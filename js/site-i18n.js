@@ -442,6 +442,56 @@
         return false;
     }
 
+    // The menu's choices must be <button>s; show(open) only shows or hides the menu.
+    function bindMenu(wrap, toggle, menu, show) {
+        const doc = root.document;
+        const options = () => Array.from(menu.querySelectorAll('button'));
+        const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
+        const set = (open) => {
+            show(open);
+            toggle.setAttribute('aria-expanded', String(open));
+        };
+        const focusAt = (index) => {
+            const list = options();
+            if (list.length) list[(index + list.length) % list.length].focus();
+        };
+        toggle.setAttribute('aria-controls', menu.id);
+        set(false);
+        toggle.addEventListener('click', () => set(!isOpen()));
+        wrap.addEventListener('keydown', (event) => {
+            const at = options().indexOf(doc.activeElement);
+            if (event.key === 'Escape' && isOpen()) {
+                set(false);
+                toggle.focus();
+            } else if (event.target === toggle && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+                set(true);
+                focusAt(event.key === 'ArrowDown' ? 0 : -1);
+            } else if (!menu.contains(event.target)) {
+                return;
+            } else if (event.key === 'ArrowDown') {
+                focusAt(at + 1);
+            } else if (event.key === 'ArrowUp') {
+                focusAt(at === -1 ? -1 : at - 1);
+            } else if ((event.key === 'Home' || event.key === 'End') && at !== -1) {
+                focusAt(event.key === 'Home' ? 0 : -1);
+            } else {
+                return;
+            }
+            event.preventDefault();
+        });
+        menu.addEventListener('click', (event) => {
+            if (!event.target.closest('button')) return;
+            set(false);
+            toggle.focus();
+        });
+        doc.addEventListener('click', (event) => {
+            if (isOpen() && !wrap.contains(event.target)) set(false);
+        });
+        doc.addEventListener('focusin', (event) => {
+            if (isOpen() && !wrap.contains(event.target)) set(false);
+        });
+    }
+
     applyEarlyCookie();
     root.addEventListener('site-consent', releaseWidget);
     root.addEventListener('storage', (event) => {
@@ -472,6 +522,7 @@
         translateAllowed,
         grantTranslate,
         selectLanguage,
+        bindMenu,
         follow,
         refreshTranslation,
         needsReload

@@ -420,3 +420,12 @@ COMPARE_NOTE = {
     "fr": "Facturée comme une deuxième analyse. La remise de retour s’applique quand vous comparez depuis l’appareil qui a lancé cette analyse. Le site du concurrent ne reçoit que les vérifications publiques et passives : aucune conversation avec le chat et aucun formulaire envoyé. Comme pour toute analyse, son propriétaire peut recevoir un e-mail à ce sujet, et ses scores peuvent apparaître dans les Live Reports.",
     "it": "Ha il prezzo di una seconda revisione. Lo sconto di ritorno vale quando confronti dal dispositivo che ha eseguito questa revisione. Il sito del concorrente riceve solo i controlli pubblici e passivi: nessuna conversazione con la chat e nessun modulo inviato. Come per ogni revisione, il suo titolare può ricevere un’email al riguardo, e i suoi punteggi possono comparire nei Live Reports.",
 }
+
+# The skip link, the first thing the keyboard reaches on each page.
+SKIP = {
+    "es": "Saltar al contenido principal",
+    "pt": "Pular para o conteúdo principal",
+    "de": "Zum Hauptinhalt springen",
+    "fr": "Aller au contenu principal",
+    "it": "Vai al contenuto principale",
+}

@@ -3575,13 +3575,19 @@
 
     openRunners() {
       const drawer = document.getElementById('runner-drawer');
-      if (drawer) drawer.classList.add('open');
+      if (drawer) {
+        drawer.classList.add('open');
+        drawer.inert = false;
+      }
       this.renderRunners(this.runnerTab);
     },
 
     closeRunners() {
       const drawer = document.getElementById('runner-drawer');
-      if (drawer) drawer.classList.remove('open');
+      if (drawer) {
+        drawer.classList.remove('open');
+        drawer.inert = true;
+      }
     },
 
     async runIds(ids) {
@@ -4088,7 +4094,7 @@
       const log = stage.querySelector('.runner-console');
       if (log) log.scrollTop = log.scrollHeight;
       const tab = tabs.querySelector('[data-runner="' + current + '"]');
-      if (tab && tab.scrollIntoView) tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      if (tab && tab.scrollIntoView && tabs.closest('.runner-drawer.open')) tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       this.paintRunnerMarks();
     },
 
@@ -4311,8 +4317,10 @@
         list.innerHTML = '';
         SiteI18n.orderedLanguages().forEach((meta) => {
           if (!SiteI18n.matchesQuery(meta, query)) return;
-          const option = document.createElement('div');
+          const option = document.createElement('button');
+          option.type = 'button';
           option.className = 'lang-option';
+          option.lang = meta.code;
           option.dataset.lang = meta.code;
           option.innerHTML = `<img src="${SiteI18n.flagUrl(meta.code)}" alt=""><span>${meta.native}</span>`;
           option.onclick = () => {
@@ -4327,13 +4335,8 @@
       menu.innerHTML = '<input class="lang-search" type="search" placeholder="Search language" aria-label="Search language"><div class="lang-options-list"></div>';
       const search = menu.querySelector('.lang-search');
       search.addEventListener('input', () => render(search.value));
-      search.addEventListener('click', (e) => e.stopPropagation());
       render('');
-      toggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        wrap.classList.toggle('open');
-      });
-      document.addEventListener('click', () => wrap.classList.remove('open'));
+      SiteI18n.bindMenu(wrap, toggle, menu, (open) => wrap.classList.toggle('open', open));
       SiteI18n.resolve().then((lang) => {
         this.labLangHeld = lang || 'en';
         syncFlag(this.labLangHeld);
