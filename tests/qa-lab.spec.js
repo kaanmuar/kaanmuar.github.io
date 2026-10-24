@@ -203,6 +203,38 @@ test.describe('CV regression lab', () => {
     expect(failed, JSON.stringify(failed, null, 2)).toEqual([]);
   });
 
+  test('a run over two screen sizes keeps each screen result per case', async ({ page }) => {
+    test.setTimeout(90000);
+    await page.evaluate(() => {
+      localStorage.setItem('qa-lab-pace', '0.5');
+      localStorage.setItem('qa-lab-view', 'background');
+      localStorage.setItem('qa-lab-devices', JSON.stringify([
+        { platform: 'profile', id: 'a', label: 'Phone A', width: 384, height: 832 },
+        { platform: 'profile', id: 'b', label: 'Phone B', width: 412, height: 915 }
+      ]));
+    });
+    const out = await page.evaluate(async () => {
+      const lab = window.QALab;
+      await lab.runIds(['SMK-02']);
+      await lab.runIds(['SMK-02']);
+      const history = JSON.parse(localStorage.getItem('qa-lab-history') || '[]');
+      const latest = history[history.length - 1];
+      lab.historyPick = new Set();
+      const report = lab.reportDocument({ lang: 'en', graphs: false, cases: true, runners: false, details: true, steps: true, history: false, analysis: false });
+      return {
+        rows: lab.results.map((row) => row.id + '|' + row.frame + '|' + row.ok),
+        saved: latest ? latest.cases.map((row) => row.id + '|' + row.frame) : [],
+        total: latest ? latest.total : 0,
+        report
+      };
+    });
+    expect(out.rows.sort()).toEqual(['SMK-02|Phone A · 384 × 832 px|true', 'SMK-02|Phone B · 412 × 915 px|true']);
+    expect(out.saved.sort()).toEqual(['SMK-02|Phone A · 384 × 832 px', 'SMK-02|Phone B · 412 × 915 px']);
+    expect(out.total).toBe(2);
+    expect(out.report).toContain('1 / ');
+    expect(out.report).toContain('2 checks across screens');
+  });
+
   test('printed and copied report carries run details, failures, and every case field', async ({ page }) => {
     const out = await page.evaluate(async () => {
       const lab = window.QALab;
