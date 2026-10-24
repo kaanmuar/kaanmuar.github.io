@@ -246,7 +246,7 @@ test.describe("the review", () => {
       start: SHOP + "about",
       routes: Object.assign({}, ROUTES, { [SHOP + "about"]: { status: 200, headers: HEADERS, body: page(tag(mine), "<p>We sell tools.</p>") } })
     });
-    assert.ok(run.asked.paths.includes("shop.example.com/"));
+    assert.equal(run.asked.paths.filter((asked) => asked === "shop.example.com/").length > 0, true);
     assert.equal(run.chatJobs.length, 0);
     assert.equal(run.report.ownerProof, undefined);
   });
@@ -257,13 +257,13 @@ test.describe("the review", () => {
     const run = await review(siteAsker(ANA, { proofs: [remembered] }), { txt });
     assert.equal(run.chatJobs[0].proof, "site");
     assert.deepEqual(run.report.ownerProof, { kind: "site", how: "", host: "shop.example.com", checked: false });
-    assert.ok(!run.asked.txt.includes("shop.example.com"));
+    assert.equal(run.asked.txt.filter((name) => name === "shop.example.com").length, 0);
   });
 
   test("without the server key no token is checked", async () => {
     const txt = { "shop.example.com": [["qa-lab-verify=" + token(ANA, "shop.example.com")]] };
     const run = await review({ reasonCode: "client", email: ANA, siteToken: null }, { txt });
     assert.equal(run.chatJobs.length, 0);
-    assert.ok(!run.asked.txt.includes("shop.example.com"));
+    assert.equal(run.asked.txt.filter((name) => name === "shop.example.com").length, 0);
   });
 });
