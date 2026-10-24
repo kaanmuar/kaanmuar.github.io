@@ -194,7 +194,7 @@ test.describe("judging the conversation", () => {
     const silent = talk.judge({ ok: true, status: "talked", vendor: "Intercom", turns: [turn("hello", "", 0)] }, { lang: "en" });
     assert.deepEqual([silent.status, silent.ran, silent.checks.length], ["no-reply", true, 0]);
     assert.match(silent.note, /got no reply within 15 s/);
-    for (const status of ["no-chat", "no-launcher", "not-opened", "no-composer"]) {
+    for (const status of ["no-chat", "no-launcher", "not-opened", "no-composer", "not-a-chat"]) {
       const result = talk.judge({ ok: true, status, turns: [] }, { lang: "en" });
       assert.deepEqual([result.status, result.ran, result.checks.length, result.note], [status, false, 0, talk.STATUS_NOTE[status]]);
     }
