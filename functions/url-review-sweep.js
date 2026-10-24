@@ -144,4 +144,4 @@ function totals(state, sinceDay) {
   return out;
 }
 
-module.exports = { PER_DAY, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, TIER1, langOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, intake, doneOn, tally, totals };
+module.exports = { PER_DAY, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, TIER1, BLOCKED, langOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, intake, doneOn, tally, totals };
