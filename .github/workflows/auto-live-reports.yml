@@ -10,11 +10,11 @@
 name: Live reports from user reviews
 
 on:
-  # The Firebase ensureLiveReportsBatch function starts the batch at 03:23 Bogotá (dispatch with backup=true),
-  # because GitHub starts scheduled runs hours late or drops them. These slots are backups: the gate job lets
-  # them run only when today's batch commit is not on main yet.
+  # The Firebase ensureLiveReportsBatch function starts the batch at 06:00 Bogotá (dispatch with backup=true),
+  # after the country sweep's last tick, because GitHub starts scheduled runs hours late or drops them. These
+  # slots are backups: the gate job lets them run only when today's batch commit is not on main yet.
   schedule:
-    - cron: '41 10 * * *' # backup, 05:41 Bogotá
+    - cron: '41 11 * * *' # backup, 06:41 Bogotá
     - cron: '17 13 * * *' # backup, 08:17 Bogotá
   workflow_dispatch:
     inputs:
