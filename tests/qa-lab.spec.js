@@ -90,20 +90,20 @@ test.describe('CV regression lab', () => {
     await expect(page.locator('html')).toHaveClass(/lab-watch/);
     await expect(page.locator('html')).not.toHaveClass(/lab-running/);
     await expect(page.locator('#case-detail .spec')).toBeVisible();
-    const shown = () => page.evaluate(() => {
-      const sut = document.getElementById('sut');
-      const box = sut.getBoundingClientRect();
+    const shown = (selector) => page.evaluate((selector) => {
+      const target = document.querySelector(selector);
+      const box = target.getBoundingClientRect();
       let top = box.top;
       let bottom = box.bottom;
-      for (let el = sut.parentElement; el && el !== document.body; el = el.parentElement) {
+      for (let el = target.parentElement; el && el !== document.body; el = el.parentElement) {
         if (getComputedStyle(el).overflowY === 'visible') continue;
         const r = el.getBoundingClientRect();
         top = Math.max(top, r.top);
         bottom = Math.min(bottom, r.bottom);
       }
       return Math.round(bottom - top);
-    });
-    expect(await shown()).toBeGreaterThanOrEqual(240);
+    }, selector);
+    expect(await shown('#sut')).toBeGreaterThanOrEqual(240);
     await page.locator('#sut').scrollIntoViewIfNeeded();
     const hits = await page.evaluate(() => {
       const box = document.getElementById('sut').getBoundingClientRect();
@@ -111,7 +111,10 @@ test.describe('CV regression lab', () => {
       return [box.top + 4, box.top + 240].map((y) => y < innerHeight && document.elementFromPoint(x, y)?.id);
     });
     expect(hits).toEqual(['sut', 'sut']);
-    expect(await shown()).toBeGreaterThanOrEqual(240);
+    expect(await shown('#sut')).toBeGreaterThanOrEqual(240);
+    await page.locator('[data-view="background"]').click();
+    await expect(page.locator('html')).toHaveClass(/lab-background/);
+    expect(await shown('.sut-bg-note')).toBeGreaterThanOrEqual(30);
   });
 
   test('ships full SEO chrome', async ({ page }) => {
