@@ -17,6 +17,7 @@ const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
+const { registrable, registryDomain } = require("./url-review-suffix");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-10-24";
@@ -235,11 +236,6 @@ function clean(value, max) {
 }
 
 const EMAIL_RE = /^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/;
-const MULTI_TLDS = ["co.uk", "org.uk", "ac.uk", "gov.uk", "nhs.uk", "com.co", "net.co", "org.co", "edu.co", "gov.co", "mil.co",
-  "com.mx", "org.mx", "edu.mx", "gob.mx", "com.br", "org.br", "edu.br", "gov.br", "com.au", "org.au", "edu.au", "gov.au",
-  "co.jp", "ac.jp", "or.jp", "go.jp", "co.za", "org.za", "ac.za", "gov.za", "com.ar", "org.ar", "edu.ar", "gob.ar",
-  "com.pe", "org.pe", "edu.pe", "gob.pe", "com.ec", "org.ec", "edu.ec", "gob.ec", "com.uy", "org.uy", "edu.uy", "gub.uy",
-  "co.nz", "org.nz", "ac.nz", "govt.nz", "com.tr", "org.tr", "edu.tr", "gov.tr"];
 
 function emailSyntax(email) {
   const value = String(email || "");
@@ -277,18 +273,10 @@ function emailsInText(text, max) {
   return out;
 }
 
-function registrable(hostname) {
-  const host = String(hostname || "").replace(/\.$/, "").replace(/^www\./, "").toLowerCase();
-  const parts = host.split(".").filter(Boolean);
-  if (parts.length < 2) return host;
-  const lastTwo = parts.slice(-2).join(".");
-  if (MULTI_TLDS.indexOf(lastTwo) !== -1 && parts.length >= 3) return parts.slice(-3).join(".");
-  return lastTwo;
-}
-
 function mailboxMatchesHost(email, hostname) {
   const domain = String(email || "").split("@")[1] || "";
-  return !!domain && registrable(domain) === registrable(hostname);
+  const site = registrable(hostname);
+  return !!domain && !!site && registrable(domain) === site;
 }
 
 // Why the asker may talk to the host finally reviewed (the chat conversation, form testing), or "":
@@ -2264,7 +2252,7 @@ async function sitePaths(raw) {
 }
 
 async function dnsFacts(hostname) {
-  const domain = registrable(hostname);
+  const domain = registryDomain(hostname);
   // Only "no such data" means the record is absent; a timeout or server failure leaves it unread (null).
   const settle = (promise, slow = null) => withTimeout(promise.catch((err) => (/^(ENODATA|ENOTFOUND)$/.test(err && err.code) ? [] : err && err.code === "ETIMEOUT" ? slow : null)), 5000, slow);
   const read = (name, slow) => settle(dns.resolveTxt(name).then((rows) => rows.map((parts) => parts.join(""))), slow);
@@ -2371,7 +2359,7 @@ function readRdap(data, domain) {
 }
 
 async function domainFacts(hostname, halt) {
-  const domain = registrable(hostname);
+  const domain = registryDomain(hostname);
   const tld = domain.split(".").pop();
   const base = await rdapBase(tld, halt);
   if (base === null) return { domain, read: false, reason: "the IANA list of RDAP servers could not be read" };
@@ -2561,7 +2549,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
     : missingIntermediate ? { missingIntermediate } : null;
   const acceptLanguage = (lookups && lookups.acceptLanguage) || "";
   const sitemapJob = lookups && lookups.sitemap ? lookups.sitemap : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
-  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registrable(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
+  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registryDomain(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
   say(tls && tls.validTo ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
   const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
@@ -3855,6 +3843,7 @@ module.exports = {
   fetchHomepage,
   emailSyntax,
   registrable,
+  registryDomain,
   ownerContacts,
   emailsInText,
   visibleText,

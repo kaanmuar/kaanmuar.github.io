@@ -2534,8 +2534,8 @@ test("the registrable domain keeps government, education and organization suffix
   assert.equal(core.registrable("unal.edu.co"), "unal.edu.co");
   assert.equal(core.registrable("medellin.unal.edu.co"), "unal.edu.co");
   assert.equal(core.registrable("www.mintic.gov.co"), "mintic.gov.co");
-  assert.equal(core.registrable("www.gov.uk"), "gov.uk");
-  assert.equal(core.registrable("tax.service.gov.uk"), "service.gov.uk");
+  assert.equal(core.registrable("www.gov.uk"), "www.gov.uk");
+  assert.equal(core.registrable("tax.service.gov.uk"), "tax.service.gov.uk");
   assert.equal(core.registrable("shop.acme.com.co"), "acme.com.co");
   assert.equal(core.registrable("docs.python.org"), "python.org");
 });
