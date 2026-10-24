@@ -1062,7 +1062,21 @@
     try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(compareTarget)); } catch (storageError) { /* only a payment round trip needs it */ }
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_compare", "URL Review", report.host || "");
     closeDashboard();
-    reviewForm.requestSubmit();
+    // requestSubmit would stop on the empty required address of a report opened from a link.
+    reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
+  }
+
+  function reopenCompare(compare, message) {
+    if (!current || !current.report || current.report.id !== compare.id) return false;
+    dash.classList.add("open");
+    document.body.style.overflow = "hidden";
+    const input = document.getElementById("compare-url");
+    input.value = String(compare.url || "").replace(/^\s*https?:\/\//i, "");
+    document.getElementById("compare-error").textContent = message;
+    document.getElementById("compare").scrollIntoView({ block: "start" });
+    input.focus({ preventScroll: true });
+    input.select();
+    return true;
   }
 
   function paintExec(report, ins) {
@@ -1898,7 +1912,8 @@
       setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Report ready. Cases are proposed, not run.", false);
       dash.scrollTop = 0;
     } catch (error) {
-      if (error.fields) markFields(error.fields);
+      const rivalField = compare && (error.fields || []).find((item) => item.field === "url");
+      if (error.fields) markFields(compare ? error.fields.filter((item) => item.field !== "url") : error.fields);
       if (window.ReviewProgress) {
         if (error.paymentRequired || (error.body && error.body.signIn) || error.fields) ReviewProgress.reset();
         else ReviewProgress.fail();
@@ -1916,7 +1931,12 @@
         setStatus("Opening this report again waits on payment.", true);
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", error.message || "");
-        setStatus(error.message || "The review failed.", true);
+        const reason = (rivalField && rivalField.message) || error.message || "The review failed.";
+        if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
+          setStatus("The comparison with " + compare.url + " did not finish. Your report is open again.", true);
+        } else {
+          setStatus(reason, true);
+        }
       }
     } finally {
       runLog.classList.remove("is-live");

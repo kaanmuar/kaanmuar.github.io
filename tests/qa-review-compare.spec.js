@@ -9,7 +9,7 @@ const ID = 'cd34ef56ab12';
 const ANA = 'a'.repeat(64);
 const days = (start, step) => Array.from({ length: 30 }, (item, index) => ({ date: '2026-09-' + String(index + 1).padStart(2, '0'), rank: start + index * step }));
 
-async function open(page, cmp) {
+async function open(page, cmp, review) {
   const store = auth.memoryStore();
   const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
   const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
@@ -36,10 +36,14 @@ async function open(page, cmp) {
       return json(checked.ok ? 200 : checked.status, checked);
     }
     if (path === '/review/open') return json(200, { report: row.report, frameworks: row.frameworks, paid: true });
+    if (path === '/review' && review) {
+      const answer = review(body);
+      return typeof answer === 'string' ? route.fulfill({ status: 200, contentType: 'application/x-ndjson', headers: cors, body: answer }) : json(400, answer);
+    }
     return json(200, path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
   });
   await page.goto('/qa-review.html?report=' + ID);
-  const card = page.locator('#compare-result');
+  const card = page.locator(cmp ? '#compare-result' : '#compare-ask');
   await expect(card).toBeVisible({ timeout: 20000 });
   await card.scrollIntoViewIfNeeded();
   return card;
@@ -89,5 +93,33 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await expect(card.locator('.compare-table tbody tr')).toHaveCount(7);
     await expect(card.locator('.cmp-presence')).toHaveCount(0);
     await expect(card.locator('.cmp-line')).toHaveCount(0);
+  });
+
+  test('a competitor review that fails reopens the report on the comparison, ready for another address', async ({ page }) => {
+    let sent = null;
+    const ask = await open(page, null, (body) => {
+      sent = body;
+      return [{ type: 'log', text: 'Opening rival.example.' }, { type: 'error', error: 'The site did not answer' }].map((line) => JSON.stringify(line)).join('\n') + '\n';
+    });
+    await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+    await ask.locator('#compare-url').fill('rival.example');
+    await ask.locator('#compare-go').click();
+    await expect(page.locator('#compare-error')).toContainText('The review of rival.example did not finish: The site did not answer.');
+    expect(sent.compareWith).toBe(ID);
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await expect(page.locator('#compare-url')).toHaveValue('rival.example');
+    await expect(page.locator('#compare-url')).toBeFocused();
+    await expect(page.locator('#url-field')).not.toHaveClass(/invalid/);
+    await expect(page.locator('#review-btn')).toBeEnabled();
+  });
+
+  test('a competitor address the server refuses is shown on the comparison, not on your own address', async ({ page }) => {
+    const ask = await open(page, null, () => ({ error: 'Enter a public https address.', fields: [{ field: 'url', message: 'Enter a public https address.' }] }));
+    await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+    await ask.locator('#compare-url').fill('localhost:3000');
+    await ask.locator('#compare-go').click();
+    await expect(page.locator('#compare-error')).toContainText('did not finish: Enter a public https address. Check the address');
+    await expect(page.locator('#url-field')).not.toHaveClass(/invalid/);
+    await expect(page.locator('#url-error')).toHaveText('');
   });
 });
