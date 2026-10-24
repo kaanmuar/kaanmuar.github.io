@@ -2561,10 +2561,11 @@ async function reviewTarget(rawUrl, hooks) {
   let readInBrowser = null;
   let speedPromise = null;
   let speedUntil = 0;
+  let canSpeed = false;
   const startSpeed = (url) => {
     if (speedPromise) return;
     speedUntil = Date.now() + SPEED_WAIT_MS;
-    const canSpeed = !halt() && typeof controls.pagespeed === "function";
+    canSpeed = !halt() && typeof controls.pagespeed === "function";
     if (canSpeed) note("Asking PageSpeed Insights for a mobile Lighthouse run in the background.");
     speedPromise = canSpeed
       ? Promise.resolve().then(() => controls.pagespeed(url)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
