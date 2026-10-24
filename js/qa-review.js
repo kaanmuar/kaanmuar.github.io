@@ -533,6 +533,9 @@
 
   // Where the readable opening of a line ends. The page blurs from here and the TXT and JSON files cut here.
   function fadeCut(raw) {
+    // A locked preview from the server starts each hidden word with U+2060.
+    const hidden = raw.indexOf("\u2060");
+    if (hidden !== -1) return hidden;
     if (raw.trim().split(/\s+/).length < 4) return raw.length;
     const mark = raw.search(/[.!?](\s|$)/);
     let cut = mark === -1 ? Math.max(28, Math.floor(raw.length * 0.36)) : mark + 1;
@@ -563,7 +566,8 @@
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) {
       const node = walker.currentNode;
-      if (!node.parentElement || node.parentElement.closest(FADE_CLEAR)) continue;
+      const hidden = node.nodeValue.indexOf("\u2060") !== -1;
+      if (!node.parentElement || node.parentElement.closest(hidden ? ".fade-line, script, style, textarea" : FADE_CLEAR)) continue;
       if (fadeCut(node.nodeValue) < node.nodeValue.length) nodes.push(node);
     }
     nodes.forEach((node) => {
