@@ -322,11 +322,11 @@ test("ask access needs the signed-in account that ran the report, on its device,
 
 const phraser = require("../../functions/url-review-phrase");
 
-function gemini(text, status) {
+function gemini(text, status, finishReason) {
   const calls = [];
   const fake = async (url, init) => {
     calls.push({ url, init, body: JSON.parse(init.body) });
-    return { ok: (status || 200) < 400, status: status || 200, json: async () => ({ candidates: [{ content: { parts: [{ text }] } }] }) };
+    return { ok: (status || 200) < 400, status: status || 200, json: async () => ({ candidates: [{ finishReason: finishReason || "STOP", content: { parts: [{ text }] } }] }) };
   };
   return { fake, calls };
 }
@@ -342,6 +342,7 @@ test("AI phrasing sends only the answer's sentences, in the page language, and r
   assert.match(calls[0].body.systemInstruction.parts[0].text, /Write in German, addressing the reader as Sie\. Use only what the answer says/);
   assert.equal(calls[0].body.contents[0].parts[0].text, "F-01 · HSTS is not sent\nFails now, rated medium in Security.\nIt ranks 1 of 20 fails and risks, with priority 61.1.");
   assert.doesNotMatch(calls[0].init.body, /secret|"session"/);
+  assert.deepEqual(calls[0].body.generationConfig, { temperature: 0.2, maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: "low" } });
 });
 
 test("AI phrasing that brings a new id or number, or drops the subject, is not shown", async () => {
@@ -356,6 +357,7 @@ test("AI phrasing is off without a key, needs sentences, is capped per report pe
   assert.deepEqual(await phraser.phrase({ input: WHY }), { ok: false, status: 503, error: "AI phrasing is off.", code: "off" });
   assert.equal((await phraser.phrase({ key: "k", input: { lines: [] } })).status, 400);
   assert.equal((await phraser.phrase({ key: "k", fetch: gemini("x", 500).fake, input: WHY })).status, 502);
+  assert.equal((await phraser.phrase({ key: "k", fetch: gemini("F-01 fails and", 200, "MAX_TOKENS").fake, input: WHY })).code, "failed");
   const store = auth.memoryStore();
   const now = Date.parse("2026-10-24T12:00:00Z");
   for (let i = 0; i < phraser.DAILY; i++) assert.equal((await phraser.phrase({ key: "k", store, id: "r1", now, fetch: gemini("F-01 fails.").fake, input: WHY })).ok, true);
