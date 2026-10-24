@@ -1,0 +1,61 @@
+Text,Image URL,Tags,Posting Time
+"grupoexito.com.co: 68. The gap: button names.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+Lesson: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 23 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-grupoexito-com-co&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-grupoexito-com-co
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #OpenSource #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/01-u-grupoexito-com-co.jpg","","2026-10-25 17:10"
+"colombia.com: 64. The gap: JSON-LD.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 2 JSON-LD blocks do not parse.
+
+Lesson: Validate each JSON-LD block after every release. One stray comma hides all of it.
+
+One automated analysis of public pages on 23 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-colombia-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #Automation #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg","","2026-10-26 15:50"
+"nibo.com.br: 79. The gap: text contrast.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+Lesson: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-nibo-com-br&utm_source=facebook&utm_medium=social&utm_campaign=country-sweep&utm_content=u-nibo-com-br
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/03-u-nibo-com-br.jpg","","2026-10-27 13:30"
+"kreuzwort-raetsel.net: 86. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 115 form controls have no label.
+
+Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-kreuzwort-raetsel-net&utm_source=facebook&utm_medium=social&utm_campaign=country-sweep&utm_content=u-kreuzwort-raetsel-net
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/04-u-kreuzwort-raetsel-net.jpg","","2026-10-28 12:45"
+"roottcostore.com: 59. The gap: outdated libraries.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 3 front-end libraries have known flaws.
+
+Lesson: Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.
+
+One automated analysis of public pages on 24 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-roottcostore-com&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-roottcostore-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/05-u-roottcostore-com.jpg","","2026-10-29 14:55"
