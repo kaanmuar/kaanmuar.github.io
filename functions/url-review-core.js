@@ -313,11 +313,17 @@ const PROOF_NOTE = {
   site: (host, how, checked) => (checked ? host + " carries this account's qa-lab-verify token in its " + (how === "meta" ? "homepage" : "DNS") : host + " was verified for this account in the last 30 days") + ", so"
 };
 
+// RFC 7505: a single MX of "." (Node reports an empty exchange) means the domain accepts no mail.
+function isNullMx(mx) {
+  return !!mx && mx.length === 1 && /^\.?$/.test(String(mx[0].exchange || ""));
+}
+
 async function emailCanReceive(email) {
   const domain = String(email || "").toLowerCase().split("@")[1] || "";
   if (!domain || hostBlocked(domain) || net.isIP(domain)) return false;
   try {
     const mx = await dns.resolveMx(domain);
+    if (isNullMx(mx)) return false;
     if (mx && mx.length) return true;
   } catch (error) {
     if (!error || (error.code !== "ENODATA" && error.code !== "ENOTFOUND")) return false;
@@ -2226,8 +2232,7 @@ async function dnsFacts(hostname) {
     txt("default._bimi." + domain)
   ]);
   const unread = [["spf", root], ["dmarc", dmarc], ["mx", mx], ["caa", caa], ["mta-sts", mtaSts], ["tlsrpt", tlsRpt], ["bimi", bimi]].filter(([, rows]) => !rows).map(([name]) => name);
-  // RFC 7505: a single MX of "." (Node reports an empty exchange) means the domain accepts no mail.
-  const nullMx = !!mx && mx.length === 1 && /^\.?$/.test(String(mx[0].exchange || ""));
+  const nullMx = isNullMx(mx);
   return {
     domain,
     spf: clean((root || []).find((row) => /^v=spf1/i.test(row)) || "", 300),
