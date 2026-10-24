@@ -243,6 +243,8 @@
         track('social_click', { event_category: 'Social', event_label: network, link_url: url.origin + url.pathname });
     }, true);
 
+    // Pages that load this file with defer put a stub in its place first; calls made before it ran are replayed.
+    const queued = root.SiteAnalytics && Array.isArray(root.SiteAnalytics.q) ? root.SiteAnalytics.q : [];
     root.SiteAnalytics = {
         id: MEASUREMENT_ID,
         track,
@@ -253,4 +255,5 @@
         bind,
         noteVisit
     };
+    queued.forEach(([name, args]) => root.SiteAnalytics[name].apply(null, args));
 }(window));

@@ -29,8 +29,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install the critical CSS builder
+        run: |
+          read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
+          echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
       - name: URL review scoring, journeys, pricing, guards, and generated scripts
         run: npm run test:review
+      - name: Critical CSS matches the stylesheets
+        run: node scripts/build-critical-css.js --check
       - name: Review language pages match their builder
         run: python3 scripts/build-review-langs.py --check
       - name: Social hub pages match their builder

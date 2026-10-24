@@ -306,17 +306,26 @@
     });
     requestAnimationFrame(frame);
   }
-  views.forEach(function (view) {
-    var boot = function () {
-      if (reduce) {
-        drawStill(view);
-        view.img.style.opacity = "0";
-        return;
-      }
-      if (!mount(view)) view.canvas.remove();
-    };
-    if (view.img.complete && view.img.naturalWidth) boot();
-    else view.img.addEventListener("load", boot, { once: true });
-  });
-  if (!reduce) requestAnimationFrame(frame);
+  // Compiling the WebGL views takes hundreds of ms; the still images show until the page is loaded and idle (#1028).
+  function start() {
+    views.forEach(function (view) {
+      var boot = function () {
+        if (reduce) {
+          drawStill(view);
+          view.img.style.opacity = "0";
+          return;
+        }
+        if (!mount(view)) view.canvas.remove();
+      };
+      if (view.img.complete && view.img.naturalWidth) boot();
+      else view.img.addEventListener("load", boot, { once: true });
+    });
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  function idle() {
+    if (window.requestIdleCallback) window.requestIdleCallback(start, { timeout: 3000 });
+    else setTimeout(start, 300);
+  }
+  if (document.readyState === "complete") idle();
+  else window.addEventListener("load", idle, { once: true });
 })();
