@@ -8,7 +8,7 @@
 
    State lives in Firestore url_review_sweep/state: { lap, pos, cursor: { cc: n }, days: { date: {done, failed} }, last }. */
 
-const url = require("url");
+const { suffixRegistrable } = require("./url-review-suffix");
 
 const PER_DAY = 24;
 const REVISIT_DAYS = 182;
@@ -47,29 +47,6 @@ function hostOf(origin) {
   } catch (error) {
     return "";
   }
-}
-
-// The ICANN section of the Public Suffix List (publicsuffix.org/list/public_suffix_list.dat) as a
-// registrable(host): the public suffix plus one label, or "" when the host is itself a public suffix (gv.at).
-function suffixRegistrable(listText) {
-  const rules = new Set();
-  const section = String(listText || "").split("===BEGIN ICANN DOMAINS===")[1] || "";
-  section.split("===END ICANN DOMAINS===")[0].split("\n").forEach((line) => {
-    const rule = line.trim().split(/\s/)[0];
-    if (!rule || rule.startsWith("//")) return;
-    const [, mark, name] = rule.match(/^(!|\*\.)?(.*)$/);
-    rules.add((mark || "") + (url.domainToASCII(name) || name));
-  });
-  return (hostname) => {
-    const labels = String(hostname || "").replace(/\.$/, "").toLowerCase().split(".").filter(Boolean);
-    let suffix = 1;
-    for (let at = 0; at < labels.length; at += 1) {
-      const name = labels.slice(at).join(".");
-      if (rules.has("!" + name)) { suffix = labels.length - at - 1; break; }
-      if (rules.has(name) || (at + 1 < labels.length && rules.has("*." + labels.slice(at + 1).join(".")))) { suffix = labels.length - at; break; }
-    }
-    return labels.length > suffix ? labels.slice(-suffix - 1).join(".") : "";
-  };
 }
 
 // rows: [[origin, rank]] in rank order; globalDomains: registrable domains in the global top list.
