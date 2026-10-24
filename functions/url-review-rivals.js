@@ -1,7 +1,8 @@
 /* Natural competitors: the 2-3 sites a site competes with, found on the open web, not typed by anyone.
 
-   findRivals asks web search who competes with a host ("<host> competitors", then "sites like <host>"),
-   counts the domains the results name in their titles and snippets and the ones they are hosted on,
+   findRivals asks web search who competes with a host ('"<host>" competitors', then 'sites like "<host>"'),
+   keeps the results that mention the site (so "sites like idmji.org" read as the IDM download manager
+   is dropped), counts the domains they name in their titles and snippets and the ones they are hosted on,
    leaves out the directories and platforms that list everyone (Similarweb, G2, Wikipedia, social
    networks), and keeps the ones Tranco ranks, closest in size to the site first.
 
@@ -12,8 +13,9 @@
    is paid, as names under the frost before.
 
    The report's owner can also pick the kind of competition: a field such as religious sites or online
-   shops, or a topic they type. findRivals then searches that field next to the site, counts the sites
-   the results are hosted on as much as the ones they name, and keeps up to FIELD_PICK, so all five
+   shops, or a topic they type. findRivals then asks for official sites in that field, then for that field
+   next to the site, counts the sites the results are hosted on as much as the ones they name, and keeps
+   up to FIELD_PICK, so all five
    competitor boxes in the report can be filled. Each field's answer is kept on the report.
 
    Sweep state lives in Firestore url_review_sweep/rivals:
@@ -61,14 +63,17 @@ const FIELDS = {
   sports: { en: "sports clubs and sports news", es: "clubes y noticias deportivas", pt: "clubes e notícias esportivas", de: "Sportvereine und Sportnachrichten", fr: "clubs et actualité sportive", it: "club e notizie sportive" },
   entertainment: { en: "streaming and entertainment sites", es: "sitios de streaming y entretenimiento", pt: "sites de streaming e entretenimento", de: "Streaming- und Unterhaltungsseiten", fr: "sites de streaming et de divertissement", it: "siti di streaming e intrattenimento" }
 };
+// Official sites first: "best ... websites" answers with listicles about site builders, not the field.
 const FIELD_QUERIES = {
-  en: ["{term} like {host}", "best {term} websites"],
-  es: ["{term} como {host}", "mejores sitios web de {term}"],
-  pt: ["{term} como {host}", "melhores sites de {term}"],
-  de: ["{term} wie {host}", "beste Websites für {term}"],
-  fr: ["{term} comme {host}", "meilleurs sites de {term}"],
-  it: ["{term} come {host}", "migliori siti di {term}"]
+  en: ["{term} official website", "{term} like {host}"],
+  es: ["{term} sitio oficial", "{term} como {host}"],
+  pt: ["{term} site oficial", "{term} como {host}"],
+  de: ["{term} offizielle Website", "{term} wie {host}"],
+  fr: ["{term} site officiel", "{term} comme {host}"],
+  it: ["{term} sito ufficiale", "{term} come {host}"]
 };
+// A listicle's own site is not in the field it ranks.
+const LISTICLE = /\b(best|top \d+|\d+ (best|top)|examples|mejores|ejemplos|melhores|exemplos|beste[nr]?|beispiele|meilleur(e)?s|exemples|migliori|esempi)\b/i;
 
 // Directories, review sites, search engines, social networks and hosts that name every site.
 const NOISE = [
@@ -85,7 +90,9 @@ const NOISE = [
   "corporationwiki.com", "opencorporates.com", "bizapedia.com", "kompass.com", "emis.com", "dnb.com", "bloomberg.com", "reuters.com",
   "yahoo.com.mx", "yahoo.co.jp", "msn.com", "aol.com", "yandex.ru", "baidu.com", "naver.com", "britannica.com", "cylex.com",
   "paginasamarillas.com", "yellowpages.com", "infobel.com", "empresite.com", "einforma.com", "datanyze.com", "6sense.com", "apollo.io",
-  "leadiq.com", "signalhire.com", "contactout.com", "lusha.com", "wikiwand.com", "fandom.com", "scribd.com", "slideshare.net", "issuu.com"
+  "leadiq.com", "signalhire.com", "contactout.com", "lusha.com", "wikiwand.com", "fandom.com", "scribd.com", "slideshare.net", "issuu.com",
+  "spotify.com", "soundcloud.com", "ivoox.com", "vimeo.com", "apptopia.com", "uia.org", "hostinger.com", "godaddy.com", "squarespace.com",
+  "weebly.com", "strikingly.com", "jimdo.com", "jimdofree.com", "websiteplanet.com", "mybestwebsitebuilder.com"
 ];
 const GENERIC = ["com", "net", "org", "io", "co", "ai", "app", "dev", "shop", "store", "online", "site", "info", "biz", "tv", "news",
   "blog", "tech", "cloud", "digital", "media", "travel", "bank", "edu", "gov"];
@@ -152,22 +159,33 @@ function fieldOf(input, lang) {
 
 function queriesFor(host, field, lang) {
   const site = bare(host);
-  if (!field) return [site + " competitors", "sites like " + site];
+  if (!field) return ['"' + site + '" competitors', 'sites like "' + site + '"'];
   return FIELD_QUERIES[langOf(lang)].map((template) => template.replace("{term}", field.term).replace("{host}", site));
 }
 
+// Whether a result is about the site: it names the host, or a brand long enough not to match by chance.
+function mentions(row, own, ownBrand) {
+  const text = [row.title, row.description, row.url].join(" ").toLowerCase();
+  return text.includes(own) || (ownBrand.length >= 4 && text.includes(ownBrand));
+}
+
 // Each result names a domain once: 2 when its title or snippet names it, 1 when it is hosted there.
-// In a field search the result's own site is in that field, so hosting counts as much as naming.
-function tallyResults(results, ownHost, tally, registrable, hostedWeight) {
+// For the site's own field only results about the site count. In a field search the result's own site
+// is in that field, so hosting counts as much as naming, unless the result is a profile of the site
+// (its podcast, its directory entry) or a listicle.
+function tallyResults(results, ownHost, tally, registrable, hostedWeight, field) {
   const own = registrable(bare(ownHost));
   const ownBrand = brandOf(own, registrable);
   (Array.isArray(results) ? results : []).forEach((row, order) => {
+    const about = mentions(row, own, ownBrand);
+    if (!field && !about) return;
     const seen = new Map();
     let hostedOn = "";
     try { hostedOn = new URL(row.url).hostname; } catch (error) { hostedOn = ""; }
     domainsIn([row.title, row.description].join(" ")).forEach((domain) => seen.set(registrable(domain), 2));
     const hosted = registrable(bare(hostedOn));
-    if (hosted && !seen.has(hosted)) seen.set(hosted, hostedWeight || 1);
+    const hostedCounts = !field || (!about && !LISTICLE.test(String(row.title || "")));
+    if (hosted && hostedCounts && !seen.has(hosted)) seen.set(hosted, hostedWeight || 1);
     seen.forEach((weight, domain) => {
       if (!domain || domain === own || noisy(domain) || shady(domain) || sameBrand(brandOf(domain, registrable), ownBrand)) return;
       const prev = tally.get(domain) || { host: domain, score: 0, first: tally.size * 100 + order };
@@ -225,7 +243,7 @@ async function findRivals(host, deps, field, lang) {
   let queries = 0;
   for (const query of queriesFor(own, field, lang)) {
     queries += 1;
-    tallyResults(await deps.search(query), own, tally, registrable, field ? 2 : 1);
+    tallyResults(await deps.search(query), own, tally, registrable, field ? 2 : 1, !!field);
     if (ranked(tally, registrable).filter((row) => row.score >= 2).length >= pick + 2) break;
   }
   const candidates = ranked(tally, registrable).slice(0, Math.max(RANK_CHECKS, pick + 3));

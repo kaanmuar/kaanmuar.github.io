@@ -55,11 +55,11 @@ test("findRivals stops searching once enough competitors are named and checks ra
     registrable: core.registrable,
     search: async (query) => {
       queries.push(query);
-      return [1, 2, 3, 4, 5, 6].map((n) => ({ title: "Store " + n, url: "https://www.store" + n + ".com/", description: "Like store" + n + ".com" }));
+      return [1, 2, 3, 4, 5, 6].map((n) => ({ title: "Shop.co vs Store " + n, url: "https://www.store" + n + ".com/", description: "Like store" + n + ".com" }));
     },
     ranker: async (domains) => { ranked.push(domains); return domains.map((domain, i) => ({ domain, read: true, rank: 1000 + i })); }
   });
-  assert.deepEqual(queries, ["shop.co competitors"]);
+  assert.deepEqual(queries, ['"shop.co" competitors']);
   assert.equal(ranked.length, 1);
   assert.equal(ranked[0][0], "shop.co");
   assert.equal(found.list.length, rivals.PICK);
@@ -78,9 +78,31 @@ test("the kind of competition is a known field or a cleaned typed topic, in the 
 });
 
 test("a field search asks for that field next to the site, in the site's language", () => {
-  assert.deepEqual(rivals.queriesFor("www.idmji.org"), ["idmji.org competitors", "sites like idmji.org"]);
+  assert.deepEqual(rivals.queriesFor("www.idmji.org"), ['"idmji.org" competitors', 'sites like "idmji.org"']);
   assert.deepEqual(rivals.queriesFor("www.idmji.org", rivals.fieldOf({ field: "religion" }, "es"), "es"),
-    ["iglesias y ministerios como idmji.org", "mejores sitios web de iglesias y ministerios"]);
+    ["iglesias y ministerios sitio oficial", "iglesias y ministerios como idmji.org"]);
+});
+
+test("a field search does not count the site's own profiles, platforms or listicle hosts", () => {
+  const tally = rivals.tallyResults([
+    { title: "Consulte en la Página Oficial www.idmji.org | Podcast", url: "https://open.spotify.com/show/5f1d", description: "Enseñanzas" },
+    { title: "Iglesia de Dios Ministerial de Jesucristo Internacional", url: "https://uia.org/s/or/en/1122284972", description: "IDMJI" },
+    { title: "IDMJI frente a otras iglesias", url: "https://www.blog-iglesias.com/idmji", description: "Como casaroca.org" },
+    { title: "50 de los mejores sitios web de iglesias", url: "https://theleadpastor.com/best-church-website-designs/", description: "thechurchco.com" },
+    { title: "Inicio | Assemblies of God (USA)", url: "https://ag.org/", description: "Iglesias y ministerios" },
+    { title: "Ministerios Ebenezer | Sitio Oficial", url: "https://www.ministeriosebenezer.com/", description: "" }
+  ], "idmji.org", new Map(), core.registrable, 2, true);
+  const scores = Object.fromEntries([...tally.values()].map((row) => [row.host, row.score]));
+  assert.deepEqual(scores, { "casaroca.org": 2, "thechurchco.com": 2, "ag.org": 2, "ministeriosebenezer.com": 2 });
+});
+
+test("the site's own field counts only results about the site, so an unrelated reading of its name is dropped", () => {
+  const tally = rivals.tallyResults([
+    { title: "Internet Download Manager alternatives", url: "https://alternativeto.net/software/internet-download-manager/", description: "bleepingcomputer.com, freedownloadmanager.org" },
+    { title: "IDM alternatives", url: "https://www.techspot.com/downloads/300-internet-download-manager/similar/", description: "See bleepingcomputer.com" },
+    { title: "IDMJI.ORG on X", url: "https://x.com/IDMJIoficial", description: "supresencia.com" }
+  ], "idmji.org", new Map(), core.registrable);
+  assert.deepEqual([...tally.keys()], ["supresencia.com"]);
 });
 
 test("a field search counts the sites results are hosted on and keeps up to five", async () => {
@@ -94,7 +116,7 @@ test("a field search counts the sites results are hosted on and keeps up to five
     },
     ranker: async (domains) => domains.map((domain) => ({ domain, read: true, rank: null }))
   }, rivals.fieldOf({ field: "religion" }, "es"), "es");
-  assert.deepEqual(queries, ["iglesias y ministerios como idmji.org"]);
+  assert.deepEqual(queries, ["iglesias y ministerios sitio oficial"]);
   assert.deepEqual(found.list.map((row) => row.host), churches.slice(0, rivals.FIELD_PICK));
 });
 
@@ -166,7 +188,7 @@ test("the rival sweep runs after the country sweep starts and before the morning
 
 test("app-piracy, gambling and directory sites are never competitors, and a result only hosted somewhere does not count", () => {
   const tally = rivals.tallyResults([
-    { title: "Best APK sites", url: "https://www.corporationwiki.com/x", description: "apkmody.com, bet365.com, topsimilarsites.com and uptodown.com" },
+    { title: "Best APK sites like Androforever", url: "https://www.corporationwiki.com/x", description: "apkmody.com, bet365.com, topsimilarsites.com and uptodown.com" },
     { title: "News", url: "https://www.yahoo.com.mx/news", description: "" }
   ], "androforever.com", new Map(), core.registrable);
   assert.deepEqual([...tally.keys()], ["uptodown.com"]);
