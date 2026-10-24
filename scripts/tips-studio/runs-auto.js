@@ -9,6 +9,12 @@ const { SITE, GUIDE, xPost } = require("./tips");
 const { tagLine } = require("../social-tags");
 
 const OWN = SITE + "/qa-review.html";
+// The call to action in the clip's language, worded as the Live Reports page's own link (js/qa-review-live.js).
+const OWN_LINE = {
+  en: "Review your own site", es: "Analiza tu propio sitio", pt: "Analise o seu site",
+  de: "Eigene Website prüfen", fr: "Analyser votre site", it: "Analizza il tuo sito"
+};
+const ownLine = (lang) => OWN_LINE[lang] ? OWN_LINE[lang] + ": " + (lang === "en" ? OWN : SITE + "/qa-review-" + lang + ".html") : OWN_LINE.en + ": " + OWN;
 const FILE = process.env.AUTO_BATCH || path.resolve(__dirname, "../../previews/auto-live-reports/batch.json");
 const AREAS = [["SEO", "SEO"], ["GEO", "GEO"], ["Analytics", "Analytics"], ["Security", "Security"], ["Accessibility", "A11y"], ["Performance", "Speed"]];
 
@@ -55,7 +61,7 @@ function captions(run) {
   const head = plainTitle(run);
   const how = run.scope === "National" ? ", one of the most visited sites in its country, from QA-lab URL Review's country sweep." : ", requested through QA-lab URL Review.";
   const fair = "One automated analysis of public pages on " + run.analyzed + how + " A starting point, not a verdict.";
-  const own = "Review your own site: " + OWN;
+  const own = ownLine(run.lang || "en");
   return {
     linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + link("linkedin", run), "", own, "", tagLine(run, "linkedin")].join("\n"),
     x: xPost(head + "\n\n" + run.action, link("x", run), tagLine(run, "x")),
@@ -67,4 +73,4 @@ function captions(run) {
   };
 }
 
-module.exports = { SITE, GUIDE, CATS, TIPS, captions, link, plainTitle };
+module.exports = { SITE, GUIDE, CATS, TIPS, OWN_LINE, captions, link, plainTitle };

@@ -301,6 +301,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
     const date = day(START, Math.floor((AFTER + index) / PER_DAY) * EVERY);
     const slot = (AFTER + index) % PER_DAY;
     const said = localize(tip, index, total, i18n);
+    if (said.lang !== "en" && studio.OWN_LINE && said.tiktok.includes(studio.OWN_LINE.en)) throw new Error(slug + ": the " + said.lang + " TikTok caption carries the English call to action");
     const cap = Object.assign(studio.captions(tip, index, total), { tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube });
     captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: altText(tip), lang: said.lang, voice: said.voice.file }, cap);
     for (const channel of Object.keys(WINDOWS)) {
