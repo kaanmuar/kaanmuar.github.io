@@ -319,3 +319,52 @@ test("ask access needs the signed-in account that ran the report, on its device,
   assert.equal((await auth.askAccess(store, proof, null, false)).status, 404);
   assert.equal((await auth.askAccess(store, proof, Object.assign({}, row, { email: "" }), true)).status, 403);
 });
+
+const phraser = require("../../functions/url-review-phrase");
+
+function gemini(text, status) {
+  const calls = [];
+  const fake = async (url, init) => {
+    calls.push({ url, init, body: JSON.parse(init.body) });
+    return { ok: (status || 200) < 400, status: status || 200, json: async () => ({ candidates: [{ content: { parts: [{ text }] } }] }) };
+  };
+  return { fake, calls };
+}
+
+const WHY = { lang: "de", ref: "F-01", title: "F-01 · HSTS is not sent", lines: ["Fails now, rated medium in Security.", "It ranks 1 of 20 fails and risks, with priority 61.1."] };
+
+test("AI phrasing sends only the answer's sentences, in the page language, and returns plain text", async () => {
+  const { fake, calls } = gemini("**F-01** fehlt: Der Header fehlt auf der Seite. Er steht auf Platz 1 mit Priorität 61,1.");
+  const result = await phraser.phrase({ key: "k", fetch: fake, input: Object.assign({ report: { secret: "x" }, session: "s" }, WHY) });
+  assert.deepEqual(result, { ok: true, text: "F-01 fehlt: Der Header fehlt auf der Seite. Er steht auf Platz 1 mit Priorität 61,1.", lang: "de" });
+  assert.match(calls[0].url, /\/models\/gemini-flash-latest:generateContent$/);
+  assert.equal(calls[0].init.headers["x-goog-api-key"], "k");
+  assert.match(calls[0].body.systemInstruction.parts[0].text, /Write in German, addressing the reader as Sie\. Use only what the answer says/);
+  assert.equal(calls[0].body.contents[0].parts[0].text, "F-01 · HSTS is not sent\nFails now, rated medium in Security.\nIt ranks 1 of 20 fails and risks, with priority 61.1.");
+  assert.doesNotMatch(calls[0].init.body, /secret|"session"/);
+});
+
+test("AI phrasing that brings a new id or number, or drops the subject, is not shown", async () => {
+  const run = async (text) => (await phraser.phrase({ key: "k", fetch: gemini(text).fake, input: WHY })).code;
+  assert.equal(await run("F-01 should be fixed within 2 days."), "unfaithful");
+  assert.equal(await run("F-01 is linked to SEC-09."), "unfaithful");
+  assert.equal(await run("The header is missing."), "unfaithful");
+  assert.equal(await run("F-01 is missing, ranked 1 of 20."), undefined);
+});
+
+test("AI phrasing is off without a key, needs sentences, is capped per report per day, and reports a failed call", async () => {
+  assert.deepEqual(await phraser.phrase({ input: WHY }), { ok: false, status: 503, error: "AI phrasing is off.", code: "off" });
+  assert.equal((await phraser.phrase({ key: "k", input: { lines: [] } })).status, 400);
+  assert.equal((await phraser.phrase({ key: "k", fetch: gemini("x", 500).fake, input: WHY })).status, 502);
+  const store = auth.memoryStore();
+  const now = Date.parse("2026-10-24T12:00:00Z");
+  for (let i = 0; i < phraser.DAILY; i++) assert.equal((await phraser.phrase({ key: "k", store, id: "r1", now, fetch: gemini("F-01 fails.").fake, input: WHY })).ok, true);
+  assert.equal((await phraser.phrase({ key: "k", store, id: "r1", now, fetch: gemini("F-01 fails.").fake, input: WHY })).status, 429);
+  assert.equal((await phraser.phrase({ key: "k", store, id: "r1", now: now + 864e5, fetch: gemini("F-01 fails.").fake, input: WHY })).ok, true);
+  assert.equal(phraser.cleanInput({ lang: "ja", lines: Array(30).fill("a") }).lines.length, 12);
+  assert.equal(phraser.cleanInput({ lang: "ja" }).lang, "en");
+});
+
+test("every page language has an AI phrasing instruction", () => {
+  Object.keys(ask.T).forEach((lang) => assert.ok(phraser.LANGS[lang], lang));
+});

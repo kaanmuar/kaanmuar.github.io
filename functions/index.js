@@ -2353,6 +2353,7 @@ async function readBrowserStream(body, log, onStart) {
 }
 
 const reviewAuth = require("./url-review-auth");
+const reviewPhrase = require("./url-review-phrase");
 const reviewOAuth = require("./url-review-oauth");
 // Each OAuth provider registers exactly this address as its redirect URI.
 const REVIEW_OAUTH_PAGE = "https://carlosandmunoz.com/qa-review.html";
@@ -3060,7 +3061,23 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       res.status(access.status).json({ error: access.error, code: access.code || "", signIn: !!access.signIn });
       return;
     }
-    res.status(200).json({ ok: true });
+    res.status(200).json({ ok: true, phrase: !!process.env.GEMINI_API_KEY });
+    return;
+  }
+  if (req.method === "POST" && pathName.endsWith("/review/ask/phrase")) {
+    const body = req.body || {};
+    const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const store = reviewAuth.firestoreStore(admin.firestore());
+    const snap = id ? await admin.firestore().collection("url_reviews").doc(id).get() : null;
+    const row = snap && snap.exists ? snap.data() || {} : null;
+    const free = !!row && (row.free === true || await hasFreeRuns(row.email));
+    const access = await reviewAuth.askAccess(store, body, row, free);
+    if (!access.ok) {
+      res.status(access.status).json({ error: access.error, code: access.code || "", signIn: !!access.signIn });
+      return;
+    }
+    const result = await reviewPhrase.phrase({ key: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL, store, id, input: body });
+    res.status(result.ok ? 200 : result.status).json(result.ok ? { text: result.text } : { error: result.error, code: result.code });
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/stop") !== -1) {
