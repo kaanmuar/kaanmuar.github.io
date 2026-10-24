@@ -1,5 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("fs");
+const path = require("path");
 
 const replies = require("../../functions/url-review-owner-replies");
 
@@ -79,4 +81,14 @@ test("anything else waits for a person", () => {
   assert.equal(reply.kind, "other");
   assert.deepEqual(replies.plan(reply, {}), { status: "waiting", apply: [], propose: "" });
   assert.equal(replies.unforward("no forward here"), null);
+});
+
+test("the owner reply page renders and escapes the proposed address", () => {
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  const source = index.match(/function replyPage\(id, row, message\) \{[\s\S]*?\n\}/)[0];
+  const replyPage = new Function("ownerLayout", "ownerReplies", "OWNER_REPLIES_URL", source + "\nreturn replyPage;")(
+    require("../../functions/owner-mail.js"), { KIND_LABELS: {} }, "https://example.test/ownerReplies");
+  const html = replyPage("abc", { kind: "other", status: "waiting", from: "a@b.c", host: "shop.example", domain: "shop.example", propose: "resend:x\"><script>alert(1)</script>@shop.example", words: "hi" }, "");
+  assert.match(html, /value="x&quot;&gt;&lt;script&gt;alert\(1\)&lt;\/script&gt;@shop\.example"/);
+  assert.ok(!html.includes("<script>"));
 });
