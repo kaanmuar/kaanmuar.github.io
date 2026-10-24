@@ -143,11 +143,13 @@
             page: ((root.location.pathname || '').split('/').pop() || 'index.html').slice(0, 80),
             title: String(document.title || '').slice(0, 120),
             timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || '').slice(0, 60),
-            languages: (navigator.languages || []).slice(0, 6).join(',').slice(0, 80),
-            createdAt: fs.serverTimestamp()
+            languages: (navigator.languages || []).slice(0, 6).join(',').slice(0, 80)
         };
         if (kind === 'visit') row.query = pageQuery();
-        database().then(({ fs, db }) => fs.addDoc(fs.collection(db, 'site_events'), row)).catch(() => {});
+        database().then(({ fs, db }) => {
+            row.createdAt = fs.serverTimestamp();
+            return fs.addDoc(fs.collection(db, 'site_events'), row);
+        }).catch(() => {});
     }
 
     function event(eventName, category, label, extra) {
