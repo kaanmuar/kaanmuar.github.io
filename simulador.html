@@ -3292,7 +3292,8 @@ function studioCopy(lang) {
 }
 function studioReportLang() {
     const langEl = document.getElementById('studio-report-lang');
-    return langEl && STUDIO_COPY[langEl.value] ? langEl.value : 'en';
+    const picked = langEl ? langEl.value : '';
+    return Object.keys(STUDIO_COPY).find(code => code === picked) || 'en';
 }
 function studioReportHtml() {
     const lang = studioReportLang();
