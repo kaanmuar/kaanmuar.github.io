@@ -148,7 +148,7 @@ function posts(batch) {
   const dir = path.join(ROOT, "media/social-posts", batch);
   const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
   const when = facebookSlots(dir);
-  return Object.keys(captions).filter((slug) => captions[slug].facebook)
+  return Object.keys(captions).filter((slug) => captions[slug].facebook && !captions[slug].hold)
     .map((slug) => ({ batch, slug, cap: captions[slug], at: when[slug] || 0 }));
 }
 
