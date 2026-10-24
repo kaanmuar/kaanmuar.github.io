@@ -2275,6 +2275,17 @@ test.describe("cases built from evidence and ranked by risk", () => {
     }
   };
 
+  test("a PageSpeed answer reaches the report", async () => {
+    const restore = fakeNetwork(routes);
+    try {
+      const pagespeed = async () => ({ ok: true, score: 77, lab: {}, bytes: 250000 });
+      const result = await core.reviewTarget(SITE, { browse: async (job) => job.html ? { ok: false } : browser, pagespeed });
+      assert.equal(result.pagespeed && result.pagespeed.score, 77);
+    } finally {
+      restore();
+    }
+  });
+
   test("cases name the host and paths, span every page, and drop the retired duplicates", async () => {
     const result = await review();
     const byId = (id) => result.cases.find((item) => item.id === id);

@@ -2036,7 +2036,7 @@ async function takeOwnerReply(mail, auth) {
 }
 
 function replyPage(id, row, message) {
-  const esc = escapeHtml;
+  const esc = ownerLayout.escapeHtml;
   const action = OWNER_REPLIES_URL + "/decide?t=" + id;
   const button = (value, label, extra) => "<form method=\"post\" action=\"" + esc(action) + "\" style=\"margin:10px 0\"><input type=\"hidden\" name=\"do\" value=\"" + value + "\">" + (extra || "") + "<button style=\"padding:10px 16px;border-radius:8px;border:0;background:#0e7490;color:#fff;font-size:14px\">" + esc(label) + "</button></form>";
   const proposed = String(row.propose || "").startsWith("resend:") ? row.propose.slice(7) : (row.mentioned || [])[0] || "";
