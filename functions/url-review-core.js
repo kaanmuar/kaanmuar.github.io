@@ -2134,7 +2134,9 @@ async function readSitemap(origin, robotsText, halt, acceptLanguage) {
       return parsed.toString();
     } catch (error) { return url; }
   });
-  const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
+  // Yoast and WordPress serve /sitemap_index.xml, and Next.js and Astro /sitemap-index.xml, often with nothing at /sitemap.xml.
+  const guesses = ["/sitemap.xml"].concat(listed.length ? [] : ["/sitemap_index.xml", "/sitemap-index.xml"]).map((path) => origin + path);
+  const candidates = upgraded.concat(guesses).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
   let last = { status: 0 };
   for (let i = 0; i < candidates.length && i < 3; i += 1) {
     const res = await fetchExtra(candidates[i], halt, true, acceptLanguage);
