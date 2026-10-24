@@ -1219,6 +1219,7 @@ async function rerunFailure(group) {
       maxDepth: options.depth || undefined,
       pageLang: options.pageLang || "",
       section: options.section === true,
+      passive: !!(group.intake && group.intake.reasonCode === "compare"),
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
@@ -1478,6 +1479,7 @@ const reviewPublish = require("./url-review-publish");
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
+const reviewCompare = require("./url-review-compare");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
 const accountData = require("./url-review-account-data");
@@ -2208,7 +2210,16 @@ async function returnPrice(priced, opts) {
   if (priced.billing === "scope") return reviewOffers.discountFor(cents, priced.count, {});
   const coupon = await couponFor(opts.coupon, opts.purpose, opts.reportId);
   const rows = opts.rows || (opts.purpose === "report" ? await runsForEmail(opts.email) : await reviewRowsFor(opts.deviceId, opts.ip));
-  return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon });
+  return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon, compare: !!opts.compare });
+}
+
+// At checkout the comparison discount holds only for a base review run on the paying device.
+async function comparesFrom(id, deviceId) {
+  const key = reviewCompare.cleanId(id);
+  const device = String(deviceId || "").slice(0, 16);
+  if (!key || !device) return false;
+  const snap = await admin.firestore().collection("url_reviews").doc(key).get();
+  return snap.exists && !!snap.get("report.insights") && String(snap.get("deviceId") || "").slice(0, 16) === device;
 }
 
 function dealFields(deal) {
@@ -2986,6 +2997,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(204).send("");
     return;
   }
+  if (req.method === "POST" && pathName.endsWith("/review/ask")) {
+    const body = req.body || {};
+    const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const snap = id ? await admin.firestore().collection("url_reviews").doc(id).get() : null;
+    const row = snap && snap.exists ? snap.data() || {} : null;
+    const free = !!row && (row.free === true || await hasFreeRuns(row.email));
+    const access = await reviewAuth.askAccess(reviewAuth.firestoreStore(admin.firestore()), body, row, free);
+    if (!access.ok) {
+      res.status(access.status).json({ error: access.error, signIn: !!access.signIn });
+      return;
+    }
+    res.status(200).json({ ok: true });
+    return;
+  }
   if (req.method === "POST" && pathName.indexOf("/stop") !== -1) {
     const stop = await reviewAuth.stopRun(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
     if (!stop.ok) {
@@ -3053,14 +3078,16 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           const ownerSnap = await admin.firestore().collection("url_reviews").doc(quoteReport).get();
           owner = ownerSnap.exists ? ownerSnap.data() : {};
         }
+        const quoteDevice = String(req.query.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
         deal = await returnPrice(priced, {
           purpose: quotePurpose,
           reportId: quoteReport,
           email: owner.email,
           before: owner.createdAt,
           coupon: req.query.coupon,
-          deviceId: String(req.query.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32),
-          ip: req.ip || ""
+          deviceId: quoteDevice,
+          ip: req.ip || "",
+          compare: quotePurpose === "new-run" && req.query.compareWith ? await comparesFrom(req.query.compareWith, quoteDevice) : false
         });
       }
       const quote = await urlReview.copQuote(deal ? deal.usd : priced.usd);
@@ -3130,6 +3157,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         let paidFrameworks = result.frameworks || [];
         let paidTools = result.tools || [];
         let paidPrice = result.amount || 0;
+        let paidCompare = "";
         if (choice !== "stripe") {
           if (!result.reference) {
             res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
@@ -3148,6 +3176,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           paidFrameworks = open.frameworks || [];
           paidTools = open.tools || [];
           paidPrice = open.priceUsd || result.amount;
+          paidCompare = reviewCompare.cleanId(open.compareWith);
           if (open.coupon) await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
           result.pages = open.pages;
           result.depth = open.depth;
@@ -3201,6 +3230,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
             pages: result.pages || urlReview.INCLUDED_PAGES,
             depth: result.depth || urlReview.INCLUDED_DEPTH,
             billing: result.billing || "run",
+            compareWith: paidCompare,
             createdAt: new Date().toISOString(),
             priceUsd: paidPrice,
             amount: result.amount,
@@ -3225,6 +3255,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       } else if (purpose === "report") {
         const reportSnap = await admin.firestore().collection("url_reviews").doc(reportId).get();
         reportData = reportSnap.exists ? reportSnap.data() : {};
+        const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), req.body || {}, reportData, false);
+        if (!access.ok && access.status !== 402) {
+          res.status(access.status).json({ error: access.locked ? "Only the account that ran this report can unlock it. Sign in with that account. No charge was made." : access.error, signIn: !!access.signIn });
+          return;
+        }
         priced = urlReview.priceFor((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools));
       } else {
         priced = urlReview.priceForRun({
@@ -3236,6 +3271,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         });
       }
       let deal = null;
+      const compareWith = purpose === "new-run" && req.body ? reviewCompare.cleanId(req.body.compareWith) : "";
       if (purpose === "report" || purpose === "new-run") {
         deal = await returnPrice(priced, {
           purpose,
@@ -3244,7 +3280,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           before: reportData.createdAt,
           coupon: req.body && req.body.coupon,
           deviceId,
-          ip: req.ip || ""
+          ip: req.ip || "",
+          compare: compareWith ? await comparesFrom(compareWith, deviceId) : false
         });
       }
       const listUsd = priced.usd;
@@ -3289,6 +3326,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         pages: priced.pages || null,
         depth: priced.depth || null,
         billing: priced.billing || "",
+        compareWith,
         priceUsd: priced.usd,
         amount: session.amount,
         currency: session.currency,
@@ -3324,8 +3362,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     });
     return;
   }
-  if (req.method === "GET") {
-    const id = String(req.query.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const opening = req.method === "GET" ? { id: req.query.id, coupon: req.query.coupon }
+    : (req.method === "POST" && pathName.endsWith("/review/open") ? (req.body || {}) : null);
+  if (opening) {
+    const id = String(opening.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     if (!id) {
       res.status(400).json({ error: "Missing report id." });
       return;
@@ -3337,10 +3377,30 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     }
     const data = snap.data() || {};
     const free = data.free === true || await hasFreeRuns(data.email);
-    if (!data.paid && !free) {
+    // A GET carries no session, so a bare link always lands on the preview.
+    const proof = req.method === "GET" ? {} : { session: opening.session, deviceKey: opening.deviceKey };
+    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), proof, data, free);
+    if (access.status === 404) {
+      res.status(404).json({ error: access.error });
+      return;
+    }
+    if (access.locked) {
+      res.status(access.status).json({
+        error: access.error,
+        signIn: true,
+        locked: true,
+        id,
+        host: data.report.host,
+        status: data.status || "",
+        frameworks: data.frameworks || [],
+        preview: urlReview.previewReport(data.report)
+      });
+      return;
+    }
+    if (!access.ok) {
       let priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] };
       try { priced = urlReview.priceFor(data.frameworks || []); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [], count: 1 }; }
-      const deal = await returnPrice(priced, { purpose: "report", reportId: id, email: data.email, before: data.createdAt, coupon: req.query.coupon });
+      const deal = await returnPrice(priced, { purpose: "report", reportId: id, email: data.email, before: data.createdAt, coupon: opening.coupon });
       res.status(402).json(Object.assign({
         paymentRequired: true,
         priceUsd: deal.usd,
@@ -3396,6 +3456,16 @@ async function runReview(req, res, placeOf) {
     res.status(intake.status || 400).json({ error: intake.error, fields: intake.fields || [] });
     return;
   }
+  let base = null;
+  if (intake.value.compareWith) {
+    const baseSnap = await admin.firestore().collection("url_reviews").doc(intake.value.compareWith).get();
+    base = baseSnap.exists ? baseSnap.data() : null;
+    const refused = reviewCompare.baseProblem(base, signedIn.email, intake.value.url);
+    if (refused) {
+      res.status(400).json({ error: refused, compare: true });
+      return;
+    }
+  }
   const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
   const ip = req.ip || "";
   const priorRows = free ? [] : await reviewRowsFor(deviceId, ip);
@@ -3406,7 +3476,8 @@ async function runReview(req, res, placeOf) {
     const deal = await returnPrice({ usd: decision.priceUsd, count: decision.count, billing: decision.billing }, {
       purpose: "new-run",
       rows: priorRows,
-      coupon: req.body && req.body.coupon
+      coupon: req.body && req.body.coupon,
+      compare: !!base
     });
     Object.assign(decision, { priceUsd: deal.usd }, dealFields(deal));
   }
@@ -3517,6 +3588,7 @@ async function runReview(req, res, placeOf) {
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
       section: intake.value.section,
+      passive: !!intake.value.compareWith,
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
@@ -3544,6 +3616,10 @@ async function runReview(req, res, placeOf) {
       report.history = history;
       writeLine({ type: "log", text: "Compared with your review of " + report.host + " from " + String(history.previousAt).slice(0, 10) + ": " + history.fixedCount + " fixed, " + history.freshCount + " new." });
     } else writeLine({ type: "log", text: "No earlier review of " + report.host + " under this email." });
+    if (base) {
+      report.compare = reviewCompare.compareSites(Object.assign({ id: intake.value.compareWith }, base.report), report);
+      if (report.compare) writeLine({ type: "log", text: "Compared with your review of " + base.report.host + ": " + report.compare.rivalOnlyCount + " open problems only " + report.host + " has, " + report.compare.ownOnlyCount + " only " + base.report.host + " has, " + report.compare.shared + " both have." });
+    }
     writeLine({ type: "log", text: "Saving the report." });
     await admin.firestore().collection("url_reviews").doc(report.id).set(record);
     await countReviewed(report);

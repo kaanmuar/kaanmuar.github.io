@@ -188,6 +188,7 @@ function termText(key) {
 
 const STATUS_NOTE = {
   "needs-proof": "A short scripted conversation runs only on reviews the site's owner has verified: asked with an email at this site's domain, verified on your account page with a DNS record or a homepage tag, or recorded by QA-lab after a signed-in run.",
+  competitor: "No conversation runs on a competitor's site: a competitor run is strictly passive, so its chat is never opened.",
   "no-chat": "No chat loaded on the start page in the conversation's browser, so nothing was sent.",
   "no-launcher": "The chat loaded, but no launcher button was found to open it, so nothing was sent.",
   "not-opened": "The chat button was pressed, but the chat did not open, so nothing was sent.",

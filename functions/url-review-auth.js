@@ -312,6 +312,19 @@ function ownsRun(row, email, device) {
   return !!row && row.email === email && sameHash(row.deviceHash, device);
 }
 
+// A stored report opens in full only for the signed-in account that ran it, once it is paid or free.
+// Everyone else, including whoever holds the link, gets the blurred preview and a sign-in prompt.
+async function reportAccess(store, input, row, free) {
+  if (!row || !row.report || row.report.preview) return fail(404, "That report was not found.");
+  const signedIn = await checkSession(store, Object.assign({}, input, { touch: false }));
+  if (!signedIn.ok) return fail(401, "Sign in with the account that ran this report to read it in full.", { signIn: true, locked: true });
+  if (!row.email || row.email !== signedIn.email) {
+    return fail(403, "This report belongs to another account. Sign in with the account that ran it to read it in full.", { signIn: true, locked: true });
+  }
+  if (row.paid !== true && free !== true) return fail(402, "This report opens in full once it is paid.", { email: signedIn.email });
+  return { ok: true, email: signedIn.email };
+}
+
 // A run's stop row names the email and device that started it; only that pair can stop it.
 async function claimRun(store, input) {
   const now = input.now || Date.now();
@@ -338,6 +351,16 @@ async function stopRun(store, input) {
   if (!ownsRun(row, signedIn.email, deviceHash(input.deviceKey))) return fail(404, "No review started on this device is running under that id.");
   await store.set("url_review_stops", runId, { stopped: true, stoppedAt: new Date(input.now || Date.now()).toISOString() });
   return { ok: true };
+}
+
+// Ask the report opens for the account that ran the report, once that report is paid or free.
+async function askAccess(store, input, row, free) {
+  const signedIn = await checkSession(store, Object.assign({}, input, { touch: false }));
+  if (!signedIn.ok) return signedIn;
+  if (!row || !row.report || row.report.preview) return fail(404, "That report was not found.");
+  if (!row.email || row.email !== signedIn.email) return fail(403, "Only the account that ran this report can ask it.");
+  if (row.paid !== true && free !== true) return fail(402, "Ask the report opens once this report is paid.");
+  return { ok: true, email: signedIn.email };
 }
 
 async function closeSession(store, session) {
@@ -403,8 +426,10 @@ module.exports = {
   providerSignIn,
   openSession,
   checkSession,
+  reportAccess,
   claimRun,
   stopRun,
+  askAccess,
   closeSession,
   dropAuthUsers,
   lookupIdToken

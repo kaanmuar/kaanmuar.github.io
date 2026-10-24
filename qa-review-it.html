@@ -356,6 +356,7 @@
     <link rel="stylesheet" href="css/qa-review-folds.css?v=20261020a">
     <link rel="stylesheet" href="css/qa-review-live.css?v=20261028b">
     <link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a">
+    <link rel="stylesheet" href="css/qa-review-ask.css?v=20261023a">
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
@@ -520,6 +521,16 @@
         .history-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .delta { font-size: 12px; font-weight: 700; color: var(--muted); }
         .delta.up { color: var(--green); } .delta.down { color: var(--red); }
+        .compare-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 6px; }
+        .compare-form label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
+        .compare-form input { flex: 1 1 240px; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: inherit; font: inherit; }
+        .compare-scroll { overflow-x: auto; margin: 10px 0 4px; }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .compare-table th, .compare-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+        .compare-table th:first-child { text-align: left; }
+        .compare-table thead th { font-size: 12px; letter-spacing: .04em; color: var(--muted); }
+        #compare-error:empty { display: none; }
+        #compare-error { color: var(--red); }
         .gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 4px; }
         .speed-title { margin: 14px 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #5b6672); }
         .gauge { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
@@ -1132,7 +1143,7 @@
                     <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg><span class="tg-text"><b class="tg-title" data-tg="pay" lang="it" translate="no">Pagamento e i tuoi diritti</b><span class="tg-gist" data-tg="pay" lang="it" translate="no">La prima revisione è inclusa; il resto si paga prima di iniziare. Non rinunci ai diritti di recesso che la legge mantiene.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
                     <div class="tg-body">
                         <label class="check" lang="it" translate="no"><input type="checkbox" name="t7"> La prima revisione inclusa è di 20 pagine e 2 link di profondità. Una revisione più ampia o più profonda, e ogni esecuzione successiva, chiede un pagamento prima di iniziare, a meno che l’account abbia una quota gratuita o di prova, un coupon o un pass concesso dall’operatore. L’importo appare in quel momento, nella pagina di pagamento. Un altro nome o un’altra email non evitano quell’addebito. Le revisioni interrotte vengono conservate. Tre interruzioni in un giorno sospendono le revisioni successive.</label>
-                        <label class="check" lang="it" translate="no"><input type="checkbox" name="t8"> Il report viene mostrato una volta, e le esecuzioni con accesso sono elencate nella pagina del mio account. Rivederlo, scaricarlo, stamparlo o condividerlo chiede un pagamento, a meno che l’account abbia una quota gratuita o di prova, un coupon o un pass concesso dall’operatore. L’importo appare allora. L’inizio di ogni caso proposto resta leggibile. Il resto del caso resta sfocato finché il pagamento non è confermato. Una copia sfocata dei punteggi e dei risultati arriva alla mia email quando la revisione finisce.</label>
+                        <label class="check" lang="it" translate="no"><input type="checkbox" name="t8"> Il report viene mostrato una volta, e le esecuzioni con accesso sono elencate nella pagina del mio account. Il report completo si apre solo per l’account con accesso che l’ha eseguito. Chiunque altro abbia il link vede l’anteprima sfocata e gli viene chiesto di accedere. Rivederlo, scaricarlo o stamparlo chiede un pagamento, a meno che l’account abbia una quota gratuita o di prova, un coupon o un pass concesso dall’operatore. L’importo appare allora. L’inizio di ogni caso proposto resta leggibile. Il resto del caso resta sfocato finché il pagamento non è confermato. Una copia dei punteggi e dei risultati arriva alla mia email quando la revisione finisce, sfocata a meno che il report sia pagato o il mio account sia gratuito.</label>
                         <label class="check" lang="it" translate="no"><input type="checkbox" name="t10"> Chiedo che il servizio inizi durante qualsiasi periodo di recesso. Riconosco che un consumatore nell’Unione europea, ai sensi della direttiva 2011/83/UE, articolo 16, e un consumatore nel Regno Unito, ai sensi delle Consumer Contracts Regulations 2013, regolamento 36(2), perde il diritto di recesso solo quando il servizio è stato interamente prestato. Non rinuncio a un diritto di recesso che quelle norme mantengono.</label>
                     </div>
                 </details>
@@ -1409,6 +1420,7 @@
             </div>
             <div class="actions">
                 <button class="btn btn-ghost" id="copy-link" type="button">Copy link</button>
+                <button class="btn btn-ghost" id="ask-open" type="button" aria-expanded="false" aria-controls="ask-panel" lang="it" translate="no" hidden>Chiedi al report</button>
                 <button class="btn btn-ghost" id="case-export-open" type="button">Export and print test cases</button>
                 <div class="menu-wrap">
                     <button class="btn btn-ghost" id="export-toggle" type="button" aria-expanded="false" aria-controls="export-menu">Export</button>
@@ -1442,6 +1454,20 @@
         <div class="kpis" id="kpis"></div>
         <h2 data-insight>One-page summary</h2>
         <article class="card" data-insight id="exec"></article>
+        <h2 data-insight>Next to a competitor</h2>
+        <article class="card" data-insight id="compare">
+            <div class="no-print" id="compare-ask">
+                <p>Run the same review on a competitor's site and see the six area scores side by side, with the open problems only one of the two sites has.</p>
+                <div class="compare-form">
+                    <label for="compare-url">Competitor's address</label>
+                    <input id="compare-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="competitor.com">
+                    <button class="btn btn-primary" id="compare-go" type="button">Compare</button>
+                </div>
+                <p class="meta-line">Priced as a second review, with the return discount. The competitor's site gets the public, passive checks only: no chat conversation and no form sent. Like any review, its owner may get one email about it, and its scores can appear in Live Reports.</p>
+                <p class="meta-line" id="compare-error" role="alert"></p>
+            </div>
+            <div id="compare-result" hidden></div>
+        </article>
         <h2 data-insight>Health score</h2>
         <div data-insight id="health"></div>
         <h2 data-insight>Fix first</h2>
@@ -1518,6 +1544,24 @@
         <article class="card" id="cases"></article>
         </section>
     </div>
+    <aside class="ask-panel no-print" id="ask-panel" aria-labelledby="ask-title" lang="it" translate="no" hidden>
+        <div class="ask-head">
+            <div>
+                <p class="eyebrow" data-ask-text="open">Chiedi al report</p>
+                <h2 id="ask-title" data-ask-text="title">Risposte solo da questo report</h2>
+            </div>
+            <button class="btn btn-ghost" id="ask-close" type="button" data-ask-text="close">Chiudi</button>
+        </div>
+        <p class="ask-note" data-ask-text="note">Spiega un risultato a partire dalle sue prove, scrive la correzione per la tecnologia vista da questa revisione, scrive il caso Playwright per un id di caso e prepara una issue GitHub o Jira. Non risponde a nulla che il report non contenga.</p>
+        <div class="ask-log" id="ask-log" role="log" aria-live="polite"></div>
+        <div class="ask-chips" id="ask-chips" hidden></div>
+        <form class="ask-form" id="ask-form" hidden>
+            <label class="ask-hidden" for="ask-input" data-ask-text="inputLabel">Domanda su questo report</label>
+            <input id="ask-input" type="text" maxlength="300" autocomplete="off" placeholder="Perché F-01 ha questa valutazione?">
+            <button class="btn btn-primary" type="submit" data-ask-text="send">Chiedi</button>
+        </form>
+        <label class="ask-repo" id="ask-repo-row" for="ask-repo" hidden><span data-ask-text="repo">Repository GitHub per le issue</span> <input class="notranslate" translate="no" id="ask-repo" type="text" placeholder="owner/repo" autocomplete="off" spellcheck="false"></label>
+    </aside>
 </div>
 <div id="case-export" class="gate no-print" hidden>
     <div class="case-sheet" role="dialog" aria-modal="true" aria-labelledby="case-export-title">
@@ -1555,7 +1599,7 @@
         <h2 id="pay-title">This report was already shown</h2>
         <div id="pay-deal" hidden></div>
         <p class="pay-price" id="pay-price">—</p>
-        <p class="muted" id="pay-detail">The amount for seeing, downloading, printing, or sharing this report again is shown here.</p>
+        <p class="muted" id="pay-detail">The amount for seeing, downloading, or printing this report again, on the account that ran it, is shown here.</p>
         <p class="status" id="pay-note" role="status"></p>
         <div class="actions">
             <button class="btn btn-ghost" id="pay-close" type="button">Close</button>
@@ -1581,11 +1625,12 @@
 <script src="js/site-glossary.js?v=20261029a"></script>
 <script src="js/site-tour.js?v=20261023a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
-<script src="js/qa-review-scripts.js?v=20261031a"></script>
+<script src="js/qa-review-scripts.js?v=20261031b"></script>
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
+<script src="js/qa-review-ask.js?v=20261023b"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261031c"></script>
+<script src="js/qa-review.js?v=20261031t"></script>
 <script src="js/url-suggest.js?v=20261023b"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>

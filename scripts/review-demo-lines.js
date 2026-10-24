@@ -193,12 +193,12 @@ const LINES = {
     it: "Ti serve il rapporto su carta, o come PDF in una cartella. Stampare è quella via. Questa clip lascia chiusa la finestra di stampa, così vedi la scelta senza una finestra sopra la pagina."
   },
   "copy-link": {
-    en: "You want to send the report without leaving this page. Copy takes the link once with this showing. Opening it again asks for payment, so the first look stays the one that is included.",
-    es: "Quieres enviar el informe sin salir de esta página. Copiar toma el enlace una vez con esta vista. Abrirlo de nuevo pide el pago, para que la primera mirada siga siendo la incluida.",
-    pt: "Você quer enviar o relatório sem sair desta página. Copiar pega o link uma vez com esta vista. Abri-lo de novo pede o pagamento, para a primeira vista continuar sendo a incluída.",
-    de: "Sie wollen den Bericht senden, ohne diese Seite zu verlassen. Kopieren nimmt den Link einmal mit dieser Ansicht. Ein erneutes Öffnen verlangt die Zahlung, damit der erste Blick der enthaltene bleibt.",
-    fr: "Vous voulez envoyer le rapport sans quitter cette page. Copier prend le lien une fois avec cet affichage. L’ouvrir à nouveau demande le paiement, pour que le premier regard reste celui qui est inclus.",
-    it: "Vuoi inviare il rapporto senza lasciare questa pagina. Copia prende il link una volta con questa vista. Riapirlo chiede il pagamento, così il primo sguardo resta quello incluso."
+    en: "You want the link to this report. Copy takes it. The link opens the full report only for the account that ran it, once signed in. Anyone else sees the blurred preview.",
+    es: "Quieres el enlace a este informe. Copiar lo toma. El enlace abre el informe completo solo para la cuenta que lo ejecutó, con la sesión iniciada. Cualquier otra persona ve la vista previa difuminada.",
+    pt: "Você quer o link deste relatório. Copiar pega o link. Ele abre o relatório completo só para a conta que o executou, com login. Qualquer outra pessoa vê a prévia desfocada.",
+    de: "Sie wollen den Link zu diesem Bericht. Kopieren nimmt ihn. Der Link öffnet den vollständigen Bericht nur für das Konto, das ihn ausgeführt hat, nach der Anmeldung. Alle anderen sehen die unscharfe Vorschau.",
+    fr: "Vous voulez le lien vers ce rapport. Copier le prend. Le lien n’ouvre le rapport complet que pour le compte qui l’a lancé, une fois connecté. Toute autre personne voit l’aperçu flouté.",
+    it: "Vuoi il link a questo rapporto. Copia lo prende. Il link apre il rapporto completo solo per l’account che l’ha eseguito, dopo l’accesso. Chiunque altro vede l’anteprima sfocata."
   },
   "language": {
     en: "The person reading the page may not want English. Spanish and Portuguese have their own headline pages. German, French, and Italian translate this one. Switch the language, and the same review stays.",
