@@ -2698,6 +2698,7 @@
         .fw-row { display: grid; grid-template-columns: 110px 1fr; gap: 4px 8px; align-items: center; font-size: 12px; margin: 6px 0; font-family: sans-serif; }
         .fw-meta { grid-column: 2; color: #5c6b76; }
         .facts th { width: 32%; color: #5c6b76; font-weight: 600; }
+        .matrix-wrap td:first-child { white-space: nowrap; }
         .fail-card { border: 1px solid #f1c4bf; border-left: 4px solid #b42318; border-radius: 8px; padding: 4px 12px; margin: 10px 0; break-inside: avoid; }
         .fail-card h3 { margin: 8px 0 4px; font-size: 14px; color: #b42318; }
         .not-run { columns: 2; font-family: sans-serif; font-size: 12px; }
