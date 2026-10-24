@@ -66,10 +66,10 @@ describe('Security and SEO', () => {
 
   it('names each clip video, poster, and duration', () => {
     const clips = [
-      ['media/qa-lab-running.html', 'QA Lab running', 'PT54S', 'qa-lab-running.mp4', 'qa-lab-running.jpg'],
+      ['media/qa-lab-running.html', 'QA Lab running', 'PT57S', 'qa-lab-running.mp4', 'qa-lab-running.jpg'],
       ['media/qa-lab-tour.html', 'QA Lab tour', 'PT41S', 'qa-lab-tour.mp4', 'qa-lab-tour.jpg'],
-      ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M33S', 'sdlc-studio-running.mp4', 'sdlc-studio-running.jpg'],
-      ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT26S', 'sdlc-studio-tour.mp4', 'sdlc-studio-tour.jpg']
+      ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M39S', 'sdlc-studio-running.mp4', 'sdlc-studio-running.jpg'],
+      ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT31S', 'sdlc-studio-tour.mp4', 'sdlc-studio-tour.jpg']
     ];
     cy.request('/sitemap.xml').its('body').then((sitemap) => {
       clips.forEach(([page, title, duration, video, poster]) => {

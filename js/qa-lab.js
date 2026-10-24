@@ -249,12 +249,15 @@
       async run({ cv, reloadCv }) {
         const btn = cv.document.getElementById('theme-toggle');
         assert(btn, '#theme-toggle missing');
+        const before = localStorage.getItem('theme');
         cv.document.documentElement.classList.remove('dark-mode');
         localStorage.setItem('theme', 'light');
         btn.click();
         assert(cv.document.documentElement.classList.contains('dark-mode'), 'dark-mode not applied');
         const again = await reloadCv();
         assert(again.document.documentElement.classList.contains('dark-mode'), 'theme did not persist');
+        const back = again.document.getElementById('theme-toggle');
+        if (before !== 'dark' && back) back.click();
         return 'html.dark-mode persisted';
       }
     },
@@ -1496,10 +1499,10 @@
       how: 'Heading, canonical, video source, poster, and VideoObject duration match that clip. Sitemap lists the page. The mp4 is video/mp4 and the jpg is image/jpeg.',
       async run() {
         const clips = [
-          ['media/qa-lab-running.html', 'QA Lab running', 'PT54S', 'media/qa-lab-running.mp4', 'media/qa-lab-running.jpg'],
+          ['media/qa-lab-running.html', 'QA Lab running', 'PT57S', 'media/qa-lab-running.mp4', 'media/qa-lab-running.jpg'],
           ['media/qa-lab-tour.html', 'QA Lab tour', 'PT41S', 'media/qa-lab-tour.mp4', 'media/qa-lab-tour.jpg'],
-          ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M33S', 'media/sdlc-studio-running.mp4', 'media/sdlc-studio-running.jpg'],
-          ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT26S', 'media/sdlc-studio-tour.mp4', 'media/sdlc-studio-tour.jpg']
+          ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M39S', 'media/sdlc-studio-running.mp4', 'media/sdlc-studio-running.jpg'],
+          ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT31S', 'media/sdlc-studio-tour.mp4', 'media/sdlc-studio-tour.jpg']
         ];
         const sitemap = await fetchText('sitemap.xml');
         for (const clip of clips) {
@@ -1815,23 +1818,23 @@
   const BRANCH = 'main';
   const LAB_LINE = {
     'SMK-01': 219, 'SMK-02': 231,
-    'FN-01': 244, 'FN-02': 262, 'FN-03': 280, 'FN-04': 301, 'FN-05': 316,     'FN-06': 329, 'FN-15': 350, 'FN-16': 382, 'FN-17': 397, 'FN-18': 415, 'FN-19': 432,
-    'FN-20': 448, 'FN-21': 464, 'FN-22': 481,
-    'FN-07': 501, 'FN-08': 516, 'FN-09': 531, 'FN-10': 544, 'FN-11': 556, 'FN-12': 569,
-    'FN-13': 582, 'FN-14': 602,
-    'FN-23': 1056, 'FN-24': 1076, 'FN-25': 1095, 'FN-26': 1136, 'FN-27': 1159, 'FN-28': 1184,
-    'FN-29': 1274, 'FN-30': 1294, 'FN-31': 1321, 'FN-32': 1334, 'FN-33': 1371, 'FN-34': 1435,
-    'STU-04': 1356, 'STU-05': 1389, 'STU-06': 1404, 'STU-07': 1419,
-    'SEC-01': 632, 'SEC-02': 647, 'SEC-03': 665, 'SEC-04': 677, 'SEC-05': 694, 'SEC-06': 707,
-    'SEC-07': 723, 'SEC-08': 745,
+    'FN-01': 244, 'FN-02': 265, 'FN-03': 283, 'FN-04': 304, 'FN-05': 319,     'FN-06': 332, 'FN-15': 353, 'FN-16': 385, 'FN-17': 400, 'FN-18': 418, 'FN-19': 435,
+    'FN-20': 451, 'FN-21': 467, 'FN-22': 484,
+    'FN-07': 504, 'FN-08': 519, 'FN-09': 534, 'FN-10': 547, 'FN-11': 559, 'FN-12': 572,
+    'FN-13': 585, 'FN-14': 605,
+    'FN-23': 1059, 'FN-24': 1079, 'FN-25': 1098, 'FN-26': 1139, 'FN-27': 1162, 'FN-28': 1187,
+    'FN-29': 1277, 'FN-30': 1297, 'FN-31': 1324, 'FN-32': 1337, 'FN-33': 1374, 'FN-34': 1438,
+    'STU-04': 1359, 'STU-05': 1392, 'STU-06': 1407, 'STU-07': 1422,
+    'SEC-01': 635, 'SEC-02': 650, 'SEC-03': 668, 'SEC-04': 680, 'SEC-05': 697, 'SEC-06': 710,
+    'SEC-07': 726, 'SEC-08': 748,
     'A11Y-01': 751, 'A11Y-02': 768, 'A11Y-03': 780, 'A11Y-04': 795, 'A11Y-05': 816, 'A11Y-06': 837,
-    'ADM-01': 866, 'ADM-02': 879, 'ADM-03': 892,
-    'STU-01': 905, 'STU-02': 918, 'STU-03': 933,
-    'MOB-01': 948, 'MOB-02': 966, 'MOB-03': 980, 'MOB-04': 1001, 'MOB-05': 1018, 'MOB-06': 1037,
-    'PERF-01': 1450, 'PERF-02': 1460, 'PERF-03': 1470, 'PERF-04': 1480,
-    'SMK-03': 1492, 'SEC-09': 1525, 'FN-35': 1553, 'FN-36': 1570, 'FN-37': 1590, 'FN-38': 1626, 'STU-08': 1658, 'STU-09': 1680,
-    'FN-39': 1702, 'FN-40': 1717, 'FN-41': 1736, 'FN-42': 1749,
-    'PERF-05': 1767, 'PERF-06': 1777, 'PERF-07': 1789, 'PERF-08': 1801
+    'ADM-01': 869, 'ADM-02': 882, 'ADM-03': 895,
+    'STU-01': 908, 'STU-02': 921, 'STU-03': 936,
+    'MOB-01': 951, 'MOB-02': 969, 'MOB-03': 983, 'MOB-04': 1004, 'MOB-05': 1021, 'MOB-06': 1040,
+    'PERF-01': 1453, 'PERF-02': 1463, 'PERF-03': 1473, 'PERF-04': 1483,
+    'SMK-03': 1495, 'SEC-09': 1528, 'FN-35': 1556, 'FN-36': 1573, 'FN-37': 1593, 'FN-38': 1629, 'STU-08': 1661, 'STU-09': 1683,
+    'FN-39': 1705, 'FN-40': 1720, 'FN-41': 1739, 'FN-42': 1752,
+    'PERF-05': 1770, 'PERF-06': 1780, 'PERF-07': 1792, 'PERF-08': 1804
   };
   const SRC = {
     'SMK-01': { Playwright: ['tests/smoke.spec.js', 5] },

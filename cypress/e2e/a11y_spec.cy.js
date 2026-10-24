@@ -1,7 +1,15 @@
 describe('Accessibility', () => {
   it('CV has no serious WCAG 2 A/AA axe violations outside overlays', () => {
     cy.visitCV();
-    cy.injectAxe();
+    // cy.injectAxe() uses eval, which the start page's Content-Security-Policy refuses; an inline script is allowed.
+    cy.readFile('node_modules/axe-core/axe.min.js').then((source) => {
+      cy.document().then((doc) => {
+        const script = doc.createElement('script');
+        script.textContent = source;
+        doc.head.appendChild(script);
+      });
+    });
+    cy.window().its('axe').should('exist');
     cy.checkA11y(
       { exclude: ['#contact-widget', '.skiptranslate'] },
       { includedImpacts: ['critical', 'serious'], rules: { 'color-contrast': { enabled: false } } }

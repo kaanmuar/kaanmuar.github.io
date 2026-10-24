@@ -88,10 +88,10 @@ test.describe('Security and SEO', () => {
 
   test('clip pages name the video, poster, and duration', async ({ request }) => {
     const clips = [
-      ['media/qa-lab-running.html', 'QA Lab running', 'PT54S', 'media/qa-lab-running.mp4', 'media/qa-lab-running.jpg'],
+      ['media/qa-lab-running.html', 'QA Lab running', 'PT57S', 'media/qa-lab-running.mp4', 'media/qa-lab-running.jpg'],
       ['media/qa-lab-tour.html', 'QA Lab tour', 'PT41S', 'media/qa-lab-tour.mp4', 'media/qa-lab-tour.jpg'],
-      ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M33S', 'media/sdlc-studio-running.mp4', 'media/sdlc-studio-running.jpg'],
-      ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT26S', 'media/sdlc-studio-tour.mp4', 'media/sdlc-studio-tour.jpg']
+      ['media/sdlc-studio-running.html', 'SDLC Studio sprint', 'PT1M39S', 'media/sdlc-studio-running.mp4', 'media/sdlc-studio-running.jpg'],
+      ['media/sdlc-studio-tour.html', 'SDLC Studio tour', 'PT31S', 'media/sdlc-studio-tour.mp4', 'media/sdlc-studio-tour.jpg']
     ];
     const sitemap = await (await request.get('/sitemap.xml')).text();
     for (const [page, title, duration, video, poster] of clips) {
