@@ -203,6 +203,32 @@ test.describe('CV regression lab', () => {
     expect(failed, JSON.stringify(failed, null, 2)).toEqual([]);
   });
 
+  test('printed and copied report carries run details, failures, and every case field', async ({ page }) => {
+    const out = await page.evaluate(async () => {
+      const lab = window.QALab;
+      const at = Date.now();
+      lab.results = [
+        { id: 'SMK-01', ok: true, ms: 120, detail: '11 assets answered 200', layer: 'Smoke', at, frame: '' },
+        { id: 'FN-01', ok: false, ms: 340, error: 'toggle missing', explain: 'The theme toggle did not render.', layer: 'Functional', at: at + 500, frame: 'Samsung Galaxy S26 Ultra · Android 16 · 384 × 832 px' }
+      ];
+      const choices = { lang: 'en', graphs: false, cases: true, runners: false, details: true, steps: true };
+      const en = lab.reportDocument(choices);
+      const es = lab.reportDocument(Object.assign({}, choices, { lang: 'es' }));
+      const text = await lab.copyReport(null);
+      return { en, es, text, title: lab.results.length };
+    });
+    for (const want of ['Run details', 'Browser in use', 'Window size', 'Frameworks chosen', 'Total case time', 'Summary by type',
+      'Failures', 'FN-01', 'toggle missing', 'The theme toggle did not render.', 'Expected', 'Public surfaces return 200',
+      'Samsung Galaxy S26 Ultra', 'Where, when and how', 'Before any UI interaction', 'Catalog cases not run']) {
+      expect(out.en, want).toContain(want);
+    }
+    expect(out.es).toContain('Detalles de la ejecución');
+    expect(out.es).toContain('Resultados por caso');
+    expect(out.text).toContain('toggle missing');
+    expect(out.text).toContain('Run details');
+    expect(out.text).not.toContain('<td');
+  });
+
   test('clicking inside the dashboard modal does not close it', async ({ page }) => {
     await page.locator('#dash-open').click();
     await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
