@@ -37,7 +37,7 @@ async function open(page, cmp, review) {
     }
     if (path === '/review/open') return json(200, { report: row.report, frameworks: row.frameworks, paid: true });
     if (path === '/review' && review) {
-      const answer = review(body);
+      const answer = await review(body);
       return typeof answer === 'string' ? route.fulfill({ status: 200, contentType: 'application/x-ndjson', headers: cors, body: answer }) : json(400, answer);
     }
     return json(200, path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
@@ -111,6 +111,31 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await expect(page.locator('#compare-url')).toBeFocused();
     await expect(page.locator('#url-field')).not.toHaveClass(/invalid/);
     await expect(page.locator('#review-btn')).toBeEnabled();
+  });
+
+  test('while a comparison runs, the log leads back to the report and the report says it is running', async ({ page }) => {
+    let answer;
+    const held = new Promise((resolve) => { answer = resolve; });
+    const ask = await open(page, null, () => held);
+    await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+    await ask.locator('#compare-url').fill('rival.example');
+    await ask.locator('#compare-go').click();
+    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+    await expect(page.locator('#compare-run')).toBeVisible();
+    await expect(page.locator('#compare-run-text')).toContainText('with rival.example');
+    if (process.env.COMPARE_SHOT) await page.locator('#run-panel').screenshot({ path: process.env.COMPARE_SHOT + '-running-log.png' });
+    await page.locator('#compare-back').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await expect(page.locator('#compare-running')).toBeVisible();
+    await expect(page.locator('#compare-running-text')).toContainText('The comparison with rival.example is running');
+    await expect(page.locator('#compare-go')).toBeDisabled();
+    await expect(page.locator('#compare-stop')).toBeDisabled();
+    if (process.env.COMPARE_SHOT) await page.locator('#compare-ask').screenshot({ path: process.env.COMPARE_SHOT + '-running-card.png' });
+    answer(JSON.stringify({ type: 'error', error: 'The site did not answer' }) + '\n');
+    await expect(page.locator('#compare-error')).toContainText('did not finish');
+    await expect(page.locator('#compare-running')).toBeHidden();
+    await expect(page.locator('#compare-run')).toBeHidden();
+    await expect(page.locator('#compare-go')).toBeEnabled();
   });
 
   test('a competitor address the server refuses is shown on the comparison, not on your own address', async ({ page }) => {

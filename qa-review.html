@@ -526,6 +526,11 @@
         .compare-field { flex: 1 1 240px; min-width: 0; }
         .compare-form .url-row { border-radius: 12px; }
         .compare-form .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
+        .compare-run, .compare-running { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 8px 0; }
+        .compare-run[hidden], .compare-running[hidden] { display: none; }
+        .compare-run span, .compare-running span { flex: 1 1 220px; font-weight: 600; }
+        .log-card .compare-run .btn-ghost { color: #f4f7f8; background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .35); }
+        .log-card .compare-run .btn-ghost:hover { background: rgba(255, 255, 255, .16); }
         .compare-scroll { overflow-x: auto; margin: 10px 0 4px; }
         .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
         .compare-table th, .compare-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
@@ -1483,6 +1488,7 @@
     <section id="run-panel" class="card log-card">
         <h2 style="margin-top:0">Review log</h2>
         <p class="muted" id="report-once">Lines appear here while the pages are being analyzed. Stop keeps the pages already saved and writes that stop into the report.</p>
+        <p class="compare-run" id="compare-run" hidden><span id="compare-run-text"></span><button class="btn btn-ghost" id="compare-back" type="button">Back to your report</button></p>
         <ol class="log" id="run-log"></ol>
     </section>
     </div>
@@ -1552,6 +1558,7 @@
                 </div>
                 <p class="meta-line">Priced as a second review, with the return discount. The competitor's site gets the public, passive checks only: no chat conversation and no form sent. Like any review, its owner may get one email about it, and its scores can appear in Live Reports.</p>
                 <p class="meta-line" id="compare-error" role="alert"></p>
+                <p class="compare-running" id="compare-running" role="status" hidden><span id="compare-running-text"></span><button class="btn btn-stop" id="compare-stop" type="button">Stop the comparison</button></p>
             </div>
             <div id="compare-result" hidden></div>
         </article>
@@ -1716,7 +1723,7 @@
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-ask.js?v=20261023b"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261031y"></script>
+<script src="js/qa-review.js?v=20261031z"></script>
 <script src="js/url-suggest.js?v=20261024a"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
