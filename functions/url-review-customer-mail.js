@@ -27,6 +27,9 @@ const COPY = {
     preheader: "Six scores are open. {count} findings wait under the blur.",
     title: "The review of {host} is in.",
     lead: "The six scores are in the clear. The findings sit under frost, with just enough showing to tell which ones matter.",
+    subjectClear: "{host} scored {score}/100 and passed every scored check.",
+    preheaderClear: "Six scores and no findings. The site passed every scored check.",
+    leadClear: "The six scores are in the clear, and the site passed every scored check. There are no findings to fix.",
     outOf: "out of 100",
     pages: "pages analyzed",
     pagesFound: "of {n} found",
@@ -67,6 +70,9 @@ const COPY = {
     preheader: "Los seis puntajes están abiertos. {count} hallazgos esperan bajo el desenfoque.",
     title: "La revisión de {host} está lista.",
     lead: "Los seis puntajes están a la vista. Los hallazgos siguen empañados, con lo justo para saber cuáles importan.",
+    subjectClear: "{host} sacó {score}/100 y pasó todas las comprobaciones con puntaje.",
+    preheaderClear: "Seis puntajes y ningún hallazgo. El sitio pasó todas las comprobaciones con puntaje.",
+    leadClear: "Los seis puntajes están a la vista y el sitio pasó todas las comprobaciones con puntaje. No hay hallazgos que arreglar.",
     outOf: "de 100",
     pages: "páginas analizadas",
     pagesFound: "de {n} encontradas",
@@ -107,6 +113,9 @@ const COPY = {
     preheader: "As seis notas estão abertas. {count} achados esperam sob o desfoque.",
     title: "A revisão de {host} está pronta.",
     lead: "As seis notas estão à vista. Os achados seguem embaçados, com o suficiente para saber quais importam.",
+    subjectClear: "{host} tirou {score}/100 e passou em todas as verificações com nota.",
+    preheaderClear: "Seis notas e nenhum achado. O site passou em todas as verificações com nota.",
+    leadClear: "As seis notas estão à vista e o site passou em todas as verificações com nota. Não há achados para corrigir.",
     outOf: "de 100",
     pages: "páginas analisadas",
     pagesFound: "de {n} encontradas",
@@ -147,6 +156,9 @@ const COPY = {
     preheader: "Die sechs Werte sind offen. {count} Befunde warten unter der Unschärfe.",
     title: "Die Prüfung von {host} ist fertig.",
     lead: "Die sechs Werte liegen offen. Die Befunde stehen unter Milchglas, gerade so sichtbar, dass man erkennt, welche zählen.",
+    subjectClear: "{host} hat {score}/100 und besteht alle bewerteten Checks.",
+    preheaderClear: "Sechs Werte, keine Befunde. Die Website besteht alle bewerteten Checks.",
+    leadClear: "Die sechs Werte liegen offen, und die Website besteht alle bewerteten Checks. Es gibt nichts zu beheben.",
     outOf: "von 100",
     pages: "geprüfte Seiten",
     pagesFound: "von {n} gefundenen",
@@ -187,6 +199,9 @@ const COPY = {
     preheader: "Les six notes sont ouvertes. {count} constats attendent sous le flou.",
     title: "La revue de {host} est prête.",
     lead: "Les six notes sont à découvert. Les constats restent sous verre dépoli, juste assez visibles pour savoir lesquels comptent.",
+    subjectClear: "{host} obtient {score}/100 et réussit tous les contrôles notés.",
+    preheaderClear: "Six notes et aucun constat. Le site réussit tous les contrôles notés.",
+    leadClear: "Les six notes sont à découvert, et le site réussit tous les contrôles notés. Il n'y a aucun constat à corriger.",
     outOf: "sur 100",
     pages: "pages analysées",
     pagesFound: "sur {n} trouvées",
@@ -227,6 +242,9 @@ const COPY = {
     preheader: "I sei punteggi sono aperti. {count} rilievi aspettano sotto la sfocatura.",
     title: "La revisione di {host} è pronta.",
     lead: "I sei punteggi sono in chiaro. I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.",
+    subjectClear: "{host} ha preso {score}/100 e ha superato tutti i controlli con punteggio.",
+    preheaderClear: "Sei punteggi e nessun rilievo. Il sito ha superato tutti i controlli con punteggio.",
+    leadClear: "I sei punteggi sono in chiaro e il sito ha superato tutti i controlli con punteggio. Non ci sono rilievi da sistemare.",
     outOf: "su 100",
     pages: "pagine analizzate",
     pagesFound: "su {n} trovate",
@@ -271,14 +289,14 @@ const PDF_COPY = {
   fr: { badgeOpen: "Rapport complet", attachedOpen: "Le rapport complet est joint en PDF.", fileOpen: "rapport", badge: "Aperçu flouté", note: "Le début de chaque ligne est lisible. Le reste reste flou jusqu'au déverrouillage du rapport.", findings: "Constats", cases: "Cas de test proposés", moreCases: "+{n} cas de plus dans le rapport complet", unlock: "Déverrouiller le rapport complet", attached: "Le rapport flouté est joint en PDF.", fails: "échouent", risks: "à risque", read: "Analysé le {date}", file: "rapport-floute", sev: { critical: "critique", high: "élevé", medium: "moyen", low: "faible" } },
   it: { badgeOpen: "Rapporto completo", attachedOpen: "Il rapporto completo è allegato in PDF.", fileOpen: "rapporto", badge: "Anteprima sfocata", note: "L'inizio di ogni riga è leggibile. Il resto resta sfocato finché il rapporto non viene sbloccato.", findings: "Risultati", cases: "Casi di test proposti", moreCases: "+{n} casi in più nel rapporto completo", unlock: "Sblocca il rapporto completo", attached: "Il rapporto sfocato è allegato in PDF.", fails: "falliscono ora", risks: "a rischio", read: "Analizzato il {date}", file: "rapporto-sfocato", sev: { critical: "critico", high: "alto", medium: "medio", low: "basso" } }
 };
-// The lead and preheader of a review that has findings but no score, so the mail never mentions six scores it does not show.
+// The lead and preheader of a review with no score, so the mail never mentions six scores it does not show.
 const PLAIN = {
-  en: { lead: "The findings sit under frost, with just enough showing to tell which ones matter.", leadOpen: "The findings are open, each line in full.", preheader: "{count} findings wait under the blur.", preheaderOpen: "{count} findings, all open." },
-  es: { lead: "Los hallazgos siguen empañados, con lo justo para saber cuáles importan.", leadOpen: "Los hallazgos están abiertos, cada línea completa.", preheader: "{count} hallazgos esperan bajo el desenfoque.", preheaderOpen: "{count} hallazgos, todo abierto." },
-  pt: { lead: "Os achados seguem embaçados, com o suficiente para saber quais importam.", leadOpen: "Os achados estão abertos, cada linha completa.", preheader: "{count} achados esperam sob o desfoque.", preheaderOpen: "{count} achados, tudo aberto." },
-  de: { lead: "Die Befunde stehen unter Milchglas, gerade so sichtbar, dass man erkennt, welche zählen.", leadOpen: "Die Befunde liegen offen, jede Zeile vollständig.", preheader: "{count} Befunde warten unter der Unschärfe.", preheaderOpen: "{count} Befunde, alles offen." },
-  fr: { lead: "Les constats restent sous verre dépoli, juste assez visibles pour savoir lesquels comptent.", leadOpen: "Les constats sont ouverts, chaque ligne en entier.", preheader: "{count} constats attendent sous le flou.", preheaderOpen: "{count} constats, tout est ouvert." },
-  it: { lead: "I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.", leadOpen: "I rilievi sono aperti, ogni riga per intero.", preheader: "{count} rilievi aspettano sotto la sfocatura.", preheaderOpen: "{count} rilievi, tutto aperto." }
+  en: { lead: "The findings sit under frost, with just enough showing to tell which ones matter.", leadOpen: "The findings are open, each line in full.", preheader: "{count} findings wait under the blur.", preheaderOpen: "{count} findings, all open.", leadClear: "No findings came up on the pages analyzed, so there is nothing to fix.", preheaderClear: "No findings came up on the pages analyzed." },
+  es: { lead: "Los hallazgos siguen empañados, con lo justo para saber cuáles importan.", leadOpen: "Los hallazgos están abiertos, cada línea completa.", preheader: "{count} hallazgos esperan bajo el desenfoque.", preheaderOpen: "{count} hallazgos, todo abierto.", leadClear: "No salió ningún hallazgo en las páginas analizadas, así que no hay nada que arreglar.", preheaderClear: "No salió ningún hallazgo en las páginas analizadas." },
+  pt: { lead: "Os achados seguem embaçados, com o suficiente para saber quais importam.", leadOpen: "Os achados estão abertos, cada linha completa.", preheader: "{count} achados esperam sob o desfoque.", preheaderOpen: "{count} achados, tudo aberto.", leadClear: "Nenhum achado apareceu nas páginas analisadas, então não há nada para corrigir.", preheaderClear: "Nenhum achado apareceu nas páginas analisadas." },
+  de: { lead: "Die Befunde stehen unter Milchglas, gerade so sichtbar, dass man erkennt, welche zählen.", leadOpen: "Die Befunde liegen offen, jede Zeile vollständig.", preheader: "{count} Befunde warten unter der Unschärfe.", preheaderOpen: "{count} Befunde, alles offen.", leadClear: "Auf den geprüften Seiten gab es keine Befunde, es gibt also nichts zu beheben.", preheaderClear: "Auf den geprüften Seiten gab es keine Befunde." },
+  fr: { lead: "Les constats restent sous verre dépoli, juste assez visibles pour savoir lesquels comptent.", leadOpen: "Les constats sont ouverts, chaque ligne en entier.", preheader: "{count} constats attendent sous le flou.", preheaderOpen: "{count} constats, tout est ouvert.", leadClear: "Aucun constat sur les pages analysées, donc rien à corriger.", preheaderClear: "Aucun constat sur les pages analysées." },
+  it: { lead: "I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.", leadOpen: "I rilievi sono aperti, ogni riga per intero.", preheader: "{count} rilievi aspettano sotto la sfocatura.", preheaderOpen: "{count} rilievi, tutto aperto.", leadClear: "Nessun rilievo nelle pagine analizzate, quindi non c'è niente da sistemare.", preheaderClear: "Nessun rilievo nelle pagine analizzate." }
 };
 const FIX_LABEL = { en: "Fix", es: "Cómo arreglarlo", pt: "Como corrigir", de: "So behebst du es", fr: "Correctif", it: "Come correggere" };
 const PDF_CASES = 24;
@@ -494,6 +512,7 @@ function findingsBlock(t, p, lang, facts) {
 function reportStory(record, t, facts, lang) {
   const open = isOpen(record);
   const plain = facts.score ? null : PLAIN[lang];
+  const clear = !facts.total;
   const stopped = !!record && record.status === "stopped";
   const rerun = !!record && Array.isArray(record.rerunOf) && record.rerunOf.length > 0;
   const failedOn = rerun ? dateOf(record.failedAt) : "";
@@ -504,7 +523,9 @@ function reportStory(record, t, facts, lang) {
     : rerun ? fill(t.subjectRerun, vars)
       : !facts.score ? fill(t.subjectPlain, vars)
         : open ? fill(t.subjectOpen, vars)
-          : fill(t.subjects[pick], vars);
+          : clear ? fill(t.subjectClear, vars)
+            : fill(t.subjects[pick], vars);
+  const key = clear ? "Clear" : open ? "Open" : "";
   return {
     open,
     subject,
@@ -512,9 +533,9 @@ function reportStory(record, t, facts, lang) {
     lead: [
       rerun ? fill(failedOn ? t.rerun : t.rerunUndated, { host: facts.host, date: failedOn }) : "",
       stopped ? t.leadStopped : "",
-      (plain || t)[open ? "leadOpen" : "lead"]
+      (plain || t)["lead" + key]
     ].filter(Boolean).join(" "),
-    preheader: fill((plain || t)[open ? "preheaderOpen" : "preheader"], { count: facts.total }),
+    preheader: fill((plain || t)["preheader" + key], { count: facts.total }),
     cta: open ? t.openFull : t.open
   };
 }
