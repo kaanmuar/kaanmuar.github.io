@@ -28,10 +28,17 @@ test("a card escapes its text, shortens tagged links and links the report in the
   assert.match(html, /data-act="play" data-video="5b4Hr6r-cBk"/);
 });
 
-test("each page prerenders only posts due by its as-of day, links all six languages and carries valid JSON-LD", () => {
+test("posted cards come first, newest first, then scheduled ones, soonest first", () => {
+  const order = card.arrange([post({ id: "a", date: "2026-11-30" }), post({ id: "b", date: "2026-10-01" }), post({ id: "c", date: "2026-11-02" }), post({ id: "d", date: "2026-10-20" })], "2026-10-24");
+  assert.deepEqual(order.map((p) => p.id + (p.upcoming ? "+" : "")), ["d", "b", "c+", "a+"]);
+  assert.match(card.cardHtml(order[2], COPY.fr, "fr"), /post-scheduled">Programmée</);
+});
+
+test("each page shows scheduled posts after posted ones, keeps them out of JSON-LD, links six languages", () => {
   const posts = [post({ id: "b/late", date: "2026-11-30", title: "Not yet" }), post()];
   const html = hub.page("de", posts, "2026-10-24");
-  assert.ok(!html.includes("Not yet"));
+  assert.ok(html.indexOf("Not yet") > html.indexOf("uber.com: 66."));
+  assert.match(html, /post-scheduled">Geplant</);
   assert.match(html, /<html lang="de">/);
   assert.match(html, /<link rel="canonical" href="https:\/\/carlosandmunoz.com\/qa-review-social-de.html">/);
   for (const code of Object.keys(LANGS).concat("x-default")) assert.match(html, new RegExp("hreflang=\"" + code + "\""));
@@ -40,7 +47,16 @@ test("each page prerenders only posts due by its as-of day, links all six langua
   assert.equal(list.numberOfItems, 1);
   assert.equal(list.itemListElement[0].item.video.embedUrl, "https://www.youtube.com/embed/5b4Hr6r-cBk");
   assert.equal(list.itemListElement[0].item.video.inLanguage, "es");
-  assert.match(html, /1 Beiträge/);
+  assert.ok(!JSON.stringify(ld).includes("Not yet"));
+  assert.match(html, /2 Beiträge/);
+});
+
+test("every language has the full interface copy", () => {
+  const keys = (obj) => Object.keys(obj).sort().join(",");
+  for (const lang of Object.keys(LANGS)) {
+    assert.equal(keys(COPY[lang]), keys(COPY.en), lang);
+    assert.equal(keys(COPY[lang].kinds), keys(COPY.en.kinds), lang);
+  }
 });
 
 test("the calendar parser keeps the header keys", () => {
