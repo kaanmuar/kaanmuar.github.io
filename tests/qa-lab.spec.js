@@ -261,6 +261,22 @@ test.describe('CV regression lab', () => {
     expect(out.text).not.toContain('<td');
   });
 
+  test('the Report dialog follows the report language', async ({ page }) => {
+    await page.evaluate(() => window.QALab.openReportOptions());
+    const dialog = page.locator('#report-options');
+    await expect(dialog.locator('#report-options-title')).toHaveText('Report');
+    await page.locator('#report-lang').selectOption('de');
+    await expect(dialog.locator('#report-options-title')).toHaveText('Bericht');
+    await expect(dialog.locator('#report-options-download')).toHaveText('Herunterladen');
+    await expect(dialog.locator('[data-report-ui="steps"]')).toHaveText('Wo, wann und wie');
+    await expect(dialog).toHaveAttribute('lang', 'de');
+    await page.locator('#report-options-close').click();
+    await page.evaluate(() => window.QALab.openReportOptions());
+    await expect(dialog.locator('#report-options-copy')).toHaveText('Kopieren');
+    await page.locator('#report-lang').selectOption('en');
+    await expect(dialog.locator('#report-options-copy')).toHaveText('Copy');
+  });
+
   test('clicking inside the dashboard modal does not close it', async ({ page }) => {
     await page.locator('#dash-open').click();
     await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
