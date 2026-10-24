@@ -1920,20 +1920,23 @@ async function latestPublicReview(host, unlisted) {
   return rivals.latestPublic(records, unlisted);
 }
 
-function findRivals(host) {
+function findRivals(host, field, lang) {
   return rivals.findRivals(host, {
     search: (query) => urlReview.webSearch(query),
     ranker: (domains) => reviewMarket.trancoRanks(domains),
     registrable: urlReview.registrable
-  });
+  }, field, lang);
 }
 
-// Looks up a report's natural competitors once and stores them on the record.
-async function rivalsOf(ref, data) {
-  if (data.report && data.report.rivals) return data.report.rivals;
-  const found = await findRivals(data.report.host);
+// Looks up a report's natural competitors once per kind of competition and stores them on the record:
+// the site's own field in report.rivals, a picked field or topic in report.rivalsBy.<key>.
+async function rivalsOf(ref, data, field) {
+  const stored = rivals.storedFor(data.report, field);
+  if (stored) return stored;
+  const found = await findRivals(data.report.host, field, data.report.observed && data.report.observed.lang);
   const value = { at: new Date().toISOString(), ownRank: found.ownRank, list: found.list };
-  await ref.update({ "report.rivals": value, rivalsAt: value.at });
+  if (field) await ref.update({ ["report.rivalsBy." + field.key]: Object.assign({ term: field.term }, value) });
+  else await ref.update({ "report.rivals": value, rivalsAt: value.at });
   return value;
 }
 
@@ -3581,11 +3584,16 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         res.status(404).json({ error: access.error });
         return;
       }
-      const found = access.locked ? data.report.rivals || { list: [] } : await rivalsOf(snap.ref, data);
+      const field = rivals.fieldOf(body, data.report.observed && data.report.observed.lang);
+      if (!access.locked && !rivals.fieldRoom(data.report, field)) {
+        res.status(429).json({ error: "This report has searched " + rivals.FIELDS_MAX + " kinds of competition already. Pick one of them or the site's own field." });
+        return;
+      }
+      const found = access.locked ? rivals.storedFor(data.report, field) || { list: [] } : await rivalsOf(snap.ref, data, field);
       const unlisted = await unlistedHosts();
       const list = (found.list || []).filter((row) => !unlisted.some((u) => row.host === u || row.host.endsWith("." + u)));
       const records = await Promise.all(list.map((row) => latestPublicReview(row.host, unlisted)));
-      res.status(200).json({ rivals: rivals.payload(Object.assign({ id }, data.report), Object.assign({}, found, { list }), records, !!access.ok) });
+      res.status(200).json({ field: field ? field.key : "", rivals: rivals.payload(Object.assign({ id }, data.report), Object.assign({}, found, { list }), records, !!access.ok) });
     } catch (error) {
       console.error("Natural competitors failed for " + id + ":", error);
       res.status(503).json({ error: "The natural competitors are not available right now." });

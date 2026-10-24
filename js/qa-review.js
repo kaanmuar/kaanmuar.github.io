@@ -531,7 +531,7 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-pick, #case-note, #alarm-note, #tool-note";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note";
 
   function applyCopyMode(paid) {
     document.body.classList.toggle("preview-copy", !paid);
@@ -861,7 +861,7 @@
     if (!cmp) {
       result.innerHTML = sample ? '<p class="muted">' + esc(cc.t("sample")) + "</p>" : made.length ? cmpMade(made) : "";
       const stored = savedCompare();
-      document.getElementById("compare-url").value = stored && stored.id === report.id ? String(stored.url || "").replace(/^\s*https?:\/\//i, "") : "";
+      fillCompareBoxes(stored && stored.id === report.id ? [stored.url].concat(stored.queue || []) : []);
       return;
     }
     const areas = (cmp.areas || []).map((row) => {
@@ -1112,13 +1112,60 @@
     try { return JSON.parse(sessionStorage.getItem(COMPARE_KEY) || "null"); } catch (error) { return null; }
   }
 
-  function startCompare() {
+  // The first competitor box is always shown; the other four open one at a time.
+  const COMPARE_IDS = ["compare-url", "compare-url-2", "compare-url-3", "compare-url-4", "compare-url-5"];
+  const compareInputs = () => COMPARE_IDS.map((id) => document.getElementById(id));
+  const compareMore = () => [...document.querySelectorAll("[data-compare-more]")];
+  const typedHost = (value) => String(value || "").trim().replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+  const siteKey = (value) => typedHost(value).toLowerCase().split(/[/?#:]/)[0].replace(/\.$/, "").replace(/^www\./, "");
+
+  function syncCompareAdd() {
+    const left = compareMore().filter((row) => row.hidden).length;
+    document.getElementById("compare-add").hidden = !left;
+    document.getElementById("compare-add-left").textContent = "(" + left + " left)";
+  }
+
+  function compareUrls() {
+    return compareInputs().filter((input) => !input.closest("[data-compare-more][hidden]")).map((input) => input.value.trim()).filter(Boolean);
+  }
+
+  function fillCompareBoxes(urls) {
+    const list = urls.map(typedHost).slice(0, COMPARE_IDS.length);
+    compareInputs().forEach((input, index) => { input.value = list[index] || ""; });
+    compareMore().forEach((row, index) => { row.hidden = index + 1 >= list.length; });
+    syncCompareAdd();
+  }
+
+  // Adds sites after the ones already typed, skipping any already there. Answers how many were added.
+  function addCompareHosts(hosts) {
+    const typed = compareUrls();
+    const seen = new Set(typed.map(siteKey));
+    const fresh = hosts.filter((host) => !seen.has(siteKey(host)) && seen.add(siteKey(host)));
+    const room = COMPARE_IDS.length - typed.length;
+    fillCompareBoxes(typed.concat(fresh.slice(0, room)));
+    return { added: Math.min(fresh.length, room), full: fresh.length > room };
+  }
+
+  // only: the sites to compare instead of the boxes, as when a natural competitor's Compare is pressed.
+  function startCompare(only) {
     const report = current && current.report;
     const error = document.getElementById("compare-error");
-    const url = document.getElementById("compare-url").value.trim();
     error.textContent = "";
     if (!report || current.sample) return;
-    if (!url || /\s/.test(url)) {
+    const own = siteKey(report.host);
+    const urls = [];
+    for (const url of Array.isArray(only) ? only : compareUrls()) {
+      if (/\s/.test(url)) {
+        error.textContent = "Check the address " + url + ": it has a space in it.";
+        return;
+      }
+      if (siteKey(url) === own) {
+        error.textContent = url + " is the site of this report. Enter a competitor's address.";
+        return;
+      }
+      if (!urls.some((seen) => siteKey(seen) === siteKey(url))) urls.push(url);
+    }
+    if (!urls.length) {
       error.textContent = "Enter the competitor's address.";
       return;
     }
@@ -1131,7 +1178,9 @@
     const limits = report.limits || {};
     compareTarget = {
       id: report.id,
-      url,
+      url: urls[0],
+      queue: urls.slice(1),
+      total: urls.length,
       report,
       frameworks: kept ? kept.frameworks : ((current.frameworks && current.frameworks.length) ? current.frameworks : selectedFrameworks()),
       tools: kept ? kept.tools : selectedTools(),
@@ -1146,45 +1195,134 @@
     reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
   }
 
+  // Each competitor is its own review against the same base report; the next one starts once the
+  // last has ended, so the submit handler has let go of the run.
+  function nextCompare(compare) {
+    const queue = compare.queue || [];
+    if (!queue.length) return false;
+    compareTarget = Object.assign({}, compare, { url: queue[0], queue: queue.slice(1), paid: false });
+    try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(compareTarget)); } catch (storageError) { /* only a payment round trip needs it */ }
+    setTimeout(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), 0);
+    return true;
+  }
+
+  function compareDone(compare, tail) {
+    const failed = compare.failed || [];
+    const host = (compare.report && compare.report.host) || "your site";
+    return "The comparisons are done. Your report of " + host + " lists each one under Next to a competitor." +
+      (failed.length ? " These did not finish: " + failed.join(", ") + "." : "") + tail;
+  }
+
+  function compareStep(compare) {
+    const total = compare.total || 1;
+    return total > 1 ? " (" + (total - (compare.queue || []).length) + " of " + total + ")" : "";
+  }
+
   // Natural competitors (functions/url-review-rivals.js): the reader picks any or many, and each one with
   // a public review is set next to this report, in full once it is paid and under the frost before.
-  const rivals = { id: "", data: null, picked: new Set(), open: false };
+  // field: the kind of competition picked ("" is the site's own field, "topic" a typed topic).
+  const rivals = { id: "", data: null, picked: new Set(), open: false, field: "", topic: "", asked: "" };
 
   function paintRivals(report, sample) {
     const box = document.getElementById("rivals");
     if (!box) return;
     rivals.id = report && !sample && report.status !== "stopped" && report.insights ? report.id : "";
-    rivals.data = null;
-    rivals.picked.clear();
+    rivals.field = "";
+    rivals.topic = "";
     box.hidden = !rivals.id;
     if (!rivals.id) return;
+    loadRivals(report);
+  }
+
+  function loadRivals(report) {
+    const box = document.getElementById("rivals");
+    const asked = [rivals.id, rivals.field, rivals.topic].join("|");
+    rivals.asked = asked;
+    rivals.data = null;
+    rivals.picked.clear();
     box.innerHTML = rivalsHead(report) + '<p class="meta-line" role="status">' + esc(cc.t("rivalsLooking")) + "</p>";
-    const asked = rivals.id;
+    wireRivalsKind(report);
     fetch(endpoint() + "/review/rivals", {
       method: "POST",
       credentials: "include",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: asked }))
+      body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id: rivals.id, field: rivals.field, topic: rivals.field === "topic" ? rivals.topic : "" }))
     })
-      .then((res) => res.json().then((body) => { if (!res.ok) throw new Error(body.error || "unavailable"); return body; }))
+      .then((res) => res.json().then((body) => { if (!res.ok) throw new Error(body.error || cc.t("rivalsFailed")); return body; }))
       .then((body) => {
-        if (rivals.id !== asked) return;
+        if (rivals.asked !== asked) return;
         rivals.data = body.rivals || { list: [] };
-        rivals.data.list.filter((row) => row.ready).forEach((row) => rivals.picked.add(row.host));
+        // A picked field shows all it found; the site's own field shows the ones already reviewed.
+        rivals.data.list.filter((row) => rivals.field || row.ready).forEach((row) => rivals.picked.add(row.host));
         drawRivals(report);
       })
-      .catch(() => { if (rivals.id === asked) box.hidden = true; });
+      .catch((error) => {
+        if (rivals.asked !== asked) return;
+        if (!rivals.field) {
+          box.hidden = true;
+          return;
+        }
+        rivals.data = { list: [], error: error.message };
+        drawRivals(report);
+      });
+  }
+
+  function rivalsFieldName() {
+    return rivals.field === "topic" ? rivals.topic : rivals.field ? cc.kind(rivals.field) : "";
   }
 
   function rivalsHead(report) {
-    return '<h3 class="cmp-h">' + esc(cc.t("rivalsTitle")) + '</h3><p class="meta-line">' + cc.t("rivalsIntro", { site: strong(report.host) }) + "</p>";
+    const intro = rivals.field ? cc.t("rivalsFieldIntro", { field: strong(rivalsFieldName()), site: strong(report.host) }) : cc.t("rivalsIntro", { site: strong(report.host) });
+    const topic = rivals.field === "topic";
+    const options = ['<option value="">' + esc(cc.t("kindSame", { site: report.host })) + "</option>"]
+      .concat(cc.kinds().map((id) => '<option value="' + id + '"' + (rivals.field === id ? " selected" : "") + ">" + esc(cc.kind(id)) + "</option>"))
+      .concat('<option value="topic"' + (topic ? " selected" : "") + ">" + esc(cc.t("kindTopic")) + "</option>");
+    return '<h3 class="cmp-h">' + esc(cc.t("rivalsTitle")) + "</h3>" +
+      '<div class="rivals-kind no-print"><label for="rivals-kind">' + esc(cc.t("kindLabel")) + '</label><select id="rivals-kind">' + options.join("") + "</select>" +
+      '<input id="rivals-topic" type="text" maxlength="60" autocomplete="off" aria-label="' + esc(cc.t("kindTopic")) + '" placeholder="' + esc(cc.t("kindTopicPh")) + '" value="' + esc(rivals.topic) + '"' + (topic ? "" : " hidden") + ">" +
+      '<button class="btn btn-ghost" id="rivals-topic-go" type="button"' + (topic ? "" : " hidden") + ">" + esc(cc.t("kindSearch")) + "</button></div>" +
+      '<p class="meta-line">' + intro + "</p>";
+  }
+
+  function wireRivalsKind(report) {
+    const select = document.getElementById("rivals-kind");
+    const topic = document.getElementById("rivals-topic");
+    const go = document.getElementById("rivals-topic-go");
+    const search = () => {
+      const value = topic.value.replace(/\s+/g, " ").trim();
+      if (value.length < 2) return topic.focus();
+      rivals.field = "topic";
+      rivals.topic = value;
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_rivals_kind", "URL Review", "topic");
+      loadRivals(report);
+    };
+    select.addEventListener("change", () => {
+      if (select.value === "topic") {
+        topic.hidden = false;
+        go.hidden = false;
+        topic.focus();
+        return;
+      }
+      rivals.field = select.value;
+      rivals.topic = "";
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_rivals_kind", "URL Review", select.value || "same");
+      loadRivals(report);
+    });
+    go.addEventListener("click", search);
+    topic.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      search();
+    });
   }
 
   function drawRivals(report) {
     const box = document.getElementById("rivals");
     const list = (rivals.data && rivals.data.list) || [];
     if (!list.length) {
-      box.innerHTML = rivalsHead(report) + '<p class="muted">' + esc(cc.t("rivalsNone")) + "</p>";
+      const why = rivals.data && rivals.data.error ? rivals.data.error : cc.t(rivals.field ? "rivalsFieldNone" : "rivalsNone");
+      box.innerHTML = rivalsHead(report) + '<p class="muted" role="status">' + esc(why) + "</p>";
+      wireRivalsKind(report);
       return;
     }
     const picked = list.filter((row) => rivals.picked.has(row.host));
@@ -1196,8 +1334,17 @@
     box.innerHTML = rivalsHead(report) +
       '<details class="rivals-pick"' + (rivals.open ? " open" : "") + '><summary>' + esc(picked.length ? cc.t("rivalsPick", { n: picked.length }) : cc.t("rivalsChoose")) + "</summary>" +
       '<div class="rivals-options" role="group" aria-label="' + esc(cc.t("rivalsChoose")) + '">' + options + "</div></details>" +
+      (report.compare ? "" : '<p class="rivals-add no-print"><button class="btn btn-ghost" id="rivals-add" type="button"' + (picked.length ? "" : " disabled") + ">" + esc(cc.t("rivalsAdd")) + '</button> <span class="meta-line" id="rivals-added" role="status"></span></p>') +
       (picked.length ? rivalsTable(report, picked, !!rivals.data.paid) : '<p class="muted">' + esc(cc.t("rivalsPickOne")) + "</p>");
+    wireRivalsKind(report);
     box.querySelector(".rivals-pick").addEventListener("toggle", (event) => { rivals.open = event.target.open; });
+    const add = document.getElementById("rivals-add");
+    if (add) add.addEventListener("click", () => {
+      if (document.getElementById("compare-ask").hidden) paintCompare(report, false);
+      const done = addCompareHosts(picked.map((row) => row.host));
+      document.getElementById("rivals-added").textContent = [done.added ? cc.t("rivalsAdded", { n: done.added }) : "", done.full ? cc.t("rivalsBoxesFull") : ""].filter(Boolean).join(" ");
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_rivals_add", "URL Review", rivals.field || "same");
+    });
     box.querySelectorAll(".rivals-options input").forEach((input) => input.addEventListener("change", () => {
       if (input.checked) rivals.picked.add(input.value);
       else rivals.picked.delete(input.value);
@@ -1209,10 +1356,7 @@
       paintCompare(Object.assign({}, report, { compare: row.compare }), false);
       document.getElementById("compare-result").scrollIntoView({ behavior: "smooth", block: "start" });
     }));
-    box.querySelectorAll("[data-rival-run]").forEach((button) => button.addEventListener("click", () => {
-      document.getElementById("compare-url").value = button.getAttribute("data-rival-run");
-      startCompare();
-    }));
+    box.querySelectorAll("[data-rival-run]").forEach((button) => button.addEventListener("click", () => startCompare([button.getAttribute("data-rival-run")])));
   }
 
   // One column per site. On a preview the competitors' cells hold placeholders under the frost:
@@ -1258,20 +1402,25 @@
 
   function showComparing(compare) {
     const own = (compare.report && compare.report.host) || "your site";
-    document.getElementById("compare-run-text").textContent = "Comparing " + own + " with " + compare.url + ".";
-    document.getElementById("compare-running-text").textContent = "The comparison with " + compare.url + " is running. Stop keeps the pages already checked.";
+    const left = (compare.queue || []).length;
+    document.getElementById("compare-run-text").textContent = "Comparing " + own + " with " + compare.url + compareStep(compare) + ".";
+    document.getElementById("compare-running-text").textContent = "The comparison with " + compare.url + compareStep(compare) + " is running. Stop keeps the pages already checked" +
+      (left ? " and does not start the other " + (left === 1 ? "competitor" : left + " competitors") : "") + ".";
     document.getElementById("compare-run").hidden = false;
     document.getElementById("compare-running").hidden = false;
     document.getElementById("compare-stop").disabled = true;
-    document.getElementById("compare-go").disabled = true;
-    document.getElementById("compare-url").disabled = true;
+    lockCompare(true);
   }
 
   function hideComparing() {
     document.getElementById("compare-run").hidden = true;
     document.getElementById("compare-running").hidden = true;
-    document.getElementById("compare-go").disabled = false;
-    document.getElementById("compare-url").disabled = false;
+    lockCompare(false);
+  }
+
+  function lockCompare(locked) {
+    document.querySelectorAll("#compare-go, #compare-add, .compare-remove").forEach((button) => { button.disabled = locked; });
+    compareInputs().forEach((input) => { input.disabled = locked; });
   }
 
   function backToReport() {
@@ -1286,8 +1435,8 @@
     hideComparing();
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
+    fillCompareBoxes([compare.url].concat(compare.queue || []));
     const input = document.getElementById("compare-url");
-    input.value = String(compare.url || "").replace(/^\s*https?:\/\//i, "");
     document.getElementById("compare-error").textContent = message;
     document.getElementById("compare").scrollIntoView({ block: "start" });
     input.focus({ preventScroll: true });
@@ -2133,6 +2282,11 @@
       if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
       setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Report ready. Cases are proposed, not run.", false);
       dash.scrollTop = 0;
+      if (compare && (compare.total || 1) > 1) {
+        const left = (compare.queue || []).length;
+        if (!stopped && nextCompare(compare)) setStatus("The comparison with " + compare.url + " is ready. Next: " + compare.queue[0] + ".", false);
+        else setStatus(compareDone(compare, stopped && left ? " Stopped: the other " + (left === 1 ? "competitor was" : left + " competitors were") + " not started." : ""), false);
+      }
     } catch (error) {
       const rivalField = compare && (error.fields || []).find((item) => item.field === "url");
       if (error.fields) markFields(compare ? error.fields.filter((item) => item.field !== "url") : error.fields);
@@ -2154,7 +2308,13 @@
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", error.message || "");
         const reason = (rivalField && rivalField.message) || error.message || "The review failed.";
-        if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
+        if (compare && (compare.queue || []).length) {
+          const failed = (compare.failed || []).concat(compare.url);
+          setStatus("The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Next: " + compare.queue[0] + ".", true);
+          nextCompare(Object.assign({}, compare, { failed }));
+        } else if (compare && (compare.total || 1) > 1) {
+          setStatus(compareDone(Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) }), ""), true);
+        } else if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
           setStatus("The comparison with " + compare.url + " did not finish. Your report is open again.", true);
         } else {
           setStatus(reason, true);
@@ -2945,9 +3105,23 @@
   restorePaid("credentialRun", "qa-review-credential");
   restorePaid("compareRun", COMPARE_KEY, () => {
     const saved = savedCompare();
-    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it.", false);
+    const left = saved ? (saved.queue || []).length : 0;
+    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it" + (left ? " and the other " + (left === 1 ? "competitor" : left + " competitors") + " after it" : "") + ".", false);
   });
   document.getElementById("compare-go").addEventListener("click", startCompare);
+  document.getElementById("compare-add").addEventListener("click", () => {
+    const row = compareMore().find((item) => item.hidden);
+    if (!row) return;
+    row.hidden = false;
+    syncCompareAdd();
+    row.querySelector("input").focus();
+  });
+  compareMore().forEach((row) => row.querySelector(".compare-remove").addEventListener("click", () => {
+    const kept = compareInputs().filter((input) => !input.closest("[data-compare-more][hidden]") && !row.contains(input)).map((input) => input.value.trim());
+    fillCompareBoxes(kept);
+    const open = compareMore().filter((item) => !item.hidden);
+    (open.length ? open[open.length - 1].querySelector("input") : document.getElementById("compare-add")).focus();
+  }));
   document.getElementById("compare-back").addEventListener("click", backToReport);
   document.getElementById("compare-stop").addEventListener("click", (event) => {
     if (!activeRun || stopBtn.disabled) return;
@@ -2955,16 +3129,17 @@
     document.getElementById("compare-running-text").textContent = "Stopping. The comparison uses the pages already checked.";
     stopBtn.click();
   });
-  const compareInput = document.getElementById("compare-url");
-  compareInput.addEventListener("input", () => {
-    const next = compareInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
-    if (next !== compareInput.value) compareInput.value = next;
-  });
-  compareInput.addEventListener("keydown", (event) => {
-    // Enter on a highlighted suggestion picks it (js/url-suggest.js) instead of starting the run.
-    if (event.key !== "Enter" || event.defaultPrevented || compareInput.hasAttribute("aria-activedescendant")) return;
-    event.preventDefault();
-    startCompare();
+  compareInputs().forEach((compareInput) => {
+    compareInput.addEventListener("input", () => {
+      const next = compareInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+      if (next !== compareInput.value) compareInput.value = next;
+    });
+    compareInput.addEventListener("keydown", (event) => {
+      // Enter on a highlighted suggestion picks it (js/url-suggest.js) instead of starting the run.
+      if (event.key !== "Enter" || event.defaultPrevented || compareInput.hasAttribute("aria-activedescendant")) return;
+      event.preventDefault();
+      startCompare();
+    });
   });
 
   const WIRE_CLIPS = ["assets/wire/scan.mp4", "assets/wire/bars.mp4", "assets/wire/orbit.mp4", "assets/wire/moon.mp4", "assets/wire/pulse.mp4", "assets/wire/drift.mp4", "assets/wire/mesh.mp4", "assets/wire/ring.mp4"];

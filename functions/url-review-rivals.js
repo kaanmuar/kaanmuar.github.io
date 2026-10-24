@@ -11,6 +11,11 @@
    (js/qa-review.js) lists them and compares the ones with a public review: in full once the report
    is paid, as names under the frost before.
 
+   The report's owner can also pick the kind of competition: a field such as religious sites or online
+   shops, or a topic they type. findRivals then searches that field next to the site, counts the sites
+   the results are hosted on as much as the ones they name, and keeps up to FIELD_PICK, so all five
+   competitor boxes in the report can be filled. Each field's answer is kept on the report.
+
    Sweep state lives in Firestore url_review_sweep/rivals:
    { job: { baseId, host, cc, list: [{ host, rank, done, outcome }] } | null, tried: [ids], days: { date: { done, few, failed } }, last }. */
 
@@ -19,7 +24,11 @@ const publish = require("./url-review-publish");
 const sweep = require("./url-review-sweep");
 
 const PICK = 3;
+const FIELD_PICK = 5;
 const MIN = 2;
+// Distinct fields one report may search, so a report cannot be used as a free search box.
+const FIELDS_MAX = 12;
+const TOPIC_MAX = 60;
 const RANK_CHECKS = 6;
 // When both sites are ranked, a rival within this factor of the site's rank, either way, comes first.
 const SIZE_GAP = 50;
@@ -33,6 +42,33 @@ const REVISIT_DAYS = 182;
 const TRIED_KEEP = 300;
 const KEEP_DAYS = 14;
 const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
+
+// The kinds of competition the report offers, as search words in the site's own language.
+// Each is a plural that reads in both query templates below.
+const FIELDS = {
+  religion: { en: "churches and ministries", es: "iglesias y ministerios", pt: "igrejas e ministérios", de: "Kirchen und Gemeinden", fr: "églises et ministères", it: "chiese e ministeri" },
+  shop: { en: "online shops", es: "tiendas en línea", pt: "lojas online", de: "Onlineshops", fr: "boutiques en ligne", it: "negozi online" },
+  news: { en: "news sites", es: "periódicos y portales de noticias", pt: "portais de notícias", de: "Nachrichtenseiten", fr: "sites d’actualité", it: "siti di notizie" },
+  education: { en: "universities and schools", es: "universidades y colegios", pt: "universidades e escolas", de: "Hochschulen und Schulen", fr: "universités et écoles", it: "università e scuole" },
+  health: { en: "hospitals and clinics", es: "hospitales y clínicas", pt: "hospitais e clínicas", de: "Kliniken und Praxen", fr: "hôpitaux et cliniques", it: "ospedali e cliniche" },
+  finance: { en: "banks and fintechs", es: "bancos y fintech", pt: "bancos e fintechs", de: "Banken und Fintechs", fr: "banques et fintechs", it: "banche e fintech" },
+  travel: { en: "travel agencies and hotels", es: "agencias de viajes y hoteles", pt: "agências de viagem e hotéis", de: "Reiseportale und Hotels", fr: "agences de voyage et hôtels", it: "agenzie di viaggio e hotel" },
+  software: { en: "software and SaaS companies", es: "empresas de software y SaaS", pt: "empresas de software e SaaS", de: "Softwarefirmen und SaaS-Anbieter", fr: "éditeurs de logiciels et SaaS", it: "aziende di software e SaaS" },
+  government: { en: "government portals", es: "portales de gobierno", pt: "portais de governo", de: "Behördenportale", fr: "portails publics", it: "portali della pubblica amministrazione" },
+  nonprofit: { en: "nonprofits and foundations", es: "fundaciones y ONG", pt: "ONGs e fundações", de: "Stiftungen und gemeinnützige Vereine", fr: "associations et fondations", it: "associazioni e fondazioni" },
+  food: { en: "restaurants and food delivery", es: "restaurantes y domicilios", pt: "restaurantes e delivery", de: "Restaurants und Lieferdienste", fr: "restaurants et livraison de repas", it: "ristoranti e consegna a domicilio" },
+  realestate: { en: "real estate agencies", es: "inmobiliarias", pt: "imobiliárias", de: "Immobilienportale", fr: "agences immobilières", it: "agenzie immobiliari" },
+  sports: { en: "sports clubs and sports news", es: "clubes y noticias deportivas", pt: "clubes e notícias esportivas", de: "Sportvereine und Sportnachrichten", fr: "clubs et actualité sportive", it: "club e notizie sportive" },
+  entertainment: { en: "streaming and entertainment sites", es: "sitios de streaming y entretenimiento", pt: "sites de streaming e entretenimento", de: "Streaming- und Unterhaltungsseiten", fr: "sites de streaming et de divertissement", it: "siti di streaming e intrattenimento" }
+};
+const FIELD_QUERIES = {
+  en: ["{term} like {host}", "best {term} websites"],
+  es: ["{term} como {host}", "mejores sitios web de {term}"],
+  pt: ["{term} como {host}", "melhores sites de {term}"],
+  de: ["{term} wie {host}", "beste Websites für {term}"],
+  fr: ["{term} comme {host}", "meilleurs sites de {term}"],
+  it: ["{term} come {host}", "migliori siti di {term}"]
+};
 
 // Directories, review sites, search engines, social networks and hosts that name every site.
 const NOISE = [
@@ -97,13 +133,32 @@ function domainsIn(text) {
   return out;
 }
 
-function queriesFor(host) {
+function langOf(value) {
+  const code = String(value || "").slice(0, 2).toLowerCase();
+  return FIELD_QUERIES[code] ? code : "en";
+}
+
+/* The kind of competition the reader picked: { field, topic } from the page, and the site's language.
+   Answers null for the site's own field, or { key, term } where key names the stored answer. */
+function fieldOf(input, lang) {
+  const body = input || {};
+  const id = String(body.field || "");
+  if (Object.prototype.hasOwnProperty.call(FIELDS, id)) return { key: id, term: FIELDS[id][langOf(lang)] };
+  if (id !== "topic") return null;
+  const term = String(body.topic || "").normalize("NFC").replace(/[^\p{L}\p{N} &'’-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, TOPIC_MAX).trim();
+  const slug = term.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  return term.length >= 2 && slug ? { key: "topic-" + slug, term } : null;
+}
+
+function queriesFor(host, field, lang) {
   const site = bare(host);
-  return [site + " competitors", "sites like " + site];
+  if (!field) return [site + " competitors", "sites like " + site];
+  return FIELD_QUERIES[langOf(lang)].map((template) => template.replace("{term}", field.term).replace("{host}", site));
 }
 
 // Each result names a domain once: 2 when its title or snippet names it, 1 when it is hosted there.
-function tallyResults(results, ownHost, tally, registrable) {
+// In a field search the result's own site is in that field, so hosting counts as much as naming.
+function tallyResults(results, ownHost, tally, registrable, hostedWeight) {
   const own = registrable(bare(ownHost));
   const ownBrand = brandOf(own, registrable);
   (Array.isArray(results) ? results : []).forEach((row, order) => {
@@ -112,7 +167,7 @@ function tallyResults(results, ownHost, tally, registrable) {
     try { hostedOn = new URL(row.url).hostname; } catch (error) { hostedOn = ""; }
     domainsIn([row.title, row.description].join(" ")).forEach((domain) => seen.set(registrable(domain), 2));
     const hosted = registrable(bare(hostedOn));
-    if (hosted && !seen.has(hosted)) seen.set(hosted, 1);
+    if (hosted && !seen.has(hosted)) seen.set(hosted, hostedWeight || 1);
     seen.forEach((weight, domain) => {
       if (!domain || domain === own || noisy(domain) || shady(domain) || sameBrand(brandOf(domain, registrable), ownBrand)) return;
       const prev = tally.get(domain) || { host: domain, score: 0, first: tally.size * 100 + order };
@@ -146,34 +201,50 @@ function rankRecord(value) {
 }
 
 // Ranked domains first, the ones close in size to the site before the rest; unranked ones only when
-// several results name them and there are not enough ranked ones.
-function pickRivals(candidates, ranks, ownRank) {
+// several results name them and there are not enough ranked ones. A field search keeps small
+// unranked sites (a local church, a neighbourhood shop) from one result, after the ranked ones.
+function pickRivals(candidates, ranks, ownRank, pick, unranked) {
   const own = rankOf(ownRank);
   const rows = candidates.map((row, index) => Object.assign({}, row, { rank: rankRecord(ranks[index]) }));
   const near = (row) => own == null || rankOf(row.rank) == null ? false : Math.max(own / row.rank.rank, row.rank.rank / own) <= SIZE_GAP;
   const withRank = rows.filter((row) => rankOf(row.rank) != null && row.score >= NAMED_SCORE);
   const ordered = withRank.filter(near).concat(withRank.filter((row) => !near(row)));
-  const extra = rows.filter((row) => rankOf(row.rank) == null && row.score >= UNRANKED_SCORE);
-  return ordered.concat(extra).slice(0, PICK).map((row) => ({ host: row.host, rank: row.rank, score: row.score }));
+  const extra = rows.filter((row) => rankOf(row.rank) == null && row.score >= (unranked || UNRANKED_SCORE));
+  return ordered.concat(extra).slice(0, pick || PICK).map((row) => ({ host: row.host, rank: row.rank, score: row.score }));
 }
 
 /* deps: { search(query) -> [{ title, url, description }], ranker(domains) -> [trancoRank], registrable(host) }.
+   field and lang: the kind of competition (fieldOf) and the site's language; no field is the site's own.
    Answers { ownRank, list: [{ host, rank, score }], queries }. */
-async function findRivals(host, deps) {
+async function findRivals(host, deps, field, lang) {
   const registrable = deps.registrable;
   const own = registrable(bare(host));
   if (shady(own)) return { ownRank: null, list: [], queries: 0 };
+  const pick = field ? FIELD_PICK : PICK;
   const tally = new Map();
   let queries = 0;
-  for (const query of queriesFor(own)) {
+  for (const query of queriesFor(own, field, lang)) {
     queries += 1;
-    tallyResults(await deps.search(query), own, tally, registrable);
-    if (ranked(tally, registrable).filter((row) => row.score >= 2).length >= PICK + 2) break;
+    tallyResults(await deps.search(query), own, tally, registrable, field ? 2 : 1);
+    if (ranked(tally, registrable).filter((row) => row.score >= 2).length >= pick + 2) break;
   }
-  const candidates = ranked(tally, registrable).slice(0, RANK_CHECKS);
+  const candidates = ranked(tally, registrable).slice(0, Math.max(RANK_CHECKS, pick + 3));
   if (!candidates.length) return { ownRank: null, list: [], queries };
   const ranks = await deps.ranker([own].concat(candidates.map((row) => row.host)));
-  return { ownRank: rankRecord(ranks[0]), list: pickRivals(candidates, ranks.slice(1), ranks[0]), queries };
+  return { ownRank: rankRecord(ranks[0]), list: pickRivals(candidates, ranks.slice(1), ranks[0], pick, field ? NAMED_SCORE : UNRANKED_SCORE), queries };
+}
+
+// The stored answer for a field, or null when that field was not searched yet.
+function storedFor(report, field) {
+  if (!report) return null;
+  if (!field) return report.rivals || null;
+  return (report.rivalsBy && report.rivalsBy[field.key]) || null;
+}
+
+// Whether one more field may be searched for this report.
+function fieldRoom(report, field) {
+  const kept = Object.keys((report && report.rivalsBy) || {});
+  return !field || kept.includes(field.key) || kept.length < FIELDS_MAX;
 }
 
 function within(createdAt, now, days) {
@@ -265,7 +336,7 @@ function intake(host, baseHost, lang) {
 }
 
 module.exports = {
-  PICK, MIN, RANK_CHECKS, SIZE_GAP, UNRANKED_SCORE, NAMED_SCORE, REVISIT_DAYS, NOISE, AREAS,
-  bare, shady, domainsIn, queriesFor, tallyResults, ranked, pickRivals, findRivals, latestPublic,
+  PICK, FIELD_PICK, FIELDS_MAX, MIN, RANK_CHECKS, SIZE_GAP, UNRANKED_SCORE, NAMED_SCORE, REVISIT_DAYS, NOISE, AREAS, FIELDS,
+  bare, shady, domainsIn, fieldOf, queriesFor, tallyResults, ranked, pickRivals, findRivals, storedFor, fieldRoom, latestPublic,
   payload, socialSummary, pickBase, doneOn, tally, started, intake
 };
