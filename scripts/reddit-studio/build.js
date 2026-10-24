@@ -24,8 +24,8 @@ function checkCopy(profile) {
   }
   if (/\breads?\b/i.test(profile.about)) errors.push("about uses the reading wording; the review analyzes pages");
   if (profile.links.length > MAX_LINKS) errors.push(profile.links.length + " social links (max " + MAX_LINKS + ")");
-  const site = profile.links.find((link) => link.url.includes("carlosandmunoz.com"));
-  if (!site || !site.url.includes("utm_source=reddit")) errors.push("the site link is missing utm_source=reddit");
+  const site = profile.links.map((link) => new URL(link.url)).find((url) => url.hostname === "carlosandmunoz.com");
+  if (!site || site.searchParams.get("utm_source") !== "reddit") errors.push("the site link is missing utm_source=reddit");
   return errors;
 }
 
