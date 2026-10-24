@@ -46,7 +46,7 @@ main() {
 	}
 
 	regen() {
-		local file out stale=()
+		local file out line stale=()
 		rebuilt=()
 		for file in "${builders[@]}"; do
 			[ -f "$file" ] || {
@@ -57,7 +57,7 @@ main() {
 				echo "ok   $file"
 				continue
 			fi
-			echo "$out" | sed 's/^/     /'
+			while IFS= read -r line; do echo "     $line"; done <<<"$out"
 			echo "build $file"
 			build "$file"
 			rebuilt+=("$file")
