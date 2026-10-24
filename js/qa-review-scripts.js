@@ -95,7 +95,7 @@
       case "SEC-01": return { kind: "httpsRedirect" };
       case "SEC-02": return { kind: "headers", path: at, rules: [{ name: "strict-transport-security" }] };
       case "SEC-03": return { kind: "headers", path: at, rules: [{ name: "content-security-policy" }] };
-      case "SEC-04": return { kind: "headers", path: at, rules: [{ name: "x-content-type-options", pattern: "nosniff" }, { name: "x-frame-options" }] };
+      case "SEC-04": return { kind: "headers", path: at, rules: [{ name: "x-content-type-options", pattern: "nosniff" }, { name: "x-frame-options", pattern: "deny|sameorigin" }] };
       case "SEC-05": return { kind: "headers", path: at, rules: [{ name: "referrer-policy" }] };
       case "SEC-08": return { kind: "headers", path: at, rules: [{ name: "permissions-policy" }] };
       case "RS-03": return { kind: "headers", path: at, rules: [{ name: "cache-control" }] };
