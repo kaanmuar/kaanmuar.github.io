@@ -1066,8 +1066,34 @@
     reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
   }
 
+  function showComparing(compare) {
+    const own = (compare.report && compare.report.host) || "your site";
+    document.getElementById("compare-run-text").textContent = "Comparing " + own + " with " + compare.url + ".";
+    document.getElementById("compare-running-text").textContent = "The comparison with " + compare.url + " is running. Stop keeps the pages already checked.";
+    document.getElementById("compare-run").hidden = false;
+    document.getElementById("compare-running").hidden = false;
+    document.getElementById("compare-stop").disabled = true;
+    document.getElementById("compare-go").disabled = true;
+    document.getElementById("compare-url").disabled = true;
+  }
+
+  function hideComparing() {
+    document.getElementById("compare-run").hidden = true;
+    document.getElementById("compare-running").hidden = true;
+    document.getElementById("compare-go").disabled = false;
+    document.getElementById("compare-url").disabled = false;
+  }
+
+  function backToReport() {
+    if (!current) return;
+    dash.classList.add("open");
+    document.body.style.overflow = "hidden";
+    document.getElementById("compare").scrollIntoView({ block: "start" });
+  }
+
   function reopenCompare(compare, message) {
     if (!current || !current.report || current.report.id !== compare.id) return false;
+    hideComparing();
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
     const input = document.getElementById("compare-url");
@@ -1848,6 +1874,7 @@
     }
     const runId = hexId();
     activeRun = runId;
+    if (compare) showComparing(compare);
     reviewBtn.disabled = true;
     stopBtn.disabled = true;
     const runLog = document.getElementById("run-log");
@@ -1898,6 +1925,7 @@
         }))
       });
       stopBtn.disabled = false;
+      document.getElementById("compare-stop").disabled = false;
       const payload = await readStream(res);
       if (!payload || !payload.report) throw new Error("The review ended without a report.");
       layer = "All";
@@ -1941,6 +1969,7 @@
     } finally {
       runLog.classList.remove("is-live");
       activeRun = "";
+      if (compare) hideComparing();
       reviewBtn.disabled = !signedIn();
       stopBtn.disabled = true;
     }
@@ -1963,6 +1992,7 @@
         const body = await res.json().catch(() => ({}));
         setStatus(body.error || "The stop was refused.", true);
         stopBtn.disabled = false;
+        document.getElementById("compare-stop").disabled = false;
       }
     } catch (error) {
       setStatus("Stop was requested. Waiting for the pages already open.", true);
@@ -2726,6 +2756,13 @@
     if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it.", false);
   });
   document.getElementById("compare-go").addEventListener("click", startCompare);
+  document.getElementById("compare-back").addEventListener("click", backToReport);
+  document.getElementById("compare-stop").addEventListener("click", (event) => {
+    if (!activeRun || stopBtn.disabled) return;
+    event.currentTarget.disabled = true;
+    document.getElementById("compare-running-text").textContent = "Stopping. The comparison uses the pages already checked.";
+    stopBtn.click();
+  });
   const compareInput = document.getElementById("compare-url");
   compareInput.addEventListener("input", () => {
     const next = compareInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
