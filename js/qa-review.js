@@ -736,7 +736,7 @@
     document.getElementById("print-mark").textContent = "";
   }
 
-  const VERDICT_LABEL = { fail: "Fails now", risk: "At risk", pass: "Passes", person: "Needs a browser" };
+  const VERDICT_LABEL = { fail: "Fails now", risk: "At risk", pass: "Passes", person: "Needs a person" };
   const AREA_NOTE = {
     SEO: "Indexing, sitemap, titles, structured data",
     GEO: "How AI answers can read and cite the site",
@@ -792,7 +792,7 @@
         '<span class="vchip v-' + key + '"><b>' + (totals[key] || 0) + "</b>" + esc(VERDICT_LABEL[key]) + "</span>").join("") + "</div>" +
       '<div class="verdict-chips" aria-label="Open problems by severity">' + ["critical", "high", "medium", "low"].map((key) =>
         '<span class="vchip s-' + ((score.severities || {})[key] ? key : "low") + '"><b>' + ((score.severities || {})[key] || 0) + "</b>" + esc(key) + "</span>").join("") + "</div>" +
-      '<p class="meta-line">Every check below was measured from the public response, not guessed. Checks marked “Needs a browser” wait for a rendered run.</p></div></div>' +
+      '<p class="meta-line">Every check below was measured from the public response, not guessed. Checks marked “Needs a person” are judgments a machine should not make for you.</p></div></div>' +
       '<div class="areas">' + Object.keys(AREA_NOTE).map((name) => {
         const area = areas[name] || { score: 0, grade: "F", fail: 0, risk: 0, pass: 0 };
         const past = current && current.report && current.report.history && current.report.history.areas && current.report.history.areas[name];
@@ -1380,7 +1380,6 @@
       rows.map(([label, state, text]) => "<tr><td><strong>" + esc(label) + "</strong></td><td>" + badge(state) + "</td><td>" + text + "</td></tr>").join("") + "</tbody></table></article>";
   }
 
-  const TALK_LABEL = { pass: "Passes", risk: "At risk", fail: "Fails now", person: "Read it yourself" };
   const TALK_PROOF = {
     own: "It ran because the review was asked from a mailbox at this site's domain.",
     credentials: "It ran because QA-lab recorded a verified signed-in run of this site for your account.",
@@ -1396,7 +1395,7 @@
       (turns.length ? " This conversation stays on your private report and is never published in Live Reports." : "") +
       (talk.status === "needs-proof" ? ' <a href="qa-review-account.html#verify">Verify a site you own</a>.' : "") + "</p>";
     if (!turns.length) return head + "</article>";
-    const rows = (talk.checks || []).map((check) => "<tr><td><strong>" + esc(check.label) + '</strong></td><td><span class="badge v-' + esc(check.verdict) + '">' + esc(TALK_LABEL[check.verdict] || check.verdict) + "</span></td><td>" + esc(check.evidence) + "</td></tr>").join("");
+    const rows = (talk.checks || []).map((check) => "<tr><td><strong>" + esc(check.label) + "</strong></td><td>" + verdictBadge(check.verdict) + "</td><td>" + esc(check.evidence) + "</td></tr>").join("");
     const log = turns.map((turn) => '<li><p><strong>Review:</strong> <span class="notranslate" translate="no">' + esc(turn.sent) + "</span></p><p><strong>Chat" + (turn.reply ? " after " + (turn.ms / 1000).toFixed(1) + " s" : "") + ":</strong> " +
       (turn.reply ? '<span class="notranslate" translate="no">' + esc(turn.reply) + "</span>" : "No reply in time.") + "</p></li>").join("");
     return head + (rows ? '<table class="mini-table"><thead><tr><th>Check</th><th>Result</th><th>What the chat said</th></tr></thead><tbody>' + rows + "</tbody></table>" : "") +
@@ -1574,7 +1573,7 @@
   function paintFindings(ins, paid) {
     const all = ins.findings || [];
     const areas = ["All"].concat(Object.keys(AREA_NOTE));
-    const verdicts = [["open", "Fails and risks"], ["all", "Everything"], ["fail", "Fails now"], ["risk", "At risk"], ["pass", "Passes"], ["person", "Needs a browser"]];
+    const verdicts = [["open", "Fails and risks"], ["all", "Everything"], ["fail", "Fails now"], ["risk", "At risk"], ["pass", "Passes"], ["person", "Needs a person"]];
     const bar = document.getElementById("finding-filters");
     bar.innerHTML = areas.map((name) => '<button type="button" data-area="' + esc(name) + '"' + (findingFilter.area === name ? ' class="on"' : "") + ">" + esc(name) + "</button>").join("") +
       '<span style="width:12px;display:inline-block"></span>' +
