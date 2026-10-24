@@ -1126,6 +1126,17 @@ test.describe("publishing user reviews to Live Reports", () => {
   });
 });
 
+test("functions/.env.example lists every key the functions read", () => {
+  const dir = path.join(__dirname, "../../functions");
+  const listed = new Set(fs.readFileSync(path.join(dir, ".env.example"), "utf8").match(/^[A-Z0-9_]+(?==)/gm));
+  const runtime = new Set(["GCLOUD_PROJECT", "GCP_PROJECT"]);
+  const read = new Set();
+  fs.readdirSync(dir).filter((name) => name.endsWith(".js")).forEach((name) => {
+    for (const m of fs.readFileSync(path.join(dir, name), "utf8").matchAll(/process\.env\.([A-Z0-9_]+)/g)) read.add(m[1]);
+  });
+  assert.deepEqual([...read].filter((key) => !listed.has(key) && !runtime.has(key)).sort(), []);
+});
+
 test("the intake takes the current terms and the ones just before, and records which", () => {
   const body = (termsVersion) => ({ termsAccepted: true, termsVersion, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://example.org/" });
   const now = core.validateIntake(body(core.TERMS_VERSION));
@@ -2237,6 +2248,17 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(text, /user-scalable=no/);
     assert.match(text, /\/about/);
     assert.doesNotMatch(text, /test\.fixme\("A11Y-07/);
+  });
+
+  test("the fix kit does not tell a site Cloudflare already fronts to put Cloudflare in front", () => {
+    const readme = (technologies) => {
+      const report = { url: "https://example.com/", cases: [], technologies, insights: { fixkit: { hosting: "GitHub Pages", headers: [{ name: "X-Frame-Options", value: "DENY" }] } } };
+      return scripts.bundle(report, [], ["Playwright"]).files.find((file) => file.path === "fix-kit/README.md").content;
+    };
+    const proxied = readme([{ name: "Cloudflare" }]);
+    assert.match(proxied, /Transform Rule/);
+    assert.doesNotMatch(proxied, /Put a CDN|in front and use/);
+    assert.match(readme([]), /Put a CDN such as Cloudflare in front/);
   });
 
   test("the preview keeps the priority and drops the selectors and checks", () => {
