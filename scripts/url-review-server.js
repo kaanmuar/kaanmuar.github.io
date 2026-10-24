@@ -43,8 +43,8 @@ function paymentKeys() {
   };
 }
 
-function payReturn(purpose, choice, reference) {
-  const base = "http://127.0.0.1:8765/qa-review-pay.html?purpose=" + purpose + "&provider=" + choice;
+function payReturn(purpose, choice, reference, lang) {
+  const base = "http://127.0.0.1:8765/" + core.payPage(lang) + "?purpose=" + purpose + "&provider=" + choice;
   if (choice === "stripe") {
     return {
       successUrl: base + "&result=success&session_id={CHECKOUT_SESSION_ID}",
@@ -625,7 +625,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 400, { error: "PayPal is the payment method for this review. No charge was made." }, origin, deviceId);
       return;
     }
-    const urls = payReturn(purpose, choice, reference);
+    const urls = payReturn(purpose, choice, reference, payBody.lang);
     try {
       const stored = purpose === "report" ? (readStore().find((item) => item && item.id === reportId && item.report) || {}) : {};
       const access = purpose === "report" ? await auth.reportAccess(signIns, payBody, stored, false) : { ok: true };

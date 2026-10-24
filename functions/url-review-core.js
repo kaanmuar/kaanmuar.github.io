@@ -3216,6 +3216,14 @@ function paymentChoice(value) {
   return String(value || "").toLowerCase() === "paypal" ? "paypal" : "";
 }
 
+const PAY_PAGE_LANGS = ["es", "pt", "de", "fr", "it"];
+
+// The payment page PayPal returns the payer to, in the language they paid from.
+function payPage(lang) {
+  const code = String(lang || "").toLowerCase();
+  return PAY_PAGE_LANGS.indexOf(code) === -1 ? "qa-review-pay.html" : "qa-review-pay-" + code + ".html";
+}
+
 function paymentProvider(value) {
   const choice = paymentChoice(value);
   return choice === "pse" ? "wompi" : choice;
@@ -3854,6 +3862,7 @@ module.exports = {
   createCheckout,
   readCheckout,
   paymentChoice,
+  payPage,
   paymentProvider,
   copQuote,
   startCheckout,

@@ -3474,21 +3474,32 @@
                 return this._exportLibs;
             },
 
+            _canvasOptions(host) {
+                return {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true,
+                    logging: false,
+                    // html2canvas clones the whole document on every call; only the export host is drawn.
+                    ignoreElements: (el) => el.parentNode === document.body && el !== host
+                };
+            },
+
             async _exportAsPDF_jsPDF() {
                 const loadingIndicator = this._showExportOverlay(this._s('print_preparing', 'Preparing Print View...'));
                 const host = await this._renderRecruiterSheets();
                 try {
-                await this._loadExportLibs();
-                const jsPDF = window.jsPDF;
+                    await this._loadExportLibs();
+                    const jsPDF = window.jsPDF;
                     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
                     const sheets = [...host.querySelectorAll('.sheet')];
                     for (let i = 0; i < sheets.length; i++) {
-                        const canvas = await html2canvas(sheets[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+                        const canvas = await html2canvas(sheets[i], this._canvasOptions(host));
                         const img = canvas.toDataURL('image/jpeg', 0.95);
                         if (i > 0) doc.addPage();
                         doc.addImage(img, 'JPEG', 0, 0, 210, 297);
                     }
-                doc.save('CarlosMunozCV_Export.pdf');
+                    doc.save('CarlosMunozCV_Export.pdf');
                 } catch (err) {
                     console.error('Error generating PDF:', err);
                     alert('Sorry, an error occurred while generating the PDF.');
@@ -3503,11 +3514,7 @@
                 const host = await this._renderRecruiterSheets();
                 try {
                     await this._loadExportLibs();
-                    const canvas = await html2canvas(host, {
-                        scale: 2,
-                        useCORS: true,
-                        backgroundColor: '#ffffff'
-                    });
+                    const canvas = await html2canvas(host, this._canvasOptions(host));
                     const link = document.createElement('a');
                     link.href = canvas.toDataURL('image/jpeg', 0.95);
                     link.download = 'CarlosMunozCV.jpg';
