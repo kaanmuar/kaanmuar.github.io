@@ -3471,7 +3471,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       }, dealFields(deal)));
       return;
     }
-    const comparisons = data.report.compare ? [] : await comparisonsFrom(id, data.email);
+    const comparisons = data.report && !data.report.compare ? await comparisonsFrom(id, data.email) : [];
     res.status(200).json({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free });
     return;
   }
