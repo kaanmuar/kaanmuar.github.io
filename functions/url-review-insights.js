@@ -953,7 +953,7 @@ function analyze(input) {
     }
   } else {
     add("SEO", "risk", "medium", "seo-sitemap", "No sitemap was found",
-      (robots.sitemaps.length ? "robots.txt names " + robots.sitemaps[0] + " but it did not return URLs." : "robots.txt names no sitemap and /sitemap.xml returned " + (sitemap.status || "nothing") + "."),
+      (robots.sitemaps.length ? "robots.txt names " + robots.sitemaps[0] + " but it did not return URLs." : "robots.txt names no sitemap, and /sitemap.xml, /sitemap_index.xml and /sitemap-index.xml returned no URLs."),
       "Publish /sitemap.xml and add a Sitemap: line to robots.txt.", { effort: "hours", cases: ["SEO-03"] });
   }
 
