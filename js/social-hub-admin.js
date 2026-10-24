@@ -158,19 +158,33 @@
     return slots;
   }
 
-  // Buffer and the Facebook Page keep no ledger in the repo, so past slots are what the calendar says went
-  // out. YouTube is confirmed by the uploads ledger (assets/social/youtube.json, matched into feed.json).
-  // scripts/facebook-queue.js only schedules 29 days ahead; later Facebook slots wait for a later run.
-  function channels(slots, youtube, now) {
+  // A post's entries in the Buffer and Facebook Page ledgers (assets/social/buffer.json and facebook.json,
+  // written by scripts/social-ledger.js).
+  function ledgerEntries(ledgers, id) {
+    return (ledgers || []).flatMap((ledger) => (ledger && ledger.posts && Array.isArray(ledger.posts[id]) ? ledger.posts[id] : []));
+  }
+
+  // A channel with ledger entries says what Buffer or the Page did: failed if any profile failed, queued while any
+  // is, sent once all are. Without one, the calendar slot is only Scheduled. YouTube is confirmed by the uploads
+  // ledger (assets/social/youtube.json, matched into feed.json). scripts/facebook-queue.js only schedules 29 days
+  // ahead; later Facebook slots wait for a later run.
+  function channels(slots, youtube, now, entries) {
     return CHANNELS.map(([net, name]) => {
-      const at = (slots && slots[net]) || "";
+      const slot = (slots && slots[net]) || "";
       const via = net === "facebook" ? "Facebook Page" : "Buffer";
-      const time = at ? new Date(at).getTime() : 0;
+      const time = slot ? new Date(slot).getTime() : 0;
+      const mine = (entries || []).filter((entry) => entry.channel === net);
+      const failed = mine.filter((entry) => entry.result === "failed");
+      const at = mine.map((entry) => entry.at || "").filter(Boolean).sort()[0] || slot;
+      const error = failed.map((entry) => entry.error).filter(Boolean).join("; ");
       let state = "none";
       if (net === "youtube" && youtube) state = "live";
-      else if (at && time <= now) state = net === "youtube" ? "missing" : "out";
-      else if (at) state = net === "facebook" && time - now > 29 * 86400000 ? "planned" : "queued";
-      return { net, name, via, state, at };
+      else if (failed.length) state = "failed";
+      else if (mine.some((entry) => entry.result === "queued")) state = "queued";
+      else if (mine.length) state = "sent";
+      else if (slot && time <= now && net === "youtube") state = "missing";
+      else if (slot) state = net === "facebook" && time - now > 29 * 86400000 ? "planned" : "scheduled";
+      return Object.assign({ net, name, via, state, at }, error ? { error } : {});
     });
   }
 
@@ -181,10 +195,13 @@
   }
 
   function statusLabel(channel) {
+    const on = (word, withTime) => word + (channel.at ? " " + when(channel.at, withTime) : "");
     if (channel.state === "live") return "On YouTube";
-    if (channel.state === "queued") return "Queued " + when(channel.at, true);
-    if (channel.state === "planned") return "Planned " + when(channel.at, true);
-    if (channel.state === "out") return "Out " + when(channel.at, false);
+    if (channel.state === "sent") return on("Sent", false);
+    if (channel.state === "failed") return on("Failed", false);
+    if (channel.state === "queued") return on("Queued", true);
+    if (channel.state === "scheduled") return on("Scheduled", true);
+    if (channel.state === "planned") return on("Planned", true);
     if (channel.state === "missing") return "Not on YouTube";
     return "Not planned";
   }
@@ -227,5 +244,5 @@
     };
   }
 
-  return { NETS, LANGS, CHANNELS, PROPOSAL_ID, canonUrl, pendingProposals, proposalDraft, empty, clean, cleanItem, same, apply, itemPost, remote, imageOk, videoId, slug, newId, batchOf, parseCalendar, channels, statusLabel };
+  return { NETS, LANGS, CHANNELS, PROPOSAL_ID, canonUrl, pendingProposals, proposalDraft, empty, clean, cleanItem, same, apply, itemPost, remote, imageOk, videoId, slug, newId, batchOf, parseCalendar, ledgerEntries, channels, statusLabel };
 });

@@ -2428,6 +2428,8 @@ async function redeemCoupon(code, record) {
 }
 
 const BROWSER_URL = process.env.BROWSER_URL || "https://europe-west1-carlosm-interactive-cv.cloudfunctions.net/reviewBrowser";
+// Longer than the browser pass may run (BUDGET_MAX_MS, 110 s, in url-review-browser.js), shorter than reviewBrowser's 120 s timeout.
+const BROWSER_WAIT_MS = 116000;
 
 async function browseForReview(job, log, onStart) {
   const key = process.env.BROWSER_KEY;
@@ -2436,7 +2438,7 @@ async function browseForReview(job, log, onStart) {
     method: "POST",
     headers: { "content-type": "application/json", "x-review-key": key },
     body: JSON.stringify(Object.assign({}, job, { stream: true })),
-    signal: AbortSignal.timeout(100000)
+    signal: AbortSignal.timeout(BROWSER_WAIT_MS)
   });
   if (!res.ok) return { ok: false, error: res.status === 429 ? "the browser was busy" : "status " + res.status };
   if (!/ndjson/i.test(res.headers.get("content-type") || "")) return res.json();
