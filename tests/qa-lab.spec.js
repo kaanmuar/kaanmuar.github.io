@@ -285,3 +285,28 @@ test.describe('CV regression lab', () => {
     await page.locator('#dash-close').click();
   });
 });
+
+test.describe('CV regression lab sequence', () => {
+  test('FN-15 and FN-16 pass after FN-01 to FN-14 in one lab run, and FN-15 leaves no competency pressed', async ({ page }) => {
+    test.setTimeout(240000);
+    await skipSiteTours(page);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/qa-lab.html');
+    await page.evaluate(() => {
+      localStorage.setItem('theme', 'light');
+      localStorage.setItem('cv-preferred-lang', 'en');
+      localStorage.setItem('qa-lab-pace', '0.5');
+    });
+    await page.reload();
+    const ids = Array.from({ length: 16 }, (_, i) => 'FN-' + String(i + 1).padStart(2, '0'));
+    await page.evaluate((list) => { window.QALab.runIds(list); }, ids);
+    await expect(page.locator('#run-log')).toContainText('Finished', { timeout: 220000 });
+    const results = await page.evaluate((list) => window.QALab.results
+      .filter((r) => list.includes(r.id))
+      .map((r) => ({ id: r.id, ok: r.ok, error: r.error || '' })), ids);
+    expect(results.map((r) => r.id)).toEqual(ids);
+    expect(results.filter((r) => !r.ok)).toEqual([]);
+    const pressed = await page.frameLocator('#sut').locator('.competency-item[aria-pressed="true"]').count();
+    expect(pressed).toBe(0);
+  });
+});
