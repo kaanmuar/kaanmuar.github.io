@@ -103,7 +103,7 @@ async function main() {
   if (!/^[\w-]+$/.test(batch)) throw new Error("--batch is required");
   const dir = path.join(ROOT, "media/social-posts", batch);
   const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
-  const slugs = Object.keys(captions);
+  const slugs = Object.keys(captions).filter((slug) => !captions[slug].hold);
   const when = readCalendar(dir);
   if (!slugs.length) { console.log("nothing to post"); return; }
   const base = SITE + "/media/social-posts/" + batch;
