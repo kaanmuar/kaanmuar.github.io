@@ -2451,46 +2451,51 @@
     if (reduced) window.setInterval(loadWire, 3 * 60 * 1000);
   }
 
-  const reviewedFact = document.getElementById("reviewed-fact");
-  const reviewedCount = document.getElementById("reviewed-count");
-  let reviewedShown = 0;
-  let reviewedFrame = 0;
-  function paintReviewed(target) {
-    const lang = window.SiteI18n && SiteI18n.current ? SiteI18n.current() : "en";
-    const format = (value) => Math.round(value).toLocaleString(lang || "en");
-    cancelAnimationFrame(reviewedFrame);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || target <= reviewedShown) {
-      reviewedShown = target;
-      reviewedCount.textContent = format(target);
-      return;
-    }
-    const from = reviewedShown;
-    const start = performance.now();
-    const duration = from ? 900 : 1600;
-    const step = (now) => {
-      const t = Math.min(1, (now - start) / duration);
-      reviewedShown = from + (target - from) * (1 - Math.pow(1 - t, 3));
-      reviewedCount.textContent = format(reviewedShown);
-      if (t < 1) reviewedFrame = requestAnimationFrame(step);
-      else reviewedShown = target;
+  function liveCount(factId, countId) {
+    const fact = document.getElementById(factId);
+    const count = document.getElementById(countId);
+    if (!fact || !count) return null;
+    let shown = 0;
+    let frame = 0;
+    return function paint(target) {
+      if (!target) return;
+      fact.hidden = false;
+      const lang = window.SiteI18n && SiteI18n.current ? SiteI18n.current() : "en";
+      const format = (value) => Math.round(value).toLocaleString(lang || "en");
+      cancelAnimationFrame(frame);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || target <= shown) {
+        shown = target;
+        count.textContent = format(target);
+        return;
+      }
+      const from = shown;
+      const start = performance.now();
+      const duration = from ? 900 : 1600;
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / duration);
+        shown = from + (target - from) * (1 - Math.pow(1 - t, 3));
+        count.textContent = format(shown);
+        if (t < 1) frame = requestAnimationFrame(step);
+        else shown = target;
+      };
+      frame = requestAnimationFrame(step);
     };
-    reviewedFrame = requestAnimationFrame(step);
   }
+  const paintPages = liveCount("reviewed-fact", "reviewed-count");
+  const paintReviews = liveCount("reviews-fact", "reviews-count");
   async function loadReviewed() {
     if (document.hidden) return;
     try {
       const response = await fetch(endpoint() + "/stats");
       if (!response.ok) return;
       const body = await response.json();
-      const pages = Number(body && body.pages) || 0;
-      if (!pages) return;
-      reviewedFact.hidden = false;
-      paintReviewed(pages);
+      if (paintPages) paintPages(Number(body && body.pages) || 0);
+      if (paintReviews) paintReviews(Number(body && body.reviews) || 0);
     } catch (error) {
       return;
     }
   }
-  if (reviewedFact && reviewedCount) {
+  if (paintPages || paintReviews) {
     loadReviewed();
     window.setInterval(loadReviewed, 2 * 60 * 1000);
   }
