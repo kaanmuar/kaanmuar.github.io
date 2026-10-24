@@ -9,7 +9,7 @@ const ID = 'cd34ef56ab12';
 const ANA = 'a'.repeat(64);
 const days = (start, step) => Array.from({ length: 30 }, (item, index) => ({ date: '2026-09-' + String(index + 1).padStart(2, '0'), rank: start + index * step }));
 
-async function open(page, cmp, review) {
+async function open(page, cmp, review, file = '/qa-review.html') {
   const store = auth.memoryStore();
   const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
   const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
@@ -42,7 +42,7 @@ async function open(page, cmp, review) {
     }
     return json(200, path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
   });
-  await page.goto('/qa-review.html?report=' + ID);
+  await page.goto(file + '?report=' + ID);
   const card = page.locator(cmp ? '#compare-result' : '#compare-ask');
   await expect(card).toBeVisible({ timeout: 20000 });
   await card.scrollIntoViewIfNeeded();
@@ -80,6 +80,29 @@ test.describe('The competitor comparison is drawn as charts', () => {
         await page.screenshot({ path: process.env.COMPARE_SHOT + '-' + name + '.png' });
       }
     }
+  });
+
+  test('on the Spanish page the card has its own Spanish copy and is kept out of machine translation', async ({ page }) => {
+    const cmp = compare.compareSites(Object.assign({}, own, { limits: { pagesFound: 1800 } }), sample.report, {
+      ranks: { own: { read: true, rank: 1310, ranks: days(1400, -3), change: 87 }, rival: { read: true, rank: null, ranks: [], change: null } }
+    });
+    const card = await open(page, cmp, null, '/qa-review-es.html');
+    await expect(card).toHaveAttribute('translate', 'no');
+    await expect(card).toHaveAttribute('lang', 'es');
+    await expect(card.locator('.compare-table:not(.cmp-signals) thead')).toContainText('Tu ventaja');
+    await expect(card.locator('.compare-table:not(.cmp-signals) tbody')).toContainText('Rendimiento');
+    await expect(card.locator('.cmp-board + .cmp-verdict')).toContainText('indicadores');
+    await expect(card.locator('.cmp-presence.cmp-own')).toContainText('87 puestos en 30 días');
+    await expect(card.locator('.cmp-presence.cmp-rival .cmp-rank')).toContainText('Fuera del millón principal de Tranco');
+    await expect(card.locator('.cmp-signals thead')).toContainText('Señal');
+    const english = await card.evaluate((node) => node.textContent.match(/Your lead|Performance|indicators|Market presence|Head to head|None\./g));
+    expect(english).toBeNull();
+    if (process.env.COMPARE_SHOT) {
+      await page.setViewportSize({ width: 1100, height: 900 });
+      await card.evaluate((node) => node.scrollIntoView({ block: 'start' }));
+      await page.screenshot({ path: process.env.COMPARE_SHOT + '-es.png' });
+    }
+    await expect(page.locator('#compare-note')).toHaveText(/^Tiene el precio de una segunda revisión\. El descuento por volver se aplica cuando comparas desde el dispositivo/);
   });
 
   test('a comparison saved before the charts still shows its scores, leads and lists', async ({ page }) => {

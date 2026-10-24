@@ -831,6 +831,9 @@
       '<div class="exec-cols history-cols"><div><h3>Fixed since then</h3>' + list(history.fixed, history.fixedCount) + "</div><div><h3>New since then</h3>" + list(history.fresh, history.freshCount) + "</div></div></div>";
   }
 
+  const cc = window.QAReviewCompareCopy;
+  const strong = (text) => "<strong>" + esc(text) + "</strong>";
+
   function paintCompare(report, sample) {
     const ask = document.getElementById("compare-ask");
     const result = document.getElementById("compare-result");
@@ -839,8 +842,13 @@
     document.getElementById("compare-error").textContent = "";
     ask.hidden = !!cmp || sample;
     result.hidden = !cmp && !sample;
+    // The card carries its own copy in each language; machine translation would garble it.
+    if (!cc.english) {
+      result.setAttribute("translate", "no");
+      result.setAttribute("lang", cc.lang);
+    }
     if (!cmp) {
-      result.innerHTML = sample ? '<p class="muted">Open one of your own reports to compare it with a competitor.</p>' : "";
+      result.innerHTML = sample ? '<p class="muted">' + esc(cc.t("sample")) + "</p>" : "";
       const stored = savedCompare();
       document.getElementById("compare-url").value = stored && stored.id === report.id ? String(stored.url || "").replace(/^\s*https?:\/\//i, "") : "";
       return;
@@ -861,28 +869,29 @@
       const gap = own - rival;
       return '<td><span class="delta ' + (gap > 0 ? "up" : gap < 0 ? "down" : "") + '">' + (gap > 0 ? "+" : "") + gap + "</span></td>";
     };
-    const rows = [{ area: "Overall", own: cmp.overall.own, rival: cmp.overall.rival }].concat(areas).map((row) =>
+    const rows = [{ area: cc.t("overall"), own: cmp.overall.own, rival: cmp.overall.rival }].concat(areas.map((row) => Object.assign({}, row, { area: cc.area(row.area) }))).map((row) =>
       '<tr><th scope="row">' + esc(row.area) + "</th>" + cell(row.own) + cell(row.rival) + leadCell(row.own, row.rival) + "</tr>").join("");
+    // Problem titles come from the report in English; they are left to translation like the rest of the report.
     const list = (items, total) => items.length
-      ? "<ul>" + items.map((item) => "<li><strong>" + esc(item.title) + '</strong> <span class="meta-line">' + esc(item.area) + " · " + esc(item.severity) + "</span></li>").join("") + "</ul>" + (total > items.length ? '<p class="meta-line">and ' + (total - items.length) + " more</p>" : "")
-      : '<p class="muted">None.</p>';
-    const when = cmp.ownAt ? new Date(cmp.ownAt).toLocaleDateString() : "";
+      ? "<ul>" + items.map((item) => '<li><strong translate="yes" lang="en">' + esc(item.title) + '</strong> <span class="meta-line">' + esc(cc.area(item.area)) + " · " + esc(cc.severity(item.severity)) + "</span></li>").join("") + "</ul>" + (total > items.length ? '<p class="meta-line">' + esc(cc.t("more", { n: total - items.length })) + "</p>" : "")
+      : '<p class="muted">' + esc(cc.t("none")) + "</p>";
+    const when = cmp.ownAt ? new Date(cmp.ownAt).toLocaleDateString(cc.lang) : "";
     const decided = dominance.own + dominance.rival + dominance.tie;
     const ahead = dominance.own === dominance.rival ? "" : dominance.own > dominance.rival ? "own" : "rival";
-    result.innerHTML = "<p>Your review of <strong>" + esc(cmp.ownHost) + "</strong>" + (when ? " from " + esc(when) : "") + " next to this review of <strong>" + esc(cmp.rivalHost) + "</strong>. " +
-      cmp.shared + " open problem" + (cmp.shared === 1 ? " is" : "s are") + " on both sites.</p>" +
+    result.innerHTML = "<p>" + cc.t("intro", { own: strong(cmp.ownHost), when: when ? esc(cc.t("introWhen", { date: when })) : "", rival: strong(cmp.rivalHost) }) + " " +
+      esc(cc.t("shared", { n: cmp.shared })) + "</p>" +
       cmpScoreboard(cmp, names, dominance, decided, ahead) +
-      (kpis.length ? '<h3 class="cmp-h">Head to head</h3><div class="cmp-kpis">' + kpis.map((kpi) => cmpKpi(kpi, names)).join("") + "</div>" : "") +
-      '<h3 class="cmp-h">The six areas</h3><div class="cmp-two">' + cmpRadar(areas, names) + cmpLeads(areas, names) + "</div>" +
+      (kpis.length ? '<h3 class="cmp-h">' + esc(cc.t("headToHead")) + '</h3><div class="cmp-kpis">' + kpis.map((kpi) => cmpKpi(kpi, names)).join("") + "</div>" : "") +
+      '<h3 class="cmp-h">' + esc(cc.t("sixAreas")) + '</h3><div class="cmp-two">' + cmpRadar(areas, names) + cmpLeads(areas, names) + "</div>" +
       cmpSkyline(areas, names) +
-      '<div class="compare-scroll"><table class="compare-table"><thead><tr><th scope="col">Area</th><th scope="col">' + esc(cmp.ownHost) + '</th><th scope="col">' + esc(cmp.rivalHost) + '</th><th scope="col">Your lead</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      '<div class="compare-scroll"><table class="compare-table"><thead><tr><th scope="col">' + esc(cc.t("area")) + '</th><th scope="col">' + esc(cmp.ownHost) + '</th><th scope="col">' + esc(cmp.rivalHost) + '</th><th scope="col">' + esc(cc.t("yourLead")) + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
       cmpEdges(cmp, areas, kpis, names) +
-      (cmp.verdicts || cmp.severities ? '<h3 class="cmp-h">Problem mix</h3>' + cmpMix(cmp, names) : "") +
-      '<div class="exec-cols history-cols"><div><h3>Only ' + esc(cmp.ownHost) + " has</h3>" + list(cmp.ownOnly || [], cmp.ownOnlyCount) + "</div><div><h3>Only " + esc(cmp.rivalHost) + " has</h3>" + list(cmp.rivalOnly || [], cmp.rivalOnlyCount) + "</div></div>" +
+      (cmp.verdicts || cmp.severities ? '<h3 class="cmp-h">' + esc(cc.t("problemMix")) + "</h3>" + cmpMix(cmp, names) : "") +
+      '<div class="exec-cols history-cols"><div><h3>' + esc(cc.t("onlyHas", { site: cmp.ownHost })) + "</h3>" + list(cmp.ownOnly || [], cmp.ownOnlyCount) + "</div><div><h3>" + esc(cc.t("onlyHas", { site: cmp.rivalHost })) + "</h3>" + list(cmp.rivalOnly || [], cmp.rivalOnlyCount) + "</div></div>" +
       (cmp.market ? cmpMarket(cmp.market, names) : "") +
       cmpTrail(cmp.trail, names) +
-      '<p class="meta-line">' + esc(cmp.rivalHost) + " got the public, passive checks only: no chat conversation and no form sent." +
-      (cmp.passive ? " Because this is a competitor run, nothing was typed into its fields and its chat was not opened, so the typed-field and open-chat checks were skipped and are left out of the lists above." : "") + " Both scores come from automated reviews, a starting point and not a verdict.</p>";
+      '<p class="meta-line">' + esc(cc.t("passive", { rival: cmp.rivalHost })) +
+      (cmp.passive ? " " + esc(cc.t("passiveMore")) : "") + " " + esc(cc.t("verdictNote")) + "</p>";
   }
 
   const CMP_SIDES = ["own", "rival"];
@@ -897,22 +906,22 @@
   function cmpRing(value, cls, host) {
     const circumference = 2 * Math.PI * 44;
     const score = value || 0;
-    return '<div class="cmp-ring ' + cls + '"><svg viewBox="0 0 100 100" role="img" aria-label="' + esc(host) + " health score " + score + ' out of 100"><circle class="ring-track" cx="50" cy="50" r="44"></circle><circle class="ring-value" cx="50" cy="50" r="44" stroke="' + scoreColor(score) + '" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + (circumference * (1 - score / 100)).toFixed(1) + '"></circle></svg>' +
-      "<b>" + score + "<small>Grade " + esc(gradeOf(score)) + "</small></b><p>" + esc(host) + "</p></div>";
+    return '<div class="cmp-ring ' + cls + '"><svg viewBox="0 0 100 100" role="img" aria-label="' + esc(cc.t("ring", { site: host, n: score })) + '"><circle class="ring-track" cx="50" cy="50" r="44"></circle><circle class="ring-value" cx="50" cy="50" r="44" stroke="' + scoreColor(score) + '" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + (circumference * (1 - score / 100)).toFixed(1) + '"></circle></svg>' +
+      "<b>" + score + "<small>" + esc(cc.t("grade", { g: gradeOf(score) })) + "</small></b><p>" + esc(host) + "</p></div>";
   }
 
   function cmpScoreboard(cmp, names, dominance, decided, ahead) {
     const gap = (cmp.overall.own || 0) - (cmp.overall.rival || 0);
     return '<div class="cmp-board">' + cmpRing(cmp.overall.own, "cmp-own", names.own) +
-      '<div class="cmp-vs"><span>vs</span><b class="delta ' + (gap > 0 ? "up" : gap < 0 ? "down" : "") + '">' + (gap > 0 ? "+" : "") + gap + "</b><small>your lead</small></div>" +
+      '<div class="cmp-vs"><span>' + esc(cc.t("vs")) + '</span><b class="delta ' + (gap > 0 ? "up" : gap < 0 ? "down" : "") + '">' + (gap > 0 ? "+" : "") + gap + "</b><small>" + esc(cc.t("leadSmall")) + "</small></div>" +
       cmpRing(cmp.overall.rival, "cmp-rival", names.rival) + "</div>" +
-      (decided ? '<p class="cmp-verdict">' + (ahead ? "<strong>" + esc(names[ahead]) + "</strong> wins " + dominance[ahead] + " of " + decided + " indicators" : "The two sites win the same number of indicators") +
-        ". " + esc(names.own) + " " + dominance.own + ", " + esc(names.rival) + " " + dominance.rival + ", level " + dominance.tie + ".</p>" +
+      (decided ? '<p class="cmp-verdict">' + (ahead ? cc.t("wins", { site: strong(names[ahead]), n: dominance[ahead], total: decided }) : esc(cc.t("sameWins"))) +
+        ". " + esc(cc.t("tally", { own: names.own, a: dominance.own, rival: names.rival, b: dominance.rival, c: dominance.tie })) + "</p>" +
         cmpSplit([
-          { value: dominance.own, cls: "cmp-own", text: dominance.own, title: names.own + " wins " + dominance.own },
-          { value: dominance.tie, cls: "cmp-tie", text: dominance.tie, title: "Level on " + dominance.tie },
-          { value: dominance.rival, cls: "cmp-rival", text: dominance.rival, title: names.rival + " wins " + dominance.rival }
-        ], "Indicators won: " + names.own + " " + dominance.own + ", level " + dominance.tie + ", " + names.rival + " " + dominance.rival) : "");
+          { value: dominance.own, cls: "cmp-own", text: dominance.own, title: cc.t("winsTitle", { site: names.own, n: dominance.own }) },
+          { value: dominance.tie, cls: "cmp-tie", text: dominance.tie, title: cc.t("levelTitle", { n: dominance.tie }) },
+          { value: dominance.rival, cls: "cmp-rival", text: dominance.rival, title: cc.t("winsTitle", { site: names.rival, n: dominance.rival }) }
+        ], cc.t("indicators", { own: names.own, a: dominance.own, c: dominance.tie, rival: names.rival, b: dominance.rival })) : "");
   }
 
   function cmpValue(kpi, value) {
@@ -921,15 +930,15 @@
     if (kpi.unit === "bytes") return value >= 1048576 ? (value / 1048576).toFixed(1) + " MB" : Math.round(value / 1024) + " KB";
     if (kpi.unit === "%") return value + "%";
     if (kpi.key === "cls") return value.toFixed(2);
-    return Number(value).toLocaleString();
+    return Number(value).toLocaleString(cc.lang);
   }
 
   function cmpKpi(kpi, names) {
     const top = Math.max(kpi.own || 0, kpi.rival || 0) || 1;
     const side = (key) => '<div class="cmp-kpi-row' + (kpi.winner === key ? " won" : "") + '"><span>' + esc(names[key]) + "</span><b>" + esc(cmpValue(kpi, kpi[key])) + "</b></div>" +
       '<div class="cmp-bar"><i class="cmp-' + key + '" style="width:' + (kpi[key] == null ? 0 : Math.max(2, kpi[key] / top * 100)).toFixed(1) + '%"></i></div>';
-    const verdict = kpi.winner === "tie" ? "Level" : kpi.winner ? esc(names[kpi.winner]) + " ahead" : "Not measured on both";
-    return '<div class="cmp-kpi ' + (kpi.winner ? "w-" + kpi.winner : "") + '"><p class="cmp-kpi-label">' + esc(kpi.label) + "<small>" + (kpi.better === "low" ? "lower is better" : "higher is better") + "</small></p>" +
+    const verdict = esc(kpi.winner === "tie" ? cc.t("level") : kpi.winner ? cc.t("ahead", { site: names[kpi.winner] }) : cc.t("notBoth"));
+    return '<div class="cmp-kpi ' + (kpi.winner ? "w-" + kpi.winner : "") + '"><p class="cmp-kpi-label">' + esc(cc.kpi(kpi)) + "<small>" + esc(cc.t(kpi.better === "low" ? "lower" : "higher")) + "</small></p>" +
       side("own") + side("rival") + '<p class="cmp-kpi-win">' + verdict + "</p></div>";
   }
 
@@ -943,22 +952,22 @@
     const spokes = areas.map((row, index) => { const [x, y] = point(index, 100); return '<line class="cmp-grid" x1="' + mid + '" y1="' + mid + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '"></line>'; }).join("");
     const labels = areas.map((row, index) => {
       const [x, y] = point(index, 122);
-      return '<text x="' + x.toFixed(1) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="' + (Math.abs(x - mid) < 8 ? "middle" : x > mid ? "start" : "end") + '">' + esc(row.area) + "</text>";
+      return '<text x="' + x.toFixed(1) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="' + (Math.abs(x - mid) < 8 ? "middle" : x > mid ? "start" : "end") + '">' + esc(cc.area(row.area)) + "</text>";
     }).join("");
     const shape = (key) => '<polygon class="cmp-shape cmp-' + key + '" points="' + areas.map((row, index) => point(index, row[key] || 0).map((n) => n.toFixed(1)).join(",")).join(" ") + '"></polygon>' +
       areas.map((row, index) => { const [x, y] = point(index, row[key] || 0); return '<circle class="cmp-dot cmp-' + key + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3"></circle>'; }).join("");
-    const label = "Radar of the six area scores. " + areas.map((row) => row.area + " " + names.own + " " + (row.own == null ? "none" : row.own) + ", " + names.rival + " " + (row.rival == null ? "none" : row.rival)).join("; ");
+    const label = cc.t("radar", { rows: areas.map((row) => cc.area(row.area) + " " + names.own + " " + (row.own == null ? cc.t("noScore") : row.own) + ", " + names.rival + " " + (row.rival == null ? cc.t("noScore") : row.rival)).join("; ") });
     return '<figure class="cmp-fig"><svg class="cmp-radar" viewBox="-70 -12 ' + (size + 140) + " " + (size + 24) + '" role="img" aria-label="' + esc(label) + '">' + rings + spokes + shape("rival") + shape("own") + labels + "</svg>" +
-      '<figcaption><span class="cmp-key cmp-own"></span>' + esc(names.own) + ' <span class="cmp-key cmp-rival"></span>' + esc(names.rival) + " · where the shapes overlap, the two sites agree</figcaption></figure>";
+      '<figcaption><span class="cmp-key cmp-own"></span>' + esc(names.own) + ' <span class="cmp-key cmp-rival"></span>' + esc(names.rival) + " · " + esc(cc.t("radarCaption")) + "</figcaption></figure>";
   }
 
   function cmpLeads(areas, names) {
     const top = Math.max(10, ...areas.map((row) => Math.abs(row.lead || 0)));
-    return '<figure class="cmp-fig cmp-leads"><p class="cmp-leads-head"><span>' + esc(names.rival) + " ahead</span><span>" + esc(names.own) + " ahead</span></p>" + areas.map((row) => {
+    return '<figure class="cmp-fig cmp-leads"><p class="cmp-leads-head"><span>' + esc(cc.t("ahead", { site: names.rival })) + "</span><span>" + esc(cc.t("ahead", { site: names.own })) + "</span></p>" + areas.map((row) => {
       const width = row.lead == null ? 0 : Math.abs(row.lead) / top * 50;
-      const tag = row.lead == null ? "–" : row.level ? "Level" : (row.lead > 0 ? "+" : "") + row.lead;
-      return '<div class="cmp-lead"><span>' + esc(row.area) + '</span><div class="cmp-lead-track"><i class="' + (row.lead > 0 ? "cmp-own" : "cmp-rival") + (row.level ? " level" : "") + '" style="' + (row.lead > 0 ? "left:50%" : "right:50%") + ";width:" + width.toFixed(1) + '%"></i></div><b class="' + (row.level ? "muted" : row.lead > 0 ? "delta up" : "delta down") + '">' + esc(tag) + "</b></div>";
-    }).join("") + "<figcaption>Your lead in each area. Under 5 points apart counts as level.</figcaption></figure>";
+      const tag = row.lead == null ? "–" : row.level ? cc.t("level") : (row.lead > 0 ? "+" : "") + row.lead;
+      return '<div class="cmp-lead"><span>' + esc(cc.area(row.area)) + '</span><div class="cmp-lead-track"><i class="' + (row.lead > 0 ? "cmp-own" : "cmp-rival") + (row.level ? " level" : "") + '" style="' + (row.lead > 0 ? "left:50%" : "right:50%") + ";width:" + width.toFixed(1) + '%"></i></div><b class="' + (row.level ? "muted" : row.lead > 0 ? "delta up" : "delta down") + '">' + esc(tag) + "</b></div>";
+    }).join("") + "<figcaption>" + esc(cc.t("leadsCaption")) + "</figcaption></figure>";
   }
 
   function cmpSkyline(areas, names) {
@@ -974,45 +983,46 @@
     };
     areas.forEach((row) => {
       body += column(x, row.own, "own") + column(x + bar + gap, row.rival, "rival");
-      labels += '<text class="cmp-col-label" x="' + (x + bar + gap / 2) + '" y="' + (floor + 18) + '" text-anchor="middle">' + esc(row.area) + "</text>";
+      labels += '<text class="cmp-col-label" x="' + (x + bar + gap / 2) + '" y="' + (floor + 18) + '" text-anchor="middle">' + esc(cc.area(row.area)) + "</text>";
       x += bar * 2 + gap + group;
     });
     const width = x - group + depth + left;
     const ground = '<polygon class="cmp-floor" points="' + [[left - 6, floor], [left - 6 + depth, floor - lift], [width + 2, floor - lift], [width + 2 - depth, floor]].map((p) => p.join(",")).join(" ") + '"></polygon>';
-    return '<figure class="cmp-fig cmp-sky"><div class="compare-scroll"><svg viewBox="0 0 ' + (width + 6) + " " + (floor + 26) + '" role="img" aria-label="' + esc("Area scores as 3D columns, " + names.own + " then " + names.rival + " in each area") + '">' + ground + body + labels + "</svg></div>" +
-      '<figcaption><span class="cmp-key cmp-own"></span>' + esc(names.own) + ' <span class="cmp-key cmp-rival"></span>' + esc(names.rival) + " · each column is an area score out of 100</figcaption></figure>";
+    return '<figure class="cmp-fig cmp-sky"><div class="compare-scroll"><svg viewBox="0 0 ' + (width + 6) + " " + (floor + 26) + '" role="img" aria-label="' + esc(cc.t("sky", { own: names.own, rival: names.rival })) + '">' + ground + body + labels + "</svg></div>" +
+      '<figcaption><span class="cmp-key cmp-own"></span>' + esc(names.own) + ' <span class="cmp-key cmp-rival"></span>' + esc(names.rival) + " · " + esc(cc.t("skyCaption")) + "</figcaption></figure>";
   }
 
   function cmpEdges(cmp, areas, kpis, names) {
-    const line = (row, value) => "<li><strong>" + esc(row.label || row.area) + "</strong> " + '<span class="meta-line">' + esc(value(row.own)) + " vs " + esc(value(row.rival)) + "</span></li>";
+    const line = (row, value) => "<li><strong>" + esc(row.key ? cc.kpi(row) : cc.area(row.area)) + "</strong> " + '<span class="meta-line">' + esc(value(row.own)) + " " + esc(cc.t("vs")) + " " + esc(value(row.rival)) + "</span></li>";
     const areaValue = (score) => score == null ? "–" : String(score);
     const pick = (side) => areas.filter((row) => row.lead != null && !row.level && (row.lead > 0) === (side === "own")).sort((a, b) => Math.abs(b.lead) - Math.abs(a.lead)).map((row) => line(row, areaValue))
       .concat(kpis.filter((row) => row.key !== "overall" && row.winner === side).map((row) => line(row, (value) => cmpValue(row, value))));
     const level = areas.filter((row) => row.level).map((row) => line(row, areaValue))
       .concat(kpis.filter((row) => row.key !== "overall" && row.winner === "tie").map((row) => line(row, (value) => cmpValue(row, value))));
-    const shared = (cmp.sharedList || []).map((item) => "<li>" + esc(item.title) + ' <span class="meta-line">both have it · ' + esc(item.area) + " · " + esc(item.severity) + "</span></li>");
-    const box = (title, items, cls) => '<div class="cmp-edge ' + cls + '"><h3>' + title + "</h3>" + (items.length ? "<ul>" + items.slice(0, 8).join("") + "</ul>" + (items.length > 8 ? '<p class="meta-line">and ' + (items.length - 8) + " more</p>" : "") : '<p class="muted">None.</p>') + "</div>";
-    return '<h3 class="cmp-h">Advantages, disadvantages and common ground</h3><div class="exec-cols cmp-edges">' +
-      box("Your advantages", pick("own"), "cmp-own") +
-      box("Common ground", level.concat(shared), "cmp-tie") +
-      box("Where " + esc(names.rival) + " is ahead", pick("rival"), "cmp-rival") + "</div>";
+    const shared = (cmp.sharedList || []).map((item) => '<li><span translate="yes" lang="en">' + esc(item.title) + '</span> <span class="meta-line">' + esc(cc.t("bothHave")) + " · " + esc(cc.area(item.area)) + " · " + esc(cc.severity(item.severity)) + "</span></li>");
+    const box = (title, items, cls) => '<div class="cmp-edge ' + cls + '"><h3>' + esc(title) + "</h3>" + (items.length ? "<ul>" + items.slice(0, 8).join("") + "</ul>" + (items.length > 8 ? '<p class="meta-line">' + esc(cc.t("more", { n: items.length - 8 })) + "</p>" : "") : '<p class="muted">' + esc(cc.t("none")) + "</p>") + "</div>";
+    return '<h3 class="cmp-h">' + esc(cc.t("edges")) + '</h3><div class="exec-cols cmp-edges">' +
+      box(cc.t("advantages"), pick("own"), "cmp-own") +
+      box(cc.t("common"), level.concat(shared), "cmp-tie") +
+      box(cc.t("whereAhead", { site: names.rival }), pick("rival"), "cmp-rival") + "</div>";
   }
 
   function cmpMix(cmp, names) {
     const verdicts = cmp.verdicts ? CMP_SIDES.map((key) => {
       const row = cmp.verdicts[key] || {};
       return '<div class="cmp-mix-row"><span>' + esc(names[key]) + "</span>" + cmpSplit(["fail", "risk", "pass", "person"].map((name) =>
-        ({ value: row[name] || 0, cls: "mix-" + name, text: row[name] || 0, title: (row[name] || 0) + " " + VERDICT_LABEL[name] })), names[key] + " checks: " + ["fail", "risk", "pass", "person"].map((name) => (row[name] || 0) + " " + VERDICT_LABEL[name]).join(", ")) + "</div>";
+        ({ value: row[name] || 0, cls: "mix-" + name, text: row[name] || 0, title: (row[name] || 0) + " " + cc.verdict(name) })), cc.t("checks", { site: names[key], list: ["fail", "risk", "pass", "person"].map((name) => (row[name] || 0) + " " + cc.verdict(name)).join(", ") })) + "</div>";
     }).join("") : "";
     const top = cmp.severities ? Math.max(1, ...CMP_SIDES.map((key) => ["critical", "high", "medium", "low"].reduce((sum, name) => sum + ((cmp.severities[key] || {})[name] || 0), 0))) : 1;
     const severities = cmp.severities ? CMP_SIDES.map((key) => {
       const row = cmp.severities[key] || {};
       const total = ["critical", "high", "medium", "low"].reduce((sum, name) => sum + (row[name] || 0), 0);
       return '<div class="cmp-mix-row"><span>' + esc(names[key]) + '</span><div class="cmp-sev" style="width:' + Math.max(4, total / top * 100).toFixed(1) + '%">' + cmpSplit(["critical", "high", "medium", "low"].map((name) =>
-        ({ value: row[name] || 0, cls: "sev-" + name, text: row[name] || 0, title: (row[name] || 0) + " " + name })), names[key] + " open problems: " + ["critical", "high", "medium", "low"].map((name) => (row[name] || 0) + " " + name).join(", ")) + "</div><b>" + total + "</b></div>";
+        ({ value: row[name] || 0, cls: "sev-" + name, text: row[name] || 0, title: (row[name] || 0) + " " + cc.severity(name) })), cc.t("problems", { site: names[key], list: ["critical", "high", "medium", "low"].map((name) => (row[name] || 0) + " " + cc.severity(name)).join(", ") })) + "</div><b>" + total + "</b></div>";
     }).join("") : "";
-    return '<div class="cmp-two">' + (verdicts ? '<figure class="cmp-fig"><figcaption>Every check, by verdict: <span class="cmp-key mix-fail"></span>fails <span class="cmp-key mix-risk"></span>at risk <span class="cmp-key mix-pass"></span>passes <span class="cmp-key mix-person"></span>needs a person</figcaption>' + verdicts + "</figure>" : "") +
-      (severities ? '<figure class="cmp-fig"><figcaption>Open problems, by severity: <span class="cmp-key sev-critical"></span>critical <span class="cmp-key sev-high"></span>high <span class="cmp-key sev-medium"></span>medium <span class="cmp-key sev-low"></span>low</figcaption>' + severities + "</figure>" : "") + "</div>";
+    const key = (cls, text) => '<span class="cmp-key ' + cls + '"></span>' + esc(text);
+    return '<div class="cmp-two">' + (verdicts ? '<figure class="cmp-fig"><figcaption>' + esc(cc.t("byVerdict")) + " " + ["fail", "risk", "pass", "person"].map((name) => key("mix-" + name, cc.legend(name))).join(" ") + "</figcaption>" + verdicts + "</figure>" : "") +
+      (severities ? '<figure class="cmp-fig"><figcaption>' + esc(cc.t("bySeverity")) + " " + ["critical", "high", "medium", "low"].map((name) => key("sev-" + name, cc.severity(name))).join(" ") + "</figcaption>" + severities + "</figure>" : "") + "</div>";
   }
 
   function cmpSpark(ranks, cls) {
@@ -1021,39 +1031,40 @@
     const best = Math.min(...values), worst = Math.max(...values);
     const span = worst - best || 1;
     const points = values.map((value, index) => (index / (values.length - 1) * 150 + 5).toFixed(1) + "," + (6 + (value - best) / span * 28).toFixed(1)).join(" ");
-    return '<svg class="cmp-spark ' + cls + '" viewBox="0 0 160 40" role="img" aria-label="' + esc("Tranco rank over " + ranks.length + " days, from #" + values[0].toLocaleString() + " to #" + values[values.length - 1].toLocaleString()) + '"><polyline points="' + points + '"></polyline></svg>';
+    return '<svg class="cmp-spark ' + cls + '" viewBox="0 0 160 40" role="img" aria-label="' + esc(cc.t("spark", { n: ranks.length, a: "#" + values[0].toLocaleString(cc.lang), b: "#" + values[values.length - 1].toLocaleString(cc.lang) })) + '"><polyline points="' + points + '"></polyline></svg>';
   }
 
   function cmpSignal(signal) {
-    if (signal.points == null) return "Not read";
-    if (signal.key === "rank") return signal.value ? "#" + Number(signal.value).toLocaleString() : "Outside the top million";
-    if (signal.key === "chrome") return signal.value ? "Yes" : "No";
-    if (signal.key === "age") return signal.value + " years";
-    return Number(signal.value).toLocaleString();
+    if (signal.points == null) return cc.t("notRead");
+    if (signal.key === "rank") return signal.value ? "#" + Number(signal.value).toLocaleString(cc.lang) : cc.t("outsideTop");
+    if (signal.key === "chrome") return cc.t(signal.value ? "yes" : "no");
+    if (signal.key === "age") return cc.t("years", { n: signal.value });
+    return Number(signal.value).toLocaleString(cc.lang);
   }
 
   function cmpMarket(market, names) {
     const gauge = (side, key) => {
       const score = side.score == null ? 0 : side.score;
-      const trend = side.change == null ? "" : side.change > 0 ? '<span class="delta up">▲ ' + side.change.toLocaleString() + " places in 30 days</span>" : side.change < 0 ? '<span class="delta down">▼ ' + (-side.change).toLocaleString() + " places in 30 days</span>" : '<span class="delta">Steady for 30 days</span>';
-      return '<div class="cmp-presence cmp-' + key + '"><svg viewBox="0 0 120 70" role="img" aria-label="' + esc(names[key] + " market presence " + (side.score == null ? "not read" : side.score + " out of 100")) + '"><path class="ring-track" d="M10 62 A50 50 0 0 1 110 62" pathLength="100"></path><path class="cmp-arc" d="M10 62 A50 50 0 0 1 110 62" pathLength="100" stroke-dasharray="' + score + ' 100"></path><text x="60" y="58" text-anchor="middle">' + (side.score == null ? "–" : side.score) + "</text></svg>" +
-        "<p><strong>" + esc(names[key]) + "</strong></p><p class=\"cmp-rank\">" + (side.rank ? "#" + side.rank.toLocaleString() + " <small>on Tranco</small>" : "<small>Outside the Tranco top million</small>") + "</p>" + cmpSpark(side.ranks, "cmp-" + key) + "<p>" + trend + "</p></div>";
+      const places = (n) => esc(cc.t("places", { n: n.toLocaleString(cc.lang) }));
+      const trend = side.change == null ? "" : side.change > 0 ? '<span class="delta up">▲ ' + places(side.change) + "</span>" : side.change < 0 ? '<span class="delta down">▼ ' + places(-side.change) + "</span>" : '<span class="delta">' + esc(cc.t("steady")) + "</span>";
+      return '<div class="cmp-presence cmp-' + key + '"><svg viewBox="0 0 120 70" role="img" aria-label="' + esc(cc.t("presence", { site: names[key], value: side.score == null ? cc.t("presenceNotRead") : cc.t("outOf", { n: side.score }) })) + '"><path class="ring-track" d="M10 62 A50 50 0 0 1 110 62" pathLength="100"></path><path class="cmp-arc" d="M10 62 A50 50 0 0 1 110 62" pathLength="100" stroke-dasharray="' + score + ' 100"></path><text x="60" y="58" text-anchor="middle">' + (side.score == null ? "–" : side.score) + "</text></svg>" +
+        "<p><strong>" + esc(names[key]) + "</strong></p><p class=\"cmp-rank\">" + (side.rank ? "#" + side.rank.toLocaleString(cc.lang) + " <small>" + esc(cc.t("onTranco")) + "</small>" : "<small>" + esc(cc.t("outsideTranco")) + "</small>") + "</p>" + cmpSpark(side.ranks, "cmp-" + key) + "<p>" + trend + "</p></div>";
     };
     const leader = market.share == null || market.share === 50 ? "" : market.share > 50 ? "own" : "rival";
     const rows = (market.own.signals || []).map((signal, index) => {
       const other = (market.rival.signals || [])[index] || {};
       const bar = (value, key) => '<div class="cmp-bar"><i class="cmp-' + key + '" style="width:' + (value || 0) + '%"></i></div>';
-      return "<tr><th scope=\"row\">" + esc(signal.label) + "<small>" + signal.weight + "% of the score</small></th><td>" + esc(cmpSignal(signal)) + bar(signal.points, "own") + "</td><td>" + esc(cmpSignal(other)) + bar(other.points, "rival") + "</td></tr>";
+      return "<tr><th scope=\"row\">" + esc(cc.signal(signal)) + "<small>" + esc(cc.t("weight", { n: signal.weight })) + "</small></th><td>" + esc(cmpSignal(signal)) + bar(signal.points, "own") + "</td><td>" + esc(cmpSignal(other)) + bar(other.points, "rival") + "</td></tr>";
     }).join("");
-    return '<h3 class="cmp-h">Market presence</h3>' +
-      (leader ? '<p class="cmp-verdict"><strong>' + esc(names[leader]) + "</strong> holds " + (leader === "own" ? market.share : 100 - market.share) + "% of the presence the two sites have together.</p>" : "") +
+    return '<h3 class="cmp-h">' + esc(cc.t("market")) + "</h3>" +
+      (leader ? '<p class="cmp-verdict">' + cc.t("holds", { site: strong(names[leader]), n: leader === "own" ? market.share : 100 - market.share }) + "</p>" : "") +
       (market.share == null ? "" : cmpSplit([
         { value: market.share, cls: "cmp-own", text: market.share + "%", title: names.own + " " + market.share + "%" },
         { value: 100 - market.share, cls: "cmp-rival", text: (100 - market.share) + "%", title: names.rival + " " + (100 - market.share) + "%" }
-      ], "Share of presence: " + names.own + " " + market.share + "%, " + names.rival + " " + (100 - market.share) + "%")) +
+      ], cc.t("share", { own: names.own, a: market.share, rival: names.rival, b: 100 - market.share }))) +
       '<div class="cmp-two">' + gauge(market.own, "own") + gauge(market.rival, "rival") + "</div>" +
-      '<div class="compare-scroll"><table class="compare-table cmp-signals"><thead><tr><th scope="col">Signal</th><th scope="col">' + esc(names.own) + '</th><th scope="col">' + esc(names.rival) + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
-      '<p class="meta-line">Presence is an estimate from public signals, not a traffic figure. The Tranco list ranks the top million domains by averaging several popularity lists over 30 days. Real-user Chrome data exists only for sites with enough Chrome visitors. A signal that could not be read is left out, and the others share its weight.</p>';
+      '<div class="compare-scroll"><table class="compare-table cmp-signals"><thead><tr><th scope="col">' + esc(cc.t("signal")) + '</th><th scope="col">' + esc(names.own) + '</th><th scope="col">' + esc(names.rival) + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      '<p class="meta-line">' + esc(cc.t("marketNote")) + "</p>";
   }
 
   function cmpTrail(trail, names) {
@@ -1067,14 +1078,14 @@
     const y = (score) => 12 + (100 - score) / 100 * (height - 40);
     const grid = [0, 50, 100].map((score) => '<line class="cmp-grid" x1="' + pad + '" x2="' + (width - pad) + '" y1="' + y(score) + '" y2="' + y(score) + '"></line><text class="cmp-axis" x="' + (pad - 6) + '" y="' + (y(score) + 4) + '" text-anchor="end">' + score + "</text>").join("");
     const line = (rows, key) => rows.length ? '<g class="cmp-' + key + '"><polyline class="cmp-line" points="' + rows.map((row) => x(row.at).toFixed(1) + "," + y(row.overall).toFixed(1)).join(" ") + '"></polyline>' +
-      rows.map((row) => '<circle class="cmp-dot" cx="' + x(row.at).toFixed(1) + '" cy="' + y(row.overall).toFixed(1) + '" r="3.5"><title>' + esc(names[key] + " " + row.overall + " on " + row.at) + "</title></circle>").join("") + "</g>" : "";
-    const label = (at, anchor) => '<text class="cmp-axis" x="' + x(new Date(at).toISOString()).toFixed(1) + '" y="' + (height - 6) + '" text-anchor="' + anchor + '">' + esc(new Date(at).toLocaleDateString()) + "</text>";
+      rows.map((row) => '<circle class="cmp-dot" cx="' + x(row.at).toFixed(1) + '" cy="' + y(row.overall).toFixed(1) + '" r="3.5"><title>' + esc(cc.t("point", { site: names[key], n: row.overall, date: new Date(row.at).toLocaleDateString(cc.lang) })) + "</title></circle>").join("") + "</g>" : "";
+    const label = (at, anchor) => '<text class="cmp-axis" x="' + x(new Date(at).toISOString()).toFixed(1) + '" y="' + (height - 6) + '" text-anchor="' + anchor + '">' + esc(new Date(at).toLocaleDateString(cc.lang)) + "</text>";
     const move = (rows) => rows.length > 1 ? rows[rows.length - 1].overall - rows[0].overall : null;
     const note = (rows, key) => {
       const moved = move(rows);
-      return esc(names[key]) + ": " + (rows.length ? rows.length + " review" + (rows.length === 1 ? "" : "s") + (moved == null ? "" : ', <span class="delta ' + (moved > 0 ? "up" : moved < 0 ? "down" : "") + '">' + (moved > 0 ? "+" : "") + moved + "</span> since the first") : "no earlier review");
+      return esc(names[key]) + ": " + (rows.length ? esc(cc.t("reviews", { n: rows.length })) + (moved == null ? "" : ', <span class="delta ' + (moved > 0 ? "up" : moved < 0 ? "down" : "") + '">' + (moved > 0 ? "+" : "") + moved + "</span> " + esc(cc.t("sinceFirst"))) : esc(cc.t("noEarlier")));
     };
-    return '<h3 class="cmp-h">Score history under your email</h3><figure class="cmp-fig cmp-trail"><div class="compare-scroll"><svg viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="' + esc("Overall score over time for " + names.own + " and " + names.rival) + '">' + grid + line(own, "own") + line(rival, "rival") + (last !== first ? label(first, "start") + label(last, "end") : label(first, "middle")) + "</svg></div>" +
+    return '<h3 class="cmp-h">' + esc(cc.t("history")) + '</h3><figure class="cmp-fig cmp-trail"><div class="compare-scroll"><svg viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="' + esc(cc.t("historyLabel", { own: names.own, rival: names.rival })) + '">' + grid + line(own, "own") + line(rival, "rival") + (last !== first ? label(first, "start") + label(last, "end") : label(first, "middle")) + "</svg></div>" +
       "<figcaption>" + note(own, "own") + " · " + note(rival, "rival") + "</figcaption></figure>";
   }
 
