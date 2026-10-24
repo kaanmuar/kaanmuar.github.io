@@ -520,6 +520,16 @@
         .history-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .delta { font-size: 12px; font-weight: 700; color: var(--muted); }
         .delta.up { color: var(--green); } .delta.down { color: var(--red); }
+        .compare-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 6px; }
+        .compare-form label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
+        .compare-form input { flex: 1 1 240px; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: inherit; font: inherit; }
+        .compare-scroll { overflow-x: auto; margin: 10px 0 4px; }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .compare-table th, .compare-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+        .compare-table th:first-child { text-align: left; }
+        .compare-table thead th { font-size: 12px; letter-spacing: .04em; color: var(--muted); }
+        #compare-error:empty { display: none; }
+        #compare-error { color: var(--red); }
         .gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 4px; }
         .speed-title { margin: 14px 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #5b6672); }
         .gauge { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
@@ -1441,6 +1451,20 @@
         <div class="kpis" id="kpis"></div>
         <h2 data-insight>One-page summary</h2>
         <article class="card" data-insight id="exec"></article>
+        <h2 data-insight>Next to a competitor</h2>
+        <article class="card" data-insight id="compare">
+            <div class="no-print" id="compare-ask">
+                <p>Run the same review on a competitor's site and see the six area scores side by side, with the open problems only one of the two sites has.</p>
+                <div class="compare-form">
+                    <label for="compare-url">Competitor's address</label>
+                    <input id="compare-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="competitor.com">
+                    <button class="btn btn-primary" id="compare-go" type="button">Compare</button>
+                </div>
+                <p class="meta-line">Priced as a second review, with the return discount. The competitor's site gets the public, passive checks only: no chat conversation and no form sent. Like any review, its owner may get one email about it, and its scores can appear in Live Reports.</p>
+                <p class="meta-line" id="compare-error" role="alert"></p>
+            </div>
+            <div id="compare-result" hidden></div>
+        </article>
         <h2 data-insight>Health score</h2>
         <div data-insight id="health"></div>
         <h2 data-insight>Fix first</h2>
@@ -1583,7 +1607,7 @@
 <script src="js/qa-review-deal.js?v=20261029a"></script>
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261031r"></script>
+<script src="js/qa-review.js?v=20261031s"></script>
 <script src="js/url-suggest.js?v=20261023b"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
