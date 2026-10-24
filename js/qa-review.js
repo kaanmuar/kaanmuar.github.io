@@ -520,17 +520,70 @@
     sessionStorage.setItem(SHOWN_KEY, ids.join(","));
   }
 
+  // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #case-note, #alarm-note, #tool-note";
+
   function applyCopyMode(paid) {
     document.body.classList.toggle("preview-copy", !paid);
     document.body.classList.toggle("paid-copy", !!paid);
+    const report = document.getElementById("report");
+    if (paid) thawSections(report);
+    else fadeSections(report);
+  }
+
+  // Where the readable opening of a line ends. The page blurs from here and the TXT and JSON files cut here.
+  function fadeCut(raw) {
+    if (raw.trim().split(/\s+/).length < 4) return raw.length;
+    const mark = raw.search(/[.!?](\s|$)/);
+    let cut = mark === -1 ? Math.max(28, Math.floor(raw.length * 0.36)) : mark + 1;
+    if (cut > raw.length - 12) cut = Math.max(16, Math.floor(raw.length * 0.42));
+    return Math.min(cut, raw.length);
+  }
+
+  function clipText(text) {
+    const raw = String(text || "");
+    const cut = fadeCut(raw);
+    return cut >= raw.length ? raw : raw.slice(0, cut).trimEnd() + " …";
+  }
+
+  function clipDeep(value) {
+    if (typeof value === "string") return clipText(value);
+    if (Array.isArray(value)) return value.map(clipDeep);
+    if (value && typeof value === "object") {
+      const out = {};
+      Object.keys(value).forEach((key) => { out[key] = clipDeep(value[key]); });
+      return out;
+    }
+    return value;
+  }
+
+  function fadeSections(root) {
+    if (!root || !document.body.classList.contains("preview-copy")) return;
+    const nodes = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!node.parentElement || node.parentElement.closest(FADE_CLEAR)) continue;
+      if (fadeCut(node.nodeValue) < node.nodeValue.length) nodes.push(node);
+    }
+    nodes.forEach((node) => {
+      const box = document.createElement("template");
+      box.innerHTML = fadeText(node.nodeValue, false);
+      node.replaceWith(box.content);
+    });
+  }
+
+  function thawSections(root) {
+    if (!root) return;
+    root.querySelectorAll(".fade-line").forEach((line) => line.replaceWith(document.createTextNode(line.textContent)));
+    root.normalize();
   }
 
   function fadeText(text, paid) {
     const raw = String(text || "");
     if (paid) return esc(raw);
-    const mark = raw.search(/[.!?](\s|$)/);
-    let cut = mark === -1 ? Math.max(28, Math.floor(raw.length * 0.36)) : mark + 1;
-    if (cut > raw.length - 12) cut = Math.max(16, Math.floor(raw.length * 0.42));
+    const cut = fadeCut(raw);
+    if (cut >= raw.length) return esc(raw);
     const parts = raw.slice(cut).split(/(\s+)/);
     let seen = 0;
     const total = parts.filter((part) => /\S/.test(part)).length || 1;
@@ -540,7 +593,7 @@
       const blur = (0.35 + (seen / total) * 7.6).toFixed(2);
       return '<span class="case-fade" style="--fade:' + blur + 'px">' + esc(part) + "</span>";
     }).join("");
-    return esc(raw.slice(0, cut)) + faded;
+    return '<span class="fade-line">' + esc(raw.slice(0, cut)) + faded + "</span>";
   }
 
   function alertsOpen(id) {
@@ -625,13 +678,6 @@
       ? "Payment for the signed-in run is confirmed on this browser. This page still does not take the password. Ask for the run at qa@carlosandmunoz.com when you are ready to share the login through a channel QA-lab names."
       : "This page does not take the password. The signed-in run waits until it is paid. The amount is shown then.";
     document.getElementById("credential-open").hidden = open;
-  }
-
-  function previewSentence(text) {
-    const raw = String(text || "");
-    const mark = raw.search(/[.!?](\s|$)/);
-    const cut = mark === -1 ? Math.min(raw.length, 90) : Math.min(raw.length, mark + 1);
-    return raw.slice(0, cut).trim() + (cut < raw.length ? " …" : "");
   }
 
   function paintVisuals(report, paid) {
@@ -1694,6 +1740,9 @@
 
   setupFolds();
 
+  const reportRoot = document.getElementById("report");
+  if (reportRoot) new MutationObserver(() => fadeSections(reportRoot)).observe(reportRoot, { childList: true, subtree: true });
+
   function render(payload) {
     const report = payload.report;
     if (!report) return;
@@ -1713,7 +1762,7 @@
     sampleNote.hidden = !sample;
     if (sample) {
       const when = new Date(report.fetchedAt);
-      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the opening of each case is readable and the rest stays blurred. Close it to read the disclaimers and review your own address.";
+      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the opening of each line is readable and the rest stays blurred in every section. Close it to read the disclaimers and review your own address.";
     }
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
@@ -1792,7 +1841,7 @@
       : "";
     document.getElementById("case-note").textContent = (paid
       ? shown.length + " cases for the selected frameworks. The full wording is open because this copy is paid."
-      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The first sentence of each case stays visible. The rest stays blurred until the report is paid.") + ranked;
+      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The opening of each line stays visible, here and in every section. The rest stays blurred until the report is paid.") + ranked;
     const extras = [];
     (report.cases || []).forEach((item) => {
       (item.also || []).forEach((name) => {
@@ -2174,10 +2223,7 @@
   }
   document.getElementById("download-json").addEventListener("click", () => {
     spend("json", () => {
-      const source = current.report;
-      const report = current.paid ? source : Object.assign({}, source, {
-        cases: (source.cases || []).map((item) => Object.assign({}, item, { title: previewSentence(item.title), why: previewSentence(item.why) }))
-      });
+      const report = current.paid ? current.report : clipDeep(current.report);
       const body = current.paid
         ? { attribution: PAID_LINE, report: report }
         : { watermark: MARK, report: report };
@@ -2187,22 +2233,21 @@
   document.getElementById("download-text").addEventListener("click", () => {
     spend("text", () => {
       const report = current.report;
+      const clip = (text) => current.paid ? String(text || "") : clipText(text);
       const lines = [
         fileBanner(),
         "",
         report.status === "stopped" ? "Stopped" : "Complete",
         report.host,
         report.finalUrl,
-        report.statement,
+        clip(report.statement),
         "",
         "Log"
       ];
-      (report.log || []).forEach((line) => lines.push((line.at || "") + " " + (line.text || "")));
+      (report.log || []).forEach((line) => lines.push((line.at || "") + " " + clip(line.text)));
       lines.push("", "Pages: " + report.counts.pages, "Technologies: " + (report.technologies || []).map((item) => item.name).join(", "), "", "Proposed cases");
       (report.cases || []).forEach((item) => {
-        const title = current.paid ? item.title : previewSentence(item.title);
-        const why = current.paid ? item.why : previewSentence(item.why);
-        lines.push(item.id + " [" + item.layer + "] " + title + " — " + why);
+        lines.push(item.id + " [" + item.layer + "] " + clip(item.title) + " — " + clip(item.why));
       });
       if (!current.paid) lines.push("", MARK);
       download("url-review-" + report.id + ".txt", lines.join("\n"), "text/plain");
