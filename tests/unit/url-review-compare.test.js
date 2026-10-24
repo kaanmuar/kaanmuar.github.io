@@ -149,6 +149,94 @@ test("a comparison paid through a credit opens its own report and keeps its base
   assert.equal(core.intakeRecord(value, { id: "r2" }, {}).paid, false);
 });
 
+test("each head-to-head indicator names a winner the right way round, with a level band", () => {
+  const kpi = (key) => compare.KPIS.find((row) => row.key === key);
+  assert.equal(compare.winnerOf(kpi("overall"), 80, 70), "own");
+  assert.equal(compare.winnerOf(kpi("overall"), 80, 79), "tie");
+  assert.equal(compare.winnerOf(kpi("open"), 3, 9), "own");
+  assert.equal(compare.winnerOf(kpi("open"), 3, 3), "tie");
+  assert.equal(compare.winnerOf(kpi("lcp"), 2000, 2050), "tie");
+  assert.equal(compare.winnerOf(kpi("lcp"), 2000, 3400), "own");
+  assert.equal(compare.winnerOf(kpi("pagesFound"), 40, 400), "rival");
+  assert.equal(compare.winnerOf(kpi("lcp"), null, 3400), "");
+});
+
+test("the comparison carries indicators, level areas, mixes, shared problems and a dominance tally", () => {
+  const cmp = compare.compareSites(own, rival);
+  const byKey = Object.fromEntries(cmp.kpis.map((row) => [row.key, row]));
+  assert.equal(byKey.overall.own, own.insights.score.overall);
+  assert.equal(byKey.open.own, own.insights.score.totals.fail + own.insights.score.totals.risk);
+  assert.equal(byKey.languages.own, own.observed.signals.hreflang);
+  assert.ok(!byKey.lighthouse, "an indicator neither report measured is left out");
+  cmp.areas.forEach((row) => {
+    assert.equal(row.lead, row.own - row.rival);
+    assert.equal(row.level, Math.abs(row.lead) < compare.LEVEL_GAP);
+  });
+  const decided = cmp.areas.length + cmp.kpis.filter((row) => row.key !== "overall" && row.winner).length;
+  assert.equal(cmp.dominance.own + cmp.dominance.rival + cmp.dominance.tie, decided);
+  assert.deepEqual(cmp.verdicts.own, own.insights.score.totals);
+  assert.deepEqual(cmp.severities.own, own.insights.score.severities);
+  assert.equal(cmp.sharedList.length, Math.min(cmp.shared, 8));
+  const theirs = open(rival);
+  cmp.sharedList.forEach((row) => assert.ok(open(own).has(row.key) && theirs.has(row.key)));
+  assert.deepEqual(cmp.trail, { own: [], rival: [] });
+  assert.equal(cmp.market.own.rank, null);
+});
+
+test("both score trails keep the last eight dated reviews in the order given", () => {
+  const rows = Array.from({ length: 10 }, (item, index) => ({ at: "2026-0" + (index % 9 + 1) + "-01T10:00:00Z", overall: 50 + index }));
+  const cmp = compare.compareSites(own, rival, { trail: { own: rows, rival: [{ at: "2026-10-01T00:00:00Z", overall: 70 }, { at: "", overall: 3 }] } });
+  assert.equal(cmp.trail.own.length, 8);
+  assert.deepEqual(cmp.trail.own[7], { at: "2026-01-01", overall: 59 });
+  assert.deepEqual(cmp.trail.rival, [{ at: "2026-10-01", overall: 70 }]);
+});
+
+test("market presence weighs the Tranco rank and the public signals that could be read", () => {
+  const market = require("../../functions/url-review-market");
+  const ranks = market.readRanks({ ranks: [{ date: "2026-10-23", rank: 254 }, { date: "2026-10-01", rank: 300 }, { date: "bad", rank: 1 }] }, "hubspot.com");
+  assert.deepEqual(ranks, { domain: "hubspot.com", read: true, rank: 254, ranks: [{ date: "2026-10-01", rank: 300 }, { date: "2026-10-23", rank: 254 }], change: 46 });
+  assert.deepEqual(market.readRanks({ ranks: [] }, "tiny.example"), { domain: "tiny.example", read: true, rank: null, ranks: [], change: null });
+  assert.equal(market.rankPart(1), 1);
+  assert.equal(market.rankPart(1000), 0.5);
+  assert.equal(market.rankPart(null), 0);
+  const big = { limits: { pagesFound: 10000 }, pagespeed: { field: { scope: "origin" } }, mentions: [1, 2, 3, 4], observed: { signals: { hreflang: 31 }, socialLinks: [1, 2, 3, 4, 5], registered: "2006-10-24" } };
+  const now = Date.parse("2026-10-24T00:00:00Z");
+  const top = market.presence(big, { read: true, rank: 1, ranks: [] }, now);
+  assert.equal(top.score, 100);
+  assert.equal(top.signals.find((row) => row.key === "age").value, 20);
+  const unread = market.presence({ limits: { pagesFound: 10000 } }, { read: false }, now);
+  assert.equal(unread.score, 100, "only pages found was read, so it carries the whole score");
+  assert.equal(unread.signals.find((row) => row.key === "rank").points, null);
+  assert.equal(market.presence({}, null, now).score, null);
+  const view = market.marketView(big, { limits: { pagesFound: 10000 } }, { own: { read: true, rank: 1000 }, rival: { read: true, rank: null } }, now);
+  assert.equal(view.own.rank, 1000);
+  assert.equal(view.share, Math.round(view.own.score / (view.own.score + view.rival.score) * 100));
+});
+
+test("Tranco is asked one domain at a time and a refusal is not read as a rank", async () => {
+  const market = require("../../functions/url-review-market");
+  const asked = [];
+  const fetcher = async (url) => {
+    asked.push(url);
+    if (/refused/.test(url)) return { ok: false, json: async () => ({}) };
+    return { ok: true, json: async () => ({ ranks: [{ date: "2026-10-23", rank: 12 }] }) };
+  };
+  const [one, two, bad] = await market.trancoRanks(["one-" + Date.now() + ".com", "two-" + Date.now() + ".com", "refused.com"], fetcher, 0);
+  assert.equal(one.rank, 12);
+  assert.equal(two.rank, 12);
+  assert.deepEqual(bad, { domain: "refused.com", read: false });
+  assert.equal(asked.length, 3);
+  assert.ok(asked.every((url) => url.startsWith(market.TRANCO_API)));
+  assert.deepEqual(await market.trancoRank("not a domain", fetcher), { domain: "not a domain", read: false });
+});
+
+test("the domain's registration date is read from RDAP", () => {
+  const facts = core.readRdap({ events: [{ eventAction: "registration", eventDate: "1995-08-14T04:00:00Z" }, { eventAction: "expiration", eventDate: "2030-08-13T04:00:00Z" }] }, "example.com");
+  assert.equal(facts.registered, "1995-08-14");
+  assert.equal(facts.expires, "2030-08-13");
+  assert.equal(core.readRdap({ events: [] }, "example.com").registered, "");
+});
+
 test("a comparison stands at least on the first return step and climbs the ladder from there", () => {
   assert.equal(offers.discountFor(1900, 1, { returns: 0 }).percent, 0);
   assert.deepEqual(offers.discountFor(1900, 1, { returns: 0, compare: true }), { listUsd: 19, usd: 17.1, cents: 1710, percent: 10, source: "return", code: "" });
