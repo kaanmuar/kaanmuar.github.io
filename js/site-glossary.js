@@ -226,6 +226,8 @@
     // Whole UI lines a word-level fix cannot repair. Keys are the English source text.
     const LINES = {
         es: {
+            'Copy link (opens for you)': 'Copiar enlace (se abre para ti)',
+            'This link opens in full only for you, signed in. Anyone else sees a blurred preview.': 'Este enlace se abre completo solo para ti, con tu sesión iniciada. Cualquier otra persona ve una vista previa difuminada.',
             'Close': 'Cerrar',
             'Run dashboard': 'Panel de la revisión',
             'What a review is': '¿Qué es una revisión?',
@@ -239,6 +241,8 @@
             'Speed, weight, paint, and layout shift': 'Velocidad, peso, renderizado y cambios de diseño'
         },
         pt: {
+            'Copy link (opens for you)': 'Copiar link (abre para você)',
+            'This link opens in full only for you, signed in. Anyone else sees a blurred preview.': 'Este link abre completo só para você, com sua conta conectada. Qualquer outra pessoa vê uma prévia desfocada.',
             'Close': 'Fechar',
             'Run dashboard': 'Painel da revisão',
             'What a review is': 'O que é uma revisão',
@@ -249,6 +253,8 @@
             'Speed, weight, paint, and layout shift': 'Velocidade, peso, renderização e mudanças de layout'
         },
         de: {
+            'Copy link (opens for you)': 'Link kopieren (öffnet sich für dich)',
+            'This link opens in full only for you, signed in. Anyone else sees a blurred preview.': 'Dieser Link öffnet sich vollständig nur für dich, wenn du angemeldet bist. Alle anderen sehen eine unscharfe Vorschau.',
             'Close': 'Schließen',
             'Run dashboard': 'Prüfungsübersicht',
             'What a review is': 'Was eine Prüfung ist',
@@ -259,6 +265,8 @@
             'Speed, weight, paint, and layout shift': 'Tempo, Gewicht, Rendering und Layoutverschiebungen'
         },
         fr: {
+            'Copy link (opens for you)': 'Copier le lien (s’ouvre pour vous)',
+            'This link opens in full only for you, signed in. Anyone else sees a blurred preview.': 'Ce lien ne s’ouvre en entier que pour vous, une fois connecté. Toute autre personne voit un aperçu flouté.',
             'Close': 'Fermer',
             'Run dashboard': 'Tableau de bord de l’analyse',
             'What a review is': 'Ce qu’est une analyse',
@@ -269,6 +277,8 @@
             'Speed, weight, paint, and layout shift': 'Vitesse, poids, rendu et décalages de mise en page'
         },
         it: {
+            'Copy link (opens for you)': 'Copia link (si apre per te)',
+            'This link opens in full only for you, signed in. Anyone else sees a blurred preview.': 'Questo link si apre per intero solo per te, con l’accesso effettuato. Chiunque altro vede un’anteprima sfocata.',
             'Close': 'Chiudi',
             'Run dashboard': 'Pannello della revisione',
             'What a review is': 'Cos’è una revisione',

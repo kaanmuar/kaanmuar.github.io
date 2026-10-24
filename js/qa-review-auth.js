@@ -75,7 +75,14 @@
     el("sign-in-done").hidden = !signed;
     el("sign-in-code-note").hidden = !!factor;
     if (waiting) el("sign-in-code-label").textContent = factor ? "Code from your authenticator app" : "Code sent to " + pending.sentTo;
-    if (signed) el("sign-in-who").textContent = signed.name ? signed.name + " (" + signed.email + ")" : signed.email;
+    const mail = el("sign-in-mail");
+    if (signed && mail) {
+      el("sign-in-who").textContent = signed.name || signed.email;
+      mail.textContent = signed.email;
+      mail.hidden = !signed.name;
+    } else if (signed) el("sign-in-who").textContent = signed.name ? signed.name + " (" + signed.email + ")" : signed.email;
+    const initial = el("sign-in-initial");
+    if (initial) initial.textContent = signed ? (signed.name || signed.email).trim().charAt(0).toUpperCase() : "";
     const photo = el("sign-in-photo");
     photo.hidden = !(signed && signed.picture);
     if (signed && signed.picture) photo.src = signed.picture;

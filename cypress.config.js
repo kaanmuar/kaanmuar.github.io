@@ -2,6 +2,7 @@ const { defineConfig } = require('cypress');
 const { spawn } = require('child_process');
 const net = require('net');
 const { beforeRunHook, afterRunHook } = require('cypress-mochawesome-reporter/lib');
+const { assertStaticServer } = require('./scripts/static-server-check');
 
 const PORT = Number(process.env.TEST_PORT || 8765);
 const baseUrl = process.env.CYPRESS_BASE_URL || `http://127.0.0.1:${PORT}`;
@@ -72,6 +73,8 @@ module.exports = defineConfig({
             stdio: 'ignore'
           });
           await waitForPort(PORT);
+        } else if (!process.env.CYPRESS_BASE_URL) {
+          await assertStaticServer(PORT);
         }
         await beforeRunHook(details);
       });

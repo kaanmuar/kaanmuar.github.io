@@ -164,6 +164,70 @@ function analyzeHtmlPages(rows, extras) {
   return insights.analyze({ pages, extras: extras || {} });
 }
 
+test.describe("page paths for the URL Review box (#632)", () => {
+  const zlib = require("node:zlib");
+  const xml = (urls) => "<?xml version=\"1.0\"?><urlset>" + urls.map((url) => "<url><loc>" + url + "</loc></url>").join("") + "</urlset>";
+
+  test("paths come from the robots.txt sitemap index and its .gz children, shallowest first", async () => {
+    const restore = fakeNetwork({
+      "https://shop.example.net/robots.txt": { status: 200, headers: { "content-type": "text/plain" }, body: "User-agent: *\nSitemap: https://shop.example.net/index.xml\n" },
+      "https://shop.example.net/index.xml": { status: 200, headers: { "content-type": "application/xml" }, body: "<sitemapindex><sitemap><loc>https://shop.example.net/pages.xml.gz</loc></sitemap></sitemapindex>" },
+      "https://shop.example.net/pages.xml.gz": { status: 200, headers: { "content-type": "application/x-gzip" }, body: zlib.gzipSync(Buffer.from(xml([
+        "https://shop.example.net/",
+        "https://shop.example.net/products/blue-mug",
+        "https://www.shop.example.net/pricing",
+        "https://shop.example.net/checkout",
+        "https://shop.example.net/docs/guide.pdf",
+        "https://cdn.example.net/elsewhere",
+        "https://shop.example.net/caf%C3%A9",
+        "https://shop.example.net/checkout"
+      ]))) }
+    });
+    try {
+      const result = await core.sitePaths("Shop.Example.net");
+      assert.equal(result.host, "shop.example.net");
+      assert.deepEqual(result.paths, ["/café", "/pricing", "/checkout", "/products/blue-mug"]);
+    } finally {
+      restore();
+    }
+  });
+
+  test("a site without a sitemap gives no paths and no error, and the answer is kept per host", async () => {
+    let restore = fakeNetwork({});
+    try {
+      assert.deepEqual((await core.sitePaths("bare.example.net")).paths, []);
+    } finally {
+      restore();
+    }
+    restore = fakeNetwork({ "https://kept.example.net/sitemap.xml": { status: 200, headers: { "content-type": "application/xml" }, body: xml(["https://kept.example.net/about"]) } });
+    try {
+      assert.deepEqual((await core.sitePaths("kept.example.net")).paths, ["/about"]);
+    } finally {
+      restore();
+    }
+    restore = fakeNetwork({});
+    try {
+      assert.deepEqual((await core.sitePaths("https://kept.example.net/anything")).paths, ["/about"]);
+    } finally {
+      restore();
+    }
+  });
+
+  test("private, internal, and malformed hosts are refused before any request", async () => {
+    for (const host of ["", "localhost", "printer.local", "metadata.google.internal", "10.0.0.1", "[::1]", "example", "exa mple.com"]) {
+      await assert.rejects(core.sitePaths(host), (error) => error.code === "BAD_HOST", host);
+    }
+  });
+
+  test("paths are capped and sorted by depth, then length", () => {
+    const urls = Array.from({ length: 400 }, (_, i) => "https://a.example.net/" + (i % 2 ? "deep/" : "") + "p" + i);
+    const paths = core.sitemapPaths(urls, "a.example.net");
+    assert.equal(paths.length, 300);
+    assert.equal(paths[0], "/p0");
+    assert.ok(paths.slice(0, 200).every((path) => !path.startsWith("/deep/")));
+  });
+});
+
 test.describe("false positives from the real-run series", () => {
   const zlib = require("node:zlib");
 
@@ -772,6 +836,48 @@ test.describe("account page file", () => {
   });
 });
 
+test.describe("a run paid through a credit", () => {
+  const offers = require("../../functions/url-review-offers");
+  const desk = require("../../functions/url-review-desk");
+  const now = Date.parse("2026-10-22T10:00:00Z");
+  const value = core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.com", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://shop.example.com/" }).value;
+  const report = (id, host) => ({ id, host, statement: "The checkout keeps a stale price", cases: [{ id: "c1", layer: "UI", title: "Coupon total does not refresh" }], pages: [] });
+  const credit = { id: "k1", status: "run-credit", paid: true, deviceId: "d1", frameworks: ["Playwright"], tools: [], pages: 20, depth: 2, priceUsd: 19, createdAt: "2026-10-21T00:00:00Z" };
+  const earlier = Object.assign(core.intakeRecord(value, report("r0", "old.example.com"), { deviceId: "d1" }), { createdAt: "2026-10-20T00:00:00Z" });
+
+  test("opens its own report for its owner, and only that report", () => {
+    const decision = core.judgeAttempts([credit, earlier], { deviceId: "d1", ip: "" }, value);
+    assert.deepEqual(decision, { ok: true, consumeId: "k1" });
+    const run = Object.assign(core.intakeRecord(value, report("r1", "shop.example.com"), { deviceId: "d1", creditId: decision.consumeId }), { createdAt: "2026-10-21T12:00:00Z" });
+    assert.equal(run.paid, true);
+    assert.equal(run.creditId, "k1");
+    const file = offers.accountFile([credit, earlier, run], "ana@example.com", now);
+    assert.equal(file.open, false);
+    assert.deepEqual(file.runs.map((row) => [row.id, row.open]), [["r1", true], ["r0", false]]);
+    assert.equal(file.runs[0].cases[0].title, "Coupon total does not refresh");
+    assert.notEqual(file.runs[1].cases[0].title, "Coupon total does not refresh");
+  });
+
+  test("a credit bought but not yet used unlocks nothing", () => {
+    const file = offers.accountFile([credit, earlier], "ana@example.com", now);
+    assert.deepEqual(file.runs.map((row) => [row.id, row.open]), [["r0", false]]);
+    assert.equal(earlier.paid, false);
+    assert.equal(earlier.creditId, "");
+  });
+
+  test("a normal unpaid run stays blurred", () => {
+    const run = core.intakeRecord(value, report("r2", "shop.example.com"), { deviceId: "d1" });
+    assert.equal(run.paid, false);
+    assert.equal(offers.accountFile([run], "ana@example.com", now).runs[0].open, false);
+  });
+
+  test("the desk counts the payment once, through the credit row", () => {
+    const run = Object.assign(core.intakeRecord(value, report("r1", "shop.example.com"), { deviceId: "d1", creditId: "k1" }), { createdAt: "2026-10-21T12:00:00Z" });
+    const used = { id: "u1", status: "run-credit-used", creditId: "k1", deviceId: "d1", createdAt: "2026-10-21T11:59:00Z" };
+    assert.equal(desk.snapshot([credit, used, run], [], [], [], []).tally.paid, 1);
+  });
+});
+
 test.describe("return price", () => {
   const offers = require("../../functions/url-review-offers");
   const now = Date.parse("2026-10-20T15:00:00Z");
@@ -1020,13 +1126,29 @@ test.describe("publishing user reviews to Live Reports", () => {
   });
 });
 
+test("functions/.env.example lists every key the functions read", () => {
+  const dir = path.join(__dirname, "../../functions");
+  const listed = new Set(fs.readFileSync(path.join(dir, ".env.example"), "utf8").match(/^[A-Z0-9_]+(?==)/gm));
+  const runtime = new Set(["GCLOUD_PROJECT", "GCP_PROJECT"]);
+  const read = new Set();
+  fs.readdirSync(dir).filter((name) => name.endsWith(".js")).forEach((name) => {
+    for (const m of fs.readFileSync(path.join(dir, name), "utf8").matchAll(/process\.env\.([A-Z0-9_]+)/g)) read.add(m[1]);
+  });
+  assert.deepEqual([...read].filter((key) => !listed.has(key) && !runtime.has(key)).sort(), []);
+});
+
 test("the intake takes the current terms and the ones just before, and records which", () => {
   const body = (termsVersion) => ({ termsAccepted: true, termsVersion, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://example.org/" });
   const now = core.validateIntake(body(core.TERMS_VERSION));
   assert.deepEqual(now.errors, []);
   assert.equal(now.value.termsVersion, core.TERMS_VERSION);
-  assert.equal(core.validateIntake(body("2026-10-22")).value.termsVersion, "2026-10-22");
+  assert.equal(core.validateIntake(body("2026-10-22.2")).value.termsVersion, "2026-10-22.2");
   assert.ok(core.validateIntake(body("2026-09-01")).errors.some((e) => e.field === "terms"));
+});
+
+test("the review page sends the terms version the server takes as current", () => {
+  const page = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8").match(/TERMS_VERSION = "([^"]+)"/)[1];
+  assert.equal(page, core.TERMS_VERSION);
 });
 
 test("payment rows are kept until January 1 of the sixth year after the payment", () => {
@@ -1067,6 +1189,7 @@ test("failure causes are classed from the review's own messages", () => {
     ["That address is not a public website.", "input"],
     ["certificate has expired", "tls"],
     ["connect ECONNREFUSED 1.2.3.4:443", "connection"],
+    ["Value for argument \"data\" is not a valid Firestore document. Cannot use \"undefined\" as a Firestore value (found in field \"report.cases.`28`.path\").", "save"],
     ["Cannot read properties of undefined (reading 'x')", "unknown"]
   ];
   cases.forEach(([message, id]) => assert.equal(failures.causeOf(message).id, id, message));
@@ -1095,7 +1218,7 @@ test("a failed run keeps its log, error and timings for 90 days", () => {
   assert.equal(record.timings.ms, 60000);
   assert.equal(record.expireAt.getTime() - 61000, 90 * 86400000);
   assert.equal(record.diagnosedAt, null);
-  assert.deepEqual(record.options, { pages: 20, depth: 2, frameworks: ["playwright"] });
+  assert.deepEqual(record.options, { pages: 20, depth: 2, pageLang: "", section: false, frameworks: ["playwright"] });
 
   const stopped = failures.failureRecord({ kind: "stopped", url: "https://shop.example.com/", lines: [] });
   assert.equal(stopped.error, null);
@@ -1479,7 +1602,7 @@ test.describe("chat widgets", () => {
     };
     const withChat = await run({ found: [{ name: "Intercom", ai: false, hosts: ["widget.intercom.io"], requests: 3, bytes: 1000, ms: 0 }, { name: "Chatbase", ai: true, hosts: ["www.chatbase.co"], requests: 1, bytes: 100, ms: 0 }], cookies: [] });
     assert.deepEqual(withChat.technologies.filter((item) => /Chat|AI/.test(item.group)).map((item) => [item.name, item.group]), [["Intercom", "Chat"], ["Chatbase", "AI chatbot"]]);
-    assert.deepEqual(withChat.cases.filter((item) => /^CHAT-/.test(item.id)).map((item) => item.id), ["CHAT-01", "CHAT-02", "CHAT-03", "CHAT-04"]);
+    assert.deepEqual(withChat.cases.filter((item) => /^CHAT-/.test(item.id)).map((item) => item.id).sort(), ["CHAT-01", "CHAT-02", "CHAT-03", "CHAT-04"]);
     const without = await run(undefined);
     assert.equal(without.cases.filter((item) => /^CHAT-/.test(item.id)).length, 0);
   });
@@ -1700,6 +1823,28 @@ test.describe("legal pages and front-end libraries", () => {
       const ids = result.cases.map((item) => item.id);
       assert.ok(["A11Y-06", "PR-04", "SEC-10"].every((id) => ids.includes(id)), ids.join(","));
       assert.match(result.cases.find((item) => item.id === "SEC-10").why, /jQuery 1\.12\.4/);
+    } finally {
+      restore();
+    }
+  });
+
+  test("a competitor run hands the passive flag to every browser job and records it", async () => {
+    const restore = fakeNetwork({ "https://shop.example.de/": { status: 200, headers: STRONG_HEADERS, body: body("<p>Hallo</p>", "de") } });
+    try {
+      const jobs = [];
+      const lines = [];
+      const owner = { reasonCode: "own", email: "ana@shop.example.de" };
+      const passive = await core.reviewTarget("https://shop.example.de/", { passive: true, asker: owner, log: (text) => lines.push(text), browse: async (job) => { jobs.push(job); return { ok: false }; } });
+      assert.ok(jobs.length >= 1);
+      jobs.forEach((job) => assert.equal(job.passive, true));
+      assert.ok(!jobs.some((job) => job.kind === "chat"), "a competitor run never starts the chat conversation, even with the owner's proof");
+      assert.equal(passive.limits.passive, true);
+      assert.ok(lines.some((text) => /competitor run: the browser types into no field and does not open the chat/.test(text)));
+      jobs.length = 0;
+      const plain = await core.reviewTarget("https://shop.example.de/", { asker: owner, browse: async (job) => { jobs.push(job); return { ok: false }; } });
+      jobs.forEach((job) => assert.equal(job.passive, false));
+      assert.ok(jobs.some((job) => job.kind === "chat"));
+      assert.equal(plain.limits.passive, false);
     } finally {
       restore();
     }
@@ -1953,4 +2098,176 @@ test("mentions come from search results on other sites only", () => {
     { title: "No link", url: "javascript:void(0)" }
   ];
   assert.deepEqual(core.parseMentions(rows, "acme.co").map((row) => [row.href, row.tone]), [["https://news.example/acme", "Favorable"]]);
+});
+
+test("a review can ask for a language and stay under the start path", () => {
+  const body = (extra) => Object.assign({
+    termsAccepted: true,
+    termsVersion: core.TERMS_VERSION,
+    name: "Ana Ruiz",
+    email: "ana@example.org",
+    reasonCode: "teaching",
+    frameworks: ["Playwright"],
+    url: "https://example.org/docs/guide"
+  }, extra);
+  const site = core.validateIntake(body()).value;
+  assert.equal(site.pageLang, "");
+  assert.equal(site.section, false);
+  const es = core.validateIntake(body({ pageLang: "es", section: true })).value;
+  assert.equal(es.pageLang, "es");
+  assert.equal(es.section, true);
+  const ignored = core.validateIntake(body({ pageLang: "english", section: "yes" })).value;
+  assert.equal(ignored.pageLang, "");
+  assert.equal(ignored.section, false);
+  assert.equal(core.sectionPrefix("https://example.org/docs/guide"), "/docs/guide");
+  assert.equal(core.sectionPrefix("https://example.org/docs/"), "/docs");
+  assert.equal(core.sectionPrefix("https://example.org/"), "");
+  assert.equal(core.underSection("https://example.org/docs/guide/install", "/docs/guide"), true);
+  assert.equal(core.underSection("https://example.org/docs", "/docs/guide"), false);
+  assert.equal(core.underSection("https://example.org/about", ""), true);
+  assert.deepEqual(core.sitemapCandidates([
+    "https://example.org/docs/guide",
+    "https://example.org/docs/guide/install",
+    "https://example.org/about",
+    "https://other.example/docs/guide/x",
+    "https://example.org/docs/guide/file.pdf",
+    "https://example.org/docs/guide/next"
+  ], "https://example.org/docs/guide", "/docs/guide", 10, ["https://example.org/docs/guide"]), [
+    "https://example.org/docs/guide/install",
+    "https://example.org/docs/guide/next"
+  ]);
+  const record = core.intakeRecord(es, { id: "r", status: "complete" }, {});
+  assert.equal(record.pageLang, "es");
+  assert.equal(record.section, true);
+  const failed = require("../../functions/url-review-failures").failureRecord({
+    kind: "failed", url: "https://example.org/docs", pageLang: "es", section: true, error: "x"
+  });
+  assert.equal(failed.options.pageLang, "es");
+  assert.equal(failed.options.section, true);
+  assert.equal(failed.intake.section, true);
+});
+
+test.describe("cases built from evidence and ranked by risk", () => {
+  const caseRank = require("../../functions/url-review-cases");
+  const SITE = "https://garden.example.com/";
+  const page = (title, inner, head) => "<!doctype html><html lang=\"en\"><head>" + (title ? "<title>" + title + "</title>" : "") + (head || "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">") + "</head><body><main>" + inner + "</main></body></html>";
+  const routes = {
+    [SITE]: { status: 200, headers: STRONG_HEADERS, body: page("Garden tools", "<h1>Garden tools</h1><img src=\"a.png\"><a href=\"/about\">About</a> <a href=\"/login\">Sign in</a>") },
+    "https://garden.example.com/about": { status: 200, headers: STRONG_HEADERS, body: page("", "<h1>About</h1><img src=\"b.png\"><img src=\"c.png\">") },
+    "https://garden.example.com/login": { status: 200, headers: STRONG_HEADERS, body: page("Sign in", "<h1>Sign in</h1><form><input name=\"user\"><input type=\"password\" name=\"pw\"></form>", "<meta name=\"viewport\" content=\"width=device-width, user-scalable=no\">") }
+  };
+  const browser = {
+    ok: true,
+    start: { status: 200, finalPath: "/", requests: 40, vitals: { lcp: 1200, cls: 0, tbt: 0 }, dom: { links: [], nav: [], forms: 0, buttons: 0, iframes: 0 } },
+    consent: { banner: "", rejected: false, before: { vendors: [], cookies: [] }, after: null },
+    axe: { ran: true, version: "4.10.0", pages: [
+      { path: "/", violations: [{ id: "color-contrast", impact: "serious", help: "Elements must meet minimum color contrast ratio thresholds", nodes: 6, targets: [".hero p", ".footer a"] }, { id: "link-name", impact: "serious", help: "Links must have discernible text", nodes: 2, targets: ["a.social-x"] }] },
+      { path: "/about", violations: [{ id: "link-name", impact: "serious", help: "Links must have discernible text", nodes: 1, targets: ["a.icon"] }] }
+    ] },
+    mobile: { width: 390, overflow: 120, offenders: ["table.prices"] }
+  };
+  const review = async () => {
+    const restore = fakeNetwork(routes);
+    try {
+      return await core.reviewTarget(SITE, { browse: async (job) => job.html ? { ok: false } : browser });
+    } finally {
+      restore();
+    }
+  };
+
+  test("cases name the host and paths, span every page, and drop the retired duplicates", async () => {
+    const result = await review();
+    const byId = (id) => result.cases.find((item) => item.id === id);
+    const ids = result.cases.map((item) => item.id);
+    ["I18N-01", "VIS-02", "SEO-01", "A11Y-03", "FM-02", "LK-02", "RS-02", "LD-02", "LD-03", "LK-04"].forEach((id) => assert.ok(!ids.includes(id), id + " is retired"));
+    assert.equal(new Set(ids).size, ids.length, "ids are unique");
+    assert.match(byId("FN-01").title, /^garden\.example\.com answers over https$/);
+    assert.match(byId("FM-03").title, /garden\.example\.com\/login/);
+    assert.equal(byId("FM-03").path, "/login");
+    assert.equal(byId("FM-01").path, "/login");
+    assert.match(byId("A11Y-01").why, /3 images without alt across garden\.example\.com, garden\.example\.com\/about, most on garden\.example\.com\/about\./);
+    assert.equal(byId("A11Y-07").check.kind, "count");
+    assert.match(byId("FN-07").why, /garden\.example\.com\/about/);
+    assert.ok(result.cases.every((item) => !/the start page|the reviewed URL/i.test(item.title)), "titles name the site");
+  });
+
+  test("axe rules, the phone overflow and open findings become ranked cases", async () => {
+    const result = await review();
+    const byId = (id) => result.cases.find((item) => item.id === id);
+    const ids = result.cases.map((item) => item.id);
+    const axe = result.cases.filter((item) => /^AXE-/.test(item.id));
+    assert.deepEqual(axe.map((item) => [item.title, item.pages, item.verdict]), [["Links must have discernible text on garden.example.com", ["/", "/about"], "fail"]]);
+    assert.match(byId("A11Y-04").why, /color-contrast \(serious\).*\.hero p/);
+    assert.equal(byId("A11Y-04").verdict, "fail");
+    assert.match(byId("MB-01").why, /Seen on garden\.example\.com: At 390 px the page is 120 px wider than the screen\. Widest elements: table\.prices\./);
+    assert.ok(!ids.some((id) => /^RT-/.test(id) && /discernible text/.test(byId(id).title)), "the axe finding joins its AXE case");
+    assert.equal(byId("FN-02").verdict, undefined, "a missing title on /about does not fail the start page's title case");
+    assert.deepEqual([byId("FN-20").title, byId("FN-20").verdict, byId("FN-20").severity], ["garden.example.com/about has no title", "fail", "medium"]);
+    assert.deepEqual(byId("MB-01").selectors, ["table.prices"]);
+    assert.ok(result.cases.every((item) => /^P[1-4]$/.test(item.priority) && item.risk >= 0 && item.risk <= 100));
+    const risks = result.cases.map((item) => item.risk);
+    assert.deepEqual(risks, risks.slice().sort((a, b) => b - a), "ranked by risk");
+    assert.deepEqual(result.cases.map((item) => item.n), result.cases.map((item, index) => index + 1));
+    const first = result.cases.findIndex((item) => item.verdict === "fail");
+    const proposed = result.cases.findIndex((item) => !item.verdict);
+    assert.ok(first < proposed, "evidence ranks above guesses");
+    assert.deepEqual(result.counts.byLayer, caseRank.countLayers(result.cases));
+    assert.equal(Object.values(result.counts.byLayer).reduce((a, b) => a + b, 0), result.cases.length);
+  });
+
+  test("an open finding with no case becomes a retest, and a pass keeps its verdict", () => {
+    const cases = [{ id: "SEC-03", layer: "Security", title: "x", why: "y", fw: ["Playwright"] }, { id: "FN-04", layer: "Functional", title: "x", why: "y", fw: ["Playwright"] }];
+    const findings = [
+      { id: "F-01", key: "pf-console", area: "Performance", verdict: "fail", severity: "high", title: "3 JavaScript errors on load", evidence: "TypeError: x is undefined on /.", fix: "Fix the error", pages: ["/"], rank: 1 },
+      { id: "F-02", key: "a11y-lang", area: "Accessibility", verdict: "pass", severity: "info", title: "Language set", evidence: "", cases: ["I18N-01"] },
+      { id: "F-03", key: "sec-csp", area: "Security", verdict: "risk", severity: "medium", title: "No CSP", evidence: "content-security-policy was absent.", cases: ["SEC-03"], pages: ["/", "/a"] }
+    ];
+    const out = caseRank.refine(cases, { findings, origin: "https://shop.example.com" });
+    const byId = (id) => out.find((item) => item.id === id);
+    assert.equal(out[0].id, "RT-01");
+    assert.match(out[0].title, /^Retest on shop\.example\.com: 3 JavaScript errors on load$/);
+    assert.equal(out[0].priority, "P1");
+    assert.equal(byId("FN-04").verdict, "pass");
+    assert.equal(byId("SEC-03").verdict, "risk");
+    assert.match(byId("SEC-03").why, /Seen on shop\.example\.com: content-security-policy was absent\./);
+    assert.deepEqual(byId("SEC-03").pages, ["/", "/a"]);
+    assert.equal(byId("SEC-03").path, "/");
+  });
+
+  test("refined cases carry no undefined field, so the report can be saved to Firestore", () => {
+    const cases = [{ id: "A11Y-01", layer: "Accessibility", title: "x", why: "y", fw: ["Playwright"], path: undefined, pages: [] }];
+    const findings = [{ id: "F-01", key: "x-none", area: "Performance", verdict: "risk", severity: "low", title: "Slow", evidence: "Slow.", rank: 1 }];
+    const out = caseRank.refine(cases, { findings, origin: "https://shop.example.com" });
+    const holes = out.flatMap((item) => Object.keys(item).filter((key) => item[key] === undefined).map((key) => item.id + "." + key));
+    assert.deepEqual(holes, []);
+  });
+
+  test("a case's own check and path drive its script", () => {
+    const report = { finalUrl: "https://shop.example.com/", host: "shop.example.com", pages: [{ path: "/", status: 200 }], cases: [
+      { id: "A11Y-07", layer: "Accessibility", title: "Pinch zoom is allowed", why: "Blocked. Expected none.", fw: ["Playwright"], path: "/login", check: { kind: "count", path: "/login", selector: "meta[name=\"viewport\"][content*=\"user-scalable=no\" i]", op: "eq", n: 0 } },
+      { id: "A11Y-01", layer: "Accessibility", title: "Images", why: "Missing. Expected none.", fw: ["Playwright"], path: "/about" }
+    ] };
+    const { files } = scripts.bundle(report, report.cases, ["Playwright"]);
+    const text = files.map((file) => file.content || file.text || "").join("\n");
+    assert.match(text, /\/login/);
+    assert.match(text, /user-scalable=no/);
+    assert.match(text, /\/about/);
+    assert.doesNotMatch(text, /test\.fixme\("A11Y-07/);
+  });
+
+  test("the fix kit does not tell a site Cloudflare already fronts to put Cloudflare in front", () => {
+    const readme = (technologies) => {
+      const report = { url: "https://example.com/", cases: [], technologies, insights: { fixkit: { hosting: "GitHub Pages", headers: [{ name: "X-Frame-Options", value: "DENY" }] } } };
+      return scripts.bundle(report, [], ["Playwright"]).files.find((file) => file.path === "fix-kit/README.md").content;
+    };
+    const proxied = readme([{ name: "Cloudflare" }]);
+    assert.match(proxied, /Transform Rule/);
+    assert.doesNotMatch(proxied, /Put a CDN|in front and use/);
+    assert.match(readme([]), /Put a CDN such as Cloudflare in front/);
+  });
+
+  test("the preview keeps the priority and drops the selectors and checks", () => {
+    const preview = core.previewReport({ cases: [{ id: "MB-01", title: "Layout holds", why: "Wider. Pushed out.", priority: "P2", risk: 30, pages: ["/"], selectors: ["table.prices"], check: { kind: "viewport" } }] });
+    assert.deepEqual([preview.cases[0].priority, preview.cases[0].risk, preview.cases[0].selectors, preview.cases[0].check], ["P2", 30, undefined, undefined]);
+  });
 });

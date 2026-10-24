@@ -96,6 +96,18 @@ test("the desk counts a paid report once, through its payment row", () => {
   assert.equal(desk.snapshot(rows, [], [], [], []).tally.paid, 2);
 });
 
+test("the desk counts a test payment only once it is captured, and never as paid", () => {
+  const rows = [
+    { id: "credit", email: EMAIL, status: "run-credit", paid: true, test: true, priceUsd: 19, provider: "paypal" },
+    { id: "open1", email: EMAIL, status: "checkout-open", paid: false, test: true, priceUsd: 19, provider: "paypal" },
+    { id: "open2", email: EMAIL, status: "checkout-open", paid: false, test: true, priceUsd: 19, provider: "paypal" }
+  ];
+  const tally = desk.snapshot(rows, [], [], [], []).tally;
+  assert.equal(tally.test, 1);
+  assert.equal(tally.paid, 0);
+  assert.equal(tally.checkout, 2);
+});
+
 test("deleting the account drops a paid run whose payment has its own row, and keeps that row", async () => {
   const store = auth.memoryStore();
   await store.set("url_reviews", "run9", { email: EMAIL, status: "complete", paid: true, provider: "wompi", report: { cases: [1] } });
@@ -115,4 +127,71 @@ test("deleting twice leaves the kept rows as they are", async () => {
   const counts = await accountData.deleteAccount(store, EMAIL, { now: Date.parse("2026-11-22T00:00:00Z") });
   assert.equal(counts.paymentsKept, undefined);
   assert.equal((await store.get("url_reviews", "run2")).accountDeletedAt, "2026-10-22T00:00:00.000Z");
+});
+
+test("the desk opens for the operator email signed in by password or Google, and nothing else", async () => {
+  const realFetch = global.fetch;
+  let user = null;
+  global.fetch = async () => ({ json: async () => ({ users: [user] }) });
+  const as = (providerId, extra) => Object.assign({ email: "kaanmuar@gmail.com", emailVerified: true, providerUserInfo: [{ providerId }] }, extra);
+  const token = "t".repeat(40);
+  try {
+    user = as("password");
+    assert.equal(await desk.verifyOperator(token), "kaanmuar@gmail.com");
+    user = as("google.com");
+    assert.equal(await desk.verifyOperator(token), "kaanmuar@gmail.com");
+    user = as("password", { emailVerified: false });
+    assert.equal(await desk.verifyOperator(token), null);
+    user = as("password", { email: "someone@example.com" });
+    assert.equal(await desk.verifyOperator(token), null);
+    user = as("github.com");
+    assert.equal(await desk.verifyOperator(token), null);
+    assert.equal(await desk.verifyOperator("short"), null);
+  } finally {
+    global.fetch = realFetch;
+  }
+});
+
+test("the desk page offers email and password before Google and asks for the authenticator code", () => {
+  for (const page of [desk.PAGE, desk.FAILURES_PAGE]) {
+    assert.ok(page.indexOf('id="desk-password"') < page.indexOf('id="desk-google"'));
+    assert.match(page, /signInWithEmailAndPassword/);
+    assert.match(page, /auth\/multi-factor-auth-required/);
+    assert.doesNotMatch(page, /This Google account cannot open/);
+  }
+});
+
+test("deleting chosen runs drops them and what hangs off them, and nothing else", async () => {
+  const store = await seeded();
+  const counts = await accountData.deleteRuns(store, "Ana@Example.com", ["run1"]);
+  assert.deepEqual(counts, { deleted: 1, paymentsKept: 0, skipped: 0 });
+  assert.equal(await store.get("url_reviews", "run1"), null);
+  assert.equal(await store.get("url_review_captures", "c1"), null);
+  assert.equal(await store.get("url_review_stops", "run1"), null);
+  assert.ok(await store.get("url_reviews", "run2"));
+  assert.ok(await store.get("url_review_captures", "c2"));
+  assert.ok(await store.get("url_review_accounts", EMAIL));
+});
+
+test("deleting chosen runs keeps a paid run's payment and skips other people's runs and payment rows", async () => {
+  const store = await seeded();
+  await store.set("url_reviews", "paid-report-run1", offers.reportPayment({ email: EMAIL }, { reportId: "run1", provider: "wompi", amount: 950, deviceId: "abc" }));
+  const counts = await accountData.deleteRuns(store, EMAIL, ["run2", "other", "credit1", "paid-report-run1", "../x", "missing"], { now: Date.parse("2026-10-23T00:00:00Z") });
+  assert.deepEqual(counts, { deleted: 1, paymentsKept: 1, skipped: 5 });
+  const kept = await store.get("url_reviews", "run2");
+  assert.equal(kept.report, undefined);
+  assert.equal(kept.amount, 950);
+  assert.equal(kept.accountDeletedAt, "2026-10-23T00:00:00.000Z");
+  assert.ok(await store.get("url_reviews", "other"));
+  assert.ok(await store.get("url_reviews", "credit1"));
+  assert.ok(await store.get("url_reviews", "paid-report-run1"));
+});
+
+test("deleting a paid run whose payment has its own row removes the run outright", async () => {
+  const store = await seeded();
+  await store.set("url_reviews", "paid-report-run2", offers.reportPayment({ email: EMAIL }, { reportId: "run2", provider: "wompi", amount: 950, deviceId: "abc" }));
+  const counts = await accountData.deleteRuns(store, EMAIL, ["run2"]);
+  assert.deepEqual(counts, { deleted: 1, paymentsKept: 0, skipped: 0 });
+  assert.equal(await store.get("url_reviews", "run2"), null);
+  assert.ok(await store.get("url_reviews", "paid-report-run2"));
 });

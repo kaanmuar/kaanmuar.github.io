@@ -1,4 +1,5 @@
 const path = require('path');
+require('../../scripts/playwright-sandbox');
 const { chromium, firefox, webkit } = require('playwright');
 const { ensureServer, BASE } = require('./server');
 

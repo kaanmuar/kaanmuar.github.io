@@ -1,3 +1,4 @@
+require('./scripts/playwright-sandbox');
 const { defineConfig, devices } = require('@playwright/test');
 
 const port = process.env.TEST_PORT || '8765';
@@ -8,6 +9,7 @@ const channel = process.env.PW_CHANNEL;
 module.exports = defineConfig({
   testDir: './tests',
   testIgnore: ['**/unit/**'],
+  globalSetup: require.resolve('./tests/global-setup.js'),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

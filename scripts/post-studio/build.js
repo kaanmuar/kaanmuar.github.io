@@ -7,6 +7,7 @@
 const fs = require("fs");
 const path = require("path");
 const { execFileSync, spawnSync } = require("child_process");
+require("../playwright-sandbox");
 const { chromium } = require("playwright");
 const sharp = require("sharp");
 const studio = require("./posts");

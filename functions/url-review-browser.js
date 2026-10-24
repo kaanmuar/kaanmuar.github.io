@@ -5,11 +5,13 @@
  * checks a tablet width, and keeps three small screenshots. The only click is a cookie banner's reject button.
  * It watches the canvas, WebGL, audio and font calls scripts make, and types a test address into one form field
  * without submitting; any request carrying that address is blocked, so nothing typed leaves the browser.
+ * A separate "chat" job opens the site's chat and sends a fixed script; the caller sends it only with the owner's proof.
  */
 const fs = require("fs");
 const crypto = require("crypto");
 const dns = require("dns").promises;
 const { legalLinks, LEGAL_ANY } = require("./url-review-legal");
+const chatTalk = require("./url-review-chat-talk");
 const { fromUrl: libraryFromUrl, fromContent: libraryFromContent, fromGlobals: libraryFromGlobals, PROBE: LIBRARY_PROBE } = require("./url-review-libraries");
 
 const AGENT_TAG = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
@@ -498,7 +500,17 @@ function canaryOf() {
 }
 
 // Types a test address into one contact field without submitting, then blurs it. Requests carrying it are blocked in prepare().
-async function typeProbe(page, rec, phase) {
+// A competitor run is strictly passive: nothing is typed into the site and its chat is never opened.
+function passiveJob(job) {
+  return !!(job && job.passive === true);
+}
+
+function refusePassive(job, action) {
+  if (passiveJob(job)) throw new Error(action + " was refused: a competitor run is strictly passive.");
+}
+
+async function typeProbe(page, rec, phase, job) {
+  refusePassive(job, "Typing into a field");
   const handle = await page.evaluateHandle(() => {
     const hint = /mail|name|nombre|nome|phone|tel|first|last|vorname|prenom|cognome|apellido/i;
     const search = /search|query|^q$|buscar|busca|suche|recherche|cerca|pesquis/i;
@@ -534,11 +546,17 @@ async function settle(page) {
   try { await page.waitForNetworkIdle({ idleTime: 700, timeout: IDLE_MS }); } catch (error) { /* busy pages keep polling */ }
 }
 
-async function prepare(context, ua, rec, viewport) {
+async function prepare(context, ua, rec, viewport, acceptLanguage) {
   const page = await context.newPage();
   await page.setViewport(viewport);
   await page.setUserAgent(ua);
-  await page.setExtraHTTPHeaders({ "accept-language": "en-US,en;q=0.9" });
+  if (acceptLanguage) {
+    await page.setExtraHTTPHeaders({ "accept-language": acceptLanguage });
+    await page.evaluateOnNewDocument((lang) => {
+      Object.defineProperty(Navigator.prototype, "language", { get: () => lang });
+      Object.defineProperty(Navigator.prototype, "languages", { get: () => [lang] });
+    }, acceptLanguage);
+  }
   await page.evaluateOnNewDocument(() => { Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }); });
   await page.setRequestInterception(true);
   page.on("request", async (req) => {
@@ -944,7 +962,8 @@ function placeFocus(roots, frameRe) {
 const CLOSE_TEXT = /close|minimi[sz]e|dismiss|hide|cerrar|minimizar|fechar|schlie(ß|ss)en|fermer|r[ée]duire|chiudi|riduci/i;
 
 // Opens the launcher with the keyboard (a click if Enter does nothing), then reads the privacy link and whether Tab, a close button, or Escape leaves it.
-async function openChat(page, roots) {
+async function openChat(page, roots, job) {
+  refusePassive(job, "Opening the chat");
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const out = { opened: false, keyboard: false, moved: false, entered: false, trapped: false, exit: "", tabs: 0, privacy: null };
   const handle = await page.$("[data-qa-chat]");
@@ -1015,6 +1034,116 @@ async function openChat(page, roots) {
   return out;
 }
 
+const START_TEXT = /send us a message|new (conversation|message)|start (a )?(chat|conversation)|chat with us|ask a question|message us|talk to us|enviar (un )?mensaje|nueva conversaci[oó]n|iniciar (el )?(chat|conversaci[oó]n)|enviar mensagem|nova conversa|iniciar conversa|nachricht senden|neue (unterhaltung|konversation|nachricht)|chat starten|envoyer un message|nouvelle conversation|d[ée]marrer|invia (un )?messaggio|nuova conversazione|avvia (la )?(chat|conversazione)/i;
+const SEND_TEXT = /^(send|send message|submit|enviar|enviar mensaje|enviar mensagem|senden|absenden|envoyer|invia|inviare)$/i;
+const COMPOSER = "textarea, [contenteditable=true], [contenteditable=''], [role=textbox], input[type=text], input:not([type])";
+
+// Frames that belong to a chat: served from a chat host, or an iframe named like one.
+async function chatFrames(page) {
+  const re = new RegExp(CHAT_FRAME, "i");
+  const out = [];
+  for (const frame of page.frames()) {
+    if (frame === page.mainFrame()) continue;
+    let host = "";
+    try { host = new URL(frame.url()).hostname; } catch (error) { host = ""; }
+    let tag = "";
+    try {
+      const node = await frame.frameElement();
+      if (node) {
+        tag = await node.evaluate((el) => [el.name, el.id, el.title, el.className, el.getAttribute("src") || ""].join(" "));
+        await node.dispose();
+      }
+    } catch (error) { tag = ""; }
+    if (chatOf(host) || re.test(tag)) out.push(frame);
+  }
+  return out;
+}
+
+function composerIn(selector, scopes, search) {
+  const visible = (node) => {
+    const rect = node.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    return rect.width > 20 && rect.height > 10 && style.visibility !== "hidden" && style.display !== "none" && !node.disabled && !node.readOnly;
+  };
+  let places = [document];
+  if (scopes) {
+    try { places = Array.from(document.querySelectorAll(scopes)); } catch (error) { places = []; }
+  }
+  const re = new RegExp(search, "i");
+  for (const place of places) {
+    const hits = Array.from(place.querySelectorAll(selector)).filter((node) => visible(node) && node.getAttribute("type") !== "search" && !re.test([node.name, node.placeholder, node.getAttribute("aria-label")].join(" ")));
+    const best = hits.find((node) => node.tagName === "TEXTAREA" || node.isContentEditable || node.getAttribute("role") === "textbox") || hits[0];
+    if (best) return best;
+  }
+  return null;
+}
+
+// The chat's message box, in a chat frame or inside the widget's roots on the page.
+async function findComposer(page, roots) {
+  const search = "search|buscar|busca|suche|recherche|cerca|pesquis";
+  for (const frame of await chatFrames(page)) {
+    const handle = await frame.evaluateHandle(composerIn, COMPOSER, "", search).catch(() => null);
+    const el = handle && handle.asElement();
+    if (el) return { frame, el, scope: "" };
+  }
+  const scope = [roots, "[data-qa-chat-root]"].filter(Boolean).join(", ");
+  const handle = await page.mainFrame().evaluateHandle(composerIn, COMPOSER, scope, search).catch(() => null);
+  const el = handle && handle.asElement();
+  return el ? { frame: page.mainFrame(), el, scope } : null;
+}
+
+function chatText(scope) {
+  try {
+    return scope ? Array.from(document.querySelectorAll(scope)).map((node) => node.innerText).join("\n") : (document.body ? document.body.innerText : "");
+  } catch (error) {
+    return "";
+  }
+}
+
+// A home screen's "Send us a message" or "New conversation" button, pressed once.
+async function pressStart(page, roots) {
+  const press = (source, scope) => {
+    const re = new RegExp(source, "i");
+    let places = [document];
+    if (scope) {
+      try { places = Array.from(document.querySelectorAll(scope)); } catch (error) { places = []; }
+    }
+    for (const place of places) {
+      const hit = Array.from(place.querySelectorAll("button, [role=button], a")).find((node) => re.test((node.innerText || node.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim()));
+      if (hit) { hit.click(); return true; }
+    }
+    return false;
+  };
+  for (const frame of await chatFrames(page)) {
+    if (await frame.evaluate(press, START_TEXT.source, "").catch(() => false)) return true;
+  }
+  return page.evaluate(press, START_TEXT.source, [roots, "[data-qa-chat-root]"].filter(Boolean).join(", ")).catch(() => false);
+}
+
+async function sendTurn(box, text) {
+  await box.el.click().catch(() => {});
+  await box.el.focus().catch(() => {});
+  await box.el.type(text, { delay: 8 });
+  await box.el.press("Enter");
+  const sentAt = Date.now();
+  await new Promise((resolve) => setTimeout(resolve, 700));
+  const left = await box.el.evaluate((node) => String(node.value != null ? node.value : node.innerText || "")).catch(() => "");
+  if (!left.trim()) return sentAt;
+  const clickedAt = Date.now();
+  await box.frame.evaluate((source, scope) => {
+    const re = new RegExp(source, "i");
+    let places = [document];
+    if (scope) {
+      try { places = Array.from(document.querySelectorAll(scope)); } catch (error) { places = []; }
+    }
+    for (const place of places) {
+      const hit = Array.from(place.querySelectorAll("button, [role=button]")).find((node) => re.test((node.getAttribute("aria-label") || node.getAttribute("title") || node.innerText || "").replace(/\s+/g, " ").trim()));
+      if (hit) { hit.click(); return; }
+    }
+  }, SEND_TEXT.source, box.scope).catch(() => {});
+  return clickedAt;
+}
+
 async function launch() {
   const puppeteer = (await import("puppeteer-core")).default;
   const local = process.env.CHROME_PATH;
@@ -1050,7 +1179,116 @@ function stopForRefusal(job, docStatus) {
   return !!(job && job.html && Number(docStatus) >= 400);
 }
 
+// job.kind "chat": the scripted conversation (url-review-chat-talk.js). The caller sends it only with the owner's proof.
+async function talk(job, log) {
+  const say = typeof log === "function" ? (text) => { try { log(text); } catch (error) { /* a closed log must not stop the talk */ } } : () => {};
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const started = Date.now();
+  const budget = Math.min(95000, Math.max(30000, Number(job && job.budgetMs) || 90000));
+  const left = () => budget - (Date.now() - started);
+  const start = String((job && job.url) || "");
+  if (passiveJob(job)) return { ok: false, error: "The conversation was refused: a competitor run is strictly passive." };
+  if (!job || ["own", "credentials", "site"].indexOf(job.proof) === -1) return { ok: false, error: "The conversation needs the owner's proof." };
+  if (!/^https:\/\//i.test(start) || blockedHost(start) || await privateAddress(new URL(start).hostname)) return { ok: false, error: "The start address was refused." };
+  const turns = ((job && job.turns) || []).filter((turn) => turn && turn.id && turn.text).slice(0, chatTalk.MAX_TURNS);
+  const acceptLanguage = /^[a-z]{2}$/.test(String((job && job.acceptLanguage) || "")) ? String(job.acceptLanguage) : "";
+  const out = { ok: true, status: "no-chat", vendor: "", ai: false, turns: [], ms: 0 };
+  const browser = await launch();
+  try {
+    const context = await browser.createBrowserContext();
+    const rec = recorder(true);
+    const ua = (await browser.userAgent()).replace(/HeadlessChrome/g, "Chrome") + " " + AGENT_TAG;
+    const page = await prepare(context, ua, rec, { width: 1280, height: 800 }, acceptLanguage);
+    say("Loading " + pathOf(start) + " in a separate browser for the conversation.");
+    await open(page, start);
+    for (let i = 0; i < 10 && !rec.chats("before").length && left() > 60000; i += 1) {
+      if (i === 0) await page.mouse.move(640, 400).catch(() => {});
+      if (i === 1) await page.evaluate(() => window.scrollBy(0, 400)).catch(() => {});
+      await wait(500);
+    }
+    const chats = rec.chats("before");
+    if (!chats.length) {
+      say("No chat loaded on the page, so nothing was sent.");
+      return out;
+    }
+    const rows = CHATS.filter((row) => chats.some((chat) => chat.name === row[0]));
+    Object.assign(out, { vendor: chats[0].name, ai: chats.some((chat) => chat.ai) });
+    const roots = rows.map((row) => row[3]).filter(Boolean).join(", ");
+    const launcher = await launcherFacts(page, rows.map((row) => row[2]).filter(Boolean), CHAT_LAUNCHER).catch(() => ({ found: false }));
+    if (!launcher.found) {
+      out.status = "no-launcher";
+      say(out.vendor + " loaded, but no launcher button was found.");
+      return out;
+    }
+    const handle = await page.$("[data-qa-chat]");
+    let target = handle;
+    if (handle && await handle.evaluate((node) => node.tagName === "IFRAME")) {
+      const frame = await handle.contentFrame();
+      const inner = frame && await frame.$("button, [role=button], a[href]");
+      if (inner) target = inner;
+    }
+    const area = () => page.evaluate(chatArea, roots, CHAT_FRAME).catch(() => 0);
+    const closed = await area();
+    if (target) await target.click().catch(() => target.evaluate((node) => node.click()).catch(() => {}));
+    await wait(2500);
+    const grew = (await area()) > Math.max(40000, closed * 1.5);
+    let box = await findComposer(page, roots);
+    if (!box && await pressStart(page, roots)) {
+      await wait(2000);
+      box = await findComposer(page, roots);
+    }
+    if (!box) {
+      out.status = grew ? "no-composer" : "not-opened";
+      say(grew ? "The chat opened, but no message box was found in it." : "The chat did not open.");
+      return out;
+    }
+    say("The " + out.vendor + " chat is open. Sending a fixed script of up to " + plural(turns.filter((turn) => out.ai || !turn.ai).length, "message") + ".");
+    out.status = "talked";
+    const talkStart = Date.now();
+    await wait(1500);
+    for (const turn of turns) {
+      if (turn.ai && !out.ai) continue;
+      if (left() < 10000 || Date.now() - talkStart > chatTalk.TALK_MS) {
+        say("The conversation's time cap was reached.");
+        break;
+      }
+      if (out.turns.length) box = await findComposer(page, roots);
+      if (!box) {
+        say("The message box was gone, so the script stopped.");
+        break;
+      }
+      const read = () => box.frame.evaluate(chatText, box.scope).catch(() => "");
+      const before = await read();
+      let sentAt = 0;
+      try { sentAt = await sendTurn(box, turn.text); } catch (error) {
+        say("A message could not be typed (" + trim(error.message, 80) + "), so the script stopped.");
+        break;
+      }
+      let reply = "";
+      let firstAt = 0;
+      let steadySince = 0;
+      while (Date.now() - sentAt < Math.min(chatTalk.REPLY_MS, left() - 3000)) {
+        await wait(500);
+        const fresh = chatTalk.newText(before, await read(), turn.text);
+        if (words(fresh) < 2) continue;
+        if (!firstAt) firstAt = Date.now();
+        if (fresh !== reply) { reply = fresh; steadySince = Date.now(); }
+        else if (Date.now() - steadySince >= 1500) break;
+      }
+      out.turns.push({ id: turn.id, sent: turn.text, reply: trim(reply, 600), ms: firstAt ? firstAt - sentAt : 0 });
+      say("Message " + out.turns.length + (reply ? " got a reply after " + Math.round((firstAt - sentAt) / 100) / 10 + " s." : " got no reply within " + chatTalk.REPLY_MS / 1000 + " s."));
+      if (!reply && out.turns.length === 1) break;
+    }
+    out.ms = Date.now() - talkStart;
+    await context.close();
+    return out;
+  } finally {
+    await browser.close().catch(() => {});
+  }
+}
+
 async function browse(job, log, onStart) {
+  if (job && job.kind === "chat") return talk(job, log);
   const say = typeof log === "function" ? (text) => { try { log(text); } catch (error) { /* a closed log must not stop the pass */ } } : () => {};
   const started = Date.now();
   const budget = Math.min(110000, Math.max(30000, Number(job && job.budgetMs) || 85000));
@@ -1058,6 +1296,7 @@ async function browse(job, log, onStart) {
   const start = String((job && job.url) || "");
   if (!/^https:\/\//i.test(start) || blockedHost(start) || await privateAddress(new URL(start).hostname)) return { ok: false, error: "The start address was refused." };
   const extra = ((job && job.paths) || []).filter((url) => /^https:\/\//i.test(url) && !blockedHost(url)).slice(0, 2);
+  const acceptLanguage = /^[a-z]{2}$/.test(String((job && job.acceptLanguage) || "")) ? String(job.acceptLanguage) : "";
   const timing = {};
   let mark = Date.now();
   const lap = (name) => { const now = Date.now(); timing[name] = now - mark; mark = now; };
@@ -1071,14 +1310,16 @@ async function browse(job, log, onStart) {
     let ua = plainUa + " " + AGENT_TAG;
     const host = new URL(start).hostname;
     const result = { ok: true, engine: version.replace("HeadlessChrome", "Chromium"), at: new Date().toISOString(), pages: [] };
-    say(result.engine + " is up. Loading " + pathOf(start) + " at 1280×800 with no stored cookies.");
+    const passive = passiveJob(job);
+    if (passive) result.passive = { reason: "competitor", skipped: ["typing", "chat-open"] };
+    say(result.engine + " is up. Loading " + pathOf(start) + " at 1280×800 with no stored cookies." + (passive ? " This is a competitor run: nothing is typed into the site and its chat is not opened." : ""));
 
     // Cold visit on a desktop width: no stored choice, nothing clicked.
     let coldContext, rec, page, first;
     const visit = async () => {
       coldContext = await browser.createBrowserContext();
       rec = recorder(true, true);
-      page = await prepare(coldContext, ua, rec, { width: 1280, height: 800 });
+      page = await prepare(coldContext, ua, rec, { width: 1280, height: 800 }, acceptLanguage);
       try {
         const cdp = await page.createCDPSession();
         cdp.on("Network.requestWillBeSent", (event) => rec.wire(event.requestId, event.request.url));
@@ -1186,8 +1427,8 @@ async function browse(job, log, onStart) {
     let chatAfter = null;
     const watchPhase = async (phase, need) => {
       let typed = null;
-      if (left() > need) {
-        try { typed = await typeProbe(page, rec, phase); } catch (error) { typed = null; }
+      if (!passive && left() > need) {
+        try { typed = await typeProbe(page, rec, phase, job); } catch (error) { typed = null; }
       }
       const row = watchFrom(await watchLog(page), rec.vendors(phase), typed, host);
       const f = row.fingerprint;
@@ -1195,7 +1436,7 @@ async function browse(job, log, onStart) {
       say((phase === "before" ? "Before a choice: " : "After the reject: ") +
         (kinds.length ? kinds.map((kind) => kind[0] + " fingerprinting by " + kind[1].join(", ")).join("; ") : "no fingerprinting call") + ". " +
         (row.recorders.length ? "Session recorders: " + row.recorders.map((rr) => rr.name + (rr.sent ? " sent data" : " loaded")).join(", ") + ". " : "") +
-        (row.typed ? "Typing a test address into \"" + row.typed.field + "\" " + (row.typed.sent.length ? "sent it to " + row.typed.sent.map((s) => s.host).join(", ") + " before submit; the requests were blocked." : "sent nothing before submit.") : "No contact field was typed into."));
+        (row.typed ? "Typing a test address into \"" + row.typed.field + "\" " + (row.typed.sent.length ? "sent it to " + row.typed.sent.map((s) => s.host).join(", ") + " before submit; the requests were blocked." : "sent nothing before submit.") : passive ? "No field was typed into, because a competitor run is strictly passive." : "No contact field was typed into."));
       return row;
     };
     const watched = { before: await watchPhase("before", 28000), after: null };
@@ -1244,7 +1485,7 @@ async function browse(job, log, onStart) {
       say("Loading " + pathOf(start) + " on a 390×844 phone (Android, touch).");
       const phoneContext = await browser.createBrowserContext();
       const phoneUa = ua.replace(/\([^)]*\)/, "(Linux; Android 14; Pixel 8)").replace(/Safari\//, "Mobile Safari/");
-      const phone = await prepare(phoneContext, phoneUa, null, { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+      const phone = await prepare(phoneContext, phoneUa, null, { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 1 }, acceptLanguage);
       try {
         await open(phone, start);
         lap("phoneLoad");
@@ -1288,13 +1529,15 @@ async function browse(job, log, onStart) {
         }
         lap("tablet");
       }
-      if (result.chat && result.chat.launcher && result.chat.launcher.found && left() <= 12000) skip("Opening the chat", 12000);
-      if (result.chat && result.chat.launcher && result.chat.launcher.found && left() > 12000) {
+      const launcherFound = !!(result.chat && result.chat.launcher && result.chat.launcher.found);
+      if (launcherFound && passive) say("The chat was not opened, because a competitor run is strictly passive. Its privacy link and keyboard focus were not checked.");
+      else if (launcherFound && left() <= 12000) skip("Opening the chat", 12000);
+      if (launcherFound && !passive && left() > 12000) {
         say("Opening the chat on the phone with the keyboard to check its privacy link and whether focus can leave it. No message is sent.");
         try {
           await phone.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
           await new Promise((resolve) => setTimeout(resolve, 500));
-          result.chat.open = await openChat(phone, chatRows.map((row) => row[3]).filter(Boolean).join(", "));
+          result.chat.open = await openChat(phone, chatRows.map((row) => row[3]).filter(Boolean).join(", "), job);
           const open = result.chat.open;
           say(!open.opened ? "The chat did not open." : "The chat opened " + (open.keyboard ? "with Enter" : "with a click") + ". " +
             (open.privacy === true ? "It links a privacy notice. " : open.privacy === false ? "It shows no privacy link. " : "") +
@@ -1319,7 +1562,7 @@ async function browse(job, log, onStart) {
       say("Opening " + pathOf(url) + " for axe-core and the text comparison.");
       const context = await browser.createBrowserContext();
       const pageRec = recorder(true);
-      const other = await prepare(context, ua, pageRec, { width: 1280, height: 800 });
+      const other = await prepare(context, ua, pageRec, { width: 1280, height: 800 }, acceptLanguage);
       try {
         const got = await open(other, url);
         const seen = await rendered(other);
@@ -1345,4 +1588,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, printPdf, stopForRefusal, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, talk, printPdf, stopForRefusal, passiveJob, typeProbe, openChat, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

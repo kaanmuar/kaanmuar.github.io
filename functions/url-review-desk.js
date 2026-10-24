@@ -227,14 +227,17 @@ function snapshot(records, alerts, active, noteRows, unlisted) {
   });
   const runs = list.map((row) => summary(row || {}, index, unlisted || [])).sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const notes = (Array.isArray(alerts) ? alerts : []).slice().sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 80);
-  // A report paid after its run has its own payment row; the run then counts once, through that row.
+  // A report paid after its run has its own payment row, and a run paid through a credit has its credit row;
+  // either way the run counts once, through that row.
   const reportPaid = new Set(list.filter((row) => row && row.status === "paid-report" && row.reportId).map((row) => row.reportId));
+  const creditPaid = new Set(list.filter((row) => row && row.report && row.creditId).map((row) => row.id));
+  const settled = (row) => !row.free && (row.status === "paid-report" || row.status === "run-credit" || (row.paid && !reportPaid.has(row.id) && !creditPaid.has(row.id)));
   const tally = {
     runs: runs.length,
     running: (active || []).length,
     reports: runs.filter((row) => row.status === "complete" || row.status === "stopped").length,
-    paid: runs.filter((row) => !row.free && !row.test && (row.status === "paid-report" || row.status === "run-credit" || (row.paid && !reportPaid.has(row.id)))).length,
-    test: runs.filter((row) => row.test).length,
+    paid: runs.filter((row) => !row.test && settled(row)).length,
+    test: runs.filter((row) => row.test && settled(row)).length,
     free: runs.filter((row) => row.free).length,
     waiting: runs.filter((row) => row.status === "payment-due").length,
     refused: runs.filter((row) => row.status === "blocked").length,
@@ -327,7 +330,10 @@ const STYLE = `
     body.desk-locked main > section:not(#desk-gate) { display: none; }
     body.desk-locked .stats, body.desk-locked #desk-out { display: none; }
     body.desk-locked #desk-gate { display: block; }
-    #desk-out { margin-top: 12px; background: transparent; color: var(--teal); border: 1px solid var(--line); }
+    #desk-out, button.quiet { margin-top: 12px; background: transparent; color: var(--teal); border: 1px solid var(--line); }
+    .gate-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .gate-form[hidden] { display: none; }
+    .gate-form button.quiet { margin-top: 0; }
     .lede a, .alert a { color: var(--teal); }
     .detail h2 { margin-top: 18px; }
     .log { font: 12px/1.5 Menlo, Consolas, monospace; max-height: 520px; overflow: auto; background: var(--paper); border-radius: 8px; padding: 10px; }
@@ -336,8 +342,18 @@ const STYLE = `
 const GATE = `
     <section id="desk-gate">
       <h2>Operator sign-in</h2>
-      <p>Continue with the operator Google account. Any other Google account stays outside.</p>
-      <button id="desk-google" type="button">Continue with Google</button>
+      <p>Sign in with the operator email and password. Any other account stays outside.</p>
+      <form id="desk-password" class="gate-form">
+        <input id="desk-email" type="email" autocomplete="username" placeholder="Email" aria-label="Email" required>
+        <input id="desk-pass" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" required>
+        <button type="submit">Sign in</button>
+      </form>
+      <form id="desk-code-form" class="gate-form" hidden>
+        <input id="desk-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code from the authenticator app" aria-label="Authenticator code" required>
+        <button type="submit">Confirm</button>
+        <button id="desk-code-back" type="button" class="quiet">Back</button>
+      </form>
+      <button id="desk-google" type="button" class="quiet">Continue with Google</button>
       <p id="desk-gate-note" class="empty"></p>
     </section>`;
 
@@ -366,7 +382,7 @@ const SIGN_IN = `
         lockDesk();
         if (response.status === 403) {
           const note = document.getElementById("desk-gate-note");
-          if (note) note.textContent = "This Google account cannot open the desk.";
+          if (note) note.textContent = "This account cannot open the desk.";
         }
         return null;
       }
@@ -397,13 +413,77 @@ const SIGN_IN = `
           body: JSON.stringify({ idToken: idToken })
         });
         if (!res.ok) {
-          note.textContent = "This Google account cannot open the desk.";
+          note.textContent = "This account cannot open the desk.";
           return;
         }
       }
       note.textContent = "";
       load();
     }
+    let deskResolver = null;
+    function showCodeStep(show) {
+      document.getElementById("desk-password").hidden = show;
+      document.getElementById("desk-code-form").hidden = !show;
+      document.getElementById("desk-google").hidden = show;
+      if (show) document.getElementById("desk-code").focus();
+    }
+    function askForCode(error) {
+      if (!error || error.code !== "auth/multi-factor-auth-required" || !error.resolver) return false;
+      deskResolver = error.resolver;
+      document.getElementById("desk-gate-note").textContent = "";
+      showCodeStep(true);
+      return true;
+    }
+    document.getElementById("desk-password").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const note = document.getElementById("desk-gate-note");
+      const auth = deskApp();
+      if (!auth) {
+        note.textContent = "Sign-in did not load.";
+        return;
+      }
+      note.textContent = "Signing in…";
+      try {
+        const cred = await auth.signInWithEmailAndPassword(document.getElementById("desk-email").value.trim(), document.getElementById("desk-pass").value);
+        await finishDesk(cred.user);
+      } catch (error) {
+        if (askForCode(error)) return;
+        console.error("Desk sign-in failed:", error);
+        const code = error && error.code;
+        note.textContent = code === "auth/too-many-requests"
+          ? "Too many attempts. Wait a few minutes and try again."
+          : "Sign-in failed. Check the email and password.";
+      }
+    });
+    document.getElementById("desk-code-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const note = document.getElementById("desk-gate-note");
+      const code = String(document.getElementById("desk-code").value || "").replace(/\\D/g, "").slice(0, 6);
+      const totp = firebase.auth.TotpMultiFactorGenerator;
+      const hint = deskResolver && deskResolver.hints.find((item) => totp && item.factorId === totp.FACTOR_ID);
+      if (!hint) {
+        note.textContent = "This account's second step is not an authenticator app.";
+        return;
+      }
+      if (code.length !== 6) {
+        note.textContent = "Enter the 6-digit code.";
+        return;
+      }
+      try {
+        const cred = await deskResolver.resolveSignIn(totp.assertionForSignIn(hint.uid, code));
+        deskResolver = null;
+        showCodeStep(false);
+        await finishDesk(cred.user);
+      } catch (error) {
+        console.error("Desk code failed:", error);
+        note.textContent = "That code did not match. Use the newest code from the app.";
+      }
+    });
+    document.getElementById("desk-code-back").addEventListener("click", () => {
+      deskResolver = null;
+      document.getElementById("desk-gate-note").textContent = "";
+      showCodeStep(false);
+    });
     document.getElementById("desk-google").addEventListener("click", async () => {
       const note = document.getElementById("desk-gate-note");
       note.textContent = "Opening Google…";
@@ -417,6 +497,7 @@ const SIGN_IN = `
         const cred = await auth.signInWithPopup(provider);
         await finishDesk(cred.user);
       } catch (error) {
+        if (askForCode(error)) return;
         const code = error && error.code;
         if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
           note.textContent = "Continuing in this window…";
@@ -439,6 +520,7 @@ const SIGN_IN = `
       startingAuth.getRedirectResult().then((result) => {
         if (result && result.user) finishDesk(result.user);
       }).catch((error) => {
+        if (askForCode(error)) return;
         console.error("Desk redirect sign-in failed:", error);
         const note = document.getElementById("desk-gate-note");
         if (note) note.textContent = "Google did not complete the sign-in (" + ((error && (error.code || error.message)) || "no code") + ").";
@@ -497,6 +579,16 @@ const PAGE = `<!DOCTYPE html>
       <div id="free-list"></div>
     </section>
     <section>
+      <h2>Owner proofs</h2>
+      <p class="empty">Mark a site as verified for an account after a signed-in run with the owner's credentials worked. That account's reviews of the host then hold a short scripted conversation with the site's chatbot. Only who marked it, when, the host and the account email are kept, for a year. Never paste a password here. Sites the owner verified with a DNS record or a homepage tag are listed too, for 30 days.</p>
+      <div class="tools">
+        <input id="proof-email" type="email" placeholder="Account email" aria-label="Account email for the owner proof">
+        <input id="proof-host" type="text" placeholder="Host, such as shop.example.com" aria-label="Host for the owner proof">
+        <button id="proof-add" type="button">Mark verified</button>
+      </div>
+      <div id="proof-list"></div>
+    </section>
+    <section>
       <h2>Return prices and 30-day passes</h2>
       <div id="offers"></div>
     </section>
@@ -545,6 +637,7 @@ const PAGE = `<!DOCTYPE html>
     const offersEl = document.getElementById("offers");
     const notesEl = document.getElementById("notes");
     const freeListEl = document.getElementById("free-list");
+    const proofListEl = document.getElementById("proof-list");
     const rerunsEl = document.getElementById("reruns");
     const noticesEl = document.getElementById("owner-notices");
     const freeEmailEl = document.getElementById("free-email");
@@ -596,6 +689,7 @@ const PAGE = `<!DOCTYPE html>
       renderOffers();
       renderNotes();
       renderFree();
+      renderProofs();
       renderReruns();
       renderNotices();
 
@@ -900,6 +994,39 @@ const PAGE = `<!DOCTYPE html>
       });
       load();
     }
+    function renderProofs() {
+      proofListEl.replaceChildren();
+      (data.ownerProofs || []).forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        block.appendChild(node("b", item.host + " · " + item.email));
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = [
+          item.kind === "operator" ? "credentials run, marked by " + item.by : "owner's " + (item.how === "meta" ? "homepage tag" : "DNS record"),
+          item.at ? "on " + when(item.at) : "",
+          item.until ? "until " + when(item.until) : ""
+        ].filter(Boolean).join(" · ");
+        block.appendChild(meta);
+        const revoke = document.createElement("button");
+        revoke.type = "button";
+        revoke.textContent = "Revoke";
+        revoke.addEventListener("click", () => setProof({ id: item.id, on: false }));
+        block.appendChild(revoke);
+        proofListEl.appendChild(block);
+      });
+      if (!(data.ownerProofs || []).length) proofListEl.appendChild(Object.assign(node("p", "No site is verified for any account."), { className: "empty" }));
+    }
+    async function setProof(body) {
+      const res = await fetch(deskBase() + "/desk/proof", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) alert((await res.json().catch(() => ({}))).error || "The proof did not save.");
+      load();
+    }
     async function setFree(email, on, note) {
       await fetch(deskBase() + "/desk/free", {
         method: "POST",
@@ -945,6 +1072,14 @@ ${SIGN_IN}
       await setFree(email, true, freeNoteEl.value.trim());
       freeEmailEl.value = "";
       freeNoteEl.value = "";
+    });
+    document.getElementById("proof-add").addEventListener("click", async () => {
+      const email = document.getElementById("proof-email").value.trim().toLowerCase();
+      const host = document.getElementById("proof-host").value.trim().toLowerCase();
+      if (!email || email.indexOf("@") === -1 || !host) return;
+      await setProof({ email: email, host: host });
+      document.getElementById("proof-email").value = "";
+      document.getElementById("proof-host").value = "";
     });
     qEl.addEventListener("input", render);
     statusEl.addEventListener("change", render);
@@ -1195,9 +1330,9 @@ async function verifyOperator(idToken) {
   const body = await response.json().catch(() => ({}));
   const user = body && Array.isArray(body.users) ? body.users[0] : null;
   if (!user || user.emailVerified !== true) return null;
-  const google = (user.providerUserInfo || []).some((item) => item && item.providerId === "google.com");
+  const known = (user.providerUserInfo || []).some((item) => item && (item.providerId === "google.com" || item.providerId === "password"));
   const email = String(user.email || "").trim().toLowerCase();
-  if (!google || email !== operatorEmail()) return null;
+  if (!known || email !== operatorEmail()) return null;
   return email;
 }
 
