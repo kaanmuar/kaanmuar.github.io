@@ -253,6 +253,8 @@ function fakeNetwork(routes) {
       req.end = () => setImmediate(() => {
         const route = routes[options.protocol + "//" + options.hostname + options.path] || { status: 404 };
         // A route with timeout: true never ends; it sends its body, if any, then the socket times out.
+        // With connecting: true as well, the host never accepted the TCP connection.
+        if (route.connecting) req.socket = { connecting: true };
         if (route.timeout && !route.body) return req.emit("timeout");
         const res = new EventEmitter();
         Object.assign(res, { statusCode: route.status, headers: route.headers || {}, socket: null });
@@ -379,6 +381,52 @@ test.describe("false positives from the real-run series", () => {
     } finally {
       restore();
     }
+  });
+
+  test("a sitemap reached by a redirect from /sitemap.xml, or only at /sitemap-index.xml, is found", async () => {
+    const urlset = (urls) => "<?xml version=\"1.0\"?><urlset>" + urls.map((url) => "<url><loc>" + url + "</loc></url>").join("") + "</urlset>";
+    const xml = { "content-type": "text/xml; charset=UTF-8" };
+    // fiscalia.gov.co: /sitemap.xml redirects to a Yoast /sitemap_index.xml, and robots.txt names no sitemap.
+    let restore = fakeNetwork({
+      "https://www.yoast.example.org/sitemap.xml": { status: 301, headers: { location: "https://www.yoast.example.org/sitemap_index.xml", "content-type": "text/html" } },
+      "https://www.yoast.example.org/sitemap_index.xml": { status: 200, headers: xml, body: "<?xml version=\"1.0\"?><?xml-stylesheet type=\"text/xsl\" href=\"/main-sitemap.xsl\"?><sitemapindex><sitemap><loc>https://www.yoast.example.org/page-sitemap.xml</loc></sitemap></sitemapindex>" },
+      "https://www.yoast.example.org/page-sitemap.xml": { status: 200, headers: xml, body: urlset(["https://www.yoast.example.org/", "https://www.yoast.example.org/contacto/"]) }
+    });
+    try {
+      const map = await core.readSitemap("https://www.yoast.example.org", "User-agent: *\nDisallow:\n", () => false);
+      assert.equal(map.source, "https://www.yoast.example.org/sitemap.xml");
+      assert.deepEqual(map.urls, ["https://www.yoast.example.org/", "https://www.yoast.example.org/contacto/"]);
+    } finally {
+      restore();
+    }
+    // typescriptlang.org: robots.txt is 404, /sitemap.xml is 404, and /sitemap-index.xml is a valid index.
+    restore = fakeNetwork({
+      "https://www.ts.example.org/sitemap-index.xml": { status: 200, headers: { "content-type": "application/xml" }, body: "<?xml version=\"1.0\"?><sitemapindex><sitemap><loc>https://www.ts.example.org/sitemap-0.xml</loc></sitemap></sitemapindex>" },
+      "https://www.ts.example.org/sitemap-0.xml": { status: 200, headers: { "content-type": "application/xml" }, body: urlset(["https://www.ts.example.org/docs/"]) }
+    });
+    try {
+      const map = await core.readSitemap("https://www.ts.example.org", "", () => false);
+      assert.equal(map.source, "https://www.ts.example.org/sitemap-index.xml");
+      assert.deepEqual(map.urls, ["https://www.ts.example.org/docs/"]);
+    } finally {
+      restore();
+    }
+    // A sitemap named in robots.txt is trusted: the guessed index paths are not requested.
+    const asked = [];
+    restore = fakeNetwork({ "https://www.ts.example.org/sitemap-index.xml": { status: 200, headers: { "content-type": "application/xml" }, body: urlset(["https://www.ts.example.org/never"]) } });
+    const https = require("node:https");
+    const request = https.request;
+    https.request = (options, onResponse) => { asked.push(options.path); return request(options, onResponse); };
+    try {
+      const map = await core.readSitemap("https://www.ts.example.org", "Sitemap: https://www.ts.example.org/maps/main.xml\n", () => false);
+      assert.deepEqual(map.urls, []);
+      assert.deepEqual(asked, ["/maps/main.xml", "/sitemap.xml"]);
+    } finally {
+      https.request = request;
+      restore();
+    }
+    const missing = insights.analyze({ pages: [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(HTML, STRONG_HEADERS, URL_) }], extras: { sitemap: { status: 404, urls: [] } } });
+    assert.equal(missing.findings.find((item) => item.key === "seo-sitemap").evidence, "robots.txt names no sitemap, and /sitemap.xml, /sitemap_index.xml and /sitemap-index.xml returned no URLs.");
   });
 
   test("gzip bytes without content-encoding decode, and an oversized archive keeps its start", () => {
@@ -645,6 +693,25 @@ test.describe("start page reads", () => {
     assert.ok(!untagged.report.insights.warnings.includes(insights.BROWSER_READ_NOTE));
   });
 
+  test("a host that accepts no connection is tried in headless Chrome, then named as down (#411)", async () => {
+    const failures = require("../../functions/url-review-failures");
+    const jobs = [];
+    const lines = [];
+    const restore = fakeNetwork({ [BANK]: { timeout: true, connecting: true } });
+    try {
+      await assert.rejects(core.reviewTarget(BANK, { log: (text) => lines.push(text), browse: async (job) => { jobs.push(job); return { ok: false, error: "net::ERR_CONNECTION_TIMED_OUT at " + BANK }; } }),
+        /^Error: The site accepted no connection to the plain request, and headless Chrome could not open it either \(net::ERR_CONNECTION_TIMED_OUT at https:\/\/bank\.example\.com\/\)\.$/);
+    } finally {
+      restore();
+    }
+    assert.equal(jobs.length, 1);
+    assert.ok(lines.includes("The site accepted no connection to the plain request in 8 s. Waiting for headless Chrome to open the page."));
+    const down = failures.causeOf("The site accepted no connection to the plain request, and headless Chrome could not open it either (net::ERR_CONNECTION_TIMED_OUT).");
+    assert.deepEqual([down.id, down.label], ["down", "The site accepted no connection"]);
+    // A host that accepted the connection and then went quiet is still "took too long".
+    await assert.rejects(review({ [BANK]: { timeout: true } }, async () => ({ ok: false, error: "the browser was busy" })), /^Error: The page took too long in the plain request, and headless Chrome could not open it either \(the browser was busy\)\.$/);
+  });
+
   test("when headless Chrome is refused too, the error names the bot protection", async () => {
     const browse = async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: {}, html: WAF.body } });
     await assert.rejects(review({ [BANK]: WAF }, browse), /^Error: The site's bot protection refused the review \(status 403, an AWS WAF bot check\), in the plain request and in headless Chrome\.$/);
@@ -670,6 +737,27 @@ test.describe("start page reads", () => {
       assert.equal(browser.stopForRefusal(seen, 403), true);
       return { ok: true, untagged: true, timing: { load: 1800 }, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: { "content-type": "text/html" }, html: block } };
     }), /^Error: The site's bot protection refused the review \(status 403\), in the plain request and in headless Chrome\.$/);
+  });
+
+  test("a phone visit still running when the budget ends is cut, and the caller waits longer than any budget", async () => {
+    const browser = require("../../functions/url-review-browser");
+    const fs = require("node:fs");
+    const path = require("node:path");
+    assert.equal(await browser.withinBudget(Promise.resolve("read"), 50, "The phone visit"), "read");
+    let late = null;
+    const stalled = new Promise((resolve) => { late = setTimeout(() => resolve("too late"), 1000); });
+    const started = Date.now();
+    await assert.rejects(browser.withinBudget(stalled, 30, "The phone visit"), /^Error: The phone visit was still running when the browser's budget ran out$/);
+    assert.ok(Date.now() - started < 500);
+    clearTimeout(late);
+    await assert.rejects(browser.withinBudget(Promise.reject(new Error("net::ERR_ABORTED")), 50, "The phone visit"), /net::ERR_ABORTED/);
+    // #366: the caller aborted at 100 s while a pass of up to 110 s was still on the phone.
+    const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+    const wait = Number((index.match(/const BROWSER_WAIT_MS = (\d+);/) || [])[1]);
+    const limit = Number((index.match(/exports\.reviewBrowser = [\s\S]*?timeoutSeconds: (\d+)/) || [])[1]) * 1000;
+    assert.match(index, /AbortSignal\.timeout\(BROWSER_WAIT_MS\)/);
+    assert.ok(wait > browser.BUDGET_MAX_MS + 3000, "wait " + wait);
+    assert.ok(wait < limit, "reviewBrowser timeout " + limit);
   });
 
   test("a redirect to http is named as such, not as a wrong address", async () => {
@@ -1504,6 +1592,118 @@ test("the diagnosis says whether a failure's cause has cleared", () => {
   assert.deepEqual([fine.now, fine.cleared, fine.rerun], ["readable", true, true]);
 });
 
+test("the daily probe checks the connection after a plain read that timed out, and tries headless Chrome when it opens (#573)", () => {
+  const slow = { hops: [], error: "The page took too long.", code: "" };
+  const unreachable = { hops: [], error: "The page took too long: the site accepted no connection in 8 s.", code: "" };
+  assert.equal(failures.probeNeedsTcp(slow), true);
+  assert.equal(failures.probeNeedsTcp(unreachable), true);
+  assert.equal(failures.probeNeedsTcp({ hops: [], error: "socket hang up", code: "ECONNRESET" }), true);
+  assert.equal(failures.probeNeedsTcp({ hops: [], error: "The host name did not resolve." }), false);
+  assert.equal(failures.probeNeedsTcp({ hops: [], error: "certificate has expired", code: "CERT_HAS_EXPIRED" }), false);
+  assert.equal(failures.probeNeedsTcp({ hops: [], status: 404, html: true }), false);
+  assert.equal(failures.probeNeedsBrowser({ status: 404, html: true }), true);
+  assert.equal(failures.probeNeedsBrowser({ status: 200, html: true, challenge: "Imperva" }), true);
+  assert.equal(failures.probeNeedsBrowser({ status: 200, html: true }), false);
+  assert.equal(failures.probeNeedsBrowser({ hops: [], httpRedirect: "http://lg.com.co/" }), false);
+  assert.equal(failures.probeNeedsBrowser(slow, { open: true, ms: 40 }), true);
+  assert.equal(failures.probeNeedsBrowser(slow, { open: false, error: "no answer in 6 s" }), false);
+  assert.equal(failures.probeNeedsBrowser(slow, { open: null, error: "The host name did not resolve." }), false);
+  assert.equal(failures.probeNeedsBrowser(slow), false);
+  assert.equal(failures.unreadUrl({ hops: [{ url: "https://uniminuto.edu.co/", status: 301, location: "https://www.uniminuto.edu.co/" }], error: "x" }, "https://uniminuto.edu.co/"), "https://www.uniminuto.edu.co/");
+  assert.equal(failures.unreadUrl({ hops: [{ url: "https://hpe.com/", status: 301, location: "/us/en/home.html" }], error: "x" }, "https://hpe.com/"), "https://hpe.com/us/en/home.html");
+  assert.equal(failures.unreadUrl(slow, "https://hpe.com/"), "https://hpe.com/");
+
+  // uniminuto.edu.co: no TCP connection on 443 at all.
+  const timeout = { cause: failures.causeOf("The page took too long.") };
+  const down = failures.diagnose(timeout, { dns: { addresses: ["1.2.3.4"] }, plain: slow, tcp: { open: false, error: "no answer in 6 s", ms: 6000 } });
+  assert.deepEqual([down.now, down.site, down.cleared, down.rerun], ["down", true, false, false]);
+  assert.equal(down.summary, "The site took too long. Now: The host accepts no connection on port 443 (no answer in 6 s), so the site looks down.");
+  // www.hpe.com: TLS completes, HTTP/1.1 hangs, and Chrome is reset with ERR_HTTP2_PROTOCOL_ERROR.
+  const silent = failures.diagnose(timeout, { dns: { addresses: ["1.2.3.4"] }, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: false, error: "net::ERR_HTTP2_PROTOCOL_ERROR at https://www.hpe.com/" } });
+  assert.deepEqual([silent.now, silent.site, silent.cleared], ["no-answer", false, false]);
+  assert.match(silent.nowLabel, /^The host accepts a connection, but it answers neither the plain read \(The page took too long\.\) nor headless Chrome \(net::ERR_HTTP2_PROTOCOL_ERROR/);
+  const chrome = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: true, docStatus: 200, words: 900 } });
+  assert.deepEqual([chrome.now, chrome.cleared, chrome.rerun, chrome.site], ["browser-unread", true, true, false]);
+  const walled = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: true, docStatus: 403, challenge: "Akamai" } });
+  assert.deepEqual([walled.now, walled.site], ["bot-protection", false]);
+  const gone = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: true, docStatus: 404 } });
+  assert.deepEqual([gone.now, gone.site], ["status", false]);
+  const busy = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: false, error: "the browser was busy" } });
+  assert.deepEqual([busy.now, busy.site], ["timeout", false]);
+  assert.match(busy.nowLabel, /, and headless Chrome did not finish \(the browser was busy\)$/);
+
+  const detail = failures.failureDetail(failedAt("2026-10-24T10:00:00Z", { probe: { dns: { addresses: ["1.2.3.4"] }, plain: slow, tcp: { open: false, error: "no answer in 6 s", ms: 6000 } } }));
+  assert.deepEqual(detail.probeLines, ["DNS: 1 addresses", "Plain read with the review UA: fails (The page took too long.)", "TCP connection to port 443: does not open (no answer in 6 s)", "Headless Chrome: not tried, as the host accepts no connection"]);
+  assert.equal(failures.failureDetail(failedAt("2026-10-24T10:00:00Z", { probe: { dns: {}, plain: slow, tcp: { open: true, ms: 41 }, browser: { ok: false, error: "x" } } })).probeLines[2], "TCP connection to port 443: opens in 41 ms");
+});
+
+test("the connection check tells a port that opens from one that refuses", async () => {
+  const net = require("node:net");
+  const server = net.createServer((socket) => socket.end());
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  try {
+    const open = await core.tcpOpen("127.0.0.1", port, 2000);
+    assert.equal(open.open, true);
+    assert.ok(open.ms >= 0);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+  const closed = await core.tcpOpen("127.0.0.1", port, 2000);
+  assert.deepEqual([closed.open, closed.error], [false, "ECONNREFUSED"]);
+  const refused = await core.tcpCheck("https://localhost/", 2000);
+  assert.equal(refused.open, null);
+  assert.match(refused.error, /not a public website/);
+});
+
+test("down hosts and confirmed 4xx pages stay on the desk without a bug; bot walls and cut-off hosts are still filed (#574 #410 #411 #330)", () => {
+  const probed = (at, message, cause, probe, extra) => failedAt(at, Object.assign({
+    url: "https://" + cause + ".example.com/",
+    host: cause + ".example.com",
+    cause: failures.causeOf(message),
+    error: { message },
+    diagnosis: failures.diagnose({ cause: failures.causeOf(message) }, probe),
+    probe,
+    lines: []
+  }, extra || {}));
+  const dns = { addresses: ["1.2.3.4"] };
+  const slow = { hops: [], error: "The page took too long." };
+  // www.coca-cola.com/co/ is a real 404 and hoe.com a 402, in the plain read and in headless Chrome.
+  const missing = probed("2026-10-25T04:55:00Z", "The URL returned status 404, in the plain read and in headless Chrome.", "status",
+    { dns, plain: { hops: [], status: 404, html: true, challenge: "" }, browser: { ok: true, untagged: true, docStatus: 404, words: 62 } });
+  // globant.com: an Imperva wall for the plain read and for plain Chrome.
+  const walled = probed("2026-10-25T05:00:00Z", "The site's bot protection refused the review (status 403, an Imperva bot check), in the plain request and in headless Chrome.", "bot-protection",
+    { dns, plain: { hops: [], status: 403, html: true, challenge: "Imperva" }, browser: { ok: true, untagged: true, docStatus: 403, challenge: "Imperva", words: 0 } });
+  // uniminuto.edu.co: down for every client.
+  const down = probed("2026-10-25T05:05:00Z", "The site accepted no connection to the plain request, and headless Chrome could not open it either (net::ERR_CONNECTION_TIMED_OUT).", "down",
+    { dns, plain: { hops: [], error: "The page took too long: the site accepted no connection in 8 s." }, tcp: { open: false, error: "no answer in 6 s", ms: 6000 } });
+  // A timeout saved before this change, which the probe now finds down or cutting off Chrome.
+  const oldDown = probed("2026-10-25T05:10:00Z", "The page took too long.", "timeout", { dns, plain: slow, tcp: { open: false, error: "ECONNREFUSED", ms: 30 } });
+  // Still filed: www.hpe.com accepts the connection and cuts Chrome off, a bot wall, and a timeout whose Chrome did not finish.
+  const tarpit = probed("2026-10-25T05:15:00Z", "The page took too long in the plain request, and headless Chrome could not open it either (net::ERR_HTTP2_PROTOCOL_ERROR at https://www.hpe.com/).", "timeout",
+    { dns, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: false, error: "net::ERR_HTTP2_PROTOCOL_ERROR at https://www.hpe.com/" } }, { url: "https://www.hpe.com/", host: "www.hpe.com" });
+  const ours = probed("2026-10-25T05:20:00Z", "The page took too long.", "timeout", { dns, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: false, error: "the browser was busy" } });
+  const refusedRerun = { id: "r1", status: "failed", at: "2026-10-25T06:00:00Z", host: "bancodebogota.com", failureIds: ["f9"], trigger: { label: "x" }, error: { message: "The site's bot protection refused the review (status 403), in the plain request and in headless Chrome." }, cause: { id: "bot-protection" }, lines: [] };
+  const slowRerun = Object.assign({}, refusedRerun, { id: "r2", host: "slow.example.com", error: { message: "The page took too long in the plain request, and headless Chrome could not open it either (net::ERR_HTTP2_PROTOCOL_ERROR at https://slow.example.com/)." }, cause: { id: "timeout" } });
+  const brokenRerun = Object.assign({}, refusedRerun, { id: "r3", host: "busy.example.com", error: { message: "The site's bot protection refused the plain request (status 403), and headless Chrome did not finish (the browser was busy)." }, cause: { id: "browser" } });
+  // hoe.com: a 402 in the plain request and in headless Chrome is site-side in a re-run too.
+  const goneRerun = Object.assign({}, refusedRerun, { id: "r4", host: "hoe.com", error: { message: "The URL returned status 402, in the plain request and in headless Chrome." }, cause: { id: "status" } });
+  const slowGone = Object.assign({}, refusedRerun, { id: "r5", host: "late.example.com", error: { message: "The URL returned status 404, in headless Chrome, after the plain request took too long." }, cause: { id: "status" } });
+
+  [missing, down, oldDown].forEach((row) => assert.equal(row.diagnosis.site, true, row.host));
+  [walled, tarpit, ours].forEach((row) => assert.equal(row.diagnosis.site, false, row.host));
+  const bugs = failures.bugPlan([missing, walled, down, oldDown, tarpit, ours], [refusedRerun, slowRerun, brokenRerun, goneRerun, slowGone], []);
+  assert.deepEqual(bugs.map((bug) => [bug.key, bug.hosts]), [
+    ["bot-protection-319", ["bancodebogota.com", "bot-protection.example.com"]],
+    ["timeout", ["slow.example.com", "timeout.example.com", "www.hpe.com"]],
+    ["browser-365", ["busy.example.com"]],
+    ["status", ["late.example.com"]]
+  ]);
+  const report = failures.periodFailures({ failures: [missing, walled, down, oldDown, tarpit, ours], previous: [], reruns: [], bugs: [], phrase: "yesterday" });
+  assert.equal(report.failed, 6);
+  assert.deepEqual(report.causes, { status: 1, "bot-protection": 1, down: 1, timeout: 3 });
+});
+
 const failedAt = (at, extra) => Object.assign({
   id: "f-" + at,
   kind: "failed",
@@ -2334,8 +2534,8 @@ test("the registrable domain keeps government, education and organization suffix
   assert.equal(core.registrable("unal.edu.co"), "unal.edu.co");
   assert.equal(core.registrable("medellin.unal.edu.co"), "unal.edu.co");
   assert.equal(core.registrable("www.mintic.gov.co"), "mintic.gov.co");
-  assert.equal(core.registrable("www.gov.uk"), "gov.uk");
-  assert.equal(core.registrable("tax.service.gov.uk"), "service.gov.uk");
+  assert.equal(core.registrable("www.gov.uk"), "www.gov.uk");
+  assert.equal(core.registrable("tax.service.gov.uk"), "tax.service.gov.uk");
   assert.equal(core.registrable("shop.acme.com.co"), "acme.com.co");
   assert.equal(core.registrable("docs.python.org"), "python.org");
 });

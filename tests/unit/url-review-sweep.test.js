@@ -6,7 +6,7 @@ const sweep = require("../../functions/url-review-sweep");
 const ops = require("../../functions/ops-schedule");
 const publish = require("../../functions/url-review-publish");
 
-test("seeds keep one main host per domain from the country, without global, blocked or foreign sites", () => {
+test("seeds keep one main host per domain from the country, without global, blocked or foreign sites", async () => {
   const rows = [
     ["https://login.bancolocal.com.co", 1000],
     ["https://www.bancolocal.com.co", 1000],
@@ -17,10 +17,66 @@ test("seeds keep one main host per domain from the country, without global, bloc
     ["http://insecure.com.co", 5000],
     ["https://tienda.com", 5000]
   ];
-  const hosts = sweep.seedHosts(rows, new Set(["google.com.co"]), core.registrable, 10, "co");
+  const hosts = await sweep.seedHosts(rows, new Set(["google.com.co"]), core.registrable, 10, "co");
   assert.deepEqual(hosts, ["www.bancolocal.com.co", "unal.edu.co", "tienda.com"]);
-  assert.deepEqual(sweep.seedHosts([["https://shop.co.uk", 1000]], new Set(), core.registrable, 10, "gb"), ["shop.co.uk"]);
-  assert.equal(sweep.seedHosts(rows, new Set(), core.registrable, 1, "co").length, 1);
+  assert.deepEqual(await sweep.seedHosts([["https://shop.co.uk", 1000]], new Set(), core.registrable, 10, "gb"), ["shop.co.uk"]);
+  assert.equal((await sweep.seedHosts(rows, new Set(), core.registrable, 1, "co")).length, 1);
+});
+
+const PSL = [
+  "// ===BEGIN ICANN DOMAINS===",
+  "at", "gv.at", "ac.at", "ae", "gov.ae", "uk", "co.uk", "ck", "*.ck", "!www.ck", "jp", "東京.jp",
+  "// ===END ICANN DOMAINS===",
+  "// ===BEGIN PRIVATE DOMAINS===", "github.io", "// ===END PRIVATE DOMAINS==="
+].join("\n");
+
+test("the Public Suffix List keeps the site's own label under gv.at and reads a bare suffix as no domain", () => {
+  const registrable = sweep.suffixRegistrable(PSL);
+  assert.equal(registrable("www.oesterreich.gv.at"), "oesterreich.gv.at");
+  assert.equal(registrable("WWW.Wien.GV.AT."), "wien.gv.at");
+  assert.equal(registrable("shop.co.uk"), "shop.co.uk");
+  assert.equal(registrable("www.derstandard.at"), "derstandard.at");
+  assert.equal(registrable("u.ae"), "u.ae");
+  assert.equal(registrable("gv.at"), "");
+  assert.equal(registrable("gov.ae"), "");
+  assert.equal(registrable("at"), "");
+  assert.equal(registrable("a.b.foo.ck"), "b.foo.ck");
+  assert.equal(registrable("www.ck"), "www.ck");
+  assert.equal(registrable("www.city.xn--1lqs71d.jp"), "city.xn--1lqs71d.jp");
+  assert.equal(registrable("blog.someone.github.io"), "github.io");
+  assert.equal(registrable("news.example.zz"), "example.zz");
+});
+
+test("seeds under a multi-label suffix keep their own host, and seeds that do not resolve are dropped", async () => {
+  const registrable = sweep.suffixRegistrable(PSL);
+  const rows = [
+    ["https://gv.at", 1000],
+    ["https://www.oesterreich.gv.at", 1000],
+    ["https://finanzonline.bmf.gv.at", 1000],
+    ["https://www.sozialversicherung.at", 1000],
+    ["https://portal.uni.ac.at", 5000],
+    ["https://gone.at", 5000],
+    ["https://news.orf.at", 5000]
+  ];
+  const live = new Set(["www.oesterreich.gv.at", "bmf.gv.at", "www.sozialversicherung.at", "portal.uni.ac.at", "orf.at"]);
+  const asked = [];
+  const resolves = async (host) => { asked.push(host); return live.has(host); };
+  const hosts = await sweep.seedHosts(rows, new Set(), registrable, 10, "at", resolves);
+  assert.deepEqual(hosts, ["www.oesterreich.gv.at", "bmf.gv.at", "www.sozialversicherung.at", "portal.uni.ac.at", "orf.at"]);
+  assert.ok(!asked.includes("gv.at"));
+  assert.ok(asked.includes("uni.ac.at"));
+  assert.deepEqual(await sweep.seedHosts(rows, new Set(), registrable, 2, "at", resolves), ["www.oesterreich.gv.at", "bmf.gv.at"]);
+  assert.deepEqual(await sweep.seedHosts(rows, new Set(), registrable, 5, "at", resolves), hosts);
+});
+
+test("the committed seeds hold no bare public suffix", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const dir = path.join(__dirname, "../../assets/sweep");
+  const bare = new Set(["gv.at", "ac.at", "gov.ae", "com.af", "edu.af", "gov.af", "com.al", "gov.al", "edu.al", "com.cn", "gov.cn", "com.ag"]);
+  const found = fs.readdirSync(dir).filter((file) => /^[a-z]{2}\.json$/.test(file))
+    .flatMap((file) => JSON.parse(fs.readFileSync(path.join(dir, file), "utf8")).hosts.filter((host) => bare.has(host)).map((host) => file + ": " + host));
+  assert.deepEqual(found, []);
 });
 
 test("a lap visits every country once and the six-language markets twice", () => {
