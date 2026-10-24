@@ -2475,3 +2475,13 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.ok(report.compare, "the stored report is not changed");
   });
 });
+
+test("links sent as POST or to sign-out routes are not opened as pages", () => {
+  assert.equal(core.actionLink('<a href="/auth/google" data-method="post" rel="nofollow">'), true);
+  assert.equal(core.actionLink('<a href="/logout" data-method="DELETE">'), true);
+  assert.equal(core.actionLink('<a href="/auth/github" rel="nofollow">'), true);
+  assert.equal(core.actionLink('<a href="/about" data-method="get">'), false);
+  assert.equal(core.actionLink('<a href="/login" rel="nofollow">'), false);
+  assert.equal(core.actionLink('<a href="/authors/kim" rel="nofollow">'), false);
+  assert.equal(core.actionLink('<a href="/auth/google">'), false);
+});
