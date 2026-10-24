@@ -126,6 +126,20 @@
   .end p { margin: 0; font-size: 40px; color: #cfe0e3; }
   .end .url { white-space: nowrap; font-family: "Fira Code", monospace; font-size: 34px; color: var(--cyan-hi); border: 2px solid rgba(126,246,251,.35); border-radius: 999px; padding: 14px 30px; }
 
+  /* Seasonal theme, set by a source's category (cat.theme). */
+  #c[data-theme="horror"] { --ink: #07040a; --cyan: #e8711a; --cyan-hi: #ff9a3d; --gold: #b8f36b; --text: #f6efe6; --muted: #bba99a;
+    background: radial-gradient(circle at 900px 198px, #f3ead6 0 52px, rgba(243,234,214,.18) 56px, transparent 150px), radial-gradient(70% 45% at 85% 5%, rgba(232,113,26,.22), transparent 70%), radial-gradient(60% 40% at 0% 100%, rgba(150,70,200,.28), transparent 70%), linear-gradient(180deg, #140a16, #07040a 60%); }
+  [data-theme="horror"] .floor { background-image: linear-gradient(rgba(255,154,61,.14) 2px, transparent 2px), linear-gradient(90deg, rgba(255,154,61,.14) 2px, transparent 2px); }
+  [data-theme="horror"] .cube { display: none; }
+  [data-theme="horror"] .brand svg { filter: drop-shadow(0 6px 18px rgba(232,113,26,.45)); }
+  [data-theme="horror"] .chip { background: rgba(40,16,8,.6); }
+  [data-theme="horror"] .body { color: #e6d9cc; }
+  [data-theme="horror"] .glass { border-color: rgba(255,154,61,.26); }
+  [data-theme="horror"] .glass::after { background: rgba(232,113,26,.10); }
+  [data-theme="horror"] .action { background: linear-gradient(135deg, rgba(232,113,26,.16), rgba(184,243,107,.10)); border-color: rgba(255,154,61,.28); }
+  [data-theme="horror"] .end { background: radial-gradient(circle at 50% 22%, #f3ead6 0 90px, rgba(243,234,214,.25) 96px, transparent 300px), radial-gradient(60% 40% at 50% 55%, rgba(232,113,26,.30), transparent 70%), #07040a; }
+  [data-theme="horror"] .end .url { border-color: rgba(255,154,61,.4); }
+
   /* Clip choreography. Times are seconds in a 12 s clip; stills jump to the end of the main scene. */
   .clip .a { animation-fill-mode: both; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
   .clip .in-up { animation-name: inUp; animation-duration: .8s; }
@@ -201,6 +215,7 @@ window.paint = function (tip, cat, fmt, index, total, guideHost, lang) {
   const c = document.getElementById("c");
   c.className = fmt;
   c.style.setProperty("--accent", cat.color);
+  c.dataset.theme = cat.theme || "";
   const tall = fmt !== "feed";
   const cubes = tall
     ? '<div class="cube a" style="--s:120px;left:820px;top:260px"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="cube a" style="--s:70px;left:900px;top:1330px;animation-direction:reverse"><i></i><i></i><i></i><i></i><i></i><i></i></div>'

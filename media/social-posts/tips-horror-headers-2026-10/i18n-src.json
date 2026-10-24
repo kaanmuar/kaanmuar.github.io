@@ -1,0 +1,91 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step."
+ },
+ "clips": {
+  "missing-csp": {
+   "lang": "en",
+   "strings": {
+    "counter": "Horror header 01 / 05",
+    "actionLabel": "Exorcise it",
+    "title.0": "The missing CSP:",
+    "title.1": "*anything* can crawl in.",
+    "body": "Without a Content-Security-Policy header, the browser runs any script that ends up in your page, including one an attacker injected.",
+    "visual.left.label": "No CSP",
+    "visual.right.label": "With CSP",
+    "action": "Check your response headers for Content-Security-Policy. Start in report-only mode, read the reports, then enforce it.",
+    "cat.label": "Horror headers · Security",
+    "cap.youtube": "Without a Content-Security-Policy header, the browser runs any script that ends up in your page, including one an attacker injected.\n\nExorcise it: Check your response headers for Content-Security-Policy. Start in report-only mode, read the reports, then enforce it.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=missing-csp\n\nHorror header 1/5 · QA-lab URL Review\n\n#Halloween #DevOps #CyberSecurity #QA #CSP #WebSecurity #Programming #LearnOnYouTube #QualityAssurance #InfoSec #TestAutomation #QAlab"
+   }
+  },
+  "zombie-redirects": {
+   "lang": "es",
+   "strings": {
+    "counter": "Horror header 02 / 05",
+    "actionLabel": "Exorcise it",
+    "title.0": "The zombie redirect chain:",
+    "title.1": "*it keeps* coming back.",
+    "body": "An old link hops from http to https, then to www, then to a trailing slash. Every hop costs a round trip, and crawlers can stop following a long chain before they reach the page.",
+    "visual.note": "Labelled example: three hops to reach one page",
+    "action": "Follow your old links to their final address. Send each one there in a single redirect, and update the links you control.",
+    "cat.label": "Horror headers · SEO",
+    "cap.youtube": "An old link hops from http to https, then to www, then to a trailing slash. Every hop costs a round trip, and crawlers can stop following a long chain before they reach the page.\n\nExorcise it: Follow your old links to their final address. Send each one there in a single redirect, and update the links you control.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=zombie-redirects\n\nHorror header 2/5 · QA-lab URL Review\n\n#Halloween #Playwright #AI #QA #Redirects #TechnicalSEO #WebDevelopment #Coding #SearchConsole #SoftwareTesting #ContentMarketing #QAlab"
+   }
+  },
+  "haunted-404": {
+   "lang": "pt",
+   "strings": {
+    "counter": "Horror header 03 / 05",
+    "actionLabel": "Exorcise it",
+    "title.0": "The haunted 404:",
+    "title.1": "*the page is gone,* the server says 200.",
+    "body": "A missing page that answers 200 OK is a soft 404. Search engines can index the error page, and monitors that only read status codes never see the broken link.",
+    "visual.left.label": "Soft 404",
+    "visual.right.label": "Real 404",
+    "action": "Open a made-up address on your site. It should answer 404 and offer a way back: a link home and a search box.",
+    "cat.label": "Horror headers · QA",
+    "cap.youtube": "A missing page that answers 200 OK is a soft 404. Search engines can index the error page, and monitors that only read status codes never see the broken link.\n\nExorcise it: Open a made-up address on your site. It should answer 404 and offer a way back: a link home and a search box.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=haunted-404\n\nHorror header 3/5 · QA-lab URL Review\n\n#Halloween #Playwright #AI #QA #Soft404 #SoftwareTesting #Programming #LearnOnYouTube #QAEngineer #GoogleSearch #SDET #QAlab"
+   }
+  },
+  "cursed-alt": {
+   "lang": "de",
+   "strings": {
+    "counter": "Horror header 04 / 05",
+    "actionLabel": "Exorcise it",
+    "title.0": "The cursed alt text:",
+    "title.1": "*IMG_2041.jpg* says nothing.",
+    "body": "Screen readers read alt text aloud. A file name or the word image leaves the picture a mystery, and a long description on a decorative image wastes the listener's time.",
+    "visual.items.0.0": "alt=\"IMG_2041.jpg\"",
+    "visual.items.0.1": "A file name, read aloud",
+    "visual.items.1.0": "alt=\"image\"",
+    "visual.items.1.1": "Says nothing new",
+    "visual.items.2.0": "alt=\"\" on a decorative swirl",
+    "visual.items.2.1": "Skipped, as it should be",
+    "visual.items.3.0": "alt=\"Team at the launch\"",
+    "visual.items.3.1": "Says what it shows",
+    "action": "Go through the images on your top page. Describe the ones that inform, and give decorative ones an empty alt.",
+    "cat.label": "Horror headers · Accessibility",
+    "cap.youtube": "Screen readers read alt text aloud. A file name or the word image leaves the picture a mystery, and a long description on a decorative image wastes the listener's time.\n\nExorcise it: Go through the images on your top page. Describe the ones that inform, and give decorative ones an empty alt.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=cursed-alt\n\nHorror header 4/5 · QA-lab URL Review\n\n#Halloween #SoftwareTesting #DevOps #QA #AltText #Accessibility #LearnOnYouTube #TechTips #a11y #QualityAssurance #WCAG #QAlab"
+   }
+  },
+  "poltergeist-cls": {
+   "lang": "fr",
+   "strings": {
+    "counter": "Horror header 05 / 05",
+    "actionLabel": "Exorcise it",
+    "title.0": "The poltergeist layout shift:",
+    "title.1": "*the button moved* by itself.",
+    "body": "Images without dimensions, late ads and swapped fonts push content down while people read and tap. Cumulative Layout Shift measures it, and 0.1 or less counts as good.",
+    "visual.note": "Width and height let the browser reserve the space",
+    "action": "Load your page on a slow connection and watch it settle. Give images a width and height, and reserve space for ads and embeds.",
+    "cat.label": "Horror headers · Performance",
+    "cap.youtube": "Images without dimensions, late ads and swapped fonts push content down while people read and tap. Cumulative Layout Shift measures it, and 0.1 or less counts as good.\n\nExorcise it: Load your page on a slow connection and watch it settle. Give images a width and height, and reserve space for ads and embeds.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=horror-headers-2026-10&utm_content=poltergeist-cls\n\nHorror header 5/5 · QA-lab URL Review\n\n#Halloween #Playwright #WebPerformance #QA #CLS #CoreWebVitals #LearnOnYouTube #TechTips #QualityAssurance #PageSpeed #TestAutomation #QAlab"
+   }
+  }
+ }
+}
