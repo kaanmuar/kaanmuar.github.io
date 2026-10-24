@@ -12,7 +12,8 @@
    assets/social/edits.json holds the owner's edits from the Social hub pane in admin.html (captions, dates,
    hidden posts, items added by hand); online builds refresh it from Firestore socialHub/live.
    Writes assets/social/feed.json (cards), assets/social/captions.json (per-network captions, loaded on copy),
-   assets/social/rss*.xml (an RSS feed per language), sitemap-social.xml (post images and clips per page),
+   assets/social/rss*.xml (an RSS feed per language), sitemap-social.xml (the hub pages and every posted post page,
+   with its image and clip), social/<post id>.html (a page per post, in its own language; noindex until its day),
    assets/social/thumbs/*.webp and the six pages. Share cards come from scripts/build-share-images.js social. Posts still queued on the networks follow the posted ones,
    marked Scheduled, and stay out of the JSON-LD until their day. */
 
@@ -154,6 +155,13 @@ function isTracked(file) {
   }
 }
 
+// The same topic written in other languages: the launch set and promo batches (<batch>/<NN>-<topic>-<lang>).
+function groupOf(post) {
+  if (post.batch === LAUNCH) return LAUNCH + "/" + post.id.split("/").pop();
+  const match = post.kind === "launch" && post.id.match(/^([^/]+)\/\d+-(.+)-([a-z]{2})$/);
+  return match && match[3] === post.lang ? match[1] + "/" + match[2] : null;
+}
+
 function collect() {
   const files = tracked();
   const edits = admin.clean(exists(EDITS) ? readJson(EDITS) : null);
@@ -169,6 +177,7 @@ function collect() {
     post.youtube = post.youtube || byTitle.get(titleKey(post.ytTitle)) || (post.kind === "review" && byTitle.get(scoreKey(post.title))) || null;
     post.thumb = admin.remote(post.image) ? post.image : thumbFor(post.id);
     post.text = body(post);
+    post.group = groupOf(post);
   });
   posts.sort((a, b) => (b.date || "").localeCompare(a.date || "") || a.id.localeCompare(b.id));
   return { posts, ledger };
@@ -246,36 +255,37 @@ function captionsJson(posts) {
   return JSON.stringify(Object.fromEntries(posts.map((post) => [post.id, post.captions]))) + "\n";
 }
 
+function posting(post, full) {
+  const item = {
+    "@type": "SocialMediaPosting",
+    "@id": card.permalink(post, post.lang, true),
+    url: card.permalink(post, post.lang, true),
+    headline: post.title.slice(0, 110),
+    articleBody: full ? post.text : post.text.slice(0, 500),
+    datePublished: post.date,
+    inLanguage: post.lang,
+    image: { "@type": "ImageObject", contentUrl: imageUrl(post), caption: post.alt || post.title },
+    author: { "@id": ORG },
+    publisher: { "@id": ORG }
+  };
+  if (post.cat) item.keywords = post.cat;
+  if (post.youtube) {
+    item.video = {
+      "@type": "VideoObject",
+      name: post.title,
+      description: post.text.slice(0, 300) || post.title,
+      inLanguage: post.clipLang || post.lang,
+      uploadDate: post.date,
+      thumbnailUrl: "https://i.ytimg.com/vi/" + post.youtube + "/hqdefault.jpg",
+      embedUrl: "https://www.youtube.com/embed/" + post.youtube,
+      contentUrl: "https://www.youtube.com/shorts/" + post.youtube
+    };
+  }
+  return item;
+}
+
 function jsonLd(lang, shown, total, copy) {
   const url = SITE + card.pageFor(lang);
-  const posting = (post) => {
-    const item = {
-      "@type": "SocialMediaPosting",
-      "@id": card.permalink(post, lang, true),
-      url: card.permalink(post, lang, true),
-      headline: post.title.slice(0, 110),
-      articleBody: post.text.slice(0, 500),
-      datePublished: post.date,
-      inLanguage: post.lang,
-      image: { "@type": "ImageObject", contentUrl: imageUrl(post), caption: post.alt || post.title },
-      author: { "@id": ORG },
-      publisher: { "@id": ORG }
-    };
-    if (post.cat) item.keywords = post.cat;
-    if (post.youtube) {
-      item.video = {
-        "@type": "VideoObject",
-        name: post.title,
-        description: post.text.slice(0, 300) || post.title,
-        inLanguage: post.clipLang || post.lang,
-        uploadDate: post.date,
-        thumbnailUrl: "https://i.ytimg.com/vi/" + post.youtube + "/hqdefault.jpg",
-        embedUrl: "https://www.youtube.com/embed/" + post.youtube,
-        contentUrl: "https://www.youtube.com/shorts/" + post.youtube
-      };
-    }
-    return item;
-  };
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -296,7 +306,7 @@ function jsonLd(lang, shown, total, copy) {
         "@id": url + "#feed",
         numberOfItems: total,
         itemListOrder: "https://schema.org/ItemListOrderDescending",
-        itemListElement: shown.map((post, i) => ({ "@type": "ListItem", position: i + 1, item: posting(post) }))
+        itemListElement: shown.map((post, i) => ({ "@type": "ListItem", position: i + 1, item: posting(post, false) }))
       },
       {
         "@type": "Organization",
@@ -482,28 +492,183 @@ ${items.join("\n")}
 
 // Each page lists the images written in its language and the clips voiced in it.
 function sitemap(posts, asOf) {
-  const shown = live(posts, asOf);
-  const urls = Object.keys(LANGS).map((lang) => {
-    const images = shown.filter((post) => post.lang === lang).slice(0, 1000).map((post) =>
-      `    <image:image><image:loc>${xml(imageUrl(post))}</image:loc></image:image>`);
-    const videos = shown.filter((post) => post.youtube && (post.clipLang || post.lang) === lang).map((post) => `    <video:video>
+  const hubs = Object.keys(LANGS).map((lang) => `  <url>
+    <loc>${SITE}${card.pageFor(lang)}</loc>
+    <lastmod>${asOf}</lastmod>
+  </url>`);
+  const urls = live(posts, asOf).map((post) => {
+    const images = [`    <image:image><image:loc>${xml(imageUrl(post))}</image:loc></image:image>`];
+    const videos = !post.youtube ? [] : [`    <video:video>
       <video:thumbnail_loc>https://i.ytimg.com/vi/${xml(post.youtube)}/hqdefault.jpg</video:thumbnail_loc>
       <video:title>${xml(post.title.slice(0, 100))}</video:title>
       <video:description>${xml((post.text || post.title).slice(0, 2048))}</video:description>
       <video:player_loc>https://www.youtube.com/embed/${xml(post.youtube)}</video:player_loc>
       <video:publication_date>${post.date}</video:publication_date>
-    </video:video>`);
+    </video:video>`];
     return `  <url>
-    <loc>${SITE}${card.pageFor(lang)}</loc>
-    <lastmod>${asOf}</lastmod>
+    <loc>${xml(card.permalink(post, post.lang, true))}</loc>
+    <lastmod>${post.date}</lastmod>
 ${images.concat(videos).join("\n")}
   </url>`;
   });
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-${urls.join("\n")}
+${hubs.concat(urls).join("\n")}
 </urlset>
 `;
+}
+
+const SHARE_TO = [
+  ["x", "X", (url, text) => "https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url)],
+  ["linkedin", "LinkedIn", (url) => "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(url)],
+  ["facebook", "Facebook", (url) => "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url)],
+  ["whatsapp", "WhatsApp", (url, text) => "https://wa.me/?text=" + encodeURIComponent(text + " " + url)]
+];
+const src = (file) => (admin.remote(file) ? file : "/" + file);
+const plain = (text, max) => {
+  const flat = String(text || "").replace(/\s+/g, " ").trim();
+  return flat.length <= max ? flat : flat.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+};
+
+function postPage(post, siblings, related, asOf) {
+  const lang = LANGS[post.lang] ? post.lang : "en";
+  const copy = COPY[lang];
+  const sfx = lang === "en" ? "" : "-" + lang;
+  const esc = card.esc;
+  const url = card.permalink(post, lang, true);
+  const hub = SITE + card.pageFor(lang);
+  const upcoming = post.date > asOf;
+  const title = post.title + " · QA-lab URL Review";
+  const description = plain(post.text || post.title, 155);
+  const image = imageUrl(post);
+  const json = (value) => JSON.stringify(value, null, 1).replace(/</g, "\\u003c");
+  const fallback = siblings.find((other) => other.lang === "en") || siblings[0];
+  const alternates = siblings.length > 1
+    ? siblings.map((other) => "    <link rel=\"alternate\" hreflang=\"" + other.lang + "\" href=\"" + card.permalink(other, other.lang, true) + "\">")
+      .concat("    <link rel=\"alternate\" hreflang=\"x-default\" href=\"" + card.permalink(fallback, fallback.lang, true) + "\">").join("\n") + "\n"
+    : "";
+  const tagged = (net) => url + "?utm_source=" + net + "&utm_medium=social&utm_campaign=social-hub&utm_content=" + card.anchor(post);
+  const share = SHARE_TO.map(([net, name, link]) =>
+    "<a class=\"post-btn\" data-act=\"share\" data-net=\"" + net + "\" href=\"" + esc(link(tagged(net), post.title)) + "\" target=\"_blank\" rel=\"noopener\">" + esc(name) + "</a>").join("");
+  const kind = copy.kind[post.kind] || post.kind;
+  const voice = (post.clipLang || post.lang).toUpperCase();
+  const play = post.youtube
+    ? "<button class=\"post-play\" type=\"button\" data-act=\"play\" data-video=\"" + esc(post.youtube) + "\" aria-label=\"" + esc(copy.watch + " (" + copy.sound + ", " + voice + ")") + "\"><span class=\"post-play-icon\" aria-hidden=\"true\"></span>"
+      + "<span class=\"post-play-label\" aria-hidden=\"true\">" + esc(copy.watch) + "<span class=\"post-play-voice\" translate=\"no\">" + card.ICON.sound + esc(voice) + "</span></span></button>"
+    : "";
+  const report = post.report
+    ? " <a class=\"post-report\" data-act=\"report\" href=\"/qa-review" + sfx + ".html?live=" + encodeURIComponent(post.report) + "&amp;from=social\">" + esc(copy.report) + " →</a>"
+    : "";
+  const captions = CAPTIONS.filter(([net]) => post.captions && post.captions[net]).map(([net, name], i) =>
+    "<details><summary>" + esc(name) + "</summary><pre id=\"cap-" + net + "\" lang=\"" + esc(post.lang) + "\">" + esc(post.captions[net]) + "</pre>"
+    + "<button class=\"post-btn\" type=\"button\" data-act=\"copy\" data-net=\"" + net + "\" data-target=\"cap-" + net + "\">" + esc(copy.copy) + "</button></details>").join("\n        ");
+  const more = related.map((other) => "<li><a href=\"/" + card.postPath(other) + "\" data-act=\"related\" data-id=\"" + esc(other.id) + "\"><img src=\"" + esc(src(other.thumb)) + "\" width=\"270\" height=\"338\" loading=\"lazy\" decoding=\"async\" alt=\"\"><span lang=\"" + esc(other.lang) + "\">" + esc(other.title) + "</span></a></li>").join("");
+  const graph = {
+    "@context": "https://schema.org",
+    "@graph": [
+      Object.assign(posting(post, true), { mainEntityOfPage: url, isPartOf: { "@type": "CollectionPage", "@id": hub + "#page", url: hub } }),
+      { "@type": "Organization", "@id": ORG, name: "QA-lab URL Review", url: SITE + "qa-review.html", logo: SITE + "assets/qa-review-mark.svg", sameAs: PROFILES.map((profile) => profile.url) },
+      { "@type": "BreadcrumbList", itemListElement: [
+        { "@type": "ListItem", position: 1, name: "QA-lab URL Review", item: SITE + "qa-review" + sfx + ".html" },
+        { "@type": "ListItem", position: 2, name: "Social", item: hub },
+        { "@type": "ListItem", position: 3, name: post.title.slice(0, 110), item: url }
+      ] }
+    ]
+  };
+  const css = version("css/social-hub.css");
+  return `<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="${CSP}">
+    <title>${esc(title)}</title>
+    <meta name="description" content="${esc(description)}">
+    <meta name="robots" content="${upcoming ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"}">
+    <meta name="theme-color" content="#0d6e76">
+    <link rel="canonical" href="${url}">
+${alternates}    <link rel="icon" href="/assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="alternate" type="application/rss+xml" href="${SITE}${OUT}/rss${sfx}.xml" title="QA-lab URL Review · Social (RSS)">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="QA-lab URL Review">
+    <meta property="og:locale" content="${LANGS[lang].locale}">
+    <meta property="og:url" content="${url}">
+    <meta property="og:title" content="${esc(post.title)}">
+    <meta property="og:description" content="${esc(description)}">
+    <meta property="og:image" content="${esc(image)}">${admin.remote(post.image) ? "" : `
+    <meta property="og:image:width" content="1080">
+    <meta property="og:image:height" content="1350">
+    <meta property="og:image:type" content="image/jpeg">`}
+    <meta property="og:image:alt" content="${esc(post.alt || post.title)}">
+    <meta property="article:published_time" content="${post.date}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@qalaburlreview">
+    <meta name="twitter:title" content="${esc(post.title)}">
+    <meta name="twitter:description" content="${esc(description)}">
+    <meta name="twitter:image" content="${esc(image)}">
+    <meta name="twitter:image:alt" content="${esc(post.alt || post.title)}">
+    <script type="application/ld+json">
+${json(graph)}
+    </script>
+    <script src="/js/site-analytics.js?v=20261024a"></script>
+    <script src="/js/qa-review-consent.js?v=20261028p"></script>
+    <script src="/js/site-theme.js"></script>
+    <script>SiteTheme.boot();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/social-hub.css?v=${css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand"><a href="/qa-review${sfx}.html"><img class="logo" src="/assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
+    <nav class="actions" aria-label="QA-lab URL Review">
+        <a class="btn btn-ghost" href="/qa-review${sfx}.html">${esc(copy.nav.review)}</a>
+        <a class="btn btn-ghost" href="/qa-review-social${sfx}.html">${esc(copy.allPosts)}</a>
+    </nav>
+</header>
+<main class="post-page" data-post-id="${esc(post.id)}" data-url="${esc(url)}" data-copied="${esc(copy.copied)}">
+    <nav class="post-crumbs" aria-label="Breadcrumb"><a href="/qa-review-social${sfx}.html">Social</a> › <span>${esc(kind)}</span></nav>
+    <article class="post post-full" data-id="${esc(post.id)}" data-kind="${esc(post.kind)}" data-lang="${esc(post.lang)}">
+        <div class="post-media"><img src="${esc(src(post.image))}" width="1080" height="1350" decoding="async" alt="${esc(post.alt || post.title)}">${play}</div>
+        <div class="post-body">
+            <p class="post-meta"><span class="post-tag post-kind-${esc(post.kind)}">${esc(kind)}</span>${post.cat ? "<span class=\"post-tag\">" + esc(card.topic(post, copy)) + "</span>" : ""}<span class="post-tag post-lang" translate="no">${esc(post.lang.toUpperCase())}</span>${upcoming ? "<span class=\"post-tag post-scheduled\">" + esc(copy.scheduled) + "</span>" : ""}</p>
+            <h1 class="post-title" lang="${esc(post.lang)}">${esc(post.title)}</h1>
+            <div class="post-text" lang="${esc(post.lang)}">${card.parasHtml(post.text)}</div>
+            <p class="post-foot"><time datetime="${esc(post.date)}">${esc(card.day(post.date, lang))}</time>${report}</p>
+            <div class="post-actions post-share">${share}<button class="post-btn" type="button" data-act="copylink">${esc(copy.copyLink)}</button><a class="post-btn" data-act="download" href="${esc(src(post.image))}" download>${esc(copy.download)}</a></div>
+        </div>
+    </article>
+${captions ? `    <section class="post-captions">
+        <h2>${esc(copy.captionsFor)}</h2>
+        ${captions}
+    </section>
+` : ""}${more ? `    <section class="post-related">
+        <h2>${esc(copy.related)}</h2>
+        <ul>${more}</ul>
+    </section>
+` : ""}    <p class="post-back"><a class="btn btn-ghost" href="/qa-review-social${sfx}.html">← ${esc(copy.allPosts)}</a></p>
+</main>
+<footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="/qa-review-legal.html?lang=${lang}">Legal</a> · <a href="/${OUT}/rss${sfx}.xml">RSS</a></p></footer>
+<script src="/js/social-post.js?v=${version("js/social-post.js")}"></script>
+</body>
+</html>
+`;
+}
+
+// Related posts: the newest posted ones of the same kind, the post's language first.
+function postPages(posts, asOf) {
+  const shown = live(posts, asOf);
+  const groups = {};
+  posts.forEach((post) => { if (post.group) (groups[post.group] = groups[post.group] || []).push(post); });
+  const files = {};
+  posts.forEach((post) => {
+    const siblings = post.group ? groups[post.group].slice().sort((a, b) => Object.keys(LANGS).indexOf(a.lang) - Object.keys(LANGS).indexOf(b.lang)) : [post];
+    const related = shown.filter((other) => other.id !== post.id && other.kind === post.kind && (!post.group || other.group !== post.group))
+      .sort((a, b) => (a.lang === post.lang ? 0 : 1) - (b.lang === post.lang ? 0 : 1)).slice(0, 6);
+    files[card.postPath(post)] = postPage(post, siblings, related, asOf);
+  });
+  return files;
 }
 
 function outputs(posts, asOf) {
@@ -512,7 +677,15 @@ function outputs(posts, asOf) {
     files[card.pageFor(lang)] = page(lang, posts, asOf);
     files[OUT + "/rss" + (lang === "en" ? "" : "-" + lang) + ".xml"] = rss(lang, posts, asOf);
   });
-  return files;
+  return Object.assign(files, postPages(posts, asOf));
+}
+
+function orphans(files) {
+  const dir = path.join(ROOT, "social");
+  if (!fs.existsSync(dir)) return [];
+  const walk = (at) => fs.readdirSync(at, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory() ? walk(path.join(at, entry.name)) : [path.relative(ROOT, path.join(at, entry.name)).split(path.sep).join("/")]);
+  return walk(dir).filter((file) => file.endsWith(".html") && !(file in files));
 }
 
 async function main() {
@@ -537,6 +710,7 @@ async function main() {
   if (check) {
     const stale = Object.entries(files).filter(([file, text]) => !exists(file) || read(file) !== text).map(([file]) => file);
     const noThumb = posts.filter(needsThumb).map((post) => post.thumb);
+    stale.push(...orphans(files));
     if (stale.length || noThumb.length) {
       console.error("Social hub is stale; run node scripts/build-social-hub.js\n" + stale.concat(noThumb.slice(0, 5)).join("\n"));
       process.exit(1);
@@ -546,11 +720,15 @@ async function main() {
   }
   const thumbs = await writeThumbs(posts);
   fs.mkdirSync(path.join(ROOT, OUT), { recursive: true });
-  Object.entries(files).forEach(([file, text]) => fs.writeFileSync(path.join(ROOT, file), text));
+  orphans(files).forEach((file) => fs.unlinkSync(path.join(ROOT, file)));
+  Object.entries(files).forEach(([file, text]) => {
+    fs.mkdirSync(path.dirname(path.join(ROOT, file)), { recursive: true });
+    fs.writeFileSync(path.join(ROOT, file), text);
+  });
   const videos = posts.filter((post) => post.youtube).length;
   console.log("Social hub: " + posts.length + " posts (" + videos + " with a clip), " + thumbs + " new thumbnails, as of " + asOf);
 }
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, collect, liveEdits, feedJson, page, rss, sitemap, outputs };
+module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };

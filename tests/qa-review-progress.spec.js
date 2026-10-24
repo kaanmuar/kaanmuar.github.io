@@ -63,12 +63,18 @@ test.describe('Review progress', () => {
     await expect(page.locator('.rp-phase')).toHaveAttribute('translate', 'no');
   });
 
-  test('writes the earlier-reviews and emailing lines in the page language, and leaves English pages alone', async ({ page }) => {
+  test('translates the late server lines and leaves hosts and emails as sent', async ({ page }) => {
     await prime(page);
-    await page.goto('/qa-review-pt.html');
-    const pt = await page.evaluate(() => ['Looking for your earlier reviews of example.com.', 'Report saved. Emailing a copy to ana@example.com.', 'Opening /a.'].map((text) => window.ReviewProgress.local(text)));
-    expect(pt).toEqual(['Procurando suas revisões anteriores de example.com.', 'Relatório salvo. Enviando uma cópia para ana@example.com.', '']);
+    await page.goto('/qa-review-es.html');
+    const say = (text) => page.evaluate((line) => window.ReviewProgress.translate(line), text);
+    expect(await say('Looking for your earlier reviews of carlosandmunoz.com.')).toBe('Buscando tus revisiones anteriores de carlosandmunoz.com.');
+    expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe('Informe guardado. Enviando una copia a ana@example.com.');
+    expect(await say('Market presence: a.com is #1,234 on Tranco, presence 80/100; b.com is outside the Tranco top million.'))
+      .toBe('Presencia en el mercado: a.com ocupa el puesto #1234 en Tranco, presencia 80/100; b.com está fuera del millón principal de Tranco.');
+    expect(await say('Reading robots.txt.')).toBe('Reading robots.txt.');
+    await page.goto('/qa-review-de.html');
+    expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe('Bericht gespeichert. Eine Kopie geht an ana@example.com.');
     await page.goto('/qa-review.html');
-    expect(await page.evaluate(() => window.ReviewProgress.local('Looking for your earlier reviews of example.com.'))).toBe('');
+    expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe('Report saved. Emailing a copy to ana@example.com.');
   });
 });
