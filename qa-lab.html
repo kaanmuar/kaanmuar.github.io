@@ -621,9 +621,9 @@
 </aside>
 <div id="report-options" class="fw-ask notranslate" hidden translate="no">
     <div class="fw-ask-card report-options-card" role="dialog" aria-modal="true" aria-labelledby="report-options-title">
-        <h2 id="report-options-title">Report</h2>
-        <p class="muted">The report stays in English until you pick another language. Check the preview, then download or print. Graphs are included.</p>
-        <label class="report-lang-label notranslate">Report language
+        <h2 id="report-options-title" data-report-ui="title">Report</h2>
+        <p class="muted" data-report-ui="intro">The report uses the language picked here. Check the preview, then copy, print, or download it. Graphs are included.</p>
+        <label class="report-lang-label notranslate"><span data-report-ui="lang">Report language</span>
             <select id="report-lang">
                 <option value="en" selected>English</option>
                 <option value="es">Español</option>
@@ -634,20 +634,20 @@
             </select>
         </label>
         <div class="report-checks" id="report-checks">
-            <label><input type="checkbox" id="opt-graphs" checked> Graphs</label>
-            <label><input type="checkbox" id="opt-details" checked> Run details</label>
-            <label><input type="checkbox" id="opt-cases" checked> Case results</label>
-            <label><input type="checkbox" id="opt-steps" checked> Where, when and how</label>
-            <label><input type="checkbox" id="opt-runners" checked> Runner comparison</label>
-            <label><input type="checkbox" id="opt-history"> Selected history runs</label>
-            <label><input type="checkbox" id="opt-analysis"> Comparison analysis</label>
+            <label><input type="checkbox" id="opt-graphs" checked> <span data-report-ui="graphs">Graphs</span></label>
+            <label><input type="checkbox" id="opt-details" checked> <span data-report-ui="details">Run details</span></label>
+            <label><input type="checkbox" id="opt-cases" checked> <span data-report-ui="cases">Case results</span></label>
+            <label><input type="checkbox" id="opt-steps" checked> <span data-report-ui="steps">Where, when and how</span></label>
+            <label><input type="checkbox" id="opt-runners" checked> <span data-report-ui="runners">Runner comparison</span></label>
+            <label><input type="checkbox" id="opt-history"> <span data-report-ui="history">Selected history runs</span></label>
+            <label><input type="checkbox" id="opt-analysis"> <span data-report-ui="analysis">Comparison analysis</span></label>
         </div>
         <iframe id="report-preview" class="report-preview notranslate" title="Report preview" sandbox="allow-same-origin"></iframe>
         <div class="history-actions">
-            <button class="btn btn-ghost" type="button" id="report-options-close">Close</button>
-            <button class="btn btn-ghost" type="button" id="report-options-copy">Copy</button>
-            <button class="btn btn-ghost" type="button" id="report-options-print">Print</button>
-            <button class="btn btn-primary" type="button" id="report-options-download">Download</button>
+            <button class="btn btn-ghost" type="button" id="report-options-close" data-report-ui="close">Close</button>
+            <button class="btn btn-ghost" type="button" id="report-options-copy" data-report-ui="copy">Copy</button>
+            <button class="btn btn-ghost" type="button" id="report-options-print" data-report-ui="print">Print</button>
+            <button class="btn btn-primary" type="button" id="report-options-download" data-report-ui="download">Download</button>
         </div>
     </div>
 </div>
@@ -697,7 +697,7 @@
 <script src="js/site-glossary.js?v=20261029b"></script>
 <script src="js/site-tour.js?v=20261012a"></script>
 <script src="js/lab-observer.js"></script>
-<script src="js/qa-lab.js?v=20261023d"></script>
+<script src="js/qa-lab.js?v=20261024e"></script>
 <script>
     document.getElementById('theme-toggle').addEventListener('click', () => SiteTheme.toggle());
     QALab.boot();
