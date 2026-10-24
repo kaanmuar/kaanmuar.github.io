@@ -86,3 +86,12 @@ test("every fix is stable when applied twice and check() names what it caught", 
   assert.deepEqual(Object.keys(FIXES).sort(), ["de", "es", "fr", "it", "pt"]);
   assert.equal(fix("A review of the site.", "en"), "A review of the site.");
 });
+
+test("the owner-only copy-link label and its note are hand-translated in every review language", () => {
+  for (const lang of ["es", "pt", "de", "fr", "it"]) {
+    for (const source of ["Copy link (opens for you)", "This link opens in full only for you, signed in. Anyone else sees a blurred preview."]) {
+      const out = Glossary.line(source, lang);
+      assert.ok(out && out !== source, lang + ": " + source);
+    }
+  }
+});

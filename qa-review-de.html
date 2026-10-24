@@ -826,7 +826,7 @@
         .capture-note { display: none; }
         .sheet-mark { display: none; position: absolute; inset: 0; z-index: 4; pointer-events: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='440' height='180'><text x='16' y='90' fill='%230d6e76' font-size='13' font-family='sans-serif' transform='rotate(-18 220 90)'>QA-lab URL Review · Carlos Muñoz · Preview copy · Not a certification</text></svg>"); background-repeat: repeat; opacity: .2; }
         body.preview-copy .sheet-mark { display: block; }
-        #report, #share-link { position: relative; z-index: 5; min-width: 0; max-width: 100%; }
+        #report, #share-link, #share-note { position: relative; z-index: 5; min-width: 0; max-width: 100%; }
         .dash-modal-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
         .dash-modal-head h2 { margin: 0; }
         #pay.gate, #run-pay.gate, #case-export.gate, #case-formats.gate { z-index: 120; align-items: center; background: rgba(12, 17, 24, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
@@ -874,7 +874,7 @@
         .sample-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 14px; color: var(--muted); font-size: 14px; }
         .sample-note { position: relative; z-index: 5; margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 10px; background: var(--panel); }
         .dash-overlay.is-sample .report-toolbar .actions > :not(#dash-close),
-        .dash-overlay.is-sample #share-link, .dash-overlay.is-sample #tool-block, .dash-overlay.is-sample #alarm-open,
+        .dash-overlay.is-sample #share-link, .dash-overlay.is-sample #share-note, .dash-overlay.is-sample #tool-block, .dash-overlay.is-sample #alarm-open,
         .dash-overlay.is-sample #credential-run { display: none !important; }
         .gate-card { width: min(720px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
         #gate { --glass-edge: color-mix(in srgb, var(--text) 14%, transparent); align-items: center; perspective: 1400px; interpolate-size: allow-keywords;
@@ -1049,7 +1049,7 @@
             body #site-tour-tooltip { left: auto; right: 16px; }
         }
         @media print {
-            .topbar, .gate, #intake, #run-panel, .filters, .no-print, .report-toolbar, #share-link, #pay, #run-pay, .wire, .stage { display: none !important; }
+            .topbar, .gate, #intake, #run-panel, .filters, .no-print, .report-toolbar, #share-link, #share-note, #pay, #run-pay, .wire, .stage { display: none !important; }
             .dash-overlay { display: block !important; position: static; background: #fff; padding: 0; overflow: visible; }
             .dash-modal { box-shadow: none; margin: 0; max-width: none; border: 0; background: #fff; color: #12181f; }
             .card, .kpi, .tick, .report-cover { box-shadow: none; break-inside: avoid; }
@@ -1421,7 +1421,7 @@
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-ghost" id="copy-link" type="button">Copy link</button>
+                <button class="btn btn-ghost" id="copy-link" type="button">Copy link (opens for you)</button>
                 <button class="btn btn-ghost" id="ask-open" type="button" aria-expanded="false" aria-controls="ask-panel" lang="de" translate="no" hidden>Den Bericht fragen</button>
                 <button class="btn btn-ghost" id="case-export-open" type="button">Export and print test cases</button>
                 <div class="menu-wrap">
@@ -1448,6 +1448,7 @@
             </div>
         </div>
         <p id="share-link" class="muted"></p>
+        <p id="share-note" class="muted">This link opens in full only for you, signed in. Anyone else sees a blurred preview.</p>
         <p id="sample-note" class="sample-note" hidden></p>
         <section id="report">
         <header class="report-cover" id="report-cover"></header>
@@ -1629,7 +1630,7 @@
 </div>
 <script>try{localStorage.setItem("cv-preferred-lang","de")}catch(e){}</script>
 <script src="js/site-i18n.js?v=20261028a"></script>
-<script src="js/site-glossary.js?v=20261029a"></script>
+<script src="js/site-glossary.js?v=20261029b"></script>
 <script src="js/site-tour.js?v=20261023a"></script>
 <script src="js/qa-review-stage.js?v=20261013f"></script>
 <script src="js/qa-review-scripts.js?v=20261031b"></script>
