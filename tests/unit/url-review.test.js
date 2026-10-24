@@ -572,6 +572,70 @@ test.describe("start page reads", () => {
     assert.equal(failures.causeOf(refused.message).id, "bot-protection");
   });
 
+  test("a server that leaves out its intermediate certificate is read after fetching it from the AIA address", async () => {
+    // Failed run 3ee60f3e464b7756 on www.dollarcity.com (#734): the server sends only its leaf, so Node
+    // answered "unable to verify the first certificate" while browsers opened the site.
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const crypto = require("node:crypto");
+    const tlsLib = require("node:tls");
+    const httpsLib = require("node:https");
+    const failures = require("../../functions/url-review-failures");
+    const pem = (name) => fs.readFileSync(path.join(__dirname, "fixtures", "tls-chain", name + ".pem"), "utf8");
+    const der = (name) => new crypto.X509Certificate(pem(name)).raw;
+    const read = async (host, issuer) => {
+      const site = "https://" + host + "/";
+      const restore = fakeNetwork({
+        [site]: { status: 200, headers: STRONG_HEADERS, body: HTML.replace(/shop\.example\.com/g, host) },
+        "http://certs.ca.example.org/intermediate.crt": { status: 200, headers: { "content-type": "application/pkix-cert" }, body: der(issuer) }
+      });
+      const fake = httpsLib.request;
+      const savedConnect = tlsLib.connect;
+      const cas = [];
+      httpsLib.request = (options, onResponse) => {
+        if (options.hostname !== host) return fake(options, onResponse);
+        cas.push(options.ca ? options.ca.includes(pem("int")) : false);
+        if (options.ca && options.ca.includes(pem("int"))) return fake(options, onResponse);
+        const { EventEmitter } = require("node:events");
+        const req = new EventEmitter();
+        req.destroy = () => {};
+        req.end = () => setImmediate(() => req.emit("error", Object.assign(new Error("unable to verify the first certificate"), { code: "UNABLE_TO_VERIFY_LEAF_SIGNATURE" })));
+        return req;
+      };
+      tlsLib.connect = (options, onSecure) => {
+        const { EventEmitter } = require("node:events");
+        const socket = new EventEmitter();
+        assert.deepEqual([options.servername, options.port], [host, 443]);
+        socket.getPeerCertificate = () => ({ raw: der("leaf") });
+        socket.destroy = () => {};
+        setImmediate(onSecure);
+        return socket;
+      };
+      const lines = [];
+      try {
+        const report = await core.reviewTarget(site, { log: (text) => lines.push(text), browse: async () => ({ ok: false }) });
+        return { report, lines, cas };
+      } finally {
+        httpsLib.request = fake;
+        tlsLib.connect = savedConnect;
+        restore();
+      }
+    };
+
+    const { report, lines, cas } = await read("chain.example.com", "int");
+    assert.deepEqual([report.pages[0].status, report.pages[0].title], [200, "Example shop for garden tools"]);
+    assert.deepEqual(cas.slice(0, 2), [false, true]);
+    assert.ok(cas.slice(2).every(Boolean), "later requests to the host carry the fetched intermediate");
+    assert.ok(lines.includes("The server sent its certificate without the intermediate Review Test Intermediate. Fetched it from http://certs.ca.example.org/intermediate.crt, as browsers do, and verified the chain again."));
+    const chain = report.insights.findings.find((item) => item.key === "sec-tls-chain");
+    assert.deepEqual([chain.verdict, chain.severity], ["risk", "medium"]);
+    assert.match(chain.evidence, /without Review Test Intermediate\. Browsers fetch/);
+
+    const wrong = await read("wrong-issuer.example.com", "other").catch((error) => error);
+    assert.equal(wrong.message, "unable to verify the first certificate");
+    assert.equal(failures.causeOf(wrong.message).id, "tls");
+  });
+
   test("an empty shell start page is crawled from the links headless Chrome rendered", async () => {
     const shell = "<!doctype html><html lang=\"en\"><head><title>Bank app</title></head><body><div id=\"root\"></div><script src=\"/app.js\"></script></body></html>";
     const page = (h1) => HTML.replace("<h1>Garden tools</h1>", "<h1>" + h1 + "</h1>");
