@@ -18,9 +18,9 @@ const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
 const { siteLabel } = caseRank;
 
-const TERMS_VERSION = "2026-10-22.2";
+const TERMS_VERSION = "2026-10-23";
 // A page loaded before a terms change still sends the version before it.
-const PREVIOUS_TERMS_VERSION = "2026-10-22";
+const PREVIOUS_TERMS_VERSION = "2026-10-22.2";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 

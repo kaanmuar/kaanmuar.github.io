@@ -1135,6 +1135,11 @@ test("the intake takes the current terms and the ones just before, and records w
   assert.ok(core.validateIntake(body("2026-09-01")).errors.some((e) => e.field === "terms"));
 });
 
+test("the review page sends the terms version the server takes as current", () => {
+  const page = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8").match(/TERMS_VERSION = "([^"]+)"/)[1];
+  assert.equal(page, core.TERMS_VERSION);
+});
+
 test("payment rows are kept until January 1 of the sixth year after the payment", () => {
   assert.equal(core.paymentExpireAt("2026-10-22T12:00:00Z").toISOString(), "2032-01-01T00:00:00.000Z");
   assert.equal(core.paymentExpireAt("2026-01-01T00:00:00Z").toISOString(), "2032-01-01T00:00:00.000Z");
