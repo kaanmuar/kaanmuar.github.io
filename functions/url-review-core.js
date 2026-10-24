@@ -253,6 +253,15 @@ function mailOf(value) {
   return emailSyntax(email) ? email : "";
 }
 
+// Cloudflare email obfuscation hex: the first byte is the XOR key for the rest.
+function cfEmail(hex) {
+  if (!/^(?:[0-9a-f]{2}){2,}$/i.test(hex || "")) return "";
+  const key = parseInt(hex.slice(0, 2), 16);
+  let out = "";
+  for (let i = 2; i < hex.length; i += 2) out += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16) ^ key);
+  return out;
+}
+
 // Addresses written out in text, including "name [at] site [dot] com" spellings.
 function emailsInText(text, max) {
   const out = [];
@@ -1142,6 +1151,8 @@ function sameHost(from, href) {
     if (next.protocol !== "https:") return "";
     if (next.hostname !== base.hostname) return "";
     if (next.port && next.port !== "443") return "";
+    // Cloudflare reserves /cdn-cgi/ for its own endpoints, such as the email obfuscation page.
+    if (next.pathname.startsWith("/cdn-cgi/")) return "";
     next.hash = "";
     [...next.searchParams.keys()].forEach((key) => {
       if (/^(utm_[a-z]+|gclid|fbclid|msclkid|mc_cid|mc_eid|intcmp|cmp|_ga|_gl|yclid|igshid)$/i.test(key)) next.searchParams.delete(key);
@@ -1427,12 +1438,14 @@ function inspect(html, headers, pageUrl) {
     if (href && links.length < 100) links.push(href);
   });
   const mailtos = [];
+  const addMail = (email) => { if (email && mailtos.indexOf(email) === -1 && mailtos.length < 5) mailtos.push(email); };
   collect(markup, "a").forEach((tag) => {
     const href = attr(tag, "href");
-    if (!/^\s*mailto:/i.test(href)) return;
-    const email = mailOf(href);
-    if (email && mailtos.indexOf(email) === -1 && mailtos.length < 5) mailtos.push(email);
+    const hidden = href.match(/\/cdn-cgi\/l\/email-protection#([0-9a-f]+)/i);
+    if (hidden) addMail(mailOf(cfEmail(hidden[1])));
+    else if (/^\s*mailto:/i.test(href)) addMail(mailOf(href));
   });
+  (markup.match(/data-cfemail=["'][0-9a-f]+["']/gi) || []).forEach((hit) => addMail(mailOf(cfEmail(hit.slice(14, -1)))));
   const scripts = collect(html, "script").map((tag) => attr(tag, "src")).filter(Boolean);
   const styles = collect(html, "link").filter((tag) => attr(tag, "rel").toLowerCase().includes("stylesheet")).length;
   const generator = collect(html, "meta").map((tag) => attr(tag, "name").toLowerCase() === "generator" ? attr(tag, "content") : "").find(Boolean) || "";
@@ -1840,7 +1853,7 @@ function propose(pages, robotsBlocked, limits, dom) {
   addCase(cases, { id: "SEC-09", layer: "Security", title: "Pages on " + host + " load nothing over plain http", why: sumOf((page) => page.signals && page.signals.mixed) + " scripts, images, frames, or stylesheets load over plain http" + (mixedPages.length ? " on " + listed(mixedPages) : " on the pages analyzed") + ". Mixed content would be confirmed in a browser console, not by downloading those URLs here.", fw: browser, pages: mixedPages.slice(0, 12) });
   const libs = [...new Set(pages.reduce((all, page) => all.concat((page.inspect && page.inspect.libraries) || []), (dom && dom.libraries) || []).map((row) => row.name + " " + row.version))];
   if (libs.length) addCase(cases, { id: "SEC-10", layer: "Security", title: "Front-end libraries on " + host + " have no known flaw", why: "The review found " + libs.slice(0, 5).join(", ") + " from script addresses, banners or page globals. The case would compare each version with the retire.js list on every release.", fw: browser });
-  const sriHosts = (face.sri && face.sri.missing) || [];
+  const sriHosts = ((face.sri && face.sri.missing) || []).filter((h) => !insights.NO_SRI_HOSTS.test(h));
   if (sriHosts.length) addCase(cases, { id: "SEC-14", layer: "Security", title: "Scripts from other hosts on " + here + " carry an integrity hash", why: "Scripts from " + sriHosts.slice(0, 4).join(", ") + " load on " + here + " without an integrity attribute. A changed file on one of those hosts would run on " + host + " unchecked. The case would assert integrity and crossorigin on each pinned script.", fw: browser, keys: ["sec-sri"], verdict: "risk", severity: "low" });
   const formHosts = (face.resources && face.resources.forms) || [];
   if (formHosts.length) addCase(cases, { id: "SEC-15", layer: "Security", title: "Forms on " + here + " post only to hosts the owner names", why: "A form on " + here + " posts to " + formHosts.slice(0, 3).join(", ") + ", not to " + host + ". The case would check that the host is the owner's processor, uses https, and is named in the privacy notice. Nothing is submitted.", fw: browser });
@@ -2134,16 +2147,18 @@ async function readSitemap(origin, robotsText, halt, acceptLanguage) {
       return parsed.toString();
     } catch (error) { return url; }
   });
-  const candidates = upgraded.concat([origin + "/sitemap.xml"]).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
+  // Yoast and WordPress serve /sitemap_index.xml, and Next.js and Astro /sitemap-index.xml, often with nothing at /sitemap.xml.
+  const guesses = ["/sitemap.xml"].concat(listed.length ? [] : ["/sitemap_index.xml", "/sitemap-index.xml"]).map((path) => origin + path);
+  const candidates = upgraded.concat(guesses).filter((url, index, all) => all.indexOf(url) === index && /^https:\/\//i.test(url));
   let last = { status: 0 };
-  for (let i = 0; i < candidates.length && i < 3; i += 1) {
-    const res = await fetchExtra(candidates[i], halt, true, acceptLanguage);
+  const readOne = async (url) => {
+    const res = await fetchExtra(url, halt, true, acceptLanguage);
     last = res;
-    if (res.status !== 200 || res.html) continue;
+    if (res.status !== 200 || res.html) return null;
     let urls = sitemapLocs(res.body);
-    let partial = !!res.truncated || listedTotal > 1;
+    let partial = !!res.truncated;
     if (/<sitemapindex\b/i.test(res.body)) {
-      const all = urls.filter((url) => /^https:\/\//i.test(url));
+      const all = urls.filter((loc) => /^https:\/\//i.test(loc));
       const children = all.slice(0, 3);
       if (all.length > children.length || all.length < urls.length) partial = true;
       urls = [];
@@ -2154,9 +2169,28 @@ async function readSitemap(origin, robotsText, halt, acceptLanguage) {
         if (urls.length >= 5000) break;
       }
     }
-    if (urls.length >= 5000) partial = true;
-    if (urls.length) return { source: candidates[i], status: 200, urls: urls.slice(0, 5000), partial };
+    return urls.length ? { urls, partial } : null;
+  };
+  // Every sitemap robots.txt lists is read, up to three, so a page can be called missing only when all of them were seen.
+  const listedUrls = candidates.filter((url) => upgraded.indexOf(url) !== -1).slice(0, 3);
+  let source = "";
+  let urls = [];
+  let partial = listedTotal > listedUrls.length;
+  for (const url of listedUrls) {
+    const got = await readOne(url);
+    if (!got) { partial = true; continue; }
+    if (!source) source = url;
+    const seen = new Set(urls);
+    urls = urls.concat(got.urls.filter((loc) => !seen.has(loc)));
+    if (got.partial) partial = true;
+    if (urls.length >= 5000) break;
   }
+  for (const fallback of urls.length ? [] : candidates.filter((url) => upgraded.indexOf(url) === -1)) {
+    const got = await readOne(fallback);
+    if (got) { source = fallback; urls = got.urls; partial = got.partial || listedTotal > 1; break; }
+  }
+  if (urls.length >= 5000) partial = true;
+  if (urls.length) return { source, status: 200, urls: urls.slice(0, 5000), partial };
   return { source: candidates[0] || "", status: last.status || 0, urls: [] };
 }
 

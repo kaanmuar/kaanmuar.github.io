@@ -2,6 +2,8 @@
    edits, hiding, and items added by hand. Edits go to Firestore socialHub/live (js/social-hub-admin.js has
    the format); scripts/build-social-hub.js pulls them on its next online run, which the daily Live Reports
    workflow makes. */
+import { createProposals } from './social-hub-proposals.js?v=20261024b';
+
 const PAGE = 40;
 const KIND = { tip: 'Tip', review: 'Site review', launch: 'Product', pick: 'Pick' };
 const NET_NAMES = { linkedin: 'LinkedIn', x: 'X', instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube' };
@@ -30,9 +32,11 @@ export function createHubEditor(deps) {
     let published = Admin.empty();
     let saved = Admin.empty();
     let slots = {};
+    let ledgers = [];
     let loading = null;
     let shown = PAGE;
     let open = '';
+    const proposals = createProposals({ Admin, $, escapeHtml, state: () => saved, persist, openAdd });
 
     function message(text, ok) {
         const el = $('hub-admin-message');
@@ -52,12 +56,17 @@ export function createHubEditor(deps) {
 
     async function pull() {
         $('hub-admin-status').textContent = 'Loading the hub…';
-        const [feedJson, captionsJson, editsJson] = await Promise.all([
+        const [feedJson, captionsJson, editsJson, proposalsJson, bufferJson, facebookJson] = await Promise.all([
             fetchJson('assets/social/feed.json', { posts: [], asOf: '' }),
             fetchJson('assets/social/captions.json', {}),
-            fetchJson('assets/social/edits.json', null)
+            fetchJson('assets/social/edits.json', null),
+            fetchJson('assets/social/proposals.json', null),
+            fetchJson('assets/social/buffer.json', null),
+            fetchJson('assets/social/facebook.json', null)
         ]);
+        proposals.load(proposalsJson);
         feed = feedJson;
+        ledgers = [bufferJson, facebookJson];
         captions = captionsJson;
         published = Admin.clean(editsJson);
         saved = published;
@@ -104,7 +113,7 @@ export function createHubEditor(deps) {
                 scheduled: !!date && date > today,
                 hidden: !!edit.hidden,
                 edited: !!saved.edits[id] || !!item,
-                channels: Admin.channels(slots[id], row.post.youtube, Date.now())
+                channels: Admin.channels(slots[id], row.post.youtube, Date.now(), Admin.ledgerEntries(ledgers, id))
             });
         }).sort((a, b) => (b.date || '').localeCompare(a.date || '') || a.id.localeCompare(b.id));
     }
@@ -112,6 +121,7 @@ export function createHubEditor(deps) {
     function matches(row, q, kind, state) {
         if (kind !== 'all' && row.post.kind !== kind) return false;
         if (state === 'queued' && !row.channels.some((channel) => channel.state === 'queued')) return false;
+        if (state === 'failed' && !row.channels.some((channel) => channel.state === 'failed')) return false;
         if (state === 'missing' && !row.channels.some((channel) => channel.state === 'missing')) return false;
         if (state === 'scheduled' && !row.scheduled) return false;
         if (state === 'edited' && !row.edited) return false;
@@ -128,7 +138,7 @@ export function createHubEditor(deps) {
             + (row.edited && !row.hidden ? '<span class="hub-admin-tag is-edited">Edited</span>' : '')
             + (row.pending ? '<span class="hub-admin-tag is-pending">Waiting for the hub build</span>' : '');
         const channels = post.kind && post.kind !== 'pick'
-            ? `<ul class="hub-admin-channels" aria-label="Channels">${row.channels.map((channel) => `<li class="is-${channel.state}" title="${escapeHtml(channel.via)}"><b>${escapeHtml(channel.name)}</b> ${escapeHtml(Admin.statusLabel(channel))}</li>`).join('')}</ul>`
+            ? `<ul class="hub-admin-channels" aria-label="Channels">${row.channels.map((channel) => `<li class="is-${channel.state}" title="${escapeHtml(channel.error ? `${channel.via}: ${channel.error}` : channel.via)}"><b>${escapeHtml(channel.name)}</b> ${escapeHtml(Admin.statusLabel(channel))}</li>`).join('')}</ul>`
             : '';
         const thumb = post.thumb ? `<img src="${escapeHtml(post.thumb)}" alt="" width="72" height="90" loading="lazy">` : '<span class="hub-admin-thumb"></span>';
         const link = row.onHub ? `<a class="cv-btn" href="qa-review-social.html?p=${encodeURIComponent(post.id)}" target="_blank" rel="noopener">Open</a>` : '';
@@ -184,16 +194,17 @@ export function createHubEditor(deps) {
         $('hub-admin-more').hidden = list.length <= shown;
         const el = open && [...document.querySelectorAll('#hub-admin-list .hub-admin-row')].find((node) => node.dataset.id === open);
         if (el) openEditor(el);
+        proposals.paint();
     }
 
-    async function persist(next, done) {
+    async function persist(next, done, after = 'The next daily hub build puts it on the public hub.') {
         if (!auth.currentUser) { message('Sign in before saving.', false); return false; }
         const state = Admin.clean(next);
         try {
             await setDoc(doc(db, 'socialHub', 'live'), { json: JSON.stringify(state), updatedAt: serverTimestamp() });
             saved = state;
             paint();
-            message(`${done} The next daily hub build puts it on the public hub.`, true);
+            message(`${done} ${after}`, true);
             return true;
         } catch (error) {
             console.error(error);
@@ -245,11 +256,25 @@ export function createHubEditor(deps) {
         if (!item) { message('An item needs a title, a date and an image: an https address or a committed file under assets/ or media/.', false); return; }
         const next = Admin.clean(saved);
         next.items.push(item);
-        return persist(next, 'Added.').then((ok) => {
+        if (form.dataset.proposal) next.decisions = Object.assign({}, next.decisions, { [form.dataset.proposal]: 'approved' });
+        return persist(next, form.dataset.proposal ? 'Approved and added.' : 'Added.').then((ok) => {
             if (!ok) return;
             form.reset();
             form.hidden = true;
+            delete form.dataset.proposal;
         });
+    }
+
+    function openAdd(draft, proposal) {
+        const form = $('hub-admin-add');
+        form.reset();
+        Object.entries(draft).forEach(([name, value]) => {
+            if (form.elements[name]) form.elements[name].value = value;
+        });
+        form.dataset.proposal = proposal;
+        form.hidden = false;
+        form.scrollIntoView({ block: 'nearest' });
+        form.elements.title.focus();
     }
 
     function bind() {
@@ -259,10 +284,16 @@ export function createHubEditor(deps) {
         $('hub-admin-more').addEventListener('click', () => { shown += PAGE; paint(); });
         $('hub-admin-add-open').addEventListener('click', () => {
             const form = $('hub-admin-add');
+            if (form.dataset.proposal) form.reset();
+            delete form.dataset.proposal;
             form.hidden = !form.hidden;
             if (!form.hidden && !form.elements.date.value) form.elements.date.value = new Date().toISOString().slice(0, 10);
         });
-        $('hub-admin-add-cancel').addEventListener('click', () => { $('hub-admin-add').hidden = true; });
+        $('hub-admin-add-cancel').addEventListener('click', () => {
+            $('hub-admin-add').hidden = true;
+            delete $('hub-admin-add').dataset.proposal;
+        });
+        proposals.bind();
         $('hub-admin-add').addEventListener('submit', (event) => { event.preventDefault(); addItem(event.target); });
         const list = $('hub-admin-list');
         list.addEventListener('click', (event) => {

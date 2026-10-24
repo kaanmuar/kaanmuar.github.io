@@ -23,12 +23,20 @@ Status field `PVTSSF_lAHOALfwis4BmsxOzhlUt04`: Backlog `3f4ac4fe`, Next `dc8fb26
 - Templates, layouts, images, logos, icons, share images, social posts, motion, copy and visual changes, and later updates or improvements to any of them each get an issue titled `Design: ...` with label `area:design`.
 - Link it as a sub-issue of the original ticket, set Status to Design while it is being made, and Done when it ships. In the body, list the decisions and the file paths, and link the live page.
 
+## GitHub API budget
+Every chat runs `gh` as kaanmuar, so all of them share one GraphQL budget of 5,000 points an hour (#892). `gh issue`, `gh pr`, `gh pr checks` and `gh project` spend it; `gh api repos/...` and `gh run` use REST, which has its own 5,000.
+- Create, read, label, comment on and close issues, and link sub-issues, through REST (below).
+- Watch CI through REST: `gh run list --commit <sha> --json databaseId -q '.[].databaseId'`, then `gh run watch <id> -i 30 --exit-status` for each. Never `gh pr checks --watch`.
+- Open and merge PRs through REST: `gh api $R/pulls -f title=... -f head=<branch> -f base=main -f body=...`, `gh api -X PUT $R/pulls/<n>/merge -f merge_method=squash`.
+- Only board moves need GraphQL. Run them through `scripts/gh-budget.sh`, which retries as the bot account when kaanmuar is rate limited.
+
 ## Commands
 ```bash
-gh issue create -R kaanmuar/kaanmuar.github.io --title "..." --body "..." --label bug --label area:be
-item=$(gh project item-add 3 --owner kaanmuar --url <issue-url> --format json -q .id)
-gh project item-edit --id "$item" --project-id PVT_kwHOALfwis4BmsxO --field-id PVTSSF_lAHOALfwis4BmsxOzhlUt04 --single-select-option-id bebf6b88
-gh api graphql -f query='mutation($p:ID!,$c:ID!){addSubIssue(input:{issueId:$p,subIssueId:$c}){issue{number}}}' \
-  -f p=$(gh issue view <ticket> --json id -q .id) -f c=$(gh issue view <child> --json id -q .id)
-gh issue close <child> --reason completed --comment "Fixed in #<PR>."
+R=repos/kaanmuar/kaanmuar.github.io
+n=$(gh api $R/issues -f title="..." -f body="..." -f 'labels[]=bug' -f 'labels[]=area:be' -q .number)
+item=$(scripts/gh-budget.sh api graphql -f query='mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}' \
+ -f p=PVT_kwHOALfwis4BmsxO -f c=$(gh api $R/issues/$n -q .node_id) -q .data.addProjectV2ItemById.item.id)
+scripts/gh-budget.sh project item-edit --id "$item" --project-id PVT_kwHOALfwis4BmsxO --field-id PVTSSF_lAHOALfwis4BmsxOzhlUt04 --single-select-option-id bebf6b88
+gh api $R/issues/<ticket>/sub_issues -F sub_issue_id=$(gh api $R/issues/<child> -q .id)
+gh api $R/issues/<child>/comments -f body="Fixed in #<PR>." >/dev/null && gh api -X PATCH $R/issues/<child> -f state=closed -f state_reason=completed >/dev/null
 ```

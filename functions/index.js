@@ -2315,6 +2315,8 @@ async function redeemCoupon(code, record) {
 }
 
 const BROWSER_URL = process.env.BROWSER_URL || "https://europe-west1-carlosm-interactive-cv.cloudfunctions.net/reviewBrowser";
+// Longer than the browser pass may run (BUDGET_MAX_MS, 110 s, in url-review-browser.js), shorter than reviewBrowser's 120 s timeout.
+const BROWSER_WAIT_MS = 116000;
 
 async function browseForReview(job, log, onStart) {
   const key = process.env.BROWSER_KEY;
@@ -2323,7 +2325,7 @@ async function browseForReview(job, log, onStart) {
     method: "POST",
     headers: { "content-type": "application/json", "x-review-key": key },
     body: JSON.stringify(Object.assign({}, job, { stream: true })),
-    signal: AbortSignal.timeout(100000)
+    signal: AbortSignal.timeout(BROWSER_WAIT_MS)
   });
   if (!res.ok) return { ok: false, error: res.status === 429 ? "the browser was busy" : "status " + res.status };
   if (!/ndjson/i.test(res.headers.get("content-type") || "")) return res.json();
@@ -3488,7 +3490,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       }, dealFields(deal)));
       return;
     }
-    res.status(200).json({ report: data.report || null, frameworks: data.frameworks || [], paid: true, free });
+    const comparisons = data.report && !data.report.compare ? await comparisonsFrom(id, data.email) : [];
+    res.status(200).json({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free });
     return;
   }
   if (req.method !== "POST") {
@@ -3497,6 +3500,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   }
   await runReview(req, res, async () => requestPlace(req));
 });
+
+async function comparisonsFrom(id, email) {
+  try {
+    const snap = await admin.firestore().collection("url_reviews")
+      .where("compareWith", "==", id)
+      .select("email", "createdAt", "compareWith", "report.id", "report.host", "report.compare.ownId", "report.compare.ownHost", "report.compare.rivalHost", "report.compare.overall", "report.compare.dominance")
+      .limit(40)
+      .get();
+    return reviewCompare.comparisonsOf(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), id, email);
+  } catch (error) {
+    console.error("Comparisons of a report failed:", error);
+    return [];
+  }
+}
 
 function requestPlace(req) {
   return {

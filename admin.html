@@ -192,12 +192,19 @@
         .hub-admin-channels { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.45rem; font-size: 0.72rem; }
         .hub-admin-channels li { border: 1px solid #d5dce3; border-radius: 6px; padding: 0.1rem 0.45rem; color: #4a5560; }
         .hub-admin-channels .is-live { border-color: #059669; color: #065f46; background: #ecfdf5; }
+        .hub-admin-channels .is-sent { border-color: #059669; color: #065f46; background: #ecfdf5; }
+        .hub-admin-channels .is-failed { border-color: #dc2626; color: #991b1b; background: #fef2f2; }
+        .hub-admin-channels .is-scheduled { border-style: dashed; }
         .hub-admin-channels .is-queued { border-color: #0284c7; color: #075985; background: #f0f9ff; }
         .hub-admin-channels .is-missing { border-color: #dc2626; color: #991b1b; background: #fef2f2; }
         .hub-admin-channels .is-none, .hub-admin-channels .is-planned { opacity: 0.6; }
         .hub-admin-actions { display: flex; flex-direction: column; align-items: stretch; }
         .hub-admin-edit { grid-column: 1 / -1; border-top: 1px solid #d5dce3; padding-top: 0.6rem; }
         .hub-admin-captions { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 0.5rem 0.9rem; }
+        .hub-proposals { border-top: 1px solid #d5dce3; border-bottom: 1px solid #d5dce3; padding: 0.75rem 0; margin: 0.75rem 0; }
+        .hub-proposals > h3 { font-weight: 700; }
+        .hub-proposal h3 a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+        .hub-proposal-summary { font-size: 0.85rem; color: #374151; margin-top: 0.3rem; }
         @media (max-width: 640px) { .hub-admin-row { grid-template-columns: 56px 1fr; } .hub-admin-row img, .hub-admin-thumb { width: 56px; height: 70px; } .hub-admin-actions { grid-column: 1 / -1; flex-direction: row; } }
         .cv-studio { display: grid; grid-template-columns: 16.5rem minmax(0, 1fr); gap: 1rem; align-items: start; }
         .cv-rail { position: sticky; top: 0.75rem; background: #1a2430; border-radius: 16px; padding: 0.85rem 0.7rem 0.7rem; }
@@ -360,7 +367,7 @@
         <div class="hub-admin-tools">
             <div><label class="filter-label" for="hub-admin-q">Search</label><input type="search" id="hub-admin-q" placeholder="Title, caption or id" autocomplete="off"></div>
             <div><label class="filter-label" for="hub-admin-kind">Kind</label><select id="hub-admin-kind"><option value="all">All kinds</option><option value="review">Site reviews</option><option value="tip">Tips</option><option value="launch">Product</option><option value="pick">Picks</option></select></div>
-            <div><label class="filter-label" for="hub-admin-state">Status</label><select id="hub-admin-state"><option value="all">Any status</option><option value="queued">Still queued on a channel</option><option value="missing">Not on YouTube yet</option><option value="scheduled">Scheduled on the hub</option><option value="edited">Edited or added</option><option value="hidden">Hidden</option><option value="pending">Waiting for the hub build</option></select></div>
+            <div><label class="filter-label" for="hub-admin-state">Status</label><select id="hub-admin-state"><option value="all">Any status</option><option value="queued">Still queued on a channel</option><option value="failed">Failed on a channel</option><option value="missing">Not on YouTube yet</option><option value="scheduled">Scheduled on the hub</option><option value="edited">Edited or added</option><option value="hidden">Hidden</option><option value="pending">Waiting for the hub build</option></select></div>
             <button type="button" id="hub-admin-add-open" class="cv-btn">Add an item</button>
         </div>
         <form id="hub-admin-add" class="hub-admin-add" hidden>
@@ -379,6 +386,13 @@
             <div class="hub-admin-buttons"><button type="submit" class="cv-btn">Add to the hub</button><button type="button" id="hub-admin-add-cancel" class="cv-btn">Cancel</button></div>
         </form>
         <p id="hub-admin-message" class="text-sm" role="status"></p>
+        <section id="hub-proposals" class="hub-proposals" aria-labelledby="hub-proposals-title">
+            <h3 id="hub-proposals-title">Proposals from the field</h3>
+            <p class="cv-note">Each day a sweep reads testing, SEO, GEO, accessibility, performance, analytics and standards sources and ranks what stands out. Nothing reaches the hub until you approve it. Approve fills in Add an item with the source credited; Dismiss keeps that link from being proposed again.</p>
+            <p id="hub-proposals-count" class="cv-note" role="status"></p>
+            <div id="hub-proposals-list" class="hub-admin-list"></div>
+            <button type="button" id="hub-proposals-more" class="cv-btn" hidden>Show more proposals</button>
+        </section>
         <p id="hub-admin-count" class="cv-note"></p>
         <div id="hub-admin-list" class="hub-admin-list"></div>
         <button type="button" id="hub-admin-more" class="cv-btn" hidden>Show more</button>
@@ -662,7 +676,7 @@
         }
     </script>
     <script src="js/cv-data.js?v=20261003"></script>
-    <script src="js/social-hub-admin.js?v=20261024a"></script>
+    <script src="js/social-hub-admin.js?v=20261024c"></script>
     <script type="module">
     // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -670,7 +684,7 @@
     import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, getDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
     import { createCvEditor } from "./js/cv-editor.js?v=20260928c";
-    import { createHubEditor } from "./js/social-hub-editor.js?v=20261024a";
+    import { createHubEditor } from "./js/social-hub-editor.js?v=20261024c";
 
     // Firebase Config
     const firebaseConfig = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", storageBucket: "carlosm-interactive-cv.firebasestorage.app", messagingSenderId: "976558418058", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };

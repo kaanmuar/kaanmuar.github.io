@@ -72,4 +72,29 @@ test.describe('Sprint studio', () => {
     await expect(page.locator('#view')).toContainText('CV-410');
     await expect(page.locator('#view')).not.toContainText('PAY-241');
   });
+
+  test('sprint report carries run details, failures and steps, and its dialog follows the language', async ({ page }) => {
+    const out = await page.evaluate(async () => {
+      const at = Date.now();
+      state.frameworks = ['Playwright', 'Robot'];
+      state.results = [
+        { id: 'XT-1400', fw: 'Playwright', ok: true, ms: 610, title: 'Risky card steps up to 3DS', ticket: 'PAY-241', story: 'Enforce 3-D Secure challenge', env: 'staging-eu-1', sprint: 'Sprint 24', steps: ['Open checkout · /checkout'], error: '', at },
+        { id: 'XT-1401', fw: 'Robot', ok: false, ms: 930, title: 'Ledger rows match', ticket: 'PAY-242', story: 'Idempotent capture', env: 'staging-us-2', sprint: 'Sprint 24', steps: ['Capture twice · ledger'], error: 'row count did not match the ledger', at: at + 900 }
+      ];
+      openStudioReport();
+      return { html: studioReportHtml(), text: await copyStudioReport(null) };
+    });
+    for (const want of ['Run details', 'Board', 'Jira', 'Sprint 24', 'staging-us-2', 'Summary by runner', 'Failures', 'row count did not match the ledger', 'PAY-242', 'Steps per case', 'Capture twice']) {
+      expect(out.html, want).toContain(want);
+    }
+    expect(out.text).toContain('row count did not match the ledger');
+    expect(out.text).not.toContain('<td');
+    const dialog = page.locator('#studio-report');
+    await page.locator('#studio-report-lang').selectOption('fr');
+    await expect(dialog.locator('#studio-report-title')).toHaveText('Rapport de sprint');
+    await expect(dialog.locator('#studio-report-copy')).toHaveText('Copier');
+    await expect(dialog.locator('[data-studio-ui="stepsTitle"]')).toHaveText('Étapes par cas');
+    await page.locator('#studio-report-lang').selectOption('en');
+    await expect(dialog.locator('#studio-report-download')).toHaveText('Download');
+  });
 });

@@ -839,12 +839,20 @@ function analyze(input) {
       "Redirect the old address in one hop to the final https URL.", { effort: "minutes" });
   }
 
-  const noindexRows = indexability.filter((row) => row.reason === "noindex");
+  const allNoindex = indexability.filter((row) => row.reason === "noindex");
+  const fullSitemap = extras.sitemap && !extras.sitemap.partial && (extras.sitemap.urls || []).length ? new Set(extras.sitemap.urls.map(normal)) : null;
+  // A noindex page with no canonical that a complete sitemap also leaves out is kept from search on purpose.
+  const keptOut = (row) => !!fullSitemap && row.path !== home.path && !row.canonical && !fullSitemap.has(normal(origin + row.path));
+  const noindexRows = allNoindex.filter((row) => !keptOut(row));
+  const privateRows = allNoindex.filter(keptOut);
   if (noindexRows.length) {
     const homeBlocked = noindexRows.some((row) => row.path === home.path);
-    add("SEO", homeBlocked ? "fail" : "risk", homeBlocked ? "critical" : "medium", "seo-noindex", homeBlocked ? "The start page tells search engines not to index it" : plural(noindexRows.length, "page asks", "pages ask") + " search engines not to index it",
+    add("SEO", homeBlocked ? "fail" : "risk", homeBlocked ? "critical" : "medium", "seo-noindex", homeBlocked ? "The start page tells search engines not to index it" : plural(noindexRows.length, "page asks search engines not to index it", "pages ask search engines not to index them"),
       sample(noindexRows.map((row) => row.path + " (" + row.robots + ")"), 4) + ".",
       "Remove noindex from pages that should be found, and keep it only on private or duplicate pages.", { pages: noindexRows.map((row) => row.path), effort: "minutes", cases: ["SEO-04"] });
+  } else if (privateRows.length) {
+    add("SEO", "pass", "info", "seo-noindex", plural(privateRows.length, "page is", "pages are") + " kept out of search on purpose",
+      sample(privateRows.map((row) => row.path + " (" + row.robots + ")"), 4) + ". Each says noindex, names no canonical, and is left out of the sitemap, so the three signals agree.", "", { pages: privateRows.map((row) => row.path), cases: ["SEO-04"] });
   }
 
   const canonicalAway = indexability.filter((row) => /^Canonical points/.test(row.reason) && row.path.indexOf("?") === -1);
@@ -853,7 +861,8 @@ function analyze(input) {
       sample(canonicalAway.map((row) => row.path + " → " + row.canonical), 4) + ". Search engines will usually index the other URL instead.",
       "Make each page's canonical point at itself unless it is a real duplicate.", { pages: canonicalAway.map((row) => row.path), effort: "minutes", cases: ["CT-02"] });
   }
-  const noCanonical = read.filter((page) => !(page.inspect.seo && page.inspect.seo.canonicalAbs));
+  const noindexPaths = new Set(allNoindex.map((row) => row.path));
+  const noCanonical = read.filter((page) => !(page.inspect.seo && page.inspect.seo.canonicalAbs) && !noindexPaths.has(page.path || pathOf(page.url)));
   if (noCanonical.length && read.length) {
     add("SEO", "risk", "low", "seo-canonical-missing", plural(noCanonical.length, "page has", "pages have") + " no canonical link",
       sample(noCanonical.map((page) => page.path), 4) + ". Without it, tracking parameters and trailing slashes can split ranking signals.",
@@ -944,7 +953,7 @@ function analyze(input) {
     }
   } else {
     add("SEO", "risk", "medium", "seo-sitemap", "No sitemap was found",
-      (robots.sitemaps.length ? "robots.txt names " + robots.sitemaps[0] + " but it did not return URLs." : "robots.txt names no sitemap and /sitemap.xml returned " + (sitemap.status || "nothing") + "."),
+      (robots.sitemaps.length ? "robots.txt names " + robots.sitemaps[0] + " but it did not return URLs." : "robots.txt names no sitemap, and /sitemap.xml, /sitemap_index.xml and /sitemap-index.xml returned no URLs."),
       "Publish /sitemap.xml and add a Sitemap: line to robots.txt.", { effort: "hours", cases: ["SEO-03"] });
   }
 
@@ -1737,4 +1746,4 @@ function fixKit(ctx) {
   };
 }
 
-module.exports = { analyze, parseRobotsFull, robotsVerdict, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };
+module.exports = { analyze, parseRobotsFull, robotsVerdict, NO_SRI_HOSTS, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };

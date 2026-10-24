@@ -190,6 +190,8 @@
     .run-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
     .run-meta span { font: 500 11.5px "Fira Code", ui-monospace, monospace; padding: 3px 8px; border-radius: 999px; color: var(--muted); border: 1px solid var(--edge); }
     .run-url { margin: 0; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .run-compare { margin: 0; font-size: 13.5px; overflow-wrap: anywhere; }
+    .run-compare a { font-weight: 700; }
     .run-statement { margin: 0; font-size: 14.5px; line-height: 1.5; }
     .run ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
     .run li { position: relative; padding-left: 16px; font-size: 13.5px; line-height: 1.4; }
@@ -641,7 +643,7 @@
     return "qa-review.html?report=" + encodeURIComponent(run.id);
   }
   function haystack(run) {
-    return [run.host, run.url, run.status, run.statement, run.at ? new Date(run.at).toLocaleString() : ""]
+    return [run.host, run.url, run.status, run.statement, run.at ? new Date(run.at).toLocaleString() : "", run.compare ? run.compare.ownHost : ""]
       .concat((run.cases || []).map((item) => (item.layer || "") + " " + (item.title || ""))).join(" ").toLowerCase();
   }
   function shownRuns() {
@@ -696,6 +698,18 @@
     bulkStatus.textContent = message;
     bulkStatus.classList.toggle("bad", !!bad);
   }
+  function compareLines(run) {
+    const lines = run.compare ? [["Compared with your review of ", run.compare.baseId, run.compare.ownHost, run.compare]] : [];
+    runs.filter((other) => other.compare && other.compare.baseId === run.id)
+      .forEach((other) => lines.push(["Compared with ", other.id, other.compare.rivalHost, other.compare]));
+    return lines.map(([lead, id, host, line]) => {
+      const row = node("p", lead, "run-compare");
+      const link = node("a", host);
+      link.href = reportHref({ id });
+      row.append(link, ": " + line.ownHost + " " + text(line.own) + ", " + line.rivalHost + " " + text(line.rival) + ".");
+      return row;
+    });
+  }
   function card(run, index) {
     const block = document.createElement("article");
     block.className = "run" + (picked.has(run.id) ? " picked" : "");
@@ -729,6 +743,7 @@
     meta.appendChild(node("span", text(run.status)));
     meta.appendChild(node("span", text(run.caseCount) + " cases"));
     block.appendChild(meta);
+    compareLines(run).forEach((row) => block.appendChild(row));
     const url = document.createElement("p");
     url.className = "run-url";
     url.appendChild(valueNode(run.url, run.open));

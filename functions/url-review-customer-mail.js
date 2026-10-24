@@ -299,6 +299,15 @@ const PLAIN = {
   it: { lead: "I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.", leadOpen: "I rilievi sono aperti, ogni riga per intero.", preheader: "{count} rilievi aspettano sotto la sfocatura.", preheaderOpen: "{count} rilievi, tutto aperto.", leadClear: "Nessun rilievo nelle pagine analizzate, quindi non c'è niente da sistemare.", preheaderClear: "Nessun rilievo nelle pagine analizzate." }
 };
 const FIX_LABEL = { en: "Fix", es: "Cómo arreglarlo", pt: "Como corrigir", de: "So beheben Sie es", fr: "Correctif", it: "Come correggere" };
+// The comparison card's wording on the page (js/qa-review-compare-copy.js).
+const CMP_COPY = {
+  en: { title: "Next to a competitor", intro: "Your review of {own}{when} next to this review of {rival}.", introWhen: " from {date}", area: "Area", overall: "Overall", yourLead: "Your lead", wins: "{site} wins {n} of {total} indicators", sameWins: "The two sites win the same number of indicators", tally: "{own} {a}, {rival} {b}, level {c}.", onlyHas: "Only {site} has", openProblems: "open problems", shared_one: "{n} open problem is on both sites.", shared_other: "{n} open problems are on both sites.", more: "and {n} more", none: "None.", passive: "{rival} got the public, passive checks only: no chat conversation and no form sent.", verdictNote: "Both scores come from automated reviews, a starting point and not a verdict." },
+  es: { title: "Frente a un competidor", intro: "Tu revisión de {own}{when} junto a esta revisión de {rival}.", introWhen: " del {date}", area: "Área", overall: "General", yourLead: "Tu ventaja", wins: "{site} gana {n} de {total} indicadores", sameWins: "Los dos sitios ganan el mismo número de indicadores", tally: "{own} {a}, {rival} {b}, empate {c}.", onlyHas: "Solo {site} tiene", openProblems: "problemas abiertos", shared_one: "{n} problema abierto está en los dos sitios.", shared_other: "{n} problemas abiertos están en los dos sitios.", more: "y {n} más", none: "Ninguno.", passive: "{rival} recibió solo las comprobaciones públicas y pasivas: sin conversación con el chat y sin enviar formularios.", verdictNote: "Las dos puntuaciones vienen de revisiones automatizadas: un punto de partida, no un veredicto." },
+  pt: { title: "Ao lado de um concorrente", intro: "Sua revisão de {own}{when} ao lado desta revisão de {rival}.", introWhen: " de {date}", area: "Área", overall: "Geral", yourLead: "Sua vantagem", wins: "{site} vence {n} de {total} indicadores", sameWins: "Os dois sites vencem o mesmo número de indicadores", tally: "{own} {a}, {rival} {b}, empate {c}.", onlyHas: "Só {site} tem", openProblems: "problemas abertos", shared_one: "{n} problema aberto está nos dois sites.", shared_other: "{n} problemas abertos estão nos dois sites.", more: "e mais {n}", none: "Nenhum.", passive: "{rival} recebeu só as verificações públicas e passivas: sem conversa com o chat e sem envio de formulários.", verdictNote: "As duas pontuações vêm de revisões automatizadas: um ponto de partida, não um veredito." },
+  de: { title: "Neben einem Mitbewerber", intro: "Ihre Prüfung von {own}{when} neben dieser Prüfung von {rival}.", introWhen: " vom {date}", area: "Bereich", overall: "Gesamt", yourLead: "Ihr Vorsprung", wins: "{site} gewinnt {n} von {total} Kennzahlen", sameWins: "Beide Websites gewinnen gleich viele Kennzahlen", tally: "{own} {a}, {rival} {b}, gleichauf {c}.", onlyHas: "Nur {site} hat", openProblems: "offene Probleme", shared_one: "{n} offenes Problem gibt es auf beiden Websites.", shared_other: "{n} offene Probleme gibt es auf beiden Websites.", more: "und {n} weitere", none: "Keine.", passive: "{rival} erhielt nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular.", verdictNote: "Beide Werte stammen aus automatisierten Prüfungen: ein Ausgangspunkt, kein Urteil." },
+  fr: { title: "Face à un concurrent", intro: "Votre analyse de {own}{when} à côté de cette analyse de {rival}.", introWhen: " du {date}", area: "Domaine", overall: "Global", yourLead: "Votre avance", wins: "{site} gagne {n} indicateurs sur {total}", sameWins: "Les deux sites gagnent le même nombre d’indicateurs", tally: "{own} {a}, {rival} {b}, égalité {c}.", onlyHas: "Seul {site} a", openProblems: "problèmes ouverts", shared_one: "{n} problème ouvert est présent sur les deux sites.", shared_other: "{n} problèmes ouverts sont présents sur les deux sites.", more: "et {n} de plus", none: "Aucun.", passive: "{rival} n’a reçu que les vérifications publiques et passives : aucune conversation avec le chat et aucun formulaire envoyé.", verdictNote: "Les deux scores viennent d’analyses automatisées : un point de départ, pas un verdict." },
+  it: { title: "Accanto a un concorrente", intro: "La tua revisione di {own}{when} accanto a questa revisione di {rival}.", introWhen: " del {date}", area: "Area", overall: "Complessivo", yourLead: "Il tuo vantaggio", wins: "{site} vince {n} indicatori su {total}", sameWins: "I due siti vincono lo stesso numero di indicatori", tally: "{own} {a}, {rival} {b}, pari {c}.", onlyHas: "Solo {site} ha", openProblems: "problemi aperti", shared_one: "{n} problema aperto è presente su entrambi i siti.", shared_other: "{n} problemi aperti sono presenti su entrambi i siti.", more: "e altri {n}", none: "Nessuno.", passive: "{rival} ha ricevuto solo i controlli pubblici e passivi: nessuna conversazione con la chat e nessun modulo inviato.", verdictNote: "Entrambi i punteggi vengono da revisioni automatizzate: un punto di partenza, non un verdetto." }
+};
 const PDF_CASES = 24;
 const FILLER_WORDS = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua".split(" ");
 
@@ -508,6 +517,96 @@ function findingsBlock(t, p, lang, facts) {
     "</td></tr>";
 }
 
+const OWN_COLOR = "#0e7490";
+const RIVAL_COLOR = "#7c3aed";
+
+function scoreOf(value) {
+  return typeof value === "number" && isFinite(value) ? value : null;
+}
+
+// A competitor run carries the comparison with the asker's own review; the mail and the PDF show its scores and counts.
+function compareFacts(record, lang) {
+  const cmp = record && record.report && record.report.compare;
+  if (!cmp || !cmp.overall) return null;
+  const c = CMP_COPY[lang];
+  const t = COPY[lang];
+  const own = String(cmp.ownHost || "").slice(0, 120);
+  const rival = String(cmp.rivalHost || record.report.host || "").slice(0, 120);
+  const areas = Array.isArray(cmp.areas) ? cmp.areas : [];
+  const rows = [{ label: c.overall, own: scoreOf(cmp.overall.own), rival: scoreOf(cmp.overall.rival) }].concat(AREAS.map((area) => {
+    const row = areas.find((item) => item && item.area === area);
+    return row ? { label: t.areas[area] || area, own: scoreOf(row.own), rival: scoreOf(row.rival) } : null;
+  }).filter(Boolean)).map((row) => Object.assign(row, { lead: row.own == null || row.rival == null ? null : row.own - row.rival }));
+  const wins = cmp.dominance || { own: 0, rival: 0, tie: 0 };
+  const decided = (wins.own || 0) + (wins.rival || 0) + (wins.tie || 0);
+  const ahead = wins.own === wins.rival ? "" : wins.own > wins.rival ? "own" : "rival";
+  const shared = Number(cmp.shared) || 0;
+  const date = dateOf(cmp.ownAt);
+  const side = (items, count) => ({ items: Array.isArray(items) ? items : [], count: Number(count) || 0 });
+  return {
+    own,
+    rival,
+    ownId: String(cmp.ownId || "").replace(/[^a-f0-9]/g, "").slice(0, 32),
+    intro: { own, when: date ? fill(c.introWhen, { date }) : "", rival },
+    rows,
+    verdict: decided ? (ahead ? fill(c.wins, { site: ahead === "own" ? own : rival, n: wins[ahead], total: decided }) : c.sameWins) + ". " +
+      fill(c.tally, { own, a: wins.own || 0, rival, b: wins.rival || 0, c: wins.tie || 0 }) : "",
+    ownOnly: side(cmp.ownOnly, cmp.ownOnlyCount),
+    rivalOnly: side(cmp.rivalOnly, cmp.rivalOnlyCount),
+    shared: fill(shared === 1 ? c.shared_one : c.shared_other, { n: shared }),
+    note: fill(c.passive, { rival }) + " " + c.verdictNote
+  };
+}
+
+function leadText(lead) {
+  return lead == null ? "–" : (lead > 0 ? "+" : "") + lead;
+}
+
+function leadColor(lead) {
+  return lead == null || lead === 0 ? "#64748b" : lead > 0 ? "#15803d" : "#b91c1c";
+}
+
+function compareBlock(c, cf, baseUrl) {
+  const font = "font-family:Arial,Helvetica,sans-serif;";
+  const th = (text, color, align) => "<th style=\"" + font + "padding:0 0 6px 10px;font-size:11px;letter-spacing:0.04em;text-align:" + (align || "right") + ";color:" + color + ";font-weight:bold;word-break:break-all;\">" + esc(text) + "</th>";
+  const td = (text, color, bold) => "<td style=\"" + font + "padding:6px 0 6px 10px;border-top:1px solid #eef2f6;font-size:14px;text-align:right;color:" + color + ";" + (bold ? "font-weight:bold;" : "") + "\">" + esc(text) + "</td>";
+  const rows = cf.rows.map((row) =>
+    "<tr><td style=\"" + font + "padding:6px 0;border-top:1px solid #eef2f6;font-size:13px;color:#334155;\">" + esc(row.label) + "</td>" +
+    td(row.own == null ? "–" : row.own, row.own == null ? "#94a3b8" : scoreColor(row.own), true) +
+    td(row.rival == null ? "–" : row.rival, row.rival == null ? "#94a3b8" : scoreColor(row.rival), true) +
+    td(leadText(row.lead), leadColor(row.lead), true) + "</tr>").join("");
+  const tile = (site, side, color) => "<td width=\"50%\" valign=\"top\" style=\"" + font + "padding:12px 14px;background:#f8fafc;border-top:3px solid " + color + ";border-radius:10px;\">" +
+    "<p style=\"margin:0;font-size:12px;line-height:17px;color:#475569;word-break:break-all;\">" + esc(fill(c.onlyHas, { site })) + "</p>" +
+    "<p style=\"margin:2px 0 0;font-size:26px;line-height:30px;font-weight:bold;color:" + color + ";\">" + side.count + "</p>" +
+    "<p style=\"margin:0;font-size:12px;line-height:17px;color:#64748b;\">" + esc(c.openProblems) + "</p></td>";
+  const ownName = "<b style=\"color:" + OWN_COLOR + ";\">" + esc(cf.own) + "</b>";
+  return "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:18px 28px 6px;\">" +
+    "<p style=\"margin:0 0 6px;" + font + "font-size:13px;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase;color:#0e7490;\">" + esc(c.title) + "</p>" +
+    "<p style=\"margin:0 0 12px;" + font + "font-size:15px;line-height:23px;color:#334155;\">" + fill(esc(c.intro), {
+      own: baseUrl ? "<a href=\"" + esc(baseUrl) + "\" style=\"text-decoration:underline;color:" + OWN_COLOR + ";\">" + ownName + "</a>" : ownName,
+      when: esc(cf.intro.when),
+      rival: "<b style=\"color:" + RIVAL_COLOR + ";\">" + esc(cf.rival) + "</b>"
+    }) + "</p>" +
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>" + th(c.area, "#64748b", "left") + th(cf.own, OWN_COLOR) + th(cf.rival, RIVAL_COLOR) + th(c.yourLead, "#64748b") + "</tr>" + rows + "</table>" +
+    (cf.verdict ? "<p style=\"margin:12px 0 0;" + font + "font-size:14px;line-height:21px;color:#0f172a;font-weight:bold;\">" + esc(cf.verdict) + "</p>" : "") +
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:12px 0 0;\"><tr>" + tile(cf.own, cf.ownOnly, OWN_COLOR) + "<td width=\"12\" style=\"font-size:0;\">&nbsp;</td>" + tile(cf.rival, cf.rivalOnly, RIVAL_COLOR) + "</tr></table>" +
+    "<p style=\"margin:10px 0 0;" + font + "font-size:13px;line-height:19px;color:#334155;\">" + esc(cf.shared) + "</p>" +
+    "<p style=\"margin:6px 0 0;" + font + "font-size:12px;line-height:18px;color:#64748b;\">" + esc(cf.note) + "</p>" +
+    "</td></tr>";
+}
+
+function compareText(c, cf) {
+  return [
+    c.title,
+    fill(c.intro, cf.intro),
+    cf.rows.map((row) => row.label + ": " + cf.own + " " + (row.own == null ? "–" : row.own) + " · " + cf.rival + " " + (row.rival == null ? "–" : row.rival) + " · " + c.yourLead + " " + leadText(row.lead)).join("\n"),
+    cf.verdict,
+    fill(c.onlyHas, { site: cf.own }) + ": " + cf.ownOnly.count + " " + c.openProblems + " · " + fill(c.onlyHas, { site: cf.rival }) + ": " + cf.rivalOnly.count + " " + c.openProblems,
+    cf.shared,
+    cf.note
+  ].filter(Boolean).join("\n");
+}
+
 // What the report mail says depends on whether the record is open, a re-run, or stopped early.
 function reportStory(record, t, facts, lang) {
   const open = isOpen(record);
@@ -550,12 +649,15 @@ function reportMail(record, options) {
   const attached = story.open ? p.attachedOpen : p.attached;
   const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report" });
   const anotherUrl = pageUrl(lang, { utm_campaign: "report-another" });
+  const cf = compareFacts(record, lang);
+  const baseUrl = cf && cf.ownId ? pageUrl(lang, { report: cf.ownId, utm_campaign: "report-compare" }) : "";
   const scoreHtml = scoreBlock(t, p, facts, story.title);
   const head = scoreHtml || "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 26px;font-family:Arial,Helvetica,sans-serif;\">" +
     "<p style=\"margin:0 0 6px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
     "<p style=\"margin:0;font-size:22px;line-height:28px;color:#ffffff;\">" + esc(story.title) + "</p>" + metaHtml(t, p, facts) + "</td></tr>";
   const inner = head +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:16px 28px 4px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#334155;\">" + esc(story.lead) + "</td></tr>" +
+    (cf ? compareBlock(CMP_COPY[lang], cf, baseUrl) : "") +
     findingsBlock(t, p, lang, facts) +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:18px 28px 22px;\">" +
     button(openUrl, story.cta, true) + button(anotherUrl, t.another, false) +
@@ -575,6 +677,7 @@ function reportMail(record, options) {
     metaText(t, p, facts),
     "",
     story.lead,
+    cf ? "\n" + compareText(CMP_COPY[lang], cf) + (baseUrl ? "\n" + cf.own + ": " + baseUrl : "") : "",
     findingLines.length ? "\n" + t.findings + "\n" + findingLines.join("\n") : "",
     facts.moreCount ? fill(t.more, { n: facts.moreCount }) : "",
     "",
@@ -665,7 +768,13 @@ const PDF_STYLE = "@page{size:A4;margin:12mm 0 14mm}@page:first{margin:0 0 14mm}
   ".cta h3{margin:0 0 2mm;font-size:15pt}.cta p{margin:0 0 1.6mm;color:#cfe3ea;font-size:10pt}" +
   ".btns{margin-top:4mm;display:flex;gap:3mm;flex-wrap:wrap}" +
   ".btn{display:inline-block;padding:2.8mm 5mm;border-radius:2.6mm;font-weight:700;text-decoration:none;font-size:10pt}" +
-  ".btn.p{background:#5eead4;color:#0f172a}.btn.s{border:1px solid #5eead4;color:#99f6e4}";
+  ".btn.p{background:#5eead4;color:#0f172a}.btn.s{border:1px solid #5eead4;color:#99f6e4}" +
+  ".cmp{background:#fff;border:1px solid #dbe3ea;border-radius:4mm;padding:5mm;break-inside:avoid}.cmp .note{margin:0 0 3mm}" +
+  ".cmp table{width:100%;border-collapse:collapse;font-size:9.5pt}.cmp th,.cmp td{padding:1.4mm 0 1.4mm 3mm;text-align:right;border-bottom:1px solid #eef2f6}" +
+  ".cmp th{font-size:7.8pt;letter-spacing:.06em;text-transform:uppercase;word-break:break-all}.cmp th:first-child,.cmp td:first-child{text-align:left;padding-left:0}" +
+  ".cmp .own{color:" + OWN_COLOR + "}.cmp .rival{color:" + RIVAL_COLOR + "}.cmp .verdict{font-weight:700;margin:3mm 0 0}" +
+  ".only{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-top:4mm}.only>div{border-top:1mm solid;padding-top:2mm;font-size:9pt}.only h3{margin:0 0 1.6mm;font-size:9pt;word-break:break-all}" +
+  ".only ul{margin:0;padding-left:4mm}.only li{margin:0 0 1mm}.only small{color:#64748b}";
 
 // The running footer sits in the page margin: a position:fixed footer lands over the content on pages after the first.
 function pdfFooter(id) {
@@ -673,6 +782,24 @@ function pdfFooter(id) {
   const quoted = "\"" + String(id || "").replace(/[^A-Za-z0-9_-]/g, "") + "\"";
   return "@page{@bottom-left{content:\"QA-lab URL Review · carlosandmunoz.com/qa-review.html\";padding-left:16mm;" + box + "}" +
     "@bottom-right{content:" + quoted + " \"  ·  \" counter(page) \" / \" counter(pages);padding-right:16mm;text-align:right;" + box + "}}";
+}
+
+// Problem titles are lines of the report, so an unpaid PDF frosts them like the findings.
+function comparePdf(c, cf, t, lineOf) {
+  const cell = (value, cls) => "<td class=\"" + cls + "\"><b" + (value == null ? "" : " style=\"color:" + scoreColor(value) + "\"") + ">" + (value == null ? "–" : value) + "</b></td>";
+  const rows = cf.rows.map((row) => "<tr><td>" + esc(row.label) + "</td>" + cell(row.own, "") + cell(row.rival, "") +
+    "<td><b style=\"color:" + leadColor(row.lead) + "\">" + esc(leadText(row.lead)) + "</b></td></tr>").join("");
+  const list = (site, side, cls, seed) => "<div class=\"" + cls + "\" style=\"border-color:" + (cls === "own" ? OWN_COLOR : RIVAL_COLOR) + "\"><h3>" + esc(fill(c.onlyHas, { site })) + ": " + side.count + "</h3>" +
+    (side.items.length ? "<ul>" + side.items.map((item, index) => "<li>" + lineOf(item.title, seed + index) + " <small>" + esc(t.areas[item.area] || item.area || "") + "</small></li>").join("") + "</ul>" +
+      (side.count > side.items.length ? "<p class=\"more\">" + esc(fill(c.more, { n: side.count - side.items.length })) + "</p>" : "")
+      : "<p class=\"more\">" + esc(c.none) + "</p>") + "</div>";
+  return "<div class=\"sec\"><h2>" + esc(c.title) + "</h2><div class=\"cmp\">" +
+    "<p class=\"note\">" + fill(esc(c.intro), { own: "<b class=\"own\">" + esc(cf.own) + "</b>", when: esc(cf.intro.when), rival: "<b class=\"rival\">" + esc(cf.rival) + "</b>" }) + "</p>" +
+    "<table><thead><tr><th>" + esc(c.area) + "</th><th class=\"own\">" + esc(cf.own) + "</th><th class=\"rival\">" + esc(cf.rival) + "</th><th>" + esc(c.yourLead) + "</th></tr></thead><tbody>" + rows + "</tbody></table>" +
+    (cf.verdict ? "<p class=\"verdict\">" + esc(cf.verdict) + "</p>" : "") +
+    "<div class=\"only\">" + list(cf.own, cf.ownOnly, "own", 11) + list(cf.rival, cf.rivalOnly, "rival", 31) + "</div>" +
+    "<p class=\"more\">" + esc(cf.shared) + " " + esc(cf.note) + "</p>" +
+    "</div></div>";
 }
 
 // A print page for the mail attachment. On an unpaid report hidden words are filler, so the PDF never carries them.
@@ -686,6 +813,7 @@ function reportPdf(record, options) {
   const open = isOpen(record);
   const lineOf = (text, seed) => open ? esc(text) : frostedLine(text, seed);
   const facts = reportFacts(record, open);
+  const cf = compareFacts(record, lang);
   const all = (Array.isArray(ins.findings) ? ins.findings : [])
     .filter((item) => item && (item.verdict === "fail" || item.verdict === "risk"))
     .sort((a, b) => (a.rank || 999) - (b.rank || 999));
@@ -731,6 +859,7 @@ function reportPdf(record, options) {
     "<div class=\"stat\"><b style=\"color:#b45309\">" + (all.length - fails) + "</b><span>" + esc(p.risks) + "</span></div>" +
     "</div>" +
     (areas ? "<div class=\"sec\"><div class=\"areas\">" + areas + "</div></div>" : "") +
+    (cf ? comparePdf(CMP_COPY[lang], cf, t, lineOf) : "") +
     (findings ? "<div class=\"sec\"><h2>" + esc(p.findings) + "</h2>" + (open ? "" : "<p class=\"note\">" + esc(p.note) + "</p>") + findings + "</div>" : "") +
     (caseRows ? "<div class=\"sec\"><h2>" + esc(p.cases) + "</h2><div class=\"cases\">" + caseRows + "</div>" + (moreCases ? "<p class=\"more\">" + esc(fill(p.moreCases, { n: moreCases })) + "</p>" : "") + "</div>" : "") +
     "<div class=\"cta\"><h3>" + esc(t.deeper) + "</h3>" + t.deeperLines.map((line) => "<p>→ " + esc(line) + "</p>").join("") +
