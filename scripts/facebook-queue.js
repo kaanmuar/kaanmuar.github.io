@@ -10,7 +10,16 @@
    facebook caption and alt text at its calendar time, skipping captions already scheduled or published on
    the Page. Meta Business Suite's Planificador does not list posts scheduled through the API; --check reads
    them. The token is a Page access token with pages_manage_posts. Exits 1 when any post failed, after
-   trying all of them. */
+   trying all of them.
+
+   The Page token never expires, but changing the Facebook password or removing the "QA-lab Page Publisher"
+   app (1097031042944706) revokes it. To renew it, generate a user token in Graph API Explorer on that app
+   with pages_manage_posts and pages_read_engagement, copy the app secret from App settings > Basic, then:
+
+     FACEBOOK_USER_TOKEN=... FACEBOOK_APP_SECRET=... FACEBOOK_PAGE_ID=... node scripts/facebook-queue.js --renew
+
+   It exchanges the user token for a long-lived one, reads the Page token from it, checks that the Page token
+   never expires, and stores it in the FACEBOOK_PAGE_TOKEN repo secret with gh. Reset the app secret after. */
 
 const fs = require("fs");
 const path = require("path");
@@ -55,19 +64,27 @@ async function waitFor(url, minutes) {
   return false;
 }
 
+// Code 190 is an expired or revoked token; "on behalf of user" means the user revoked the app's access.
+function graphError(status, json) {
+  const error = json.error || {};
+  const message = "Graph " + status + ": " + (error.message || JSON.stringify(json)).slice(0, 300);
+  const revoked = error.code === 190 || /on behalf of user|session has been invalidated/i.test(error.message || "");
+  return new Error(revoked ? message + "\nFACEBOOK_PAGE_TOKEN was revoked. Renew it with node scripts/facebook-queue.js --renew (steps at the top of that file)." : message);
+}
+
 async function graph(edge, params) {
   const body = new URLSearchParams(Object.assign({}, params, { access_token: process.env.FACEBOOK_PAGE_TOKEN }));
   const res = await fetch(GRAPH + "/" + edge, { method: "POST", body });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok || json.error) throw new Error("Graph " + res.status + ": " + ((json.error && json.error.message) || JSON.stringify(json)).slice(0, 300));
+  if (!res.ok || json.error) throw graphError(res.status, json);
   return json;
 }
 
-async function graphGet(edge, params) {
-  const qs = new URLSearchParams(Object.assign({}, params, { access_token: process.env.FACEBOOK_PAGE_TOKEN }));
+async function graphGet(edge, params, token = process.env.FACEBOOK_PAGE_TOKEN) {
+  const qs = new URLSearchParams(Object.assign({}, params, token ? { access_token: token } : {}));
   const res = await fetch(GRAPH + "/" + edge + "?" + qs);
   const json = await res.json().catch(() => ({}));
-  if (!res.ok || json.error) throw new Error("Graph " + res.status + ": " + ((json.error && json.error.message) || JSON.stringify(json)).slice(0, 300));
+  if (!res.ok || json.error) throw graphError(res.status, json);
   return json;
 }
 
@@ -100,6 +117,26 @@ async function check(page) {
   console.log(scheduled.length + " scheduled on the Page" + (times.length ? ", " + new Date(times[0]).toISOString() + " to " + new Date(times[times.length - 1]).toISOString() : ""));
 }
 
+// Explorer user token -> long-lived user token -> Page token, which then has no expiry date.
+async function renew(page) {
+  const app = process.env.FACEBOOK_APP_ID || "1097031042944706";
+  const secret = process.env.FACEBOOK_APP_SECRET;
+  const user = process.env.FACEBOOK_USER_TOKEN;
+  if (!(page && secret && user)) throw new Error("FACEBOOK_PAGE_ID, FACEBOOK_APP_SECRET and FACEBOOK_USER_TOKEN must be set.");
+  const long = await graphGet("oauth/access_token", { grant_type: "fb_exchange_token", client_id: app, client_secret: secret, fb_exchange_token: user }, null);
+  const { access_token: token, name } = await graphGet(page, { fields: "access_token,name" }, long.access_token);
+  if (!token) throw new Error("No Page token for " + page + ": the user is not an admin of the Page, or pages_manage_posts was not granted.");
+  const { data } = await graphGet("debug_token", { input_token: token }, app + "|" + secret);
+  const scopes = data.scopes || [];
+  if (!data.is_valid || data.expires_at !== 0 || !scopes.includes("pages_manage_posts")) {
+    throw new Error("The Page token is not a never-expiring pages_manage_posts token: " + JSON.stringify({ valid: data.is_valid, expires_at: data.expires_at, scopes }));
+  }
+  const repo = process.env.GITHUB_REPO || "kaanmuar/kaanmuar.github.io";
+  const set = require("child_process").spawnSync("gh", ["secret", "set", "FACEBOOK_PAGE_TOKEN", "-R", repo], { input: token, stdio: ["pipe", "inherit", "inherit"] });
+  if (set.status !== 0) throw new Error("gh secret set FACEBOOK_PAGE_TOKEN failed");
+  console.log("FACEBOOK_PAGE_TOKEN renewed for " + name + " (" + page + "), no expiry, scopes " + scopes.join(" ") + ". Reset the app secret now.");
+}
+
 // Batches with Facebook captions and a calendar, oldest first.
 function allBatches() {
   const root = path.join(ROOT, "media/social-posts");
@@ -118,6 +155,7 @@ function posts(batch) {
 async function main() {
   const opts = args();
   const page = process.env.FACEBOOK_PAGE_ID;
+  if (opts.renew) return renew(page);
   const live = !opts["dry-run"];
   if ((live || opts.check) && !(page && process.env.FACEBOOK_PAGE_TOKEN)) throw new Error("FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN must be set.");
   if (opts.check) return check(page);
