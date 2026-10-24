@@ -4,7 +4,8 @@
 #   scripts/regen-generated.sh --push   # in the Regenerate workflow: rebuild on the tip of main, commit, push
 # Two PRs that each passed CI can together leave generated pages stale on main (#968), so the workflow runs this on
 # every push to main. A builder runs only when its check fails, so dates such as the social hub's as-of day do not churn.
-# Order matters: build-llms-full.py also writes the review language pages. A builder not on this branch yet is skipped.
+# Order matters: build-llms-full.py also writes the review language pages, and they copy the head build-critical-css.js
+# writes into qa-review.html. A builder not on this branch yet is skipped.
 # The social hub rebuilds offline, from committed sources only; the daily Live Reports job pulls YouTube and the admin edits.
 # A push that loses the race is not rebased: the rebuild is redone on the new tip, so generated files never conflict.
 # The body is one function so bash has read all of it before git reset rewrites this file.
@@ -13,13 +14,21 @@ set -euo pipefail
 main() {
 	local builders=(
 		scripts/build-catalog-suites.js
+		scripts/build-legal-html.js
+		scripts/build-critical-css.js
 		scripts/build-llms-full.py
 		scripts/build-review-langs.py
-		scripts/build-legal-html.js
 		scripts/build-social-hub.js
 	)
 	local rebuilt=()
 	export PYTHONDONTWRITEBYTECODE=1
+	# The critical CSS builder, which build-social-hub.js also runs, needs packages a bare runner does not have.
+	if [ -n "${GITHUB_ACTIONS:-}" ] && [ -f scripts/build-critical-css.js ] && ! node -e 'require("postcss")' 2>/dev/null; then
+		local deps
+		read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+		npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}" >/dev/null
+		export NODE_PATH="$RUNNER_TEMP/critical-css/node_modules${NODE_PATH:+:$NODE_PATH}"
+	fi
 
 	check() {
 		case "$1" in
@@ -37,7 +46,7 @@ main() {
 				local version
 				version=$(node -p "(require('./package-lock.json').packages['node_modules/sharp'] || {}).version || 'latest'")
 				npm install -s --no-save --prefix "$RUNNER_TEMP/sharp" "sharp@$version" >/dev/null
-				export NODE_PATH="$RUNNER_TEMP/sharp/node_modules"
+				export NODE_PATH="$RUNNER_TEMP/sharp/node_modules${NODE_PATH:+:$NODE_PATH}"
 			fi
 			node "$1" --offline
 			;;

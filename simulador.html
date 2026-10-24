@@ -100,13 +100,15 @@
     </script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
     <script src="js/site-consent.js?v=20261027a" defer></script>
-    <script src="js/site-analytics.js?v=20261024b"></script>
+    <script>window.SiteAnalytics=window.SiteAnalytics||{q:[]};["track","event","trackEvent","once","page","bind","noteVisit"].forEach(function(n){SiteAnalytics[n]=SiteAnalytics[n]||function(){SiteAnalytics.q.push([n,arguments])}});</script>
+    <script src="js/site-analytics.js?v=20261030a" defer></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
     <script>SiteLook.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap"></noscript>
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
@@ -533,7 +535,9 @@
             .flow-grid, .release-grid { grid-template-columns: 1fr; }
         }
     </style>
-    <link rel="stylesheet" href="css/site-look.css?v=20261104a">
+    <style data-critical="css/site-look.css?v=20261104a">html[data-look] body{background-color:var(--bg, var(--bg-primary));background-image:var(--look-gradient);background-attachment:fixed;color:var(--text, var(--text-secondary))}html[data-look] .topbar{background:color-mix(in srgb, var(--bg-secondary) 42%, transparent);border-color:var(--look-edge);backdrop-filter:blur(var(--look-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--look-blur)) saturate(1.5)}html[data-look] .nav,html[data-look] .runner-drawer{background-color:var(--look-bar);background-image:var(--look-bar-gradient);background-attachment:fixed}html[data-look] .btn-primary{background-color:var(--accent)!important;color:var(--on-accent)!important}html[data-look] .topbar #tour-start-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:36px;margin-left:4px;padding:0 14px 0 36px;border:0;border-radius:999px;background:linear-gradient(180deg, #b7f3f1 0%, #3ec4c8 34%, #14939b 100%);color:#f7fffe;font-weight:650;letter-spacing:0.01em;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 8px 16px rgba(13, 110, 118, 0.28);transition:transform 0.28s cubic-bezier(.2, .8, .2, 1), filter 0.2s ease}html[data-look] .topbar #tour-start-btn::before{content:"";position:absolute;left:5px;top:50%;width:26px;height:26px;margin-top:-13px;border-radius:50%;background:linear-gradient(180deg, #ffffff 0%, #e7f8f7 100%);box-shadow:0 1px 2px rgba(8, 60, 66, 0.22)}html[data-look] .topbar #tour-start-btn::after{content:"";position:absolute;left:14px;top:50%;margin-top:-5px;border-style:solid;border-width:5px 0 5px 8px;border-color:transparent transparent transparent #0d6e76}html[data-look] .topbar #tour-start-btn:hover{background:linear-gradient(180deg, #d7fffd 0%, #67d7da 36%, #1aa3ab 100%);color:#f7fffe;transform:scale(1.045);filter:brightness(1.06)}html[data-look] .topbar #theme-toggle,html[data-look] .topbar .lang-toggle{position:relative;isolation:isolate;border-color:transparent;background:transparent;transition:transform 0.28s cubic-bezier(.2, .8, .2, 1)}html[data-look] .topbar #theme-toggle::before,html[data-look] .topbar .lang-toggle::before{content:"";position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(183, 243, 241, 0.72) 48%, rgba(20, 147, 155, 0.28) 100%);box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 10px rgba(13, 110, 118, 0.18);z-index:-1;pointer-events:none}html[data-look] .topbar #theme-toggle:hover,html[data-look] .topbar .lang-toggle:hover{background:transparent;transform:scale(1.06)}@media (prefers-reduced-motion: reduce){html[data-look] .topbar #tour-start-btn,html[data-look] .topbar #theme-toggle,html[data-look] .topbar .lang-toggle{transition:none}html[data-look] .topbar #tour-start-btn:hover,html[data-look] .topbar #theme-toggle:hover,html[data-look] .topbar .lang-toggle:hover{transform:none;filter:none}}.skip-link{position:fixed;top:8px;left:8px;z-index:10000;padding:10px 16px;border-radius:8px;background:#12181f;color:#ffffff;font:600 15px/1.2 Inter, system-ui, sans-serif;text-decoration:none;transform:translateY(calc(-100% - 16px))}.skip-link:focus{transform:none;outline:3px solid #4db3bb;outline-offset:2px}html.dark-mode .skip-link{background:#ffffff;color:#12181f;outline-color:#0d6e76}main[tabindex="-1"]:focus{outline:none}</style>
+    <link rel="preload" href="css/site-look.css?v=20261104a" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
