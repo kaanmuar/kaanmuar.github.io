@@ -79,7 +79,7 @@ function heldBack(record, ctx) {
   const held = publish.heldReason(record || {}, opts.unlisted || []);
   if (held) return held;
   const host = publish.bare(report.host);
-  if (core.ownerProof(record, host)) return "own";
+  if (core.ownerProof(record, host) === "own") return "own";
   if (CONSENT_TLDS.test(host)) return "needs-consent";
   if ((opts.stopped || new Set()).has("@" + domainOf(host))) return "stopped";
   if (!due(opts.notice, opts.now)) return "recent";
