@@ -7,6 +7,9 @@ import functools
 import http.server
 import os
 import sys
+import urllib.parse
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class Server(http.server.ThreadingHTTPServer):
@@ -20,8 +23,9 @@ class Server(http.server.ThreadingHTTPServer):
 
 class Quiet(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
-        # scripts/static-server-check.js refuses to reuse a server without this header.
+        # scripts/static-server-check.js refuses to reuse a server without these headers, or one serving another checkout.
         self.send_header("X-Static-Server", "lab")
+        self.send_header("X-Static-Root", urllib.parse.quote(ROOT))
         super().end_headers()
 
     def log_message(self, *args):
@@ -30,8 +34,7 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 
 def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    handler = functools.partial(Quiet, directory=root)
+    handler = functools.partial(Quiet, directory=ROOT)
     with Server(("", port), handler) as server:
         server.serve_forever()
 
