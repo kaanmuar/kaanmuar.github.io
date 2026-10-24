@@ -2,7 +2,8 @@
 
    The daily Live Reports job (scripts/auto-live-reports.js) reads GET /publishable on reviewUrl.
    It gets the newest complete review per host since a date, already filtered and trimmed: no
-   requester name, email, reason, IP, device, page list, log, or engine internals ever leave here.
+   requester name, email, reason, IP, device, page list, log, engine internals, or chat conversation
+   (report.chatTalk and any talk-* finding) ever leave here.
    A host whose owner asked to be left out goes in Firestore url_review_unlisted/<host>; an asker who
    ticked "Don't publish" leaves `unlisted: true` on that one record. */
 
@@ -77,7 +78,7 @@ function publicReport(report) {
     insights: {
       score: ins.score,
       summary: ins.summary || "",
-      findings: (ins.findings || []).map((f) => pick(f, ["key", "verdict", "area", "severity", "rank", "title", "evidence", "fix", "effort"])),
+      findings: (ins.findings || []).filter((f) => !/^talk-/.test(String(f.key || ""))).map((f) => pick(f, ["key", "verdict", "area", "severity", "rank", "title", "evidence", "fix", "effort"])),
       geo: {
         crawlers: (geo.crawlers || []).map((c) => pick(c, ["role", "allowed", "token"])),
         llms: { ok: !!(geo.llms && geo.llms.ok) },
