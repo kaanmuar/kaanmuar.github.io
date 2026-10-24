@@ -342,18 +342,22 @@ const STYLE = `
 const GATE = `
     <section id="desk-gate">
       <h2>Operator sign-in</h2>
-      <p>Sign in with the operator email and password. Any other account stays outside.</p>
+      <p>Sign in with the operator email and password, or have a sign-in link sent to that email. Any other account stays outside.</p>
       <form id="desk-password" class="gate-form">
         <input id="desk-email" type="email" autocomplete="username" placeholder="Email" aria-label="Email" required>
         <input id="desk-pass" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" required>
         <button type="submit">Sign in</button>
+        <button id="desk-link" type="button" class="quiet">Email me a sign-in link</button>
+      </form>
+      <form id="desk-link-form" class="gate-form" hidden>
+        <input id="desk-link-email" type="email" autocomplete="username" placeholder="Email the link was sent to" aria-label="Email the link was sent to" required>
+        <button type="submit">Finish sign-in</button>
       </form>
       <form id="desk-code-form" class="gate-form" hidden>
         <input id="desk-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code from the authenticator app" aria-label="Authenticator code" required>
         <button type="submit">Confirm</button>
         <button id="desk-code-back" type="button" class="quiet">Back</button>
       </form>
-      <button id="desk-google" type="button" class="quiet">Continue with Google</button>
       <p id="desk-gate-note" class="empty"></p>
     </section>`;
 
@@ -424,8 +428,14 @@ const SIGN_IN = `
     function showCodeStep(show) {
       document.getElementById("desk-password").hidden = show;
       document.getElementById("desk-code-form").hidden = !show;
-      document.getElementById("desk-google").hidden = show;
+      document.getElementById("desk-link-form").hidden = true;
       if (show) document.getElementById("desk-code").focus();
+    }
+    function showLinkStep() {
+      document.getElementById("desk-password").hidden = true;
+      document.getElementById("desk-code-form").hidden = true;
+      document.getElementById("desk-link-form").hidden = false;
+      document.getElementById("desk-link-email").focus();
     }
     function askForCode(error) {
       if (!error || error.code !== "auth/multi-factor-auth-required" || !error.resolver) return false;
@@ -484,47 +494,74 @@ const SIGN_IN = `
       document.getElementById("desk-gate-note").textContent = "";
       showCodeStep(false);
     });
-    document.getElementById("desk-google").addEventListener("click", async () => {
+    const LINK_EMAIL = "deskLinkEmail";
+    document.getElementById("desk-link").addEventListener("click", async () => {
       const note = document.getElementById("desk-gate-note");
-      note.textContent = "Opening Google…";
+      const field = document.getElementById("desk-email");
+      if (!field.reportValidity()) return;
       const auth = deskApp();
       if (!auth) {
-        note.textContent = "Google sign-in did not load.";
+        note.textContent = "Sign-in did not load.";
         return;
       }
-      const provider = new firebase.auth.GoogleAuthProvider();
+      const email = field.value.trim();
+      note.textContent = "Sending the link…";
       try {
-        const cred = await auth.signInWithPopup(provider);
+        await auth.sendSignInLinkToEmail(email, { url: location.origin + location.pathname, handleCodeInApp: true });
+        localStorage.setItem(LINK_EMAIL, email);
+        note.textContent = "A sign-in link is on its way to " + email + ". Open it in this browser.";
+      } catch (error) {
+        console.error("Desk link failed:", error);
+        const code = error && error.code;
+        note.textContent = code === "auth/too-many-requests"
+          ? "Too many attempts. Wait a few minutes and try again."
+          : code === "auth/operation-not-allowed"
+            ? "Sign-in links are not turned on for this desk yet."
+            : "The link could not be sent (" + (code || "no code") + ").";
+      }
+    });
+    async function finishLink(auth, email) {
+      const note = document.getElementById("desk-gate-note");
+      note.textContent = "Signing in…";
+      try {
+        const cred = await auth.signInWithEmailLink(email, location.href);
+        localStorage.removeItem(LINK_EMAIL);
+        history.replaceState(null, "", location.pathname);
+        showCodeStep(false);
         await finishDesk(cred.user);
       } catch (error) {
-        if (askForCode(error)) return;
         const code = error && error.code;
-        if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
-          note.textContent = "Continuing in this window…";
-          auth.signInWithRedirect(provider);
+        if (code !== "auth/invalid-email") {
+          localStorage.removeItem(LINK_EMAIL);
+          history.replaceState(null, "", location.pathname);
+        }
+        if (askForCode(error)) return;
+        console.error("Desk link sign-in failed:", error);
+        if (code === "auth/invalid-email") {
+          note.textContent = "That is not the email the link was sent to.";
           return;
         }
-        if (code === "auth/unauthorized-domain") {
-          note.textContent = "Google did not accept this desk address.";
-          return;
-        }
-        console.error("Desk sign-in failed:", error);
-        note.textContent = "Google did not complete the sign-in (" + (code || (error && error.message) || "no code") + ").";
+        showCodeStep(false);
+        note.textContent = code === "auth/invalid-action-code" || code === "auth/expired-action-code"
+          ? "This link was already used or has expired. Send a new one."
+          : "The link did not sign you in (" + (code || "no code") + ").";
       }
+    }
+    document.getElementById("desk-link-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const auth = deskApp();
+      if (auth) finishLink(auth, document.getElementById("desk-link-email").value.trim());
     });
     const startingAuth = deskApp();
     if (startingAuth) {
       startingAuth.onAuthStateChanged((user) => {
         if (user) load();
       });
-      startingAuth.getRedirectResult().then((result) => {
-        if (result && result.user) finishDesk(result.user);
-      }).catch((error) => {
-        if (askForCode(error)) return;
-        console.error("Desk redirect sign-in failed:", error);
-        const note = document.getElementById("desk-gate-note");
-        if (note) note.textContent = "Google did not complete the sign-in (" + ((error && (error.code || error.message)) || "no code") + ").";
-      });
+      if (startingAuth.isSignInWithEmailLink(location.href)) {
+        const saved = localStorage.getItem(LINK_EMAIL);
+        if (saved) finishLink(startingAuth, saved);
+        else showLinkStep();
+      }
     }
     document.getElementById("desk-out").addEventListener("click", async () => {
       const auth = deskApp();
@@ -1319,9 +1356,23 @@ function operatorEmail() {
   return (process.env.DESK_GOOGLE_EMAIL || "kaanmuar@gmail.com").trim().toLowerCase();
 }
 
+// Email-link sign-in issues "password" tokens too. Google is off the desk for now.
+const DESK_SIGN_IN = ["password", "emailLink"];
+
+function tokenClaims(token) {
+  try {
+    return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"));
+  } catch (error) {
+    return null;
+  }
+}
+
 async function verifyOperator(idToken) {
   const token = String(idToken || "").trim();
   if (token.length < 20 || token.length > 4000) return null;
+  const claims = tokenClaims(token);
+  const method = String((claims && claims.firebase && claims.firebase.sign_in_provider) || "");
+  if (!DESK_SIGN_IN.includes(method)) return null;
   const response = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + DESK_FIREBASE_KEY, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -1329,8 +1380,8 @@ async function verifyOperator(idToken) {
   });
   const body = await response.json().catch(() => ({}));
   const user = body && Array.isArray(body.users) ? body.users[0] : null;
-  if (!user || user.emailVerified !== true) return null;
-  const known = (user.providerUserInfo || []).some((item) => item && (item.providerId === "google.com" || item.providerId === "password"));
+  if (!user || user.emailVerified !== true || user.localId !== claims.sub) return null;
+  const known = (user.providerUserInfo || []).some((item) => item && item.providerId === "password");
   const email = String(user.email || "").trim().toLowerCase();
   if (!known || email !== operatorEmail()) return null;
   return email;

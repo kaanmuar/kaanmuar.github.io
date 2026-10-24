@@ -127,7 +127,7 @@ function deskOperator(req) {
   return session;
 }
 
-function verifyDeskGoogle(idToken) {
+function verifyDeskSignIn(idToken) {
   return desk.verifyOperator(idToken);
 }
 
@@ -325,7 +325,7 @@ const server = http.createServer(async (req, res) => {
     let sessionBody = {};
     try { sessionBody = await readBody(req); } catch (error) { sessionBody = {}; }
     let email = null;
-    try { email = await verifyDeskGoogle(sessionBody.idToken); } catch (error) { email = null; }
+    try { email = await verifyDeskSignIn(sessionBody.idToken); } catch (error) { email = null; }
     if (!email) {
       sendJson(res, 403, { error: "This account cannot open the desk." }, origin, deviceHint);
       return;
