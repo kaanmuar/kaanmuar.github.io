@@ -6,19 +6,39 @@
 
    For each country, the most visited https origins of its latest month, minus sites that are in the global
    top GLOBAL_RANK (everyone's sites, not that country's), adult, piracy and gambling hosts, endings that are
-   neither the country's nor a common generic one, and duplicates of one registrable domain. Writes assets/sweep/<cc>.json ({ cc, month, hosts }) and assets/sweep/index.json
+   neither the country's nor a common generic one, duplicates of one registrable domain (Public Suffix List),
+   bare public suffixes such as gv.at, and hosts that do not resolve. Writes assets/sweep/<cc>.json ({ cc, month, hosts }) and assets/sweep/index.json
    ({ month, built, countries: { cc: n } }), which sweepReviews in functions/index.js reads from the site. */
 
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
-const { registrable } = require("../functions/url-review-core");
+const dns = require("dns").promises;
 const sweep = require("../functions/url-review-sweep");
 
 const REPO = "zakird/crux-top-lists";
 const RAW = "https://raw.githubusercontent.com/" + REPO + "/main/";
+const PSL = "https://publicsuffix.org/list/public_suffix_list.dat";
 const OUT = path.resolve(__dirname, "../assets/sweep");
 const COUNTRY_RANK = 50000;
+const resolver = new dns.Resolver({ timeout: 2500, tries: 2 });
+
+async function suffixList() {
+  const res = await fetch(PSL);
+  if (!res.ok) throw new Error("The Public Suffix List answered " + res.status);
+  const registrable = sweep.suffixRegistrable(await res.text());
+  if (registrable("gv.at") || registrable("www.oesterreich.gv.at") !== "oesterreich.gv.at") throw new Error("The Public Suffix List has no ICANN section to read");
+  return registrable;
+}
+
+async function resolves(host) {
+  try {
+    if ((await resolver.resolve4(host)).length) return true;
+  } catch (error) {
+    if (error.code !== "ENODATA") return false;
+  }
+  return resolver.resolve6(host).then((records) => records.length > 0, () => false);
+}
 
 async function paths() {
   const headers = { "user-agent": "qa-lab-sweep-seeds", accept: "application/vnd.github+json" };
@@ -56,7 +76,7 @@ async function rows(file, maxRank) {
 
 async function main() {
   const only = process.argv.slice(2).map((cc) => cc.toLowerCase());
-  const all = await paths();
+  const [all, registrable] = await Promise.all([paths(), suffixList()]);
   const countries = latest(all, /^data\/country\/([a-z]{2})\/(\d{6})\.csv\.gz$/);
   const globalMonth = latest(all, /^data\/(global)\/(\d{6})\.csv\.gz$/).global;
   const globalDomains = new Set((await rows("data/global/" + globalMonth + ".csv.gz", sweep.GLOBAL_RANK)).map(([origin]) => {
@@ -69,7 +89,7 @@ async function main() {
   for (const cc of codes) {
     const month = countries[cc];
     try {
-      const hosts = sweep.seedHosts(await rows("data/country/" + cc + "/" + month + ".csv.gz", COUNTRY_RANK), globalDomains, registrable, sweep.PER_COUNTRY, cc);
+      const hosts = await sweep.seedHosts(await rows("data/country/" + cc + "/" + month + ".csv.gz", COUNTRY_RANK), globalDomains, registrable, sweep.PER_COUNTRY, cc, resolves);
       fs.writeFileSync(path.join(OUT, cc + ".json"), JSON.stringify({ cc, month, hosts }) + "\n");
       index.countries[cc] = hosts.length;
       console.log(cc + " " + month + " " + hosts.length);
