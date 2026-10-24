@@ -41,6 +41,63 @@ test("a reply forwarded from the inbox is read as the owner's, with the new pers
   assert.equal(replies.plan(reply, null).propose, "", "nothing to resend without a notice");
 });
 
+test("an Outlook forward with no marker line is read as the owner's, not the operator's (#764)", () => {
+  const text = fs.readFileSync(path.join(__dirname, "fixtures", "owner-reply-outlook-forward.txt"), "utf8");
+  const reply = replies.read({ from: "QA-lab <qa@carlosandmunoz.com>", to: "reply@reply.carlosandmunoz.com", subject: "RV: RE: Informe", text });
+  assert.equal(reply.from, "soporte@ferreteria-ejemplo.com.co");
+  assert.equal(reply.domain, "ferreteria-ejemplo.com.co");
+  assert.equal(reply.forwardedBy, "qa@carlosandmunoz.com");
+  assert.equal(reply.subject, "RE: Informe público de www.ferreteria-ejemplo.com.co");
+  assert.equal(reply.kind, "interested");
+  assert.ok(reply.words.startsWith("Buenas tardes,"));
+  assert.ok(!reply.words.includes("Hicimos una revisión"), "the quoted notice is cut");
+  assert.deepEqual(reply.mentioned, []);
+});
+
+test("the original sender is found in Gmail, Outlook and Apple Mail forward headers", () => {
+  const body = "\n\nPlease write to the new web manager instead.";
+  const cases = [
+    ["---------- Forwarded message ---------\nFrom: owner@shop.example\nDate: Fri, Oct 23, 2026\nSubject: Re: report\nTo: <qa@carlosandmunoz.com>" + body, "Re: report"],
+    ["---------- Forwarded message ---------\n\nFrom: \"Shop Owner\" <owner@shop.example>\nDate: Fri, Oct 23, 2026\nSubject: Re: report" + body, "Re: report"],
+    ["-----Original Message-----\nFrom: Shop Owner [mailto:owner@shop.example]\nSent: Friday, October 23, 2026 9:12 AM\nTo: QA-lab\nSubject: RE: report" + body, "RE: report"],
+    ["________________________________\nFrom: Shop Owner <owner@shop.example<mailto:owner@shop.example>>\nSent: Friday, October 23, 2026 9:12 AM\nSubject: RE: report" + body, "RE: report"],
+    ["**From:** Shop Owner <owner@shop.example>\n**Sent:** Friday, October 23, 2026\n**Subject:** RE: report" + body, "RE: report"],
+    ["Von: Shop Owner <owner@shop.example>\nGesendet: Freitag, 23. Oktober 2026\nBetreff: AW: Bericht" + body, "AW: Bericht"],
+    ["De : Shop Owner <owner@shop.example>\nEnvoyé : vendredi 23 octobre 2026\nObjet : RE: Rapport" + body, "RE: Rapport"],
+    ["Begin forwarded message:\n\nFrom: Shop Owner <owner@shop.example>\nSubject: Re: report\nDate: October 23, 2026" + body, "Re: report"],
+    ["Inicio del mensaje reenviado:\n\nDe: Shop Owner <owner@shop.example>\nAsunto: Re: Informe\nFecha: 23 de octubre de 2026" + body, "Re: Informe"]
+  ];
+  for (const [text, subject] of cases) {
+    const reply = replies.read({ from: "kaanmuar@gmail.com", subject: "Fwd: report", text });
+    assert.equal(reply.from, "owner@shop.example", text);
+    assert.equal(reply.forwardedBy, "kaanmuar@gmail.com", text);
+    assert.equal(reply.subject, subject, text);
+    assert.equal(reply.kind, "redirect", text);
+  }
+});
+
+test("a forward of a forward skips the other operator inbox, and our own headers are never the sender", () => {
+  const text = [
+    "---------- Forwarded message ---------",
+    "From: QA-lab <qa@carlosandmunoz.com>",
+    "Date: Fri, Oct 23, 2026",
+    "Subject: Fwd: Re: report",
+    "",
+    "---------- Forwarded message ---------",
+    "From: Shop Owner <owner@shop.example>",
+    "Date: Fri, Oct 23, 2026",
+    "Subject: Re: report",
+    "",
+    "Thanks, what would a full audit cost?"
+  ].join("\n");
+  const reply = replies.read({ from: "kaanmuar@gmail.com", subject: "Fwd: Fwd: Re: report", text });
+  assert.equal(reply.from, "owner@shop.example");
+  assert.equal(reply.subject, "Re: report");
+  assert.equal(reply.kind, "interested");
+  assert.equal(replies.unforward("Testing.\n\nFrom: QA-lab URL Review <review@carlosandmunoz.com>\nSent: Thu\nSubject: Report"), null);
+  assert.equal(replies.unforward("De: aquí en adelante, owner@shop.example se encarga."), null, "a From line alone is not a header block");
+});
+
 test("a direct reply carries its notice token and loses the quoted text", () => {
   const token = "a".repeat(32);
   const reply = replies.read({
