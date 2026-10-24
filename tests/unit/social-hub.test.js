@@ -22,7 +22,7 @@ test("a card escapes its text, shortens tagged links and links the report in the
   assert.match(html, /alt="Card &lt;uber&gt;"/);
   assert.match(html, /href="https:\/\/carlosandmunoz.com\/qa-review-guide.html\?utm_source=x&amp;utm_medium=social"/);
   assert.match(html, />carlosandmunoz.com\/qa-review-guide.html</);
-  assert.match(html, /href="qa-review-es.html\?live=u-uber-com"/);
+  assert.match(html, /href="qa-review-es.html\?live=u-uber-com&amp;from=social"/);
   assert.match(html, /href="qa-review-social-es.html\?p=auto-2026-10-22%2F01-u-uber-com"/);
   assert.match(html, /▶ ES/);
   assert.match(html, /data-act="play" data-video="5b4Hr6r-cBk"/);

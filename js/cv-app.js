@@ -788,8 +788,13 @@
                     widgetCloseBtn: document.getElementById('widget-close-btn'),
                     messageTab: document.getElementById('message-tab'),
                     ratingTab: document.getElementById('rating-tab'),
+                    chatTab: document.getElementById('chat-tab'),
                     messagePane: document.getElementById('message-pane'),
                     ratingPane: document.getElementById('rating-pane'),
+                    chatPane: document.getElementById('chat-pane'),
+                    chatLog: document.getElementById('chat-log'),
+                    chatInput: document.getElementById('chat-input'),
+                    chatSendBtn: document.getElementById('chat-send-btn'),
 
                     messageForm: document.getElementById('message-form'),
                     senderName: document.getElementById('sender-name'),
@@ -1992,6 +1997,14 @@
                         this._trackEvent('contact_tab', 'Engagement', 'rating');
                         this._switchTab('rating');
                     });
+                    this.DOMElements.chatTab.addEventListener('click', () => {
+                        this._trackEvent('contact_tab', 'Engagement', 'chat');
+                        this._switchTab('chat');
+                    });
+                    this.DOMElements.chatSendBtn.addEventListener('click', () => this._chatSend());
+                    this.DOMElements.chatInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); this._chatSend(); }
+                    });
                 },
 
             _toggleDropdown(elementId, shouldToggle) {
@@ -2547,16 +2560,48 @@
             },
 
             _switchTab(tabName) {
-                const { messageTab, ratingTab, messagePane, ratingPane } = this.DOMElements;
-                const isMessageTab = tabName === 'message';
+                const { messageTab, ratingTab, chatTab, messagePane, ratingPane, chatPane } = this.DOMElements;
+                [['message', messageTab, messagePane], ['chat', chatTab, chatPane], ['rating', ratingTab, ratingPane]].forEach(([name, tab, pane]) => {
+                    const on = name === tabName;
+                    tab.classList.toggle('active', on);
+                    tab.setAttribute('aria-selected', on);
+                    pane.classList.toggle('active', on);
+                });
+                if (tabName === 'chat') {
+                    if (!this.DOMElements.chatLog.childElementCount) this._chatSay('bot', this._t().chat_greeting);
+                    this.DOMElements.chatInput.focus();
+                }
+            },
 
-                messageTab.classList.toggle('active', isMessageTab);
-                ratingTab.classList.toggle('active', !isMessageTab);
-                messageTab.setAttribute('aria-selected', isMessageTab);
-                ratingTab.setAttribute('aria-selected', !isMessageTab);
+            _chatSay(who, text) {
+                const line = document.createElement('p');
+                line.className = 'chat-line chat-' + who;
+                line.textContent = text;
+                this.DOMElements.chatLog.appendChild(line);
+                this.DOMElements.chatLog.scrollTop = this.DOMElements.chatLog.scrollHeight;
+            },
 
-                messagePane.classList.toggle('active', isMessageTab);
-                ratingPane.classList.toggle('active', !isMessageTab);
+            // Fixed answers chosen by keyword, in the page's language. Contact details typed in are never repeated back.
+            _chatReply(text) {
+                const t = this._t();
+                const en = this.data.translations.en;
+                const say = (key) => t[key] || en[key];
+                if (/ignor|instruc|anweisung|prompt|system/i.test(text)) return say('chat_reply_refuse');
+                if (/@|\d[\d\s().-]{6,}\d/.test(text)) return say('chat_reply_data');
+                if (/refund|return|reembols|devolu|erstatt|r[uü]ckgabe|rembours|retour|rimbors|reso\b/i.test(text)) return say('chat_reply_policy');
+                if (/person|human|people|humano|pessoa|mensch|personne|umano|agent|someone|alguien|algu[eé]m|jemand|quelqu|qualcuno/i.test(text)) return say('chat_reply_person');
+                if (/offer|cost|price|hire|rate|ofrec|cuest|precio|oferec|custa|pre[cç]o|biet|kost|preis|propos|co[uû]t|prix|offri|costa|prezzo|hello|hola|ol[aá]|hallo|bonjour|ciao|\bhi\b/i.test(text)) return say('chat_reply_hello');
+                return say('chat_reply_default');
+            },
+
+            _chatSend() {
+                const input = this.DOMElements.chatInput;
+                const text = input.value.trim().slice(0, 300);
+                if (!text) return;
+                input.value = '';
+                this._chatSay('you', text);
+                this._trackEvent('chat_message', 'Engagement', 'chat');
+                setTimeout(() => this._chatSay('bot', this._chatReply(text)), 700);
             },
 
             _validateField(field, rules) {
@@ -3928,21 +3973,20 @@
                     const messageOn = widgetOn && !(feedback.message && feedback.message.hidden);
                     const ratingOn = widgetOn && !(feedback.rating && feedback.rating.hidden);
                     show('testimonials-section', !(feedback.testimonials && feedback.testimonials.hidden));
-                    show('contact-widget', widgetOn && (messageOn || ratingOn));
-                    show('contact-widget-fab', widgetOn && (messageOn || ratingOn));
+                    show('contact-widget', widgetOn);
+                    show('contact-widget-fab', widgetOn);
                     show('message-tab', messageOn);
                     show('message-pane', messageOn);
                     show('rating-tab', ratingOn);
                     show('rating-pane', ratingOn);
-                    if (!messageOn && ratingOn) {
-                        const messageTab = document.getElementById('message-tab');
-                        const ratingTab = document.getElementById('rating-tab');
-                        const messagePane = document.getElementById('message-pane');
-                        const ratingPane = document.getElementById('rating-pane');
-                        if (messageTab) { messageTab.classList.remove('active'); messageTab.setAttribute('aria-selected', 'false'); }
-                        if (messagePane) messagePane.classList.remove('active');
-                        if (ratingTab) { ratingTab.classList.add('active'); ratingTab.setAttribute('aria-selected', 'true'); }
-                        if (ratingPane) ratingPane.classList.add('active');
+                    if (!messageOn) {
+                        const first = ratingOn ? 'rating' : 'chat';
+                        ['message', 'chat', 'rating'].forEach((name) => {
+                            const tab = document.getElementById(name + '-tab');
+                            const pane = document.getElementById(name + '-pane');
+                            if (tab) { tab.classList.toggle('active', name === first); tab.setAttribute('aria-selected', String(name === first)); }
+                            if (pane) pane.classList.toggle('active', name === first);
+                        });
                     }
                     const glyph = this._ratingGlyph(feedback.rating && feedback.rating.mark);
                     document.querySelectorAll('#star-rating .star').forEach((star) => { star.textContent = glyph; });
