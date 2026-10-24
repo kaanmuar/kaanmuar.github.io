@@ -2283,8 +2283,10 @@
   }
 
   function closeMenus() {
-    document.querySelectorAll(".report-toolbar .menu").forEach((menu) => { menu.hidden = true; });
-    document.querySelectorAll(".report-toolbar [aria-controls]").forEach((button) => button.setAttribute("aria-expanded", "false"));
+    document.querySelectorAll(".report-toolbar .menu").forEach((menu) => {
+      menu.hidden = true;
+      document.querySelectorAll('.report-toolbar [aria-controls="' + menu.id + '"]').forEach((button) => button.setAttribute("aria-expanded", "false"));
+    });
   }
   function bindMenu(toggleId, menuId) {
     const toggle = document.getElementById(toggleId);
