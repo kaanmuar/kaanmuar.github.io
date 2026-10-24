@@ -525,6 +525,17 @@
         .compare-form label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
         .compare-field { flex: 1 1 240px; min-width: 0; }
         .compare-form .url-row { border-radius: 12px; }
+        .compare-more { flex-basis: 100%; }
+        .compare-more[hidden], .compare-add[hidden], .rivals-kind [hidden] { display: none; }
+        .compare-remove { border: 0; background: none; color: var(--muted); font-size: 20px; line-height: 1; padding: 8px 12px; cursor: pointer; }
+        .compare-remove:hover, .compare-remove:focus-visible { color: var(--red); }
+        .compare-add { flex-basis: auto; }
+        .rivals-kind { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 4px; max-width: 640px; }
+        .rivals-kind label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
+        .rivals-kind select, .rivals-kind input { flex: 1 1 220px; min-width: 0; }
+        .rivals-kind select { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 12px; padding: 10px 12px; font: inherit; }
+        .rivals-kind select:focus-visible { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
+        .rivals-add { margin: 0 0 12px; }
         .compare-form .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
         .compare-run, .compare-running { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 8px 0; }
         .compare-run[hidden], .compare-running[hidden] { display: none; }
@@ -1589,8 +1600,37 @@
                         </div>
                     </div>
                     <button class="btn btn-primary" id="compare-go" type="button">Compare</button>
+                    <div class="compare-field compare-more" data-compare-more hidden>
+                        <div class="url-row notranslate" id="compare-url-2-field">
+                            <span>https://</span>
+                            <input id="compare-url-2" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="second-competitor.com" aria-label="Second competitor's address">
+                            <button class="compare-remove" type="button" aria-label="Remove the second competitor">×</button>
+                        </div>
+                    </div>
+                    <div class="compare-field compare-more" data-compare-more hidden>
+                        <div class="url-row notranslate" id="compare-url-3-field">
+                            <span>https://</span>
+                            <input id="compare-url-3" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="third-competitor.com" aria-label="Third competitor's address">
+                            <button class="compare-remove" type="button" aria-label="Remove the third competitor">×</button>
+                        </div>
+                    </div>
+                    <div class="compare-field compare-more" data-compare-more hidden>
+                        <div class="url-row notranslate" id="compare-url-4-field">
+                            <span>https://</span>
+                            <input id="compare-url-4" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="fourth-competitor.com" aria-label="Fourth competitor's address">
+                            <button class="compare-remove" type="button" aria-label="Remove the fourth competitor">×</button>
+                        </div>
+                    </div>
+                    <div class="compare-field compare-more" data-compare-more hidden>
+                        <div class="url-row notranslate" id="compare-url-5-field">
+                            <span>https://</span>
+                            <input id="compare-url-5" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="fifth-competitor.com" aria-label="Fifth competitor's address">
+                            <button class="compare-remove" type="button" aria-label="Remove the fifth competitor">×</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost compare-add" id="compare-add" type="button">+ Add another competitor <span id="compare-add-left">(4 left)</span></button>
                 </div>
-                <p class="meta-line" id="compare-note" lang="de" translate="no">Kostet wie eine zweite Prüfung. Der Rückkehrrabatt gilt, wenn Sie vom Gerät aus vergleichen, auf dem diese Prüfung lief. Die Website des Wettbewerbers erhält nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular. Wie bei jeder Prüfung kann ihr Inhaber eine E-Mail dazu erhalten, und ihre Werte können in den Live Reports erscheinen.</p>
+                <p class="meta-line" id="compare-note" lang="de" translate="no">Jeder Wettbewerber kostet wie eine zweite Prüfung, und sie laufen nacheinander. Der Rückkehrrabatt gilt, wenn Sie vom Gerät aus vergleichen, auf dem diese Prüfung lief. Die Website des Wettbewerbers erhält nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular. Wie bei jeder Prüfung kann ihr Inhaber eine E-Mail dazu erhalten, und ihre Werte können in den Live Reports erscheinen.</p>
                 <p class="meta-line" id="compare-error" role="alert"></p>
                 <p class="compare-running" id="compare-running" role="status" hidden><span id="compare-running-text"></span><button class="btn btn-stop" id="compare-stop" type="button">Stop the comparison</button></p>
             </div>
