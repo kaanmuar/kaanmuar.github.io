@@ -1,6 +1,6 @@
 # .github/workflows/auto-live-reports.yml
 # Once a day, every publishable user review becomes a Live Report, a feed card, a story, and a clip,
-# and goes into the Buffer queues and onto the Facebook Page. Filtering and privacy live in functions/url-review-publish.js.
+# and goes into the Buffer queues, onto the Facebook Page, and into the social hub (qa-review-social*.html). Filtering and privacy live in functions/url-review-publish.js.
 # Secrets: PUBLISH_KEY (same value as functions/.env), BUFFER_API_KEY (Buffer → Settings → API),
 # LIVE_REPORTS_DEPLOY_KEY (write deploy key), FACEBOOK_PAGE_ID (the Graph ID, not the profile ID in Page URLs) and
 # FACEBOOK_PAGE_TOKEN (never-expiring Page token from the "QA-lab Page Publisher" Meta app, with pages_manage_posts;
@@ -97,8 +97,10 @@ jobs:
 
       - name: Install the renderer
         if: steps.reports.outputs.social != '0'
+        # sharp writes the social hub thumbnails for the new posts.
         run: |
-          npm install --no-save --ignore-scripts playwright@"$(node -p "require('./package-lock.json').packages['node_modules/playwright'].version")"
+          LOCK="require('./package-lock.json').packages"
+          npm install --no-save --ignore-scripts playwright@"$(node -p "$LOCK['node_modules/playwright'].version")" sharp@"$(node -p "$LOCK['node_modules/sharp'].version")"
           npx playwright install --with-deps chromium
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
           pip install -q edge-tts
@@ -133,6 +135,10 @@ jobs:
             git add "media/social-posts/$BATCH"
             git add -f "media/social-posts/$BATCH/story"
           fi
+          # The hub reads tracked files only, so it is built once the batch is staged. It also picks up
+          # yesterday's clips, which Buffer uploads to YouTube a day after their batch.
+          node scripts/build-social-hub.js
+          git add assets/social qa-review-social*.html
           if git diff --cached --quiet; then echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0; fi
           git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} reviews, ${{ steps.reports.outputs.social }} posts ($BATCH) [skip ci]"
           # PRs merged during the render move main. The checkout is shallow, so the data commit is
@@ -146,7 +152,8 @@ jobs:
             git reset -q --hard FETCH_HEAD
             git cherry-pick -X theirs "$DATA"
             python3 scripts/build-llms-full.py
-            git add llms.txt llms-full.txt qa-review*.html
+            node scripts/build-social-hub.js --offline
+            git add llms.txt llms-full.txt qa-review*.html assets/social
             git diff --cached --quiet || git commit -q --amend --no-edit
           done
           gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
