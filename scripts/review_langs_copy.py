@@ -402,3 +402,12 @@ COPY = {
         ],
     },
 }
+
+# The note under the competitor field in the report's comparison card.
+COMPARE_NOTE = {
+    "es": "Tiene el precio de una segunda revisión. El descuento por volver se aplica cuando comparas desde el dispositivo que hizo esta revisión. El sitio del competidor recibe solo las comprobaciones públicas y pasivas: sin conversación con el chat y sin enviar formularios. Como en cualquier revisión, su dueño puede recibir un correo sobre ella, y sus puntuaciones pueden aparecer en Live Reports.",
+    "pt": "Tem o preço de uma segunda revisão. O desconto de retorno vale quando você compara pelo dispositivo que fez esta revisão. O site do concorrente recebe só as verificações públicas e passivas: sem conversa com o chat e sem envio de formulários. Como em qualquer revisão, o dono pode receber um e-mail sobre ela, e as pontuações podem aparecer nos Live Reports.",
+    "de": "Kostet wie eine zweite Prüfung. Der Rückkehrrabatt gilt, wenn Sie vom Gerät aus vergleichen, auf dem diese Prüfung lief. Die Website des Wettbewerbers erhält nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular. Wie bei jeder Prüfung kann ihr Inhaber eine E-Mail dazu erhalten, und ihre Werte können in den Live Reports erscheinen.",
+    "fr": "Facturée comme une deuxième revue. La remise de retour s’applique quand vous comparez depuis l’appareil qui a lancé cette revue. Le site du concurrent ne reçoit que les vérifications publiques et passives : aucune conversation avec le chat et aucun formulaire envoyé. Comme pour toute revue, son propriétaire peut recevoir un e-mail à ce sujet, et ses scores peuvent apparaître dans les Live Reports.",
+    "it": "Ha il prezzo di una seconda revisione. Lo sconto di ritorno vale quando confronti dal dispositivo che ha eseguito questa revisione. Il sito del concorrente riceve solo i controlli pubblici e passivi: nessuna conversazione con la chat e nessun modulo inviato. Come per ogni revisione, il suo titolare può ricevere un’email al riguardo, e i suoi punteggi possono comparire nei Live Reports.",
+}

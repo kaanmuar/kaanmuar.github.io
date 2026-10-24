@@ -15,7 +15,7 @@ import pathlib
 import re
 import sys
 
-from review_langs_copy import AND, COPY, DATE, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE
+from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BASE = "https://carlosandmunoz.com/"
@@ -253,6 +253,7 @@ def build(source, code, data):
     s = structured(s, code)
     s = gate(s, code)
     s = ask_panel(s, code)
+    s = retag(s, '<p class="meta-line" id="compare-note">', "</p>", COMPARE_NOTE[code], code)
     s = with_live(s, code, data)
     s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js')
     return page, s
