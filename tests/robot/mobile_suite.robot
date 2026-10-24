@@ -51,10 +51,10 @@ Suite Teardown    Close All Browsers
 [Mobile] QA Competency Filter Works On Phone
     [Tags]    Mobile    CV
     Open CV in Mobile Browser
-    Click Element    css:.competency-item[data-competency="qa"]
+    Click Into View    css:.competency-item[data-competency="qa"]
     Wait Until Page Contains Element    css:html.topic-focus
     Page Should Contain Element    css:.experience-item.topic-match
-    Click Element    id:languages-heading
+    Click Into View    id:languages-heading
     Wait Until Page Does Not Contain Element    css:html.topic-focus
 
 [Mobile] Admin Login Shows Back To CV

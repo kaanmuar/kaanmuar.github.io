@@ -4,15 +4,15 @@ const ONLINE = ['www.google.com', 'carlosandmunoz.com', 'gooogle.com'];
 const SITEMAPS = { 'carlosandmunoz.com': ['/qa-lab', '/pricing', '/checkout', '/qa-review', '/blog/checkout-tips'] };
 const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 
-async function open(page) {
-  await page.addInitScript((version) => {
+async function open(page, lang = '') {
+  await page.addInitScript((args) => {
     try {
-      sessionStorage.setItem('qa-review-terms', version);
+      sessionStorage.setItem('qa-review-terms', args.version);
       localStorage.setItem('hasSeenReviewTour', 'true');
       localStorage.setItem('qa-review-analytics', 'necessary');
-      localStorage.setItem('cv-preferred-lang', 'en');
+      localStorage.setItem('cv-preferred-lang', args.lang || 'en');
     } catch (e) { /* storage is optional */ }
-  }, TERMS);
+  }, { version: TERMS, lang });
   await page.route(/\/news\?/, (route) => route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"items":[]}' }));
   await page.route(/ipwho\.is/, (route) => route.fulfill({ contentType: 'application/json', body: '{"success":false}' }));
   await page.route(/dns\.google\/resolve/, (route) => {
@@ -24,7 +24,7 @@ async function open(page) {
     const host = new URL(route.request().url()).searchParams.get('host');
     route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ host, paths: SITEMAPS[host] || [] }) });
   });
-  await page.goto('/qa-review.html');
+  await page.goto(lang ? '/qa-review-' + lang + '.html' : '/qa-review.html');
   const box = page.locator('#url');
   await expect(box).toBeEnabled();
   return box;
@@ -69,6 +69,17 @@ test.describe('URL Review page box predictions', () => {
     await expect(page.locator('#url-hint .url-fix')).toHaveText('www.google.com');
     await box.fill('carlosandmunoz.com/qa-lab');
     await expect(page.locator('#url-hint')).toHaveText('carlosandmunoz.com is online.');
+  });
+
+  test('the address check speaks the page language and keeps the host out of translation', async ({ page }) => {
+    const box = await open(page, 'es');
+    await box.fill('carlosandmunoz.com');
+    const hint = page.locator('#url-hint');
+    await expect(hint).toHaveText('carlosandmunoz.com está en línea.');
+    await expect(hint).toHaveAttribute('lang', 'es');
+    await expect(hint).toHaveAttribute('translate', 'no');
+    await box.fill('gogle.com');
+    await expect(hint).toHaveText('gogle.com no existe. ¿Quisiste decir www.google.com?');
   });
 
   test('after an online host and a slash, its sitemap paths are listed and filtered as you type', async ({ page }) => {
