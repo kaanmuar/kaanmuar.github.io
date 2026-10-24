@@ -25,6 +25,9 @@ const POST_EVERY_DAYS = 30;
 // Sites the country sweep reviewed (functions/url-review-sweep.js) all get a card, but only this
 // many become social posts per batch, so requested reviews keep the feed and Buffer stays under its cap.
 const SWEEP_POSTS_PER_BATCH = 2;
+// Rival-sweep comparisons (functions/url-review-rivals.js): a site and its natural competitors in one
+// post. Each competitor's own review gets a card but no post of its own.
+const COMPARE_POSTS_PER_BATCH = 2;
 
 // Top finding key: [the gap, in a few words; a lesson that is true for any site; hashtags].
 const LESSONS = {
@@ -170,6 +173,29 @@ function copyFor(report, recent) {
   };
 }
 
+// The leader overall, and for each area which site leads it.
+function versusCopy(sites) {
+  const names = sites.map((site) => site.host);
+  const order = sites.slice().sort((a, b) => b.overall - a.overall);
+  const lead = order[0];
+  const base = sites[0];
+  const leads = live.AREAS.map((area) => {
+    const best = sites.filter((site) => typeof site.areas[area] === "number").sort((a, b) => b.areas[area] - a.areas[area])[0];
+    return best ? [area, best.host] : null;
+  }).filter(Boolean);
+  const byHost = new Map();
+  leads.forEach(([area, host]) => byHost.set(host, (byHost.get(host) || []).concat(area)));
+  const parts = [...byHost].map(([host, areas]) => host + " leads in " + (areas.length === live.AREAS.length ? "all six areas" : areas.join(", ")));
+  const vs = names.join(" vs ");
+  return {
+    title: [vs.length <= 44 ? vs + "." : names.length + " natural competitors.", "*" + (order.length > 1 && lead.overall === order[1].overall ? "A tie at the top: " + lead.overall + "." : lead.host + " leads: " + lead.overall + ".") + "*"],
+    body: "Health scores: " + order.map((site) => site.host + " " + site.overall).join(", ") + "." + (parts.length ? " " + parts.join("; ") + "." : "") +
+      (byHost.has(base.host) ? "" : " " + base.host + " leads in none of the six areas."),
+    action: "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    tags: ["SEO", "WebPerf", "QA"]
+  };
+}
+
 async function fetchPublishable(since) {
   if (!process.env.PUBLISH_KEY) throw new Error("PUBLISH_KEY is not set.");
   const res = await fetch(ENDPOINT + "?since=" + encodeURIComponent(since), { headers: { "x-publish-key": process.env.PUBLISH_KEY } });
@@ -200,7 +226,7 @@ async function main() {
   for (const { report, source } of payload.reports || []) {
     const host = bare(report.host);
     if (curated.has(host) || gone(host)) continue;
-    const swept = source === "sweep";
+    const swept = source === "sweep" || source === "rivals";
     const scope = swept ? "National" : "Requested";
     const copy = copyFor(report, state.recent || []);
     const country = countryOf(host);
@@ -213,6 +239,7 @@ async function main() {
     added += 1;
     const last = (state.posted || {})[host];
     if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
+    if (source === "rivals") continue;
     if (swept && sweepPosts >= SWEEP_POSTS_PER_BATCH) continue;
     if (swept) sweepPosts += 1;
     const score = report.insights.score;
@@ -221,6 +248,24 @@ async function main() {
       areas: Object.fromEntries(live.AREAS.map((a) => [a, score.areas[a].score])) });
     state.posted = Object.assign(state.posted || {}, { [host]: today });
     if (copy.key) state.recent = [copy.key].concat(state.recent || []).slice(0, 5);
+  }
+
+  let comparePosts = 0;
+  for (const cmp of payload.comparisons || []) {
+    if (comparePosts >= COMPARE_POSTS_PER_BATCH) break;
+    const host = bare(cmp.host);
+    const key = "vs:" + host;
+    const id = "u-" + host.replace(/[^a-z0-9]+/g, "-").slice(0, 60);
+    const sites = [cmp].concat(cmp.rivals || []).filter((site) => !gone(site.host));
+    if (gone(host) || sites.length < 2 || !items.some((x) => x.card.id === id)) continue;
+    const last = (state.posted || {})[key];
+    if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
+    const copy = versusCopy(sites.map((site) => Object.assign({}, site, { host: bare(site.host) })));
+    batch.push({ id: "vs-" + id.slice(2), live: id, host, kind: "rivals", scope: "Versus", title: copy.title, body: copy.body, action: copy.action, tags: copy.tags,
+      fetchedAt: cmp.createdAt, pages: 0, overall: cmp.overall, areas: cmp.areas,
+      sites: sites.map((site) => ({ host: bare(site.host), overall: site.overall, areas: site.areas })) });
+    state.posted = Object.assign(state.posted || {}, { [key]: today });
+    comparePosts += 1;
   }
 
   if (added || removed) live.writeAll(items);
