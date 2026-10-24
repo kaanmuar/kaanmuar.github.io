@@ -2,7 +2,8 @@
 """Build qa-review-{es,pt,de,fr,it}.html from qa-review.html.
 
 The head, the structured data, the consent screen, the stage headline, the noscript
-Live Reports text, and the stored language are translated by hand (review_langs_copy.py);
+Live Reports text, and the stored language are translated by hand (review_langs_copy.py),
+and the Ask the report panel copy comes from js/qa-review-ask.js;
 the rest of the body stays English and is translated in the browser. The noscript text on
 every page, English included, is written from assets/live-reports/index.json.
 
@@ -178,6 +179,33 @@ def locale_block(code):
     return "\n".join(lines)
 
 
+ASK_KEYS = ("open", "title", "close", "note", "inputLabel", "placeholder", "send", "repo")
+
+
+def ask_copy(code):
+    """The Ask the report panel strings for one language, read from js/qa-review-ask.js."""
+    js = (ROOT / "js/qa-review-ask.js").read_text(encoding="utf-8")
+    start = js.index(f"\n    {code}: {{\n")
+    out = {}
+    for key in ASK_KEYS:
+        m = re.compile(rf'\b{key}: ("(?:[^"\\]|\\.)*")').search(js, start)
+        if not m:
+            raise SystemExit(f"js/qa-review-ask.js has no {code}.{key}")
+        out[key] = json.loads(m.group(1))
+    return out
+
+
+def ask_panel(s, code):
+    en, t = ask_copy("en"), ask_copy(code)
+    mark = f' lang="{code}" translate="no" hidden>'
+    s = swap(s, f'aria-controls="ask-panel" hidden>{en["open"]}</button>', f'aria-controls="ask-panel"{mark}{t["open"]}</button>')
+    s = swap(s, '<aside class="ask-panel no-print" id="ask-panel" aria-labelledby="ask-title" hidden>', f'<aside class="ask-panel no-print" id="ask-panel" aria-labelledby="ask-title"{mark}')
+    for key in ASK_KEYS:
+        if key != "placeholder":
+            s = swap(s, f'data-ask-text="{key}">{en[key]}<', f'data-ask-text="{key}">{t[key]}<')
+    return swap(s, f'placeholder="{en["placeholder"]}"', f'placeholder="{t["placeholder"]}"')
+
+
 def build(source, code, data):
     t = LANGS[code]
     page = f"qa-review-{code}.html"
@@ -223,6 +251,7 @@ def build(source, code, data):
     )
     s = structured(s, code)
     s = gate(s, code)
+    s = ask_panel(s, code)
     s = with_live(s, code, data)
     s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js')
     return page, s
