@@ -795,24 +795,237 @@
       document.getElementById("compare-url").value = stored && stored.id === report.id ? String(stored.url || "").replace(/^\s*https?:\/\//i, "") : "";
       return;
     }
+    const areas = (cmp.areas || []).map((row) => {
+      const lead = row.own == null || row.rival == null ? null : row.own - row.rival;
+      return Object.assign({ lead, level: lead != null && Math.abs(lead) < 5 }, row);
+    });
+    const kpis = cmp.kpis || [];
+    const dominance = cmp.dominance || areas.reduce((out, row) => {
+      if (row.lead != null) out[row.level ? "tie" : row.lead > 0 ? "own" : "rival"]++;
+      return out;
+    }, { own: 0, rival: 0, tie: 0 });
+    const names = { own: cmp.ownHost, rival: cmp.rivalHost };
     const cell = (score) => score == null ? '<td class="muted">–</td>' : '<td><b style="color:' + scoreColor(score) + '">' + score + "</b></td>";
-    const lead = (own, rival) => {
+    const leadCell = (own, rival) => {
       if (own == null || rival == null) return '<td class="muted">–</td>';
       const gap = own - rival;
       return '<td><span class="delta ' + (gap > 0 ? "up" : gap < 0 ? "down" : "") + '">' + (gap > 0 ? "+" : "") + gap + "</span></td>";
     };
-    const rows = [{ area: "Overall", own: cmp.overall.own, rival: cmp.overall.rival }].concat(cmp.areas || []).map((row) =>
-      '<tr><th scope="row">' + esc(row.area) + "</th>" + cell(row.own) + cell(row.rival) + lead(row.own, row.rival) + "</tr>").join("");
+    const rows = [{ area: "Overall", own: cmp.overall.own, rival: cmp.overall.rival }].concat(areas).map((row) =>
+      '<tr><th scope="row">' + esc(row.area) + "</th>" + cell(row.own) + cell(row.rival) + leadCell(row.own, row.rival) + "</tr>").join("");
     const list = (items, total) => items.length
       ? "<ul>" + items.map((item) => "<li><strong>" + esc(item.title) + '</strong> <span class="meta-line">' + esc(item.area) + " · " + esc(item.severity) + "</span></li>").join("") + "</ul>" + (total > items.length ? '<p class="meta-line">and ' + (total - items.length) + " more</p>" : "")
       : '<p class="muted">None.</p>';
     const when = cmp.ownAt ? new Date(cmp.ownAt).toLocaleDateString() : "";
+    const decided = dominance.own + dominance.rival + dominance.tie;
+    const ahead = dominance.own === dominance.rival ? "" : dominance.own > dominance.rival ? "own" : "rival";
     result.innerHTML = "<p>Your review of <strong>" + esc(cmp.ownHost) + "</strong>" + (when ? " from " + esc(when) : "") + " next to this review of <strong>" + esc(cmp.rivalHost) + "</strong>. " +
       cmp.shared + " open problem" + (cmp.shared === 1 ? " is" : "s are") + " on both sites.</p>" +
+      cmpScoreboard(cmp, names, dominance, decided, ahead) +
+      (kpis.length ? '<h3 class="cmp-h">Head to head</h3><div class="cmp-kpis">' + kpis.map((kpi) => cmpKpi(kpi, names)).join("") + "</div>" : "") +
+      '<h3 class="cmp-h">The six areas</h3><div class="cmp-two">' + cmpRadar(areas, names) + cmpLeads(areas, names) + "</div>" +
+      cmpSkyline(areas, names) +
       '<div class="compare-scroll"><table class="compare-table"><thead><tr><th scope="col">Area</th><th scope="col">' + esc(cmp.ownHost) + '</th><th scope="col">' + esc(cmp.rivalHost) + '</th><th scope="col">Your lead</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      cmpEdges(cmp, areas, kpis, names) +
+      (cmp.verdicts || cmp.severities ? '<h3 class="cmp-h">Problem mix</h3>' + cmpMix(cmp, names) : "") +
       '<div class="exec-cols history-cols"><div><h3>Only ' + esc(cmp.ownHost) + " has</h3>" + list(cmp.ownOnly || [], cmp.ownOnlyCount) + "</div><div><h3>Only " + esc(cmp.rivalHost) + " has</h3>" + list(cmp.rivalOnly || [], cmp.rivalOnlyCount) + "</div></div>" +
+      (cmp.market ? cmpMarket(cmp.market, names) : "") +
+      cmpTrail(cmp.trail, names) +
       '<p class="meta-line">' + esc(cmp.rivalHost) + " got the public, passive checks only: no chat conversation and no form sent." +
       (cmp.passive ? " Because this is a competitor run, nothing was typed into its fields and its chat was not opened, so the typed-field and open-chat checks were skipped and are left out of the lists above." : "") + " Both scores come from automated reviews, a starting point and not a verdict.</p>";
+  }
+
+  const CMP_SIDES = ["own", "rival"];
+
+  function cmpSplit(parts, label) {
+    const total = parts.reduce((sum, part) => sum + part.value, 0);
+    if (!total) return "";
+    return '<div class="cmp-split" role="img" aria-label="' + esc(label) + '">' + parts.filter((part) => part.value).map((part) =>
+      '<i class="' + part.cls + '" style="flex:' + part.value + '" title="' + esc(part.title) + '"><span>' + esc(part.text) + "</span></i>").join("") + "</div>";
+  }
+
+  function cmpRing(value, cls, host) {
+    const circumference = 2 * Math.PI * 44;
+    const score = value || 0;
+    return '<div class="cmp-ring ' + cls + '"><svg viewBox="0 0 100 100" role="img" aria-label="' + esc(host) + " health score " + score + ' out of 100"><circle class="ring-track" cx="50" cy="50" r="44"></circle><circle class="ring-value" cx="50" cy="50" r="44" stroke="' + scoreColor(score) + '" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + (circumference * (1 - score / 100)).toFixed(1) + '"></circle></svg>' +
+      "<b>" + score + "<small>Grade " + esc(gradeOf(score)) + "</small></b><p>" + esc(host) + "</p></div>";
+  }
+
+  function cmpScoreboard(cmp, names, dominance, decided, ahead) {
+    const gap = (cmp.overall.own || 0) - (cmp.overall.rival || 0);
+    return '<div class="cmp-board">' + cmpRing(cmp.overall.own, "cmp-own", names.own) +
+      '<div class="cmp-vs"><span>vs</span><b class="delta ' + (gap > 0 ? "up" : gap < 0 ? "down" : "") + '">' + (gap > 0 ? "+" : "") + gap + "</b><small>your lead</small></div>" +
+      cmpRing(cmp.overall.rival, "cmp-rival", names.rival) + "</div>" +
+      (decided ? '<p class="cmp-verdict">' + (ahead ? "<strong>" + esc(names[ahead]) + "</strong> wins " + dominance[ahead] + " of " + decided + " indicators" : "The two sites win the same number of indicators") +
+        ". " + esc(names.own) + " " + dominance.own + ", " + esc(names.rival) + " " + dominance.rival + ", level " + dominance.tie + ".</p>" +
+        cmpSplit([
+          { value: dominance.own, cls: "cmp-own", text: dominance.own, title: names.own + " wins " + dominance.own },
+          { value: dominance.tie, cls: "cmp-tie", text: dominance.tie, title: "Level on " + dominance.tie },
+          { value: dominance.rival, cls: "cmp-rival", text: dominance.rival, title: names.rival + " wins " + dominance.rival }
+        ], "Indicators won: " + names.own + " " + dominance.own + ", level " + dominance.tie + ", " + names.rival + " " + dominance.rival) : "");
+  }
+
+  function cmpValue(kpi, value) {
+    if (value == null) return "–";
+    if (kpi.unit === "ms") return value >= 1000 ? (value / 1000).toFixed(1) + " s" : Math.round(value) + " ms";
+    if (kpi.unit === "bytes") return value >= 1048576 ? (value / 1048576).toFixed(1) + " MB" : Math.round(value / 1024) + " KB";
+    if (kpi.unit === "%") return value + "%";
+    if (kpi.key === "cls") return value.toFixed(2);
+    return Number(value).toLocaleString();
+  }
+
+  function cmpKpi(kpi, names) {
+    const top = Math.max(kpi.own || 0, kpi.rival || 0) || 1;
+    const side = (key) => '<div class="cmp-kpi-row' + (kpi.winner === key ? " won" : "") + '"><span>' + esc(names[key]) + "</span><b>" + esc(cmpValue(kpi, kpi[key])) + "</b></div>" +
+      '<div class="cmp-bar"><i class="cmp-' + key + '" style="width:' + (kpi[key] == null ? 0 : Math.max(2, kpi[key] / top * 100)).toFixed(1) + '%"></i></div>';
+    const verdict = kpi.winner === "tie" ? "Level" : kpi.winner ? esc(names[kpi.winner]) + " ahead" : "Not measured on both";
+    return '<div class="cmp-kpi ' + (kpi.winner ? "w-" + kpi.winner : "") + '"><p class="cmp-kpi-label">' + esc(kpi.label) + "<small>" + (kpi.better === "low" ? "lower is better" : "higher is better") + "</small></p>" +
+      side("own") + side("rival") + '<p class="cmp-kpi-win">' + verdict + "</p></div>";
+  }
+
+  function cmpRadar(areas, names) {
+    const size = 300, mid = 150, radius = 105;
+    const point = (index, value) => {
+      const angle = (-90 + index * 360 / areas.length) * Math.PI / 180;
+      return [mid + Math.cos(angle) * radius * value / 100, mid + Math.sin(angle) * radius * value / 100];
+    };
+    const rings = [25, 50, 75, 100].map((level) => '<polygon class="cmp-grid" points="' + areas.map((row, index) => point(index, level).map((n) => n.toFixed(1)).join(",")).join(" ") + '"></polygon>').join("");
+    const spokes = areas.map((row, index) => { const [x, y] = point(index, 100); return '<line class="cmp-grid" x1="' + mid + '" y1="' + mid + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '"></line>'; }).join("");
+    const labels = areas.map((row, index) => {
+      const [x, y] = point(index, 122);
+      return '<text x="' + x.toFixed(1) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="' + (Math.abs(x - mid) < 8 ? "middle" : x > mid ? "start" : "end") + '">' + esc(row.area) + "</text>";
+    }).join("");
+    const shape = (key) => '<polygon class="cmp-shape cmp-' + key + '" points="' + areas.map((row, index) => point(index, row[key] || 0).map((n) => n.toFixed(1)).join(",")).join(" ") + '"></polygon>' +
+      areas.map((row, index) => { const [x, y] = point(index, row[key] || 0); return '<circle class="cmp-dot cmp-' + key + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3"></circle>'; }).join("");
+    const label = "Radar of the six area scores. " + areas.map((row) => row.area + " " + names.own + " " + (row.own == null ? "none" : row.own) + ", " + names.rival + " " + (row.rival == null ? "none" : row.rival)).join("; ");
+    return '<figure class="cmp-fig"><svg class="cmp-radar" viewBox="-70 -12 ' + (size + 140) + " " + (size + 24) + '" role="img" aria-label="' + esc(label) + '">' + rings + spokes + shape("rival") + shape("own") + labels + "</svg>" +
+      '<figcaption><span class="cmp-key cmp-own"></span>' + esc(names.own) + ' <span class="cmp-key cmp-rival"></span>' + esc(names.rival) + " · where the shapes overlap, the two sites agree</figcaption></figure>";
+  }
+
+  function cmpLeads(areas, names) {
+    const top = Math.max(10, ...areas.map((row) => Math.abs(row.lead || 0)));
+    return '<figure class="cmp-fig cmp-leads"><p class="cmp-leads-head"><span>' + esc(names.rival) + " ahead</span><span>" + esc(names.own) + " ahead</span></p>" + areas.map((row) => {
+      const width = row.lead == null ? 0 : Math.abs(row.lead) / top * 50;
+      const tag = row.lead == null ? "–" : row.level ? "Level" : (row.lead > 0 ? "+" : "") + row.lead;
+      return '<div class="cmp-lead"><span>' + esc(row.area) + '</span><div class="cmp-lead-track"><i class="' + (row.lead > 0 ? "cmp-own" : "cmp-rival") + (row.level ? " level" : "") + '" style="' + (row.lead > 0 ? "left:50%" : "right:50%") + ";width:" + width.toFixed(1) + '%"></i></div><b class="' + (row.level ? "muted" : row.lead > 0 ? "delta up" : "delta down") + '">' + esc(tag) + "</b></div>";
+    }).join("") + "<figcaption>Your lead in each area. Under 5 points apart counts as level.</figcaption></figure>";
+  }
+
+  function cmpSkyline(areas, names) {
+    const bar = 20, gap = 4, group = 34, depth = 9, lift = 6, scale = 1.3, floor = 160, left = 14;
+    let x = left, body = "", labels = "";
+    const column = (x0, value, key) => {
+      const h = (value || 0) * scale;
+      const y = floor - h;
+      return '<g class="cmp-col cmp-' + key + '"><polygon class="cmp-col-side" points="' + [[x0 + bar, y], [x0 + bar + depth, y - lift], [x0 + bar + depth, floor - lift], [x0 + bar, floor]].map((p) => p.join(",")).join(" ") + '"></polygon>' +
+        '<rect class="cmp-col-front" x="' + x0 + '" y="' + y + '" width="' + bar + '" height="' + h + '"></rect>' +
+        '<polygon class="cmp-col-top" points="' + [[x0, y], [x0 + depth, y - lift], [x0 + bar + depth, y - lift], [x0 + bar, y]].map((p) => p.join(",")).join(" ") + '"></polygon>' +
+        '<text x="' + (x0 + bar / 2 + depth / 2) + '" y="' + (y - lift - 4) + '" text-anchor="middle">' + (value == null ? "–" : value) + "</text></g>";
+    };
+    areas.forEach((row) => {
+      body += column(x, row.own, "own") + column(x + bar + gap, row.rival, "rival");
+      labels += '<text class="cmp-col-label" x="' + (x + bar + gap / 2) + '" y="' + (floor + 18) + '" text-anchor="middle">' + esc(row.area) + "</text>";
+      x += bar * 2 + gap + group;
+    });
+    const width = x - group + depth + left;
+    const ground = '<polygon class="cmp-floor" points="' + [[left - 6, floor], [left - 6 + depth, floor - lift], [width + 2, floor - lift], [width + 2 - depth, floor]].map((p) => p.join(",")).join(" ") + '"></polygon>';
+    return '<figure class="cmp-fig cmp-sky"><div class="compare-scroll"><svg viewBox="0 0 ' + (width + 6) + " " + (floor + 26) + '" role="img" aria-label="' + esc("Area scores as 3D columns, " + names.own + " then " + names.rival + " in each area") + '">' + ground + body + labels + "</svg></div>" +
+      '<figcaption><span class="cmp-key cmp-own"></span>' + esc(names.own) + ' <span class="cmp-key cmp-rival"></span>' + esc(names.rival) + " · each column is an area score out of 100</figcaption></figure>";
+  }
+
+  function cmpEdges(cmp, areas, kpis, names) {
+    const line = (row, value) => "<li><strong>" + esc(row.label || row.area) + "</strong> " + '<span class="meta-line">' + esc(value(row.own)) + " vs " + esc(value(row.rival)) + "</span></li>";
+    const areaValue = (score) => score == null ? "–" : String(score);
+    const pick = (side) => areas.filter((row) => row.lead != null && !row.level && (row.lead > 0) === (side === "own")).sort((a, b) => Math.abs(b.lead) - Math.abs(a.lead)).map((row) => line(row, areaValue))
+      .concat(kpis.filter((row) => row.key !== "overall" && row.winner === side).map((row) => line(row, (value) => cmpValue(row, value))));
+    const level = areas.filter((row) => row.level).map((row) => line(row, areaValue))
+      .concat(kpis.filter((row) => row.key !== "overall" && row.winner === "tie").map((row) => line(row, (value) => cmpValue(row, value))));
+    const shared = (cmp.sharedList || []).map((item) => "<li>" + esc(item.title) + ' <span class="meta-line">both have it · ' + esc(item.area) + " · " + esc(item.severity) + "</span></li>");
+    const box = (title, items, cls) => '<div class="cmp-edge ' + cls + '"><h3>' + title + "</h3>" + (items.length ? "<ul>" + items.slice(0, 8).join("") + "</ul>" + (items.length > 8 ? '<p class="meta-line">and ' + (items.length - 8) + " more</p>" : "") : '<p class="muted">None.</p>') + "</div>";
+    return '<h3 class="cmp-h">Advantages, disadvantages and common ground</h3><div class="exec-cols cmp-edges">' +
+      box("Your advantages", pick("own"), "cmp-own") +
+      box("Common ground", level.concat(shared), "cmp-tie") +
+      box("Where " + esc(names.rival) + " is ahead", pick("rival"), "cmp-rival") + "</div>";
+  }
+
+  function cmpMix(cmp, names) {
+    const verdicts = cmp.verdicts ? CMP_SIDES.map((key) => {
+      const row = cmp.verdicts[key] || {};
+      return '<div class="cmp-mix-row"><span>' + esc(names[key]) + "</span>" + cmpSplit(["fail", "risk", "pass", "person"].map((name) =>
+        ({ value: row[name] || 0, cls: "mix-" + name, text: row[name] || 0, title: (row[name] || 0) + " " + VERDICT_LABEL[name] })), names[key] + " checks: " + ["fail", "risk", "pass", "person"].map((name) => (row[name] || 0) + " " + VERDICT_LABEL[name]).join(", ")) + "</div>";
+    }).join("") : "";
+    const top = cmp.severities ? Math.max(1, ...CMP_SIDES.map((key) => ["critical", "high", "medium", "low"].reduce((sum, name) => sum + ((cmp.severities[key] || {})[name] || 0), 0))) : 1;
+    const severities = cmp.severities ? CMP_SIDES.map((key) => {
+      const row = cmp.severities[key] || {};
+      const total = ["critical", "high", "medium", "low"].reduce((sum, name) => sum + (row[name] || 0), 0);
+      return '<div class="cmp-mix-row"><span>' + esc(names[key]) + '</span><div class="cmp-sev" style="width:' + Math.max(4, total / top * 100).toFixed(1) + '%">' + cmpSplit(["critical", "high", "medium", "low"].map((name) =>
+        ({ value: row[name] || 0, cls: "sev-" + name, text: row[name] || 0, title: (row[name] || 0) + " " + name })), names[key] + " open problems: " + ["critical", "high", "medium", "low"].map((name) => (row[name] || 0) + " " + name).join(", ")) + "</div><b>" + total + "</b></div>";
+    }).join("") : "";
+    return '<div class="cmp-two">' + (verdicts ? '<figure class="cmp-fig"><figcaption>Every check, by verdict: <span class="cmp-key mix-fail"></span>fails <span class="cmp-key mix-risk"></span>at risk <span class="cmp-key mix-pass"></span>passes <span class="cmp-key mix-person"></span>needs a person</figcaption>' + verdicts + "</figure>" : "") +
+      (severities ? '<figure class="cmp-fig"><figcaption>Open problems, by severity: <span class="cmp-key sev-critical"></span>critical <span class="cmp-key sev-high"></span>high <span class="cmp-key sev-medium"></span>medium <span class="cmp-key sev-low"></span>low</figcaption>' + severities + "</figure>" : "") + "</div>";
+  }
+
+  function cmpSpark(ranks, cls) {
+    if (!ranks || ranks.length < 2) return "";
+    const values = ranks.map((row) => row.rank);
+    const best = Math.min(...values), worst = Math.max(...values);
+    const span = worst - best || 1;
+    const points = values.map((value, index) => (index / (values.length - 1) * 150 + 5).toFixed(1) + "," + (6 + (value - best) / span * 28).toFixed(1)).join(" ");
+    return '<svg class="cmp-spark ' + cls + '" viewBox="0 0 160 40" role="img" aria-label="' + esc("Tranco rank over " + ranks.length + " days, from #" + values[0].toLocaleString() + " to #" + values[values.length - 1].toLocaleString()) + '"><polyline points="' + points + '"></polyline></svg>';
+  }
+
+  function cmpSignal(signal) {
+    if (signal.points == null) return "Not read";
+    if (signal.key === "rank") return signal.value ? "#" + Number(signal.value).toLocaleString() : "Outside the top million";
+    if (signal.key === "chrome") return signal.value ? "Yes" : "No";
+    if (signal.key === "age") return signal.value + " years";
+    return Number(signal.value).toLocaleString();
+  }
+
+  function cmpMarket(market, names) {
+    const gauge = (side, key) => {
+      const score = side.score == null ? 0 : side.score;
+      const trend = side.change == null ? "" : side.change > 0 ? '<span class="delta up">▲ ' + side.change.toLocaleString() + " places in 30 days</span>" : side.change < 0 ? '<span class="delta down">▼ ' + (-side.change).toLocaleString() + " places in 30 days</span>" : '<span class="delta">Steady for 30 days</span>';
+      return '<div class="cmp-presence cmp-' + key + '"><svg viewBox="0 0 120 70" role="img" aria-label="' + esc(names[key] + " market presence " + (side.score == null ? "not read" : side.score + " out of 100")) + '"><path class="ring-track" d="M10 62 A50 50 0 0 1 110 62" pathLength="100"></path><path class="cmp-arc" d="M10 62 A50 50 0 0 1 110 62" pathLength="100" stroke-dasharray="' + score + ' 100"></path><text x="60" y="58" text-anchor="middle">' + (side.score == null ? "–" : side.score) + "</text></svg>" +
+        "<p><strong>" + esc(names[key]) + "</strong></p><p class=\"cmp-rank\">" + (side.rank ? "#" + side.rank.toLocaleString() + " <small>on Tranco</small>" : "<small>Outside the Tranco top million</small>") + "</p>" + cmpSpark(side.ranks, "cmp-" + key) + "<p>" + trend + "</p></div>";
+    };
+    const leader = market.share == null || market.share === 50 ? "" : market.share > 50 ? "own" : "rival";
+    const rows = (market.own.signals || []).map((signal, index) => {
+      const other = (market.rival.signals || [])[index] || {};
+      const bar = (value, key) => '<div class="cmp-bar"><i class="cmp-' + key + '" style="width:' + (value || 0) + '%"></i></div>';
+      return "<tr><th scope=\"row\">" + esc(signal.label) + "<small>" + signal.weight + "% of the score</small></th><td>" + esc(cmpSignal(signal)) + bar(signal.points, "own") + "</td><td>" + esc(cmpSignal(other)) + bar(other.points, "rival") + "</td></tr>";
+    }).join("");
+    return '<h3 class="cmp-h">Market presence</h3>' +
+      (leader ? '<p class="cmp-verdict"><strong>' + esc(names[leader]) + "</strong> holds " + (leader === "own" ? market.share : 100 - market.share) + "% of the presence the two sites have together.</p>" : "") +
+      (market.share == null ? "" : cmpSplit([
+        { value: market.share, cls: "cmp-own", text: market.share + "%", title: names.own + " " + market.share + "%" },
+        { value: 100 - market.share, cls: "cmp-rival", text: (100 - market.share) + "%", title: names.rival + " " + (100 - market.share) + "%" }
+      ], "Share of presence: " + names.own + " " + market.share + "%, " + names.rival + " " + (100 - market.share) + "%")) +
+      '<div class="cmp-two">' + gauge(market.own, "own") + gauge(market.rival, "rival") + "</div>" +
+      '<div class="compare-scroll"><table class="compare-table cmp-signals"><thead><tr><th scope="col">Signal</th><th scope="col">' + esc(names.own) + '</th><th scope="col">' + esc(names.rival) + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      '<p class="meta-line">Presence is an estimate from public signals, not a traffic figure. The Tranco list ranks the top million domains by averaging several popularity lists over 30 days. Real-user Chrome data exists only for sites with enough Chrome visitors. A signal that could not be read is left out, and the others share its weight.</p>';
+  }
+
+  function cmpTrail(trail, names) {
+    const own = (trail && trail.own) || [];
+    const rival = (trail && trail.rival) || [];
+    if (own.length + rival.length < 3) return "";
+    const dates = own.concat(rival).map((row) => Date.parse(row.at)).filter((at) => !isNaN(at));
+    const first = Math.min(...dates), last = Math.max(...dates);
+    const width = 520, height = 170, pad = 30;
+    const x = (at) => pad + (last === first ? (width - pad * 2) / 2 : (Date.parse(at) - first) / (last - first) * (width - pad * 2));
+    const y = (score) => 12 + (100 - score) / 100 * (height - 40);
+    const grid = [0, 50, 100].map((score) => '<line class="cmp-grid" x1="' + pad + '" x2="' + (width - pad) + '" y1="' + y(score) + '" y2="' + y(score) + '"></line><text class="cmp-axis" x="' + (pad - 6) + '" y="' + (y(score) + 4) + '" text-anchor="end">' + score + "</text>").join("");
+    const line = (rows, key) => rows.length ? '<g class="cmp-' + key + '"><polyline class="cmp-line" points="' + rows.map((row) => x(row.at).toFixed(1) + "," + y(row.overall).toFixed(1)).join(" ") + '"></polyline>' +
+      rows.map((row) => '<circle class="cmp-dot" cx="' + x(row.at).toFixed(1) + '" cy="' + y(row.overall).toFixed(1) + '" r="3.5"><title>' + esc(names[key] + " " + row.overall + " on " + row.at) + "</title></circle>").join("") + "</g>" : "";
+    const label = (at, anchor) => '<text class="cmp-axis" x="' + x(new Date(at).toISOString()).toFixed(1) + '" y="' + (height - 6) + '" text-anchor="' + anchor + '">' + esc(new Date(at).toLocaleDateString()) + "</text>";
+    const move = (rows) => rows.length > 1 ? rows[rows.length - 1].overall - rows[0].overall : null;
+    const note = (rows, key) => {
+      const moved = move(rows);
+      return esc(names[key]) + ": " + (rows.length ? rows.length + " review" + (rows.length === 1 ? "" : "s") + (moved == null ? "" : ', <span class="delta ' + (moved > 0 ? "up" : moved < 0 ? "down" : "") + '">' + (moved > 0 ? "+" : "") + moved + "</span> since the first") : "no earlier review");
+    };
+    return '<h3 class="cmp-h">Score history under your email</h3><figure class="cmp-fig cmp-trail"><div class="compare-scroll"><svg viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="' + esc("Overall score over time for " + names.own + " and " + names.rival) + '">' + grid + line(own, "own") + line(rival, "rival") + (last !== first ? label(first, "start") + label(last, "end") : label(first, "middle")) + "</svg></div>" +
+      "<figcaption>" + note(own, "own") + " · " + note(rival, "rival") + "</figcaption></figure>";
   }
 
   function savedCompare() {

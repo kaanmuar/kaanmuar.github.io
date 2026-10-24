@@ -361,13 +361,13 @@
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
             --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; --on-cyan: #fff;
-            --green: #0f766e; --amber: #b45309; --red: #b42318;
+            --green: #0f766e; --amber: #b45309; --red: #b42318; --rival: #7c3aed;
             --frost: rgba(247, 248, 250, .92); --frost-blur: blur(10px);
         }
         html.dark-mode {
             --bg: #10161d; --panel: #161d26; --panel-2: #0c1118; --card: #1a2430;
             --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; --on-cyan: #10161d;
-            --green: #5fb89a; --amber: #c4a574; --red: #e07a73;
+            --green: #5fb89a; --amber: #c4a574; --red: #e07a73; --rival: #b39ddb;
             --frost: rgba(22, 29, 38, .92);
             color-scheme: dark;
         }
@@ -533,6 +533,85 @@
         .compare-table thead th { font-size: 12px; letter-spacing: .04em; color: var(--muted); }
         #compare-error:empty { display: none; }
         #compare-error { color: var(--red); }
+        #compare-result { --own: var(--cyan); }
+        .cmp-h { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; margin: 22px 0 8px; }
+        .cmp-verdict { margin: 10px 0 6px; }
+        .cmp-board { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 14px 0 4px; flex-wrap: wrap; }
+        .cmp-ring { position: relative; width: 180px; text-align: center; }
+        .cmp-ring svg { width: 132px; height: 132px; display: block; margin: 0 auto; transform: rotate(-90deg); }
+        .cmp-ring circle { fill: none; stroke-width: 9; }
+        .cmp-ring .ring-track { stroke: var(--panel-2); }
+        .cmp-ring .ring-value { stroke-linecap: round; }
+        .cmp-ring b { position: absolute; top: 0; left: calc(50% - 66px); width: 132px; height: 132px; display: grid; place-content: center; font-family: "Source Serif 4", Georgia, serif; font-size: 2.3rem; line-height: 1; }
+        .cmp-ring b small { display: block; font-family: inherit; font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 6px; }
+        .cmp-ring p { margin: 6px 0 0; font-weight: 700; font-size: 13.5px; overflow-wrap: anywhere; }
+        .cmp-ring.cmp-own p { color: var(--own); } .cmp-ring.cmp-rival p { color: var(--rival); }
+        .cmp-vs { display: grid; justify-items: center; gap: 2px; }
+        .cmp-vs span { font-family: "Source Serif 4", Georgia, serif; font-style: italic; color: var(--muted); font-size: 1.3rem; }
+        .cmp-vs b { font-size: 1.4rem; } .cmp-vs small { font-size: 11px; color: var(--muted); }
+        .cmp-split { display: flex; height: 22px; border-radius: 999px; overflow: hidden; margin: 6px 0 4px; background: var(--panel-2); }
+        .cmp-split i { display: flex; align-items: center; justify-content: center; min-width: 18px; font-style: normal; font-size: 11px; font-weight: 700; color: #fff; }
+        .cmp-split i span { padding: 0 4px; }
+        .cmp-own { --c: var(--own); } .cmp-rival { --c: var(--rival); } .cmp-tie { --c: var(--muted); }
+        .cmp-split i, .cmp-bar i, .cmp-key { background: var(--c); }
+        .mix-fail { --c: var(--red); } .mix-risk { --c: var(--amber); } .mix-pass { --c: var(--green); } .mix-person { --c: var(--muted); }
+        .sev-critical { --c: color-mix(in srgb, var(--red) 70%, #000); } .sev-high { --c: var(--red); } .sev-medium { --c: var(--amber); } .sev-low { --c: var(--muted); }
+        .cmp-key { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin: 0 4px 0 8px; vertical-align: -1px; }
+        .cmp-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+        .cmp-kpi { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); break-inside: avoid; }
+        .cmp-kpi.w-own { border-top: 3px solid var(--own); } .cmp-kpi.w-rival { border-top: 3px solid var(--rival); } .cmp-kpi.w-tie { border-top: 3px solid var(--muted); }
+        .cmp-kpi-label { margin: 0 0 6px; font-size: 13px; font-weight: 700; }
+        .cmp-kpi-label small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+        .cmp-kpi-row { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); }
+        .cmp-kpi-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cmp-kpi-row b { color: var(--text); white-space: nowrap; }
+        .cmp-kpi-row.won b::after { content: " ✓"; color: var(--green); }
+        .cmp-bar { height: 6px; border-radius: 999px; background: var(--panel-2); margin: 3px 0 6px; overflow: hidden; }
+        .cmp-bar i { display: block; height: 100%; border-radius: inherit; }
+        .cmp-kpi-win { margin: 2px 0 0; font-size: 12px; font-weight: 700; }
+        .cmp-kpi.w-own .cmp-kpi-win { color: var(--own); } .cmp-kpi.w-rival .cmp-kpi-win { color: var(--rival); } .cmp-kpi.w-tie .cmp-kpi-win { color: var(--muted); }
+        .cmp-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+        .cmp-fig { margin: 0; break-inside: avoid; }
+        .cmp-fig figcaption { font-size: 12px; color: var(--muted); margin: 6px 0; }
+        .cmp-radar { width: 100%; max-width: 380px; display: block; margin: 0 auto; }
+        .cmp-radar text, .cmp-sky text, .cmp-axis { font-size: 12px; fill: var(--muted); }
+        .cmp-grid { fill: none; stroke: var(--line); stroke-width: 1; }
+        .cmp-shape { fill: var(--c); fill-opacity: .18; stroke: var(--c); stroke-width: 2; }
+        .cmp-dot { fill: var(--c); }
+        .cmp-leads-head { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin: 6px 0 8px 96px; }
+        .cmp-lead { display: grid; grid-template-columns: 90px 1fr 46px; gap: 6px; align-items: center; margin: 0 0 9px; font-size: 13px; }
+        .cmp-lead b { text-align: right; font-size: 12px; }
+        .cmp-lead-track { position: relative; height: 14px; background: var(--panel-2); border-radius: 4px; }
+        .cmp-lead-track::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); }
+        .cmp-lead-track i { position: absolute; top: 0; bottom: 0; background: var(--c); border-radius: 4px; }
+        .cmp-lead-track i.level { opacity: .45; }
+        .cmp-sky { margin-top: 12px; } .cmp-sky svg { width: 100%; min-width: 460px; max-width: 600px; display: block; margin: 0 auto; }
+        .cmp-sky .cmp-col-label { font-size: 10px; }
+        .cmp-trail svg { width: 100%; min-width: 420px; max-width: 620px; display: block; }
+        .cmp-col .cmp-col-front { fill: var(--c); }
+        .cmp-col .cmp-col-top { fill: color-mix(in srgb, var(--c) 55%, #fff); }
+        .cmp-col .cmp-col-side { fill: color-mix(in srgb, var(--c) 65%, #000); }
+        .cmp-col text { font-size: 10px; font-weight: 700; fill: var(--text); }
+        .cmp-floor { fill: var(--panel-2); }
+        .cmp-edge { border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 10px; padding: 10px 12px; }
+        .cmp-mix-row { display: grid; grid-template-columns: minmax(0, 150px) 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
+        .cmp-mix-row > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cmp-mix-row .cmp-split { grid-column: 2 / 4; }
+        .cmp-mix-row .cmp-sev .cmp-split { grid-column: auto; }
+        .cmp-mix-row .cmp-sev + b { font-size: 12px; }
+        .cmp-presence { text-align: center; border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 12px; padding: 10px; }
+        .cmp-presence svg:first-child { width: 150px; }
+        .cmp-presence path { fill: none; stroke-width: 10; stroke-linecap: round; }
+        .cmp-presence .ring-track { stroke: var(--panel-2); }
+        .cmp-presence .cmp-arc { stroke: var(--c); }
+        .cmp-presence text { font-family: "Source Serif 4", Georgia, serif; font-size: 22px; fill: var(--text); }
+        .cmp-presence p { margin: 2px 0; }
+        .cmp-rank { font-size: 1.15rem; font-weight: 700; } .cmp-rank small { font-size: 12px; font-weight: 400; color: var(--muted); }
+        .cmp-spark { width: 160px; height: 40px; display: block; margin: 4px auto; }
+        .cmp-spark polyline, .cmp-line { fill: none; stroke: var(--c); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+        .cmp-signals th small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+        .cmp-signals td { min-width: 120px; } .cmp-signals .cmp-bar { margin: 4px 0 0 auto; max-width: 120px; }
+        @media (max-width: 720px) { .cmp-two { grid-template-columns: 1fr; } .cmp-edges { grid-template-columns: 1fr; } }
         .gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 4px; }
         .speed-title { margin: 14px 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #5b6672); }
         .gauge { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
@@ -1460,7 +1539,7 @@
         <h2 data-insight>Next to a competitor</h2>
         <article class="card" data-insight id="compare">
             <div class="no-print" id="compare-ask">
-                <p>Run the same review on a competitor's site and see the six area scores side by side, with the open problems only one of the two sites has.</p>
+                <p>Run the same review on a competitor's site and see who wins each indicator: the six areas as a radar and 3D columns, speed and page weight head to head, your advantages and theirs, the common ground, the open problems only one site has, and how present each site is in the market, from its Tranco rank and 30-day trend.</p>
                 <div class="compare-form">
                     <label for="compare-url">Competitor's address</label>
                     <div class="compare-field">
@@ -1638,7 +1717,7 @@
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-ask.js?v=20261023b"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261031v"></script>
+<script src="js/qa-review.js?v=20261031w"></script>
 <script src="js/url-suggest.js?v=20261024a"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>

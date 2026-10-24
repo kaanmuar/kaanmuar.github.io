@@ -2184,6 +2184,8 @@ function readRdap(data, domain) {
   const events = Array.isArray(data && data.events) ? data.events : [];
   const expiry = events.find((event) => /^expiration$/i.test(event.eventAction || ""));
   const at = expiry && Date.parse(expiry.eventDate);
+  const registration = events.find((event) => /^registration$/i.test(event.eventAction || ""));
+  const born = registration && Date.parse(registration.eventDate);
   const status = (Array.isArray(data && data.status) ? data.status : []).map((item) => clean(item, 60)).slice(0, 12);
   const registrarEntity = (Array.isArray(data && data.entities) ? data.entities : []).find((entity) => (entity.roles || []).includes("registrar"));
   const vcard = (registrarEntity && Array.isArray(registrarEntity.vcardArray) && registrarEntity.vcardArray[1]) || [];
@@ -2208,6 +2210,7 @@ function readRdap(data, domain) {
     read: true,
     contacts,
     expires: at && !isNaN(at) ? new Date(at).toISOString().slice(0, 10) : "",
+    registered: born && !isNaN(born) ? new Date(born).toISOString().slice(0, 10) : "",
     daysLeft: at && !isNaN(at) ? Math.floor((at - Date.now()) / 86400000) : null,
     registrar: clean((fn && fn[3]) || "", 120),
     status,
@@ -2872,7 +2875,9 @@ async function reviewTarget(rawUrl, hooks) {
       headers: homeInspect.headers,
       ms: first.ms,
       bytes: homeInspect.bytes,
-      signals: homeInspect.signals || {}
+      signals: homeInspect.signals || {},
+      socialLinks: homeInspect.socialLinks || [],
+      registered: (extras && extras.domain && extras.domain.registered) || ""
     },
     log: lines,
     status: stopped ? "stopped" : "complete",
