@@ -1137,10 +1137,11 @@ async function probeFailure(url) {
   if (probe.dns.error) return probe;
   probe.plain = await urlReview.probeRead(url);
   const plain = probe.plain;
-  const refused = !plain.error && !plain.httpRedirect && ((plain.status >= 400 && plain.status < 500) || !!plain.challenge);
-  if (!refused) return probe;
+  const target = plain.url || reviewFailures.unreadUrl(plain, url);
+  if (reviewFailures.probeNeedsTcp(plain)) probe.tcp = await urlReview.tcpCheck(target, 6000);
+  if (!reviewFailures.probeNeedsBrowser(plain, probe.tcp)) return probe;
   const started = Date.now();
-  const browsed = await browseForReview({ url: plain.url, paths: [], html: true, probe: true }, null)
+  const browsed = await browseForReview({ url: target, paths: [], html: true, probe: true }, null)
     .catch((error) => ({ ok: false, error: String((error && error.message) || "").slice(0, 120) }));
   const view = browsed && browsed.ok && browsed.start ? browsed.start : null;
   probe.browser = view ? {
@@ -1149,7 +1150,7 @@ async function probeFailure(url) {
     status: view.status || 0,
     docStatus: view.docStatus || 0,
     finalUrl: String(view.finalUrl || "").slice(0, 300),
-    challenge: view.html ? urlReview.challengeOf(view.finalUrl || plain.url, view.headers || {}, view.html) : "",
+    challenge: view.html ? urlReview.challengeOf(view.finalUrl || target, view.headers || {}, view.html) : "",
     words: view.renderedWords || 0,
     ms: Date.now() - started
   } : { ok: false, error: browsed ? browsed.error || "no answer" : "no browser key", ms: Date.now() - started };
