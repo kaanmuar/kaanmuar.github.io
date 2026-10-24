@@ -37,6 +37,60 @@ test("a review without a score does not promise six scores", () => {
   assert.match(customerMail.reportMail(Object.assign({}, plain, { paid: true }), {}).html, /The findings are open, each line in full\./);
 });
 
+const clearInsights = Object.assign({}, report.insights, {
+  findings: report.insights.findings.filter((item) => item.verdict !== "fail" && item.verdict !== "risk"),
+  score: Object.assign({}, report.insights.score, {
+    overall: 100,
+    grade: "A",
+    areas: Object.fromEntries(customerMail.AREAS.map((area) => [area, { score: 100, grade: "A" }]))
+  })
+});
+const clear = Object.assign({}, record, { report: Object.assign({}, report, { insights: clearInsights }) });
+const preheaderOf = (mail) => mail.html.match(/<div style="display:none;[^>]*>([^&]*)/)[1];
+const blur = /under (the blur|frost)|empañad|desenfoque|embaçad|desfoque|Milchglas|Unschärfe|verre dépoli|flou|smerigliato|sfocatura/i;
+
+test("a review with no findings says the site passed every scored check, never that findings wait under the blur", () => {
+  const mail = customerMail.reportMail(clear, {});
+  assert.equal(preheaderOf(mail), "Six scores and no findings. The site passed every scored check.");
+  assert.match(mail.html, /The six scores are in the clear, and the site passed every scored check\. There are no findings to fix\./);
+  assert.equal(mail.subject, report.host + " scored 100/100 and passed every scored check.");
+  assert.doesNotMatch(mail.html + mail.text + mail.subject, blur);
+  assert.doesNotMatch(mail.html + mail.text, /What to fix first|more findings|\b0 findings|fail now|at risk/);
+  const open = customerMail.reportMail(Object.assign({}, clear, { paid: true }), {});
+  assert.equal(preheaderOf(open), "Six scores and no findings. The site passed every scored check.");
+  assert.doesNotMatch(open.html, /the findings are open/i);
+  const es = customerMail.reportMail(Object.assign({}, clear, { lang: "es" }), {});
+  assert.equal(preheaderOf(es), "Seis puntajes y ningún hallazgo. El sitio pasó todas las comprobaciones con puntaje.");
+  assert.match(es.html, /Los seis puntajes están a la vista y el sitio pasó todas las comprobaciones con puntaje\./);
+  for (const lang of customerMail.LANGS) {
+    const each = customerMail.reportMail(Object.assign({}, clear, { lang }), {});
+    assert.doesNotMatch(each.html + each.text + each.subject, blur, lang);
+    assert.doesNotMatch(preheaderOf(each), /\{count\}|\b0\b/, lang);
+  }
+});
+
+test("a review with findings still says they wait under the blur, with the count", () => {
+  const mail = customerMail.reportMail(record, {});
+  assert.equal(preheaderOf(mail), "Six scores are open. 26 findings wait under the blur.");
+  assert.match(mail.html, /The findings sit under frost/);
+  assert.doesNotMatch(mail.html + mail.subject, /passed every scored check/);
+  const es = customerMail.reportMail(Object.assign({}, record, { lang: "es" }), {});
+  assert.equal(preheaderOf(es), "Los seis puntajes están abiertos. 26 hallazgos esperan bajo el desenfoque.");
+  assert.doesNotMatch(es.html, /todas las comprobaciones/);
+});
+
+test("a review with neither a score nor findings says nothing came up, without promising six scores", () => {
+  const bare = Object.assign({}, record, { report: Object.assign({}, report, { insights: { findings: [] } }) });
+  const mail = customerMail.reportMail(bare, {});
+  assert.equal(preheaderOf(mail), "No findings came up on the pages analyzed.");
+  assert.match(mail.html, /No findings came up on the pages analyzed, so there is nothing to fix\./);
+  for (const lang of customerMail.LANGS) {
+    const each = customerMail.reportMail(Object.assign({}, bare, { lang }), {});
+    assert.doesNotMatch(each.html + each.text, /\b(six|seis|sechs|sei)\b/i, lang);
+    assert.doesNotMatch(each.html + each.text, blur, lang);
+  }
+});
+
 test("the PDF footer and page numbers sit in the page margin, not in a fixed box over the content", () => {
   const { html } = customerMail.reportPdf(record);
   assert.doesNotMatch(html, /\.foot\{|class="foot"/);
