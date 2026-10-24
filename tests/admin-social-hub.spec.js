@@ -54,6 +54,14 @@ const CALENDARS = {
   'launch-2026-10': 'Date,Time,Channel,Language,Post,Format,Asset,How,Caption key\n2026-10-19,08:30,LinkedIn,de,talking,Image,de/a.jpg,Buffer CSV,linkedin\n'
 };
 
+const PROPOSALS = {
+  version: 1, built: '2026-10-24T13:30:00.000Z', sources: { 'web-dev': 1, hn: 1 }, proposals: [
+    { id: 'aaaaaaaaaaaa', title: 'Optimize <i>INP</i> on real pages', url: 'https://web.dev/blog/inp', source: 'web.dev', author: 'Barry', date: '2026-10-23', topic: 'Performance', lang: 'en', summary: 'Interaction to Next Paint, field data first.', image: '', why: '300 points on Hacker News; also on Hacker News', score: 5 },
+    { id: 'bbbbbbbbbbbb', title: 'WCAG 3 working draft', url: 'https://www.w3.org/news/wcag3', source: 'W3C', author: '', date: '2026-10-22', topic: 'Standards', lang: 'en', summary: '', image: 'https://www.w3.org/a.png', why: '', score: 2 },
+    { id: 'cccccccccccc', title: 'Already dismissed', url: 'https://example.com/old', source: 'Moz', author: '', date: '2026-10-21', topic: 'SEO', lang: 'en', summary: '', image: '', why: '', score: 1 }
+  ]
+};
+
 async function openHub(page, saved) {
   await page.addInitScript((data) => { window.__store = data ? { 'socialHub/live': { json: JSON.stringify(data) } } : {}; }, saved || null);
   for (const [file, body] of Object.entries(STUBS)) {
@@ -62,6 +70,7 @@ async function openHub(page, saved) {
   await page.route('**/assets/social/feed.json', (route) => route.fulfill({ json: FEED }));
   await page.route('**/assets/social/captions.json', (route) => route.fulfill({ json: CAPTIONS }));
   await page.route('**/assets/social/edits.json', (route) => route.fulfill({ status: 404, body: '' }));
+  await page.route('**/assets/social/proposals.json', (route) => route.fulfill({ json: PROPOSALS }));
   await page.route('**/media/social-posts/*/calendar.csv', (route) => {
     const batch = new URL(route.request().url()).pathname.split('/')[3];
     return CALENDARS[batch] ? route.fulfill({ contentType: 'text/csv', body: CALENDARS[batch] }) : route.fulfill({ status: 404, body: '' });
@@ -146,6 +155,48 @@ test.describe('admin social hub', () => {
     const state = await savedState(page);
     expect(state.items).toHaveLength(1);
     expect(state.items[0]).toMatchObject({ id: 'pick/b-web-almanac-b', url: 'https://almanac.httparchive.org/', youtube: '5b4Hr6r-cBk', lang: 'en' });
+  });
+
+  test('lists field sweep proposals; approving adds a credited item, dismissing records the decision', async ({ page }) => {
+    await openHub(page, { version: 1, edits: {}, items: [], decisions: { cccccccccccc: 'dismissed' } });
+    const proposals = page.locator('#hub-proposals-list .hub-proposal');
+    await expect(proposals).toHaveCount(2);
+    await expect(page.locator('#hub-proposals-count')).toHaveText('2 waiting for a decision, best first. Last sweep: 2026-10-24.');
+    const inp = proposals.filter({ hasText: 'INP' });
+    await expect(inp.locator('h3 a')).toHaveText('Optimize <i>INP</i> on real pages');
+    await expect(inp.locator('h3 i')).toHaveCount(0);
+    await expect(inp).toContainText('by Barry · 300 points on Hacker News');
+
+    await inp.locator('[data-act="approve"]').click();
+    const form = page.locator('#hub-admin-add');
+    await expect(form).toBeVisible();
+    await expect(form.locator('[name="url"]')).toHaveValue('https://web.dev/blog/inp');
+    await expect(form.locator('[name="image"]')).toHaveValue('assets/share/qa-review-social.jpg');
+    await expect(form.locator('[name="cat"]')).toHaveValue('Performance');
+    await expect(form.locator('[name="text"]')).toHaveValue('Interaction to Next Paint, field data first.\n\nVia web.dev, by Barry, 2026-10-23.');
+    await form.locator('[name="title"]').fill('Optimize INP on real pages');
+    await form.locator('button[type="submit"]').click();
+    await expect(page.locator('#hub-admin-message')).toContainText('Approved and added.');
+    let state = await savedState(page);
+    expect(state.decisions).toEqual({ aaaaaaaaaaaa: 'approved', cccccccccccc: 'dismissed' });
+    expect(state.items[0]).toMatchObject({ id: 'pick/optimize-inp-on-real-pages', url: 'https://web.dev/blog/inp', cat: 'Performance' });
+    await expect(row(page, 'pick/optimize-inp-on-real-pages')).toContainText('Waiting for the hub build');
+    await expect(proposals).toHaveCount(1);
+
+    await proposals.first().locator('[data-act="dismiss"]').click();
+    await expect(page.locator('#hub-admin-message')).toHaveText('Dismissed. The sweep will not propose it again.');
+    state = await savedState(page);
+    expect(state.decisions.bbbbbbbbbbbb).toBe('dismissed');
+    expect(state.items).toHaveLength(1);
+    await expect(proposals).toHaveCount(0);
+    await expect(page.locator('#hub-proposals-count')).toHaveText('Nothing waiting. Last sweep: 2026-10-24.');
+
+    await page.locator('#hub-admin-add-open').click();
+    await page.locator('#hub-admin-add [name="title"]').fill('By hand');
+    await page.locator('#hub-admin-add [name="image"]').fill('https://carlosandmunoz.com/favicon.svg');
+    await page.locator('#hub-admin-add button[type="submit"]').click();
+    await expect(page.locator('#hub-admin-message')).toContainText('Added.');
+    expect(Object.keys((await savedState(page)).decisions)).toHaveLength(3);
   });
 
   test('shows edits already saved in Firestore and lets them be dropped', async ({ page }) => {
