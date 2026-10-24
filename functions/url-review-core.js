@@ -3666,19 +3666,34 @@ async function pageSpeed(url, key) {
 }
 
 const FILLER = "loremipsumdolorsitametconsectetur";
+const FROST_MARK = "\u2060";
 
 function frostText(text) {
   const raw = String(text || "");
+  if (raw.indexOf(FROST_MARK) !== -1) return raw;
   const mark = raw.search(/[.!?](\s|$)/);
   let cut = mark === -1 ? Math.max(28, Math.floor(raw.length * 0.36)) : mark + 1;
   if (cut > raw.length - 12) cut = Math.max(16, Math.floor(raw.length * 0.42));
   if (cut >= raw.length) return raw;
   let at = 0;
-  return raw.slice(0, cut) + raw.slice(cut).replace(/\S/g, () => FILLER[at++ % FILLER.length]);
+  // Each hidden word starts with an invisible mark, so the page blurs from there even in a shortened or split line.
+  return raw.slice(0, cut) + raw.slice(cut).replace(/\S+/g, (word) => FROST_MARK + word.slice(1).replace(/\S/g, () => FILLER[at++ % FILLER.length]));
+}
+
+// Same rule as fadeCut in js/qa-review.js: lines under four words stay readable on the page.
+function frostAll(value) {
+  if (typeof value === "string") return value.trim().split(/\s+/).length < 4 ? value : frostText(value);
+  if (Array.isArray(value)) return value.map(frostAll);
+  if (value && typeof value === "object") {
+    const out = {};
+    Object.keys(value).forEach((key) => { out[key] = frostAll(value[key]); });
+    return out;
+  }
+  return value;
 }
 
 // The page blurs a free report with CSS, so a paid reopen sends only this copy:
-// the readable opening of each blurred line, filler for the rest, and no fix-kit files.
+// the readable opening of every line in every section, filler for the rest, and no fix-kit files.
 function previewReport(report) {
   const copy = JSON.parse(JSON.stringify(report || {}));
   (copy.cases || []).forEach((item) => {
@@ -3709,8 +3724,9 @@ function previewReport(report) {
   }
   // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
   delete copy.compare;
-  copy.preview = true;
-  return copy;
+  const frosted = frostAll(copy);
+  frosted.preview = true;
+  return frosted;
 }
 
 module.exports = {
