@@ -99,8 +99,8 @@ jobs:
         if: steps.reports.outputs.social != '0'
         # sharp writes the social hub thumbnails for the new posts.
         run: |
-          LOCK="require('./package-lock.json').packages"
-          npm install --no-save --ignore-scripts playwright@"$(node -p "$LOCK['node_modules/playwright'].version")" sharp@"$(node -p "$LOCK['node_modules/sharp'].version")"
+          locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
+          npm install --no-save --ignore-scripts playwright@"$(locked playwright)" sharp@"$(locked sharp)"
           npx playwright install --with-deps chromium
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
           pip install -q edge-tts
