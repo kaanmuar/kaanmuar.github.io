@@ -1,5 +1,5 @@
 #!/bin/bash
-# Every day at 07:00, an hour after diagnoseReviewFailures, a Cursor agent on this Mac takes the bugs the daily
+# Every day at 07:30, after fileReviewFailureBugs (07:05) has filed the day's bugs, a Cursor agent on this Mac takes the bugs the daily
 # check of failed URL reviews files (#320), fixes the ones our code can fix, merges, deploys and closes them.
 #   scripts/fix-review-failures.sh install   installs the launchd job (re-run after changing this file)
 #   scripts/fix-review-failures.sh           runs once now
@@ -23,7 +23,7 @@ if [ "${1:-}" = install ]; then
 <dict>
   <key>Label</key><string>$LABEL</string>
   <key>ProgramArguments</key><array><string>/bin/bash</string><string>$STATE/run.sh</string></array>
-  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer></dict>
   <key>StandardOutPath</key><string>$STATE/logs/launchd.log</string>
   <key>StandardErrorPath</key><string>$STATE/logs/launchd.log</string>
 </dict>
@@ -31,7 +31,7 @@ if [ "${1:-}" = install ]; then
 EOF
 	launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
 	launchctl bootstrap "gui/$(id -u)" "$PLIST"
-	echo "Installed $LABEL: daily at 07:00, logs in $STATE/logs"
+	echo "Installed $LABEL: daily at 07:30, logs in $STATE/logs"
 	exit 0
 fi
 
@@ -51,9 +51,9 @@ git reset -q --hard origin/main
 git clean -qfd
 
 read -r -d '' PROMPT <<'EOF' || true
-You run unattended every morning on the owner's Mac, an hour after diagnoseReviewFailures has diagnosed yesterday's failed URL reviews. Nobody will answer questions: decide, act, and finish. The repo is kaanmuar/kaanmuar.github.io and this checkout is a clean `main`. Follow `.cursor/rules/scrum-board.mdc` for tickets, sub-issues and board columns.
+You run unattended every morning on the owner's Mac, after diagnoseReviewFailures (06:00) has diagnosed yesterday's failed URL reviews and fileReviewFailureBugs (07:05) has filed a bug for each new cause. Nobody will answer questions: decide, act, and finish. The repo is kaanmuar/kaanmuar.github.io and this checkout is a clean `main`. Follow `.cursor/rules/scrum-board.mdc` for tickets, sub-issues and board columns.
 
-1. List open issues labelled `bug` and `area:be` whose body contains "Found while: #320, by the daily check of failed URL reviews". Skip one that already has an open PR, or that you commented on with no new failed runs since.
+1. List open issues labelled `bug` and `area:be` whose body contains "#320, by the daily check of failed URL reviews" (the line reads `**Found while:** #320, by the daily check of failed URL reviews`), for example `gh issue list --label bug --label area:be --state open --search '"by the daily check of failed URL reviews" in:body'`. Skip one that already has an open PR, or that you commented on with no new failed runs since.
 2. For each bug, read its evidence (cause class, sites, probe: DNS, plain read hop chain, size, bot-check vendor, headless Chrome, last log lines), `functions/url-review-failures.js` and the review code it calls.
 3. If the cause is the site's own state (a real 404 or 402, a host that does not resolve, a site that is down or refuses every client), comment on the bug with the evidence and why our code cannot fix it, and leave it open in Backlog.
 4. If our code can fix it (read strategy, timeout, fallback, size, a misclassified cause), fix it on a new branch off `main`, one PR per cause class:
