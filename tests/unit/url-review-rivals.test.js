@@ -66,6 +66,50 @@ test("findRivals stops searching once enough competitors are named and checks ra
   assert.equal(found.ownRank.rank, 1000);
 });
 
+test("the kind of competition is a known field or a cleaned typed topic, in the site's language", () => {
+  assert.equal(rivals.fieldOf({}, "es"), null);
+  assert.equal(rivals.fieldOf({ field: "same" }, "es"), null);
+  assert.equal(rivals.fieldOf({ field: "constructor" }, "es"), null);
+  assert.deepEqual(rivals.fieldOf({ field: "religion" }, "es-CO"), { key: "religion", term: "iglesias y ministerios" });
+  assert.deepEqual(rivals.fieldOf({ field: "religion" }, "ja"), { key: "religion", term: "churches and ministries" });
+  assert.deepEqual(rivals.fieldOf({ field: "topic", topic: "  Música <b>cristiana</b>!! " }, "es"), { key: "topic-musica-b-cristiana-b", term: "Música b cristiana b" });
+  assert.equal(rivals.fieldOf({ field: "topic", topic: "<>" }, "es"), null);
+  assert.equal(rivals.fieldOf({ field: "topic", topic: "x".repeat(200) }).term.length, 60);
+});
+
+test("a field search asks for that field next to the site, in the site's language", () => {
+  assert.deepEqual(rivals.queriesFor("www.idmji.org"), ["idmji.org competitors", "sites like idmji.org"]);
+  assert.deepEqual(rivals.queriesFor("www.idmji.org", rivals.fieldOf({ field: "religion" }, "es"), "es"),
+    ["iglesias y ministerios como idmji.org", "mejores sitios web de iglesias y ministerios"]);
+});
+
+test("a field search counts the sites results are hosted on and keeps up to five", async () => {
+  const queries = [];
+  const churches = ["supresencia.com", "casaroca.org", "elshaddai.org", "mci12.com", "avivamiento.com", "ministeriosk.com", "ccc.org.co"];
+  const found = await rivals.findRivals("idmji.org", {
+    registrable: core.registrable,
+    search: async (query) => {
+      queries.push(query);
+      return churches.map((host) => ({ title: "Iglesia", url: "https://www." + host + "/", description: "Bienvenidos" }));
+    },
+    ranker: async (domains) => domains.map((domain) => ({ domain, read: true, rank: null }))
+  }, rivals.fieldOf({ field: "religion" }, "es"), "es");
+  assert.deepEqual(queries, ["iglesias y ministerios como idmji.org"]);
+  assert.deepEqual(found.list.map((row) => row.host), churches.slice(0, rivals.FIELD_PICK));
+});
+
+test("each field's answer is kept apart, and a report may search a limited number of fields", () => {
+  const religion = rivals.fieldOf({ field: "religion" }, "en");
+  const report = { rivals: { list: [{ host: "a.com" }] }, rivalsBy: { religion: { list: [{ host: "b.org" }] } } };
+  assert.equal(rivals.storedFor(report, null).list[0].host, "a.com");
+  assert.equal(rivals.storedFor(report, religion).list[0].host, "b.org");
+  assert.equal(rivals.storedFor(report, rivals.fieldOf({ field: "shop" })), null);
+  const full = { rivalsBy: Object.fromEntries(Array.from({ length: rivals.FIELDS_MAX }, (_, i) => ["topic-" + i, { list: [] }])) };
+  assert.equal(rivals.fieldRoom(full, religion), false);
+  assert.equal(rivals.fieldRoom(full, { key: "topic-3" }), true);
+  assert.equal(rivals.fieldRoom(full, null), true);
+});
+
 test("the dropdown gets full comparisons once paid, names only before", () => {
   const base = record("base.com", 80);
   const rival = record("rival.com", 70);
