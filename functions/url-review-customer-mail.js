@@ -29,6 +29,7 @@ const COPY = {
     lead: "The six scores are in the clear. The findings sit under frost, with just enough showing to tell which ones matter.",
     outOf: "out of 100",
     pages: "pages analyzed",
+    pagesFound: "of {n} found",
     cases: "proposed test cases",
     findings: "What to fix first",
     more: "+{n} more findings in the full report",
@@ -68,6 +69,7 @@ const COPY = {
     lead: "Los seis puntajes están a la vista. Los hallazgos siguen empañados, con lo justo para saber cuáles importan.",
     outOf: "de 100",
     pages: "páginas analizadas",
+    pagesFound: "de {n} encontradas",
     cases: "casos de prueba propuestos",
     findings: "Qué arreglar primero",
     more: "+{n} hallazgos más en el informe completo",
@@ -107,6 +109,7 @@ const COPY = {
     lead: "As seis notas estão à vista. Os achados seguem embaçados, com o suficiente para saber quais importam.",
     outOf: "de 100",
     pages: "páginas analisadas",
+    pagesFound: "de {n} encontradas",
     cases: "casos de teste propostos",
     findings: "O que corrigir primeiro",
     more: "+{n} achados no relatório completo",
@@ -146,6 +149,7 @@ const COPY = {
     lead: "Die sechs Werte liegen offen. Die Befunde stehen unter Milchglas, gerade so sichtbar, dass man erkennt, welche zählen.",
     outOf: "von 100",
     pages: "geprüfte Seiten",
+    pagesFound: "von {n} gefundenen",
     cases: "vorgeschlagene Testfälle",
     findings: "Was zuerst zu beheben ist",
     more: "+{n} weitere Befunde im vollständigen Bericht",
@@ -185,6 +189,7 @@ const COPY = {
     lead: "Les six notes sont à découvert. Les constats restent sous verre dépoli, juste assez visibles pour savoir lesquels comptent.",
     outOf: "sur 100",
     pages: "pages analysées",
+    pagesFound: "sur {n} trouvées",
     cases: "cas de test proposés",
     findings: "À corriger en premier",
     more: "+{n} autres constats dans le rapport complet",
@@ -224,6 +229,7 @@ const COPY = {
     lead: "I sei punteggi sono in chiaro. I rilievi restano sotto vetro smerigliato, quanto basta per capire quali contano.",
     outOf: "su 100",
     pages: "pagine analizzate",
+    pagesFound: "su {n} trovate",
     cases: "casi di test proposti",
     findings: "Cosa sistemare prima",
     more: "+{n} altri rilievi nel report completo",
@@ -357,6 +363,7 @@ function reportFacts(record, open) {
     date: dateOf(report.fetchedAt || (record && record.createdAt)),
     score,
     pages: Number(counts.pages) || (Array.isArray(report.pages) ? report.pages.length : 0),
+    found: Number(report.limits && report.limits.pagesFound) ? report.limits.pagesFound + (report.limits.pagesFoundPartial ? "+" : "") : "",
     cases: Number(counts.cases) || (Array.isArray(report.cases) ? report.cases.length : 0),
     findings: actionable.slice(0, SHOWN_FINDINGS).map((item) => Object.assign({ area: item.area || "", severity: item.severity || "low" },
       open ? { shown: String(item.title || "").replace(/\s+/g, " ").trim(), hidden: 0, fix: String(item.fix || "").replace(/\s+/g, " ").trim() } : frost(item.title))),
@@ -425,13 +432,13 @@ function footerText(t, why, opts) {
 
 function metaHtml(t, p, facts) {
   return "<p style=\"margin:14px 0 0;font-size:13px;line-height:19px;color:#cbd5e1;\">" +
-    [facts.date ? esc(fill(p.read, { date: facts.date })) : "", facts.pages + " " + esc(t.pages), facts.cases + " " + esc(t.cases)].filter(Boolean).join(" &middot; ") + "</p>" +
+    [facts.date ? esc(fill(p.read, { date: facts.date })) : "", facts.pages + " " + esc(t.pages) + (facts.found ? " " + esc(t.pagesFound.replace("{n}", facts.found)) : ""), facts.cases + " " + esc(t.cases)].filter(Boolean).join(" &middot; ") + "</p>" +
     (facts.total ? "<p style=\"margin:4px 0 0;font-size:13px;line-height:19px;font-weight:bold;\"><span style=\"color:#fca5a5;\">" + facts.fails + " " + esc(p.fails) + "</span><span style=\"color:#cbd5e1;\"> &middot; </span><span style=\"color:#fcd34d;\">" + facts.risks + " " + esc(p.risks) + "</span></p>" : "");
 }
 
 function metaText(t, p, facts) {
   return [
-    [facts.date ? fill(p.read, { date: facts.date }) : "", facts.pages + " " + t.pages, facts.cases + " " + t.cases].filter(Boolean).join(" · "),
+    [facts.date ? fill(p.read, { date: facts.date }) : "", facts.pages + " " + t.pages + (facts.found ? " " + t.pagesFound.replace("{n}", facts.found) : ""), facts.cases + " " + t.cases].filter(Boolean).join(" · "),
     facts.total ? facts.fails + " " + p.fails + " · " + facts.risks + " " + p.risks : ""
   ].filter(Boolean).join("\n");
 }
@@ -697,7 +704,7 @@ function reportPdf(record, options) {
     (facts.score ? "<div class=\"ring\" style=\"background:conic-gradient(" + ringColor + " " + overall * 3.6 + "deg,rgba(255,255,255,.14) 0)\"><div><b>" + overall + "</b><i>" + esc(t.outOf) + "</i><em style=\"background:" + ringColor + "\">" + esc(facts.score.grade || "") + "</em></div></div>" : "") +
     "</div>" +
     "<div class=\"stats\">" +
-    "<div class=\"stat\"><b>" + facts.pages + "</b><span>" + esc(t.pages) + "</span></div>" +
+    "<div class=\"stat\"><b>" + facts.pages + "</b><span>" + esc(t.pages) + (facts.found ? " " + esc(t.pagesFound.replace("{n}", facts.found)) : "") + "</span></div>" +
     "<div class=\"stat\"><b>" + facts.cases + "</b><span>" + esc(t.cases) + "</span></div>" +
     "<div class=\"stat\"><b style=\"color:#b91c1c\">" + fails + "</b><span>" + esc(p.fails) + "</span></div>" +
     "<div class=\"stat\"><b style=\"color:#b45309\">" + (all.length - fails) + "</b><span>" + esc(p.risks) + "</span></div>" +

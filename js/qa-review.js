@@ -701,6 +701,11 @@
   };
   let findingFilter = { area: "All", verdict: "open" };
 
+  function foundCount(limits) {
+    const count = Number(limits && limits.pagesFound) || 0;
+    return count ? count + (limits.pagesFoundPartial ? "+" : "") : "";
+  }
+
   function gradeOf(score) {
     if (score >= 90) return "A";
     if (score >= 80) return "B";
@@ -860,6 +865,7 @@
     });
     const sev = score.severities || {};
     const read = (report.limits && report.limits.pagesRead) || (report.pages || []).length;
+    const found = foundCount(report.limits);
     const list = (rows) => rows.length ? "<ul>" + rows.map((item) => "<li><strong>" + esc(item.title) + '</strong> <span class="meta-line">' + esc(item.area) + "</span></li>").join("") + "</ul>" : '<p class="muted">None found.</p>';
     const value = score.overall || 0;
     const letter = score.grade || gradeOf(value);
@@ -867,7 +873,7 @@
       historyBlock(report.history) +
       '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(ins.summary || value + " out of 100.") + "</p></div>" +
       '<p class="meta-line">' + (sev.critical || 0) + " critical · " + (sev.high || 0) + " high · " + (sev.medium || 0) + " medium · " + (sev.low || 0) + " low · " +
-      read + " page" + (read === 1 ? "" : "s") + " analyzed" + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
+      read + " page" + (read === 1 ? "" : "s") + " analyzed" + (found ? " of " + found + " found" : "") + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
       '<div class="exec-cols"><div><h3>Biggest risks</h3>' + list(risks) + "</div><div><h3>Quick wins</h3>" + list(quick) + "</div><div><h3>Already solid</h3>" +
       (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(name) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">No area scores B or better yet.</p>') + "</div></div>" +
       '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">Print this summary</button></p>';
@@ -1498,6 +1504,16 @@
     paintMentions(report);
     paintCredential(payload);
     const pages = report.pages || [];
+    const found = foundCount(limits);
+    const foundNote = document.getElementById("pages-found");
+    if (foundNote) {
+      const read = limits.pagesRead || pages.length;
+      foundNote.hidden = !found;
+      foundNote.textContent = found
+        ? found + " page" + (found === "1" ? " was" : "s were") + " found on " + (report.host || "the site") + " in the links of the pages analyzed and its sitemap. This review analyzed " + read + " of them" +
+          (limits.maxPages ? ", up to " + limits.maxPages + " pages and " + (limits.maxDepth || "?") + " links deep" : "") + "."
+        : "";
+    }
     document.getElementById("pages").innerHTML = pages.length ? pages.map((page) =>
       "<tr><td>" + esc(page.path) + "</td><td>" + esc(page.status || page.error || "—") + "</td><td>" + esc(page.ms) + "</td><td>" + esc(page.title) + "</td></tr>"
     ).join("") : '<tr><td colspan="4">No page was saved.</td></tr>';

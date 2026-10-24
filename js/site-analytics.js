@@ -94,6 +94,19 @@
 
     const PLAIN_VISIT_LABELS = { cv: 1, studio: 1, lab: 1, popup: 1, direct: 1 };
 
+    function pageQuery() {
+        const privateParams = ['report', 'signin', 'key', 'state', 'code', 'scope', 'error', 'error_description', 'error_uri', 'iss'];
+        try {
+            const params = new URLSearchParams(root.location.search || '');
+            privateParams.forEach((name) => params.delete(name));
+            const text = params.toString();
+            const query = (text ? '?' + text : '').slice(0, 120);
+            return /^[A-Za-z0-9=&%_.?+-]*$/.test(query) ? query : '';
+        } catch (e) {
+            return '';
+        }
+    }
+
     function cvRefCode(raw) {
         const code = String(raw || '').trim().toLowerCase();
         if (!code || code.length > 40 || PLAIN_VISIT_LABELS[code]) return '';
@@ -119,7 +132,7 @@
         const storedLabel = visitCode || (label == null ? '' : label);
         let referrerHost = '';
         try { referrerHost = document.referrer ? new URL(document.referrer).host : ''; } catch (e) { referrerHost = ''; }
-        database().then(({ fs, db }) => fs.addDoc(fs.collection(db, 'site_events'), {
+        const row = {
             site: site,
             kind: kind,
             name: String(name).slice(0, 40),
@@ -132,7 +145,9 @@
             timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || '').slice(0, 60),
             languages: (navigator.languages || []).slice(0, 6).join(',').slice(0, 80),
             createdAt: fs.serverTimestamp()
-        })).catch(() => {});
+        };
+        if (kind === 'visit') row.query = pageQuery();
+        database().then(({ fs, db }) => fs.addDoc(fs.collection(db, 'site_events'), row)).catch(() => {});
     }
 
     function event(eventName, category, label, extra) {
