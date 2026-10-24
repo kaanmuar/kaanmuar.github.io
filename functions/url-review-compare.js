@@ -178,4 +178,33 @@ function compareSites(own, rival, extra) {
   };
 }
 
-module.exports = { AREAS, KPIS, LIST_MAX, LEVEL_GAP, ACTIVE_KEYS, sameSite, cleanId, baseProblem, winnerOf, compareSites };
+// One line per comparison: enough to name and link it from its base review and the account page.
+function compareLine(row) {
+  const cmp = row && row.report && row.report.compare;
+  if (!cmp || !cmp.overall) return null;
+  return {
+    id: cleanId(row.id || row.report.id),
+    at: String(row.createdAt || ""),
+    baseId: cleanId(row.compareWith || cmp.ownId),
+    ownHost: cmp.ownHost || "",
+    rivalHost: cmp.rivalHost || row.report.host || "",
+    own: num(cmp.overall.own),
+    rival: num(cmp.overall.rival),
+    dominance: cmp.dominance || null
+  };
+}
+
+// The comparisons the owner of a base review ran from it, newest first.
+function comparisonsOf(rows, baseId, email) {
+  const id = cleanId(baseId);
+  const address = String(email || "").trim().toLowerCase();
+  if (!id || !address) return [];
+  return (rows || [])
+    .filter((row) => row && String(row.email || "").trim().toLowerCase() === address)
+    .map(compareLine)
+    .filter((line) => line && line.id && line.baseId === id)
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, LIST_MAX);
+}
+
+module.exports = { AREAS, KPIS, LIST_MAX, LEVEL_GAP, ACTIVE_KEYS, sameSite, cleanId, baseProblem, winnerOf, compareSites, compareLine, comparisonsOf };
