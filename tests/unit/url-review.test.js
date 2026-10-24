@@ -92,12 +92,28 @@ test.describe("scoring", () => {
     assert.equal(result.fixkit.headers.find((item) => item.name === "X-Frame-Options").missing, false);
   });
 
-  test("the SEC-04 script expects DENY or SAMEORIGIN, not any X-Frame-Options value", () => {
+  test("the SEC-04 script takes DENY, SAMEORIGIN or CSP frame-ancestors as the frame policy, not any X-Frame-Options value", () => {
     const check = scripts.checkFor({ id: "SEC-04", path: "/" }, { startPath: "/" });
-    const rule = check.rules.find((item) => item.name === "x-frame-options");
-    assert.ok(new RegExp(rule.pattern, "i").test("SAMEORIGIN"));
-    assert.ok(new RegExp(rule.pattern, "i").test("deny"));
-    assert.ok(!new RegExp(rule.pattern, "i").test("ALLOW-FROM https://www.gather.town"));
+    const rule = check.rules.find((item) => [].concat(item.name).indexOf("x-frame-options") !== -1);
+    assert.deepEqual(rule.name, ["x-frame-options", "content-security-policy"]);
+    const passes = (frame, csp) => new RegExp(rule.pattern, "i").test([frame, csp].join(" "));
+    assert.ok(passes("SAMEORIGIN", ""));
+    assert.ok(passes("deny", ""));
+    assert.ok(passes("", "default-src 'self'; frame-ancestors 'self'"));
+    assert.ok(!passes("ALLOW-FROM https://www.gather.town", ""));
+    assert.ok(!passes("", "default-src 'self'"));
+  });
+
+  test("every framework's SEC-04 export reads both frame headers", () => {
+    const report = JSON.parse(JSON.stringify(require("../../assets/qa-review-sample.json").report));
+    const item = report.cases.find((row) => row.id === "SEC-04");
+    const wanted = ["Playwright", "Cypress", "Selenium", "Robot", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha"].filter((fw) => (item.fw || []).indexOf(fw) !== -1);
+    assert.ok(wanted.length >= 10);
+    scripts.snippets(report, item, wanted).forEach((out) => {
+      assert.match(out.code, /x-frame-options/i, out.framework || out.label);
+      assert.match(out.code, /content-security-policy/i, out.framework || out.label);
+      assert.match(out.code, /frame-ancestors/, out.framework || out.label);
+    });
   });
 
   test("a robots.txt that shuts out an AI answer crawler fails the GEO crawler check", () => {
