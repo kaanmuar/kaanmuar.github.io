@@ -11,7 +11,7 @@ const H = 3600000;
 
 const JOBS = [
   { job: "sweepReviews", cron: "*/15 0-5 * * *", gap: 20, what: "Review the next country-sweep site (one per tick, capped per day)" },
-  { job: "ensureLiveReportsBatch", cron: "23 3 * * *", gap: 26, what: "Start the Live Reports workflow (GitHub fires its own slots hours late)" },
+  { job: "ensureLiveReportsBatch", cron: "0 6 * * *", gap: 26, what: "Start the Live Reports workflow once the night's sweep is done (GitHub fires its own slots hours late)" },
   { job: "diagnoseReviewFailures", cron: "0 6 * * *", gap: 26, what: "Probe why yesterday's failed reviews failed" },
   { job: "rerunReviewFailures", cron: "30 6 * * *", gap: 26, what: "Re-run failed reviews a fix now covers" },
   { job: "fileReviewFailureBugs", cron: "5 7 * * *", gap: 26, what: "Open a bug under #320 for each new failure cause" },
@@ -29,9 +29,9 @@ const JOBS = [
   { job: "sendReviewNotes", cron: "0 10 * * 1-6", gap: 50, what: "Follow-up notes to askers (REVIEW_NOTES_LIVE=1)" },
   { job: "sendOwnerNotices", cron: "0 11 * * 1-6", gap: 50, what: "Owner notices for sites now on Live Reports (OWNER_NOTICES_LIVE=1)" },
   { job: "dispatchFacebookQueue", cron: "7 11 * * *", gap: 26, what: "Start the Facebook queue workflow (GitHub fires its own slot hours late)" },
-  // GitHub Actions crons are UTC, as written in .github/workflows (05:41, 11:07, 04:00 and 05:00 Bogotá). GitHub
+  // GitHub Actions crons are UTC, as written in .github/workflows (06:41, 11:07, 04:00 and 05:00 Bogotá). GitHub
   // starts them hours late, so nothing that must happen at a set time hangs on them.
-  { job: "auto-live-reports.yml", host: "github", cron: "41 10 * * *", gap: 26, what: "Publish yesterday's reviews as Live Reports and social posts (backup slots)" },
+  { job: "auto-live-reports.yml", host: "github", cron: "41 11 * * *", gap: 26, what: "Publish yesterday's reviews as Live Reports and social posts (backup slots)" },
   { job: "facebook-page.yml", host: "github", cron: "7 16 * * *", gap: 24, what: "Schedule the Facebook queue (started by dispatchFacebookQueue; this slot is the backup)" },
   { job: "sweep-seeds.yml", host: "github", cron: "0 9 16 * *", gap: 32 * 24, what: "Rebuild the country-sweep seeds from the CrUX top lists" },
   { job: "domain-index.yml", host: "github", cron: "0 10 16 * *", gap: 32 * 24, what: "Rebuild the URL Review host suggestions from the CrUX and Tranco lists" }
