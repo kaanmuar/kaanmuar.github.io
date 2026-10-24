@@ -533,7 +533,7 @@ const server = http.createServer(async (req, res) => {
     const paidLater = !!found && rows.some((row) => row && row.status === "paid-report" && row.reportId === found.id && row.paid === true);
     const access = await auth.askAccess(signIns, askBody, found, paidLater || (!!found && found.free === true));
     if (!access.ok) {
-      sendJson(res, access.status, { error: access.error, signIn: !!access.signIn }, origin, deviceHint);
+      sendJson(res, access.status, { error: access.error, code: access.code || "", signIn: !!access.signIn }, origin, deviceHint);
       return;
     }
     sendJson(res, 200, { ok: true }, origin, deviceHint);
