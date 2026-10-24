@@ -107,6 +107,8 @@ const CMPS = [
   ["Google consent message", ".fc-consent-root", ".fc-cta-do-not-consent"],
   ["Sourcepoint", "iframe[id^='sp_message_iframe']", ""]
 ];
+// Saved reports and the report page read this value of consent.banner as a banner no known tool matched.
+const UNNAMED_BANNER = "A cookie banner";
 const REJECT_TEXT = "^(reject|reject all|reject cookies|decline|decline all|deny|deny all|refuse|refuse all|disagree|rechazar|rechazar todo|rechazar todas|recusar|rejeitar|rejeitar todos|ablehnen|alle ablehnen|refuser|tout refuser|rifiuta|rifiuta tutto)\\b|\\b(only|just|solo|s[oó]lo|s[oó]|nur|seulement|uniquement|strict|strictly|apenas|somente|soltanto)(?![a-z]).{0,30}(neces|essential|essenz|required|requerid|erforderlich|n[oö]tig|notwendig|n[ée]cessaire)|\\b(necessary|essential|required)( cookies)? only\\b|continue without|continuar sin|continuer sans|weiter ohne|continua senza|continuar sem";
 
 let axeSource = "";
@@ -747,16 +749,13 @@ async function findBanner(page) {
     let name = "";
     let root = null;
     let reject = null;
+    // A tool's selector can also match a hidden leftover node earlier in the page (gavi.org's display:none #custom_popup_outer).
     for (const [cmp, box, button] of cmps) {
-      const node = document.querySelector(box);
+      const node = Array.from(document.querySelectorAll(box)).find((hit) => hit.tagName === "IFRAME" || hit.shadowRoot || visible(hit));
       if (!node) continue;
-      if (node.tagName !== "IFRAME" && !visible(node) && !node.shadowRoot) continue;
       name = cmp;
       root = node;
-      if (button) {
-        const hit = document.querySelector(button);
-        if (hit && visible(hit)) reject = hit;
-      }
+      if (button) reject = Array.from(document.querySelectorAll(button)).find(visible) || null;
       break;
     }
     if (!root) {
@@ -767,16 +766,25 @@ async function findBanner(page) {
         const text = (node.innerText || "").slice(0, 2000);
         return (style.position === "fixed" || style.position === "sticky" || /dialog/.test(node.getAttribute("role") || "")) && /cookie|consent|privacy|analytics|galleta|privacidad|datenschutz|confidentialit|riservatezza/i.test(text);
       }) || null;
-      if (root) name = "A cookie banner";
     }
     if (root && !reject && root.tagName !== "IFRAME") {
       reject = buttonsIn(root.shadowRoot || root).find((node) => visible(node) && pattern.test(label(node))) || null;
     }
-    if (!root) return { name: "", rejectLabel: "", clicked: false };
+    if (!root) return { found: false, name: "", rejectLabel: "", clicked: false };
     const rejectLabel = reject ? label(reject).slice(0, 60) : "";
     if (reject) reject.setAttribute("data-qa-reject", "1");
-    return { name, rejectLabel, clicked: false };
+    return { found: true, name, rejectLabel, clicked: false };
   }, CMPS, REJECT_TEXT);
+}
+
+// The log line for the banner check; a banner no known tool matched has no name.
+function bannerSay(banner, cookies) {
+  const tracking = cookies.filter((cookie) => cookie.tracking).length;
+  const count = cookies.length + (cookies.length === 1 ? " cookie was" : " cookies were");
+  const share = cookies.length ? ", " + (tracking ? tracking + " of them for tracking" : "none of them for tracking") : "";
+  if (!banner.found) return "No cookie banner was found. " + count + " set on the first visit" + share + ".";
+  return (banner.name ? "Found the " + banner.name + " cookie banner" : "Found a cookie banner") +
+    (banner.rejectLabel ? " with a \"" + banner.rejectLabel + "\" button" : " with no reject button") + ". " + count + " set before any choice" + share + ".";
 }
 
 async function cookiesOf(context, page, host) {
@@ -1471,11 +1479,9 @@ async function browse(job, log, onStart) {
     say("Core Web Vitals in the lab: LCP " + result.start.vitals.lcp + " ms, CLS " + result.start.vitals.cls + ", TBT " + result.start.vitals.tbt + " ms. Took the desktop screenshot.");
     const banner = await findBanner(page);
     const beforeCookies = await cookiesOf(coldContext, page, host);
-    say(banner.name
-      ? "Found the " + banner.name + " cookie banner" + (banner.rejectLabel ? " with a \"" + banner.rejectLabel + "\" button" : " with no reject button") + ". " + beforeCookies.length + " cookies were set before any choice."
-      : "No cookie banner was found. " + beforeCookies.length + " cookies were set on the first visit.");
+    say(bannerSay(banner, beforeCookies));
     const consent = {
-      banner: banner.name,
+      banner: banner.found ? banner.name || UNNAMED_BANNER : "",
       rejectLabel: banner.rejectLabel,
       rejected: false,
       before: { vendors: rec.vendors("before"), cookies: beforeCookies.filter((cookie) => cookie.tracking).slice(0, 20), cookieCount: beforeCookies.length },
@@ -1661,4 +1667,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, open, talk, printPdf, stopForRefusal, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, open, talk, printPdf, stopForRefusal, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

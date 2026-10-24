@@ -487,7 +487,7 @@ function browserChecks(b, add, ctx) {
       add("Analytics", consent.banner ? "fail" : "risk", "high", "an-firing", consent.banner ? "Tracking starts before the visitor chooses" : "Tracking starts on load and no banner asks first", evidence,
         "Hold every tag until consent, or set Google Consent Mode v2 defaults to denied before any tag loads. Block third-party embeds until the visitor agrees.", { effort: "hours", cases: ["AN-01", "PR-03"], count: beforeHits.length + beforeCookies.length });
     } else if (consent.before.vendors.length || ctx.tags.length || ctx.consentTools.length) {
-      add("Analytics", "pass", "info", "an-firing", "No tracking request or cookie before a choice",
+      add("Analytics", "pass", "info", "an-firing", denied.length ? "No tracking cookie before a choice, only cookieless pings" : "No tracking request or cookie before a choice",
         bannerText + ". " + (denied.length ? denied.map((row) => row.name).join(", ") + " only sent pings with Consent Mode denied, which store no cookie." : "No request reached a known tracking host and no tracking cookie was set."), "", { cases: ["AN-01"] });
     }
     if (consent.rejected && consent.after) {
@@ -1173,6 +1173,7 @@ function analyze(input) {
   });
   const tracking = tags.filter((tag) => !tag.cookieless);
   const googleTags = tags.filter((tag) => /^Google/.test(tag.name));
+  const deniedPings = ((browsed && browsed.consent && browsed.consent.before && browsed.consent.before.vendors) || []).filter((row) => /^Google/.test(row.name) && row.denied > 0).map((row) => row.name);
   const homeTags = new Set(((face.analytics && face.analytics.tags) || []).map((tag) => tag.name));
   const untagged = homeTags.size ? read.filter((page) => !((page.inspect.analytics && page.inspect.analytics.tags) || []).length && !(page.inspect.analytics && page.inspect.analytics.loader)).map((page) => page.path) : [];
   if (!tags.length && consentTools.length) {
@@ -1206,16 +1207,23 @@ function analyze(input) {
     add("Analytics", "risk", "high", "an-consent", "Tracking tags load with no consent tool in the page",
       tracking.map((tag) => tag.name).join(", ") + (tracking.length === 1 ? " appears" : " appear") + " in the HTML and no consent platform or Google Consent Mode default was found. In the EU, the UK, Brazil, and Colombia this is a legal exposure.",
       "Add a consent platform and set Google Consent Mode v2 defaults to denied before any tag loads.", { effort: "hours", cases: ["PR-03", "AN-01"] });
+  } else if (googleTags.length && consentTools.length && !consentMode && deniedPings.length) {
+    add("Analytics", "pass", "info", "an-consent-mode", "Consent Mode defaults are set when the page runs, not in the HTML",
+      "No gtag consent default is written in the HTML, but before a choice " + deniedPings.join(", ") + " sent pings with Consent Mode denied, so " + consentTools.join(", ") + " or Tag Manager sets the defaults at runtime.", "", { cases: ["PR-03", "AN-01"] });
   } else if (googleTags.length && consentTools.length && !consentMode) {
     add("Analytics", "risk", "medium", "an-consent-mode", consentTools.join(", ") + " is present but Google Consent Mode defaults were not found",
-      "Without Consent Mode v2 defaults, Google tags can fire before the visitor chooses, and Google Ads loses modelled conversions.",
+      "No gtag consent default is written in the HTML" + (browsed && browsed.consent ? ", and the browser run saw no Google ping with Consent Mode denied" : ". The consent tool or Tag Manager may still set one when the page runs") + ". Without Consent Mode v2 defaults, Google tags can fire before the visitor chooses, and Google Ads loses modelled conversions.",
       "Call gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'}) before the tags.", { effort: "minutes", cases: ["PR-03", "AN-01"] });
   } else if (consentMode) {
     const v2 = consentMode.v2;
-    const denied = consentMode.analytics === "denied";
+    const regions = consentMode.regions || [];
+    const denied = consentMode.analytics === "denied" || regions.length > 0;
+    const where = regions.length ? " in " + plural(regions.length, "listed region") : "";
     add("Analytics", denied && v2 ? "pass" : "risk", denied ? "low" : "medium", "an-consent-mode",
-      denied ? (v2 ? "Consent Mode v2 starts in denied" : "Consent Mode starts in denied, without the v2 signals") : "Consent Mode default grants analytics before a choice",
-      "gtag consent default sets analytics_storage to " + (consentMode.analytics || "unset") + (v2 ? " and includes ad_user_data and ad_personalization." : "."),
+      denied ? (v2 ? "Consent Mode v2 starts in denied" + where : "Consent Mode starts in denied" + where + ", without the v2 signals") : "Consent Mode default grants analytics before a choice",
+      regions.length
+        ? "gtag consent default sets analytics_storage to denied for " + sample(regions, 8) + ", and to " + (consentMode.analytics || "unset") + " elsewhere." + (v2 ? " The denied default includes ad_user_data and ad_personalization." : "")
+        : "gtag consent default sets analytics_storage to " + (consentMode.analytics || "unset") + (v2 ? " and includes ad_user_data and ad_personalization." : "."),
       denied && v2 ? "" : "Default every storage type to denied and add ad_user_data and ad_personalization.", { effort: "minutes", cases: ["PR-03", "AN-01"] });
   } else if (consentTools.length) {
     add("Analytics", "pass", "info", "an-consent", "A consent tool is present", consentTools.join(", ") + " was found in the HTML.", "", { cases: ["PR-03"] });

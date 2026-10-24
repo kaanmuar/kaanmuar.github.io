@@ -1328,6 +1328,29 @@ const CONSENT_TOOLS = [
   ["Google consent messages", /fundingchoicesmessages\.google\.com/i]
 ];
 
+// A gtag consent default with no region applies everywhere; one with a region list applies only there and wins in those regions.
+function consentModeOf(body) {
+  const blocks = [];
+  const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([\s\S]{0,1200}?)\}/g;
+  let match;
+  while ((match = re.exec(body)) && blocks.length < 8) {
+    const list = (match[1].match(/region['"]?\s*:\s*\[([^\]]*)\]/) || [])[1] || "";
+    const regions = [...list.matchAll(/['"]([A-Za-z]{2}(?:-[A-Za-z0-9]{1,3})?)['"]/g)].map((hit) => hit[1].toUpperCase());
+    blocks.push({
+      analytics: (match[1].match(/analytics_storage['"]?\s*:\s*['"](denied|granted)/) || [])[1] || "",
+      v2: /ad_user_data/.test(match[1]) && /ad_personalization/.test(match[1]),
+      regions: regions.length ? regions : null
+    });
+  }
+  if (!blocks.length) return null;
+  const everywhere = blocks.find((block) => !block.regions) || null;
+  const scoped = everywhere && everywhere.analytics === "denied" ? [] : blocks.filter((block) => block.regions && block.analytics === "denied");
+  const lead = scoped[0] || everywhere || blocks[0];
+  const mode = { analytics: everywhere ? everywhere.analytics : "", v2: lead.v2 };
+  if (scoped.length) mode.regions = [...new Set([].concat(...scoped.map((block) => block.regions)))];
+  return mode;
+}
+
 function analyticsScan(html) {
   const body = String(html || "");
   const tags = [];
@@ -1345,12 +1368,7 @@ function analyticsScan(html) {
     tags.push({ name, ids });
   });
   const consent = CONSENT_TOOLS.filter(([, pattern]) => pattern.test(body)).map(([name]) => name);
-  let consentMode = null;
-  const mode = body.match(/gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([\s\S]{0,600}?)\}/);
-  if (mode) {
-    const analytics = (mode[1].match(/analytics_storage['"]?\s*:\s*['"](denied|granted)/) || [])[1] || "";
-    consentMode = { analytics, v2: /ad_user_data/.test(mode[1]) && /ad_personalization/.test(mode[1]) };
-  }
+  const consentMode = consentModeOf(body);
   const ga4 = (tags.find((tag) => tag.name === "Google Analytics 4") || { ids: [] }).ids;
   return {
     tags,

@@ -1289,6 +1289,8 @@
     const hits = (rows) => (rows || []).reduce((sum, row) => sum + (row.hits || 0), 0);
     const beforeBad = hits(before.vendors) + (before.cookies || []).length;
     const afterBad = after ? hits(after.vendors) + (after.cookies || []).length : 0;
+    const pings = (rows) => (rows || []).reduce((sum, row) => sum + (row.denied || 0), 0);
+    const quiet = (rows, none) => pings(rows) ? "No tracking cookies · " + pings(rows) + " cookieless ping" + (pings(rows) === 1 ? "" : "s") : none;
     const axePages = (b.axe && b.axe.ran && b.axe.pages) || [];
     const rules = new Map();
     axePages.forEach((page) => (page.violations || []).forEach((rule) => {
@@ -1313,8 +1315,8 @@
       typedTo(watch.before).length || typedTo(watchAfter).length ? "typing sent" : ""
     ].filter(Boolean).join(" · ") || "None seen" : "Not checked";
     const tiles = [
-      ["Before a choice", beforeBad ? (consent.banner ? "fail" : "risk") : "pass", beforeBad ? beforeBad + " tracking signal" + (beforeBad === 1 ? "" : "s") : "Nothing tracked"],
-      ["After Reject", after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? afterBad + " still tracked" : "Tracking stopped") : (consent.banner ? "Reject not found" : "No banner showed")],
+      ["Before a choice", beforeBad ? (consent.banner ? "fail" : "risk") : "pass", beforeBad ? beforeBad + " tracking signal" + (beforeBad === 1 ? "" : "s") : quiet(before.vendors, "Nothing tracked")],
+      ["After Reject", after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? afterBad + " still tracked" : quiet(after.vendors, "Tracking stopped")) : (consent.banner ? "Reject not found" : "No banner showed")],
       ["Fingerprinting and recording", !watch.before ? "unknown" : spied ? (consent.banner ? "fail" : "risk") : printers(watch.before).length ? "risk" : "pass", watchText],
       ["axe-core", axePages.length ? (rules.size ? "fail" : "pass") : "unknown", axePages.length ? rules.size + " rules fail on " + axePages.length + " page" + (axePages.length === 1 ? "" : "s") : "Did not run"],
       ["Phone width", mobile.width ? (mobile.overflow > 2 ? "fail" : "pass") : "unknown", mobile.width ? (mobile.overflow > 2 ? mobile.overflow + " px too wide" : "Fits " + mobile.width + " px") : "Not checked"],
@@ -1459,13 +1461,14 @@
     const rows = (a.tags || []).map((tag) =>
       "<tr><td><strong>" + esc(tag.name) + "</strong>" + (tag.cookieless ? ' <span class="badge v-pass">cookieless</span>' : "") + '</td><td class="notranslate" translate="no">' + esc((tag.ids || []).join(", ") || "—") + "</td><td>" + tag.pages + " of " + total + "</td></tr>").join("");
     const consent = a.consentTools && a.consentTools.length ? a.consentTools.join(", ") : "None found";
-    const mode = a.consentMode ? "analytics_storage " + (a.consentMode.analytics || "unset") + (a.consentMode.v2 ? " · v2 signals present" : " · v2 signals missing") : "No default found";
+    const regions = (a.consentMode && a.consentMode.regions) || [];
+    const mode = a.consentMode ? "analytics_storage " + (regions.length ? "denied in " + regions.length + " region" + (regions.length === 1 ? "" : "s") + ", " + (a.consentMode.analytics || "unset") + " elsewhere" : a.consentMode.analytics || "unset") + (a.consentMode.v2 ? " · v2 signals present" : " · v2 signals missing") : "No default in the HTML";
     const utm = a.utm ? (a.utm.kept ? "Kept through redirects" : "Stripped on " + a.utm.finalPath) : "Not tested";
     document.getElementById("analytics").innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' +
       '<div class="check-tile ' + ((a.tags || []).length ? "pass" : "risk") + '"><b>Tools</b>' + (a.tags || []).length + " found</div>" +
       '<div class="check-tile ' + (a.consentTools && a.consentTools.length ? "pass" : ((a.tags || []).some((tag) => !tag.cookieless) ? "risk" : "unknown")) + '"><b>Consent tool</b>' + esc(consent) + "</div>" +
-      '<div class="check-tile ' + (a.consentMode ? (a.consentMode.analytics === "denied" && a.consentMode.v2 ? "pass" : "risk") : "unknown") + '"><b>Consent Mode</b>' + esc(mode) + "</div>" +
+      '<div class="check-tile ' + (a.consentMode ? ((a.consentMode.analytics === "denied" || regions.length) && a.consentMode.v2 ? "pass" : "risk") : "unknown") + '"><b>Consent Mode</b>' + esc(mode) + "</div>" +
       '<div class="check-tile ' + (a.utm ? (a.utm.kept ? "pass" : "fail") : "unknown") + '"><b>UTM parameters</b>' + esc(utm) + "</div></div>" +
       '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>Tool</th><th>IDs</th><th>Pages with it</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">No known analytics or advertising tag was in the HTML of the pages analyzed.</p>') +
       ((a.untagged || []).length ? '<p class="meta-line">Pages without a tag: ' + esc(a.untagged.slice(0, 8).join(", ")) + "</p>" : "") + "</article>";
