@@ -1977,6 +1977,25 @@ function sitemapCandidates(urls, startUrl, prefix, limit, already) {
   return out;
 }
 
+function pagesFound(pages, links, sitemap, startUrl, prefix) {
+  const found = new Set();
+  const add = (url) => {
+    if (!url || (prefix && !underSection(url, prefix))) return;
+    if (/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?|xml|gz|css|js)(\?|$)/i.test(url)) return;
+    found.add(pagePath(url));
+  };
+  (pages || []).forEach((page) => {
+    add(page.url);
+    ((page.inspect && page.inspect.links) || []).forEach(add);
+  });
+  (links || []).forEach(add);
+  ((sitemap && sitemap.urls) || []).forEach((raw) => add(sameHost(startUrl, raw)));
+  (pages || []).forEach((page) => {
+    if (page.requested && page.requested !== page.url && found.has(pagePath(page.url))) found.delete(pagePath(page.requested));
+  });
+  return { count: found.size, partial: !!(sitemap && sitemap.partial) };
+}
+
 function sitemapLocs(xml) {
   const locs = [];
   const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
@@ -2739,6 +2758,9 @@ async function reviewTarget(rawUrl, hooks) {
   if (!extrasSettled) note("Waiting for the background checks to finish.");
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
   cases = domainCases(cases, extras);
+  const found = pagesFound(pages, startQueue, await sitemapPromise, first.url, prefix);
+  found.count = Math.max(found.count, pages.length);
+  note(found.count + (found.partial ? "+" : "") + " page" + (found.count === 1 ? " was" : "s were") + " found on " + origin.hostname + " in the links of the pages analyzed and the sitemap. " + pages.length + " of them were analyzed.");
   let speed = null;
   let speedTimer = null;
   try {
@@ -2809,6 +2831,8 @@ async function reviewTarget(rawUrl, hooks) {
       maxPages: chosen.pages,
       maxDepth: chosen.depth,
       pagesRead: pages.length,
+      pagesFound: found.count,
+      pagesFoundPartial: found.partial,
       robotsBlocked,
       robotsNote,
       timedOut: Date.now() >= deadline,
@@ -3597,6 +3621,7 @@ module.exports = {
   sectionPrefix,
   underSection,
   sitemapCandidates,
+  pagesFound,
   PAGE_LANGS,
   PAGE_CHOICES,
   DEPTH_CHOICES,
