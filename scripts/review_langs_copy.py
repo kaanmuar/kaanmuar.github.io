@@ -42,6 +42,7 @@ SAMPLE = ('<button class="btn btn-ghost" id="sample-open" type="button">{button}
 
 COPY = {
     "es": {
+        "compare_note": "Se cobra como una segunda revisión, con el descuento por volver. El sitio de la competencia recibe solo los controles públicos y pasivos: sin conversación de chat y sin enviar formularios. Como cualquier revisión, su dueño puede recibir un correo sobre ella, y sus puntuaciones pueden aparecer en Live Reports.",
         "gate": {
             "lede": "Todos los controles de esta página siguen desactivados hasta que aceptes. Para ejecutar una revisión, inicias sesión en este dispositivo con tu correo o con una cuenta que ya tienes (Google, Microsoft, GitHub, Yahoo o X). La revisión obtiene páginas públicas, abre hasta tres de ellas en un navegador sin interfaz desde una dirección de la UE en Bélgica y propone casos de prueba. En ese navegador pulsa una vez el botón de rechazo del banner de cookies y nada más. Google PageSpeed Insights califica la página de inicio y Google Web Risk la compara con las listas de Navegación segura, así que Google recibe esa dirección, y se consulta al registro del dominio por RDAP. No ejecuta los casos, no inicia sesión en tu sitio, no envía formularios ni genera carga. El selector de idioma está en esta pantalla.",
             "sample": {"button": "Ver un informe de ejemplo", "text": "Es la revisión de este mismo sitio, difuminada como un informe sin pagar. Abrirlo no envía nada. ¿Eres nuevo?", "tour": "Haz el recorrido de cinco minutos"},
@@ -114,6 +115,7 @@ COPY = {
         ],
     },
     "pt": {
+        "compare_note": "Cobrada como uma segunda revisão, com o desconto de retorno. O site do concorrente recebe só as verificações públicas e passivas: nenhuma conversa de chat e nenhum formulário enviado. Como em qualquer revisão, o dono do site pode receber um e-mail sobre ela, e as pontuações podem aparecer nos Live Reports.",
         "gate": {
             "lede": "Todos os controles desta página ficam desativados até você aceitar. Para fazer uma revisão, você entra neste dispositivo com seu e-mail ou com uma conta que já tem (Google, Microsoft, GitHub, Yahoo ou X). A revisão busca páginas públicas, abre até três delas em um navegador headless a partir de um endereço da UE na Bélgica e propõe casos de teste. Nesse navegador, ela clica uma vez no botão de recusar do banner de cookies e em nada mais. O Google PageSpeed Insights pontua a página inicial e o Google Web Risk a confere nas listas do Navegação segura, então o Google recebe esse endereço, e o registro do domínio é consultado via RDAP. Ela não executa os casos, não faz login no seu site, não envia formulários nem gera carga. O seletor de idioma está nesta tela.",
             "sample": {"button": "Ver um relatório de exemplo", "text": "É a revisão deste próprio site, desfocada como um relatório não pago. Abrir não envia nada. Primeira vez aqui?", "tour": "Faça o tour de cinco minutos"},
@@ -186,6 +188,7 @@ COPY = {
         ],
     },
     "de": {
+        "compare_note": "Berechnet wie eine zweite Prüfung, mit dem Rabatt für Wiederkehrende. Die Website des Mitbewerbers erhält nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein abgeschicktes Formular. Wie bei jeder Prüfung kann ihr Inhaber eine E-Mail dazu erhalten, und ihre Bewertungen können in Live Reports erscheinen.",
         "gate": {
             "lede": "Alle Bedienelemente dieser Seite bleiben aus, bis Sie zustimmen. Für eine Prüfung melden Sie sich auf diesem Gerät mit Ihrer E-Mail-Adresse oder einem bestehenden Konto an (Google, Microsoft, GitHub, Yahoo oder X). Die Prüfung ruft öffentliche Seiten ab, öffnet bis zu drei davon in einem Headless-Browser von einer EU-Adresse in Belgien und schlägt Testfälle vor. In diesem Browser klickt sie einmal auf die Ablehnen-Schaltfläche eines Cookie-Banners und sonst nichts. Google PageSpeed Insights bewertet die Startseite, und Google Web Risk gleicht sie mit den Safe-Browsing-Listen ab, daher erhält Google diese Adresse; außerdem wird die Registrierungsstelle der Domain per RDAP abgefragt. Sie führt die Fälle nicht aus, meldet sich nicht auf Ihrer Website an, sendet keine Formulare und erzeugt keine Last. Die Sprachauswahl ist auf diesem Bildschirm.",
             "sample": {"button": "Beispielbericht ansehen", "text": "Es ist die Prüfung dieser Website selbst, unscharf wie ein unbezahlter Bericht. Zum Öffnen wird nichts gesendet. Neu hier?", "tour": "Machen Sie die Fünf-Minuten-Tour"},
@@ -258,6 +261,7 @@ COPY = {
         ],
     },
     "fr": {
+        "compare_note": "Facturée comme une deuxième analyse, avec la remise de retour. Le site du concurrent ne reçoit que les contrôles publics et passifs : aucune conversation de chat et aucun formulaire envoyé. Comme pour toute analyse, son propriétaire peut recevoir un e-mail à ce sujet, et ses scores peuvent apparaître dans les Live Reports.",
         "gate": {
             "lede": "Toutes les commandes de cette page restent désactivées tant que vous n’avez pas accepté. Pour lancer une analyse, vous vous connectez sur cet appareil avec votre e-mail ou un compte que vous avez déjà (Google, Microsoft, GitHub, Yahoo ou X). L’analyse récupère des pages publiques, en ouvre jusqu’à trois dans un navigateur headless depuis une adresse de l’UE en Belgique et propose des cas de test. Dans ce navigateur, elle clique une fois sur le bouton de refus d’un bandeau de cookies, et rien d’autre. Google PageSpeed Insights note la page d’accueil et Google Web Risk la compare aux listes Safe Browsing : Google reçoit donc cette adresse, et le registre du domaine est interrogé via RDAP. Elle n’exécute pas les cas, ne se connecte pas à votre site, n’envoie pas de formulaires et ne génère pas de charge. Le choix de la langue se trouve sur cet écran.",
             "sample": {"button": "Voir un exemple de rapport", "text": "C’est l’analyse de ce site lui-même, floutée comme un rapport non payé. L’ouvrir n’envoie rien. Première visite ?", "tour": "Suivez la visite de cinq minutes"},
@@ -330,6 +334,7 @@ COPY = {
         ],
     },
     "it": {
+        "compare_note": "Costa come una seconda revisione, con lo sconto di ritorno. Il sito del concorrente riceve solo i controlli pubblici e passivi: nessuna conversazione in chat e nessun modulo inviato. Come per ogni revisione, il suo proprietario può ricevere un’email al riguardo, e i suoi punteggi possono comparire nei Live Reports.",
         "gate": {
             "lede": "Tutti i controlli di questa pagina restano disattivati finché non accetti. Per avviare una revisione, accedi su questo dispositivo con la tua email o con un account che hai già (Google, Microsoft, GitHub, Yahoo o X). La revisione recupera pagine pubbliche, ne apre fino a tre in un browser headless da un indirizzo UE in Belgio e propone casi di test. In quel browser preme una volta il pulsante di rifiuto del banner dei cookie e nient’altro. Google PageSpeed Insights valuta la pagina iniziale e Google Web Risk la confronta con gli elenchi di Navigazione sicura, quindi Google riceve quell’indirizzo, e il registro del dominio viene interrogato tramite RDAP. Non esegue i casi, non accede al tuo sito, non invia moduli e non genera carico. La scelta della lingua è in questa schermata.",
             "sample": {"button": "Vedi un report di esempio", "text": "È la revisione di questo stesso sito, sfocata come un report non pagato. Aprirlo non invia nulla. Prima volta qui?", "tour": "Fai il tour di cinque minuti"},
