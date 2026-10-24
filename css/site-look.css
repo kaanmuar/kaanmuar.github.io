@@ -68,8 +68,13 @@ html[data-look] .sidebar hr {
 }
 
 html[data-look] .admin-bar,
-html[data-look] .admin-bar h1 {
+html[data-look] .admin-bar h1,
+html[data-look] #logout-btn {
     color: var(--text-primary);
+}
+
+html[data-look] #logout-btn {
+    border-color: color-mix(in srgb, var(--text-primary) 30%, transparent);
 }
 
 html[data-look] .admin-kicker,

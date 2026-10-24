@@ -9,6 +9,8 @@
    the daily Live Reports batches), media/social-posts/launch-2026-10/<lang>/<topic>-captions.json with its
    calendar.csv, assets/live-reports/index.json for report links, and assets/social/youtube.json, the uploads
    ledger. The channel feed lists only the latest 15 uploads, so the ledger keeps every one it has seen.
+   assets/social/edits.json holds the owner's edits from the Social hub pane in admin.html (captions, dates,
+   hidden posts, items added by hand); online builds refresh it from Firestore socialHub/live.
    Writes assets/social/feed.json (cards), assets/social/captions.json (per-network captions, loaded on copy),
    assets/social/rss*.xml (an RSS feed per language), sitemap-social.xml (post images and clips per page),
    assets/social/thumbs/*.webp and the six pages. Share cards come from scripts/build-share-images.js social. Posts still queued on the networks follow the posted ones,
@@ -18,12 +20,15 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 const card = require("../js/social-hub-card");
+const admin = require("../js/social-hub-admin");
 const { PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = card.SITE;
 const OUT = "assets/social";
 const LEDGER = OUT + "/youtube.json";
+const EDITS = OUT + "/edits.json";
+const FIRESTORE = "https://firestore.googleapis.com/v1/projects/carlosm-interactive-cv/databases/(default)/documents";
 const CHANNEL = "UCf-yFKiAHooXPsRsCXFKBjg";
 const PRERENDER = 24;
 const TEXT_MAX = 1200;
@@ -139,9 +144,19 @@ function launchPosts(files) {
   return posts;
 }
 
+function isTracked(file) {
+  try {
+    execFileSync("git", ["ls-files", "--error-unmatch", file], { cwd: ROOT, stdio: "ignore" });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 function collect() {
   const files = tracked();
-  const posts = batchPosts(files, liveIds()).concat(launchPosts(files));
+  const edits = admin.clean(exists(EDITS) ? readJson(EDITS) : null);
+  const posts = admin.apply(batchPosts(files, liveIds()).concat(launchPosts(files)), edits, isTracked);
   const ledger = exists(LEDGER) ? readJson(LEDGER) : { videos: {} };
   const byTitle = new Map();
   Object.entries(ledger.videos).forEach(([id, video]) => {
@@ -150,8 +165,8 @@ function collect() {
     });
   });
   posts.forEach((post) => {
-    post.youtube = byTitle.get(titleKey(post.ytTitle)) || (post.kind === "review" && byTitle.get(scoreKey(post.title))) || null;
-    post.thumb = thumbFor(post.id);
+    post.youtube = post.youtube || byTitle.get(titleKey(post.ytTitle)) || (post.kind === "review" && byTitle.get(scoreKey(post.title))) || null;
+    post.thumb = admin.remote(post.image) ? post.image : thumbFor(post.id);
     post.text = body(post);
   });
   posts.sort((a, b) => (b.date || "").localeCompare(a.date || "") || a.id.localeCompare(b.id));
@@ -180,8 +195,22 @@ async function growLedger() {
   return added;
 }
 
+// socialHub/live is public to read (firestore.rules), so the build needs no credentials.
+async function pullEdits() {
+  const res = await fetch(FIRESTORE + "/socialHub/live", { signal: AbortSignal.timeout(15000) });
+  if (res.status === 404) return 0;
+  if (!res.ok) throw new Error("Firestore answered " + res.status);
+  const doc = await res.json();
+  const edits = admin.clean(JSON.parse((doc.fields && doc.fields.json && doc.fields.json.stringValue) || "{}"));
+  fs.mkdirSync(path.join(ROOT, OUT), { recursive: true });
+  fs.writeFileSync(path.join(ROOT, EDITS), JSON.stringify(edits, null, 1) + "\n");
+  return Object.keys(edits.edits).length + edits.items.length;
+}
+
+const needsThumb = (post) => !admin.remote(post.thumb) && !exists(post.thumb);
+
 async function writeThumbs(posts) {
-  const missing = posts.filter((post) => !exists(post.thumb));
+  const missing = posts.filter(needsThumb);
   if (!missing.length) return 0;
   const sharp = require("sharp");
   fs.mkdirSync(path.join(ROOT, OUT, "thumbs"), { recursive: true });
@@ -222,7 +251,7 @@ function jsonLd(lang, shown, total, copy) {
       articleBody: post.text.slice(0, 500),
       datePublished: post.date,
       inLanguage: post.lang,
-      image: { "@type": "ImageObject", contentUrl: SITE + post.image, caption: post.alt || post.title },
+      image: { "@type": "ImageObject", contentUrl: imageUrl(post), caption: post.alt || post.title },
       author: { "@id": ORG },
       publisher: { "@id": ORG }
     };
@@ -392,6 +421,7 @@ ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
 `;
 }
 
+const imageUrl = (post) => (admin.remote(post.image) ? post.image : SITE + post.image);
 const xml = (value) => String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const rfc822 = (day) => new Date(day + "T12:00:00Z").toUTCString();
 const live = (posts, asOf) => card.arrange(posts, asOf).filter((post) => !post.upcoming);
@@ -406,8 +436,10 @@ function rss(lang, posts, asOf) {
       <guid isPermaLink="false">${xml(post.id)}</guid>
       <pubDate>${rfc822(post.date)}</pubDate>${post.cat ? "\n      <category>" + xml(post.cat) + "</category>" : ""}
       <description>${xml(text)}</description>
-      <enclosure url="${xml(SITE + post.image)}" length="${fs.statSync(path.join(ROOT, post.image)).size}" type="image/jpeg"/>
-      <media:content url="${xml(SITE + post.image)}" medium="image" type="image/jpeg"/>
+${admin.remote(post.image)
+    ? `      <media:content url="${xml(post.image)}" medium="image"/>`
+    : `      <enclosure url="${xml(SITE + post.image)}" length="${fs.statSync(path.join(ROOT, post.image)).size}" type="image/jpeg"/>
+      <media:content url="${xml(SITE + post.image)}" medium="image" type="image/jpeg"/>`}
     </item>`;
   });
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -431,7 +463,7 @@ function sitemap(posts, asOf) {
   const shown = live(posts, asOf);
   const urls = Object.keys(LANGS).map((lang) => {
     const images = shown.filter((post) => post.lang === lang).slice(0, 1000).map((post) =>
-      `    <image:image><image:loc>${xml(SITE + post.image)}</image:loc></image:image>`);
+      `    <image:image><image:loc>${xml(imageUrl(post))}</image:loc></image:image>`);
     const videos = shown.filter((post) => post.youtube && (post.clipLang || post.lang) === lang).map((post) => `    <video:video>
       <video:thumbnail_loc>https://i.ytimg.com/vi/${xml(post.youtube)}/hqdefault.jpg</video:thumbnail_loc>
       <video:title>${xml(post.title.slice(0, 100))}</video:title>
@@ -470,6 +502,11 @@ async function main() {
     } catch (error) {
       console.warn("YouTube feed skipped: " + error.message);
     }
+    try {
+      console.log("Admin: " + (await pullEdits()) + " edited or added posts");
+    } catch (error) {
+      console.warn("Admin edits skipped: " + error.message);
+    }
   }
   const { posts } = collect();
   const feedFile = path.join(ROOT, OUT, "feed.json");
@@ -477,7 +514,7 @@ async function main() {
   const files = outputs(posts, asOf);
   if (check) {
     const stale = Object.entries(files).filter(([file, text]) => !exists(file) || read(file) !== text).map(([file]) => file);
-    const noThumb = posts.filter((post) => !exists(post.thumb)).map((post) => post.thumb);
+    const noThumb = posts.filter(needsThumb).map((post) => post.thumb);
     if (stale.length || noThumb.length) {
       console.error("Social hub is stale; run node scripts/build-social-hub.js\n" + stale.concat(noThumb.slice(0, 5)).join("\n"));
       process.exit(1);
