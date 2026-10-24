@@ -356,18 +356,29 @@
       when: 'After clicking IT Project Management, then clicking Languages.',
       how: 'html.topic-focus with match + dim rows; outside click restores.',
       async run({ cv }) {
-        const btn = cv.document.querySelector('.competency-item[data-competency="pm"]');
+        const pm = () => cv.document.querySelector('.competency-item[data-competency="pm"]');
+        const btn = pm();
         assert(btn, 'competency button missing');
-        btn.dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
-        await wait(120);
-        assert(cv.document.documentElement.classList.contains('topic-focus'), 'topic-focus not applied');
-        assert(btn.getAttribute('aria-pressed') === 'true', 'competency not pressed');
-        assert(cv.document.querySelector('.experience-item.topic-match'), 'no highlighted experience');
-        assert(cv.document.querySelector('.experience-item.topic-dim'), 'no dimmed experience');
-        cv.document.getElementById('languages-heading').dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
-        await wait(80);
-        assert(!cv.document.documentElement.classList.contains('topic-focus'), 'topic-focus stayed after outside click');
-        return 'pm focus + restore';
+        try {
+          btn.dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+          await wait(120);
+          assert(cv.document.documentElement.classList.contains('topic-focus'), 'topic-focus not applied');
+          assert(btn.getAttribute('aria-pressed') === 'true', 'competency not pressed');
+          assert(cv.document.querySelector('.experience-item.topic-match'), 'no highlighted experience');
+          const roles = cv.document.querySelectorAll('#experience-container .experience-item').length;
+          const sorted = cv.document.querySelectorAll('#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim').length;
+          assert(sorted === roles, sorted + ' of ' + roles + ' roles were matched or dimmed');
+          assert(cv.document.getElementById('languages-section').classList.contains('topic-dim'), 'unrelated sections were not dimmed');
+          cv.document.getElementById('languages-heading').dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+          await wait(80);
+          assert(!cv.document.documentElement.classList.contains('topic-focus'), 'topic-focus stayed after outside click');
+          return 'pm focus + restore';
+        } finally {
+          if (pm() && pm().getAttribute('aria-pressed') === 'true') {
+            pm().dispatchEvent(new cv.window.MouseEvent('click', { bubbles: true }));
+            await wait(80);
+          }
+        }
       }
     },
     {
@@ -1807,23 +1818,23 @@
   const BRANCH = 'main';
   const LAB_LINE = {
     'SMK-01': 219, 'SMK-02': 231,
-    'FN-01': 244, 'FN-02': 262, 'FN-03': 280, 'FN-04': 301, 'FN-05': 316,     'FN-06': 329, 'FN-15': 350, 'FN-16': 371, 'FN-17': 386, 'FN-18': 404, 'FN-19': 421,
-    'FN-20': 437, 'FN-21': 453, 'FN-22': 470,
-    'FN-07': 490, 'FN-08': 505, 'FN-09': 520, 'FN-10': 533, 'FN-11': 545, 'FN-12': 558,
-    'FN-13': 571, 'FN-14': 591,
-    'FN-23': 1045, 'FN-24': 1065, 'FN-25': 1084, 'FN-26': 1125, 'FN-27': 1148, 'FN-28': 1173,
-    'FN-29': 1262, 'FN-30': 1282, 'FN-31': 1309, 'FN-32': 1322, 'FN-33': 1359, 'FN-34': 1422,
-    'STU-04': 1344, 'STU-05': 1377, 'STU-06': 1392, 'STU-07': 1407,
-    'SEC-01': 621, 'SEC-02': 636, 'SEC-03': 654, 'SEC-04': 666, 'SEC-05': 683, 'SEC-06': 696,
-    'SEC-07': 712, 'SEC-08': 734,
+    'FN-01': 244, 'FN-02': 265, 'FN-03': 283, 'FN-04': 304, 'FN-05': 319,     'FN-06': 332, 'FN-15': 353, 'FN-16': 385, 'FN-17': 400, 'FN-18': 418, 'FN-19': 435,
+    'FN-20': 451, 'FN-21': 467, 'FN-22': 484,
+    'FN-07': 504, 'FN-08': 519, 'FN-09': 534, 'FN-10': 547, 'FN-11': 559, 'FN-12': 572,
+    'FN-13': 585, 'FN-14': 605,
+    'FN-23': 1059, 'FN-24': 1079, 'FN-25': 1098, 'FN-26': 1139, 'FN-27': 1162, 'FN-28': 1187,
+    'FN-29': 1277, 'FN-30': 1297, 'FN-31': 1324, 'FN-32': 1337, 'FN-33': 1374, 'FN-34': 1438,
+    'STU-04': 1359, 'STU-05': 1392, 'STU-06': 1407, 'STU-07': 1422,
+    'SEC-01': 635, 'SEC-02': 650, 'SEC-03': 668, 'SEC-04': 680, 'SEC-05': 697, 'SEC-06': 710,
+    'SEC-07': 726, 'SEC-08': 748,
     'A11Y-01': 751, 'A11Y-02': 768, 'A11Y-03': 780, 'A11Y-04': 795, 'A11Y-05': 816, 'A11Y-06': 837,
-    'ADM-01': 855, 'ADM-02': 868, 'ADM-03': 881,
-    'STU-01': 894, 'STU-02': 907, 'STU-03': 922,
-    'MOB-01': 937, 'MOB-02': 955, 'MOB-03': 969, 'MOB-04': 990, 'MOB-05': 1007, 'MOB-06': 1026,
-    'PERF-01': 1437, 'PERF-02': 1447, 'PERF-03': 1457, 'PERF-04': 1467,
-    'SMK-03': 1479, 'SEC-09': 1512, 'FN-35': 1540, 'FN-36': 1557, 'FN-37': 1577, 'FN-38': 1613, 'STU-08': 1645, 'STU-09': 1667,
-    'FN-39': 1689, 'FN-40': 1704, 'FN-41': 1723, 'FN-42': 1736,
-    'PERF-05': 1754, 'PERF-06': 1764, 'PERF-07': 1776, 'PERF-08': 1788
+    'ADM-01': 869, 'ADM-02': 882, 'ADM-03': 895,
+    'STU-01': 908, 'STU-02': 921, 'STU-03': 936,
+    'MOB-01': 951, 'MOB-02': 969, 'MOB-03': 983, 'MOB-04': 1004, 'MOB-05': 1021, 'MOB-06': 1040,
+    'PERF-01': 1453, 'PERF-02': 1463, 'PERF-03': 1473, 'PERF-04': 1483,
+    'SMK-03': 1495, 'SEC-09': 1528, 'FN-35': 1556, 'FN-36': 1573, 'FN-37': 1593, 'FN-38': 1629, 'STU-08': 1661, 'STU-09': 1683,
+    'FN-39': 1705, 'FN-40': 1720, 'FN-41': 1739, 'FN-42': 1752,
+    'PERF-05': 1770, 'PERF-06': 1780, 'PERF-07': 1792, 'PERF-08': 1804
   };
   const SRC = {
     'SMK-01': { Playwright: ['tests/smoke.spec.js', 5] },
@@ -3383,7 +3394,7 @@
           const isCv = /index\.html/i.test(path) || path === '' || path === '/';
           const tick = () => {
             const chrome = doc.getElementById('login-overlay') || doc.getElementById('runBtn') || doc.getElementById('run-all');
-            const cvReady = doc.querySelector('.main-container') && (!isCv || (win.CarlosMunozCV && win.CarlosMunozCV.tourSteps));
+            const cvReady = doc.querySelector('.main-container') && (!isCv || (win.CarlosMunozCV && win.CarlosMunozCV.tourSteps && doc.documentElement.dataset.cvSettled));
             if (chrome || cvReady || Date.now() - start > 12000) {
               resolve({ window: win, document: doc });
               return;
@@ -3604,7 +3615,7 @@
       document.getElementById('run-all').disabled = true;
       document.getElementById('run-visible').disabled = true;
       document.querySelectorAll('[data-pace]').forEach((b) => { b.disabled = true; });
-      const pack = CASES.filter((c) => ids.includes(c.id));
+      const pack = ids.map((id) => CASES.find((c) => c.id === id)).filter(Boolean);
       this.results = this.results.filter((r) => !ids.includes(r.id));
       const holdMs = Math.round(this.pace * 1000);
       const frameNames = frames.filter(Boolean).map((frame) => frame.label).join(', ');
