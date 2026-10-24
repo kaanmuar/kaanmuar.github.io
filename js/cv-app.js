@@ -3448,10 +3448,31 @@
                 });
             },
 
+            _loadExportLibs() {
+                const libs = [
+                    ['html2canvas', 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H'],
+                    ['jsPDF', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js', 'sha384-l7aOEgTYxgJ0nn2MziQWZCvuvJ2PtNcP05R4QwEoHW+kIS1gFpzupcQ7WhAdRKuq']
+                ];
+                this._exportLibs = this._exportLibs || Promise.all(libs.map(([name, src, integrity]) => typeof window[name] === 'function' ? null : new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.integrity = integrity;
+                    script.crossOrigin = 'anonymous';
+                    script.onload = resolve;
+                    script.onerror = () => reject(new Error(name + ' did not load'));
+                    document.head.appendChild(script);
+                }))).catch((err) => {
+                    this._exportLibs = null;
+                    throw err;
+                });
+                return this._exportLibs;
+            },
+
             async _exportAsPDF_jsPDF() {
                 const loadingIndicator = this._showExportOverlay(this._s('print_preparing', 'Preparing Print View...'));
                 const host = await this._renderRecruiterSheets();
                 try {
+                await this._loadExportLibs();
                 const jsPDF = window.jsPDF;
                     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
                     const sheets = [...host.querySelectorAll('.sheet')];
@@ -3475,6 +3496,7 @@
                 const loadingIndicator = this._showExportOverlay(this._s('print_generating_jpg', 'Generating JPG, please wait...'));
                 const host = await this._renderRecruiterSheets();
                 try {
+                    await this._loadExportLibs();
                     const canvas = await html2canvas(host, {
                         scale: 2,
                         useCORS: true,
@@ -3940,7 +3962,10 @@
                 if (photo) {
                     const portrait = this._livePortrait(profile);
                     photo.classList.remove('cv-live-off');
-                    if (portrait) photo.src = portrait;
+                    if (portrait) {
+                        photo.removeAttribute('srcset');
+                        photo.src = portrait;
+                    }
                 }
                 const feedback = live.feedback;
                 if (feedback) {

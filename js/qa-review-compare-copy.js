@@ -5,7 +5,7 @@
 
   const COPY = {
     en: {
-      sample: "Open one of your own reports to compare it with a competitor.",
+      sample: "Open one of your own reports to compare it with a competitor.", made: "Comparisons from this review",
       more: "and {n} more", none: "None.",
       intro: "Your review of {own}{when} next to this review of {rival}.", introWhen: " from {date}",
       shared_one: "{n} open problem is on both sites.", shared_other: "{n} open problems are on both sites.",
@@ -43,7 +43,7 @@
       signals: {}
     },
     es: {
-      sample: "Abre uno de tus propios informes para compararlo con un competidor.",
+      sample: "Abre uno de tus propios informes para compararlo con un competidor.", made: "Comparaciones hechas desde esta revisión",
       more: "y {n} más", none: "Ninguno.",
       intro: "Tu revisión de {own}{when} junto a esta revisión de {rival}.", introWhen: " del {date}",
       shared_one: "{n} problema abierto está en los dos sitios.", shared_other: "{n} problemas abiertos están en los dos sitios.",
@@ -81,7 +81,7 @@
       signals: { rank: "Puesto en Tranco", chrome: "Datos de Chrome de usuarios reales", pages: "Páginas encontradas", languages: "Versiones de idioma", writeups: "Artículos públicos", social: "Perfiles sociales enlazados", age: "Antigüedad del dominio" }
     },
     pt: {
-      sample: "Abra um dos seus próprios relatórios para compará-lo com um concorrente.",
+      sample: "Abra um dos seus próprios relatórios para compará-lo com um concorrente.", made: "Comparações feitas a partir desta revisão",
       more: "e mais {n}", none: "Nenhum.",
       intro: "Sua revisão de {own}{when} ao lado desta revisão de {rival}.", introWhen: " de {date}",
       shared_one: "{n} problema aberto está nos dois sites.", shared_other: "{n} problemas abertos estão nos dois sites.",
@@ -119,7 +119,7 @@
       signals: { rank: "Posição no Tranco", chrome: "Dados do Chrome de usuários reais", pages: "Páginas encontradas", languages: "Versões de idioma", writeups: "Matérias públicas", social: "Perfis sociais vinculados", age: "Idade do domínio" }
     },
     de: {
-      sample: "Öffnen Sie einen Ihrer eigenen Berichte, um ihn mit einem Wettbewerber zu vergleichen.",
+      sample: "Öffnen Sie einen Ihrer eigenen Berichte, um ihn mit einem Wettbewerber zu vergleichen.", made: "Vergleiche aus dieser Prüfung",
       more: "und {n} weitere", none: "Keine.",
       intro: "Ihre Prüfung von {own}{when} neben dieser Prüfung von {rival}.", introWhen: " vom {date}",
       shared_one: "{n} offenes Problem gibt es auf beiden Websites.", shared_other: "{n} offene Probleme gibt es auf beiden Websites.",
@@ -157,7 +157,7 @@
       signals: { rank: "Tranco-Rang", chrome: "Chrome-Daten echter Nutzer", pages: "Gefundene Seiten", languages: "Sprachversionen", writeups: "Öffentliche Beiträge", social: "Verlinkte Social-Media-Profile", age: "Alter der Domain" }
     },
     fr: {
-      sample: "Ouvrez l’un de vos propres rapports pour le comparer à un concurrent.",
+      sample: "Ouvrez l’un de vos propres rapports pour le comparer à un concurrent.", made: "Comparaisons faites depuis cette analyse",
       more: "et {n} de plus", none: "Aucun.",
       intro: "Votre analyse de {own}{when} à côté de cette analyse de {rival}.", introWhen: " du {date}",
       shared_one: "{n} problème ouvert est présent sur les deux sites.", shared_other: "{n} problèmes ouverts sont présents sur les deux sites.",
@@ -165,7 +165,7 @@
       onlyHas: "Seul {site} a", problemMix: "Types de problèmes",
       passive: "{rival} n’a reçu que les vérifications publiques et passives : aucune conversation avec le chat et aucun formulaire envoyé.",
       passiveMore: "Comme il s’agit d’une analyse de concurrent, rien n’a été saisi dans ses champs et son chat n’a pas été ouvert : les vérifications des champs et du chat ont donc été ignorées et ne figurent pas dans les listes ci-dessus.",
-      verdictNote: "Les deux scores viennent de analyses automatisées : un point de départ, pas un verdict.",
+      verdictNote: "Les deux scores viennent d’analyses automatisées : un point de départ, pas un verdict.",
       ring: "Score de santé de {site} : {n} sur 100", grade: "Note {g}", vs: "vs", leadSmall: "votre avance",
       wins: "{site} gagne {n} indicateurs sur {total}", sameWins: "Les deux sites gagnent le même nombre d’indicateurs",
       tally: "{own} {a}, {rival} {b}, égalité {c}.", winsTitle: "{site} gagne {n}", levelTitle: "Égalité sur {n}",
@@ -195,7 +195,7 @@
       signals: { rank: "Rang Tranco", chrome: "Données Chrome d’utilisateurs réels", pages: "Pages trouvées", languages: "Versions linguistiques", writeups: "Articles publics", social: "Profils sociaux liés", age: "Âge du domaine" }
     },
     it: {
-      sample: "Apri uno dei tuoi report per confrontarlo con un concorrente.",
+      sample: "Apri uno dei tuoi report per confrontarlo con un concorrente.", made: "Confronti fatti da questa revisione",
       more: "e altri {n}", none: "Nessuno.",
       intro: "La tua revisione di {own}{when} accanto a questa revisione di {rival}.", introWhen: " del {date}",
       shared_one: "{n} problema aperto è presente su entrambi i siti.", shared_other: "{n} problemi aperti sono presenti su entrambi i siti.",

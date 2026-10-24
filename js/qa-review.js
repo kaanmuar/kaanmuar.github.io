@@ -849,16 +849,17 @@
     const result = document.getElementById("compare-result");
     if (!ask || !result) return;
     const cmp = report.compare;
+    const made = !cmp && !sample && Array.isArray(report.comparisons) ? report.comparisons : [];
     document.getElementById("compare-error").textContent = "";
     ask.hidden = !!cmp || sample;
-    result.hidden = !cmp && !sample;
+    result.hidden = !cmp && !sample && !made.length;
     // The card carries its own copy in each language; machine translation would garble it.
     if (!cc.english) {
       result.setAttribute("translate", "no");
       result.setAttribute("lang", cc.lang);
     }
     if (!cmp) {
-      result.innerHTML = sample ? '<p class="muted">' + esc(cc.t("sample")) + "</p>" : "";
+      result.innerHTML = sample ? '<p class="muted">' + esc(cc.t("sample")) + "</p>" : made.length ? cmpMade(made) : "";
       const stored = savedCompare();
       document.getElementById("compare-url").value = stored && stored.id === report.id ? String(stored.url || "").replace(/^\s*https?:\/\//i, "") : "";
       return;
@@ -888,7 +889,8 @@
     const when = cmp.ownAt ? new Date(cmp.ownAt).toLocaleDateString(cc.lang) : "";
     const decided = dominance.own + dominance.rival + dominance.tie;
     const ahead = dominance.own === dominance.rival ? "" : dominance.own > dominance.rival ? "own" : "rival";
-    result.innerHTML = "<p>" + cc.t("intro", { own: strong(cmp.ownHost), when: when ? esc(cc.t("introWhen", { date: when })) : "", rival: strong(cmp.rivalHost) }) + " " +
+    const ownName = cmp.ownId ? '<a href="?report=' + encodeURIComponent(cmp.ownId) + '">' + strong(cmp.ownHost) + "</a>" : strong(cmp.ownHost);
+    result.innerHTML = "<p>" + cc.t("intro", { own: ownName, when: when ? esc(cc.t("introWhen", { date: when })) : "", rival: strong(cmp.rivalHost) }) + " " +
       esc(cc.t("shared", { n: cmp.shared })) + "</p>" +
       cmpScoreboard(cmp, names, dominance, decided, ahead) +
       (kpis.length ? '<h3 class="cmp-h">' + esc(cc.t("headToHead")) + '</h3><div class="cmp-kpis">' + kpis.map((kpi) => cmpKpi(kpi, names)).join("") + "</div>" : "") +
@@ -905,6 +907,13 @@
   }
 
   const CMP_SIDES = ["own", "rival"];
+
+  function cmpMade(made) {
+    return '<h3 class="cmp-h">' + esc(cc.t("made")) + '</h3><ul class="cmp-made">' + made.map((line) =>
+      '<li><a href="?report=' + encodeURIComponent(line.id) + '">' + esc(line.rivalHost) + '</a> <span class="meta-line">' +
+      esc([line.ownHost + " " + (line.own == null ? "–" : line.own) + " " + cc.t("vs") + " " + line.rivalHost + " " + (line.rival == null ? "–" : line.rival),
+        line.at ? new Date(line.at).toLocaleDateString(cc.lang) : ""].filter(Boolean).join(" · ")) + "</span></li>").join("") + "</ul>";
+  }
 
   function cmpSplit(parts, label) {
     const total = parts.reduce((sum, part) => sum + part.value, 0);

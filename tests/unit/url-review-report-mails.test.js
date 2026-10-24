@@ -166,3 +166,52 @@ test("the owner mail renders section headings and its eyebrow", () => {
   assert.equal(mail.text, "Report\n\nMONEY\nRevenue: 9 USD\n\n");
   assert.match(ownerMail({ intro: "x", rows: [] }).html, />Carlos Muñoz CV<\/p>/);
 });
+
+const reviewCompare = require("../../functions/url-review-compare.js");
+const rival = require("./fixtures/review-excalidraw.json");
+const cmp = reviewCompare.compareSites(Object.assign({}, report, { id: "ab12cd" }), rival);
+const compared = { id: "cd34", email: "ana@example.com", lang: "en", createdAt: "2026-10-24T10:00:00Z", compareWith: "ab12cd", report: Object.assign({}, rival, { id: "cd34", compare: cmp }) };
+
+test("a competitor run's mail carries the comparison: both scores per area, the indicators won, and the problems only one site has", () => {
+  const mail = customerMail.reportMail(compared, {});
+  assert.match(mail.html, />Next to a competitor<\/p>/);
+  assert.ok(mail.html.includes("?report=ab12cd&amp;utm_campaign=report-compare"));
+  assert.ok(mail.html.indexOf("Next to a competitor") < mail.html.indexOf("What to fix first"));
+  assert.match(mail.text, new RegExp("^Overall: " + report.host + " " + cmp.overall.own + " · " + rival.host + " " + cmp.overall.rival + " · Your lead [+-]?\\d+$", "m"));
+  assert.match(mail.text, new RegExp("^Only " + report.host + " has: " + cmp.ownOnlyCount + " open problems · Only " + rival.host + " has: " + cmp.rivalOnlyCount + " open problems$", "m"));
+  assert.match(mail.text, /wins \d+ of \d+ indicators\./);
+  assert.match(mail.text, /got the public, passive checks only/);
+  assert.doesNotMatch(customerMail.reportMail(record, {}).html + customerMail.reportPdf(record).html, /Next to a competitor/);
+});
+
+test("the comparison in the mail and the PDF speaks the record's language", () => {
+  const titles = { es: "Frente a un competidor", pt: "Ao lado de um concorrente", de: "Neben einem Mitbewerber", fr: "Face à un concurrent", it: "Accanto a un concorrente" };
+  for (const [lang, title] of Object.entries(titles)) {
+    const each = Object.assign({}, compared, { lang });
+    assert.ok(customerMail.reportMail(each, {}).text.includes("\n" + title + "\n"), lang);
+    assert.ok(customerMail.reportPdf(each).html.includes("<h2>" + customerMail.esc(title) + "</h2>"), lang);
+    assert.doesNotMatch(customerMail.reportMail(each, {}).text, /Your lead|open problems|indicators/, lang);
+  }
+  assert.match(customerMail.reportMail(Object.assign({}, compared, { lang: "de" }), {}).text, /^Ihre Prüfung von /m);
+});
+
+test("the mail's comparison wording matches the comparison card on the page", () => {
+  const vm = require("node:vm");
+  const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "../../js/qa-review-compare-copy.js"), "utf8");
+  for (const lang of customerMail.LANGS) {
+    const sandbox = { window: {}, document: { documentElement: { lang } } };
+    vm.runInNewContext(source, sandbox);
+    const card = sandbox.window.QAReviewCompareCopy;
+    const mail = customerMail.reportMail(Object.assign({}, compared, { lang }), {}).text;
+    if (lang !== "de") assert.ok(mail.includes(card.t("intro", { own: report.host, when: card.t("introWhen", { date: "2026-10-19" }), rival: rival.host })), lang);
+    assert.ok(mail.includes(card.t("shared", { n: cmp.shared })), lang);
+    assert.ok(mail.includes(card.t("passive", { rival: rival.host }) + " " + card.t("verdictNote")), lang);
+  }
+});
+
+test("an unpaid PDF frosts the problem titles of the comparison, and an open one prints them", () => {
+  const title = cmp.rivalOnly[0].title;
+  assert.ok(customerMail.reportPdf(Object.assign({}, compared, { paid: true })).html.includes(customerMail.esc(title)));
+  assert.ok(!customerMail.reportPdf(compared).html.includes(customerMail.esc(title)));
+  assert.ok(customerMail.reportPdf(compared).html.includes("Only " + rival.host + " has: " + cmp.rivalOnlyCount + "</h3>"));
+});

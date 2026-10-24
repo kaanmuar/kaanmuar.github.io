@@ -540,6 +540,7 @@
         #compare-error { color: var(--red); }
         #compare-result { --own: var(--cyan); }
         .cmp-h { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; margin: 22px 0 8px; }
+        .cmp-made { margin: 0; padding-left: 18px; } .cmp-made li { margin: 0 0 6px; } .cmp-made a { font-weight: 700; }
         .cmp-verdict { margin: 10px 0 6px; }
         .cmp-board { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 14px 0 4px; flex-wrap: wrap; }
         .cmp-ring { position: relative; width: 180px; text-align: center; }
@@ -1137,6 +1138,8 @@
             .dash-overlay { display: block !important; position: static; background: #fff; padding: 0; overflow: visible; }
             .dash-modal { box-shadow: none; margin: 0; max-width: none; border: 0; background: #fff; color: #12181f; }
             .card, .kpi, .tick, .report-cover { box-shadow: none; break-inside: avoid; }
+            #compare:has(> #compare-result[hidden]), h2:has(+ #compare > #compare-result[hidden]) { display: none !important; }
+            #compare-result { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             main { max-width: none; }
             body { background: #fff !important; color: #12181f; }
             .mark, .sheet-mark { display: none !important; }
@@ -1724,7 +1727,7 @@
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-ask.js?v=20261024c"></script>
 <script src="js/qa-review-progress.js?v=20261102a"></script>
-<script src="js/qa-review-compare-copy.js?v=20261101a"></script>
+<script src="js/qa-review-compare-copy.js?v=20261101b"></script>
 <script src="js/qa-review.js?v=20261102a"></script>
 <script src="js/url-suggest.js?v=20261102a"></script>
 <script src="js/qa-review-live.js?v=20261029d"></script>
