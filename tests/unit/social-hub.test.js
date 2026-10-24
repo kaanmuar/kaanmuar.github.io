@@ -76,6 +76,24 @@ test("the social sitemap puts each clip under the page of the language it was vo
   assert.doesNotMatch(en, /video:video/);
 });
 
+test("the hub promo writes every topic in six languages and queues each twice, woman then man", () => {
+  const promo = require("../../scripts/tips-studio/promo-social-hub");
+  assert.equal(promo.TIPS.length, 36);
+  const queued = promo.TIPS.filter((tip) => !tip.hold);
+  assert.equal(queued.length, 12);
+  assert.deepEqual(queued.map((tip) => tip.voice), Array(6).fill("w").concat(Array(6).fill("m")));
+  const byTopic = {};
+  queued.forEach((tip) => { (byTopic[tip.topic] = byTopic[tip.topic] || []).push(tip.lang); });
+  Object.values(byTopic).forEach((langs) => { assert.equal(langs.length, 2); assert.notEqual(langs[0], langs[1]); });
+  assert.equal(new Set(queued.map((tip) => tip.date)).size, 12);
+  for (const tip of promo.TIPS) {
+    const cap = promo.captions(tip);
+    assert.ok(cap.x.length <= 280, tip.id);
+    assert.ok(tip.alt.length <= 300, tip.id);
+    assert.match(cap.facebook, new RegExp("qa-review-social" + (tip.lang === "en" ? "" : "-" + tip.lang) + "\\.html\\?utm_source=facebook&utm_medium=social&utm_campaign=social-hub-promo&utm_content=" + tip.id));
+  }
+});
+
 test("the calendar parser keeps the header keys", () => {
   assert.deepEqual(hub.csvRows("Date,Language,Post\n2026-10-19,de,talking\n"), [{ Date: "2026-10-19", Language: "de", Post: "talking" }]);
 });

@@ -86,13 +86,14 @@ function batchPosts(files, reports) {
       const image = "media/social-posts/" + batch + "/feed/" + slug + ".jpg";
       if (!files.has(image)) continue;
       const report = slug.replace(/^\d+-/, "");
-      // The text captions are English; c.lang is the language the clip was voiced in (TikTok and YouTube copy).
+      // The text captions are English unless the post was written in its own language (c.textLang);
+      // c.lang is the language the clip was voiced in (TikTok and YouTube copy).
       posts.push({
         id: batch + "/" + slug,
-        kind: batch.startsWith("tips") ? "tip" : "review",
+        kind: batch.startsWith("tips") ? "tip" : batch.startsWith("promo") ? "launch" : "review",
         batch,
         date: c.date,
-        lang: "en",
+        lang: LANGS[c.textLang] ? c.textLang : "en",
         clipLang: LANGS[c.lang] ? c.lang : null,
         cat: c.cat || "",
         title: cleanTitle(c.title),
@@ -196,12 +197,17 @@ async function growLedger() {
 }
 
 // socialHub/live is public to read (firestore.rules), so the build needs no credentials.
-async function pullEdits() {
+async function liveEdits() {
   const res = await fetch(FIRESTORE + "/socialHub/live", { signal: AbortSignal.timeout(15000) });
-  if (res.status === 404) return 0;
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error("Firestore answered " + res.status);
   const doc = await res.json();
-  const edits = admin.clean(JSON.parse((doc.fields && doc.fields.json && doc.fields.json.stringValue) || "{}"));
+  return admin.clean(JSON.parse((doc.fields && doc.fields.json && doc.fields.json.stringValue) || "{}"));
+}
+
+async function pullEdits() {
+  const edits = await liveEdits();
+  if (!edits) return 0;
   fs.mkdirSync(path.join(ROOT, OUT), { recursive: true });
   fs.writeFileSync(path.join(ROOT, EDITS), JSON.stringify(edits, null, 1) + "\n");
   return Object.keys(edits.edits).length + edits.items.length;
@@ -531,4 +537,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, collect, feedJson, page, rss, sitemap, outputs };
+module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, collect, liveEdits, feedJson, page, rss, sitemap, outputs };

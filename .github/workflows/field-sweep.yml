@@ -1,0 +1,55 @@
+# .github/workflows/field-sweep.yml
+# Daily: proposes standout items from our field for the social hub (scripts/field-sweep.js writes
+# assets/social/proposals.json). The owner approves or dismisses them in admin.html; nothing is posted from here.
+# Pushes straight to main with LIVE_REPORTS_DEPLOY_KEY, like the Live Reports job. Schedule: functions/ops-schedule.js.
+
+name: Field sweep
+
+on:
+  schedule:
+    - cron: '23 13 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: field-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Sweep the field
+        id: sweep
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/field-sweep.js
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add assets/social/proposals.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -q -m "Field sweep: ${{ steps.sweep.outputs.proposals }} proposals, ${{ steps.sweep.outputs.added }} new [skip ci]"
+          for attempt in 1 2 3 4 5; do
+            git push origin HEAD:main && break
+            if [ "$attempt" = 5 ]; then echo "::error::main kept moving; the proposals were not pushed."; exit 1; fi
+            sleep $((attempt * 5))
+            DATA=$(git rev-parse HEAD)
+            git fetch -q --depth=1 origin main
+            git reset -q --hard FETCH_HEAD
+            if ! git cherry-pick -X theirs "$DATA"; then
+              [ -z "$(git status --porcelain)" ] || exit 1
+              echo "main already has these proposals."; exit 0
+            fi
+          done
