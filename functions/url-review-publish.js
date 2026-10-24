@@ -106,8 +106,25 @@ function selectPublishable(records, unlisted) {
   }
   const reports = [...byHost.values()]
     .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
-    .map((r) => ({ createdAt: r.createdAt, source: r.source === "sweep" ? "sweep" : "request", report: publicReport(r.report) }));
+    .map((r) => ({ createdAt: r.createdAt, source: r.source === "sweep" || r.source === "rivals" ? r.source : "request", report: publicReport(r.report) }));
   return { reports, held };
 }
 
-module.exports = { MIN_PAGES, heldReason, publicReport, selectPublishable, bare };
+function scores(row) {
+  return { host: bare(row.host), overall: row.overall, areas: row.areas || {} };
+}
+
+// Rival-sweep comparisons (url_review_rivals): hosts and scores only, without any unlisted host.
+function publicComparisons(rows, unlisted) {
+  return (Array.isArray(rows) ? rows : [])
+    .filter((row) => row && row.host && typeof row.overall === "number" && !under(row.host, unlisted || []))
+    .map((row) => Object.assign(scores(row), {
+      createdAt: row.createdAt,
+      cc: row.cc || "",
+      rivals: (row.rivals || []).filter((rival) => rival && rival.host && typeof rival.overall === "number" && !under(rival.host, unlisted || []))
+        .map((rival) => Object.assign(scores(rival), { dominance: rival.dominance || null }))
+    }))
+    .filter((row) => row.rivals.length);
+}
+
+module.exports = { MIN_PAGES, heldReason, publicReport, selectPublishable, publicComparisons, bare };
