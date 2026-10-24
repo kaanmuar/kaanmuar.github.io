@@ -862,6 +862,44 @@
             overflow: hidden;
         }
         #message-pane .widget-lead { margin-bottom: 0.45rem; flex-shrink: 0; }
+        #chat-pane.active {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+        #chat-pane .widget-lead { margin-bottom: 0.45rem; flex-shrink: 0; }
+        .chat-log {
+            flex: 1 1 auto;
+            min-height: 12rem;
+            max-height: 20rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            padding: 0.25rem 0 0.6rem;
+        }
+        .chat-line {
+            margin: 0;
+            max-width: 85%;
+            padding: 0.45rem 0.7rem;
+            border-radius: 0.9rem;
+            font-size: 0.86rem;
+            line-height: 1.4;
+        }
+        .chat-bot { align-self: flex-start; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); }
+        .chat-you { align-self: flex-end; background: var(--accent); color: #fff; }
+        .chat-compose { display: flex; gap: 0.4rem; flex-shrink: 0; }
+        .chat-compose input {
+            flex: 1 1 auto;
+            min-width: 0;
+            padding: 0.5rem 0.7rem;
+            border-radius: 0.6rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .chat-compose .submit-btn { width: auto; margin: 0; padding: 0.5rem 1rem; }
         #message-form {
             display: flex;
             flex-direction: column;

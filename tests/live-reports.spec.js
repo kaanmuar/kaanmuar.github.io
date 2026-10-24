@@ -104,6 +104,30 @@ test.describe('Live reports', () => {
     expect(violations).toEqual([]);
   });
 
+  test('a report opened from the social hub leads back to the hub', async ({ page }) => {
+    await prime(page);
+    await page.goto('/qa-review-social.html');
+    const open = page.locator('.post [data-act="report"]').first();
+    await expect(open).toHaveAttribute('href', /from=social/);
+    await open.click();
+    const viewer = page.locator('#live-viewer');
+    await expect(viewer.locator('.lv-fix li').first()).toBeVisible();
+    const back = viewer.locator('[data-act="hub"]');
+    await expect(back).toHaveText('Back to Social');
+    await expect(back).toHaveAttribute('href', 'qa-review-social.html');
+    await back.click();
+    await expect(page).toHaveURL(/\/qa-review-social\.html$/);
+
+    await page.goto('/qa-review-es.html?live=govuk&from=social');
+    await expect(page.locator('#live-viewer [data-act="hub"]')).toHaveText('Volver a Social');
+    await page.keyboard.press('Escape');
+    await expect(page).toHaveURL(/\/qa-review-social-es\.html$/);
+
+    await page.goto('/qa-review.html?live=govuk');
+    await expect(page.locator('#live-viewer .lv-fix li').first()).toBeVisible();
+    await expect(page.locator('#live-viewer [data-act="hub"]')).toHaveCount(0);
+  });
+
   test('printing shows a message instead of the report', async ({ page }) => {
     await prime(page);
     await page.goto('/qa-review.html?live=govuk');

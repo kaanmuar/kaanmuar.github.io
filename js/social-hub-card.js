@@ -79,7 +79,7 @@
         + "<span class=\"post-play-label\" aria-hidden=\"true\">" + esc(copy.watch) + "<span class=\"post-play-voice\" translate=\"no\">" + ICON.sound + esc(voice) + "</span></span></button>"
       : "";
     const report = post.report
-      ? "<a class=\"post-report\" data-act=\"report\" href=\"qa-review" + suffix(lang) + ".html?live=" + encodeURIComponent(post.report) + "\">" + esc(copy.report) + " →</a>"
+      ? "<a class=\"post-report\" data-act=\"report\" href=\"qa-review" + suffix(lang) + ".html?live=" + encodeURIComponent(post.report) + "&amp;from=social\">" + esc(copy.report) + " →</a>"
       : "";
     return "<article class=\"post" + (post.youtube ? " post-has-clip" : "") + "\" id=\"" + anchor(post) + "\" data-id=\"" + esc(post.id) + "\" data-kind=\"" + esc(post.kind) + "\" data-lang=\"" + esc(post.lang) + "\">"
       + "<div class=\"post-media\"><img src=\"" + esc(post.thumb) + "\" width=\"540\" height=\"675\" loading=\"lazy\" decoding=\"async\" alt=\"" + esc(post.alt) + "\">" + play + "</div>"

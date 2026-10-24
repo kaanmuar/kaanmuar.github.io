@@ -1135,6 +1135,48 @@ async function pressStart(page, roots) {
   return page.evaluate(press, START_TEXT.source, [roots, "[data-qa-chat-root]"].filter(Boolean).join(", ")).catch(() => false);
 }
 
+const OWN_CHAT = "\\b(chat|chatbot|live help|assistant|asistente|assistente|assistent|bate-papo|tchat)\\b";
+
+// No vendor loaded: a pinned, small button low on the page whose name says chat, built by the site itself.
+function ownLauncher(source) {
+  const re = new RegExp(source, "i");
+  const pinned = (node) => {
+    for (let n = node; n && n !== document.documentElement; n = n.parentElement) if (getComputedStyle(n).position === "fixed") return true;
+    return false;
+  };
+  const hit = Array.from(document.querySelectorAll("button, [role=button], a")).find((node) => {
+    const rect = node.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    if (!rect.width || !rect.height || style.visibility === "hidden" || style.display === "none") return false;
+    if (rect.top < innerHeight / 2 || rect.width > 240 || !pinned(node)) return false;
+    return re.test([node.getAttribute("aria-label"), node.getAttribute("title"), node.innerText].join(" "));
+  });
+  if (!hit) return "";
+  hit.setAttribute("data-qa-chat", "1");
+  return (hit.getAttribute("aria-label") || hit.getAttribute("title") || hit.innerText || "").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+// After the launcher opens: a tab named only "Chat" is pressed, and its panel (or the open dialog) becomes the chat's root.
+function ownPane(source) {
+  const re = new RegExp("^\\s*" + source + "\\s*$", "i");
+  const visible = (node) => { const rect = node.getBoundingClientRect(); return rect.width > 0 && rect.height > 0 && getComputedStyle(node).visibility !== "hidden"; };
+  const tab = Array.from(document.querySelectorAll("[role=tab], button")).find((node) => visible(node) && !node.hasAttribute("data-qa-chat") && re.test(node.innerText || ""));
+  if (tab && tab.getAttribute("aria-selected") !== "true") tab.click();
+  const panel = (tab && tab.getAttribute("aria-controls") && document.getElementById(tab.getAttribute("aria-controls")))
+    || Array.from(document.querySelectorAll("[role=dialog], [aria-modal=true]")).find((node) => visible(node) && node.querySelector("textarea, [contenteditable=true], input[type=text]"));
+  if (!panel) return false;
+  panel.setAttribute("data-qa-chat-root", "1");
+  return true;
+}
+
+// A message box inside a form that asks for an email, phone, file or topic is a contact form; a chat also shows a message log.
+function notAChat(node) {
+  const form = node.closest("form");
+  if (form && form.querySelector("input[type=email], input[type=tel], input[type=file], select, input[name*=mail i]")) return true;
+  const root = node.closest("[data-qa-chat-root]");
+  return !(root && root.querySelector("[role=log], [aria-live]"));
+}
+
 async function sendTurn(box, text) {
   await box.el.click().catch(() => {});
   await box.el.focus().catch(() => {});
@@ -1222,18 +1264,25 @@ async function talk(job, log) {
       await wait(500);
     }
     const chats = rec.chats("before");
-    if (!chats.length) {
+    const own = chats.length ? "" : await page.evaluate(ownLauncher, OWN_CHAT).catch(() => "");
+    if (!chats.length && !own) {
       say("No chat loaded on the page, so nothing was sent.");
       return out;
     }
-    const rows = CHATS.filter((row) => chats.some((chat) => chat.name === row[0]));
-    Object.assign(out, { vendor: chats[0].name, ai: chats.some((chat) => chat.ai) });
-    const roots = rows.map((row) => row[3]).filter(Boolean).join(", ");
-    const launcher = await launcherFacts(page, rows.map((row) => row[2]).filter(Boolean), CHAT_LAUNCHER).catch(() => ({ found: false }));
-    if (!launcher.found) {
-      out.status = "no-launcher";
-      say(out.vendor + " loaded, but no launcher button was found.");
-      return out;
+    let roots = "";
+    if (own) {
+      out.vendor = "Site's own chat";
+      say("No chat vendor loaded, but the page has its own chat button (\"" + own + "\").");
+    } else {
+      const rows = CHATS.filter((row) => chats.some((chat) => chat.name === row[0]));
+      Object.assign(out, { vendor: chats[0].name, ai: chats.some((chat) => chat.ai) });
+      roots = rows.map((row) => row[3]).filter(Boolean).join(", ");
+      const launcher = await launcherFacts(page, rows.map((row) => row[2]).filter(Boolean), CHAT_LAUNCHER).catch(() => ({ found: false }));
+      if (!launcher.found) {
+        out.status = "no-launcher";
+        say(out.vendor + " loaded, but no launcher button was found.");
+        return out;
+      }
     }
     const handle = await page.$("[data-qa-chat]");
     let target = handle;
@@ -1244,11 +1293,14 @@ async function talk(job, log) {
     }
     const area = () => page.evaluate(chatArea, roots, CHAT_FRAME).catch(() => 0);
     const closed = await area();
-    if (target) await target.click().catch(() => target.evaluate((node) => node.click()).catch(() => {}));
+    // A site's own launcher can sit under its own tour or overlay, so it is clicked in the page rather than at its spot.
+    if (target && own) await target.evaluate((node) => node.click()).catch(() => {});
+    else if (target) await target.click().catch(() => target.evaluate((node) => node.click()).catch(() => {}));
     await wait(2500);
+    if (own && await page.evaluate(ownPane, OWN_CHAT).catch(() => false)) await wait(1000);
     const grew = (await area()) > Math.max(40000, closed * 1.5);
     let box = await findComposer(page, roots);
-    if (!box && await pressStart(page, roots)) {
+    if (!box && !own && await pressStart(page, roots)) {
       await wait(2000);
       box = await findComposer(page, roots);
     }
@@ -1257,7 +1309,12 @@ async function talk(job, log) {
       say(grew ? "The chat opened, but no message box was found in it." : "The chat did not open.");
       return out;
     }
-    say("The " + out.vendor + " chat is open. Sending a fixed script of up to " + plural(turns.filter((turn) => out.ai || !turn.ai).length, "message") + ".");
+    if (own && await box.el.evaluate(notAChat).catch(() => true)) {
+      out.status = "not-a-chat";
+      say("The site's chat button opened a contact form, not a conversation, so nothing was sent.");
+      return out;
+    }
+    say((own ? "The site's own chat" : "The " + out.vendor + " chat") + " is open. Sending a fixed script of up to " + plural(turns.filter((turn) => out.ai || !turn.ai).length, "message") + ".");
     out.status = "talked";
     const talkStart = Date.now();
     await wait(1500);
@@ -1604,4 +1661,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, open, talk, printPdf, stopForRefusal, passiveJob, typeProbe, openChat, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, open, talk, printPdf, stopForRefusal, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

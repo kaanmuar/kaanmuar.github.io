@@ -243,3 +243,29 @@ test("a comparison stands at least on the first return step and climbs the ladde
   assert.equal(offers.discountFor(1900, 1, { returns: 2, compare: true }).percent, 15);
   assert.equal(offers.discountFor(1900, 1, { returns: 0, compare: true, coupon: { code: "BIG", percent: 30 } }).source, "coupon");
 });
+
+test("a base review lists only the comparisons its owner ran from it, newest first", () => {
+  const cmp = compare.compareSites(Object.assign({}, own, { id: "ab12" }), rival);
+  const row = (id, at, extra) => Object.assign({ id, email: "ana@example.com", createdAt: at, compareWith: "ab12", report: Object.assign({}, rival, { id, compare: cmp }) }, extra);
+  const rows = [
+    row("c1", "2026-10-20T10:00:00Z"),
+    row("c2", "2026-10-24T10:00:00Z"),
+    row("c3", "2026-10-22T10:00:00Z", { email: "eve@example.com" }),
+    row("c4", "2026-10-23T10:00:00Z", { compareWith: "ff99" }),
+    { id: "c5", email: "ana@example.com", compareWith: "ab12", report: Object.assign({}, rival, { id: "c5" }) }
+  ];
+  const lines = compare.comparisonsOf(rows, "ab12", "Ana@Example.com");
+  assert.deepEqual(lines.map((line) => line.id), ["c2", "c1"]);
+  assert.deepEqual(lines[0], { id: "c2", at: "2026-10-24T10:00:00Z", baseId: "ab12", ownHost: own.host, rivalHost: rival.host, own: cmp.overall.own, rival: cmp.overall.rival, dominance: cmp.dominance });
+  assert.deepEqual(compare.comparisonsOf(rows, "ab12", ""), []);
+  assert.deepEqual(compare.comparisonsOf(rows, "", "ana@example.com"), []);
+});
+
+test("the account file names the base review of each comparison run", () => {
+  const base = { id: "ab12", email: "ana@example.com", createdAt: "2026-10-19T10:00:00Z", report: Object.assign({}, own, { id: "ab12" }) };
+  const cmp = compare.compareSites(base.report, rival);
+  const run = { id: "cd34", email: "ana@example.com", createdAt: "2026-10-24T10:00:00Z", compareWith: "ab12", report: Object.assign({}, rival, { id: "cd34", compare: cmp }) };
+  const file = offers.accountFile([base, run], "ana@example.com", Date.parse("2026-10-24T12:00:00Z"));
+  assert.equal(file.runs.find((item) => item.id === "ab12").compare, null);
+  assert.deepEqual(file.runs.find((item) => item.id === "cd34").compare, { id: "cd34", at: run.createdAt, baseId: "ab12", ownHost: own.host, rivalHost: rival.host, own: cmp.overall.own, rival: cmp.overall.rival, dominance: cmp.dominance });
+});
