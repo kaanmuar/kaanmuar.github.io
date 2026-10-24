@@ -30,7 +30,57 @@
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/02-u-mercadolibre-com-co-de.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/02-u-mercadolibre-com-co-es.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/02-u-mercadolibre-com-co-fr.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/02-u-mercadolibre-com-co-it.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/02-u-mercadolibre-com-co-pt.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/02-u-mercadolibre-com-co.jpg</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-23/01-u-pirouline-com.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-23/01-u-pirouline-com-de.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-23/01-u-pirouline-com-es.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-23/01-u-pirouline-com-fr.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-23/01-u-pirouline-com-it.html</loc>
+    <lastmod>2026-10-24</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-23/01-u-pirouline-com-pt.html</loc>
     <lastmod>2026-10-24</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/01-u-pirouline-com.jpg</image:loc></image:image>
   </url>
@@ -54,6 +104,101 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&am
     </video:video>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/02-u-epssura-com-de.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0FypyDn0reM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>epssura.com: 40. Die Lücke: Formular-Labels.</video:title>
+      <video:description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 161 Formularfelder haben kein Label.
+
+Die Lektion für jedes Team: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
+
+Eine automatisierte Analyse öffentlicher Seiten am 20. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epssura-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0FypyDn0reM</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/02-u-epssura-com-es.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0FypyDn0reM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>epssura.com: 40. El punto débil: etiquetas de formulario.</video:title>
+      <video:description>Cada página tiene título, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 161 controles de formulario no tienen etiqueta.
+
+La lección para cualquier equipo: Dale a cada campo una etiqueta visible vinculada con for e id. Los lectores de pantalla la anuncian y el área táctil crece.
+
+Un análisis automatizado de páginas públicas el 20 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epssura-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0FypyDn0reM</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/02-u-epssura-com-fr.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0FypyDn0reM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>epssura.com: 40. Le point faible : les libellés de formulaire.</video:title>
+      <video:description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 161 champs de formulaire n’ont pas de libellé.
+
+La leçon pour chaque équipe : Donnez à chaque champ un libellé visible, relié par for et id. Les lecteurs d’écran l’annoncent, et la zone tactile s’agrandit.
+
+Une analyse automatisée des pages publiques, le 20 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epssura-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0FypyDn0reM</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/02-u-epssura-com-it.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0FypyDn0reM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>epssura.com: 40. La lacuna: le label dei form.</video:title>
+      <video:description>Ogni pagina ha un titolo, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 161 controlli dei form non hanno label.
+
+La lezione per ogni team: Dai a ogni input una label visibile, collegata con for e id. Gli screen reader la annunciano e l’area di tocco cresce.
+
+Un’analisi automatica di pagine pubbliche: 20 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epssura-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0FypyDn0reM</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/02-u-epssura-com-pt.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0FypyDn0reM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>epssura.com: 40. A lacuna: rótulos de formulário.</video:title>
+      <video:description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 161 controles de formulário não têm rótulo.
+
+A lição para toda equipe: Dê a cada campo um rótulo visível ligado a ele com for e id. Leitores de tela o anunciam, e a área de toque cresce.
+
+Uma análise automatizada de páginas públicas em 20 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-epssura-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epssura-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0FypyDn0reM</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com.html</loc>
     <lastmod>2026-10-23</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg</image:loc></image:image>
@@ -66,6 +211,101 @@ The lesson for every team: Give every page a unique title of about 60 characters
 
 One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
 The full report: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uber-com
+
+#SEO #Titles #SERP #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/5b4Hr6r-cBk</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com-de.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/5b4Hr6r-cBk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>uber.com: 66. Die Lücke: Seitentitel.</video:title>
+      <video:description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 56 Seiten haben keinen Titel.
+
+Die Lektion für jedes Team: Geben Sie jeder Seite einen eindeutigen Titel mit etwa 60 Zeichen: zuerst die Seite, dann die Website.
+
+Eine automatisierte Analyse öffentlicher Seiten am 21. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uber-com
+
+#SEO #Titles #SERP #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/5b4Hr6r-cBk</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com-es.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/5b4Hr6r-cBk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>uber.com: 66. El punto débil: títulos de página.</video:title>
+      <video:description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 56 páginas no tienen título.
+
+La lección para cualquier equipo: Dale a cada página un título único de unos 60 caracteres: primero la página, después el sitio.
+
+Un análisis automatizado de páginas públicas el 21 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uber-com
+
+#SEO #Titles #SERP #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/5b4Hr6r-cBk</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com-fr.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/5b4Hr6r-cBk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>uber.com: 66. Le point faible : les titres de page.</video:title>
+      <video:description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 56 pages n’ont pas de titre.
+
+La leçon pour chaque équipe : Donnez à chaque page un titre unique d’environ 60 caractères : la page d’abord, le site ensuite.
+
+Une analyse automatisée des pages publiques, le 21 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uber-com
+
+#SEO #Titles #SERP #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/5b4Hr6r-cBk</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com-it.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/5b4Hr6r-cBk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>uber.com: 66. La lacuna: i titoli delle pagine.</video:title>
+      <video:description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 56 pagine non hanno un titolo.
+
+La lezione per ogni team: Dai a ogni pagina un titolo unico di circa 60 caratteri: prima la pagina, poi il sito.
+
+Un’analisi automatica di pagine pubbliche: 21 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uber-com
+
+#SEO #Titles #SERP #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/5b4Hr6r-cBk</video:player_loc>
+      <video:publication_date>2026-10-23</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com-pt.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/5b4Hr6r-cBk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>uber.com: 66. A lacuna: títulos de página.</video:title>
+      <video:description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 56 páginas não têm título.
+
+A lição para toda equipe: Dê a cada página um título único de cerca de 60 caracteres: primeiro a página, depois o site.
+
+Uma análise automatizada de páginas públicas em 21 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uber-com
 
 #SEO #Titles #SERP #QA #QAlab</video:description>
       <video:player_loc>https://www.youtube.com/embed/5b4Hr6r-cBk</video:player_loc>
@@ -115,6 +355,101 @@ The lesson for every team: Check your own links after each release, and fix or r
 
 One automated analysis of public pages on 19 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
 The full report: https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-teaminternational-com
+
+#SEO #BrokenLinks #QA #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/BZTtWQCzPCM</video:player_loc>
+      <video:publication_date>2026-10-22</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/01-u-teaminternational-com-de.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/BZTtWQCzPCM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>teaminternational.com: 64. Die Lücke: defekte Links.</video:title>
+      <video:description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 16 interne Links führen zu einem Fehler.
+
+Die Lektion für jedes Team: Prüfen Sie Ihre eigenen Links nach jedem Release und reparieren Sie jeden, der 404 liefert, oder leiten Sie ihn um.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-teaminternational-com
+
+#SEO #BrokenLinks #QA #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/BZTtWQCzPCM</video:player_loc>
+      <video:publication_date>2026-10-22</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/01-u-teaminternational-com-es.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/BZTtWQCzPCM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>teaminternational.com: 64. El punto débil: enlaces rotos.</video:title>
+      <video:description>Cada página tiene título, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 16 enlaces internos llevan a un error.
+
+La lección para cualquier equipo: Revisa tus enlaces tras cada lanzamiento y corrige o redirige cada uno que responda 404.
+
+Un análisis automatizado de páginas públicas el 19 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-teaminternational-com
+
+#SEO #BrokenLinks #QA #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/BZTtWQCzPCM</video:player_loc>
+      <video:publication_date>2026-10-22</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/01-u-teaminternational-com-fr.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/BZTtWQCzPCM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>teaminternational.com: 64. Le point faible : les liens cassés.</video:title>
+      <video:description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 16 liens internes mènent à une erreur.
+
+La leçon pour chaque équipe : Vérifiez vos liens après chaque mise en production, et corrigez ou redirigez tous ceux qui répondent 404.
+
+Une analyse automatisée des pages publiques, le 19 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-teaminternational-com
+
+#SEO #BrokenLinks #QA #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/BZTtWQCzPCM</video:player_loc>
+      <video:publication_date>2026-10-22</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/01-u-teaminternational-com-it.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/BZTtWQCzPCM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>teaminternational.com: 64. La lacuna: link rotti.</video:title>
+      <video:description>Ogni pagina ha un titolo, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 16 link interni portano a un errore.
+
+La lezione per ogni team: Controlla i tuoi link dopo ogni release e correggi o reindirizza quelli che rispondono 404.
+
+Un’analisi automatica di pagine pubbliche: 19 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-teaminternational-com
+
+#SEO #BrokenLinks #QA #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/BZTtWQCzPCM</video:player_loc>
+      <video:publication_date>2026-10-22</video:publication_date>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/auto-2026-10-21/01-u-teaminternational-com-pt.html</loc>
+    <lastmod>2026-10-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/BZTtWQCzPCM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>teaminternational.com: 64. A lacuna: links quebrados.</video:title>
+      <video:description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 16 links internos levam a um erro.
+
+A lição para toda equipe: Verifique seus links após cada release e corrija ou redirecione todo aquele que responder 404.
+
+Uma análise automatizada de páginas públicas em 19 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-teaminternational-com
 
 #SEO #BrokenLinks #QA #QA #QAlab</video:description>
       <video:player_loc>https://www.youtube.com/embed/BZTtWQCzPCM</video:player_loc>
