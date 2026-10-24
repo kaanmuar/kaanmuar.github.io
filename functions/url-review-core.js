@@ -2230,8 +2230,11 @@ async function sitePaths(raw) {
 async function dnsFacts(hostname) {
   const domain = registrable(hostname);
   // Only "no such data" means the record is absent; a timeout or server failure leaves it unread (null).
-  const settle = (promise) => withTimeout(promise.catch((err) => (/^(ENODATA|ENOTFOUND)$/.test(err && err.code) ? [] : null)), 5000, null);
-  const txt = (name) => settle(dns.resolveTxt(name).then((rows) => rows.map((parts) => parts.join(""))));
+  const settle = (promise, slow = null) => withTimeout(promise.catch((err) => (/^(ENODATA|ENOTFOUND)$/.test(err && err.code) ? [] : err && err.code === "ETIMEOUT" ? slow : null)), 5000, slow);
+  const read = (name, slow) => settle(dns.resolveTxt(name).then((rows) => rows.map((parts) => parts.join(""))), slow);
+  // A large TXT set falls back to TCP, which can pass the limit on a cold resolver cache, so a slow read is asked once more.
+  const SLOW = Symbol("slow");
+  const txt = (name) => read(name, SLOW).then((rows) => (rows === SLOW ? read(name) : rows));
   const [soa, root, dmarc, mx, caa, mtaSts, tlsRpt, bimi] = await Promise.all([
     withTimeout(dns.resolveSoa(domain).catch(() => null), 5000, null),
     txt(domain),
