@@ -128,10 +128,28 @@ function bump(map, key) {
   map[name] = (map[name] || 0) + 1;
 }
 
-function tally(map, limit) {
-  const keys = Object.keys(map).sort((a, b) => map[b] - map[a] || a.localeCompare(b));
+function tally(map, limit, byKey) {
+  const keys = Object.keys(map).sort(byKey ? (a, b) => a.localeCompare(b) : (a, b) => map[b] - map[a] || a.localeCompare(b));
   if (!keys.length) return "None";
   return keys.slice(0, limit || 40).map((key) => key + " " + map[key]).join(", ");
+}
+
+function plural(count, word) {
+  return count + " " + word + (count === 1 ? "" : "s");
+}
+
+function percent(part, whole) {
+  return whole ? Math.round((part / whole) * 100) + "%" : "n/a";
+}
+
+function delta(now, before, phrase, unit) {
+  const diff = Math.round((now - before) * 100) / 100;
+  return " (" + before + (unit || "") + " " + phrase + (diff ? ", " + (diff > 0 ? "+" : "") + diff : "") + ")";
+}
+
+function scoreOf(row) {
+  const score = row && row.report && row.report.insights && row.report.insights.score;
+  return score && typeof score.overall === "number" ? score : null;
 }
 
 function hostOf(row) {
@@ -140,16 +158,25 @@ function hostOf(row) {
   return clip(report.host || "", 120);
 }
 
-function money(rows) {
+// url_reviews also holds payments, owner claims and runs turned away; only runs are reviews.
+const PAYMENTS = new Set(["paid-report", "run-credit", "run-credit-used", "monthly-pass", "checkout-open"]);
+const TURNED_AWAY = new Set(["payment-due", "blocked"]);
+const REVENUE = { "paid-report": "report unlocks", "run-credit": "run credits", "monthly-pass": "passes" };
+
+// Money is read from the payment rows: an unlocked run is also marked paid, and a free run is paid at 0 USD.
+function money(payments) {
   let usd = 0;
   let paidCount = 0;
-  rows.forEach((row) => {
-    if (row.paid === true) {
-      paidCount += 1;
-      usd += Number(row.priceUsd) || 0;
-    }
+  let tests = 0;
+  const kinds = {};
+  payments.forEach((row) => {
+    if (row.paid !== true || !REVENUE[row.status]) return;
+    if (row.test) { tests += 1; return; }
+    paidCount += 1;
+    usd += Number(row.priceUsd) || 0;
+    bump(kinds, REVENUE[row.status]);
   });
-  return { usd: Math.round(usd * 100) / 100, paidCount };
+  return { usd: Math.round(usd * 100) / 100, paidCount, tests, kinds };
 }
 
 // The LinkedIn app and many mail clients send no referrer, so a tagged link names the source better.
@@ -164,7 +191,29 @@ function line(parts) {
   return parts.filter(Boolean).join(" · ");
 }
 
-function summarizePeriod(opens, reviews, captures, alerts) {
+function summarizePeriod(opens, rows, captures, alerts) {
+  const all = rows || [];
+  const claims = all.filter((row) => row.status === "owner-claim");
+  const payments = all.filter((row) => PAYMENTS.has(row.status));
+  const away = all.filter((row) => TURNED_AWAY.has(row.status));
+  const reviews = all.filter((row) => row.status !== "owner-claim" && !PAYMENTS.has(row.status) && !TURNED_AWAY.has(row.status));
+  const turnedAway = {};
+  away.forEach((row) => bump(turnedAway, row.status));
+  const checkouts = payments.filter((row) => row.status === "checkout-open").length;
+  const paidRuns = reviews.filter((row) => row.paid === true && !row.free && !row.test).length;
+  const freeRuns = reviews.filter((row) => row.free === true).length;
+  const visitors = new Set((opens || []).map((row) => row.ip).filter(Boolean)).size;
+  const scored = reviews.map(scoreOf).filter(Boolean);
+  const grades = {};
+  scored.forEach((score) => bump(grades, score.grade || "?"));
+  const askers = {};
+  reviews.forEach((row) => bump(askers, String(row.email || "").toLowerCase()));
+  const mailed = { sent: 0, pdf: 0, failed: 0, unrecorded: 0 };
+  reviews.filter((row) => row.email && (row.status === "complete" || row.status === "stopped")).forEach((row) => {
+    if (!row.mail) mailed.unrecorded += 1;
+    else if (row.mail.sent) { mailed.sent += 1; if (row.mail.pdf) mailed.pdf += 1; }
+    else mailed.failed += 1;
+  });
   const pages = {};
   const countries = {};
   const cities = {};
@@ -196,7 +245,7 @@ function summarizePeriod(opens, reviews, captures, alerts) {
     bump(reasons, row.reasonCode || "");
   });
   (captures || []).forEach((row) => bump(captureKinds, row.kind || "capture"));
-  const paid = money(reviews || []);
+  const paid = money(payments);
   const openLines = (opens || []).slice(0, 120).map((row) => line([
     bogotaLabel(whenOf(row)),
     row.page,
@@ -222,9 +271,12 @@ function summarizePeriod(opens, reviews, captures, alerts) {
       row.pages ? row.pages + " pages" : "",
       row.depth ? "depth " + row.depth : "",
       row.priceUsd != null && row.priceUsd !== "" ? String(row.priceUsd) + " USD" : "",
-      row.paid === true ? "paid" : row.paid === false ? "unpaid" : "",
+      row.free === true ? "free" : row.paid === true ? "paid" : row.paid === false ? "unpaid" : "",
+      row.test ? "test" : "",
       counts.cases != null ? counts.cases + " cases" : "",
+      scoreOf(row) ? "score " + scoreOf(row).overall + " " + (scoreOf(row).grade || "") : "",
       signals ? signals + " signals" : "",
+      row.mail ? (row.mail.sent ? "mailed" + (row.mail.pdf ? " with PDF" : " without PDF") : "mail failed: " + clip(row.mail.error, 60)) : "",
       [row.city, row.country].filter(Boolean).join(", "),
       row.reasonCode || clip(row.reason, 80)
     ]);
@@ -248,16 +300,31 @@ function summarizePeriod(opens, reviews, captures, alerts) {
     more(openLines.length, (opens || []).length, "opens"),
     reviewLines.length ? "\nReviews\n" + reviewLines.join("\n") : "\nReviews\nNone",
     more(reviewLines.length, (reviews || []).length, "reviews"),
+    payments.length ? "\nPayments\n" + payments.slice(0, 40).map((row) => line([bogotaLabel(whenOf(row)), row.status, row.email, row.reportId, row.priceUsd != null ? row.priceUsd + " USD" : "", row.provider, row.test ? "test" : ""])).join("\n") : "",
+    away.length ? "\nTurned away\n" + away.slice(0, 40).map((row) => line([bogotaLabel(whenOf(row)), row.status, row.name, row.email, hostOf(row), row.priceUsd ? row.priceUsd + " USD due" : "", clip(row.reason, 80)])).join("\n") : "",
+    claims.length ? "\nOwner claims\n" + claims.slice(0, 40).map((row) => line([bogotaLabel(whenOf(row)), hostOf(row), row.email, row.mail && !row.mail.sent ? "mail failed" : ""])).join("\n") : "",
     captureLines.length ? "\nCopies and prints\n" + captureLines.join("\n") : "",
     alertLines.length ? "\nAlerts already sent\n" + alertLines.join("\n") : ""
   ].filter(Boolean).join("\n").slice(0, 12000);
   return {
     opens: (opens || []).length,
-    reviews: (reviews || []).length,
+    visitors,
+    reviews: reviews.length,
+    claims: claims.length,
     captures: (captures || []).length,
     alerts: (alerts || []).length,
     paidUsd: paid.usd,
     paidCount: paid.paidCount,
+    paidKinds: paid.kinds,
+    testPayments: paid.tests,
+    checkouts,
+    paidRuns,
+    freeRuns,
+    turnedAway,
+    averageScore: scored.length ? Math.round(scored.reduce((sum, score) => sum + score.overall, 0) / scored.length) : null,
+    grades,
+    repeatAskers: Object.keys(askers).filter((key) => askers[key] > 1).length,
+    mailed,
     pages: pages,
     countries: countries,
     cities: cities,
@@ -275,29 +342,56 @@ function summarizePeriod(opens, reviews, captures, alerts) {
   };
 }
 
-function reportRows(summary, previous, phrase) {
+// extra: { failures: periodFailures().rows, followUp: { notes, stops, notices, unlisted, replies, redemptions }, sweep }.
+// followUp and sweep are left out of the quarter-hour report.
+function reportRows(summary, previous, phrase, extra) {
   const prior = previous || { opens: 0, reviews: 0, paidUsd: 0 };
+  const more = extra || {};
+  const follow = more.followUp;
+  const mailed = summary.mailed || { sent: 0, pdf: 0, failed: 0, unrecorded: 0 };
   const captures = String(summary.captures) + (Object.keys(summary.captureKinds).length ? " (" + tally(summary.captureKinds, 6) + ")" : "");
+  const replies = follow ? follow.replies + (follow.replies === 1 ? " reply" : " replies") : "";
   return [
-    { label: "Opens", value: String(summary.opens) },
-    { label: "Reviews", value: String(summary.reviews) },
-    { label: "Paid", value: summary.paidCount + " charges, " + summary.paidUsd + " USD" },
-    { label: "Captures", value: captures },
+    { heading: "Volume and money" },
+    { label: "Opens", value: summary.opens + delta(summary.opens, prior.opens || 0, phrase) + "; " + plural(summary.visitors || 0, "network") },
+    { label: "Reviews", value: summary.reviews + delta(summary.reviews, prior.reviews || 0, phrase) + (summary.reviews ? "; " + tally(summary.statuses) : "") + (summary.freeRuns ? "; " + summary.freeRuns + " free" : "") },
+    { label: "Turned away", value: Object.keys(summary.turnedAway || {}).length ? tally(summary.turnedAway) : "" },
+    { label: "Revenue", value: summary.paidUsd + " USD" + delta(summary.paidUsd, prior.paidUsd || 0, phrase, " USD") + " from " + plural(summary.paidCount, "payment") +
+      (summary.paidCount ? " (" + tally(summary.paidKinds || {}) + ")" : "") + (summary.testPayments ? "; " + summary.testPayments + " test not counted" : "") },
+    { label: "Checkouts", value: summary.checkouts ? summary.checkouts + " opened" : "" },
+    { label: "Conversion", value: percent(summary.reviews, summary.opens) + " of opens ran a review, " + percent(summary.paidRuns || 0, summary.reviews) + " of reviews were paid for" },
+    { label: "Scores", value: summary.averageScore == null ? "" : "average " + summary.averageScore + "; grades " + tally(summary.grades, 6, true) },
+    { label: "Repeat askers", value: summary.repeatAskers ? String(summary.repeatAskers) : "" },
+    { heading: "Delivery and follow-up" },
+    { label: "Report mails", value: mailed.sent + " sent (" + mailed.pdf + " with PDF), " + mailed.failed + " failed" + (mailed.unrecorded ? ", " + mailed.unrecorded + " not recorded" : "") },
+    { label: "Copies and prints", value: captures },
     { label: "Alerts", value: String(summary.alerts) },
-    { label: "Versus", value: "opens " + summary.opens + " vs " + prior.opens + ", reviews " + summary.reviews + " vs " + prior.reviews + ", paid " + summary.paidUsd + " vs " + prior.paidUsd + " USD (" + phrase + ")" },
-    { label: "Pages", value: tally(summary.pages) },
-    { label: "Statuses", value: tally(summary.statuses) },
-    { label: "Hosts", value: tally(summary.hosts) },
-    { label: "Frameworks", value: tally(summary.frameworks) },
-    { label: "Reasons", value: tally(summary.reasons) },
+    { label: "Follow-up notes", value: follow ? plural(follow.notes, "note") + " sent, " + follow.stops + " stopped" : "" },
+    { label: "Owner notices", value: follow ? follow.notices + " sent, " + (summary.claims || 0) + " claimed, " + follow.unlisted + " taken off Live Reports, " + replies : "" },
+    { label: "Coupons", value: follow ? follow.redemptions + " redeemed" : "" },
+    { label: "Country sweep", value: more.sweep != null ? more.sweep + " reviewed, not counted above" : "" },
+    { heading: "Failures" }
+  ].concat(more.failures || [], [
+    { heading: "Where people came from" },
+    { label: "Sources", value: tally(summary.referrers) },
     { label: "Countries", value: tally(summary.countries) },
     { label: "Cities", value: tally(summary.cities) },
     { label: "Languages", value: tally(summary.langs) },
-    { label: "Sources", value: tally(summary.referrers) },
+    { label: "Pages", value: tally(summary.pages) },
     { label: "Screens", value: tally(summary.screens) },
     { label: "Time zones", value: tally(summary.zones) },
-    { label: "Hours", value: tally(summary.hours) + " America/Bogota" }
-  ];
+    { label: "Hours", value: tally(summary.hours, 24, true) + " America/Bogota" },
+    { heading: "What was reviewed" },
+    { label: "Hosts", value: tally(summary.hosts) },
+    { label: "Frameworks", value: tally(summary.frameworks) },
+    { label: "Reasons", value: tally(summary.reasons) }
+  ]);
+}
+
+// The subject line carries the numbers, so the inbox list is the summary.
+function reportSubject(title, label, summary, failed) {
+  const parts = [plural(summary.reviews, "review"), summary.paidCount ? summary.paidUsd + " USD" : "", failed ? failed + " failed" : ""].filter(Boolean);
+  return title + " URL review — " + label + " · " + parts.join(", ");
 }
 
 module.exports = {
@@ -306,5 +400,6 @@ module.exports = {
   openSource,
   reviewUrls,
   summarizePeriod,
-  reportRows
+  reportRows,
+  reportSubject
 };

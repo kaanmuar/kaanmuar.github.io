@@ -33,6 +33,7 @@ function keepUntil() {
   return new Date(Date.now() + KEEP_MS);
 }
 const siteReport = require("./site-report-mail");
+const ownerLayout = require("./owner-mail");
 const ops = require("./ops-schedule");
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
@@ -192,16 +193,6 @@ function clipBlock(value, max) {
   return text.slice(0, max) + "…";
 }
 
-function escapeHtml(value) {
-  return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#39;"
-  }[ch]));
-}
-
 function adminRespondUrl(type, id) {
   const docId = String(id || "").trim();
   if (!docId || (type !== "message" && type !== "rating")) return "";
@@ -211,38 +202,10 @@ function adminRespondUrl(type, id) {
   return url.toString();
 }
 
-async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLabel, to, replyTo }) {
+async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLabel, to, replyTo, eyebrow }) {
   const from = prepareMail();
   if (!from) return false;
-  const safeRows = (rows || []).filter((row) => row && row.value);
-  const text = [
-    intro,
-    "",
-    ...safeRows.map((row) => row.label + ": " + row.value),
-    body ? "\n" + body : "",
-    respondUrl ? "\nRespond: " + respondUrl : ""
-  ].join("\n");
-  const rowHtml = safeRows.map((row) =>
-    "<tr>" +
-    "<td style=\"padding:8px 16px 8px 0;color:#5c6b7a;font-size:13px;vertical-align:top;white-space:nowrap;\">" + escapeHtml(row.label) + "</td>" +
-    "<td style=\"padding:8px 0;color:#1c2833;font-size:15px;\">" + escapeHtml(row.value) + "</td>" +
-    "</tr>"
-  ).join("");
-  const bodyHtml = body
-    ? "<div style=\"margin-top:16px;padding:16px;background:#f4f7f8;border-radius:8px;color:#1c2833;font-size:15px;line-height:1.5;white-space:pre-wrap;\">" + escapeHtml(body) + "</div>"
-    : "";
-  const buttonHtml = respondUrl
-    ? "<a href=\"" + escapeHtml(respondUrl) + "\" style=\"display:inline-block;margin-top:22px;background:#0e7490;color:#ffffff;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:12px 20px;border-radius:8px;\">" + escapeHtml(buttonLabel || "Respond") + "</a>"
-    : "";
-  const html = "<!DOCTYPE html><html><body style=\"margin:0;padding:24px;background:#eef2f4;font-family:Georgia,'Times New Roman',serif;\">" +
-    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;\">" +
-    "<tr><td style=\"padding:28px;\">" +
-    "<p style=\"margin:0 0 8px;font-family:Arial,sans-serif;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#0e7490;\">Carlos Muñoz CV</p>" +
-    "<h1 style=\"margin:0 0 20px;font-size:22px;line-height:1.3;color:#102027;font-weight:normal;\">" + escapeHtml(intro) + "</h1>" +
-    "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">" + rowHtml + "</table>" +
-    bodyHtml +
-    buttonHtml +
-    "</td></tr></table></body></html>";
+  const { text, html } = ownerLayout.ownerMail({ intro, rows, body, respondUrl, buttonLabel, eyebrow: eyebrow || (to === REVIEW_ALERT_TO ? "QA-lab URL Review" : "") });
   await sgMail.send(Object.assign({
     to: to || OWNER_EMAIL,
     from: from,
@@ -1006,6 +969,28 @@ function loadSummaries(name, fields, start, end) {
     .then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
 }
 
+// What went out after the reviews in a period. Single-field ranges only, so no composite index is needed.
+async function loadFollowUp(start, end) {
+  const db = admin.firestore();
+  const within = (name, field, fields) => db.collection(name).where(field, ">=", start).where(field, "<", end).select(...fields).limit(5000).get()
+    .then((snap) => snap.docs.map((doc) => doc.data()));
+  const [notes, notices, unlisted, replies, redemptions] = await Promise.all([
+    within("url_review_notes", "createdAt", ["status"]),
+    within("url_review_owner_notice_log", "sentAt", ["domain"]),
+    within("url_review_unlisted", "at", ["via"]),
+    within("url_review_owner_replies", "at", ["kind"]),
+    within("url_review_redemptions", "at", ["test"])
+  ]);
+  return {
+    notes: notes.filter((row) => row.status === "follow-note").length,
+    stops: notes.filter((row) => row.status === "follow-stop").length,
+    notices: notices.length,
+    unlisted: unlisted.length,
+    replies: replies.length,
+    redemptions: redemptions.filter((row) => !row.test).length
+  };
+}
+
 // A failure bug seen closed on GitHub is marked once, so only the open ones are asked about again.
 async function loadFailureBugs() {
   const snap = await admin.firestore().collection("url_review_failure_bugs").get();
@@ -1040,9 +1025,9 @@ async function sendReviewPeriodReport(period) {
   const id = "review-" + period + "-" + window.label.replace(/[\s:]/g, "-");
   const startStamp = admin.firestore.Timestamp.fromDate(window.start);
   const endStamp = admin.firestore.Timestamp.fromDate(window.end);
-  const [opens, reviews, captures, alerts, pageEvents, failed, priorFailed, reruns] = await Promise.all([
+  const [opens, allReviews, captures, alerts, pageEvents, failed, priorFailed, reruns] = await Promise.all([
     loadBound("url_review_opens", "createdAt", startStamp, endStamp),
-    loadBound("url_reviews", "createdAt", window.start.toISOString(), window.end.toISOString()).then(askedFor),
+    loadBound("url_reviews", "createdAt", window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_captures", "at", window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_alerts", "at", window.start.toISOString(), window.end.toISOString()),
     loadEvents(window.start, window.end).then((rows) => rows.filter((row) => row.site === "review")),
@@ -1050,6 +1035,7 @@ async function sendReviewPeriodReport(period) {
     loadSummaries("url_review_failures", ["kind", "cause"], earlier.start, window.start),
     loadSummaries("url_review_reruns", reviewFailures.RERUN_FIELDS, window.start, window.end)
   ]);
+  const reviews = askedFor(allReviews);
   if (period === "quarter" && !opens.length && !reviews.length && !captures.length && !alerts.length && !pageEvents.length) return null;
   const ref = admin.firestore().collection("url_review_reports").doc(id);
   const claimed = await admin.firestore().runTransaction(async (tx) => {
@@ -1067,6 +1053,7 @@ async function sendReviewPeriodReport(period) {
       loadBound("url_reviews", "createdAt", earlier.start.toISOString(), window.start.toISOString()).then(askedFor)
     ]);
     const previous = reviewMail.summarizePeriod(priorOpens, priorReviews, [], []);
+    const followUp = period === "quarter" ? null : await loadFollowUp(window.start.toISOString(), window.end.toISOString());
     const quiet = period === "quarter" && !failed.length && !reruns.length;
     const failures = reviewFailures.periodFailures({
       failures: failed,
@@ -1087,6 +1074,15 @@ async function sendReviewPeriodReport(period) {
       alerts: summary.alerts,
       paidUsd: summary.paidUsd,
       paidCount: summary.paidCount,
+      paidKinds: summary.paidKinds,
+      paidRuns: summary.paidRuns,
+      visitors: summary.visitors,
+      claims: summary.claims,
+      turnedAway: summary.turnedAway,
+      averageScore: summary.averageScore,
+      mailed: summary.mailed,
+      followUp: followUp,
+      sweep: allReviews.length - reviews.length,
       pages: summary.pages,
       countries: summary.countries,
       cities: summary.cities,
@@ -1107,9 +1103,14 @@ async function sendReviewPeriodReport(period) {
     const title = period === "quarter" ? "15-minute" : period.charAt(0).toUpperCase() + period.slice(1);
     const pageBody = pageEvents.length ? siteReport.reportBody(pageEvents, actionTitle) : "";
     const sent = await sendOwnerEmail({
-      subject: title + " URL review — " + window.label,
+      eyebrow: "QA-lab URL Review",
+      subject: reviewMail.reportSubject(title, window.label, summary, failures.failed),
       intro: title + " QA-lab URL Review report for " + window.label,
-      rows: reviewMail.reportRows(summary, previous, earlier.phrase).concat(quiet ? [] : failures.rows),
+      rows: reviewMail.reportRows(summary, previous, earlier.phrase, {
+        failures: quiet ? [] : failures.rows,
+        followUp,
+        sweep: period === "quarter" ? null : allReviews.length - reviews.length
+      }),
       body: [summary.body, quiet ? "" : failures.body, pageBody].filter(Boolean).join("\n\n")
     });
     if (!sent) throw new Error("URL review report email was not sent.");
@@ -1459,6 +1460,7 @@ async function mailReviewedSites(ip, source) {
     urls
   });
   await sendOwnerEmail({
+    eyebrow: "QA-lab URL Review",
     subject: "QA-lab URL Review was opened",
     intro: "Someone opened the QA-lab URL Review",
     rows: reviewMail.openRows(merged, 0)
@@ -1562,7 +1564,21 @@ async function mailReportToAsker(record) {
   if (record.status !== "complete" && record.status !== "stopped") return;
   const [stopUrl, pdf] = await Promise.all([stopLinkFor(record.email, record.lang), reportPdfFor(record)]);
   const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf });
-  await sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []);
+  await sendReportMail(record.id, () => sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []), !!pdf);
+}
+
+// The period report counts report mails from this mark, so a report that never reached the asker shows there.
+async function sendReportMail(id, send, pdf) {
+  const mark = { at: new Date().toISOString(), sent: false, pdf };
+  try {
+    mark.sent = (await send()) === true;
+    if (!mark.sent) mark.error = "mail is not configured";
+  } catch (error) {
+    mark.error = String((error && error.message) || "mail failed").slice(0, 200);
+    throw error;
+  } finally {
+    if (id) await admin.firestore().collection("url_reviews").doc(id).set({ mail: mark }, { merge: true }).catch((error) => console.error("Report mail mark failed:", error));
+  }
 }
 
 async function noteSharedOpen(ref, record) {
@@ -2990,7 +3006,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     await ref.update({ claims: admin.firestore.FieldValue.increment(1), claimedAt: at });
     const pdf = await reportPdfFor(copy);
     const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host) });
-    await sendAskerMail(email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []);
+    await sendReportMail(id, () => sendAskerMail(email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []), !!pdf);
     res.status(200).send(ownerMail.ownerPage(link.lang, "claimed", Object.assign({}, link, { email })));
     return;
   }
