@@ -521,9 +521,11 @@
         .history-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .delta { font-size: 12px; font-weight: 700; color: var(--muted); }
         .delta.up { color: var(--green); } .delta.down { color: var(--red); }
-        .compare-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 6px; }
+        .compare-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin: 10px 0 6px; }
         .compare-form label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
-        .compare-form input { flex: 1 1 240px; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: inherit; font: inherit; }
+        .compare-field { flex: 1 1 240px; min-width: 0; }
+        .compare-form .url-row { border-radius: 12px; }
+        .compare-form .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
         .compare-scroll { overflow-x: auto; margin: 10px 0 4px; }
         .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
         .compare-table th, .compare-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
@@ -1460,7 +1462,12 @@
                 <p>Run the same review on a competitor's site and see the six area scores side by side, with the open problems only one of the two sites has.</p>
                 <div class="compare-form">
                     <label for="compare-url">Competitor's address</label>
-                    <input id="compare-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="competitor.com">
+                    <div class="compare-field">
+                        <div class="url-row notranslate" id="compare-url-field">
+                            <span>https://</span>
+                            <input id="compare-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="competitor.com">
+                        </div>
+                    </div>
                     <button class="btn btn-primary" id="compare-go" type="button">Compare</button>
                 </div>
                 <p class="meta-line">Priced as a second review, with the return discount. The competitor's site gets the public, passive checks only: no chat conversation and no form sent. Like any review, its owner may get one email about it, and its scores can appear in Live Reports.</p>
@@ -1630,8 +1637,8 @@
 <script src="js/qa-review-auth.js?v=20261022h"></script>
 <script src="js/qa-review-ask.js?v=20261023b"></script>
 <script src="js/qa-review-progress.js?v=20261022c"></script>
-<script src="js/qa-review.js?v=20261031t"></script>
-<script src="js/url-suggest.js?v=20261023b"></script>
+<script src="js/qa-review.js?v=20261031u"></script>
+<script src="js/url-suggest.js?v=20261024a"></script>
 <script src="js/qa-review-live.js?v=20261029c"></script>
 </body>
 </html>

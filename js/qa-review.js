@@ -787,7 +787,7 @@
     if (!cmp) {
       result.innerHTML = sample ? '<p class="muted">Open one of your own reports to compare it with a competitor.</p>' : "";
       const stored = savedCompare();
-      document.getElementById("compare-url").value = stored && stored.id === report.id ? stored.url : "";
+      document.getElementById("compare-url").value = stored && stored.id === report.id ? String(stored.url || "").replace(/^\s*https?:\/\//i, "") : "";
       return;
     }
     const cell = (score) => score == null ? '<td class="muted">–</td>' : '<td><b style="color:' + scoreColor(score) + '">' + score + "</b></td>";
@@ -2461,11 +2461,16 @@
     if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it.", false);
   });
   document.getElementById("compare-go").addEventListener("click", startCompare);
-  document.getElementById("compare-url").addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      startCompare();
-    }
+  const compareInput = document.getElementById("compare-url");
+  compareInput.addEventListener("input", () => {
+    const next = compareInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+    if (next !== compareInput.value) compareInput.value = next;
+  });
+  compareInput.addEventListener("keydown", (event) => {
+    // Enter on a highlighted suggestion picks it (js/url-suggest.js) instead of starting the run.
+    if (event.key !== "Enter" || event.defaultPrevented || compareInput.hasAttribute("aria-activedescendant")) return;
+    event.preventDefault();
+    startCompare();
   });
 
   const WIRE_CLIPS = ["assets/wire/scan.mp4", "assets/wire/bars.mp4", "assets/wire/orbit.mp4", "assets/wire/moon.mp4", "assets/wire/pulse.mp4", "assets/wire/drift.mp4", "assets/wire/mesh.mp4", "assets/wire/ring.mp4"];

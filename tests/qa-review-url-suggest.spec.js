@@ -95,3 +95,48 @@ test.describe('URL Review page box predictions', () => {
     await expect(page.locator('#url-error')).toBeEmpty();
   });
 });
+
+test.describe('Report competitor box predictions', () => {
+  async function openCompare(page) {
+    await open(page);
+    await page.evaluate(() => {
+      document.getElementById('dash-overlay').classList.add('open');
+      document.getElementById('compare-ask').hidden = false;
+    });
+    const box = page.locator('#compare-url');
+    await expect(box).toBeVisible();
+    return box;
+  }
+
+  test('https:// sits in front of the box and a pasted scheme is dropped', async ({ page }) => {
+    const box = await openCompare(page);
+    await expect(page.locator('#compare-url-field span')).toHaveText('https://');
+    await box.fill('https://carlosandmunoz.com/pricing');
+    await expect(box).toHaveValue('carlosandmunoz.com/pricing');
+    await box.fill('http:///www.google.com');
+    await expect(box).toHaveValue('www.google.com');
+  });
+
+  test('hosts and paths are predicted, and Enter on a suggestion picks it without starting the comparison', async ({ page }) => {
+    const box = await openCompare(page);
+    await box.pressSequentially('goo');
+    await expect(page.locator('#compare-url-suggest li').first()).toHaveText('www.google.com');
+    await box.press('ArrowDown');
+    await expect(box).toHaveAttribute('aria-activedescendant', 'compare-url-opt-0');
+    await box.press('Enter');
+    await expect(box).toHaveValue('www.google.com');
+    await expect(page.locator('#compare-url-hint')).toContainText('is online and is one of the most visited sites');
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await box.fill('carlosandmunoz.com/che');
+    await expect(page.locator('#compare-url-suggest li')).toHaveText(['/checkout', '/blog/checkout-tips']);
+    await expect(page.locator('#url-suggest')).toBeHidden();
+  });
+
+  test('a misspelt competitor host offers the popular one', async ({ page }) => {
+    const box = await openCompare(page);
+    await box.fill('gogle.com');
+    await expect(page.locator('#compare-url-hint')).toContainText('does not exist');
+    await page.locator('#compare-url-hint .url-fix').click();
+    await expect(box).toHaveValue('www.google.com');
+  });
+});
