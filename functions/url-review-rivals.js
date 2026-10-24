@@ -16,6 +16,7 @@
 
 const compare = require("./url-review-compare");
 const publish = require("./url-review-publish");
+const sweep = require("./url-review-sweep");
 
 const PICK = 3;
 const MIN = 2;
@@ -24,6 +25,10 @@ const RANK_CHECKS = 6;
 const SIZE_GAP = 50;
 // An unranked domain still counts when this many results name it.
 const UNRANKED_SCORE = 4;
+// A competitor has to be named in a title or snippet at least once; a result merely hosted there is not enough.
+const NAMED_SCORE = 2;
+// Besides the country sweep's blocklist: app-piracy and download sites a post must not send people to.
+const SHADY = /apk|crack|warez|keygen|nulled|serial|downloader|y2mate|savefrom|mp3juice|1337x|piratebay|yts\b/i;
 const REVISIT_DAYS = 182;
 const TRIED_KEEP = 300;
 const KEEP_DAYS = 14;
@@ -40,7 +45,11 @@ const NOISE = [
   "twitter.com", "x.com", "tiktok.com", "pinterest.com", "threads.net", "trustpilot.com", "glassdoor.com", "indeed.com", "yelp.com",
   "tripadvisor.com", "google.com", "bing.com", "yahoo.com", "duckduckgo.com", "forbes.com", "investopedia.com", "techcrunch.com",
   "github.com", "w3.org", "schema.org", "cloudflare.com", "amazonaws.com", "gstatic.com", "googleapis.com", "bit.ly", "t.co",
-  "wordpress.com", "blogspot.com", "wix.com", "apps.apple.com", "play.google.com"
+  "wordpress.com", "blogspot.com", "wix.com", "apps.apple.com", "play.google.com",
+  "corporationwiki.com", "opencorporates.com", "bizapedia.com", "kompass.com", "emis.com", "dnb.com", "bloomberg.com", "reuters.com",
+  "yahoo.com.mx", "yahoo.co.jp", "msn.com", "aol.com", "yandex.ru", "baidu.com", "naver.com", "britannica.com", "cylex.com",
+  "paginasamarillas.com", "yellowpages.com", "infobel.com", "empresite.com", "einforma.com", "datanyze.com", "6sense.com", "apollo.io",
+  "leadiq.com", "signalhire.com", "contactout.com", "lusha.com", "wikiwand.com", "fandom.com", "scribd.com", "slideshare.net", "issuu.com"
 ];
 const GENERIC = ["com", "net", "org", "io", "co", "ai", "app", "dev", "shop", "store", "online", "site", "info", "biz", "tv", "news",
   "blog", "tech", "cloud", "digital", "media", "travel", "bank", "edu", "gov"];
@@ -58,7 +67,12 @@ function endingOk(ending) {
 }
 
 function noisy(domain) {
-  return NOISE.some((item) => domain === item || domain.endsWith("." + item));
+  return NOISE.some((item) => domain === item || domain.endsWith("." + item)) || /^yahoo\.|similar|sites?like|alternative|competitor|toplist|rankings?\b/.test(domain);
+}
+
+// Sites no post or report should send people to.
+function shady(host) {
+  return sweep.BLOCKED.test(bare(host)) || SHADY.test(bare(host));
 }
 
 // The name before the public suffix, so amazon.com and amazon.co.uk are one brand.
@@ -100,7 +114,7 @@ function tallyResults(results, ownHost, tally, registrable) {
     const hosted = registrable(bare(hostedOn));
     if (hosted && !seen.has(hosted)) seen.set(hosted, 1);
     seen.forEach((weight, domain) => {
-      if (!domain || domain === own || noisy(domain) || sameBrand(brandOf(domain, registrable), ownBrand)) return;
+      if (!domain || domain === own || noisy(domain) || shady(domain) || sameBrand(brandOf(domain, registrable), ownBrand)) return;
       const prev = tally.get(domain) || { host: domain, score: 0, first: tally.size * 100 + order };
       prev.score += weight;
       tally.set(domain, prev);
@@ -137,7 +151,7 @@ function pickRivals(candidates, ranks, ownRank) {
   const own = rankOf(ownRank);
   const rows = candidates.map((row, index) => Object.assign({}, row, { rank: rankRecord(ranks[index]) }));
   const near = (row) => own == null || rankOf(row.rank) == null ? false : Math.max(own / row.rank.rank, row.rank.rank / own) <= SIZE_GAP;
-  const withRank = rows.filter((row) => rankOf(row.rank) != null);
+  const withRank = rows.filter((row) => rankOf(row.rank) != null && row.score >= NAMED_SCORE);
   const ordered = withRank.filter(near).concat(withRank.filter((row) => !near(row)));
   const extra = rows.filter((row) => rankOf(row.rank) == null && row.score >= UNRANKED_SCORE);
   return ordered.concat(extra).slice(0, PICK).map((row) => ({ host: row.host, rank: row.rank, score: row.score }));
@@ -148,6 +162,7 @@ function pickRivals(candidates, ranks, ownRank) {
 async function findRivals(host, deps) {
   const registrable = deps.registrable;
   const own = registrable(bare(host));
+  if (shady(own)) return { ownRank: null, list: [], queries: 0 };
   const tally = new Map();
   let queries = 0;
   for (const query of queriesFor(own)) {
@@ -210,7 +225,7 @@ function socialSummary(base, records, rivals) {
 function pickBase(records, state, unlisted) {
   const tried = new Set((state && state.tried) || []);
   return (Array.isArray(records) ? records : [])
-    .filter((record) => record && record.id && record.source === "sweep" && !record.rivalsAt && !tried.has(record.id) && !publish.heldReason(record, unlisted || []))
+    .filter((record) => record && record.id && record.source === "sweep" && !record.rivalsAt && !shady(record.report && record.report.host) && !tried.has(record.id) && !publish.heldReason(record, unlisted || []))
     .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0] || null;
 }
 
@@ -250,7 +265,7 @@ function intake(host, baseHost, lang) {
 }
 
 module.exports = {
-  PICK, MIN, RANK_CHECKS, SIZE_GAP, UNRANKED_SCORE, REVISIT_DAYS, NOISE, AREAS,
-  bare, domainsIn, queriesFor, tallyResults, ranked, pickRivals, findRivals, latestPublic,
+  PICK, MIN, RANK_CHECKS, SIZE_GAP, UNRANKED_SCORE, NAMED_SCORE, REVISIT_DAYS, NOISE, AREAS,
+  bare, shady, domainsIn, queriesFor, tallyResults, ranked, pickRivals, findRivals, latestPublic,
   payload, socialSummary, pickBase, doneOn, tally, started, intake
 };
