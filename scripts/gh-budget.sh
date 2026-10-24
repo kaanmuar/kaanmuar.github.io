@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Runs gh as kaanmuar and, if GitHub answers with a rate limit, runs it again as the bot account. Every chat
-# shares kaanmuar's GraphQL budget (5,000 points an hour). A rate-limited request is not carried out, so the
-# retry is safe for mutations. Queries and board mutations can be counted in different buckets, so checking
-# rate_limit first does not predict whether a call passes.
+# Runs gh with whichever account still has GraphQL budget. Board commands (gh project ..., or GraphQL that names
+# a ProjectV2) go first as the qa-lab-agents app, whose installation on the enterprise org carlosandmunoz-hq gets
+# 10,000 points an hour (scripts/gh-app-token.js). Then as kaanmuar, which every chat shares (5,000 an hour), then
+# as the bot. A rate-limited request is not carried out, so the retry is safe for mutations. Queries and board
+# mutations can be counted in different buckets, so checking rate_limit first does not predict whether a call passes.
 #
-# The bot's classic token (scopes repo, project) is in the macOS Keychain. GitHub Apps and fine-grained tokens
-# can't reach a user-owned board, so it has to be a classic token:
+# The bot's classic token (scopes repo, project) is in the macOS Keychain:
 #   security add-generic-password -a qa-lab-bot -s qa-lab-bot -w
 #
 #   scripts/gh-budget.sh project item-edit ...     # any non-interactive gh command; output is printed at the end
@@ -13,26 +13,35 @@
 set -uo pipefail
 
 bot=$(security find-generic-password -a qa-lab-bot -s qa-lab-bot -w 2>/dev/null || true)
+app=$("$(dirname "$0")/gh-app-token.js" 2>/dev/null || true)
+me=$(gh auth token 2>/dev/null || true)
 
 if [ "${1:-}" = "--status" ]; then
-	query='.data.rateLimit | "\(.remaining) GraphQL points left, resets \(.resetAt)"'
-	echo "kaanmuar: $(gh api graphql -f query='{rateLimit{remaining resetAt}}' -q "$query" 2>&1)"
-	if [ -n "$bot" ]; then
-		echo "bot: $(GH_TOKEN="$bot" gh api graphql -f query='{rateLimit{remaining resetAt}}' -q "$query" 2>&1)"
-	else echo "bot: no token in the Keychain"; fi
+	query='.data.rateLimit | "\(.remaining)/\(.limit) GraphQL points left, resets \(.resetAt)"'
+	for who in app me bot; do
+		token=${!who}
+		if [ -n "$token" ]; then
+			echo "$who: $(GH_TOKEN="$token" gh api graphql -f query='{rateLimit{limit remaining resetAt}}' -q "$query" 2>&1)"
+		else echo "$who: no token"; fi
+	done
 	exit 0
 fi
+
+order="me bot"
+case "$*" in project* | *ProjectV2*) order="app me bot" ;; esac
 
 out=$(mktemp) err=$(mktemp)
 trap 'rm -f "$out" "$err"' EXIT
 
-status=0
-gh "$@" >"$out" 2>"$err" || status=$?
-if [ "$status" -ne 0 ] && [ -n "$bot" ] && grep -qi "rate limit" "$out" "$err"; then
-	echo "gh-budget: kaanmuar is rate limited; running as the bot" >&2
+status=1
+for who in $order; do
+	token=${!who}
+	[ -n "$token" ] || continue
 	status=0
-	GH_TOKEN="$bot" gh "$@" >"$out" 2>"$err" || status=$?
-fi
+	GH_TOKEN="$token" gh "$@" >"$out" 2>"$err" || status=$?
+	[ "$status" -ne 0 ] && grep -qi "rate limit" "$out" "$err" || break
+	echo "gh-budget: $who is rate limited; trying the next account" >&2
+done
 cat "$out"
 cat "$err" >&2
 exit "$status"
