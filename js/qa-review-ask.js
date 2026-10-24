@@ -988,7 +988,7 @@
       if (!payload) return "";
       const words = L();
       const mark = words === T.en ? "" : ' lang="' + lang() + '" translate="no"';
-      return '<button type="button" class="ask-about" data-ask-about="' + esc(id) + '" aria-label="' + esc(fill(words.askWhy, { id })) + '"' + mark + ">" + esc(words.askCard) + "</button>";
+      return '<button type="button" class="ask-about" data-ask-about="' + esc(id) + '" aria-label="' + esc(words.askCard + ": " + id) + '"' + mark + ">" + esc(words.askCard) + "</button>";
     }
 
     function show(next) {
