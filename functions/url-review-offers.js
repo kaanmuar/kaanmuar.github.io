@@ -3,6 +3,7 @@
  * A note is prepared only. Sending stays off until the asker checks the box.
  */
 const core = require("./url-review-core");
+const reviewCompare = require("./url-review-compare");
 
 const RETURN_TABLE = [
   { n: 1, percent: 10, label: "First return within 30 days" },
@@ -291,7 +292,8 @@ function customerRun(row, open) {
       layer: item.layer || "",
       title: open ? (item.title || "") : blur(item.title || "")
     })),
-    log: open ? (report.log || []).slice(-12).map((line) => line && line.text ? line.text : "") : []
+    log: open ? (report.log || []).slice(-12).map((line) => line && line.text ? line.text : "") : [],
+    compare: reviewCompare.compareLine(row)
   };
 }
 

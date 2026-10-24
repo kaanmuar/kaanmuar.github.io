@@ -9,11 +9,11 @@ const ID = 'cd34ef56ab12';
 const ANA = 'a'.repeat(64);
 const days = (start, step) => Array.from({ length: 30 }, (item, index) => ({ date: '2026-09-' + String(index + 1).padStart(2, '0'), rank: start + index * step }));
 
-async function open(page, cmp, review, file = '/qa-review.html') {
+async function open(page, cmp, review, file = '/qa-review.html', extra = {}) {
   const store = auth.memoryStore();
   const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
   const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
-  const row = { email: 'ana@example.com', paid: true, frameworks: sample.frameworks, report: Object.assign({}, sample.report, { id: ID, compare: cmp }) };
+  const row = { email: 'ana@example.com', paid: true, frameworks: sample.frameworks, report: Object.assign({}, sample.report, { id: ID, compare: cmp }, extra) };
   await page.addInitScript(({ version, session }) => {
     try {
       sessionStorage.setItem('qa-review-terms', version);
@@ -169,5 +169,36 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await expect(page.locator('#compare-error')).toContainText('did not finish: Enter a public https address. Check the address');
     await expect(page.locator('#url-field')).not.toHaveClass(/invalid/);
     await expect(page.locator('#url-error')).toHaveText('');
+  });
+
+  test('a base report links the comparisons made from it', async ({ page }) => {
+    const made = [{ id: 'ab12cd', at: '2026-10-24T10:00:00Z', baseId: ID, ownHost: sample.report.host, rivalHost: 'rival.example', own: 78, rival: 86 }];
+    const ask = await open(page, null, null, '/qa-review.html', { comparisons: made });
+    await expect(ask).toBeVisible();
+    const list = page.locator('#compare-result');
+    await expect(list).toBeVisible();
+    await expect(list.locator('.cmp-h')).toHaveText('Comparisons from this review');
+    await expect(list.locator('.cmp-made a')).toHaveAttribute('href', '?report=ab12cd');
+    await expect(list.locator('.cmp-made a')).toHaveText('rival.example');
+    await expect(list.locator('.cmp-made li')).toContainText(sample.report.host + ' 78 vs rival.example 86');
+  });
+
+  test('a comparison names its base review as a link', async ({ page }) => {
+    const cmp = compare.compareSites(Object.assign({}, own, { id: 'fe98' }), sample.report);
+    const card = await open(page, cmp);
+    await expect(card.locator('p').first().locator('a[href="?report=fe98"]')).toHaveText(own.host);
+  });
+
+  test('printed, a report with no comparison leaves the empty card out, and a comparison keeps its bar colors', async ({ page }) => {
+    await open(page, null);
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.locator('#compare')).toBeHidden();
+    await expect(page.locator('h2:has(+ #compare)')).toBeHidden();
+    await page.emulateMedia({ media: 'screen' });
+    const cmp = compare.compareSites(own, sample.report);
+    const card = await open(page, cmp);
+    await page.emulateMedia({ media: 'print' });
+    await expect(card).toBeVisible();
+    expect(await card.locator('.cmp-split i').first().evaluate((node) => getComputedStyle(node).printColorAdjust)).toBe('exact');
   });
 });
