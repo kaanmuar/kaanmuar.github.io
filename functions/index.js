@@ -1347,8 +1347,9 @@ async function fileReviewFailureBugs() {
 
 exports.fileReviewFailureBugs = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB" }), "fileReviewFailureBugs", () => fileReviewFailureBugs());
 
-// GitHub can skip scheduled runs, so this checks from outside GitHub that today's Live Reports batch
-// (auto-YYYY-MM-DD, dated in UTC) is on main or underway, and dispatches the workflow when it is neither.
+// GitHub starts scheduled runs hours late or skips them, so Cloud Scheduler starts the Live Reports batch:
+// when today's batch (auto-YYYY-MM-DD, dated in UTC) is neither on main nor underway, it dispatches the
+// workflow. The workflow's own schedule slots are the backups.
 const LIVE_REPORTS_WORKFLOW = "auto-live-reports.yml";
 
 async function githubGet(path, token) {
@@ -1380,15 +1381,7 @@ async function ensureLiveReportsBatch() {
   }
   await github(repo + "/actions/workflows/" + LIVE_REPORTS_WORKFLOW + "/dispatches", { ref: "main", inputs: { backup: "true" } }, token);
   const finished = runs.workflow_runs.map((run) => run.event + " " + run.conclusion).join(", ") || "none";
-  console.log("Live Reports watchdog: no batch auto-" + today + " on main and no run underway (today's runs: " + finished + "), so the workflow was dispatched.");
-  await sendOwnerEmail({
-    to: REVIEW_ALERT_TO,
-    subject: "Live Reports: today's batch was missing, the backup started it",
-    intro: "GitHub did not publish the auto-" + today + " Live Reports batch on schedule, so the Firebase watchdog dispatched the workflow.",
-    rows: [{ label: "Today's runs before the backup", value: finished }],
-    respondUrl: "https://github.com/" + BUG_REPO + "/actions/workflows/" + LIVE_REPORTS_WORKFLOW,
-    buttonLabel: "Open the workflow runs"
-  });
+  console.log("Live Reports watchdog: dispatched batch auto-" + today + " (today's earlier runs: " + finished + ").");
   return null;
 }
 
