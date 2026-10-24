@@ -47,6 +47,19 @@ test("clips in another language carry tags in that language", () => {
   assert.ok(!tagsFor(hsts, "linkedin", "en").includes("#Ciberseguridad"));
 });
 
+test("a review clip's TikTok caption calls to action in the clip's language", () => {
+  process.env.AUTO_BATCH = path.join(path.dirname(FILE), "no-batch.json");
+  const { captions, OWN_LINE } = require("../../scripts/tips-studio/runs-auto.js");
+  const run = { id: "r1", scope: "Requested", title: ["A *title*"], body: "Body.", action: "Lesson.", analyzed: "24 Oct 2026", tags: ["QA"], cat: "Requested" };
+  assert.match(captions(run).tiktok, /Review your own site: https:\/\/\S+\/qa-review\.html /);
+  for (const lang of ["es", "pt", "de", "fr", "it"]) {
+    const tiktok = captions(Object.assign({}, run, { lang })).tiktok;
+    assert.ok(tiktok.includes(OWN_LINE[lang] + ": "), lang);
+    assert.ok(tiktok.includes("/qa-review-" + lang + ".html "), lang);
+    assert.ok(!tiktok.includes(OWN_LINE.en), lang);
+  }
+});
+
 test("trending tags older than three days are ignored", () => {
   const stale = path.join(path.dirname(FILE), "stale.json");
   fs.writeFileSync(stale, JSON.stringify({ date: "2020-01-01", tags: [{ tag: "CyberSecurity", topic: "Security", score: 3 }] }));
