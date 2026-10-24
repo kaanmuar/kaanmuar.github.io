@@ -72,6 +72,18 @@ test.describe('Review page language', () => {
     await expect(page.locator('#charge')).toHaveText('Continuar a PayPal');
     await expect(page.locator('#charge')).toHaveAttribute('translate', 'no');
     await expect(page.locator('.actions a')).toHaveAttribute('href', 'qa-review-es.html');
+    const checkout = page.waitForRequest((request) => request.url().endsWith('/checkout') && request.method() === 'POST');
+    await page.locator('#charge').click();
+    expect((await checkout).postDataJSON().lang).toBe('es');
+  });
+
+  test('the return price ticket is written in the payment page language', async ({ page }) => {
+    await prime(page, 'es');
+    await page.route('http://127.0.0.1:8768/**', (route) => route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ cop: 62000, rate: 4100, usd: 15.2, listUsd: 19, percent: 20 }) }));
+    await page.goto('/qa-review-pay-es.html?purpose=new-run&frameworks=Playwright');
+    await expect(page.locator('.deal-eyebrow')).toHaveText('Qué bueno verte de nuevo');
+    await expect(page.locator('.deal-foot')).toContainText('Te ahorras 3.80 USD.');
+    await expect(page.locator('#pay-deal .deal')).toHaveAttribute('translate', 'no');
   });
 
   test('an English choice keeps the English payment page', async ({ page }) => {
