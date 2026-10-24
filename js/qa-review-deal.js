@@ -35,6 +35,24 @@
 @media (prefers-reduced-motion: reduce) { .deal-ticket, .deal-ticket::before, .deal-ticket::after, .deal-spark { animation: none !important; } .deal-was::after { animation: none; transform: rotate(-9deg) scaleX(1); } .deal-ticket { transform: none; } }
 `;
 
+  const COPY = {
+    en: { label: "Return price: {usd} USD instead of {list} USD", eyebrow: "Welcome back", applied: "Your return price is already applied.", earned: "Coming back pays. This price is yours.", keep: "You keep {usd} USD." },
+    es: { label: "Precio de regreso: {usd} USD en lugar de {list} USD", eyebrow: "Qué bueno verte de nuevo", applied: "Tu precio de regreso ya está aplicado.", earned: "Volver tiene premio. Este precio es tuyo.", keep: "Te ahorras {usd} USD." },
+    pt: { label: "Preço de retorno: {usd} USD em vez de {list} USD", eyebrow: "Que bom ver você de novo", applied: "Seu preço de retorno já está aplicado.", earned: "Voltar vale a pena. Este preço é seu.", keep: "Você economiza {usd} USD." },
+    de: { label: "Rückkehrpreis: {usd} USD statt {list} USD", eyebrow: "Willkommen zurück", applied: "Ihr Rückkehrpreis ist bereits angewendet.", earned: "Wiederkommen lohnt sich. Dieser Preis gilt für Sie.", keep: "Sie sparen {usd} USD." },
+    fr: { label: "Prix de retour : {usd} USD au lieu de {list} USD", eyebrow: "Bon retour", applied: "Votre prix de retour est déjà appliqué.", earned: "Revenir est récompensé. Ce prix est pour vous.", keep: "Vous économisez {usd} USD." },
+    it: { label: "Prezzo di ritorno: {usd} USD invece di {list} USD", eyebrow: "Bentornato", applied: "Il tuo prezzo di ritorno è già applicato.", earned: "Tornare conviene. Questo prezzo è tuo.", keep: "Risparmi {usd} USD." }
+  };
+
+  function copy() {
+    const lang = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
+    return COPY[lang] ? { lang, text: COPY[lang] } : { lang: "en", text: COPY.en };
+  }
+
+  function fill(text, vars) {
+    return text.replace(/\{(\w+)\}/g, (match, name) => (vars[name] != null ? vars[name] : match));
+  }
+
   function money(value) {
     const dollars = Math.round(Number(value) * 100) / 100;
     return Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2);
@@ -111,15 +129,18 @@
       return false;
     }
     addStyle();
+    const { lang, text } = copy();
     const wrap = node("div", "deal");
+    // Hand-translated copy must not be machine-translated again as if it were English.
+    if (lang !== "en") wrap.setAttribute("translate", "no");
     const ticket = node("div", "deal-ticket");
     ticket.setAttribute("role", "group");
-    ticket.setAttribute("aria-label", "Return price: " + money(usd) + " USD instead of " + money(list) + " USD");
+    ticket.setAttribute("aria-label", fill(text.label, { usd: money(usd), list: money(list) }));
     const stub = node("div", "deal-stub");
     stub.appendChild(node("span", "deal-off", "−" + percent + "%"));
     ticket.appendChild(stub);
-    ticket.appendChild(node("p", "deal-eyebrow", "Welcome back"));
-    ticket.appendChild(node("p", "deal-title", deal.coupon ? "Your return price is already applied." : "Coming back pays. This price is yours."));
+    ticket.appendChild(node("p", "deal-eyebrow", text.eyebrow));
+    ticket.appendChild(node("p", "deal-title", deal.coupon ? text.applied : text.earned));
     const prices = node("div", "deal-prices");
     const was = node("s", "deal-was", money(list) + " USD");
     const now = node("b", "deal-now");
@@ -128,7 +149,7 @@
     ticket.appendChild(prices);
     const foot = node("div", "deal-foot");
     if (deal.coupon) foot.appendChild(node("span", "deal-code notranslate", "✓ " + deal.coupon));
-    foot.appendChild(node("span", "", "You keep " + money(list - usd) + " USD."));
+    foot.appendChild(node("span", "", fill(text.keep, { usd: money(list - usd) })));
     ticket.appendChild(foot);
     for (let index = 0; index < 3; index += 1) ticket.appendChild(node("i", "deal-spark"));
     wrap.appendChild(ticket);
