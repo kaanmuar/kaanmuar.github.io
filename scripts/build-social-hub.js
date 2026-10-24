@@ -312,6 +312,18 @@ function jsonLd(lang, shown, total, copy) {
   };
 }
 
+// Topics on the visible posts, most used first.
+function topics(posts) {
+  const counts = {};
+  posts.forEach((post) => { if (post.cat) counts[post.cat] = (counts[post.cat] || 0) + 1; });
+  return Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+}
+
+// Cache key from the file itself, so a design change ships the same day as the last feed build.
+function version(file) {
+  return require("crypto").createHash("sha1").update(read(file)).digest("hex").slice(0, 10);
+}
+
 const CSP = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com; frame-src https://www.youtube-nocookie.com; form-action 'self';";
 
 function page(lang, posts, asOf) {
@@ -335,6 +347,7 @@ function page(lang, posts, asOf) {
   const kinds = ["all", "tip", "review", "launch", "video"].map((kind) =>
     "<button type=\"button\" class=\"hub-chip\" data-kind=\"" + kind + "\" aria-pressed=\"" + (kind === "all") + "\">" + esc(copy.kinds[kind]) + "</button>").join("");
   const langOptions = "<option value=\"all\">" + esc(copy.allLangs) + "</option>" + Object.entries(LANGS).map(([code, info]) => "<option value=\"" + code + "\">" + esc(info.native) + "</option>").join("");
+  const topicOptions = "<option value=\"all\">" + esc(copy.allTopics) + "</option>" + topics(visible).map((cat) => "<option value=\"" + esc(cat) + "\">" + esc(card.topic({ cat }, copy)) + "</option>").join("");
   const hubCopy = Object.assign({}, copy, { captions: CAPTIONS, lang, asOf });
   const json = (value) => JSON.stringify(value, null, 1).replace(/</g, "\\u003c");
   return `<!DOCTYPE html>
@@ -380,7 +393,7 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
     <script>SiteTheme.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/social-hub.css?v=${asOf.replace(/-/g, "")}">
+    <link rel="stylesheet" href="css/social-hub.css?v=${version("css/social-hub.css")}">
 </head>
 <body>
 <header class="topbar">
@@ -400,22 +413,25 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
         <nav class="hub-langs" aria-label="${esc(copy.language)}">${langLinks}</nav>
     </section>
     <section class="hub-tools" aria-label="${esc(copy.search)}">
-        <div class="hub-chips" role="group">${kinds}</div>
-        <label class="hub-field"><span>${esc(copy.language)}</span><select id="hub-lang">${langOptions}</select></label>
+        <div class="hub-chips" role="group" aria-label="${esc(copy.kinds.all)}">${kinds}</div>
+        <div class="hub-selects">
+            <label class="hub-field"><span>${esc(copy.language)}</span><select id="hub-lang">${langOptions}</select></label>
+            <label class="hub-field"><span>${esc(copy.topic)}</span><select id="hub-topic">${topicOptions}</select></label>
+        </div>
         <label class="hub-field hub-search"><span class="sr-only">${esc(copy.search)}</span><input id="hub-q" type="search" placeholder="${esc(copy.search)}" autocomplete="off"></label>
         <p class="hub-count" id="hub-count" aria-live="polite">${esc(copy.count.replace("{n}", visible.length))}</p>
     </section>
     <section class="hub-feed" id="hub-feed" aria-label="${esc(copy.h1)}">
 ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
     </section>
-    <p class="hub-empty" id="hub-empty" hidden>${esc(copy.empty)}</p>
+    <div class="hub-empty" id="hub-empty" hidden><p>${esc(copy.empty)}</p><button class="btn btn-ghost" id="hub-clear" type="button">${esc(copy.clear)}</button></div>
     <p class="hub-more-wrap"><button class="btn btn-primary" id="hub-more" type="button"${visible.length > PRERENDER ? "" : " hidden"}>${esc(copy.loadMore)}</button></p>
 </main>
 <footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">Legal</a> · <a href="${OUT}/rss${sfx}.xml">RSS</a> · <a href="${OUT}/feed.json">JSON feed</a></p></footer>
 <dialog class="hub-dialog" id="hub-dialog" aria-label="${esc(copy.share)}"><form method="dialog"><button class="hub-close" value="close" aria-label="${esc(copy.close)}">×</button></form><div id="hub-dialog-body"></div></dialog>
 <script>window.SocialHubCopy = ${JSON.stringify(hubCopy).replace(/</g, "\\u003c")};</script>
-<script src="js/social-hub-card.js?v=${asOf.replace(/-/g, "")}"></script>
-<script src="js/social-hub.js?v=${asOf.replace(/-/g, "")}"></script>
+<script src="js/social-hub-card.js?v=${version("js/social-hub-card.js")}"></script>
+<script src="js/social-hub.js?v=${version("js/social-hub.js")}"></script>
 </body>
 </html>
 `;
