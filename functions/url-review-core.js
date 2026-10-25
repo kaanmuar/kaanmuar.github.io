@@ -28,6 +28,9 @@ const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;
 const FIXLIST_CENTS = 500;
 const CREDENTIALS_CENTS = 3900;
+// A comparison is a flat 9 USD for each competitor run, with no return discount; the report holds five competitors.
+const COMPARE_CENTS = 900;
+const MAX_COMPETITORS = 5;
 
 // The full report: 19 USD for the first framework or tool, 5 USD for each one after it.
 function itemCents(index) {
@@ -113,6 +116,7 @@ function priceMatches(usd) {
     DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
   });
   if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
+  if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
   const lists = [CREDENTIALS_CENTS];
   for (let count = 1; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     const base = unitCents(count);
@@ -638,8 +642,47 @@ function budgetMs(pages) {
   return Math.min(TOTAL_MS, 15000 + Number(pages) * 1500);
 }
 
+// The frameworks, tools and scope are kept so the credit it buys matches the comparison runs; none of them adds to the price.
+function priceForCompare(options) {
+  const src = options || {};
+  const scope = priceForScope(src.pages, src.depth);
+  const frameworks = normalizeFrameworks(src.frameworks);
+  const tools = normalizeTools(src.tools);
+  if (!frameworks.length) {
+    const error = new Error("Choose at least one framework.");
+    error.status = 400;
+    throw error;
+  }
+  const competitors = src.competitors == null || src.competitors === "" ? 1 : Number(src.competitors);
+  if (!Number.isInteger(competitors) || competitors < 1 || competitors > MAX_COMPETITORS) {
+    const error = new Error("Compare with one to " + MAX_COMPETITORS + " competitors.");
+    error.status = 400;
+    throw error;
+  }
+  const cents = COMPARE_CENTS * competitors;
+  return {
+    billing: "compare",
+    frameworks,
+    tools,
+    pages: scope.pages,
+    depth: scope.depth,
+    count: competitors,
+    competitors,
+    eachUsd: COMPARE_CENTS / 100,
+    frameworkUsd: 0,
+    discount: [],
+    scopeUsd: 0,
+    pageUsd: 0,
+    depthUsd: 0,
+    cents,
+    usd: cents / 100
+  };
+}
+
+// A run with compareWith is a comparison, whatever billing the asker sends.
 function priceForRun(options) {
   const src = options || {};
+  if (src.compareWith) return priceForCompare(src);
   const scope = priceForScope(src.pages, src.depth);
   const billing = src.billing === "scope" ? "scope" : "run";
   const frameworks = normalizeFrameworks(src.frameworks);
@@ -740,7 +783,7 @@ function chargedUsd(options) {
   }
   const cents = Math.round(usd * 100);
   if (cents === priced.cents) return priced;
-  const floor = purpose === "fixlist" ? priced.cents : floorCents(priced.cents);
+  const floor = purpose === "fixlist" || priced.billing === "compare" ? priced.cents : floorCents(priced.cents);
   if (!(cents < priced.cents && cents >= floor)) {
     const error = new Error("The discount on this charge is out of range. No charge was made.");
     error.status = 400;
@@ -755,15 +798,27 @@ function sameScope(row, scope) {
   return pages === scope.pages && depth === scope.depth;
 }
 
+function rowsOf(rows, identity) {
+  const deviceId = identity && identity.deviceId;
+  const ip = identity && identity.ip;
+  return (rows || []).filter((row) => row && (row.deviceId === deviceId || (ip && row.ip === ip)));
+}
+
+// How the next plain run of this browser or network is billed: before any finished run only a wider or
+// deeper read is paid ("scope"); after one, frameworks, tools and scope are ("run").
+function standingFor(rows, identity) {
+  const completed = rowsOf(rows, identity).some((row) => row.status === "complete");
+  return { billing: completed ? "run" : "scope" };
+}
+
 function judgeAttempts(rows, identity, request) {
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
-  const deviceId = identity && identity.deviceId;
   const frameworks = Array.isArray(request) ? request : (request && request.frameworks);
   const tools = !Array.isArray(request) && request ? request.tools : [];
   const askedPages = !Array.isArray(request) && request && request.pages != null ? request.pages : INCLUDED_PAGES;
   const askedDepth = !Array.isArray(request) && request && request.depth != null ? request.depth : INCLUDED_DEPTH;
-  const mine = (rows || []).filter((row) => row && (row.deviceId === deviceId || (identity.ip && row.ip === identity.ip)));
+  const mine = rowsOf(rows, identity);
   const stops = mine.filter((row) => row.status === "stopped" && now - Date.parse(row.createdAt || 0) < day);
   if (stops.length >= 3) {
     return { ok: false, code: "stopped", message: "This browser or network stopped three reviews in the last day." };
@@ -780,19 +835,20 @@ function judgeAttempts(rows, identity, request) {
   const compareWith = !Array.isArray(request) && request ? String(request.compareWith || "") : "";
   // A credit bought for a comparison pays for that comparison only, and a plain credit never pays for one.
   const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope) && String(row.compareWith || "") === compareWith);
-  // A comparison is priced as a second review, whichever device ran the first.
+  // A comparison is 9 USD for each competitor, whichever device ran the first review.
   const compare = !!compareWith;
-  const completed = compare || mine.some((row) => row.status === "complete");
-  if (!completed && scope.cents === 0) return { ok: true };
+  const billing = standingFor(mine, identity).billing;
+  if (!compare && billing === "scope" && scope.cents === 0) return { ok: true };
   if (credit) return { ok: true, consumeId: credit.id };
-  const billing = completed ? "run" : "scope";
-  const priced = priceForRun({ frameworks, tools, pages: scope.pages, depth: scope.depth, billing });
+  const priced = compare
+    ? priceForCompare({ frameworks, tools, pages: scope.pages, depth: scope.depth })
+    : priceForRun({ frameworks, tools, pages: scope.pages, depth: scope.depth, billing });
   return {
     ok: false,
     code: "payment",
     message: compare
-      ? "A comparison is priced as a second review and asks for payment before it starts."
-      : completed
+      ? "A comparison is 9 USD for each competitor and asks for payment before it starts."
+      : billing === "run"
         ? "Another review asks for payment before it starts."
         : "A wider or deeper review asks for payment before it starts.",
     priceUsd: priced.usd,
@@ -4214,6 +4270,8 @@ module.exports = {
   PRICE_PER_FRAMEWORK,
   EXTRA_FRAMEWORK_USD,
   FIXLIST_CENTS,
+  COMPARE_CENTS,
+  MAX_COMPETITORS,
   centsForIndex,
   scheduleCents,
   itemCents,
@@ -4226,6 +4284,7 @@ module.exports = {
   priceForLayers,
   priceForScope,
   priceForRun,
+  priceForCompare,
   chargedUsd,
   priceMatches,
   paypalPaid,
@@ -4285,6 +4344,7 @@ module.exports = {
   startCheckout,
   inspectPayment,
   judgeAttempts,
+  standingFor,
   reviewTarget,
   journeys,
   toolsForPage,

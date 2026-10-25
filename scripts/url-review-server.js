@@ -592,6 +592,14 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true }, origin, deviceHint);
     return;
   }
+  if (req.method === "POST" && url.pathname === "/standing") {
+    let standingBody = {};
+    try { standingBody = await readBody(req); } catch (error) { standingBody = {}; }
+    const standing = core.standingFor(readStore(), { deviceId: deviceFrom(req, standingBody), ip: clientIp(req) });
+    // This server has no free accounts and charges no return step, so it reports neither.
+    sendJson(res, 200, { billing: standing.billing, free: false, percent: 0, compareUsd: core.COMPARE_CENTS / 100 }, origin, deviceHint);
+    return;
+  }
   if (req.method === "GET" && url.pathname === "/checkout/quote") {
     try {
       const layerQuery = url.searchParams.get("layers");
@@ -611,7 +619,9 @@ const server = http.createServer(async (req, res) => {
             tools: url.searchParams.get("tools") || "",
             pages: pageQuery,
             depth: url.searchParams.get("depth"),
-            billing: url.searchParams.get("billing") || ""
+            billing: url.searchParams.get("billing") || "",
+            compareWith: compare.cleanId(url.searchParams.get("compareWith")),
+            competitors: url.searchParams.get("competitors")
           })
           : core.priceFor(url.searchParams.get("frameworks") || "", url.searchParams.get("tools") || "");
       if (purposeQuery === "report" && url.searchParams.get("reportId")) {
@@ -633,6 +643,8 @@ const server = http.createServer(async (req, res) => {
         scopeUsd: priced.scopeUsd,
         pageUsd: priced.pageUsd,
         depthUsd: priced.depthUsd,
+        competitors: priced.competitors,
+        eachUsd: priced.eachUsd,
         perFramework: priced.each,
         creditUsd: priced.creditUsd || 0
       }, origin, deviceHint);
@@ -681,7 +693,9 @@ const server = http.createServer(async (req, res) => {
             tools: payBody.tools,
             pages: payBody.pages,
             depth: payBody.depth,
-            billing: payBody.billing
+            billing: payBody.billing,
+            compareWith: purpose === "new-run" ? compare.cleanId(payBody.compareWith) : "",
+            competitors: payBody.competitors
           });
       const session = await core.startCheckout(Object.assign({
         provider: choice,
@@ -695,6 +709,8 @@ const server = http.createServer(async (req, res) => {
         pages: priced.pages,
         depth: priced.depth,
         billing: priced.billing,
+        compareWith: purpose === "new-run" ? compare.cleanId(payBody.compareWith) : "",
+        competitors: priced.competitors,
         alertCount: priced.alertCount,
         priceUsd: priced.usd,
         creditCents,
@@ -719,6 +735,7 @@ const server = http.createServer(async (req, res) => {
         depth: priced.depth || null,
         billing: priced.billing || "",
         compareWith: purpose === "new-run" ? compare.cleanId(payBody.compareWith) : "",
+        competitors: priced.competitors || null,
         priceUsd: priced.usd,
         amount: session.amount,
         currency: session.currency,
@@ -764,6 +781,7 @@ const server = http.createServer(async (req, res) => {
       let frameworks = result.frameworks || [];
       let priceUsd = result.amount || 0;
       let compareWith = "";
+      let competitors = 1;
       if (choice !== "stripe") {
         const open = readStore().find((row) => row && row.status === "checkout-open" && row.reference === result.reference);
         const sameLink = !result.linkId || (open && open.externalId === result.linkId);
@@ -781,9 +799,10 @@ const server = http.createServer(async (req, res) => {
         result.pages = open.pages;
         result.depth = open.depth;
         result.billing = open.billing;
+        if (compareWith && open.billing === "compare") competitors = Math.max(1, Math.min(core.MAX_COMPETITORS, Number(open.competitors) || 1));
       }
       const addon = offers.ADDONS.indexOf(purpose) !== -1;
-      writeRecord({
+      const paidRow = {
         id: purpose === "report" && reportId ? "paid-report-" + reportId : addon ? "paid-" + purpose + "-" + (result.reference || crypto.randomBytes(9).toString("hex")) : crypto.randomBytes(9).toString("hex"),
         status: purpose === "report" && reportId ? "paid-report" : addon ? "paid-addon" : "run-credit",
         purpose,
@@ -803,7 +822,12 @@ const server = http.createServer(async (req, res) => {
         priceUsd,
         amount: result.amount,
         currency: result.currency
-      });
+      };
+      // One comparison checkout leaves a credit for each competitor; the first carries the payment.
+      writeRecord(competitors > 1 ? Object.assign({}, paidRow, { competitors }) : paidRow);
+      for (let n = 2; n <= competitors; n += 1) {
+        writeRecord(Object.assign({}, paidRow, { id: crypto.randomBytes(9).toString("hex"), priceUsd: 0, amount: 0, paidWith: paidRow.id, competitors }));
+      }
       sendJson(res, 200, { paid: true, purpose }, origin, deviceId);
     } catch (error) {
       sendJson(res, error.status || 502, { paid: false, error: error.message || "The payment could not be confirmed." }, origin, deviceId);

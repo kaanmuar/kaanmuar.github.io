@@ -64,11 +64,10 @@ function applyReturn(cents, count, n) {
 }
 
 // The better of the return ladder and a coupon; they never stack, and the price never falls below half the list.
-// A comparison is a second review, so it stands at least on the first return step.
 function discountFor(cents, count, options) {
   const opts = options || {};
   const list = Math.max(0, Math.round(Number(cents) || 0));
-  const ladder = returnPercent(opts.compare ? Math.max(1, Math.round(Number(opts.returns) || 0)) : opts.returns);
+  const ladder = returnPercent(opts.returns);
   const offered = opts.coupon ? Math.max(0, Math.min(50, Math.round(Number(opts.coupon.percent) || 0))) : 0;
   const percent = Math.max(ladder, offered);
   const floor = core.floorCents(list);

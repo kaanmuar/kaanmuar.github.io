@@ -2492,21 +2492,13 @@ async function runsForEmail(email) {
   return snap.docs.map((doc) => doc.data());
 }
 
+// A first run's wider read and a comparison keep their list price: no return step and no code.
 async function returnPrice(priced, opts) {
   const cents = Math.round(Number(priced.usd) * 100);
-  if (priced.billing === "scope") return reviewOffers.discountFor(cents, priced.count, {});
+  if (priced.billing === "scope" || priced.billing === "compare") return reviewOffers.discountFor(cents, priced.count, {});
   const coupon = await couponFor(opts.coupon, opts.purpose, opts.reportId, opts.email);
   const rows = opts.rows || (opts.purpose === "report" ? await runsForEmail(opts.email) : await reviewRowsFor(opts.deviceId, opts.ip));
-  return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon, compare: !!opts.compare });
-}
-
-// At checkout the comparison discount holds only for a base review run on the paying device.
-async function comparesFrom(id, deviceId) {
-  const key = reviewCompare.cleanId(id);
-  const device = String(deviceId || "").slice(0, 16);
-  if (!key || !device) return false;
-  const snap = await admin.firestore().collection("url_reviews").doc(key).get();
-  return snap.exists && !!snap.get("report.insights") && String(snap.get("deviceId") || "").slice(0, 16) === device;
+  return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon });
 }
 
 function dealFields(deal) {
@@ -2731,8 +2723,14 @@ async function fulfillPayment(result, ctx) {
       currency: result.currency,
       expireAt: urlReview.paymentExpireAt()
     };
-    await admin.firestore().collection("url_reviews").doc("credit-" + result.reference).set(credit);
-    await rememberReview("run-paid", Object.assign({ via }, credit));
+    // One comparison checkout pays for each competitor run: one credit per competitor, each tied to the base review.
+    // The first credit carries the payment; the others name it, so the amount is counted once.
+    const competitors = paidCompare && open.billing === "compare" ? Math.max(1, Math.min(urlReview.MAX_COMPETITORS, Number(open.competitors) || 1)) : 1;
+    await admin.firestore().collection("url_reviews").doc("credit-" + result.reference).set(competitors > 1 ? Object.assign({}, credit, { competitors }) : credit);
+    for (let n = 2; n <= competitors; n += 1) {
+      await admin.firestore().collection("url_reviews").doc("credit-" + result.reference + "-" + n).set(Object.assign({}, credit, { priceUsd: 0, amount: 0, paidWith: "credit-" + result.reference, competitors }));
+    }
+    await rememberReview("run-paid", Object.assign({ via }, credit, competitors > 1 ? { competitors } : {}));
   }
   await closeCheckout(paidPurpose);
   return { code: 200, body: { paid: true, purpose: paidPurpose } };
@@ -3733,6 +3731,28 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     res.status(200).json({ ok: true });
     return;
   }
+  // How this browser's next run is billed, read once on load and on each sign-in change; it prices nothing.
+  if (req.method === "POST" && pathName.indexOf("/standing") !== -1) {
+    try {
+      const body = req.body || {};
+      const signedIn = body.session ? await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), Object.assign({}, body, { touch: false })) : { ok: false };
+      const free = signedIn.ok ? await hasFreeRuns(signedIn.email) : false;
+      const deviceId = String(body.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+      const ip = req.ip || "";
+      const rows = free ? [] : await reviewRowsFor(deviceId, ip);
+      const standing = urlReview.standingFor(rows, { deviceId, ip });
+      res.status(200).json({
+        billing: standing.billing,
+        free,
+        percent: !free && standing.billing === "run" ? reviewOffers.returnPercent(reviewOffers.returnsBefore(rows)) : 0,
+        compareUsd: urlReview.COMPARE_CENTS / 100
+      });
+    } catch (error) {
+      console.error("Standing lookup failed:", error);
+      res.status(502).json({ error: "How this run is billed could not be read." });
+    }
+    return;
+  }
   if (req.method === "GET" && pathName.indexOf("/checkout/quote") !== -1) {
     try {
       let priced = req.query.purpose === "fixlist"
@@ -3749,7 +3769,9 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
             tools: String(req.query.tools || ""),
             pages: req.query.pages,
             depth: req.query.depth,
-            billing: String(req.query.billing || "")
+            billing: String(req.query.billing || ""),
+            compareWith: reviewCompare.cleanId(req.query.compareWith),
+            competitors: req.query.competitors
           })
           : urlReview.priceFor(String(req.query.frameworks || ""), String(req.query.tools || ""));
       const quotePurpose = req.query.purpose === "report" ? "report" : (req.query.pages && !req.query.layers ? "new-run" : "");
@@ -3770,8 +3792,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           before: owner.createdAt,
           coupon: req.query.coupon,
           deviceId: quoteDevice,
-          ip: req.ip || "",
-          compare: quotePurpose === "new-run" && req.query.compareWith ? await comparesFrom(req.query.compareWith, quoteDevice) : false
+          ip: req.ip || ""
         });
       }
       const quote = await urlReview.copQuote(deal ? deal.usd : priced.usd);
@@ -3790,6 +3811,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         scopeUsd: priced.scopeUsd,
         pageUsd: priced.pageUsd,
         depthUsd: priced.depthUsd,
+        competitors: priced.competitors,
+        eachUsd: priced.eachUsd,
         perFramework: priced.each,
         creditUsd: priced.creditUsd || 0
       }, dealFields(deal)));
@@ -3854,17 +3877,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       } else if (purpose === "report") {
         creditCents = urlReview.creditFor(reportData);
         priced = urlReview.priceForReport((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools), creditCents);
-      } else {
+      }
+      const compareWith = purpose === "new-run" && req.body ? reviewCompare.cleanId(req.body.compareWith) : "";
+      if (!priced) {
         priced = urlReview.priceForRun({
           frameworks: (req.body && req.body.frameworks) || [],
           tools: req.body && req.body.tools,
           pages: req.body && req.body.pages,
           depth: req.body && req.body.depth,
-          billing: req.body && req.body.billing
+          billing: req.body && req.body.billing,
+          compareWith,
+          competitors: req.body && req.body.competitors
         });
       }
       let deal = null;
-      const compareWith = purpose === "new-run" && req.body ? reviewCompare.cleanId(req.body.compareWith) : "";
       if (purpose === "report" || purpose === "new-run") {
         deal = await returnPrice(priced, {
           purpose,
@@ -3873,8 +3899,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           before: reportData.createdAt,
           coupon: req.body && req.body.coupon,
           deviceId,
-          ip: req.ip || "",
-          compare: compareWith ? await comparesFrom(compareWith, deviceId) : false
+          ip: req.ip || ""
         });
       }
       const listUsd = priced.usd;
@@ -3897,6 +3922,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         pages: priced.pages,
         depth: priced.depth,
         billing: priced.billing,
+        compareWith,
+        competitors: priced.competitors,
         alertCount: priced.alertCount,
         priceUsd: priced.usd,
         listUsd,
@@ -3922,6 +3949,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         depth: priced.depth || null,
         billing: priced.billing || "",
         compareWith,
+        competitors: priced.competitors || null,
         priceUsd: priced.usd,
         creditUsd: creditCents / 100,
         amount: session.amount,
@@ -4153,8 +4181,7 @@ async function runReview(req, res, placeOf) {
     const deal = await returnPrice({ usd: decision.priceUsd, count: decision.count, billing: decision.billing }, {
       purpose: "new-run",
       rows: priorRows,
-      coupon: req.body && req.body.coupon,
-      compare: !!base
+      coupon: req.body && req.body.coupon
     });
     Object.assign(decision, { priceUsd: deal.usd }, dealFields(deal));
   }
