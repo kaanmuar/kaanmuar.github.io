@@ -3060,3 +3060,15 @@ test("PayPal returns the payer to the payment page in the language they paid fro
   assert.equal(core.payPage("../x"), "qa-review-pay.html");
   assert.equal(core.payPage(undefined), "qa-review-pay.html");
 });
+
+test("technologies come from the site's own markup, not from words, prose attributes, JSON-LD or links to other sites", () => {
+  const names = (html) => core.analyzeHtml(html, { "content-type": "text/html" }, "https://www.example.com/").technologies.map((item) => item.name);
+  const prose = "<html><head><meta name=\"description\" content=\"We left Wix for a static site\"><script type=\"application/ld+json\">{\"description\":\"Shopify alternative\"}</script></head><body>" +
+    "<p>Compare Squarespace, Webflow and Joomla.</p><img src=\"/a.png\" alt=\"Built with Svelte\">" +
+    "<a href=\"https://www.cancilleria.gov.co/sites/default/files/decreto.pdf\">Decree</a><a href=\"https://wordpress.org/wp-content/x\">WP</a><a href=\"/case-study/from-squarespace-to-drupal\">Case</a>" +
+    "<script>const note = 'The domain moved because of Squarespace.'; const legal = { es: \"Ver <a href=\\\"https://x.gov.co/sites/default/files/d.pdf\\\">el decreto</a>\" };</script></body></html>";
+  assert.deepEqual(names(prose).filter((name) => /Wix|Shopify|Squarespace|Webflow|Joomla|Svelte|Drupal|WordPress/.test(name)), []);
+  const own = "<html><head><meta name=\"generator\" content=\"WordPress 6.6\"><!-- This is Squarespace. --><script>Shopify.theme = {\"name\":\"Dawn\"};</script></head><body>" +
+    "<a href=\"/sites/default/files/menu.pdf\">Menu</a><a href=\"https://shop.example.com/wp-content/a.pdf\">A</a></body></html>";
+  assert.deepEqual(names(own).filter((name) => /Shopify|Squarespace|Drupal|WordPress/.test(name)).sort(), ["Drupal", "Shopify", "Squarespace", "WordPress"]);
+});

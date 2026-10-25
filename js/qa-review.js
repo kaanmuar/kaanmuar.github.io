@@ -799,15 +799,10 @@
     if (!slotRoot) document.getElementById("print-mark").textContent = "";
   }
 
-  const VERDICT_LABEL = { fail: "Fails now", risk: "At risk", pass: "Passes", person: "Needs a person" };
-  const AREA_NOTE = {
-    SEO: "Indexing, sitemap, titles, structured data",
-    GEO: "How AI answers can read and cite the site",
-    Analytics: "Tags, consent, chat widgets, privacy notice, imprint",
-    Security: "Headers, TLS, DNS, mail transport, domain, Safe Browsing, libraries",
-    Accessibility: "Markup, axe-core, phone layout, chat launcher, accessibility statement",
-    Performance: "Speed, weight, paint, layout shift, chat weight"
-  };
+  const cc = window.QAReviewCompareCopy;
+  const VERDICT_LABEL = { fail: cc.verdict("fail"), risk: cc.verdict("risk"), pass: cc.verdict("pass"), person: cc.verdict("person") };
+  const AREA_NOTE = {};
+  ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"].forEach((name) => { AREA_NOTE[name] = cc.areaNote(name); });
   let findingFilter = { area: "All", verdict: "open" };
 
   // The section painters draw into the report on this page, or, while slotRoot is set, into one column
@@ -889,9 +884,9 @@
         const area = areas[name] || { score: 0, grade: "F", fail: 0, risk: 0, pass: 0 };
         const past = current && current.report && current.report.history && current.report.history.areas && current.report.history.areas[name];
         const moved = past ? area.score - past.before : 0;
-        return '<button type="button" class="area" data-area="' + esc(name) + '"><div class="area-score"><span><b>' + area.score + "</b> " + esc(name) + (moved ? ' <span class="delta ' + (moved > 0 ? "up" : "down") + '" title="Change since your last review">' + (moved > 0 ? "+" : "") + moved + "</span>" : "") + '</span><span class="grade grade-' + esc(area.grade) + '">' + esc(area.grade) + "</span></div>" +
+        return '<button type="button" class="area" data-area="' + esc(name) + '"><div class="area-score"><span><b>' + area.score + "</b> " + esc(cc.area(name)) + (moved ? ' <span class="delta ' + (moved > 0 ? "up" : "down") + '" title="Change since your last review">' + (moved > 0 ? "+" : "") + moved + "</span>" : "") + '</span><span class="grade grade-' + esc(area.grade) + '">' + esc(area.grade) + "</span></div>" +
           '<div class="bar"><i style="width:' + area.score + "%;background:" + scoreColor(area.score) + '"></i></div>' +
-          "<small>" + area.fail + " fail · " + area.risk + " at risk · " + area.pass + " pass — " + esc(AREA_NOTE[name]) + "</small></button>";
+          "<small>" + esc(cc.t("areaCounts", { fail: area.fail, risk: area.risk, pass: area.pass })) + " — " + esc(AREA_NOTE[name]) + "</small></button>";
       }).join("") + "</div></article>";
     slot("health").querySelectorAll(".area").forEach((button) => {
       button.addEventListener("click", () => {
@@ -927,7 +922,6 @@
       '<div class="exec-cols history-cols"><div><h3>Fixed since then</h3>' + list(history.fixed, history.fixedCount) + "</div><div><h3>New since then</h3>" + list(history.fresh, history.freshCount) + "</div></div></div>";
   }
 
-  const cc = window.QAReviewCompareCopy;
   const strong = (text) => "<strong>" + esc(text) + "</strong>";
 
   function paintCompare(report, sample) {
@@ -1556,7 +1550,7 @@
       '<p class="meta-line">' + (sev.critical || 0) + " critical · " + (sev.high || 0) + " high · " + (sev.medium || 0) + " medium · " + (sev.low || 0) + " low · " +
       read + " page" + (read === 1 ? "" : "s") + " analyzed" + (found ? " of " + found + " found" : "") + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
       '<div class="exec-cols"><div><h3>Biggest risks</h3>' + list(risks) + "</div><div><h3>Quick wins</h3>" + list(quick) + "</div><div><h3>Already solid</h3>" +
-      (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(name) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">No area scores B or better yet.</p>') + "</div></div>" +
+      (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(cc.area(name)) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">No area scores B or better yet.</p>') + "</div></div>" +
       (slotRoot ? "" : '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">Print this summary</button></p>');
     if (!slotRoot) document.getElementById("print-exec").addEventListener("click", () => {
       spend("print", () => {
