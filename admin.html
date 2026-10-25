@@ -695,7 +695,7 @@
     // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, multiFactor, TotpMultiFactorGenerator, getMultiFactorResolver, sendEmailVerification, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, getDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, getDoc, getCountFromServer, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
     import { createCvEditor } from "./js/cv-editor.js?v=20260928c";
     import { createHubEditor } from "./js/social-hub-editor.js?v=20261024c";
@@ -1752,10 +1752,19 @@
     // Same rule as openSource in functions/url-review-mail.js, so admin, the site report, and the period mail agree.
     function reviewOpenSource(row) {
         let tagged = '';
-        try { tagged = new URLSearchParams(String(row.query || '')).get('utm_source') || ''; } catch (error) { tagged = ''; }
-        if (tagged) return tagged.toLowerCase().slice(0, 40) + ' (tagged link)';
+        let campaign = '';
+        try {
+            const params = new URLSearchParams(String(row.query || ''));
+            tagged = params.get('utm_source') || '';
+            campaign = params.get('utm_campaign') || '';
+        } catch (error) { tagged = ''; }
+        if (tagged) return tagged.toLowerCase().slice(0, 40) + (campaign ? ' / ' + campaign.toLowerCase().slice(0, 40) : '') + ' (tagged link)';
         return row.referrerHost || 'Direct';
     }
+
+    // Breakdowns read at most this many rows per range; the Opens and Reviews totals are server counts.
+    const REVIEW_ROWS = 2000;
+    let reviewActivityLoad = 0;
 
     async function loadReviewActivity() {
         const host = document.getElementById('review-kpis');
@@ -1764,15 +1773,24 @@
         const start = new Date();
         if (range === 'all') start.setFullYear(start.getFullYear() - 5);
         else start.setDate(start.getDate() - Number(range));
+        const load = ++reviewActivityLoad;
+        const stale = () => load !== reviewActivityLoad;
         const paint = (id, map) => {
             const node = document.getElementById(id);
             if (node) node.innerHTML = siteBars(map);
         };
+        // url_review_opens stores a Timestamp and url_reviews an ISO string.
+        const opensQuery = (from, to) => query(collection(db, 'url_review_opens'), where('createdAt', '>=', from), ...(to ? [where('createdAt', '<', to)] : []));
+        const reviewsQuery = (from, to) => query(collection(db, 'url_reviews'), where('createdAt', '>=', from.toISOString()), ...(to ? [where('createdAt', '<', to.toISOString())] : []));
+        const count = async (q) => (await getCountFromServer(q)).data().count;
         try {
-            const [openSnap, reviewSnap] = await Promise.all([
-                getDocs(query(collection(db, 'url_review_opens'), where('createdAt', '>=', start), orderBy('createdAt', 'desc'), limit(500))),
-                getDocs(query(collection(db, 'url_reviews'), where('createdAt', '>=', start.toISOString()), orderBy('createdAt', 'desc'), limit(500)))
+            const [openSnap, reviewSnap, openTotal, reviewTotal] = await Promise.all([
+                getDocs(query(opensQuery(start), orderBy('createdAt', 'desc'), limit(REVIEW_ROWS))),
+                getDocs(query(reviewsQuery(start), orderBy('createdAt', 'desc'), limit(REVIEW_ROWS))),
+                count(opensQuery(start)),
+                count(reviewsQuery(start))
             ]);
+            if (stale()) return;
             const opens = openSnap.docs.map((item) => item.data());
             const reviews = reviewSnap.docs.map((item) => item.data());
             const pages = {}, countries = {}, cities = {}, langs = {}, referrers = {}, screens = {}, statuses = {}, hosts = {}, frameworks = {};
@@ -1797,7 +1815,7 @@
                     paidUsd += Number(row.priceUsd) || 0;
                 }
             });
-            const cards = [['Opens', opens.length], ['Reviews', reviews.length], ['Paid', paid + ' · ' + (Math.round(paidUsd * 100) / 100) + ' USD']];
+            const cards = [['Opens', openTotal], ['Reviews', reviewTotal], ['Paid', paid + ' · ' + (Math.round(paidUsd * 100) / 100) + ' USD']];
             host.innerHTML = cards.map(([label, value]) => `<div class="stat-kpi"><span>${label}</span><strong>${value}</strong></div>`).join('');
             paint('review-pages', pages);
             paint('review-statuses', statuses);
@@ -1810,18 +1828,23 @@
             paint('review-screens', screens);
             const compareHost = document.getElementById('review-compare');
             if (compareHost) {
-                compareHost.textContent = '';
+                const truncated = [];
+                if (openTotal > opens.length) truncated.push(`the newest ${opens.length} of ${openTotal} opens`);
+                if (reviewTotal > reviews.length) truncated.push(`the newest ${reviews.length} of ${reviewTotal} reviews`);
+                const note = truncated.length ? ` Breakdowns and Paid cover ${truncated.join(' and ')}.` : '';
+                compareHost.textContent = note.trim();
                 if (range !== 'all') {
                     const prevStart = new Date(start.getTime());
                     prevStart.setDate(prevStart.getDate() - Number(range));
                     try {
                         const [priorOpens, priorReviews] = await Promise.all([
-                            getDocs(query(collection(db, 'url_review_opens'), where('createdAt', '>=', prevStart), where('createdAt', '<', start), orderBy('createdAt', 'desc'), limit(500))),
-                            getDocs(query(collection(db, 'url_reviews'), where('createdAt', '>=', prevStart.toISOString()), where('createdAt', '<', start.toISOString()), orderBy('createdAt', 'desc'), limit(500)))
+                            count(opensQuery(prevStart, start)),
+                            count(reviewsQuery(prevStart, start))
                         ]);
-                        compareHost.textContent = `Previous ${range} days: opens ${opens.length} vs ${priorOpens.size}, reviews ${reviews.length} vs ${priorReviews.size}.`;
+                        if (stale()) return;
+                        compareHost.textContent = `Previous ${range} days: opens ${openTotal} vs ${priorOpens}, reviews ${reviewTotal} vs ${priorReviews}.${note}`;
                     } catch (compareError) {
-                        compareHost.textContent = '';
+                        if (!stale()) compareHost.textContent = note.trim();
                     }
                 }
             }
@@ -1834,7 +1857,7 @@
                     : '<p class="stats-empty">The first URL review email has not gone out yet.</p>';
             }
         } catch (error) {
-            host.innerHTML = '<p class="stats-empty">URL review activity is not available yet.</p>';
+            if (!stale()) host.innerHTML = '<p class="stats-empty">URL review activity is not available yet.</p>';
         }
     }
 
